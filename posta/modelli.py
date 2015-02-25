@@ -7,12 +7,20 @@ from base.tratti import *
 
 
 class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
-    pass
+
+    class Meta:
+        verbose_name = "Messaggio di posta"
+        verbose_name_plural = "Messaggi di posta"
 
 
 class Destinatario(ModelloSemplice, ConMarcaTemporale):
-    pass
+
+    class Meta:
+        verbose_name = "Destinatario di posta"
+        verbose_name_plural = "Destinatario di posta"
 
 
 class Allegato(ModelloSemplice, ConMarcaTemporale):
-    pass
+
+    class Meta:
+        verbose_name_plural = "Allegati"

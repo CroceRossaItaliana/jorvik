@@ -7,16 +7,26 @@ from base.tratti import *
 
 
 class Corso(ModelloSemplice, ConMarcaTemporale, ConGeolocalizzazione, ConCommenti, ConGiudizio):
-    pass
+
+    class Meta:
+        verbose_name = "Corso di formazione"
+        verbose_name_plural = "Corsi di formazione"
 
 
 class Partecipazione(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
-    pass
+
+    class Meta:
+        verbose_name = "Richiesta di partecipazione"
+        verbose_name_plural = "Richieste di partecipazione"
 
 
 class Lezione(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
-    pass
+
+    class Meta:
+        verbose_name_plural = "Lezioni"
 
 
 class Assenza(ModelloSemplice, ConMarcaTemporale):
-    pass
+
+    class Meta:
+        verbose_name_plural = "Assenze"

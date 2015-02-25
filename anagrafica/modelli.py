@@ -15,28 +15,43 @@ from base.tratti import *
 
 
 class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
-    pass
+
+    class Meta:
+        verbose_name_plural = "Persone"
 
 
 class Telefono(ModelloSemplice, ConMarcaTemporale):
-    pass
+
+    class Meta:
+        verbose_name = "Numero di telefono"
+        verbose_name_plural = "Numeri di telefono"
 
 
 class Documento(ModelloSemplice, ConMarcaTemporale):
-    pass
+
+    class Meta:
+        verbose_name_plural = "Documenti"
 
 
-class Utente(ModelloSemplice):
-    pass
+class Utenza(ModelloSemplice):
+
+    class Meta:
+        verbose_name_plural = "Utenze"
 
 
 class Appartenenza(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
-    pass
+
+    class Meta:
+        verbose_name_plural = "Appartenenze"
 
 
 class Comitato(ModelloAlbero, ConGeolocalizzazione):
-    pass
+
+    class Meta:
+        verbose_name_plural = "Comitati"
 
 
 class Delega(ModelloSemplice, ConMarcaTemporale):
-    pass
+
+    class Meta:
+        verbose_name_plural = "Deleghe"

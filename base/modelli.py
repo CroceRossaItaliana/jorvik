@@ -76,6 +76,10 @@ class Giudizio(ModelloSemplice, ConMarcaTemporale):
     Rappresenta un giudizio sociale ad un oggetto generico.
     Utilizzare tramite il tratto ConGiudizio ed i suoi metodi.
     """
+
+    class Meta:
+        verbose_name_plural = "Giudizi"
+
     autore = models.ForeignKey("Autore", Persona, db_index=True, related_name="giudizi")
     positivo = models.BooleanField("Positivo", db_index=True)
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True)
@@ -88,6 +92,10 @@ class Commento(ModelloSemplice, ConMarcaTemporale):
     Rappresenta un commento sociale ad un oggetto generico.
     Utilizzare tramite il tratto ConCommento ed i suoi metodi.
     """
+
+    class Meta:
+        verbose_name_plural = "Commenti"
+
     autore = models.ForeignKey("Autore", Persona, db_index=True, related_name="commenti")
     commento = models.TextField("Testo del commento")
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True)
@@ -96,6 +104,15 @@ class Commento(ModelloSemplice, ConMarcaTemporale):
 
 
 class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
+    """
+    Rappresenta una richiesta di autorizzazione relativa ad un oggetto generico.
+    Utilizzare tramite il tratto ConAutorizzazioni ed i suoi metodi.
+    """
+
+    class Meta:
+        verbose_name = "Richiesta di autorizzazione"
+        verbose_name_plural = "Richieste di autorizzazione"
+
     richiedente = models.ForeignKey("Richiedente", Persona, db_index=True, related_name="autorizzazioni_richieste")
     destinatario = models.ForeignKey("Destinatario", Persona, db_index=True, related_name="autorizzazioni_destinate")
     firmatario = models.ForeignKey("Firmatario", Persona, db_index=True, blank=True, null=True, default=None, related_name="autorizzazioni_firmate")
