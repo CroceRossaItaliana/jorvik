@@ -133,10 +133,27 @@ class ConAutorizzazioni(ModelloSemplice):
 
     autorizzazioni = GenericRelation(
         Autorizzazione,
-        related_query_name='commenti',
+        related_query_name='autorizzazioni',
         content_type_field='oggetto_tipo',
         object_id_field='oggetto_id'
     )
+
+    def autorizzazione_richiedi(self, richiedente, destinatario, motivo_obbligatorio=False, **kwargs):
+        """
+        Richiede una autorizzazione per l'oggetto attuale
+        :param richiedente: Colui che inoltra la richiesta.
+        :param destinatario: Colui che si vuole che autorizzi.
+        :param motivo_obbligatorio: Vero se si vuole forzare l'inserimento della motivazione in caso di rifiuto.
+        :param kwargs:
+        :return:
+        """
+        r = Autorizzazione(
+            richiedente=richiedente,
+            destinatario=destinatario,
+            motivo_obbligatorio=motivo_obbligatorio,
+            **kwargs
+        )
+        r.save()
 
     def autorizzazione_concessa(self):
         """
@@ -144,7 +161,7 @@ class ConAutorizzazioni(ModelloSemplice):
         """
         pass
 
-    def autorizzazione_negata(self):
+    def autorizzazione_negata(self, motivo=None):
         """
         Sovrascrivimi! Ascoltatore per negazione autorizzazione.
         """
@@ -160,7 +177,7 @@ class ConAutorizzazioni(ModelloSemplice):
             return False
 
         # Ci sono autorizzazioni pendenti?
-        elif self.autorizazzioni.filter(concessa=None).count():
+        elif self.autorizazzioni.filter(concessa__isnull=True).count():
             return None
 
         # Sono tutte concesse.

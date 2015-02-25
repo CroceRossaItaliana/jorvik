@@ -9,12 +9,15 @@ Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 - Comitato
 - Delega
 """
+from datetime import date
+from django.db.models import Q
 
 from base.modelli import *
 from base.stringhe import normalizza_nome, generatore_nome_file
 from base.tratti import *
 from base.stringa import *
 import phonenumbers
+from base.utils import is_list
 
 
 class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
@@ -213,6 +216,67 @@ class Utenza(ModelloSemplice):
 
 
 class Appartenenza(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
+    """
+    Rappresenta un'appartenenza di una Persona ad un Comitato.
+    """
+
+    # Tipologia appartenenza
+    VOLONTARIO = 'V'
+    ORDINARIO = 'O'
+    DIPENDENTE = 'D'
+    TIPO = (
+        (VOLONTARIO, 'Volontario'),
+        (ORDINARIO, 'Membro Ordinario'),
+        (DIPENDENTE, 'Dipendente')
+    )
+
+    tipo = models.CharField("Tipo", max_length=1, choices=TIPO, default=VOLONTARIO, db_index=True)
+
+    inizio = models.DateField("Inizio", db_index=True, null=False)
+    fine = models.DateField("Fine", db_index=True, null=True, blank=True, default=None)
+
+    confermata = models.BooleanField("Confermata", default=True, db_index=True)
+
+    def attuale(self, al_giorno=date.today()):
+        """
+        Controlla che l'appartenenza sia attuale:
+        1) Al giorno,
+        2) Confermata.
+        :param al_giorno: Default oggi. Giorno da calcolare.
+        :return: Vero o falso.
+        """
+        if not self.confermata:
+            return False
+
+        if al_giorno >= self.inizio and (self.fine is None or self.fine >= al_giorno):
+            return True
+
+        return False
+
+    def richiedi(self):
+        """
+        Richiede di confermare l'appartenenza.
+        """
+        self.confermata = False
+        self.save()
+        self.autorizzazione_richiedi(
+            self.persona,
+            self.comitato.presidente()
+        )
+
+    def autorizzazione_concessa(self):
+        """
+        Questo metodo viene chiamato quando la richiesta viene accettata.
+        :return:
+        """
+        self.confermata = True
+        self.save()
+
+        # TODO: Inviare e-mail di autorizzazione concessa!
+
+    def autorizzazione_negata(self, motivo=None):
+        self.confermata = False
+        self.save()
 
     class Meta:
         verbose_name_plural = "Appartenenze"
@@ -281,6 +345,39 @@ class Comitato(ModelloAlbero, ConGeolocalizzazione):
 
     class Meta:
         verbose_name_plural = "Comitati"
+
+    def appartenenze_attuali(self, tipo=None, al_giorno=date.today()):
+        """
+        Ritorna l'elenco di appartenenze attuali ad un determinato giorno.
+        :param tipo: Se specificato, filtra per tipologia.
+        :param al_giorno: Default oggi. Giorno da controllare.
+        :return: Ricerca filtrata per appartenenze attuali.
+        """
+        f = self.appartenenze.filter(
+            Q(inizio__lte=al_giorno),
+            Q(fine__isnull=True) | Q(fine__gte=al_giorno)
+        )
+
+        # Se richiesto, filtra per tipo (o tipi)
+        if tipo is not None:
+            if is_list(tipo):
+                f.filter(tipo__in=tipo)
+            else:
+                f.filter(tipo=tipo)
+
+        # NB: Vengono collegate via Join le tabelle Persona e Comitato per maggiore efficienza.
+        return f.select_related('persona', 'comitato')
+
+    def membri_attuali(self, tipo=None):
+        """
+        Ritorna i membri attuali, eventualmente filtrati per tipo, del comitato.
+        :param tipo: Se specificato, aggiunge un filtro per tipo
+        :return:
+        """
+        # NB: Questo e' efficiente perche' appartenenze_attuali risolve l'oggetto Persona
+        #     via una Join (i.e. non viene fatta una nuova query per ogni elemento).
+        a = self.appartenenze_attuali(tipo=tipo)
+        return [x.persona for x in a]
 
 
 class Delega(ModelloSemplice, ConMarcaTemporale):
