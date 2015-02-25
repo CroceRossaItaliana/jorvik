@@ -237,6 +237,23 @@ class Appartenenza(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     confermata = models.BooleanField("Confermata", default=True, db_index=True)
 
+    @staticmethod
+    def query_attuale(al_giorno=date.today()):
+        """
+        Restituisce l'oggetto Q per filtrare le appartenenze attuali.
+        :param al_giorno: Giorno per considerare l'appartenenza attuale. Default oggi.
+        :return: Q!
+        """
+
+        # IMPORTANTE: Ogni modifica a questa funzione deve essere rispecchiata
+        #             nella funzione Appartenenza.attuale.
+        return Q(
+            Q(inizio__lte=al_giorno),
+            Q(fine__isnull=True) | Q(fine__gte=al_giorno),
+            confermata=True,
+        )
+
+    @property
     def attuale(self, al_giorno=date.today()):
         """
         Controlla che l'appartenenza sia attuale:
@@ -245,6 +262,10 @@ class Appartenenza(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         :param al_giorno: Default oggi. Giorno da calcolare.
         :return: Vero o falso.
         """
+
+        # IMPORTANTE: Ogni modifica a questa funzione deve essere rispecchiata
+        #             nella funzione Appartenenza.query_attuale.
+
         if not self.confermata:
             return False
 
@@ -346,16 +367,24 @@ class Comitato(ModelloAlbero, ConGeolocalizzazione):
     class Meta:
         verbose_name_plural = "Comitati"
 
-    def appartenenze_attuali(self, tipo=None, al_giorno=date.today()):
+    def appartenenze_attuali(self, tipo=None, comitati_figli=False, al_giorno=date.today(), **kwargs):
         """
         Ritorna l'elenco di appartenenze attuali ad un determinato giorno.
         :param tipo: Se specificato, filtra per tipologia.
+        :param comitati_figli: Se vero, ricerca anche tra i comitati figli.
         :param al_giorno: Default oggi. Giorno da controllare.
         :return: Ricerca filtrata per appartenenze attuali.
         """
-        f = self.appartenenze.filter(
-            Q(inizio__lte=al_giorno),
-            Q(fine__isnull=True) | Q(fine__gte=al_giorno)
+
+        # Inizia la ricerca dalla mia discendenza o da me solamente?
+        if comitati_figli:
+            f = Appartenenza.objects.filter(comitato__in=self.get_descendants(True))
+        else:
+            f = self.appartenenze
+
+        f = f.filter(
+            Appartenenza.query_attuale(al_giorno),
+            **kwargs
         )
 
         # Se richiesto, filtra per tipo (o tipi)
@@ -368,15 +397,16 @@ class Comitato(ModelloAlbero, ConGeolocalizzazione):
         # NB: Vengono collegate via Join le tabelle Persona e Comitato per maggiore efficienza.
         return f.select_related('persona', 'comitato')
 
-    def membri_attuali(self, tipo=None):
+    def membri_attuali(self, tipo=None, comitati_figli=False, **kwargs):
         """
         Ritorna i membri attuali, eventualmente filtrati per tipo, del comitato.
         :param tipo: Se specificato, aggiunge un filtro per tipo
+        :param comitati_figli: Se vero, ricerca anche tra i comitati figli.
         :return:
         """
         # NB: Questo e' efficiente perche' appartenenze_attuali risolve l'oggetto Persona
         #     via una Join (i.e. non viene fatta una nuova query per ogni elemento).
-        a = self.appartenenze_attuali(tipo=tipo)
+        a = self.appartenenze_attuali(tipo=tipo, comitati_figli=comitati_figli, **kwargs)
         return [x.persona for x in a]
 
 
