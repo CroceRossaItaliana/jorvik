@@ -6,3 +6,4 @@ django-oauth2-provider==0.2.6.1
 django-safedelete==0.2.1
 djangorestframework==3.0.5
 django-mptt==0.6.1
+phonenumbers==7.0.2
