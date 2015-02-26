@@ -92,7 +92,7 @@ class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
         """
         if self.email_contatto:
             return self.email_contatto
-        self.email_utenza
+        return self.email_utenza
 
     @property
     def email_utenza(self):
