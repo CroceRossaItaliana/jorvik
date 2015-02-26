@@ -42,8 +42,21 @@ PERMESSI_OGGETTI = (
 )
 
 # Livelli di permesso
-SCRITTURA = 10
-LETTURA = 5
+# IMPORTANTE: Tenere in ordine, sia numerico che di linea.
+
+# - Scrittura e cancellazione
+RIMOZIONE = 40
+
+# - Scrittura
+MODIFICA = 30
+
+# - Scrittura dei dettagli
+MODIFICA_TURNI = 25
+MODIFICA_LEZIONI = MODIFICA_TURNI
+
+# - Sola lettura
+LETTURA = 10
+
 
 # Funzioni permessi
 # Nota bene: Non inserire () dopo il nome della funzione.
@@ -129,7 +142,7 @@ def permessi_minimi_persona(persona, oggetto, minimo=LETTURA):
 
     :param persona: La persona da testare per i permessi.
     :param oggetto: L'oggetto da accedere
-    :param permessi: Il permesso richiesto, es. SCRITTURA.
+    :param permessi: Il permesso richiesto, es. MODIFICA.
     :return: Vero se il permesso minimo e' raggiunto, falso altrimenti.
     """
     permessi = permessi_persona(persona, oggetto)

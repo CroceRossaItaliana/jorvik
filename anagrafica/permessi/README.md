@@ -3,13 +3,17 @@
 ### Controllare i permessi
 
 ```python
-oggetto = Attivita.objects.get(pk=123) # Una attivita'
-persona = request.user.persona # Il mio utente
+def attivita_turni_modifica(request, attivita_id):
 
-if not permessi_minimi_persona(persona, oggetto, SCRITTURA)
-    return PERMESSO_NEGATO
+    attivita = Attivita.objects.get(pk=attivita_id) 
+    persona = request.user.persona # Il mio utente
+    
+    if not permessi_minimi_persona(persona, attivita, MODIFICA_TURNI)
+        return PERMESSO_NEGATO # :(
 
-print("Yaay! %s puo scrivere su %s" % (persona, oggetto))
+    print("Yaay! %s può modificare turni %s" % (persona, attivita))
+
+    # ...
 ```
  
 ### Aggiungere una nuova delega

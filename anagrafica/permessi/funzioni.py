@@ -11,28 +11,28 @@ def permessi_presidente(comitato, oggetto):
 
     :param comitato: Il comitato di cui si e' presidenti.
     :param oggetto: L'oggetto per cui controllare i permessi.
-    :return: SCRITTURA, LETTURA o None.
+    :return: MODIFICA, LETTURA o None.
     """
 
     # Se e' un comitato
     if isinstance(oggetto, Comitato):
         # Posso modificare se e' sotto il mio
         if oggetto.figlio_di(comitato):
-            return SCRITTURA
+            return MODIFICA
         return None
 
     # Persona
     if isinstance(oggetto, Persona):
         # TODO: Assume che un presidente abbia permessi onnipotenti a scendere.
         if comitato.ha_persona(oggetto, comitati_figli=True):
-            return SCRITTURA
+            return MODIFICA
         return None
 
     # Attivita
     if isinstance(oggetto, Attivita):
         # TODO: Assume che un presidente abbia permessi onnipotenti a scendere.
         if oggetto.figlio_di(comitato, comitati_figli=True):
-            return SCRITTURA
+            return MODIFICA
 
     return None
 
@@ -43,7 +43,7 @@ def permessi_vicepresidente(comitato, oggetto):
 
     :param comitato: Il comitato di cui si e' vice presidenti.
     :param oggetto: L'oggetto per cui controllare i permessi.
-    :return: SCRITTURA, LETTURA o None.
+    :return: MODIFICA, LETTURA o None.
     """
 
     # Gli stessi permessi del presidente
@@ -56,7 +56,7 @@ def permessi_ufficio_soci(comitato, oggetto):
 
     :param comitato: Il comitato di cui si e' ufficio soci.
     :param oggetto: L'oggetto per cui controllare i permessi.
-    :return: SCRITTURA, LETTURA o None.
+    :return: MODIFICA, LETTURA o None.
     """
 
     # L'ufficio soci e' il presidente nel contesto delle persone
@@ -72,16 +72,16 @@ def permessi_delegato_area(area, oggetto):
 
     :param area: L'area di cui si e' delegati
     :param oggetto: L'oggetto per cui controllare i permessi.
-    :return: SCRITTURA, LETTURA o None.
+    :return: MODIFICA, LETTURA o None.
     """
 
     if isinstance(oggetto, Area):
         if oggetto == area:
-            return SCRITTURA
+            return MODIFICA
 
     if isinstance(oggetto, Attivita):
         if oggetto.area == area:
-            return SCRITTURA
+            return MODIFICA
 
     if isinstance(oggetto, Persona):
         # TODO: Controllare che la persona (oggetto) partecipi ad una attivita' dell'area
@@ -97,7 +97,7 @@ def permessi_responsabile_area(area, oggetto):
 
     :param area: L'area di cui si e' responsabili
     :param oggetto: L'oggetto per cui controllare i permessi.
-    :return: SCRITTURA, LETTURA o None.
+    :return: MODIFICA, LETTURA o None.
     """
 
     return permessi_delegato_area(area, oggetto)
@@ -109,12 +109,12 @@ def permessi_referente(attivita, oggetto):
 
     :param attivita: L'attivita' di cui si e' referenti
     :param oggetto: L'oggetto per cui controllare i permessi.
-    :return: SCRITTURA, LETTURA o None.
+    :return: MODIFICA, LETTURA o None.
     """
 
     if isinstance(oggetto, Attivita):
         if attivita == oggetto:
-            return SCRITTURA
+            return MODIFICA
 
     if isinstance(oggetto, Persona):
         # TODO: Controllare che la persona (oggetto) partecipi all'attivita'
