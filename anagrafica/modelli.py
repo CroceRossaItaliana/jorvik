@@ -18,6 +18,7 @@ from base.tratti import *
 from base.stringa import *
 import phonenumbers
 from base.utils import is_list
+from .permessi.costanti import *
 
 
 class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
@@ -133,6 +134,12 @@ class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
         t = Telefono(persona=self, numero=f, servizio=servizio)
         t.save()
         return True
+
+    def deleghe_attuali(self, al_giorno=date.today()):
+        """
+        Ritorna una ricerca per le deleghe che son attuali.
+        """
+        return self.deleghe.filter(Delega.query_attuale(al_giorno))
 
 
 class Telefono(ModelloSemplice, ConMarcaTemporale):
@@ -419,8 +426,71 @@ class Comitato(ModelloAlbero, ConGeolocalizzazione):
         a = self.appartenenze_attuali(membro=membro, comitati_figli=comitati_figli, **kwargs)
         return [x.persona for x in a]
 
+    def appartenenze_persona(self, persona, membro=None, comitati_figli=False, **kwargs):
+        """
+        Ottiene le appartenenze di una data persona, o None se la persona non appartiene al comitato.
+        """
+        self.appartenenze_attuali(membro=membro, comitati_figli=comitati_figli, persona=persona, **kwargs)
+
+    def ha_persona(self, persona, membro=None, comitati_figli=False, **kwargs):
+        """
+        Controlla se una persona e' membro del comitato o meno.
+        """
+        n = self.appartenenze_persona(persona, membro=membro, comitati_figli=comitati_figli, **kwargs).count()
+        if n:
+            return True
+        return False
+
 
 class Delega(ModelloSemplice, ConMarcaTemporale):
+    """
+    Rappresenta una delega ad una funzione.
+
+    Una delega abilita una persona all'accesso ad una determinata funzionalita' -espressa
+    dal tipo della delega- su di un determinato elemento -espressa dall'oggetto-.
+
+    Una delega ha inizio e fine. Una fine None-NULL rappresenta una fine indeterminata.
+    """
 
     class Meta:
         verbose_name_plural = "Deleghe"
+
+    persona = models.ForeignKey(Persona, db_index=True, related_name='deleghe')
+    tipo = models.CharField(max_length=2, db_index=True, choices=PERMESSI_NOMI)
+    oggetto_tipo = models.ForeignKey(ContentType, db_index=True)
+    oggetto_id = models.PositiveIntegerField(db_index=True)
+    oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
+
+    inizio = models.DateField("Inizio", db_index=True, null=False)
+    fine = models.DateField("Fine", db_index=True, null=True, blank=True, default=None)
+
+    @staticmethod
+    def query_attuale(al_giorno=date.today()):
+        """
+        Restituisce l'oggetto Q per filtrare le deleghe attuali.
+        :param al_giorno: Giorno per considerare le deleghe attuali. Default oggi.
+        :return: Q!
+        """
+
+        # IMPORTANTE: Ogni modifica a questa funzione deve essere rispecchiata
+        #             nella funzione Delega.attuale.
+        return Q(
+            Q(inizio__lte=al_giorno),
+            Q(fine__isnull=True) | Q(fine__gte=al_giorno)
+        )
+
+    @property
+    def attuale(self, al_giorno=date.today()):
+        """
+        Controlla che la delega sia attuale:
+        1) Al giorno,
+        2) Confermata.
+        :param al_giorno: Default oggi. Giorno da calcolare.
+        :return: Vero o falso.
+        """
+
+        # IMPORTANTE: Ogni modifica a questa funzione deve essere rispecchiata
+        #             nella funzione Appartenenza.query_attuale.
+
+        return al_giorno >= self.inizio \
+            and (self.fine is None or self.fine >= al_giorno)

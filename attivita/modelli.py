@@ -25,3 +25,8 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
 
+
+class Area(ModelloSemplice, ConMarcaTemporale):
+
+    class Meta:
+        verbose_name_plural = "Aree"

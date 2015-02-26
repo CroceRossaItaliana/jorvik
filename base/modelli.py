@@ -61,6 +61,9 @@ class ModelloAlbero(ModelloSemplice, MPTTModel):
             n += 1
         return n
 
+    def figlio_di(self, altro, includimi=True):
+        return self.is_descendant_of(altro, include_self=includimi)
+
 
 """
 Seguono qui le entita' di base.
