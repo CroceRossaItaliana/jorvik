@@ -220,21 +220,29 @@ class Appartenenza(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     Rappresenta un'appartenenza di una Persona ad un Comitato.
     """
 
-    # Tipologia appartenenza
+    # Tipo di membro
     VOLONTARIO = 'V'
     ORDINARIO = 'O'
     DIPENDENTE = 'D'
-    TIPO = (
+    MEMBRO = (
         (VOLONTARIO, 'Volontario'),
         (ORDINARIO, 'Membro Ordinario'),
         (DIPENDENTE, 'Dipendente')
     )
+    membro = models.CharField("Tipo membro", max_length=1, choices=MEMBRO, default=VOLONTARIO, db_index=True)
 
-    tipo = models.CharField("Tipo", max_length=1, choices=TIPO, default=VOLONTARIO, db_index=True)
+    # Tipo di appartenenza
+    NORMALE = 'N'
+    ESTESO = 'E'
+    TIPO = (
+        (NORMALE, 'Normale'),
+        (ESTESO, 'Estensione'),
+    )
+    tipo = models.CharField("Tipo app.", max_length=1, choices=TIPO, default=NORMALE, db_index=True)
 
+    # Dati appartenenza
     inizio = models.DateField("Inizio", db_index=True, null=False)
     fine = models.DateField("Fine", db_index=True, null=True, blank=True, default=None)
-
     confermata = models.BooleanField("Confermata", default=True, db_index=True)
 
     @staticmethod
@@ -367,10 +375,12 @@ class Comitato(ModelloAlbero, ConGeolocalizzazione):
     class Meta:
         verbose_name_plural = "Comitati"
 
-    def appartenenze_attuali(self, tipo=None, comitati_figli=False, al_giorno=date.today(), **kwargs):
+    def appartenenze_attuali(self, membro=None, comitati_figli=False, al_giorno=date.today(), **kwargs):
         """
         Ritorna l'elenco di appartenenze attuali ad un determinato giorno.
-        :param tipo: Se specificato, filtra per tipologia.
+        Altri parametri (**kwargs), es. tipo=Appartenenza.ESTESO possono essere aggiunti.
+
+        :param membro: Se specificato, filtra per tipologia di membro (es. Appartenenza.VOLONTARIO).
         :param comitati_figli: Se vero, ricerca anche tra i comitati figli.
         :param al_giorno: Default oggi. Giorno da controllare.
         :return: Ricerca filtrata per appartenenze attuali.
@@ -387,26 +397,26 @@ class Comitato(ModelloAlbero, ConGeolocalizzazione):
             **kwargs
         )
 
-        # Se richiesto, filtra per tipo (o tipi)
-        if tipo is not None:
-            if is_list(tipo):
-                f.filter(tipo__in=tipo)
+        # Se richiesto, filtra per tipo membro (o tipi)
+        if membro is not None:
+            if is_list(membro):
+                f.filter(membro__in=membro)
             else:
-                f.filter(tipo=tipo)
+                f.filter(membro=membro)
 
         # NB: Vengono collegate via Join le tabelle Persona e Comitato per maggiore efficienza.
         return f.select_related('persona', 'comitato')
 
-    def membri_attuali(self, tipo=None, comitati_figli=False, **kwargs):
+    def membri_attuali(self, membro=None, comitati_figli=False, **kwargs):
         """
         Ritorna i membri attuali, eventualmente filtrati per tipo, del comitato.
-        :param tipo: Se specificato, aggiunge un filtro per tipo
+        :param membro: Se specificato, filtra per tipologia di membro (es. Appartenenza.VOLONTARIO).
         :param comitati_figli: Se vero, ricerca anche tra i comitati figli.
         :return:
         """
         # NB: Questo e' efficiente perche' appartenenze_attuali risolve l'oggetto Persona
         #     via una Join (i.e. non viene fatta una nuova query per ogni elemento).
-        a = self.appartenenze_attuali(tipo=tipo, comitati_figli=comitati_figli, **kwargs)
+        a = self.appartenenze_attuali(membro=membro, comitati_figli=comitati_figli, **kwargs)
         return [x.persona for x in a]
 
 
