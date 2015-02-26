@@ -16,7 +16,7 @@ print("Yaay! %s puo scrivere su %s" % (persona, oggetto))
 
 1. In `permessi.costanti`:
   * Crea una nuova costante in testa al file col nome della tua nuova delega;
-  * Modifica `PERMESSI_NOMI aggiungendo il nome esteso della tua applicazione;
+  * Modifica `PERMESSI_NOMI` aggiungendo il nome esteso della tua applicazione;
   * Modifica `PERMESSI_OGGETTI` aggiungendo il tipo di oggetto sul quale agisce;
   
 2. In `permessi.funzioni`:
