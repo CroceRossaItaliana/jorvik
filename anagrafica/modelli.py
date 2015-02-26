@@ -34,17 +34,20 @@ class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
     )
 
     # Stati
+    # Valutiamo se mettere militare e IV tra gli stati o Appartenenze
     PERSONA = 'P'
     ASPIRANTE = 'A'
     VOLONTARIO = 'V'
     DIPENDENTE = 'D'
     MILITARE = 'M'
+    INFERMIERAVOLONTARIA = 'I'
     STATO = (
         (PERSONA,       'Persona'),
         (ASPIRANTE,     'Aspirante'),
         (VOLONTARIO,    'Volontario'),
         (DIPENDENTE,    'Dipendente'),
         (MILITARE,      'Militare'),
+        (INFERMIERAVOLONTARIA, 'Infermiera Volontaria'),
     )
 
     # Informazioni anagrafiche
@@ -226,7 +229,7 @@ class Appartenenza(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     DIPENDENTE = 'D'
     MEMBRO = (
         (VOLONTARIO, 'Volontario'),
-        (ORDINARIO, 'Membro Ordinario'),
+        (ORDINARIO,  'Membro Ordinario'),
         (DIPENDENTE, 'Dipendente')
     )
     membro = models.CharField("Tipo membro", max_length=1, choices=MEMBRO, default=VOLONTARIO, db_index=True)
@@ -323,10 +326,10 @@ class Comitato(ModelloAlbero, ConGeolocalizzazione):
     NAZIONALE = 'N'
     ESTENSIONE = (
         (TERRITORIALE, 'Unità Territoriale'),
-        (LOCALE, 'Comitato Locale'),
-        (PROVINCIALE, 'Comitato Provinciale'),
-        (REGIONALE, 'Comitato Regionale'),
-        (NAZIONALE, 'Comitato Nazioanle')
+        (LOCALE,       'Comitato Locale'),
+        (PROVINCIALE,  'Comitato Provinciale'),
+        (REGIONALE,    'Comitato Regionale'),
+        (NAZIONALE,    'Comitato Nazioanle')
     )
 
     # Tipologia del comitato
