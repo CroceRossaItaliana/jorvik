@@ -89,6 +89,10 @@ def permessi_delega(instanza_delega, oggetto):
     if not isinstance(instanza_delega.oggetto, PERMESSI_OGGETTI_DICT[tipo]):
         raise ValueError("Il tipo di oggetto associato non è valido per questa delega")
 
+    # Controlla che la delega sia valida
+    if not instanza_delega.attuale:
+        return None
+
     return PERMESSI_FUNZIONI_DICT[tipo](instanza_delega.oggetto, oggetto)
 
 
