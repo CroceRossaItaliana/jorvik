@@ -1,3 +1,5 @@
+# coding=utf-8
+
 """
 Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 
@@ -26,7 +28,7 @@ from base.tratti import ConMarcaTemporale
 from base.utils import is_list
 
 
-class Persona(ConGeolocalizzazioneRaggio, ModelloCancellabile):
+class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
     """
     Rappresenta un record anagrafico in Gaia.
     """
@@ -199,7 +201,7 @@ class Telefono(ConMarcaTemporale, ModelloSemplice):
         return phonenumbers.format_number(self._phonenumber(), phonenumbers.PhoneNumberFormat.E164)
 
 
-class Documento(ConMarcaTemporale, ModelloSemplice):
+class Documento(ModelloSemplice, ConMarcaTemporale):
     """
     Rappresenta un documento caricato da un utente.
     """
@@ -224,10 +226,14 @@ class Documento(ConMarcaTemporale, ModelloSemplice):
         app_label = 'anagrafica'
 
 
-class Appartenenza(ConMarcaTemporale, ConAutorizzazioni, ModelloSemplice):
+class Appartenenza(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     """
     Rappresenta un'appartenenza di una Persona ad un Comitato.
     """
+
+    class Meta:
+        verbose_name_plural = "Appartenenze"
+        app_label = 'anagrafica'
 
     # Tipo di membro
     VOLONTARIO = 'V'
@@ -253,10 +259,6 @@ class Appartenenza(ConMarcaTemporale, ConAutorizzazioni, ModelloSemplice):
     inizio = models.DateField("Inizio", db_index=True, null=False)
     fine = models.DateField("Fine", db_index=True, null=True, blank=True, default=None)
     confermata = models.BooleanField("Confermata", default=True, db_index=True)
-
-    class Meta:
-        verbose_name_plural = "Appartenenze"
-        app_label = 'anagrafica'
 
     @staticmethod
     def query_attuale(al_giorno=date.today()):
@@ -321,7 +323,11 @@ class Appartenenza(ConMarcaTemporale, ConAutorizzazioni, ModelloSemplice):
         self.save()
 
 
-class Comitato(ConGeolocalizzazione, ModelloAlbero):
+class Comitato(ModelloAlbero, ConGeolocalizzazione):
+
+    class Meta:
+        verbose_name_plural = "Comitati"
+        app_label = 'anagrafica'
 
     # Nome gia' presente in Modello Albero
 
@@ -381,10 +387,6 @@ class Comitato(ConGeolocalizzazione, ModelloAlbero):
             if attuale.genitore is None:
                 return None
             attuale = attuale.genitore
-
-    class Meta:
-        verbose_name_plural = "Comitati"
-        app_label = 'anagrafica'
 
     def appartenenze_attuali(self, membro=None, comitati_figli=False, al_giorno=date.today(), **kwargs):
         """
@@ -446,7 +448,7 @@ class Comitato(ConGeolocalizzazione, ModelloAlbero):
         return False
 
 
-class Delega(ConMarcaTemporale, ModelloSemplice):
+class Delega(ModelloSemplice, ConMarcaTemporale):
     """
     Rappresenta una delega ad una funzione.
 

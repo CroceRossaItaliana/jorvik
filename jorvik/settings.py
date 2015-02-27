@@ -38,6 +38,7 @@ INSTALLED_APPS = (
     #'provider.oauth2',
     'rest_framework',
     'mptt',
+    'safedelete',
 
     # Moduli interni
     'base',
@@ -57,6 +58,17 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+)
+
+TEMPLATE_CONTEXT_PROCESSOR = (
+    "django.contrib.auth.context_processors.auth",
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    "django.core.context_processors.static",
+    "django.core.context_processors.tz",
+    "django.core.context_processors.request",
+    "django.contrib.messages.context_processors.messages",
 )
 
 # Imposta anagrafica.Utenza come modello di autenticazione

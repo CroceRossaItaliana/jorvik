@@ -1,3 +1,5 @@
+# coding=utf-8
+
 from django.contrib.auth.models import PermissionsMixin, BaseUserManager, AbstractBaseUser
 from django.core.mail import send_mail
 from django.db import models
@@ -32,12 +34,11 @@ class GestoreUtenti(BaseUserManager):
                                  **extra_fields)
 
 
-class Utenza(ConMarcaTemporale, AbstractBaseUser, PermissionsMixin):
+class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
 
     class Meta:
         verbose_name_plural = "Utenze"
         app_label = 'autenticazione'
-
 
     email = models.EmailField('Indirizzo email', max_length=254, unique=True)
     persona = OneToOneField("anagrafica.Persona", null=True, blank=True, db_index=True)

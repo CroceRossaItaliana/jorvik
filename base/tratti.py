@@ -7,11 +7,10 @@ potrebbe necessitare l'implementazione di metodi o proprieta'
 particolari. Fare riferimento alla documentazione del tratto
 utilizzato.
 """
-from base.models import ModelloSemplice
 from django.db import models
 
 
-class ConMarcaTemporale(ModelloSemplice):
+class ConMarcaTemporale():
     """
     Aggiunge le marche temporali automatiche di creazione ed ultima modifica.
     """

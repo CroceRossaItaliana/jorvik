@@ -1,3 +1,5 @@
+# coding=utf-8
+
 """
 Questo file gestisce i permessi in Gaia.
 """

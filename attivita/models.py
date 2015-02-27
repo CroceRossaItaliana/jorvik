@@ -1,3 +1,5 @@
+# coding=utf-8
+
 """
 Questo modulo definisce i modelli del modulo Attivita' di Gaia.
 """

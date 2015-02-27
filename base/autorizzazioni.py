@@ -7,7 +7,7 @@ from base.tratti import ConMarcaTemporale
 __author__ = 'alfioemanuele'
 
 
-class Autorizzazione(ConMarcaTemporale, ModelloSemplice):
+class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     """
     Rappresenta una richiesta di autorizzazione relativa ad un oggetto generico.
     Utilizzare tramite il tratto ConAutorizzazioni ed i suoi metodi.
@@ -16,6 +16,7 @@ class Autorizzazione(ConMarcaTemporale, ModelloSemplice):
     class Meta:
         verbose_name = "Richiesta di autorizzazione"
         verbose_name_plural = "Richieste di autorizzazione"
+        app_label = "base"
 
     richiedente = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="autorizzazioni_richieste")
     destinatario = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="autorizzazioni_destinate")
@@ -51,7 +52,7 @@ class Autorizzazione(ConMarcaTemporale, ModelloSemplice):
         self.firma(firmatario, False)
 
 
-class ConAutorizzazioni(ModelloSemplice):
+class ConAutorizzazioni():
     """
     Aggiunge la possibilita' di aggiungere le funzionalita'
     di autorizzazione ad un ogetto.

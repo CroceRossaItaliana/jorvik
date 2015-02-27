@@ -7,7 +7,7 @@ from base.tratti import ConMarcaTemporale
 __author__ = 'alfioemanuele'
 
 
-class Giudizio(ConMarcaTemporale, ModelloSemplice):
+class Giudizio(ModelloSemplice, ConMarcaTemporale):
     """
     Rappresenta un giudizio sociale ad un oggetto generico.
     Utilizzare tramite il tratto ConGiudizio ed i suoi metodi.
@@ -39,7 +39,7 @@ class Commento(ConMarcaTemporale, ModelloSemplice):
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
 
 
-class ConGiudizio(ModelloSemplice):
+class ConGiudizio():
     """
     Aggiunge le funzionalita' di giudizio, stile social,
     positivi o negativi.
@@ -117,7 +117,7 @@ class ConGiudizio(ModelloSemplice):
         return None
 
 
-class ConCommenti(ModelloSemplice):
+class ConCommenti():
     """
     Aggiunge la possibilita' di aggiungere commenti ad
     un oggetto.

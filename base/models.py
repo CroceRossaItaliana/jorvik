@@ -16,7 +16,7 @@ class ModelloSemplice(models.Model):
 PolicyCancellazioneMorbida = safedelete_mixin_factory(SOFT_DELETE)
 
 
-class ModelloCancellabile(PolicyCancellazioneMorbida, ModelloSemplice):
+class ModelloCancellabile(ModelloSemplice, PolicyCancellazioneMorbida):
     """
     Questa classe astratta rappresenta un Modello generico, con
     aggiunta la caratteristica di avere cancellazione SOFT DELETE.
@@ -33,7 +33,7 @@ class ModelloCancellabile(PolicyCancellazioneMorbida, ModelloSemplice):
         abstract = True
 
 
-class ModelloAlbero(ModelloSemplice, MPTTModel):
+class ModelloAlbero(MPTTModel, ModelloSemplice):
     """
     Rappresenta un modello parte di un albero gerarchico.
     Nota bene: Per motivi tecnici, questo aggiunge anche un NOME.

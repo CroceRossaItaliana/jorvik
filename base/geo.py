@@ -1,6 +1,5 @@
 from django.contrib.gis.db import models
 from django.contrib.gis.measure import D
-from base.models import ModelloSemplice
 
 
 class ConGeolocalizzazione(models.Model):
@@ -23,7 +22,7 @@ class ConGeolocalizzazione(models.Model):
         self.objects.filter(geo__distance_lte=(self.geo, D(km=km)))
 
 
-class ConGeolocalizzazioneRaggio(ModelloSemplice, ConGeolocalizzazione):
+class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
     """
     Aggiunge le funzioni di geolocalizzazione e quelle necessarie a rappresentare
     un'area circolare con raggio in kilometri.
