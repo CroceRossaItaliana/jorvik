@@ -39,6 +39,9 @@ class ModelloAlbero(ModelloSemplice, MPTTModel):
     Nota bene: Per motivi tecnici, questo aggiunge anche un NOME.
     """
 
+    class Meta:
+        abstract = True
+
     class MPTTMeta:
         order_insertion_by = ['nome']
 

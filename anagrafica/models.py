@@ -10,24 +10,21 @@ Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 - Delega
 """
 from datetime import date
+
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.core.mail import send_mail
 from django.db import models
 from django.db.models import Q
-from django.db.models.fields.related import OneToOneField
-from django.utils.http import urlquote
-from anagrafica.auth import GestoreUtenti
+import phonenumbers
+
 from base.autorizzazioni import ConAutorizzazioni
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
-
 from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero
 from base.stringhe import normalizza_nome, generatore_nome_file
-
-import phonenumbers
 from base.tratti import ConMarcaTemporale
 from base.utils import is_list
+
 
 class Persona(ConGeolocalizzazioneRaggio, ModelloCancellabile):
     """
@@ -118,6 +115,7 @@ class Persona(ConGeolocalizzazioneRaggio, ModelloCancellabile):
 
     class Meta:
         verbose_name_plural = "Persone"
+        app_label = 'anagrafica'
 
     # Q: Qual e' il numero di telefono di questa persona?
     # A: Una persona puo' avere da zero ad illimitati numeri di telefono.
@@ -163,6 +161,7 @@ class Telefono(ConMarcaTemporale, ModelloSemplice):
     class Meta:
         verbose_name = "Numero di telefono"
         verbose_name_plural = "Numeri di telefono"
+        app_label = 'anagrafica'
 
     def _phonenumber(self):
         return phonenumbers.parse(self.numero)
@@ -222,37 +221,7 @@ class Documento(ConMarcaTemporale, ModelloSemplice):
 
     class Meta:
         verbose_name_plural = "Documenti"
-
-
-class Utenza(PermissionsMixin, ConMarcaTemporale, ModelloSemplice):
-
-    class Meta:
-        verbose_name_plural = "Utenze"
-
-    email = models.EmailField('Indirizzo email', max_length=254, unique=True)
-    persona = OneToOneField(Persona, db_index=True)
-
-    is_staff = models.BooleanField('Amministratore', default=False,
-        help_text='Se l\'utente è un amministratore o meno.')
-    is_active = models.BooleanField('Attivo', default=True,
-        help_text='Utenti attivi. Impostare come disattivo invece di cancellare.')
-
-    objects = GestoreUtenti()
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['persona']
-
-    def get_absolute_url(self):
-        return "/utenti/%s/" % urlquote(self.email)
-
-    def get_full_name(self):
-        return self.persona.nome_completo()
-
-    def get_short_name(self):
-        return self.persona.nome
-
-    def email_user(self, subject, message, from_email=None):
-        send_mail(subject, message, from_email, [self.email])
+        app_label = 'anagrafica'
 
 
 class Appartenenza(ConMarcaTemporale, ConAutorizzazioni, ModelloSemplice):
@@ -284,6 +253,10 @@ class Appartenenza(ConMarcaTemporale, ConAutorizzazioni, ModelloSemplice):
     inizio = models.DateField("Inizio", db_index=True, null=False)
     fine = models.DateField("Fine", db_index=True, null=True, blank=True, default=None)
     confermata = models.BooleanField("Confermata", default=True, db_index=True)
+
+    class Meta:
+        verbose_name_plural = "Appartenenze"
+        app_label = 'anagrafica'
 
     @staticmethod
     def query_attuale(al_giorno=date.today()):
@@ -347,11 +320,8 @@ class Appartenenza(ConMarcaTemporale, ConAutorizzazioni, ModelloSemplice):
         self.confermata = False
         self.save()
 
-    class Meta:
-        verbose_name_plural = "Appartenenze"
 
-
-class Comitato(ModelloAlbero, ConGeolocalizzazione):
+class Comitato(ConGeolocalizzazione, ModelloAlbero):
 
     # Nome gia' presente in Modello Albero
 
@@ -414,6 +384,7 @@ class Comitato(ModelloAlbero, ConGeolocalizzazione):
 
     class Meta:
         verbose_name_plural = "Comitati"
+        app_label = 'anagrafica'
 
     def appartenenze_attuali(self, membro=None, comitati_figli=False, al_giorno=date.today(), **kwargs):
         """
@@ -487,6 +458,7 @@ class Delega(ConMarcaTemporale, ModelloSemplice):
 
     class Meta:
         verbose_name_plural = "Deleghe"
+        app_label = 'anagrafica'
 
     from anagrafica.permessi.costanti import PERMESSI_NOMI
 

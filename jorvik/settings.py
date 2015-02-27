@@ -31,6 +31,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.gis',
 
     # Librerie terze
     #'provider',
@@ -40,6 +41,7 @@ INSTALLED_APPS = (
 
     # Moduli interni
     'base',
+    'autenticazione',
     'anagrafica',
     'social',
     'posta',
@@ -58,7 +60,7 @@ MIDDLEWARE_CLASSES = (
 )
 
 # Imposta anagrafica.Utenza come modello di autenticazione
-AUTH_USER_MODEL = 'anagrafica.Utenza'
+AUTH_USER_MODEL = 'autenticazione.Utenza'
 
 # Configurazione URL
 ROOT_URLCONF = 'jorvik.urls'
@@ -72,9 +74,10 @@ WSGI_APPLICATION = 'jorvik.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.contrib.gis.db.backends.mysql',
         'OPTIONS': {
-            'read_default_file': '/config/mysql.cnf',
+            'read_default_file': 'config/mysql.cnf',
+            'init_command': 'SET storage_engine=MyISAM',
         },
     }
 }

@@ -1,0 +1,9 @@
+- model: anagrafica.Persona
+  pk: 1
+  fields:
+    nome: Marco
+    cognome: Polo
+    codice_fiscale: MARPOL00M10F100W
+    data_nascita: 10/10/1900
+    genere: M
+    stato: P

@@ -61,8 +61,7 @@ class ConAutorizzazioni(ModelloSemplice):
         abstract = True
 
     autorizzazioni = GenericRelation(
-        "base.autorizzazioni",
-        related_query_name='autorizzazioni',
+        "base.Autorizzazione",
         content_type_field='oggetto_tipo',
         object_id_field='oggetto_id'
     )
