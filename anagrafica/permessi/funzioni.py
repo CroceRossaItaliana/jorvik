@@ -2,7 +2,9 @@
 Questo modulo contiene tutte le funzioni per testare i permessi
 a partire da un oggetto sul quale ho una delega ed un oggetto da testare.
 """
-from anagrafica.modelli import *
+from anagrafica.models import Comitato, Persona
+import anagrafica.permessi.costanti
+from attivita.models import Attivita, Area
 
 
 def permessi_presidente(comitato, oggetto):
@@ -18,21 +20,21 @@ def permessi_presidente(comitato, oggetto):
     if isinstance(oggetto, Comitato):
         # Posso modificare se e' sotto il mio
         if oggetto.figlio_di(comitato):
-            return MODIFICA
+            return anagrafica.permessi.costanti.MODIFICA
         return None
 
     # Persona
     if isinstance(oggetto, Persona):
         # TODO: Assume che un presidente abbia permessi onnipotenti a scendere.
         if comitato.ha_persona(oggetto, comitati_figli=True):
-            return MODIFICA
+            return anagrafica.permessi.costanti.MODIFICA
         return None
 
     # Attivita
     if isinstance(oggetto, Attivita):
         # TODO: Assume che un presidente abbia permessi onnipotenti a scendere.
         if oggetto.figlio_di(comitato, comitati_figli=True):
-            return MODIFICA
+            return anagrafica.permessi.costanti.MODIFICA
 
     return None
 
@@ -77,16 +79,16 @@ def permessi_delegato_area(area, oggetto):
 
     if isinstance(oggetto, Area):
         if oggetto == area:
-            return MODIFICA
+            return anagrafica.permessi.costanti.MODIFICA
 
     if isinstance(oggetto, Attivita):
         if oggetto.area == area:
-            return MODIFICA
+            return anagrafica.permessi.costanti.MODIFICA
 
     if isinstance(oggetto, Persona):
         # TODO: Controllare che la persona (oggetto) partecipi ad una attivita' dell'area
         if False:
-            return LETTURA
+            return anagrafica.permessi.costanti.LETTURA
 
     return None
 
@@ -114,12 +116,12 @@ def permessi_referente(attivita, oggetto):
 
     if isinstance(oggetto, Attivita):
         if attivita == oggetto:
-            return MODIFICA
+            return anagrafica.permessi.costanti.MODIFICA
 
     if isinstance(oggetto, Persona):
         # TODO: Controllare che la persona (oggetto) partecipi all'attivita'
         if False:
-            return LETTURA
+            return anagrafica.permessi.costanti.LETTURA
 
     return None
 

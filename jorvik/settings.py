@@ -33,14 +33,17 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
 
     # Librerie terze
-    'provider',
-    'provider.oauth2',
+    #'provider',
+    #'provider.oauth2',
     'rest_framework',
     'mptt',
 
     # Moduli interni
     'base',
     'anagrafica',
+    'social',
+    'posta',
+    'formazione',
 )
 
 # Classi middleware (intercetta & computa)

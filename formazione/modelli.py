@@ -2,7 +2,7 @@
 Questo modulo definisce i modelli del modulo di Formazione di Gaia.
 """
 
-from base.modelli import *
+from base.models import *
 from base.tratti import *
 
 

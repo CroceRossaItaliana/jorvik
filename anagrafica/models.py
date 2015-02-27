@@ -10,18 +10,21 @@ Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 - Delega
 """
 from datetime import date
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.db import models
 from django.db.models import Q
+from base.autorizzazioni import ConAutorizzazioni
+from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 
-from base.modelli import *
+from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero
 from base.stringhe import normalizza_nome, generatore_nome_file
-from base.tratti import *
-from base.stringa import *
+
 import phonenumbers
+from base.tratti import ConMarcaTemporale
 from base.utils import is_list
-from .permessi.costanti import *
 
-
-class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
+class Persona(ConGeolocalizzazioneRaggio, ModelloCancellabile):
     """
     Rappresenta un record anagrafico in Gaia.
     """
@@ -66,7 +69,7 @@ class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
     comune_residenza = models.CharField("Comune di residenza", max_length=64, blank=True)
     provincia_residenza = models.CharField("Provincia di residenza", max_length=2, blank=True)
     stato_residenza = models.CharField("Stato di residenza", max_length=2, default="IT")
-    cap_residenza = models.CharField("CAP di Residenza", max_lenght=5, blank=True)
+    cap_residenza = models.CharField("CAP di Residenza", max_length=5, blank=True)
     email_contatto = models.CharField("Email di contatto", max_length=64, blank=True)
 
     def nome_completo(self):
@@ -142,7 +145,7 @@ class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
         return self.deleghe.filter(Delega.query_attuale(al_giorno))
 
 
-class Telefono(ModelloSemplice, ConMarcaTemporale):
+class Telefono(ConMarcaTemporale, ModelloSemplice):
     """
     Rappresenta un numero di telefono.
     NON USARE DIRETTAMENTE. Usare i metodi in Persona.
@@ -192,7 +195,7 @@ class Telefono(ModelloSemplice, ConMarcaTemporale):
         return phonenumbers.format_number(self._phonenumber(), phonenumbers.PhoneNumberFormat.E164)
 
 
-class Documento(ModelloSemplice, ConMarcaTemporale):
+class Documento(ConMarcaTemporale, ModelloSemplice):
     """
     Rappresenta un documento caricato da un utente.
     """
@@ -222,7 +225,7 @@ class Utenza(ModelloSemplice):
         verbose_name_plural = "Utenze"
 
 
-class Appartenenza(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
+class Appartenenza(ConMarcaTemporale, ConAutorizzazioni, ModelloSemplice):
     """
     Rappresenta un'appartenenza di una Persona ad un Comitato.
     """
@@ -442,7 +445,7 @@ class Comitato(ModelloAlbero, ConGeolocalizzazione):
         return False
 
 
-class Delega(ModelloSemplice, ConMarcaTemporale):
+class Delega(ConMarcaTemporale, ModelloSemplice):
     """
     Rappresenta una delega ad una funzione.
 
@@ -454,6 +457,8 @@ class Delega(ModelloSemplice, ConMarcaTemporale):
 
     class Meta:
         verbose_name_plural = "Deleghe"
+
+    from anagrafica.permessi.costanti import PERMESSI_NOMI
 
     persona = models.ForeignKey(Persona, db_index=True, related_name='deleghe')
     tipo = models.CharField(max_length=2, db_index=True, choices=PERMESSI_NOMI)
@@ -494,3 +499,4 @@ class Delega(ModelloSemplice, ConMarcaTemporale):
 
         return al_giorno >= self.inizio \
             and (self.fine is None or self.fine >= al_giorno)
+
