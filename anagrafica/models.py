@@ -10,10 +10,15 @@ Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 - Delega
 """
 from datetime import date
+from django.contrib.auth.models import PermissionsMixin
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.mail import send_mail
 from django.db import models
 from django.db.models import Q
+from django.db.models.fields.related import OneToOneField
+from django.utils.http import urlquote
+from anagrafica.auth import GestoreUtenti
 from base.autorizzazioni import ConAutorizzazioni
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 
@@ -219,10 +224,35 @@ class Documento(ConMarcaTemporale, ModelloSemplice):
         verbose_name_plural = "Documenti"
 
 
-class Utenza(ModelloSemplice):
+class Utenza(PermissionsMixin, ConMarcaTemporale, ModelloSemplice):
 
     class Meta:
         verbose_name_plural = "Utenze"
+
+    email = models.EmailField('Indirizzo email', max_length=254, unique=True)
+    persona = OneToOneField(Persona, db_index=True)
+
+    is_staff = models.BooleanField('Amministratore', default=False,
+        help_text='Se l\'utente è un amministratore o meno.')
+    is_active = models.BooleanField('Attivo', default=True,
+        help_text='Utenti attivi. Impostare come disattivo invece di cancellare.')
+
+    objects = GestoreUtenti()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['persona']
+
+    def get_absolute_url(self):
+        return "/utenti/%s/" % urlquote(self.email)
+
+    def get_full_name(self):
+        return self.persona.nome_completo()
+
+    def get_short_name(self):
+        return self.persona.nome
+
+    def email_user(self, subject, message, from_email=None):
+        send_mail(subject, message, from_email, [self.email])
 
 
 class Appartenenza(ConMarcaTemporale, ConAutorizzazioni, ModelloSemplice):

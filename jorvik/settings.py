@@ -57,6 +57,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
+# Imposta anagrafica.Utenza come modello di autenticazione
+AUTH_USER_MODEL = 'anagrafica.Utenza'
+
 # Configurazione URL
 ROOT_URLCONF = 'jorvik.urls'
 
