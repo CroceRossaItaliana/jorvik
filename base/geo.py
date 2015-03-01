@@ -1,4 +1,5 @@
 from django.contrib.gis.db import models
+from django.contrib.gis.geos import fromstr
 from django.contrib.gis.measure import D
 
 
@@ -10,8 +11,9 @@ class ConGeolocalizzazione(models.Model):
     class Meta:
         abstract = True
 
-    geo = models.PointField()
-    indirizzo = models.CharField("Indirizzo", max_length=255)
+    objects = models.GeoManager()
+    geo = models.PointField(default='POINT(0.0 0.0)')
+    indirizzo = models.CharField("Indirizzo", max_length=255, blank=True, null=True)
 
     def vicini(self, km):
         """
@@ -28,7 +30,7 @@ class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
     un'area circolare con raggio in kilometri.
     """
 
-    raggio = models.FloatField("Raggio KM", default=0.0)
+    raggio = models.FloatField("Raggio KM", default=0.0, null=True, blank=True)
 
     class Meta:
         abstract = True

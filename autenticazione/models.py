@@ -57,10 +57,14 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
         return "/utenti/%s/" % urlquote(self.email)
 
     def get_full_name(self):
-        return self.persona.nome_completo()
+        if self.persona:
+            return self.persona.nome_completo()
+        return "Scollegato #" + str(self.id)
 
     def get_short_name(self):
-        return self.persona.nome
+        if self.persona:
+            return self.persona.nome
+        return "Scollegato #" + str(self.id)
 
     def email_user(self, subject, message, from_email=None):
         send_mail(subject, message, from_email, [self.email])

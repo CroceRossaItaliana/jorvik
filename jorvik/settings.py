@@ -24,7 +24,6 @@ ALLOWED_HOSTS = []
 # Elenca le applicazioni installate da abilitare
 
 INSTALLED_APPS = (
-    # Moduli Django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -32,14 +31,12 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
-
     # Librerie terze
     #'provider',
     #'provider.oauth2',
     'rest_framework',
     'mptt',
     'safedelete',
-
     # Moduli interni
     'base',
     'autenticazione',
@@ -47,6 +44,7 @@ INSTALLED_APPS = (
     'social',
     'posta',
     'formazione',
+    'bootstrap3',
 )
 
 # Classi middleware (intercetta & computa)
@@ -108,7 +106,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = '/static/'
-
+STATIC_ROOT = '/tmp'
 TEMPLATE_DIRS = (
     os.path.join(BASE_DIR,  'templates'),
 )

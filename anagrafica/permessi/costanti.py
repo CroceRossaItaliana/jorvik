@@ -80,4 +80,4 @@ PERMESSI_OGGETTI_DICT = dict(PERMESSI_OGGETTI)
 PERMESSI_FUNZIONI_DICT = dict(PERMESSI_FUNZIONI)
 
 # Il redirect in caso di permessi negati
-PERMESSO_NEGATO = redirect('/?accesso-negato=1')
+PERMESSO_NEGATO = '/errore/accesso-negato/'

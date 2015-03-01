@@ -20,9 +20,8 @@ from django.db import models
 from django.db.models import Q
 import phonenumbers
 
-from base.autorizzazioni import ConAutorizzazioni
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
-from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero
+from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni
 from base.stringhe import normalizza_nome, generatore_nome_file
 from base.tratti import ConMarcaTemporale
 from base.utils import is_list
@@ -446,6 +445,9 @@ class Comitato(ModelloAlbero, ConGeolocalizzazione):
         if n:
             return True
         return False
+
+    def __str__(self):
+        return self.nome
 
 
 class Delega(ModelloSemplice, ConMarcaTemporale):
