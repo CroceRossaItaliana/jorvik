@@ -6,7 +6,6 @@ python:
 
 before_script:
   - "mysql -e 'CREATE DATABASE jorvik CHARSET utf8;'"
-  - "mysql -e 'CREATE DATABASE test_jorvik CHARSET utf8;'"
 
 install:
   - "pip install -r requirements.txt"
