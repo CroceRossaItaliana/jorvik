@@ -75,9 +75,9 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     """
 
     class Meta:
-        verbose_name = "Richiesta di autorizzazione"
-        verbose_name_plural = "Richieste di autorizzazione"
+        verbose_name_plural = "Autorizzazioni"
         app_label = "base"
+        abstract = False
 
     richiedente = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="autorizzazioni_richieste")
     destinatario = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="autorizzazioni_destinate")

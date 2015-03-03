@@ -1,10 +1,12 @@
 language: python
 python:
+  - "2.7"
   - "3.3"
   - "3.4"
 
 before_script:
-  - mysql -e 'create database jorvik_test;'
+  - "mysql -e 'CREATE DATABASE jorvik CHARSET utf8;'"
+  - "mysql -e 'CREATE DATABASE test_jorvik CHARSET utf8;'"
 
 install:
   - "pip install -r requirements.txt"

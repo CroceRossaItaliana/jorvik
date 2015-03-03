@@ -3,11 +3,11 @@
 """
 Questo modulo definisce i modelli del modulo di Formazione di Gaia.
 """
-from base.autorizzazioni import ConAutorizzazioni
+from base.models import ConAutorizzazioni
 from base.geo import ConGeolocalizzazione
 from base.models import ModelloSemplice
 from base.tratti import ConMarcaTemporale
-from social.modelli import ConCommenti, ConGiudizio
+from social.models import ConCommenti, ConGiudizio
 
 
 class Corso(ConMarcaTemporale, ConGeolocalizzazione, ConCommenti, ConGiudizio, ModelloSemplice):

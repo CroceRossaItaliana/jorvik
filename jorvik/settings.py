@@ -84,6 +84,10 @@ WSGI_APPLICATION = 'jorvik.wsgi.application'
 
 DATABASES = {
     'default': {
+        'NAME': 'jorvik',
+        'TEST': {
+            'NAME': 'test_jorvik',
+        },
         'ENGINE': 'django.contrib.gis.db.backends.mysql',
         'OPTIONS': {
             'read_default_file': 'config/mysql.cnf',

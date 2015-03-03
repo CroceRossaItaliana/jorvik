@@ -4,6 +4,7 @@ Questo modulo definisce i modelli del modulo di Posta di Gaia.
 
 from base.models import *
 from base.tratti import *
+from social.models import ConGiudizio
 
 
 class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio):

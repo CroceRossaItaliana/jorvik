@@ -23,7 +23,7 @@ class Giudizio(ModelloSemplice, ConMarcaTemporale):
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
 
 
-class Commento(ConMarcaTemporale, ModelloSemplice):
+class Commento(ModelloSemplice, ConMarcaTemporale):
     """
     Rappresenta un commento sociale ad un oggetto generico.
     Utilizzare tramite il tratto ConCommento ed i suoi metodi.

@@ -4,7 +4,7 @@
 Questo modulo definisce i modelli del modulo Attivita' di Gaia.
 """
 
-from social.modelli import ConGiudizio, ConCommenti
+from social.models import ConGiudizio, ConCommenti
 from base.models import ModelloSemplice, ConAutorizzazioni
 from base.tratti import ConMarcaTemporale
 from base.geo import ConGeolocalizzazione

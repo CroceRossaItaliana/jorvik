@@ -259,6 +259,9 @@ class Appartenenza(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     fine = models.DateField("Fine", db_index=True, null=True, blank=True, default=None)
     confermata = models.BooleanField("Confermata", default=True, db_index=True)
 
+    persona = models.ForeignKey("anagrafica.Persona", related_name="appartenenze", db_index=True)
+    comitato = models.ForeignKey("anagrafica.Comitato", related_name="appartenenze", db_index=True)
+
     @staticmethod
     def query_attuale(al_giorno=date.today()):
         """
