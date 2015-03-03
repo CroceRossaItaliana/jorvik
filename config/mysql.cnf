@@ -1,5 +1,5 @@
 [client]
-database = jorvik_test
+database = jorvik
 user = root
 password =
 default-character-set = utf8
