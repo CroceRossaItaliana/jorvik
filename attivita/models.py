@@ -10,27 +10,27 @@ from base.tratti import ConMarcaTemporale
 from base.geo import ConGeolocalizzazione
 
 
-class Attivita(ConGeolocalizzazione, ConMarcaTemporale, ConGiudizio, ConCommenti, ModelloSemplice):
+class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiudizio, ConCommenti):
 
     class Meta:
         verbose_name = "Attività"
         verbose_name_plural = "Attività"
 
 
-class Turno(ConMarcaTemporale, ConGiudizio, ModelloSemplice):
+class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
     class Meta:
         verbose_name_plural = "Turni"
 
 
-class Partecipazione(ConMarcaTemporale, ConAutorizzazioni, ModelloSemplice):
+class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     class Meta:
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
 
 
-class Area(ConMarcaTemporale, ModelloSemplice):
+class Area(ModelloSemplice, ConMarcaTemporale):
 
     class Meta:
         verbose_name_plural = "Aree"

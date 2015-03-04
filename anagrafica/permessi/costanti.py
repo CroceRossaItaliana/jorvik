@@ -3,7 +3,12 @@
 """
 Questo file gestisce i permessi in Gaia.
 """
-from django.shortcuts import redirect
+from anagrafica.permessi.applicazioni import PRESIDENTE
+from anagrafica.permessi.applicazioni import VICEPRESIDENTE
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+from anagrafica.permessi.applicazioni import DELEGATO_AREA
+from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
+from anagrafica.permessi.applicazioni import REFERENTE
 
 from anagrafica.permessi.funzioni import permessi_presidente, permessi_vicepresidente, permessi_ufficio_soci, \
     permessi_delegato_area, permessi_responsabile_area, permessi_referente
@@ -17,24 +22,7 @@ from attivita.models import Attivita, Area
 # | Leggi README.md per una guida su come aggiungere nuovi permessi. |
 # ====================================================================
 
-# Tipologie di applicativi esistenti
 
-PRESIDENTE = 'PR'
-VICEPRESIDENTE = 'VP'
-UFFICIO_SOCI = 'US'
-DELEGATO_AREA = 'DA'
-RESPONSABILE_AREA = 'RA'
-REFERENTE = 'RE'
-
-# Nomi assegnati
-PERMESSI_NOMI = (
-    (PRESIDENTE,        "Presidente"),
-    (VICEPRESIDENTE,    "Vice Presidente"),
-    (UFFICIO_SOCI,      "Ufficio Soci"),
-    (DELEGATO_AREA,     "Delegato d'Area"),
-    (RESPONSABILE_AREA, "Responsabile d'Area"),
-    (REFERENTE,         "Referente Attività"),
-)
 
 # Oggetti assegnati
 PERMESSI_OGGETTI = (
@@ -75,7 +63,6 @@ PERMESSI_FUNZIONI = (
 )
 
 # Tieni in memoria anche come dizionari, per lookup veloci
-PERMESSI_NOMI_DICT = dict(PERMESSI_NOMI)
 PERMESSI_OGGETTI_DICT = dict(PERMESSI_OGGETTI)
 PERMESSI_FUNZIONI_DICT = dict(PERMESSI_FUNZIONI)
 

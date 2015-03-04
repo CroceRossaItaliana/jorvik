@@ -1,4 +1,5 @@
 from django.test import TestCase
+from anagrafica.costanti import LOCALE
 from anagrafica.models import Comitato, Persona, Appartenenza
 
 
@@ -9,7 +10,7 @@ class TestAnagrafica(TestCase):
         c = Comitato(
             nome="Comitato Regionale di Sicilia",
             tipo=Comitato.COMITATO,
-            estensione=Comitato.LOCALE,
+            estensione=LOCALE,
         )
         c.save()
 

@@ -19,15 +19,19 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Q
 import phonenumbers
+from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
+from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI
+from anagrafica.permessi.applicazioni import VICEPRESIDENTE
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni
 from base.stringhe import normalizza_nome, generatore_nome_file
-from base.tratti import ConMarcaTemporale
+from base.tratti import ConMarcaTemporale, ConStorico
 from base.utils import is_list
 
 
-class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
+class Persona(ModelloCancellabile, ConMarcaTemporale):
     """
     Rappresenta un record anagrafico in Gaia.
     """
@@ -42,16 +46,8 @@ class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
 
     # Stati
     PERSONA = 'P'
-    ASPIRANTE = 'A'
-    VOLONTARIO = 'V'
-    DIPENDENTE = 'D'
-    MILITARE = 'M'
     STATO = (
         (PERSONA,       'Persona'),
-        (ASPIRANTE,     'Aspirante'),
-        (VOLONTARIO,    'Volontario'),
-        (DIPENDENTE,    'Dipendente'),
-        (MILITARE,      'Militare'),
     )
 
     # Informazioni anagrafiche
@@ -62,7 +58,7 @@ class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
     genere = models.CharField("Genere", max_length=1, choices=GENERE, db_index=True)
 
     # Stato
-    stato = models.CharField("Stato", max_length=1, choices=STATO, db_index=True)
+    stato = models.CharField("Stato", max_length=1, choices=STATO, default=PERSONA, db_index=True)
 
     # Informazioni anagrafiche aggiuntive - OPZIONALI (blank=True o default=..)
     comune_nascita = models.CharField("Comune di Nascita", max_length=64, blank=True)
@@ -74,6 +70,8 @@ class Persona(ModelloCancellabile, ConGeolocalizzazioneRaggio):
     stato_residenza = models.CharField("Stato di residenza", max_length=2, default="IT")
     cap_residenza = models.CharField("CAP di Residenza", max_length=5, blank=True)
     email_contatto = models.CharField("Email di contatto", max_length=64, blank=True)
+
+    avatar = models.ImageField("Avatar", blank=True, null=True, upload_to=generatore_nome_file('avatar/'))
 
     def nome_completo(self):
         """
@@ -225,7 +223,7 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
         app_label = 'anagrafica'
 
 
-class Appartenenza(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
+class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzazioni):
     """
     Rappresenta un'appartenenza di una Persona ad un Comitato.
     """
@@ -235,15 +233,21 @@ class Appartenenza(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         app_label = 'anagrafica'
 
     # Tipo di membro
-    VOLONTARIO = 'V'
-    ORDINARIO = 'O'
-    DIPENDENTE = 'D'
+    VOLONTARIO = 'VO'
+    ORDINARIO = 'OR'
+    DIPENDENTE = 'DI'
+    INFERMIERA = 'IN'
+    MILITARE = 'MI'
+    DONATORE = 'DO'
     MEMBRO = (
         (VOLONTARIO, 'Volontario'),
         (ORDINARIO, 'Membro Ordinario'),
-        (DIPENDENTE, 'Dipendente')
+        (DIPENDENTE, 'Dipendente'),
+        (INFERMIERA, 'Infermiera Volontaria'),
+        (MILITARE, 'Membro Militare'),
+        (DONATORE, 'Donatore Finanziario'),
     )
-    membro = models.CharField("Tipo membro", max_length=1, choices=MEMBRO, default=VOLONTARIO, db_index=True)
+    membro = models.CharField("Tipo membro", max_length=2, choices=MEMBRO, default=VOLONTARIO, db_index=True)
 
     # Tipo di appartenenza
     NORMALE = 'N'
@@ -255,59 +259,27 @@ class Appartenenza(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     tipo = models.CharField("Tipo app.", max_length=1, choices=TIPO, default=NORMALE, db_index=True)
 
     # Dati appartenenza
-    inizio = models.DateField("Inizio", db_index=True, null=False)
-    fine = models.DateField("Fine", db_index=True, null=True, blank=True, default=None)
     confermata = models.BooleanField("Confermata", default=True, db_index=True)
+    CONDIZIONE_ATTUALE_AGGIUNTIVA = Q(confermata=True)
 
     persona = models.ForeignKey("anagrafica.Persona", related_name="appartenenze", db_index=True)
     comitato = models.ForeignKey("anagrafica.Comitato", related_name="appartenenze", db_index=True)
-
-    @staticmethod
-    def query_attuale(al_giorno=date.today()):
-        """
-        Restituisce l'oggetto Q per filtrare le appartenenze attuali.
-        :param al_giorno: Giorno per considerare l'appartenenza attuale. Default oggi.
-        :return: Q!
-        """
-
-        # IMPORTANTE: Ogni modifica a questa funzione deve essere rispecchiata
-        #             nella funzione Appartenenza.attuale.
-        return Q(
-            Q(inizio__lte=al_giorno),
-            Q(fine__isnull=True) | Q(fine__gte=al_giorno),
-            confermata=True,
-        )
-
-    @property
-    def attuale(self, al_giorno=date.today()):
-        """
-        Controlla che l'appartenenza sia attuale:
-        1) Al giorno,
-        2) Confermata.
-        :param al_giorno: Default oggi. Giorno da calcolare.
-        :return: Vero o falso.
-        """
-
-        # IMPORTANTE: Ogni modifica a questa funzione deve essere rispecchiata
-        #             nella funzione Appartenenza.query_attuale.
-
-        if not self.confermata:
-            return False
-
-        if al_giorno >= self.inizio and (self.fine is None or self.fine >= al_giorno):
-            return True
-
-        return False
 
     def richiedi(self):
         """
         Richiede di confermare l'appartenenza.
         """
+        # Import qui per non essere ricorsivo e rompere il mondo
+
         self.confermata = False
         self.save()
         self.autorizzazione_richiedi(
             self.persona,
-            self.comitato.presidente()
+            (
+                (PRESIDENTE, self.comitato),
+                (VICEPRESIDENTE, self.comitato),
+                (UFFICIO_SOCI, self.comitato)
+            )
         )
 
     def autorizzazione_concessa(self):
@@ -325,27 +297,13 @@ class Appartenenza(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         self.save()
 
 
-class Comitato(ModelloAlbero, ConGeolocalizzazione):
+class Comitato(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
 
     class Meta:
         verbose_name_plural = "Comitati"
         app_label = 'anagrafica'
 
     # Nome gia' presente in Modello Albero
-
-    # Estensione del Comitato
-    TERRITORIALE = 'T'
-    LOCALE = 'L'
-    PROVINCIALE = 'P'
-    REGIONALE = 'R'
-    NAZIONALE = 'N'
-    ESTENSIONE = (
-        (TERRITORIALE, 'Unità Territoriale'),
-        (LOCALE, 'Comitato Locale'),
-        (PROVINCIALE, 'Comitato Provinciale'),
-        (REGIONALE, 'Comitato Regionale'),
-        (NAZIONALE, 'Comitato Nazioanle')
-    )
 
     # Tipologia del comitato
     COMITATO = 'C'
@@ -370,6 +328,8 @@ class Comitato(ModelloAlbero, ConGeolocalizzazione):
     email = models.CharField("Indirizzo e-mail", max_length=64, blank=True)
     codice_fiscale = models.CharField("Codice Fiscale", max_length=32, blank=True)
     partita_iva = models.CharField("Partita IVA", max_length=32, blank=True)
+
+    membri = models.ManyToManyField(Persona, through='Appartenenza')
 
     # Q: Come ottengo i dati del comitato?
     # A: Usa la funzione Comitato.ottieni, ad esempio, Comitato.ottieni('partita_iva').
@@ -453,7 +413,7 @@ class Comitato(ModelloAlbero, ConGeolocalizzazione):
         return self.nome
 
 
-class Delega(ModelloSemplice, ConMarcaTemporale):
+class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
     """
     Rappresenta una delega ad una funzione.
 
@@ -467,45 +427,20 @@ class Delega(ModelloSemplice, ConMarcaTemporale):
         verbose_name_plural = "Deleghe"
         app_label = 'anagrafica'
 
-    from anagrafica.permessi.costanti import PERMESSI_NOMI
-
     persona = models.ForeignKey(Persona, db_index=True, related_name='deleghe')
     tipo = models.CharField(max_length=2, db_index=True, choices=PERMESSI_NOMI)
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True)
     oggetto_id = models.PositiveIntegerField(db_index=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
 
-    inizio = models.DateField("Inizio", db_index=True, null=False)
-    fine = models.DateField("Fine", db_index=True, null=True, blank=True, default=None)
 
-    @staticmethod
-    def query_attuale(al_giorno=date.today()):
-        """
-        Restituisce l'oggetto Q per filtrare le deleghe attuali.
-        :param al_giorno: Giorno per considerare le deleghe attuali. Default oggi.
-        :return: Q!
-        """
+class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
+    """
+    Rappresenta una fototessera per la persona.
+    """
 
-        # IMPORTANTE: Ogni modifica a questa funzione deve essere rispecchiata
-        #             nella funzione Delega.attuale.
-        return Q(
-            Q(inizio__lte=al_giorno),
-            Q(fine__isnull=True) | Q(fine__gte=al_giorno)
-        )
+    class Meta:
+        verbose_name_plural = "Fototessere"
 
-    @property
-    def attuale(self, al_giorno=date.today()):
-        """
-        Controlla che la delega sia attuale:
-        1) Al giorno,
-        2) Confermata.
-        :param al_giorno: Default oggi. Giorno da calcolare.
-        :return: Vero o falso.
-        """
-
-        # IMPORTANTE: Ogni modifica a questa funzione deve essere rispecchiata
-        #             nella funzione Appartenenza.query_attuale.
-
-        return al_giorno >= self.inizio \
-            and (self.fine is None or self.fine >= al_giorno)
-
+    persona = models.ForeignKey(Persona, related_name="fototessere", db_index=True)
+    file = models.ImageField("Fototessera", upload_to=generatore_nome_file('fototessere/'))

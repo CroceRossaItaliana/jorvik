@@ -5,7 +5,8 @@ from autenticazione.models import Utenza
 
 __author__ = 'alfioemanuele'
 
-@admin.register
+
+@admin.register(Utenza)
 class AdminUtenza(UserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),

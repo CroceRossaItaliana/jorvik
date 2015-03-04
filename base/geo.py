@@ -12,7 +12,7 @@ class ConGeolocalizzazione(models.Model):
         abstract = True
 
     objects = models.GeoManager()
-    geo = models.PointField(default='POINT(0.0 0.0)')
+    geo = models.PointField(blank=True, default='POINT(0.0 0.0)')
     indirizzo = models.CharField("Indirizzo", max_length=255, blank=True, null=True)
 
     def vicini(self, km):
