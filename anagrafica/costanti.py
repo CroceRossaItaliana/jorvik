@@ -1,3 +1,5 @@
+# coding=utf-8
+
 TERRITORIALE = 'T'
 LOCALE = 'L'
 PROVINCIALE = 'P'
