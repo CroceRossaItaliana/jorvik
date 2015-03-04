@@ -87,7 +87,7 @@ class ConStorico(models.Model):
         :return: True o False.
         """
         try:
-            self.objects.get(self.query_attuale(al_giorno), pk=self.pk)
+            self.__class__.objects.get(self.query_attuale(al_giorno), pk=self.pk)
 
         except ObjectDoesNotExist:
             return False

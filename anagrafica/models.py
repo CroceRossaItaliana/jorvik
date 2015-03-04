@@ -375,9 +375,9 @@ class Comitato(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
         # Se richiesto, filtra per tipo membro (o tipi)
         if membro is not None:
             if is_list(membro):
-                f.filter(membro__in=membro)
+                f = f.filter(membro__in=membro)
             else:
-                f.filter(membro=membro)
+                f = f.filter(membro=membro)
 
         # NB: Vengono collegate via Join le tabelle Persona e Comitato per maggiore efficienza.
         return f.select_related('persona', 'comitato')

@@ -25,18 +25,56 @@ class TestAnagrafica(TestCase):
         a = Appartenenza(
             persona=p,
             comitato=c,
+            membro=Appartenenza.VOLONTARIO,
             inizio="1980-12-10",
             confermata=False
         )
         a.save()
-        #a.richiedi() # TODO Necessario presidente.
 
         self.assertTrue(
             c.appartenenze_attuali().count() == 0,
-            msg="Non ci devono essere appartenze ancora attuali"
+            msg="Non ci devono essere appartenze ancora attuali."
         )
 
-        #for x in a.autorizzazioni:
-        #    x.concedi(p)
+        a.richiedi()
 
-        #self.assertTrue("Ora invece si", c.appartenenze_attuali())
+        self.assertTrue(
+            c.appartenenze_attuali().count() == 0,
+            msg="Non ancora."
+        )
+
+        self.assertTrue(
+            a.autorizzazioni_set(),
+            msg="Qualche autorizzazione e' stata generata."
+
+        )
+
+        a.autorizzazioni_set()[0].concedi(p)
+
+        self.assertTrue(
+            c.appartenenze_attuali().count() == 1,
+            msg="Ora l'appartenenza e' attuale."
+        )
+
+        # Riscarica l'appartenenza
+        a = Appartenenza.objects.get(pk=a.id)
+
+        self.assertTrue(
+            a.confermata,
+            msg="L'appartenenza risulta ora confermata."
+        )
+
+        self.assertTrue(
+            a.attuale(),
+            msg="L'appartenenza risulta ora attuale ad oggi."
+        )
+
+        self.assertTrue(
+            c.membri_attuali()[0] == p,
+            msg="Il membro attuale corrisponde alla persona inserita."
+        )
+
+        self.assertTrue(
+            c.appartenenze_attuali(membro=Appartenenza.MILITARE).count() == 0,
+            msg="Ma ancora nessun militare."
+        )

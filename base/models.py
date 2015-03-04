@@ -112,15 +112,15 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         # Nessuna altra firma e' piu' necessaria.
         if not concedi:
             self.oggetto.autorizzazione_negata()
-            self.oggetto.autorizzazioni.update(necessaria=False)
+            self.oggetto.autorizzazioni_set().update(necessaria=False)
             return
 
         # Questa concessa, di questo progressivo non e' piu' necessaria
         # alcuna auutorizzazione.
-        self.oggetto.autorizzazioni.filter(progressivo=self.progressivo).update(necessaria=False)
+        self.oggetto.autorizzazioni_set().filter(progressivo=self.progressivo).update(necessaria=False)
 
         # Se questa autorizzazione e' concessa, ed e' l'ultima.
-        if self.oggetto.autorizzazioni.filter(necessaria=True).count() == 0:
+        if self.oggetto.autorizzazioni_set().filter(necessaria=True).count() == 0:
             self.oggetto.autorizzazione_concessa()
 
     def concedi(self, firmatario):
@@ -140,10 +140,18 @@ class ConAutorizzazioni():
         abstract = True
 
     autorizzazioni = GenericRelation(
-        "base.Autorizzazione",
+        Autorizzazione,
         content_type_field='oggetto_tipo',
         object_id_field='oggetto_id'
     )
+
+    def autorizzazioni_set(self):
+        """
+        Ottiene il queryset delle autorizzazioni associate.
+        :return: Queryset.
+        """
+        tipo = ContentType.objects.get_for_model(self)
+        return Autorizzazione.objects.filter(oggetto_tipo__pk=tipo.id, oggetto_id=self.id)
 
     def autorizzazione_richiedi(self, richiedente, destinatario, motivo_obbligatorio=True, **kwargs):
         """
@@ -159,7 +167,7 @@ class ConAutorizzazioni():
         from anagrafica.permessi.costanti import PERMESSI_OGGETTI_DICT
 
         try:  # Cerca l'autorizzazione per questo oggetto con progressivo maggiore
-            ultima = self.autorizzazioni.latest('progressivo')
+            ultima = self.autorizzazioni_set().latest('progressivo')
             # Se esiste, calcola il prossimo progressivo per l'oggetto
             prossimo_progressivo = ultima.progressivo + 1
 
