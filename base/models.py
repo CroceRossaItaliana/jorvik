@@ -5,7 +5,9 @@ from django.db import models
 from safedelete import safedelete_mixin_factory, SOFT_DELETE
 from mptt.models import MPTTModel, TreeForeignKey
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI, PERMESSI_NOMI_DICT
+from base.stringhe import generatore_nome_file
 from base.tratti import ConMarcaTemporale
+from datetime import datetime
 
 
 class ModelloSemplice(models.Model):
@@ -239,5 +241,71 @@ class ConAutorizzazioni():
         return "Negata"
 
 
+class ConScadenza():
+    """
+    Aggiunge un attributo DateTimeField scadenza.
+    """
+
+    class Meta:
+        abstract = True
+
+    scadenza = models.DateTimeField("Scadenza", null=True, blank=True, db_index=True, default=None)
+
+    @property
+    def scaduto(self):
+        """
+        Controlla se l'oggetto e' gia' scaduto o meno.
+
+        :return:
+        """
+        if not self.scadenza:
+            return False
+        return self.scadenza < datetime.now()
+
+    @classmethod
+    def scaduti(cls):
+        """
+        Ottiene il queryset di oggetti scaduti (per la cancellazione?)
+        :return:
+        """
+        return cls.objects.exclude(scadenza__isnull=True).filter(scadenza__lte=datetime.now())
+
+    @classmethod
+    def pulisci(cls):
+        """
+        Cancella gli elementi scaduti.
+        :return: Il numero di elementi cancellati.
+        """
+        n = cls.scaduti().count()
+        cls.scaduti().delete()
+        return n
+
+
 class Token(ModelloSemplice, ConMarcaTemporale):
     pass
+
+
+class Allegato(ModelloSemplice, ConMarcaTemporale, ConScadenza):
+    """
+    Rappresenta un allegato generico in database, con potenziale scadenza.
+    """
+
+    oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="allegato_come_oggetto")
+    oggetto_id = models.PositiveIntegerField(db_index=True)
+    oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
+    file = models.FileField("File", upload_to=generatore_nome_file('allegati/'))
+
+
+class ConAllegati():
+    """
+    Aggiunge la possibilita' di allegare file all'oggetto, anche con scadenza.
+    """
+
+    allegati = GenericRelation(
+        Allegato,
+        content_type_field='oggetto_tipo',
+        object_id_field='oggetto_id'
+    )
+
+    class Meta:
+        abstract = True

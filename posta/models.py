@@ -7,7 +7,7 @@ from base.tratti import *
 from social.models import ConGiudizio
 
 
-class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
+class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
     class Meta:
         verbose_name = "Messaggio di posta"
@@ -20,8 +20,3 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
         verbose_name = "Destinatario di posta"
         verbose_name_plural = "Destinatario di posta"
 
-
-class Allegato(ModelloSemplice, ConMarcaTemporale):
-
-    class Meta:
-        verbose_name_plural = "Allegati"

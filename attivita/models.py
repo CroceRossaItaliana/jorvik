@@ -5,12 +5,12 @@ Questo modulo definisce i modelli del modulo Attivita' di Gaia.
 """
 
 from social.models import ConGiudizio, ConCommenti
-from base.models import ModelloSemplice, ConAutorizzazioni
+from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati
 from base.tratti import ConMarcaTemporale
 from base.geo import ConGeolocalizzazione
 
 
-class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiudizio, ConCommenti):
+class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiudizio, ConCommenti, ConAllegati):
 
     class Meta:
         verbose_name = "Attività"
