@@ -320,7 +320,7 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
     @property
     def volontario(self, **kwargs):
         """
-        Controlla se membro ordinario
+        Controlla se membro volontario
         """
         return self.membro(self, Appartenenza.VOLONTARIO, **kwargs)
 
@@ -334,28 +334,28 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
     @property
     def dipendente(self, **kwargs):
         """
-        Controlla se membro ordinario
+        Controlla se membro dipendente
         """
         return self.membro(self, Appartenenza.DIPENDENTE, **kwargs)
 
     @property
     def donatore(self, **kwargs):
         """
-        Controlla se membro ordinario
+        Controlla se membro donatore
         """
         return self.membro(self, Appartenenza.DONATORE, **kwargs)
 
     @property
     def militare(self, **kwargs):
         """
-        Controlla se membro ordinario
+        Controlla se membro militare
         """
         return self.membro(self, Appartenenza.MILITARE, **kwargs)
 
     @property
     def infermiera(self, **kwargs):
         """
-        Controlla se membro ordinario
+        Controlla se membro infermiera
         """
         return self.membro(self, Appartenenza.INFERMIERA, **kwargs)
 
