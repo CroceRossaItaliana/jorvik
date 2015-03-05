@@ -113,6 +113,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         # Se ha negato, allora avvisa subito della negazione.
         # Nessuna altra firma e' piu' necessaria.
         if not concedi:
+            self.oggetto.confermata = False
+            self.oggetto.save()
             self.oggetto.autorizzazione_negata()
             self.oggetto.autorizzazioni_set().update(necessaria=False)
             return
@@ -123,6 +125,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
         # Se questa autorizzazione e' concessa, ed e' l'ultima.
         if self.oggetto.autorizzazioni_set().filter(necessaria=True).count() == 0:
+            self.oggetto.confermata = True
+            self.oggetto.save()
             self.oggetto.autorizzazione_concessa()
 
     def concedi(self, firmatario):
@@ -132,7 +136,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         self.firma(firmatario, False)
 
 
-class ConAutorizzazioni():
+class ConAutorizzazioni(models.Model):
     """
     Aggiunge la possibilita' di aggiungere le funzionalita'
     di autorizzazione ad un ogetto.
@@ -146,6 +150,8 @@ class ConAutorizzazioni():
         content_type_field='oggetto_tipo',
         object_id_field='oggetto_id'
     )
+
+    confermata = models.BooleanField("Confermata", default=True, db_index=True)
 
     def autorizzazioni_set(self):
         """
@@ -215,30 +221,6 @@ class ConAutorizzazioni():
         Sovrascrivimi! Ascoltatore per negazione autorizzazione.
         """
         pass
-
-    def autorizzazione_esito(self):
-        """
-        Restituisce l'esito delle richieste di autorizazzione.
-        True per concessa, False per negata, None per pendente.
-        """
-        # Ci sono autorizzazioni negate?
-        if self.autorizzazioni.filter(concessa=False).count():
-            return False
-
-        # Ci sono autorizzazioni pendenti?
-        elif self.autorizazzioni.filter(concessa__isnull=True).count():
-            return None
-
-        # Sono tutte concesse.
-        return True
-
-    def autorizzazione_esito_in_testo(self):
-        esito = self.autorizzazione_esito()
-        if esito:
-            return "Concessa"
-        elif esito is None:
-            return "In attesa"
-        return "Negata"
 
 
 class ConScadenza():

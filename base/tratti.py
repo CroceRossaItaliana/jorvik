@@ -67,7 +67,7 @@ class ConStorico(models.Model):
     fine = models.DateField("Fine", db_index=True, null=True, blank=True, default=None)
 
     @classmethod
-    def query_attuale(cls, al_giorno=date.today()):
+    def query_attuale(cls, al_giorno=date.today(), **kwargs):
         """
         Restituisce l'oggetto Q per filtrare le entita' attuali.
         :param al_giorno: Giorno per considerare la verifica per l'attuale. Default oggi.
@@ -77,7 +77,8 @@ class ConStorico(models.Model):
         return Q(
             Q(inizio__lte=al_giorno),
             Q(fine__isnull=True) | Q(fine__gte=al_giorno),
-            cls.CONDIZIONE_ATTUALE_AGGIUNTIVA
+            cls.CONDIZIONE_ATTUALE_AGGIUNTIVA,
+            **kwargs
         )
 
     def attuale(self, al_giorno=date.today()):

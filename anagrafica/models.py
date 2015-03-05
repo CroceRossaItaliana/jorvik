@@ -16,6 +16,7 @@ from datetime import date
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
 import phonenumbers
@@ -29,6 +30,7 @@ from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, Con
 from base.stringhe import normalizza_nome, generatore_nome_file
 from base.tratti import ConMarcaTemporale, ConStorico
 from base.utils import is_list
+from gruppi.models import Appartenenza
 
 
 class Persona(ModelloCancellabile, ConMarcaTemporale):
@@ -49,6 +51,9 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
     STATO = (
         (PERSONA,       'Persona'),
     )
+
+    # Costanti
+    ETA_GIOVANE = 32
 
     # Informazioni anagrafiche
     nome = models.CharField("Nome", max_length=64)
@@ -146,6 +151,184 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
         """
         return self.deleghe.filter(Delega.query_attuale(al_giorno))
 
+    def appartenenze_attuali(self, **kwargs):
+        """
+        Ottiene il queryset delle appartenenze attuali e confermate.
+        """
+        return self.appartenenze.filter(Appartenenza.query_attuale(**kwargs)).select_related('comitato')
+
+    def appartenenze_pendenti(self, **kwargs):
+        """
+        Ottiene il queryset delle appartenenze non confermate.
+        """
+        return self.appartenenze.filter(confermata=False, **kwargs).select_related('comitato')
+
+    def prima_appartenenza(self, **kwargs):
+        """
+        Ottiene la prima appartenenza, se esistente.
+        """
+        return self.appartenenze.filter(confermata=True, **kwargs).first('inizio')
+
+    def ingresso(self, **kwargs):
+        """
+        Ottiene la data di ingresso della persona o None se non disponibile.
+        """
+        try:
+            a = self.prima_appartenenza(**kwargs)
+
+        except ObjectDoesNotExist:
+            return None
+
+        return a.inizio
+
+    def membro_di(self, comitato, **kwargs):
+        """
+        Controlla se la persona e' membro attuale e confermato di un dato comitato.
+        E' possibile aggiungere dati come membro=VOLONTARIO,...
+        """
+        return comitato.ha_membro(persona=self, **kwargs)
+    
+    def membro(self, membro, **kwargs):
+        """
+        Controlla se la persona ha appartenenza come mebro tipo specificato
+
+        es. if p.membro(DIPENDENTE):
+              print("Sei anche dipendente...")
+        """
+        return self.appartenenze_attuali(membro=membro, **kwargs).exists()
+
+    def membro_sotto(self, comitato, **kwargs):
+        """
+        Controlla se la persona e' membro attuale e confermato di un dato comitato
+        o di uno dei suoi figli diretti.
+        """
+        return self.membro_di(self, comitato, includi_figli=True, **kwargs)
+
+    def comitati_attuali(self, **kwargs):
+        """
+        Ottiene queryset di Comitato di cui fa parte
+        """
+        return [x.comitato for x in self.appartenenze_attuali(**kwargs)]
+
+    def titoli_personali_confermati(self):
+        """
+        Ottiene queryset per TitoloPersonale con conferma approvata.
+        """
+        return self.titoli_personali.filter(confermata=True).select_related('titolo')
+
+    def titoli_confermati(self):
+        """
+        Ottiene queryset per Titolo con conferma approvata.
+        """
+        return [x.titolo for x in self.titoli_personali_confermati()]
+
+    def fototessera_attuale(self):
+        """
+        Ottiene la fototessera confermata se presente.
+        Se non esiste, lancia ObjectDoesNotExist.
+        """
+        return self.fototessere.filter(confermata=True).latest('ultima_modifica')
+
+    @property
+    def eta(self, al_giorno=date.today()):
+        """
+        Ottiene l'eta' in anni del volontario.
+        """
+
+        return al_giorno.year - self.data_nascita.year - ((al_giorno.month, al_giorno.day) < (self.data_nascita.month, self.data_nascita.day))
+
+    @property
+    def giovane(self, **kwargs):
+        return self.eta(**kwargs) <= self.ETA_GIOVANE
+
+    """
+    # Gestione della Privacy
+
+    * Ottenere il livello di Privacy su di un elemento
+      `p.policy(CELLULARE) => Privacy.POLICY_COMITATO`
+
+    * Imposta il livello di Privacy su di un elemento
+      `p.policy(CELLULARE, Privacy.POLICY_PUBBLICO)`
+
+    * Ottenere una informazione su una Persona "p", solo
+      se ho la Policy minima indicata.
+      `p.ottieni(Privacy.POLICY_COMITATO, CELLULARE)
+        > "numero di cellulare", oppure None
+    """
+    def policy(self, campo, nuova_policy=None):
+        """
+        Ottiene o cambia la Privacy policy per un campo.
+         * Ottenere: `p.policy(CELLULARE) => Privacy.POLICY_COMITATO`
+         * Cambiare: `p.policy(CELLULARE, Privacy.POLICY_PUBBLICO)`
+        """
+
+        if nuova_policy:  # Se sto impostando nuova policy
+
+            try:  # Prova a modificare
+                p = Privacy.objects.get(persona=self, campo=campo)
+                p.policy = nuova_policy
+                p.save()
+
+            except ObjectDoesNotExist:  # Altrimenti crea policy
+                p = Privacy(
+                    persona=self,
+                    campo=campo,
+                    policy=nuova_policy
+                )
+                p.save()
+
+            return
+
+        # Se sto invece ottenendo
+        try:
+            p = Privacy.objects.get(persona=self, campo=campo)
+            return p.policy
+
+        except ObjectDoesNotExist:  # Policy di default
+            return Privacy.POLICY_DEFAULT
+
+
+class Privacy(ModelloSemplice, ConMarcaTemporale):
+    """
+    Rappresenta una singola politica di Privacy selezionata da una Persona.
+    """
+
+    # Campi privacy
+    EMAIL = 'email'
+    CELLULARE = 'cellulare'
+    #... TODO
+
+    CAMPI = (
+        (EMAIL, "Indirizzo E-mail"),
+        (CELLULARE, "Numeri di Cellulare"),
+    )
+
+    # Tipi di Policy
+    # ORDINE CRESCENTE (Aperto > Ristretto)
+    POLICY_PUBBLICO = 8
+    POLICY_REGISTRATI = 6
+    POLICY_COMITATO = 4
+    POLICY_RISTRETTO = 2
+    POLICY_PRIVATO = 0
+    POLICY = (
+        (POLICY_PUBBLICO, "Pubblico"),
+        (POLICY_REGISTRATI, "Utenti di Gaia"),
+        (POLICY_COMITATO, "A tutti i membri del mio Comitato"),
+        (POLICY_RISTRETTO, "Ai Responsabili del mio Comitato"),
+        (POLICY_PRIVATO, "Solo a me")
+    )
+
+    POLICY_DEFAULT = POLICY_RISTRETTO
+
+    persona = models.ForeignKey(Persona, related_name="privacy", db_index=True)
+    campo = models.CharField(max_length=8, choices=CAMPI, db_index=True)
+    policy = models.PositiveSmallIntegerField(choices=POLICY, db_index=True)
+
+    class Meta:
+        verbose_name = "Politica di Privacy"
+        verbose_name_plural = "Politiche di Privacy"
+        unique_together = (('persona', 'campo'), )
+
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
     """
@@ -153,7 +336,7 @@ class Telefono(ConMarcaTemporale, ModelloSemplice):
     NON USARE DIRETTAMENTE. Usare i metodi in Persona.
     """
 
-    persona = models.ForeignKey(Persona, related_name="numeri_telefono")
+    persona = models.ForeignKey(Persona, related_name="numeri_telefono", db_index=True)
     numero = models.CharField("Numero di telefono", max_length=16)
     servizio = models.BooleanField("Numero di servizio", default=False)
 
@@ -258,8 +441,6 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     )
     tipo = models.CharField("Tipo app.", max_length=1, choices=TIPO, default=NORMALE, db_index=True)
 
-    # Dati appartenenza
-    confermata = models.BooleanField("Confermata", default=True, db_index=True)
     CONDIZIONE_ATTUALE_AGGIUNTIVA = Q(confermata=True)
 
     persona = models.ForeignKey("anagrafica.Persona", related_name="appartenenze", db_index=True)
@@ -271,8 +452,6 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         """
         # Import qui per non essere ricorsivo e rompere il mondo
 
-        self.confermata = False
-        self.save()
         self.autorizzazione_richiedi(
             self.persona,
             (
@@ -287,14 +466,11 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         Questo metodo viene chiamato quando la richiesta viene accettata.
         :return:
         """
-        self.confermata = True
-        self.save()
-
         # TODO: Inviare e-mail di autorizzazione concessa!
 
     def autorizzazione_negata(self, motivo=None):
-        self.confermata = False
-        self.save()
+        # TOOD: Fare qualcosa
+        pass
 
 
 class Comitato(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
@@ -396,18 +572,15 @@ class Comitato(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
 
     def appartenenze_persona(self, persona, membro=None, comitati_figli=False, **kwargs):
         """
-        Ottiene le appartenenze di una data persona, o None se la persona non appartiene al comitato.
+        Ottiene le appartenenze attuali di una data persona, o None se la persona non appartiene al comitato.
         """
         self.appartenenze_attuali(membro=membro, comitati_figli=comitati_figli, persona=persona, **kwargs)
 
-    def ha_persona(self, persona, membro=None, comitati_figli=False, **kwargs):
+    def ha_membro(self, persona, membro=None, comitati_figli=False, **kwargs):
         """
         Controlla se una persona e' membro del comitato o meno.
         """
-        n = self.appartenenze_persona(persona, membro=membro, comitati_figli=comitati_figli, **kwargs).count()
-        if n:
-            return True
-        return False
+        return self.appartenenze_persona(persona, membro=membro, comitati_figli=comitati_figli, **kwargs).exists()
 
     def __str__(self):
         return self.nome
