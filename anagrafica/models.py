@@ -30,7 +30,6 @@ from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, Con
 from base.stringhe import normalizza_nome, generatore_nome_file
 from base.tratti import ConMarcaTemporale, ConStorico
 from base.utils import is_list
-from gruppi.models import Appartenenza
 
 
 class Persona(ModelloCancellabile, ConMarcaTemporale):
@@ -287,21 +286,108 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
         except ObjectDoesNotExist:  # Policy di default
             return Privacy.POLICY_DEFAULT
 
+    def ottieni(self, policy_minima, campo):
+        """
+        Ottiene il campo se e solo se la policy minima e' soddisfatta.
+        Altrimenti ritorna None.
+        """
+        policy = self.policy(campo)
+
+        if policy >= policy_minima:
+
+            if campo not in Privacy.CAMPO_OTTIENI_DICT:
+                raise ValueError("Campo %s non specificato nelle impostazioni Privacy Polici." % (campo,))
+
+            return Privacy.CAMPO_OTTIENI_DICT[campo](self)
+
+        return None
+
+    def ultimo_accesso_testo(self):
+        """
+        Ottiene l'ultimo accesso in testo, senza ledere la privacy.
+        """
+        if not self.utenza or not self.utenza.ultimo_accesso:
+            return "Mai"
+
+        if self.utenza.ultimo_accesso > date.today().timedelta(days=-5):
+            return "Recentemente"
+
+        if self.utenza.ultimo_accesso > date.today().timedelta(months=-1):
+            return "Nell'ultimo mese"
+
+        return "Più di un mese fà"
+
+    @property
+    def volontario(self, **kwargs):
+        """
+        Controlla se membro ordinario
+        """
+        return self.membro(self, Appartenenza.VOLONTARIO, **kwargs)
+
+    @property
+    def ordinario(self, **kwargs):
+        """
+        Controlla se membro ordinario
+        """
+        return self.membro(self, Appartenenza.ORDINARIO, **kwargs)
+
+    @property
+    def dipendente(self, **kwargs):
+        """
+        Controlla se membro ordinario
+        """
+        return self.membro(self, Appartenenza.DIPENDENTE, **kwargs)
+
+    @property
+    def donatore(self, **kwargs):
+        """
+        Controlla se membro ordinario
+        """
+        return self.membro(self, Appartenenza.DONATORE, **kwargs)
+
+    @property
+    def militare(self, **kwargs):
+        """
+        Controlla se membro ordinario
+        """
+        return self.membro(self, Appartenenza.MILITARE, **kwargs)
+
+    @property
+    def infermiera(self, **kwargs):
+        """
+        Controlla se membro ordinario
+        """
+        return self.membro(self, Appartenenza.INFERMIERA, **kwargs)
+
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """
     Rappresenta una singola politica di Privacy selezionata da una Persona.
+
+    ## Come creare un nuovo campo Privacy
+       1. Aggiungere la costante (es. EMAIL = 'email')
+       2. Aggiungere la descrizione del campo in CAMPI (es. (EMAIL, "Indirizzo E-mail"))
+       3. Aggiungere la funzione lambda in CAMPO_OTTIENI (es. (EMAIL, lambda p: p.email()))
     """
 
     # Campi privacy
     EMAIL = 'email'
     CELLULARE = 'cellulare'
-    #... TODO
+    # ... TODO
 
     CAMPI = (
         (EMAIL, "Indirizzo E-mail"),
         (CELLULARE, "Numeri di Cellulare"),
     )
+
+    # Per ogni campo definire una funzione lambda
+    # per ottenere il campo.
+    CAMPO_OTTIENI = (
+        (EMAIL, lambda p: p.email()),
+        (CELLULARE, lambda p: p.cellulare())
+
+    )
+    CAMPO_OTTIENI_DICT = dict(CAMPO_OTTIENI)
 
     # Tipi di Policy
     # ORDINE CRESCENTE (Aperto > Ristretto)
