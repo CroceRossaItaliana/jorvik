@@ -16,8 +16,35 @@ class AdminComitato(MPTTModelAdmin):
     list_display = ('nome', 'genitore', 'tipo', 'estensione', 'creazione', 'ultima_modifica', )
     list_filter = ('tipo', 'estensione')
 
+# admin.site.register(Appartenenza)
 
-admin.site.register(Appartenenza)
-admin.site.register(Delega)
-admin.site.register(Documento)
-admin.site.register(Fototessera)
+@admin.register(Appartenenza)
+class AdminAppartenenza(admin.ModelAdmin):
+    search_fields = ["tipo", "membro", "persona__nome", "persona__cognome", "persona__codice_fiscale",
+                     "persona__utenza__email", "comitato__nome"]
+    list_display = ("persona", "comitato", "tipo", "attuale", "inizio", "fine", "creazione")
+    list_filter = ("membro", "tipo")
+
+
+# admin.site.register(Delega)
+@admin.register(Delega)
+class AdminDelega(admin.ModelAdmin):
+    search_fields = []
+    list_display = ()
+    list_filter = ()
+
+
+# admin.site.register(Documento)
+@admin.register(Documento)
+class AdminDocumento(admin.ModelAdmin):
+    search_fields = []
+    list_display = ()
+    list_filter = ()
+
+
+# admin.site.register(Fototessera)
+@admin.register(Fototessera)
+class AdminFototessera(admin.ModelAdmin):
+    search_fields = []
+    list_display = ()
+    list_filter = ()
