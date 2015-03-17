@@ -44,8 +44,9 @@ sudo pip3 install -r requirements.txt
 
 ### Configurazione
 
-1. Modifica `config/mysql.cnf` con le credenziali di MySQL.
-2. Esegui `python3 ./manage.py syncdb` per creare il database.
-3. ... tbc.
+1. Modifica `config/mysql.cnf` con le credenziali di MySQL
+2. Crea il database con es. `mysql -u root -p -e 'CREATE DATABASE jorvik CHARSET utf8;`
+3. Esegui `python3 ./manage.py syncdb` per creare il database
+4. Esegui `python3 ./manage.py collectstatic` per creare la cartella `assets/`
+5. **Avvia il server** con `python3 ./manage.py runserver`
 
-**Per eseguire in ambiente di debug, il server integrato di Django puo' essere usato con `python3 ./manage.py runserver`.**
