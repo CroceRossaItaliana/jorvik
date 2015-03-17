@@ -7,7 +7,6 @@ I punti chiave nella riprogettazione sono i seguenti:
 * Raccogliere il feedback ottenuto tramite <feedback@gaia.cri.it>,
 * Raccogliere le necessita' espresse dagli utenti tramite il Supporto,
 * Raccogliere le nuove necessita' dell'Associazione,
-* Usare
 
 ## Sviluppo
 
@@ -25,13 +24,8 @@ Stato attuale di `master`: [![Build Status](https://travis-ci.org/CroceRossaItal
 * [GEOS](http://trac.osgeo.org/geos/)
 
 ```bash
-# Ubuntu 14.10+
-sudo apt-get install python3-pip mysql-server binutils libproj-dev gdal-bin python3-dev libmysqlclient-dev
-```
-
-```bash
-# Mac OS X
-brew install # TBA
+# Ubuntu 14.10+ (installa i Requisiti sopra indicati)
+sudo apt-get install git python3-pip mysql-server binutils libproj-dev gdal-bin python3-dev libmysqlclient-dev
 ```
 
 ### Installazione
@@ -44,9 +38,9 @@ sudo pip3 install -r requirements.txt
 
 ### Configurazione
 
-1. Modifica `config/mysql.cnf` con le credenziali di MySQL
-2. Crea il database con es. `mysql -u root -p -e 'CREATE DATABASE jorvik CHARSET utf8;`
-3. Esegui `python3 ./manage.py syncdb` per creare il database
+1. Modifica `config/mysql.cnf` con le credenziali di MySQL (non necessario se root pwd. vuota)
+2. Crea il database con es. `mysql -u root -p -e 'CREATE DATABASE jorvik CHARSET utf8;'`
+3. Esegui `python3 ./manage.py syncdb` per creare le tabelle del database
 4. Esegui `python3 ./manage.py collectstatic` per creare la cartella `assets/`
 5. **Avvia il server** con `python3 ./manage.py runserver`
 
