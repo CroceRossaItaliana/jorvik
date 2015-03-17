@@ -32,8 +32,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.gis',
     # Librerie terze
-    #'provider',
-    #'provider.oauth2',
+    'oauth2_provider',
     'rest_framework',
     'mptt',
     'safedelete',
@@ -120,3 +119,9 @@ STATIC_ROOT = '/tmp'
 TEMPLATE_DIRS = (
     os.path.join(BASE_DIR,  'templates'),
 )
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.ext.rest_framework.OAuth2Authentication',
+    )
+}

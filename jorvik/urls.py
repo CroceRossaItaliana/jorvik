@@ -12,5 +12,6 @@ print("Getto gli URLS")
 urlpatterns = patterns('',
     url(r'^$', 'base.viste.index'),
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 )
 
