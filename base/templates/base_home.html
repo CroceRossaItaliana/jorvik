@@ -1,0 +1,117 @@
+{% extends "base_vuota.html" %}
+
+{% load staticfiles %}
+
+{% block pagina_titolo %}Home page{% endblock %}
+
+{% block pagina_principale %}
+
+<div style="background-image: url('{% static 'img/home_img1.jpg' %}');" class="row allinea-centro testo-bianco testo-ombra-nera padding-verticale-60">
+    <h2>Prendi parte alla Rivoluzione</h2>
+    <p>Facciamo una Croce Rossa Italiana nuova.</p>
+    <p><a href="/informazioni/" class="btn btn-lg btn-danger">Cosa &egrave; Gaia</a></p>
+</div>
+
+<div class="container">
+    <div class="row allinea-centro ">
+        <div class="col-md-6">
+            <h2>Gi&agrave; volontario?</h2>
+            <div class="well">
+                <a href="/registrati/volontario/" class="btn btn-lg btn-success btn-block">
+                    <i class="fa fa-user"></i>
+                    Registrati ora
+                </a>
+            </div>
+            <p><strong>Gaia è il nuovo sistema informativo</strong> che ti permetterà di venire a conoscenza immediatamente
+                delle attività organizzate e dare la tua disponibilità con un click da pc o smartphone.</p>
+
+            <p>È semplice e richiede poco tempo.<br />Clicca qui sopra e segui le istruzioni.</p>
+
+            <p>&nbsp;</p>
+        </div>
+
+        <div class="col-md-6">
+            <h2>Vuoi entrare in Croce Rossa?</h2>
+            <div class="well">
+                <a href="/registrati/aspirante/" class="btn btn-lg btn-primary btn-block">
+                    <i class="fa fa-hand-o-right"></i>
+                    Iscriviti al prossimo corso base
+                </a>
+            </div>
+
+            <p>Organizziamo continuamente corsi base per gli aspiranti volontari.</p>
+            <p>Il volontariato in Croce Rossa ti cambierà la vita, <a href="http://www.cri.it/diventavolontario" target="_new" ><i class="icon-link"></i> scopri perché</a>.</p>
+            <p>Clicca sul pulsante qui sopra: verrai richiamato da un volontario ed informato sul prossimo corso base a te vicino.</p>
+            <p>&nbsp;</p>
+
+        </div>
+
+    </div>
+</div>
+
+
+<div style="background-image: url('{% static 'img/home_img2.jpg' %}');" class="row allinea-centro testo-bianco testo-ombra-nera padding-verticale-60">
+    <div class="col-md-6">
+        <h3>(Nome di un comitato)</h3>
+        <h3>&egrave; su Gaia.</h3>
+    </div>
+    <div class="col-md-6">
+        <h3>{{ numero_comitati }} sedi CRI sono gi&agrave; su Gaia.</h3>
+        <p class="grassetto" id=""></p>
+        <p>
+            <a href="/informazioni/comitati/" class="btn btn-lg btn-default testo-ombra-nulla">
+                <i class="fa fa-globe"></i>
+                Mappa completa dei comitati con recapiti
+            </a>
+        </p>
+
+    </div>
+
+    <script type="text/javascript">
+    </script>
+
+
+</div>
+
+<p>&nbsp;</p>
+
+<div class="container">
+    <div class="row allinea-centro">
+
+        <div class="col-md-4">
+            <h1 style="font-size: 4em;">
+                <span style="transform: rotate(10deg); -webkit-transform: rotate(10deg);" class="text-info">
+                    -
+                        <i class="fa fa-clock-o"></i>
+                        <i class="fa fa-file-o"></i>
+                </span>
+
+                <br />
+
+                &nbsp; &nbsp; &nbsp;
+
+                <span class="text-success">
+                    +
+                        <i class="fa fa-group"></i>
+                        <i class="fa fa-bolt"></i>
+                </span>
+            </h1>
+
+        </div>
+        <div class="col-md-4 well well-sm sf2">
+            <h3 class="text-muted"><i class="fa fa-minus-circle"></i> Carte</h3>
+            <h2 class="text-danger"><i class="fa fa-plus-circle"></i> Volontariato</h2>
+        </div>
+
+        <div class="col-md-4">
+            <p>&nbsp;</p>
+            <p>Gaia nasce per <strong>eliminare carte e tempi morti</strong>.</p>
+            <p>Via il superfluo, <big>resta il volontariato</big>.</p>
+            <p>Trasparente ed efficiente.</p>
+        </div>
+
+    </div>
+</div>
+
+
+{% endblock %}

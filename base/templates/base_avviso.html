@@ -1,0 +1,21 @@
+{% extends "base_vuota.html" %}
+
+{% block base_body_classe %}sfondo-grigio-chiaro{% endblock %}
+
+{% block pagina_titolo %}Avviso{% endblock %}
+
+{% block pagina_principale %}
+    <div class="container">
+        <div class="row">
+
+            <div class="col-md-8 col-md-offset-2 sfondo-bianco margine-verticale-20 {% block avviso_classe %}allinea-centro{% endblock %}">
+                <h2 class="{% block avviso_titolo_classe %}{% endblock %}">
+                    {% block avviso_titolo %}avviso_titolo{% endblock %}
+                </h2>
+                {% block avviso_corpo %}
+                    <p>{% block avviso_messaggio %}avviso_messaggio{% endblock %}</p>
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

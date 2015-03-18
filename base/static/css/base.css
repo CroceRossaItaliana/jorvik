@@ -1,0 +1,119 @@
+.sfondo-grigio-chiaro {
+    background-color: #f5f5f5;
+}
+
+.sfondo-bianco {
+    background-color: #ffffff;
+}
+
+.grassetto {
+    font-weight: bold;
+}
+
+.corsivo {
+    font-style: italic;
+}
+
+.piu-grande {
+    font-size: larger;
+}
+
+.piu-piccolo {
+    font-size: smaller;
+}
+
+.rosso-scuro {
+    color: #CC0000;
+}
+
+.grigio-scuro {
+    color: #333;
+}
+
+.margine-nullo {
+    margin: 0px 0px 0px 0px;
+}
+
+.margine-nullo-sopra {
+    margin-top: 0px;
+}
+
+.margine-nullo-sotto {
+    margin-bottom: 0px;
+}
+
+.margine-nullo-destra {
+    margin-right: 0px;
+}
+
+.margine-nullo-sinistra {
+    margin-left: 0px;
+}
+
+.padding-nullo {
+    padding: 0px 0px 0px 0px;
+}
+
+.padding-nullo-sopra {
+    padding-top: 0px;
+}
+
+.padding-nullo-sotto {
+    padding-bottom: 0px;
+}
+
+.padding-nullo-destra {
+    padding-right: 0px;
+}
+
+.padding-nullo-sinistra {
+    padding-left: 0px;
+}
+
+.allinea-centro {
+    text-align: center;
+}
+
+.allinea-destra {
+    text-align: right;
+}
+
+.allinea-sinistra {
+    text-aligh: left;
+}
+
+.margine-verticale-20 {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.padding-verticale-20 {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.padding-verticale-40 {
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+.padding-verticale-60 {
+    padding-top: 60px;
+    padding-bottom: 60px;
+}
+
+.bordi-arrotondati-5 {
+    border-radius: 10px 10px;
+}
+
+.testo-bianco {
+    color: white;
+}
+
+.testo-ombra-nera {
+    text-shadow: 1px 1px 2px black, 2px 2px 1px black;
+}
+
+.testo-ombra-nulla {
+    text-shadow: none;
+}

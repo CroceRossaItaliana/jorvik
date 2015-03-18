@@ -62,6 +62,13 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
             return self.persona.nome_completo()
         return "Scollegato #" + str(self.id)
 
+    def nome_completo(self):
+        return self.get_full_name()
+
+    @property
+    def nome(self):
+        return self.get_short_name()
+
     def get_short_name(self):
         if self.persona:
             return self.persona.nome

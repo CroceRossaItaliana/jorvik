@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    {% block base_head %}{% endblock %}
+    <title>{% block base_titolo %}{% endblock %}</title>
+</head>
+<body class="{% block base_body_classe %}{% endblock %}">
+    {% block base_body %}{% endblock %}
+</body>
+</html>

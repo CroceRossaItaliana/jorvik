@@ -1,0 +1,16 @@
+{% extends "base_avviso.html" %}
+
+{% block pagina_titolo %}Manutenzione in corso{% endblock %}
+
+{% block avviso_titolo_classe %}text-danger{% endblock %}
+{% block avviso_titolo %}<i class="fa fa-exclamation-circle"></i> Gaia torner&agrave; presto online.{% endblock %}
+
+{% block avviso_corpo %}
+<p>Stiamo lavorando per voi al fine di rendere il servizio più efficiente.</p>
+<p>Ci scusiamo per il disagio.</p>
+<p><a href="mailto:supporto@gaia.cri.it">supporto@gaia.cri.it</a></p>
+<hr />
+<p>Segui gli ultimi aggiornamenti su Twitter:</p>
+<a class="twitter-timeline" href="https://twitter.com/progettogaiacri" data-widget-id="441274884593684480">Tweets di @progettogaiacri</a>
+    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+{% endblock %}
