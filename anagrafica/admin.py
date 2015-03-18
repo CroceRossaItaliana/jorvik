@@ -29,22 +29,22 @@ class AdminAppartenenza(admin.ModelAdmin):
 # admin.site.register(Delega)
 @admin.register(Delega)
 class AdminDelega(admin.ModelAdmin):
-    search_fields = []
-    list_display = ()
-    list_filter = ()
+    search_fields = ["tipo", "persona__nome", "person__nome", "persona__codice_fiscale", "tipo", "oggetto"]
+    list_display = ("tipo", "oggetto", "persona")
+    list_filter = ("tipo", "persona")
 
 
 # admin.site.register(Documento)
 @admin.register(Documento)
 class AdminDocumento(admin.ModelAdmin):
-    search_fields = []
-    list_display = ()
-    list_filter = ()
+    search_fields = ["tipo", "persona__nome", "persona__cognome", "persona__codice_fiscale"]
+    list_display = ("tipo", "persona")
+    list_filter = ("tipo", "persona")
 
 
 # admin.site.register(Fototessera)
 @admin.register(Fototessera)
 class AdminFototessera(admin.ModelAdmin):
-    search_fields = []
-    list_display = ()
-    list_filter = ()
+    search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale"]
+    list_display = ("persona",)
+    list_filter = ("persona",)
