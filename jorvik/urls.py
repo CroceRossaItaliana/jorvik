@@ -13,6 +13,9 @@ urlpatterns = patterns('',
 
     url(r'^$', 'base.viste.index'),
 
+    url(r'^registrati/(?P<tipo>\w+)/$', 'anagrafica.viste.registrati'),
+    url(r'^registrati/(?P<tipo>\w+)/(?P<step>\w+)/$', 'anagrafica.viste.registrati'),
+
     url(r'^manutenzione/$', 'base.viste.manutenzione'),
 
     url(r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'base_login.html'}),

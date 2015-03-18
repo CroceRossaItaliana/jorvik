@@ -4,6 +4,8 @@
     nome: Marco
     cognome: Polo
     codice_fiscale: MARPOL00M10F100W
-    data_nascita: 10/10/1900
+    data_nascita: 1900-10-10
     genere: M
     stato: P
+    creazione: 2010-12-31
+    ultima_modifica: 2010-12-31
