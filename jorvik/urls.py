@@ -11,18 +11,26 @@ from django.core.urlresolvers import reverse
 print("Getto gli URLS")
 urlpatterns = patterns('',
 
+    # Home page!
     url(r'^$', 'base.viste.index'),
 
+    # Moduli di registrazione
+    url(r'^registrati/(?P<tipo>\w+)/conferma/$', 'anagrafica.viste.registrati_conferma'),
     url(r'^registrati/(?P<tipo>\w+)/$', 'anagrafica.viste.registrati'),
     url(r'^registrati/(?P<tipo>\w+)/(?P<step>\w+)/$', 'anagrafica.viste.registrati'),
 
+    # Modalita' manutenzione
     url(r'^manutenzione/$', 'base.viste.manutenzione'),
 
+    # Login e logout
     url(r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'base_login.html'}),
     url(r'^logout/$', 'django.contrib.auth.views.logout', {'template_name': 'base_logout.html'}),
     url('^', include('django.contrib.auth.urls')),
 
+    # Amministrazione
     url(r'^admin/', include(admin.site.urls)),
+
+    # OAuth 2.0
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 )
 

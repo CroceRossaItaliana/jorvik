@@ -1,14 +1,17 @@
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect
+from django.contrib.auth import login
 
 # Le viste base vanno qui.
-from django.template import RequestContext, Context
+from django.template import RequestContext
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
-from anagrafica.models import Comitato
 
 # Tipi di registrazione permessi
+from anagrafica.models import Persona
+from autenticazione.models import Utenza
+
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
 TIPO_DIPENDENTE = 'dipendente'
@@ -61,6 +64,11 @@ def registrati(request, tipo, step=None):
         # Ricomincia, quindi svuoto la sessione!
         request.session['registrati'] = {}
 
+    try:
+        sessione = request.session['registrati'].copy()
+    except KeyError:
+        sessione = {}
+
     lista_step = [
         # Per ogni step:
         #  nome: Il nome completo dello step (es. "Selezione Comitato")
@@ -69,6 +77,7 @@ def registrati(request, tipo, step=None):
         {'nome': STEP_NOMI[x], 'slug': x,
          'completato': (STEP[tipo].index(x) < STEP[tipo].index(step)),
          'attuale': (STEP[tipo].index(x) == STEP[tipo].index(step)),
+         'modulo': MODULI[x](initial=sessione) if MODULI[x] else None,
          }
         for x in STEP[tipo]
     ]
@@ -80,11 +89,6 @@ def registrati(request, tipo, step=None):
         step_successivo = STEP[tipo][STEP[tipo].index(step) + 1]
 
     step_modulo = MODULI[step]
-
-    try:
-        sessione = request.session['registrati'].copy()
-    except KeyError:
-        sessione = {}
 
     # Se questa e' la ricezione dello step compilato
     if request.method == 'POST':
@@ -118,3 +122,70 @@ def registrati(request, tipo, step=None):
         'anagrafica_registrati_step_' + step + '.html',
         RequestContext(request, contesto)
     )
+
+
+def registrati_conferma(request, tipo):
+    """
+    Controlla che tutti i parametri siano corretti in sessione ed effettua
+    la registrazione vera e propria!
+    """
+
+    # Controlla che il tipo sia valido (/registrati/<tipo>/)
+    if tipo not in TIPO:
+        return redirect('/errore/')  # Altrimenti porta ad errore generico
+
+    try:
+        sessione = request.session['registrati'].copy()
+    except KeyError:
+        sessione = {}
+
+    print(sessione)
+
+    dati = {}
+
+    # Carica tutti i moduli inviati da questo tipo di registrazione
+    for (k, modulo) in [(x, MODULI[x](data=sessione)) for x in STEP[tipo] if MODULI[x] is not None]:
+
+        # Controlla nuovamente la validita'
+        if not modulo.is_valid():
+            raise ValueError("Errore nella validazione del sub-modulo %s" % (k, ))
+
+        # Aggiunge tutto a "dati"
+        dati.update(modulo.cleaned_data)
+
+
+    print("Dati aggiornati")
+    print(dati)
+
+    campi = [str(x.name) for x in Persona._meta.fields]
+    dati_persona = {x: dati[x] for x in dati if x in campi}
+
+    # Crea la persona
+    p = Persona(**dati_persona)
+    p.save()
+
+    # Associa l'utenza
+    u = Utenza(persona=p, email=dati['email'])
+    u.set_password(dati['password'])
+    u.save()
+
+    # Effettua il login!
+    u.backend = 'django.contrib.auth.backends.ModelBackend'
+    login(request, u)
+
+    if tipo == TIPO_ASPIRANTE:
+        # TODO Registrazione aspirante
+        pass
+
+    elif tipo == TIPO_VOLONTARIO:
+        pass
+        # TODO Registrazione volontario
+
+    elif tipo == TIPO_DIPENDENTE:
+        pass
+        # TODO Registrazione dipendente
+
+    else:
+        raise ValueError("Non so come gestire questa iscrizione.")
+
+    return redirect('/manutenzione/')

@@ -1,5 +1,15 @@
 {% extends "anagrafica_registrati.html" %}
 
+{% load bootstrap3 %}
+
+{% block registrati_azione %}/registrati/{{ tipo }}/conferma/{% endblock %}
+
 {% block step_contenuto %}
     <p>Yay, hai finito!</p>
+
+    <button type="submit" class="btn btn-lg btn-block btn-success">
+        <i class="fa fa-check"></i>
+        Completa registrazione
+    </button>
+
 {% endblock %}

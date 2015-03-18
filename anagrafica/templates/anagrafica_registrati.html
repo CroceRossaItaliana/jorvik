@@ -42,7 +42,7 @@
         </div>
 
         <div class="col-md-9">
-            <form action="/registrati/{{ tipo }}/{{ attuale_slug }}/" method="POST">
+            <form action="{% block registrati_azione %}/registrati/{{ tipo }}/{{ attuale_slug }}/{% endblock %}" method="POST">
                 {% csrf_token %}
 
                 {% block step_contenuto %}
@@ -55,14 +55,23 @@
                     {% endif %}
                 {% endblock %}
 
-                <div class="row allinea-destra">
+                <div class="row ">
 
-                    {% if step_successivo %}
-                    <button class="btn btn-success" type="submit">
-                        Prosegui
-                        <i class="fa fa-arrow-right"></i>
-                    </button>
-                    {% endif %}
+                    <div class="col-md-6 padding-verticale-20 piu-piccolo">
+                        <a href="/registrati/{{ tipo }}/">
+                            <i class="fa fa-refresh"></i>
+                            Reimposta
+                        </a>
+                    </div>
+
+                    <div class="col-md-6 allinea-destra">
+                        {% if step_successivo %}
+                        <button class="btn btn-success" type="submit">
+                            Avanti
+                            <i class="fa fa-arrow-right"></i>
+                        </button>
+                        {% endif %}
+                    </div>
 
                 </div>
             </form>
