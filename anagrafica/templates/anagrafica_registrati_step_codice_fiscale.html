@@ -2,4 +2,12 @@
 
 {% block step_contenuto %}
     <p>Il tuo codice fiscale, per favore!</p>
+
+    {% if modulo.errors %}
+        <div class="alert alert-danger">
+            <h4>Sei gi&agrave; su Gaia?</h4>
+            <p>Potresti essere gi&agrave; stato inserito. Prova a <a href="#">recuperare la password</a>.</p>
+        </div>
+    {% endif %}
+
 {% endblock %}

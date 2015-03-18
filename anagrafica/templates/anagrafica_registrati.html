@@ -1,5 +1,6 @@
 {% extends "base_vuota.html" %}
 
+{% load bootstrap3 %}
 {% block pagina_principale %}
 
 <div class="container">
@@ -21,14 +22,14 @@
             {% for s in lista_step %}
                 <li>
                     {% if s.completato %}
-                        <a href="/registrati/{{ tipo }}/{{ s.slug }}/">
+                        <a href="/registrati/{{ tipo }}/{{ s.slug }}/" title="Torna indietro allo step: {{ s.nome }}">
                             <i class="fa fa-check-square"></i>
                             {{ s.nome }}
                         </a>
                     {% else %}
                         {% if s.attuale %}
                             <i class="fa fa-plus-square"></i>
-                            <strong>{{ s.nome }}</strong>
+                            <strong>{{ s.nome }}</strong> (attuale)
                         {% else %}
                             <i class="fa fa-square-o"></i>
                             {{ s.nome }}
@@ -41,11 +42,17 @@
         </div>
 
         <div class="col-md-9">
-            <form action="/registrati/{{ tipo }}/{{ step_successivo }}/" method="POST">
+            <form action="/registrati/{{ tipo }}/{{ attuale_slug }}/" method="POST">
                 {% csrf_token %}
 
                 {% block step_contenuto %}
                     <pre>step_contenuto</pre>
+                {% endblock %}
+
+                {% block step_modulo %}
+                    {% if modulo %}
+                        {% bootstrap_form modulo %}
+                    {% endif %}
                 {% endblock %}
 
                 <div class="row allinea-destra">
