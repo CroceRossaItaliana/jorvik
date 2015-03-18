@@ -484,6 +484,7 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
         (CODICE_FISCALE, 'Codice Fiscale')
     )
 
+    tipo = models.CharField(choices=TIPO, max_length=1, default=CARTA_IDENTITA, db_index=True)
     persona = models.ForeignKey(Persona, related_name="documenti", db_index=True)
     file = models.FileField("File", upload_to=generatore_nome_file('documenti/'))
 
