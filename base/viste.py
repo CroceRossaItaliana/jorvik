@@ -2,7 +2,9 @@ from django.http import HttpResponse
 from django.shortcuts import render, render_to_response
 
 # Le viste base vanno qui.
+from django.template import RequestContext
 from anagrafica.models import Comitato
+from base.forms import ModuloRecuperaPassword
 
 
 def index(request):
@@ -18,3 +20,18 @@ def manutenzione(request):
     """
     return render_to_response('base_manutenzione.html', {})
 
+
+def recupera_password(request):
+    """
+    Mostra semplicemente la pagina di recupero password.
+    """
+    if request.method == 'POST':
+        modulo = ModuloRecuperaPassword(request.POST)
+        if modulo.is_valid():
+            pass
+            # TODO RECUPERO
+    else:
+        contesto = {
+            'modulo': ModuloRecuperaPassword(),
+        }
+        return render_to_response('base_recupera_password.html', RequestContext(request, contesto))

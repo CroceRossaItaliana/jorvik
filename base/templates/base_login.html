@@ -16,25 +16,35 @@
     <hr />
 
     <div class="row">
-    <div class="col-md-8 col-md-offset-2">
+        <div class="col-md-6">
 
-        <form method="post" action="{% url 'django.contrib.auth.views.login' %}">
-        {% csrf_token %}
+            <form method="post" action="{% url 'django.contrib.auth.views.login' %}">
+            {% csrf_token %}
 
-        {% bootstrap_form form %}
+            {% bootstrap_form form %}
 
-        <button type="submit" class="btn btn-block btn-primary">
-            <i class="fa fa-send"></i>
-            Accedi ora
-        </button>
+            <button type="submit" class="btn btn-block btn-primary">
+                <i class="fa fa-send"></i>
+                Accedi ora
+            </button>
 
-        <input type="hidden" name="next" value="{{ next }}" />
+            <input type="hidden" name="next" value="{{ next }}" />
 
-        </form>
+            </form>
 
-        <p>&nbsp;</p>
+            <p>&nbsp;</p>
 
-    </div>
+        </div>
+        <div class="col-md-6">
+            <p>Inserisci la tua email e la password che hai fornito alla registrazione.</p>
+            <hr/>
+            <h3><i class="fa fa-key"></i> Recupera password</h3>
+            <p>Se non ricordi la tua password, puoi richiederne una nuova.</p>
+            <a href="/recupera-password/" class="btn btn-block btn-primary">
+                <i class="fa fa-send"></i>
+                Recupera Password
+            </a>
+        </div>
     </div>
 
 {% endblock %}

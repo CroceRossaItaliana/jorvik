@@ -27,6 +27,9 @@ urlpatterns = patterns('',
     url(r'^logout/$', 'django.contrib.auth.views.logout', {'template_name': 'base_logout.html'}),
     url('^', include('django.contrib.auth.urls')),
 
+    # Modulo di recupero password
+    url(r'^recupera-password/$', 'base.viste.recupera_password'),
+
     # Amministrazione
     url(r'^admin/', include(admin.site.urls)),
 
