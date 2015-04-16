@@ -48,3 +48,9 @@ def aggiornamenti(request):
     Mostra semplicemente la pagina degli aggiornamenti ed esce.
     """
     return render_to_response('base_informazioni_aggiornamenti.html', {})
+
+def sicurezza(request):
+    """
+    Mostra semplicemente la pagina degli aggiornamenti ed esce.
+    """
+    return render_to_response('base_informazioni_sicurezza.html', {})
