@@ -35,3 +35,9 @@ def recupera_password(request):
             'modulo': ModuloRecuperaPassword(),
         }
         return render_to_response('base_recupera_password.html', RequestContext(request, contesto))
+
+def informazioni(request):
+    """
+    Mostra semplicemente la pagina diinformazioni ed esce.
+    """
+    return render_to_response('base_informazioni.html', {})

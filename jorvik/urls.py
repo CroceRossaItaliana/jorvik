@@ -30,6 +30,9 @@ urlpatterns = patterns('',
     # Modulo di recupero password
     url(r'^recupera-password/$', 'base.viste.recupera_password'),
 
+    # Informazioni
+    url(r'^informazioni/$', 'base.viste.informazioni'),
+
     # Amministrazione
     url(r'^admin/', include(admin.site.urls)),
 
