@@ -34,6 +34,7 @@ urlpatterns = patterns('',
     url(r'^informazioni/$', 'base.viste.informazioni'),
     url(r'^informazioni/aggiornamenti/$', 'base.viste.aggiornamenti'),
     url(r'^informazioni/sicurezza/$', 'base.viste.sicurezza'),
+    url(r'^informazioni/condizioni/$', 'base.viste.condizioni'),
 
     # Amministrazione
     url(r'^admin/', include(admin.site.urls)),

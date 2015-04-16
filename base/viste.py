@@ -54,3 +54,9 @@ def sicurezza(request):
     Mostra semplicemente la pagina degli aggiornamenti ed esce.
     """
     return render_to_response('base_informazioni_sicurezza.html', {})
+
+def condizioni(request):
+    """
+    Mostra semplicemente la pagina delle condizioni ed esce.
+    """
+    return render_to_response('base_informazioni_condizioni.html', {})
