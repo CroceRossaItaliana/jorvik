@@ -41,3 +41,10 @@ def informazioni(request):
     Mostra semplicemente la pagina diinformazioni ed esce.
     """
     return render_to_response('base_informazioni.html', {})
+
+
+def aggiornamenti(request):
+    """
+    Mostra semplicemente la pagina degli aggiornamenti ed esce.
+    """
+    return render_to_response('base_informazioni_aggiornamenti.html', {})
