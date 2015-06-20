@@ -2,6 +2,8 @@
 Questo modulo contiene tutte le funzioni per testare i permessi
 a partire da un oggetto sul quale ho una delega ed un oggetto da testare.
 """
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 from anagrafica.models import Sede, Persona
 import anagrafica.permessi.costanti
 from attivita.models import Attivita, Area
