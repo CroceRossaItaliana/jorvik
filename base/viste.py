@@ -2,9 +2,8 @@ from django.http import HttpResponse
 from django.shortcuts import render, render_to_response
 
 # Le viste base vanno qui.
-from django.template import RequestContext
 from anagrafica.models import Sede
-from autenticazione.funzioni import pagina_pubblica
+from autenticazione.funzioni import pagina_pubblica, pagina_anonima
 from base.forms import ModuloRecuperaPassword
 
 
@@ -22,7 +21,7 @@ def manutenzione(request):
     """
     return 'base_manutenzione.html'
 
-@pagina_pubblica
+@pagina_anonima
 def recupera_password(request):
     """
     Mostra semplicemente la pagina di recupero password.

@@ -1,4 +1,5 @@
 from anagrafica.permessi.costanti import LETTURA, PERMESSI_FUNZIONI_DICT, PERMESSI_OGGETTI_DICT
+from anagrafica.permessi.funzioni import unisci_permessi
 
 __author__ = 'alfioemanuele'
 

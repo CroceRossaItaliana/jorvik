@@ -3,13 +3,13 @@ from django.shortcuts import render_to_response, redirect
 from django.contrib.auth import login
 
 # Le viste base vanno qui.
-from django.template import RequestContext
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
 from anagrafica.models import Persona
+from autenticazione.funzioni import pagina_anonima
 from autenticazione.models import Utenza
 
 TIPO_VOLONTARIO = 'volontario'
@@ -47,7 +47,7 @@ MODULI = {
     STEP_FINE: None,
 }
 
-
+@pagina_anonima
 def registrati(request, tipo, step=None):
     """
     La vista per tutti gli step della registrazione.
@@ -118,12 +118,9 @@ def registrati(request, tipo, step=None):
         'modulo': modulo,
     }
 
-    return render_to_response(
-        'anagrafica_registrati_step_' + step + '.html',
-        RequestContext(request, contesto)
-    )
+    return 'anagrafica_registrati_step_' + step + '.html', contesto
 
-
+@pagina_anonima
 def registrati_conferma(request, tipo):
     """
     Controlla che tutti i parametri siano corretti in sessione ed effettua
@@ -152,7 +149,6 @@ def registrati_conferma(request, tipo):
 
         # Aggiunge tutto a "dati"
         dati.update(modulo.cleaned_data)
-
 
     # Quali di questi campi vanno nella persona?
     campi_persona = [str(x.name) for x in Persona._meta.fields]
