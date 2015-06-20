@@ -77,6 +77,7 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
 
     avatar = models.ImageField("Avatar", blank=True, null=True, upload_to=generatore_nome_file('avatar/'))
 
+    @property
     def nome_completo(self):
         """
         Restituisce il nome e cognome
@@ -127,6 +128,12 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
     #       numeri = [str(x) for x in Persona.numeri_telefono]
     #    - Usare Persona.aggiungi_numero_telefono per aggiungere un numero di telefono.
 
+    def deleghe_attuali(self, al_giorno=date.today()):
+        """
+        Ritorna una ricerca per le deleghe che son attuali.
+        """
+        return self.deleghe.filter(Delega.query_attuale(al_giorno))
+
     def aggiungi_numero_telefono(self, numero, servizio=False, paese="IT"):
         """
         Aggiunge un numero di telefono per la persona.
@@ -143,12 +150,6 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
         t = Telefono(persona=self, numero=f, servizio=servizio)
         t.save()
         return True
-
-    def deleghe_attuali(self, al_giorno=date.today()):
-        """
-        Ritorna una ricerca per le deleghe che son attuali.
-        """
-        return self.deleghe.filter(Delega.query_attuale(al_giorno))
 
     def appartenenze_attuali(self, **kwargs):
         """
@@ -296,7 +297,7 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
         if policy >= policy_minima:
 
             if campo not in Privacy.CAMPO_OTTIENI_DICT:
-                raise ValueError("Campo %s non specificato nelle impostazioni Privacy Polici." % (campo,))
+                raise ValueError("Campo %s non specificato nelle Privacy Policy." % (campo,))
 
             return Privacy.CAMPO_OTTIENI_DICT[campo](self)
 
@@ -399,8 +400,8 @@ class Privacy(ModelloSemplice, ConMarcaTemporale):
     POLICY = (
         (POLICY_PUBBLICO, "Pubblico"),
         (POLICY_REGISTRATI, "Utenti di Gaia"),
-        (POLICY_SEDE, "A tutti i membri del mio Sede"),
-        (POLICY_RISTRETTO, "Ai Responsabili del mio Sede"),
+        (POLICY_SEDE, "A tutti i membri della mia Sede CRI"),
+        (POLICY_RISTRETTO, "Ai Responsabili della mia Sede CRI"),
         (POLICY_PRIVATO, "Solo a me")
     )
 
@@ -504,14 +505,18 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
 
     # Tipo di membro
     VOLONTARIO = 'VO'
+    ESTESO = 'ES'
     ORDINARIO = 'OR'
     DIPENDENTE = 'DI'
     INFERMIERA = 'IN'
     MILITARE = 'MI'
     DONATORE = 'DO'
+    SOSTENITORE = 'SO'
     MEMBRO = (
         (VOLONTARIO, 'Volontario'),
-        (ORDINARIO, 'Membro Ordinario'),
+        (ESTESO, 'Volontario in Estensione'),
+        (ORDINARIO, 'Socio Ordinario'),
+        (SOSTENITORE, 'Sostenitore'),
         (DIPENDENTE, 'Dipendente'),
         (INFERMIERA, 'Infermiera Volontaria'),
         (MILITARE, 'Membro Militare'),
@@ -519,19 +524,28 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     )
     membro = models.CharField("Tipo membro", max_length=2, choices=MEMBRO, default=VOLONTARIO, db_index=True)
 
-    # Tipo di appartenenza
-    NORMALE = 'N'
-    ESTESO = 'E'
-    TIPO = (
-        (NORMALE, 'Normale'),
-        (ESTESO, 'Estensione'),
+    # Tipo di terminazione
+    DIMISSIONE = 'D'
+    ESPULSIONE = 'E'
+    SOSPENSIONE = 'S'
+    TRASFERIMENTO = 'T'
+    TERMINAZIONE = (
+        (DIMISSIONE, 'Dimissione'),
+        (ESPULSIONE, 'Espulsione'),
+        (SOSPENSIONE, 'Sospensione'),
+        (TRASFERIMENTO, 'Trasferimento')
     )
-    tipo = models.CharField("Tipo app.", max_length=1, choices=TIPO, default=NORMALE, db_index=True)
+    terminazione = models.CharField("Terminazione", max_length=1, choices=TERMINAZIONE, default=None, db_index=True,
+                                    blank=True, null=True)
 
-    CONDIZIONE_ATTUALE_AGGIUNTIVA = Q(confermata=True)
+    # In caso di trasferimento, o altro, e' possibile individuare quale appartenenza precede
+    precedente = models.ForeignKey('self', related_name='successiva', on_delete=models.SET_NULL, default=None,
+                                   blank=True, null=True)
 
     persona = models.ForeignKey("anagrafica.Persona", related_name="appartenenze", db_index=True)
     sede = models.ForeignKey("anagrafica.Sede", related_name="appartenenze", db_index=True)
+
+    CONDIZIONE_ATTUALE_AGGIUNTIVA = Q(confermata=True)
 
     def richiedi(self):
         """
@@ -557,7 +571,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
 
     def autorizzazione_negata(self, motivo=None):
         # TOOD: Fare qualcosa
-        pass
+        self.confermata = False
 
 
 class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
@@ -572,9 +586,11 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
     # Tipologia della sede
     COMITATO = 'C'
     MILITARE = 'M'
+    AUTOPARCO = 'A'
     TIPO = (
         (COMITATO, 'Comitato'),
         (MILITARE, 'Sede Militare'),
+        (AUTOPARCO, 'Autoparco')
     )
 
     estensione = models.CharField("Estensione", max_length=1, choices=ESTENSIONE, db_index=True)
@@ -705,3 +721,25 @@ class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
 
     persona = models.ForeignKey(Persona, related_name="fototessere", db_index=True)
     file = models.ImageField("Fototessera", upload_to=generatore_nome_file('fototessere/'))
+
+
+class Dimissione(ModelloSemplice, ConMarcaTemporale):
+    """
+    Rappresenta una pratica di dimissione.
+    """
+    appartenenza = models.ForeignKey(Appartenenza, related_name='dimissione')
+
+
+class Trasferimento(ModelloSemplice, ConMarcaTemporale):
+    """
+    Rappresenta una pratica di trasferimento.
+    """
+    appartenenza = models.ForeignKey(Appartenenza, related_name='dimissione')
+
+
+class Estensione(ModelloSemplice, ConMarcaTemporale):
+    """
+    Rappresenta una pratica di estensione.
+    """
+
+    appartenenza = models.ForeignKey(Appartenenza, related_name='dimissione')
