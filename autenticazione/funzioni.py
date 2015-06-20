@@ -9,12 +9,12 @@ __author__ = 'alfioemanuele'
 def _spacchetta(pacchetto):
     # Controlla se tupla (pagina, contesto) oppure solo 'pagina.html'.
     if isinstance(pacchetto, tuple):
-        (template, contesto) = pacchetto
+        (template, contesto, richiesta) = pacchetto + (pacchetto, )
     elif isinstance(pacchetto, str):
-        (template, contesto) = (pacchetto, {})
+        (template, contesto, richiesta) = (pacchetto, {}, pacchetto)
     else:
-        (template, contesto) = (None, None)
-    return template, contesto
+        (template, contesto, richiesta) = (None, None, pacchetto)
+    return template, contesto, richiesta
 
 
 def pagina_pubblica(funzione):
@@ -26,10 +26,10 @@ def pagina_pubblica(funzione):
 
     def _pagina_pubblica(request, *args, **kwargs):
 
-        (template, contesto) = r = _spacchetta(funzione(request, *args, **kwargs))
+        (template, contesto, richiesta) = _spacchetta(funzione(request, *args, **kwargs))
 
         if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
-            return r  # Passa attraverso.
+            return richiesta  # Passa attraverso.
 
         return render_to_response(template, RequestContext(request, contesto))
 
@@ -47,10 +47,10 @@ def pagina_anonima(funzione, pagina='/utente/'):
 
     def _pagina_anonima(request, *args, **kwargs):
 
-        (template, contesto) = r = _spacchetta(funzione(request, *args, **kwargs))
+        (template, contesto, richiesta) = _spacchetta(funzione(request, *args, **kwargs))
 
         if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
-            return r  # Passa attraverso.
+            return richiesta  # Passa attraverso.
 
         if request.user.is_authenticated():
             return redirect(pagina)

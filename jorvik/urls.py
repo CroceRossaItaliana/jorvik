@@ -9,7 +9,7 @@ from django.contrib import admin
 from django.core.urlresolvers import reverse
 
 print("Getto gli URLS")
-urlpatterns = patterns('',
+urlpatterns = [
 
     # Home page!
     url(r'^$', 'base.viste.index'),
@@ -41,5 +41,5 @@ urlpatterns = patterns('',
 
     # OAuth 2.0
     # url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
-)
+]
 

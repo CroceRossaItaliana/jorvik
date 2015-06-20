@@ -151,7 +151,7 @@ def registrati_conferma(request, tipo):
         dati.update(modulo.cleaned_data)
 
     # Quali di questi campi vanno nella persona?
-    campi_persona = [str(x.name) for x in Persona._meta.fields]
+    campi_persona = [str(x.name) for x in Persona._meta.get_fields()]
     dati_persona = {x: dati[x] for x in dati if x in campi_persona}
 
     # Crea la persona
