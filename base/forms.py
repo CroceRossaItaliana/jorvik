@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import ModelForm
 import mptt
-from anagrafica.models import Comitato, Persona, Appartenenza
+from anagrafica.models import Sede, Persona, Appartenenza
 from autenticazione.models import Utenza
 
 class ModuloRecuperaPassword(forms.Form):

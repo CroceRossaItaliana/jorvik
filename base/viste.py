@@ -3,13 +3,13 @@ from django.shortcuts import render, render_to_response
 
 # Le viste base vanno qui.
 from django.template import RequestContext
-from anagrafica.models import Comitato
+from anagrafica.models import Sede
 from base.forms import ModuloRecuperaPassword
 
 
 def index(request):
     contesto = {
-        'numero_comitati': Comitato.objects.count(),
+        'numero_comitati': Sede.objects.count(),
     }
     return render_to_response('base_home.html', contesto)
 

@@ -13,7 +13,7 @@ from anagrafica.permessi.applicazioni import REFERENTE
 
 from anagrafica.permessi.funzioni import permessi_presidente, permessi_vicepresidente, permessi_ufficio_soci, \
     permessi_delegato_area, permessi_responsabile_area, permessi_referente
-from anagrafica.models import Comitato
+from anagrafica.models import Sede
 from attivita.models import Attivita, Area
 
 
@@ -27,9 +27,9 @@ from attivita.models import Attivita, Area
 
 # Oggetti assegnati
 PERMESSI_OGGETTI = (
-    (PRESIDENTE,        Comitato),
-    (VICEPRESIDENTE,    Comitato),
-    (UFFICIO_SOCI,      Comitato),
+    (PRESIDENTE,        Sede),
+    (VICEPRESIDENTE,    Sede),
+    (UFFICIO_SOCI,      Sede),
     (DELEGATO_AREA,     Area),
     (RESPONSABILE_AREA, Area),
     (REFERENTE,         Attivita),

@@ -2,68 +2,68 @@
 Questo modulo contiene tutte le funzioni per testare i permessi
 a partire da un oggetto sul quale ho una delega ed un oggetto da testare.
 """
-from anagrafica.models import Comitato, Persona
+from anagrafica.models import Sede, Persona
 import anagrafica.permessi.costanti
 from attivita.models import Attivita, Area
 
 
-def permessi_presidente(comitato, oggetto):
+def permessi_presidente(sede, oggetto):
     """
     Permessi della delega di PRESIDENTE.
 
-    :param comitato: Il comitato di cui si e' presidenti.
+    :param sede: Il sede di cui si e' presidenti.
     :param oggetto: L'oggetto per cui controllare i permessi.
     :return: MODIFICA, LETTURA o None.
     """
 
-    # Se e' un comitato
-    if isinstance(oggetto, Comitato):
+    # Se e' un sede
+    if isinstance(oggetto, Sede):
         # Posso modificare se e' sotto il mio
-        if oggetto.figlio_di(comitato):
+        if oggetto.figlio_di(sede):
             return anagrafica.permessi.costanti.MODIFICA
         return None
 
     # Persona
     if isinstance(oggetto, Persona):
         # TODO: Assume che un presidente abbia permessi onnipotenti a scendere.
-        if comitato.ha_persona(oggetto, comitati_figli=True):
+        if sede.ha_persona(oggetto, figli=True):
             return anagrafica.permessi.costanti.MODIFICA
         return None
 
     # Attivita
     if isinstance(oggetto, Attivita):
         # TODO: Assume che un presidente abbia permessi onnipotenti a scendere.
-        if oggetto.figlio_di(comitato, comitati_figli=True):
+        if oggetto.figlio_di(sede, figli=True):
             return anagrafica.permessi.costanti.MODIFICA
 
     return None
 
 
-def permessi_vicepresidente(comitato, oggetto):
+def permessi_vicepresidente(sede, oggetto):
     """
     Permessi della delega di VICE PRESIDENTE.
 
-    :param comitato: Il comitato di cui si e' vice presidenti.
+    :param sede: Il sede di cui si e' vice presidenti.
     :param oggetto: L'oggetto per cui controllare i permessi.
     :return: MODIFICA, LETTURA o None.
     """
 
     # Gli stessi permessi del presidente
-    return permessi_presidente(comitato, oggetto)
+    return permessi_presidente(sede, oggetto)
 
 
-def permessi_ufficio_soci(comitato, oggetto):
+def permessi_ufficio_soci(sede, oggetto):
     """
     Permessi della delega di UFFICIO SOCI.
 
-    :param comitato: Il comitato di cui si e' ufficio soci.
+    :param sede: Il sede di cui si e' ufficio soci.
     :param oggetto: L'oggetto per cui controllare i permessi.
     :return: MODIFICA, LETTURA o None.
     """
 
     # L'ufficio soci e' il presidente nel contesto delle persone
     if isinstance(oggetto, Persona):
-        return permessi_presidente(comitato, oggetto)
+        return permessi_presidente(sede, oggetto)
 
     return None
 

@@ -40,6 +40,6 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
 
     # OAuth 2.0
-    url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    # url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 )
 

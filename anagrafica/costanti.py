@@ -7,7 +7,7 @@ REGIONALE = 'R'
 NAZIONALE = 'N'
 ESTENSIONE = (
     (TERRITORIALE, 'Unità Territoriale'),
-    (LOCALE, 'Comitato Locale'),
+    (LOCALE, 'Sede Locale'),
     (PROVINCIALE, 'Comitato Provinciale'),
     (REGIONALE, 'Comitato Regionale'),
     (NAZIONALE, 'Comitato Nazioanle')

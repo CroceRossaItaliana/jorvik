@@ -154,13 +154,13 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
         """
         Ottiene il queryset delle appartenenze attuali e confermate.
         """
-        return self.appartenenze.filter(Appartenenza.query_attuale(**kwargs)).select_related('comitato')
+        return self.appartenenze.filter(Appartenenza.query_attuale(**kwargs)).select_related('sede')
 
     def appartenenze_pendenti(self, **kwargs):
         """
         Ottiene il queryset delle appartenenze non confermate.
         """
-        return self.appartenenze.filter(confermata=False, **kwargs).select_related('comitato')
+        return self.appartenenze.filter(confermata=False, **kwargs).select_related('sede')
 
     def prima_appartenenza(self, **kwargs):
         """
@@ -180,12 +180,12 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
 
         return a.inizio
 
-    def membro_di(self, comitato, **kwargs):
+    def membro_di(self, sede, **kwargs):
         """
-        Controlla se la persona e' membro attuale e confermato di un dato comitato.
+        Controlla se la persona e' membro attuale e confermato di un dato sede.
         E' possibile aggiungere dati come membro=VOLONTARIO,...
         """
-        return comitato.ha_membro(persona=self, **kwargs)
+        return sede.ha_membro(persona=self, **kwargs)
     
     def membro(self, membro, **kwargs):
         """
@@ -196,18 +196,18 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
         """
         return self.appartenenze_attuali(membro=membro, **kwargs).exists()
 
-    def membro_sotto(self, comitato, **kwargs):
+    def membro_sotto(self, sede, **kwargs):
         """
-        Controlla se la persona e' membro attuale e confermato di un dato comitato
+        Controlla se la persona e' membro attuale e confermato di un dato sede
         o di uno dei suoi figli diretti.
         """
-        return self.membro_di(self, comitato, includi_figli=True, **kwargs)
+        return self.membro_di(self, sede, includi_figli=True, **kwargs)
 
     def comitati_attuali(self, **kwargs):
         """
-        Ottiene queryset di Comitato di cui fa parte
+        Ottiene queryset di Sede di cui fa parte
         """
-        return [x.comitato for x in self.appartenenze_attuali(**kwargs)]
+        return [x.sede for x in self.appartenenze_attuali(**kwargs)]
 
     def titoli_personali_confermati(self):
         """
@@ -244,20 +244,20 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
     # Gestione della Privacy
 
     * Ottenere il livello di Privacy su di un elemento
-      `p.policy(CELLULARE) => Privacy.POLICY_COMITATO`
+      `p.policy(CELLULARE) => Privacy.POLICY_SEDE`
 
     * Imposta il livello di Privacy su di un elemento
       `p.policy(CELLULARE, Privacy.POLICY_PUBBLICO)`
 
     * Ottenere una informazione su una Persona "p", solo
       se ho la Policy minima indicata.
-      `p.ottieni(Privacy.POLICY_COMITATO, CELLULARE)
+      `p.ottieni(Privacy.POLICY_SEDE, CELLULARE)
         > "numero di cellulare", oppure None
     """
     def policy(self, campo, nuova_policy=None):
         """
         Ottiene o cambia la Privacy policy per un campo.
-         * Ottenere: `p.policy(CELLULARE) => Privacy.POLICY_COMITATO`
+         * Ottenere: `p.policy(CELLULARE) => Privacy.POLICY_SEDE`
          * Cambiare: `p.policy(CELLULARE, Privacy.POLICY_PUBBLICO)`
         """
 
@@ -393,14 +393,14 @@ class Privacy(ModelloSemplice, ConMarcaTemporale):
     # ORDINE CRESCENTE (Aperto > Ristretto)
     POLICY_PUBBLICO = 8
     POLICY_REGISTRATI = 6
-    POLICY_COMITATO = 4
+    POLICY_SEDE = 4
     POLICY_RISTRETTO = 2
     POLICY_PRIVATO = 0
     POLICY = (
         (POLICY_PUBBLICO, "Pubblico"),
         (POLICY_REGISTRATI, "Utenti di Gaia"),
-        (POLICY_COMITATO, "A tutti i membri del mio Comitato"),
-        (POLICY_RISTRETTO, "Ai Responsabili del mio Comitato"),
+        (POLICY_SEDE, "A tutti i membri del mio Sede"),
+        (POLICY_RISTRETTO, "Ai Responsabili del mio Sede"),
         (POLICY_PRIVATO, "Solo a me")
     )
 
@@ -495,7 +495,7 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
 
 class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzazioni):
     """
-    Rappresenta un'appartenenza di una Persona ad un Comitato.
+    Rappresenta un'appartenenza di una Persona ad un Sede.
     """
 
     class Meta:
@@ -531,7 +531,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     CONDIZIONE_ATTUALE_AGGIUNTIVA = Q(confermata=True)
 
     persona = models.ForeignKey("anagrafica.Persona", related_name="appartenenze", db_index=True)
-    comitato = models.ForeignKey("anagrafica.Comitato", related_name="appartenenze", db_index=True)
+    sede = models.ForeignKey("anagrafica.Sede", related_name="appartenenze", db_index=True)
 
     def richiedi(self):
         """
@@ -542,9 +542,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         self.autorizzazione_richiedi(
             self.persona,
             (
-                (PRESIDENTE, self.comitato),
-                (VICEPRESIDENTE, self.comitato),
-                (UFFICIO_SOCI, self.comitato)
+                (PRESIDENTE, self.sede),
+                (VICEPRESIDENTE, self.sede),
+                (UFFICIO_SOCI, self.sede)
             )
         )
 
@@ -560,15 +560,16 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         pass
 
 
-class Comitato(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
+class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
 
     class Meta:
-        verbose_name_plural = "Comitati"
+        verbose_name = "Sede CRI"
+        verbose_name_plural = "Sedi CRI"
         app_label = 'anagrafica'
 
     # Nome gia' presente in Modello Albero
 
-    # Tipologia del comitato
+    # Tipologia della sede
     COMITATO = 'C'
     MILITARE = 'M'
     TIPO = (
@@ -595,7 +596,7 @@ class Comitato(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
     membri = models.ManyToManyField(Persona, through='Appartenenza')
 
     # Q: Come ottengo i dati del comitato?
-    # A: Usa la funzione Comitato.ottieni, ad esempio, Comitato.ottieni('partita_iva').
+    # A: Usa la funzione Sede.ottieni, ad esempio, Sede.ottieni('partita_iva').
     #    Questa funzione cerca la prima partita IVA disponibile a "Salire" l'albero.
 
     def ottieni(self, nome_campo):
@@ -613,20 +614,20 @@ class Comitato(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
                 return None
             attuale = attuale.genitore
 
-    def appartenenze_attuali(self, membro=None, comitati_figli=False, al_giorno=date.today(), **kwargs):
+    def appartenenze_attuali(self, membro=None, figli=False, al_giorno=date.today(), **kwargs):
         """
         Ritorna l'elenco di appartenenze attuali ad un determinato giorno.
         Altri parametri (**kwargs), es. tipo=Appartenenza.ESTESO possono essere aggiunti.
 
         :param membro: Se specificato, filtra per tipologia di membro (es. Appartenenza.VOLONTARIO).
-        :param comitati_figli: Se vero, ricerca anche tra i comitati figli.
+        :param figli: Se vero, ricerca anche tra i comitati figli.
         :param al_giorno: Default oggi. Giorno da controllare.
         :return: Ricerca filtrata per appartenenze attuali.
         """
 
         # Inizia la ricerca dalla mia discendenza o da me solamente?
-        if comitati_figli:
-            f = Appartenenza.objects.filter(comitato__in=self.get_descendants(True))
+        if figli:
+            f = Appartenenza.objects.filter(sede__in=self.get_descendants(True))
         else:
             f = self.appartenenze
 
@@ -642,32 +643,32 @@ class Comitato(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
             else:
                 f = f.filter(membro=membro)
 
-        # NB: Vengono collegate via Join le tabelle Persona e Comitato per maggiore efficienza.
-        return f.select_related('persona', 'comitato')
+        # NB: Vengono collegate via Join le tabelle Persona e Sede per maggiore efficienza.
+        return f.select_related('persona', 'sede')
 
-    def membri_attuali(self, membro=None, comitati_figli=False, **kwargs):
+    def membri_attuali(self, membro=None, figli=False, **kwargs):
         """
-        Ritorna i membri attuali, eventualmente filtrati per tipo, del comitato.
+        Ritorna i membri attuali, eventualmente filtrati per tipo, del sede.
         :param membro: Se specificato, filtra per tipologia di membro (es. Appartenenza.VOLONTARIO).
-        :param comitati_figli: Se vero, ricerca anche tra i comitati figli.
+        :param figli: Se vero, ricerca anche tra i comitati figli.
         :return:
         """
         # NB: Questo e' efficiente perche' appartenenze_attuali risolve l'oggetto Persona
         #     via una Join (i.e. non viene fatta una nuova query per ogni elemento).
-        a = self.appartenenze_attuali(membro=membro, comitati_figli=comitati_figli, **kwargs)
+        a = self.appartenenze_attuali(membro=membro, figli=figli, **kwargs)
         return [x.persona for x in a]
 
-    def appartenenze_persona(self, persona, membro=None, comitati_figli=False, **kwargs):
+    def appartenenze_persona(self, persona, membro=None, figli=False, **kwargs):
         """
-        Ottiene le appartenenze attuali di una data persona, o None se la persona non appartiene al comitato.
+        Ottiene le appartenenze attuali di una data persona, o None se la persona non appartiene al sede.
         """
-        self.appartenenze_attuali(membro=membro, comitati_figli=comitati_figli, persona=persona, **kwargs)
+        self.appartenenze_attuali(membro=membro, figli=figli, persona=persona, **kwargs)
 
-    def ha_membro(self, persona, membro=None, comitati_figli=False, **kwargs):
+    def ha_membro(self, persona, membro=None, figli=False, **kwargs):
         """
-        Controlla se una persona e' membro del comitato o meno.
+        Controlla se una persona e' membro del sede o meno.
         """
-        return self.appartenenze_persona(persona, membro=membro, comitati_figli=comitati_figli, **kwargs).exists()
+        return self.appartenenze_persona(persona, membro=membro, figli=figli, **kwargs).exists()
 
     def __str__(self):
         return self.nome

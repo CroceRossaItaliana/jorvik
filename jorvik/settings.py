@@ -32,7 +32,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.gis',
     # Librerie terze
-    'oauth2_provider',
+    # 'oauth2_provider',
     'rest_framework',
     'mptt',
     'safedelete',

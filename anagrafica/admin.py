@@ -1,6 +1,6 @@
 from django.contrib import admin
 from mptt.admin import MPTTModelAdmin
-from anagrafica.models import Persona, Comitato, Appartenenza, Delega, Documento, Fototessera
+from anagrafica.models import Persona, Sede, Appartenenza, Delega, Documento, Fototessera
 
 # Aggiugni al pannello di amministrazione
 @admin.register(Persona)
@@ -10,8 +10,8 @@ class AdminPersona(admin.ModelAdmin):
     list_filter = ('stato', )
 
 
-@admin.register(Comitato)
-class AdminComitato(MPTTModelAdmin):
+@admin.register(Sede)
+class Adminsede(MPTTModelAdmin):
     search_fields = ['nome', 'genitore__nome']
     list_display = ('nome', 'genitore', 'tipo', 'estensione', 'creazione', 'ultima_modifica', )
     list_filter = ('tipo', 'estensione')
@@ -21,8 +21,8 @@ class AdminComitato(MPTTModelAdmin):
 @admin.register(Appartenenza)
 class AdminAppartenenza(admin.ModelAdmin):
     search_fields = ["tipo", "membro", "persona__nome", "persona__cognome", "persona__codice_fiscale",
-                     "persona__utenza__email", "comitato__nome"]
-    list_display = ("persona", "comitato", "tipo", "attuale", "inizio", "fine", "creazione")
+                     "persona__utenza__email", "sede__nome"]
+    list_display = ("persona", "sede", "tipo", "attuale", "inizio", "fine", "creazione")
     list_filter = ("membro", "tipo")
 
 

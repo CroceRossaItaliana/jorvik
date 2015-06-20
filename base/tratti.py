@@ -28,26 +28,26 @@ class ConMarcaTemporale(models.Model):
 
 class ConEstensione(models.Model):
     """
-    Aggiunge un Comitato ed un livello di estensione dell'oggetto.
+    Aggiunge un Sede ed un livello di estensione dell'oggetto.
     """
 
-    comitato = models.ForeignKey("anagrafica.Comitato", db_index=True)
+    sede = models.ForeignKey("anagrafica.Sede", db_index=True)
     estensione = models.CharField("Estensione", max_length=1, choices=ESTENSIONE, db_index=True)
 
-    def possibili_estensioni(self, comitato=None):
+    def possibili_estensioni(self, sede=None):
         """
-        Dato un comitato, od il comitato gia' salvato, ritorna le possibili estensioni.
-        :param comitato: Opzionale. Il comitato. Quello gia' salvato se non specificato.
+        Dato un sede, od il sede gia' salvato, ritorna le possibili estensioni.
+        :param sede: Opzionale. Il sede. Quello gia' salvato se non specificato.
         :return: (chiave, valore), (chiave, valore)
         """
 
-        if comitato is None:
-            comitato = self.comitato
+        if sede is None:
+            sede = self.sede
 
         return (
             (chiave, valore) for (chiave, valore) in ESTENSIONE
-            if chiave in ESTENSIONE_MINORE[comitato.estensione]
-            or chiave == comitato.estensione
+            if chiave in ESTENSIONE_MINORE[sede.estensione]
+            or chiave == sede.estensione
         )
 
 

@@ -1,14 +1,14 @@
 from django import forms
 from django.forms import ModelForm
 import mptt
-from anagrafica.models import Comitato, Persona, Appartenenza
+from anagrafica.models import Sede, Persona, Appartenenza
 from autenticazione.models import Utenza
 
 
 class ModuloStepComitato(ModelForm):
     class Meta:
         model = Appartenenza
-        fields = ['comitato', 'inizio', ]
+        fields = ['sede', 'inizio', ]
 
     inizio = forms.DateField(label="Data di Ingresso in CRI")
 
