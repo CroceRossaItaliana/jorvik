@@ -21,8 +21,7 @@ from django.db import models
 from django.db.models import Q
 import phonenumbers
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
-from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI
-from anagrafica.permessi.applicazioni import VICEPRESIDENTE
+from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, APPLICAZIONI_SLUG_DICT, PERMESSI_NOMI_DICT
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
@@ -115,7 +114,7 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
         return None
 
     def __str__(self):
-        return self.nome_completo()
+        return self.nome_completo
 
     class Meta:
         verbose_name_plural = "Persone"
@@ -360,6 +359,18 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
         """
         return self.membro(self, Appartenenza.INFERMIERA, **kwargs)
 
+    def applicazioni_disponibili(self):
+        lista = []
+
+        if self.volontario:
+            lista += [('utente', 'Volontario')]
+        else:
+            lista += [('utente', 'Utente')]
+
+        for d in self.deleghe_attuali():
+            lista += [(APPLICAZIONI_SLUG_DICT[d.tipo], PERMESSI_NOMI_DICT[d.tipo])]
+
+        return lista
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """
@@ -734,7 +745,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale):
     """
     Rappresenta una pratica di trasferimento.
     """
-    appartenenza = models.ForeignKey(Appartenenza, related_name='dimissione')
+    appartenenza = models.ForeignKey(Appartenenza, related_name='trasferimento')
 
 
 class Estensione(ModelloSemplice, ConMarcaTemporale):
@@ -742,4 +753,4 @@ class Estensione(ModelloSemplice, ConMarcaTemporale):
     Rappresenta una pratica di estensione.
     """
 
-    appartenenza = models.ForeignKey(Appartenenza, related_name='dimissione')
+    appartenenza = models.ForeignKey(Appartenenza, related_name='estensione')

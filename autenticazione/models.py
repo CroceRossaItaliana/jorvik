@@ -59,7 +59,7 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
 
     def get_full_name(self):
         if self.persona:
-            return self.persona.nome_completo()
+            return self.persona.nome_completo
         return "Scollegato #" + str(self.id)
 
     def nome_completo(self):
@@ -77,4 +77,12 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
     def email_user(self, subject, message, from_email=None):
         send_mail(subject, message, from_email, [self.email])
 
-
+    @property
+    def applicazioni_disponibili(self):
+        """
+        Ritorna un elenco di applicazioni disponibili all'utenza
+        :return: dict (slug, verbose name)
+        """
+        if not self.persona:
+            return None
+        return self.persona.applicazioni_disponibili

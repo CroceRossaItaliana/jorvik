@@ -272,13 +272,16 @@ class Allegato(ModelloSemplice, ConMarcaTemporale, ConScadenza):
     Rappresenta un allegato generico in database, con potenziale scadenza.
     """
 
+    class Meta:
+        verbose_name_plural = "Allegati"
+
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="allegato_come_oggetto")
     oggetto_id = models.PositiveIntegerField(db_index=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
     file = models.FileField("File", upload_to=generatore_nome_file('allegati/'))
 
 
-class ConAllegati():
+class ConAllegati:
     """
     Aggiunge la possibilita' di allegare file all'oggetto, anche con scadenza.
     """

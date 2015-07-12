@@ -8,7 +8,8 @@ __author__ = 'alfioemanuele'
 class Patente(ModelloSemplice, ConMarcaTemporale):
 
     class Meta:
-        verbose_name_plural = "Patenti"
+        verbose_name = "Patente di Guida"
+        verbose_name_plural = "Patenti di Guida"
 
     CIVILE = 'CIV'
     CRI = 'CRI'

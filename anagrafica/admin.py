@@ -22,8 +22,8 @@ class Adminsede(MPTTModelAdmin):
 class AdminAppartenenza(admin.ModelAdmin):
     search_fields = ["tipo", "membro", "persona__nome", "persona__cognome", "persona__codice_fiscale",
                      "persona__utenza__email", "sede__nome"]
-    list_display = ("persona", "sede", "tipo", "attuale", "inizio", "fine", "creazione")
-    list_filter = ("membro", "tipo")
+    list_display = ("persona", "sede", "attuale", "inizio", "fine", "creazione")
+    list_filter = ("membro",)
 
 
 # admin.site.register(Delega)

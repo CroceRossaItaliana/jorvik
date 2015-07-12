@@ -69,4 +69,13 @@ def pagina_privata(funzione, pagina=LOGIN_REDIRECT_URL):
     :return: (decoratore)
     """
 
-    return login_required(funzione, login_url=pagina)
+    def _pagina_anonima(request, *args, **kwargs):
+
+        (template, contesto, richiesta) = _spacchetta(funzione(request, *args, **kwargs))
+
+        if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
+            return richiesta  # Passa attraverso.
+
+        return render_to_response(template, RequestContext(request, contesto))
+
+    return login_required(_pagina_anonima, login_url=LOGIN_REDIRECT_URL)

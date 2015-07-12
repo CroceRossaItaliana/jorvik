@@ -36,6 +36,9 @@ urlpatterns = [
     url(r'^informazioni/sicurezza/$', 'base.viste.sicurezza'),
     url(r'^informazioni/condizioni/$', 'base.viste.condizioni'),
 
+    # Applicazioni
+    url(r'^utente/$', 'anagrafica.viste.utente'),
+
     # Amministrazione
     url(r'^admin/', include(admin.site.urls)),
 

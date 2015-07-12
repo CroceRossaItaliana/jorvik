@@ -41,19 +41,6 @@ def permessi_presidente(sede, oggetto):
     return None
 
 
-def permessi_vicepresidente(sede, oggetto):
-    """
-    Permessi della delega di VICE PRESIDENTE.
-
-    :param sede: Il sede di cui si e' vice presidenti.
-    :param oggetto: L'oggetto per cui controllare i permessi.
-    :return: MODIFICA, LETTURA o None.
-    """
-
-    # Gli stessi permessi del presidente
-    return permessi_presidente(sede, oggetto)
-
-
 def permessi_ufficio_soci(sede, oggetto):
     """
     Permessi della delega di UFFICIO SOCI.

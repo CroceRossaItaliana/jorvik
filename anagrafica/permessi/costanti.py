@@ -5,13 +5,12 @@
 Questo file gestisce i permessi in Gaia.
 """
 from anagrafica.permessi.applicazioni import PRESIDENTE
-from anagrafica.permessi.applicazioni import VICEPRESIDENTE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.applicazioni import DELEGATO_AREA
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
 from anagrafica.permessi.applicazioni import REFERENTE
 
-from anagrafica.permessi.funzioni import permessi_presidente, permessi_vicepresidente, permessi_ufficio_soci, \
+from anagrafica.permessi.funzioni import permessi_presidente, permessi_ufficio_soci, \
     permessi_delegato_area, permessi_responsabile_area, permessi_referente
 from anagrafica.models import Sede
 from attivita.models import Attivita, Area
@@ -28,7 +27,6 @@ from attivita.models import Attivita, Area
 # Oggetti assegnati
 PERMESSI_OGGETTI = (
     (PRESIDENTE,        Sede),
-    (VICEPRESIDENTE,    Sede),
     (UFFICIO_SOCI,      Sede),
     (DELEGATO_AREA,     Area),
     (RESPONSABILE_AREA, Area),
@@ -56,7 +54,6 @@ LETTURA = 10
 # Nota bene: Non inserire () dopo il nome della funzione.
 PERMESSI_FUNZIONI = (
     (PRESIDENTE,        permessi_presidente),
-    (VICEPRESIDENTE,    permessi_vicepresidente),
     (UFFICIO_SOCI,      permessi_ufficio_soci),
     (DELEGATO_AREA,     permessi_delegato_area),
     (RESPONSABILE_AREA, permessi_responsabile_area),

@@ -8,7 +8,8 @@ __author__ = 'alfioemanuele'
 class Competenza(ModelloSemplice):
 
     class Meta:
-        verbose_name_plural = "Competenze"
+        verbose_name = "Competenza CRI"
+        verbose_name_plural = "Competenze CRI"
 
 
 class CompetenzaPersonale(ModelloSemplice, ConMarcaTemporale):

@@ -9,7 +9,7 @@ from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
 from anagrafica.models import Persona
-from autenticazione.funzioni import pagina_anonima
+from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 
 TIPO_VOLONTARIO = 'volontario'
@@ -183,3 +183,9 @@ def registrati_conferma(request, tipo):
         raise ValueError("Non so come gestire questa iscrizione.")
 
     return redirect('/manutenzione/')
+
+
+@pagina_privata
+def utente(request):
+
+    return 'anagrafica_utente_home.html', {}
