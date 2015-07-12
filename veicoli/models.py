@@ -117,7 +117,7 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
         (METANO, "Metano"),
         (ELETTRICA, "Elettrica"),
     )
-    alimentazione = models.CharField("Alimentazione (P.3)", choices=ALIMENTAZIONE, default=BENZINA)
+    alimentazione = models.CharField("Alimentazione (P.3)", max_length=1, choices=ALIMENTAZIONE, default=BENZINA)
 
     # Sezione S
     posti = models.SmallIntegerField("N. Posti a sedere conducente compreso (S.1)", default=5)
