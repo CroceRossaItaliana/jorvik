@@ -187,13 +187,7 @@ def registrati_conferma(request, tipo):
 
 
 @pagina_privata
-def utente(request):
-
-    p = request.user.persona
-    dest = [p]
-
-    print(p)
-    print(dest)
+def utente(request, me):
 
     Messaggio.costruisci_e_invia(
         oggetto="Prova di invio",
@@ -201,8 +195,8 @@ def utente(request):
         corpo={
             "testo": "Questo e' un messaggio di prova."
         },
-        mittente=p,
-        destinatari=dest
+        mittente=me,
+        destinatari=[me]
     )
 
     return 'anagrafica_utente_home.html'

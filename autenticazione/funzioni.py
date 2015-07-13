@@ -27,11 +27,13 @@ def pagina_pubblica(funzione):
 
     def _pagina_pubblica(request, *args, **kwargs):
 
-        (template, contesto, richiesta) = _spacchetta(funzione(request, *args, **kwargs))
+        request.me = request.user.persona if request.user and hasattr(request.user, 'persona') else None
+        (template, contesto, richiesta) = _spacchetta(funzione(request, request.me, *args, **kwargs))
 
         if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
             return richiesta  # Passa attraverso.
 
+        contesto.update({"me": request.me})
         return render_to_response(template, RequestContext(request, contesto))
 
     return _pagina_pubblica
@@ -56,6 +58,7 @@ def pagina_anonima(funzione, pagina='/utente/'):
         if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
             return richiesta  # Passa attraverso.
 
+        contesto.update({"me": None})
         return render_to_response(template, RequestContext(request, contesto))
 
     return _pagina_anonima
@@ -76,11 +79,13 @@ def pagina_privata(funzione, pagina=LOGIN_REDIRECT_URL):
         if request.user is not None and request.user.applicazioni_disponibili is None:
             return redirect('/errore/orfano/')
 
-        (template, contesto, richiesta) = _spacchetta(funzione(request, *args, **kwargs))
+        request.me = request.user.persona
+        (template, contesto, richiesta) = _spacchetta(funzione(request, request.me, *args, **kwargs))
 
         if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
             return richiesta  # Passa attraverso.
 
+        contesto.update({"me": request.me})
         return render_to_response(template, RequestContext(request, contesto))
 
     return _pagina_privata

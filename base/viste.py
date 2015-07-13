@@ -8,14 +8,14 @@ from base.forms import ModuloRecuperaPassword
 
 
 @pagina_pubblica
-def index(request):
+def index(request, me):
     contesto = {
         'numero_comitati': Sede.objects.count(),
     }
     return 'base_home.html', contesto
 
 @pagina_pubblica
-def manutenzione(request):
+def manutenzione(request, me):
     """
     Mostra semplicemente la pagina di manutenzione ed esce.
     """
@@ -38,28 +38,28 @@ def recupera_password(request):
         return 'base_recupera_password.html', contesto
 
 @pagina_pubblica
-def informazioni(request):
+def informazioni(request, me):
     """
     Mostra semplicemente la pagina diinformazioni ed esce.
     """
     return 'base_informazioni.html'
 
 @pagina_pubblica
-def informazioni_aggiornamenti(request):
+def informazioni_aggiornamenti(request, me):
     """
     Mostra semplicemente la pagina degli aggiornamenti ed esce.
     """
     return 'base_informazioni_aggiornamenti.html'
 
 @pagina_pubblica
-def informazioni_sicurezza(request):
+def informazioni_sicurezza(request, me):
     """
     Mostra semplicemente la pagina degli aggiornamenti ed esce.
     """
     return 'base_informazioni_sicurezza.html'
 
 @pagina_pubblica
-def informazioni_condizioni(request):
+def informazioni_condizioni(request, me):
     """
     Mostra semplicemente la pagina delle condizioni ed esce.
     """

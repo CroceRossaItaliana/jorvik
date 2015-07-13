@@ -122,7 +122,7 @@ TEMPLATE_DIRS = (
 
 LOGIN_URL = '/login/'
 LOGOUT_URL = '/logout/'
-LOGIN_REDIRECT_URL = '/login/'
+LOGIN_REDIRECT_URL = '/utente/'
 SESSION_COOKIE_PATH = '/'
 
 REST_FRAMEWORK = {

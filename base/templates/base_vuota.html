@@ -19,11 +19,11 @@
           </a>
         </div>
         <div id="navbar" class="navbar-collapse collapse allinea-destra">
-            {% if user.is_authenticated %}
+            {% if me %}
                 <p class="navbar-btn btn-groupgi">
                     <a class="btn btn-sm btn-primary" href="/utente/">
                         <i class="fa fa-user"></i>
-                        Ciao, <strong>{{ user.nome }}</strong>
+                        Ciao, <strong>{{ me.nome }}</strong>
                     </a>
                     <a class="btn btn-sm btn-info" href="/logout/">
                         <i class="fa fa-sign-out"></i>
