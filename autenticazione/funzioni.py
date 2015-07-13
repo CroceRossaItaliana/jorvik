@@ -8,6 +8,7 @@ __author__ = 'alfioemanuele'
 
 def _spacchetta(pacchetto):
     # Controlla se tupla (pagina, contesto) oppure solo 'pagina.html'.
+    print("Pacchetto: " + str(pacchetto))
     if isinstance(pacchetto, tuple):
         (template, contesto, richiesta) = pacchetto + (pacchetto, )
     elif isinstance(pacchetto, str):
@@ -47,13 +48,13 @@ def pagina_anonima(funzione, pagina='/utente/'):
 
     def _pagina_anonima(request, *args, **kwargs):
 
+        if request.user.is_authenticated():
+            return redirect(pagina)
+
         (template, contesto, richiesta) = _spacchetta(funzione(request, *args, **kwargs))
 
         if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
             return richiesta  # Passa attraverso.
-
-        if request.user.is_authenticated():
-            return redirect(pagina)
 
         return render_to_response(template, RequestContext(request, contesto))
 
@@ -69,7 +70,11 @@ def pagina_privata(funzione, pagina=LOGIN_REDIRECT_URL):
     :return: (decoratore)
     """
 
-    def _pagina_anonima(request, *args, **kwargs):
+    @login_required(login_url=LOGIN_REDIRECT_URL)
+    def _pagina_privata(request, *args, **kwargs):
+
+        if request.user is not None and request.user.applicazioni_disponibili is None:
+            return redirect('/errore/orfano/')
 
         (template, contesto, richiesta) = _spacchetta(funzione(request, *args, **kwargs))
 
@@ -78,4 +83,4 @@ def pagina_privata(funzione, pagina=LOGIN_REDIRECT_URL):
 
         return render_to_response(template, RequestContext(request, contesto))
 
-    return login_required(_pagina_anonima, login_url=LOGIN_REDIRECT_URL)
+    return _pagina_privata

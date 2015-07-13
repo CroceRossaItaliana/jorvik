@@ -104,6 +104,14 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
         return self.email_utenza
 
     @property
+    def email_firma(self):
+        """
+        La firma e-mail dell'utente (es. "Mario Rossi <mario@rossi.it>")
+        :return: Stringa.
+        """
+        return self.nome_completo + " <" + self.email_contatto + ">"
+
+    @property
     def email_utenza(self):
         """
         Restituisce l'email dell'utenza, se presente.
@@ -322,50 +330,51 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
         """
         Controlla se membro volontario
         """
-        return self.membro(self, Appartenenza.VOLONTARIO, **kwargs)
+        return self.membro(Appartenenza.VOLONTARIO, **kwargs)
 
     @property
     def ordinario(self, **kwargs):
         """
         Controlla se membro ordinario
         """
-        return self.membro(self, Appartenenza.ORDINARIO, **kwargs)
+        return self.membro(Appartenenza.ORDINARIO, **kwargs)
 
     @property
     def dipendente(self, **kwargs):
         """
         Controlla se membro dipendente
         """
-        return self.membro(self, Appartenenza.DIPENDENTE, **kwargs)
+        return self.membro(Appartenenza.DIPENDENTE, **kwargs)
 
     @property
     def donatore(self, **kwargs):
         """
         Controlla se membro donatore
         """
-        return self.membro(self, Appartenenza.DONATORE, **kwargs)
+        return self.membro(Appartenenza.DONATORE, **kwargs)
 
     @property
     def militare(self, **kwargs):
         """
         Controlla se membro militare
         """
-        return self.membro(self, Appartenenza.MILITARE, **kwargs)
+        return self.membro(Appartenenza.MILITARE, **kwargs)
 
     @property
     def infermiera(self, **kwargs):
         """
         Controlla se membro infermiera
         """
-        return self.membro(self, Appartenenza.INFERMIERA, **kwargs)
+        return self.membro(Appartenenza.INFERMIERA, **kwargs)
 
+    @property
     def applicazioni_disponibili(self):
         lista = []
 
         if self.volontario:
-            lista += [('utente', 'Volontario')]
+            lista += [('/utente/', 'Volontario')]
         else:
-            lista += [('utente', 'Utente')]
+            lista += [('/utente/', 'Utente')]
 
         for d in self.deleghe_attuali():
             lista += [(APPLICAZIONI_SLUG_DICT[d.tipo], PERMESSI_NOMI_DICT[d.tipo])]

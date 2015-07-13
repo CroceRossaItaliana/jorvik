@@ -45,21 +45,21 @@ def informazioni(request):
     return 'base_informazioni.html'
 
 @pagina_pubblica
-def aggiornamenti(request):
+def informazioni_aggiornamenti(request):
     """
     Mostra semplicemente la pagina degli aggiornamenti ed esce.
     """
     return 'base_informazioni_aggiornamenti.html'
 
 @pagina_pubblica
-def sicurezza(request):
+def informazioni_sicurezza(request):
     """
     Mostra semplicemente la pagina degli aggiornamenti ed esce.
     """
     return 'base_informazioni_sicurezza.html'
 
 @pagina_pubblica
-def condizioni(request):
+def informazioni_condizioni(request):
     """
     Mostra semplicemente la pagina delle condizioni ed esce.
     """

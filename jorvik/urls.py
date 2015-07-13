@@ -6,9 +6,9 @@ Questo modulo contiene la configurazione per il routing degli URL.
 
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
-from django.core.urlresolvers import reverse
 
-print("Getto gli URLS")
+handler404 = 'base.errori.non_trovato'
+
 urlpatterns = [
 
     # Home page!
@@ -22,6 +22,10 @@ urlpatterns = [
     # Modalita' manutenzione
     url(r'^manutenzione/$', 'base.viste.manutenzione'),
 
+    # Pagina di errore
+    url(r'^errore/404/$', 'base.errori.non_trovato'),
+    url(r'^errore/orfano/$', 'base.errori.orfano'),
+
     # Login e logout
     url(r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'base_login.html'}),
     url(r'^logout/$', 'django.contrib.auth.views.logout', {'template_name': 'base_logout.html'}),
@@ -32,9 +36,9 @@ urlpatterns = [
 
     # Informazioni
     url(r'^informazioni/$', 'base.viste.informazioni'),
-    url(r'^informazioni/aggiornamenti/$', 'base.viste.aggiornamenti'),
-    url(r'^informazioni/sicurezza/$', 'base.viste.sicurezza'),
-    url(r'^informazioni/condizioni/$', 'base.viste.condizioni'),
+    url(r'^informazioni/aggiornamenti/$', 'base.viste.informazioni_aggiornamenti'),
+    url(r'^informazioni/sicurezza/$', 'base.viste.informazioni_sicurezza'),
+    url(r'^informazioni/condizioni/$', 'base.viste.informazioni_condizioni'),
 
     # Applicazioni
     url(r'^utente/$', 'anagrafica.viste.utente'),
@@ -45,4 +49,3 @@ urlpatterns = [
     # OAuth 2.0
     # url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 ]
-

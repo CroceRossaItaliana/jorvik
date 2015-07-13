@@ -11,6 +11,7 @@ from anagrafica.forms import ModuloStepAnagrafica
 from anagrafica.models import Persona
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
+from posta.models import Messaggio
 
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
@@ -188,4 +189,20 @@ def registrati_conferma(request, tipo):
 @pagina_privata
 def utente(request):
 
-    return 'anagrafica_utente_home.html', {}
+    p = request.user.persona
+    dest = [p]
+
+    print(p)
+    print(dest)
+
+    Messaggio.costruisci_e_invia(
+        oggetto="Prova di invio",
+        modello="email_testo.html",
+        corpo={
+            "testo": "Questo e' un messaggio di prova."
+        },
+        mittente=p,
+        destinatari=dest
+    )
+
+    return 'anagrafica_utente_home.html'

@@ -16,6 +16,7 @@ class Autoparco(ModelloSemplice, ConEstensione, ConMarcaTemporale):
         verbose_name_plural = "Autoparchi"
 
 
+
 class Veicolo(ModelloSemplice, ConMarcaTemporale):
     """
     Rappresenta un Veicolo CRI, immatricolato o meno.
