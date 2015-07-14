@@ -1,5 +1,5 @@
 [client]
 database = jorvik
 user = root
-password = Look,
+password = 
 default-character-set = utf8
