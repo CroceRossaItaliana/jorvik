@@ -1,16 +1,19 @@
 from django.http import HttpResponse
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.contrib.auth import login
 
 # Le viste base vanno qui.
-from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali
+from django.views.generic import ListView
+from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
+    ModuloCreazioneDocumento
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
-from anagrafica.models import Persona
+from anagrafica.models import Persona, Documento
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
+from base.files import Zip
 from posta.models import Messaggio
 
 TIPO_VOLONTARIO = 'volontario'
@@ -188,15 +191,82 @@ def registrati_conferma(request, tipo):
 
 @pagina_privata
 def utente(request, me):
-
-    Messaggio.costruisci_e_invia(
-        oggetto="Prova di invio",
-        modello="email_testo.html",
-        corpo={
-            "testo": "Questo e' un messaggio di prova."
-        },
-        mittente=me,
-        destinatari=[me]
-    )
-
     return 'anagrafica_utente_home.html'
+
+@pagina_privata
+def utente_anagrafica(request, me):
+
+    contesto = {}
+
+    if request.method == "POST":
+
+        modulo_dati = ModuloModificaAnagrafica(request.POST, instance=me)
+        modulo_avatar = ModuloModificaAvatar(request.POST, request.FILES, instance=me)
+
+        if modulo_dati.is_valid():
+            modulo_dati.save()
+
+        if modulo_avatar.is_valid():
+            modulo_avatar.save()
+
+    else:
+
+        modulo_dati = ModuloModificaAnagrafica(instance=me)
+        modulo_avatar = ModuloModificaAvatar(instance=me)
+
+    contesto.update({
+        "modulo_dati": modulo_dati,
+        "modulo_avatar": modulo_avatar
+    })
+
+    print(modulo_dati.errors)
+    print(modulo_avatar.errors)
+
+    return 'anagrafica_utente_anagrafica.html', contesto
+
+
+@pagina_privata
+def utente_documenti(request, me):
+
+    contesto = {
+        "documenti": me.documenti.all()
+    }
+
+    if request.method == "POST":
+
+        nuovo_doc = Documento(persona=me)
+        modulo_aggiunta = ModuloCreazioneDocumento(request.POST, request.FILES, instance=nuovo_doc)
+
+        if modulo_aggiunta.is_valid():
+            modulo_aggiunta.save()
+
+    else:
+
+        modulo_aggiunta = ModuloCreazioneDocumento()
+
+    contesto.update({"modulo_aggiunta": modulo_aggiunta})
+
+    return 'anagrafica_utente_documenti.html', contesto
+
+
+@pagina_privata
+def utente_documenti_cancella(request, me, pk):
+
+    doc = get_object_or_404(Documento, pk=pk)
+
+    if not doc.persona == me:
+        return redirect('/errore/permessi/')
+
+    doc.delete()
+    return redirect('/utente/documenti/')
+
+
+@pagina_privata
+def utente_documenti_zip(request, me):
+
+    z = Zip(oggetto=me)
+    for d in me.documenti.all():
+        z.aggiungi_file(d.file.path)
+    z.comprimi_e_salva(nome='Documenti.zip')
+
+    return redirect(z.download_url)

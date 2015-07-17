@@ -14,7 +14,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/">
+          <a class="navbar-brand" {% if me %}href="/utente/"{% else %}href="/"{% endif %}>
               Gaia <strong>Jorvik</strong><sup class="piu-piccolo">Beta</sup>
           </a>
         </div>

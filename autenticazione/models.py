@@ -59,7 +59,7 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
 
     def get_full_name(self):
         if self.persona:
-            return self.persona.nome_completo()
+            return self.persona.nome_completo
         return "Scollegato #" + str(self.id)
 
     def nome_completo(self):

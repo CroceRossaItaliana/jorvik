@@ -223,7 +223,7 @@ class ConAutorizzazioni(models.Model):
         pass
 
 
-class ConScadenza():
+class ConScadenza:
     """
     Aggiunge un attributo DateTimeField scadenza.
     """
@@ -275,10 +275,20 @@ class Allegato(ModelloSemplice, ConMarcaTemporale, ConScadenza):
     class Meta:
         verbose_name_plural = "Allegati"
 
+    GENERATORE_NOME_FILE = generatore_nome_file('allegati/')
+
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="allegato_come_oggetto")
     oggetto_id = models.PositiveIntegerField(db_index=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
-    file = models.FileField("File", upload_to=generatore_nome_file('allegati/'))
+    file = models.FileField("File", upload_to=GENERATORE_NOME_FILE)
+    nome = models.CharField("Nome file", max_length=64, default="File", blank=False, null=False)
+
+    @property
+    def download_url(self):
+        """
+        Ritorna l'URL per il download del file.
+        """
+        return self.file.url
 
 
 class ConAllegati:

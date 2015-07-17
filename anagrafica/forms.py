@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import ModelForm
 import mptt
-from anagrafica.models import Sede, Persona, Appartenenza
+from anagrafica.models import Sede, Persona, Appartenenza, Documento
 from autenticazione.models import Utenza
 
 
@@ -52,6 +52,26 @@ class ModuloStepCredenziali(forms.Form):
 class ModuloStepAnagrafica(ModelForm):
     class Meta:
         model = Persona
-        fields = ['nome', 'cognome', 'data_nascita', 'provincia_nascita', 'stato_nascita',
+        fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita', 'provincia_nascita', 'stato_nascita',
                   'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
                   'cap_residenza']
+
+
+class ModuloModificaAnagrafica(ModelForm):
+    class Meta:
+        model = Persona
+        fields = ['data_nascita', 'comune_nascita', 'provincia_nascita', 'stato_nascita',
+                  'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
+                  'cap_residenza']
+
+
+class ModuloModificaAvatar(ModelForm):
+    class Meta:
+        model = Persona
+        fields = ['avatar']
+
+
+class ModuloCreazioneDocumento(ModelForm):
+    class Meta:
+        model = Documento
+        fields = ['tipo', 'file']

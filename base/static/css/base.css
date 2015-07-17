@@ -121,3 +121,15 @@
 .testo-ombra-nulla {
     text-shadow: none;
 }
+
+#sezione {
+    padding: 0px 0px;
+}
+
+#sezione li a {
+    padding: 5px 10px;
+}
+
+#sezione hr {
+    margin: 5px 0px;
+}

@@ -1,0 +1,100 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Gestione Documenti{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="alert bg-info">
+        <p>
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire i tuoi documenti.
+        </p>
+
+    </div>
+
+    <form action="/utente/documenti/" method="POST" enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <div class="row">
+
+            <div class="col-lg-8">
+
+                <h4><i class="fa fa-folder-o fa-fw"></i> Documenti caricati</h4>
+
+                <table class="table table-condensed table-bordered table-responsive">
+
+                    <thead>
+                        <th>Data caricamento</th>
+                        <th>Tipo documento</th>
+                        <th>Visualizza</th>
+                        <th>Cancella</th>
+                    </thead>
+
+                    <tbody>
+                    {% for d in documenti %}
+                        <tr>
+                            <td>{{ d.creazione }}</td>
+                            <td>{{ d.get_tipo_display }}</td>
+                            <td>
+                                <a href="{{ d.file.url }}" title="Scarica il documento">
+                                    <i class="fa fa-download"></i> Scarica ({{ d.file.size|filesizeformat }})
+                                </a>
+                            </td>
+                            <td>
+                                <a href="/utente/documenti/cancella/{{ d.pk }}/" title="Cancella il documento">
+                                    <i class="fa fa-remove"></i> Cancella
+                                </a>
+                            </td>
+                        </tr>
+
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="bg-warning">
+                                <i class="fa fa-info"></i> Nessun documento caricato.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+
+                    </tbody>
+
+                </table>
+
+                {% if documenti %}
+                    <a class="btn btn-default btn-block btn-sm" href="/utente/documenti/zip/">
+                        <i class="fa fa-download fa-fw"></i>
+                        Scarica tutti i documenti (ZIP)
+                    </a>
+                {% endif %}
+
+
+
+            </div>
+
+            <div class="col-lg-4">
+
+                <h4><i class="fa fa-plus"></i> Aggiungi documento</h4>
+
+                {% bootstrap_form modulo_aggiunta %}
+
+                <button class="btn btn-primary">
+                    <i class="fa fa-check"></i>
+                    Carica
+                </button>
+
+
+
+            </div>
+
+
+
+        </div>
+
+
+
+    </form>
+
+{% endblock %}

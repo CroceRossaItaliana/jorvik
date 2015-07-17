@@ -1,0 +1,84 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Modifica Anagrafica{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="alert bg-info">
+        <p>
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire la tua anagrafica.
+            Non &egrave; pi&ugrave; necessario che le modifiche alla tua anagrafica vengano approvate.
+            Tieni presente che ogni modifica verr&agrave; registrata.
+        </p>
+        <p>
+            <i class="fa fa-warning fa-fw"></i> Nota bene: Per motivi di sicurezza, le correzioni al tuo nome
+            (<strong>{{ me.nome_completo }}</strong>) o al tuo codice fiscale (<strong>{{ me.codice_fiscale }}</strong>),
+            possono essere effettuate solo dall'Ufficio Soci o il Presidente della tua Sede di appartenenza.
+        </p>
+    </div>
+
+    <form action="/utente/anagrafica/" method="POST" enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <div class="row">
+
+            <div class="col-lg-8">
+
+                <h4><i class="fa fa-edit fa-fw"></i> Dati anagrafici</h4>
+
+                {% bootstrap_form modulo_dati %}
+
+            </div>
+
+            <div class="col-lg-4">
+
+                <div class="thumbnail">
+                    {% if me.avatar %}
+                        <img src="{{ me.avatar.url }}" alt="La tua immagine di profilo">
+                    {% endif %}
+                    <div class="caption">
+                        <h4>Immagine di profilo</h4>
+                        {% if not me.avatar %}
+                            <p class="alert bg-warning">
+                                <i class="fa fa-warning"></i> Nessuna immagine di profilo caricata. Usa il pulsante qui sotto per scegliere una immagine da usare come immagine di profilo.
+                            </p>
+                        {% endif %}
+
+                        {% bootstrap_form modulo_avatar %}
+                    </div>
+                </div>
+
+                <div class="thumbnail">
+                    {% if me.avatar %}
+                        <img src="{{ MEDIA_URL }}{{ me.avatar}}" alt="La tua fototessera" />
+                    {% endif %}
+                    <div class="caption">
+                        <h4>Fototessera</h4>
+                        {% if not me.avatar %}
+                            <p class="alert bg-warning">
+                                <i class="fa fa-warning"></i> Nessuna fototessera caricata. Usa il pulsante qui sotto per scegliere una immagine da usare come fototessera.
+                            </p>
+                        {% endif %}
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="row">
+             <div class="col-lg-6 col-lg-offset-3">
+                 <button class="btn btn-block btn-lg btn-success" type="submit">
+                     <i class="fa fa-save fa-fw"></i>
+                     Salva modifiche
+                 </button>
+             </div>
+        </div>
+
+    </form>
+
+{% endblock %}

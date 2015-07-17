@@ -50,6 +50,7 @@ INSTALLED_APPS = (
     'posta',
     'formazione',
     'bootstrap3',
+    'django_countries',
 )
 
 # Classi middleware (intercetta & computa)
@@ -133,3 +134,6 @@ REST_FRAMEWORK = {
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = '/tmp/app-messages'
+
+MEDIA_ROOT = '/tmp/media/'
+MEDIA_URL = '/media/'

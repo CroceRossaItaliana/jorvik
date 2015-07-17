@@ -19,6 +19,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
+from django_countries.fields import CountryField
 import phonenumbers
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, APPLICAZIONI_SLUG_DICT, PERMESSI_NOMI_DICT
@@ -66,12 +67,12 @@ class Persona(ModelloCancellabile, ConMarcaTemporale):
     # Informazioni anagrafiche aggiuntive - OPZIONALI (blank=True o default=..)
     comune_nascita = models.CharField("Comune di Nascita", max_length=64, blank=True)
     provincia_nascita = models.CharField("Provincia di Nascita", max_length=2, blank=True)
-    stato_nascita = models.CharField("Stato di nascita", max_length=2, default="IT")
+    stato_nascita = CountryField("Stato di nascita", default="IT")
     indirizzo_residenza = models.CharField("Indirizzo di residenza", max_length=64, blank=True)
     comune_residenza = models.CharField("Comune di residenza", max_length=64, blank=True)
     provincia_residenza = models.CharField("Provincia di residenza", max_length=2, blank=True)
-    stato_residenza = models.CharField("Stato di residenza", max_length=2, default="IT")
-    cap_residenza = models.CharField("CAP di Residenza", max_length=5, blank=True)
+    stato_residenza = CountryField("Stato di residenza", default="IT")
+    cap_residenza = models.CharField("CAP di Residenza", max_length=8, blank=True)
     email_contatto = models.CharField("Email di contatto", max_length=64, blank=True)
 
     avatar = models.ImageField("Avatar", blank=True, null=True, upload_to=generatore_nome_file('avatar/'))

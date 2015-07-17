@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
+from base.menu import MENU
 from jorvik.settings import LOGIN_REDIRECT_URL
 
 __author__ = 'alfioemanuele'
@@ -34,6 +35,8 @@ def pagina_pubblica(funzione):
             return richiesta  # Passa attraverso.
 
         contesto.update({"me": request.me})
+        contesto.update({"request": request})
+        contesto.update({"menu": MENU})
         return render_to_response(template, RequestContext(request, contesto))
 
     return _pagina_pubblica
@@ -59,6 +62,8 @@ def pagina_anonima(funzione, pagina='/utente/'):
             return richiesta  # Passa attraverso.
 
         contesto.update({"me": None})
+        contesto.update({"request": request})
+        contesto.update({"menu": MENU})
         return render_to_response(template, RequestContext(request, contesto))
 
     return _pagina_anonima
@@ -86,6 +91,8 @@ def pagina_privata(funzione, pagina=LOGIN_REDIRECT_URL):
             return richiesta  # Passa attraverso.
 
         contesto.update({"me": request.me})
+        contesto.update({"request": request})
+        contesto.update({"menu": MENU})
         return render_to_response(template, RequestContext(request, contesto))
 
     return _pagina_privata

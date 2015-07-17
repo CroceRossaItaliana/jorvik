@@ -5,6 +5,8 @@ Funzioni per il trattamento delle stringhe.
 import string
 import uuid
 import os.path
+from datetime import timedelta, datetime
+from jorvik.settings import MEDIA_ROOT
 
 
 def normalizza_nome(stringa):
@@ -30,9 +32,8 @@ def generatore_nome_file(prefisso, forza_suffisso=None):
     :param prefisso: Prefisso (es. "cartella/%Y/")
     :param forza_suffisso: Un suffisso da forzare (es. ".txt"), o suffisso originale se None
     :return: Una funzione che ogni volta chiamata ritorna qualcosa come
-             prefisso/C22AF346-8D6B-429B-B518-F85F7E69281F.suffisso
+             {MEDIA_ROOT}/prefisso/C22AF346-8D6B-429B-B518-F85F7E69281F.suffisso
     """
-
     def generatore(instanza, originale):
 
         suffisso = forza_suffisso if forza_suffisso is not None \
@@ -41,3 +42,11 @@ def generatore_nome_file(prefisso, forza_suffisso=None):
         return prefisso + genera_uuid_casuale() + suffisso
 
     return generatore  # Nota: ritorna una funzione!
+
+
+def domani():
+    """
+    Ritorna la data di domani. Scorciatoia (generalmente usata per scadenza automatica Allegati).
+    :return: datetime (solo date) a domani.
+    """
+    return datetime.now().date() + timedelta(1)
