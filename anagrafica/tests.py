@@ -1,6 +1,6 @@
 from django.test import TestCase
 from anagrafica.costanti import LOCALE
-from anagrafica.models import Sede, Persona, Appartenenza
+from anagrafica.models import Sede, Persona, Appartenenza, Documento
 
 
 class TestAnagrafica(TestCase):
@@ -78,3 +78,36 @@ class TestAnagrafica(TestCase):
             c.appartenenze_attuali(membro=Appartenenza.MILITARE).count() == 0,
             msg="Ma ancora nessun militare."
         )
+
+    def test_documenti(self):
+
+        p = Persona(
+            nome="Mario",
+            cognome="Rossi",
+            codice_fiscale="FRSSAKJSIKAJD1",
+            data_nascita="1994-2-5"
+        )
+        p.save()
+
+        d = Documento(
+            persona=p,
+            tipo=Documento.PATENTE_CIVILE,
+            file=None,
+        )
+        d.save()
+
+        self.assertTrue(
+            p.documenti.all(),
+            msg="Il membro ha almeno un documento"
+        )
+
+        self.assertTrue(
+            p.documenti.filter(tipo=Documento.PATENTE_CIVILE),
+            msg="Il membro ha di fatto una patente civile"
+        )
+
+        self.assertFalse(
+            p.documenti.filter(tipo=Documento.CARTA_IDENTITA),
+            msg="Il membro non ha davvero alcuna carta di identita"
+        )
+
