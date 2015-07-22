@@ -154,9 +154,28 @@ class ConAutorizzazioni(models.Model):
 
     confermata = models.BooleanField("Confermata", default=True, db_index=True)
 
-    ESITO_OK = 2
-    ESITO_NO = 1
-    ESITO_MIAO = 0
+    ESITO_OK = "Confermato"
+    ESITO_NO = "Negato"
+    ESITO_PENDING = "In attesa"
+
+    @property
+    def esito(self):
+        """
+        Ottiene l'esito. (*ConAutorizzazioni.ESITO_OK, .ESITO_NO, .ESITO_PENDING).
+        :return:
+        """
+        if self.confermata:  # Se confermata, okay
+            return self.ESITO_OK
+
+        elif self.autorizzazioni.exists(concessa=False):  # Altrimenti, se almeno una negazione, esito negativo
+            return self.ESITO_NO
+
+        else:  # Se non confermata e nessun esito negativo, ancora pendente
+            return self.ESITO_PENDING
+
+    @property
+    def autorizzazioni_negate(self):
+        return self.autorizzazioni.filter(concessa=False)
 
     @property
     def autorizzazioni(self):

@@ -33,17 +33,26 @@
 
                 <tbody>
                 {% for d in appartenenze %}
-                    <tr {% if d.attuale %}class="bg-success"{% endif %}>
+                    <tr     {% if d.esito == d.ESITO_OK %}class="bg-success"
+                            {% elif d.esito == d.ESITO_PENDING %}class="gb-warning"
+                            {% endif %}>
                         <td>
-                            {% if d.attuale %}
-                                <i class="fa fa-check fa-fw"></i>
-                                Attuale
-                            {% elif not d.confermata %}
-                                <i class="fa fa-warning-sign fa-fw"></i>
-                                Negata
+                            {% if d.esito == d.ESITO_OK %}
+
+                                {% if d.attuale %}
+                                    <i class="fa fa-check fa-fw"></i>
+                                    Attuale
+                                {% else %}
+                                    <i class="fa fa-folder fa-fw"></i>
+                                    Passata
+                                {% endif %}
+
+                            {% elif d.esito == d.ESITO_PENDING %}
+                                <i class="fa fa-clock fa-fw"></i>
+                                In attesa
                             {% else %}
-                                <i class="fa fa-folder fa-fw"></i>
-                                Passata
+                                <i class="fa fa-remove fa-fw"></i>
+                                Negata
                             {% endif %}
                         </td>
                         <td>{{ d.inizio }}</td>
@@ -79,8 +88,8 @@
 
                 {% empty %}
                     <tr>
-                        <td colspan="4" class="bg-warning">
-                            <i class="fa fa-info"></i> Nessun documento caricato.
+                        <td colspan="5" class="bg-warning">
+                            <i class="fa fa-info"></i> Nessuna appartenenza registrata.
                         </td>
                     </tr>
 
