@@ -325,7 +325,7 @@ class Allegato(ModelloSemplice, ConMarcaTemporale, ConScadenza):
 
 
 
-class ConAllegati:
+class ConAllegati(models.Model):
     """
     Aggiunge la possibilita' di allegare file all'oggetto, anche con scadenza.
     """

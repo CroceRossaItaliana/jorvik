@@ -26,13 +26,13 @@ from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, APPLICAZ
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
-from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni
+from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati
 from base.stringhe import normalizza_nome, generatore_nome_file
 from base.tratti import ConMarcaTemporale, ConStorico
 from base.utils import is_list
 
 
-class Persona(ModelloCancellabile, ConMarcaTemporale):
+class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
     """
     Rappresenta un record anagrafico in Gaia.
     """
