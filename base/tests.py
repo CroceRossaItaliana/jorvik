@@ -39,9 +39,6 @@ class TestBase(TestCase):
         z.aggiungi_file(f2.name, self.NOME_2)
         z.comprimi_e_salva(nome='TestZip.zip')
 
-        # Apri e verifica ZIP
-        z = Zip.objects.get(nome='TestZip.zip')
-
         with ZipFile(z.file.path, 'r') as zip:
 
             self.assertIsNone(
