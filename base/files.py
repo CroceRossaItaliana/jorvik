@@ -41,6 +41,7 @@ class Zip(Allegato):
         :return:
         """
         zname = self.GENERATORE_NOME_FILE(nome)
+        self.prepara_cartelle(MEDIA_ROOT + zname)
         with ZipFile(MEDIA_ROOT + zname, 'w') as zf:
             for f_path, f_nome in self._file_in_attesa:
                 zf.write(f_path, f_nome)

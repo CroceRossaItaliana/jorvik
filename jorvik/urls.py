@@ -47,6 +47,7 @@ urlpatterns = [
     url(r'^utente/documenti/$', 'anagrafica.viste.utente_documenti'),
     url(r'^utente/documenti/zip/$', 'anagrafica.viste.utente_documenti_zip'),
     url(r'^utente/documenti/cancella/(?P<pk>.*)/$', 'anagrafica.viste.utente_documenti_cancella'),
+    url(r'^utente/storico/$', 'anagrafica.viste.utente_storico'),
 
     url(r'^media/(?P<path>.*)$', 'django.views.static.serve', {"document_root": MEDIA_ROOT}),
 

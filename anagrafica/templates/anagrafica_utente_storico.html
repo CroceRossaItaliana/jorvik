@@ -1,0 +1,107 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Storico Appartenenze e Deleghe{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="alert bg-info">
+        <p>
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai controllare le tue appartenenze e deleghe.
+        </p>
+
+    </div>
+
+
+
+    <div class="row">
+
+        <div class="col-lg-12">
+
+            <h4><i class="fa fa-clock-o fa-fw"></i> Appartenenze</h4>
+
+            <table class="table table-condensed table-bordered table-responsive">
+
+                <thead>
+                    <th>Stato</th>
+                    <th>Inizio</th>
+                    <th>Fine</th>
+                    <th>Tipo</th>
+                    <th>Sede</th>
+                </thead>
+
+                <tbody>
+                {% for d in appartenenze %}
+                    <tr {% if d.attuale %}class="bg-success"{% endif %}>
+                        <td>
+                            {% if d.attuale %}
+                                <i class="fa fa-check fa-fw"></i>
+                                Attuale
+                            {% elif not d.confermata %}
+                                <i class="fa fa-warning-sign fa-fw"></i>
+                                Negata
+                            {% else %}
+                                <i class="fa fa-folder fa-fw"></i>
+                                Passata
+                            {% endif %}
+                        </td>
+                        <td>{{ d.inizio }}</td>
+                        <td>
+                            {% if d.fine %}
+                                {{ d.fine }}
+                                {% if d.terminazione %}
+                                    <br />
+                                    <span class="text-muted">
+                                        per {{ d.get_terminazione_display }}
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">
+                                    Attuale
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ d.get_membro_display }}
+                        </td>
+                        <td>
+                            <strong>{{ d.sede.nome_completo }}</strong><br />
+                            {{ d.sede.get_tipo_display }}
+                        </td>
+
+                    </tr>
+
+                    {% for a in d.autorizzazioni %}
+
+
+                    {% endfor %}
+
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="bg-warning">
+                            <i class="fa fa-info"></i> Nessun documento caricato.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+
+                </tbody>
+
+            </table>
+
+
+
+
+        </div>
+
+
+
+
+    </div>
+
+
+
+
+{% endblock %}

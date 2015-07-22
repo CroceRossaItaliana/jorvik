@@ -578,7 +578,6 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             self.persona,
             (
                 (PRESIDENTE, self.sede),
-                (VICEPRESIDENTE, self.sede),
                 (UFFICIO_SOCI, self.sede)
             )
         )
@@ -654,7 +653,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
     def appartenenze_attuali(self, membro=None, figli=False, al_giorno=date.today(), **kwargs):
         """
         Ritorna l'elenco di appartenenze attuali ad un determinato giorno.
-        Altri parametri (**kwargs), es. tipo=Appartenenza.ESTESO possono essere aggiunti.
+        Altri parametri (**kwargs) possono essere aggiunti.
 
         :param membro: Se specificato, filtra per tipologia di membro (es. Appartenenza.VOLONTARIO).
         :param figli: Se vero, ricerca anche tra i comitati figli.
@@ -709,6 +708,10 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
 
     def __str__(self):
         return self.nome
+
+    @property
+    def nome_completo(self):
+        return str(self)
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):

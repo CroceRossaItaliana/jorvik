@@ -1,3 +1,4 @@
+import os
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
@@ -153,6 +154,14 @@ class ConAutorizzazioni(models.Model):
 
     confermata = models.BooleanField("Confermata", default=True, db_index=True)
 
+    ESITO_OK = 2
+    ESITO_NO = 1
+    ESITO_MIAO = 0
+
+    @property
+    def autorizzazioni(self):
+        return self.autorizzazioni_set()
+
     def autorizzazioni_set(self):
         """
         Ottiene il queryset delle autorizzazioni associate.
@@ -289,6 +298,31 @@ class Allegato(ModelloSemplice, ConMarcaTemporale, ConScadenza):
         Ritorna l'URL per il download del file.
         """
         return self.file.url
+
+    def prepara_cartelle(self, file_path, path_include_file=True):
+        """
+        Crea ricorsivamente le directory per la creazione di un file.
+        Se path_include_file non specificato o True, il primo parametro aspettato e' il path completo
+        al nuovo file. Altrimenti, solo il percorso da creare e' aspettato.
+        """
+        if path_include_file:
+            path = os.path.dirname(file_path)
+        else:
+            path = file_path
+
+        if os.path.isdir(path):
+            return True
+
+        try:
+            os.makedirs(path)
+        except OSError as e:
+            if e.errno == 17:
+                # Dir already exists. No biggie.
+                pass
+
+        return True
+
+
 
 
 class ConAllegati:

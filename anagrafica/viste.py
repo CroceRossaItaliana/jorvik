@@ -264,9 +264,22 @@ def utente_documenti_cancella(request, me, pk):
 @pagina_privata
 def utente_documenti_zip(request, me):
 
+    if not me.documenti.exists():
+        return redirect('/utente/documenti')
+
     z = Zip(oggetto=me)
     for d in me.documenti.all():
         z.aggiungi_file(d.file.path)
     z.comprimi_e_salva(nome='Documenti.zip')
 
     return redirect(z.download_url)
+
+@pagina_privata
+def utente_storico(request, me):
+
+    contesto = {
+        "appartenenze": me.appartenenze.all(),
+        "deleghe": me.deleghe.all()
+    }
+
+    return 'anagrafica_utente_storico.html', contesto
