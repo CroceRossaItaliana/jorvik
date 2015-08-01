@@ -118,6 +118,7 @@ USE_TZ = False
 STATIC_URL = '/assets/'
 STATIC_ROOT = 'assets/'
 TEMPLATE_DIRS = (
+    'base/templates',
     os.path.join(BASE_DIR,  'templates'),
 )
 

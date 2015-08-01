@@ -19,8 +19,10 @@
           </a>
         </div>
         <div id="navbar" class="navbar-collapse collapse allinea-destra">
+
+
             {% if me %}
-                <p class="navbar-btn btn-groupgi">
+                <p class="navbar-btn btn-group">
                     <a class="btn btn-sm btn-primary" href="/utente/">
                         <i class="fa fa-user"></i>
                         Ciao, <strong>{{ me.nome }}</strong>
@@ -31,18 +33,35 @@
                     </a>
                 </p>
             {% else %}
-                <p class="navbar-btn">
-                    <a class="btn btn-sm btn-danger" href="/login/">
+                <p class="navbar-btn btn-group">
+
+                    {% if not site_url %}
+                        <a class="btn btn-sm btn-danger" href="/login/">
                         <i class="fa fa-key"></i> Accedi
                     </a>
+                    {% endif %}
+
+                    {% block base_admin_navbar %}{% endblock %}
+
                 </p>
             {% endif %}
+
+
         </div><!--/.navbar-collapse -->
       </div>
     </nav>
     {% endblock %}
 
     <p style="padding: 0px 0px 0px 0px; margin: 0px 0px 0px 0px; padding-top: 50px; height: 0px;" id="nav-spacer">&nbsp;</p>
+
+    {% if msg_errore %}
+        <div class="container alert-dismissible alert-danger alert">
+            <i class="fa fa-warning fa-fw"></i> <strong>Errore</strong> &mdash; {{ msg_errore }}
+        </div>
+    {% endif %}
+
+    {% block base_admin_breadcrumbs %}
+    {% endblock %}
 
     {% block pagina_principale %}
     {% endblock %}

@@ -1,11 +1,17 @@
 <!DOCTYPE html>
 <html>
+{% block base_admin_head_pre %}{% endblock %}
 <head lang="en">
     <meta charset="UTF-8">
     {% block base_head %}{% endblock %}
+    {% block base_admin_head %}{% endblock %}
     <title>{% block base_titolo %}{% endblock %}</title>
 </head>
-<body class="{% block base_body_classe %}{% endblock %}">
+{% block base_admin_head_post %}{% endblock %}
+{% block base_admin_body_pre %}{% endblock %}
+<body class="{% block base_body_classe %}{% endblock %} {% block base_admin_body_class %}{% endblock %}">
     {% block base_body %}{% endblock %}
+    {% block base_admin_body %}{% endblock %}
 </body>
+{% block base_admin_body_post %}{% endblock %}
 </html>

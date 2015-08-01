@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, render_to_response
 
 # Le viste base vanno qui.
-from anagrafica.models import Sede
+from anagrafica.models import Sede, Persona
 from autenticazione.funzioni import pagina_pubblica, pagina_anonima
 from base.forms import ModuloRecuperaPassword
 
@@ -26,16 +26,23 @@ def recupera_password(request):
     """
     Mostra semplicemente la pagina di recupero password.
     """
+    contesto = {}
     if request.method == 'POST':
         modulo = ModuloRecuperaPassword(request.POST)
         if modulo.is_valid():
-            pass
-            # TODO RECUPERO
-    else:
-        contesto = {
-            'modulo': ModuloRecuperaPassword(),
-        }
-        return 'base_recupera_password.html', contesto
+
+            try:
+                per = Persona.objects.get(codice_fiscale=modulo.codice_fiscale, utenza__email=modulo.email)
+
+
+
+            except Persona.DoesNotExist:
+                contesto.update({'errore': True})
+
+    contesto.update({
+        'modulo': ModuloRecuperaPassword(),
+    })
+    return 'base_recupera_password.html', contesto
 
 @pagina_pubblica
 def informazioni(request, me):
