@@ -429,14 +429,14 @@ class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
         :return: True se il permesso e' posseduto. False altrimenti.
         """
         return persona_ha_permesso(self, permesso, al_giorno=al_giorno)
-    def ha_permessi(self, *permessi, al_giorno=date.today()):
+
+    def ha_permessi(self, *permessi):
         """
         Dato un elenco di permessi, ritorna True se tutti i permessi sono posseduti.
         :param permessi: Elenco di permessi.
-        :param al_giorno: Data di verifica.
         :return: True se tutti i permessi sono posseduti. False altrimenti.
         """
-        return persona_ha_permessi(self, *permessi, al_giorno=al_giorno)
+        return persona_ha_permessi(self, *permessi)
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """

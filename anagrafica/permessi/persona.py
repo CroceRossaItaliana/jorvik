@@ -114,7 +114,7 @@ def persona_ha_permesso(persona, permesso, al_giorno=date.today()):
 
     return False
 
-def persona_ha_permessi(persona, *permessi, al_giorno=date.today()):
+def persona_ha_permessi(persona, *permessi):
     """
     Dato un elenco di permessi, ritorna True se tutti i permessi sono posseduti.
     :param permessi: Elenco di permessi.
@@ -122,7 +122,7 @@ def persona_ha_permessi(persona, *permessi, al_giorno=date.today()):
     :return: True se tutti i permessi sono posseduti. False altrimenti.
     """
     for p in permessi:
-        if isinstance(p, (list, tuple)) and not persona.ha_permessi(*p, al_giorno=al_giorno):
+        if isinstance(p, (list, tuple)) and not persona.ha_permessi(*p):
             return False
         if not persona.ha_permesso(p):
             return False
