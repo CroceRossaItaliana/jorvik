@@ -1,0 +1,23 @@
+{% extends "base_avviso.html" %}
+
+{% block pagina_titolo %}Accesso Negato{% endblock %}
+
+{% block avviso_titolo %}
+    Accesso Negato<span class="text-muted">, siamo spiacenti</span>
+{% endblock %}
+
+{% block avviso_corpo %}
+    <p>
+        <i class="fa fa-5x fa-lock text-danger"></i>
+        &nbsp;
+        <i class="fa fa-5x fa-warning text-warning"></i>
+    </p>
+    <p>Hai cercato di accedere a dei contenuti che non appaiono essere di tua competenza.</p>
+    <p>Questo pu&ograve; essere dovuto a dei permessi temporanei che sono scaduti.</p>
+    <p><a href="/"><i class="fa fa-home"></i> Torna alla Home</a>.</p>
+    <p>&nbsp;</p>
+    <p class="text-info">
+        <i class="fa fa-info-circle"></i>
+        Nota che questo evento &egrave; stato registrato per motivi di sicurezza.
+    </p>
+{% endblock %}

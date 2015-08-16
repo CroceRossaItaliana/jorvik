@@ -23,3 +23,12 @@ def orfano(request, me):
     :return:
     """
     return 'base_errore_orfano.html'
+
+@pagina_pubblica
+def permessi(request, me):
+    """
+    Questa vista viene chiamata quando un utente tenta ad accedere a dei contenuti fuori competenza.
+    :param request:
+    :return:
+    """
+    return 'base_errore_permessi.html'

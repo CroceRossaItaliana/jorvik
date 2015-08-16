@@ -2,96 +2,96 @@
 Questo modulo contiene tutte le funzioni per testare i permessi
 a partire da un oggetto sul quale ho una delega ed un oggetto da testare.
 """
-from django.shortcuts import render_to_response
-from django.template import RequestContext
-from anagrafica.models import Sede, Persona
-import anagrafica.permessi.costanti
+from anagrafica.models import Sede
+from anagrafica.permessi.applicazioni import PRESIDENTE
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+from anagrafica.permessi.applicazioni import DELEGATO_AREA
+from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
+from anagrafica.permessi.applicazioni import REFERENTE
+
+from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
+    GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO
+
 from attivita.models import Attivita, Area
+from formazione.models import Corso
 
 
-def permessi_presidente(sede, oggetto):
+def permessi_presidente(sede):
     """
     Permessi della delega di PRESIDENTE.
 
     :param sede: Il sede di cui si e' presidenti.
-    :param oggetto: L'oggetto per cui controllare i permessi.
-    :return: MODIFICA, LETTURA o None.
+    :return: Lista di permessi
     """
 
-    # Se e' un sede
-    if isinstance(oggetto, Sede):
-        # Posso modificare se e' sotto il mio
-        if oggetto.figlio_di(sede):
-            return anagrafica.permessi.costanti.MODIFICA
-        return None
+    return [
+       (GESTIONE_SEDE,      sede.esplora())
+    ] \
+        + permessi_ufficio_soci(sede) \
+        + permessi_responsabile_attivita(sede) \
+        + permessi_responsabile_formazione(sede)
 
-    # Persona
-    if isinstance(oggetto, Persona):
-        # TODO: Assume che un presidente abbia permessi onnipotenti a scendere.
-        if sede.ha_persona(oggetto, figli=True):
-            return anagrafica.permessi.costanti.MODIFICA
-        return None
-
-    # Attivita
-    if isinstance(oggetto, Attivita):
-        # TODO: Assume che un presidente abbia permessi onnipotenti a scendere.
-        if oggetto.figlio_di(sede, figli=True):
-            return anagrafica.permessi.costanti.MODIFICA
-
-    return None
-
-
-def permessi_ufficio_soci(sede, oggetto):
+def permessi_ufficio_soci(sede):
     """
     Permessi della delega di UFFICIO SOCI.
 
-    :param sede: Il sede di cui si e' ufficio soci.
-    :param oggetto: L'oggetto per cui controllare i permessi.
-    :return: MODIFICA, LETTURA o None.
+    :param sede: Sede di cui si e' ufficio soci.
+    :return: Lista di permessi.
     """
+    return [
+        (GESTIONE_SOCI,     Sede.objects.filter(pk=sede.pk)),
+        (ELENCHI_SOCI,      sede.esplora()),
+    ]
 
-    # L'ufficio soci e' il presidente nel contesto delle persone
-    if isinstance(oggetto, Persona):
-        return permessi_presidente(sede, oggetto)
+def permessi_responsabile_attivita(sede):
+    """
+    Permessi della delega di RESPONSABILE DELLE ATTIVITA'.
 
-    return None
+    :param sede: Sede di cui si e' responsabile attivita'.
+    :return: Lista di permessi.
+    """
+    return [
+        (GESTIONE_ATTIVITA_SEDE,    Sede.objects.filter(pk=sede.pk)),
+        (GESTIONE_ATTIVITA_AREA,    Area.objects.filter(sede=sede)),
+        (GESTIONE_ATTIVITA,         Attivita.objects.filter(sede=sede))
+    ]
 
+def permessi_responsabile_formazione(sede):
+    """
+    Permessi della delega di RESPONSABILE DELLA FORMAZIONE.
 
-def permessi_delegato_area(area, oggetto):
+    :param sede: Sede di cui si e' responsabile formazione.
+    :return: Lista di permessi.
+    """
+    return [
+        (GESTIONE_CORSI_SEDE,       Sede.objects.filter(pk=sede.pk)),
+        (GESTIONE_CORSO,            Corso.objects.filter(sede=sede))
+
+    ]
+
+def permessi_delegato_area(area):
     """
     Permessi della delega di DELEGATO D'AREA.
 
     :param area: L'area di cui si e' delegati
-    :param oggetto: L'oggetto per cui controllare i permessi.
-    :return: MODIFICA, LETTURA o None.
+    :return: Lista di permessi.
     """
-
-    if isinstance(oggetto, Area):
-        if oggetto == area:
-            return anagrafica.permessi.costanti.MODIFICA
-
-    if isinstance(oggetto, Attivita):
-        if oggetto.area == area:
-            return anagrafica.permessi.costanti.MODIFICA
-
-    if isinstance(oggetto, Persona):
-        # TODO: Controllare che la persona (oggetto) partecipi ad una attivita' dell'area
-        if False:
-            return anagrafica.permessi.costanti.LETTURA
-
-    return None
+    return [
+        (GESTIONE_ATTIVITA_AREA,    Area.objects.filter(pk=area.pk)),
+        (GESTIONE_ATTIVITA,         Attivita.objects.filter(area=area))
+    ]
 
 
-def permessi_responsabile_area(area, oggetto):
+def permessi_responsabile_area(area):
     """
     Permessi della delega di RESPONSABILE D'AREA.
 
     :param area: L'area di cui si e' responsabili
-    :param oggetto: L'oggetto per cui controllare i permessi.
-    :return: MODIFICA, LETTURA o None.
+    :return: Lista di permessi.
     """
-
-    return permessi_delegato_area(area, oggetto)
+    return [
+    ] \
+        + permessi_delegato_area(area)
 
 
 def permessi_referente(attivita, oggetto):
@@ -99,38 +99,26 @@ def permessi_referente(attivita, oggetto):
     Permessi della delega di REFERENTE ATTIVITA'.
 
     :param attivita: L'attivita' di cui si e' referenti
-    :param oggetto: L'oggetto per cui controllare i permessi.
-    :return: MODIFICA, LETTURA o None.
+    :return: Lista di permessi.
     """
 
-    if isinstance(oggetto, Attivita):
-        if attivita == oggetto:
-            return anagrafica.permessi.costanti.MODIFICA
-
-    if isinstance(oggetto, Persona):
-        # TODO: Controllare che la persona (oggetto) partecipi all'attivita'
-        if False:
-            return anagrafica.permessi.costanti.LETTURA
-
-    return None
+    return [
+        (GESTIONE_ATTIVITA,         Attivita.objects.filter(pk=attivita.pk))
+    ]
 
 
 # Non modificare
 
 
-def unisci_permessi(*args):
-    """
-    Unisce dei permessi ottenuti da funzioni permessi_* ed ottiene il permesso
-    maggiore o None se nessun permesso ottenuto.
-    :param *args: Tutti i permessi da unire.
-    :return: Il permesso maggiore o nessuno.
-    """
+# Funzioni permessi
+# Nota bene: Non inserire () dopo il nome della funzione.
+PERMESSI_FUNZIONI = (
+    (PRESIDENTE,        permessi_presidente),
+    (UFFICIO_SOCI,      permessi_ufficio_soci),
+    (DELEGATO_AREA,     permessi_delegato_area),
+    (RESPONSABILE_AREA, permessi_responsabile_area),
+    (REFERENTE,         permessi_referente),
+)
 
-    permessi = [permesso for permesso in args if permesso is not None]
-
-    # Se non e' rimasto niente, non ho permessi
-    if not permessi:
-        return None
-
-    # Altrimenti, restituisci il permesso piu' alto
-    return max(permessi)
+# Tieni in memoria anche come dizionari, per lookup veloci
+PERMESSI_FUNZIONI_DICT = dict(PERMESSI_FUNZIONI)

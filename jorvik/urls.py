@@ -26,6 +26,7 @@ urlpatterns = [
     # Pagina di errore
     url(r'^errore/404/$', 'base.errori.non_trovato'),
     url(r'^errore/orfano/$', 'base.errori.orfano'),
+    url(r'^errore/permessi/$', 'base.errori.permessi'),
 
     # Login e logout
     url(r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'base_login.html'}),

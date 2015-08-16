@@ -1,8 +1,11 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import AnonymousUser
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
+import functools
+from anagrafica.permessi.costanti import ERRORE_ORFANO, ERRORE_PERMESSI
 from base.menu import MENU
-from jorvik.settings import LOGIN_REDIRECT_URL
+from jorvik.settings import LOGIN_REDIRECT_URL, LOGIN_URL
 
 __author__ = 'alfioemanuele'
 
@@ -69,22 +72,34 @@ def pagina_anonima(funzione, pagina='/utente/'):
     return _pagina_anonima
 
 
-def pagina_privata(funzione, pagina=LOGIN_REDIRECT_URL):
+def pagina_privata(funzione=None, pagina=LOGIN_URL, permessi=[]):
     """
     Questa funzione attua da decoratore per le pagine accessibili SOLO da utenti identificati.
     Redirect automatico a una pagina.
     :param funzione: (decoratore)
     :param pagina: Pagina verso il quale fare il redirect. Default: LOGIN_REDIRECT_URL.
+    :param permessi: Un elenco di permessi NECESSARI.
     :return: (decoratore)
     """
 
-    @login_required(login_url=LOGIN_REDIRECT_URL)
+    # Questo codice rende i parametri opzionali, ie. rende possibile chiamare sia @pagina_privata
+    # che @pagina_privata(pagina=x) o @pagina_privata(permesso1, permesso2, ...)
+    if funzione is None:
+        return functools.partial(pagina_privata, pagina=pagina, permessi=permessi)
+
     def _pagina_privata(request, *args, **kwargs):
 
-        if request.user is not None and request.user.applicazioni_disponibili is None:
-            return redirect('/errore/orfano/')
+        if isinstance(request.user, AnonymousUser):
+            return redirect(LOGIN_URL)
+
+        if not request.user or request.user.applicazioni_disponibili is None:
+            return redirect(ERRORE_ORFANO)
 
         request.me = request.user.persona
+
+        if not request.me.ha_permessi(permessi):  # Controlla che io lo abbia
+            return redirect(ERRORE_PERMESSI)  # Altrimenti, buttami fuori
+
         (template, contesto, richiesta) = _spacchetta(funzione(request, request.me, *args, **kwargs))
 
         if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
@@ -96,3 +111,4 @@ def pagina_privata(funzione, pagina=LOGIN_REDIRECT_URL):
         return render_to_response(template, RequestContext(request, contesto))
 
     return _pagina_privata
+

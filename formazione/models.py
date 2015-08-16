@@ -3,7 +3,7 @@
 """
 Questo modulo definisce i modelli del modulo di Formazione di Gaia.
 """
-from anagrafica.models import Sede
+from anagrafica.models import Sede, Persona
 from base.models import ConAutorizzazioni
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.models import ModelloSemplice
@@ -43,6 +43,7 @@ class Corso(ModelloSemplice, ConMarcaTemporale, ConGeolocalizzazione, ConComment
 
 class Partecipazione(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
 
+    persona = models.ForeignKey(Persona, related_name='partecipazioni_corsi')
     corso = models.ForeignKey(Corso, related_name='partecipazioni')
 
     class Meta:
@@ -67,6 +68,8 @@ class Assenza(ModelloSemplice, ConMarcaTemporale):
 
 
 class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
+
+    persona = models.OneToOneField(Persona, related_name='aspirante')
 
     # Numero minimo di Comitati nelle vicinanze
     MINIMO_COMITATI = 10

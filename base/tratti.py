@@ -12,6 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
 from anagrafica.costanti import ESTENSIONE, ESTENSIONE_MINORE
+from base.utils import concept
 
 
 class ConMarcaTemporale(models.Model):
@@ -59,6 +60,7 @@ class ConStorico(models.Model):
     class Meta:
         abstract = True
 
+
     # Puo' essere sovrascritto per aggiungere una ulteriore
     # condizione di attualita' (es. partecipazione confermata, ecc.)
     CONDIZIONE_ATTUALE_AGGIUNTIVA = Q()
@@ -67,6 +69,7 @@ class ConStorico(models.Model):
     fine = models.DateField("Fine", db_index=True, null=True, blank=True, default=None)
 
     @classmethod
+    @concept
     def query_attuale(cls, al_giorno=date.today(), **kwargs):
         """
         Restituisce l'oggetto Q per filtrare le entita' attuali.
@@ -87,10 +90,4 @@ class ConStorico(models.Model):
         :param al_giorno: Giorno per considerare la verifica per l'attuale. Default oggi.
         :return: True o False.
         """
-        try:
-            self.__class__.objects.get(self.query_attuale(al_giorno), pk=self.pk)
-
-        except ObjectDoesNotExist:
-            return False
-
-        return True
+        return self.__class__.objects.filter(self.query_attuale(al_giorno).q, pk=self.pk).exists()

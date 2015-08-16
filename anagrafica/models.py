@@ -24,6 +24,8 @@ import phonenumbers
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, APPLICAZIONI_SLUG_DICT, PERMESSI_NOMI_DICT
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
+    persona_permessi_almeno, persona_ha_permessi
 
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati
@@ -140,7 +142,7 @@ class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
         """
         Ritorna una ricerca per le deleghe che son attuali.
         """
-        return self.deleghe.filter(Delega.query_attuale(al_giorno))
+        return self.deleghe.filter(Delega.query_attuale(al_giorno).q)
 
     def aggiungi_numero_telefono(self, numero, servizio=False, paese="IT"):
         """
@@ -163,7 +165,7 @@ class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
         """
         Ottiene il queryset delle appartenenze attuali e confermate.
         """
-        return self.appartenenze.filter(Appartenenza.query_attuale(**kwargs)).select_related('sede')
+        return self.appartenenze.filter(Appartenenza.query_attuale(**kwargs).q).select_related('sede')
 
     def appartenenze_pendenti(self, **kwargs):
         """
@@ -195,7 +197,7 @@ class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
         E' possibile aggiungere dati come membro=VOLONTARIO,...
         """
         return sede.ha_membro(persona=self, **kwargs)
-    
+
     def membro(self, membro, **kwargs):
         """
         Controlla se la persona ha appartenenza come mebro tipo specificato
@@ -382,6 +384,60 @@ class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
 
         return lista
 
+
+    def oggetti_permesso(self, permesso, al_giorno=date.today()):
+        """
+        Dato un permesso, ritorna un queryset agli oggetti che sono coperti direttamente
+        dal permesso. Es.: GESTINE_SOCI -> Elenco dei Comitati in cui si ha gestione dei soci.
+        :param permesso: Permesso singolo.
+        :param al_giorno: Data di verifica.
+        :return: QuerySet. Se permesso non valido, QuerySet vuoto (EmptyQuerySet).
+        """
+        return persona_oggetti_permesso(self, permesso, al_giorno=al_giorno)
+
+    def permessi(self, oggetto, al_giorno=date.today()):
+        """
+        Ritorna il livello di permessi che si ha su un qualunque oggetto.
+
+        Se non e' necessario conoscere il livello, ma si vuole controllare se si hanno
+         abbastanza permessi, la funzione booleanea Persona.permessi_almeno(oggetto, minimo)
+         dovrebbe essere preferita, in quanto ottimizzata (ie. smette di ricercare una volta
+         superato il livello minimo di permesso che si sta cercando).
+
+        :param oggetto: Oggetto qualunque.
+        :param al_giorno:  Data di verifica.
+        :return: Intero. NESSUNO...COMPLETO
+        """
+        return persona_permessi(self, oggetto, al_giorno=al_giorno)
+
+    def permessi_almeno(self, oggetto, minimo, al_giorno=date.today()):
+        """
+        Controlla se ho i permessi minimi richiesti specificati su un dato oggetto.
+
+        :param oggetto: Oggetto qualunque.
+        :param minimo: Oggetto qualunque.
+        :param al_giorno:  Data di verifica.
+        :return: True se permessi >= minimo, False altrimenti
+        """
+        return persona_permessi_almeno(self, oggetto, minimo=minimo, al_giorno=al_giorno)
+
+    def ha_permesso(self, permesso, al_giorno=date.today()):
+        """
+        Dato un permesso, ritorna true se il permesso e' posseduto.
+        :param permesso: Permesso singolo.
+        :param al_giorno: Data di verifica.
+        :return: True se il permesso e' posseduto. False altrimenti.
+        """
+        return persona_ha_permesso(self, permesso, al_giorno=al_giorno)
+    def ha_permessi(self, *permessi, al_giorno=date.today()):
+        """
+        Dato un elenco di permessi, ritorna True se tutti i permessi sono posseduti.
+        :param permessi: Elenco di permessi.
+        :param al_giorno: Data di verifica.
+        :return: True se tutti i permessi sono posseduti. False altrimenti.
+        """
+        return persona_ha_permessi(self, *permessi, al_giorno=al_giorno)
+
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """
     Rappresenta una singola politica di Privacy selezionata da una Persona.
@@ -533,6 +589,12 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     MILITARE = 'MI'
     DONATORE = 'DO'
     SOSTENITORE = 'SO'
+
+    # Membri sotto il diretto controllo della Sede
+    MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE)
+    # Membri sotto il diretto controllo di una altra Sede
+    MEMBRO_ESTESO = (ESTESO,)
+
     MEMBRO = (
         (VOLONTARIO, 'Volontario'),
         (ESTESO, 'Volontario in Estensione'),
@@ -668,7 +730,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
             f = self.appartenenze
 
         f = f.filter(
-            Appartenenza.query_attuale(al_giorno),
+            Appartenenza.query_attuale(al_giorno).q,
             **kwargs
         )
 
@@ -682,17 +744,20 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
         # NB: Vengono collegate via Join le tabelle Persona e Sede per maggiore efficienza.
         return f.select_related('persona', 'sede')
 
-    def membri_attuali(self, membro=None, figli=False, **kwargs):
+    def membri_attuali(self, figli=False, al_giorno=date.today(), **kwargs):
         """
         Ritorna i membri attuali, eventualmente filtrati per tipo, del sede.
-        :param membro: Se specificato, filtra per tipologia di membro (es. Appartenenza.VOLONTARIO).
         :param figli: Se vero, ricerca anche tra i comitati figli.
+        :param al_giorno: Default oggi. Giorno da controllare.
+        :param membro: Se filtrare per membro.
         :return:
         """
-        # NB: Questo e' efficiente perche' appartenenze_attuali risolve l'oggetto Persona
-        #     via una Join (i.e. non viene fatta una nuova query per ogni elemento).
-        a = self.appartenenze_attuali(membro=membro, figli=figli, **kwargs)
-        return [x.persona for x in a]
+        if figli:
+            kwargs.update({'sede__in': self.get_descendants(True)})
+        else:
+            kwargs.update({'sede': self.pk})
+
+        return Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, **kwargs).via("appartenenze"))
 
     def appartenenze_persona(self, persona, membro=None, figli=False, **kwargs):
         """
@@ -712,6 +777,21 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
     @property
     def nome_completo(self):
         return str(self)
+
+    def esplora(self, includi_me=True):
+        """
+        Ritorna un QuerySet di tutte le Sedi sottostanti.
+        :param includi_me: Se True, include me stesso.
+        :return: QuerySet.
+        """
+        return self.get_descendants(include_self=includi_me)
+
+    def figli(self):
+        """
+        Ritorna i figli immediati di questa Sede.
+        :return: QuerySet.
+        """
+        return self.get_children()
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
@@ -734,6 +814,12 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
     oggetto_id = models.PositiveIntegerField(db_index=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
 
+    def permessi(self):
+        """
+        Ottiene un elenco di permessi che scaturiscono dalla delega.
+        :return: Una lista di permessi.
+        """
+        return delega_permessi(self)
 
 class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
     """
