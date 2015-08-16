@@ -10,6 +10,8 @@ Questo file gestisce i permessi in Gaia.
    https://github.com/CroceRossaItaliana/jorvik/wiki/Deleghe,-Permessi-e-Livelli-di-Accesso
  ============================================================================================
 """
+from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA, REFERENTE
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 
 GESTIONE_SEDE = "GESTIONE_SEDE"
 GESTIONE_SOCI = "GESTIONE_SOCI"
@@ -30,6 +32,15 @@ PERMESSI_OGGETTI = (
     (GESTIONE_ATTIVITA,         'Attivita'),
     (GESTIONE_CORSI_SEDE,       'Sede'),
     (GESTIONE_CORSO,            'Corso'),
+)
+
+# Tipologia degli oggetti assegnati ad ogni Delega.
+DELEGHE_OGGETTI = (
+    (PRESIDENTE,        'Sede'),
+    (UFFICIO_SOCI,      'Sede'),
+    (DELEGATO_AREA,     'Area'),
+    (RESPONSABILE_AREA, 'Area'),
+    (REFERENTE,         'Attivita'),
 )
 
 
@@ -82,6 +93,7 @@ def permesso_minimo(tipo):
 
 # Tieni in memoria anche come dizionari, per lookup veloci
 PERMESSI_OGGETTI_DICT = dict(PERMESSI_OGGETTI)
+DELEGHE_OGGETTI_DICT = dict(DELEGHE_OGGETTI)
 
 # Costanti URL
 ERRORE_PERMESSI = '/errore/permessi/'

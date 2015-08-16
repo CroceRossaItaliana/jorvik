@@ -5,7 +5,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from safedelete import safedelete_mixin_factory, SOFT_DELETE
 from mptt.models import MPTTModel, TreeForeignKey
-from anagrafica.permessi.applicazioni import PERMESSI_NOMI, PERMESSI_NOMI_DICT
+from anagrafica.permessi.applicazioni import PERMESSI_NOMI
+from anagrafica.permessi.costanti import DELEGHE_OGGETTI_DICT
 from base.stringhe import generatore_nome_file
 from base.tratti import ConMarcaTemporale
 from datetime import datetime
@@ -220,10 +221,10 @@ class ConAutorizzazioni(models.Model):
 
             (ruolo, oggetto) = i
 
-            if ruolo not in PERMESSI_NOMI_DICT:
+            if ruolo not in DELEGHE_OGGETTI_DICT:
                 raise ValueError("Il ruolo che si richiede firmi questa autorizzazione non esiste.")
 
-            if not isinstance(oggetto, PERMESSI_OGGETTI_DICT[ruolo]):
+            if oggetto.__class__.__name__ != DELEGHE_OGGETTI_DICT[ruolo]:
                 raise ValueError("L'oggetto specificato non e' valido per il ruolo che si richiede firmi "
                                  "l'autorizzazione.")
 
