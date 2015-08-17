@@ -14,6 +14,8 @@ from django.db import models
 
 class Corso(ModelloSemplice, ConMarcaTemporale, ConGeolocalizzazione, ConCommenti, ConGiudizio):
 
+    sede = models.ForeignKey(Sede, related_name='corsi')
+
     # Tipologia di corso
     BASE = 'BA'
     TIPO = (

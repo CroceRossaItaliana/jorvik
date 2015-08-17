@@ -1,6 +1,8 @@
 from django.test import TestCase
-from anagrafica.costanti import LOCALE
-from anagrafica.models import Sede, Persona, Appartenenza, Documento
+from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
+from anagrafica.models import Sede, Persona, Appartenenza, Documento, Delega
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE
+from anagrafica.permessi.costanti import MODIFICA
 
 
 class TestAnagrafica(TestCase):
@@ -78,6 +80,187 @@ class TestAnagrafica(TestCase):
             c.appartenenze_attuali(membro=Appartenenza.MILITARE).count() == 0,
             msg="Ma ancora nessun militare."
         )
+
+    def test_permessi(self):
+
+        c = Sede(
+            nome="Comitato Regionale di Sicilia",
+            tipo=Sede.COMITATO,
+            estensione=REGIONALE,
+        )
+        c.save()
+
+        c2 = Sede(
+            genitore=c,
+            nome="Comitato Provinciael di Catania",
+            tipo=Sede.COMITATO,
+            estensione=PROVINCIALE,
+        )
+        c2.save()
+
+        p = Persona(
+            nome="Mario",
+            cognome="Rossi",
+            codice_fiscale="FRSSAKJSIKAJDO",
+            data_nascita="1994-2-5"
+        )
+        p.save()
+
+        v = Persona(
+            nome="Luigi",
+            cognome="Verdi",
+            codice_fiscale="FRXSAKJSIKAJDO",
+            data_nascita="1995-2-5"
+        )
+        v.save()
+
+        a = Appartenenza(
+            persona=v,
+            sede=c,
+            membro=Appartenenza.VOLONTARIO,
+            inizio="1980-12-10",
+            confermata=True
+        )
+        a.save()
+
+        self.assertFalse(
+            p.permessi_almeno(c, MODIFICA),
+            msg="Questa persona non ha delega di presidenza"
+        )
+
+        self.assertFalse(
+            p.permessi_almeno(v, MODIFICA),
+            msg="Questa persona non ha delega di Ufficio Soci"
+        )
+
+        d1 = Delega(
+            persona=p,
+            tipo=UFFICIO_SOCI,
+            oggetto=c,
+            inizio="1980-12-10",
+            fine="1990-12-10",
+        )
+        d1.save()
+
+        self.assertFalse(
+            p.permessi_almeno(v, MODIFICA),
+            msg="La delega e' passata, non vale."
+        )
+
+        d2 = Delega(
+            persona=p,
+            tipo=UFFICIO_SOCI,
+            oggetto=c,
+            inizio="2020-12-10",
+            fine="2025-12-10",
+        )
+        d2.save()
+
+        self.assertFalse(
+            p.permessi_almeno(v, MODIFICA),
+            msg="La delega e' futura, non vale."
+        )
+
+        d3 = Delega(
+            persona=p,
+            tipo=UFFICIO_SOCI,
+            oggetto=c,
+            inizio="2020-12-10",
+            fine=None,
+        )
+        d3.save()
+
+        self.assertFalse(
+            p.permessi_almeno(v, MODIFICA),
+            msg="La delega e' futura, non vale."
+        )
+
+        d4 = Delega(
+            persona=p,
+            tipo=UFFICIO_SOCI,
+            oggetto=c,
+            inizio="2000-12-10",
+            fine="2099-12-10",
+        )
+        d4.save()
+
+        self.assertTrue(
+            p.permessi_almeno(v, MODIFICA),
+            msg="La persona ha diritti di US sulla scheda."
+        )
+
+        d4.delete()
+
+        d5 = Delega(
+            persona=p,
+            tipo=UFFICIO_SOCI,
+            oggetto=c,
+            inizio="2000-12-10",
+            fine=None,
+        )
+        d5.save()
+
+        self.assertTrue(
+            p.permessi_almeno(v, MODIFICA),
+            msg="La persona ha diritti di US sulla scheda."
+        )
+
+        self.assertFalse(
+            p.permessi_almeno(c, MODIFICA),
+            msg="Questa persona non ha delega di presidenza"
+        )
+
+        d6 = Delega(
+            persona=p,
+            tipo=PRESIDENTE,
+            oggetto=c,
+            inizio="2000-12-10",
+            fine=None,
+        )
+        d6.save()
+
+        self.assertTrue(
+            p.permessi_almeno(v, MODIFICA),
+            msg="La persona ha diritti di US sulla scheda."
+        )
+
+        self.assertTrue(
+            p.permessi_almeno(c, MODIFICA),
+            msg="Questa persona ha delega di presidenza"
+        )
+
+        self.assertTrue(
+            p.permessi_almeno(c2, MODIFICA),
+            msg="Questa persona ha delega di presidenza, e puo' quindi modificare comitati sottostanti"
+        )
+
+        d5.delete()
+
+        self.assertTrue(
+            p.permessi_almeno(v, MODIFICA),
+            msg="La persona ha ancora, tramite presidenza, diritti di US sulla scheda."
+        )
+
+        self.assertTrue(
+            p.permessi_almeno(c, MODIFICA),
+            msg="Questa persona ha delega di presidenza"
+        )
+
+        d6.fine = "2010-12-10"
+        d6.save()
+
+        self.assertFalse(
+            p.permessi_almeno(v, MODIFICA),
+            msg="La persona non ha piu, tramite presidenza, diritti di US sulla scheda."
+        )
+
+        self.assertFalse(
+            p.permessi_almeno(c, MODIFICA),
+            msg="Questa persona non ha piu delega di presidenza"
+        )
+
+        d6.delete()
+
 
     def test_documenti(self):
 

@@ -1,6 +1,18 @@
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import fromstr
 from django.contrib.gis.measure import D
+from base.tratti import ConMarcaTemporale
+
+
+class Locazione(ConMarcaTemporale, models.Model):
+
+    class Meta:
+        verbose_name = "Locazione Geografica"
+        verbose_name_plural = "Locazioni Geografiche"
+
+    objects = models.GeoManager()
+    geo = models.PointField(blank=True, default='POINT(0.0 0.0)')
+    indirizzo = models.CharField("Indirizzo", max_length=255, blank=True, null=True)
 
 
 class ConGeolocalizzazione(models.Model):
@@ -11,9 +23,7 @@ class ConGeolocalizzazione(models.Model):
     class Meta:
         abstract = True
 
-    objects = models.GeoManager()
-    geo = models.PointField(blank=True, default='POINT(0.0 0.0)')
-    indirizzo = models.CharField("Indirizzo", max_length=255, blank=True, null=True)
+    locazione = models.ForeignKey(Locazione, null=True, blank=True, related_name="%(app_label)s_%(class)s")
 
     def vicini(self, km):
         """
@@ -21,7 +31,10 @@ class ConGeolocalizzazione(models.Model):
         :param km: Raggio di ricerca in kilometri.
         :return: Una ricerca filtrata.
         """
-        self.objects.filter(geo__distance_lte=(self.geo, D(km=km)))
+        if self.locazione is None:
+            return self.objects.none()
+
+        self.objects.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=km)))
 
 
 class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
@@ -40,5 +53,5 @@ class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
         Filtra una ricerca, per gli elementi nel raggio di questo elemento.
         :return: La ricerca filtrata
         """
-        return ricerca.filter(geo__distance_lte=(self.geo, D(km=self.raggio)))
+        return ricerca.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=self.raggio)))
 

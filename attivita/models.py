@@ -43,5 +43,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
 class Area(ModelloSemplice, ConMarcaTemporale):
 
+    sede = models.ForeignKey(Sede, related_name='aree')
+
     class Meta:
         verbose_name_plural = "Aree"

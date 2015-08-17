@@ -46,7 +46,8 @@ def persona_permessi(persona, oggetto, al_giorno=date.today()):
     # Per ogni delega attuale, aggiungi i permessi
     for d in persona.deleghe_attuali(al_giorno=al_giorno):
         ## [(permesso, oggetto), ...] = PERMESSI_DELEGA[d.tipo](d.oggetto)  # ie. ((
-        permessi += [ESPANDI_PERMESSI[permesso](queryset) for (permesso, queryset) in d.permessi()]
+        for (permesso, queryset) in d.permessi():
+            permessi += ESPANDI_PERMESSI[permesso](queryset)
 
     massimo = permesso_minimo(oggetto.__class__)  # ie. NESSUNO
     for (permesso, queryset) in permessi:  # p: (PERMESSO, queryset)
@@ -82,7 +83,8 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=date.tod
     # Per ogni delega attuale, aggiungi i permessi
     for d in persona.deleghe_attuali(al_giorno=al_giorno):
         ## [(permesso, oggetto), ...] = PERMESSI_DELEGA[d.tipo](d.oggetto)  # ie. ((
-        permessi += [ESPANDI_PERMESSI[permesso](queryset) for (permesso, queryset) in d.permessi()]
+        for (permesso, queryset) in d.permessi():
+            permessi += ESPANDI_PERMESSI[permesso](queryset)
 
     for (permesso, queryset) in permessi:  # p: (PERMESSO, queryset)
 

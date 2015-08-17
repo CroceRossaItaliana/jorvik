@@ -2,7 +2,6 @@
 Questo modulo contiene tutte le funzioni per testare i permessi
 a partire da un oggetto sul quale ho una delega ed un oggetto da testare.
 """
-from anagrafica.models import Sede
 from anagrafica.permessi.applicazioni import PRESIDENTE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.applicazioni import DELEGATO_AREA
@@ -12,8 +11,6 @@ from anagrafica.permessi.applicazioni import REFERENTE
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
     GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO
 
-from attivita.models import Attivita, Area
-from formazione.models import Corso
 
 
 def permessi_presidente(sede):
@@ -38,6 +35,7 @@ def permessi_ufficio_soci(sede):
     :param sede: Sede di cui si e' ufficio soci.
     :return: Lista di permessi.
     """
+    from anagrafica.models import Sede
     return [
         (GESTIONE_SOCI,     Sede.objects.filter(pk=sede.pk)),
         (ELENCHI_SOCI,      sede.esplora()),
@@ -50,6 +48,8 @@ def permessi_responsabile_attivita(sede):
     :param sede: Sede di cui si e' responsabile attivita'.
     :return: Lista di permessi.
     """
+    from anagrafica.models import Sede
+    from attivita.models import Area, Attivita
     return [
         (GESTIONE_ATTIVITA_SEDE,    Sede.objects.filter(pk=sede.pk)),
         (GESTIONE_ATTIVITA_AREA,    Area.objects.filter(sede=sede)),
@@ -63,6 +63,8 @@ def permessi_responsabile_formazione(sede):
     :param sede: Sede di cui si e' responsabile formazione.
     :return: Lista di permessi.
     """
+    from anagrafica.models import Sede
+    from formazione.models import Corso
     return [
         (GESTIONE_CORSI_SEDE,       Sede.objects.filter(pk=sede.pk)),
         (GESTIONE_CORSO,            Corso.objects.filter(sede=sede))
@@ -76,6 +78,7 @@ def permessi_delegato_area(area):
     :param area: L'area di cui si e' delegati
     :return: Lista di permessi.
     """
+    from attivita.models import Area, Attivita
     return [
         (GESTIONE_ATTIVITA_AREA,    Area.objects.filter(pk=area.pk)),
         (GESTIONE_ATTIVITA,         Attivita.objects.filter(area=area))
@@ -101,7 +104,7 @@ def permessi_referente(attivita, oggetto):
     :param attivita: L'attivita' di cui si e' referenti
     :return: Lista di permessi.
     """
-
+    from attivita.models import Attivita
     return [
         (GESTIONE_ATTIVITA,         Attivita.objects.filter(pk=attivita.pk))
     ]

@@ -24,6 +24,7 @@ import phonenumbers
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, APPLICAZIONI_SLUG_DICT, PERMESSI_NOMI_DICT
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+from anagrafica.permessi.delega import delega_permessi
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
 

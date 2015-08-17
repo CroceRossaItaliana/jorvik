@@ -20,16 +20,16 @@ Questo file gestisce la espansione dei permessi in Gaia.
 def espandi_gestione_soci(qs_sedi, al_giorno=date.today()):
     from anagrafica.models import Persona, Appartenenza
     return [
-        (MODIFICA,  Persona.objects.filter(Appartenenza.query_attuale(figli=False, al_giorno=al_giorno, membro__in=Appartenenza.MEMBRO_DIRETTO).via("appartenenze"))),
-        (LETTURA,   Persona.objects.filter(Appartenenza.query_attuale(figli=False, al_giorno=al_giorno, membro__in=Appartenenza.MEMBRO_ESTESO).via("appartenenze")))
+        (MODIFICA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO).via("appartenenze"))),
+        (LETTURA,   Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ESTESO).via("appartenenze")))
     ]
 
 def espandi_elenchi_soci(qs_sedi, al_giorno=date.today()):
-    from anagrafica.models import Persona, Appartenenza
+    from anagrafica.models import Persona, Appartenenza, Sede
     return [
-        (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(figli=True, al_giorno=al_giorno).via("appartenenze"))),
-        (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(figli=False, al_giorno=al_giorno, membro__in=Appartenenza.MEMBRO_DIRETTO).via("appartenenze"))),
-        (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(figli=False, al_giorno=al_giorno, membro__in=Appartenenza.MEMBRO_ESTESO).via("appartenenze"))),
+        (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=Sede.objects.get_queryset_descendants(qs_sedi, include_self=True)).via("appartenenze"))),
+        (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO).via("appartenenze"))),
+        (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ESTESO).via("appartenenze"))),
     ]
 
 def espandi_gestione_sede(qs_sedi, al_giorno=date.today()):
@@ -71,7 +71,7 @@ def espandi_gestione_corso(qs_corsi, al_giorno=date.today()):
     from anagrafica.models import Persona
     return [
         (MODIFICA,  qs_corsi),
-        (MODIFICA,  Persona.objects.filter(partecipazioni_corsi__corso__in=qs_corsi)).exclude(aspirante__id__innull=True),
+        (MODIFICA,  Persona.objects.filter(partecipazioni_corsi__corso__in=qs_corsi).exclude(aspirante__id__isnull=True)),
         (LETTURA,   Persona.objects.filter(partecipazioni_corsi__corso__in=qs_corsi)),
     ]
 
