@@ -18,7 +18,8 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, QuerySet
+from django.db.models.query import EmptyQuerySet
 from django_countries.fields import CountryField
 import phonenumbers
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
@@ -392,9 +393,13 @@ class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
         dal permesso. Es.: GESTINE_SOCI -> Elenco dei Comitati in cui si ha gestione dei soci.
         :param permesso: Permesso singolo.
         :param al_giorno: Data di verifica.
-        :return: QuerySet. Se permesso non valido, QuerySet vuoto (EmptyQuerySet).
+        :return: QuerySet. Se permesso non valido, QuerySet vuoto o None (EmptyQuerySet).
         """
-        return persona_oggetti_permesso(self, permesso, al_giorno=al_giorno)
+        permessi = persona_oggetti_permesso(self, permesso, al_giorno=al_giorno)
+        if isinstance(permessi, QuerySet):
+            return permessi
+        else:
+            return Persona.objects.none()  # Un EmptyQuerySet qualunque.
 
     def permessi(self, oggetto, al_giorno=date.today()):
         """

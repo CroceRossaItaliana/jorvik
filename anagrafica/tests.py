@@ -2,7 +2,7 @@ from django.test import TestCase
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Delega
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE
-from anagrafica.permessi.costanti import MODIFICA
+from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI
 
 
 class TestAnagrafica(TestCase):
@@ -175,6 +175,11 @@ class TestAnagrafica(TestCase):
             msg="La delega e' futura, non vale."
         )
 
+        self.assertFalse(
+            p.oggetti_permesso(ELENCHI_SOCI).exists(),
+            msg="Non ho permesso di Elenchi soci da nessuna parte"
+        )
+
         d4 = Delega(
             persona=p,
             tipo=UFFICIO_SOCI,
@@ -203,6 +208,11 @@ class TestAnagrafica(TestCase):
         self.assertTrue(
             p.permessi_almeno(v, MODIFICA),
             msg="La persona ha diritti di US sulla scheda."
+        )
+
+        self.assertTrue(
+            p.oggetti_permesso(ELENCHI_SOCI).count() == 2,
+            msg="Ho permesso di elenchi su due comitati"
         )
 
         self.assertFalse(

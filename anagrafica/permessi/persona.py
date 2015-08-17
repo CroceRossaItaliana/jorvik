@@ -12,7 +12,7 @@ def persona_oggetti_permesso(persona, permesso, al_giorno=date.today()):
     dal permesso. Es.: GESTINE_SOCI -> Elenco dei Comitati in cui si ha gestione dei soci.
     :param permesso: Permesso singolo.
     :param al_giorno: Data di verifica.
-    :return: QuerySet. Se permesso non valido, QuerySet vuoto (EmptyQuerySet).
+    :return: QuerySet. Se permesso non valido, QuerySet vuoto o None (EmptyQuerySet).
     """
     if not permesso:
         return True
