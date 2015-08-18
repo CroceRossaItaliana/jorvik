@@ -71,7 +71,7 @@ sudo apt-get install git python3-pip mysql-server binutils libproj-dev gdal-bin 
     ```
     
 4. Opzionale: **Posta, debug, chiave di produzione**
-  * Fare quanto al punto (1.1) per tutti i file `config/*.cnf.sample` che si vuole personalizzare 
+  * Fare quanto al punto (3.ii, 3.iii) per tutti i file `config/*.cnf.sample` che si vuole personalizzare 
 5. **Assets (CSS, JS, Immagini)**
   * Per creare la cartella `assets` e riempirla di contenuti
   
