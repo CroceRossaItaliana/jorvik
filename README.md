@@ -50,19 +50,19 @@ sudo apt-get install git python3-pip mysql-server binutils libproj-dev gdal-bin 
     sudo pip3 install -r requirements.txt
     ```
     
-4. **Database** 
-  1. Crea un file di configurazione MySQL copiando quello di esempio
-  
-    ```bash
-    cp config/mysql.cnf{.sample,}
-    ```
-  
-  2. Crea un database per Jorvik, es. con nome `jorvik`
+4. **Database**   
+  1. Crea un database per Jorvik, es. con nome `jorvik`
   
     ```bash
     mysql -u root -p -e 'CREATE DATABASE jorvik CHARSET utf8;'
     ```
     
+  2. Crea un file di configurazione MySQL copiando quello di esempio
+  
+    ```bash
+    cp config/mysql.cnf{.sample,}
+    ```
+  
   3. Modifica `config/mysql.cnf` con le credenziali ed il nome del database creato
   4. Crea tutte le tabelle di database necessarie
   
@@ -70,7 +70,7 @@ sudo apt-get install git python3-pip mysql-server binutils libproj-dev gdal-bin 
     python3 ./manage.py syncdb
     ```
     
-4. **Posta, debug, chiave di produzione**
+4. Opzionale: **Posta, debug, chiave di produzione**
   * Fare quanto al punto (1.1) per tutti i file `config/*.cnf.sample` che si vuole personalizzare 
 5. **Assets (CSS, JS, Immagini)**
   * Per creare la cartella `assets` e riempirla di contenuti
