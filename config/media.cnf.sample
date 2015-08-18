@@ -1,0 +1,10 @@
+[media]
+
+# Questo file permette di configurare il modo di salvataggio e
+#  recupero dei file statici caricati dagli utenti.
+
+# Dove devono essere salvati i dati (file path locale)
+media_root = /tmp/media/
+
+# URL pubblico, relativo, ove servire i dati
+media_url = /media/

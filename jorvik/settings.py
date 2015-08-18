@@ -4,21 +4,13 @@ Queste sono le impostazioni di Django per il progetto Jorvik.
 Informazioni sul file:  https://docs.djangoproject.com/en/1.7/topics/settings/
 Documentazione config.: https://docs.djangoproject.com/en/1.7/ref/settings/
 """
+import configparser
 
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Deployment: https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
-# DA CAMBIARE IN PRODUZIONE
-SECRET_KEY = 'nxt$3dhwh_k_@lh^)=^i^ra!$ty-vy1v=g7fptenicbiqqwaqt'
-
-# DA CAMBIARE IN PRODUZIONE
-DEBUG = True
-
-TEMPLATE_DEBUG = True
-
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Elenca le applicazioni installate da abilitare
@@ -87,6 +79,10 @@ WSGI_APPLICATION = 'jorvik.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
+MYSQL_CONF_FILE = 'config/mysql.cnf' if os.path.isfile('config/mysql.cnf') else 'config/mysql.cnf.sample'
+EMAIL_CONF_FILE = 'config/email.cnf' if os.path.isfile('config/email.cnf') else 'config/email.cnf.sample'
+MEDIA_CONF_FILE = 'config/media.cnf' if os.path.isfile('config/media.cnf') else 'config/media.cnf.sample'
+DEBUG_CONF_FILE = 'config/debug.cnf' if os.path.isfile('config/debug.cnf') else 'config/debug.cnf.sample'
 
 DATABASES = {
     'default': {
@@ -96,7 +92,7 @@ DATABASES = {
         },
         'ENGINE': 'django.contrib.gis.db.backends.mysql',
         'OPTIONS': {
-            'read_default_file': 'config/mysql.cnf',
+            'read_default_file': MYSQL_CONF_FILE,
             'init_command': 'SET storage_engine=MyISAM',
         },
     }
@@ -133,8 +129,30 @@ REST_FRAMEWORK = {
     )
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-EMAIL_FILE_PATH = '/tmp/app-messages'
+# Configurazione E-mail
+EMAIL_CONF = configparser.ConfigParser()
+EMAIL_CONF.read(EMAIL_CONF_FILE)
+EMAIL_BACKEND = EMAIL_CONF.get('email', 'backend')
+EMAIL_FILE_PATH = EMAIL_CONF.get('email', 'file_path')
+EMAIL_HOST = EMAIL_CONF.get('email', 'host')
+EMAIL_PORT = EMAIL_CONF.get('email', 'port')
+EMAIL_HOST_USER = EMAIL_CONF.get('email', 'username')
+EMAIL_HOST_PASSWORD = EMAIL_CONF.get('email', 'password')
+EMAIL_USE_SSL = EMAIL_CONF.getboolean('email', 'ssl')
+EMAIL_USE_TLS = EMAIL_CONF.getboolean('email', 'tls')
+EMAIL_SSL_KEYFILE = EMAIL_CONF.get('email', 'ssl_keyfile')
+EMAIL_SSL_CERTFILE = EMAIL_CONF.get('email', 'ssl_certfile')
 
-MEDIA_ROOT = '/tmp/media/'
-MEDIA_URL = '/media/'
+# Configurazione media
+MEDIA_CONF = configparser.ConfigParser()
+MEDIA_CONF.read(MEDIA_CONF_FILE)
+MEDIA_ROOT = MEDIA_CONF.get('media', 'media_root')
+MEDIA_URL = MEDIA_CONF.get('media', 'media_url')
+
+# Configurazione debug e produzione
+DEBUG_CONF = configparser.ConfigParser()
+DEBUG_CONF.read(DEBUG_CONF_FILE)
+DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
+TEMPLATE_DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
+SECRET_KEY = DEBUG_CONF.get('production', 'secret_key')
+ALLOWED_HOST = ['localhost', '127.0.0.1', DEBUG_CONF.get('production', 'host')]

@@ -1,5 +1,5 @@
 .idea
 *.pyc
 db.sqlite3
-config
+config/*.cnf
 assets/

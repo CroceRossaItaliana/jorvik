@@ -1,0 +1,27 @@
+[email]
+
+# Backend
+#  (scegliere rimuovendo il ; dal backend da attivare)
+
+##  FILE: Salva e-mail come file di testo in una cartella (debug)
+backend = django.core.mail.backends.filebased.EmailBackend
+
+##  SMTP: Invia tramite server SMTP.
+;backend = django.core.mail.backends.smtp.EmailBackend
+
+# Configurazione
+
+## FILE
+file_path = /tmp/
+
+## SMTP
+host = localhost
+port = 25
+username =
+password =
+tls = 0
+ssl = 0
+
+# SSL
+ssl_keyfile =
+ssl_certfile =

@@ -1,0 +1,13 @@
+[debug]
+
+# Modalità debug
+debug = 1
+
+
+[production]
+
+# Host permesso (quando debug spento)
+host = localhost
+
+# Chiave segreta (qui di esempio)
+secret_key = nxtg7fptenicbiqqwaqtnxtg7fptenicbiqqwaqt
