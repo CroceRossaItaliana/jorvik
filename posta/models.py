@@ -162,6 +162,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         m.accoda()
         return m
 
+    def __str__(self):
+        return self.oggetto
+
 
 class Destinatario(ModelloSemplice, ConMarcaTemporale):
 

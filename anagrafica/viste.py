@@ -155,7 +155,7 @@ def registrati_conferma(request, tipo):
         dati.update(modulo.cleaned_data)
 
     # Quali di questi campi vanno nella persona?
-    campi_persona = [str(x.name) for x in Persona._meta.get_fields()]
+    campi_persona = [str(x.name) for x in Persona._meta.get_fields() if not x.is_relation]
     dati_persona = {x: dati[x] for x in dati if x in campi_persona}
 
     # Crea la persona
@@ -170,6 +170,9 @@ def registrati_conferma(request, tipo):
     # Effettua il login!
     u.backend = 'django.contrib.auth.backends.ModelBackend'
     login(request, u)
+
+    # Da' il benvenuto all'utente
+    p.invia_email_benvenuto_registrazione(tipo=tipo)
 
     if tipo == TIPO_ASPIRANTE:
         # TODO Registrazione aspirante

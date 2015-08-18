@@ -126,6 +126,14 @@ class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
             return self.utenza.email
         return None
 
+    @property
+    def admin(self):
+        """
+        Controlla se l'utente e' admin.
+        :return: True se admin, False altrimenti.
+        """
+        return self.utenza is not None and self.utenza.is_staff
+
     def __str__(self):
         return self.nome_completo
 
@@ -443,6 +451,23 @@ class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
         :return: True se tutti i permessi sono posseduti. False altrimenti.
         """
         return persona_ha_permessi(self, *permessi)
+
+    def invia_email_benvenuto_registrazione(self, tipo='aspirante'):
+        """
+        Invia una email di benvenuto in seguito alla registrazione.
+        :param tipo: Stringa 'aspirante' o 'volontario'.
+        """
+        from posta.models import Messaggio
+
+        Messaggio.costruisci_e_invia(
+            oggetto="Benvenuto/a su Gaia!",
+            modello="email_benvenuto_" + str(tipo) + "_registrazione.html",
+            corpo={
+                'nome': self.nome_completo,
+            },
+            destinatari=[self]
+        )
+
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """

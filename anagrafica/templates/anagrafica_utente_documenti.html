@@ -39,7 +39,10 @@
                             <td>{{ d.get_tipo_display }}</td>
                             <td>
                                 <a href="{{ d.file.url }}" title="Scarica il documento">
-                                    <i class="fa fa-download"></i> Scarica ({{ d.file.size|filesizeformat }})
+                                    <i class="fa fa-download"></i> Scarica
+                                    {% if d.file and d.file.size %}
+                                        ({{ d.file.size|filesizeformat }})
+                                    {% endif %}
                                 </a>
                             </td>
                             <td>
