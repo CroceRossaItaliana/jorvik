@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from django.shortcuts import render, render_to_response
+from django.shortcuts import render, render_to_response, get_object_or_404
 
 # Le viste base vanno qui.
 from anagrafica.models import Sede, Persona
@@ -81,3 +81,13 @@ def informazioni_sedi(request, me):
         'sedi': Sede.objects.all()
     }
     return 'base_informazioni_sedi.html', contesto
+
+@pagina_pubblica
+def informazioni_sede(request, me, slug):
+    """
+    Mostra dettagli sul comitato.
+    """
+    contesto = {
+        'sede': get_object_or_404(Sede, slug=slug)
+    }
+    return 'base_informazioni_sede.html', contesto

@@ -1,0 +1,94 @@
+{% extends "base_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load l10n %}
+
+{% block pagina_titolo %}
+    {{ sede.nome }} - {{ sede.get_tipo_display }}, {{ sede.get_estensione_display }}
+{% endblock %}
+
+{% block pagina_principale %}
+
+
+    <div class="container">
+
+        <div class="row">
+            <div class="col-md-6">
+
+                <a href="/informazioni/sedi/" class="btn btn-block btn-success">
+                    <i class="fa fa-fw fa-reply"></i>
+                    Torna all'elenco delle Sedi
+                </a>
+
+                <hr />
+
+                {% if sede.genitore %}
+                    <h4 class="allinea-centro">
+                        <a href="{{ sede.genitore.url }}">{{ sede.genitore.nome }}</a>
+                    </h4>
+                {% endif %}
+
+                <h2 class="allinea-centro">
+                    {{ sede.nome }}
+                </h2>
+
+                <h4 class="allinea-centro">
+                    {{ sede.get_tipo_display }} &mdash;
+                    {{ sede.get_estensione_display }}
+                </h4>
+
+
+
+                {% if sede.ottieni_figli.exists %}
+
+                    <p>&nbsp;</p>
+                    <p>Questa Sede ha {{ sede.ottieni_figli.count }} sedi direttamente subordinate, per un totale di
+                        {{ sede.ottieni_discendenti.count }} sedi subordinate (anche indirettamente).</p>
+                    <ul>
+                        {% for node in sede.ottieni_figli %}
+                            <li>
+                                <a href="{{ node.url }}">
+                                    {{ node.nome }}
+                                </a>
+                                ({{ node.get_estensione_display }})
+
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                {% endif %}
+
+                {% if sede.ottieni_fratelli.exists %}
+
+                    <p>&nbsp;</p>
+                    <p>Inoltre, vi sono altre {{ sede.ottieni_fratelli.count }} sedi allo stesso livello:</p>
+
+                    <ul>
+                        {% for node in sede.ottieni_fratelli %}
+                            <li>
+                                <a href="{{ node.url }}">
+                                    {{ node.nome }}
+                                </a>
+                                ({{ node.get_estensione_display }})
+
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+
+                {% endif %}
+
+
+            </div>
+
+
+            <div class="col-md-6">
+
+            </div>
+
+        </div>
+    </div>
+
+
+{% endblock %}

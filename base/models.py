@@ -61,8 +61,11 @@ class ModelloAlbero(MPTTModel, ModelloSemplice):
     def ottieni_figli(self):
         return self.get_children()
 
-    def ottieni_discendenti(self, includimi=True):
-        return self.get_descendant_count(include_self=includimi)
+    def ottieni_discendenti(self, includimi=False):
+        return self.get_descendants(include_self=includimi)
+
+    def ottieni_fratelli(self, includimi=False):
+        return self.get_siblings(include_self=includimi)
 
     def ottieni_numero_figli(self, includimi=False):
         n = self.get_descendant_count()

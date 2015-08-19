@@ -33,8 +33,8 @@ from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati
 from base.stringhe import normalizza_nome, generatore_nome_file
 from base.tratti import ConMarcaTemporale, ConStorico
-from base.utils import is_list
-
+from base.utils import is_list, sede_slugify
+from autoslug import AutoSlugField
 
 class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
     """
@@ -722,7 +722,29 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
     codice_fiscale = models.CharField("Codice Fiscale", max_length=32, blank=True)
     partita_iva = models.CharField("Partita IVA", max_length=32, blank=True)
 
+    slug = AutoSlugField(populate_from=lambda x: x.sorgente_slug(), slugify=sede_slugify, always_update=True)
     membri = models.ManyToManyField(Persona, through='Appartenenza')
+
+    def sorgente_slug(self):
+        if self.genitore:
+            return str(self.genitore.slug) + "-" + self.nome
+        else:
+            return self.nome
+
+    @property
+    def url(self):
+        return "/informazioni/sedi/" + str(self.slug) + "/"
+
+    @property
+    def icona(self):
+        dict = {
+            NAZIONALE: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
+            REGIONALE: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
+            PROVINCIALE: "https://maps.google.com/mapfiles/ms/icons/orange-dot.png",
+            LOCALE: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+            TERRITORIALE: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+        }
+        return dict[self.estensione]
 
     # Q: Come ottengo i dati del comitato?
     # A: Usa la funzione Sede.ottieni, ad esempio, Sede.ottieni('partita_iva').
@@ -817,12 +839,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
         """
         return self.get_descendants(include_self=includi_me)
 
-    def figli(self):
-        """
-        Ritorna i figli immediati di questa Sede.
-        :return: QuerySet.
-        """
-        return self.get_children()
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):

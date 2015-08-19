@@ -60,3 +60,16 @@ def concept(method):
         qs.via = lambda accessor: prefix(accessor, q)
         return qs
     return func
+
+from autoslug.settings import slugify as default_slugify
+def sede_slugify(value):
+    """
+    Utilizzato come funzione per la slugifyazione delle sedi
+    """
+    parole_vietate = ('comitato', 'di', 'della', 'del', 'in', 'provinciale',
+                      'locale', 'territoriale', 'regionale', 'nazionale',)
+    value = value.replace('d\'', '').replace('D\'', '')
+    stringa = default_slugify(value)
+    for parola in parole_vietate:
+        stringa = stringa.replace(parola + str("-"), "")
+    return stringa
