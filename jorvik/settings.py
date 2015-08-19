@@ -4,14 +4,16 @@ Queste sono le impostazioni di Django per il progetto Jorvik.
 Informazioni sul file:  https://docs.djangoproject.com/en/1.7/topics/settings/
 Documentazione config.: https://docs.djangoproject.com/en/1.7/ref/settings/
 """
-import configparser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 import os
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Deployment: https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
-
-
 
 # Elenca le applicazioni installate da abilitare
 
