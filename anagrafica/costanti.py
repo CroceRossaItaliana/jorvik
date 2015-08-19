@@ -8,9 +8,9 @@ NAZIONALE = 'N'
 ESTENSIONE = (
     (TERRITORIALE, 'Unità Territoriale'),
     (LOCALE, 'Sede Locale'),
-    (PROVINCIALE, 'Comitato Provinciale'),
-    (REGIONALE, 'Comitato Regionale'),
-    (NAZIONALE, 'Comitato Nazioanle')
+    (PROVINCIALE, 'Sede Provinciale'),
+    (REGIONALE, 'Sede Regionale'),
+    (NAZIONALE, 'Sede Nazionale')
 )
 
 # Ad uso di comparazione

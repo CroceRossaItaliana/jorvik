@@ -168,7 +168,7 @@ class ConAutorizzazioni(models.Model):
         if self.confermata:  # Se confermata, okay
             return self.ESITO_OK
 
-        elif self.autorizzazioni.exists(concessa=False):  # Altrimenti, se almeno una negazione, esito negativo
+        elif self.autorizzazioni.filter(concessa=False).exists():  # Altrimenti, se almeno una negazione, esito negativo
             return self.ESITO_NO
 
         else:  # Se non confermata e nessun esito negativo, ancora pendente
