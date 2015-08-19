@@ -3,10 +3,12 @@
 {% load bootstrap3 %}
 {% load mptt_tags %}
 {% load l10n %}
+{% load cache %}
 
 {% block pagina_titolo %}Elenco Sedi CRI con Recapiti e Mappa{% endblock %}
 
 {% block pagina_principale %}
+{% cache 1800 informazioni_sedi %}
 
 
     <div class="container">
@@ -24,8 +26,10 @@
 
             <div class="col-md-4 alert alert-info allinea-centro">
                 <h4>
-                    <i class="fa fa-bar-chart fa-2x"></i><br />
-                    <span class="label label-success">{{ sedi.count }}</span>
+                    <big><big>
+                        {{ sedi.count }}
+                    </big></big>
+                    <br />
                     Sedi CRI aderiscono al Progetto Gaia
                 </h4>
 
@@ -46,12 +50,10 @@
                 <ul class="root">
                     {% recursetree sedi %}
                         <li>
-                            <a href="{{ node.url }}">
-                                {{ node.nome }}
-                            </a>
-                            ({{ node.get_estensione_display }})
-
-                            {% if not node.is_leaf_node %}
+                            <p>
+                                <a href="{{ node.url }}"><strong>{{ node.nome }}</strong></a>, {{ node.get_estensione_display }}
+                            </p>
+                            {% if not node.estensione == massimo_lista and not node.is_leaf_node %}
                                 <ul class="children">
                                     {{ children }}
                                 </ul>
@@ -85,7 +87,6 @@
                 mapTypeId: google.maps.MapTypeId.ROADMAP
             }
             var map = new google.maps.Map(document.getElementById("laMappa"), opzioni);
-
             {% for sede in sedi %}
                 {% if sede.locazione %}
                     messaggio = new google.maps.InfoWindow({
@@ -105,9 +106,7 @@
                 {% endif %}
             {% endfor %}
         }
-
         {% endlocalize %}
-
         function loadScript() {
           var script = document.createElement("script");
           script.type = "text/javascript";
@@ -117,4 +116,5 @@
         window.onload = loadScript;
     </script>
 
+{% endcache %}
 {% endblock %}

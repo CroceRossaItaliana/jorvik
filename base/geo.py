@@ -11,7 +11,7 @@ class Locazione(ConMarcaTemporale, models.Model):
         verbose_name_plural = "Locazioni Geografiche"
 
     objects = models.GeoManager()
-    geo = models.PointField(blank=True, default='POINT(0.0 0.0)')
+    geo = models.PointField(blank=True, default='POINT(0.0 0.0)', srid=4326)
     indirizzo = models.CharField("Indirizzo", max_length=255, blank=True, null=True)
 
 

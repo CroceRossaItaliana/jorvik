@@ -711,11 +711,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
 
     # Dati del comitato
     # Nota: indirizzo e' gia' dentro per via di ConGeolocalizzazione
-    via = models.CharField("Via", max_length=64, blank=True)
-    civico = models.CharField("Civico", max_length=8, blank=True)
-    comune = models.CharField("Comune", max_length=64, blank=True)
-    provincia = models.CharField("Provincia", max_length=64, blank=True)
-    cap = models.CharField("CAP", max_length=5, blank=True)
     telefono = models.CharField("Telefono", max_length=64, blank=True)
     fax = models.CharField("FAX", max_length=64, blank=True)
     email = models.CharField("Indirizzo e-mail", max_length=64, blank=True)

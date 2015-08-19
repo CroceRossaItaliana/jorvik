@@ -49,7 +49,7 @@
                         {% for node in sede.ottieni_figli %}
                             <li>
                                 <a href="{{ node.url }}">
-                                    {{ node.nome }}
+                                    <strong>{{ node.nome }}</strong>
                                 </a>
                                 ({{ node.get_estensione_display }})
 

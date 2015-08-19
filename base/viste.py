@@ -2,6 +2,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, render_to_response, get_object_or_404
 
 # Le viste base vanno qui.
+from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
 from autenticazione.funzioni import pagina_pubblica, pagina_anonima
 from base.forms import ModuloRecuperaPassword
@@ -78,7 +79,8 @@ def informazioni_sedi(request, me):
     Mostra un elenco dei Comitato, su una mappa, ed esce.
     """
     contesto = {
-        'sedi': Sede.objects.all()
+        'sedi': Sede.objects.all(),
+        'massimo_lista': REGIONALE,
     }
     return 'base_informazioni_sedi.html', contesto
 
