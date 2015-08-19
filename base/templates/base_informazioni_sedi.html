@@ -1,0 +1,48 @@
+{% extends "base_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Elenco Sedi CRI con Recapiti e Mappa{% endblock %}
+
+{% block pagina_principale %}
+
+
+    <div class="container">
+
+        <div class="row">
+
+            <div class="col-md-8">
+                <h2>
+                    <i class="fa fa-globe text-warning"></i>
+                    Dov'&egrave; Croce Rossa attorno a me?
+                </h2>
+                <p>Elenco delle Sedi CRI che aderiscono al Progetto Gaia, con i relativi Recapiti ed una mappa.</p>
+            </div>
+
+            <div class="col-md-4 alert alert-info allinea-centro">
+                <h4>
+                    <i class="fa fa-bar-chart fa-2x"></i><br />
+                    <span class="label label-success">{{ sedi.count }}</span>
+                    Sedi CRI aderiscono al Progetto Gaia
+                </h4>
+
+            </div>
+
+        </div>
+
+        <hr />
+
+        <div class="row">
+            <div class="col-md-6">
+
+
+            </div>
+
+
+            <div class="col-md-6">
+
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

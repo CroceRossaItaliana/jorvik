@@ -70,4 +70,14 @@ def informazioni_condizioni(request, me):
     """
     Mostra semplicemente la pagina delle condizioni ed esce.
     """
-    return 'base_informazioni_condizioni.html'
+    return 'base_informazioni_condizioni.html'\
+
+@pagina_pubblica
+def informazioni_sedi(request, me):
+    """
+    Mostra un elenco dei Comitato, su una mappa, ed esce.
+    """
+    contesto = {
+        'sedi': Sede.objects.all()
+    }
+    return 'base_informazioni_sedi.html', contesto
