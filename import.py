@@ -111,23 +111,19 @@ def carica_comitato(tipo='nazionali', id=1, ref=None, num=0):
 
     comitato = ottieni_comitato(tipo, id)
 
-    geo = Point(comitato['y'], comitato['x'])
-    try:
-        loc = locazione(geo, comitato['dati']['formattato'])
-    except:
-        loc = None
 
     c = Sede(
         genitore=ref,
         nome=comitato['nome'],
-        locazione=loc,
         tipo=Sede.COMITATO,
         estensione=COMITATO_ESTENSIONE[tipo],
     )
     c.save()
-    print(" " + ("-"*num) + " " + c.nome + " " + str(geo.x) + ", " + str(geo.y))
-    if c.locazione is not None:
-        print(" " + ("-"*num) + " " + c.nome + " " + str(c.locazione.geo.x) + ", " + str(c.locazione.geo.y))
+
+    if 'formattato' in comitato['dati'] and comitato['dati']['formattato']:
+        c.imposta_locazione(comitato['dati']['formattato'])
+
+    print(" " + ("-"*num) + " " + c.nome + ": " + str(c.locazione))
 
     totale = 1
     for (a, b) in ottieni_figli(tipo,id):
