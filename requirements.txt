@@ -12,3 +12,4 @@ mysqlclient==1.3.6
 Pillow==2.7.0
 PyYAML==3.11
 django-countries==3.3
+googlemaps==2.2

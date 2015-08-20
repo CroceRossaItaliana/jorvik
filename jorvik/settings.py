@@ -85,6 +85,7 @@ MYSQL_CONF_FILE = 'config/mysql.cnf' if os.path.isfile('config/mysql.cnf') else 
 EMAIL_CONF_FILE = 'config/email.cnf' if os.path.isfile('config/email.cnf') else 'config/email.cnf.sample'
 MEDIA_CONF_FILE = 'config/media.cnf' if os.path.isfile('config/media.cnf') else 'config/media.cnf.sample'
 DEBUG_CONF_FILE = 'config/debug.cnf' if os.path.isfile('config/debug.cnf') else 'config/debug.cnf.sample'
+APIS_CONF_FILE = 'config/apis.cnf' if os.path.isfile('config/apis.cnf') else 'config/apis.cnf.sample'
 
 DATABASES = {
     'default': {
@@ -158,3 +159,8 @@ DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
 TEMPLATE_DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
 SECRET_KEY = DEBUG_CONF.get('production', 'secret_key')
 ALLOWED_HOST = ['localhost', '127.0.0.1', DEBUG_CONF.get('production', 'host')]
+
+# Configurazione dei servizi API
+APIS_CONF = configparser.ConfigParser()
+APIS_CONF.read(APIS_CONF_FILE)
+GOOGLE_KEY = APIS_CONF.get('google', 'api_key')
