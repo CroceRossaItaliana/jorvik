@@ -21,6 +21,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.sites',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
@@ -89,15 +90,20 @@ APIS_CONF_FILE = 'config/apis.cnf' if os.path.isfile('config/apis.cnf') else 'co
 
 DATABASES = {
     'default': {
+        #'TEST': {
+        #    'NAME': 'test_jorvik',
+        #},
+        #'ENGINE': 'django.contrib.gis.db.backends.mysql',
+        #'OPTIONS': {
+        #    'read_default_file': MYSQL_CONF_FILE,
+        #    'init_command': 'SET storage_engine=MyISAM',
+        #},
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'jorvik',
-        'TEST': {
-            'NAME': 'test_jorvik',
-        },
-        'ENGINE': 'django.contrib.gis.db.backends.mysql',
-        'OPTIONS': {
-            'read_default_file': MYSQL_CONF_FILE,
-            'init_command': 'SET storage_engine=MyISAM',
-        },
+        'USER': 'jorvik',
+        'PASSWORD': 'jorvik',
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
 
@@ -109,6 +115,8 @@ TIME_ZONE = 'CET'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = False
+
+SITE_ID = 1
 
 
 # File statici (CSS, JavaScript, Images)

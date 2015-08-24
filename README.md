@@ -26,13 +26,14 @@ Puoi trovare la **[Documentazione sul Wiki del progetto](https://github.com/Croc
 
 * **[Python 2.7-3.x](https://www.python.org/downloads/)** (es. `python3`)
 * **[PIP 2 o 3](https://www.python.org/downloads/)** (es. `pip3`)
-* **[MySQL Community Server 5.5+](https://dev.mysql.com/downloads/mysql/)**, o [MariaDB 10.x](https://mariadb.org/), o [PostgreSQL](http://www.postgresql.org/) con [PostGIS](http://postgis.net/))
+* **[MySQL Community Server 5.6+](https://dev.mysql.com/downloads/mysql/)**, o [MariaDB 10.x](https://mariadb.org/), o [PostgreSQL](http://www.postgresql.org/) con [PostGIS](http://postgis.net/))
+    * Nel caso di **MySQL 5.6**, diventa necessario installare **[CroceRossaItaliana/django](https://github.com/CroceRossaItaliana/django)**, una versione modificata di Django 1.8.x che introduce il supporto per gli operatori geografici, sul backend MySQL, su Django 1.8.x. [La stessa modifica](https://github.com/django/django/commit/71e20814fcb5983bdc96a6b15765b8f6abd11542) verrà integrata in Django 1.9 nella fine del 2015.
 * **[GEOS](http://trac.osgeo.org/geos/)** (Geometry Engine Open Source)
 * **Linux**, Mac OS X e, probabilmente, Windows Server 2008 o 7 e superiori
 
 ```bash
 # Ubuntu 14.10+ (installa i Requisiti sopra indicati)
-sudo apt-get install git python3-pip mysql-server binutils libproj-dev gdal-bin python3-dev libmysqlclient-dev
+sudo apt-get install git python3-pip binutils libproj-dev gdal-bin python3-dev libmysqlclient-dev libpq-dev postgresql postgresql-contrib
 ```
 
 ### Installazione e configurazione
@@ -40,7 +41,7 @@ sudo apt-get install git python3-pip mysql-server binutils libproj-dev gdal-bin 
 1. **Scarica Jorvik** usando git
   
     ```bash
-    git clone https://github.com/CroceRossaItaliana/jorvik 
+    git clone --recursive https://github.com/CroceRossaItaliana/jorvik 
     cd jorvik
     ```
   
@@ -48,6 +49,12 @@ sudo apt-get install git python3-pip mysql-server binutils libproj-dev gdal-bin 
     
     ```bash
     sudo pip3 install -r requirements.txt
+    ```
+   
+3. **Installa la versione di Django** necessaria
+    
+    ```bash
+    sudo pip3 install -e django
     ```
     
 4. **Database**   

@@ -1,10 +1,10 @@
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import fromstr, Point
-from django.contrib.gis.measure import D
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import SET_NULL
 import googlemaps
 from base.tratti import ConMarcaTemporale
+from django.contrib.gis.measure import Distance
 from jorvik.settings import GOOGLE_KEY
 
 
@@ -146,16 +146,16 @@ class ConGeolocalizzazione(models.Model):
         return l
 
 
-    def vicini(self, km):
+    def vicini(self, queryset, km):
         """
-        Ritorna tutti gli oggetti simili vicini, nei pressi di x KM.
+        Filtra una QuerySet per tutti gli oggetti simili vicini, nei pressi di x KM.
         :param km: Raggio di ricerca in kilometri.
         :return: Una ricerca filtrata.
         """
         if self.locazione is None:
-            return self.objects.none()
+            return queryset.none()
 
-        self.objects.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=km)))
+        return queryset.filter(locazione__geo__distance_lte=(self.locazione.geo, Distance(km=km)))
 
 
 class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):

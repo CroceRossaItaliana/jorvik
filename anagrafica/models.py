@@ -31,7 +31,7 @@ from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_per
 
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati
-from base.stringhe import normalizza_nome, generatore_nome_file
+from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico
 from base.utils import is_list, sede_slugify
 from autoslug import AutoSlugField
@@ -79,7 +79,7 @@ class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
     cap_residenza = models.CharField("CAP di Residenza", max_length=8, blank=True)
     email_contatto = models.CharField("Email di contatto", max_length=64, blank=True)
 
-    avatar = models.ImageField("Avatar", blank=True, null=True, upload_to=generatore_nome_file('avatar/'))
+    avatar = models.ImageField("Avatar", blank=True, null=True, upload_to=GeneratoreNomeFile('avatar/'))
 
     @property
     def nome_completo(self):
@@ -595,7 +595,7 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
 
     tipo = models.CharField(choices=TIPO, max_length=1, default=CARTA_IDENTITA, db_index=True)
     persona = models.ForeignKey(Persona, related_name="documenti", db_index=True)
-    file = models.FileField("File", upload_to=generatore_nome_file('documenti/'))
+    file = models.FileField("File", upload_to=GeneratoreNomeFile('documenti/'))
 
     class Meta:
         verbose_name_plural = "Documenti"
@@ -717,14 +717,14 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
     codice_fiscale = models.CharField("Codice Fiscale", max_length=32, blank=True)
     partita_iva = models.CharField("Partita IVA", max_length=32, blank=True)
 
-    slug = AutoSlugField(populate_from=lambda x: x.sorgente_slug(), slugify=sede_slugify, always_update=True)
-    membri = models.ManyToManyField(Persona, through='Appartenenza')
-
     def sorgente_slug(self):
         if self.genitore:
             return str(self.genitore.slug) + "-" + self.nome
         else:
             return self.nome
+
+    slug = AutoSlugField(populate_from=sorgente_slug, slugify=sede_slugify, always_update=True)
+    membri = models.ManyToManyField(Persona, through='Appartenenza')
 
     @property
     def url(self):
@@ -872,7 +872,7 @@ class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
         verbose_name_plural = "Fototessere"
 
     persona = models.ForeignKey(Persona, related_name="fototessere", db_index=True)
-    file = models.ImageField("Fototessera", upload_to=generatore_nome_file('fototessere/'))
+    file = models.ImageField("Fototessera", upload_to=GeneratoreNomeFile('fototessere/'))
 
 
 class Dimissione(ModelloSemplice, ConMarcaTemporale):

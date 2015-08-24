@@ -1,8 +1,11 @@
 """
 Funzioni per il trattamento delle stringhe.
 """
+import copy
+from functools import partial
 
 import string
+import types
 import uuid
 import os.path
 from datetime import timedelta, datetime
@@ -25,24 +28,30 @@ def genera_uuid_casuale():
     """
     return str(uuid.uuid4()).upper()
 
+from django.utils.deconstruct import deconstructible
 
-def generatore_nome_file(prefisso, forza_suffisso=None):
-    """
-    Ritorna un generatore di nome file casuale, sulla base di un prefisso.
-    :param prefisso: Prefisso (es. "cartella/%Y/")
-    :param forza_suffisso: Un suffisso da forzare (es. ".txt"), o suffisso originale se None
-    :return: Una funzione che ogni volta chiamata ritorna qualcosa come
-             {MEDIA_ROOT}/prefisso/C22AF346-8D6B-429B-B518-F85F7E69281F.suffisso
-    """
-    def generatore(instanza, originale):
+@deconstructible
+class GeneratoreNomeFile():
 
-        suffisso = forza_suffisso if forza_suffisso is not None \
+    def __init__(self, prefisso, forza_suffisso=None):
+        """
+        :param prefisso: Prefisso (es. "cartella/%Y/")
+        :param forza_suffisso: Un suffisso da forzare (es. ".txt"), o suffisso originale se None
+        """
+        self.prefisso = prefisso
+        self.forza_suffisso = forza_suffisso
+
+    def __call__(self, instanza, originale):
+        """
+        Ritorna un generatore di nome file casuale, sulla base di un prefisso.
+        :return: Una funzione che ogni volta chiamata ritorna qualcosa come
+                 {MEDIA_ROOT}/prefisso/C22AF346-8D6B-429B-B518-F85F7E69281F.suffisso
+        """
+
+        suffisso = self.forza_suffisso if self.forza_suffisso is not None \
             else os.path.splitext(originale)[1]
 
-        return prefisso + genera_uuid_casuale() + suffisso
-
-    return generatore  # Nota: ritorna una funzione!
-
+        return self.prefisso + genera_uuid_casuale() + suffisso
 
 def domani():
     """

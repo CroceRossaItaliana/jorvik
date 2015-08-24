@@ -85,6 +85,26 @@
 
             <div class="col-md-6">
 
+                {% if vicini.exists %}
+
+                    <p>&nbsp;</p>
+                    <p>Vi sono altre {{ vicini.count }} nelle vicinanze:</p>
+
+                    <ul>
+                        {% for node in vicini %}
+                            <li>
+                                <a href="{{ node.url }}">
+                                    {{ node.nome }}
+                                </a>
+                                ({{ node.get_estensione_display }})
+
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+
+                {% endif %}
+
             </div>
 
         </div>

@@ -1,4 +1,4 @@
-Django==1.8.3
+Django==1.8.4
 Markdown==2.6
 django-bootstrap3==5.1.1
 django-filter==0.9.2

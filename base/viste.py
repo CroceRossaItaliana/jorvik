@@ -89,7 +89,12 @@ def informazioni_sede(request, me, slug):
     """
     Mostra dettagli sul comitato.
     """
+    sede = get_object_or_404(Sede, slug=slug)
+    vicini = sede.vicini(queryset=Sede.objects.all(), km=5)
+    print(vicini.query)
+
     contesto = {
-        'sede': get_object_or_404(Sede, slug=slug)
+        'sede': sede,
+        'vicini': vicini
     }
     return 'base_informazioni_sede.html', contesto

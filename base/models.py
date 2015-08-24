@@ -7,7 +7,7 @@ from safedelete import safedelete_mixin_factory, SOFT_DELETE
 from mptt.models import MPTTModel, TreeForeignKey
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
 from anagrafica.permessi.costanti import DELEGHE_OGGETTI_DICT
-from base.stringhe import generatore_nome_file
+from base.stringhe import GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale
 from datetime import datetime
 
@@ -307,12 +307,10 @@ class Allegato(ModelloSemplice, ConMarcaTemporale, ConScadenza):
     class Meta:
         verbose_name_plural = "Allegati"
 
-    GENERATORE_NOME_FILE = generatore_nome_file('allegati/')
-
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="allegato_come_oggetto")
     oggetto_id = models.PositiveIntegerField(db_index=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
-    file = models.FileField("File", upload_to=GENERATORE_NOME_FILE)
+    file = models.FileField("File", upload_to=GeneratoreNomeFile('allegati/'))
     nome = models.CharField("Nome file", max_length=64, default="File", blank=False, null=False)
 
     @property
