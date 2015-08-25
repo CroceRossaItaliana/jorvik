@@ -32,10 +32,17 @@
                     <tr>
                         <td{% if messaggio and messaggio.pk == msg.pk %} class="success"{% endif %}>
 
-                            <p>
+
+                            <p class="hidden-xs hidden-sm">
+                                <a class="grassetto piu-grande" href="/posta/{{ direzione }}/{{ pagina }}/{{ msg.pk }}/"
+                                        >{{ msg.oggetto }}</a>
+                            </p>
+                            <p class="hidden-md hidden-lg">
                                 <a class="grassetto piu-grande" href="/posta/{{ direzione }}/{{ pagina }}/{{ msg.pk }}/#leggi"
                                         >{{ msg.oggetto }}</a>
                             </p>
+
+
                             <p class="text-muted">
                                 {% if direzione == "in-arrivo" %}
                                     <i class="fa fa-fw fa-user"></i> Da:
