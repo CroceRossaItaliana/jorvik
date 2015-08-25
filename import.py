@@ -1,6 +1,7 @@
 
 import os, sys
 from django.contrib.gis.geos import Point
+from jorvik.settings import MYSQL_CONF
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "jorvik.settings")
 
@@ -17,8 +18,12 @@ __author__ = 'alfioemanuele'
 import MySQLdb
 
 # .conect(host, username, password, database)
-db = MySQLdb.connect('localhost', 'root', '', 'gaia_vecchio')
-
+db = MySQLdb.connect(
+    MYSQL_CONF.get('client', 'host'),
+    MYSQL_CONF.get('client', 'user'),
+    MYSQL_CONF.get('client', 'password'),
+    MYSQL_CONF.get('client', 'database')
+)
 
 ## IMPORTA COMITATI
 COMITATO_INFERIORE = {

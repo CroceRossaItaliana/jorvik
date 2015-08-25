@@ -83,10 +83,20 @@ WSGI_APPLICATION = 'jorvik.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 MYSQL_CONF_FILE = 'config/mysql.cnf' if os.path.isfile('config/mysql.cnf') else 'config/mysql.cnf.sample'
+PGSQL_CONF_FILE = 'config/pgsql.cnf' if os.path.isfile('config/pgsql.cnf') else 'config/pgsql.cnf.sample'
 EMAIL_CONF_FILE = 'config/email.cnf' if os.path.isfile('config/email.cnf') else 'config/email.cnf.sample'
 MEDIA_CONF_FILE = 'config/media.cnf' if os.path.isfile('config/media.cnf') else 'config/media.cnf.sample'
 DEBUG_CONF_FILE = 'config/debug.cnf' if os.path.isfile('config/debug.cnf') else 'config/debug.cnf.sample'
 APIS_CONF_FILE = 'config/apis.cnf' if os.path.isfile('config/apis.cnf') else 'config/apis.cnf.sample'
+
+# MySQL
+MYSQL_CONF = configparser.ConfigParser()
+MYSQL_CONF.read(MYSQL_CONF_FILE)
+
+# PGSQL
+PGSQL_CONF = configparser.ConfigParser()
+PGSQL_CONF.read(PGSQL_CONF_FILE)
+
 
 DATABASES = {
     'default': {
@@ -99,10 +109,10 @@ DATABASES = {
         #    'init_command': 'SET storage_engine=MyISAM',
         #},
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'jorvik',
-        'USER': 'jorvik',
-        'PASSWORD': 'jorvik',
-        'HOST': 'localhost',
+        'NAME': PGSQL_CONF.get('client', 'database'),
+        'USER': PGSQL_CONF.get('client', 'user'),
+        'PASSWORD': PGSQL_CONF.get('client', 'password'),
+        'HOST': PGSQL_CONF.get('client', 'host'),
         'PORT': '',
     }
 }

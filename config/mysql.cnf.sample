@@ -1,5 +1,9 @@
 [client]
-database = jorvik
+
+# Questo file viene usato per l'importazione dei dati da Gaia
+
+host = localhost
+database = gaia_vecchio
 user = root
 password =
 default-character-set = utf8
