@@ -24,4 +24,10 @@ MENU = {
             ("Reperibilità", "fa-thumb-tack", "/attivita/reperibilita/"),
         )),
     ),
+    "posta": (
+        ("Posta", (
+            ("In arrivo", "fa-inbox", "/posta/in-arrivo/"),
+            ("In uscita", "fa-mail-forward", "/posta/in-uscita/"),
+        )),
+    )
 }

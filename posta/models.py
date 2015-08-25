@@ -6,12 +6,10 @@ from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives
 from django.template import Context
 from django.template.loader import get_template
 from django.utils.html import strip_tags
-from anagrafica.models import Persona
-
 from base.models import *
 from base.tratti import *
 from social.models import ConGiudizio
-
+from lxml import html
 
 class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
@@ -29,14 +27,31 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     terminato = models.DateTimeField(blank=True, null=True, default=None)
 
     # Il mittente e' una persona o None (il sistema di Gaia)
-    mittente = models.ForeignKey(Persona, default=None, null=True, blank=True)
+    mittente = models.ForeignKey("anagrafica.Persona", default=None, null=True, blank=True)
 
+    @property
     def destinatari(self):
         """
         Ritorna la lista di tutti gli oggetti Persona destinatari di questo messaggio.
         :return:
         """
-        return [x.persona for x in self.oggetti_destinatario]
+        return [x.persona for x in self.oggetti_destinatario.all()]
+
+    @property
+    def corpo_body(self):
+        """
+        Prova ad estrarre il corpo della pagina (body).
+        :return:
+        """
+        doc = html.document_fromstring(self.corpo)
+        body = doc.xpath('//body')[0]
+        body.tag = 'div'
+        #try:
+        return html.tostring(body)
+        #except:
+        #    return self.corpo
+        #print html.parse('http://someurl.at.domain').xpath('//body')[0].text_content()
+
 
     def accoda(self):
         """
@@ -173,7 +188,7 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
         verbose_name_plural = "Destinatario di posta"
 
     messaggio = models.ForeignKey(Messaggio, null=False, blank=True, related_name='oggetti_destinatario')
-    persona = models.ForeignKey(Persona, null=True, blank=True, default=None)
+    persona = models.ForeignKey("anagrafica.Persona", null=True, blank=True, default=None)
 
     inviato = models.BooleanField(default=False)
     tentativo = models.DateTimeField(default=None, blank=True, null=True)

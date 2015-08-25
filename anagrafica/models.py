@@ -35,6 +35,8 @@ from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico
 from base.utils import is_list, sede_slugify
 from autoslug import AutoSlugField
+from posta.models import Messaggio
+
 
 class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
     """
@@ -389,6 +391,8 @@ class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
         else:
             lista += [('/utente/', 'Utente')]
 
+        lista += [('/posta/in-arrivo/', 'Posta')]
+
         for d in self.deleghe_attuali():
             lista += [(APPLICAZIONI_SLUG_DICT[d.tipo], PERMESSI_NOMI_DICT[d.tipo])]
 
@@ -467,6 +471,26 @@ class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
             },
             destinatari=[self]
         )
+
+    def posta_in_arrivo(self):
+        """
+        Ottiene il queryset della posta in arrivo per la Persona.
+        :return: Queryset della posta in arrivo.
+        """
+        return Messaggio.objects.filter(oggetti_destinatario__persona=self).order_by('-creazione')
+
+    def posta_in_uscita(self):
+        """
+        Ottiene il queryset della posta in uscita per la Persona.
+        :return: Queryset della posta in uscita.
+        """
+        return Messaggio.objects.filter(mittente=self).order_by('-creazione')
+
+    @property
+    def link(self):
+        return "<a href='/profilo/" + str(self.pk) + "/'>" + str(self.nome_completo) + "</a>"
+
+
 
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):

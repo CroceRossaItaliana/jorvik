@@ -6,6 +6,7 @@ Questo modulo contiene la configurazione per il routing degli URL.
 
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
+from django.shortcuts import redirect
 from jorvik.settings import MEDIA_ROOT
 
 handler404 = 'base.errori.non_trovato'
@@ -51,6 +52,11 @@ urlpatterns = [
     url(r'^utente/documenti/zip/$', 'anagrafica.viste.utente_documenti_zip'),
     url(r'^utente/documenti/cancella/(?P<pk>.*)/$', 'anagrafica.viste.utente_documenti_cancella'),
     url(r'^utente/storico/$', 'anagrafica.viste.utente_storico'),
+
+    url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/(?P<messaggio_id>\d+)/', 'posta.viste.posta'),
+    url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/', 'posta.viste.posta'),
+    url(r'^posta/(?P<direzione>[\w\-]+)/', 'posta.viste.posta'),
+    url(r'^posta/', 'posta.viste.posta_home'),
 
     url(r'^media/(?P<path>.*)$', 'django.views.static.serve', {"document_root": MEDIA_ROOT}),
 

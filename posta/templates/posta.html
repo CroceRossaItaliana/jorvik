@@ -1,0 +1,282 @@
+{% extends 'posta_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+
+    {% if messaggio %}
+        {{ messaggio.oggetto }} &mdash;
+    {% endif %}
+
+    {% if direzione == "in-arrivo" %}
+        Posta in arrivo
+    {% else %}
+        Posta in uscita
+    {% endif %}
+
+{% endblock %}
+
+
+{% block app_contenuto %}
+
+<div class="row">
+
+    <div class="col-md-4">
+
+        <table class="table table-condensed table-striped table-bordered">
+            <thead>
+                <th><i class="fa fa-fw fa-envelope"></i> Messaggio</th>
+            </thead>
+            <tbody>
+                {% for msg in messaggi %}
+                    <tr>
+                        <td{% if messaggio and messaggio.pk == msg.pk %} class="success"{% endif %}>
+
+                            <p>
+                                <a class="grassetto piu-grande" href="/posta/{{ direzione }}/{{ pagina }}/{{ msg.pk }}/#leggi"
+                                        >{{ msg.oggetto }}</a>
+                            </p>
+                            <p class="text-muted">
+                                {% if direzione == "in-arrivo" %}
+                                    <i class="fa fa-fw fa-user"></i> Da:
+                                        {% if msg.mittente %}
+                                            <strong>{{ msg.mittente.link|safe }}</strong>
+                                        {% else %}
+                                            <strong><i class="fa fa-fw fa-info-circle"></i> Notifica Gaia</strong>
+                                        {% endif %}
+
+                                    <br />
+                                    <i class="fa fa-fw fa-clock-o"></i> Ricevuto: {{ msg.creazione }}
+
+                                {% else %}
+                                    {% if msg.destinatari|length < 2 %}
+                                        <i class="fa fa-fw fa-user"></i> A: <strong>{{ msg.destinatari.0.link|safe }}</strong>
+
+                                    {% else %}
+                                        <i class="fa fa-fw fa-group"></i> A: <strong>({{ msg.destinatari|length }} destinatari)</strong>
+
+                                    {% endif %}
+                                        <br />
+                                        <i class="fa fa-fw fa-clock-o"></i> Inviato: {{ msg.creazione }}
+
+                                {% endif %}
+                            </p>
+
+
+                        </td>
+                    </tr>
+
+                {% empty %}
+                    <tr class="danger allinea-centro">
+                        <td>
+                            <h4>Nessun messaggio.</h4>
+                            <p>Torna pi&ugrave; tardi.</p>
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+
+            </tbody>
+        </table>
+
+        <div class="allinea-centro">
+            <ul class="pagination">
+
+
+                {% if ha_precedente %}
+                    <li class="prev">
+                        <a href="/posta/{{ direzione }}/{{ pagina_precedente }}/">
+                            <i class="fa fa-arrow-left"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="prev disabled">
+                        <a href="#">
+                            <i class="fa fa-arrow-left"></i>
+                        </a>
+                    </li>
+
+                {% endif %}
+
+                <li class="active">
+                    <a href="#">Pag. {{ pagina }} di {{ pagine }}</a>
+                </li>
+
+                {% if ha_successivo %}
+                    <li class="prev">
+                        <a href="/posta/{{ direzione }}/{{ pagina_successiva }}/">
+                            <i class="fa fa-arrow-right"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="prev disabled">
+                        <a href="#">
+                            <i class="fa fa-arrow-right"></i>
+                        </a>
+                    </li>
+
+                {% endif %}
+
+            </ul>
+
+            <p>{{ totale  }} messaggi in questa casella.</p>
+        </div>
+
+    </div>
+
+    <div class="col-md-8">
+
+        {% if messaggio %}
+            <a id="leggi">&nbsp;</a>
+            <div class="row">
+                <div class="row allinea-centro">
+                    <h3>{{ messaggio.oggetto }}</h3>
+                </div>
+                <hr />
+
+                <div class="row allinea-centro ">
+
+                    <div class="col-md-4">
+                        <span class="text-muted">
+                            <i class="fa fa-fw fa-clock-o"></i> Spedito
+                        </span><br />
+                        {{ messaggio.creazione|date:"SHORT_DATETIME_FORMAT" }}
+                    </div>
+
+                    <div class="col-md-4">
+                        <span class="text-muted">
+                            <i class="fa fa-fw fa-user"></i> Mittente
+                        </span><br />
+                        {% if messaggio.mittente %}
+                            {{ messaggio.mittente.link|safe }}
+                        {% else %}
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Notifica Gaia
+                        {% endif %}
+
+                    </div>
+
+                    <div class="col-md-4">
+                        {% if direzione == "in-arrivo" %}
+                            <span class="text-muted">
+                                <i class="fa fa-fw fa-mail-forward"></i> Destinatario
+                            </span><br />
+                            {{ me.link|safe }} (Tu)
+
+
+                        {% else %}
+
+                            {% if messaggio.destinatari|length < 2 %}
+                                <span class="text-muted">
+                                    <i class="fa fa-fw fa-mail-forward"></i> Destinatario
+                                </span><br />
+                                <strong>{{ messaggio.destinatari.0.link|safe }}</strong>
+
+                            {% else %}
+                                <span class="text-muted">
+                                    <i class="fa fa-fw fa-mail-forward"></i> Destinatari
+                                </span><br />
+                                <strong>{{ messaggio.destinatari|length }} persone</strong>
+
+                            {% endif %}
+                            <br />
+                            <a href="#" class="piu-piccolo" onclick="maggiori_dettagli();">
+                                maggiori dettagli
+                            </a>
+
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                {% if not direzione == "in-arrivo" %}
+                    <script type="text/javascript">
+                    function maggiori_dettagli() {
+                        $("#maggiori-dettagli").toggle();
+                    }
+                    </script>
+                    <div class="row" id="maggiori-dettagli" style="display: none;">
+                        <table class="table table-condesed table-bordered">
+                            <thead>
+                                <th>
+                                    <i class="fa fa-fw fa-user"></i>
+                                    Destinatario
+                                </th>
+                                <th>
+                                    <i class="fa fa-fw fa-mail-forward"></i>
+                                    Stato e-mail
+                                </th>
+                                <th>
+                                    <i class="fa fa-fw fa-clock-o"></i>
+                                    Invio / Ultimo tentativo
+                                </th>
+                            </thead>
+                            <tbody>
+                                {% for oggetto_destinatario in messaggio.oggetti_destinatario.all %}
+                                    <tr {% if oggetto_destinatario.inviato %}class="success"{% else %}class="warning"{% endif %}>
+                                        <td>{{ oggetto_destinatario.persona.link|safe }}</td>
+                                        <td>
+                                            {% if oggetto_destinatario.inviato %}
+                                                <i class="fa fa-fw fa-check"></i> Inviato
+
+                                            {% elif oggetto_destinatario.errore %}
+                                                <i class="fa fa-fw fa-warning"></i> In coda
+
+                                            {% else %}
+                                                <i class="fa fa-fw fa-clock-o"></i> In coda
+
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ oggetto_destinatario.tentativo }}
+                                        </td>
+
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+
+                <hr />
+
+                <div class="row" style="padding: 0% 10%;">
+                    {{ messaggio.corpo_body|safe }}
+
+                </div>
+            </div>
+
+
+
+        {% elif messaggi|length == 0 %}
+            <div class="alert alert-info allinea-centro">
+                <p>&nbsp;</p>
+                <h4>
+                    <i class="fa fa-fw fa-info-circle"></i>
+                    Ancora nessun messaggio.
+                </h4>
+                <p>Nessun problema.</p>
+                <p>Quando ci saranno dei messaggi da visualizzare, li troverai qui.</p>
+                <p>&nbsp;</p>
+            </div>
+
+
+        {% else %}
+            <div class="alert alert-info allinea-centro">
+                <p>&nbsp;</p>
+                <h4>
+                    <i class="fa fa-fw fa-info-circle"></i>
+                    Seleziona un messaggio da visualizzare.
+                </h4>
+                <p>Clicca sull'oggetto di un messaggo dall'elenco di destra per visualizzarne il contenuto.</p>
+                <p>&nbsp;</p>
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}
