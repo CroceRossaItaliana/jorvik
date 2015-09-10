@@ -391,6 +391,7 @@ class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
         else:
             lista += [('/utente/', 'Utente')]
 
+        lista += [('/attivita/calendario/', 'Attività')]
         lista += [('/posta/in-arrivo/', 'Posta')]
 
         for d in self.deleghe_attuali():

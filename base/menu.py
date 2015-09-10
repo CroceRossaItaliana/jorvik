@@ -13,21 +13,23 @@ MENU = {
             ("Storico", "fa-clock-o", "/utente/storico/"),
             ("Documenti", "fa-folder", "/utente/documenti/"),
         )),
-        ("Posta", (
-            ("In arrivo", "fa-inbox", "/posta/in-arrivo/"),
-            ("In uscita", "fa-mail-forward", "/posta/in-uscita/"),
-        )),
-        ("Attività", (
-            ("Calendario", "fa-calendar", "/attivita/"),
-            ("Miei turni", "fa-list", "/attivita/storico/"),
-            ("Gruppi", "fa-users", "/attivita/gruppi/"),
-            ("Reperibilità", "fa-thumb-tack", "/attivita/reperibilita/"),
+        ("Sicurezza", (
+            ("Cambia password", "fa-key", "/utente/cambia-password/"),
+            ("Storico accesso", "fa-list", "/utente/storico-accessi/"),
         )),
     ),
     "posta": (
         ("Posta", (
             ("In arrivo", "fa-inbox", "/posta/in-arrivo/"),
             ("In uscita", "fa-mail-forward", "/posta/in-uscita/"),
+        )),
+    ),
+    "attivita": (
+        ("Attività", (
+            ("Calendario", "fa-calendar", "/attivita/"),
+            ("Miei turni", "fa-list", "/attivita/storico/"),
+            ("Gruppi", "fa-users", "/attivita/gruppi/"),
+            ("Reperibilità", "fa-thumb-tack", "/attivita/reperibilita/"),
         )),
     )
 }
