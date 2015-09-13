@@ -1,5 +1,5 @@
 [client]
 host = localhost
 database = jorvik
-user = root
+user = postgres
 password =
