@@ -66,6 +66,23 @@ COMITATO_DATI = {
     'locali': 'datiLocali',
     'comitati': 'datiComitati'
 }
+COMITATO_OID = {
+    'nazionali': 'Nazionale',
+    'regionali': 'Regionale',
+    'provinciali': 'Provinciale',
+    'locali': 'Locale',
+    'comitati': 'Comitato'
+}
+
+# Questo dizionario mantiene le associazioni ID/OID
+#  es. ASSOC_ID['Nazionale'][1] = (Sede, 1)
+ASSOC_ID = {
+    'Nazionale': {},
+    'Regionale': {},
+    'Provinciale': {},
+    'Locale': {},
+    'Comitato': {},
+}
 
 def ottieni_comitato(tipo='nazionali', id=1):
     cursore = db.cursor()
@@ -136,6 +153,8 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
     )
     c.save()
 
+    ASSOC_ID[COMITATO_OID[tipo]].update({id: (Sede, c.pk)})
+
     if posizione and 'formattato' in comitato['dati'] and comitato['dati']['formattato']:
         c.imposta_locazione(comitato['dati']['formattato'])
 
@@ -158,3 +177,4 @@ print("  - Importazione dal database, geolocalizzazione " + str("attiva" if args
 n = carica_comitato(args.geo)
 print("  = Importati " + str(n) + " comitati.")
 
+# print(ASSOC_ID)
