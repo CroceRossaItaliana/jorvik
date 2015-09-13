@@ -38,7 +38,7 @@ from autoslug import AutoSlugField
 from posta.models import Messaggio
 
 
-class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
+class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     """
     Rappresenta un record anagrafico in Gaia.
     """
@@ -170,7 +170,10 @@ class Persona(ModelloCancellabile, ConMarcaTemporale, ConAllegati):
             return False
         f = phonenumbers.format_number(n, phonenumbers.PhoneNumberFormat.E164)
         t = Telefono(persona=self, numero=f, servizio=servizio)
-        t.save()
+        try:
+            t.save()
+        except:
+            return False
         return True
 
     def appartenenze_attuali(self, **kwargs):

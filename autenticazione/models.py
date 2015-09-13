@@ -43,6 +43,7 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
     email = models.EmailField('Indirizzo email', max_length=254, unique=True)
     persona = OneToOneField("anagrafica.Persona", null=True, blank=True, db_index=True)
     ultimo_accesso = models.DateTimeField("Ultimo accesso", blank=True, null=True)
+    ultimo_consenso = models.DateTimeField("Ultimo consenso", blank=True, null=True)
 
     is_staff = models.BooleanField('Amministratore', default=False,
         help_text='Se l\'utente è un amministratore o meno.')

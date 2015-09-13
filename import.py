@@ -1,19 +1,24 @@
-
 import os, sys
+os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
+
 import pickle
 from django.contrib.gis.geos import Point
-from jorvik.settings import MYSQL_CONF
+from autenticazione.models import Utenza
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "jorvik.settings")
+
+from safedelete import HARD_DELETE
+from jorvik.settings import MYSQL_CONF
 
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
 from django.template.backends import django
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
-from anagrafica.models import Sede
+from anagrafica.models import Sede, Persona
 from base.geo import Locazione
 import argparse
+
+from datetime import datetime
 
 __author__ = 'alfioemanuele'
 
@@ -28,7 +33,13 @@ parser.add_argument('-v', dest='verbose', action='store_const',
                    help='mostra dettagli sul progresso (estremamente prolisso)')
 parser.add_argument('--salta-comitati', dest='comitati', action='store_const',
                    const=False, default=True,
-                   help='salta importazione comitati')
+                   help='salta importazione comitati (usa cache precedente)')
+parser.add_argument('--salta-anagrafiche', dest='anagrafiche', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione anagrafiche (usa cache precedente)')
+parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
+                   const=True, default=False,
+                   help='ignora errori di integrità (solo test)')
 
 args = parser.parse_args()
 
@@ -88,6 +99,10 @@ ASSOC_ID_COMITATI = {
     'Comitato': {},
 }
 
+# Questo dizionario mantiene le associazioni ID persone
+#  es. ASSOC_ID['123'] = 4422
+ASSOC_ID_PERSONE = {}
+
 def ottieni_comitato(tipo='nazionali', id=1):
     cursore = db.cursor()
     cursore.execute("""
@@ -134,6 +149,115 @@ def ottieni_figli(tipo='nazionali', id=1):
     figli = cursore.fetchall()
     figli = [(COMITATO_INFERIORE[tipo], x[0]) for x in figli]
     return figli
+
+def carica_anagrafiche():
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, nome, cognome, stato, email, password,
+            codiceFiscale, timestamp, admin, consenso, sesso
+        FROM
+           anagrafica
+        """
+    )
+    persone = cursore.fetchall()
+
+    for persona in persone:
+
+        if args.verbose:
+            print("    - Anagrafica: " + str(persona[6]))
+
+        id = persona[0]
+        cursore.execute("""
+            SELECT
+                id, nome, valore
+            FROM
+                dettagliPersona
+            WHERE id = %s
+            """, (id,)
+        )
+        dettagli = cursore.fetchall()
+        dict = {}
+        for (id, nome, valore) in dettagli:
+            dict.update({nome: valore})
+        dati = {
+            'id': persona[0],
+            'nome': persona[1],
+            'cognome': persona[2],
+            'stato': persona[3],
+            'email': persona[4],
+            'password': persona[5],
+            'codiceFiscale': persona[6],
+            'timestamp': persona[7],
+            'admin': persona[8],
+            'consenso': persona[9],
+            'sesso': persona[10],
+            'dettagliPersona': dict
+        }
+
+        #print(dati)
+
+        p = Persona(
+            nome=dati['nome'],
+            cognome=dati['cognome'],
+            codice_fiscale=dati['codiceFiscale'],
+            data_nascita=datetime.fromtimestamp(int(dati['dettagliPersona']['dataNascita'])),
+            genere=Persona.MASCHIO if dati['sesso'] == 1 else Persona.FEMMINA,
+            stato=Persona.PERSONA,
+            comune_nascita=dict['comuneNascita'],
+            provincia_nascita=dict['provinciaNascita'][0:2],
+            stato_nascita='IT',
+            indirizzo_residenza=str(dict['indirizzo']) + ", " + str(dict['civico']),
+            comune_residenza=dict['comuneResidenza'],
+            provincia_residenza=dict['provinciaResidenza'][0:2],
+            stato_residenza='IT',
+            cap_residenza=dict['CAPResidenza'],
+            email_contatto=dict.get('emailServizio', ''),
+            creazione=datetime.fromtimestamp(int(dict.get('timestamp'))) if dict.get('timestamp') else datetime.now(),
+        )
+        try:
+            p.save()
+        except:
+            if args.ignora:
+                print("    ERRORE DATABASE IGNORATO")
+                continue
+            else:
+                raise
+
+        if dati['email']:
+            if args.verbose:
+                print("      - Utenza attiva " + str(dati['email']))
+            u = Utenza(
+                persona=p,
+                ultimo_accesso=datetime.fromtimestamp(int(dict.get('ultimoAccesso', None))) if dict.get('ultimoAccesso', None) else None,
+                ultimo_consenso=datetime.fromtimestamp(int(dati['consenso'])) if dati['consenso'] else None,
+                email=dati['email'],
+                is_staff=True if dati['admin'] else False
+            )
+            u.set_unusable_password()
+            try:
+                u.save()
+            except:
+                if args.ignora:
+                    print("    ERRORE DATABASE IGNORATO")
+                    continue
+                else:
+                    raise
+
+        if dict.get('cellulare', False):
+            if args.verbose:
+                print("      - Numero cellulare personale " + str(dict.get('cellulare')))
+            p.aggiungi_numero_telefono(dict.get('cellulare'), False)
+
+        if dict.get('cellulareServizio', False):
+            if args.verbose:
+                print("      - Numero cellulare servizio " + str(dict.get('cellulareServizio')))
+            p.aggiungi_numero_telefono(dict.get('cellulareServizio'), True)
+
+        ASSOC_ID_PERSONE.update({dati['id']: p.pk})
+        # print(dict.keys())
+
+
 
 def locazione(geo, indirizzo):
     if not indirizzo:
@@ -194,5 +318,20 @@ else:
     print("  ~ Carico tabella delle corrispondenze (comitati.pickle-tmp)")
     ASSOC_ID_COMITATI = pickle.load(open("comitati.pickle-tmp", "rb"))
 
+
+# Importazione delle Anagrafiche
+
+print("> Importazione delle Anagrafiche")
+if args.anagrafiche:
+    print("  - Eliminazione attuali")
+    Persona.objects.all().delete()
+    print("  - Importazione dal database")
+    carica_anagrafiche()
+    print("  ~ Persisto tabella delle corrispondenze (persone.pickle-tmp)")
+    pickle.dump(ASSOC_ID_PERSONE, open("persone.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (persone.pickle-tmp)")
+    ASSOC_ID_PERSONE = pickle.load(open("persone.pickle-tmp", "rb"))
 
 # print(ASSOC_ID_COMITATI)

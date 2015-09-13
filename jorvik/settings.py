@@ -97,7 +97,6 @@ MYSQL_CONF.read(MYSQL_CONF_FILE)
 PGSQL_CONF = configparser.ConfigParser()
 PGSQL_CONF.read(PGSQL_CONF_FILE)
 
-
 DATABASES = {
     'default': {
         #'TEST': {
