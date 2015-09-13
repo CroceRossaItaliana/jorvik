@@ -3,9 +3,16 @@ python:
   - "2.7"
   - "3.3"
   - "3.4"
+addons:
+  postgresql: "9.4"
 
+
+#before_script:
+#  - "mysql -e 'CREATE DATABASE jorvik CHARSET utf8;'"
 before_script:
-  - "mysql -e 'CREATE DATABASE jorvik CHARSET utf8;'"
+  - psql -U postgres -c 'CREATE DATABASE jorvik;'
+  - psql -U postgres -c "CREATE EXTENSION postgis" -d jorvik
+  - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d jorvik
 
 install:
   - "pip install -r requirements.txt"
