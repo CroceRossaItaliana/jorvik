@@ -1,5 +1,6 @@
 
 import os, sys
+import pickle
 from django.contrib.gis.geos import Point
 from jorvik.settings import MYSQL_CONF
 
@@ -24,7 +25,10 @@ parser.add_argument('--no-geo', dest='geo', action='store_const',
                    help='disattiva le funzionalità geografiche (solo test)')
 parser.add_argument('-v', dest='verbose', action='store_const',
                    const=True, default=False,
-                   help='mostra dettagli sul progresso')
+                   help='mostra dettagli sul progresso (estremamente prolisso)')
+parser.add_argument('--salta-comitati', dest='comitati', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione comitati')
 
 args = parser.parse_args()
 
@@ -76,7 +80,7 @@ COMITATO_OID = {
 
 # Questo dizionario mantiene le associazioni ID/OID
 #  es. ASSOC_ID['Nazionale'][1] = (Sede, 1)
-ASSOC_ID = {
+ASSOC_ID_COMITATI = {
     'Nazionale': {},
     'Regionale': {},
     'Provinciale': {},
@@ -153,7 +157,7 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
     )
     c.save()
 
-    ASSOC_ID[COMITATO_OID[tipo]].update({id: (Sede, c.pk)})
+    ASSOC_ID_COMITATI[COMITATO_OID[tipo]].update({id: (Sede, c.pk)})
 
     if posizione and 'formattato' in comitato['dati'] and comitato['dati']['formattato']:
         c.imposta_locazione(comitato['dati']['formattato'])
@@ -171,10 +175,24 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
 # Importazione dei Comitati
 
 print("> Importazione dei Comitati")
-print("  - Eliminazione attuali")
-Sede.objects.all().delete()
-print("  - Importazione dal database, geolocalizzazione " + str("attiva" if args.geo else "disattiva"))
-n = carica_comitato(args.geo)
-print("  = Importati " + str(n) + " comitati.")
 
-# print(ASSOC_ID)
+if args.comitati:
+    print("  - Eliminazione attuali")
+    Sede.objects.all().delete()
+    print("  - Importazione dal database, geolocalizzazione " + str("attiva" if args.geo else "disattiva"))
+
+    try:
+        n = carica_comitato(args.geo)
+    except KeyboardInterrupt:
+        print("Saltato")
+        n = 0
+    print("  = Importati " + str(n) + " comitati.")
+    print("  ~ Persisto tabella delle corrispondenze (comitati.pickle-tmp)")
+    pickle.dump(ASSOC_ID_COMITATI, open("comitati.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (comitati.pickle-tmp)")
+    ASSOC_ID_COMITATI = pickle.load(open("comitati.pickle-tmp", "rb"))
+
+
+# print(ASSOC_ID_COMITATI)
