@@ -12,10 +12,22 @@ from django.template.backends import django
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
 from anagrafica.models import Sede
 from base.geo import Locazione
+import argparse
 
 __author__ = 'alfioemanuele'
 
 import MySQLdb
+
+parser = argparse.ArgumentParser(description='Importa i dati da un database MySQL di PHP-Gaia.')
+parser.add_argument('--no-geo', dest='geo', action='store_const',
+                   const=False, default=True,
+                   help='disattiva le funzionalità geografiche (solo test)')
+parser.add_argument('-v', dest='verbose', action='store_const',
+                   const=True, default=False,
+                   help='mostra dettagli sul progresso')
+
+args = parser.parse_args()
+
 
 # .conect(host, username, password, database)
 db = MySQLdb.connect(
@@ -112,10 +124,9 @@ def locazione(geo, indirizzo):
         l.save()
     return l
 
-def carica_comitato(tipo='nazionali', id=1, ref=None, num=0):
+def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
 
     comitato = ottieni_comitato(tipo, id)
-
 
     c = Sede(
         genitore=ref,
@@ -125,18 +136,25 @@ def carica_comitato(tipo='nazionali', id=1, ref=None, num=0):
     )
     c.save()
 
-    if 'formattato' in comitato['dati'] and comitato['dati']['formattato']:
+    if posizione and 'formattato' in comitato['dati'] and comitato['dati']['formattato']:
         c.imposta_locazione(comitato['dati']['formattato'])
 
-    print(" " + ("-"*num) + " " + c.nome + ": " + str(c.locazione))
+    if args.verbose:
+        print("    - " + ("-"*num) + " " + c.nome + ": " + str(c.locazione))
 
     totale = 1
     for (a, b) in ottieni_figli(tipo,id):
-        totale += carica_comitato(a, b, c, num+1)
+        totale += carica_comitato(posizione, a, b, c, num+1)
 
     return totale
 
-print("Importazione dei Comitati...")
+
+# Importazione dei Comitati
+
+print("> Importazione dei Comitati")
+print("  - Eliminazione attuali")
 Sede.objects.all().delete()
-n  = carica_comitato()
-print("Importati " + str(n) + " comitati.")
+print("  - Importazione dal database, geolocalizzazione " + str("attiva" if args.geo else "disattiva"))
+n = carica_comitato(args.geo)
+print("  = Importati " + str(n) + " comitati.")
+
