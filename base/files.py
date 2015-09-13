@@ -2,7 +2,7 @@ import os
 from zipfile import ZipFile
 from django.core.files import File
 from base.models import Allegato
-from base.stringhe import domani
+from base.stringhe import domani, GeneratoreNomeFile
 from jorvik.settings import MEDIA_ROOT
 from io import StringIO
 
@@ -40,7 +40,8 @@ class Zip(Allegato):
         :param nome:
         :return:
         """
-        zname = self.GENERATORE_NOME_FILE(nome)
+        generatore = GeneratoreNomeFile('allegati/')
+        zname = generatore(nome)
         self.prepara_cartelle(MEDIA_ROOT + zname)
         with ZipFile(MEDIA_ROOT + zname, 'w') as zf:
             for f_path, f_nome in self._file_in_attesa:
