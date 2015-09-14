@@ -134,6 +134,34 @@ def ottieni_comitato(tipo='nazionali', id=1):
         'dati': dict
     }
 
+def mysql_copia_tabella_in_memoria(vecchia, nuova, campi_text=[], indici=['id']):
+    query = "DROP TABLE IF EXISTS " + nuova + ";\n"
+    for campo in campi_text:
+        query += "ALTER TABLE " + vecchia + " MODIFY " + campo + " VARCHAR(256);\n"
+    query += "CREATE TABLE " + nuova + " SELECT * FROM " + vecchia + " WHERE 1=2;\n"
+    query += "ALTER TABLE " + nuova + " ENGINE=MEMORY;\n"
+    for indice in indici:
+        query += "ALTER TABLE " + nuova + " ADD INDEX (" + indice + ") USING HASH ;\n"
+    query += "INSERT INTO " + nuova + " SELECT * FROM " + vecchia + ";\n"
+    cursore = db.cursor()
+    cursore.execute(query)
+    cursore.close()
+
+def mysql_cancella_tabella(tabella):
+    query = "DROP TABLE " + tabella + ";\n"
+    cursore = db.cursor()
+    cursore.execute(query)
+    cursore.close()
+
+def data_da_timestamp(timestamp, default=datetime.now()):
+    if not timestamp:
+        return default
+    timestamp = int(timestamp)
+    try:
+        return datetime.fromtimestamp(timestamp)
+    except ValueError:
+        return default
+
 def ottieni_figli(tipo='nazionali', id=1):
     if COMITATO_INFERIORE[tipo] is None:
         return []
@@ -147,6 +175,7 @@ def ottieni_figli(tipo='nazionali', id=1):
         """, (id,)
     )
     figli = cursore.fetchall()
+    cursore.close()
     figli = [(COMITATO_INFERIORE[tipo], x[0]) for x in figli]
     return figli
 
@@ -162,24 +191,38 @@ def carica_anagrafiche():
     )
     persone = cursore.fetchall()
 
+    if args.verbose:
+        print("  - Creazione dizionario dettagli schede")
+
+    cursore.execute("""
+        SELECT
+            id, nome, valore
+        FROM
+            dettagliPersona
+        """
+    )
+    dettagli = cursore.fetchall()
+    DETTAGLI_DICT = {}
+    for riga in dettagli:
+        attuale = DETTAGLI_DICT.get(int(riga[0]), {})
+        attuale.update({riga[1]: riga[2]})
+        DETTAGLI_DICT.update({int(riga[0]): attuale})
+
+    print(DETTAGLI_DICT[218])
+
+    totale = str(cursore.rowcount)
+    contatore = 0
     for persona in persone:
 
+        contatore += 1
+
         if args.verbose:
-            print("    - Anagrafica: " + str(persona[6]))
+            print("    - " + str(contatore) + " su " + totale + ": id=" + str(persona[0]) + ", codice_fiscale=" + str(persona[6]))
+            print("      - Scaricamento dati aggiuntivi")
 
         id = persona[0]
-        cursore.execute("""
-            SELECT
-                id, nome, valore
-            FROM
-                dettagliPersona
-            WHERE id = %s
-            """, (id,)
-        )
-        dettagli = cursore.fetchall()
-        dict = {}
-        for (id, nome, valore) in dettagli:
-            dict.update({nome: valore})
+
+        dict = DETTAGLI_DICT.get(int(persona[0]), {})
         dati = {
             'id': persona[0],
             'nome': persona[1],
@@ -196,24 +239,26 @@ def carica_anagrafiche():
         }
 
         #print(dati)
+        if args.verbose:
+            print("      - Creazione della scheda anagrafica")
 
         p = Persona(
             nome=dati['nome'],
             cognome=dati['cognome'],
             codice_fiscale=dati['codiceFiscale'],
-            data_nascita=datetime.fromtimestamp(int(dati['dettagliPersona']['dataNascita'])),
+            data_nascita=data_da_timestamp(dict.get('dataNascita'), default=None),
             genere=Persona.MASCHIO if dati['sesso'] == 1 else Persona.FEMMINA,
             stato=Persona.PERSONA,
-            comune_nascita=dict['comuneNascita'],
-            provincia_nascita=dict['provinciaNascita'][0:2],
+            comune_nascita=dict.get('comuneNascita'),
+            provincia_nascita=dict.get('provinciaNascita')[0:2] if dict.get('provinciaNascita') else None,
             stato_nascita='IT',
-            indirizzo_residenza=str(dict['indirizzo']) + ", " + str(dict['civico']),
-            comune_residenza=dict['comuneResidenza'],
-            provincia_residenza=dict['provinciaResidenza'][0:2],
+            indirizzo_residenza=str(dict.get('indirizzo')) + ", " + str(dict.get('civico')),
+            comune_residenza=dict.get('comuneResidenza'),
+            provincia_residenza=dict.get('provinciaResidenza')[0:2] if dict.get('provinciaResidenza') else None,
             stato_residenza='IT',
-            cap_residenza=dict['CAPResidenza'],
+            cap_residenza=dict.get('CAPResidenza'),
             email_contatto=dict.get('emailServizio', ''),
-            creazione=datetime.fromtimestamp(int(dict.get('timestamp'))) if dict.get('timestamp') else datetime.now(),
+            creazione=data_da_timestamp(dict.get('timestamp')),
         )
         try:
             p.save()
@@ -254,7 +299,7 @@ def carica_anagrafiche():
                 print("      - Numero cellulare servizio " + str(dict.get('cellulareServizio')))
             p.aggiungi_numero_telefono(dict.get('cellulareServizio'), True)
 
-        ASSOC_ID_PERSONE.update({dati['id']: p.pk})
+        ASSOC_ID_PERSONE.update({int(id): p.pk})
         # print(dict.keys())
 
 
