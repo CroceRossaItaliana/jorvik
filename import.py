@@ -269,19 +269,30 @@ def carica_anagrafiche():
             else:
                 raise
 
+        # Se anagrafica attiva (ha accesso), crea Utenza
         if dati['email']:
+
             if args.verbose:
                 print("      - Utenza attiva " + str(dati['email']))
+
             u = Utenza(
                 persona=p,
                 ultimo_accesso=datetime.fromtimestamp(int(dict.get('ultimoAccesso', None))) if dict.get('ultimoAccesso', None) else None,
                 ultimo_consenso=datetime.fromtimestamp(int(dati['consenso'])) if dati['consenso'] else None,
                 email=dati['email'],
-                is_staff=True if dati['admin'] else False
+                is_staff=True if dati['admin'] else False,
+                is_superuser=True if dati['admin'] else False,
             )
-            u.set_unusable_password()
+
+            if (dati['password']):
+                u.password = "gaia$1$$" + dati['password']
+
+            else:
+                u.set_unusable_password()
+
             try:
                 u.save()
+
             except:
                 if args.ignora:
                     print("    ERRORE DATABASE IGNORATO")
@@ -370,6 +381,7 @@ print("> Importazione delle Anagrafiche")
 if args.anagrafiche:
     print("  - Eliminazione attuali")
     Persona.objects.all().delete()
+    Utenza.objects.all().delete()
     print("  - Importazione dal database")
     carica_anagrafiche()
     print("  ~ Persisto tabella delle corrispondenze (persone.pickle-tmp)")

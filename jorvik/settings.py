@@ -97,6 +97,13 @@ MYSQL_CONF.read(MYSQL_CONF_FILE)
 PGSQL_CONF = configparser.ConfigParser()
 PGSQL_CONF.read(PGSQL_CONF_FILE)
 
+PASSWORD_HASHERS = (
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'autenticazione.retro.RetroGaiaHasher'
+)
+
+
 DATABASES = {
     'default': {
         #'TEST': {
