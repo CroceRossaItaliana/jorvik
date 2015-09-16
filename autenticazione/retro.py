@@ -6,7 +6,9 @@ from django.utils.datastructures import SortedDict
 __author__ = 'alfioemanuele'
 
 """
-Contiene la funzione di hasing per la retrocompatibilita' con il Progetto Gaia originario.
+Contiene la funzione di hashing per la retrocompatibilita' con il software originario del Progetto Gaia.
+
+La password viene aggiornata al primo accesso. (must_update(...) => True).
 """
 
 class RetroGaiaHasher(BasePasswordHasher):
@@ -34,10 +36,10 @@ class RetroGaiaHasher(BasePasswordHasher):
     def safe_summary(self, encoded):
         algorithm, iterations, salt, hash = encoded.split('$', 3)
         return SortedDict([
-            (_('algorithm'), algorithm),
-            (_('iterations'), iterations),
-            (_('salt'), mask_hash(salt)),
-            (_('hash'), mask_hash(hash)),
+            ('algorithm', algorithm),
+            ('iterations', iterations),
+            ('salt', mask_hash(salt)),
+            ('hash', mask_hash(hash)),
         ])
 
     def must_update(self, encoded):
