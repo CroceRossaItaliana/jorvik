@@ -5,7 +5,7 @@ from django.contrib.auth import login
 # Le viste base vanno qui.
 from django.views.generic import ListView
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
-    ModuloCreazioneDocumento
+    ModuloCreazioneDocumento, ModuloModificaPassword
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -296,3 +296,23 @@ def utente_storico(request, me):
     }
 
     return 'anagrafica_utente_storico.html', contesto
+
+@pagina_privata
+def utente_cambia_password(request, me):
+
+    if request.method == "POST":
+
+        modulo = ModuloModificaPassword(request.POST)
+
+        if modulo.is_valid():
+            modulo.save()
+
+    else:
+
+        modulo = ModuloModificaPassword(user=me)
+
+    contesto = {
+        "modulo": modulo
+    }
+
+    return 'anagrafica_utente_cambia_password.html', contesto

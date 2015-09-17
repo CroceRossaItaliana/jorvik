@@ -112,3 +112,53 @@ def pagina_privata(funzione=None, pagina=LOGIN_URL, permessi=[]):
 
     return _pagina_privata
 
+
+def pagina_privata_no_cambio_firma(funzione=None, pagina=LOGIN_URL, permessi=[]):
+    """
+    Questa funzione attua da decoratore per le pagine accessibili SOLO da utenti identificati.
+    Redirect automatico a una pagina.
+
+    Questa versione (_no_cambio_firma) non modifica la firma della funzione ...(request, **kwargs).
+    Ideale per l'uso o estensione delle viste di Django.
+
+    :param funzione: (decoratore)
+    :param pagina: Pagina verso il quale fare il redirect. Default: LOGIN_REDIRECT_URL.
+    :param permessi: Un elenco di permessi NECESSARI.
+    :return: (decoratore)
+    """
+
+    # Questo codice rende i parametri opzionali, ie. rende possibile chiamare sia @pagina_privata
+    # che @pagina_privata(pagina=x) o @pagina_privata(permesso1, permesso2, ...)
+    if funzione is None:
+        return functools.partial(pagina_privata, pagina=pagina, permessi=permessi)
+
+    def _pagina_privata(request, *args, **kwargs):
+
+        if isinstance(request.user, AnonymousUser):
+            return redirect(LOGIN_URL)
+
+        if not request.user or request.user.applicazioni_disponibili is None:
+            return redirect(ERRORE_ORFANO)
+
+        request.me = request.user.persona
+
+        if not request.me.ha_permessi(permessi):  # Controlla che io lo abbia
+            return redirect(ERRORE_PERMESSI)  # Altrimenti, buttami fuori
+
+        extra = {}
+        extra.update({"me": request.me})
+        extra.update({"request": request})
+        extra.update({"menu": MENU})
+
+        (template, contesto, richiesta) = _spacchetta(funzione(request, *args, extra_context=extra, **kwargs))
+
+        if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
+            return richiesta  # Passa attraverso.
+
+        contesto.update({"me": request.me})
+        contesto.update({"request": request})
+        contesto.update({"menu": MENU})
+        return render_to_response(template, RequestContext(request, contesto))
+
+    return _pagina_privata
+

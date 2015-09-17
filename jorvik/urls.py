@@ -6,7 +6,10 @@ Questo modulo contiene la configurazione per il routing degli URL.
 
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
+from django.contrib.auth.views import password_change, password_change_done
 from django.shortcuts import redirect
+from anagrafica.forms import ModuloModificaPassword
+from autenticazione.funzioni import pagina_privata, pagina_privata_no_cambio_firma
 from jorvik.settings import MEDIA_ROOT
 
 handler404 = 'base.errori.non_trovato'
@@ -52,6 +55,14 @@ urlpatterns = [
     url(r'^utente/documenti/zip/$', 'anagrafica.viste.utente_documenti_zip'),
     url(r'^utente/documenti/cancella/(?P<pk>.*)/$', 'anagrafica.viste.utente_documenti_cancella'),
     url(r'^utente/storico/$', 'anagrafica.viste.utente_storico'),
+    url(r'^utente/cambia-password/?$', pagina_privata_no_cambio_firma(password_change), {
+        "template_name": "anagrafica_utente_cambia_password.html",
+        "password_change_form": ModuloModificaPassword,
+        "post_change_redirect": "/utente/cambia-password/fatto/"
+    }),
+    url(r'^utente/cambia-password/fatto/$', pagina_privata_no_cambio_firma(password_change_done), {
+        "template_name": "anagrafica_utente_cambia_password_fatto.html",
+    }),
 
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/(?P<messaggio_id>\d+)/', 'posta.viste.posta'),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/', 'posta.viste.posta'),

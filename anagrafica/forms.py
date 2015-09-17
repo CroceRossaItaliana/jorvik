@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.forms import PasswordChangeForm
 from django.forms import ModelForm
 import mptt
 from anagrafica.models import Sede, Persona, Appartenenza, Documento
@@ -75,3 +76,7 @@ class ModuloCreazioneDocumento(ModelForm):
     class Meta:
         model = Documento
         fields = ['tipo', 'file']
+
+
+class ModuloModificaPassword(PasswordChangeForm):
+    pass
