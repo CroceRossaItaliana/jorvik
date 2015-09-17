@@ -12,6 +12,7 @@ MENU = {
             ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
             ("Storico", "fa-clock-o", "/utente/storico/"),
             ("Documenti", "fa-folder", "/utente/documenti/"),
+            ("Contatti", "fa-envelope", "/utente/contatti/"),
         )),
         ("Sicurezza", (
             ("Cambia password", "fa-key", "/utente/cambia-password/"),

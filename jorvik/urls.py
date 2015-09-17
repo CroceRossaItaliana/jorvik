@@ -55,6 +55,7 @@ urlpatterns = [
     url(r'^utente/documenti/zip/$', 'anagrafica.viste.utente_documenti_zip'),
     url(r'^utente/documenti/cancella/(?P<pk>.*)/$', 'anagrafica.viste.utente_documenti_cancella'),
     url(r'^utente/storico/$', 'anagrafica.viste.utente_storico'),
+    url(r'^utente/contatti/$', 'anagrafica.viste.utente_contatti'),
     url(r'^utente/cambia-password/?$', pagina_privata_no_cambio_firma(password_change), {
         "template_name": "anagrafica_utente_cambia_password.html",
         "password_change_form": ModuloModificaPassword,

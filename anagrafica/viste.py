@@ -5,7 +5,7 @@ from django.contrib.auth import login
 # Le viste base vanno qui.
 from django.views.generic import ListView
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
-    ModuloCreazioneDocumento, ModuloModificaPassword
+    ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -298,21 +298,27 @@ def utente_storico(request, me):
     return 'anagrafica_utente_storico.html', contesto
 
 @pagina_privata
-def utente_cambia_password(request, me):
+def utente_contatti(request, me):
 
     if request.method == "POST":
 
-        modulo = ModuloModificaPassword(request.POST)
+        modulo_email_accesso = ModuloModificaEmailAccesso(request.POST, instance=me.utenza)
+        modulo_email_contatto = ModuloModificaEmailContatto(request.POST, instance=me)
 
-        if modulo.is_valid():
-            modulo.save()
+        if modulo_email_accesso.is_valid():
+            modulo_email_accesso.save()
+
+        if modulo_email_contatto.is_valid():
+            modulo_email_contatto.save()
 
     else:
 
-        modulo = ModuloModificaPassword(user=me)
+        modulo_email_accesso = ModuloModificaEmailAccesso(instance=me.utenza)
+        modulo_email_contatto = ModuloModificaEmailContatto(instance=me)
 
     contesto = {
-        "modulo": modulo
+        "modulo_email_accesso": modulo_email_accesso,
+        "modulo_email_contatto": modulo_email_contatto,
     }
 
-    return 'anagrafica_utente_cambia_password.html', contesto
+    return 'anagrafica_utente_contatti.html', contesto

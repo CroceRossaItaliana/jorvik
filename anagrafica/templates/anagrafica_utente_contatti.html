@@ -1,0 +1,64 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Modifica i tuoi recapiti E-mail e Numeri di telefono{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="alert bg-info">
+        <p>
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai modificare il tuo indirizzo e-mail di
+            accesso, il tuo indirizzo e-mail di contatto e gestire i tuoi numeri di telefono.
+        </p>
+    </div>
+
+    <form action="/utente/contatti/" method="POST" >
+
+        {% csrf_token %}
+
+        <div class="row">
+
+            <div class="col-lg-6">
+                <h4>
+                    <i class="fa fa-fw fa-key"></i>
+                    E-mail di accesso
+                </h4>
+                <p>
+                    Questo indirizzo e-mail viene usato per effettuare l'accesso a Gaia, assieme alla tua password.
+                    Per motivi di sicurezza, &egrave; fondamentale che l'indirizzo sia sotto il tuo completo e
+                    solo controllo.
+                </p>
+                {% bootstrap_form modulo_email_accesso %}
+                 <button class="btn btn-block btn-lg btn-success" type="submit">
+                     <i class="fa fa-save fa-fw"></i>
+                     Salva E-mail di accesso
+                 </button>
+
+
+            </div>
+
+            <div class="col-lg-6">
+                <h4>
+                    <i class="fa fa-fw fa-envelope"></i>
+                    E-mail di contatto
+                    <span class="text-muted">(opzionale)</span>
+                </h4>
+                <p>
+                    Questo indirizzo e-mail viene usato per inviarti tutte le notifiche relative a Gaia, nonch&eacute;
+                    tutti i messaggi inviati dagli utenti, come ad esempio le comunicazioni di massa. Se non impostato,
+                    verr&agrave; usato l'indirizzo E-mail di accesso.
+                </p>
+                {% bootstrap_form modulo_email_contatto %}
+                 <button class="btn btn-block btn-lg btn-success" type="submit">
+                     <i class="fa fa-save fa-fw"></i>
+                     Salva E-mail di contatto
+                 </button>
+
+
+            </div>
+        </div>
+
+    </form>
+
+{% endblock %}

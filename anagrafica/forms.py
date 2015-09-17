@@ -80,3 +80,13 @@ class ModuloCreazioneDocumento(ModelForm):
 
 class ModuloModificaPassword(PasswordChangeForm):
     pass
+
+class ModuloModificaEmailAccesso(ModelForm):
+    class Meta:
+        model = Utenza
+        fields = ['email']
+
+class ModuloModificaEmailContatto(ModelForm):
+    class Meta:
+        model = Persona
+        fields = ['email_contatto']

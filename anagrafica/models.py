@@ -79,7 +79,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     provincia_residenza = models.CharField("Provincia di residenza", max_length=2, blank=True)
     stato_residenza = CountryField("Stato di residenza", default="IT")
     cap_residenza = models.CharField("CAP di Residenza", max_length=8, blank=True)
-    email_contatto = models.CharField("Email di contatto", max_length=64, blank=True)
+    email_contatto = models.EmailField("Email di contatto", max_length=64, blank=True)
 
     avatar = models.ImageField("Avatar", blank=True, null=True, upload_to=GeneratoreNomeFile('avatar/'))
 
