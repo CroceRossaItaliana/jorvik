@@ -174,6 +174,9 @@ class ConAutorizzazioni(models.Model):
         elif self.autorizzazioni.filter(concessa=False).exists():  # Altrimenti, se almeno una negazione, esito negativo
             return self.ESITO_NO
 
+        elif not self.autorizzazioni.exists():  # Se non vi e' nessuna richiesta, allora e' negata d'ufficio
+            return self.ESITO_NO
+
         else:  # Se non confermata e nessun esito negativo, ancora pendente
             return self.ESITO_PENDING
 

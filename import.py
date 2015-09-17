@@ -1,4 +1,7 @@
 import os, sys
+from django.db import transaction, IntegrityError
+from anagrafica.permessi.applicazioni import PRESIDENTE
+
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
 import pickle
@@ -14,7 +17,7 @@ application = get_wsgi_application()
 
 from django.template.backends import django
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
-from anagrafica.models import Sede, Persona
+from anagrafica.models import Sede, Persona, Appartenenza
 from base.geo import Locazione
 import argparse
 
@@ -37,6 +40,9 @@ parser.add_argument('--salta-comitati', dest='comitati', action='store_const',
 parser.add_argument('--salta-anagrafiche', dest='anagrafiche', action='store_const',
                    const=False, default=True,
                    help='salta importazione anagrafiche (usa cache precedente)')
+parser.add_argument('--salta-appartenenze', dest='appartenenze', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione appartenenze (usa cache precedente)')
 parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
                    const=True, default=False,
                    help='ignora errori di integrità (solo test)')
@@ -100,8 +106,16 @@ ASSOC_ID_COMITATI = {
 }
 
 # Questo dizionario mantiene le associazioni ID persone
-#  es. ASSOC_ID['123'] = 4422
+#  es. ASSOC_ID_PERSONE['123'] = 4422
 ASSOC_ID_PERSONE = {}
+
+# Questo dizionario mantiene le associazioni ID appartenenze
+#  es. ASSOC_ID_APPARTENENZE['123'] = 4444
+ASSOC_ID_APPARTENENZE = {}
+
+def progresso(contatore, totale):
+    percentuale = contatore / totale * 100.0
+    return "%.2f%% (%d su %d) " % (percentuale, contatore, totale)
 
 def ottieni_comitato(tipo='nazionali', id=1):
     cursore = db.cursor()
@@ -186,7 +200,9 @@ def carica_anagrafiche():
             id, nome, cognome, stato, email, password,
             codiceFiscale, timestamp, admin, consenso, sesso
         FROM
-           anagrafica
+            anagrafica
+        WHERE
+            codiceFiscale IS NOT NULL
         """
     )
     persone = cursore.fetchall()
@@ -210,14 +226,14 @@ def carica_anagrafiche():
 
     print(DETTAGLI_DICT[218])
 
-    totale = str(cursore.rowcount)
+    totale = cursore.rowcount
     contatore = 0
     for persona in persone:
 
         contatore += 1
 
         if args.verbose:
-            print("    - " + str(contatore) + " su " + totale + ": id=" + str(persona[0]) + ", codice_fiscale=" + str(persona[6]))
+            print("    - " + progresso(contatore, totale) + ": id=" + str(persona[0]) + ", codice_fiscale=" + str(persona[6]))
             print("      - Scaricamento dati aggiuntivi")
 
         id = persona[0]
@@ -230,7 +246,7 @@ def carica_anagrafiche():
             'stato': persona[3],
             'email': persona[4],
             'password': persona[5],
-            'codiceFiscale': persona[6],
+            'codiceFiscale': persona[6].upper(),
             'timestamp': persona[7],
             'admin': persona[8],
             'consenso': persona[9],
@@ -262,12 +278,10 @@ def carica_anagrafiche():
         )
         try:
             p.save()
-        except:
-            if args.ignora:
-                print("    ERRORE DATABASE IGNORATO")
-                continue
-            else:
-                raise
+        except IntegrityError:
+            if args.verbose:
+                print("    - CF DUPLICATO: Unione...")
+                p = Persona.objects.get(codice_fiscale=dati['codiceFiscale'])
 
         # Se anagrafica attiva (ha accesso), crea Utenza
         if dati['email']:
@@ -313,7 +327,165 @@ def carica_anagrafiche():
         ASSOC_ID_PERSONE.update({int(id): p.pk})
         # print(dict.keys())
 
+        cursore.close()
 
+@transaction.atomic
+def carica_appartenenze():
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, volontario, comitato, stato, timestamp, conferma, inizio, fine
+        FROM
+           appartenenza
+        WHERE
+                volontario IS NOT NULL
+            AND comitato IS NOT NULL
+            AND stato IS NOT NULL
+            AND inizio IS NOT NULL
+            AND timestamp IS NOT NULL
+        """
+    )
+    apps = cursore.fetchall()
+    totale = int(cursore.rowcount)
+
+    contatore = 0
+
+    for app in apps:
+
+        contatore += 1
+
+        id = int(app[0])
+
+        if args.verbose:
+            print("    - " + progresso(contatore, totale) + ": Appartenenza id=" + str(id))
+
+        persona = int(app[1])
+        comitato = int(app[2])
+
+        if persona not in ASSOC_ID_PERSONE:
+            if args.verbose:
+                print("      IGNORATA: Persona non riconosciuta (id=" + str(persona) + ")")
+            continue
+        persona = ASSOC_ID_PERSONE[persona]
+        persona = Persona.objects.get(pk=persona)
+
+        if comitato not in ASSOC_ID_COMITATI['Comitato']:
+            if args.verbose:
+                print("      IGNORATA: Comitato non riconosciuto (id=" + str(comitato) + ")")
+            continue
+        comitato = ASSOC_ID_COMITATI['Comitato'][comitato][1]
+        comitato = Sede.objects.get(pk=comitato)
+
+        inizio = data_da_timestamp(app[6], None)
+        fine = data_da_timestamp(app[7], None) if app[7] else None
+
+        if inizio is None:
+            if args.verbose:
+                print("      IGNORATA: Non valida (inizio fuori range)")
+            continue
+
+        stato = int(app[3])
+
+        """
+        define('MEMBRO_DIMESSO',            0);
+        define('MEMBRO_TRASFERITO',         1);
+        define('MEMBRO_ORDINARIO_DIMESSO',  2);
+        define('MEMBRO_APP_NEGATA',         3);
+        define('MEMBRO_ORDINARIO_PROMOSSO', 4);
+        define('MEMBRO_EST_TERMINATA',      5);
+        define('MEMBRO_TRASF_ANN',          9);
+        define('MEMBRO_TRASF_NEGATO',      10);
+        define('MEMBRO_EST_ANN',           14);
+        define('MEMBRO_EST_NEGATA',        15);
+        define('MEMBRO_ORDINARIO',         16);
+        define('SOGLIA_APPARTENENZE',      19);
+        define('MEMBRO_TRASF_IN_CORSO',    20);
+        define('MEMBRO_EST_PENDENTE',      25);
+        define('MEMBRO_PENDENTE',          30);
+        define('MEMBRO_ESTESO',            35);
+        define('MEMBRO_VOLONTARIO',        40);
+        define('MEMBRO_MODERATORE',        50);
+        define('MEMBRO_DIPENDENTE',        60);
+        define('MEMBRO_PRESIDENTE',        70);
+        """
+
+        ## Trasferimento ed Estensione in corso, non sono piu' stati validi.
+        if stato in [20, 25]:
+            if args.verbose:
+                print("      IGNORATA: Appartenenza fittizia (trasferimento/estensione in corso)")
+            continue
+
+        if stato in [5, 14, 15, 25, 35]:
+            membro = Appartenenza.ESTESO
+
+        elif stato in [0, 1, 3, 9, 10, 20, 30, 40, 50, 60, 70, 80]:
+            membro = Appartenenza.VOLONTARIO
+
+        elif stato in [2, 4, 16]:
+            membro = Appartenenza.ORDINARIO
+
+        else:
+            if args.verbose:
+                print("      IGNORATA: Stato appartenenza non riconosciuto (stato=" + str(stato) + ")")
+            continue
+
+        # Motivo della terminazione
+
+        terminazione = None
+
+        if stato in [0, 2]:
+            terminazione = Appartenenza.DIMISSIONE
+
+        if stato == 1:
+            terminazione = Appartenenza.TRASFERIMENTO
+
+        if stato == 4:
+            terminazione = Appartenenza.PROMOZIONE
+
+        # Stato di conferma dell'appartenenza
+
+        if stato in [0, 1, 2, 4, 5, 16, 35, 40, 50, 60, 70, 80]:
+            confermata = True
+
+        elif stato in [3, 9, 10, 14, 15]:
+            confermata = False
+
+        else:
+            confermata = False  # MEMBRO_PENDENTE
+
+        if args.verbose:
+            print("      - Creazione appartenenza")
+
+        # Creazione della nuova appartenenza
+        a = Appartenenza(
+            persona=persona,
+            sede=comitato,
+            inizio=inizio,
+            fine=fine,
+            confermata=confermata,
+            membro=membro,
+            terminazione=terminazione,
+        )
+        a.save()
+
+        # Pendenti.
+        if stato == 30:  # MEMBRO_PENDENTE
+            if args.verbose:
+                print("      - Pendente, richiesta autorizzazione")
+
+            a.autorizzazione_richiedi(
+                persona,
+                ((PRESIDENTE, comitato)),
+            )
+
+        ASSOC_ID_APPARTENENZE.update({id: a.pk})
+
+        # Terminati.
+        # Non accettati.
+
+    if args.verbose:
+        print("  - Persisto su database...")
+    return
 
 def locazione(geo, indirizzo):
     if not indirizzo:
@@ -351,6 +523,12 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
 
     return totale
 
+@transaction.atomic
+def carica_comitati(geo):
+    with Sede.objects.delay_mptt_updates():
+        n = carica_comitato(geo)
+        print("  - Persisto su database...")
+    return n
 
 # Importazione dei Comitati
 
@@ -360,12 +538,7 @@ if args.comitati:
     print("  - Eliminazione attuali")
     Sede.objects.all().delete()
     print("  - Importazione dal database, geolocalizzazione " + str("attiva" if args.geo else "disattiva"))
-
-    try:
-        n = carica_comitato(args.geo)
-    except KeyboardInterrupt:
-        print("Saltato")
-        n = 0
+    n = carica_comitati(args.geo)
     print("  = Importati " + str(n) + " comitati.")
     print("  ~ Persisto tabella delle corrispondenze (comitati.pickle-tmp)")
     pickle.dump(ASSOC_ID_COMITATI, open("comitati.pickle-tmp", "wb"))
@@ -373,7 +546,6 @@ if args.comitati:
 else:
     print("  ~ Carico tabella delle corrispondenze (comitati.pickle-tmp)")
     ASSOC_ID_COMITATI = pickle.load(open("comitati.pickle-tmp", "rb"))
-
 
 # Importazione delle Anagrafiche
 
@@ -390,5 +562,20 @@ if args.anagrafiche:
 else:
     print("  ~ Carico tabella delle corrispondenze (persone.pickle-tmp)")
     ASSOC_ID_PERSONE = pickle.load(open("persone.pickle-tmp", "rb"))
+
+
+# Importazione delle Appartenenze
+print("> Importazione delle Appartenenze")
+if args.appartenenze:
+    print("  - Eliminazione attuali")
+    Appartenenza.objects.all().delete()
+    carica_appartenenze()
+    print("  ~ Persisto tabella delle corrispondenze (appartenenze.pickle-tmp)")
+    pickle.dump(ASSOC_ID_APPARTENENZE, open("appartenenze.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (appartenenze.pickle-tmp)")
+    ASSOC_ID_APPARTENENZE = pickle.load(open("appartenenze.pickle-tmp", "rb"))
+
 
 # print(ASSOC_ID_COMITATI)

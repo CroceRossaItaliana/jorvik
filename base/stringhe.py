@@ -41,7 +41,7 @@ class GeneratoreNomeFile():
         self.prefisso = prefisso
         self.forza_suffisso = forza_suffisso
 
-    def __call__(self, originale):
+    def __call__(self, i, originale):
         """
         Ritorna un generatore di nome file casuale, sulla base di un prefisso.
         :return: Una funzione che ogni volta chiamata ritorna qualcosa come

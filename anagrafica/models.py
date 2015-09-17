@@ -671,11 +671,13 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     ESPULSIONE = 'E'
     SOSPENSIONE = 'S'
     TRASFERIMENTO = 'T'
+    PROMOZIONE = 'P'
     TERMINAZIONE = (
         (DIMISSIONE, 'Dimissione'),
         (ESPULSIONE, 'Espulsione'),
         (SOSPENSIONE, 'Sospensione'),
-        (TRASFERIMENTO, 'Trasferimento')
+        (TRASFERIMENTO, 'Trasferimento'),
+        (PROMOZIONE, 'Promozione'),
     )
     terminazione = models.CharField("Terminazione", max_length=1, choices=TERMINAZIONE, default=None, db_index=True,
                                     blank=True, null=True)
