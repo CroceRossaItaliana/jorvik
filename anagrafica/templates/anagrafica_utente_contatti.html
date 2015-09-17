@@ -35,10 +35,9 @@
                      Salva E-mail di accesso
                  </button>
 
+                 <p>&nbsp;</p>
+                 <hr />
 
-            </div>
-
-            <div class="col-lg-6">
                 <h4>
                     <i class="fa fa-fw fa-envelope"></i>
                     E-mail di contatto
@@ -55,9 +54,76 @@
                      Salva E-mail di contatto
                  </button>
 
+            </div>
+
+            <div class="col-lg-6">
+
+                <h4>
+                    <i class="fa fa-fw fa-phone"></i>
+                    Numeri di telefono cellulare
+                </h4>
+
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <th>Numero</th>
+                        <th>Tipologia</th>
+                        <th>Azioni</th>
+                    </thead>
+                    <tbody>
+                        {% for numero in numeri %}
+                            <tr>
+                                <td class="grassetto">
+                                    {{ numero }}
+                                </td>
+                                <td>
+                                    {% if numero.servizio %}
+                                       Di servizio
+                                    {% else %}
+                                        Personale
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="/utente/contatti/cancella-numero/{{ numero.id }}/"
+                                            data-conferma="Vuoi davvero cancellare il numero {{ numero }}?">
+                                        <i class="fa fa-trash"></i>
+                                        Cancella
+                                    </a>
+                                </td>
+                            </tr>
+
+                        {% empty %}
+                            <tr class="warning">
+                                <td colspan="3">
+                                    <p class="grassetto">
+                                        <i class="fa fa-fw fa-warning"></i> Nessun numero telefonico registrato.
+                                    </p>
+                                    <p>
+                                        Aggiungi almeno un numero di telefono, questo verr&agrave; condiviso con i
+                                        responsabili delle attivit&agrave; a cui partecipi (o se sei un responsabile,
+                                        con i volontari che partecipano alle attivit&agrave; da te organizzate).
+                                    </p>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <p>&nbsp;</p>
+                <h4>
+                    <i class="fa fa-fw fa-plus-circle"></i>
+                    Aggiungi un numero
+                </h4>
+                {% bootstrap_form modulo_numero_telefono %}
+                 <button class="btn btn-block btn-success" type="submit">
+                     <i class="fa fa-check fa-fw"></i>
+                     Aggiungi numero
+                 </button>
 
             </div>
         </div>
+
+
+
 
     </form>
 

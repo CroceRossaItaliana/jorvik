@@ -90,3 +90,13 @@ class ModuloModificaEmailContatto(ModelForm):
     class Meta:
         model = Persona
         fields = ['email_contatto']
+
+class ModuloCreazioneTelefono(forms.Form):
+    PERSONALE = "P"
+    SERVIZIO = "S"
+    TIPOLOGIA = (
+        (PERSONALE, "Personale"),
+        (SERVIZIO, "Di Servizio")
+    )
+    numero_di_telefono = forms.CharField(max_length=16, initial="+39 ")
+    tipologia = forms.ChoiceField(choices=TIPOLOGIA, initial=PERSONALE, widget=forms.RadioSelect())

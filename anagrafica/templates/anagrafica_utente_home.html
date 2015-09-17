@@ -1,7 +1,46 @@
 {% extends "anagrafica_utente_vuota.html" %}
 
 {% load bootstrap3 %}
+{% load static %}
 
 {% block app_contenuto %}
-    Yeah
+
+    <div
+            id="benvenuto"
+            class="well well-lg allinea-centro" style="
+            background-image: url('{% static 'img/welcome_img1.jpg' %}');
+            text-shadow: 2px 1px 0px white;
+    ">
+        <p>&nbsp;</p>
+        <h1>
+            <span class="text-muted">Benvenut{% if me.genere == "M" %}o{% else %}a{% endif %}</span>
+            {{ me.nome }}<br />
+        </h1>
+        <h3>oggi &egrave; un ottimo giorno per fare volontariato</h3>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+    </div>
+
+
+    {% if not me.numeri_telefono.exists %}
+        <div class="alert alert-warning">
+            <h4>
+                <i class="fa fa-fw fa-warning"></i>
+                Aggiungi il tuo numero di cellulare nella sezione Contatti
+                <a href="/utente/contatti/" target="_new">
+                    &mdash; vai alla sezione Contatti
+                </a>
+
+            </h4>
+            <p>
+                Cos&igrave; facendo, i responsabili delle attivit&agrave; alle quali parteciperai saranno
+                in grado di contattarti tempestivamente, in caso di necessit&agrave;. Il tuo numero verr&agrave;
+                inoltre condiviso con i delegati per le emergenze, e tutti coloro che deciderai.
+            </p>
+        </div>
+    {% endif %}
+
+
+
 {% endblock %}

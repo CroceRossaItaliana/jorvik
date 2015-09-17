@@ -5,12 +5,13 @@ from django.contrib.auth import login
 # Le viste base vanno qui.
 from django.views.generic import ListView
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
-    ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto
+    ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
+    ModuloCreazioneTelefono
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
-from anagrafica.models import Persona, Documento
+from anagrafica.models import Persona, Documento, Telefono
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.files import Zip
@@ -304,6 +305,7 @@ def utente_contatti(request, me):
 
         modulo_email_accesso = ModuloModificaEmailAccesso(request.POST, instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(request.POST, instance=me)
+        modulo_numero_telefono = ModuloCreazioneTelefono(request.POST)
 
         if modulo_email_accesso.is_valid():
             modulo_email_accesso.save()
@@ -311,14 +313,35 @@ def utente_contatti(request, me):
         if modulo_email_contatto.is_valid():
             modulo_email_contatto.save()
 
+        if modulo_numero_telefono.is_valid():
+            me.aggiungi_numero_telefono(
+                modulo_numero_telefono.data['numero_di_telefono'],
+                modulo_numero_telefono.data['tipologia'] == modulo_numero_telefono.SERVIZIO
+            )
+
     else:
 
         modulo_email_accesso = ModuloModificaEmailAccesso(instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(instance=me)
+        modulo_numero_telefono = ModuloCreazioneTelefono()
 
+    numeri = me.numeri_telefono.all()
     contesto = {
         "modulo_email_accesso": modulo_email_accesso,
         "modulo_email_contatto": modulo_email_contatto,
+        "modulo_numero_telefono": modulo_numero_telefono,
+        "numeri": numeri
     }
 
     return 'anagrafica_utente_contatti.html', contesto
+
+@pagina_privata
+def utente_contatti_cancella_numero(request, me, pk):
+
+    tel = get_object_or_404(Telefono, pk=pk)
+
+    if not tel.persona == me:
+        return redirect('/errore/permessi/')
+
+    tel.delete()
+    return redirect('/utente/contatti/')
