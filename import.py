@@ -1,8 +1,10 @@
 import os, sys
-from django.db import transaction, IntegrityError
-from anagrafica.permessi.applicazioni import PRESIDENTE
-
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
+
+from django.db import transaction, IntegrityError
+from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA
+from attivita.models import Area
+
 
 import pickle
 from django.contrib.gis.geos import Point
@@ -43,6 +45,9 @@ parser.add_argument('--salta-anagrafiche', dest='anagrafiche', action='store_con
 parser.add_argument('--salta-appartenenze', dest='appartenenze', action='store_const',
                    const=False, default=True,
                    help='salta importazione appartenenze (usa cache precedente)')
+parser.add_argument('--salta-aree', dest='aree', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione aree (usa cache precedente)')
 parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
                    const=True, default=False,
                    help='ignora errori di integrità (solo test)')
@@ -106,12 +111,17 @@ ASSOC_ID_COMITATI = {
 }
 
 # Questo dizionario mantiene le associazioni ID persone
-#  es. ASSOC_ID_PERSONE['123'] = 4422
+#  es. ASSOC_ID_PERSONE[123] = 4422
 ASSOC_ID_PERSONE = {}
 
 # Questo dizionario mantiene le associazioni ID appartenenze
-#  es. ASSOC_ID_APPARTENENZE['123'] = 4444
+#  es. ASSOC_ID_APPARTENENZE[123] = 4444
 ASSOC_ID_APPARTENENZE = {}
+
+# Questo dizionario mantiene le associazioni ID delle aree
+# es. ASSOC_ID_AREE[123] = 444
+ASSOC_ID_AREE = {}
+
 
 def progresso(contatore, totale):
     percentuale = contatore / totale * 100.0
@@ -497,6 +507,27 @@ def locazione(geo, indirizzo):
         l.save()
     return l
 
+def comitato_oid(oid):
+    if not oid:
+        return None
+    oid = str(oid)
+    oid = oid.split(':')
+    if len(oid) < 2:
+        return None
+    try:
+        return ASSOC_ID_COMITATI[oid[0]][int(oid[1])][0].objects.get(pk=ASSOC_ID_COMITATI[oid[0]][int(oid[1])][1])
+    except:
+        return None
+
+def persona_id(id):
+    if not id:
+        return None
+    id = int(id)
+    try:
+        return Persona.objects.get(pk=ASSOC_ID_PERSONE[id])
+    except:
+        return None
+
 def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
 
     comitato = ottieni_comitato(tipo, id)
@@ -529,6 +560,78 @@ def carica_comitati(geo):
         n = carica_comitato(geo)
         print("  - Persisto su database...")
     return n
+
+def carica_aree():
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, nome, comitato, responsabile, obiettivo
+        FROM
+            aree
+        WHERE   comitato IS NOT NULL
+            AND comitato <> ''
+            AND responsabile IS NOT NULL
+            AND responsabile <> ''
+            AND obiettivo IS NOT NULL
+            AND obiettivo IN (1, 2, 3, 4, 5, 6)
+        """
+    )
+    aree = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for area in aree:
+
+        contatore += 1
+
+        id = int(area[0])
+        nome = str(area[1])
+        comitato = comitato_oid(area[2])
+        responsabile = persona_id(area[3])
+        obiettivo = int(area[4])
+
+        if args.verbose:
+            print("    - " + progresso(contatore, totale) + "Area: id=%s, comitato=%s, obiettivo=%d" % (id, area[2], obiettivo))
+
+        if not comitato:
+            if args.verbose:
+                print("      COMITATO NON VALIDO, SALTATO")
+            continue
+
+        if not responsabile:
+            if args.verbose:
+                print("      RESPONSABILE NON VALIDO, SALTATO (id=%s)" % (area[3],))
+            continue
+
+        # Se esiste una area uguale (solo aggiunta responsabile)
+        if args.verbose:
+            print("      - Ricerca aree da accorpare...")
+
+        esistente = Area.objects.filter(nome=nome, sede=comitato, obiettivo=obiettivo)
+        if esistente.exists():
+            esistente = esistente[0]
+
+            if args.verbose:
+                print("        - Trovata area, id=%d, nome=%s" % (esistente.pk, esistente.nome))
+                print("      - Aggiunta delegato, persona=%s" % (str(responsabile), ))
+
+            esistente.aggiungi_delegato(DELEGATO_AREA, responsabile)
+
+            ASSOC_ID_AREE[id] = esistente.pk
+            continue
+
+        if args.verbose:
+            print("      - Aggiunta della nuova area")
+        a = Area(sede=comitato, obiettivo=obiettivo, nome=nome,)
+        a.save()
+
+        if args.verbose:
+            print("      - Aggiunta del responsabile")
+        a.aggiungi_delegato(DELEGATO_AREA, responsabile)
+
+        ASSOC_ID_AREE[id] = a.pk
+
+
 
 # Importazione dei Comitati
 
@@ -576,6 +679,20 @@ if args.appartenenze:
 else:
     print("  ~ Carico tabella delle corrispondenze (appartenenze.pickle-tmp)")
     ASSOC_ID_APPARTENENZE = pickle.load(open("appartenenze.pickle-tmp", "rb"))
+
+
+# Importazione delle Aree
+print("> Importazione delle Aree")
+if args.aree:
+    print("  - Eliminazione attuali")
+    Area.objects.all().delete()
+    carica_aree()
+    print("  ~ Persisto tabella delle corrispondenze (appartenenze.pickle-tmp)")
+    pickle.dump(ASSOC_ID_AREE, open("aree.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (aree.pickle-tmp)")
+    ASSOC_ID_AREE = pickle.load(open("aree.pickle-tmp", "rb"))
 
 
 # print(ASSOC_ID_COMITATI)

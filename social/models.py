@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -128,7 +129,8 @@ class ConCommenti():
 
     commenti = GenericRelation(
         Commento,
-        related_query_name='commenti',
+        related_query_name='%(class)',
         content_type_field='oggetto_tipo',
         object_id_field='oggetto_id'
     )
+

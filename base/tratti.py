@@ -7,7 +7,9 @@ potrebbe necessitare l'implementazione di metodi o proprieta'
 particolari. Fare riferimento alla documentazione del tratto
 utilizzato.
 """
-from datetime import date
+from datetime import date, datetime
+from django.apps import AppConfig, apps
+from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
@@ -91,3 +93,72 @@ class ConStorico(models.Model):
         :return: True o False.
         """
         return self.__class__.objects.filter(self.query_attuale(al_giorno).q, pk=self.pk).exists()
+
+
+class ConDelegati(models.Model):
+    """
+    Aggiunge la possibilita' di gestire e aggiungere delegati.
+    """
+
+    class Meta:
+        abstract = True
+
+    deleghe = GenericRelation(
+        'anagrafica.Delega',
+        related_query_name="%(class)s",
+        content_type_field='oggetto_tipo',
+        object_id_field='oggetto_id'
+    )
+
+    @property
+    def deleghe_attuali(self, al_giorno=datetime.today()):
+        """
+        Ottiene QuerySet per gli oggetti Delega validi ad un determinato giorno.
+        :param al_giorno: Giorno da verificare. Se assente, oggi.
+        :return: QuerySet di oggetti Delega.
+        """
+        Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
+        return self.deleghe.filter(Delega.query_attuale(al_giorno).q)
+
+    @property
+    def delegati_attuali(self, al_giorno=datetime.today()):
+        """
+        Ottiene QuerySet per gli oggetti Persona delegati ad un determinato giorno.
+        :param al_giorno: Giorno da verificare. Se assente, oggi.
+        :return: QuerySet di oggetti Persona.
+        """
+        Persona = apps.get_model(app_label='anagrafica', model_name='Persona')
+        return Persona.objects.filter(delega__in=self.deleghe_attuali(al_giorno))
+
+    def aggiungi_delegato(self, tipo, persona, firmatario=None, inizio=date.today(), fine=None):
+        """
+        Aggiunge un delegato per l'oggetto. Nel caso in cui una nuova delega (attuale)
+         viene inserita, contemporaneamente ad una delega attuale per la stessa persona,
+         sempre attuale, questa ultima viene estesa. Assicura quindi l'assenza di duplicati.
+        :param tipo: Tipologia di delega.
+        :param persona: La Persona da delegare al trattamento dell'oggetto.
+        :param firmatario: Persona che inserisce la delega, opzionale.
+        :param inizio: Inizio della delega. Se non specificato, inizio immediato.
+        :param fine: Fine della delega. Se non specificato o None, fine indeterminata.
+        :return: Oggetto delegato inserito.
+        """
+
+        # Se il nuovo inserimento e' attuale
+        if inizio <= date.today() and (fine is None or fine >= date.today()):
+
+            # Cerca eventuali deleghe pari gia' esistenti.
+            delega_pari = self.deleghe_attuali.filter(persona=persona, tipo=tipo)
+
+            # Se esiste, estende se necessario, e ritorna la delega passata
+            if delega_pari.exists():
+                delega_pari = delega_pari[0]
+                delega_pari.inizio = min(delega_pari.inizio, inizio)
+                delega_pari.fine = None if fine is None or delega_pari.fine is None else max(delega_pari.fine, fine)
+                delega_pari.save()
+                return delega_pari
+
+        # Aggiungi la nuova delega.
+        Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
+        d = Delega(oggetto=self, persona=persona, inizio=inizio, fine=fine, tipo=tipo, firmatario=firmatario)
+        d.save()
+        return d

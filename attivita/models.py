@@ -4,11 +4,10 @@
 Questo modulo definisce i modelli del modulo Attivita' di Gaia.
 """
 from django.db import models
-from anagrafica.models import Sede
 
 from social.models import ConGiudizio, ConCommenti
 from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati
-from base.tratti import ConMarcaTemporale
+from base.tratti import ConMarcaTemporale, ConDelegati
 from base.geo import ConGeolocalizzazione
 
 
@@ -18,7 +17,7 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
         verbose_name = "Attività"
         verbose_name_plural = "Attività"
 
-    sede = models.ForeignKey(Sede, related_name='attivita')
+    sede = models.ForeignKey('anagrafica.Sede', related_name='attivita')
     area = models.ForeignKey("Area", related_name='attivita')
 
 
@@ -41,9 +40,11 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     turno = models.ForeignKey(Turno, related_name='partecipazioni')
 
 
-class Area(ModelloSemplice, ConMarcaTemporale):
+class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
 
-    sede = models.ForeignKey(Sede, related_name='aree')
+    sede = models.ForeignKey('anagrafica.Sede', related_name='aree')
+    nome = models.CharField(max_length=256, db_index=True, default='Generale', blank=False)
+    obiettivo = models.SmallIntegerField(null=False, blank=False, default=1, db_index=True)
 
     class Meta:
         verbose_name_plural = "Aree"
