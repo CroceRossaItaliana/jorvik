@@ -133,3 +133,7 @@
 #sezione hr {
     margin: 5px 0px;
 }
+
+.nascosto {
+    display: none;
+}
