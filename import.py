@@ -2,9 +2,8 @@ import os, sys
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
 from django.db import transaction, IntegrityError
-from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA
-from attivita.models import Area
-
+from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, REFERENTE
+from attivita.models import Area, Attivita
 
 import pickle
 from django.contrib.gis.geos import Point
@@ -48,6 +47,9 @@ parser.add_argument('--salta-appartenenze', dest='appartenenze', action='store_c
 parser.add_argument('--salta-aree', dest='aree', action='store_const',
                    const=False, default=True,
                    help='salta importazione aree (usa cache precedente)')
+parser.add_argument('--salta-attivita', dest='attivita', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione attivita (usa cache precedente)')
 parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
                    const=True, default=False,
                    help='ignora errori di integrità (solo test)')
@@ -79,6 +81,13 @@ COMITATO_ESTENSIONE = {
     'provinciali': PROVINCIALE,
     'locali': LOCALE,
     'comitati': TERRITORIALE
+}
+COMITATO_ESTENSIONE_COSTANTE = {
+    10: TERRITORIALE,
+    20: LOCALE,
+    30: PROVINCIALE,
+    40: REGIONALE,
+    80: NAZIONALE,
 }
 COMITATO_GENITORE = {
     'nazionali': None,
@@ -121,8 +130,12 @@ ASSOC_ID_PERSONE = {}
 ASSOC_ID_APPARTENENZE = {}
 
 # Questo dizionario mantiene le associazioni ID delle aree
-# es. ASSOC_ID_AREE[123] = 444
+#  es. ASSOC_ID_AREE[123] = 444
 ASSOC_ID_AREE = {}
+
+# Questo dizionario mantiene le associazioni ID delle attivita
+#  es. ASSOC_ID_ATTIVITA[123] = 465
+ASSOC_ID_ATTIVITA = {}
 
 
 def progresso(contatore, totale):
@@ -521,12 +534,37 @@ def comitato_oid(oid):
     except:
         return None
 
+def comitato_estensione(comitato, estensione):
+    if not comitato:
+        return False
+    if estensione is None:
+        return comitato
+    estensione = int(estensione)
+    if estensione == 90:
+        return None
+    esteso = comitato
+    while True:
+        if esteso.estensione == COMITATO_ESTENSIONE_COSTANTE[estensione]:
+            return esteso
+        if esteso.genitore is None:
+            return comitato
+        esteso = esteso.genitore
+
 def persona_id(id):
     if not id:
         return None
     id = int(id)
     try:
         return Persona.objects.get(pk=ASSOC_ID_PERSONE[id])
+    except:
+        return None
+
+def area_id(id):
+    if not id:
+        return None
+    id = int(id)
+    try:
+        return Area.objects.get(pk=ASSOC_ID_AREE[id])
     except:
         return None
 
@@ -633,6 +671,85 @@ def carica_aree():
 
         ASSOC_ID_AREE[id] = a.pk
 
+    cursore.close()
+
+def carica_attivita():
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, nome, luogo, comitato, visibilita, referente, tipo, descrizione, stato, area, apertura
+        FROM
+            attivita
+        WHERE   nome IS NOT NULL
+            AND comitato IS NOT NULL
+            AND comitato <> ''
+            AND area IS NOT NULL
+        """
+    )
+    attivita = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for att in attivita:
+
+        contatore += 1
+
+        id = int(att[0])
+        nome = str(att[1])
+        luogo = str(att[2])
+        comitato = comitato_oid(att[3])
+        estensione = comitato_estensione(comitato, int(att[4]))
+        referente = persona_id(att[5])
+        descrizione = str(att[7])
+        stato = Attivita.BOZZA if int(att[8]) == 10 else Attivita.VISIBILE
+        area = area_id(att[9])
+
+        if att[10] is None:
+            apertura = Attivita.CHIUSA
+        else:
+            apertura = Attivita.APERTA if int(att[10]) == 10 else Attivita.CHIUSA
+
+        if args.verbose:
+            print("    - " + progresso(contatore, totale) + "Attivita: id=%s, comitato=%s, nome=%s" % (id, att[3], nome))
+
+        if not comitato:
+            if args.verbose:
+                print("      COMITATO NON VALIDO, SALTATO")
+            continue
+
+        if not area:
+            if args.verbose:
+                print("      AREA NON VALIDA, SALTATA")
+            continue
+
+        if args.verbose:
+            print("      - Creazione attivita'")
+
+        a = Attivita(
+            sede=comitato,
+            estensione=estensione,
+            nome=nome,
+            descrizione=descrizione,
+            area=area,
+            apertura=apertura,
+            stato=stato,
+        )
+        a.save()
+
+        if luogo and args.geo:
+            l = a.imposta_locazione(luogo)
+            if args.verbose:
+                print("      - Impostato luogo: " + str(l))
+
+        if referente:
+            a.aggiungi_delegato(REFERENTE, referente)
+            if args.verbose:
+                print("      - Impostato referente: " + str(referente))
+
+        ASSOC_ID_ATTIVITA[id] = a.pk
+
+
 
 
 # Importazione dei Comitati
@@ -689,12 +806,26 @@ if args.aree:
     print("  - Eliminazione attuali")
     Area.objects.all().delete()
     carica_aree()
-    print("  ~ Persisto tabella delle corrispondenze (appartenenze.pickle-tmp)")
+    print("  ~ Persisto tabella delle corrispondenze (aree.pickle-tmp)")
     pickle.dump(ASSOC_ID_AREE, open("aree.pickle-tmp", "wb"))
 
 else:
     print("  ~ Carico tabella delle corrispondenze (aree.pickle-tmp)")
     ASSOC_ID_AREE = pickle.load(open("aree.pickle-tmp", "rb"))
+
+
+# Importazione delle Aree
+print("> Importazione delle Attivita'")
+if args.attivita:
+    print("  - Eliminazione attuali")
+    Attivita.objects.all().delete()
+    carica_attivita()
+    print("  ~ Persisto tabella delle corrispondenze (attivita.pickle-tmp)")
+    pickle.dump(ASSOC_ID_ATTIVITA, open("attivita.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (attivita.pickle-tmp)")
+    ASSOC_ID_ATTIVITA = pickle.load(open("attivita.pickle-tmp", "rb"))
 
 
 # print(ASSOC_ID_COMITATI)
