@@ -11,15 +11,11 @@
 
     <div class="row allinea-centro">
 
-        <p class="text-muted allinea-destra piu-piccolo">
-            <strong>Benvenuto in Gaia!</strong>
-            Ultimo accesso: <strong>{{ me.utenza.last_login }}</strong>
-        </p>
-
-        <ul class="nav nav-tabs nav-justified">
-            {% for app_slug, app_nome in user.applicazioni_disponibili %}
+        <ul class="nav nav-tabs nav-justified piu-grande">
+            {% for app_slug, app_nome, app_icona in user.applicazioni_disponibili %}
                 <li role="presentation"{% if app_slug in request.path %} class="active"{% endif %}>
                     <a href="{{ app_slug }}" class="grassetto">
+                        <i class="fa fa-fw {{ app_icona }}"></i>
                         {{ app_nome }}
                     </a>
                 </li>
@@ -38,7 +34,8 @@
                 <span class="icon-bar"></span>
             </button>
 
-        <div class="col-lg-3 well well-sm">
+        {% block menu_laterale %}
+        <div class="{% block menu_laterale_col %}col-lg-3{% endblock %} well well-sm">
 
 
             <ul id="sezione" class="nav nav-pills nav-stacked navbar-collapse collapse">
@@ -65,8 +62,9 @@
             </ul>
 
         </div>
+        {% endblock %}
 
-        <div class="col-lg-9">
+        <div class="{% block app_contenuto_col %}col-lg-9{% endblock %}">
 
             {% block app_contenuto %}
                 Pagina in costruzione!

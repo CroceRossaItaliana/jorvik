@@ -1,4 +1,4 @@
-{% extends "base_vuota.html" %}
+{% extends "anagrafica_utente_vuota.html" %}
 
 {% load bootstrap3 %}
 
@@ -6,76 +6,35 @@
     Benvenuto in Gaia
 {% endblock %}
 
-{% block pagina_principale %}
-<div class="container">
 
-    <div class="row allinea-centro">
+{% block menu_laterale %}
+<div class="col-lg-2 well well-sm">
 
-        <p class="text-muted allinea-destra piu-piccolo">
-            <strong>Benvenuto in Gaia!</strong>
-            Ultimo accesso: <strong>{{ me.utenza.last_login }}</strong>
-        </p>
 
-        <ul class="nav nav-tabs nav-justified">
-            {% for app_slug, app_nome in user.applicazioni_disponibili %}
-                <li role="presentation"{% if app_slug in request.path %} class="active"{% endif %}>
-                    <a href="{{ app_slug }}" class="grassetto">
-                        {{ app_nome }}
+    <ul id="sezione" class="nav nav-pills nav-stacked navbar-collapse collapse">
+
+        {% for sezione_nome, sezione_pagine in menu.posta %}
+
+            <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
+
+            {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
+
+                <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
+                    <a href="{{ link_url|urlencode }}">
+                        <i class="fa {{ link_icona }} fa-fw"></i>
+                        {{ link_nome }}
                     </a>
                 </li>
+
             {% endfor %}
-        </ul>
 
-        <p>&nbsp;</p>
+            <hr />
 
-    </div>
+        {% endfor %}
 
-    <div class="row">
-            <button type="button" class="navbar-toggle collapsed btn btn-standard" data-toggle="collapse" data-target="#sezione" aria-expanded="false" aria-controls="navbar">
-                <span>Mostra navigazione</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-
-        <div class="col-lg-2 well well-sm">
-
-
-            <ul id="sezione" class="nav nav-pills nav-stacked navbar-collapse collapse">
-
-                {% for sezione_nome, sezione_pagine in menu.posta %}
-
-                    <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
-
-                    {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
-
-                        <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
-                            <a href="{{ link_url|urlencode }}">
-                                <i class="fa {{ link_icona }} fa-fw"></i>
-                                {{ link_nome }}
-                            </a>
-                        </li>
-
-                    {% endfor %}
-
-                    <hr />
-
-                {% endfor %}
-
-            </ul>
-
-        </div>
-
-        <div class="col-lg-10">
-
-            {% block app_contenuto %}
-                Pagina in costruzione!
-            {% endblock %}
-
-        </div>
-
-    </div>
+    </ul>
 
 </div>
-
 {% endblock %}
+
+{% block app_contenuto_col %}col-lg-10{% endblock %}
