@@ -60,7 +60,9 @@ db = MySQLdb.connect(
     MYSQL_CONF.get('client', 'host'),
     MYSQL_CONF.get('client', 'user'),
     MYSQL_CONF.get('client', 'password'),
-    MYSQL_CONF.get('client', 'database')
+    MYSQL_CONF.get('client', 'database'),
+    use_unicode=True,
+    charset="utf8"
 )
 
 ## IMPORTA COMITATI
