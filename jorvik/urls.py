@@ -71,6 +71,12 @@ urlpatterns = [
     url(r'^posta/(?P<direzione>[\w\-]+)/', 'posta.viste.posta'),
     url(r'^posta/', 'posta.viste.posta_home'),
 
+    url(r'^attivita/$', 'attivita.viste.attivita'),
+    url(r'^attivita/calendario/$', 'attivita.viste.attivita_calendario'),
+    url(r'^attivita/storico/$', 'attivita.viste.attivita_storico'),
+    url(r'^attivita/gruppi/$', 'attivita.viste.attivita_gruppi'),
+    url(r'^attivita/reperibilita/$', 'attivita.viste.attivita_reperibilita'),
+
     url(r'^media/(?P<path>.*)$', 'django.views.static.serve', {"document_root": MEDIA_ROOT}),
 
     # Amministrazione

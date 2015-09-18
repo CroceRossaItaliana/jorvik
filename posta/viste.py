@@ -13,7 +13,7 @@ Questo file contiene le viste relative al modulo di posta
 
 POSTA_PER_PAGINA = 7
 
-def posta_home(request, me):
+def posta_home(request):
     """
     Questo metodo viene chiamato se non viene specificata la direzione (ie /posta/).
     Redirige alla direzione di default (/posta/in-arrivo/).

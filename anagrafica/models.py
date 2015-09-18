@@ -394,8 +394,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         else:
             lista += [('/utente/', 'Utente', 'fa-user')]
 
-        lista += [('/attivita/calendario/', 'Attività', 'fa-calendar')]
-        lista += [('/posta/in-arrivo/', 'Posta', 'fa-envelope')]
+        lista += [('/attivita/', 'Attività', 'fa-calendar')]
+        lista += [('/posta/', 'Posta', 'fa-envelope')]
 
         for d in self.deleghe_attuali():
             lista += [(APPLICAZIONI_SLUG_DICT[d.tipo], PERMESSI_NOMI_DICT[d.tipo])]

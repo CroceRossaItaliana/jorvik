@@ -16,7 +16,6 @@ MENU = {
         )),
         ("Sicurezza", (
             ("Cambia password", "fa-key", "/utente/cambia-password/"),
-            ("Storico accesso", "fa-list", "/utente/storico-accessi/"),
         )),
     ),
     "posta": (
@@ -27,7 +26,7 @@ MENU = {
     ),
     "attivita": (
         ("Attività", (
-            ("Calendario", "fa-calendar", "/attivita/"),
+            ("Calendario", "fa-calendar", "/attivita/calendario/"),
             ("Miei turni", "fa-list", "/attivita/storico/"),
             ("Gruppi", "fa-users", "/attivita/gruppi/"),
             ("Reperibilità", "fa-thumb-tack", "/attivita/reperibilita/"),
