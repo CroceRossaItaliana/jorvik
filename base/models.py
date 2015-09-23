@@ -93,6 +93,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                                    related_name="autorizzazioni_firmate")
     concessa = models.NullBooleanField("Esito", db_index=True, blank=True, null=True, default=None)
     motivo_obbligatorio = models.BooleanField("Obbliga a fornire un motivo", default=False)
+    motivo_negazione = models.CharField(blank=True, null=True, max_length=256)
+
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="autcomeoggetto")
     oggetto_id = models.PositiveIntegerField(db_index=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
@@ -157,19 +159,82 @@ class ConAutorizzazioni(models.Model):
     )
 
     confermata = models.BooleanField("Confermata", default=True, db_index=True)
+    ritirata = models.BooleanField("Ritirata", default=False, db_index=True)
 
     ESITO_OK = "Confermato"
     ESITO_NO = "Negato"
+    ESITO_RITIRATA = "Ritirata"
     ESITO_PENDING = "In attesa"
+
+    @classmethod
+    def con_esito(cls, esito):
+        """
+        Ottiene QuerySet degli oggetti con esito selezionato.
+        :param esito: L'esito: (*ConAutorizzazioni.ESITO_OK, .ESITO_NO, .ESITO_PENDING, .ESITO_RITIRATA).
+        :return: QuerySet filtrato.
+        """
+        if esito == cls.ESITO_OK:
+            return cls.objects.filter(confermata=True, ritirata=False)
+
+        elif esito == cls.ESITO_RITIRATA:
+            return cls.objects.filter(ritirata=True)
+
+        elif esito == cls.ESITO_PENDING:
+            return cls.objects.filter(confermata=False, ritirata=False)
+
+        else:  # ESITO_NO
+            raise NotImplementedError("Operazione non implementata.")
+            # Ottenere:
+            # - Oggetti con nessuna autorizzazione e confermata=False
+            # - Oggetti con almeno una autorizzazione negata
+
+    @property
+    @classmethod
+    def con_esito_ok(cls):
+        """
+        Ottiene un QuerySet per tutti gli oggetti con esito ESITO_OK.
+        :return:
+        """
+        return cls.con_esito(cls.ESITO_OK)
+
+    @property
+    @classmethod
+    def con_esito_ritirata(cls):
+        """
+        Ottiene un QuerySet per tutti gli oggetti con esito ESITO_RITIRATA.
+        :return:
+        """
+        return cls.con_esito(cls.ESITO_RITIRATA)
+
+    @property
+    @classmethod
+    def con_esito_pending(cls):
+        """
+        Ottiene un QuerySet per tutti gli oggetti con esito ESITO_PENDING.
+        :return:
+        """
+        return cls.con_esito(cls.ESITO_PENDING)
+
+    @property
+    @classmethod
+    def con_esito_no(cls):
+        """
+        Ottiene un QuerySet per tutti gli oggetti con esito ESITO_NO.
+        :return:
+        """
+        return cls.con_esito(cls.ESITO_NO)
 
     @property
     def esito(self):
         """
-        Ottiene l'esito. (*ConAutorizzazioni.ESITO_OK, .ESITO_NO, .ESITO_PENDING).
+        Ottiene l'esito. (*ConAutorizzazioni.ESITO_OK, .ESITO_NO, .ESITO_PENDING, .ESITO_RITIRATA).
         :return:
         """
         if self.confermata:  # Se confermata, okay
             return self.ESITO_OK
+
+        elif self.ritirata:  # Ritirata?
+            return self.ESITO_RITIRATA
 
         elif self.autorizzazioni.filter(concessa=False).exists():  # Altrimenti, se almeno una negazione, esito negativo
             return self.ESITO_NO
@@ -199,6 +264,7 @@ class ConAutorizzazioni(models.Model):
     def autorizzazione_richiedi(self, richiedente, destinatario, motivo_obbligatorio=True, **kwargs):
         """
         Richiede una autorizzazione per l'oggetto attuale
+
         :param richiedente: Colui che inoltra la richiesta.
         :param destinatario: Il ruolo che deve firmare l'autorizzazione, in forma
                       (RUOLO, OGGETTO). Puo' anche essere tupla ((Ruolo1, Ogg1), (Ruolo2, Ogg2), ...)
@@ -244,6 +310,19 @@ class ConAutorizzazioni(models.Model):
                 **kwargs
             )
             r.save()
+
+        # Rimuovi eventuale stato di confermata
+        self.confermata = False
+
+    def autorizzazioni_ritira(self):
+        """
+        Ritira le autorizzazioni pendenti ed imposta lo stato a ritirato.
+        :return:
+        """
+        self.ritirata = True
+
+        # Non diventa piu' necessaria alcuna autorizzazione tra quelle richieste
+        self.autorizzazioni.update(necessaria=False)
 
     def autorizzazione_concessa(self):
         """

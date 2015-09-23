@@ -2,8 +2,11 @@ import os, sys
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
 from django.db import transaction, IntegrityError
-from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, REFERENTE
-from attivita.models import Area, Attivita
+from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, REFERENTE, DELEGATO_OBIETTIVO_1, \
+    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
+    DELEGATO_CO, UFFICIO_SOCI, RESPONSABILE_PATENTI, RESPONSABILE_FORMAZIONE, UFFICIO_SOCI_TEMPORANEO, \
+    RESPONSABILE_AUTOPARCO, RESPONSABILE_DONAZIONI
+from attivita.models import Area, Attivita, Partecipazione, Turno
 
 import pickle
 from django.contrib.gis.geos import Point
@@ -18,7 +21,7 @@ application = get_wsgi_application()
 
 from django.template.backends import django
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
-from anagrafica.models import Sede, Persona, Appartenenza
+from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from base.geo import Locazione
 import argparse
 
@@ -44,12 +47,21 @@ parser.add_argument('--salta-anagrafiche', dest='anagrafiche', action='store_con
 parser.add_argument('--salta-appartenenze', dest='appartenenze', action='store_const',
                    const=False, default=True,
                    help='salta importazione appartenenze (usa cache precedente)')
+parser.add_argument('--salta-deleghe', dest='deleghe', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione deleghe (usa cache precedente)')
 parser.add_argument('--salta-aree', dest='aree', action='store_const',
                    const=False, default=True,
                    help='salta importazione aree (usa cache precedente)')
 parser.add_argument('--salta-attivita', dest='attivita', action='store_const',
                    const=False, default=True,
                    help='salta importazione attivita (usa cache precedente)')
+parser.add_argument('--salta-turni', dest='turni', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione turni (usa cache precedente)')
+parser.add_argument('--salta-partecipazioni', dest='partecipazioni', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione partecipazioni (usa cache precedente)')
 parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
                    const=True, default=False,
                    help='ignora errori di integrità (solo test)')
@@ -129,6 +141,10 @@ ASSOC_ID_PERSONE = {}
 #  es. ASSOC_ID_APPARTENENZE[123] = 4444
 ASSOC_ID_APPARTENENZE = {}
 
+# Questo dizionario mantiene le associazioni ID appartenenze
+#  es. ASSOC_ID_DELEGHE[123] = 4444
+ASSOC_ID_DELEGHE = {}
+
 # Questo dizionario mantiene le associazioni ID delle aree
 #  es. ASSOC_ID_AREE[123] = 444
 ASSOC_ID_AREE = {}
@@ -136,6 +152,14 @@ ASSOC_ID_AREE = {}
 # Questo dizionario mantiene le associazioni ID delle attivita
 #  es. ASSOC_ID_ATTIVITA[123] = 465
 ASSOC_ID_ATTIVITA = {}
+
+# Questo dizionario mantiene le associazioni ID dei turni
+#  es. ASSOC_ID_TURNI[123] = 465
+ASSOC_ID_TURNI = {}
+
+# Questo dizionario mantiene le associazioni ID delle partecipazioni
+#  es. ASSOC_ID_PARTECIPAZIONI[123] = 465
+ASSOC_ID_PARTECIPAZIONI = {}
 
 
 def progresso(contatore, totale):
@@ -196,6 +220,8 @@ def data_da_timestamp(timestamp, default=datetime.now()):
     if not timestamp:
         return default
     timestamp = int(timestamp)
+    if not timestamp:  # timestamp 0, 1970-1-1
+        return default
     try:
         return datetime.fromtimestamp(timestamp)
     except ValueError:
@@ -568,6 +594,24 @@ def area_id(id):
     except:
         return None
 
+def attivita_id(id):
+    if not id:
+        return None
+    try:
+        id = int(id)
+        return Attivita.objects.get(pk=ASSOC_ID_ATTIVITA[id])
+    except:
+        return None
+
+def turno_id(id):
+    if not id:
+        return None
+    id = int(id)
+    try:
+        return Turno.objects.get(pk=ASSOC_ID_TURNI[id])
+    except:
+        return None
+
 def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
 
     comitato = ottieni_comitato(tipo, id)
@@ -600,6 +644,120 @@ def carica_comitati(geo):
         n = carica_comitato(geo)
         print("  - Persisto su database...")
     return n
+
+def carica_deleghe():
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, comitato, estensione, volontario, applicazione, dominio, inizio, fine, pConferma, tConferma,
+            partecipazione
+        FROM
+            delegati
+        WHERE   comitato IS NOT NULL
+            AND comitato <> ''
+            AND volontario IS NOT NULL
+            AND volontario <> ''
+            AND inizio IS NOT NULL
+            AND inizio <> ''
+        """
+    )
+    deleghe = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for delega in deleghe:
+
+        contatore += 1
+
+        id = int(delega[0])
+        sede = comitato_oid(delega[1])
+        persona = persona_id(delega[3])
+
+        if args.verbose:
+            print("    - " + progresso(contatore, totale) + "Delega: id=%s, sede=%s, persona=%s" % (id, str(sede), str(persona)))
+
+
+        tipo = int(delega[4])
+        if tipo == 30:
+            tipo = PRESIDENTE
+        elif tipo == 40:
+            if not delega[5]:
+                if args.verbose:
+                    print("      TIPO NON VALIDO (OBIETTIVO SENZA DOMINIO), SALTATA")
+                continue
+
+            ob = int(delega[5])
+            if ob == 1:
+                tipo = DELEGATO_OBIETTIVO_1
+            elif ob == 2:
+                tipo = DELEGATO_OBIETTIVO_2
+            elif ob == 3:
+                tipo = DELEGATO_OBIETTIVO_3
+            elif ob == 4:
+                tipo = DELEGATO_OBIETTIVO_4
+            elif ob == 5:
+                tipo = DELEGATO_OBIETTIVO_5
+            elif ob == 6:
+                tipo = DELEGATO_OBIETTIVO_6
+            else:
+                raise ValueError("Delegato non valido ob=%d" % (ob, ))
+        elif tipo == 50:
+            tipo = DELEGATO_CO
+        elif tipo == 60:
+            if delega[10] is not None:  # Se delega per Partecipazione
+                tipo = UFFICIO_SOCI_TEMPORANEO
+            else:
+                tipo = UFFICIO_SOCI
+        elif tipo == 70:
+            tipo = RESPONSABILE_PATENTI
+        elif tipo == 80:
+            tipo = RESPONSABILE_FORMAZIONE
+        elif tipo == 90:
+            tipo = RESPONSABILE_AUTOPARCO
+        elif tipo == 100:
+            tipo = RESPONSABILE_DONAZIONI
+        else:
+            raise ValueError("Tipo delegato non valido tipo=%d" % (tipo,))
+
+        inizio = data_da_timestamp(delega[6], None)
+        fine = data_da_timestamp(delega[7], None)
+        firmatario = persona_id(delega[8])
+        creazione = data_da_timestamp(delega[9])
+
+
+        if not sede:
+            if args.verbose:
+                print("      COMITATO NON VALIDO, SALTATA")
+            continue
+
+        if not persona:
+            if args.verbose:
+                print("      PERSONA NON VALIDA, SALTATA")
+            continue
+
+        if not inizio:
+            if args.verbose:
+                print("      INIZIO NON VALIDO, SALTATA")
+            continue
+
+        if args.verbose:
+            print("      - Creazione delega")
+
+        d = Delega(
+            persona=persona,
+            tipo=tipo,
+            oggetto=sede,
+            inizio=inizio,
+            fine=fine,
+            firmatario=firmatario,
+            creazione=creazione,
+        )
+        d.save()
+
+        ASSOC_ID_DELEGHE.update({id: d.pk})
+
+
+
 
 def carica_aree():
     cursore = db.cursor()
@@ -749,7 +907,184 @@ def carica_attivita():
 
         ASSOC_ID_ATTIVITA[id] = a.pk
 
+    cursore.close()
 
+def carica_turni():
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, attivita, nome, inizio, fine, timestamp, minimo, massimo, prenotazione
+        FROM
+            turni
+        WHERE   attivita IS NOT NULL
+            AND attivita <> ''
+            AND inizio IS NOT NULL
+            AND inizio <> ''
+            AND fine IS NOT NULL
+            AND fine <> ''
+        """
+    )
+    turni = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for turno in turni:
+        contatore += 1
+
+        id = int(turno[0])
+        attivita = attivita_id(turno[1])
+        nome = str(turno[2])
+        inizio = data_da_timestamp(turno[3], None)
+        fine = data_da_timestamp(turno[4], None)
+        creazione = data_da_timestamp(turno[5])
+        minimo = int(turno[6])
+        massimo = int(turno[7]) if int(turno[7]) != 999 else None
+        prenotazione = data_da_timestamp(turno[8], inizio)
+
+        if args.verbose:
+            print("    - " + progresso(contatore, totale) + "Turno id=%d, attivita=%s" % (id, str(attivita),))
+
+        if not attivita:
+            if args.verbose:
+                print("      ATTIVITA NON VALIDA, SALTATO")
+            continue
+
+        if inizio is None or fine is None:
+            if args.verbose:
+                print("      INIZIO O FINE NON VALIDI, SALTATO")
+            continue
+
+        if args.verbose:
+            print("      - Creazione turno")
+
+        t = Turno(
+            attivita=attivita,
+            nome=nome,
+            inizio=inizio,
+            fine=fine,
+            creazione=creazione,
+            minimo=minimo,
+            massimo=massimo,
+            prenotazione=prenotazione,
+        )
+        t.save()
+
+        ASSOC_ID_TURNI.update({id: t.pk})
+
+
+
+def carica_partecipazioni():
+
+    # Dizionario per le autorizzazioni. Es:
+    #  AUTORIZZAZIONI[PART_ID] = [(...), (...)]
+    AUTORIZZAZIONI = {}
+
+    print("  - Caricamento autorizzazioni in memoria")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, volontario, partecipazione, timestamp, pFirma, tFirma, note, stato, motivo
+        FROM
+            autorizzazioni
+        WHERE   volontario IS NOT NULL
+            AND volontario <> ''
+            AND partecipazione IS NOT NULL
+            AND partecipazione <> ''
+        """
+    )
+    auts = cursore.fetchall()
+    for aut in auts:
+        part = int(aut[2])
+        try:
+            AUTORIZZAZIONI[part] += [aut]
+        except KeyError:
+            AUTORIZZAZIONI.update({part: [aut]})
+
+    cursore.close()
+
+    print("  - Scaricamento partecipazioni")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, volontario, turno, stato, tipo, timestamp, tConferma, pConferma
+        FROM
+            partecipazioni
+        WHERE   volontario IS NOT NULL
+            AND volontario <> ''
+            AND turno IS NOT NULL
+            AND turno <> ''
+        """
+    )
+    parts = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for part in parts:
+        contatore += 1
+
+        id = int(part[0])
+        persona = persona_id(part[1])
+        turno = turno_id(part[2])
+        stato_raw = int(part[3])
+        if stato_raw == 0:
+            stato = Partecipazione.RITIRATA
+        else:
+            stato = Partecipazione.RICHIESTA
+        creazione = data_da_timestamp(part[5])
+        tConferma = data_da_timestamp(part[6], None)
+        pConferma = persona_id(part[7])
+
+        if args.verbose:
+            print("    - " + progresso(contatore, totale) + "Partecipazione id=%d, turno=%s" % (id, part[2],))
+
+        if not persona:
+            if args.verbose:
+                print("      PERSONA PARTECIPANTE NON VALIDA, SALTATA")
+            continue
+
+        if not turno:
+            if args.verbose:
+                print("      TURNO NON VALIDO, SALTATA")
+            continue
+
+        if args.verbose:
+            print("      - Creazione partecipazione")
+
+        p = Partecipazione(
+            persona=persona,
+            turno=turno,
+            stato=stato,
+            ritirata=True if stato_raw == 0 else False,
+            confermata=False if stato_raw == 20 else True,
+            creazione=creazione,
+        )
+        p.save()
+
+        ASSOC_ID_PARTECIPAZIONI[id] = p.pk
+
+        try:
+            auts = AUTORIZZAZIONI[id]
+        except KeyError:
+            auts = []
+
+        for aut in auts:
+            # id, volontario, partecipazione, timestamp, pFirma, tFirma, note, stato, motivo
+
+            richiedente = persona
+            firmatario = persona_id(aut[1])
+            creazione = data_da_timestamp(aut[3])
+            stato = int(aut[7])
+            if stato == 10:
+                necessaria = True
+                # TODO
+                # importate le deleghe, si puo' controllare se l'autorizzazione irchiesta e' al
+                # referente di attivita' oppure al presidente del mio comitato, trasformando di conseguenza
+                # se in dubbio e passato, non e' necessario importare.
+                
+            necessaria = False
+            motivo_negazione = None if not aut[8] else str(aut[8])
 
 
 # Importazione dei Comitati
@@ -800,6 +1135,20 @@ else:
     ASSOC_ID_APPARTENENZE = pickle.load(open("appartenenze.pickle-tmp", "rb"))
 
 
+# Importazione delle Deleghe
+print("> Importazione delle Deleghe")
+if args.deleghe:
+    print("  - Eliminazione attuali")
+    Delega.objects.all().delete()
+    carica_deleghe()
+    print("  ~ Persisto tabella delle corrispondenze (deleghe.pickle-tmp)")
+    pickle.dump(ASSOC_ID_DELEGHE, open("deleghe.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (deleghe.pickle-tmp)")
+    ASSOC_ID_DELEGHE = pickle.load(open("deleghe.pickle-tmp", "rb"))
+
+
 # Importazione delle Aree
 print("> Importazione delle Aree")
 if args.aree:
@@ -814,7 +1163,7 @@ else:
     ASSOC_ID_AREE = pickle.load(open("aree.pickle-tmp", "rb"))
 
 
-# Importazione delle Aree
+# Importazione delle Attivita
 print("> Importazione delle Attivita'")
 if args.attivita:
     print("  - Eliminazione attuali")
@@ -826,6 +1175,33 @@ if args.attivita:
 else:
     print("  ~ Carico tabella delle corrispondenze (attivita.pickle-tmp)")
     ASSOC_ID_ATTIVITA = pickle.load(open("attivita.pickle-tmp", "rb"))
+
+# Importazione dei turni di attivita'
+print("> Importazione dei Turni")
+if args.turni:
+    print("  - Eliminazione attuali")
+    Turno.objects.all().delete()
+    carica_turni()
+    print("  ~ Persisto tabella delle corrispondenze (turni.pickle-tmp)")
+    pickle.dump(ASSOC_ID_TURNI, open("turni.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (turni.pickle-tmp)")
+    ASSOC_ID_TURNI = pickle.load(open("turni.pickle-tmp", "rb"))
+
+
+# Importazione delle partecipazioni
+print("> Importazione delle Partecipazioni (ed autorizzazioni)")
+if args.partecipazioni:
+    print("  - Eliminazione attuali")
+    Partecipazione.objects.all().delete()
+    carica_partecipazioni()
+    print("  ~ Persisto tabella delle corrispondenze (partecipazioni.pickle-tmp)")
+    pickle.dump(ASSOC_ID_PARTECIPAZIONI, open("partecipazioni.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (partecipazioni.pickle-tmp)")
+    ASSOC_ID_PARTECIPAZIONI = pickle.load(open("partecipazioni.pickle-tmp", "rb"))
 
 
 # print(ASSOC_ID_COMITATI)

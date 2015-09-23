@@ -40,6 +40,9 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     apertura = models.CharField(choices=APERTURA, default=APERTA, max_length=1, db_index=True)
     descrizione = models.TextField(blank=True)
 
+    def __str__(self):
+        return self.nome
+
 
 class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
@@ -48,6 +51,14 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
     attivita = models.ForeignKey(Attivita, related_name='turni')
 
+    nome = models.CharField(max_length=128, default="Nuovo turno", db_index=True)
+
+    prenotazione = models.DateTimeField("Prenotazione entro", db_index=True, null=False)
+    inizio = models.DateTimeField("Inizio", db_index=True, null=False)
+    fine = models.DateTimeField("Fine", db_index=True, null=True, blank=True, default=None)
+
+    minimo = models.SmallIntegerField(db_index=True, default=1)
+    massimo = models.SmallIntegerField(db_index=True, null=True, default=None)
 
 
 class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
@@ -56,8 +67,75 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
 
+    RICHIESTA = 'K'
+    RITIRATA = 'X'
+    NON_PRESENTATO = 'N'
+    STATO = (
+        (RICHIESTA, "Richiesta"),
+        (RITIRATA, "Ritirata"),
+        (NON_PRESENTATO, "Non presentato"),
+    )
+
     persona = models.ForeignKey("anagrafica.Persona", related_name='partecipazioni')
     turno = models.ForeignKey(Turno, related_name='partecipazioni')
+    stato = models.CharField(choices=STATO, default=RICHIESTA, max_length=1, db_index=True)
+
+    @property
+    @classmethod
+    def ritirate(cls):
+        """
+        Ottiene il QuerySet per tutte le partecipazioni ritirate.
+        """
+        return cls.con_esito_ritirata
+
+    @property
+    @classmethod
+    def confermate(cls):
+        """
+        Ottiene il QuerySet per tutte le partecipazioni confermate.
+        """
+        return cls.con_esito_ok
+
+    @property
+    @classmethod
+    def negate(cls):
+        """
+        Ottiene il QuerySet per tutte le partecipazioni negate.
+        """
+        return cls.con_esito_no
+
+    @property
+    @classmethod
+    def in_attesa(cls):
+        """
+        Ottiene il QuerySet per tutte le partecipazioni in attesa di autorizzazione.
+        """
+        return cls.con_esito_pending
+
+    def ritira(self):
+        """
+        Ritira la partecipazione, annulla eventuali richieste pendenti.
+        """
+        self.stato = self.RITIRATA
+        self.autorizzazioni_ritira()
+
+    def autorizzazione_concessa(self):
+        """
+        (Automatico)
+        Invia notifica di autorizzazione concessa.
+        """
+        # TODO
+        pass
+
+    def autorizzazione_negata(self, motivo=None):
+        """
+        (Automatico)
+        Invia notifica di autorizzazione negata.
+        :param motivo: Motivazione, se presente.
+        """
+        # TODO
+        pass
+
 
 
 class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
