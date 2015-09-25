@@ -1,4 +1,6 @@
 import os, sys
+from base.models import Autorizzazione
+
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
 from django.db import transaction, IntegrityError
@@ -25,7 +27,7 @@ from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from base.geo import Locazione
 import argparse
 
-from datetime import datetime
+from datetime import datetime, date
 
 __author__ = 'alfioemanuele'
 
@@ -1069,6 +1071,9 @@ def carica_partecipazioni():
         except KeyError:
             auts = []
 
+        if args.verbose:
+            print("      - %d autorizzazioni da creare" % (len(auts),))
+
         for aut in auts:
             # id, volontario, partecipazione, timestamp, pFirma, tFirma, note, stato, motivo
 
@@ -1077,7 +1082,45 @@ def carica_partecipazioni():
             creazione = data_da_timestamp(aut[3])
             stato = int(aut[7])
             if stato == 10:
+
+                if turno.prenotazione < date.today():
+                    if args.verbose:
+                        print("      - Troppo tardi per prenotarsi, pendente ignorata")
+                        print("        Cancello autorizzazioni associate...")
+                    Autorizzazione.objects.filter(
+                        richiedente=richiedente,
+                        oggetto=p,
+                    ).delete()
+                    p.stato = Partecipazione.ESITO_NO
+                    p.save()
+                    break
+
                 necessaria = True
+
+                # A chi e' stata rivolta la richiesta? Mica al Presidente del MIO comitato?
+                if firmatario.deleghe_attuali(al_giorno=creazione, tipo=PRESIDENTE).exists():
+                    # Presidente del mio comitato, assumo seconda.
+                    destinatario_ruolo = PRESIDENTE
+                    try:
+                        destinatario_oggetto = Sede.objects\
+                        .get(
+                            Appartenenza.objects.attuale(al_giorno=creazione).via("appartenenza"),
+                            appartenenza__persona=richiedente, membro__in=[Appartenenza.VOLONTARIO, Appartenenza.ESTESO]
+                        )
+                    except:
+                        if args.verbose:
+                            print("      - Sembra come richiesta al presidente, ma nessuna appartenenza, quindi Sede")
+                            continue
+
+                else:
+                    # Referente dell'attivita'
+                    destinatario_ruolo = REFERENTE
+                    destinatario_oggetto = turno.attivita
+
+                # TODO Crea autorizzazione.
+
+
+
                 # TODO
                 # importate le deleghe, si puo' controllare se l'autorizzazione irchiesta e' al
                 # referente di attivita' oppure al presidente del mio comitato, trasformando di conseguenza

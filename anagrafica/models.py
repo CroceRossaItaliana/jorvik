@@ -150,11 +150,11 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     #       numeri = [str(x) for x in Persona.numeri_telefono]
     #    - Usare Persona.aggiungi_numero_telefono per aggiungere un numero di telefono.
 
-    def deleghe_attuali(self, al_giorno=date.today()):
+    def deleghe_attuali(self, al_giorno=date.today(), **kwargs):
         """
         Ritorna una ricerca per le deleghe che son attuali.
         """
-        return self.deleghe.filter(Delega.query_attuale(al_giorno).q)
+        return self.deleghe.filter(Delega.query_attuale(al_giorno).q, **kwargs)
 
     def aggiungi_numero_telefono(self, numero, servizio=False, paese="IT"):
         """

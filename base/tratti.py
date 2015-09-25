@@ -75,6 +75,8 @@ class ConStorico(models.Model):
     def query_attuale(cls, al_giorno=date.today(), **kwargs):
         """
         Restituisce l'oggetto Q per filtrare le entita' attuali.
+
+        NOTA BENE: https://pypi.python.org/pypi/django-conceptq/0.1.0
         :param al_giorno: Giorno per considerare la verifica per l'attuale. Default oggi.
         :return: Q!
         """

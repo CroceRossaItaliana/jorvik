@@ -58,6 +58,9 @@ class ModelloAlbero(MPTTModel, ModelloSemplice):
     nome = models.CharField(max_length=64, unique=False, db_index=True)
     genitore = TreeForeignKey('self', null=True, blank=True, related_name='figli')
 
+    def ottieni_superiori(self, includimi=False):
+        return self.get_ancestors(include_self=includimi)
+
     def ottieni_figli(self):
         return self.get_children()
 
