@@ -1,5 +1,6 @@
+# coding=utf8
+
 import os, sys
-from base.models import Autorizzazione
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
@@ -9,6 +10,7 @@ from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, REFERENT
     DELEGATO_CO, UFFICIO_SOCI, RESPONSABILE_PATENTI, RESPONSABILE_FORMAZIONE, UFFICIO_SOCI_TEMPORANEO, \
     RESPONSABILE_AUTOPARCO, RESPONSABILE_DONAZIONI
 from attivita.models import Area, Attivita, Partecipazione, Turno
+from base.models import Autorizzazione
 
 import pickle
 from django.contrib.gis.geos import Point
@@ -32,6 +34,12 @@ from datetime import datetime, date
 __author__ = 'alfioemanuele'
 
 import MySQLdb
+
+def stringa(s):
+    try:
+        return s.encode('utf-8')
+    except:
+        return str(s)
 
 parser = argparse.ArgumentParser(description='Importa i dati da un database MySQL di PHP-Gaia.')
 parser.add_argument('--no-geo', dest='geo', action='store_const',
@@ -286,7 +294,7 @@ def carica_anagrafiche():
         contatore += 1
 
         if args.verbose:
-            print("    - " + progresso(contatore, totale) + ": id=" + str(persona[0]) + ", codice_fiscale=" + str(persona[6]))
+            print("    - " + progresso(contatore, totale) + ": id=" + stringa(persona[0]) + ", codice_fiscale=" + stringa(persona[6]))
             print("      - Scaricamento dati aggiuntivi")
 
         id = persona[0]
@@ -311,19 +319,22 @@ def carica_anagrafiche():
         if args.verbose:
             print("      - Creazione della scheda anagrafica")
 
+        provincia_residenza = dict.get('provinciaResidenza')[0:2] if dict.get('provinciaResidenza') else ''
+        provincia_nascita = dict.get('provinciaNascita')[0:2] if dict.get('provinciaNascita') else provincia_residenza
+        data_nascita = data_da_timestamp(dict.get('dataNascita'), default=None)
         p = Persona(
             nome=dati['nome'],
             cognome=dati['cognome'],
             codice_fiscale=dati['codiceFiscale'],
-            data_nascita=data_da_timestamp(dict.get('dataNascita'), default=None),
+            data_nascita=data_nascita,
             genere=Persona.MASCHIO if dati['sesso'] == 1 else Persona.FEMMINA,
             stato=Persona.PERSONA,
             comune_nascita=dict.get('comuneNascita'),
-            provincia_nascita=dict.get('provinciaNascita')[0:2] if dict.get('provinciaNascita') else None,
+            provincia_nascita=provincia_nascita,
             stato_nascita='IT',
-            indirizzo_residenza=str(dict.get('indirizzo')) + ", " + str(dict.get('civico')),
+            indirizzo_residenza=stringa(dict.get('indirizzo')) + ", " + stringa(dict.get('civico')),
             comune_residenza=dict.get('comuneResidenza'),
-            provincia_residenza=dict.get('provinciaResidenza')[0:2] if dict.get('provinciaResidenza') else None,
+            provincia_residenza=provincia_residenza,
             stato_residenza='IT',
             cap_residenza=dict.get('CAPResidenza'),
             email_contatto=dict.get('emailServizio', ''),
@@ -334,13 +345,17 @@ def carica_anagrafiche():
         except IntegrityError:
             if args.verbose:
                 print("    - CF DUPLICATO: Unione...")
-                p = Persona.objects.get(codice_fiscale=dati['codiceFiscale'])
+                p = Persona.objects.filter(codice_fiscale=dati['codiceFiscale'])
+                if not p:
+                    raise
+                p = p[0]
+
 
         # Se anagrafica attiva (ha accesso), crea Utenza
         if dati['email']:
 
             if args.verbose:
-                print("      - Utenza attiva " + str(dati['email']))
+                print("      - Utenza attiva " + stringa(dati['email']))
 
             u = Utenza(
                 persona=p,
@@ -369,12 +384,12 @@ def carica_anagrafiche():
 
         if dict.get('cellulare', False):
             if args.verbose:
-                print("      - Numero cellulare personale " + str(dict.get('cellulare')))
+                print("      - Numero cellulare personale " + stringa(dict.get('cellulare')))
             p.aggiungi_numero_telefono(dict.get('cellulare'), False)
 
         if dict.get('cellulareServizio', False):
             if args.verbose:
-                print("      - Numero cellulare servizio " + str(dict.get('cellulareServizio')))
+                print("      - Numero cellulare servizio " + stringa(dict.get('cellulareServizio')))
             p.aggiungi_numero_telefono(dict.get('cellulareServizio'), True)
 
         ASSOC_ID_PERSONE.update({int(id): p.pk})
@@ -410,21 +425,21 @@ def carica_appartenenze():
         id = int(app[0])
 
         if args.verbose:
-            print("    - " + progresso(contatore, totale) + ": Appartenenza id=" + str(id))
+            print("    - " + progresso(contatore, totale) + ": Appartenenza id=" + stringa(id))
 
         persona = int(app[1])
         comitato = int(app[2])
 
         if persona not in ASSOC_ID_PERSONE:
             if args.verbose:
-                print("      IGNORATA: Persona non riconosciuta (id=" + str(persona) + ")")
+                print("      IGNORATA: Persona non riconosciuta (id=" + stringa(persona) + ")")
             continue
         persona = ASSOC_ID_PERSONE[persona]
         persona = Persona.objects.get(pk=persona)
 
         if comitato not in ASSOC_ID_COMITATI['Comitato']:
             if args.verbose:
-                print("      IGNORATA: Comitato non riconosciuto (id=" + str(comitato) + ")")
+                print("      IGNORATA: Comitato non riconosciuto (id=" + stringa(comitato) + ")")
             continue
         comitato = ASSOC_ID_COMITATI['Comitato'][comitato][1]
         comitato = Sede.objects.get(pk=comitato)
@@ -479,7 +494,7 @@ def carica_appartenenze():
 
         else:
             if args.verbose:
-                print("      IGNORATA: Stato appartenenza non riconosciuto (stato=" + str(stato) + ")")
+                print("      IGNORATA: Stato appartenenza non riconosciuto (stato=" + stringa(stato) + ")")
             continue
 
         # Motivo della terminazione
@@ -553,7 +568,7 @@ def locazione(geo, indirizzo):
 def comitato_oid(oid):
     if not oid:
         return None
-    oid = str(oid)
+    oid = stringa(oid)
     oid = oid.split(':')
     if len(oid) < 2:
         return None
@@ -632,7 +647,7 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
         c.imposta_locazione(comitato['dati']['formattato'])
 
     if args.verbose:
-        print("    - " + ("-"*num) + " " + c.nome + ": " + str(c.locazione))
+        print("    - " + ("-"*num) + " " + c.nome + ": " + stringa(c.locazione))
 
     totale = 1
     for (a, b) in ottieni_figli(tipo,id):
@@ -676,7 +691,7 @@ def carica_deleghe():
         persona = persona_id(delega[3])
 
         if args.verbose:
-            print("    - " + progresso(contatore, totale) + "Delega: id=%s, sede=%s, persona=%s" % (id, str(sede), str(persona)))
+            print("    - " + progresso(contatore, totale) + "Delega: id=%s, sede=%s, persona=%s" % (id, stringa(sede), stringa(persona)))
 
 
         tipo = int(delega[4])
@@ -785,7 +800,7 @@ def carica_aree():
         contatore += 1
 
         id = int(area[0])
-        nome = str(area[1])
+        nome = stringa(area[1])
         comitato = comitato_oid(area[2])
         responsabile = persona_id(area[3])
         obiettivo = int(area[4])
@@ -813,7 +828,7 @@ def carica_aree():
 
             if args.verbose:
                 print("        - Trovata area, id=%d, nome=%s" % (esistente.pk, esistente.nome))
-                print("      - Aggiunta delegato, persona=%s" % (str(responsabile), ))
+                print("      - Aggiunta delegato, persona=%s" % (stringa(responsabile), ))
 
             esistente.aggiungi_delegato(DELEGATO_AREA, responsabile)
 
@@ -856,12 +871,12 @@ def carica_attivita():
         contatore += 1
 
         id = int(att[0])
-        nome = str(att[1])
-        luogo = str(att[2])
+        nome = stringa(att[1])
+        luogo = stringa(att[2])
         comitato = comitato_oid(att[3])
         estensione = comitato_estensione(comitato, int(att[4]))
         referente = persona_id(att[5])
-        descrizione = str(att[7])
+        descrizione = stringa(att[7])
         stato = Attivita.BOZZA if int(att[8]) == 10 else Attivita.VISIBILE
         area = area_id(att[9])
 
@@ -900,12 +915,12 @@ def carica_attivita():
         if luogo and args.geo:
             l = a.imposta_locazione(luogo)
             if args.verbose:
-                print("      - Impostato luogo: " + str(l))
+                print("      - Impostato luogo: " + stringa(l))
 
         if referente:
             a.aggiungi_delegato(REFERENTE, referente)
             if args.verbose:
-                print("      - Impostato referente: " + str(referente))
+                print("      - Impostato referente: " + stringa(referente))
 
         ASSOC_ID_ATTIVITA[id] = a.pk
 
@@ -935,7 +950,7 @@ def carica_turni():
 
         id = int(turno[0])
         attivita = attivita_id(turno[1])
-        nome = str(turno[2])
+        nome = stringa(turno[2])
         inizio = data_da_timestamp(turno[3], None)
         fine = data_da_timestamp(turno[4], None)
         creazione = data_da_timestamp(turno[5])
@@ -944,7 +959,7 @@ def carica_turni():
         prenotazione = data_da_timestamp(turno[8], inizio)
 
         if args.verbose:
-            print("    - " + progresso(contatore, totale) + "Turno id=%d, attivita=%s" % (id, str(attivita),))
+            print("    - " + progresso(contatore, totale) + "Turno id=%d, attivita=%s" % (id, stringa(attivita),))
 
         if not attivita:
             if args.verbose:
@@ -1127,7 +1142,7 @@ def carica_partecipazioni():
                 # se in dubbio e passato, non e' necessario importare.
                 
             necessaria = False
-            motivo_negazione = None if not aut[8] else str(aut[8])
+            motivo_negazione = None if not aut[8] else stringa(aut[8])
 
 
 # Importazione dei Comitati
@@ -1137,9 +1152,9 @@ print("> Importazione dei Comitati")
 if args.comitati:
     print("  - Eliminazione attuali")
     Sede.objects.all().delete()
-    print("  - Importazione dal database, geolocalizzazione " + str("attiva" if args.geo else "disattiva"))
+    print("  - Importazione dal database, geolocalizzazione " + stringa("attiva" if args.geo else "disattiva"))
     n = carica_comitati(args.geo)
-    print("  = Importati " + str(n) + " comitati.")
+    print("  = Importati " + stringa(n) + " comitati.")
     print("  ~ Persisto tabella delle corrispondenze (comitati.pickle-tmp)")
     pickle.dump(ASSOC_ID_COMITATI, open("comitati.pickle-tmp", "wb"))
 
