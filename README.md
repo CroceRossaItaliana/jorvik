@@ -58,7 +58,7 @@ sudo apt-get install git python3-pip binutils libproj-dev gdal-bin python3-dev l
   
   ```bash
   xcode-select --install
-  brew install libtiff libjpeg webp little-cms2
+  brew install libtiff libjpeg webp little-cms2 geos
   ```
   
 5. Scaricare [**Postgreapp**](http://postgresapp.com/) (PostgreSQL con PostGIS)
