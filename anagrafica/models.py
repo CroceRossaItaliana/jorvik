@@ -64,7 +64,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     nome = models.CharField("Nome", max_length=64)
     cognome = models.CharField("Cognome", max_length=64)
     codice_fiscale = models.CharField("Codice Fiscale", max_length=16, blank=False, unique=True, db_index=True)
-    data_nascita = models.DateField("Data di nascita", db_index=True)
+    data_nascita = models.DateField("Data di nascita", db_index=True, null=True)
     genere = models.CharField("Genere", max_length=1, choices=GENERE, db_index=True)
 
     # Stato
