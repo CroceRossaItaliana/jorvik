@@ -26,8 +26,7 @@ Puoi trovare la **[Documentazione sul Wiki del progetto](https://github.com/Croc
 
 * **[Python 2.7-3.x](https://www.python.org/downloads/)** (es. `python3`)
 * **[PIP 2 o 3](https://www.python.org/downloads/)** (es. `pip3`)
-* **[MySQL Community Server 5.6+](https://dev.mysql.com/downloads/mysql/)**, o [MariaDB 10.x](https://mariadb.org/), o [PostgreSQL](http://www.postgresql.org/) con [PostGIS](http://postgis.net/))
-    * Nel caso di **MySQL 5.6**, diventa necessario installare **[CroceRossaItaliana/django](https://github.com/CroceRossaItaliana/django)**, una versione modificata di Django 1.8.x che introduce il supporto per gli operatori geografici, sul backend MySQL, su Django 1.8.x. [La stessa modifica](https://github.com/django/django/commit/71e20814fcb5983bdc96a6b15765b8f6abd11542) verrà integrata in Django 1.9 nella fine del 2015.
+* **[PostgreSQL](http://www.postgresql.org/) 9.4+** con [PostGIS](http://postgis.net/))
 * **[GEOS](http://trac.osgeo.org/geos/)** (Geometry Engine Open Source)
 * **Linux**, Mac OS X e, probabilmente, Windows Server 2008 o 7 e superiori
 
