@@ -31,10 +31,37 @@ Puoi trovare la **[Documentazione sul Wiki del progetto](https://github.com/Croc
 * **[GEOS](http://trac.osgeo.org/geos/)** (Geometry Engine Open Source)
 * **Linux**, Mac OS X e, probabilmente, Windows Server 2008 o 7 e superiori
 
+#### Ubuntu 14.10+ 
+
+Per installare i requisiti sopra indicati:
+
 ```bash
-# Ubuntu 14.10+ (installa i Requisiti sopra indicati)
 sudo apt-get install git python3-pip binutils libproj-dev gdal-bin python3-dev libmysqlclient-dev libpq-dev postgresql postgresql-contrib
 ```
+
+#### Mac OS X 10.9+
+
+1. Assicurarsi di aver installato [Brew](http://brew.sh/).
+  * Altrimenti, installare con
+    
+    ```bash
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    ```
+2. **Python 2**: Installare pip
+  
+  ```bash
+  sudo easy_install pip
+  ```
+  
+3. **Python 3** Installare Python **3.4.x** [dal sito ufficiale](https://www.python.org/downloads/) 
+4. Installare i requisiti per i moduli necessari:
+  
+  ```bash
+  xcode-select --install
+  brew install libtiff libjpeg webp little-cms2
+  ```
+  
+5. Scaricare [**Postgreapp**](http://postgresapp.com/) (PostgreSQL con PostGIS)
 
 ### Installazione e configurazione
 
