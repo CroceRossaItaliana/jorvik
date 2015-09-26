@@ -54,15 +54,22 @@ sudo apt-get install git python3-pip binutils libproj-dev gdal-bin python3-dev l
   ```
   
 3. **Python 3** Installare Python **3.4.x** [dal sito ufficiale](https://www.python.org/downloads/) 
-4. Installare i requisiti per i moduli necessari:
+4. Scaricare [**Postgreapp**](http://postgresapp.com/) (PostgreSQL con PostGIS)
+5. Aggiungere PostgreSQL alla propria `$PATH`:
+  
+  ```bash
+  echo "export PATH=\$PATH:/Applications/Postgres.app/Contents/Versions/9.4/bin" >> ~/.profile
+  export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/9.4/bin
+  ```
+  
+6. Installare i requisiti per i moduli necessari:
   
   ```bash
   xcode-select --install
   brew install libtiff libjpeg webp little-cms2 geos
   ```
   
-5. Scaricare [**Postgreapp**](http://postgresapp.com/) (PostgreSQL con PostGIS)
-
+ 
 ### Installazione e configurazione
 
 1. **Scarica Jorvik** usando git
