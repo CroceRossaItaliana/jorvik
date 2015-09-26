@@ -65,7 +65,7 @@ sudo apt-get install git python3-pip binutils libproj-dev gdal-bin python3-dev l
   
   ```bash
   xcode-select --install
-  brew install libtiff libjpeg webp little-cms2 geos
+  brew install libtiff libjpeg webp little-cms2 geos mysql-connector-c
   ```
   
  
