@@ -264,6 +264,8 @@ def carica_anagrafiche():
             anagrafica
         WHERE
             codiceFiscale IS NOT NULL
+        AND nome IS NOT NULL
+        AND cognome IS NOT NULL
         """
     )
     persone = cursore.fetchall()
