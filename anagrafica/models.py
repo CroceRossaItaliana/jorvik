@@ -74,7 +74,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     comune_nascita = models.CharField("Comune di Nascita", max_length=64, blank=True)
     provincia_nascita = models.CharField("Provincia di Nascita", max_length=2, blank=True)
     stato_nascita = CountryField("Stato di nascita", default="IT")
-    indirizzo_residenza = models.CharField("Indirizzo di residenza", max_length=64, blank=True)
+    indirizzo_residenza = models.CharField("Indirizzo di residenza", max_length=128, blank=True)
     comune_residenza = models.CharField("Comune di residenza", max_length=64, blank=True)
     provincia_residenza = models.CharField("Provincia di residenza", max_length=2, blank=True)
     stato_residenza = CountryField("Stato di residenza", default="IT")
