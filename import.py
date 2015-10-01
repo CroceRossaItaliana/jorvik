@@ -693,7 +693,8 @@ def carica_deleghe():
         persona = persona_id(delega[3])
 
         if args.verbose:
-            print("    - " + progresso(contatore, totale) + "Delega: id=%s, sede=%s, persona=%s" % (id, stringa(sede), stringa(persona)))
+            print("    - " + progresso(contatore, totale) + "Delega: id=%s, sede=%s, persona=%s" %
+                  (id, str(sede.pk) if sede else None, persona.codice_fiscale if persona else None))
 
 
         tipo = int(delega[4])
