@@ -36,6 +36,8 @@ __author__ = 'alfioemanuele'
 import MySQLdb
 
 def stringa(s):
+    if s is None:
+        return None
     try:
         return s.encode('utf-8')
     except:
@@ -851,6 +853,7 @@ def carica_aree():
 
     cursore.close()
 
+@transaction.atomic
 def carica_attivita():
 
     cursore = db.cursor()
@@ -880,6 +883,8 @@ def carica_attivita():
         estensione = comitato_estensione(comitato, int(att[4]))
         referente = persona_id(att[5])
         descrizione = stringa(att[7])
+        if descrizione is None:
+            descrizione = ''
         stato = Attivita.BOZZA if int(att[8]) == 10 else Attivita.VISIBILE
         area = area_id(att[9])
 
@@ -889,7 +894,7 @@ def carica_attivita():
             apertura = Attivita.APERTA if int(att[10]) == 10 else Attivita.CHIUSA
 
         if args.verbose:
-            print("    - " + progresso(contatore, totale) + "Attivita: id=%s, comitato=%s, nome=%s" % (id, att[3], nome))
+            print("    - " + progresso(contatore, totale) + "Attivita: id=%s, comitato=%s, nome=%s" % (id, stringa(att[3]), stringa(nome)))
 
         if not comitato:
             if args.verbose:
@@ -923,7 +928,7 @@ def carica_attivita():
         if referente:
             a.aggiungi_delegato(REFERENTE, referente)
             if args.verbose:
-                print("      - Impostato referente: " + stringa(referente))
+                print("      - Impostato referente: " + stringa(referente.codice_fiscale))
 
         ASSOC_ID_ATTIVITA[id] = a.pk
 
