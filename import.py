@@ -959,6 +959,8 @@ def carica_turni():
         id = int(turno[0])
         attivita = attivita_id(turno[1])
         nome = stringa(turno[2])
+        if not nome:
+            nome = '(Turno senza nome)'
         inizio = data_da_timestamp(turno[3], None)
         fine = data_da_timestamp(turno[4], None)
         creazione = data_da_timestamp(turno[5])
@@ -967,7 +969,7 @@ def carica_turni():
         prenotazione = data_da_timestamp(turno[8], inizio)
 
         if args.verbose:
-            print("    - " + progresso(contatore, totale) + "Turno id=%d, attivita=%s" % (id, stringa(attivita),))
+            print("    - " + progresso(contatore, totale) + "Turno id=%d, attivita=%s" % (id, stringa(attivita.pk) if attivita else None,))
 
         if not attivita:
             if args.verbose:
