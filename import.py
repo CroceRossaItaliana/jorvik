@@ -4,6 +4,7 @@ import os, sys
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction, IntegrityError
 from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, REFERENTE, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
@@ -1108,13 +1109,14 @@ def carica_partecipazioni():
             stato = int(aut[7])
             if stato == 10:
 
-                if turno.prenotazione < date.today():
+                if turno.prenotazione < datetime.now():
                     if args.verbose:
                         print("      - Troppo tardi per prenotarsi, pendente ignorata")
                         print("        Cancello autorizzazioni associate...")
                     Autorizzazione.objects.filter(
                         richiedente=richiedente,
-                        oggetto=p,
+                        oggetto_tipo=ContentType.objects.get_for_model(Partecipazione),
+                        oggetto_id=p.pk
                     ).delete()
                     p.stato = Partecipazione.ESITO_NO
                     p.save()
