@@ -176,7 +176,7 @@ ASSOC_ID_PARTECIPAZIONI = {}
 
 
 def progresso(contatore, totale):
-    percentuale = contatore / totale * 100.0
+    percentuale = contatore / ( totale * 100.0 )
     return "%.2f%% (%d su %d) " % (percentuale, contatore, totale)
 
 def ottieni_comitato(tipo='nazionali', id=1):
@@ -1019,6 +1019,7 @@ def carica_partecipazioni():
             AND volontario <> ''
             AND partecipazione IS NOT NULL
             AND partecipazione <> ''
+            AND stato IS NOT NULL
         """
     )
     auts = cursore.fetchall()
@@ -1118,7 +1119,7 @@ def carica_partecipazioni():
                         oggetto_tipo=ContentType.objects.get_for_model(Partecipazione),
                         oggetto_id=p.pk
                     ).delete()
-                    p.stato = Partecipazione.ESITO_NO
+                    p.stato = Partecipazione.RITIRATA
                     p.save()
                     break
 
