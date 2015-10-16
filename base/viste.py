@@ -91,7 +91,6 @@ def informazioni_sede(request, me, slug):
     """
     sede = get_object_or_404(Sede, slug=slug)
     vicini = sede.vicini(queryset=Sede.objects.all(), km=5)
-    print(vicini.query)
 
     contesto = {
         'sede': sede,
