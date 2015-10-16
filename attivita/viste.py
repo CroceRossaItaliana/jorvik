@@ -1,4 +1,5 @@
 from django.shortcuts import redirect
+from attivita.models import Partecipazione
 from autenticazione.funzioni import pagina_privata
 
 def attivita(request):
@@ -17,8 +18,14 @@ def attivita_storico(request, me):
     """
     Mostra uno storico delle attivita' a cui ho chiesto di partecipare/partecipato.
     """
+    storico = Partecipazione.objects.filter(persona=me).order_by('-creazione')
+    print(storico)
 
-    return 'attivita_vuota.html'
+    contesto = {
+        storico: storico
+    }
+
+    return 'attivita_storico.html', contesto
 
 @pagina_privata
 def attivita_gruppi(request, me):

@@ -1,0 +1,17 @@
+{% extends 'attivita_vuota.html' %}
+
+{% block pagina_titolo %}
+    Storico partecipazione alle attivit&agrave;
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h4>Storico delle richieste di partecipazione</h4>
+
+    {% for richiesta in storico %}
+        {{ richiesta }}
+
+    {% empty %}
+        Nessuna richiesta.
+    {% endfor %}
+{% endblock %}
