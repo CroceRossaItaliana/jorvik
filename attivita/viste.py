@@ -19,10 +19,9 @@ def attivita_storico(request, me):
     Mostra uno storico delle attivita' a cui ho chiesto di partecipare/partecipato.
     """
     storico = Partecipazione.objects.filter(persona=me).order_by('-creazione')
-    print(storico)
 
     contesto = {
-        storico: storico
+        "storico": storico
     }
 
     return 'attivita_storico.html', contesto
