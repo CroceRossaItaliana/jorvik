@@ -43,6 +43,10 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     def __str__(self):
         return self.nome
 
+    @property
+    def url(self):
+        return "/attivita/scheda/%d/" % (self.pk,)
+
 
 class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
@@ -74,9 +78,9 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     RITIRATA = 'X'
     NON_PRESENTATO = 'N'
     STATO = (
-        (RICHIESTA, "Richiesta"),
-        (RITIRATA, "Ritirata"),
-        (NON_PRESENTATO, "Non presentato"),
+        (RICHIESTA, "Part. Richiesta"),
+        (RITIRATA, "Part. Ritirata"),
+        (NON_PRESENTATO, "Non presentato/a"),
     )
 
     persona = models.ForeignKey("anagrafica.Persona", related_name='partecipazioni')
