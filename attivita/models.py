@@ -60,6 +60,9 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     minimo = models.SmallIntegerField(db_index=True, default=1)
     massimo = models.SmallIntegerField(db_index=True, null=True, default=None)
 
+    def __str__(self):
+        return "%s (%s)" % (self.nome, self.attivita.nome if self.attivita else "Nessuna attività")
+
 
 class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
@@ -79,6 +82,9 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     persona = models.ForeignKey("anagrafica.Persona", related_name='partecipazioni')
     turno = models.ForeignKey(Turno, related_name='partecipazioni')
     stato = models.CharField(choices=STATO, default=RICHIESTA, max_length=1, db_index=True)
+
+    def __str__(self):
+        return "%s a %s" % (self.persona.codice_fiscale, str(self.turno))
 
     @property
     @classmethod
@@ -146,3 +152,6 @@ class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
 
     class Meta:
         verbose_name_plural = "Aree"
+
+    def __str__(self):
+        return "%s (Ob. %d)" % (self.nome, self.obiettivo)
