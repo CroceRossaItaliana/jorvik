@@ -53,7 +53,62 @@
                 </td>
                 <td>
                     <span class="piu-grande">
-                        {{ richiesta.esito }}
+                        {% if richiesta.stato == richiesta.RICHIESTA %}
+
+                            {% if richiesta.esito == richiesta.ESITO_OK %}
+                                <span class="text-success grassetto">
+                                    <i class="fa fa-fw fa-check"></i>
+                                    Approvata
+                                </span>
+
+                            {% elif richiesta.esito == richiesta.ESITO_PENDING %}
+                                <span class="text-warning grassetto">
+                                    <i class="fa fa-fw fa-clock-o"></i>
+                                    In attesa
+                                </span>
+
+                            {% elif richiesta.esito == richiesta.ESITO_NO %}
+                                <span class="text-danger grassetto">
+                                    <i class="fa fa-fw fa-times"></i>
+                                    Non approvata
+                                </span>
+
+                            {% endif %}
+
+                            <br />
+                            <span class="text-muted">
+                                {% for autorizzazione in richiesta.autorizzazioni %}
+
+                                    {{ autorizzazione.persona.nome_completo }}
+
+                                    {% if autorizzazione.concessa == True %}
+                                        ha approvato.
+
+                                    {% elif autorizazzione.concessa == False %}
+                                        ha negato.
+
+                                    {% else %}
+                                        &egrave; in attesa.
+
+                                    {% endif %}
+
+                                {% endfor %}
+                            </span>
+
+                        {% elif richiesta.stato == richiesta.RITIRATA %}
+                            <span class="text-warning grassetto">
+                                <i class="fa fa-fw fa-times"></i>
+                                Ritirata
+                            </span>
+
+                        {% elif richiesta.stato == richiesta.NON_PRESENTATO %}
+                            <span class="text-danger grassetto">
+                                <i class="fa fa-fw fa-warning"></i>
+                                Non presentato/a
+                            </span>
+
+                        {% endif %}
+
                     </span>
                 </td>
                 <td>
