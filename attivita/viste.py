@@ -1,4 +1,5 @@
 from django.shortcuts import redirect
+from attivita.forms import ModuloStoricoTurni
 from attivita.models import Partecipazione
 from autenticazione.funzioni import pagina_privata
 
@@ -19,8 +20,16 @@ def attivita_storico(request, me):
     Mostra uno storico delle attivita' a cui ho chiesto di partecipare/partecipato.
     """
     storico = Partecipazione.objects.filter(persona=me).order_by('-creazione')
+    form = None
+
+    anni = Partecipazione.confermate().filter(persona=me).\
+        dates('turno__inizio', 'year', order='DESC')
+
+    if anni:
+        form = ModuloStoricoTurni(anni)
 
     contesto = {
+        "form": form,
         "storico": storico
     }
 
