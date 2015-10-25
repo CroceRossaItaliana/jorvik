@@ -98,13 +98,12 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         """
         return cls.con_esito_ritirata
 
-    @property
     @classmethod
     def confermate(cls):
         """
         Ottiene il QuerySet per tutte le partecipazioni confermate.
         """
-        return cls.con_esito_ok
+        return cls.con_esito_ok()
 
     @property
     @classmethod
