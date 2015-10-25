@@ -1,7 +1,8 @@
 $(document).ready(function() {
 
-
-
+    $(function () {
+         $('[data-toggle="popover"]').popover()
+    })
    $("[data-conferma]").each(function(i, e) {
         $(e).click(function() {
             return confirm($(e).data('conferma'));

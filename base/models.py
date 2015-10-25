@@ -191,7 +191,6 @@ class ConAutorizzazioni(models.Model):
             # - Oggetti con nessuna autorizzazione e confermata=False
             # - Oggetti con almeno una autorizzazione negata
 
-    @property
     @classmethod
     def con_esito_ok(cls):
         """
