@@ -1101,61 +1101,75 @@ def carica_partecipazioni():
         if args.verbose:
             print("      - %d autorizzazioni da creare" % (len(auts),))
 
+        progressivo = 0
+
         for aut in auts:
+
+            progressivo += 1
             # id, volontario, partecipazione, timestamp, pFirma, tFirma, note, stato, motivo
 
             richiedente = persona
             firmatario = persona_id(aut[1])
             creazione = data_da_timestamp(aut[3])
+            ultima_modifica = data_da_timestamp(aut[5])
             stato = int(aut[7])
-            if stato == 10:
+            concessa = True if stato == 30 else False if stato == 20 else None
 
-                if turno.prenotazione < datetime.now():
+            if stato == 10 and turno.prenotazione < datetime.now():  # pendente e troppo tardi...
+                if args.verbose:
+                    print("      - Troppo tardi per prenotarsi, pendente ignorata")
+                    print("        Cancello autorizzazioni associate...")
+                Autorizzazione.objects.filter(
+                    richiedente=richiedente,
+                    oggetto_tipo=ContentType.objects.get_for_model(Partecipazione),
+                    oggetto_id=p.pk
+                ).delete()
+                p.stato = Partecipazione.RITIRATA
+                p.save()
+                break
+
+            necessaria = True
+
+            # A chi e' stata rivolta la richiesta? Mica al Presidente del MIO comitato?
+            if firmatario.deleghe_attuali(al_giorno=creazione, tipo=PRESIDENTE).exists():
+                # Presidente del mio comitato, assumo seconda.
+                destinatario_ruolo = PRESIDENTE
+                try:
+                    destinatario_oggetto = Sede.objects\
+                    .get(
+                        Appartenenza.objects.attuale(al_giorno=creazione).via("appartenenza"),
+                        appartenenza__persona=richiedente, membro__in=[Appartenenza.VOLONTARIO, Appartenenza.ESTESO]
+                    )
+                except:
                     if args.verbose:
-                        print("      - Troppo tardi per prenotarsi, pendente ignorata")
-                        print("        Cancello autorizzazioni associate...")
-                    Autorizzazione.objects.filter(
-                        richiedente=richiedente,
-                        oggetto_tipo=ContentType.objects.get_for_model(Partecipazione),
-                        oggetto_id=p.pk
-                    ).delete()
-                    p.stato = Partecipazione.RITIRATA
-                    p.save()
-                    break
+                        print("      - Sembra come richiesta al presidente, ma nessuna appartenenza, quindi Sede")
+                        continue
 
-                necessaria = True
-
-                # A chi e' stata rivolta la richiesta? Mica al Presidente del MIO comitato?
-                if firmatario.deleghe_attuali(al_giorno=creazione, tipo=PRESIDENTE).exists():
-                    # Presidente del mio comitato, assumo seconda.
-                    destinatario_ruolo = PRESIDENTE
-                    try:
-                        destinatario_oggetto = Sede.objects\
-                        .get(
-                            Appartenenza.objects.attuale(al_giorno=creazione).via("appartenenza"),
-                            appartenenza__persona=richiedente, membro__in=[Appartenenza.VOLONTARIO, Appartenenza.ESTESO]
-                        )
-                    except:
-                        if args.verbose:
-                            print("      - Sembra come richiesta al presidente, ma nessuna appartenenza, quindi Sede")
-                            continue
-
-                else:
-                    # Referente dell'attivita'
-                    destinatario_ruolo = REFERENTE
-                    destinatario_oggetto = turno.attivita
-
-                # TODO Crea autorizzazione.
+            else:
+                # Referente dell'attivita'
+                destinatario_ruolo = REFERENTE
+                destinatario_oggetto = turno.attivita
 
 
-
-                # TODO
-                # importate le deleghe, si puo' controllare se l'autorizzazione irchiesta e' al
-                # referente di attivita' oppure al presidente del mio comitato, trasformando di conseguenza
-                # se in dubbio e passato, non e' necessario importare.
-                
             necessaria = False
-            motivo_negazione = None if not aut[8] else stringa(aut[8])
+            motivo_negazione = '' if not aut[8] else stringa(aut[8])
+
+            a = Autorizzazione(
+                richiedente=richiedente,
+                firmatario=firmatario,
+                concessa=concessa,
+                motivo_obbligatorio=False,
+                motivo_negazione=motivo_negazione,
+                oggetto=p,
+                necessaria=necessaria,
+                progressivo=progressivo,
+                destinatario_ruolo=destinatario_ruolo,
+                destinatario_oggetto=destinatario_oggetto,
+                creazione=creazione,
+                ultima_modifica=ultima_modifica,
+            )
+            a.save()
+
 
 
 # Importazione dei Comitati
