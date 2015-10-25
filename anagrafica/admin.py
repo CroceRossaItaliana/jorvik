@@ -2,12 +2,38 @@ from django.contrib import admin
 from mptt.admin import MPTTModelAdmin
 from anagrafica.models import Persona, Sede, Appartenenza, Delega, Documento, Fototessera
 
+RAW_ID_FIELDS_PERSONA = []
+RAW_ID_FIELDS_SEDE = []
+RAW_ID_FIELDS_APPARTENENZA = ['persona', 'sede', 'precedente']
+RAW_ID_FIELDS_DELEGA = ['persona', 'firmatario',]
+RAW_ID_FIELDS_DOCUMENTO = ['persona']
+
 # Aggiugni al pannello di amministrazione
+class InlineAppartenenzaPersona(admin.TabularInline):
+    model = Appartenenza
+    raw_id_fields = RAW_ID_FIELDS_APPARTENENZA
+    extra = 0
+
+
+class InlineDelegaPersona(admin.TabularInline):
+    model = Delega
+    raw_id_fields = RAW_ID_FIELDS_DELEGA
+    fk_name = 'persona'
+    extra = 0
+
+
+class InlineDocumentoPersona(admin.TabularInline):
+    model = Documento
+    raw_id_fields = RAW_ID_FIELDS_DOCUMENTO
+    extra = 0
+
+
 @admin.register(Persona)
 class AdminPersona(admin.ModelAdmin):
     search_fields = ['nome', 'cognome', 'codice_fiscale', 'utenza__email', 'email_contatto']
     list_display = ('nome', 'cognome', 'utenza', 'email_contatto', 'codice_fiscale', 'data_nascita', 'stato', 'ultima_modifica', )
     list_filter = ('stato', )
+    inlines = [InlineAppartenenzaPersona, InlineDelegaPersona, InlineDocumentoPersona]
 
 
 @admin.register(Sede)
@@ -24,6 +50,7 @@ class AdminAppartenenza(admin.ModelAdmin):
                      "persona__utenza__email", "sede__nome"]
     list_display = ("persona", "sede", "attuale", "inizio", "fine", "creazione")
     list_filter = ("membro", "inizio", "fine")
+    raw_id_fields = RAW_ID_FIELDS_APPARTENENZA
 
 
 # admin.site.register(Delega)
@@ -32,6 +59,7 @@ class AdminDelega(admin.ModelAdmin):
     search_fields = ["tipo", "persona__nome", "persona__codice_fiscale", "tipo", "oggetto_id"]
     list_display = ("tipo", "oggetto", "persona", "inizio", "fine", "attuale")
     list_filter = ("tipo", "inizio", "fine")
+    raw_id_fields = RAW_ID_FIELDS_DELEGA
 
 
 # admin.site.register(Documento)
@@ -40,6 +68,7 @@ class AdminDocumento(admin.ModelAdmin):
     search_fields = ["tipo", "persona__nome", "persona__cognome", "persona__codice_fiscale"]
     list_display = ("tipo", "persona", "creazione")
     list_filter = ("tipo", "persona", "creazione")
+    raw_id_fields = RAW_ID_FIELDS_DOCUMENTO
 
 
 # admin.site.register(Fototessera)
