@@ -5,8 +5,9 @@ from anagrafica.models import Persona, Sede, Appartenenza, Delega, Documento, Fo
 RAW_ID_FIELDS_PERSONA = []
 RAW_ID_FIELDS_SEDE = []
 RAW_ID_FIELDS_APPARTENENZA = ['persona', 'sede', 'precedente']
-RAW_ID_FIELDS_DELEGA = ['persona', 'firmatario',]
+RAW_ID_FIELDS_DELEGA = ['persona', 'firmatario', ]
 RAW_ID_FIELDS_DOCUMENTO = ['persona']
+
 
 # Aggiugni al pannello di amministrazione
 class InlineAppartenenzaPersona(admin.TabularInline):

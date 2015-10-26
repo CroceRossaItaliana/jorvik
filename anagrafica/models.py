@@ -11,7 +11,7 @@ Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 - Comitato
 - Delega
 """
-from datetime import date
+from datetime import date, timedelta
 
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -25,9 +25,11 @@ import phonenumbers
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, APPLICAZIONI_SLUG_DICT, PERMESSI_NOMI_DICT
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+from anagrafica.permessi.costanti import GESTIONE_ATTIVITA
 from anagrafica.permessi.delega import delega_permessi
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
+from attivita.models import Turno
 
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati
@@ -229,11 +231,11 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         """
         return self.membro_di(self, sede, includi_figli=True, **kwargs)
 
-    def comitati_attuali(self, **kwargs):
+    def sedi_attuali(self, **kwargs):
         """
         Ottiene queryset di Sede di cui fa parte
         """
-        return [x.sede for x in self.appartenenze_attuali(**kwargs)]
+        return Sede.objects.filter(pk__in=[x.sede.pk for x in self.appartenenze_attuali(**kwargs)])
 
     def titoli_personali_confermati(self):
         """
@@ -406,7 +408,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     def oggetti_permesso(self, permesso, al_giorno=date.today()):
         """
         Dato un permesso, ritorna un queryset agli oggetti che sono coperti direttamente
-        dal permesso. Es.: GESTINE_SOCI -> Elenco dei Comitati in cui si ha gestione dei soci.
+        dal permesso. Es.: GESTIONE_SOCI -> Elenco dei Comitati in cui si ha gestione dei soci.
         :param permesso: Permesso singolo.
         :param al_giorno: Data di verifica.
         :return: QuerySet. Se permesso non valido, QuerySet vuoto o None (EmptyQuerySet).
@@ -415,7 +417,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         if isinstance(permessi, QuerySet):
             return permessi
         else:
-            return Persona.objects.none()  # Un EmptyQuerySet qualunque.
+            return None  # Un EmptyQuerySet qualunque.
 
     def permessi(self, oggetto, al_giorno=date.today()):
         """
@@ -493,6 +495,26 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     @property
     def link(self):
         return "<a href='/profilo/" + str(self.pk) + "/'>" + str(self.nome_completo) + "</a>"
+
+    def calendario_turni(self, inizio, fine):
+        """
+        Ritorna il QuerySet per i turni da mostrare in calendario alla Persona.
+        :param inizio: datetime.date per il giorno di inizio (incl.)
+        :param fine: datetime.date per il giorno di fine (incl.)
+        :return: QuerySet per Turno
+        """
+        sedi = self.sedi_attuali(membro__in=Appartenenza.MEMBRO_ATTIVITA)
+        print(sedi)
+        return Turno.objects.filter(
+            # Attivtia organizzate dai miei comitati
+            Q(attivita__sede__in=sedi)
+            # Attivita aperte ai miei comitati
+            | Q(attivita__estensione__in=Sede.objects.get_queryset_ancestors(sedi, include_self=True))
+
+            # Attivita che gesticsco
+            | Q(attivita__in=self.oggetti_permesso(GESTIONE_ATTIVITA) or [])
+            , inizio__gte=inizio, fine__lt=(fine + timedelta(1))
+        ).order_by('inizio')
 
 
 
@@ -648,6 +670,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     MILITARE = 'MI'
     DONATORE = 'DO'
     SOSTENITORE = 'SO'
+
+    # Quale tipo di membro puo' partecipare alle attivita'?
+    MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO,)
 
     # Membri sotto il diretto controllo della Sede
     MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE)
