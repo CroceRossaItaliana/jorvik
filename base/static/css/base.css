@@ -141,3 +141,41 @@
 body, p, span, div {
     font-family: 'Telex';
 }
+
+.calendario-turno {
+    padding-top: 4px;
+    padding-left: 5px;
+    padding-bottom: 10px;
+    margin-bottom: 4px;
+    border-radius: 2px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+}
+
+.calendario-turno:hover {
+    border-left: 2px solid red;
+}
+
+.calendario-giorno {
+    text-align: center;
+    padding: 20px;
+}
+
+.calendario-giorno .giorno-settimana {
+    padding: 4px;
+    background-color: #3c3c3c;
+    color: white;
+    font-size: larger;
+    font-weight: bold;
+}
+
+.calendario-giorno .giorno {
+    font-size: xx-large;
+}
+
+.calendario-giorno .mese {
+    padding: 4px;
+    background-color: #222222;
+    color: white;
+    font-size: larger;
+}
