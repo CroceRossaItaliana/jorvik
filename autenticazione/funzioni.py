@@ -12,7 +12,6 @@ __author__ = 'alfioemanuele'
 
 def _spacchetta(pacchetto):
     # Controlla se tupla (pagina, contesto) oppure solo 'pagina.html'.
-    print("Pacchetto: " + str(pacchetto))
     if isinstance(pacchetto, tuple):
         (template, contesto, richiesta) = pacchetto + (pacchetto, )
     elif isinstance(pacchetto, str):
