@@ -73,6 +73,7 @@ urlpatterns = [
 
     url(r'^attivita/$', 'attivita.viste.attivita'),
     url(r'^attivita/calendario/$', 'attivita.viste.attivita_calendario'),
+    url(r'^attivita/calendario/(?P<inizio>[0-9\-]+)/(?P<fine>[0-9\-]+)/$', 'attivita.viste.attivita_calendario'),
     url(r'^attivita/storico/$', 'attivita.viste.attivita_storico'),
     url(r'^attivita/gruppi/$', 'attivita.viste.attivita_gruppi'),
     url(r'^attivita/reperibilita/$', 'attivita.viste.attivita_reperibilita'),
