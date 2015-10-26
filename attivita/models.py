@@ -67,6 +67,12 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     def __str__(self):
         return "%s (%s)" % (self.nome, self.attivita.nome if self.attivita else "Nessuna attività")
 
+    def partecipazioni_confermate(self):
+        return Partecipazione.con_esito_ok().filter(turno=self)
+
+    @property
+    def scoperto(self):
+        return self.partecipazioni_confermate().count() < self.minimo
 
 class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
@@ -90,13 +96,12 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     def __str__(self):
         return "%s a %s" % (self.persona.codice_fiscale, str(self.turno))
 
-    @property
     @classmethod
     def ritirate(cls):
         """
         Ottiene il QuerySet per tutte le partecipazioni ritirate.
         """
-        return cls.con_esito_ritirata
+        return cls.con_esito_ritirata()
 
     @classmethod
     def confermate(cls):
@@ -105,13 +110,12 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         """
         return cls.con_esito_ok()
 
-    @property
     @classmethod
     def negate(cls):
         """
         Ottiene il QuerySet per tutte le partecipazioni negate.
         """
-        return cls.con_esito_no
+        return cls.con_esito_no()
 
     @property
     @classmethod

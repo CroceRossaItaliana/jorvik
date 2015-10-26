@@ -1,10 +1,84 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
+<div class="calendario-turno {% if turno.scoperto %}bg-warning{% endif %}"
+        onclick="javascript:location.href='{{ turno.url }}';">
 
-</body>
-</html>
+    <div class="row calendario-turno-riga1">
+
+        <div class="col-md-3">
+            <i class="fa fa-fw fa-clock-o text-muted"></i>
+            <span class="grassetto">
+                {{ turno.inizio.time }}&mdash;{{ turno.fine.time }}
+            </span>
+        </div>
+
+        <div class="col-md-7">
+
+            <a href="{{ turno.url }}" class="grassetto">
+                {{ turno.nome }}
+            </a>
+
+            &mdash;
+            <a href="{{ turno.attivita.url }}">
+                {{ turno.attivita.nome }}
+            </a>
+
+        </div>
+
+        <div class="col-md-2 hidden-sm hidden-xs hidden-print">
+            <a href="{{ turno.url }}" target="_new" class="btn btn-default btn-xs btn-block">
+                Dettagli turno
+                <i class="fa fa-fw fa-mail-forward"></i>
+            </a>
+        </div>
+
+    </div>
+
+    <div class="row calendario-turno-riga2">
+
+        <div class="col-md-3">
+            {% if turno.scoperto %}
+                <i class="fa fa-fw fa-warning text-danger"></i>
+            {% else %}
+                <i class="fa fa-fw fa-users text-muted"></i>
+            {% endif %}
+
+            <span class="{% if turno.scoperto %}text-danger{% endif %}">
+                {{ turno.partecipazioni_confermate.count }} prenotati
+            </span>
+
+            {% if turno.massimo %}
+                (max. {{ turno.massimo }})
+            {% endif %}
+
+        </div>
+
+
+        <div class="col-md-3">
+            <i class="fa fa-fw fa-map-marker text-muted"></i>
+
+            {% if turno.attivita.locazione %}
+                <a href="{{ turno.attivita.locazione.url }}">
+                    {{ turno.attivita.locazione }}
+                </a>
+
+            {% else %}
+                Posizione sconosciuta
+
+            {% endif %}
+
+        </div>
+
+        <div class="col-md-3">
+            <i class="fa fa-fw fa-users text-muted"></i>
+
+            {{ turno.partecipazioni_confermate.count }} prenotati
+
+            {% if turno.massimo %}
+                (max. {{ turno.massimo }})
+            {% endif %}
+
+        </div>
+
+
+    </div>
+
+</div>

@@ -1,18 +1,86 @@
+from datetime import date, timedelta, datetime
 from django.shortcuts import redirect
 from attivita.forms import ModuloStoricoTurni
 from attivita.models import Partecipazione
+from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata
 
 def attivita(request):
     return redirect('/attivita/calendario/')
 
 @pagina_privata
-def attivita_calendario(request, me):
+def attivita_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
     """
     Mostra il calendario delle attivita' personalizzato.
     """
 
-    return 'attivita_vuota.html'
+    # Range default e massimo
+    DEFAULT_GIORNI = 6
+    MASSIMO_GIORNI = 31
+
+    # Formato date URL
+    FORMATO = "%d-%m-%Y"
+
+    if inizio is None:
+        inizio = date.today().strftime(FORMATO)
+
+    inizio = datetime.strptime(inizio, FORMATO).date()
+
+    if fine is None:
+        fine = inizio + timedelta(DEFAULT_GIORNI)
+    else:
+        fine = datetime.strptime(fine, FORMATO).date()
+
+    # Assicura che il range sia valido (non troppo breve, non troppo lungo)
+    differenza = (fine - inizio)
+    if differenza.days < 0 or differenza.days > MASSIMO_GIORNI:
+        return attivita_calendario(request, me, inizio=inizio, fine=None)
+
+
+    # Successivo
+    successivo_inizio = inizio + differenza
+    successivo_inizio_stringa = successivo_inizio.strftime(FORMATO)
+    successivo_fine = fine + differenza
+    successivo_fine_stringa = successivo_fine.strftime(FORMATO)
+
+    successivo_url = "/attivita/calendario/%s/%s/" % (successivo_inizio_stringa, successivo_fine_stringa, )
+
+    # Oggi
+    oggi_url = "/attivita/calendario/"
+
+    # Precedente
+    precedente_inizio = inizio - differenza
+    precedente_inizio_stringa = precedente_inizio.strftime(FORMATO)
+    precedente_fine = fine - differenza
+    precedente_fine_stringa = precedente_fine.strftime(FORMATO)
+
+    precedente_url = "/attivita/calendario/%s/%s/" % (precedente_inizio_stringa, precedente_fine_stringa, )
+
+
+    # Elenco
+    turni = me.calendario_turni(inizio, fine)
+    raggruppati = turni_raggruppa_giorno(turni)
+    print(raggruppati)
+
+    contesto = {
+        "inizio": inizio,
+        "fine": fine,
+
+        "successivo_inizio": successivo_inizio,
+        "successivo_fine": successivo_fine,
+        "successivo_url": successivo_url,
+
+        "oggi_url": oggi_url,
+
+        "precedente_inizio": precedente_inizio,
+        "precedente_fine": precedente_fine,
+        "precedente_url": precedente_url,
+
+        "turni": turni,
+        "raggruppati": raggruppati,
+    }
+
+    return 'attivita_calendario.html', contesto
 
 @pagina_privata
 def attivita_storico(request, me):
