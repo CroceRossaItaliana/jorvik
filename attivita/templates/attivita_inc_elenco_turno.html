@@ -24,7 +24,7 @@
         </div>
 
         <div class="col-md-2 hidden-sm hidden-xs hidden-print">
-            <a href="{{ turno.url }}" target="_new" class="btn btn-default btn-xs btn-block">
+            <a href="{{ turno.url }}" target="_new" class="btn btn-primary btn-xs btn-block">
                 Dettagli turno
                 <i class="fa fa-fw fa-mail-forward"></i>
             </a>
@@ -52,7 +52,7 @@
         </div>
 
 
-        <div class="col-md-3">
+        <div class="col-md-4">
             <i class="fa fa-fw fa-map-marker text-muted"></i>
 
             {% if turno.attivita.locazione %}
@@ -67,16 +67,23 @@
 
         </div>
 
-        <div class="col-md-3">
-            <i class="fa fa-fw fa-users text-muted"></i>
+        <div class="col-md-2">
 
-            {{ turno.partecipazioni_confermate.count }} prenotati
-
-            {% if turno.massimo %}
-                (max. {{ turno.massimo }})
-            {% endif %}
+            <i class="fa fa-fw fa-home text-muted"></i>
+            <a href="{{ turno.attivita.sede.url }}" target="_new">
+                {{ turno.attivita.sede.nome_completo }}
+            </a>
 
         </div>
+
+        <div class="col-md-3">
+
+            <i class="fa fa-fw fa-comments text-muted"></i>
+            <strong>{{ turno.attivita.commenti.count }}</strong> commento/i
+
+        </div>
+
+
 
 
     </div>

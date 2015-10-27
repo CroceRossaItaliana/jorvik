@@ -32,6 +32,8 @@ class Commento(ModelloSemplice, ConMarcaTemporale):
 
     class Meta:
         verbose_name_plural = "Commenti"
+        app_label = "social"
+        abstract = False
 
     autore = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="commenti")
     commento = models.TextField("Testo del commento")
@@ -118,7 +120,7 @@ class ConGiudizio():
         return None
 
 
-class ConCommenti():
+class ConCommenti(models.Model):
     """
     Aggiunge la possibilita' di aggiungere commenti ad
     un oggetto.
@@ -129,7 +131,7 @@ class ConCommenti():
 
     commenti = GenericRelation(
         Commento,
-        related_query_name='%(class)',
+        related_query_name='%(class)s',
         content_type_field='oggetto_tipo',
         object_id_field='oggetto_id'
     )
