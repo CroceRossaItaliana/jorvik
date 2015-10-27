@@ -1,0 +1,66 @@
+{% extends 'attivita_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}{% endblock %}
+    {{ attivita.nome }} ({{ attivita.sede.nome_completo }})
+    &mdash; Attivit&agrave;
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro">
+        {{ attivita.nome }}
+    </h2>
+    <h4 class="allinea-centro">
+        <i class="fa fa-fw fa-map-marker"></i>
+
+        {% if attivita.locazione %}
+            <a href="{{ attivita.url_mappa }}">
+                {{ attivita.locazione }}
+            </a>
+
+        {% else %}
+            Posizione non impostata
+
+        {% endif %}
+    </h4>
+
+    <p>&nbsp;</p>
+
+    <ul class="nav nav-tabs">
+      <li role="presentation" {% if request.path == attivita.url %}class="active"{% endif %}>
+          <a href="{{ attivita.url }}">
+            <i class="fa fa-fw fa-info"></i>
+            Informazioni
+          </a>
+      </li>
+      <li role="presentation" {% if attivita.url_mappa in request.path %}class="active"{% endif %}>
+          <a href="{{ attivita.url_mappa }}">
+            <i class="fa fa-fw fa-globe"></i>
+            Mappa
+          </a>
+      </li>
+      <li role="presentation" {% if attivita.url_turni in request.path %}class="active"{% endif %}>
+          <a href="{{ attivita.url_turni }}">
+            <i class="fa fa-fw fa-calendar"></i>
+            Turni
+          </a>
+      </li>
+
+    </ul>
+
+    <p>&nbsp;</p>
+    {% block scheda_contenuto %}
+    {% endblock %}
+
+    <p>&nbsp;</p>
+    <hr />
+
+    <div class="piu-piccolo allinea-centro">
+        <i class="fa fa-fw fa-clock-o"></i>
+        Ultimo aggiornamento {{ attivita.ultima_modifica }}
+    </div>
+
+{% endblock %}

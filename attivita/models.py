@@ -47,6 +47,14 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     def url(self):
         return "/attivita/scheda/%d/" % (self.pk,)
 
+    @property
+    def url_mappa(self):
+        return self.url + "mappa/"
+
+    @property
+    def url_turni(self):
+        return self.url + "turni/"
+
 
 class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
@@ -73,6 +81,11 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     @property
     def scoperto(self):
         return self.partecipazioni_confermate().count() < self.minimo
+
+    @property
+    def url(self):
+        return "%sturni/%d/" % (self.attivita.url, self.pk)
+
 
 class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 

@@ -77,6 +77,10 @@ urlpatterns = [
     url(r'^attivita/storico/$', 'attivita.viste.attivita_storico'),
     url(r'^attivita/gruppi/$', 'attivita.viste.attivita_gruppi'),
     url(r'^attivita/reperibilita/$', 'attivita.viste.attivita_reperibilita'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/$', 'attivita.viste.attivita_scheda_informazioni'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/mappa/$', 'attivita.viste.attivita_scheda_mappa'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/$', 'attivita.viste.attivita_scheda_turni'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/(?P<turno>[0-9]+)/$', 'attivita.viste.attivita_scheda_turni'),
 
     url(r'^media/(?P<path>.*)$', 'django.views.static.serve', {"document_root": MEDIA_ROOT}),
 

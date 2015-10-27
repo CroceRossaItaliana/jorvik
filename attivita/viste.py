@@ -1,9 +1,10 @@
 from datetime import date, timedelta, datetime
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from attivita.forms import ModuloStoricoTurni
-from attivita.models import Partecipazione
+from attivita.models import Partecipazione, Attivita
 from attivita.utils import turni_raggruppa_giorno
-from autenticazione.funzioni import pagina_privata
+from autenticazione.funzioni import pagina_privata, pagina_pubblica
+
 
 def attivita(request):
     return redirect('/attivita/calendario/')
@@ -118,3 +119,42 @@ def attivita_reperibilita(request, me):
     """
 
     return 'attivita_vuota.html'
+
+@pagina_pubblica
+def attivita_scheda_informazioni(request, me=None, pk=None):
+    """
+    Mostra la scheda "Informazioni" di una attivita'.
+    """
+
+    attivita = get_object_or_404(Attivita, pk=pk)
+    contesto = {
+        "attivita": attivita
+    }
+
+    return 'attivita_scheda_informazioni.html', contesto
+
+@pagina_pubblica
+def attivita_scheda_mappa(request, me=None, pk=None):
+    """
+    Mostra la scheda "Informazioni" di una attivita'.
+    """
+
+    attivita = get_object_or_404(Attivita, pk=pk)
+    contesto = {
+        "attivita": attivita
+    }
+
+    return 'attivita_scheda_informazioni.html', contesto
+
+@pagina_privata
+def attivita_scheda_turni(request, me=None, pk=None, turno=None):
+    """
+    Mostra la scheda "Informazioni" di una attivita'.
+    """
+
+    attivita = get_object_or_404(Attivita, pk=pk)
+    contesto = {
+        "attivita": attivita
+    }
+
+    return 'attivita_scheda_informazioni.html', contesto

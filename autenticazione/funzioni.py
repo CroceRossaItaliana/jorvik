@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
+from django.utils.http import urlencode
 import functools
 from anagrafica.permessi.costanti import ERRORE_ORFANO, ERRORE_PERMESSI
 from base.menu import MENU
@@ -89,7 +90,7 @@ def pagina_privata(funzione=None, pagina=LOGIN_URL, permessi=[]):
     def _pagina_privata(request, *args, **kwargs):
 
         if isinstance(request.user, AnonymousUser):
-            return redirect(LOGIN_URL)
+            return redirect(LOGIN_URL + "?" + urlencode({"next": request.path}))
 
         if not request.user or request.user.applicazioni_disponibili is None:
             return redirect(ERRORE_ORFANO)
