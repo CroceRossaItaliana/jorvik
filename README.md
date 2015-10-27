@@ -57,7 +57,18 @@ Vagrant gestisce la creazione e la configurazione automatica (provisioning) di u
     python3 manage.py syncdb
     ```
 
-5. **Usare il tasto "Run" su [JetBrains PyCharm](https://www.jetbrains.com/pycharm/)** per controllare e avviare il server
+5. **Installare PyCharm** [JetBrains PyCharm](https://www.jetbrains.com/pycharm/)
+6. **Configurare PyCharm per usare Vagrant**:
+  * Preferenze > Progetto > Interprete > Aggiungi interprete remoto
+    ![image](https://cloud.githubusercontent.com/assets/621062/10762277/4da18088-7cbd-11e5-924e-a2737d7783e1.png)
+
+  * Scegliere "Vagrant" e `/usr/bin/python3` come interprete, e cliccare OK
+    ![image](https://cloud.githubusercontent.com/assets/621062/10762319/7ce52214-7cbd-11e5-8cbf-26bfe0565b7e.png)
+  
+  * Assicurarsi che l'interprete "Vagrant" sia ora selezionato, quindi cliccare OK
+  
+6. **Usare il tasto "Run" su PyCharm** per controllare e avviare il server
+  ![image](https://cloud.githubusercontent.com/assets/621062/10762357/abcb3050-7cbd-11e5-9fdf-c08a0b439369.png)
 
 
 #### Vagrant
