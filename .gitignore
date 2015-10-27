@@ -1,6 +1,8 @@
-.idea
+.idea/*
+!.idea/runConfigurations
 *.pyc
 db.sqlite3
 config/*.cnf
 assets/
 *.pickle-tmp
+.vagrant
