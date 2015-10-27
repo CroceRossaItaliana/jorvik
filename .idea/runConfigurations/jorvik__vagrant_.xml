@@ -21,11 +21,6 @@
     <option name="runNoReload" value="false" />
     <option name="useCustomRunCommand" value="false" />
     <option name="customRunCommand" value="" />
-    <method>
-      <option name="ToolBeforeRunTask" enabled="true" actionId="Tool_External Tools_Vagrant Up" />
-      <option name="ToolBeforeRunTask" enabled="true" actionId="Tool_External Tools_Restart Database" />
-      <option name="ToolBeforeRunTask" enabled="true" actionId="Tool_External Tools_Django COLLECTSTATIC" />
-      <option name="ToolBeforeRunTask" enabled="true" actionId="Tool_External Tools_Django SYNCDB" />
-    </method>
+    <method />
   </configuration>
 </component>
