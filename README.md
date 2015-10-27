@@ -30,103 +30,64 @@ Puoi trovare la **[Documentazione sul Wiki del progetto](https://github.com/Croc
 * **[GEOS](http://trac.osgeo.org/geos/)** (Geometry Engine Open Source)
 * **Linux**, Mac OS X e, probabilmente, Windows Server 2008 o 7 e superiori
 
-#### Ubuntu 14.10+ 
+### Ambiente di sviluppo
 
-Per installare i requisiti sopra indicati:
-
-```bash
-sudo apt-get install git python3-pip binutils libproj-dev gdal-bin python3-dev libmysqlclient-dev libpq-dev postgresql postgresql-contrib libxml2-dev libxslt-dev
-```
-
-#### Mac OS X 10.9+
-
-1. Assicurarsi di aver installato [Brew](http://brew.sh/).
-  * Altrimenti, installare con
-    
-    ```bash
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    ```
-2. **Python 2**: Installare pip
-  
-  ```bash
-  sudo easy_install pip
-  ```
-  
-3. **Python 3** Installare Python **3.4.x** [dal sito ufficiale](https://www.python.org/downloads/) 
-4. Scaricare [**Postgreapp**](http://postgresapp.com/) (PostgreSQL con PostGIS)
-5. Aggiungere PostgreSQL alla propria `$PATH`:
-  
-  ```bash
-  echo "export PATH=\$PATH:/Applications/Postgres.app/Contents/Versions/9.4/bin" >> ~/.profile
-  export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/9.4/bin
-  ```
-  
-6. Installare i requisiti per i moduli necessari:
-  
-  ```bash
-  xcode-select --install
-  brew install libtiff libjpeg webp little-cms2 geos mysql-connector-c
-  ```
-  
- 
-### Installazione e configurazione
+Per la configurazione automatica dell'ambiente di sviluppo su **Linux e Mac OS X 10.9+**, è possibile usare Vagrant.
+Vagrant gestisce la creazione e la configurazione automatica (provisioning) di una macchina virtuale.
 
 1. **Scarica Jorvik** usando git
-  
+
     ```bash
-    git clone --recursive https://github.com/CroceRossaItaliana/jorvik 
+    git clone --recursive https://github.com/CroceRossaItaliana/jorvik
     cd jorvik
     ```
-  
-2. **Installa i moduli** necessari usando **pip3**
-    
+
+2. **Scarica Vagrant** da [vagrantup.com](https://www.vagrantup.com/downloads.html),
+3. **Configura la macchina virtuale** (potrebbe volerci un po')
+
     ```bash
-    sudo pip3 install -r requirements.txt
-    ```
-   
-3. **Installa la versione di Django** necessaria
-    
-    ```bash
-    sudo pip3 install -e django
-    ```
-    
-4. **Database**   
-  1. Crea un database per Jorvik, es. con nome `jorvik`
-  
-    ```bash
-    mysql -u root -p -e 'CREATE DATABASE jorvik CHARSET utf8;'
-    ```
-    
-  2. Crea un file di configurazione MySQL copiando quello di esempio
-  
-    ```bash
-    cp config/mysql.cnf{.sample,}
-    ```
-  
-  3. Modifica `config/mysql.cnf` con le credenziali ed il nome del database creato
-  4. Crea tutte le tabelle di database necessarie
-  
-    ```bash
-    python3 ./manage.py syncdb
-    ```
-    
-4. Opzionale: **Posta, debug, chiave di produzione**
-  * Fare quanto al punto (3.ii, 3.iii) per tutti i file `config/*.cnf.sample` che si vuole personalizzare 
-5. **Assets (CSS, JS, Immagini)**
-  * Per creare la cartella `assets` e riempirla di contenuti
-  
-    ```bash
-    python3 ./manage.py collectstatic
+    vagrant up
     ```
 
-6. **Avvia il server** 
-  * Per avviare il server su [http://localhost:8000/](http://localhost:8000)
-    
+4. **Crea il primo utente** (amministratore)
+
     ```bash
-    python3 ./manage.py runserver
+    vagrant ssh
+    cd /vagrant
+    python3 manage.py syncdb
     ```
-    
-    
-    
+
+5. **Usare il tasto "Run" su [JetBrains PyCharm](https://www.jetbrains.com/pycharm/)** per controllare e avviare il server
+
+
+#### Vagrant
+
+* **Configurare (primo avvio) e avviare la macchina virtuale**
+
+    ```bash
+    vagrant up
+    ```
+
+* **Spegnere la macchina virtuale**
+
+    ```bash
+    vagrant halt
+    ```
+
+* **Cancellare e riconfigurare la macchina virtuale**
+
+    ```bash
+    vagrant halt && vagrant destroy && vagrant up
+    ```
+
+* **Collegarsi in SSH alla macchina virtuale** (se necessario)
+
+    ```bash
+    vagrant ssh
+    cd vagrant/ # Directory con jorvik
+    ```
+
+
+
 
 [JetBrains PyCharm](https://www.jetbrains.com/pycharm/) racchiude gli strumenti Django in un buon IDE.
