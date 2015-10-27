@@ -35,7 +35,7 @@ Puoi trovare la **[Documentazione sul Wiki del progetto](https://github.com/Croc
 Per installare i requisiti sopra indicati:
 
 ```bash
-sudo apt-get install git python3-pip binutils libproj-dev gdal-bin python3-dev libmysqlclient-dev libpq-dev postgresql postgresql-contrib
+sudo apt-get install git python3-pip binutils libproj-dev gdal-bin python3-dev libmysqlclient-dev libpq-dev postgresql postgresql-contrib libxml2-dev libxslt-dev
 ```
 
 #### Mac OS X 10.9+
