@@ -42,6 +42,7 @@ Vagrant gestisce la creazione e la configurazione automatica (provisioning) di u
     cd jorvik
     ```
 
+1. **Scarica VirtualBox** da [virtualbox.org](https://www.virtualbox.org/wiki/Downloads),
 2. **Scarica Vagrant** da [vagrantup.com](https://www.vagrantup.com/downloads.html),
 3. **Configura la macchina virtuale** (potrebbe volerci un po')
 
