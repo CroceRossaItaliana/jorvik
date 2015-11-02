@@ -83,13 +83,13 @@ Vagrant gestisce la creazione e la configurazione automatica (provisioning) di u
 * **Spegnere la macchina virtuale**
 
     ```bash
-    vagrant halt
+    vagrant halt -f
     ```
 
 * **Cancellare e riconfigurare la macchina virtuale**
 
     ```bash
-    vagrant halt && vagrant destroy && vagrant up
+    vagrant halt -f && vagrant destroy -f && vagrant up
     ```
 
 * **Collegarsi in SSH alla macchina virtuale** (se necessario)
