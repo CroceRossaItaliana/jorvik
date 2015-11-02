@@ -13,8 +13,8 @@
     <module name="jorvik" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="/vagrant/manage.py" />
-    <option name="PARAMETERS" value="migrate" />
-    <option name="SHOW_COMMAND_LINE" value="true" />
+    <option name="PARAMETERS" value="migrate --noinput" />
+    <option name="SHOW_COMMAND_LINE" value="false" />
     <method />
   </configuration>
 </component>

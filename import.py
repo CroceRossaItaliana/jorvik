@@ -38,9 +38,9 @@ import MySQLdb
 
 def stringa(s):
     if s is None:
-        return None
+        return ''
     try:
-        return s.encode('utf-8')
+        return str(s.encode('utf-8'))
     except:
         return str(s)
 
@@ -176,7 +176,7 @@ ASSOC_ID_PARTECIPAZIONI = {}
 
 
 def progresso(contatore, totale):
-    percentuale = contatore / ( totale * 100.0 )
+    percentuale = contatore / float( totale * 100.0 )
     return "%.2f%% (%d su %d) " % (percentuale, contatore, totale)
 
 def ottieni_comitato(tipo='nazionali', id=1):

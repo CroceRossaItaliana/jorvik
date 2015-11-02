@@ -19,6 +19,7 @@ echo "Configurazione installazione..."
 cat <<EOL > config/pgsql.cnf
 [client]
 host = localhost
+port = 5432
 database = jorvik
 user = jorvik
 password = jorvik
