@@ -1,10 +1,10 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="jorvik (vagrant)" type="Python.DjangoServer" factoryName="Django server">
+  <configuration default="false" name="Esegui jorvik (vagrant)" type="Python.DjangoServer" factoryName="Django server">
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
-      <env name="PYTHONUNBUFFERED" value="1" />
       <env name="DJANGO_SETTINGS_MODULE" value="jorvik.settings" />
+      <env name="PYTHONUNBUFFERED" value="1" />
     </envs>
     <option name="SDK_HOME" value="" />
     <option name="WORKING_DIRECTORY" value="" />
@@ -21,6 +21,8 @@
     <option name="runNoReload" value="false" />
     <option name="useCustomRunCommand" value="false" />
     <option name="customRunCommand" value="" />
-    <method />
+    <method>
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Aggiornamento database (jorvik)" run_configuration_type="PythonConfigurationType" />
+    </method>
   </configuration>
 </component>
