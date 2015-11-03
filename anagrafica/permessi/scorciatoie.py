@@ -66,7 +66,7 @@ def permessi_delega(instanza_delega, oggetto):
     if tipo not in PERMESSI_OGGETTI_DICT:
         raise NotImplementedError("La delega non specifica la tipologia di oggetti associati.")
 
-    if instanza_delega.oggetto.__class__.__name__ != PERMESSI_OGGETTI_DICT[tipo]:
+    if instanza_delega.oggetto.__class__.__name__ != PERMESSI_OGGETTI_DICT[tipo][1]:
         raise ValueError("Il tipo di oggetto associato non è valido per questa delega")
 
     # Controlla che la delega sia valida
