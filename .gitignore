@@ -6,3 +6,4 @@ config/*.cnf
 assets/
 *.pickle-tmp
 .vagrant
+.DS_Store
