@@ -118,8 +118,8 @@ DATABASES = {
         'NAME': PGSQL_CONF.get('client', 'database'),
         'USER': PGSQL_CONF.get('client', 'user'),
         'PASSWORD': PGSQL_CONF.get('client', 'password'),
-        'HOST': PGSQL_CONF.get('client', 'host'),
-        'PORT': PGSQL_CONF.get('client', 'port') or '5432',
+        'HOST': PGSQL_CONF.get('client', 'host', fallback='localhost'),
+        'PORT': PGSQL_CONF.get('client', 'port', fallback='5432'),
     }
 }
 
