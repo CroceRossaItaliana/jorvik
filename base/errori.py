@@ -1,3 +1,4 @@
+from anagrafica.models import Persona
 from autenticazione.funzioni import pagina_pubblica
 
 __author__ = 'alfioemanuele'
@@ -22,7 +23,11 @@ def orfano(request, me):
     :param request:
     :return:
     """
-    return 'base_errore_orfano.html'
+    # Se il primo utente, istruisco sul come creare il resto...
+    contesto = {
+        "primo_utente": Persona.objects.all().count() == 0
+    }
+    return 'base_errore_orfano.html', contesto
 
 @pagina_pubblica
 def permessi(request, me):

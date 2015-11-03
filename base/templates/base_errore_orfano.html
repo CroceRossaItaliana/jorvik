@@ -9,4 +9,20 @@
 {% block avviso_corpo %}
     <p>Le credenziali sono funzionanti, ma sono state disassociate dal tuo profilo.</p>
     <p>Contatta il Supporto per sapere di pi&ugrave;.</p>
+
+    {% if primo_utente %}
+        <div class="alert alert-warning alert-block" style="text-align: left !important;">
+            <h4><i class="fa fa-fw fa-code"></i> Sei uno sviluppatore?</h4>
+            <p>Hai fatto accesso a Jorvik con una utenza
+                che non &egrave; ancora associata ad un profilo anagrafico.</p>
+            <p class="grassetto">Se hai appena installato Jorvik, questo &egrave; normale.</p>
+            <p>Per ottenere accesso a Jorvik, fai come segue:</p>
+            <ol>
+                <li><a href="/admin/anagrafica/persona/add/" target="_new">Crea una nuova Persona</a> con i tuoi dettagli anagrafici,</li>
+                <li><a href="/admin/autenticazione/utenza/1/" target="_new">Modifica la tua Utenza</a>, al campo "Persona", associando il modello appena creato,</li>
+                <li><a href="/utente/">Accedi a Jorvik</a>, la tua utenza &egrave; ora attiva.</li>
+            </ol>
+        </div>
+
+    {% endif %}
 {% endblock %}
