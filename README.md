@@ -34,12 +34,17 @@ Puoi trovare la **[Documentazione sul Wiki del progetto](https://github.com/Croc
 
 Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 10.9+ e Windows 8+**, è possibile usare Vagrant con VirtualBox. Vagrant gestisce la creazione e la configurazione automatica (provisioning) di una macchina virtuale.
 
-1. **Scarica Jorvik** usando git
+1. **Scarica Jorvik** usando Git ([GitHub Desktop](https://desktop.github.com/) per Windows e Mac OS X, o da terminale come segue)
 
     ```bash
     git clone --recursive https://github.com/CroceRossaItaliana/jorvik
-    cd jorvik
     ```
+
+1. **Aprire un terminale** (prompt dei Comandi su Windows) e accedere alla cartella dove risiede il codice appena scaricato.
+
+   ```bash
+   cd jorvik
+   ```
 
 1. **Scarica VirtualBox** da [virtualbox.org](https://www.virtualbox.org/wiki/Downloads),
 2. **Scarica Vagrant** da [vagrantup.com](https://www.vagrantup.com/downloads.html),
@@ -64,9 +69,10 @@ Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 
 
   * Scegliere **"Vagrant"** e **`/usr/bin/python3`** come interprete, e cliccare OK
     ![image](https://cloud.githubusercontent.com/assets/621062/10762319/7ce52214-7cbd-11e5-8cbf-26bfe0565b7e.png)
-    **Nota bene**: Su Mac OS X, se questo step fallisce, e' via di un bug noto. Bisogna chiudere e riavviare PyChar da Terminale, con il comando `charm`.
+    
+    **Nota bene**: Su Mac OS X, se questo step fallisce ("impossibile trovare vagrant"), e' per via di un bug noto con la piattaforma. In tal caso e' necessario chiudere e riavviare PyChar da Terminale, con il comando `charm`.
   
-  * Assicurarsi che l'interprete "Vagrant" sia ora selezionato, quindi cliccare OK
+  * Assicurarsi che l'interprete "Vagrant" sia ora selezionato come predefinito per il progetto, quindi cliccare OK
   
 6. **Usare il tasto "Run" su PyCharm** per controllare e avviare il server
   ![image](https://cloud.githubusercontent.com/assets/621062/10762357/abcb3050-7cbd-11e5-9fdf-c08a0b439369.png)
