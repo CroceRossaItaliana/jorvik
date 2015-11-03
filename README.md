@@ -57,7 +57,7 @@ Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 
     python3 manage.py syncdb
     ```
 
-5. **Installare PyCharm** [JetBrains PyCharm](https://www.jetbrains.com/pycharm/)
+5. **Installare PyCharm Professional** da [JetBrains](https://www.jetbrains.com/pycharm/). La licenza e' gratis per gli studenti. Contattaci se necessiti di una licenza per lavorare su Jorvik.
 6. **Configurare PyCharm per usare Vagrant**:
   * Preferenze > Progetto > Interprete > Aggiungi interprete remoto
     ![image](https://cloud.githubusercontent.com/assets/621062/10762277/4da18088-7cbd-11e5-924e-a2737d7783e1.png)
