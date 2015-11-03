@@ -32,8 +32,7 @@ Puoi trovare la **[Documentazione sul Wiki del progetto](https://github.com/Croc
 
 ### Ambiente di sviluppo
 
-Per la configurazione automatica dell'ambiente di sviluppo su **Linux e Mac OS X 10.9+**, è possibile usare Vagrant.
-Vagrant gestisce la creazione e la configurazione automatica (provisioning) di una macchina virtuale.
+Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 10.9+ e Windows 8+**, è possibile usare Vagrant con VirtualBox. Vagrant gestisce la creazione e la configurazione automatica (provisioning) di una macchina virtuale.
 
 1. **Scarica Jorvik** usando git
 
@@ -63,8 +62,9 @@ Vagrant gestisce la creazione e la configurazione automatica (provisioning) di u
   * Preferenze > Progetto > Interprete > Aggiungi interprete remoto
     ![image](https://cloud.githubusercontent.com/assets/621062/10762277/4da18088-7cbd-11e5-924e-a2737d7783e1.png)
 
-  * Scegliere "Vagrant" e `/usr/bin/python3` come interprete, e cliccare OK
+  * Scegliere **"Vagrant"** e **`/usr/bin/python3`** come interprete, e cliccare OK
     ![image](https://cloud.githubusercontent.com/assets/621062/10762319/7ce52214-7cbd-11e5-8cbf-26bfe0565b7e.png)
+    **Nota bene**: Su Mac OS X, se questo step fallisce, e' via di un bug noto. Bisogna chiudere e riavviare PyChar da Terminale, con il comando `charm`.
   
   * Assicurarsi che l'interprete "Vagrant" sia ora selezionato, quindi cliccare OK
   
