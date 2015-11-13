@@ -6,77 +6,102 @@
 
 {% block scheda_contenuto %}
 
-    <div class="row allinea-centro">
+    <div class="row">
 
         <div class="col-md-3">
-            <h4 class="text-info">
-                <i class="fa fa-fw fa-user"></i>
-                Referenti
-                <span class="text-muted">
-                    {{ attivita.delegati_attuali.count }}
-                </span>
-            </h4>
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-user"></i>
+                        Referenti
+                        <span class="pull-right">
+                            {{ attivita.delegati_attuali.count }}
+                        </span>
+                    </h3>
+                </div>
 
-            <div class="btn-group btn-group-vertical col-md-12">
-            {% for referente in attivita.delegati_attuali %}
-                {% card referente extra_class='btn btn-sm btn-default btn-block' %}
+                <div class="panel-body">
+                    <div class="btn-group btn-group-vertical">
+                    {% for referente in attivita.delegati_attuali %}
+                        {% card referente extra_class='' %}
 
-            {% empty %}
-                <i class="fa fa-fw fa-warning"></i>
-                Nessun referente.
+                    {% empty %}
+                        <i class="fa fa-fw fa-warning"></i>
+                        Nessun referente.
 
-            {% endfor %}
+                    {% endfor %}
+                    </div>
+                </div>
+
             </div>
-
         </div>
 
         <div class="col-md-3">
-            <h4 class="text-info">
-                <i class="fa fa-fw fa-globe"></i>
-                Area d'intervento
-            </h4>
-            {{ attivita.area.nome }} <br />
-            <span class="text-muted">
-                Obiettivo Strategico
-                {{ attivita.area.obiettivo }}
-            </span>
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-globe"></i>
+                        Area d'intervento
+                    </h3>
+                </div>
 
+                <div class="panel-body">
+                    {{ attivita.area.nome }} <br />
+                    <span class="text-muted">
+                        Obiettivo Strategico
+                        {{ attivita.area.obiettivo }}
+                    </span>
+                </div>
 
+            </div>
         </div>
 
         <div class="col-md-3">
-            <h4 class="text-info">
-                <i class="fa fa-fw fa-home"></i>
-                Organizzatore
-            </h4>
-            <strong>
-                <a href="{{ attivita.sede.url }}" target="_new">
-                    {{ attivita.sede.nome }}
-                </a>
-            </strong><br />
-            {{ attivita.sede.get_tipo_display }} &mdash;
-            {{ attivita.sede.get_estensione_display }}
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-home"></i>
+                        Organizzatore
+                    </h3>
+                </div>
 
+                <div class="panel-body">
+                    <strong>
+                        <a href="{{ attivita.sede.url }}" target="_new">
+                            {{ attivita.sede.nome }}
+                        </a>
+                    </strong><br />
+                    {{ attivita.sede.get_tipo_display }} &mdash;
+                    {{ attivita.sede.get_estensione_display }}
+                </div>
+
+            </div>
         </div>
 
         <div class="col-md-3">
-            <h4 class="text-info">
-                <i class="fa fa-fw fa-lock"></i>
-                Aperto a
-            </h4>
-            Tutti i Volontari di
-            <strong>
-                <a href="{{ attivita.sede.url }}" target="_new">
-                    {{ attivita.sede.nome }}
-                </a>
-            </strong><br />
-            ({{ attivita.sede.get_estensione_display }} e sottostanti)
-        </div>
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-lock"></i>
+                        Aperto a
+                    </h3>
+                </div>
 
+                <div class="panel-body">
+                    Tutti i Volontari di
+                    <strong>
+                        <a href="{{ attivita.sede.url }}" target="_new">
+                            {{ attivita.sede.nome }}
+                        </a>
+                    </strong><br />
+                    ({{ attivita.sede.get_estensione_display }} e sottostanti)
+                </div>
+
+            </div>
+        </div>
 
     </div>
 
-    <hr/>
 
     {% if me %}
         <div class="row">
@@ -94,7 +119,7 @@
                         {{ attivita.commenti.count }}
                     </span>
                 </h3>
-                {% commenti attivita 20 300 %}
+                {% commenti attivita 10 %}
 
             </div>
 
