@@ -82,6 +82,9 @@ urlpatterns = [
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/$', 'attivita.viste.attivita_scheda_turni'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/(?P<turno>[0-9]+)/$', 'attivita.viste.attivita_scheda_turni'),
 
+    url(r'^social/commenti/nuovo/', 'social.viste.commenti_nuovo'),
+    url(r'^social/commenti/cancella/(?P<pk>[0-9]+)/', 'social.viste.commenti_cancella'),
+
     url(r'^media/(?P<path>.*)$', 'django.views.static.serve', {"document_root": MEDIA_ROOT}),
 
     # Amministrazione
