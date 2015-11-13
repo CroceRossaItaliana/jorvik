@@ -1,0 +1,32 @@
+<div class="row commento-riga">
+
+    <div class="col-md-12">
+        <div class="row piu-piccolo">
+            <div class="col-md-6 grassetto">
+                {{ commento.autore.link|safe }}
+            </div>
+            <div class="col-md-1">
+                {% if commento.puo_modificare %}
+                    <a data-conferma="Vuoi davvero cancellare questo commento?"
+                       class="text-danger"
+                       href="/social/commenti/cancella/{{ commento.pk }}/?next={{ social_next }}"
+                    >
+                       cancella
+                    </a>
+                {% endif %}
+            </div>
+            <div class="col-md-5 text-muted allinea-destra">
+                <i class="fa fa-fw fa-clock-o"></i>
+                {{ commento.creazione|date:"SHORT_DATETIME_FORMAT" }}
+            </div>
+
+        </div>
+        <div class="row">
+            {{ commento.commento }}
+
+        </div>
+
+    </div>
+
+
+</div>

@@ -41,6 +41,8 @@ class Commento(ModelloSemplice, ConMarcaTemporale):
     oggetto_id = models.PositiveIntegerField(db_index=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
 
+    LUNGHEZZA_MASSIMA = 1024
+
 
 class ConGiudizio():
     """

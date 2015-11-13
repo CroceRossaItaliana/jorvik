@@ -1,0 +1,35 @@
+<div class="row">
+    <div    {% if social_altezza_massima %}
+                class="col-md-12 commenti-box"
+                style="max-height: {{ social_altezza_massima }}px;"
+            {% else %}
+                class="col-md-12"
+            {% endif %}>
+
+
+        {% if social_commenti %}
+            <div class="allinea-centro text-muted grassetto">
+                <i class="fa fa-fw fa-comments-o"></i> {{ social_commenti.count }} commenti
+            </div>
+
+        {% endif %}
+
+        {% include 'social_commenti_tag_inc_form.html' %}
+
+        {% for commento in social_commenti %}
+
+            <div class="col-md-12">
+            {% include 'social_commenti_tag_inc_commento.html' %}
+            </div>
+
+        {% empty %}
+            <div class="alert alert-success">
+                <i class="fa fa-fw fa-comment"></i>
+                Ancora nessun commento. Sii il primo!
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+</div>
