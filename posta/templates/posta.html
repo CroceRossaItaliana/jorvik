@@ -23,69 +23,55 @@
 
     <div class="col-md-4">
 
-        <table class="table table-condensed table-striped table-bordered">
-            <thead>
-                <th><i class="fa fa-fw fa-envelope"></i> Messaggio</th>
-            </thead>
-            <tbody>
-                {% for msg in messaggi %}
-                    <tr>
-                        <td{% if messaggio and messaggio.pk == msg.pk %} class="success"{% endif %}>
+        {% for msg in messaggi %}
+            <div class="panel panel-{% if messaggio and messaggio.pk == msg.pk %}primary{% else %}info{% endif %}">
+                <div class="panel-heading">
+                    <h3 class="panel-title hidden-xs hidden-sm">
+                        <a href="/posta/{{ direzione }}/{{ pagina }}/{{ msg.pk }}/"
+                                >{{ msg.oggetto }}</a>
+                    </h3>
+                    <h3 class="panel-title hidden-md hidden-lg">
+                        <a href="/posta/{{ direzione }}/{{ pagina }}/{{ msg.pk }}/#leggi"
+                                >{{ msg.oggetto }}</a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    {% if direzione == "in-arrivo" %}
+                        <i class="fa fa-fw fa-user"></i> Da:
+                            {% if msg.mittente %}
+                                <strong>{{ msg.mittente.link|safe }}</strong>
+                            {% else %}
+                                <strong><i class="fa fa-fw fa-info-circle"></i> Notifica Gaia</strong>
+                            {% endif %}
+
+                        <br />
+                        <i class="fa fa-fw fa-clock-o"></i> Ricevuto: {{ msg.creazione|date:"SHORT_DATETIME_FORMAT" }}
+
+                    {% else %}
+                        {% if msg.destinatari|length < 2 %}
+                            <i class="fa fa-fw fa-user"></i> A: <strong>{{ msg.destinatari.0.link|safe }}</strong>
+
+                        {% else %}
+                            <i class="fa fa-fw fa-group"></i> A: <strong>({{ msg.destinatari|length }} destinatari)</strong>
+
+                        {% endif %}
+                            <br />
+                            <i class="fa fa-fw fa-clock-o"></i> Inviato: {{ msg.creazione|date:"SHORT_DATETIME_FORMAT" }}
+
+                    {% endif %}
+                </div>
+
+            </div>
+
+        {% empty %}
+            <div class="alert alert-warning allinea-centro">
+                <h4>Nessun messaggio.</h4>
+                <p>Torna pi&ugrave; tardi.</p>
+            </div>
+
+        {% endfor %}
 
 
-                            <p class="hidden-xs hidden-sm">
-                                <a class="grassetto piu-grande" href="/posta/{{ direzione }}/{{ pagina }}/{{ msg.pk }}/"
-                                        >{{ msg.oggetto }}</a>
-                            </p>
-                            <p class="hidden-md hidden-lg">
-                                <a class="grassetto piu-grande" href="/posta/{{ direzione }}/{{ pagina }}/{{ msg.pk }}/#leggi"
-                                        >{{ msg.oggetto }}</a>
-                            </p>
-
-
-                            <p class="text-muted">
-                                {% if direzione == "in-arrivo" %}
-                                    <i class="fa fa-fw fa-user"></i> Da:
-                                        {% if msg.mittente %}
-                                            <strong>{{ msg.mittente.link|safe }}</strong>
-                                        {% else %}
-                                            <strong><i class="fa fa-fw fa-info-circle"></i> Notifica Gaia</strong>
-                                        {% endif %}
-
-                                    <br />
-                                    <i class="fa fa-fw fa-clock-o"></i> Ricevuto: {{ msg.creazione }}
-
-                                {% else %}
-                                    {% if msg.destinatari|length < 2 %}
-                                        <i class="fa fa-fw fa-user"></i> A: <strong>{{ msg.destinatari.0.link|safe }}</strong>
-
-                                    {% else %}
-                                        <i class="fa fa-fw fa-group"></i> A: <strong>({{ msg.destinatari|length }} destinatari)</strong>
-
-                                    {% endif %}
-                                        <br />
-                                        <i class="fa fa-fw fa-clock-o"></i> Inviato: {{ msg.creazione }}
-
-                                {% endif %}
-                            </p>
-
-
-                        </td>
-                    </tr>
-
-                {% empty %}
-                    <tr class="danger allinea-centro">
-                        <td>
-                            <h4>Nessun messaggio.</h4>
-                            <p>Torna pi&ugrave; tardi.</p>
-                        </td>
-                    </tr>
-
-                {% endfor %}
-
-
-            </tbody>
-        </table>
 
         <div class="allinea-centro">
             <ul class="pagination">
