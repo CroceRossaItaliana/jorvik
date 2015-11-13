@@ -6,6 +6,109 @@
 
 {% block scheda_contenuto %}
 
-    Informazioni..
+    <div class="row allinea-centro">
+
+        <div class="col-md-3">
+            <h4 class="text-info">
+                <i class="fa fa-fw fa-user"></i>
+                Referenti
+                <span class="text-muted">
+                    {{ attivita.delegati_attuali.count }}
+                </span>
+            </h4>
+
+            <div class="btn-group btn-group-vertical col-md-12">
+            {% for referente in attivita.delegati_attuali %}
+                {% card referente extra_class='btn btn-sm btn-default btn-block' %}
+
+            {% empty %}
+                <i class="fa fa-fw fa-warning"></i>
+                Nessun referente.
+
+            {% endfor %}
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+            <h4 class="text-info">
+                <i class="fa fa-fw fa-globe"></i>
+                Area d'intervento
+            </h4>
+            {{ attivita.area.nome }} <br />
+            <span class="text-muted">
+                Obiettivo Strategico
+                {{ attivita.area.obiettivo }}
+            </span>
+
+
+        </div>
+
+        <div class="col-md-3">
+            <h4 class="text-info">
+                <i class="fa fa-fw fa-home"></i>
+                Organizzatore
+            </h4>
+            <strong>
+                <a href="{{ attivita.sede.url }}" target="_new">
+                    {{ attivita.sede.nome }}
+                </a>
+            </strong><br />
+            {{ attivita.sede.get_tipo_display }} &mdash;
+            {{ attivita.sede.get_estensione_display }}
+
+        </div>
+
+        <div class="col-md-3">
+            <h4 class="text-info">
+                <i class="fa fa-fw fa-lock"></i>
+                Aperto a
+            </h4>
+            Tutti i Volontari di
+            <strong>
+                <a href="{{ attivita.sede.url }}" target="_new">
+                    {{ attivita.sede.nome }}
+                </a>
+            </strong><br />
+            ({{ attivita.sede.get_estensione_display }} e sottostanti)
+        </div>
+
+
+    </div>
+
+    <hr/>
+
+    {% if me %}
+        <div class="row">
+            <div class="col-md-6">
+                <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
+                {{ attivita.descrizione|safe }}
+
+            </div>
+
+            <div class="col-md-6">
+                <h3>
+                    <i class="fa fa-fw fa-comments-o"></i>
+                    Commenti
+                    <span class="text-muted">
+                        {{ attivita.commenti.count }}
+                    </span>
+                </h3>
+                {% commenti attivita 20 300 %}
+
+            </div>
+
+        </div>
+    {% else %}
+
+        <div class="alert alert-info col-md-12">
+            <h4><i class="fa fa-fw fa-key"></i> Accedi a Gaia per maggiori informazioni</h4>
+            <p>Alcune informazioni, come la descrizione dell'attivit&agrave; e
+            i commenti, sono visibili solo ai volontari che hanno effettuato
+            l'accesso a Gaia. Se sei registrato/a, accedi a Gaia usando
+            il pulsante in alto a destra a questa pagina.</p>
+        </div>
+
+    {% endif %}
 
 {% endblock %}

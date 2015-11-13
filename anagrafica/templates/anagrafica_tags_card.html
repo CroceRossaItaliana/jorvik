@@ -1,0 +1,38 @@
+<a class="{{ card_class }}" data-toggle="popover"
+   title="{{ card_persona.nome_completo }}"
+   data-html="true" data-placement="top"
+   data-content="
+    <p>
+        <strong><i class='fa fa-fw fa-phone'></i> Telefono</strong>:
+        <ul>
+            {% for tel in card_persona.numeri_telefono.all %}
+                <li>{{ tel }}</li>
+
+            {% empty %}
+                <li>Nessun numero di telefono.</li>
+
+            {% endfor %}
+        </ul>
+    </p>
+    <p>
+        <strong><i class='fa fa-fw fa-envelope'></i> E-mail</strong>:
+        {% if card_persona.email %}
+            {{ card_persona.email }}
+        {% else %}
+            Nessuna e-mail.
+        {% endif %}
+    <p>
+    <p>
+        <a href='{{ card_persona.url }}' target='_new'>
+            <i class='fa fa-fw fa-mail-forward'></i>
+            Profilo di {{ card_persona.nome }}
+        </a>
+    </p>
+
+   "
+>
+    {% if card_nome %}
+        <i class="fa fa-fw fa-info-circle"></i>
+        {{ card_persona.nome_completo }}
+    {% endif %}
+</a>

@@ -112,7 +112,6 @@ class ConDelegati(models.Model):
         object_id_field='oggetto_id'
     )
 
-    @property
     def deleghe_attuali(self, al_giorno=datetime.today()):
         """
         Ottiene QuerySet per gli oggetti Delega validi ad un determinato giorno.
@@ -122,7 +121,6 @@ class ConDelegati(models.Model):
         Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
         return self.deleghe.filter(Delega.query_attuale(al_giorno).q)
 
-    @property
     def delegati_attuali(self, al_giorno=datetime.today()):
         """
         Ottiene QuerySet per gli oggetti Persona delegati ad un determinato giorno.

@@ -493,8 +493,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         return Messaggio.objects.filter(mittente=self).order_by('-creazione')
 
     @property
+    def url(self):
+        return "/profilo/" + str(self.pk) + "/"
+
+    @property
     def link(self):
-        return "<a href='/profilo/" + str(self.pk) + "/'>" + str(self.nome_completo) + "</a>"
+        return "<a href='" + str(self.url) + "'>" + str(self.nome_completo) + "</a>"
 
     def calendario_turni(self, inizio, fine):
         """

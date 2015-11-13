@@ -81,6 +81,9 @@ urlpatterns = [
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/mappa/$', 'attivita.viste.attivita_scheda_mappa'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/$', 'attivita.viste.attivita_scheda_turni'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/(?P<turno>[0-9]+)/$', 'attivita.viste.attivita_scheda_turni'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/modifica/$', 'attivita.viste.attivita_scheda_informazioni_modifica'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/modifica/$', 'attivita.viste.attivita_scheda_turni_modifica'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/report/$', 'attivita.viste.attivita_scheda_report'),
 
     url(r'^social/commenti/nuovo/', 'social.viste.commenti_nuovo'),
     url(r'^social/commenti/cancella/(?P<pk>[0-9]+)/', 'social.viste.commenti_cancella'),

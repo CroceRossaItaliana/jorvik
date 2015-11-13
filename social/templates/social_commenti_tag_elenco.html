@@ -6,14 +6,6 @@
                 class="col-md-12"
             {% endif %}>
 
-
-        {% if social_commenti %}
-            <div class="allinea-centro text-muted grassetto">
-                <i class="fa fa-fw fa-comments-o"></i> {{ social_commenti.count }} commenti
-            </div>
-
-        {% endif %}
-
         {% include 'social_commenti_tag_inc_form.html' %}
 
         {% for commento in social_commenti %}
