@@ -126,7 +126,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         Restituisce l'email dell'utenza, se presente.
         :return: Email o None
         """
-        if self.utenza:
+        if hasattr(self, 'utenza'):
             return self.utenza.email
         return None
 
@@ -136,7 +136,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         Controlla se l'utente e' admin.
         :return: True se admin, False altrimenti.
         """
-        return self.utenza is not None and self.utenza.is_staff
+        return hasattr(self, 'utenza') and self.utenza.is_staff
 
     def __str__(self):
         return self.nome_completo
@@ -508,7 +508,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         :return: QuerySet per Turno
         """
         sedi = self.sedi_attuali(membro__in=Appartenenza.MEMBRO_ATTIVITA)
-        print(sedi)
         return Turno.objects.filter(
             # Attivtia organizzate dai miei comitati
             Q(attivita__sede__in=sedi)
