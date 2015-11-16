@@ -97,7 +97,7 @@ def permessi_responsabile_area(area):
         + permessi_delegato_area(area)
 
 
-def permessi_referente(attivita, oggetto):
+def permessi_referente(attivita):
     """
     Permessi della delega di REFERENTE ATTIVITA'.
 
