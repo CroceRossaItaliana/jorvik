@@ -2,8 +2,8 @@ import datetime
 from django.test import TestCase
 from attivita.models import Attivita, Area, Turno
 from anagrafica.costanti import LOCALE
-from anagrafica.models import Sede, Persona, Appartenenza
-
+from anagrafica.models import Sede, Persona, Appartenenza, Delega
+from anagrafica.permessi.applicazioni import REFERENTE
 
 class TestAttivita(TestCase):
     def test_attivita(self):
@@ -331,4 +331,76 @@ class TestAttivita(TestCase):
             p3.calendario_turni(datetime.date(2015, 11, 1), datetime.date(2015, 11, 30)).filter(pk=t2.pk).exists(),
             msg="Il turno non viene trovato nel calendario - attivita' estesa al volontario"
         )
-    
+
+    def test_permessi_attivita(self):
+
+        fiumefreddo = Sede(
+            nome="Comitato Locale di Fiumefreddo di Sicilia",
+            tipo=Sede.COMITATO,
+            estensione=LOCALE,
+        )
+        fiumefreddo.save()
+
+        mascali = Sede(
+            nome="Comitato Locale di Mascali",
+            tipo=Sede.COMITATO,
+            estensione=LOCALE,
+        )
+        mascali.save()
+
+        area = Area(
+            nome="6",
+            obiettivo=6,
+            sede=fiumefreddo,
+        )
+        area.save()
+
+        a = Attivita(
+            stato=Attivita.VISIBILE,
+            nome="Att 1",
+            apertura=Attivita.APERTA,
+            area=area,
+            descrizione="1",
+            sede=mascali,
+        )
+        a.save()
+
+        p = Persona(
+            nome="Mario",
+            cognome="Rossi",
+            codice_fiscale="FRSSAKJNOKAJMI",
+            data_nascita="1994-2-5"
+        )
+        p.save()
+
+        app = Appartenenza(
+            persona=p,
+            sede=fiumefreddo,
+            membro=Appartenenza.VOLONTARIO,
+            inizio="1980-12-10",
+        )
+        app.save()
+
+        t = Turno(
+            attivita=a,
+            prenotazione=datetime.datetime(2015, 11, 10),
+            inizio=datetime.datetime(2015, 11, 10),
+            fine=datetime.datetime(2015, 11, 30),
+            minimo=1,
+            massimo=6,
+        )
+        t.save()
+
+        delega = Delega(
+            oggetto=a,
+            persona=p,
+            tipo=REFERENTE,
+            inizio="2015-11-15",
+        )
+        delega.save()
+
+        self.assertTrue(
+            p.calendario_turni(datetime.date(2015, 11, 1), datetime.date(2015, 11, 30)).filter(pk=t.pk).exists(),
+            msg="Il turno viene trovato nel calendario - attivita' creata dalla sede del volontario"
+        )
+
