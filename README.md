@@ -14,7 +14,7 @@ Sei interessato a partecipare allo sviluppo di Gaia/Jorvik? Contattaci all'indir
 
 ### Integrazione continua
 
-Jorvik viene installato e testato sulle recenti versioni di Python 2 e 3, in modo automatico, da Travis CI ad ogni push.
+Jorvik viene installato e testato sulle recenti versioni di Python 3, in modo automatico, da Travis CI ad ogni push.
 
 Stato attuale di `master`: [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=master)](https://travis-ci.org/CroceRossaItaliana/jorvik)
 
@@ -24,23 +24,27 @@ Puoi trovare la **[Documentazione sul Wiki del progetto](https://github.com/Croc
 
 ### Requisiti
 
-* **[Python 2.7-3.x](https://www.python.org/downloads/)** (es. `python3`)
-* **[PIP 2 o 3](https://www.python.org/downloads/)** (es. `pip3`)
+* **[Python 3.x](https://www.python.org/downloads/)** (es. `python3`)
+* **[PIP 3](https://www.python.org/downloads/)** (es. `pip3`)
 * **[PostgreSQL](http://www.postgresql.org/) 9.4+** con [PostGIS](http://postgis.net/))
 * **[GEOS](http://trac.osgeo.org/geos/)** (Geometry Engine Open Source)
 * **Linux**, Mac OS X e, probabilmente, Windows Server 2008 o 7 e superiori
 
 ### Ambiente di sviluppo
 
-Per la configurazione automatica dell'ambiente di sviluppo su **Linux e Mac OS X 10.9+**, è possibile usare Vagrant.
-Vagrant gestisce la creazione e la configurazione automatica (provisioning) di una macchina virtuale.
+Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 10.9+ e Windows 8+**, è possibile usare Vagrant con VirtualBox. Vagrant gestisce la creazione e la configurazione automatica (provisioning) di una macchina virtuale.
 
-1. **Scarica Jorvik** usando git
+1. **Scarica Jorvik** usando Git ([GitHub Desktop](https://desktop.github.com/) per Windows e Mac OS X, o da terminale come segue)
 
     ```bash
     git clone --recursive https://github.com/CroceRossaItaliana/jorvik
-    cd jorvik
     ```
+
+1. **Aprire un terminale** (prompt dei Comandi su Windows) e accedere alla cartella dove risiede il codice appena scaricato.
+
+   ```bash
+   cd jorvik
+   ```
 
 1. **Scarica VirtualBox** da [virtualbox.org](https://www.virtualbox.org/wiki/Downloads),
 2. **Scarica Vagrant** da [vagrantup.com](https://www.vagrantup.com/downloads.html),
@@ -58,15 +62,17 @@ Vagrant gestisce la creazione e la configurazione automatica (provisioning) di u
     python3 manage.py syncdb
     ```
 
-5. **Installare PyCharm** [JetBrains PyCharm](https://www.jetbrains.com/pycharm/)
+5. **Installare PyCharm Professional** da [JetBrains](https://www.jetbrains.com/pycharm/). La licenza e' gratis per gli studenti. Contattaci se necessiti di una licenza per lavorare su Jorvik.
 6. **Configurare PyCharm per usare Vagrant**:
   * Preferenze > Progetto > Interprete > Aggiungi interprete remoto
     ![image](https://cloud.githubusercontent.com/assets/621062/10762277/4da18088-7cbd-11e5-924e-a2737d7783e1.png)
 
-  * Scegliere "Vagrant" e `/usr/bin/python3` come interprete, e cliccare OK
+  * Scegliere **"Vagrant"** e **`/usr/bin/python3`** come interprete, e cliccare OK
     ![image](https://cloud.githubusercontent.com/assets/621062/10762319/7ce52214-7cbd-11e5-8cbf-26bfe0565b7e.png)
+    
+    **Nota bene**: Su Mac OS X, se questo step fallisce ("impossibile trovare vagrant"), e' per via di un bug noto con la piattaforma. In tal caso e' necessario chiudere e riavviare PyChar da Terminale, con il comando `charm`.
   
-  * Assicurarsi che l'interprete "Vagrant" sia ora selezionato, quindi cliccare OK
+  * Assicurarsi che l'interprete "Vagrant" sia ora selezionato come predefinito per il progetto, quindi cliccare OK
   
 6. **Usare il tasto "Run" su PyCharm** per controllare e avviare il server
   ![image](https://cloud.githubusercontent.com/assets/621062/10762357/abcb3050-7cbd-11e5-9fdf-c08a0b439369.png)

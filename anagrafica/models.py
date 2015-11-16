@@ -25,7 +25,7 @@ import phonenumbers
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, APPLICAZIONI_SLUG_DICT, PERMESSI_NOMI_DICT
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
-from anagrafica.permessi.costanti import GESTIONE_ATTIVITA
+from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT
 from anagrafica.permessi.delega import delega_permessi
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
@@ -38,7 +38,7 @@ from base.tratti import ConMarcaTemporale, ConStorico
 from base.utils import is_list, sede_slugify
 from autoslug import AutoSlugField
 from posta.models import Messaggio
-
+from django.apps import apps
 
 class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     """
@@ -417,7 +417,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         if isinstance(permessi, QuerySet):
             return permessi
         else:
-            return None  # Un EmptyQuerySet qualunque.
+            return apps.get_model(PERMESSI_OGGETTI_DICT[permesso][0], PERMESSI_OGGETTI_DICT[permesso][1]).objects.none()
 
     def permessi(self, oggetto, al_giorno=date.today()):
         """
@@ -493,8 +493,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         return Messaggio.objects.filter(mittente=self).order_by('-creazione')
 
     @property
+    def url(self):
+        return "/profilo/" + str(self.pk) + "/"
+
+    @property
     def link(self):
-        return "<a href='/profilo/" + str(self.pk) + "/'>" + str(self.nome_completo) + "</a>"
+        return "<a href='" + str(self.url) + "'>" + str(self.nome_completo) + "</a>"
 
     def calendario_turni(self, inizio, fine):
         """
@@ -512,7 +516,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
             | Q(attivita__estensione__in=Sede.objects.get_queryset_ancestors(sedi, include_self=True))
 
             # Attivita che gesticsco
-            | Q(attivita__in=self.oggetti_permesso(GESTIONE_ATTIVITA) or [])
+            | Q(attivita__in=self.oggetti_permesso(GESTIONE_ATTIVITA))
             , inizio__gte=inizio, fine__lt=(fine + timedelta(1))
         ).order_by('inizio')
 

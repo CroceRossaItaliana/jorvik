@@ -6,6 +6,16 @@
 
 {% block scheda_contenuto %}
 
-    Mappa..
+    {% if attivita.locazione %}
+
+
+    {% else %}
+        <div class="alert alert-warning">
+            <h4><i class="fa fa-fw fa-warning"></i> Locazione sconosciuta</h4>
+            <p>Non &egrave; stato ancora impostato alcun indirizzo per questa attivit&agrave;.</p>
+            <p>Vai su <a href="../">Informazioni</a> e contatta il referente per maggiori informazioni.</p>
+        </div>
+
+    {% endif %}
 
 {% endblock %}

@@ -10,7 +10,7 @@
 
 {% block app_contenuto %}
 
-    <h2 class="allinea-centro">
+    <h2 class="allinea-centro grassetto text-success">
         {{ attivita.nome }}
     </h2>
     <h4 class="allinea-centro">
@@ -30,24 +30,49 @@
     <p>&nbsp;</p>
 
     <ul class="nav nav-tabs">
-      <li role="presentation" {% if request.path == attivita.url %}class="active"{% endif %}>
-          <a href="{{ attivita.url }}">
-            <i class="fa fa-fw fa-info"></i>
-            Informazioni
-          </a>
-      </li>
-      <li role="presentation" {% if attivita.url_mappa in request.path %}class="active"{% endif %}>
-          <a href="{{ attivita.url_mappa }}">
-            <i class="fa fa-fw fa-globe"></i>
-            Mappa
-          </a>
-      </li>
-      <li role="presentation" {% if attivita.url_turni in request.path %}class="active"{% endif %}>
-          <a href="{{ attivita.url_turni }}">
-            <i class="fa fa-fw fa-calendar"></i>
-            Turni
-          </a>
-      </li>
+        <li role="presentation" {% if request.path == attivita.url %}class="active"{% endif %}>
+            <a href="{{ attivita.url }}">
+                <i class="fa fa-fw fa-info"></i>
+                Informazioni
+            </a>
+        </li>
+        {% if attivita.locazione %}
+            <li role="presentation" {% if attivita.url_mappa in request.path %}class="active"{% endif %}>
+                <a href="{{ attivita.url_mappa }}">
+                    <i class="fa fa-fw fa-globe"></i>
+                    Mappa
+                </a>
+            </li>
+        {% endif %}
+        <li role="presentation" {% if attivita.url_turni in request.path and not attivita.url_turni_modifica in request.path %}class="active"{% endif %}>
+            <a href="{{ attivita.url_turni }}">
+                <i class="fa fa-fw fa-calendar"></i>
+                Turni
+            </a>
+        </li>
+
+        {% if puo_modificare %}
+            <li role="presentation" {% if request.path == attivita.url_modifica %}class="active"{% endif %}>
+                <a href="{{ attivita.url_modifica }}" class="text-danger">
+                    <i class="fa fa-fw fa-pencil"></i>
+                    Gestione attivit&agrave;
+                </a>
+            </li>
+            <li role="presentation" {% if attivita.url_turni_modifica in request.path %}class="active"{% endif %}>
+                <a href="{{ attivita.url_turni_modifica }}" class="text-danger">
+                    <i class="fa fa-fw fa-calendar"></i>
+                    Gestione turni
+                </a>
+            </li>
+            <li role="presentation" {% if attivita.url_report in request.path %}class="active"{% endif %}>
+                <a href="{{ attivita.url_report }}" class="text-danger">
+                    <i class="fa fa-fw fa-file-excel-o"></i>
+                    Scarica report
+                </a>
+            </li>
+
+        {% endif %}
+
 
     </ul>
 

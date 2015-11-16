@@ -4,6 +4,8 @@ Queste sono le impostazioni di Django per il progetto Jorvik.
 Informazioni sul file:  https://docs.djangoproject.com/en/1.7/topics/settings/
 Documentazione config.: https://docs.djangoproject.com/en/1.7/ref/settings/
 """
+from django.template.base import add_to_builtins
+
 try:
     import configparser
 except ImportError:
@@ -118,8 +120,8 @@ DATABASES = {
         'NAME': PGSQL_CONF.get('client', 'database'),
         'USER': PGSQL_CONF.get('client', 'user'),
         'PASSWORD': PGSQL_CONF.get('client', 'password'),
-        'HOST': PGSQL_CONF.get('client', 'host'),
-        'PORT': PGSQL_CONF.get('client', 'port') or '5432',
+        'HOST': PGSQL_CONF.get('client', 'host', fallback='localhost'),
+        'PORT': PGSQL_CONF.get('client', 'port', fallback='5432'),
     }
 }
 
@@ -188,3 +190,7 @@ ALLOWED_HOST = ['localhost', '127.0.0.1', DEBUG_CONF.get('production', 'host')]
 APIS_CONF = configparser.ConfigParser()
 APIS_CONF.read(APIS_CONF_FILE)
 GOOGLE_KEY = APIS_CONF.get('google', 'api_key')
+
+# Template builtins
+add_to_builtins('anagrafica.templatetags.utils')
+add_to_builtins('social.templatetags.social')

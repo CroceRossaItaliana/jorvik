@@ -79,6 +79,9 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=date.tod
     if permesso_minimo(oggetto.__class__) >= minimo:
         return True
 
+    if persona.admin:
+        return True
+
     permessi = []
     # Per ogni delega attuale, aggiungi i permessi
     for d in persona.deleghe_attuali(al_giorno=al_giorno):
@@ -123,6 +126,8 @@ def persona_ha_permessi(persona, *permessi):
     :param al_giorno: Data di verifica.
     :return: True se tutti i permessi sono posseduti. False altrimenti.
     """
+    if persona.admin:
+        return True
     for p in permessi:
         if isinstance(p, (list, tuple)) and not persona.ha_permessi(*p):
             return False

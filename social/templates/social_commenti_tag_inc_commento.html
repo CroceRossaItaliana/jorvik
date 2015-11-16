@@ -1,0 +1,30 @@
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <strong>
+            {{ commento.autore.link|safe }}
+        </strong>
+
+        {% if commento.puo_modificare %}
+            &nbsp;
+            <a data-conferma="Vuoi davvero cancellare questo commento?"
+               class="text-danger"
+               href="/social/commenti/cancella/{{ commento.pk }}/?next={{ social_next }}"
+            >
+                <i class="fa fa-fw fa-trash"></i>
+               cancella
+            </a>
+        {% endif %}
+
+        <span class="text-muted pull-right">
+            <i class="fa fa-fw fa-clock-o"></i>
+            {{ commento.creazione|date:"SHORT_DATETIME_FORMAT" }}
+        </span>
+
+    </div>
+    <div class="panel-body">
+        {{ commento.commento }}
+    </div>
+</div>
+
+

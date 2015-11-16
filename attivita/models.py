@@ -55,6 +55,22 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     def url_turni(self):
         return self.url + "turni/"
 
+    @property
+    def url_modifica(self):
+        return self.url + "modifica/"
+
+    @property
+    def url_mappa_modifica(self):
+        return self.url_modifica
+
+    @property
+    def url_turni_modifica(self):
+        return self.url_turni + "modifica/"
+
+    @property
+    def url_report(self):
+        return self.url + "report/"
+
 
 class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 

@@ -1,6 +1,8 @@
 from datetime import date, timedelta, datetime
 from django.shortcuts import redirect, get_object_or_404
-from attivita.forms import ModuloStoricoTurni
+
+from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI
+from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni
 from attivita.models import Partecipazione, Attivita
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
@@ -127,8 +129,11 @@ def attivita_scheda_informazioni(request, me=None, pk=None):
     """
 
     attivita = get_object_or_404(Attivita, pk=pk)
+    puo_modificare = me and me.permessi_almeno(attivita, MODIFICA)
+
     contesto = {
-        "attivita": attivita
+        "attivita": attivita,
+        "puo_modificare": puo_modificare,
     }
 
     return 'attivita_scheda_informazioni.html', contesto
@@ -140,11 +145,13 @@ def attivita_scheda_mappa(request, me=None, pk=None):
     """
 
     attivita = get_object_or_404(Attivita, pk=pk)
+    puo_modificare = me and me.permessi_almeno(attivita, MODIFICA)
     contesto = {
-        "attivita": attivita
+        "attivita": attivita,
+        "puo_modificare": puo_modificare,
     }
 
-    return 'attivita_scheda_informazioni.html', contesto
+    return 'attivita_scheda_mappa.html', contesto
 
 @pagina_privata
 def attivita_scheda_turni(request, me=None, pk=None, turno=None):
@@ -153,8 +160,69 @@ def attivita_scheda_turni(request, me=None, pk=None, turno=None):
     """
 
     attivita = get_object_or_404(Attivita, pk=pk)
+    puo_modificare = me and me.permessi_almeno(attivita, MODIFICA)
     contesto = {
-        "attivita": attivita
+        "attivita": attivita,
+        "puo_modificare": puo_modificare,
+
     }
 
-    return 'attivita_scheda_informazioni.html', contesto
+    return 'attivita_scheda_turni.html', contesto
+
+@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+def attivita_scheda_informazioni_modifica(request, me, pk=None):
+    """
+    Mostra la pagina di modifica di una attivita'.
+    """
+    attivita = get_object_or_404(Attivita, pk=pk)
+    if not me.permessi_almeno(attivita, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    if request.POST:
+        modulo = ModuloAttivitaInformazioni(request.POST, instance=attivita)
+        if modulo.is_valid():
+            modulo.save()
+
+    else:
+        modulo = ModuloAttivitaInformazioni(instance=attivita)
+
+    contesto = {
+        "attivita": attivita,
+        "puo_modificare": True,
+        "modulo": modulo,
+    }
+
+    return 'attivita_scheda_informazioni_modifica.html', contesto
+
+@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+def attivita_scheda_turni_modifica(request, me, pk=None):
+    """
+    Mostra la pagina di modifica di una attivita'.
+    """
+    attivita = get_object_or_404(Attivita, pk=pk)
+    if not me.permessi_almeno(attivita, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    contesto = {
+        "attivita": attivita,
+        "puo_modificare": True,
+    }
+
+    return 'attivita_scheda_turni_modifica.html', contesto
+
+@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+def attivita_scheda_report(request, me, pk=None):
+    """
+    Mostra la pagina di modifica di una attivita'.
+    """
+    attivita = get_object_or_404(Attivita, pk=pk)
+    if not me.permessi_almeno(attivita, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    contesto = {
+        "attivita": attivita,
+        "puo_modificare": True,
+    }
+
+    return 'attivita_scheda_report.html', contesto
+
