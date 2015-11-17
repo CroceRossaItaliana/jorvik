@@ -16,9 +16,6 @@ RUN sed -i -e 's/host = localhost/host = db/' /vagrant/config/pgsql.cnf
 RUN sed -i -e 's/user = postgres/user = jorvik/' /vagrant/config/pgsql.cnf
 RUN sed -i -e 's/password =/password = jorvik/' /vagrant/config/pgsql.cnf
 
-RUN python3 /vagrant/manage.py migrate --noinput
-RUN python3 /vagrant/manage.py collectstatic --noinput
-
 EXPOSE 8000
 
-CMD ["/usr/bin/python3", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD python3 manage.py migrate --noinput && python3 manage.py collectstatic --noinput && python3 manage.py runserver 0.0.0.0:8000
