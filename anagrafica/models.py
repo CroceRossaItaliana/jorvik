@@ -509,6 +509,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         """
         sedi = self.sedi_attuali(membro__in=Appartenenza.MEMBRO_ATTIVITA)
         return Turno.objects.filter(
+            # Attivita visibile
+
+
             # Attivtia organizzate dai miei comitati
             Q(attivita__sede__in=sedi)
             # Attivita aperte ai miei comitati
