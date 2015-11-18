@@ -59,31 +59,4 @@ Vagrant.configure(2) do |config|
     end
   end
 
-  # Development and testing VM
-  config.vm.define "dev1", primary: true do |development|
-    development.vm.network "forwarded_port", guest: 8000, host: 18000
-    development.vm.network "forwarded_port", guest: 5432, host: 45432
-    development.vm.provider "virtualbox" do |vb|
-      vb.memory = "2048"
-    end
-  end
-
-  # Development and testing VM
-  config.vm.define "dev2", primary: true do |development|
-    development.vm.network "forwarded_port", guest: 8000, host: 28000
-    development.vm.network "forwarded_port", guest: 5432, host: 25432
-    development.vm.provider "virtualbox" do |vb|
-      vb.memory = "2048"
-    end
-  end
-
-  # Development and testing VM
-  config.vm.define "dev3", primary: true do |development|
-    development.vm.network "forwarded_port", guest: 8000, host: 38000
-    development.vm.network "forwarded_port", guest: 5432, host: 35432
-    development.vm.provider "virtualbox" do |vb|
-      vb.memory = "2048"
-    end
-  end
-
 end

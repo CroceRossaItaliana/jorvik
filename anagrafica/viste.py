@@ -345,3 +345,19 @@ def utente_contatti_cancella_numero(request, me, pk):
 
     tel.delete()
     return redirect('/utente/contatti/')
+
+@pagina_privata
+def utente_estensione(request, me):
+
+    if request.POST:
+        modulo = ModuloCreazioneEstensione(request.POST)
+        if modulo.is_valid():
+            pass
+    else:
+        modulo = ModuloCreazioneEstensione()
+
+    contesto = {
+        "modulo":modulo
+
+    }
+    return "anagrafica_utente_estensione.html", contesto

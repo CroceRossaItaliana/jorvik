@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 from django.forms import ModelForm
 import mptt
-from anagrafica.models import Sede, Persona, Appartenenza, Documento
+from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione
 from autenticazione.models import Utenza
 
 
@@ -81,15 +81,18 @@ class ModuloCreazioneDocumento(ModelForm):
 class ModuloModificaPassword(PasswordChangeForm):
     pass
 
+
 class ModuloModificaEmailAccesso(ModelForm):
     class Meta:
         model = Utenza
         fields = ['email']
 
+
 class ModuloModificaEmailContatto(ModelForm):
     class Meta:
         model = Persona
         fields = ['email_contatto']
+
 
 class ModuloCreazioneTelefono(forms.Form):
     PERSONALE = "P"
@@ -100,3 +103,9 @@ class ModuloCreazioneTelefono(forms.Form):
     )
     numero_di_telefono = forms.CharField(max_length=16, initial="+39 ")
     tipologia = forms.ChoiceField(choices=TIPOLOGIA, initial=PERSONALE, widget=forms.RadioSelect())
+
+
+class ModuloCreazioneEstensione(ModelForm):
+    class Meta:
+        model = Estensione
+        fields = ['destinazione']

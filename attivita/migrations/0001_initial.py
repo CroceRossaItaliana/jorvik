@@ -3,26 +3,23 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 import social.models
-import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0001_initial'),
-        ('anagrafica', '0002_auto_20151102_1412'),
+        ('anagrafica', '0001_initial'),
     ]
 
     operations = [
         migrations.CreateModel(
             name='Area',
             fields=[
-                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(serialize=False, auto_created=True, verbose_name='ID', primary_key=True)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
-                ('nome', models.CharField(db_index=True, default='Generale', max_length=256)),
-                ('obiettivo', models.SmallIntegerField(db_index=True, default=1)),
-                ('sede', models.ForeignKey(related_name='aree', to='anagrafica.Sede')),
+                ('nome', models.CharField(default='Generale', db_index=True, max_length=256)),
+                ('obiettivo', models.SmallIntegerField(default=1, db_index=True)),
             ],
             options={
                 'verbose_name_plural': 'Aree',
@@ -31,17 +28,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Attivita',
             fields=[
-                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(serialize=False, auto_created=True, verbose_name='ID', primary_key=True)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
-                ('nome', models.CharField(db_index=True, default='Nuova attività', max_length=255)),
-                ('stato', models.CharField(db_index=True, choices=[('B', 'Bozza'), ('V', 'Visibile')], default='B', max_length=1)),
-                ('apertura', models.CharField(db_index=True, choices=[('C', 'Chiusa'), ('A', 'Aperta')], default='A', max_length=1)),
+                ('nome', models.CharField(default='Nuova attività', db_index=True, max_length=255)),
+                ('stato', models.CharField(default='B', db_index=True, max_length=1, choices=[('B', 'Bozza'), ('V', 'Visibile')])),
+                ('apertura', models.CharField(default='A', db_index=True, max_length=1, choices=[('C', 'Chiusa'), ('A', 'Aperta')])),
                 ('descrizione', models.TextField(blank=True)),
                 ('area', models.ForeignKey(related_name='attivita', to='attivita.Area')),
-                ('estensione', models.ForeignKey(related_name='attivita_estensione', default=None, null=True, to='anagrafica.Sede')),
-                ('locazione', models.ForeignKey(related_name='attivita_attivita', null=True, to='base.Locazione', on_delete=django.db.models.deletion.SET_NULL, blank=True)),
-                ('sede', models.ForeignKey(related_name='attivita', to='anagrafica.Sede')),
+                ('estensione', models.ForeignKey(default=None, null=True, related_name='attivita_estensione', to='anagrafica.Sede')),
             ],
             options={
                 'verbose_name_plural': 'Attività',
@@ -52,12 +47,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Partecipazione',
             fields=[
-                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(serialize=False, auto_created=True, verbose_name='ID', primary_key=True)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
-                ('confermata', models.BooleanField(db_index=True, verbose_name='Confermata', default=True)),
-                ('ritirata', models.BooleanField(db_index=True, verbose_name='Ritirata', default=False)),
-                ('stato', models.CharField(db_index=True, choices=[('K', 'Part. Richiesta'), ('X', 'Part. Ritirata'), ('N', 'Non presentato/a')], default='K', max_length=1)),
+                ('confermata', models.BooleanField(default=True, db_index=True, verbose_name='Confermata')),
+                ('ritirata', models.BooleanField(default=False, db_index=True, verbose_name='Ritirata')),
+                ('stato', models.CharField(default='K', db_index=True, max_length=1, choices=[('K', 'Part. Richiesta'), ('X', 'Part. Ritirata'), ('N', 'Non presentato/a')])),
                 ('persona', models.ForeignKey(related_name='partecipazioni', to='anagrafica.Persona')),
             ],
             options={
@@ -68,15 +63,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Turno',
             fields=[
-                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(serialize=False, auto_created=True, verbose_name='ID', primary_key=True)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
-                ('nome', models.CharField(db_index=True, default='Nuovo turno', max_length=128)),
+                ('nome', models.CharField(default='Nuovo turno', db_index=True, max_length=128)),
                 ('prenotazione', models.DateTimeField(db_index=True, verbose_name='Prenotazione entro')),
                 ('inizio', models.DateTimeField(db_index=True, verbose_name='Inizio')),
-                ('fine', models.DateTimeField(db_index=True, blank=True, verbose_name='Fine', default=None, null=True)),
-                ('minimo', models.SmallIntegerField(db_index=True, default=1)),
-                ('massimo', models.SmallIntegerField(db_index=True, default=None, null=True)),
+                ('fine', models.DateTimeField(default=None, blank=True, db_index=True, null=True, verbose_name='Fine')),
+                ('minimo', models.SmallIntegerField(default=1, db_index=True)),
+                ('massimo', models.SmallIntegerField(default=None, db_index=True, null=True)),
                 ('attivita', models.ForeignKey(related_name='turni', to='attivita.Attivita')),
             ],
             options={
