@@ -117,9 +117,9 @@ DATABASES = {
         #    'init_command': 'SET storage_engine=MyISAM',
         #},
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': PGSQL_CONF.get('client', 'database'),
-        'USER': PGSQL_CONF.get('client', 'user'),
-        'PASSWORD': PGSQL_CONF.get('client', 'password'),
+        'NAME': PGSQL_CONF.get('client', 'database', fallback='jorvik'),
+        'USER': PGSQL_CONF.get('client', 'user', fallback='jorvik'),
+        'PASSWORD': PGSQL_CONF.get('client', 'password', fallback='jorvik'),
         'HOST': PGSQL_CONF.get('client', 'host', fallback='localhost'),
         'PORT': PGSQL_CONF.get('client', 'port', fallback='5432'),
     }
