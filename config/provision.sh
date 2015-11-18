@@ -25,5 +25,5 @@ user = jorvik
 password = jorvik
 EOL
 
-python3 manage.py migrate
+#python3 manage.py migrate
 python3 manage.py collectstatic --noinput
