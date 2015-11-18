@@ -7,40 +7,34 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('contenttypes', '0002_remove_content_type_name'),
-        ('anagrafica', '0002_auto_20151119_0000'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Commento',
+            name='Elemento',
             fields=[
                 ('id', models.AutoField(serialize=False, auto_created=True, primary_key=True, verbose_name='ID')),
                 ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('commento', models.TextField(verbose_name='Testo del commento')),
-                ('oggetto_id', models.PositiveIntegerField(db_index=True)),
-                ('autore', models.ForeignKey(to='anagrafica.Persona', related_name='commenti')),
-                ('oggetto_tipo', models.ForeignKey(to='contenttypes.ContentType')),
+                ('confermata', models.BooleanField(verbose_name='Confermata', default=True, db_index=True)),
+                ('ritirata', models.BooleanField(verbose_name='Ritirata', default=False, db_index=True)),
             ],
             options={
-                'abstract': False,
-                'verbose_name_plural': 'Commenti',
+                'verbose_name': 'Elemento patente',
+                'verbose_name_plural': 'Elementi patente',
             },
         ),
         migrations.CreateModel(
-            name='Giudizio',
+            name='Patente',
             fields=[
                 ('id', models.AutoField(serialize=False, auto_created=True, primary_key=True, verbose_name='ID')),
                 ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('positivo', models.BooleanField(verbose_name='Positivo', default=True, db_index=True)),
-                ('oggetto_id', models.PositiveIntegerField(db_index=True)),
-                ('autore', models.ForeignKey(to='anagrafica.Persona', related_name='giudizi')),
-                ('oggetto_tipo', models.ForeignKey(to='contenttypes.ContentType')),
+                ('tipo', models.CharField(default='CIV', max_length=2, choices=[('CIV', 'Patente Civile'), ('CRI', 'Patente CRI')])),
             ],
             options={
-                'verbose_name_plural': 'Giudizi',
+                'verbose_name': 'Patente di Guida',
+                'verbose_name_plural': 'Patenti di Guida',
             },
         ),
     ]
