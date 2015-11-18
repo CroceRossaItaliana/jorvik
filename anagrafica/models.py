@@ -949,9 +949,13 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale):
     appartenenza = models.ForeignKey(Appartenenza, related_name='trasferimento')
 
 
-class Estensione(ModelloSemplice, ConMarcaTemporale):
+class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     """
     Rappresenta una pratica di estensione.
     """
-
-    appartenenza = models.ForeignKey(Appartenenza, related_name='estensione')
+    richiedente = models.ForeignKey(Persona, related_name='richiedente')
+    persona = models.ForeignKey(Persona)
+    destinazione = models.ForeignKey(Sede, 'Sede di destinazione', related_name='estensioni_destinazione')
+    appartenenza = models.ForeignKey(Appartenenza, related_name='estensione', null=True, blank=True)
+    protocollo_numero = models.PositiveIntegerField('Numero di protocollo', null=True, blank=True)
+    protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)

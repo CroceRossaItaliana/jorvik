@@ -1,0 +1,11 @@
+<div class="alert bg-info">
+    <p>
+        <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai visionare lo stato della tua richiesta di estensione.
+    </p>
+</div>
+
+{% if me.estensione.esito == me.estensione.ESITO_OK %}
+##termina
+{% else %}
+##annulla richiesta
+{% endif %}

@@ -1,0 +1,17 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Richiesta Estensione{% endblock %}
+
+{% block app_contenuto %}
+
+    {% if me.estensione %}
+        {% include "anagrafica_utente_estensione_stato.html" %}
+    {% else %}
+        {% include "anagrafica_utente_estensione_richiedi.html" %}
+    {% endif %}
+
+{% endblock %}
+
+##elenco richieste passate

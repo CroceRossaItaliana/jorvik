@@ -7,20 +7,20 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('anagrafica', '0002_auto_20151118_2029'),
         ('contenttypes', '0002_remove_content_type_name'),
-        ('anagrafica', '0002_auto_20151102_1412'),
     ]
 
     operations = [
         migrations.CreateModel(
             name='Commento',
             fields=[
-                ('id', models.AutoField(serialize=False, auto_created=True, primary_key=True, verbose_name='ID')),
+                ('id', models.AutoField(serialize=False, auto_created=True, verbose_name='ID', primary_key=True)),
                 ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
+                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
                 ('commento', models.TextField(verbose_name='Testo del commento')),
                 ('oggetto_id', models.PositiveIntegerField(db_index=True)),
-                ('autore', models.ForeignKey(to='anagrafica.Persona', related_name='commenti')),
+                ('autore', models.ForeignKey(related_name='commenti', to='anagrafica.Persona')),
                 ('oggetto_tipo', models.ForeignKey(to='contenttypes.ContentType')),
             ],
             options={
@@ -31,12 +31,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Giudizio',
             fields=[
-                ('id', models.AutoField(serialize=False, auto_created=True, primary_key=True, verbose_name='ID')),
+                ('id', models.AutoField(serialize=False, auto_created=True, verbose_name='ID', primary_key=True)),
                 ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('positivo', models.BooleanField(db_index=True, verbose_name='Positivo', default=True)),
+                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
+                ('positivo', models.BooleanField(default=True, db_index=True, verbose_name='Positivo')),
                 ('oggetto_id', models.PositiveIntegerField(db_index=True)),
-                ('autore', models.ForeignKey(to='anagrafica.Persona', related_name='giudizi')),
+                ('autore', models.ForeignKey(related_name='giudizi', to='anagrafica.Persona')),
                 ('oggetto_tipo', models.ForeignKey(to='contenttypes.ContentType')),
             ],
             options={

@@ -13,6 +13,7 @@ MENU = {
             ("Storico", "fa-clock-o", "/utente/storico/"),
             ("Documenti", "fa-folder", "/utente/documenti/"),
             ("Contatti", "fa-envelope", "/utente/contatti/"),
+            ("Estensione", "fa-arrow-right", "/utente/estensione/"),
         )),
         ("Sicurezza", (
             ("Cambia password", "fa-key", "/utente/cambia-password/"),
