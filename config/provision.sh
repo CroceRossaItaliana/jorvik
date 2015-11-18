@@ -13,7 +13,7 @@ sudo apt-get upgrade
 sudo apt-get install -y --force-yes git python3-pip binutils libproj-dev gdal-bin python3-dev libmysqlclient-dev libpq-dev libxml2-dev libxslt-dev
 
 echo "Installazione dei requisiti Python..."
-#udo pip3 install -q -r requirements.txt
+sudo pip3 install -q -r requirements.txt
 
 echo "Configurazione installazione..."
 cat <<EOL > config/pgsql.cnf
