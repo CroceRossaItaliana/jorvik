@@ -8,9 +8,9 @@
 JORVIK_DIRECTORY=/vagrant
 cd $JORVIK_DIRECTORY
 
-sudo bash config/provision-psql.sh
-sudo apt-get upgrade
-sudo apt-get install -y --force-yes git python3-pip binutils libproj-dev gdal-bin python3-dev libmysqlclient-dev libpq-dev libxml2-dev libxslt-dev
+#sudo bash config/provision-psql.sh
+#sudo apt-get upgrade
+#sudo apt-get install -y --force-yes git python3-pip binutils libproj-dev gdal-bin python3-dev libmysqlclient-dev libpq-dev libxml2-dev libxslt-dev
 
 echo "Installazione dei requisiti Python..."
 sudo pip3 install -q -r requirements.txt
