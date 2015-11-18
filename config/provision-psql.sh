@@ -62,7 +62,7 @@ fi
 # Update package list and upgrade all packages
 apt-get update
 apt-get -y --force-yes upgrade
-apt-get -y --force-yes install libgdal1i "postgresql-$PG_VERSION" "postgresql-contrib-$PG_VERSION" "postgresql-$PG_VERSION-postgis-scripts"
+apt-get -y --force-yes install "postgresql-$PG_VERSION" "postgresql-contrib-$PG_VERSION" "postgresql-$PG_VERSION-postgis-scripts"
 
 PG_CONF="/etc/postgresql/$PG_VERSION/main/postgresql.conf"
 PG_HBA="/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
