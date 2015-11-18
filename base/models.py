@@ -199,7 +199,6 @@ class ConAutorizzazioni(models.Model):
         """
         return cls.con_esito(cls.ESITO_OK)
 
-    @property
     @classmethod
     def con_esito_ritirata(cls):
         """
@@ -208,7 +207,6 @@ class ConAutorizzazioni(models.Model):
         """
         return cls.con_esito(cls.ESITO_RITIRATA)
 
-    @property
     @classmethod
     def con_esito_pending(cls):
         """
@@ -217,7 +215,6 @@ class ConAutorizzazioni(models.Model):
         """
         return cls.con_esito(cls.ESITO_PENDING)
 
-    @property
     @classmethod
     def con_esito_no(cls):
         """
