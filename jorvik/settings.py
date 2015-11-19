@@ -191,6 +191,3 @@ APIS_CONF = configparser.ConfigParser()
 APIS_CONF.read(APIS_CONF_FILE)
 GOOGLE_KEY = APIS_CONF.get('google', 'api_key')
 
-# Template builtins
-add_to_builtins('anagrafica.templatetags.utils')
-add_to_builtins('social.templatetags.social')

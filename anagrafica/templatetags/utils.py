@@ -1,9 +1,9 @@
-from django import template
+from django.template import Library
 from django.template.loader import render_to_string
 
 from anagrafica.models import Persona
 
-register = template.Library()
+register = Library()
 
 
 @register.simple_tag(takes_context=True)
