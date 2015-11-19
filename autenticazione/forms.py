@@ -20,7 +20,11 @@ class ModuloModificaUtenza(ModelForm):
     password hash display field.
     """
 
-    password = ReadOnlyPasswordHashField()
+    password = ReadOnlyPasswordHashField(
+        help_text=_("Le password vengono salvate solamente in modo criptato, "
+                    "quindi non c'e' modo di vedere la password di questo utente, "
+                    "ma puoi cambiarla <a href=\"password/\">con questo modulo</a>.")
+    )
 
     class Meta:
         model = Utenza
