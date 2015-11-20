@@ -12,11 +12,17 @@
     <div class="row allinea-centro">
 
         <ul class="nav nav-tabs nav-justified piu-grande">
-            {% for app_slug, app_nome, app_icona in user.applicazioni_disponibili %}
+            {% for app_slug, app_nome, app_icona, app_num in user.applicazioni_disponibili %}
                 <li role="presentation"{% if app_slug in request.path %} class="active"{% endif %}>
                     <a href="{{ app_slug }}" class="grassetto">
                         <i class="fa fa-fw {{ app_icona }}"></i>
                         {{ app_nome }}
+
+                        {% if app_num %}
+                            <span class="badge">
+                                {{ app_num }}
+                            </span>
+                        {% endif %}
                     </a>
                 </li>
             {% endfor %}

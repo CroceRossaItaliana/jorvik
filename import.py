@@ -39,10 +39,10 @@ import MySQLdb
 def stringa(s):
     if s is None:
         return ''
-    try:
-        return str(s.encode('utf-8'))
-    except:
-        return str(s)
+    # try:
+    #    #return str(s.encode('utf-8'))
+    #except:
+    return str(s)
 
 parser = argparse.ArgumentParser(description='Importa i dati da un database MySQL di PHP-Gaia.')
 parser.add_argument('--no-geo', dest='geo', action='store_const',

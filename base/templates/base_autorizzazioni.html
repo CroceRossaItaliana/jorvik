@@ -1,0 +1,70 @@
+{% extends 'base_autorizzazioni_vuota.html' %}
+
+{% block pagina_titolo %}
+    ({{ richieste.count }}) Richieste
+{% endblock %}
+
+{% block app_contenuto %}
+
+    {% for richiesta in richieste %}
+
+        <div class="panel panel-default ">
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-9">
+                        {% include richiesta.template_path %}
+
+                    </div>
+                    <div class="col-md-3">
+                        <div class=" btn-group-vertical btn-group-sm btn-block">
+                            <a class="btn btn-success">
+                                <i class="fa fa-fw fa-check"></i>
+                                Conferma
+                            </a>
+                            <a class="btn btn-danger">
+                                <i class="fa fa-fw fa-times"></i>
+                                Nega
+                                {% if richiesta.motivo_obbligatorio %}
+                                    e motiva
+                                {% endif %}
+
+                            </a>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+            <div class="panel-footer piu-piccolo">
+                <i class="fa fa-fw fa-clock-o"></i>
+                Richiesta inoltrata il {{ richiesta.creazione }}
+                da {{ richiesta.richiedente.nome_completo }}.
+
+                <p class="pull-right">
+                    In dubbio?
+                    <a href="#">
+                        Scrivi un messaggio a {{ richiesta.richiedente.nome }}
+                        <i class="fa fa-fw fa-envelope-o"></i>
+
+                    </a>
+                </p>
+            </div>
+
+        </div>
+
+    {% empty %}
+
+        <div class="alert alert-block alert-success">
+            <h4>
+                <i class="fa fa-fw fa-check-circle"></i>
+                Ben fatto!
+            </h4>
+            <p>
+                Non ci sono richieste in attesa.
+            </p>
+
+        </div>
+    {% endfor %}
+
+{% endblock %}

@@ -1,0 +1,17 @@
+<p>{{ richiesta.richiedente.link|safe }} chiede la conferma della propria appartenenza alla
+Sede CRI di {{ richiesta.oggetto.sede.link|safe }}.</p>
+
+<table class="table table-bordered table-condensed table-striped allinea-centro piu-piccolo">
+    <tr>
+        <td>{{ richiesta.richiedente.nome }}</td>
+        <td>{{ richiesta.richiedente.cognome }}</td>
+        <td class="monospace">{{ richiesta.richiedente.codice_fiscale }}</td>
+        <td>{{ richiesta.richiedente.get_genere_display }}</td>
+        <td>
+            Nato a
+            {{ richiesta.richiedente.comune_nascita|default:"(?)" }}
+            il
+            {{ richiesta.richiedente.data_nascita|default:"(?)" }}
+        </td>
+    </tr>
+</table>

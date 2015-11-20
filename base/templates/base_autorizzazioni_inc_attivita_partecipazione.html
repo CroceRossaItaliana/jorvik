@@ -1,0 +1,19 @@
+<p>{{ richiesta.richiedente.link|safe }} chiede di poter partecipare ad un turno dell'attivit&agrave;
+    {{ richiesta.oggetto.turno.attivita.link|safe }}.</p>
+
+<table class="table table-bordered table-condensed table-striped allinea-centro piu-piccolo">
+    <tr>
+        <td>{{ richiesta.richiedente.nome_completo }}</td>
+        <td>
+            {{ richiesta.oggetto.turno.attivita.link|safe }}
+            {% if richiesta.oggetto.turno.attivita.locazione %}
+                <i class="fa fa-fw fa-map-marker"></i>
+                {{ richiesta.oggetto.turno.attivita.locazione }}
+            {% endif %}
+        </td>
+        <td class="grassetto">{{ richiesta.oggetto.turno.link|safe }}</td>
+        <td>
+            {{ richiesta.oggetto.turno.inizio|date:"SHORT_DATETIME_FORMAT" }}&mdash;{{ richiesta.oggetto.turno.fine|date:"SHORT_DATETIME_FORMAT" }}
+        </td>
+    </tr>
+</table>

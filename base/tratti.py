@@ -147,7 +147,7 @@ class ConDelegati(models.Model):
         if inizio <= date.today() and (fine is None or fine >= date.today()):
 
             # Cerca eventuali deleghe pari gia' esistenti.
-            delega_pari = self.deleghe_attuali.filter(persona=persona, tipo=tipo)
+            delega_pari = self.deleghe_attuali().filter(persona=persona, tipo=tipo)
 
             # Se esiste, estende se necessario, e ritorna la delega passata
             if delega_pari.exists():

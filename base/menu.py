@@ -32,5 +32,12 @@ MENU = {
             ("Gruppi", "fa-users", "/attivita/gruppi/"),
             ("Reperibilità", "fa-thumb-tack", "/attivita/reperibilita/"),
         )),
-    )
+    ),
+    "autorizzazioni": (
+        ("Richieste", (
+            ("In attesa", "fa-user-plus", "/autorizzazioni/"),
+            ("Storico", "fa-clock-o", "/autorizzazioni/storico/"),
+        )),
+    ),
+
 }

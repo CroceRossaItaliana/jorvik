@@ -1,0 +1,81 @@
+{% extends 'base_autorizzazioni_vuota.html' %}
+
+{% block pagina_titolo %}
+    Storico Richieste
+{% endblock %}
+
+{% block app_contenuto %}
+
+    {% for richiesta in richieste %}
+
+        <div class="panel panel-default {% if richiesta.concessa %}panel-success{% else %}panel-danger{% endif %}">
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-9">
+                        {% include richiesta.template_path %}
+
+                    </div>
+                    <div class="col-md-3">
+                        {% if richiesta.concessa %}
+                            <h4 class="text-success">
+                                <i class="fa fa-fw fa-check-circle"></i>
+                                Confermata
+                            </h4>
+
+                        {% else %}
+                            <h4 class="text-danger">
+                                <i class="fa fa-fw fa-times"></i>
+                                Negata
+                            </h4>
+                            {% if richiesta.motivo_negazione %}
+                                <p class="text-danger piu-piccolo">
+                                    <strong>Motivo:</strong>
+                                    {{ richiesta.motivo_negazione }}
+                                </p>
+
+                            {% else %}
+                                <p class="text-danger piu-piccolo">
+                                    Motivazione non fornita.
+                                </p>
+
+
+                            {% endif %}
+
+                        {% endif %}
+                        <p class="text-muted piu-piccolo">
+                            <i class="fa fa-fw fa-clock-o"></i>
+                            {{ richiesta.ultima_modifica }}
+                        </p>
+
+                    </div>
+                </div>
+
+            </div>
+            <div class="panel-footer piu-piccolo">
+                <i class="fa fa-fw fa-clock-o"></i>
+                Richiesta inoltrata il {{ richiesta.creazione }}
+                da {{ richiesta.richiedente.nome_completo }}.
+
+                <p class="pull-right text-muted">
+                    <i class="fa fa-info-circle"></i>
+                    Non &egrave; possibile modificare le richieste lavorate.
+                </p>
+            </div>
+
+        </div>
+
+    {% empty %}
+
+        <div class="alert alert-block alert-success">
+            <h4>
+                <i class="fa fa-fw fa-check-circle"></i>
+                Nessuna richiesta evasa.
+            </h4>
+            <p>
+                Qui comprariranno le richieste confermate e negate.
+            </p>
+
+        </div>
+    {% endfor %}
+
+{% endblock %}

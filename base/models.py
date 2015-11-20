@@ -145,6 +145,16 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     def nega(self, firmatario):
         self.firma(firmatario, False)
 
+    @property
+    def template_path(self):
+        """
+        Ritorna il nome del template dell'autorizzazione.
+        """
+        return 'base_autorizzazioni_inc_%s_%s.html' % (
+            self.oggetto._meta.app_label.lower(),
+            self.oggetto._meta.object_name.lower()
+        )
+
 
 class ConAutorizzazioni(models.Model):
     """

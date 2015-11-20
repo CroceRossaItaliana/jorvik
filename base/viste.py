@@ -4,7 +4,7 @@ from django.shortcuts import render, render_to_response, get_object_or_404
 # Le viste base vanno qui.
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
-from autenticazione.funzioni import pagina_pubblica, pagina_anonima
+from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_privata
 from base.forms import ModuloRecuperaPassword
 
 
@@ -97,3 +97,27 @@ def informazioni_sede(request, me, slug):
         'vicini': vicini
     }
     return 'base_informazioni_sede.html', contesto
+
+@pagina_privata
+def autorizzazioni(request, me):
+    """
+    Mostra elenco delle autorizzazioni in attesa.
+    """
+    richieste = me.autorizzazioni_in_attesa().order_by('creazione')
+    contesto = {
+        "richieste": richieste
+    }
+
+    return 'base_autorizzazioni.html', contesto
+
+@pagina_privata
+def autorizzazioni_storico(request, me):
+    """
+    Mostra storico delle autorizzazioni.
+    """
+    richieste = me.autorizzazioni_firmate.all().order_by('-ultima_modifica')[0:50]
+    contesto = {
+        "richieste": richieste
+    }
+
+    return 'base_autorizzazioni_storico.html', contesto

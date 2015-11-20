@@ -67,6 +67,10 @@ urlpatterns = [
         "template_name": "anagrafica_utente_cambia_password_fatto.html",
     }),
 
+    url(r'^autorizzazioni/$', 'base.viste.autorizzazioni'),
+    url(r'^autorizzazioni/storico/$', 'base.viste.autorizzazioni_storico'),
+
+
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/(?P<messaggio_id>\d+)/', 'posta.viste.posta'),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/', 'posta.viste.posta'),
     url(r'^posta/(?P<direzione>[\w\-]+)/', 'posta.viste.posta'),

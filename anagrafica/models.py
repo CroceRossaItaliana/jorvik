@@ -32,7 +32,8 @@ from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_per
 from attivita.models import Turno
 
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
-from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati
+from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
+    Autorizzazione
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico
 from base.utils import is_list, sede_slugify
@@ -399,7 +400,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         lista += [('/attivita/', 'Attività', 'fa-calendar')]
         lista += [('/posta/', 'Posta', 'fa-envelope')]
 
+        if self.ha_pannello_autorizzazioni:
+            lista += [('/autorizzazioni/', 'Richieste', 'fa-user-plus', self.autorizzazioni_in_attesa().count())]
+
+        tipi = []
         for d in self.deleghe_attuali():
+            if d.tipo in tipi:
+                continue
+            tipi.append(d.tipo)
             lista += [(APPLICAZIONI_SLUG_DICT[d.tipo], PERMESSI_NOMI_DICT[d.tipo])]
 
         return lista
@@ -522,7 +530,31 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
             , inizio__gte=inizio, fine__lt=(fine + timedelta(1))
         ).order_by('inizio')
 
+    @property
+    def ha_pannello_autorizzazioni(self):
+        """
+        Ritorna True se il pannello autorizzazioni deve essere mostrato per l'utente.
+        False altrimenti.
+        """
+        print (self.deleghe)
+        return self.deleghe_attuali().exists() or self.autorizzazioni_in_attesa().exists()
 
+    def autorizzazioni(self):
+        """
+        Ritorna tutte le autorizzazioni firmabili da questo utente.
+        :return: QuerySet<Autorizzazione>.
+        """
+        r = Autorizzazione.objects.none()
+        for delega in self.deleghe_attuali():
+            r |= delega.autorizzazioni()
+        return r
+
+    def autorizzazioni_in_attesa(self):
+        """
+        Ritorna tutte le autorizzazioni firmabili da qesto utente e in attesa di firma.
+        :return: QuerySet<Autorizzazione>
+        """
+        return self.autorizzazioni().filter(necessaria=True).order_by('creazione')
 
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
@@ -792,6 +824,12 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
         return "/informazioni/sedi/" + str(self.slug) + "/"
 
     @property
+    def link(self):
+        return "<a href='%s' target='_new'>%s</a>" % (
+            self.url, self.nome_completo
+        )
+
+    @property
     def icona(self):
         dict = {
             NAZIONALE: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
@@ -925,6 +963,17 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
         :return: Una lista di permessi.
         """
         return delega_permessi(self)
+
+    def autorizzazioni(self):
+        """
+        Ottiene le autorizzazioni firmabili da questo ruolo.
+        :return: QuerySet
+        """
+        oggetto_tipo = ContentType.objects.get_for_model(self.oggetto)
+        return Autorizzazione.objects.filter(destinatario_ruolo=self.tipo,
+                                             destinatario_oggetto_tipo__pk=oggetto_tipo.pk,
+                                             destinatario_oggetto_id=self.oggetto.pk)
+
 
 class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
     """

@@ -48,6 +48,12 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
         return "/attivita/scheda/%d/" % (self.pk,)
 
     @property
+    def link(self):
+        return "<a href='%s' target='_new'>%s</a>" % (
+            self.url, self.nome
+        )
+
+    @property
     def url_mappa(self):
         return self.url + "mappa/"
 
@@ -101,6 +107,12 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     @property
     def url(self):
         return "%sturni/%d/" % (self.attivita.url, self.pk)
+
+    @property
+    def link(self):
+        return "<a href='%s' target='_new'>%s</a>" % (
+            self.url, self.nome
+        )
 
 
 class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
