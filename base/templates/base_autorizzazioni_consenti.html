@@ -1,0 +1,42 @@
+{% extends 'base_avviso.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Consenti{% endblock %}
+
+{% block avviso_titolo %}Consenti{% endblock %}
+
+
+{% block avviso_corpo %}
+
+    {% if richiesta.esito == richiesta.ESITO_PENDING %}
+
+        <p>Per dare consenso a questa richiesta, &egrave; necessario aggiungere le seguenti informazioni.</p>
+
+        <form method="POST">
+            {% csrf_token %}
+            {% bootstrap_form modulo %}
+
+            <button type="sybmit" class="btn btn-block btn-success">
+                <i class="fa fa-fw fa-check-circle">
+                    Consenti richiesta
+                </i>
+            </button>
+        </form>
+
+    {% else %}
+
+        <p class="text-success grassetto">
+            Richiesta autorizzata.
+
+        </p>
+
+
+    {% endif %}
+
+    <a class="btn btn-block btn-default" href="/autorizzazioni/">
+        <i class="fa fa-fw fa-mail-reply"></i>
+        Torna all'elenco richieste in attesa
+    </a>
+
+{% endblock %}

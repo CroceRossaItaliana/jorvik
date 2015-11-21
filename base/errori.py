@@ -37,3 +37,22 @@ def permessi(request, me):
     :return:
     """
     return 'base_errore_permessi.html'
+
+@pagina_pubblica
+def generico(request, me=None,
+             titolo="Errore", messaggio="Si è verificato un errore generico.",
+             torna_titolo="Home page", torna_url="/"):
+    """
+    Ritorna un errore generico con un link per tornare indietro.
+    :param titolo: Il titolo del messaggio di errore.
+    :param messaggio: Il messaggio di errore.
+    :param torna_titolo: Il titolo del link per tornare alla pagina precedente.
+    :param torna_url: L'URL della pagina precedente alla quale tornare.
+    """
+    contesto = {
+        "errore_titolo": titolo,
+        "errore_messaggio": messaggio,
+        "errore_torna_titolo": torna_titolo,
+        "errore_torna_url": torna_url,
+    }
+    return 'base_errore_generico.html', contesto

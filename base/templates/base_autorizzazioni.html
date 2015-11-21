@@ -17,11 +17,11 @@
                     </div>
                     <div class="col-md-3">
                         <div class=" btn-group-vertical btn-group-sm btn-block">
-                            <a class="btn btn-success">
+                            <a class="btn btn-success" href="/autorizzazioni/{{ richiesta.pk }}/concedi/">
                                 <i class="fa fa-fw fa-check"></i>
                                 Conferma
                             </a>
-                            <a class="btn btn-danger">
+                            <a class="btn btn-danger" href="/autorizzazioni/{{ richiesta.pk }}/nega/>
                                 <i class="fa fa-fw fa-times"></i>
                                 Nega
                                 {% if richiesta.motivo_obbligatorio %}

@@ -110,22 +110,33 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     destinatario_oggetto_id = models.PositiveIntegerField(db_index=True)
     destinatario_oggetto = GenericForeignKey('destinatario_oggetto_tipo', 'destinatario_oggetto_id')
 
-    def firma(self, firmatario, concedi=True):
+    def firma(self, firmatario, concedi=True, modulo=None, motivo=None):
         """
         Firma l'autorizzazione.
         :param firmatario: Il firmatario.
         :param concedi: L'esito, vero per concedere, falso per negare.
+        :param modulo: Se modulo necessario, un modulo valido.
         :return:
         """
         self.concessa = concedi
         self.firmatario = firmatario
+        self.save()
+
+        # Controlla che il modulo fornito, se presente, sia valido
+        if modulo and not modulo.is_valid():
+            raise ValueError("Il modulo richiesto per l'accettazione non e' stato completato correttamente.")
 
         # Se ha negato, allora avvisa subito della negazione.
         # Nessuna altra firma e' piu' necessaria.
         if not concedi:
             self.oggetto.confermata = False
+            if self.motivo_obbligatorio:
+                if not motivo:
+                    raise ValueError("Non e' stato fornita una motivazione valida.")
+                self.motivo_negazione = motivo
+                self.save()
             self.oggetto.save()
-            self.oggetto.autorizzazione_negata()
+            self.oggetto.autorizzazione_negata(motivo=motivo)
             self.oggetto.autorizzazioni_set().update(necessaria=False)
             return
 
@@ -137,13 +148,13 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         if self.oggetto.autorizzazioni_set().filter(necessaria=True).count() == 0:
             self.oggetto.confermata = True
             self.oggetto.save()
-            self.oggetto.autorizzazione_concessa()
+            self.oggetto.autorizzazione_concessa(modulo=modulo)
 
-    def concedi(self, firmatario):
-        self.firma(firmatario, True)
+    def concedi(self, firmatario, modulo=None):
+        self.firma(firmatario, True, modulo=modulo)
 
-    def nega(self, firmatario):
-        self.firma(firmatario, False)
+    def nega(self, firmatario, motivo=None):
+        self.firma(firmatario, False, motivo=None)
 
     @property
     def template_path(self):
@@ -282,8 +293,6 @@ class ConAutorizzazioni(models.Model):
         :return:
         """
 
-        from anagrafica.permessi.costanti import PERMESSI_OGGETTI_DICT
-
         try:  # Cerca l'autorizzazione per questo oggetto con progressivo maggiore
             ultima = self.autorizzazioni_set().latest('progressivo')
             # Se esiste, calcola il prossimo progressivo per l'oggetto
@@ -333,7 +342,7 @@ class ConAutorizzazioni(models.Model):
         # Non diventa piu' necessaria alcuna autorizzazione tra quelle richieste
         self.autorizzazioni.update(necessaria=False)
 
-    def autorizzazione_concessa(self):
+    def autorizzazione_concessa(self, modulo=None):
         """
         Sovrascrivimi! Ascoltatore per concessione autorizzazione.
         """
@@ -344,6 +353,12 @@ class ConAutorizzazioni(models.Model):
         Sovrascrivimi! Ascoltatore per negazione autorizzazione.
         """
         pass
+
+    def autorizzazione_consenti_modulo(self):
+        """
+        Sovrascrivimi! Ritorna la classe del modulo per la conferma.
+        """
+        return None
 
 
 class ConScadenza:
