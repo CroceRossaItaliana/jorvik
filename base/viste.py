@@ -1,11 +1,13 @@
 from django.http import HttpResponse
-from django.shortcuts import render, render_to_response, get_object_or_404
-
+from django.shortcuts import render, render_to_response, get_object_or_404, redirect
 # Le viste base vanno qui.
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
+from anagrafica.permessi.costanti import ERRORE_PERMESSI
 from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_privata
-from base.forms import ModuloRecuperaPassword
+from base import errori
+from base.forms import ModuloRecuperaPassword, ModuloNegaAutorizzazione
+from base.models import Autorizzazione
 
 
 @pagina_pubblica
@@ -104,11 +106,89 @@ def autorizzazioni(request, me):
     Mostra elenco delle autorizzazioni in attesa.
     """
     richieste = me.autorizzazioni_in_attesa().order_by('creazione')
+    for richiesta in richieste:
+        if richiesta.oggetto.MODULO_CONSENTI:
+            richiesta.modulo = richiesta.oggetto.MODULO_CONSENTI
+
     contesto = {
         "richieste": richieste
     }
 
     return 'base_autorizzazioni.html', contesto
+
+
+def autorizzazione_consenti(request, me, pk=None):
+    """
+    Mostra il modulo da compilare per il consenso, ed eventualmente registra l'accettazione.
+    """
+    richiesta = get_object_or_404(Autorizzazione, pk=pk)
+
+    # Controlla che io possa firmare questa autorizzazione
+    if not me.autorizzazioni_in_attesa.filter(pk=richiesta.pk).exists():
+        return errori.generico(
+            titolo="Richiesta non trovata",
+            messaggio="Probabilmente l'autorizzazione è stata concessa da qualcun altro.",
+            torna_titolo="Richieste in attesa",
+            torna_url="/autorizzazioni/"
+        )
+
+    modulo = None
+
+    # Se la richiesta ha un modulo di consenso
+    if richiesta.oggetto.autorizzazione_consenti_modulo():
+        if request.POST:
+            modulo = richiesta.oggetto.autorizzazione_consenti_modulo()(request.POST)
+
+            if modulo.is_valid():
+                # Accetta la richiesta con modulo
+                richiesta.concedi(me, modulo=modulo)
+
+        else:
+            modulo = richiesta.oggetto.autorizzazione_consenti_modulo()()
+
+    else:
+        # Accetta la richiesta senza modulo
+        richiesta.concedi(me, modulo=None)
+
+    contesto = {
+        "modulo": modulo,
+        "richiesta": richiesta,
+    }
+
+    return 'base_autorizzazioni_consenti.html', contesto
+
+
+def autorizzazione_nega(request, me, pk=None):
+    """
+    Mostra il modulo da compilare per la negazione, ed eventualmente registra la negazione.
+    """
+    richiesta = get_object_or_404(Autorizzazione, pk=pk)
+
+    # Controlla che io possa firmare questa autorizzazione
+    if not me.autorizzazioni_in_attesa.filter(pk=richiesta.pk).exists():
+        return redirect(ERRORE_PERMESSI)
+
+    # Se la richiesta richiede motivazione
+    if richiesta.motivo_obbligatorio:
+        if request.POST:
+            modulo = ModuloNegaAutorizzazione(request.POST)
+            if modulo.is_valid():
+                richiesta.nega(modulo.cleaned_data['motivo'])
+
+        else:
+            modulo = ModuloNegaAutorizzazione(request.POST)
+
+    else:
+        # Nega senza motivazione
+        richiesta.nega()
+
+    contesto = {
+        "moodulo": modulo,
+        "richiesta": richiesta,
+    }
+
+    return 'base_autorizzazioni_nega.html', contesto
+
 
 @pagina_privata
 def autorizzazioni_storico(request, me):

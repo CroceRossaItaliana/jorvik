@@ -1,0 +1,20 @@
+{% extends "base_avviso.html" %}
+
+{% block pagina_titolo %}{{ errore_titolo }}{% endblock %}
+
+{% block avviso_titolo_classe %}text-danger{% endblock %}
+
+{% block avviso_titolo %}
+    {{ errore_titolo }}
+{% endblock %}
+
+{% block avviso_messaggio %}
+    <p>{{ errore_messaggio }}</p>
+{% endblock %}
+
+{% block avviso_post_messaggio %}
+    <a href="{{ errore_torna_url }}">
+        <i class="fa fa-fw fa-mail-reply"></i>
+        Torna: {{ errore_torna_titolo }}
+    </a>
+{% endblock %}
