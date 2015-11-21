@@ -107,8 +107,8 @@ def autorizzazioni(request, me):
     """
     richieste = me.autorizzazioni_in_attesa().order_by('creazione')
     for richiesta in richieste:
-        if richiesta.oggetto.MODULO_CONSENTI:
-            richiesta.modulo = richiesta.oggetto.MODULO_CONSENTI
+        if richiesta.oggetto.autorizzazione_consenti_modulo():
+            richiesta.modulo = richiesta.oggetto.autorizzazione_consenti_modulo()
 
     contesto = {
         "richieste": richieste

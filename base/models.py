@@ -154,7 +154,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         self.firma(firmatario, True, modulo=modulo)
 
     def nega(self, firmatario, motivo=None):
-        self.firma(firmatario, False, motivo=None)
+        self.firma(firmatario, False, motivo=motivo)
 
     @property
     def template_path(self):
