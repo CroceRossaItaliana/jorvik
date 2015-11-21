@@ -176,7 +176,7 @@ ASSOC_ID_PARTECIPAZIONI = {}
 
 
 def progresso(contatore, totale):
-    percentuale = contatore / float( totale * 100.0 )
+    percentuale = contatore / float(totale) * 100.0
     return "%.2f%% (%d su %d) " % (percentuale, contatore, totale)
 
 def ottieni_comitato(tipo='nazionali', id=1):
