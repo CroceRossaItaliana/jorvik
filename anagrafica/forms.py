@@ -109,3 +109,8 @@ class ModuloCreazioneEstensione(ModelForm):
     class Meta:
         model = Estensione
         fields = ['destinazione']
+
+class ModuloConsentiEstensione(ModelForm):
+    protocollo_numero = forms.IntegerField(label="Numero di protocollo", help_text="Numero di protocollo con cui è stata accettata la richiesta")
+    protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data di registrazione del protocollo")
+

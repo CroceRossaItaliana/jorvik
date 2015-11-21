@@ -11,8 +11,7 @@ Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 - Comitato
 - Delega
 """
-from datetime import date, timedelta
-
+from datetime import date, timedelta, datetime
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -23,6 +22,7 @@ from django.db.models.query import EmptyQuerySet
 from django_countries.fields import CountryField
 import phonenumbers
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
+from anagrafica.forms import ModuloConsentiEstensione
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, APPLICAZIONI_SLUG_DICT, PERMESSI_NOMI_DICT
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT
@@ -556,6 +556,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         """
         return self.autorizzazioni().filter(necessaria=True).order_by('creazione')
 
+    @property
+    def estensione(self):
+        self.estensioni.filter().first()
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """
@@ -1005,9 +1008,23 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     """
     Rappresenta una pratica di estensione.
     """
+
+    MODULO_CONSENTI = ModuloConsentiEstensione()
+
     richiedente = models.ForeignKey(Persona, related_name='richiedente')
-    persona = models.ForeignKey(Persona)
+    persona = models.ForeignKey(Persona, related_name='estensioni')
     destinazione = models.ForeignKey(Sede, related_name='estensioni_destinazione')
     appartenenza = models.ForeignKey(Appartenenza, related_name='estensione', null=True, blank=True)
     protocollo_numero = models.PositiveIntegerField('Numero di protocollo', null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
+
+    def autorizzazione_concessa(self, MODULO_CONSENTI):
+        app = Appartenenza(
+            membro=Appartenenza.MEMBRO_ESTESO,
+            persona=self.persona,
+            sede=self.destinazione,
+            inizio=datetime.today(),
+            fine=datetime.today()+timedelta(years=1)
+        )
+        app.save()
+        app.richiedi()

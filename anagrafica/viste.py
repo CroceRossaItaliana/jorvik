@@ -6,12 +6,13 @@ from django.contrib.auth import login
 from django.views.generic import ListView
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
-    ModuloCreazioneTelefono
+    ModuloCreazioneTelefono, ModuloCreazioneEstensione
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
 from anagrafica.models import Persona, Documento, Telefono
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.files import Zip
@@ -350,14 +351,21 @@ def utente_contatti_cancella_numero(request, me, pk):
 def utente_estensione(request, me):
 
     if request.POST:
-        modulo = ModuloCreazioneEstensione(request.POST)
+        dati_estensione = {
+                'richiedente': me,
+                'persona': me
+            }
+        modulo = ModuloCreazioneEstensione(request.POST, initial=dati_estensione)
         if modulo.is_valid():
-            pass
+            modulo.save()
+            modulo.autorizzazione_richiedi(
+                richiedente=me,
+                destinatario=((PRESIDENTE, me.sede), (UFFICIO_SOCI, me.sede)),
+                motivo_obbligatorio=True
+            )
     else:
         modulo = ModuloCreazioneEstensione()
-
     contesto = {
-        "modulo":modulo
-
+        "modulo": modulo
     }
     return "anagrafica_utente_estensione.html", contesto
