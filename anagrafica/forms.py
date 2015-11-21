@@ -1,7 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 from django.forms import ModelForm
-import mptt
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione
 from autenticazione.models import Utenza
 
@@ -113,4 +112,3 @@ class ModuloCreazioneEstensione(ModelForm):
 class ModuloConsentiEstensione(ModelForm):
     protocollo_numero = forms.IntegerField(label="Numero di protocollo", help_text="Numero di protocollo con cui è stata accettata la richiesta")
     protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data di registrazione del protocollo")
-
