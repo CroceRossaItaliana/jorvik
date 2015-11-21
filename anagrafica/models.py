@@ -558,7 +558,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
 
     @property
     def estensione(self):
-        self.estensioni.filter().first()
+        return self.estensioni.all().first()
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """
@@ -771,7 +771,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             )
         )
 
-    def autorizzazione_concessa(self):
+    def autorizzazione_concessa(self, modulo=None):
         """
         Questo metodo viene chiamato quando la richiesta viene accettata.
         :return:
@@ -1016,17 +1016,17 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     protocollo_numero = models.PositiveIntegerField('Numero di protocollo', null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
 
-    def autorizzazione_consenti_modulo(self):
+    def autorizzazioni_consenti_modulo(self):
         from anagrafica.forms import ModuloConsentiEstensione
         return ModuloConsentiEstensione
 
-    def autorizzazione_concessa(self, MODULO_CONSENTI):
+    def autorizzazione_concessa(self, modulo=None):
         app = Appartenenza(
-            membro=Appartenenza.MEMBRO_ESTESO,
+            membro=Appartenenza.ESTESO,
             persona=self.persona,
             sede=self.destinazione,
             inizio=datetime.today(),
-            fine=datetime.today()+timedelta(years=1)
+            fine=datetime.today()+timedelta(days=365)
         )
         app.save()
         app.richiedi()
@@ -1034,8 +1034,12 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         self.save()
 
     def richiedi(self):
+        if not self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO).exists():
+            raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
+        sede = self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO)[0]
+
         self.autorizzazione_richiedi(
-                richiedente=me,
-                destinatario=((PRESIDENTE, me.sede), (UFFICIO_SOCI, me.sede)),
+                richiedente=self.persona,
+                destinatario=((PRESIDENTE, sede), (UFFICIO_SOCI, sede)),
                 motivo_obbligatorio=True
             )

@@ -1,3 +1,5 @@
+import datetime
+
 from django.test import TestCase
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.forms import ModuloCreazioneEstensione
@@ -324,13 +326,12 @@ class TestAnagrafica(TestCase):
             msg="Il presidente non ha autorizzazioni in attesa"
         )
 
-        dati_estensione = {
-                'richiedente': da_estendere,
-                'persona': da_estendere,
-                'destinazione': sede2
-            }
-        modulo = ModuloCreazioneEstensione(initial=dati_estensione)
-        est = modulo.save()
+        modulo = ModuloCreazioneEstensione()
+        est = modulo.save(commit=False)
+        est.richiedente = da_estendere
+        est.persona = da_estendere
+        est.destinazione = sede2
+        est.save()
         est.richiedi()
 
         self.assertTrue(
@@ -351,14 +352,15 @@ class TestAnagrafica(TestCase):
         aut = presidente1.autorizzazioni_in_attesa().first()
 
         self.assertFalse(
-            aut.appartenza.exist(),
+            est.appartenenza is not None,
             msg="l'estensione non ha un'appartenenza"
         )
 
-        modulo = est.autorizzazioni_modulo_concedi()(initial={
+        modulo = est.autorizzazioni_consenti_modulo()({
             "protocollo_numero": 31,
-            "protocollo_data": "2010-10-3"
+            "protocollo_data": datetime.date.today()
         })
+
         aut.concedi(presidente1, modulo=modulo)
 
         self.assertTrue(
@@ -366,29 +368,30 @@ class TestAnagrafica(TestCase):
             msg="Il presidente ha autorizzazioni in attesa"
         )
 
+        est.refresh_from_db()
         self.assertTrue(
-            aut.appartenza.exist(),
+            est.appartenenza is not None,
             msg="l'estensione ha un'appartenenza"
         )
 
         self.assertTrue(
-            aut.appartenza.persona == da_estendere,
-            msg="l'appartenza contiene il volontario esatto"
+            est.appartenenza.persona == da_estendere,
+            msg="l'appartenenza contiene il volontario esatto"
         )
 
         self.assertTrue(
-            aut.appartenza.sede == sede2,
-            msg="l'appartenza contiene la sede esatta"
+            est.appartenenza.sede == sede2,
+            msg="l'appartenenza contiene la sede esatta"
         )
 
         self.assertTrue(
-            aut.appartenza.membro == Appartenenza.MEMBRO_ESTESO,
-            msg="l'appartenza e' di tipo esteso"
+            est.appartenenza.membro == Appartenenza.ESTESO,
+            msg="l'appartenenza e' di tipo esteso"
         )
 
         self.assertTrue(
-            aut.appartenza.esito == Appartenenza.ESITO_PENDING,
-            msg="l'appartenza e' pendente"
+            est.appartenenza.esito == Appartenenza.ESITO_PENDING,
+            msg="l'appartenenza e' pendente"
         )
 
         aut2 = presidente2.autorizzazioni_in_attesa().first()
@@ -396,8 +399,8 @@ class TestAnagrafica(TestCase):
         aut2.concedi(presidente2)
 
         self.assertTrue(
-            aut.appartenza.esito == Appartenenza.ESITO_OK,
-            msg="l'appartenza e' accettata"
+            est.appartenenza.esito == Appartenenza.ESITO_OK,
+            msg="l'appartenenza e' accettata"
         )
 
     def test_estensione_accettata_negata(self):
@@ -418,13 +421,12 @@ class TestAnagrafica(TestCase):
             msg="Il presidente non ha autorizzazioni in attesa"
         )
 
-        dati_estensione = {
-                'richiedente': da_estendere,
-                'persona': da_estendere,
-                'destinazione': sede2
-            }
-        modulo = ModuloCreazioneEstensione(initial=dati_estensione)
-        est = modulo.save()
+        modulo = ModuloCreazioneEstensione()
+        est = modulo.save(commit=False)
+        est.richiedente = da_estendere
+        est.persona = da_estendere
+        est.destinazione = sede2
+        est.save()
         est.richiedi()
 
         self.assertTrue(
@@ -445,14 +447,13 @@ class TestAnagrafica(TestCase):
         aut = presidente1.autorizzazioni_in_attesa().first()
 
         self.assertFalse(
-            aut.appartenza.exist(),
+            est.appartenenza is not None,
             msg="l'estensione non ha un'appartenenza"
         )
 
-
-        modulo = est.autorizzazioni_modulo_concedi()(initial={
+        modulo = est.autorizzazioni_consenti_modulo()({
             "protocollo_numero": 31,
-            "protocollo_data": "2010-10-3"
+            "protocollo_data": datetime.date.today()
         })
         aut.concedi(presidente1, modulo=modulo)
 
@@ -461,29 +462,31 @@ class TestAnagrafica(TestCase):
             msg="Il presidente ha autorizzazioni in attesa"
         )
 
+        est.refresh_from_db()
         self.assertTrue(
-            aut.appartenza.exist(),
+            est.appartenenza is not None,
             msg="l'estensione ha un'appartenenza"
         )
 
         self.assertTrue(
-            aut.appartenza.persona == da_estendere,
-            msg="l'appartenza contiene il volontario esatto"
+            est.appartenenza.persona == da_estendere,
+            msg="l'appartenenza contiene il volontario esatto"
         )
 
         self.assertTrue(
-            aut.appartenza.sede == sede2,
-            msg="l'appartenza contiene la sede esatta"
+            est.appartenenza.sede == sede2,
+            msg="l'appartenenza contiene la sede esatta"
         )
 
         self.assertTrue(
-            aut.appartenza.membro == Appartenenza.MEMBRO_ESTESO,
-            msg="l'appartenza e' di tipo esteso"
+            est.appartenenza.membro == Appartenenza.ESTESO,
+            msg="l'appartenenza e' di tipo esteso"
         )
 
+        print(est.appartenenza.esito)
         self.assertTrue(
-            aut.appartenza.esito == Appartenenza.ESITO_PENDING,
-            msg="l'appartenza e' pendente"
+            est.appartenenza.esito == Appartenenza.ESITO_PENDING,
+            msg="l'appartenenza e' pendente"
         )
 
         aut2 = presidente2.autorizzazioni_in_attesa().first()
@@ -491,8 +494,8 @@ class TestAnagrafica(TestCase):
         aut2.nega(presidente2)
 
         self.assertTrue(
-            aut.appartenza.esito == Appartenenza.ESITO_NO,
-            msg="l'appartenza e' rifiutata"
+            est.appartenenza.esito == Appartenenza.ESITO_NO,
+            msg="l'appartenenza e' rifiutata"
         )
 
 
@@ -515,15 +518,16 @@ class TestAnagrafica(TestCase):
             msg="Il presidente non ha autorizzazioni in attesa"
         )
 
-        dati_estensione = {
-                'richiedente': da_estendere,
-                'persona': da_estendere,
-                'destinazione': sede2
-            }
-        modulo = ModuloCreazioneEstensione(initial=dati_estensione)
-        est = modulo.save()
+        modulo = ModuloCreazioneEstensione()
+        est = modulo.save(commit=False)
+        est.richiedente = da_estendere
+        est.persona = da_estendere
+        est.destinazione = sede2
+        est.save()
         est.richiedi()
 
+        
+        
         self.assertTrue(
             da_estendere.estensione == est,
             msg="L'estensione creata correttamente"
@@ -542,14 +546,16 @@ class TestAnagrafica(TestCase):
         aut = presidente1.autorizzazioni_in_attesa().first()
 
         self.assertFalse(
-            aut.appartenza.exist(),
+            est.appartenenza is not None,
             msg="l'estensione non ha un'appartenenza"
         )
 
         aut.nega(presidente1, motivo="Il volontario qualcosa")
 
+
+        est.refresh_from_db()
         self.assertFalse(
-            aut.appartenza.exist(),
+            est.appartenenza is not None,
             msg="l'estensione non ha un'appartenenza"
         )
 

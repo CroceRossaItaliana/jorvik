@@ -10,12 +10,12 @@ from attivita.models import Area
 
 
 def codice_fiscale(length=16):
-   return ''.join(random.choice(string.lowercase) for i in range(length))
+   return ''.join(random.choice(string.ascii_letters + string.digits) for i in range(length))
 
 def crea_persona():
     p = Persona(
         nome=names.get_first_name(),
-        cognome=names.last_name(),
+        cognome=names.get_last_name(),
         codice_fiscale=codice_fiscale(),
         data_nascita="1994-2-5"
     )
