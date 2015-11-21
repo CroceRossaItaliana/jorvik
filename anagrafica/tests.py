@@ -1,8 +1,10 @@
 from django.test import TestCase
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
+from anagrafica.forms import ModuloCreazioneEstensione
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Delega
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI
+from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede
 
 
 class TestAnagrafica(TestCase):
@@ -304,3 +306,259 @@ class TestAnagrafica(TestCase):
             msg="Il membro non ha davvero alcuna carta di identita"
         )
 
+    def test_estensione_accettata_accettata(self):
+        presidente1 = crea_persona()
+        presidente2 = crea_persona()
+
+        da_estendere, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
+
+        sede2 = crea_sede(presidente2)
+
+        self.assertTrue(
+            da_estendere.estensione is None,
+            msg="Non esiste estensione alcuna"
+        )
+
+        self.assertFalse(
+            presidente1.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente non ha autorizzazioni in attesa"
+        )
+
+        dati_estensione = {
+                'richiedente': da_estendere,
+                'persona': da_estendere,
+                'destinazione': sede2
+            }
+        modulo = ModuloCreazioneEstensione(initial=dati_estensione)
+        est = modulo.save()
+        est.richiedi()
+
+        self.assertTrue(
+            da_estendere.estensione == est,
+            msg="L'estensione creata correttamente"
+        )
+
+        self.assertTrue(
+            presidente1.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente ha autorizzazioni da processare"
+        )
+
+        self.assertFalse(
+            presidente2.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente non ha autorizzazioni in attesa"
+        )
+
+        aut = presidente1.autorizzazioni_in_attesa().first()
+
+        self.assertFalse(
+            aut.appartenza.exist(),
+            msg="l'estensione non ha un'appartenenza"
+        )
+
+        modulo = est.autorizzazioni_modulo_concedi()(initial={
+            "protocollo_numero": 31,
+            "protocollo_data": "2010-10-3"
+        })
+        aut.concedi(presidente1, modulo=modulo)
+
+        self.assertTrue(
+            presidente2.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente ha autorizzazioni in attesa"
+        )
+
+        self.assertTrue(
+            aut.appartenza.exist(),
+            msg="l'estensione ha un'appartenenza"
+        )
+
+        self.assertTrue(
+            aut.appartenza.persona == da_estendere,
+            msg="l'appartenza contiene il volontario esatto"
+        )
+
+        self.assertTrue(
+            aut.appartenza.sede == sede2,
+            msg="l'appartenza contiene la sede esatta"
+        )
+
+        self.assertTrue(
+            aut.appartenza.membro == Appartenenza.MEMBRO_ESTESO,
+            msg="l'appartenza e' di tipo esteso"
+        )
+
+        self.assertTrue(
+            aut.appartenza.esito == Appartenenza.ESITO_PENDING,
+            msg="l'appartenza e' pendente"
+        )
+
+        aut2 = presidente2.autorizzazioni_in_attesa().first()
+
+        aut2.concedi(presidente2)
+
+        self.assertTrue(
+            aut.appartenza.esito == Appartenenza.ESITO_OK,
+            msg="l'appartenza e' accettata"
+        )
+
+    def test_estensione_accettata_negata(self):
+        presidente1 = crea_persona()
+        presidente2 = crea_persona()
+
+        da_estendere, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
+
+        sede2 = crea_sede(presidente2)
+
+        self.assertTrue(
+            da_estendere.estensione is None,
+            msg="Non esiste estensione alcuna"
+        )
+
+        self.assertFalse(
+            presidente1.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente non ha autorizzazioni in attesa"
+        )
+
+        dati_estensione = {
+                'richiedente': da_estendere,
+                'persona': da_estendere,
+                'destinazione': sede2
+            }
+        modulo = ModuloCreazioneEstensione(initial=dati_estensione)
+        est = modulo.save()
+        est.richiedi()
+
+        self.assertTrue(
+            da_estendere.estensione == est,
+            msg="L'estensione creata correttamente"
+        )
+
+        self.assertTrue(
+            presidente1.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente ha autorizzazioni da processare"
+        )
+
+        self.assertFalse(
+            presidente2.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente non ha autorizzazioni in attesa"
+        )
+
+        aut = presidente1.autorizzazioni_in_attesa().first()
+
+        self.assertFalse(
+            aut.appartenza.exist(),
+            msg="l'estensione non ha un'appartenenza"
+        )
+
+
+        modulo = est.autorizzazioni_modulo_concedi()(initial={
+            "protocollo_numero": 31,
+            "protocollo_data": "2010-10-3"
+        })
+        aut.concedi(presidente1, modulo=modulo)
+
+        self.assertTrue(
+            presidente2.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente ha autorizzazioni in attesa"
+        )
+
+        self.assertTrue(
+            aut.appartenza.exist(),
+            msg="l'estensione ha un'appartenenza"
+        )
+
+        self.assertTrue(
+            aut.appartenza.persona == da_estendere,
+            msg="l'appartenza contiene il volontario esatto"
+        )
+
+        self.assertTrue(
+            aut.appartenza.sede == sede2,
+            msg="l'appartenza contiene la sede esatta"
+        )
+
+        self.assertTrue(
+            aut.appartenza.membro == Appartenenza.MEMBRO_ESTESO,
+            msg="l'appartenza e' di tipo esteso"
+        )
+
+        self.assertTrue(
+            aut.appartenza.esito == Appartenenza.ESITO_PENDING,
+            msg="l'appartenza e' pendente"
+        )
+
+        aut2 = presidente2.autorizzazioni_in_attesa().first()
+
+        aut2.nega(presidente2)
+
+        self.assertTrue(
+            aut.appartenza.esito == Appartenenza.ESITO_NO,
+            msg="l'appartenza e' rifiutata"
+        )
+
+
+    def test_estensione_negata(self):
+
+        presidente1 = crea_persona()
+        presidente2 = crea_persona()
+
+        da_estendere, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
+
+        sede2 = crea_sede(presidente2)
+
+        self.assertTrue(
+            da_estendere.estensione is None,
+            msg="Non esiste estensione alcuna"
+        )
+
+        self.assertFalse(
+            presidente1.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente non ha autorizzazioni in attesa"
+        )
+
+        dati_estensione = {
+                'richiedente': da_estendere,
+                'persona': da_estendere,
+                'destinazione': sede2
+            }
+        modulo = ModuloCreazioneEstensione(initial=dati_estensione)
+        est = modulo.save()
+        est.richiedi()
+
+        self.assertTrue(
+            da_estendere.estensione == est,
+            msg="L'estensione creata correttamente"
+        )
+
+        self.assertTrue(
+            presidente1.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente ha autorizzazioni da processare"
+        )
+
+        self.assertFalse(
+            presidente2.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente non ha autorizzazioni in attesa"
+        )
+
+        aut = presidente1.autorizzazioni_in_attesa().first()
+
+        self.assertFalse(
+            aut.appartenza.exist(),
+            msg="l'estensione non ha un'appartenenza"
+        )
+
+        aut.nega(presidente1, motivo="Il volontario qualcosa")
+
+        self.assertFalse(
+            aut.appartenza.exist(),
+            msg="l'estensione non ha un'appartenenza"
+        )
+
+        self.assertIsNone(
+            da_estendere.estensione,
+            msg="Il volontario non ha estensioni in corso"
+        )
+
+        self.assertTrue(
+            est.esito == est.ESITO_NO,
+            msg="Estensione rifiutata"
+        )

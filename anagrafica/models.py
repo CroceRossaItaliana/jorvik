@@ -22,7 +22,7 @@ from django.db.models.query import EmptyQuerySet
 from django_countries.fields import CountryField
 import phonenumbers
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
-from anagrafica.forms import ModuloConsentiEstensione
+
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, APPLICAZIONI_SLUG_DICT, PERMESSI_NOMI_DICT
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT
@@ -1009,14 +1009,16 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     Rappresenta una pratica di estensione.
     """
 
-    MODULO_CONSENTI = ModuloConsentiEstensione()
-
     richiedente = models.ForeignKey(Persona, related_name='richiedente')
     persona = models.ForeignKey(Persona, related_name='estensioni')
     destinazione = models.ForeignKey(Sede, related_name='estensioni_destinazione')
     appartenenza = models.ForeignKey(Appartenenza, related_name='estensione', null=True, blank=True)
     protocollo_numero = models.PositiveIntegerField('Numero di protocollo', null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
+
+    def autorizzazione_consenti_modulo(self):
+        from anagrafica.forms import ModuloConsentiEstensione
+        return ModuloConsentiEstensione
 
     def autorizzazione_concessa(self, MODULO_CONSENTI):
         app = Appartenenza(
@@ -1028,3 +1030,12 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         )
         app.save()
         app.richiedi()
+        self.appartenenza = app
+        self.save()
+
+    def richiedi(self):
+        self.autorizzazione_richiedi(
+                richiedente=me,
+                destinatario=((PRESIDENTE, me.sede), (UFFICIO_SOCI, me.sede)),
+                motivo_obbligatorio=True
+            )

@@ -357,12 +357,8 @@ def utente_estensione(request, me):
             }
         modulo = ModuloCreazioneEstensione(request.POST, initial=dati_estensione)
         if modulo.is_valid():
-            modulo.save()
-            modulo.autorizzazione_richiedi(
-                richiedente=me,
-                destinatario=((PRESIDENTE, me.sede), (UFFICIO_SOCI, me.sede)),
-                motivo_obbligatorio=True
-            )
+            est = modulo.save()
+            est.richiedi()
     else:
         modulo = ModuloCreazioneEstensione()
     contesto = {
