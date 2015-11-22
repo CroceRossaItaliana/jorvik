@@ -3,6 +3,7 @@ from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKe
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models import Q
 from safedelete import safedelete_mixin_factory, SOFT_DELETE
 from mptt.models import MPTTModel, TreeForeignKey
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
@@ -205,13 +206,20 @@ class ConAutorizzazioni(models.Model):
             return cls.objects.filter(ritirata=True)
 
         elif esito == cls.ESITO_PENDING:
-            return cls.objects.filter(confermata=False, ritirata=False)
+            # Confermata = False, ma almeno una autorizzazione e nessuna negata
+            tipo = ContentType.objects.get_for_model(cls)
+            return cls.objects.filter(confermata=False, ritirata=False,
+                  pk__in=Autorizzazione.objects.filter(oggetto_tipo__pk=tipo.id).values_list('oggetto_id', flat=True))\
+                .exclude(
+                  pk__in=Autorizzazione.objects.filter(oggetto_tipo__pk=tipo.id, concessa=False).values_list('oggetto_id', flat=True)
+            )
 
         else:  # ESITO_NO
-            raise NotImplementedError("Operazione non implementata.")
-            # Ottenere:
-            # - Oggetti con nessuna autorizzazione e confermata=False
-            # - Oggetti con almeno una autorizzazione negata
+            tipo = ContentType.objects.get_for_model(cls)
+            return cls.objects.filter(
+                # Confermata = False, ma non pendente
+                confermata=False,
+            ).exclude(pk__in=cls.con_esito(cls.ESITO_PENDING))
 
     @classmethod
     def con_esito_ok(cls):

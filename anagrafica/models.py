@@ -558,7 +558,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
 
     @property
     def estensione(self):
-        return self.estensioni.all().first()
+        """
+        Ritorna estensione in corso, o estensione in attesa di conferma, se applicabile.
+        Altrimenti, None.
+        :return: Estensione se in corso o in attesa, altrimenti None.
+        """
+        return self.estensioni.filter(
+            Q(Appartenenza.query_attuale().via("appartenenza")) |  # Con appartenenza attuale
+            Q(pk__in=Estensione.con_esito_pending().filter(persona=self))  # O con esito pending
+        ).first()
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """

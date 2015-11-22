@@ -560,12 +560,14 @@ class TestAnagrafica(TestCase):
             msg="l'estensione non ha un'appartenenza"
         )
 
+        self.assertTrue(
+            est.esito == est.ESITO_NO,
+            msg="Estensione rifiutata"
+        )
+
+        da_estendere.refresh_from_db()
         self.assertIsNone(
             da_estendere.estensione,
             msg="Il volontario non ha estensioni in corso"
         )
 
-        self.assertTrue(
-            est.esito == est.ESITO_NO,
-            msg="Estensione rifiutata"
-        )
