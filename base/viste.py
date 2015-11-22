@@ -129,7 +129,7 @@ def autorizzazione_concedi(request, me, pk=None):
     if not me.autorizzazioni_in_attesa().filter(pk=richiesta.pk).exists():
         return errore_generico(request, me,
             titolo="Richiesta non trovata",
-            messaggio="Probabilmente l'autorizzazione è stata concessa da qualcun altro.",
+            messaggio="E' possibile che la richiesta sia stata già approvata o respinta da qualcun altro.",
             torna_titolo="Richieste in attesa",
             torna_url="/autorizzazioni/"
         )
