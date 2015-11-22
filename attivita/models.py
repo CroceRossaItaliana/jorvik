@@ -173,7 +173,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         self.stato = self.RITIRATA
         self.autorizzazioni_ritira()
 
-    def autorizzazione_concessa(self):
+    def autorizzazione_concessa(self, modulo):
         """
         (Automatico)
         Invia notifica di autorizzazione concessa.

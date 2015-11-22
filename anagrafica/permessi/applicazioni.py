@@ -50,6 +50,7 @@ APPLICAZIONI_SLUG = (
     (DELEGATO_AREA, "delegato-area"),
     (RESPONSABILE_AREA, "responsabile-area"),
     (REFERENTE, "referente-attivita"),
+    (DELEGATO_CO, "centrale-operativa"),
 )
 
 PERMESSI_NOMI_DICT = dict(PERMESSI_NOMI)

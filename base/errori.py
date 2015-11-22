@@ -38,8 +38,7 @@ def permessi(request, me):
     """
     return 'base_errore_permessi.html'
 
-@pagina_pubblica
-def generico(request, me=None,
+def errore_generico(request, me=None,
              titolo="Errore", messaggio="Si è verificato un errore generico.",
              torna_titolo="Home page", torna_url="/"):
     """

@@ -356,7 +356,7 @@ class TestAnagrafica(TestCase):
             msg="l'estensione non ha un'appartenenza"
         )
 
-        modulo = est.autorizzazioni_consenti_modulo()({
+        modulo = est.autorizzazione_concedi_modulo()({
             "protocollo_numero": 31,
             "protocollo_data": datetime.date.today()
         })
@@ -451,7 +451,7 @@ class TestAnagrafica(TestCase):
             msg="l'estensione non ha un'appartenenza"
         )
 
-        modulo = est.autorizzazioni_consenti_modulo()({
+        modulo = est.autorizzazione_concedi_modulo()({
             "protocollo_numero": 31,
             "protocollo_data": datetime.date.today()
         })

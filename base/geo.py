@@ -20,10 +20,10 @@ class Locazione(ConMarcaTemporale, models.Model):
     geo = models.PointField(blank=True, default='POINT(0.0 0.0)', srid=4326)
 
     via = models.CharField("Via", max_length=64, blank=True)
-    civico = models.CharField("Civico", max_length=8, blank=True)
+    civico = models.CharField("Civico", max_length=16, blank=True)
     comune = models.CharField("Comune", max_length=64, blank=True, db_index=True)
-    provincia = models.CharField("Provincia", max_length=32, blank=True, db_index=True)
-    regione = models.CharField("Regione", max_length=32, blank=True, db_index=True)
+    provincia = models.CharField("Provincia", max_length=64, blank=True, db_index=True)
+    regione = models.CharField("Regione", max_length=64, blank=True, db_index=True)
     cap = models.CharField("CAP", max_length=32, blank=True, db_index=True)
     stato = models.CharField("Stato", max_length=2, blank=True, db_index=True)
 

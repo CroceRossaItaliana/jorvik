@@ -118,13 +118,14 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         :param modulo: Se modulo necessario, un modulo valido.
         :return:
         """
-        self.concessa = concedi
-        self.firmatario = firmatario
-        self.save()
-
         # Controlla che il modulo fornito, se presente, sia valido
         if modulo and not modulo.is_valid():
             raise ValueError("Il modulo richiesto per l'accettazione non e' stato completato correttamente.")
+
+        self.concessa = concedi
+        self.firmatario = firmatario
+        self.necessaria = False
+        self.save()
 
         # Se ha negato, allora avvisa subito della negazione.
         # Nessuna altra firma e' piu' necessaria.
@@ -354,7 +355,7 @@ class ConAutorizzazioni(models.Model):
         """
         pass
 
-    def autorizzazione_consenti_modulo(self):
+    def autorizzazione_concedi_modulo(self):
         """
         Sovrascrivimi! Ritorna la classe del modulo per la conferma.
         """

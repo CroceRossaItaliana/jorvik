@@ -9,7 +9,7 @@
 
 {% block avviso_corpo %}
 
-    {% if richiesta.esito == richiesta.ESITO_PENDING %}
+    {% if richiesta.necessaria %}
 
         <p>Per dare consenso a questa richiesta, &egrave; necessario aggiungere le seguenti informazioni.</p>
 
@@ -38,5 +38,7 @@
         <i class="fa fa-fw fa-mail-reply"></i>
         Torna all'elenco richieste in attesa
     </a>
+
+    <p>&nbsp;</p>
 
 {% endblock %}

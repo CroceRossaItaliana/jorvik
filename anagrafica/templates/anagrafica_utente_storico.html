@@ -102,6 +102,74 @@
 
 
 
+            <p>&nbsp;</p>
+
+            <h4><i class="fa fa-clock-o fa-fw"></i> Deleghe</h4>
+
+            <table class="table table-condensed table-responsive">
+
+                <thead>
+                    <th>Stato</th>
+                    <th>Validit&agrave;</th>
+                    <th>Delega</th>
+                </thead>
+
+
+<tbody>
+                {% for d in deleghe %}
+                    <tr     {% if d.attuale %}class="bg-success"
+                            {% endif %}>
+                        <td>
+
+                            {% if d.attuale %}
+                                <i class="fa fa-check fa-fw"></i>
+                                Valida
+                            {% else %}
+                                <i class="fa fa-folder fa-fw"></i>
+                                Archiviata
+                            {% endif %}
+
+                        </td>
+                        <td>Dal {{ d.inizio }}<br />
+                            {% if d.fine %}
+                                al {{ d.fine }}
+
+                            {% else %}
+                                <span class="text-muted">
+                                    (a tempo indet.)
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td style="width: 60%;">
+                            {{ d.get_tipo_display }}<br />
+                            {% if d.oggetto.link %}
+                                <strong>{{ d.oggetto.link|safe }}</strong>
+                            {% else %}
+                                <strong>{{ d.oggetto }}</strong>
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% for a in d.autorizzazioni %}
+
+
+                    {% endfor %}
+
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="bg-warning">
+                            <i class="fa fa-info"></i> Nessuna delega registrata.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+
+                </tbody>
+
+            </table>
 
         </div>
 

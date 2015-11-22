@@ -408,7 +408,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
             if d.tipo in tipi:
                 continue
             tipi.append(d.tipo)
-            lista += [(APPLICAZIONI_SLUG_DICT[d.tipo], PERMESSI_NOMI_DICT[d.tipo])]
+            #lista += [(APPLICAZIONI_SLUG_DICT[d.tipo], PERMESSI_NOMI_DICT[d.tipo])]
 
         return lista
 
@@ -1016,7 +1016,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     protocollo_numero = models.PositiveIntegerField('Numero di protocollo', null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
 
-    def autorizzazioni_consenti_modulo(self):
+    def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiEstensione
         return ModuloConsentiEstensione
 
