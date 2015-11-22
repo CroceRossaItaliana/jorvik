@@ -398,6 +398,8 @@ class TestAnagrafica(TestCase):
 
         aut2.concedi(presidente2)
 
+        est.appartenenza.refresh_from_db()
+
         self.assertTrue(
             est.appartenenza.esito == Appartenenza.ESITO_OK,
             msg="l'appartenenza e' accettata"
@@ -490,7 +492,7 @@ class TestAnagrafica(TestCase):
 
         aut2 = presidente2.autorizzazioni_in_attesa().first()
 
-        aut2.nega(presidente2)
+        aut2.nega(presidente2, "Motivazione qualsiasi")
 
         self.assertTrue(
             est.appartenenza.esito == Appartenenza.ESITO_NO,
