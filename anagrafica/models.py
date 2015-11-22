@@ -1026,7 +1026,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
             persona=self.persona,
             sede=self.destinazione,
             inizio=datetime.today(),
-            fine=datetime.today()+timedelta(days=365)
+            fine=datetime.today() + timedelta(days=365)
         )
         app.save()
         app.richiedi()
@@ -1039,7 +1039,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         sede = self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO)[0]
 
         self.autorizzazione_richiedi(
-                richiedente=self.persona,
-                destinatario=((PRESIDENTE, sede), (UFFICIO_SOCI, sede)),
-                motivo_obbligatorio=True
-            )
+            richiedente=self.persona,
+            destinatario=((PRESIDENTE, sede), (UFFICIO_SOCI, sede)),
+            motivo_obbligatorio=True
+        )

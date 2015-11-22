@@ -332,6 +332,10 @@ class ConAutorizzazioni(models.Model):
 
         # Rimuovi eventuale stato di confermata
         self.confermata = False
+        self.save()
+
+        # Evita cache per esito
+        self.refresh_from_db()
 
     def autorizzazioni_ritira(self):
         """

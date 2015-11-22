@@ -483,7 +483,6 @@ class TestAnagrafica(TestCase):
             msg="l'appartenenza e' di tipo esteso"
         )
 
-        print(est.appartenenza.esito)
         self.assertTrue(
             est.appartenenza.esito == Appartenenza.ESITO_PENDING,
             msg="l'appartenenza e' pendente"
