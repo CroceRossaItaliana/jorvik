@@ -1,0 +1,13 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p class="grassetto">Buone notizie!</p>
+    <p>Ricevi questo messaggio perch&eacute; una tua richiesta &egrave; stata <strong>APPROVATA</strong>.</p>
+
+    <p>Segue il contenuto della richiesta inoltrata il {{ richiesta.creazione }}:</p>
+    <hr />
+    {% include richiesta.template_path %}
+    <hr />
+
+{% endblock %}

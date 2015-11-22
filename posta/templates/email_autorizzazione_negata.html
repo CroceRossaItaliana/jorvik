@@ -1,0 +1,20 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p>Ricevi questo messaggio perch&eacute; una tua richiesta &egrave; stata <strong>RESPINTA</strong>.</p>
+
+    <p>Segue il contenuto della richiesta inoltrata il {{ richiesta.creazione }}:</p>
+    <hr />
+    {% include richiesta.template_path %}
+    <hr />
+
+    <p>La richiesta &egrave; stata respinta da {{ richiesta.firmatario.link|safe }} il {{ richiesta.firmatario.ultima_modifica }}.</p>
+    {% if richiesta.motivo_negazione %}
+        <p>{{ richiesta.firmatario.nome }} ha fornito la seguenta motivazione: <strong>{{ richiesta.motivo_negazione }}</strong>.</p>
+    {% endif %}
+
+    <p>Per ulteriori informazioni sulla motivazione della negazione, o se credi ci sia stato un errore,
+        puoi contattare {{ richiesta.firmatario.link|safe }} rispondendo a questa e-mail.</p>
+
+{% endblock %}

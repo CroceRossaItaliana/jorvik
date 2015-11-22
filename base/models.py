@@ -8,10 +8,10 @@ from safedelete import safedelete_mixin_factory, SOFT_DELETE
 from mptt.models import MPTTModel, TreeForeignKey
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
 from anagrafica.permessi.costanti import DELEGHE_OGGETTI_DICT
+from base.notifiche import NOTIFICA_NON_INVIARE
 from base.stringhe import GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale
 from datetime import datetime
-
 
 class ModelloSemplice(models.Model):
     """
@@ -140,6 +140,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             self.oggetto.save()
             self.oggetto.autorizzazione_negata(motivo=motivo)
             self.oggetto.autorizzazioni_set().update(necessaria=False)
+            if self.oggetto.INVIA_NOTIFICA_NEGATA:
+                self.notifica_negata()
             return
 
         # Questa concessa, di questo progressivo non e' piu' necessaria
@@ -151,6 +153,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             self.oggetto.confermata = True
             self.oggetto.save()
             self.oggetto.autorizzazione_concessa(modulo=modulo)
+            if self.oggetto.INVIA_NOTIFICA_CONCESSA:
+                self.notifica_concessa()
 
     def concedi(self, firmatario, modulo=None):
         self.firma(firmatario, True, modulo=modulo)
@@ -167,6 +171,50 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             self.oggetto._meta.app_label.lower(),
             self.oggetto._meta.object_name.lower()
         )
+
+    def notifica_richiesta(self):
+        from anagrafica.models import Delega, Persona
+        from posta.models import Messaggio
+
+        tipo = ContentType.objects.get_for_model(self.destinatario_oggetto)
+        destinatari = [d.persona for d in
+                       Delega.query_attuale().filter(tipo=self.destinatario_ruolo,
+                                                     oggetto_tipo__pk=tipo.pk,
+                                                     oggetto_id=self.destinatario_oggetto.pk)]
+        Messaggio.costruisci_e_invia(
+            oggetto="Richiesta di %s da %s" % (self.oggetto.RICHIESTA_NOME, self.richiedente.nome_completo,),
+            modello="email_autorizzazione_richiesta.html",
+            corpo={
+                "richiesta": self,
+            },
+            mittente=self.richiedente,
+            destinatari=destinatari,
+        )
+
+    def notifica_concessa(self):
+        from posta.models import Messaggio
+        Messaggio.costruisci_e_invia(
+            oggetto="Richiesta di %s APPROVATA" % (self.oggetto.RICHIESTA_NOME,),
+            modello="email_autorizzazione_concessa.html",
+            corpo={
+                "richiesta": self,
+            },
+            mittente=self.firmatario,
+            destinatari=[self.richiedente]
+        )
+
+    def notifica_negata(self):
+        from posta.models import Messaggio
+        Messaggio.costruisci_e_invia(
+            oggetto="Richiesta di %s RESPINTA" % (self.oggetto.RICHIESTA_NOME,),
+            modello="email_autorizzazione_negata.html",
+            corpo={
+                "richiesta": self,
+            },
+            mittente=self.firmatario,
+            destinatari=[self.richiedente]
+        )
+
 
 
 class ConAutorizzazioni(models.Model):
@@ -191,6 +239,15 @@ class ConAutorizzazioni(models.Model):
     ESITO_NO = "Negato"
     ESITO_RITIRATA = "Ritirata"
     ESITO_PENDING = "In attesa"
+
+    # Sovrascrivimi! Invia notifiche e-mail?
+    INVIA_NOTIFICHE = True
+
+    INVIA_NOTIFICA_CONCESSA = INVIA_NOTIFICHE
+    INVIA_NOTIFICA_NEGATA = INVIA_NOTIFICHE
+
+    # Sovrascrivimi!
+    RICHIESTA_NOME = "autorizzazione"
 
     @classmethod
     def con_esito(cls, esito):
@@ -318,7 +375,14 @@ class ConAutorizzazioni(models.Model):
         # Per ogni destinatario aspettato
         for i in destinatario:
 
-            (ruolo, oggetto) = i
+            # Policy se non specificata
+            notifica_invia = NOTIFICA_NON_INVIARE
+
+            try:  # Controlla se la policy e' specificata
+                (ruolo, oggetto, notifica_invia) = i
+
+            except ValueError:  # Altrimenti, estrai comunque ruolo e oggetto
+                (ruolo, oggetto) = i
 
             if ruolo not in DELEGHE_OGGETTI_DICT:
                 raise ValueError("Il ruolo che si richiede firmi questa autorizzazione non esiste.")
@@ -337,6 +401,9 @@ class ConAutorizzazioni(models.Model):
                 **kwargs
             )
             r.save()
+
+            if notifica_invia:
+                r.notifica_richiesta()
 
         # Rimuovi eventuale stato di confermata
         self.confermata = False

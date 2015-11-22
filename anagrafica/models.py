@@ -41,6 +41,8 @@ from autoslug import AutoSlugField
 from posta.models import Messaggio
 from django.apps import apps
 
+from base.notifiche import NOTIFICA_INVIA, NOTIFICA_NON_INVIARE
+
 class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     """
     Rappresenta un record anagrafico in Gaia.
@@ -765,6 +767,8 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
 
     CONDIZIONE_ATTUALE_AGGIUNTIVA = Q(confermata=True)
 
+    RICHIESTA_NOME = "Appartenenza"
+
     def richiedi(self):
         """
         Richiede di confermare l'appartenenza.
@@ -774,8 +778,8 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         self.autorizzazione_richiedi(
             self.persona,
             (
-                (PRESIDENTE, self.sede),
-                (UFFICIO_SOCI, self.sede)
+                (PRESIDENTE, self.sede, NOTIFICA_INVIA),
+                (UFFICIO_SOCI, self.sede, NOTIFICA_NON_INVIARE)
             )
         )
 
@@ -1024,6 +1028,8 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     protocollo_numero = models.PositiveIntegerField('Numero di protocollo', null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
 
+    RICHIESTA_NOME = "Estensione"
+
     def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiEstensione
         return ModuloConsentiEstensione
@@ -1048,6 +1054,9 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
         self.autorizzazione_richiedi(
             richiedente=self.persona,
-            destinatario=((PRESIDENTE, sede), (UFFICIO_SOCI, sede)),
+            destinatario=(
+                (PRESIDENTE, sede, NOTIFICA_INVIA),
+                (UFFICIO_SOCI, sede, NOTIFICA_NON_INVIARE)
+            ),
             motivo_obbligatorio=True
         )
