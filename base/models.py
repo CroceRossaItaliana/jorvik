@@ -181,6 +181,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                        Delega.query_attuale().filter(tipo=self.destinatario_ruolo,
                                                      oggetto_tipo__pk=tipo.pk,
                                                      oggetto_id=self.destinatario_oggetto.pk)]
+        if not destinatari:
+            return  # Nessun destinatario, nessuna e-mail.
         Messaggio.costruisci_e_invia(
             oggetto="Richiesta di %s da %s" % (self.oggetto.RICHIESTA_NOME, self.richiedente.nome_completo,),
             modello="email_autorizzazione_richiesta.html",

@@ -15,6 +15,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
     SUPPORTO_EMAIL = 'supporto@gaia.cri.it'
     SUPPORTO_NOME = 'Supporto Gaia'
+    NOREPLY_EMAIL = 'noreply@gaia.cri.it'
 
     class Meta:
         verbose_name = "Messaggio di posta"
@@ -76,8 +77,10 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         else:
             mittente_nome = self.mittente.nome_completo
             mittente_email = self.mittente.email
+            if not mittente_email:
+                mittente_email = self.NOREPLY_EMAIL
 
-        mittente = mittente_nome + " <" + mittente_email + ">"
+        mittente = "%s <%s>" % (mittente_nome, mittente_email)
 
         plain_text = strip_tags(self.corpo)
         successo = True
@@ -113,6 +116,10 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             except SMTPException as e:
                 successo = False
                 d.errore = str(e)
+
+            except TypeError as e:
+                successo = True
+                d.errore = "Nessun indirizzo e-mail. Saltato"
 
             d.tentativo = datetime.now()
             d.save()
