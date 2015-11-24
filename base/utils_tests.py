@@ -3,7 +3,7 @@ import string
 
 import names
 
-from anagrafica.costanti import LOCALE
+from anagrafica.costanti import LOCALE, ESTENSIONE
 from anagrafica.models import Persona, Sede, Appartenenza, Delega
 from anagrafica.permessi.applicazioni import PRESIDENTE
 from attivita.models import Area
@@ -22,11 +22,12 @@ def crea_persona():
     p.save()
     return p
 
-def crea_sede(presidente=None, genitore=None):
+def crea_sede(presidente=None, estensione=LOCALE, genitore=None):
+    ESTENSIONE_DICT = dict(ESTENSIONE)
     s = Sede(
-        nome="Comitato Regionale di Sicilia",
+        nome="Com. " + ESTENSIONE_DICT[estensione] + " " + names.get_last_name(),
         tipo=Sede.COMITATO,
-        estensione=LOCALE,
+        estensione=estensione,
         genitore=genitore,
     )
     s.save()

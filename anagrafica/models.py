@@ -948,6 +948,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
         """
         return self.get_descendants(include_self=includi_me)
 
+    @property
     def comitato(self):
         """
         Ottiene il comitato a cui afferisce la Sede attuale.
