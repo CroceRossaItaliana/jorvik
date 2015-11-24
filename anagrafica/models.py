@@ -948,6 +948,19 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
         """
         return self.get_descendants(include_self=includi_me)
 
+    @property
+    def comitato(self):
+        """
+        Ottiene il comitato a cui afferisce la Sede attuale.
+        :return: Oggetto Sede o None.
+        """
+
+        # Regionale e Nazionale sono Comitati.
+        if self.estensione in [LOCALE, PROVINCIALE, REGIONALE, NAZIONALE]:
+            return self
+
+        # Se sono unita' territoriale, ritorna il mio genitore.
+        return self.genitore
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
