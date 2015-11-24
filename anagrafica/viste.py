@@ -6,7 +6,7 @@ from django.contrib.auth import login
 from django.views.generic import ListView
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
-    ModuloCreazioneTelefono, ModuloCreazioneEstensione
+    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -365,3 +365,21 @@ def utente_estensione(request, me):
         "modulo": modulo
     }
     return "anagrafica_utente_estensione.html", contesto
+
+@pagina_privata
+def utente_trasferimento(request, me):
+
+    if request.POST:
+        dati_trasferimento = {
+                'persona': me
+            }
+        modulo = ModuloCreazioneEstensione(request.POST, initial=dati_trasferimento)
+        if modulo.is_valid():
+            est = modulo.save()
+            est.richiedi()
+    else:
+        modulo = ModuloCreazioneTrasferimento()
+    contesto = {
+        "modulo": modulo
+    }
+    return "anagrafica_utente_trasferimento.html", contesto

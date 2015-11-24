@@ -1013,7 +1013,12 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale):
     """
     Rappresenta una pratica di trasferimento.
     """
+
+    persona = models.ForeignKey(Persona, related_name='trasferimenti')
+    destinazione = models.ForeignKey(Sede, related_name='trasferimenti_destinazione')
     appartenenza = models.ForeignKey(Appartenenza, related_name='trasferimento')
+    protocollo_numero = models.PositiveIntegerField('Numero di protocollo', null=True, blank=True)
+    protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
 
 
 class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
