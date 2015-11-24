@@ -6,42 +6,22 @@ from anagrafica.forms import ModuloCreazioneEstensione
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Delega
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI
-from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede
+from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza
 
 
 class TestAnagrafica(TestCase):
 
     def test_appartenenza(self):
 
-        c = Sede(
-            nome="Comitato Regionale di Sicilia",
-            tipo=Sede.COMITATO,
-            estensione=LOCALE,
-        )
-        c.save()
-
-        p = Persona(
-            nome="Mario",
-            cognome="Rossi",
-            codice_fiscale="FRSSAKJSIKAJDO",
-            data_nascita="1994-2-5"
-        )
-        p.save()
-
-        a = Appartenenza(
-            persona=p,
-            sede=c,
-            membro=Appartenenza.VOLONTARIO,
-            inizio="1980-12-10",
-            confermata=False
-        )
-        a.save()
+        p = crea_persona()
+        c = crea_sede()
 
         self.assertTrue(
             c.appartenenze_attuali().count() == 0,
             msg="Non ci devono essere appartenze ancora attuali."
         )
 
+        a = crea_appartenenza(p, c)
         a.richiedi()
 
         self.assertTrue(
@@ -87,11 +67,7 @@ class TestAnagrafica(TestCase):
 
     def test_permessi(self):
 
-        c = Sede(
-            nome="Comitato Regionale di Sicilia",
-            tipo=Sede.COMITATO,
-            estensione=REGIONALE,
-        )
+        c = crea_sede()
         c.save()
 
         c2 = Sede(
@@ -102,20 +78,10 @@ class TestAnagrafica(TestCase):
         )
         c2.save()
 
-        p = Persona(
-            nome="Mario",
-            cognome="Rossi",
-            codice_fiscale="FRSSAKJSIKAJDO",
-            data_nascita="1994-2-5"
-        )
+        p = crea_persona()
         p.save()
 
-        v = Persona(
-            nome="Luigi",
-            cognome="Verdi",
-            codice_fiscale="FRXSAKJSIKAJDO",
-            data_nascita="1995-2-5"
-        )
+        v = crea_persona()
         v.save()
 
         a = Appartenenza(
@@ -278,12 +244,7 @@ class TestAnagrafica(TestCase):
 
     def test_documenti(self):
 
-        p = Persona(
-            nome="Mario",
-            cognome="Rossi",
-            codice_fiscale="FRSSAKJSIKAJD1",
-            data_nascita="1994-2-5"
-        )
+        p = crea_persona()
         p.save()
 
         d = Documento(
