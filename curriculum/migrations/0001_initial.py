@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Competenza',
             fields=[
-                ('id', models.AutoField(serialize=False, auto_created=True, primary_key=True, verbose_name='ID')),
+                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
             ],
             options={
                 'verbose_name': 'Competenza CRI',
@@ -24,11 +24,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='CompetenzaPersonale',
             fields=[
-                ('id', models.AutoField(serialize=False, auto_created=True, primary_key=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
+                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
+                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
                 ('competenza', models.ForeignKey(to='curriculum.Competenza')),
-                ('persona', models.ForeignKey(to='anagrafica.Persona', related_name='competenze_personali')),
+                ('persona', models.ForeignKey(related_name='competenze_personali', to='anagrafica.Persona')),
             ],
             options={
                 'verbose_name': 'Competenza personale',
@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Titolo',
             fields=[
-                ('id', models.AutoField(serialize=False, auto_created=True, primary_key=True, verbose_name='ID')),
+                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
             ],
             options={
                 'verbose_name_plural': 'Titoli',
@@ -47,12 +47,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TitoloPersonale',
             fields=[
-                ('id', models.AutoField(serialize=False, auto_created=True, primary_key=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('confermata', models.BooleanField(verbose_name='Confermata', default=True, db_index=True)),
-                ('ritirata', models.BooleanField(verbose_name='Ritirata', default=False, db_index=True)),
-                ('persona', models.ForeignKey(to='anagrafica.Persona', related_name='titoli_personali')),
+                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
+                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
+                ('confermata', models.BooleanField(verbose_name='Confermata', db_index=True, default=True)),
+                ('ritirata', models.BooleanField(verbose_name='Ritirata', db_index=True, default=False)),
+                ('persona', models.ForeignKey(related_name='titoli_personali', to='anagrafica.Persona')),
                 ('titolo', models.ForeignKey(to='curriculum.Titolo')),
             ],
             options={

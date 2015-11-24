@@ -1,0 +1,17 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Richiesta Trasferimento{% endblock %}
+
+{% block app_contenuto %}
+
+    {% if me.estensione %}
+        {% include "anagrafica_utente_trasferimento_stato.html" %}
+    {% else %}
+        {% include "anagrafica_utente_traferimento_richiedi.html" %}
+    {% endif %}
+
+{% endblock %}
+
+##elenco richieste passate

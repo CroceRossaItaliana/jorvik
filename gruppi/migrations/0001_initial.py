@@ -14,11 +14,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Appartenenza',
             fields=[
-                ('id', models.AutoField(serialize=False, auto_created=True, primary_key=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('confermata', models.BooleanField(verbose_name='Confermata', default=True, db_index=True)),
-                ('ritirata', models.BooleanField(verbose_name='Ritirata', default=False, db_index=True)),
+                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
+                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
+                ('confermata', models.BooleanField(verbose_name='Confermata', db_index=True, default=True)),
+                ('ritirata', models.BooleanField(verbose_name='Ritirata', db_index=True, default=False)),
             ],
             options={
                 'verbose_name_plural': 'Appartenenze',
@@ -27,9 +27,9 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Gruppo',
             fields=[
-                ('conestensione_ptr', models.OneToOneField(serialize=False, auto_created=True, to='base.ConEstensione', primary_key=True, parent_link=True)),
-                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
+                ('conestensione_ptr', models.OneToOneField(primary_key=True, to='base.ConEstensione', serialize=False, auto_created=True, parent_link=True)),
+                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
                 ('nome', models.CharField(verbose_name='Nome', max_length=127)),
             ],
             options={

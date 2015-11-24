@@ -1,0 +1,11 @@
+<div class="alert bg-info">
+    <p>
+        <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai visionare lo stato della tua richiesta di trasferimento.
+    </p>
+</div>
+
+{% if me.trasferimento.esito == me.trasferimento.ESITO_OK %}
+##termina
+{% else %}
+##annulla richiesta
+{% endif %}

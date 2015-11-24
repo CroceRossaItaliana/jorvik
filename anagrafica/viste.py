@@ -351,14 +351,19 @@ def utente_contatti_cancella_numero(request, me, pk):
 def utente_estensione(request, me):
 
     if request.POST:
-        dati_estensione = {
-                'richiedente': me,
-                'persona': me
-            }
-        modulo = ModuloCreazioneEstensione(request.POST, initial=dati_estensione)
+        if me.estensione is not None:
+            return "anagrafica_utente_estensione.html"
+        modulo = ModuloCreazioneEstensione(request.POST)
         if modulo.is_valid():
-            est = modulo.save()
-            est.richiedi()
+            est = modulo.save(commit=False)
+            if est.destinazione in me.sedi_attuali():
+                modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
+            else:
+
+                est.richiedente = me
+                est.persona = me
+                modulo.save()
+                est.richiedi()
     else:
         modulo = ModuloCreazioneEstensione()
     contesto = {
@@ -370,13 +375,19 @@ def utente_estensione(request, me):
 def utente_trasferimento(request, me):
 
     if request.POST:
-        dati_trasferimento = {
-                'persona': me
-            }
-        modulo = ModuloCreazioneEstensione(request.POST, initial=dati_trasferimento)
+        if me.trasferimento is not None:
+            return "anagrafica_utente_trasferimento.html"
+        modulo = ModuloCreazioneEstensione(request.POST)
         if modulo.is_valid():
-            est = modulo.save()
-            est.richiedi()
+            trasf = modulo.save(commit=False)
+            if trasf.destinazione in me.sedi_attuali():
+                modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
+            else:
+
+                trasf.persona = me
+                trasf.richiedente = me
+                modulo.save()
+                trasf.richiedi()
     else:
         modulo = ModuloCreazioneTrasferimento()
     contesto = {

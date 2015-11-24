@@ -1014,11 +1014,45 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale):
     Rappresenta una pratica di trasferimento.
     """
 
+    richiedente = models.ForeignKey(Persona, related_name='trasferimenti_richiesti_da')
     persona = models.ForeignKey(Persona, related_name='trasferimenti')
     destinazione = models.ForeignKey(Sede, related_name='trasferimenti_destinazione')
     appartenenza = models.ForeignKey(Appartenenza, related_name='trasferimento')
     protocollo_numero = models.PositiveIntegerField('Numero di protocollo', null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
+
+    NOME_RICHIESTA = "Trasferimento"
+
+    def autorizzazione_concedi_modulo(self):
+        from anagrafica.forms import ModuloConsentiTrasferimento
+        return ModuloConsentiTrasferimento
+
+    def autorizzazione_concessa(self, modulo=None):
+        app = Appartenenza(
+            membro=Appartenenza.ESTESO,
+            persona=self.persona,
+            sede=self.destinazione,
+            inizio=datetime.today(),
+            fine=datetime.today() + timedelta(days=365)
+        )
+        app.save()
+        app.richiedi()
+        self.appartenenza = app
+        self.save()
+
+    def richiedi(self):
+        if not self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO).exists():
+            raise ValueError("Impossibile richiedere trasferimento: Nessuna appartenenza attuale.")
+        sede = self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO)[0]
+
+        self.autorizzazione_richiedi(
+            richiedente=self.persona,
+            destinatario=(
+                (PRESIDENTE, sede, NOTIFICA_INVIA),
+                (UFFICIO_SOCI, sede, NOTIFICA_NON_INVIARE)
+            ),
+            motivo_obbligatorio=True
+        )
 
 
 class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
@@ -1026,7 +1060,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     Rappresenta una pratica di estensione.
     """
 
-    richiedente = models.ForeignKey(Persona, related_name='richiedente')
+    richiedente = models.ForeignKey(Persona, related_name='estensioni_richieste_da')
     persona = models.ForeignKey(Persona, related_name='estensioni')
     destinazione = models.ForeignKey(Sede, related_name='estensioni_destinazione')
     appartenenza = models.ForeignKey(Appartenenza, related_name='estensione', null=True, blank=True)
