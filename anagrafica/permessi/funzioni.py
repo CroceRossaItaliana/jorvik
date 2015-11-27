@@ -22,7 +22,7 @@ def permessi_presidente(sede):
     """
 
     return [
-       (GESTIONE_SEDE,      sede.esplora())
+       (GESTIONE_SEDE,      sede.espandi())
     ] \
         + permessi_ufficio_soci(sede) \
         + permessi_responsabile_attivita(sede) \
@@ -37,8 +37,8 @@ def permessi_ufficio_soci(sede):
     """
     from anagrafica.models import Sede
     return [
-        (GESTIONE_SOCI,     Sede.objects.filter(pk=sede.pk)),
-        (ELENCHI_SOCI,      sede.esplora()),
+        (GESTIONE_SOCI,     Sede.objects.filter(pk=sede.pk).espandi()),
+        (ELENCHI_SOCI,      sede.espandi()),
     ]
 
 def permessi_responsabile_attivita(sede):

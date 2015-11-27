@@ -12,6 +12,8 @@ Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 - Delega
 """
 from datetime import date, timedelta, datetime
+
+import mptt
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -21,11 +23,13 @@ from django.db.models import Q, QuerySet
 from django.db.models.query import EmptyQuerySet
 from django_countries.fields import CountryField
 import phonenumbers
+from model_utils.managers import PassThroughManagerMixin
+
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, APPLICAZIONI_SLUG_DICT, PERMESSI_NOMI_DICT
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
-from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT
+from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI
 from anagrafica.permessi.delega import delega_permessi
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
@@ -223,7 +227,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         Controlla se la persona ha appartenenza come mebro tipo specificato
 
         es. if p.membro(DIPENDENTE):
-              print("Sei anche dipendente...")
+              Print("Sei anche dipendente...")
         """
         return self.appartenenze_attuali(membro=membro, **kwargs).exists()
 
@@ -405,6 +409,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         if self.ha_pannello_autorizzazioni:
             lista += [('/autorizzazioni/', 'Richieste', 'fa-user-plus', self.autorizzazioni_in_attesa().count())]
 
+        if self.ha_permesso(GESTIONE_SOCI):
+            lista += [('/us/', 'Soci', 'fa-users')]
+
         tipi = []
         for d in self.deleghe_attuali():
             if d.tipo in tipi:
@@ -538,7 +545,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         Ritorna True se il pannello autorizzazioni deve essere mostrato per l'utente.
         False altrimenti.
         """
-        print (self.deleghe)
         return self.deleghe_attuali().exists() or self.autorizzazioni_in_attesa().exists()
 
     def autorizzazioni(self):
@@ -795,6 +801,31 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         self.confermata = False
 
 
+class SedeManager(PassThroughManagerMixin, mptt.managers.TreeManager):
+    pass
+
+
+class SedeQuerySet(QuerySet):
+
+    def comitati(self):
+        """
+        Filtra per Comitati.
+        """
+        return self.filter(estensione__in=[NAZIONALE, REGIONALE, PROVINCIALE, LOCALE])
+
+    def espandi(self):
+        """
+        Espande il QuerySet.
+        Se pubblico, me e tutte le sedi sottostanti.
+        Se privato, me e le unita' territoriali incluse.
+        :param includi_me: Includimi nel queryset ritornato.
+        """
+
+        return self \
+            | self.filter(estensione__in=[NAZIONALE, REGIONALE]).get_descendants(include_self=True) \
+            | self.filter(estensione=TERRITORIALE, genitore__in=(self.filter(estensione__in=[PROVINCIALE, LOCALE])))
+
+
 class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
 
     class Meta:
@@ -813,6 +844,8 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
         (MILITARE, 'Sede Militare'),
         (AUTOPARCO, 'Autoparco')
     )
+
+    objects = SedeManager.for_queryset_class(SedeQuerySet)()
 
     estensione = models.CharField("Estensione", max_length=1, choices=ESTENSIONE, db_index=True)
     tipo = models.CharField("Tipologia", max_length=1, choices=TIPO, default=COMITATO, db_index=True)
@@ -961,6 +994,31 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
 
         # Se sono unita' territoriale, ritorna il mio genitore.
         return self.genitore
+
+    def espandi(self, includi_me=False):
+        """
+        Espande la Sede.
+        Se pubblico, me e tutte le sedi sottostanti.
+        Se privato, me e le unita' territoriali incluse.
+        :param includi_me: Includimi nel queryset ritornato.
+        """
+
+        # Sede pubblica... ritorna tutto sotto di se.
+        if self.estensione in [NAZIONALE, REGIONALE]:
+            return self.get_descendants(include_self=includi_me)
+
+        # Sede privata... espandi con unita' territoriali.
+        if self.estensione in [PROVINCIALE, LOCALE]:
+            return self.get_children().filter(estensione=TERRITORIALE) | Sede.objects.filter(pk=self.pk)
+
+        # Sede territoriale. Solo me, se richiesto.
+
+        if includi_me:
+            return Sede.objects.filter(pk=self.pk)
+
+        else:
+            return Sede.objects.none()
+
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):

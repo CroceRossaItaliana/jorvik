@@ -67,15 +67,10 @@ class TestAnagrafica(TestCase):
 
     def test_permessi(self):
 
-        c = crea_sede()
+        c = crea_sede(estensione=PROVINCIALE)
         c.save()
 
-        c2 = Sede(
-            genitore=c,
-            nome="Comitato Provinciael di Catania",
-            tipo=Sede.COMITATO,
-            estensione=PROVINCIALE,
-        )
+        c2 = crea_sede(estensione=TERRITORIALE, genitore=c)
         c2.save()
 
         p = crea_persona()
@@ -577,4 +572,62 @@ class TestAnagrafica(TestCase):
             maletto.comitato == catania.comitato,
             msg="Sede.comitato e' transitiva"
         )
+
+    def test_sede_espandi(self):
+
+        italia = crea_sede(estensione=NAZIONALE)
+        _sicilia = crea_sede(estensione=REGIONALE, genitore=italia)
+        __catania = crea_sede(estensione=PROVINCIALE, genitore=_sicilia)
+        ___maletto = crea_sede(estensione=TERRITORIALE, genitore=__catania)
+        ___giarre = crea_sede(estensione=LOCALE, genitore=__catania)
+        ____riposto = crea_sede(estensione=TERRITORIALE, genitore=___giarre)
+        ____salfio = crea_sede(estensione=TERRITORIALE, genitore=___giarre)
+        lombardia = crea_sede(estensione=REGIONALE, genitore=italia)
+        _milano = crea_sede(estensione=PROVINCIALE, genitore=lombardia)
+
+        # Ricarica tutte le Sedi dal database
+        for x in [italia, _sicilia, __catania, ___maletto, ___giarre, ____riposto, ____salfio, lombardia, _milano]:
+            x.refresh_from_db()
+
+        self.assertTrue(
+            italia.espandi(includi_me=True).count() == (italia.get_descendants().count() + 1),
+            msg="Espansione dal Nazionale ritorna tutti i Comitati - inclusa Italia",
+        )
+
+        self.assertTrue(
+            italia.espandi(includi_me=False).count() == italia.get_descendants().count(),
+            msg="Espansione dal Nazionale ritorna tutti i Comitati - escludendo Italia",
+        )
+
+        self.assertTrue(
+            _sicilia.espandi(includi_me=True).count() == (_sicilia.get_descendants().count() + 1),
+            msg="Espansione dal Regionale ritrna tutti i Comitati - Inclusa Regione"
+        )
+
+        self.assertTrue(
+            __catania in _sicilia.espandi(),
+            msg="Espansione Regionale ritorna Provinciale"
+        )
+
+        self.assertTrue(
+            ____salfio in _sicilia.espandi(),
+            msg="Espansione Regionale ritorna Territoriale"
+        )
+
+        self.assertTrue(
+            ____riposto in ___giarre.espandi(),
+            msg="Espansione Locale ritorna Territoriale"
+        )
+
+        self.assertTrue(
+            ____riposto not in __catania.espandi(),
+            msg="Espansione Provinciale non ritorna territoriale altrui"
+        )
+
+        self.assertTrue(
+            ___maletto in __catania.espandi(),
+            msg="Espansione Provinciale ritorna territoriale proprio"
+        )
+
+
 

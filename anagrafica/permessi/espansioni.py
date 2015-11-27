@@ -27,7 +27,7 @@ def espandi_gestione_soci(qs_sedi, al_giorno=date.today()):
 def espandi_elenchi_soci(qs_sedi, al_giorno=date.today()):
     from anagrafica.models import Persona, Appartenenza, Sede
     return [
-        (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=Sede.objects.get_queryset_descendants(qs_sedi, include_self=True)).via("appartenenze"))),
+        (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi.espandi()).via("appartenenze"))),
         (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO).via("appartenenze"))),
         (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ESTESO).via("appartenenze"))),
     ]
@@ -36,7 +36,7 @@ def espandi_gestione_sede(qs_sedi, al_giorno=date.today()):
     from anagrafica.models import Sede
     return [
         (MODIFICA,  qs_sedi),
-        (MODIFICA,  Sede.objects.get_queryset_descendants(qs_sedi, include_self=True)),
+        (MODIFICA,  qs_sedi.espandi()),
     ]
 
 def espandi_gestione_attivita_sede(qs_sedi, al_giorno=date.today()):

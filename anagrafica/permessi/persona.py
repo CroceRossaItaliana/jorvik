@@ -129,8 +129,10 @@ def persona_ha_permessi(persona, *permessi):
     if persona.admin:
         return True
     for p in permessi:
-        if isinstance(p, (list, tuple)) and not persona.ha_permessi(*p):
-            return False
-        if not persona.ha_permesso(p):
-            return False
+        if isinstance(p, (list, tuple)):  # Tupla
+            if not persona.ha_permessi(*p):
+                return False
+        else:  # Singolo permesso
+            if not persona.ha_permesso(p):
+                return False
     return True
