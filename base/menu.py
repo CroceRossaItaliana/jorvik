@@ -39,5 +39,29 @@ MENU = {
             ("Storico", "fa-clock-o", "/autorizzazioni/storico/"),
         )),
     ),
+    "us": (
+        ("Elenchi", (
+            ("Soci", "fa-list", "/us/elenco/soci/"),
+            ("Sostenitori", "fa-list", "/us/elenco/sostenitori/"),
+            ("Elettorato", "fa-list", "/us/elenco/elettorato/"),
+        )),
+        ("Aggiungi", (
+            ("Volontario", "fa-plus-square", "/us/aggiungi/volontario/"),
+            ("Sostenitore", "fa-plus-square", "/us/aggiungi/sostenitore/"),
+        )),
+        ("Pratiche", (
+            ("Nuovo trasferimento", "fa-file-o", "/us/trasferimento/"),
+            ("Nuova estensione", "fa-file-o", "/us/estensione/"),
+            ("Messa in riserva", "fa-file-o", "/us/riserva/"),
+            ("Nuovo provvedimento", "fa-file-o", "/us/provvedimento/"),
+        )),
+        ("Quote", (
+            ("Quote associative", "fa-money", "/us/trasferimento/"),
+            ("Ricerca", "fa-search", "/us/estensione/"),
+        )),
+        ("Tesserini", (
+            ("Non riconsegnati", "fa-credit-card", "/us/non-riconsegnati/"),
+        )),
+    ),
 
 }

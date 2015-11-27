@@ -20,7 +20,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q, QuerySet
-from django.db.models.query import EmptyQuerySet
 from django_countries.fields import CountryField
 import phonenumbers
 from model_utils.managers import PassThroughManagerMixin
@@ -46,6 +45,7 @@ from posta.models import Messaggio
 from django.apps import apps
 
 from base.notifiche import NOTIFICA_INVIA, NOTIFICA_NON_INVIARE
+
 
 class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     """

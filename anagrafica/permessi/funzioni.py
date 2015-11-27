@@ -35,10 +35,9 @@ def permessi_ufficio_soci(sede):
     :param sede: Sede di cui si e' ufficio soci.
     :return: Lista di permessi.
     """
-    from anagrafica.models import Sede
     return [
-        (GESTIONE_SOCI,     Sede.objects.filter(pk=sede.pk).espandi()),
-        (ELENCHI_SOCI,      sede.espandi()),
+        (GESTIONE_SOCI,     sede.espandi(includi_me=True)),
+        (ELENCHI_SOCI,      sede.espandi(includi_me=True)),
     ]
 
 def permessi_responsabile_attivita(sede):

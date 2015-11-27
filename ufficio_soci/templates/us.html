@@ -1,0 +1,51 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Ufficio Soci
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro text-success">
+        Ufficio Soci
+    </h2>
+
+    <p class="allinea-centro">
+        <img  alt="Emblema CRI" src="https://upload.wikimedia.org/wikipedia/it/thumb/4/4a/Emblema_CRI.svg/300px-Emblema_CRI.svg.png" width="180" height="180" />
+    </p>
+
+
+    <div class="alert alert-info">
+        <h4><i class="fa fa-info-circle"></i> Benvenuto nella sezione dedicata all'Ufficio Soci.</h4>
+        <p>Usa il men&ugrave; sulla destra che ti permetter&agrave; di accedere alle funzioni
+        relative all'amministrazione dei Soci.</p>
+    </div>
+
+    <div class="row ">
+
+        <div class="col-md-3 allinea-centro">
+            <h3>{{ sedi.count }}</h3>
+            <p class="grassetto">Sedi CRI</p>
+        </div>
+
+        <div class="col-md-3 allinea-centro">
+            <h3>{{ sedi.count }}</h3>
+            <p class="grassetto">Sedi CRI</p>
+        </div>
+
+        <div class="col-md-6">
+            <p>Sei abilitato alla gestione dell'Ufficio Soci per le seguenti sedi:</p>
+            <ul>
+                {% for sede in sedi %}
+                    <li>{{ sede.link|safe }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+    </div>
+
+
+
+{% endblock %}

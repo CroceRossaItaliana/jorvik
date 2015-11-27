@@ -91,6 +91,8 @@ urlpatterns = [
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/modifica/$', 'attivita.viste.attivita_scheda_turni_modifica'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/report/$', 'attivita.viste.attivita_scheda_report'),
 
+    url(r'^us/', 'ufficio_soci.viste.us'),
+
     url(r'^social/commenti/nuovo/', 'social.viste.commenti_nuovo'),
     url(r'^social/commenti/cancella/(?P<pk>[0-9]+)/', 'social.viste.commenti_cancella'),
 
@@ -98,6 +100,10 @@ urlpatterns = [
 
     # Amministrazione
     url(r'^admin/', include(admin.site.urls)),
+
+    # Autocompletamento
+    url(r'^autocomplete/', include('autocomplete_light.urls')),
+
 
     # OAuth 2.0
     # url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),

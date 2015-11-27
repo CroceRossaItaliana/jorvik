@@ -48,6 +48,7 @@ INSTALLED_APPS = (
     'formazione',
     'bootstrap3',
     'django_countries',
+    'autocomplete_light',
 )
 
 # Classi middleware (intercetta & computa)
