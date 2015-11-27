@@ -6,7 +6,7 @@ from django.contrib.auth import login
 from django.views.generic import ListView
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
-    ModuloCreazioneTelefono, ModuloCreazioneEstensione
+    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -351,17 +351,46 @@ def utente_contatti_cancella_numero(request, me, pk):
 def utente_estensione(request, me):
 
     if request.POST:
-        dati_estensione = {
-                'richiedente': me,
-                'persona': me
-            }
-        modulo = ModuloCreazioneEstensione(request.POST, initial=dati_estensione)
+        if me.estensione is not None:
+            return "anagrafica_utente_estensione.html"
+        modulo = ModuloCreazioneEstensione(request.POST)
         if modulo.is_valid():
-            est = modulo.save()
-            est.richiedi()
+            est = modulo.save(commit=False)
+            if est.destinazione in me.sedi_attuali():
+                modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
+            else:
+
+                est.richiedente = me
+                est.persona = me
+                modulo.save()
+                est.richiedi()
     else:
         modulo = ModuloCreazioneEstensione()
     contesto = {
         "modulo": modulo
     }
     return "anagrafica_utente_estensione.html", contesto
+
+@pagina_privata
+def utente_trasferimento(request, me):
+
+    if request.POST:
+        if me.trasferimento is not None:
+            return "anagrafica_utente_trasferimento.html"
+        modulo = ModuloCreazioneEstensione(request.POST)
+        if modulo.is_valid():
+            trasf = modulo.save(commit=False)
+            if trasf.destinazione in me.sedi_attuali():
+                modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
+            else:
+
+                trasf.persona = me
+                trasf.richiedente = me
+                modulo.save()
+                trasf.richiedi()
+    else:
+        modulo = ModuloCreazioneTrasferimento()
+    contesto = {
+        "modulo": modulo
+    }
+    return "anagrafica_utente_trasferimento.html", contesto

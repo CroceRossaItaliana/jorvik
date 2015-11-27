@@ -7,5 +7,5 @@
 {% if me.estensione.esito == me.estensione.ESITO_OK %}
 ##termina
 {% else %}
-##annulla richiesta
+{{ me.estensione.destinazione.nome }}
 {% endif %}

@@ -52,6 +52,7 @@ urlpatterns = [
     url(r'^utente/$', 'anagrafica.viste.utente'),
     url(r'^utente/anagrafica/$', 'anagrafica.viste.utente_anagrafica'),
     url(r'^utente/estensione/$', 'anagrafica.viste.utente_estensione'),
+    url(r'^utente/trasferimento/$', 'anagrafica.viste.utente_trasferimento'),
     url(r'^utente/documenti/$', 'anagrafica.viste.utente_documenti'),
     url(r'^utente/documenti/zip/$', 'anagrafica.viste.utente_documenti_zip'),
     url(r'^utente/documenti/cancella/(?P<pk>.*)/$', 'anagrafica.viste.utente_documenti_cancella'),

@@ -14,6 +14,8 @@ MENU = {
             ("Documenti", "fa-folder", "/utente/documenti/"),
             ("Contatti", "fa-envelope", "/utente/contatti/"),
             ("Estensione", "fa-arrow-right", "/utente/estensione/"),
+            ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
+
         )),
         ("Sicurezza", (
             ("Cambia password", "fa-key", "/utente/cambia-password/"),

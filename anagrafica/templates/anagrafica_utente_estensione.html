@@ -5,7 +5,7 @@
 {% block pagina_titolo %}Richiesta Estensione{% endblock %}
 
 {% block app_contenuto %}
-
+    {{ me.estensione  }}
     {% if me.estensione %}
         {% include "anagrafica_utente_estensione_stato.html" %}
     {% else %}
