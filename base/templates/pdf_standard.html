@@ -1,0 +1,26 @@
+{% extends 'pdf_vuoto.html' %}
+
+{% block html %}
+<html>
+    <style>
+        html, body {
+            /* Margini della pagina */
+            padding: 30px 30px 30px 30px;
+        }
+    </style>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <body style="font-family: 'Times New Roman', 'Tahoma'; color: #333;">
+
+        {% block corpo %}
+            <p>Il testo del PDF va qui (block 'corpo').</p>
+        {% endblock %}
+
+		<p>&nbsp;</p>
+
+		<p id="footer_pdf" style="margin-top: 50px; padding-top: 10px; border-top: 1px solid #888; font-size: smaller; color: #666;">
+		    Documento stampabile generato digitalmente da <strong>Gaia</strong>. Autenticato: {{ timestamp }}.
+		</p>
+
+	</body>
+</html>
+{% endblock %}
