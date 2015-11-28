@@ -1,3 +1,5 @@
+# coding=utf8
+
 from datetime import date, timedelta, datetime
 from django.shortcuts import redirect, get_object_or_404
 
@@ -6,6 +8,7 @@ from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni
 from attivita.models import Partecipazione, Attivita
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
+from base.files import Excel, FoglioExcel
 
 
 def attivita(request):
@@ -91,20 +94,54 @@ def attivita_storico(request, me):
     Mostra uno storico delle attivita' a cui ho chiesto di partecipare/partecipato.
     """
     storico = Partecipazione.objects.filter(persona=me).order_by('-creazione')
-    form = None
-
-    anni = Partecipazione.confermate().filter(persona=me).\
-        dates('turno__inizio', 'year', order='DESC')
-
-    if anni:
-        form = ModuloStoricoTurni(anni)
 
     contesto = {
-        "form": form,
         "storico": storico
     }
 
-    return 'attivita_storico.html', contesto
+    return 'attivita_storico.html', contesto\
+
+@pagina_privata
+def attivita_storico_excel(request, me):
+    """
+    Scarica il foglio di servizio
+    """
+
+    storico = Partecipazione.confermate().filter(persona=me).order_by('-creazione')
+
+    anni = storico.dates('turno__inizio', 'year', order='DESC')
+
+    excel = Excel(oggetto=me)
+
+    # Per ogni anno, crea un foglio
+    for anno in anni:
+
+        anno = anno.year
+
+        # Crea il nuovo foglio di lavoro
+        foglio = FoglioExcel(
+            nome="Anno %d" % (anno,),
+            intestazione=(
+                "Attivita", "Localita", "Turno", "Inizio", "Fine",
+            )
+        )
+
+        # Aggiungi le partecipazioni
+        for part in storico.filter(turno__inizio__year=anno):
+            foglio.aggiungi_riga(
+                part.turno.attivita.nome,
+                part.turno.attivita.locazione if part.turno.attivita.locazione else 'N/A',
+                part.turno.nome,
+                part.turno.inizio,
+                part.turno.fine,
+            )
+
+        excel.aggiungi_foglio(foglio)
+
+    # Salva file excel e scarica
+    excel.genera_e_salva("Foglio di servizio.xlsx")
+    return redirect(excel.download_url)
+
 
 @pagina_privata
 def attivita_gruppi(request, me):

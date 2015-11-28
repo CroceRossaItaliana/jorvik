@@ -18,3 +18,4 @@ psycopg2==2.6.1
 names==0.3.0
 django-autocomplete-light==2.2.10
 django-model-utils==2.3.1
+XlsxWriter==0.7.7

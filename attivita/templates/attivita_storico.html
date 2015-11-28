@@ -21,9 +21,13 @@
 
         <div class="col-md-4">
             <h3><i class="fa fa-fw fa-file"></i> Foglio di servizio</h3>
-            {% if form %}
+            {% if storico.exists %}
+                <p>Clicca sul pulsante per scaricare il tuo foglio di servizio in formato Excel. Il file conterr&agrave;
+                    un foglio per ogni anno di servizio.</p>
+                <a href="/attivita/storico/excel/" class="btn btn-block btn-success" download>
+                    <i class="fa fa-fw fa-download"></i> Scarica Excel
+                </a>
 
-                Form
             {% else %}
                 <span class="text-muted">
                     <i class="fa fa-fw fa-info-circle"></i>
