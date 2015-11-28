@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, date
 from zipfile import ZipFile
 from django.core.files import File
 from django.template import Context
@@ -10,6 +10,7 @@ from base.stringhe import domani, GeneratoreNomeFile
 from jorvik.settings import MEDIA_ROOT, DOMPDF_ENDPOINT
 from io import StringIO
 import urllib
+import xlsxwriter
 
 __author__ = 'alfioemanuele'
 
@@ -115,6 +116,92 @@ class PDF(Allegato):
         pdffile = open(MEDIA_ROOT + zname, 'wb')
         pdffile.write(response.read())
         pdffile.close()
+
+        self.file = zname
+        self.nome = nome
+        self.scadenza = scadenza
+        self.save()
+
+
+class FoglioExcel:
+    """
+    Rappresenta un foglio Excel.
+    """
+
+    def __init__(self, nome, intestazione):
+        """
+        Crea un nuovo foglio di lavoro per un documento excel.
+        :param nome: Il nome del nuovo foglio di lavoro.
+        :param intestazione: L'intestazione del foglio di lavoro (tupla o lista).
+        """
+        self.nome = nome
+        self.intestazione = intestazione
+        self.contenuto = []
+
+    def aggiungi_riga(self, *riga):
+        """
+        Aggiunge una riga di contenuto (iterabile).
+        :param riga: Tupla o lista con le colonne della riga
+        """
+        self.contenuto.append(riga)
+
+
+class Excel(Allegato):
+    """
+    Rappresenta un file Excel generato al volo.
+    """
+
+    class Meta:
+        proxy = True
+
+    fogli = []
+
+    def aggiungi_foglio(self, foglio):
+        """
+        Aggiunge un Foglio di lavoro di Excel al documento.
+        :param foglio: Un oggetto FoglioExcel.
+        """
+        if not isinstance(foglio, FoglioExcel):
+            raise ValueError("Il foglio Excel da aggiungere deve essere di tipo FoglioExcel.")
+
+        self.fogli.append(foglio)
+
+    def genera_e_salva(self, nome='File.xlsx', scadenza=domani(), **kwargs):
+        """
+        Genera il file e lo salva su database.
+        :param nome: Il nome del file da allegare (opzionale, default 'File.xlsx').
+        :param scadenza: Scadenza del file. Domani.
+        :param kwargs:
+        :return:
+        """
+
+        generatore = GeneratoreNomeFile('allegati/')
+        zname = generatore(self, nome)
+        self.prepara_cartelle(MEDIA_ROOT + zname)
+
+        workbook = xlsxwriter.Workbook(MEDIA_ROOT + zname)
+        bold = workbook.add_format({'bold': True})
+
+        for foglio in self.fogli:  # Per ogni foglio
+
+            # Aggiunge il foglio
+            worksheet = workbook.add_worksheet(foglio.nome)
+
+            # Aggiunge l'intestazione
+            for col, testo in enumerate(foglio.intestazione):
+                worksheet.write(0, col, str(testo), bold)
+
+            # Aggiunge il contenuto
+            for riga, colonne in enumerate(foglio.contenuto):
+                riga += 1  # Indice shiftato per intestazione
+                for colonna, testo in enumerate(colonne):
+                    if isinstance(testo, datetime):
+                        testo = testo.strftime("%d/%m/%y %H:%M")
+                    if isinstance(testo, date):
+                        testo = testo.strftime("%d/%m/%y")
+                    worksheet.write(riga, colonna, str(testo))
+
+        workbook.close()
 
         self.file = zname
         self.nome = nome
