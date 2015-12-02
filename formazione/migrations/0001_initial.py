@@ -2,8 +2,8 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-import django.db.models.deletion
 import social.models
+import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
@@ -17,11 +17,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Aspirante',
             fields=[
-                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
                 ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
-                ('raggio', models.FloatField(blank=True, verbose_name='Raggio KM', default=0.0, null=True)),
-                ('locazione', models.ForeignKey(related_name='formazione_aspirante', to='base.Locazione', null=True, blank=True, on_delete=django.db.models.deletion.SET_NULL)),
+                ('raggio', models.FloatField(verbose_name='Raggio KM', null=True, blank=True, default=0.0)),
+                ('locazione', models.ForeignKey(to='base.Locazione', null=True, on_delete=django.db.models.deletion.SET_NULL, blank=True, related_name='formazione_aspirante')),
                 ('persona', models.OneToOneField(related_name='aspirante', to='anagrafica.Persona')),
             ],
             options={
@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Assenza',
             fields=[
-                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
                 ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
             ],
@@ -42,24 +42,24 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Corso',
             fields=[
-                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
                 ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
-                ('tipo', models.CharField(choices=[('BA', 'Corso Base')], verbose_name='Tipo', max_length=2, default='BA')),
-                ('stato', models.CharField(choices=[('P', 'In preparazione'), ('A', 'Attivo'), ('I', 'Iniziato'), ('T', 'Terminato'), ('A', 'Annullato')], verbose_name='Stato', max_length=1, default='P')),
-                ('locazione', models.ForeignKey(related_name='formazione_corso', to='base.Locazione', null=True, blank=True, on_delete=django.db.models.deletion.SET_NULL)),
+                ('tipo', models.CharField(verbose_name='Tipo', choices=[('BA', 'Corso Base')], max_length=2, default='BA')),
+                ('stato', models.CharField(verbose_name='Stato', choices=[('P', 'In preparazione'), ('A', 'Attivo'), ('I', 'Iniziato'), ('T', 'Terminato'), ('A', 'Annullato')], max_length=1, default='P')),
+                ('locazione', models.ForeignKey(to='base.Locazione', null=True, on_delete=django.db.models.deletion.SET_NULL, blank=True, related_name='formazione_corso')),
                 ('sede', models.ForeignKey(related_name='corsi', to='anagrafica.Sede')),
             ],
             options={
-                'verbose_name': 'Corso di formazione',
                 'verbose_name_plural': 'Corsi di formazione',
+                'verbose_name': 'Corso di formazione',
             },
             bases=(models.Model, social.models.ConGiudizio),
         ),
         migrations.CreateModel(
             name='Lezione',
             fields=[
-                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
                 ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
                 ('corso', models.ForeignKey(related_name='lezioni', to='formazione.Corso')),
@@ -72,17 +72,17 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Partecipazione',
             fields=[
-                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
                 ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
-                ('confermata', models.BooleanField(verbose_name='Confermata', db_index=True, default=True)),
-                ('ritirata', models.BooleanField(verbose_name='Ritirata', db_index=True, default=False)),
+                ('confermata', models.BooleanField(db_index=True, verbose_name='Confermata', default=True)),
+                ('ritirata', models.BooleanField(db_index=True, verbose_name='Ritirata', default=False)),
                 ('corso', models.ForeignKey(related_name='partecipazioni', to='formazione.Corso')),
                 ('persona', models.ForeignKey(related_name='partecipazioni_corsi', to='anagrafica.Persona')),
             ],
             options={
-                'verbose_name': 'Richiesta di partecipazione',
                 'verbose_name_plural': 'Richieste di partecipazione',
+                'verbose_name': 'Richiesta di partecipazione',
             },
         ),
         migrations.AddField(

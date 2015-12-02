@@ -6,12 +6,39 @@
 
 {% block app_contenuto %}
 
-    {% if me.estensione %}
+    {% if me.trasferimento %}
         {% include "anagrafica_utente_trasferimento_stato.html" %}
     {% else %}
-        {% include "anagrafica_utente_traferimento_richiedi.html" %}
+        {% include "anagrafica_utente_trasferimento_richiedi.html" %}
     {% endif %}
 
+<div class="row" style="margin-top: 5px;">
+    <div class="col-md-12">
+        <h3>Storico trasferimenti</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Richiedente</th>
+                    <th>Destinazione</th>
+                    <th>Esito</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trasferimento in contesto.storico %}
+                <tr>
+                    <td>{{ trasferimento.richiedente }}</td>
+                    <td>{{ trasferimento.destinazione }}</td>
+                    <td>{{ trasferimento.get_esito_display }}</td>
+                </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="bg-warning">
+                            <i class="fa fa-info"></i> Nessun trasferimento passato.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}
-
-##elenco richieste passate
