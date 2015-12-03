@@ -201,7 +201,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         """
         Ottiene la prima appartenenza, se esistente.
         """
-        return self.appartenenze.filter(confermata=True, **kwargs).first('inizio')
+        return self.appartenenze.filter(confermata=True, **kwargs).order_by('inizio').first()
 
     def ingresso(self, **kwargs):
         """
@@ -733,6 +733,10 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
 
     # Membri sotto il diretto controllo della Sede
     MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE)
+
+    # Membri soci
+    MEMBRO_SOCIO = (VOLONTARIO, ORDINARIO,)
+
     # Membri sotto il diretto controllo di una altra Sede
     MEMBRO_ESTESO = (ESTESO,)
 

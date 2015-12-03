@@ -49,6 +49,7 @@ INSTALLED_APPS = (
     'bootstrap3',
     'django_countries',
     'autocomplete_light',
+    'django_extensions',
 )
 
 # Classi middleware (intercetta & computa)
@@ -82,6 +83,8 @@ ROOT_URLCONF = 'jorvik.urls'
 # Applicazione per il deployment tramite WSGI
 WSGI_APPLICATION = 'jorvik.wsgi.application'
 
+# Usa pickle come serializzatore
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases

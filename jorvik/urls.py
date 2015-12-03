@@ -95,6 +95,10 @@ urlpatterns = [
 
     url(r'^us/$', 'ufficio_soci.viste.us'),
     url(r'^us/estensione/$', 'ufficio_soci.viste.us_estensione'),
+    url(r'^us/elenco/soci/$', 'ufficio_soci.viste.us_elenco_soci'),
+    url(r'^us/elenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', 'ufficio_soci.viste.us_elenco'),
+    url(r'^us/elenco/(?P<elenco_id>.*)/download/$', 'ufficio_soci.viste.us_elenco_download'),
+    url(r'^us/elenco/(?P<elenco_id>.*)/$', 'ufficio_soci.viste.us_elenco'),
 
     url(r'^social/commenti/nuovo/', 'social.viste.commenti_nuovo'),
     url(r'^social/commenti/cancella/(?P<pk>[0-9]+)/', 'social.viste.commenti_cancella'),

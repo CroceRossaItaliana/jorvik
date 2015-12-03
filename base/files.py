@@ -145,6 +145,12 @@ class FoglioExcel:
         """
         self.contenuto.append(riga)
 
+    def __str__(self):
+        return "<FoglioExcel: %s>" % (self.nome,)
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class Excel(Allegato):
     """
@@ -182,7 +188,7 @@ class Excel(Allegato):
         workbook = xlsxwriter.Workbook(MEDIA_ROOT + zname)
         bold = workbook.add_format({'bold': True})
 
-        for foglio in self.fogli:  # Per ogni foglio
+        for foglio in [x for x in self.fogli]:  # Per ogni foglio
 
             # Aggiunge il foglio
             worksheet = workbook.add_worksheet(foglio.nome)

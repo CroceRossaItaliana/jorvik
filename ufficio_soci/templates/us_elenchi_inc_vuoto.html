@@ -1,0 +1,145 @@
+{% extends 'base_bootstrap.html' %}
+
+{% block pagina_titolo %}Elenco{% endblock %}
+
+{% block pagina_corpo %}
+
+    <div class="container-fluid">
+
+        <div class="row">
+
+            <div class="col-sm-3">
+
+                <div class="input-group">
+                    <input type="text" class="form-control" name="filtra" placeholder="Filtra elenco...">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="button">
+                            <i class="fa fa-fw fa-search"></i>
+                        </button>
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="col-sm-5">
+
+                <ul class="pagination" style="margin-top: 0px;">
+
+                    {% if ha_precedente %}
+                        <li class="prev">
+                            <a href="{{ pagina_precedente }}" data-caricamento>
+                                <i class="fa fa-arrow-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="prev disabled">
+                            <a href="#">
+                                <i class="fa fa-arrow-left"></i>
+                            </a>
+                        </li>
+
+                    {% endif %}
+
+                    <li class="active">
+                        <a href="#">Pag. {{ pagina }} di {{ pagine }} ({{ totale }} persone)</a>
+                    </li>
+
+                    {% if ha_successivo %}
+                        <li class="prev">
+                            <a href="{{ pagina_successiva }}" data-caricamento>
+                                <i class="fa fa-arrow-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="prev disabled">
+                            <a href="#">
+                                <i class="fa fa-arrow-right"></i>
+                            </a>
+                        </li>
+
+                    {% endif %}
+
+                </ul>
+
+            </div>
+
+
+
+            <div class="col-sm-4">
+                <div class="btn-group">
+                    <a class="btn btn-primary" href="{{ download_url }}"
+                       data-caricamento
+                    >
+                        <i class="fa fa-fw fa-download"></i>
+                        Scarica
+                    </a>
+                    <a class="btn btn-primary"
+                        data-conferma="Vuoi scrivere un nuovo messaggio da inviare a tutte le {{ totale }} persone in elenco?"
+                        href="#{{ messaggio_url }}"
+                    >
+                        <i class="fa fa-fw fa-envelope-o"></i>
+                        Invia messaggio
+                    </a>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+        <div class="row">
+
+            <table class="table table-striped table-condensed">
+                <thead>
+                    {% block elenco_intestazione %}
+
+                    {% endblock %}
+
+                    {% block elenco_intestazione_azioni %}
+                        <th>Azioni</th>
+                    {% endblock %}
+                </thead>
+
+                {% for persona in risultati %}
+
+                    <tr class="{% block elenco_riga_classe %}{% endblock %}">
+
+                        {% block elenco_riga %}
+
+                        {% endblock %}
+
+                        <td>
+                            <div class="btn-group btn-group-xs">
+                                {% block elenco_riga_azioni %}
+
+                                {% endblock %}
+                            </div>
+                        </td>
+
+                    </tr>
+
+
+                {% empty %}
+
+                    {% block elenco_vuoto %}
+                        <div class="alert alert-warning">
+                            <h4>Questo elenco &egrave; vuoto.</h4>
+                        </div>
+
+                    {% endblock %}
+
+                {% endfor %}
+
+            </table>
+
+
+
+        </div>
+
+
+
+
+    </div>
+
+{% endblock %}

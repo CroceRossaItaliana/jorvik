@@ -1,0 +1,21 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Elenco dei Soci
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro">
+        <i class="fa fa-fw fa-users"></i>
+        Elenco dei Soci
+    </h2>
+
+    <hr />
+
+    {% load utils %}
+    {% elenco elenco %}
+
+{% endblock %}
