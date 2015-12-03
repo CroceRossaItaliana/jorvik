@@ -349,10 +349,8 @@ def utente_contatti_cancella_numero(request, me, pk):
 
 @pagina_privata
 def utente_estensione(request, me):
-
+    storico = me.estensioni.all()
     if request.POST:
-        if me.estensione is not None:
-            return "anagrafica_utente_estensione.html"
         modulo = ModuloCreazioneEstensione(request.POST)
         if modulo.is_valid():
             est = modulo.save(commit=False)
@@ -367,17 +365,16 @@ def utente_estensione(request, me):
     else:
         modulo = ModuloCreazioneEstensione()
     contesto = {
-        "modulo": modulo
+        "modulo": modulo,
+        "storico": storico
     }
     return "anagrafica_utente_estensione.html", contesto
 
 @pagina_privata
 def utente_trasferimento(request, me):
-
+    storico = me.trasferimenti.all()
     if request.POST:
-        if me.trasferimento is not None:
-            return "anagrafica_utente_trasferimento.html"
-        modulo = ModuloCreazioneEstensione(request.POST)
+        modulo = ModuloCreazioneTrasferimento(request.POST)
         if modulo.is_valid():
             trasf = modulo.save(commit=False)
             if trasf.destinazione in me.sedi_attuali():
@@ -391,6 +388,7 @@ def utente_trasferimento(request, me):
     else:
         modulo = ModuloCreazioneTrasferimento()
     contesto = {
-        "modulo": modulo
+        "modulo": modulo,
+        "storico": storico
     }
     return "anagrafica_utente_trasferimento.html", contesto

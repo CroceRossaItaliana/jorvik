@@ -571,9 +571,20 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         Altrimenti, None.
         :return: Estensione se in corso o in attesa, altrimenti None.
         """
-        return self.estensioni.filter(
+        return self.estensioni.all().filter(
             Q(Appartenenza.query_attuale().via("appartenenza")) |  # Con appartenenza attuale
-            Q(pk__in=Estensione.con_esito_pending().filter(persona=self))  # O con esito pending
+            Q(pk__in=Estensione.con_esito_ok().filter(persona=self))  # O con esito pending
+        ).first()
+
+    @property
+    def trasferimento(self):
+        """
+        Ritorna Trasferimento in attesa di conferma, se applicabile.
+        Altrimenti, None.
+        :return: Trasferimento in attesa, altrimenti None.
+        """
+        return self.trasferimenti.all().filter(
+            Q(pk__in=Trasferimento.con_esito_pending().filter(persona=self))  # O con esito pending
         ).first()
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
@@ -1084,7 +1095,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     appartenenza = models.ForeignKey(Appartenenza, related_name='dimissione')
 
 
-class Trasferimento(ModelloSemplice, ConMarcaTemporale):
+class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     """
     Rappresenta una pratica di trasferimento.
     """

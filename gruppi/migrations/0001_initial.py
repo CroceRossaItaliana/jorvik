@@ -14,11 +14,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Appartenenza',
             fields=[
-                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
                 ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
-                ('confermata', models.BooleanField(verbose_name='Confermata', db_index=True, default=True)),
-                ('ritirata', models.BooleanField(verbose_name='Ritirata', db_index=True, default=False)),
+                ('confermata', models.BooleanField(db_index=True, verbose_name='Confermata', default=True)),
+                ('ritirata', models.BooleanField(db_index=True, verbose_name='Ritirata', default=False)),
             ],
             options={
                 'verbose_name_plural': 'Appartenenze',
@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Gruppo',
             fields=[
-                ('conestensione_ptr', models.OneToOneField(primary_key=True, to='base.ConEstensione', serialize=False, auto_created=True, parent_link=True)),
+                ('conestensione_ptr', models.OneToOneField(parent_link=True, primary_key=True, auto_created=True, serialize=False, to='base.ConEstensione')),
                 ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
                 ('nome', models.CharField(verbose_name='Nome', max_length=127)),

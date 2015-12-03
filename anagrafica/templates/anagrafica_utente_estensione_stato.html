@@ -7,5 +7,24 @@
 {% if me.estensione.esito == me.estensione.ESITO_OK %}
 ##termina
 {% else %}
-{{ me.estensione.destinazione.nome }}
+<div class="row" style="margin-top: 5px;">
+    <div class="col-md-12">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Richiedente</th>
+                    <th>Destinazione</th>
+                    <th>Esito</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ me.estensione.richiedente }}</td>
+                    <td>{{ me.estensione.destinazione }}</td>
+                    <td>{{ me.estensione.get_esito_display }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endif %}

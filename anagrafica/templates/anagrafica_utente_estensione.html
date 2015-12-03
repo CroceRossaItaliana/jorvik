@@ -5,13 +5,40 @@
 {% block pagina_titolo %}Richiesta Estensione{% endblock %}
 
 {% block app_contenuto %}
-    {{ me.estensione  }}
     {% if me.estensione %}
         {% include "anagrafica_utente_estensione_stato.html" %}
     {% else %}
         {% include "anagrafica_utente_estensione_richiedi.html" %}
     {% endif %}
 
-{% endblock %}
 
-##elenco richieste passate
+<div class="row" style="margin-top: 5px;">
+    <div class="col-md-12">
+        <h3>Storico estesioni</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Richiedente</th>
+                    <th>Destinazione</th>
+                    <th>Esito</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for estensione in storico %}
+                <tr>
+                    <td>{{ estensione.richiedente }}</td>
+                    <td>{{ estensione.destinazione }}</td>
+                    <td>{{ estensione.get_esito_display }}</td>
+                </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="bg-warning">
+                            <i class="fa fa-info"></i> Nessuna estensione passata.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
