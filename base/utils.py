@@ -7,6 +7,10 @@ https://github.com/yourcelf/django-conceptq
 
 """
 import copy
+import operator
+from functools import reduce
+
+from django.db import models
 from django.db.models import Q, F
 
 
@@ -73,3 +77,29 @@ def sede_slugify(value):
     for parola in parole_vietate:
         stringa = stringa.replace(parola + str("-"), "")
     return stringa
+
+
+def filtra_queryset(queryset, termini_ricerca, campi_ricerca=[]):
+        """
+        Returns a tuple containing a queryset to implement the search,
+        and a boolean indicating if the results may contain duplicates.
+        """
+        def construct_search(field_name):
+            if field_name.startswith('^'):
+                return "%s__istartswith" % field_name[1:]
+            elif field_name.startswith('='):
+                return "%s__iexact" % field_name[1:]
+            elif field_name.startswith('@'):
+                return "%s__search" % field_name[1:]
+            else:
+                return "%s__icontains" % field_name
+
+        if termini_ricerca and termini_ricerca:
+            orm_lookups = [construct_search(str(search_field))
+                           for search_field in campi_ricerca]
+            for bit in termini_ricerca.split():
+                or_queries = [models.Q(**{orm_lookup: bit})
+                              for orm_lookup in orm_lookups]
+                queryset = queryset.filter(reduce(operator.or_, or_queries))
+
+        return queryset

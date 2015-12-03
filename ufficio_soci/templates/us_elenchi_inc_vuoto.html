@@ -6,22 +6,35 @@
 
     <div class="container-fluid">
 
-        <div class="row">
+        <div class="row allinea-centro">
 
-            <div class="col-sm-3">
+            <div class="col-sm-4">
+                <form method="POST" data-caricamento>
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="filtra"
+                               placeholder="Filtra elenco..." value="{{ filtra }}">
+                        <span class="input-group-btn">
 
-                <div class="input-group">
-                    <input type="text" class="form-control" name="filtra" placeholder="Filtra elenco...">
-                    <span class="input-group-btn">
-                        <button class="btn btn-default" type="button">
-                            <i class="fa fa-fw fa-search"></i>
-                        </button>
-                    </span>
-                </div>
+                            <button class="btn btn-primary" type="submit"
+                                title="Filtra risultati">
+                                <i class="fa fa-fw fa-search"></i>
+                            </button>
 
+                            {% if filtra %}
+                                <button class="btn btn-danger" type="submit"
+                                        title="Rimuovi filtro - Mostra tutti"
+                                        name="filtra" value="">
+                                    <i class="fa fa-fw fa-times"></i>
+                                </button>
+                            {% endif %}
+
+                        </span>
+                    </div>
+                </form>
             </div>
 
-            <div class="col-sm-5">
+            <div class="col-sm-4">
 
                 <ul class="pagination" style="margin-top: 0px;">
 
@@ -41,7 +54,7 @@
                     {% endif %}
 
                     <li class="active">
-                        <a href="#">Pag. {{ pagina }} di {{ pagine }} ({{ totale }} persone)</a>
+                        <a href="#">Pag. {{ pagina }} di {{ pagine }} ({{ totale }} pp.)</a>
                     </li>
 
                     {% if ha_successivo %}

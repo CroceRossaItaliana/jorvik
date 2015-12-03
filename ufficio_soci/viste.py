@@ -74,15 +74,25 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
         if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
             return redirect("/us/elenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
 
+    if request.POST:  # Cambiato il termine di ricerca?
+        # Memorizza il nuovo termine
+        request.session["elenco_filtra_%s" % (elenco_id,)] = request.POST['filtra']
+        # Torna alla prima pagina
+        return redirect("/us/elenco/%s/%d/" % (elenco_id, 1))
+
+    # Eventuale termine di ricerca
+    filtra = request.session.get("elenco_filtra_%s" % (elenco_id,), default="")
+
     pagina_precedente = "/us/elenco/%s/%d/" % (elenco_id, pagina-1)
     pagina_successiva = "/us/elenco/%s/%d/" % (elenco_id, pagina+1)
     download_url = "/us/elenco/%s/download/" % (elenco_id,)
     messaggio_url = "/us/elenco/%s/messaggio/" % (elenco_id,)
 
-    p = Paginator(
-        elenco.ordina(
-            elenco.risultati(modulo=modulo)
-        ), 15)  # Pagina (num risultati per pagina)
+    risultati = elenco.ordina(elenco.risultati(modulo=modulo))
+    if filtra:  # Se keyword specificata, filtra i risultati
+        risultati = elenco.filtra(risultati, filtra)
+
+    p = Paginator(risultati, 15)  # Pagina (num risultati per pagina)
     pg = p.page(pagina)
 
     contesto = {
@@ -97,6 +107,7 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
         'elenco_id': elenco_id,
         'download_url': download_url,
         'messaggio_url': messaggio_url,
+        'filtra': filtra,
     }
 
     return elenco.template(), contesto

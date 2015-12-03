@@ -1,4 +1,7 @@
+from django.contrib.admin import ModelAdmin
+
 from anagrafica.models import Persona, Appartenenza
+from base.utils import filtra_queryset
 
 
 class Elenco:
@@ -26,6 +29,9 @@ class Elenco:
         :return: Un QuerySet<Persona> con tutti i risultati.
         """
         raise NotImplementedError("Metodo risultati dell'elenco non implementato.")
+
+    def filtra(self, queryset, termine):
+        raise NotImplementedError("Metodo filtra non implementato.")
 
     def ordina(self, qs):
         return qs
@@ -60,6 +66,10 @@ class ElencoSemplice(Elenco):
 
     def ordina(self, qs):
         return qs.order_by('cognome', 'nome',)
+
+    def filtra(self, queryset, termine):
+        return filtra_queryset(queryset, termini_ricerca=termine,
+                               campi_ricerca=['nome', 'cognome', 'codice_fiscale',])
 
 
 class ElencoSoci(ElencoSemplice):
@@ -98,3 +108,4 @@ class ElencoSoci(ElencoSemplice):
             ("Numeri di telefono", lambda p: ", ".join([str(x) for x in p.numeri_telefono.all()])),
             ("Ingresso in CRI", lambda p: p.ingresso())
         )
+
