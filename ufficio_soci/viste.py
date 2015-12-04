@@ -6,7 +6,8 @@ from anagrafica.permessi.costanti import GESTIONE_SOCI
 from autenticazione.funzioni import pagina_privata
 from base.errori import errore_generico
 from base.files import Excel, FoglioExcel
-from ufficio_soci.elenchi import ElencoSoci
+from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
+    ElencoElettoratoAlGiorno
 from ufficio_soci.forms import ModuloCreazioneEstensione
 
 
@@ -193,10 +194,63 @@ def us_elenco_download(request, me, elenco_id):
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_elenco_soci(request, me):
 
-    elenco = ElencoSoci(me.oggetti_permesso(GESTIONE_SOCI))
+    elenco = ElencoSociAlGiorno(me.oggetti_permesso(GESTIONE_SOCI))
 
     contesto = {
+        "elenco_nome": "Elenco dei Soci",
         "elenco": elenco
     }
 
-    return 'us_elenco_soci.html', contesto
+    return 'us_elenco_generico.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_elenco_sostenitori(request, me):
+
+    elenco = ElencoSostenitori(me.oggetti_permesso(GESTIONE_SOCI))
+
+    contesto = {
+        "elenco_nome": "Elenco dei Sostenitori",
+        "elenco": elenco
+    }
+
+    return 'us_elenco_generico.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_elenco_volontari(request, me):
+
+    elenco = ElencoVolontari(me.oggetti_permesso(GESTIONE_SOCI))
+
+    contesto = {
+        "elenco_nome": "Elenco dei Volontari Attivi",
+        "elenco": elenco
+    }
+
+    return 'us_elenco_generico.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_elenco_ordinari(request, me):
+
+    elenco = ElencoOrdinari(me.oggetti_permesso(GESTIONE_SOCI))
+
+    contesto = {
+        "elenco_nome": "Elenco dei Soci Ordinari",
+        "elenco": elenco
+    }
+
+    return 'us_elenco_generico.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_elenco_elettorato(request, me):
+
+    elenco = ElencoElettoratoAlGiorno(me.oggetti_permesso(GESTIONE_SOCI))
+
+    contesto = {
+        "elenco_nome": "Elenco Elettorato",
+        "elenco": elenco
+    }
+
+    return 'us_elenco_generico.html', contesto

@@ -18,13 +18,12 @@
                         Per favore compila il modulo qui sotto e clicca su "Genera elenco".</p>
                 </div>
 
-                <p>&nbsp;</p>
 
                 <form method="POST">
                     {% csrf_token %}
                     {% bootstrap_form modulo %}
 
-                    <button class="btn btn-block btn-primary" data-caricamento>
+                    <button class="btn btn-block btn-primary btn-lg" data-caricamento>
                         <i class="fa fa-fw fa-check"></i>
                         Genera elenco
                     </button>

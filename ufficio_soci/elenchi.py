@@ -1,8 +1,11 @@
 from django.contrib.admin import ModelAdmin
+from django.db.models import Q
 
 from anagrafica.models import Persona, Appartenenza
 from base.utils import filtra_queryset
-from ufficio_soci.forms import ModuloElencoSoci
+from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato
+from datetime import date
+from django.utils.timezone import now
 
 
 class Elenco:
@@ -54,17 +57,15 @@ class Elenco:
         return 'us_elenchi_inc_vuoto.html'
 
 
-class ElencoSemplice(Elenco):
+
+class ElencoVistaSemplice(Elenco):
 
     def excel_colonne(self):
-        return super(ElencoSemplice, self).excel_colonne() + (
+        return super(ElencoVistaSemplice, self).excel_colonne() + (
             ("Cognome", lambda p: p.cognome),
             ("Nome", lambda p: p.nome),
             ("Codice Fiscale", lambda p: p.codice_fiscale),
         )
-
-    def template(self):
-        return 'us_elenchi_inc_persone.html'
 
     def ordina(self, qs):
         return qs.order_by('cognome', 'nome',)
@@ -73,15 +74,18 @@ class ElencoSemplice(Elenco):
         return filtra_queryset(queryset, termini_ricerca=termine,
                                campi_ricerca=['nome', 'cognome', 'codice_fiscale',])
 
+    def template(self):
+        return 'us_elenchi_inc_persone.html'
 
-class ElencoDettagliato(ElencoSemplice):
+
+class ElencoVistaAnagrafica(ElencoVistaSemplice):
     """
     Un elenco che, esportato in excel, contiene tutti i dati
      anagrafici delle persone.
     """
 
     def excel_colonne(self):
-        return super(ElencoDettagliato, self).excel_colonne() + (
+        return super(ElencoVistaAnagrafica, self).excel_colonne() + (
             ("Data di Nascita", lambda p: p.data_nascita),
             ("Luogo di Nascita", lambda p: p.comune_nascita),
             ("Provincia di Nascita", lambda p: p.provincia_nascita),
@@ -95,7 +99,24 @@ class ElencoDettagliato(ElencoSemplice):
         )
 
 
-class ElencoSoci(ElencoDettagliato):
+class ElencoVistaSoci(ElencoVistaAnagrafica):
+
+    def template(self):
+        return 'us_elenchi_inc_soci.html'
+
+    def excel_foglio(self, p):
+        if self.modulo_riempito and self.modulo_riempito.cleaned_data['al_giorno']:
+            return p.sedi_attuali(al_giorno=self.modulo_riempito.cleaned_data['al_giorno'], membro__in=Appartenenza.MEMBRO_SOCIO).first().nome
+        else:
+            return p.sedi_attuali(membro__in=Appartenenza.MEMBRO_SOCIO).first().nome
+
+    def excel_colonne(self):
+        return super(ElencoVistaSoci, self).excel_colonne() + (
+            ("Ingresso in CRI", lambda p: p.ingresso()),
+        )
+
+
+class ElencoSociAlGiorno(ElencoVistaSoci):
     """
     args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi soci
     """
@@ -115,14 +136,94 @@ class ElencoSoci(ElencoDettagliato):
     def modulo(self):
         return ModuloElencoSoci
 
-    def template(self):
-        return 'us_elenchi_inc_soci.html'
 
-    def excel_foglio(self, p):
-        return p.sedi_attuali(al_giorno=self.modulo_riempito.cleaned_data['al_giorno'], membro__in=Appartenenza.MEMBRO_SOCIO).first().nome
+class ElencoSostenitori(ElencoVistaAnagrafica):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
+    """
 
-    def excel_colonne(self):
-        return super(ElencoSoci, self).excel_colonne() + (
-            ("Ingresso in CRI", lambda p: p.ingresso())
+    def risultati(self):
+        qs_sedi = self.args[0]
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro=Appartenenza.SOSTENITORE,
+            ).via("appartenenze")
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
         )
 
+
+class ElencoVolontari(ElencoVistaSoci):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
+    """
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro=Appartenenza.VOLONTARIO,
+            ).via("appartenenze")
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        )
+
+
+class ElencoOrdinari(ElencoVistaSoci):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
+    """
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro=Appartenenza.ORDINARIO,
+            ).via("appartenenze")
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        )
+
+
+class ElencoElettoratoAlGiorno(ElencoVistaSoci):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi soci
+    """
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+
+        oggi = now().date()
+        nascita_minima = date(oggi.year - 18, oggi.month, oggi.day)
+        anzianita_minima = date(oggi.year - Appartenenza.MEMBRO_ANZIANITA_ANNI, oggi.month, oggi.day)
+
+        aggiuntivi = {
+            # Anzianita' minima
+            "appartenenze__in": Appartenenza.con_esito_ok().filter(
+                membro__in=Appartenenza.MEMBRO_ANZIANITA,
+                inizio__lte=anzianita_minima
+            )
+        }
+        if self.modulo_riempito.cleaned_data['elettorato'] == ModuloElencoElettorato.ELETTORATO_PASSIVO:
+            # Elettorato passivo,
+            aggiuntivi.update({
+                # Eta' minima
+                "data_nascita__lte": nascita_minima,
+            })
+
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(
+                al_giorno=self.modulo_riempito.cleaned_data['al_giorno'],
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_SOCIO,
+            ).via("appartenenze"),
+            Q(**aggiuntivi),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        )
+
+    def modulo(self):
+        return ModuloElencoElettorato

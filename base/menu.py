@@ -43,6 +43,7 @@ MENU = {
     ),
     "us": (
         ("Elenchi", (
+            ("Volontari", "fa-list", "/us/elenco/volontari/"),
             ("Soci", "fa-list", "/us/elenco/soci/"),
             ("Sostenitori", "fa-list", "/us/elenco/sostenitori/"),
             ("Elettorato", "fa-list", "/us/elenco/elettorato/"),
