@@ -128,6 +128,20 @@
                 </div>
                 <hr />
 
+                {% if inviato %}
+                    <div class="alert alert-success">
+                        <i class="fa fa-fw fa-check-circle-o"></i>
+                        Il messaggio &egrave; stato inviato.
+                    </div>
+
+                {% elif accodato %}
+                    <div class="alert alert-success">
+                        <i class="fa fa-fw fa-check-circle-o"></i>
+                        Il messaggio &egrave; stato accodato per l'invio.
+                    </div>
+
+                {% endif %}
+
                 <div class="row allinea-centro ">
 
                     <div class="col-md-4">
@@ -190,45 +204,47 @@
                     }
                     </script>
                     <div class="row" id="maggiori-dettagli" style="display: none;">
-                        <table class="table table-condesed table-bordered">
-                            <thead>
-                                <th>
-                                    <i class="fa fa-fw fa-user"></i>
-                                    Destinatario
-                                </th>
-                                <th>
-                                    <i class="fa fa-fw fa-mail-forward"></i>
-                                    Stato e-mail
-                                </th>
-                                <th>
-                                    <i class="fa fa-fw fa-clock-o"></i>
-                                    Invio / Ultimo tentativo
-                                </th>
-                            </thead>
-                            <tbody>
-                                {% for oggetto_destinatario in messaggio.oggetti_destinatario.all %}
-                                    <tr {% if oggetto_destinatario.inviato %}class="success"{% else %}class="warning"{% endif %}>
-                                        <td>{{ oggetto_destinatario.persona.link|safe }}</td>
-                                        <td>
-                                            {% if oggetto_destinatario.inviato %}
-                                                <i class="fa fa-fw fa-check"></i> Inviato
+                        <div class="col-md-12">
+                            <table class="table table-condensed">
+                                <thead>
+                                    <th>
+                                        <i class="fa fa-fw fa-user"></i>
+                                        Destinatario
+                                    </th>
+                                    <th>
+                                        <i class="fa fa-fw fa-mail-forward"></i>
+                                        Stato e-mail
+                                    </th>
+                                    <th>
+                                        <i class="fa fa-fw fa-clock-o"></i>
+                                        Invio / Ultimo tentativo
+                                    </th>
+                                </thead>
+                                <tbody>
+                                    {% for oggetto_destinatario in messaggio.oggetti_destinatario.all %}
+                                        <tr {% if oggetto_destinatario.inviato %}class="success"{% else %}class="warning"{% endif %}>
+                                            <td>{{ oggetto_destinatario.persona.link|safe }}</td>
+                                            <td>
+                                                {% if oggetto_destinatario.inviato %}
+                                                    <i class="fa fa-fw fa-check"></i> Inviato
 
-                                            {% elif oggetto_destinatario.errore %}
-                                                <i class="fa fa-fw fa-warning"></i> In coda
+                                                {% elif oggetto_destinatario.errore %}
+                                                    <i class="fa fa-fw fa-warning"></i> In coda
 
-                                            {% else %}
-                                                <i class="fa fa-fw fa-clock-o"></i> In coda
+                                                {% else %}
+                                                    <i class="fa fa-fw fa-clock-o"></i> In coda
 
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {{ oggetto_destinatario.tentativo }}
-                                        </td>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ oggetto_destinatario.tentativo }}
+                                            </td>
 
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 {% endif %}
 

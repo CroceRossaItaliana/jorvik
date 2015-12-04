@@ -36,4 +36,6 @@ $(document).ready(function() {
    $("#benvenuto h1, #benvenuto h3").fadeIn(1500);
    $("#benvenuto p").fadeIn(3000);
 
+    $(".autocomplete").removeAttr('required');
+
 });

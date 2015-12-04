@@ -6,6 +6,7 @@ from anagrafica.permessi.costanti import GESTIONE_SOCI
 from autenticazione.funzioni import pagina_privata
 from base.errori import errore_generico
 from base.files import Excel, FoglioExcel
+from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno
 from ufficio_soci.forms import ModuloCreazioneEstensione
@@ -189,6 +190,31 @@ def us_elenco_download(request, me, elenco_id):
     excel.genera_e_salva("Elenco.xlsx")
 
     return redirect(excel.download_url)
+
+
+@pagina_privata
+def us_elenco_messaggio(request, me, elenco_id):
+
+    try:  # Prova a ottenere l'elenco dalla sessione.
+        elenco = request.session["elenco_%s" % (elenco_id,)]
+
+    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
+        raise ValueError("Elenco non presente in sessione.")
+
+    if elenco.modulo():  # Se l'elenco richiede un modulo
+
+        try:  # Prova a recuperare il modulo riempito
+            modulo = request.session["elenco_modulo_%s" % (elenco_id,)]
+
+        except KeyError:  # Se fallisce, il modulo non e' stato ancora compilato
+            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
+
+        if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
+            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
+
+        elenco.modulo_riempito = modulo  # Imposta il modulo
+
+    return imposta_destinatari_e_scrivi_messaggio(request, elenco.ordina(elenco.risultati()))
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))

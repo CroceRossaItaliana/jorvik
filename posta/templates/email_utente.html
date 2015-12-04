@@ -1,0 +1,11 @@
+{% extends 'email.html' %}
+
+
+{% block header %}
+   <p>Messaggio inviato da <strong>{{ mittente.nome_completo }}</strong> tramite Gaia.</p>
+{% endblock %}
+
+
+{% block corpo %}
+    <p>{{ testo }}</p>
+{% endblock %}

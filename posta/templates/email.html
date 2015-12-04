@@ -17,6 +17,28 @@
 
     <hr/>
 
+{% block corpo_allegati %}
+
+    {% if allegati %}
+        <h4>Allegati ({{ allegati|length }})</h4>
+        <ul>
+            {% for allegato in allegati %}
+                <li>
+                    <strong>{{ allegato.nome }}</strong>
+                    (<a href="{{ allegato.download_url }}" target="_new" download>Scarica</a>)
+                    <br />
+                    Peso {{ allegato.file.size|filesizeformat }}, scadenza {{ allegato.scadenza }}
+                </li>
+            {% endfor %}
+        </ul>
+        <hr />
+
+    {% else %}
+
+    {% endif %}
+
+{% endblock %}
+
 {% block footer %}
     <p>
         <a href="https://gaia.cri.it/?p=login&ref=mail" style="color: #C00; font-weight: bold;">Clicca qui per entrare su Gaia &mdash; https://gaia.cri.it</a><br />

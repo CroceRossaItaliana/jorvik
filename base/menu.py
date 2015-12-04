@@ -23,6 +23,7 @@ MENU = {
     ),
     "posta": (
         ("Posta", (
+            ("Scrivi", "fa-pencil", "/posta/scrivi/"),
             ("In arrivo", "fa-inbox", "/posta/in-arrivo/"),
             ("In uscita", "fa-mail-forward", "/posta/in-uscita/"),
         )),
