@@ -1,0 +1,41 @@
+{% extends 'base_bootstrap.html' %}
+
+{% block pagina_titolo %}Elenco{% endblock %}
+
+{% load bootstrap3 %}
+
+{% block pagina_corpo %}
+
+    <div class="container-fluid">
+
+        <div class="row">
+
+            <div class="col-sm-10 col-sm-offset-1">
+
+                <div class="alert alert-block alert-info">
+                    <h4><i class="fa fa-fw fa-info-circle"></i> Necessarie informazioni</h4>
+                    <p>Prima di generare questo elenco, abbiamo bisogno di ulteriori informazioni.
+                        Per favore compila il modulo qui sotto e clicca su "Genera elenco".</p>
+                </div>
+
+                <p>&nbsp;</p>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
+
+                    <button class="btn btn-block btn-primary" data-caricamento>
+                        <i class="fa fa-fw fa-check"></i>
+                        Genera elenco
+                    </button>
+                </form>
+
+                <p>&nbsp;</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+{% endblock %}

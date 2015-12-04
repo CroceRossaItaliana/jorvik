@@ -2,6 +2,7 @@ from django.contrib.admin import ModelAdmin
 
 from anagrafica.models import Persona, Appartenenza
 from base.utils import filtra_queryset
+from ufficio_soci.forms import ModuloElencoSoci
 
 
 class Elenco:
@@ -12,6 +13,7 @@ class Elenco:
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+        self.modulo_riempito = None  # Qui andra' un eventuale modulo riempito.
 
     def modulo(self):
         """
@@ -20,7 +22,7 @@ class Elenco:
         """
         return None
 
-    def risultati(self, modulo=None):
+    def risultati(self):
         """
         Dato il contenuto del modulo.
         :param modulo:
@@ -72,30 +74,14 @@ class ElencoSemplice(Elenco):
                                campi_ricerca=['nome', 'cognome', 'codice_fiscale',])
 
 
-class ElencoSoci(ElencoSemplice):
+class ElencoDettagliato(ElencoSemplice):
     """
-    args: QuerySet<Sede>
+    Un elenco che, esportato in excel, contiene tutti i dati
+     anagrafici delle persone.
     """
-
-    def risultati(self, modulo=None):
-        qs_sedi = self.args[0]
-        return Persona.objects.filter(
-            Appartenenza.query_attuale(
-                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_SOCIO,
-            ).via("appartenenze")
-        ).prefetch_related(
-            'appartenenze', 'appartenenze__sede',
-            'utenza', 'numeri_telefono'
-        )
-
-    def template(self):
-        return 'us_elenchi_inc_soci.html'
-
-    def excel_foglio(self, p):
-        return p.sedi_attuali(membro__in=Appartenenza.MEMBRO_SOCIO).first().nome
 
     def excel_colonne(self):
-        return super(ElencoSoci, self).excel_colonne() + (
+        return super(ElencoDettagliato, self).excel_colonne() + (
             ("Data di Nascita", lambda p: p.data_nascita),
             ("Luogo di Nascita", lambda p: p.comune_nascita),
             ("Provincia di Nascita", lambda p: p.provincia_nascita),
@@ -106,6 +92,37 @@ class ElencoSoci(ElencoSemplice):
             ("Stato di residenza", lambda p: p.stato_residenza),
             ("Email", lambda p: p.email),
             ("Numeri di telefono", lambda p: ", ".join([str(x) for x in p.numeri_telefono.all()])),
+        )
+
+
+class ElencoSoci(ElencoDettagliato):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi soci
+    """
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(
+                al_giorno=self.modulo_riempito.cleaned_data['al_giorno'],
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_SOCIO,
+            ).via("appartenenze")
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        )
+
+    def modulo(self):
+        return ModuloElencoSoci
+
+    def template(self):
+        return 'us_elenchi_inc_soci.html'
+
+    def excel_foglio(self, p):
+        return p.sedi_attuali(al_giorno=self.modulo_riempito.cleaned_data['al_giorno'], membro__in=Appartenenza.MEMBRO_SOCIO).first().nome
+
+    def excel_colonne(self):
+        return super(ElencoSoci, self).excel_colonne() + (
             ("Ingresso in CRI", lambda p: p.ingresso())
         )
 

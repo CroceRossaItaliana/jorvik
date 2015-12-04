@@ -56,23 +56,23 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
     try:  # Prova a ottenere l'elenco dalla sessione.
         elenco = request.session["elenco_%s" % (elenco_id,)]
 
-    except IndexError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
+    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
         return errore_generico(request, me, titolo="Sessione scaduta",
                                messaggio="Ricarica la pagina.",
                                torna_url=request.path, torna_titolo="Riprova")
-
-    modulo = None
 
     if elenco.modulo():  # Se l'elenco richiede un modulo
 
         try:  # Prova a recuperare il modulo riempito
             modulo = request.session["elenco_modulo_%s" % (elenco_id,)]
 
-        except IndexError:  # Se fallisce, il modulo non e' stato ancora compilato
+        except KeyError:  # Se fallisce, il modulo non e' stato ancora compilato
             return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
 
         if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
             return redirect("/us/elenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
+
+        elenco.modulo_riempito = modulo  # Imposta il modulo
 
     if request.POST:  # Cambiato il termine di ricerca?
         # Memorizza il nuovo termine
@@ -88,7 +88,7 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
     download_url = "/us/elenco/%s/download/" % (elenco_id,)
     messaggio_url = "/us/elenco/%s/messaggio/" % (elenco_id,)
 
-    risultati = elenco.ordina(elenco.risultati(modulo=modulo))
+    risultati = elenco.ordina(elenco.risultati())
     if filtra:  # Se keyword specificata, filtra i risultati
         risultati = elenco.filtra(risultati, filtra)
 
@@ -112,7 +112,31 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
 
     return elenco.template(), contesto
 
-# TODO elenco_modulo
+
+@pagina_privata
+def us_elenco_modulo(request, me, elenco_id):
+
+    try:  # Prova a ottenere l'elenco dalla sessione.
+        elenco = request.session["elenco_%s" % (elenco_id,)]
+
+    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
+        raise ValueError("Elenco non presente in sessione.")
+
+    if not elenco.modulo():  # No modulo? Vai all'elenco
+        return redirect("/us/elenco/%s/1/" % (elenco_id,))
+
+    modulo = elenco.modulo()(request.POST or None)
+
+    if request.POST and modulo.is_valid():  # Modulo ok
+        request.session["elenco_modulo_%s" % (elenco_id,)] = modulo     # Salva modulo in sessione
+        return redirect("/us/elenco/%s/1/" % (elenco_id,))              # Redirigi alla prima pagina
+
+    contesto = {
+        "modulo": modulo
+    }
+
+    return 'us_elenchi_inc_modulo.html', contesto
+
 
 @pagina_privata
 def us_elenco_download(request, me, elenco_id):
@@ -120,24 +144,24 @@ def us_elenco_download(request, me, elenco_id):
     try:  # Prova a ottenere l'elenco dalla sessione.
         elenco = request.session["elenco_%s" % (elenco_id,)]
 
-    except IndexError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
+    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
         raise ValueError("Elenco non presente in sessione.")
-
-    modulo = None
 
     if elenco.modulo():  # Se l'elenco richiede un modulo
 
         try:  # Prova a recuperare il modulo riempito
             modulo = request.session["elenco_modulo_%s" % (elenco_id,)]
 
-        except IndexError:  # Se fallisce, il modulo non e' stato ancora compilato
+        except KeyError:  # Se fallisce, il modulo non e' stato ancora compilato
             return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
 
         if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
             return redirect("/us/elenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
 
+        elenco.modulo_riempito = modulo  # Imposta il modulo
+
     # Ottiene elenco
-    persone = elenco.ordina(elenco.risultati(modulo=modulo))
+    persone = elenco.ordina(elenco.risultati())
 
     # Crea nuovo excel
     excel = Excel(oggetto=me)
@@ -162,6 +186,7 @@ def us_elenco_download(request, me, elenco_id):
 
     excel.fogli = fogli.values()
     excel.genera_e_salva("Elenco.xlsx")
+
     return redirect(excel.download_url)
 
 
