@@ -18,7 +18,7 @@
     <div class="row">
         <div class="col-md-6">
 
-            <form method="post" action="{% url 'django.contrib.auth.views.login' %}">
+            <form method="post">
             {% csrf_token %}
 
             {% bootstrap_form form %}
@@ -40,7 +40,7 @@
             <hr/>
             <h3><i class="fa fa-key"></i> Recupera password</h3>
             <p>Se non ricordi la tua password, puoi richiederne una nuova.</p>
-            <a href="{% url 'password_reset' %}" class="btn btn-block btn-primary">
+            <a href="/recupera-password/" class="btn btn-block btn-primary">
                 <i class="fa fa-send"></i>
                 Recupera Password
             </a>
