@@ -141,19 +141,31 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         return d.save()
 
     @classmethod
-    def costruisci(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo={}, mittente=None, destinatari=[], **kwargs):
+    def costruisci(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo={}, mittente=None, destinatari=[], allegati=[], **kwargs):
+
+        corpo.update({
+            "mittente": mittente,
+            "allegati": allegati,
+        })
+
         m = cls(
             oggetto=oggetto,
             mittente=mittente,
             corpo=get_template(modello).render(Context(corpo))
         )
         m.save()
+
         for d in destinatari:
             m.aggiungi_destinatario(d)
+
+        for a in allegati:
+            a.oggetto = m
+            a.save()
+
         return m
 
     @classmethod
-    def costruisci_e_invia(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo={}, mittente=None, destinatari=[], **kwargs):
+    def costruisci_e_invia(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo={}, mittente=None, destinatari=[], allegati=[], **kwargs):
         """
         Scorciatoia per costruire rapidamente un messaggio di posta e inviarlo immediatamente.
          IMPORTANTE. Non adatto per messaggi con molti destinatari. In caso di fallimento immediato, il messaggio
@@ -165,12 +177,12 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         :param destinatari: Un elenco di destinatari (oggetti Persona).
         :return: Un oggetto Messaggio inviato.
         """
-        m = cls.costruisci(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente, destinatari=destinatari, **kwargs)
+        m = cls.costruisci(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente, destinatari=destinatari, allegati=allegati, **kwargs)
         m.invia()
         return m
 
     @classmethod
-    def costruisci_e_accoda(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo={}, mittente=None, destinatari=[], **kwargs):
+    def costruisci_e_accoda(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo={}, mittente=None, destinatari=[], allegati=[], **kwargs):
         """
         Scorciatoia per costruire rapidamente un messaggio di posta e accodarlo per l'invio asincrono.
         :param oggetto: Oggetto del messaggio.
@@ -180,7 +192,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         :param destinatari: Un elenco di destinatari (oggetti Persona).
         :return: Un oggetto Messaggio accodato.
         """
-        m = cls.costruisci(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente, destinatari=destinatari, **kwargs)
+        m = cls.costruisci(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente, destinatari=destinatari, allegati=[], **kwargs)
         m.accoda()
         return m
 

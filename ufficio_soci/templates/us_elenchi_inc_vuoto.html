@@ -12,8 +12,10 @@
                 <form method="POST" data-caricamento>
                     {% csrf_token %}
                     <div class="input-group">
-                        <input type="text" class="form-control" name="filtra"
-                               placeholder="Filtra elenco..." value="{{ filtra }}">
+                        <input  type="text" class="form-control" name="filtra"
+                                placeholder="Filtra elenco..." value="{{ filtra }}"
+                                {% if filtra %}autofocus{% endif %}
+                        >
                         <span class="input-group-btn">
 
                             <button class="btn btn-primary" type="submit"
@@ -88,7 +90,7 @@
                     </a>
                     <a class="btn btn-primary"
                         data-conferma="Vuoi scrivere un nuovo messaggio da inviare a tutte le {{ totale }} persone in elenco?"
-                        href="#{{ messaggio_url }}"
+                        href="{{ messaggio_url }}" target="_new" data-caricamento
                     >
                         <i class="fa fa-fw fa-envelope-o"></i>
                         Invia messaggio
@@ -136,9 +138,21 @@
                 {% empty %}
 
                     {% block elenco_vuoto %}
-                        <div class="alert alert-warning">
-                            <h4>Questo elenco &egrave; vuoto.</h4>
-                        </div>
+
+                        {% if filtra %}
+                            <div class="alert alert-warning">
+                                <h4><i class="fa fa-fw fa-search"></i> Nessun risultato trovato &mdash; Prova a cambiare il termine di ricerca.</h4>
+                                <p><i class="fa fa-fw fa-warning"></i> Assicurati di aver digitato apostrofi ed accetti correttamente.</p>
+                            </div>
+
+
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <h4><i class="fa fa-fw fa-info-circle"></i> Questo elenco &egrave; vuoto.</h4>
+                                <p>Nessuna persona trovata da mostrare in questo elenco.</p>
+                            </div>
+
+                        {% endif %}
 
                     {% endblock %}
 

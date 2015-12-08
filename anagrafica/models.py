@@ -514,6 +514,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         return "/profilo/" + str(self.pk) + "/"
 
     @property
+    def messaggio_url(self):
+        return self.url + "messaggio/"
+
+    @property
     def link(self):
         return "<a href='" + str(self.url) + "'>" + str(self.nome_completo) + "</a>"
 
@@ -741,6 +745,8 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
 
     # Membri soci
     MEMBRO_SOCIO = (VOLONTARIO, ORDINARIO,)
+    MEMBRO_ANZIANITA = MEMBRO_SOCIO
+    MEMBRO_ANZIANITA_ANNI = 2
 
     # Membri sotto il diretto controllo di una altra Sede
     MEMBRO_ESTESO = (ESTESO,)

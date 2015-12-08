@@ -69,11 +69,14 @@ urlpatterns = [
         "template_name": "anagrafica_utente_cambia_password_fatto.html",
     }),
 
+    url(r'^profilo/(?P<pk>[0-9]+)/messaggio/$', 'anagrafica.viste.profilo_messaggio'),
+
     url(r'^autorizzazioni/$', 'base.viste.autorizzazioni'),
     url(r'^autorizzazioni/storico/$', 'base.viste.autorizzazioni_storico'),
     url(r'^autorizzazioni/(?P<pk>[0-9]+)/concedi/$', 'base.viste.autorizzazione_concedi'),
     url(r'^autorizzazioni/(?P<pk>[0-9]+)/nega/$', 'base.viste.autorizzazione_nega'),
 
+    url(r'^posta/scrivi/', 'posta.viste.posta_scrivi'),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/(?P<messaggio_id>\d+)/', 'posta.viste.posta'),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/', 'posta.viste.posta'),
     url(r'^posta/(?P<direzione>[\w\-]+)/', 'posta.viste.posta'),
@@ -97,8 +100,15 @@ urlpatterns = [
     url(r'^us/$', 'ufficio_soci.viste.us'),
     url(r'^us/estensione/$', 'ufficio_soci.viste.us_estensione'),
     url(r'^us/elenco/soci/$', 'ufficio_soci.viste.us_elenco_soci'),
+    url(r'^us/elenco/sostenitori/$', 'ufficio_soci.viste.us_elenco_sostenitori'),
+    url(r'^us/elenco/volontari/$', 'ufficio_soci.viste.us_elenco_volontari'),
+    url(r'^us/elenco/ordinari/$', 'ufficio_soci.viste.us_elenco_ordinari'),
+    url(r'^us/elenco/elettorato/$', 'ufficio_soci.viste.us_elenco_elettorato'),
+
     url(r'^us/elenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', 'ufficio_soci.viste.us_elenco'),
     url(r'^us/elenco/(?P<elenco_id>.*)/download/$', 'ufficio_soci.viste.us_elenco_download'),
+    url(r'^us/elenco/(?P<elenco_id>.*)/messaggio/$', 'ufficio_soci.viste.us_elenco_messaggio'),
+    url(r'^us/elenco/(?P<elenco_id>.*)/modulo/$', 'ufficio_soci.viste.us_elenco_modulo'),
     url(r'^us/elenco/(?P<elenco_id>.*)/$', 'ufficio_soci.viste.us_elenco'),
 
     url(r'^social/commenti/nuovo/', 'social.viste.commenti_nuovo'),

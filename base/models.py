@@ -487,7 +487,7 @@ class Token(ModelloSemplice, ConMarcaTemporale):
     pass
 
 
-class Allegato(ModelloSemplice, ConMarcaTemporale, ConScadenza):
+class Allegato(ConMarcaTemporale, ConScadenza, ModelloSemplice):
     """
     Rappresenta un allegato generico in database, con potenziale scadenza.
     """
@@ -495,8 +495,8 @@ class Allegato(ModelloSemplice, ConMarcaTemporale, ConScadenza):
     class Meta:
         verbose_name_plural = "Allegati"
 
-    oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="allegato_come_oggetto")
-    oggetto_id = models.PositiveIntegerField(db_index=True)
+    oggetto_tipo = models.ForeignKey(ContentType, db_index=True, blank=True, null=True, related_name="allegato_come_oggetto")
+    oggetto_id = models.PositiveIntegerField(db_index=True, blank=True, null=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
     file = models.FileField("File", upload_to=GeneratoreNomeFile('allegati/'))
     nome = models.CharField("Nome file", max_length=64, default="File", blank=False, null=False)
@@ -530,8 +530,6 @@ class Allegato(ModelloSemplice, ConMarcaTemporale, ConScadenza):
                 pass
 
         return True
-
-
 
 
 class ConAllegati(models.Model):

@@ -1,0 +1,43 @@
+{% extends 'posta_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+
+    Scivi un messaggio
+
+{% endblock %}
+
+
+{% block app_contenuto %}
+
+
+    <h3 class="allinea-centro">
+        <i class="fa fa-fw fa-pencil"></i>
+        Scrivi un nuovo messaggio
+    </h3>
+
+    <div class="col-md-8 col-md-offset-2">
+
+        <div class="alert alert-info">
+            <i class="fa fa-fw fa-info-circle"></i>
+            Puoi utilizzare questo modulo per inviare messaggi ad altre persone su Gaia. I messaggi inviati da Gaia
+            verranno recapitati su Gaia, nonc&eacute; tramite e-mail.
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+
+            {% csrf_token %}
+            {% bootstrap_form modulo %}
+
+            <button type="submit"
+                    class="btn btn-primary btn-success btn-block btn-lg">
+                <i class="fa fa-fw fa-send-o"></i>
+                Invia il messaggio
+            </button>
+
+        </form>
+
+    </div>
+
+{% endblock %}

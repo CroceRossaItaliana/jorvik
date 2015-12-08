@@ -4,8 +4,13 @@ from anagrafica.models import Persona, Sede
 
 
 class PersonaAutocompletamento(autocomplete_light.AutocompleteModelBase):
-    search_fields = ['nome', 'cognome',]
+    search_fields = ['nome', 'cognome', 'codice_fiscale',]
     model = Persona
+
+    autocomplete_js_attributes = {
+        'placeholder': 'Digita nome o CF...',
+        'required': False,
+    }
 
     def choices_for_request(self):
         if not self.request.user.is_staff:  #TODO udpate
@@ -14,15 +19,15 @@ class PersonaAutocompletamento(autocomplete_light.AutocompleteModelBase):
         return super(PersonaAutocompletamento, self).choices_for_request()
 
     choice_html_format = u'''
-        <span class="block" data-value="%s"><strong>%s</strong> (%s a %s)</span>
+        <span class="block" data-value="%s"><strong>%s</strong> %s</span>
     '''
 
     def choice_html(self, choice):
+        app = choice.appartenenze_attuali().first() if choice else None
         return self.choice_html_format % (
             self.choice_value(choice),
             self.choice_label(choice),
-            choice.appartenenze_attuali().first().get_membro_display() if choice else '',
-            choice.appartenenze_attuali().first().sede if choice else '',
+            ("(%s a %s)" % (app.get_membro_display(), app.sede)) if app else '',
         )
 
 

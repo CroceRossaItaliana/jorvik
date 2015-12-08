@@ -18,6 +18,7 @@ from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.files import Zip
 from posta.models import Messaggio
+from posta.utils import imposta_destinatari_e_scrivi_messaggio
 
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
@@ -382,7 +383,6 @@ def utente_estensione_termina(request, me, pk):
         return redirect('/utente/estensione/')
 
 
-
 @pagina_privata
 def utente_trasferimento(request, me):
     storico = me.trasferimenti.all()
@@ -405,3 +405,10 @@ def utente_trasferimento(request, me):
         "storico": storico
     }
     return "anagrafica_utente_trasferimento.html", contesto
+
+
+@pagina_privata
+def profilo_messaggio(request, me, pk=None):
+    persona = get_object_or_404(Persona, pk=pk)
+    qs = Persona.objects.filter(pk=persona.pk)
+    return imposta_destinatari_e_scrivi_messaggio(request, qs)
