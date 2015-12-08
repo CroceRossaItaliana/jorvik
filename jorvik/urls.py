@@ -99,6 +99,7 @@ urlpatterns = [
 
     url(r'^us/$', 'ufficio_soci.viste.us'),
     url(r'^us/estensione/$', 'ufficio_soci.viste.us_estensione'),
+    url(r'^us/estensione/(?P<pk>.*)/termina/$', 'ufficio_soci.viste.us_estensione_termina'),
     url(r'^us/elenco/soci/$', 'ufficio_soci.viste.us_elenco_soci'),
     url(r'^us/elenco/sostenitori/$', 'ufficio_soci.viste.us_elenco_sostenitori'),
     url(r'^us/elenco/volontari/$', 'ufficio_soci.viste.us_elenco_volontari'),

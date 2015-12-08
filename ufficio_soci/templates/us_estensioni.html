@@ -1,11 +1,25 @@
+{% extends "us_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Elenco Estensioni{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="alert bg-info">
+        <p>
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai visionare e modificare le estensioni.
+        </p>
+    </div>
+
 <div class="row" style="margin-top: 5px;">
     <hr>
     <div class="col-md-12">
-        <h3>Estesioni Attuali</h3>
+        <h3>Storico Estesioni</h3>
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Richiedente</th>
+                    <th>Volontario Esteso</th>
                     <th>Destinazione</th>
                     <th>Esito</th>
                     <th>Termina</th>
@@ -14,13 +28,17 @@
             <tbody>
                 {% for estensione in attuali %}
                 <tr>
-                    <td>{{ estensione.richiedente }}</td>
+                    <td>{{ estensione.persona }}</td>
                     <td>{{ estensione.destinazione }}</td>
                     <td>{{ estensione.get_esito_display }}</td>
                     <td>
-                        <a class="btn btn-danger" href="{{"/utente/estensione/"}}{{estensione.pk}}{{"/termina/"}}">
+                        {% if estensione.esito == Estensione.ESITO_OK %}
+                        <a class="btn btn-danger" href="{{"/us/estensione/"}}{{estensione.pk}}{{"/termina/"}}">
                             <i class="fa fa-trash"></i> Termina estensione.
                         </a>
+                        {% else %}
+                            Nessuna azione disponibile
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}
@@ -36,4 +54,4 @@
     <hr>
 </div>
 
-
+{% endblock %}
