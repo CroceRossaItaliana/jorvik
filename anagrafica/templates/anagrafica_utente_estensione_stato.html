@@ -1,30 +1,39 @@
-<div class="alert bg-info">
-    <p>
-        <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai visionare lo stato della tua richiesta di estensione.
-    </p>
-</div>
-
-{% if me.estensione.esito == me.estensione.ESITO_OK %}
-##termina
-{% else %}
 <div class="row" style="margin-top: 5px;">
+    <hr>
     <div class="col-md-12">
+        <h3>Estesioni Attuali</h3>
         <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Richiedente</th>
                     <th>Destinazione</th>
                     <th>Esito</th>
+                    <th>Termina</th>
                 </tr>
             </thead>
             <tbody>
+                {% for estensione in attuali %}
                 <tr>
-                    <td>{{ me.estensione.richiedente }}</td>
-                    <td>{{ me.estensione.destinazione }}</td>
-                    <td>{{ me.estensione.get_esito_display }}</td>
+                    <td>{{ estensione.richiedente }}</td>
+                    <td>{{ estensione.destinazione }}</td>
+                    <td>{{ estensione.get_esito_display }}</td>
+                    <td>
+                        <a class="btn btn-danger" href="{{"/utente/estensione/"}}{{estensione.pk}}{{"/termina/"}}">
+                            <i class="fa fa-trash"></i> Nessuna estensione passata.
+                        </a>
+                    </td>
                 </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="bg-warning">
+                            <i class="fa fa-info"></i> Nessuna estensione passata.
+                        </td>
+                    </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
+    <hr>
 </div>
-{% endif %}
+
+
