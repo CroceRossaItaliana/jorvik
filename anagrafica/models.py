@@ -564,17 +564,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         """
         return self.autorizzazioni().filter(necessaria=True).order_by('creazione')
 
-    @property
-    def estensione(self):
-        """
-        Ritorna estensione in corso, o estensione in attesa di conferma, se applicabile.
-        Altrimenti, None.
-        :return: Estensione se in corso o in attesa, altrimenti None.
-        """
-        return self.estensioni.all().filter(
-            Q(Appartenenza.query_attuale().via("appartenenza")) |  # Con appartenenza attuale
-            Q(pk__in=Estensione.con_esito_ok().filter(persona=self))  # O con esito pending
-        ).first()
 
     @property
     def trasferimento(self):
@@ -586,6 +575,11 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         return self.trasferimenti.all().filter(
             Q(pk__in=Trasferimento.con_esito_pending().filter(persona=self))  # O con esito pending
         ).first()
+
+    def estensioni_attuali(self):
+        return self.estensioni.all().filter(
+            Q(pk_in=Estensione.con_esito_ok())
+        )
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """
@@ -769,12 +763,14 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     SOSPENSIONE = 'S'
     TRASFERIMENTO = 'T'
     PROMOZIONE = 'P'
+    FINE_ESTENSIONE = 'FE'
     TERMINAZIONE = (
         (DIMISSIONE, 'Dimissione'),
         (ESPULSIONE, 'Espulsione'),
         (SOSPENSIONE, 'Sospensione'),
         (TRASFERIMENTO, 'Trasferimento'),
         (PROMOZIONE, 'Promozione'),
+        (FINE_ESTENSIONE, 'Fine Estensione'),
     )
     terminazione = models.CharField("Terminazione", max_length=1, choices=TERMINAZIONE, default=None, db_index=True,
                                     blank=True, null=True)
@@ -1185,3 +1181,8 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
             ),
             motivo_obbligatorio=True
         )
+
+    def termina(self):
+        self.appartenenza.fine = datetime.today()
+        self.appartenenza.terminazione = Appartenenza.FINE_ESTENSIONE
+        self.save()

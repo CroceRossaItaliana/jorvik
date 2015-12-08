@@ -5,11 +5,17 @@
 {% block pagina_titolo %}Richiesta Estensione{% endblock %}
 
 {% block app_contenuto %}
-    {% if me.estensione %}
-        {% include "anagrafica_utente_estensione_stato.html" %}
-    {% else %}
-        {% include "anagrafica_utente_estensione_richiedi.html" %}
-    {% endif %}
+
+    <div class="alert bg-info">
+        <p>
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai visionare lo stato delle estensioni.
+        </p>
+    </div>
+
+    {% include "anagrafica_utente_estensione_stato.html" %}
+
+    {% include "anagrafica_utente_estensione_richiedi.html" %}
+
 
 
 <div class="row" style="margin-top: 5px;">

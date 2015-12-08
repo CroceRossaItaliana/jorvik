@@ -11,8 +11,9 @@ from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
-from anagrafica.models import Persona, Documento, Telefono
+from anagrafica.models import Persona, Documento, Telefono, Estensione
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI
+from anagrafica.permessi.costanti import ERRORE_PERMESSI
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.files import Zip
@@ -366,9 +367,21 @@ def utente_estensione(request, me):
         modulo = ModuloCreazioneEstensione()
     contesto = {
         "modulo": modulo,
-        "storico": storico
+        "storico": storico,
+        "attuali": me.estensioni_attuali()
     }
     return "anagrafica_utente_estensione.html", contesto
+
+@pagina_privata()
+def utente_estensione_termina(request, me, pk):
+    estensione = get_object_or_404(Estensione, pk=pk)
+    if estensione.persona <> me:
+        return redirect(ERRORE_PERMESSI)
+    else:
+        estensione.termina()
+        return redirect('/utente/estensione/')
+
+
 
 @pagina_privata
 def utente_trasferimento(request, me):
