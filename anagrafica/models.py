@@ -514,6 +514,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         return "/profilo/" + str(self.pk) + "/"
 
     @property
+    def messaggio_url(self):
+        return self.url + "messaggio/"
+
+    @property
     def link(self):
         return "<a href='" + str(self.url) + "'>" + str(self.nome_completo) + "</a>"
 
