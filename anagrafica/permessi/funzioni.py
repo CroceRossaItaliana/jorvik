@@ -37,7 +37,7 @@ def permessi_ufficio_soci(sede):
     """
     return [
         (GESTIONE_SOCI,     sede.espandi(includi_me=True)),
-        (ELENCHI_SOCI,      sede.espandi(includi_me=True)),
+        (ELENCHI_SOCI,      sede.espandi(includi_me=True, pubblici=True)),
     ]
 
 def permessi_responsabile_attivita(sede):

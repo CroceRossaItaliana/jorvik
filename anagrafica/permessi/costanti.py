@@ -64,6 +64,15 @@ LETTURA = 10
 NESSUNO = 0
 
 
+# Livelli di permesso per template
+PERMESSI_TESTO = {
+    "completo": COMPLETO,
+    "modifica": MODIFICA,
+    "lettura": LETTURA,
+    "nessuno": NESSUNO,
+}
+
+
 # I permessi minimi per ogni tipo di oggetto.
 #  Ad esempio, tutti i commenti sono pubblici. Ne segue,
 #  che il permesso minimo per Commento sia LETTURA.

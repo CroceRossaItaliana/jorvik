@@ -2,7 +2,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import redirect
 
 from anagrafica.models import Appartenenza, Persona
-from anagrafica.permessi.costanti import GESTIONE_SOCI
+from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI
 from autenticazione.funzioni import pagina_privata
 from base.errori import errore_generico
 from base.files import Excel, FoglioExcel
@@ -215,6 +215,43 @@ def us_elenco_messaggio(request, me, elenco_id):
         elenco.modulo_riempito = modulo  # Imposta il modulo
 
     return imposta_destinatari_e_scrivi_messaggio(request, elenco.ordina(elenco.risultati()))
+
+
+@pagina_privata(permessi=(ELENCHI_SOCI,))
+def us_elenchi(request, me, elenco_tipo):
+
+    tipi_elenco = {
+        "volontari": (ElencoVolontari, "Elenco dei Volontari"),
+        "ordinari": (ElencoOrdinari, "Elenco dei Soci Ordinari"),
+        "soci": (ElencoSociAlGiorno, "Elenco dei Soci"),
+        "sostenitori": (ElencoSostenitori, "Elenco dei Sostenitori"),
+        "elettorato": (ElencoElettoratoAlGiorno, "Elenco Elettorato"),
+    }
+
+    if elenco_tipo not in tipi_elenco:
+        return redirect("/us/")
+
+    elenco_nome = tipi_elenco[elenco_tipo][1]
+
+    if request.POST:  # Ho selezionato delle sedi. Elabora elenco.
+
+        sedi = me.oggetti_permesso(ELENCHI_SOCI).filter(pk__in=request.POST.getlist('sedi'))
+        elenco = tipi_elenco[elenco_tipo][0](sedi)
+
+        return 'us_elenco_generico.html', {
+            "elenco": elenco,
+            "elenco_nome": elenco_nome,
+        }
+
+    else:  # Devo selezionare delle Sedi.
+
+        sedi = me.oggetti_permesso(ELENCHI_SOCI)
+
+        return 'us_elenco_sede.html', {
+            "sedi": sedi,
+            "elenco_nome": elenco_nome,
+        }
+
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))

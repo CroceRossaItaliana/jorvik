@@ -14,7 +14,12 @@
 {% endblock %}
 
 {% block elenco_riga_azioni_extra %}
-    <a class="btn btn-default" href="/us/dimetti/{{ persona.pk }}/" target="_new">
-        <i class="fa fa-fw fa-times"></i> Dimetti
-    </a>
+
+    {% if puo_modificare %}
+        <a class="btn btn-default" href="/us/dimetti/{{ persona.pk }}/" target="_new">
+            <i class="fa fa-fw fa-times"></i> Dimetti
+        </a>
+
+    {% endif %}
+
 {% endblock %}
