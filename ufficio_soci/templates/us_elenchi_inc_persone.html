@@ -28,9 +28,15 @@
 
 {% block elenco_riga_azioni %}
 
-    <a href="{{ persona.url }}" class="btn btn-default" target="_new">
-        <i class="fa fa-fw fa-file-o"></i> Scheda
-    </a>
+    {% load utils %}
+    {% permessi_almeno persona "modifica" as puo_modificare %}
+    {% permessi_almeno persona "lettura" as puo_leggere %}
+
+    {% if puo_leggere %}
+        <a href="{{ persona.url }}" class="btn btn-default" target="_new">
+            <i class="fa fa-fw fa-file-o"></i> Scheda
+        </a>
+    {% endif %}
 
     <a href="{{ persona.messaggio_url }}" class="btn btn-default" target="_new">
         <i class="fa fa-fw fa-envelope-o"></i> Msg.

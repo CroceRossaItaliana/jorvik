@@ -2,6 +2,7 @@ from django.template import Library
 from django.template.loader import render_to_string
 
 from anagrafica.models import Persona
+from anagrafica.permessi.costanti import PERMESSI_TESTO, NESSUNO
 from base.stringhe import genera_uuid_casuale
 from ufficio_soci.elenchi import Elenco
 
@@ -37,3 +38,26 @@ def elenco(context, oggetto_elenco=None,):
         'iframe_url': "/us/elenco/%s/1/" % (elenco_id,)
     })
     return render_to_string('us_elenchi_inc_iframe.html', context)
+
+
+@register.assignment_tag(takes_context=True)
+def permessi_almeno(context, oggetto, minimo="lettura"):
+    """
+    Controlla che l'utente attuale -estrapolato dal contesto- abbia i permessi
+     minimi su un determinato oggetto. Ritorna True o False.
+    """
+
+    if minimo not in PERMESSI_TESTO:
+        raise ValueError("Permesso '%s' non riconosciuto. Deve essere in 'PERMESSI_TESTO'." % (minimo,))
+
+    minimo_int = PERMESSI_TESTO[minimo]
+
+    if minimo_int == NESSUNO:
+        return True
+
+    if not hasattr(context.request, 'me'):
+        return False
+
+    almeno = context.request.me.permessi_almeno(oggetto, minimo_int)
+    return almeno
+

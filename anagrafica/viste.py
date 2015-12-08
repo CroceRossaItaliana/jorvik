@@ -376,7 +376,7 @@ def utente_estensione(request, me):
 @pagina_privata()
 def utente_estensione_termina(request, me, pk):
     estensione = get_object_or_404(Estensione, pk=pk)
-    if estensione.persona <> me:
+    if not estensione.persona == me:
         return redirect(ERRORE_PERMESSI)
     else:
         estensione.termina()

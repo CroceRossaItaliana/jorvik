@@ -830,17 +830,20 @@ class SedeQuerySet(QuerySet):
         """
         return self.filter(estensione__in=[NAZIONALE, REGIONALE, PROVINCIALE, LOCALE])
 
-    def espandi(self):
+    def espandi(self, pubblici=False):
         """
         Espande il QuerySet.
         Se pubblico, me e tutte le sedi sottostanti.
         Se privato, me e le unita' territoriali incluse.
-        :param includi_me: Includimi nel queryset ritornato.
+        :param pubblici: Espand i Comitati pubblici al tutti i Comitati sottostanti.
         """
 
-        return self \
-            | self.filter(estensione__in=[NAZIONALE, REGIONALE]).get_descendants(include_self=True) \
-            | self.filter(estensione=TERRITORIALE, genitore__in=(self.filter(estensione__in=[PROVINCIALE, LOCALE])))
+        qs = self | self.filter(estensione=TERRITORIALE, genitore__in=(self.filter(estensione__in=[PROVINCIALE, LOCALE])))
+
+        if pubblici:
+            qs |= self.filter(estensione__in=[NAZIONALE, REGIONALE]).get_descendants(include_self=True)
+
+        return qs
 
 
 class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
@@ -1012,16 +1015,17 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
         # Se sono unita' territoriale, ritorna il mio genitore.
         return self.genitore
 
-    def espandi(self, includi_me=False):
+    def espandi(self, includi_me=False, pubblici=False):
         """
         Espande la Sede.
         Se pubblico, me e tutte le sedi sottostanti.
         Se privato, me e le unita' territoriali incluse.
         :param includi_me: Includimi nel queryset ritornato.
+        :param pubblici: Espandi i pubblici, ritornando tutto al di sotto.
         """
 
         # Sede pubblica... ritorna tutto sotto di se.
-        if self.estensione in [NAZIONALE, REGIONALE]:
+        if pubblici and self.estensione in [NAZIONALE, REGIONALE]:
             return self.get_descendants(include_self=includi_me)
 
         # Sede privata... espandi con unita' territoriali.
@@ -1035,7 +1039,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
 
         else:
             return Sede.objects.none()
-
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):

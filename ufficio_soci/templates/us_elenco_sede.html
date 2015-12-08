@@ -1,0 +1,76 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    {{ elenco_nome }}
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro">
+        <i class="fa fa-fw fa-users"></i>
+        {{ elenco_nome }}
+    </h2>
+
+    <hr />
+
+    <div class="alert alert-block alert-info">
+        <h4><i class="fa fa-fw fa-info-circle"></i> Seleziona Sede per {{ elenco_nome }}</h4>
+        <p>Ci risulta che tu abbia i permessi per richiedere l'elenco dei soci delle seguenti Sedi e
+            unit&agrave; territoriali. Seleziona le sedi che vuoi includere nell'elenco da generare, poi clicca su 'Genera Elenco'.</p>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+            {% load mptt_tags %}
+
+        <div class="row">
+
+            <script type="text/javascript">
+                function selezionaInferiori(el, vero) {
+                    $(el).closest('li').find('.children').find('[type="checkbox"]').prop('checked', vero);
+                }
+            </script>
+
+            <div class="col-md-9">
+                <ul>
+                    {% recursetree sedi %}
+                        <li>
+                            <label>
+                                <input type="checkbox" name="sedi" value="{{ node.pk }}" checked="checked" data-genitore="{{ node.genitore.pk }} "/>
+                                {{ node.nome }}
+                            </label>
+
+                            {% if not node.is_leaf_node %}
+                                <ul class="children">
+                                    Sedi sottostanti:
+                                    <div class="btn-group btn-group-xs">
+                                        <button type="button" class="btn btn-default" onclick="selezionaInferiori(this, true);">
+                                            <i class="fa fa-check-square"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-default" onclick="selezionaInferiori(this, false);">
+                                            <i class="fa fa-square"></i>
+                                        </button>
+                                    </div>
+                                    {{ children }}
+                                </ul>
+                            {% endif %}
+                        </li>
+                    {% endrecursetree %}
+                </ul>
+            </div>
+
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary btn-lg btn-block">
+                    <i class="fa fa-fw fa-check-circle-o"></i> Genera elenco
+                </button>
+
+
+            </div>
+        </div>
+
+    
+    </form>
+
+{% endblock %}
