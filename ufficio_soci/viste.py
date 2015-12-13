@@ -1,8 +1,8 @@
 from django.core.paginator import Paginator
 from django.shortcuts import redirect
 
-from anagrafica.models import Appartenenza, Persona
-from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI
+from anagrafica.models import Appartenenza, Persona, Estensione
+from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI
 from autenticazione.funzioni import pagina_privata
 from base.errori import errore_generico
 from base.files import Excel, FoglioExcel
@@ -46,6 +46,27 @@ def us_estensione(request, me):
     }
 
     return 'us_estensione.html', contesto
+
+@pagina_privata()
+def us_estensioni(request, me):
+    sedi = me.oggetti_permesso(GESTIONE_SOCI).espandi()
+    estensioni = Estensione.filter(destinazione__in=(sedi))
+
+    contesto = {
+        'estensioni': estensioni,
+    }
+
+    return 'us_estensioni.html', contesto
+
+@pagina_privata()
+def us_estensione_termina(request, me, pk):
+    estensione = get_object_or_404(Estensione, pk=pk)
+    if estensione not in me.oggetti_permesso(GESTIONE_SOCI).espandi():
+        return redirect(ERRORE_PERMESSI)
+    else:
+        estensione.termina()
+        return redirect('/us/estensioni/')
+
 
 
 @pagina_privata

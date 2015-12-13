@@ -772,7 +772,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     SOSPENSIONE = 'S'
     TRASFERIMENTO = 'T'
     PROMOZIONE = 'P'
-    FINE_ESTENSIONE = 'FE'
+    FINE_ESTENSIONE = 'F'
     TERMINAZIONE = (
         (DIMISSIONE, 'Dimissione'),
         (ESPULSIONE, 'Espulsione'),
