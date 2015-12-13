@@ -1,0 +1,51 @@
+{% extends 'formazione_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Formazione
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro text-success">
+        Formazione
+    </h2>
+
+    <p class="allinea-centro">
+        <img  alt="Emblema CRI" src="https://upload.wikimedia.org/wikipedia/it/thumb/4/4a/Emblema_CRI.svg/300px-Emblema_CRI.svg.png" width="180" height="180" />
+    </p>
+
+
+    <div class="alert alert-info">
+        <h4><i class="fa fa-info-circle"></i> Benvenuto nella sezione dedicata alla Formazione CRI.</h4>
+        <p>Usa il men&ugrave; sulla destra che ti permetter&agrave; di accedere alle funzioni
+        relative alla gestione dei Corsi Base e dei Corsi di Formazione CRI.</p>
+    </div>
+
+    <div class="row ">
+
+        <div class="col-md-3 allinea-centro">
+            <h3>{{ corsi.count }}</h3>
+            <p class="grassetto">Corsi Gestiti</p>
+        </div>
+
+        <div class="col-md-3 allinea-centro">
+            <h3>{{ sedi.count }}</h3>
+            <p class="grassetto">Sedi Gestite</p>
+        </div>
+
+        <div class="col-md-6">
+            <p>Sei abilitato alla gestione della Formazione per le seguenti sedi:</p>
+            <ul>
+                {% for sede in sedi %}
+                    <li>{{ sede.link|safe }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+    </div>
+
+
+
+{% endblock %}

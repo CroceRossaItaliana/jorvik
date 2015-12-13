@@ -63,10 +63,10 @@ def permessi_responsabile_formazione(sede):
     :return: Lista di permessi.
     """
     from anagrafica.models import Sede
-    from formazione.models import Corso
+    from formazione.models import CorsoBase
     return [
-        (GESTIONE_CORSI_SEDE,       Sede.objects.filter(pk=sede.pk)),
-        (GESTIONE_CORSO,            Corso.objects.filter(sede=sede))
+        (GESTIONE_CORSI_SEDE,       sede.espandi(includi_me=True)),
+        (GESTIONE_CORSO,            CorsoBase.objects.filter(sede__in=sede.espandi(includi_me=True)))
 
     ]
 

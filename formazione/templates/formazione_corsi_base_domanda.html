@@ -1,0 +1,73 @@
+{% extends 'formazione_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+
+{% block pagina_titolo %}
+    Domanda Formativa per Corsi Base
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro text-success">
+        Domanda Formativa per Corsi Base
+    </h2>
+
+    <div class="alert alert-info">
+        <h4><i class="fa fa-info-circle"></i> Cosa &egrave; la domanda formativa?</h4>
+        <p>Per ogni Sede CRI, la domanda formativa rappresenta il numero di aspiranti volontari che hanno registrato
+            su Gaia il proprio interesse per entrare in Croce Rossa in una zona che comprende la Sede. &Egrave;
+            possibile usare questo numero per la programmazione di nuovi corsi. Gli aspiranti che si iscrivono
+            a un Corso Base non vengono pi&ugrave; considerati in questo numero.</p>
+        <p>Attivando un nuovo Corso Base su Gaia, verranno inviate delle notifiche di attivazione
+            del corso a tutti gli aspiranti nella zona considerati in questa cifra.</p>
+    </div>
+
+    <div class="row ">
+
+        <ul>
+            {% recursetree sedi %}
+                <li>
+
+                    <strong>{{ node.nome }}</strong>:
+
+                    {{ node.domanda_formativa }} aspiranti interessati
+
+                    {% if node.domanda_formativa > 100 %}
+                        <span class="label label-danger">
+                            <i class="fa fa-fw fa-warning"></i>
+                            Attivazione nuovo corso fortemente consigliata
+                        </span>
+
+                    {% elif node.domanda_formativa > 35 %}
+                        <span class="label label-warning">
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Considera l'attivazione di un nuovo corso
+                        </span>
+
+                    {% endif %}
+
+
+
+                    {% if not node.is_leaf_node %}
+                        <ul class="children">
+                            {{ children }}
+                        </ul>
+                    {% endif %}
+                </li>
+            {% endrecursetree %}
+        </ul>
+
+
+    </div>
+
+    <div class="alert alert-success">
+        <h4><i class="fa fa-asterisk"></i> Vuoi pianificare un nuovo corso?</h4>
+        <p>Se vuoi pianificare un nuovo corso base, clicca su
+            <a href="/formazione/corsi-base/nuovo/" class="btn btn-xs btn-success">Pianifica un Nuovo Corso</a>.</p>
+        <p>Potrai assegnare un Direttore del Corso che si occuper&agrave; di organizzarne i particolari.</p>
+    </div>
+
+
+
+{% endblock %}

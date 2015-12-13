@@ -67,5 +67,16 @@ MENU = {
             ("Non riconsegnati", "fa-credit-card", "/us/non-riconsegnati/"),
         )),
     ),
+    "formazione": (
+        ("Corsi Base", (
+            ("Elenco Corsi Base", "fa-list", "/formazione/corsi-base/elenco/"),
+            ("Domanda formativa", "fa-area-chart", "/formazione/corsi-base/domanda/"),
+            ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-base/nuovo/"),
+        )),
+        ("Corsi di Formazione", (
+            ("Elenco Corsi di Formazione", "fa-list", "/formazione/corsi-formazione/"),
+            ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-formazione/nuovo/"),
+        )),
+    ),
 
 }

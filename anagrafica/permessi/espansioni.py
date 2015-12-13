@@ -61,11 +61,11 @@ def espandi_gestione_attivita(qs_attivita, al_giorno=date.today()):
     ]
 
 def espandi_gestione_corsi_sede(qs_sedi, al_giorno=date.today()):
-    from formazione.models import Corso
+    from formazione.models import CorsoBase
     return [
-        (COMPLETO,  Corso.objects.filter(sede__in=qs_sedi)),
+        (COMPLETO,  CorsoBase.objects.filter(sede__in=qs_sedi)),
     ] \
-        + espandi_gestione_corso(Corso.objects.filter(sede__in=qs_sedi))
+        + espandi_gestione_corso(CorsoBase.objects.filter(sede__in=qs_sedi))
 
 def espandi_gestione_corso(qs_corsi, al_giorno=date.today()):
     from anagrafica.models import Persona

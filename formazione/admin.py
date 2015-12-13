@@ -1,10 +1,10 @@
 from django.contrib import admin
-from formazione.models import Corso, Partecipazione, Assenza, Aspirante
+from formazione.models import CorsoBase, PartecipazioneCorsoBase, AssenzaCorsoBase, Aspirante
 
 __author__ = 'alfioemanuele'
 
 
-admin.site.register(Corso)
-admin.site.register(Partecipazione)
-admin.site.register(Assenza)
+admin.site.register(CorsoBase)
+admin.site.register(PartecipazioneCorsoBase)
+admin.site.register(AssenzaCorsoBase)
 admin.site.register(Aspirante)

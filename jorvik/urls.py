@@ -108,6 +108,12 @@ urlpatterns = [
     url(r'^us/elenco/(?P<elenco_id>.*)/modulo/$', 'ufficio_soci.viste.us_elenco_modulo'),
     url(r'^us/elenco/(?P<elenco_id>.*)/$', 'ufficio_soci.viste.us_elenco'),
 
+    url(r'^formazione/$', 'formazione.viste.formazione'),
+    url(r'^formazione/corsi-base/elenco/$', 'formazione.viste.formazione_corsi_base_elenco'),
+    url(r'^formazione/corsi-base/domanda/$', 'formazione.viste.formazione_corsi_base_domanda'),
+    url(r'^formazione/corsi-base/nuovo/$', 'formazione.viste.formazione_corsi_base_nuovo'),
+    url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/$', 'formazione.viste.formazione_corsi_base_scheda'),
+
     url(r'^social/commenti/nuovo/', 'social.viste.commenti_nuovo'),
     url(r'^social/commenti/cancella/(?P<pk>[0-9]+)/', 'social.viste.commenti_cancella'),
 

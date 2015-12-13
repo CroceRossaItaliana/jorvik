@@ -14,14 +14,8 @@ from django.db import models
 
 class Corso(ModelloSemplice, ConMarcaTemporale, ConGeolocalizzazione, ConCommenti, ConGiudizio):
 
-    sede = models.ForeignKey(Sede, related_name='corsi')
-
-    # Tipologia di corso
-    BASE = 'BA'
-    TIPO = (
-        (BASE, 'Corso Base'),
-    )
-    tipo = models.CharField('Tipo', choices=TIPO, max_length=2, default=BASE)
+    class Meta:
+        abstract = True
 
     # Stato del corso
     PREPARAZIONE = 'P'
@@ -37,36 +31,52 @@ class Corso(ModelloSemplice, ConMarcaTemporale, ConGeolocalizzazione, ConComment
         (ANNULLATO, 'Annullato'),
     )
     stato = models.CharField('Stato', choices=STATO, max_length=1, default=PREPARAZIONE)
+    sede = models.ForeignKey(Sede, related_query_name='%(class)s_corso')
+
+
+class CorsoBase(Corso):
+
+    ## Tipologia di corso
+    #BASE = 'BA'
+    #TIPO = (
+    #    (BASE, 'Corso Base'),
+    #)
+    #tipo = models.CharField('Tipo', choices=TIPO, max_length=2, default=BASE)
 
     class Meta:
-        verbose_name = "Corso di formazione"
-        verbose_name_plural = "Corsi di formazione"
+        verbose_name = "Corso Base"
+        verbose_name_plural = "Corsi Base"
+
+    data_inizio = models.DateTimeField(blank=False, null=False)
+    data_esame = models.DateTimeField(blank=False, null=False)
 
 
-class Partecipazione(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
+
+
+class PartecipazioneCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
 
     persona = models.ForeignKey(Persona, related_name='partecipazioni_corsi')
-    corso = models.ForeignKey(Corso, related_name='partecipazioni')
+    corso = models.ForeignKey(CorsoBase, related_name='partecipazioni')
 
     class Meta:
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
 
 
-class Lezione(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
+class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
-    corso = models.ForeignKey(Corso, related_name='lezioni')
-
-    class Meta:
-        verbose_name_plural = "Lezioni"
-
-
-class Assenza(ModelloSemplice, ConMarcaTemporale):
-
-    corso = models.ForeignKey(Corso, related_name='assenze')
+    corso = models.ForeignKey(CorsoBase, related_name='lezioni')
 
     class Meta:
-        verbose_name_plural = "Assenze"
+        verbose_name_plural = "Lezioni Corsi Base"
+
+
+class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
+
+    corso = models.ForeignKey(CorsoBase, related_name='assenze')
+
+    class Meta:
+        verbose_name_plural = "Assenze ai Corsi Base"
 
 
 class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
@@ -91,14 +101,13 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
         """
         return self.nel_raggio(Sede.objects.filter(tipo=tipo, **kwargs))
 
-    def corsi(self, tipo=Corso.BASE, stato=Corso.ATTIVO, **kwargs):
+    def corsi(self, stato=Corso.ATTIVO, **kwargs):
         """
         Ritorna un elenco di Corsi (Base) nelle vicinanze dell'Aspirante.
-        :param tipo: Il tipo di corso. Default=Corso.BASE.
         :param stato: Stato del corso. Default=Corso.ATTIVO.
         :return: Un elenco di Corsi.
         """
-        return self.nel_raggio(Corso.objects.filter(tipo=tipo, stato=stato, **kwargs))
+        return self.nel_raggio(CorsoBase.objects.filter(stato=stato, **kwargs))
 
     def calcola_raggio(self):
         """
