@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Competenza',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
+                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
             ],
             options={
                 'verbose_name_plural': 'Competenze CRI',
@@ -24,9 +24,9 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='CompetenzaPersonale',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
+                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
                 ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
-                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
+                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
                 ('competenza', models.ForeignKey(to='curriculum.Competenza')),
                 ('persona', models.ForeignKey(related_name='competenze_personali', to='anagrafica.Persona')),
             ],
@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Titolo',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
+                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
             ],
             options={
                 'verbose_name_plural': 'Titoli',
@@ -47,11 +47,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TitoloPersonale',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
+                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
                 ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
-                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
-                ('confermata', models.BooleanField(db_index=True, verbose_name='Confermata', default=True)),
-                ('ritirata', models.BooleanField(db_index=True, verbose_name='Ritirata', default=False)),
+                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
+                ('confermata', models.BooleanField(default=True, db_index=True, verbose_name='Confermata')),
+                ('ritirata', models.BooleanField(default=False, db_index=True, verbose_name='Ritirata')),
                 ('persona', models.ForeignKey(related_name='titoli_personali', to='anagrafica.Persona')),
                 ('titolo', models.ForeignKey(to='curriculum.Titolo')),
             ],
