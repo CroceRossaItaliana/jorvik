@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import migrations, models
-import mptt.fields
-import autoslug.fields
-import django_countries.fields
-import base.utils
-import anagrafica.models
+from django.db import models, migrations
 import base.stringhe
+import django_countries.fields
+import autoslug.fields
+import anagrafica.models
+import base.utils
+import mptt.fields
 
 
 class Migration(migrations.Migration):
@@ -19,15 +19,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Appartenenza',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('inizio', models.DateField(db_index=True, verbose_name='Inizio')),
-                ('fine', models.DateField(blank=True, default=None, null=True, db_index=True, verbose_name='Fine')),
-                ('confermata', models.BooleanField(default=True, db_index=True, verbose_name='Confermata')),
-                ('ritirata', models.BooleanField(default=False, db_index=True, verbose_name='Ritirata')),
-                ('membro', models.CharField(default='VO', choices=[('VO', 'Volontario'), ('ES', 'Volontario in Estensione'), ('OR', 'Socio Ordinario'), ('SO', 'Sostenitore'), ('DI', 'Dipendente'), ('IN', 'Infermiera Volontaria'), ('MI', 'Membro Militare'), ('DO', 'Donatore Finanziario')], db_index=True, max_length=2, verbose_name='Tipo membro')),
-                ('terminazione', models.CharField(default=None, blank=True, db_index=True, choices=[('D', 'Dimissione'), ('E', 'Espulsione'), ('S', 'Sospensione'), ('T', 'Trasferimento'), ('P', 'Promozione'), ('F', 'Fine Estensione')], null=True, max_length=1, verbose_name='Terminazione')),
+                ('inizio', models.DateField(verbose_name='Inizio', db_index=True)),
+                ('fine', models.DateField(null=True, verbose_name='Fine', default=None, blank=True, db_index=True)),
+                ('confermata', models.BooleanField(verbose_name='Confermata', default=True, db_index=True)),
+                ('ritirata', models.BooleanField(verbose_name='Ritirata', default=False, db_index=True)),
+                ('membro', models.CharField(max_length=2, verbose_name='Tipo membro', default='VO', db_index=True, choices=[('VO', 'Volontario'), ('ES', 'Volontario in Estensione'), ('OR', 'Socio Ordinario'), ('SO', 'Sostenitore'), ('DI', 'Dipendente'), ('IN', 'Infermiera Volontaria'), ('MI', 'Membro Militare'), ('DO', 'Donatore Finanziario')])),
+                ('terminazione', models.CharField(null=True, default=None, db_index=True, max_length=1, verbose_name='Terminazione', choices=[('D', 'Dimissione'), ('E', 'Espulsione'), ('S', 'Sospensione'), ('T', 'Trasferimento'), ('P', 'Promozione'), ('F', 'Fine Estensione')], blank=True)),
             ],
             options={
                 'verbose_name_plural': 'Appartenenze',
@@ -36,12 +36,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Delega',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('inizio', models.DateField(db_index=True, verbose_name='Inizio')),
-                ('fine', models.DateField(blank=True, default=None, null=True, db_index=True, verbose_name='Fine')),
-                ('tipo', models.CharField(choices=[('PR', 'Presidente'), ('US', 'Ufficio Soci'), ('UT', 'Ufficio Soci Temporaneo'), ('DA', "Delegato d'Area"), ('O1', 'Delegato Obiettivo I (Salute)'), ('O2', 'Delegato Obiettivo II (Sociale)'), ('O3', 'Delegato Obiettivo III (Emergenze)'), ('O4', 'Delegato Obiettivo IV (Principi)'), ('O5', 'Delegato Obiettivo V (Giovani)'), ('O6', 'Delegato Obiettivo VI (Sviluppo)'), ('RA', "Responsabile d'Area"), ('RE', 'Referente Attività'), ('CO', 'Delegato Centrale Operativa'), ('RF', 'Responsabile Formazione'), ('AP', 'Responsabile Autoparco'), ('PA', 'Responsabile Patenti'), ('DO', 'Responsabile Donazioni Sangue')], db_index=True, max_length=2)),
+                ('inizio', models.DateField(verbose_name='Inizio', db_index=True)),
+                ('fine', models.DateField(null=True, verbose_name='Fine', default=None, blank=True, db_index=True)),
+                ('tipo', models.CharField(max_length=2, choices=[('PR', 'Presidente'), ('US', 'Ufficio Soci'), ('UT', 'Ufficio Soci Temporaneo'), ('DA', "Delegato d'Area"), ('O1', 'Delegato Obiettivo I (Salute)'), ('O2', 'Delegato Obiettivo II (Sociale)'), ('O3', 'Delegato Obiettivo III (Emergenze)'), ('O4', 'Delegato Obiettivo IV (Principi)'), ('O5', 'Delegato Obiettivo V (Giovani)'), ('O6', 'Delegato Obiettivo VI (Sviluppo)'), ('RA', "Responsabile d'Area"), ('RE', 'Referente Attività'), ('CO', 'Delegato Centrale Operativa'), ('RF', 'Responsabile Formazione'), ('AP', 'Responsabile Autoparco'), ('PA', 'Responsabile Patenti'), ('DO', 'Responsabile Donazioni Sangue')], db_index=True)),
                 ('oggetto_id', models.PositiveIntegerField(db_index=True)),
             ],
             options={
@@ -51,8 +51,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Dimissione',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
             ],
             options={
@@ -62,11 +62,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Documento',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('tipo', models.CharField(default='I', choices=[('I', "Carta d'identità"), ('P', 'Patente Civile'), ('S', 'Patente CRI'), ('C', 'Codice Fiscale')], db_index=True, max_length=1)),
-                ('file', models.FileField(upload_to=base.stringhe.GeneratoreNomeFile('documenti/'), verbose_name='File')),
+                ('tipo', models.CharField(max_length=1, default='I', db_index=True, choices=[('I', "Carta d'identità"), ('P', 'Patente Civile'), ('S', 'Patente CRI'), ('C', 'Codice Fiscale')])),
+                ('file', models.FileField(verbose_name='File', upload_to=base.stringhe.GeneratoreNomeFile('documenti/'))),
             ],
             options={
                 'verbose_name_plural': 'Documenti',
@@ -75,13 +75,13 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Estensione',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('confermata', models.BooleanField(default=True, db_index=True, verbose_name='Confermata')),
-                ('ritirata', models.BooleanField(default=False, db_index=True, verbose_name='Ritirata')),
-                ('protocollo_numero', models.PositiveIntegerField(blank=True, null=True, verbose_name='Numero di protocollo')),
-                ('protocollo_data', models.DateField(blank=True, null=True, verbose_name='Data di presa in carico')),
+                ('confermata', models.BooleanField(verbose_name='Confermata', default=True, db_index=True)),
+                ('ritirata', models.BooleanField(verbose_name='Ritirata', default=False, db_index=True)),
+                ('protocollo_numero', models.PositiveIntegerField(null=True, verbose_name='Numero di protocollo', blank=True)),
+                ('protocollo_data', models.DateField(null=True, verbose_name='Data di presa in carico', blank=True)),
             ],
             options={
                 'abstract': False,
@@ -90,12 +90,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Fototessera',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('confermata', models.BooleanField(default=True, db_index=True, verbose_name='Confermata')),
-                ('ritirata', models.BooleanField(default=False, db_index=True, verbose_name='Ritirata')),
-                ('file', models.ImageField(upload_to=base.stringhe.GeneratoreNomeFile('fototessere/'), verbose_name='Fototessera')),
+                ('confermata', models.BooleanField(verbose_name='Confermata', default=True, db_index=True)),
+                ('ritirata', models.BooleanField(verbose_name='Ritirata', default=False, db_index=True)),
+                ('file', models.ImageField(verbose_name='Fototessera', upload_to=base.stringhe.GeneratoreNomeFile('fototessere/'))),
             ],
             options={
                 'verbose_name_plural': 'Fototessere',
@@ -104,25 +104,25 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Persona',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
                 ('nome', models.CharField(max_length=64, verbose_name='Nome')),
                 ('cognome', models.CharField(max_length=64, verbose_name='Cognome')),
-                ('codice_fiscale', models.CharField(max_length=16, db_index=True, unique=True, verbose_name='Codice Fiscale')),
-                ('data_nascita', models.DateField(null=True, db_index=True, verbose_name='Data di nascita')),
-                ('genere', models.CharField(choices=[('M', 'Maschio'), ('F', 'Femmina')], db_index=True, max_length=1, verbose_name='Genere')),
-                ('stato', models.CharField(default='P', choices=[('P', 'Persona')], db_index=True, max_length=1, verbose_name='Stato')),
-                ('comune_nascita', models.CharField(blank=True, max_length=64, verbose_name='Comune di Nascita')),
-                ('provincia_nascita', models.CharField(blank=True, max_length=2, verbose_name='Provincia di Nascita')),
-                ('stato_nascita', django_countries.fields.CountryField(default='IT', max_length=2, verbose_name='Stato di nascita')),
-                ('indirizzo_residenza', models.CharField(blank=True, max_length=512, verbose_name='Indirizzo di residenza')),
-                ('comune_residenza', models.CharField(blank=True, max_length=64, verbose_name='Comune di residenza')),
-                ('provincia_residenza', models.CharField(blank=True, max_length=2, verbose_name='Provincia di residenza')),
-                ('stato_residenza', django_countries.fields.CountryField(default='IT', max_length=2, verbose_name='Stato di residenza')),
-                ('cap_residenza', models.CharField(blank=True, max_length=16, verbose_name='CAP di Residenza')),
-                ('email_contatto', models.EmailField(blank=True, max_length=64, verbose_name='Email di contatto')),
-                ('avatar', models.ImageField(blank=True, upload_to=base.stringhe.GeneratoreNomeFile('avatar/'), null=True, verbose_name='Avatar')),
+                ('codice_fiscale', models.CharField(max_length=16, verbose_name='Codice Fiscale', unique=True, db_index=True)),
+                ('data_nascita', models.DateField(null=True, verbose_name='Data di nascita', db_index=True)),
+                ('genere', models.CharField(max_length=1, verbose_name='Genere', choices=[('M', 'Maschio'), ('F', 'Femmina')], db_index=True)),
+                ('stato', models.CharField(max_length=1, verbose_name='Stato', default='P', db_index=True, choices=[('P', 'Persona')])),
+                ('comune_nascita', models.CharField(max_length=64, verbose_name='Comune di Nascita', blank=True)),
+                ('provincia_nascita', models.CharField(max_length=2, verbose_name='Provincia di Nascita', blank=True)),
+                ('stato_nascita', django_countries.fields.CountryField(max_length=2, verbose_name='Stato di nascita', default='IT')),
+                ('indirizzo_residenza', models.CharField(max_length=512, verbose_name='Indirizzo di residenza', blank=True)),
+                ('comune_residenza', models.CharField(max_length=64, verbose_name='Comune di residenza', blank=True)),
+                ('provincia_residenza', models.CharField(max_length=2, verbose_name='Provincia di residenza', blank=True)),
+                ('stato_residenza', django_countries.fields.CountryField(max_length=2, verbose_name='Stato di residenza', default='IT')),
+                ('cap_residenza', models.CharField(max_length=16, verbose_name='CAP di Residenza', blank=True)),
+                ('email_contatto', models.EmailField(max_length=64, verbose_name='Email di contatto', blank=True)),
+                ('avatar', models.ImageField(null=True, verbose_name='Avatar', blank=True, upload_to=base.stringhe.GeneratoreNomeFile('avatar/'))),
             ],
             options={
                 'verbose_name_plural': 'Persone',
@@ -131,68 +131,83 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Privacy',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('campo', models.CharField(choices=[('email', 'Indirizzo E-mail'), ('cellulare', 'Numeri di Cellulare')], db_index=True, max_length=8)),
+                ('campo', models.CharField(max_length=8, choices=[('email', 'Indirizzo E-mail'), ('cellulare', 'Numeri di Cellulare')], db_index=True)),
                 ('policy', models.PositiveSmallIntegerField(choices=[(8, 'Pubblico'), (6, 'Utenti di Gaia'), (4, 'A tutti i membri della mia Sede CRI'), (2, 'Ai Responsabili della mia Sede CRI'), (0, 'Solo a me')], db_index=True)),
             ],
             options={
-                'verbose_name_plural': 'Politiche di Privacy',
                 'verbose_name': 'Politica di Privacy',
+                'verbose_name_plural': 'Politiche di Privacy',
+            },
+        ),
+        migrations.CreateModel(
+            name='ProvvedimentoDisciplinare',
+            fields=[
+                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
+                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
+                ('protocollo_data', models.DateField(db_index=True)),
+                ('protocollo_numero', models.IntegerField()),
+                ('motivazione', models.CharField(max_length=500)),
+                ('tipo', models.CharField(max_length=1)),
+            ],
+            options={
+                'abstract': False,
             },
         ),
         migrations.CreateModel(
             name='Sede',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('nome', models.CharField(db_index=True, max_length=64)),
-                ('estensione', models.CharField(choices=[('T', 'Unità Territoriale'), ('L', 'Sede Locale'), ('P', 'Sede Provinciale'), ('R', 'Sede Regionale'), ('N', 'Sede Nazionale')], db_index=True, max_length=1, verbose_name='Estensione')),
-                ('tipo', models.CharField(default='C', choices=[('C', 'Comitato'), ('M', 'Sede Militare'), ('A', 'Autoparco')], db_index=True, max_length=1, verbose_name='Tipologia')),
-                ('telefono', models.CharField(blank=True, max_length=64, verbose_name='Telefono')),
-                ('fax', models.CharField(blank=True, max_length=64, verbose_name='FAX')),
-                ('email', models.CharField(blank=True, max_length=64, verbose_name='Indirizzo e-mail')),
-                ('codice_fiscale', models.CharField(blank=True, max_length=32, verbose_name='Codice Fiscale')),
-                ('partita_iva', models.CharField(blank=True, max_length=32, verbose_name='Partita IVA')),
-                ('slug', autoslug.fields.AutoSlugField(editable=False, always_update=True, populate_from=anagrafica.models.Sede.sorgente_slug, slugify=base.utils.sede_slugify)),
-                ('lft', models.PositiveIntegerField(editable=False, db_index=True)),
-                ('rght', models.PositiveIntegerField(editable=False, db_index=True)),
-                ('tree_id', models.PositiveIntegerField(editable=False, db_index=True)),
-                ('level', models.PositiveIntegerField(editable=False, db_index=True)),
-                ('genitore', mptt.fields.TreeForeignKey(related_name='figli', blank=True, null=True, to='anagrafica.Sede')),
+                ('nome', models.CharField(max_length=64, db_index=True)),
+                ('estensione', models.CharField(max_length=1, verbose_name='Estensione', choices=[('T', 'Unità Territoriale'), ('L', 'Sede Locale'), ('P', 'Sede Provinciale'), ('R', 'Sede Regionale'), ('N', 'Sede Nazionale')], db_index=True)),
+                ('tipo', models.CharField(max_length=1, verbose_name='Tipologia', default='C', db_index=True, choices=[('C', 'Comitato'), ('M', 'Sede Militare'), ('A', 'Autoparco')])),
+                ('telefono', models.CharField(max_length=64, verbose_name='Telefono', blank=True)),
+                ('fax', models.CharField(max_length=64, verbose_name='FAX', blank=True)),
+                ('email', models.CharField(max_length=64, verbose_name='Indirizzo e-mail', blank=True)),
+                ('codice_fiscale', models.CharField(max_length=32, verbose_name='Codice Fiscale', blank=True)),
+                ('partita_iva', models.CharField(max_length=32, verbose_name='Partita IVA', blank=True)),
+                ('slug', autoslug.fields.AutoSlugField(slugify=base.utils.sede_slugify, always_update=True, populate_from=anagrafica.models.Sede.sorgente_slug, editable=False)),
+                ('lft', models.PositiveIntegerField(db_index=True, editable=False)),
+                ('rght', models.PositiveIntegerField(db_index=True, editable=False)),
+                ('tree_id', models.PositiveIntegerField(db_index=True, editable=False)),
+                ('level', models.PositiveIntegerField(db_index=True, editable=False)),
+                ('genitore', mptt.fields.TreeForeignKey(null=True, blank=True, related_name='figli', to='anagrafica.Sede')),
             ],
             options={
-                'verbose_name_plural': 'Sedi CRI',
                 'verbose_name': 'Sede CRI',
+                'verbose_name_plural': 'Sedi CRI',
             },
         ),
         migrations.CreateModel(
             name='Telefono',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
                 ('numero', models.CharField(max_length=16, verbose_name='Numero di telefono')),
-                ('servizio', models.BooleanField(default=False, verbose_name='Numero di servizio')),
+                ('servizio', models.BooleanField(verbose_name='Numero di servizio', default=False)),
                 ('persona', models.ForeignKey(related_name='numeri_telefono', to='anagrafica.Persona')),
             ],
             options={
-                'verbose_name_plural': 'Numeri di telefono',
                 'verbose_name': 'Numero di telefono',
+                'verbose_name_plural': 'Numeri di telefono',
             },
         ),
         migrations.CreateModel(
             name='Trasferimento',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('confermata', models.BooleanField(default=True, db_index=True, verbose_name='Confermata')),
-                ('ritirata', models.BooleanField(default=False, db_index=True, verbose_name='Ritirata')),
-                ('protocollo_numero', models.PositiveIntegerField(blank=True, null=True, verbose_name='Numero di protocollo')),
-                ('protocollo_data', models.DateField(blank=True, null=True, verbose_name='Data di presa in carico')),
+                ('confermata', models.BooleanField(verbose_name='Confermata', default=True, db_index=True)),
+                ('ritirata', models.BooleanField(verbose_name='Ritirata', default=False, db_index=True)),
+                ('protocollo_numero', models.PositiveIntegerField(null=True, verbose_name='Numero di protocollo', blank=True)),
+                ('protocollo_data', models.DateField(null=True, verbose_name='Data di presa in carico', blank=True)),
                 ('appartenenza', models.ForeignKey(related_name='trasferimento', to='anagrafica.Appartenenza')),
                 ('destinazione', models.ForeignKey(related_name='trasferimenti_destinazione', to='anagrafica.Sede')),
                 ('persona', models.ForeignKey(related_name='trasferimenti', to='anagrafica.Persona')),
@@ -201,5 +216,17 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
+        ),
+        migrations.CreateModel(
+            name='Sospensione',
+            fields=[
+                ('provvedimentodisciplinare_ptr', models.OneToOneField(auto_created=True, serialize=False, parent_link=True, primary_key=True, to='anagrafica.ProvvedimentoDisciplinare')),
+                ('inizio', models.DateField(verbose_name='Inizio', db_index=True)),
+                ('fine', models.DateField(null=True, verbose_name='Fine', default=None, blank=True, db_index=True)),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=('anagrafica.provvedimentodisciplinare', models.Model),
         ),
     ]

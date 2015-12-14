@@ -98,6 +98,7 @@ urlpatterns = [
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/report/$', 'attivita.viste.attivita_scheda_report'),
 
     url(r'^us/$', 'ufficio_soci.viste.us'),
+    url(r'^us/provvedimenti/$', 'ufficio_soci.viste.us_provvedimento'),
     url(r'^us/estensione/$', 'ufficio_soci.viste.us_estensione'),
     url(r'^us/estensione/(?P<pk>.*)/termina/$', 'ufficio_soci.viste.us_estensione_termina'),
 

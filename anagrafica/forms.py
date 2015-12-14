@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 from django.forms import ModelForm
-from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione
+from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare
 from autenticazione.models import Utenza
+import autocomplete_light
 
 
 class ModuloStepComitato(ModelForm):
@@ -121,3 +122,12 @@ class ModuloCreazioneTrasferimento(ModelForm):
 class ModuloConsentiTrasferimento(forms.Form):
     protocollo_numero = forms.IntegerField(label="Numero di protocollo", help_text="Numero di protocollo con cui è stata registrata la richiesta.")
     protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data di registrazione del protocollo.")
+
+class ModuloNuovoProvvedimento(autocomplete_light.FieldBase):
+    persona = forms.ModelChoiceField(queryset=Persona.objects.all(), label="Volontario")
+    motivazione = forms.CharField(label="Motivazione", help_text="Motivazione del provvedimento")
+    tipo = forms.ChoiceField(choices=ProvvedimentoDisciplinare.TIPO,label="Tipo", help_text="Tipo di Provvedimento")
+    provvedimeto_inizio = forms.DateField(label="Data di inizio provvedimento", help_text="Data di inizio del provvedimento (se applicabile)", required=False)
+    provvedimento_fine = forms.DateField(label="Data di fine provvedimento", help_text="Data di fine del provvedimento (se applicabile)", required=False)
+    protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data del protocollo")
+    protocollo_numero = forms.IntegerField(label="Numero del protocolo", help_text="Numero di protocollo")
