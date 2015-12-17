@@ -1024,6 +1024,22 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
         # Se sono unita' territoriale, ritorna il mio genitore.
         return self.genitore
 
+    def superiore(self, estensione=LOCALE):
+        """
+        Ritorna la sede superiore con estensione specificata
+        :param estensione:
+        :return:
+        """
+        x = self
+        while True:
+            try:
+                x = x.genitore
+                if x.estensione == estensione:
+                    return x
+            except:
+                return None
+
+
     @property
     def domanda_formativa(self):
         return 42  # TODO

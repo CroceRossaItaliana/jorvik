@@ -498,6 +498,7 @@ def carica_appartenenze():
 
         elif stato in [2, 4, 16]:
             membro = Appartenenza.ORDINARIO
+            comitato = comitato.superiore(REGIONALE)
 
         else:
             if args.verbose:
@@ -550,7 +551,7 @@ def carica_appartenenze():
 
             a.autorizzazione_richiedi(
                 persona,
-                ((PRESIDENTE, comitato)),
+                ((PRESIDENTE, comitato.comitato())),
             )
 
         ASSOC_ID_APPARTENENZE.update({id: a.pk})
