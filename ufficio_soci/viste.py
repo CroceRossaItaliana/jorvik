@@ -1,7 +1,8 @@
 from django.core.paginator import Paginator
 from django.shortcuts import redirect
 
-from anagrafica.models import Appartenenza, Persona, Estensione
+from anagrafica.forms import ModuloNuovoProvvedimento
+from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI
 from autenticazione.funzioni import pagina_privata
 from base.errori import errore_generico
@@ -66,6 +67,32 @@ def us_estensione_termina(request, me, pk):
     else:
         estensione.termina()
         return redirect('/us/estensioni/')
+
+
+@pagina_privata()
+def us_provvedimento(request, me):
+    if request.POST:
+        modulo = ModuloNuovoProvvedimento(request.POST)
+        if modulo.is_valid():
+            provvedimento = ProvvedimentoDisciplinare(
+                persona = modulo.cleaned_data['persona'],
+                tipo = modulo.cleaned_data['tipo'],
+                motivazione = modulo.cleaned_data['motivo'],
+                provvedimento_inizio = modulo.cleaned_data['provvedimento_inizio'],
+                provvedimento_fine = modulo.cleaned_data['provvedimento_fine'],
+                protocollo_data = modulo.cleaned_data['protocollo_data'],
+                protocollo_numero = modulo.cleaned_data['protocollo_numero'],
+            )
+            provvedimento.save()
+            provvedimento.esegui()
+
+
+    contesto = {
+        "modulo": modulo,
+    }
+
+
+    return "us_provvedimento.html", contesto
 
 
 

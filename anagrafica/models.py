@@ -38,7 +38,7 @@ from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
     Autorizzazione
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
-from base.tratti import ConMarcaTemporale, ConStorico
+from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo
 from base.utils import is_list, sede_slugify
 from autoslug import AutoSlugField
 from posta.models import Messaggio
@@ -587,6 +587,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         return self.estensioni.all().filter(
             Q(pk__in=Estensione.con_esito_ok())
         )
+
+    def espelli(self):
+        for appartenenza in self.appartenenze_attuali():
+            appartenenza.terminazione = "E"
+            appartenenza.fine = datetime.today()
+
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """
@@ -1200,3 +1206,35 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         self.appartenenza.fine = datetime.today()
         self.appartenenza.terminazione = Appartenenza.FINE_ESTENSIONE
         self.save()
+
+
+class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocollo):
+    AMMONIZIONE = "A"
+    SOSPENSIONE = "S"
+    ESPULSIONE = "E"
+    TIPO = (
+        (AMMONIZIONE, "Ammonizione",),
+        (SOSPENSIONE, "Sospensione",),
+        (ESPULSIONE, "Esplusione",),
+    )
+
+    motivazione = models.CharField(max_length=500)
+    persona = models.ForeignKey(Persona, related_name="provvedimenti")
+    tipo = models.CharField(max_length=1)
+
+    def esegui(self, lunghezza):
+        if self.tipo == "E":
+            self.persona.espelli()
+        if self.tipo == "S":
+            sospensione = Sospensione(
+                inzio=datetime.today(),
+                fine=datetime.today() + timedelta(days=lunghezza),
+                provvedimento=self.id
+            )
+            sospensione.save()
+
+
+class Sospensione(ProvvedimentoDisciplinare, ConStorico):
+    provvedimento = models.ForeignKey(ProvvedimentoDisciplinare, related_name="provvedimento")
+
+

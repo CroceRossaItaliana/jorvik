@@ -1,0 +1,21 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Nuovo Provvedimento Disciplinare
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <p>Da qui registro un nuovo provvedimento disciplinare per un Volontario...</p>
+
+    <form method="POST">
+        {% csrf_token %}
+        {% bootstrap_form modulo %}
+        <button type="submit" class="btn btn-block btn-primary">
+            Registra provvedimento
+        </button>
+    </form>
+
+{% endblock %}

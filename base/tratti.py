@@ -29,6 +29,18 @@ class ConMarcaTemporale(models.Model):
     ultima_modifica = models.DateTimeField(auto_now=True, db_index=True)
 
 
+
+class ConProtocollo(models.Model):
+    """
+    Aggiunge data e numero di protocollo.
+    """
+
+    class Meta:
+        abstract = True
+
+    protocollo_data = models.DateField(db_index=True)
+    protocollo_numero = models.IntegerField()
+
 class ConEstensione(models.Model):
     """
     Aggiunge un Sede ed un livello di estensione dell'oggetto.
