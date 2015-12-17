@@ -42,9 +42,9 @@ def espandi_gestione_sede(qs_sedi, al_giorno=date.today()):
 def espandi_gestione_attivita_sede(qs_sedi, al_giorno=date.today()):
     from attivita.models import Attivita
     return [
-        (COMPLETO,  Attivita.objects.filter(sede__in=qs_sedi)),
+        (COMPLETO,  Attivita.objects.filter(sede__in=qs_sedi.espandi())),
     ] \
-        + espandi_gestione_attivita(Attivita.objects.filter(sede__in=qs_sedi))
+        + espandi_gestione_attivita(Attivita.objects.filter(sede__in=qs_sedi.espandi()))
 
 def espandi_gestione_attivita_area(qs_aree, al_giorno=date.today()):
     from attivita.models import Attivita

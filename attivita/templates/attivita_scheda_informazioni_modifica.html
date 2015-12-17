@@ -1,6 +1,7 @@
 {% extends 'attivita_scheda.html' %}
 
 {% load social %}
+{% load utils %}
 {% load bootstrap3 %}
 
 {% block scheda_titolo %}
@@ -9,7 +10,6 @@
 
 {% block scheda_contenuto %}
 
-    {% if me %}
     <div class="row">
 
         <form method="POST" class="col-md-7">
@@ -85,6 +85,20 @@
         </div>
 
     </div>
-    {% endif %}
+
+    <div class="row">
+
+        <div class="col-md-12">
+
+            <h3>
+                <i class="fa fa-fw fa-globe"></i>
+                Indirizzo dell'attivit&agrave;
+            </h3>
+
+            {% localizzatore attivita %}
+
+        </div>
+
+    </div>
 
 {% endblock %}

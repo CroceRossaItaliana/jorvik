@@ -50,9 +50,9 @@ def permessi_responsabile_attivita(sede):
     from anagrafica.models import Sede
     from attivita.models import Area, Attivita
     return [
-        (GESTIONE_ATTIVITA_SEDE,    Sede.objects.filter(pk=sede.pk)),
-        (GESTIONE_ATTIVITA_AREA,    Area.objects.filter(sede=sede)),
-        (GESTIONE_ATTIVITA,         Attivita.objects.filter(sede=sede))
+        (GESTIONE_ATTIVITA_SEDE,    sede.espandi()),
+        (GESTIONE_ATTIVITA_AREA,    Area.objects.filter(sede__in=sede.espandi())),
+        (GESTIONE_ATTIVITA,         Attivita.objects.filter(sede__in=sede.espandi()))
     ]
 
 def permessi_responsabile_formazione(sede):
