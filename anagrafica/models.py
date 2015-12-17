@@ -585,7 +585,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
 
     def estensioni_attuali(self):
         return self.estensioni.all().filter(
-            Q(pk_in=Estensione.con_esito_ok())
+            Q(pk__in=Estensione.con_esito_ok())
         )
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
