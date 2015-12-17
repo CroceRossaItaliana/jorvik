@@ -38,4 +38,17 @@ $(document).ready(function() {
 
     $(".autocomplete").removeAttr('required');
 
+    tinymce.init({
+        selector: ".wysiwyg-semplice",
+        relative_urls: false,
+        toolbar: 'undo redo | bold italic | link unlink image | table | bullist numlist outdent indent',
+        statusbar: false,
+        plugins: 'link image table',
+        menubar: false,
+        language: 'it',
+        resize: 'both',
+
+
+
+    })
 });

@@ -131,7 +131,6 @@ urlpatterns = [
     # Autocompletamento
     url(r'^autocomplete/', include('autocomplete_light.urls')),
 
-
     # OAuth 2.0
     # url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 ]

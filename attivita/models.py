@@ -10,7 +10,6 @@ from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati
 from base.tratti import ConMarcaTemporale, ConDelegati
 from base.geo import ConGeolocalizzazione
 
-
 class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiudizio, ConCommenti,
                ConAllegati, ConDelegati):
 

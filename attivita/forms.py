@@ -3,6 +3,7 @@ from django.forms import ModelForm
 from django.forms.extras import SelectDateWidget
 
 from attivita.models import Attivita
+from base.wysiwyg import WYSIWYGSemplice
 
 
 class ModuloStoricoTurni(forms.Form):
@@ -16,3 +17,6 @@ class ModuloAttivitaInformazioni(ModelForm):
     class Meta:
         model = Attivita
         fields = ['apertura', 'estensione', 'descrizione', 'stato', ]
+        widgets = {
+            "descrizione": WYSIWYGSemplice(),
+        }
