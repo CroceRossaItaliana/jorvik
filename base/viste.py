@@ -185,8 +185,6 @@ def autorizzazione_nega(request, me, pk=None):
             if modulo.is_valid():
                 # Accetta la richiesta con modulo
                 richiesta.nega(me, modulo=modulo)
-                if 'motivo' in modulo.cleaned_data:
-                    richiesta.motivo_negazione = modulo.cleaned_data['motivo']
 
         else:
             modulo = richiesta.oggetto.autorizzazione_nega_modulo()()

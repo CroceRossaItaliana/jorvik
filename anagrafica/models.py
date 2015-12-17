@@ -1149,7 +1149,6 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                 (PRESIDENTE, sede, NOTIFICA_INVIA),
                 (UFFICIO_SOCI, sede, NOTIFICA_NON_INVIARE)
             ),
-            motivo_obbligatorio=True
         )
 
 

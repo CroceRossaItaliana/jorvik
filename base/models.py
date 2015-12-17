@@ -133,13 +133,11 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         # Nessuna altra firma e' piu' necessaria.
         if not concedi:
             self.oggetto.confermata = False
-            if self.motivo_obbligatorio:
-                if not motivo:
-                    raise ValueError("Non e' stato fornita una motivazione valida.")
-                self.motivo_negazione = motivo
-                self.save()
             self.oggetto.save()
-            self.oggetto.autorizzazione_negata(motivo=motivo)
+            self.oggetto.autorizzazione_negata(modulo=modulo)
+            if 'motivo' in modulo.cleaned_data:
+                self.motivo_negazione = modulo.cleaned_data['motivo']
+                self.save()
             self.oggetto.autorizzazioni_set().update(necessaria=False)
             if self.oggetto.INVIA_NOTIFICA_NEGATA:
                 self.notifica_negata()
@@ -160,8 +158,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     def concedi(self, firmatario, modulo=None):
         self.firma(firmatario, True, modulo=modulo)
 
-    def nega(self, firmatario, motivo=None):
-        self.firma(firmatario, False, motivo=motivo)
+    def nega(self, firmatario, modulo=None):
+        self.firma(firmatario, False, modulo=modulo)
 
     @property
     def template_path(self):
@@ -349,14 +347,13 @@ class ConAutorizzazioni(models.Model):
         tipo = ContentType.objects.get_for_model(self)
         return Autorizzazione.objects.filter(oggetto_tipo__pk=tipo.id, oggetto_id=self.id)
 
-    def autorizzazione_richiedi(self, richiedente, destinatario, motivo_obbligatorio=True, **kwargs):
+    def autorizzazione_richiedi(self, richiedente, destinatario, **kwargs):
         """
         Richiede una autorizzazione per l'oggetto attuale
 
         :param richiedente: Colui che inoltra la richiesta.
         :param destinatario: Il ruolo che deve firmare l'autorizzazione, in forma
                       (RUOLO, OGGETTO). Puo' anche essere tupla ((Ruolo1, Ogg1), (Ruolo2, Ogg2), ...)
-        :param motivo_obbligatorio: Vero se si vuole forzare l'inserimento della motivazione in caso di rifiuto.
         :param kwargs:
         :return:
         """
@@ -399,7 +396,6 @@ class ConAutorizzazioni(models.Model):
                 destinatario_oggetto=oggetto,
                 progressivo=prossimo_progressivo,
                 oggetto=self,
-                motivo_obbligatorio=motivo_obbligatorio,
                 **kwargs
             )
             r.save()

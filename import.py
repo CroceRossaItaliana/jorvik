@@ -1160,7 +1160,6 @@ def carica_partecipazioni():
                 richiedente=richiedente,
                 firmatario=firmatario,
                 concessa=concessa,
-                motivo_obbligatorio=False,
                 motivo_negazione=motivo_negazione,
                 oggetto=p,
                 necessaria=necessaria,
