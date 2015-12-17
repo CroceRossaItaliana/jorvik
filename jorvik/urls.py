@@ -117,6 +117,9 @@ urlpatterns = [
     url(r'^formazione/corsi-base/nuovo/$', 'formazione.viste.formazione_corsi_base_nuovo'),
     url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/$', 'formazione.viste.formazione_corsi_base_scheda'),
 
+    url(r'^geo/localizzatore/imposta/$', 'base.viste.geo_localizzatore_imposta'),
+    url(r'^geo/localizzatore/$', 'base.viste.geo_localizzatore'),
+
     url(r'^social/commenti/nuovo/', 'social.viste.commenti_nuovo'),
     url(r'^social/commenti/cancella/(?P<pk>[0-9]+)/', 'social.viste.commenti_cancella'),
 

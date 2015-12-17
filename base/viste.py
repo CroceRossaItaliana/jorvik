@@ -1,3 +1,4 @@
+from django.db.models.loading import get_model
 from django.http import HttpResponse
 from django.shortcuts import render, render_to_response, get_object_or_404, redirect
 # Le viste base vanno qui.
@@ -7,7 +8,8 @@ from anagrafica.permessi.costanti import ERRORE_PERMESSI
 from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_privata
 from base import errori
 from base.errori import errore_generico
-from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione
+from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLocalizzatore
+from base.geo import Locazione
 from base.models import Autorizzazione
 
 
@@ -212,3 +214,48 @@ def autorizzazioni_storico(request, me):
     }
 
     return 'base_autorizzazioni_storico.html', contesto
+
+
+@pagina_privata
+def geo_localizzatore(request, me):
+    app_label = request.session['app_label']
+    model = request.session['model']
+    pk = int(request.session['pk'])
+    continua_url = request.session['continua_url']
+    oggetto = get_model(app_label, model)
+    oggetto = oggetto.objects.get(pk=pk)
+
+    risultati = None
+    ricerca = False
+
+    modulo = ModuloLocalizzatore(request.POST or None,)
+    if modulo.is_valid():
+        stringa = "%s, %s, %s" % (modulo.cleaned_data['indirizzo'],
+                                  modulo.cleaned_data['comune'],
+                                  modulo.cleaned_data['stato'],)
+        risultati = Locazione.cerca(stringa)
+        ricerca = True
+
+    contesto = {
+        "locazione": oggetto.locazione,
+        "continua_url": continua_url,
+        "modulo": modulo,
+        "ricerca": ricerca,
+        "risultati": risultati,
+        "oggetto": oggetto,
+    }
+
+    return 'base_geo_localizzatore.html', contesto
+
+
+@pagina_privata
+def geo_localizzatore_imposta(request, me):
+    app_label = request.session['app_label']
+    model = request.session['model']
+    pk = int(request.session['pk'])
+    oggetto = get_model(app_label, model)
+    oggetto = oggetto.objects.get(pk=pk)
+
+    oggetto.imposta_locazione(request.POST['indirizzo'])
+
+    return redirect("/geo/localizzatore/")

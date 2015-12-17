@@ -551,7 +551,7 @@ def carica_appartenenze():
 
             a.autorizzazione_richiedi(
                 persona,
-                ((PRESIDENTE, comitato.comitato())),
+                ((PRESIDENTE, comitato.comitato),),
             )
 
         ASSOC_ID_APPARTENENZE.update({id: a.pk})

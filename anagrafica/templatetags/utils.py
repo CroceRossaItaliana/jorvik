@@ -1,8 +1,10 @@
+from django.contrib.contenttypes.models import ContentType
 from django.template import Library
 from django.template.loader import render_to_string
 
 from anagrafica.models import Persona
 from anagrafica.permessi.costanti import PERMESSI_TESTO, NESSUNO
+from base.geo import ConGeolocalizzazione
 from base.stringhe import genera_uuid_casuale
 from ufficio_soci.elenchi import Elenco
 
@@ -38,6 +40,27 @@ def elenco(context, oggetto_elenco=None,):
         'iframe_url': "/us/elenco/%s/1/" % (elenco_id,)
     })
     return render_to_string('us_elenchi_inc_iframe.html', context)
+
+
+@register.simple_tag(takes_context=True)
+def localizzatore(context, oggetto_localizzatore=None, continua_url=None):
+
+    if not isinstance(oggetto_localizzatore, ConGeolocalizzazione):
+        raise ValueError("Il tag localizzatore puo' solo essere usato con un oggetto ConGeoolocalizzazione, ma e' stato usato con un oggetto %s." % (oggetto_localizzatore.__class__.__name__,))
+
+    oggetto_tipo = ContentType.objects.get_for_model(oggetto_localizzatore)
+
+    context.request.session['app_label'] = oggetto_tipo.app_label
+    context.request.session['model'] = oggetto_tipo.model
+    context.request.session['pk'] = oggetto_localizzatore.pk
+    context.request.session['continua_url'] = continua_url
+
+    url = "/geo/localizzatore/"
+    context.update({
+        'iframe_url': url,
+    })
+    return render_to_string('base_iframe_4_3.html', context)
+
 
 
 @register.assignment_tag(takes_context=True)

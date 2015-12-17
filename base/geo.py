@@ -3,6 +3,8 @@ from django.contrib.gis.geos import fromstr, Point
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import SET_NULL
 import googlemaps
+from django_countries.fields import CountryField
+
 from base.tratti import ConMarcaTemporale
 from django.contrib.gis.measure import Distance
 from jorvik.settings import GOOGLE_KEY
@@ -25,7 +27,7 @@ class Locazione(ConMarcaTemporale, models.Model):
     provincia = models.CharField("Provincia", max_length=64, blank=True, db_index=True)
     regione = models.CharField("Regione", max_length=64, blank=True, db_index=True)
     cap = models.CharField("CAP", max_length=32, blank=True, db_index=True)
-    stato = models.CharField("Stato", max_length=2, blank=True, db_index=True)
+    stato = CountryField("Stato", default="IT")
 
     def __str__(self):
         return self.indirizzo
