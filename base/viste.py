@@ -7,7 +7,7 @@ from anagrafica.permessi.costanti import ERRORE_PERMESSI
 from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_privata
 from base import errori
 from base.errori import errore_generico
-from base.forms import ModuloRecuperaPassword, ModuloNegaAutorizzazione
+from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione
 from base.models import Autorizzazione
 
 
@@ -169,22 +169,30 @@ def autorizzazione_nega(request, me, pk=None):
 
     # Controlla che io possa firmare questa autorizzazione
     if not me.autorizzazioni_in_attesa().filter(pk=richiesta.pk).exists():
-        return redirect(ERRORE_PERMESSI)
+        return errore_generico(request, me,
+            titolo="Richiesta non trovata",
+            messaggio="E' possibile che la richiesta sia stata già approvata o respinta da qualcun altro.",
+            torna_titolo="Richieste in attesa",
+            torna_url="/autorizzazioni/"
+        )
 
     modulo = None
 
     # Se la richiesta richiede motivazione
-    if richiesta.motivo_obbligatorio:
+    if richiesta.oggetto.autorizzazione_nega_modulo():
         if request.POST:
-            modulo = ModuloNegaAutorizzazione(request.POST)
+            modulo = richiesta.oggetto.autorizzazione_nega_modulo()(request.POST)
             if modulo.is_valid():
-                richiesta.nega(me, motivo=modulo.cleaned_data['motivo'])
+                # Accetta la richiesta con modulo
+                richiesta.nega(me, modulo=modulo)
+                if 'motivo' in modulo.cleaned_data:
+                    richiesta.motivo_negazione = modulo.cleaned_data['motivo']
 
         else:
-            modulo = ModuloNegaAutorizzazione(request.POST)
+            modulo = richiesta.oggetto.autorizzazione_nega_modulo()()
 
     else:
-        # Nega senza motivazione
+        # Nega senza modulo
         richiesta.nega(me)
 
     contesto = {

@@ -4,10 +4,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
+from django.forms import forms
 from safedelete import safedelete_mixin_factory, SOFT_DELETE
 from mptt.models import MPTTModel, TreeForeignKey
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
 from anagrafica.permessi.costanti import DELEGHE_OGGETTI_DICT
+from base.forms import ModuloMotivoNegazione
 from base.notifiche import NOTIFICA_NON_INVIARE
 from base.stringhe import GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale
@@ -96,7 +98,6 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     firmatario = models.ForeignKey("anagrafica.Persona", db_index=True, blank=True, null=True, default=None,
                                    related_name="autorizzazioni_firmate")
     concessa = models.NullBooleanField("Esito", db_index=True, blank=True, null=True, default=None)
-    motivo_obbligatorio = models.BooleanField("Obbliga a fornire un motivo", default=False)
     motivo_negazione = models.CharField(blank=True, null=True, max_length=256)
 
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="autcomeoggetto")
@@ -216,7 +217,6 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             mittente=self.firmatario,
             destinatari=[self.richiedente]
         )
-
 
 
 class ConAutorizzazioni(models.Model):
@@ -430,7 +430,7 @@ class ConAutorizzazioni(models.Model):
         """
         pass
 
-    def autorizzazione_negata(self, motivo=None):
+    def autorizzazione_negata(self, modulo=None):
         """
         Sovrascrivimi! Ascoltatore per negazione autorizzazione.
         """
@@ -441,6 +441,12 @@ class ConAutorizzazioni(models.Model):
         Sovrascrivimi! Ritorna la classe del modulo per la conferma.
         """
         return None
+
+    def autorizzazione_nega_modulo(self):
+        """
+        Sovrascrivimi! Ritorna la classe del modulo per la negazione.
+        """
+        return ModuloMotivoNegazione
 
 
 class ConScadenza:

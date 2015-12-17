@@ -30,5 +30,5 @@ def formazione_corsi_base_nuovo(request, me):
 
 
 @pagina_privata
-def forazione_corsi_base_scheda(request, me, pk):
+def formazione_corsi_base_scheda(request, me, pk):
     pass

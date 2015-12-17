@@ -1,4 +1,4 @@
-# coding=utf8
+# -*- coding: utf-8 -*-
 
 import os, sys
 
@@ -29,6 +29,7 @@ from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRI
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from base.geo import Locazione
 import argparse
+import ftfy
 
 from datetime import datetime, date
 
@@ -42,7 +43,7 @@ def stringa(s):
     # try:
     #    #return str(s.encode('utf-8'))
     #except:
-    return str(s)
+    return ftfy.fix_text(str(s), fix_entities=False)
 
 parser = argparse.ArgumentParser(description='Importa i dati da un database MySQL di PHP-Gaia.')
 parser.add_argument('--no-geo', dest='geo', action='store_const',
@@ -307,8 +308,8 @@ def carica_anagrafiche():
         dict = DETTAGLI_DICT.get(int(persona[0]), {})
         dati = {
             'id': persona[0],
-            'nome': persona[1],
-            'cognome': persona[2],
+            'nome': stringa(persona[1]),
+            'cognome': stringa(persona[2]),
             'stato': persona[3],
             'email': persona[4],
             'password': persona[5],
@@ -324,8 +325,8 @@ def carica_anagrafiche():
         if args.verbose:
             print("      - Creazione della scheda anagrafica")
 
-        provincia_residenza = dict.get('provinciaResidenza')[0:2] if dict.get('provinciaResidenza') else ''
-        provincia_nascita = dict.get('provinciaNascita')[0:2] if dict.get('provinciaNascita') else provincia_residenza
+        provincia_residenza = stringa(dict.get('provinciaResidenza')[0:2]) if dict.get('provinciaResidenza') else ''
+        provincia_nascita = stringa(dict.get('provinciaNascita')[0:2]) if dict.get('provinciaNascita') else provincia_residenza
         data_nascita = data_da_timestamp(dict.get('dataNascita'), default=None)
         p = Persona(
             nome=dati['nome'],
@@ -334,11 +335,11 @@ def carica_anagrafiche():
             data_nascita=data_nascita,
             genere=Persona.MASCHIO if dati['sesso'] == 1 else Persona.FEMMINA,
             stato=Persona.PERSONA,
-            comune_nascita=dict.get('comuneNascita') if dict.get('comuneNascita') else '',
+            comune_nascita=stringa(dict.get('comuneNascita')) if dict.get('comuneNascita') else '',
             provincia_nascita=provincia_nascita,
             stato_nascita='IT',
             indirizzo_residenza=stringa(dict.get('indirizzo')) + ", " + stringa(dict.get('civico')),
-            comune_residenza=dict.get('comuneResidenza') if dict.get('comuneResidenza') else '',
+            comune_residenza=stringa(dict.get('comuneResidenza')) if dict.get('comuneResidenza') else '',
             provincia_residenza=provincia_residenza,
             stato_residenza='IT',
             cap_residenza=dict.get('CAPResidenza') if dict.get('CAPResidenza') else '',
@@ -486,6 +487,7 @@ def carica_appartenenze():
         if stato in [20, 25]:
             if args.verbose:
                 print("      IGNORATA: Appartenenza fittizia (trasferimento/estensione in corso)")
+                # TODO Trasferimenti ed estensioni
             continue
 
         if stato in [5, 14, 15, 25, 35]:
@@ -640,7 +642,7 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
 
     c = Sede(
         genitore=ref,
-        nome=comitato['nome'],
+        nome=stringa(comitato['nome']),
         tipo=Sede.COMITATO,
         estensione=COMITATO_ESTENSIONE[tipo],
     )
@@ -649,7 +651,7 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
     ASSOC_ID_COMITATI[COMITATO_OID[tipo]].update({id: (Sede, c.pk)})
 
     if posizione and 'formattato' in comitato['dati'] and comitato['dati']['formattato']:
-        c.imposta_locazione(comitato['dati']['formattato'])
+        c.imposta_locazione(stringa(comitato['dati']['formattato']))
 
     if args.verbose:
         print("    - " + ("-"*num) + " " + c.nome + ": " + stringa(c.locazione))

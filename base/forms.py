@@ -6,7 +6,7 @@ class ModuloRecuperaPassword(forms.Form):
     email = forms.EmailField(label='Email')
 
 
-class ModuloNegaAutorizzazione(forms.Form):
+class ModuloMotivoNegazione(forms.Form):
     motivo = forms.CharField(label='Motivo negazione',
                              help_text="Fornisci una breve motivazione per la negazione di questa richiesta. "
                                        "Questa verrà comunicata al richiedente.",
