@@ -38,6 +38,20 @@
                     {{ sede.get_estensione_display }}
                 </h4>
 
+                {% if sede.email %}
+                    <p>
+                        <i class="fa fa-fw fa-envelope-o"></i>
+                        <a href="mailto:{{ sede.email }}">{{ sede.email }}</a>
+                    </p>
+                {% endif %}
+
+                {% if sede.telefono %}
+                    <p>
+                        <i class="fa fa-fw fa-phone"></i>
+                        {{ sede.telefono }}
+                    </p>
+                {% endif %}
+
 
 
                 {% if sede.ottieni_figli.exists %}

@@ -72,7 +72,7 @@
                     {% mappa sedi %}
                         <strong>{{ elemento.link|safe }}</strong><br />
                         {{ elemento.get_estensione_display }}, {{ elemento.get_tipo_display }}<br />
-                        {{ elemento.locazione.indirizzo }}
+                        {{ elemento.locazione.formattato }}
 
                     {% icona_colore %}
                         {{ elemento.colore_mappa }}

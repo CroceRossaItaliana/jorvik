@@ -119,6 +119,10 @@ class Locazione(ConMarcaTemporale, models.Model):
             setattr(self, k, valori[k])
         return self.save()
 
+    @property
+    def formattato(self):
+        return self.indirizzo.replace("Italy", "Italia")
+
 
 class ConGeolocalizzazione(models.Model):
     """
