@@ -128,8 +128,8 @@ class NodoMappa(template.Node):
                 continue  # Salta elementi senza posizione.
 
             context.update({"elemento": elemento})
-            contenuto = str(self.nodelist.render(context)).strip()
-            colore = str(self.nodelist_icona.render(context)).strip()
+            contenuto = str(self.nodelist.render(context)).strip().replace("\n", " ")
+            colore = str(self.nodelist_icona.render(context)).strip().replace("\n", " ")
 
             output += """
             messaggio.push(new google.maps.InfoWindow({

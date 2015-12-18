@@ -21,7 +21,8 @@
 
     {% load utils %}
     {% mappa attivita %}
-        {{ elemento }}
+        <strong>{{ elemento.nome }}</strong><br />
+        {{ elemento.locazione.indirizzo }}
 
     {% icona_colore %}
         red
