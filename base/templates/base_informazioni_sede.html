@@ -79,12 +79,6 @@
 
                 {% endif %}
 
-
-            </div>
-
-
-            <div class="col-md-6">
-
                 {% if vicini.exists %}
 
                     <p>&nbsp;</p>
@@ -104,6 +98,27 @@
 
 
                 {% endif %}
+
+
+            </div>
+
+
+            <div class="col-md-6">
+
+
+                <div class="row">
+
+                    {% load utils %}
+                    {% mappa da_mostrare %}
+                        <strong>{{ elemento.link|safe }}</strong><br />
+                        {{ elemento.get_estensione_display }}, {{ elemento.get_tipo_display }}<br />
+                        {{ elemento.locazione.indirizzo }}
+
+                    {% icona_colore %}
+                        {{ elemento.colore_mappa }}
+                    {% endmappa %}
+
+                </div>
 
             </div>
 

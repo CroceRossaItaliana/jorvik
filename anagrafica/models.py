@@ -907,13 +907,13 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
         )
 
     @property
-    def icona(self):
+    def colore_mappa(self):
         dict = {
-            NAZIONALE: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
-            REGIONALE: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
-            PROVINCIALE: "https://maps.google.com/mapfiles/ms/icons/orange-dot.png",
-            LOCALE: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-            TERRITORIALE: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            NAZIONALE: "green",
+            REGIONALE: "green",
+            PROVINCIALE: "orange",
+            LOCALE: "red",
+            TERRITORIALE: "blue",
         }
         return dict[self.estensione]
 

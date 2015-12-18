@@ -8,7 +8,7 @@
 {% block pagina_titolo %}Elenco Sedi CRI con Recapiti e Mappa{% endblock %}
 
 {% block pagina_principale %}
-{% cache 1800 informazioni_sedi %}
+{% cache 1800 informazioni_sedi_v4 %}
 
 
     <div class="container">
@@ -65,56 +65,27 @@
 
             </div>
 
+            <div class="col-md-6">
+                <div class="row">
 
-            <div class="col-md-6" id="laMappa" style="min-height: 700px;">
+                    {% load utils %}
+                    {% mappa sedi %}
+                        <strong>{{ elemento.link|safe }}</strong><br />
+                        {{ elemento.get_estensione_display }}, {{ elemento.get_tipo_display }}<br />
+                        {{ elemento.locazione.indirizzo }}
 
+                    {% icona_colore %}
+                        {{ elemento.colore_mappa }}
+                    {% endmappa %}
+
+                </div>
             </div>
+
+
 
         </div>
     </div>
 
-    <script type="text/javascript">
-
-        {% localize off %}
-
-        var messaggi = {};
-        var marcatori = {};
-
-        function initialize() {
-            var opzioni = {
-                zoom: 6,
-                center: new google.maps.LatLng(41.9, 12.4833333),
-                mapTypeId: google.maps.MapTypeId.ROADMAP
-            }
-            var map = new google.maps.Map(document.getElementById("laMappa"), opzioni);
-            {% for sede in sedi %}
-                {% if sede.locazione %}
-                    messaggio = new google.maps.InfoWindow({
-                        content: "<strong><a href='{{ sede.url }}'>{{ sede.nome }}</a></strong><small><br />{{ sede.get_tipo_display }}, {{ sede.get_estensione_display }}</small><br />{{ sede.locazione.indirizzo }}"
-                    });
-                    marcatore = new google.maps.Marker({
-                        position: new google.maps.LatLng({{ sede.locazione.geo.y }}, {{ sede.locazione.geo.x }}),
-                        map: map,
-                        animation: google.maps.Animation.DROP,
-                        icon: '{{ sede.icona }}'
-                    });
-                    messaggi.sede{{sede.pk}} = messaggio;
-                    marcatori.sede{{sede.pk}} = marcatore;
-                    google.maps.event.addListener(marcatori.sede{{sede.pk}}, 'click', function () {
-                        messaggi.sede{{sede.pk}}.open(map, marcatori.sede{{sede.pk}});
-                    });
-                {% endif %}
-            {% endfor %}
-        }
-        {% endlocalize %}
-        function loadScript() {
-          var script = document.createElement("script");
-          script.type = "text/javascript";
-          script.src = "https://maps.google.com/maps/api/js?sensor=false&callback=initialize";
-          document.body.appendChild(script);
-        }
-        window.onload = loadScript;
-    </script>
 
 {% endcache %}
 {% endblock %}

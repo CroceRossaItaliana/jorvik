@@ -99,7 +99,8 @@ def informazioni_sede(request, me, slug):
 
     contesto = {
         'sede': sede,
-        'vicini': vicini
+        'vicini': vicini,
+        'da_mostrare': vicini | sede.ottieni_discendenti(includimi=True),
     }
     return 'base_informazioni_sede.html', contesto
 
