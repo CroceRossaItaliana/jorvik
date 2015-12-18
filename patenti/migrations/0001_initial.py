@@ -13,11 +13,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Elemento',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
                 ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
-                ('confermata', models.BooleanField(default=True, db_index=True, verbose_name='Confermata')),
-                ('ritirata', models.BooleanField(default=False, db_index=True, verbose_name='Ritirata')),
+                ('confermata', models.BooleanField(db_index=True, verbose_name='Confermata', default=True)),
+                ('ritirata', models.BooleanField(db_index=True, verbose_name='Ritirata', default=False)),
             ],
             options={
                 'verbose_name_plural': 'Elementi patente',
@@ -27,10 +27,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Patente',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
                 ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
-                ('tipo', models.CharField(default='CIV', max_length=2, choices=[('CIV', 'Patente Civile'), ('CRI', 'Patente CRI')])),
+                ('tipo', models.CharField(choices=[('CIV', 'Patente Civile'), ('CRI', 'Patente CRI')], max_length=2, default='CIV')),
             ],
             options={
                 'verbose_name_plural': 'Patenti di Guida',

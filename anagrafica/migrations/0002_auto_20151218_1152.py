@@ -17,12 +17,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sede',
             name='locazione',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.SET_NULL, related_name='anagrafica_sede', blank=True, to='base.Locazione', null=True),
+            field=models.ForeignKey(blank=True, related_name='anagrafica_sede', to='base.Locazione', on_delete=django.db.models.deletion.SET_NULL, null=True),
         ),
         migrations.AddField(
             model_name='sede',
             name='membri',
-            field=models.ManyToManyField(through='anagrafica.Appartenenza', to='anagrafica.Persona'),
+            field=models.ManyToManyField(to='anagrafica.Persona', through='anagrafica.Appartenenza'),
         ),
         migrations.AddField(
             model_name='provvedimentodisciplinare',
@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='estensione',
             name='appartenenza',
-            field=models.ForeignKey(related_name='estensione', blank=True, to='anagrafica.Appartenenza', null=True),
+            field=models.ForeignKey(blank=True, related_name='estensione', to='anagrafica.Appartenenza', null=True),
         ),
         migrations.AddField(
             model_name='estensione',
@@ -72,7 +72,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='delega',
             name='firmatario',
-            field=models.ForeignKey(default=None, related_name='deleghe_firmate', to='anagrafica.Persona', related_query_name='delega_firmata', null=True),
+            field=models.ForeignKey(related_query_name='delega_firmata', to='anagrafica.Persona', related_name='deleghe_firmate', null=True, default=None),
         ),
         migrations.AddField(
             model_name='delega',
@@ -82,7 +82,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='delega',
             name='persona',
-            field=models.ForeignKey(related_name='deleghe', to='anagrafica.Persona', related_query_name='delega'),
+            field=models.ForeignKey(to='anagrafica.Persona', related_query_name='delega', related_name='deleghe'),
         ),
         migrations.AddField(
             model_name='appartenenza',
@@ -92,7 +92,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='appartenenza',
             name='precedente',
-            field=models.ForeignKey(default=None, on_delete=django.db.models.deletion.SET_NULL, related_name='successiva', blank=True, to='anagrafica.Appartenenza', null=True),
+            field=models.ForeignKey(blank=True, related_name='successiva', to='anagrafica.Appartenenza', on_delete=django.db.models.deletion.SET_NULL, null=True, default=None),
         ),
         migrations.AddField(
             model_name='appartenenza',

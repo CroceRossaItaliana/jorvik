@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Competenza',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
             ],
             options={
                 'verbose_name_plural': 'Competenze CRI',
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='CompetenzaPersonale',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
                 ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
                 ('competenza', models.ForeignKey(to='curriculum.Competenza')),
@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Titolo',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
             ],
             options={
                 'verbose_name_plural': 'Titoli',
@@ -47,11 +47,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TitoloPersonale',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
                 ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
                 ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
-                ('confermata', models.BooleanField(default=True, db_index=True, verbose_name='Confermata')),
-                ('ritirata', models.BooleanField(default=False, db_index=True, verbose_name='Ritirata')),
+                ('confermata', models.BooleanField(db_index=True, verbose_name='Confermata', default=True)),
+                ('ritirata', models.BooleanField(db_index=True, verbose_name='Ritirata', default=False)),
                 ('persona', models.ForeignKey(to='anagrafica.Persona', related_name='titoli_personali')),
                 ('titolo', models.ForeignKey(to='curriculum.Titolo')),
             ],
