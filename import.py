@@ -2,6 +2,8 @@
 
 import os, sys
 
+import phonenumbers
+
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
 from django.contrib.contenttypes.models import ContentType
@@ -175,6 +177,14 @@ ASSOC_ID_TURNI = {}
 #  es. ASSOC_ID_PARTECIPAZIONI[123] = 465
 ASSOC_ID_PARTECIPAZIONI = {}
 
+
+def parse_numero(numero, paese="IT"):
+    try:
+        n = phonenumbers.parse(numero, paese)
+    except phonenumbers.phonenumberutil.NumberParseException:
+        return numero
+    f = phonenumbers.format_number(n, phonenumbers.PhoneNumberFormat.E164)
+    return f
 
 def progresso(contatore, totale):
     percentuale = contatore / float(totale) * 100.0
@@ -653,6 +663,18 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
 
     if posizione and 'formattato' in comitato['dati'] and comitato['dati']['formattato']:
         c.imposta_locazione(stringa(comitato['dati']['formattato']))
+
+    if 'telefono' in comitato['dati'] and comitato['dati']['telefono']:
+        c.telefono = parse_numero(comitato['dati']['telefono'])
+        c.save()
+
+    if 'fax' in comitato['dati'] and comitato['dati']['fax']:
+        c.fax = parse_numero(comitato['dati']['fax'])
+        c.save()
+
+    if 'email' in comitato['dati'] and comitato['dati']['email']:
+        c.email = comitato['dati']['email']
+        c.save()
 
     if args.verbose:
         print("    - " + ("-"*num) + " " + c.nome + ": " + stringa(c.locazione))
