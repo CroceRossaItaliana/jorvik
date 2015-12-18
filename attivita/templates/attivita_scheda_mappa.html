@@ -20,6 +20,11 @@
 
 
     {% load utils %}
-    {% localizzatore attivita continua_url=attivita.url_mappa %}
+    {% mappa attivita %}
+        {{ elemento }}
+
+    {% icona_colore %}
+        red
+    {% endmappa %}
 
 {% endblock %}

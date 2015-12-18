@@ -159,6 +159,10 @@ class ConGeolocalizzazione(models.Model):
 
         return queryset.filter(locazione__geo__distance_lte=(self.locazione.geo, Distance(km=km)))
 
+    @property
+    def icona_colore(self):
+        return 'red'
+
 
 class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
     """

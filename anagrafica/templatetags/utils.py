@@ -1,4 +1,6 @@
+from django import template
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import QuerySet
 from django.template import Library
 from django.template.loader import render_to_string
 
@@ -83,4 +85,77 @@ def permessi_almeno(context, oggetto, minimo="lettura"):
 
     almeno = context.request.me.permessi_almeno(oggetto, minimo_int)
     return almeno
+
+
+@register.tag()
+def mappa(parser, token):
+    nodelist = parser.parse(('icona_colore', 'endmappa',))
+    tag_name, elementi = token.split_contents()
+    elementi = template.Variable(elementi)
+    token = parser.next_token()
+    nodelist_icona = None
+    if token.contents == 'icona_colore':
+        nodelist_icona = parser.parse(('endmappa',))
+        token = parser.next_token()
+    return NodoMappa(nodelist, nodelist_icona, elementi)
+
+class NodoMappa(template.Node):
+    def __init__(self, nodelist, nodelist_icona, elementi):
+        self.nodelist = nodelist
+        self.nodelist_icona = nodelist_icona
+        self.elementi = elementi
+    def render(self, context):
+        elementi = self.elementi.resolve(context)
+        if not isinstance(elementi, (QuerySet, list)):
+            elementi = [elementi]
+        output = """
+        <div id="laMappa" class="col-md-12" style="min-height: 700px;">
+        </div>
+        <script type="text/javascript">
+        function initialize() {
+          var opzioni = {
+            zoom: 6,
+            center: new google.maps.LatLng(41.9,12.4833333),
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+          }
+          var map = new google.maps.Map(document.getElementById("laMappa"), opzioni);
+          var messaggio = [], marcatore = [];
+        """
+
+        i = 0
+        for elemento in elementi:
+            if not elemento.locazione:
+                continue  # Salta elementi senza posizione.
+
+            context.update({"elemento": elemento})
+            contenuto = str(self.nodelist.render(context)).strip()
+            colore = str(self.nodelist_icona.render(context)).strip()
+
+            output += """
+            messaggio.push(new google.maps.InfoWindow({
+                content: \"""" + contenuto + """\"
+            }));
+            marcatore.push(new google.maps.Marker({
+                position: new google.maps.LatLng(""" + str(elemento.locazione.geo.y) + """, """ + str(elemento.locazione.geo.x) + """),
+                map: map, animation: google.maps.Animation.DROP, icon: 'https://maps.google.com/mapfiles/ms/icons/""" + colore + """-dot.png'
+            }));
+            google.maps.event.addListener(marcatore[""" + str(i) + """], 'click', function() {
+                messaggio[""" + str(i) + """].open(map, marcatore[""" + str(i) + """]);
+            });
+            """
+            i += 1
+
+        output += """
+            }
+            function loadScript() {
+              var script = document.createElement("script");
+              script.type = "text/javascript";
+              script.src = "https://maps.google.com/maps/api/js?sensor=false&callback=initialize";
+              document.body.appendChild(script);
+          }
+          window.onload = loadScript;
+        </script>
+        """
+
+        return output
 
