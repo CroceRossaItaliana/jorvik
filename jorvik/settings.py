@@ -50,7 +50,6 @@ INSTALLED_APPS = (
     'django_countries',
     'autocomplete_light',
     'django_extensions',
-    'tinymce',
 )
 
 # Classi middleware (intercetta & computa)
