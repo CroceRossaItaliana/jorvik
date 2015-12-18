@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import migrations, models
+from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Competenza',
             fields=[
-                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
+                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
             ],
             options={
                 'verbose_name_plural': 'Competenze CRI',
@@ -24,9 +24,9 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='CompetenzaPersonale',
             fields=[
-                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
-                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
+                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
+                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
                 ('competenza', models.ForeignKey(to='curriculum.Competenza')),
                 ('persona', models.ForeignKey(to='anagrafica.Persona', related_name='competenze_personali')),
             ],
@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Titolo',
             fields=[
-                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
+                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
             ],
             options={
                 'verbose_name_plural': 'Titoli',
@@ -47,11 +47,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TitoloPersonale',
             fields=[
-                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
-                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
-                ('confermata', models.BooleanField(db_index=True, verbose_name='Confermata', default=True)),
-                ('ritirata', models.BooleanField(db_index=True, verbose_name='Ritirata', default=False)),
+                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
+                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
+                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
+                ('confermata', models.BooleanField(default=True, verbose_name='Confermata', db_index=True)),
+                ('ritirata', models.BooleanField(default=False, verbose_name='Ritirata', db_index=True)),
                 ('persona', models.ForeignKey(to='anagrafica.Persona', related_name='titoli_personali')),
                 ('titolo', models.ForeignKey(to='curriculum.Titolo')),
             ],

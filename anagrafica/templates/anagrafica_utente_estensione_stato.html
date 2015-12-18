@@ -14,14 +14,16 @@
             <tbody>
                 {% for estensione in attuali %}
                 <tr>
+                    {%  if estensione.attuale != 'n' %}
                     <td>{{ estensione.richiedente }}</td>
                     <td>{{ estensione.destinazione }}</td>
-                    <td>{{ estensione.get_esito_display }}</td>
+                    <td>{{ estensione.esito }}</td>
                     <td>
                         <a class="btn btn-danger" href="{{"/utente/estensione/"}}{{estensione.pk}}{{"/termina/"}}">
                             <i class="fa fa-trash"></i> Termina estensione.
                         </a>
                     </td>
+                {% endif %}
                 </tr>
                 {% empty %}
                     <tr>
