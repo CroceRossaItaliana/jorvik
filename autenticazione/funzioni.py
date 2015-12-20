@@ -5,7 +5,7 @@ from django.template import RequestContext
 from django.utils.http import urlencode
 import functools
 from anagrafica.permessi.costanti import ERRORE_ORFANO, ERRORE_PERMESSI
-from base.menu import MENU
+from base.menu import menu
 from jorvik.settings import LOGIN_REDIRECT_URL, LOGIN_URL
 
 __author__ = 'alfioemanuele'
@@ -39,7 +39,7 @@ def pagina_pubblica(funzione):
 
         contesto.update({"me": request.me})
         contesto.update({"request": request})
-        contesto.update({"menu": MENU})
+        contesto.update({"menu": menu(request)})
         return render_to_response(template, RequestContext(request, contesto))
 
     return _pagina_pubblica
@@ -107,7 +107,7 @@ def pagina_privata(funzione=None, pagina=LOGIN_URL, permessi=[]):
 
         contesto.update({"me": request.me})
         contesto.update({"request": request})
-        contesto.update({"menu": MENU})
+        contesto.update({"menu": menu(request)})
         return render_to_response(template, RequestContext(request, contesto))
 
     return _pagina_privata
@@ -148,7 +148,7 @@ def pagina_privata_no_cambio_firma(funzione=None, pagina=LOGIN_URL, permessi=[])
         extra = {}
         extra.update({"me": request.me})
         extra.update({"request": request})
-        extra.update({"menu": MENU})
+        extra.update({"menu": menu(request)})
 
         (template, contesto, richiesta) = _spacchetta(funzione(request, *args, extra_context=extra, **kwargs))
 
@@ -157,7 +157,7 @@ def pagina_privata_no_cambio_firma(funzione=None, pagina=LOGIN_URL, permessi=[])
 
         contesto.update({"me": request.me})
         contesto.update({"request": request})
-        contesto.update({"menu": MENU})
+        contesto.update({"menu": menu(request)})
         return render_to_response(template, RequestContext(request, contesto))
 
     return _pagina_privata

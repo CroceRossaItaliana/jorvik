@@ -1,9 +1,16 @@
 import autocomplete_light
 
 from anagrafica.models import Persona, Sede
+from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE
 
 
-class PersonaAutocompletamento(autocomplete_light.AutocompleteModelBase):
+class AutocompletamentoBase(autocomplete_light.AutocompleteModelBase):
+    @property
+    def persona(self):
+        return self.request.user.persona
+
+
+class PersonaAutocompletamento(AutocompletamentoBase):
     search_fields = ['nome', 'cognome', 'codice_fiscale',]
     model = Persona
 
@@ -14,7 +21,7 @@ class PersonaAutocompletamento(autocomplete_light.AutocompleteModelBase):
 
     def choices_for_request(self):
         if not self.request.user.is_staff:  #TODO udpate
-            self.choices = self.choices.filter(appartenenze__sede=self.request.user.persona.appartenenze_attuali().first().sede)
+            self.choices = self.choices.filter(appartenenze__sede=self.persona.appartenenze_attuali().first().sede)
 
         return super(PersonaAutocompletamento, self).choices_for_request()
 
@@ -31,10 +38,16 @@ class PersonaAutocompletamento(autocomplete_light.AutocompleteModelBase):
         )
 
 
-class SedeAutocompletamento(autocomplete_light.AutocompleteModelBase):
+class SedeAutocompletamento(AutocompletamentoBase):
     search_fields = ['^nome', ]
     model = Sede
 
 
+class SedeNuovoCorsoAutocompletamento(SedeAutocompletamento):
+    def choices_for_request(self):
+        return self.persona.oggetti_permesso(GESTIONE_CORSI_SEDE)
+
+
 autocomplete_light.register(PersonaAutocompletamento)
 autocomplete_light.register(SedeAutocompletamento)
+autocomplete_light.register(SedeNuovoCorsoAutocompletamento)

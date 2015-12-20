@@ -1,0 +1,56 @@
+{% extends 'formazione_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+
+{% block pagina_titolo %}
+    Pianifica un Corso Base
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro text-success">
+        Pianifica un Corso Base
+    </h2>
+
+    <div class="row">
+
+        <div class="col-md-6">
+            <form method="POST">
+                {% csrf_token %}
+                {% bootstrap_form modulo %}
+                <button type="submit" class="btn btn-lg btn-success"
+                    data-conferma="Confermi di voler pianificare il corso?">
+                    <i class="fa fa-fw fa-asterisk"></i>
+                    Pianifica il Corso
+                </button>
+            </form>
+
+        </div>
+
+        <div class="col-md-6">
+            <div class="alert alert-info">
+                <i class="fa fa-fw fa-calendar"></i> <strong>Data ed ora di inizio</strong>:
+                Ti consigliamo di inserire in questo campo la data e l'ora nella quale sar&agrave;
+                effettuata la presentazione del Corso. Questa data sar&agrave; comunicata
+                agli aspiranti nella tua zona come data di inziio del Corso.
+            </div>
+
+            <div class="alert alert-info">
+                <i class="fa fa-fw fa-info-circle"></i> <strong>Nota bene</strong>:
+                Dopo questo step potrai nominare uno o pi&ugrave; direttori del corso.
+                Questi potranno inserire gli ulteriori dettagli sul corso,
+                come le date delle lezioni, la descrizione, nonch&eacute; gestire
+                interamente il corso per te.
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+
+
+{% endblock %}

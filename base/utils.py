@@ -103,3 +103,17 @@ def filtra_queryset(queryset, termini_ricerca, campi_ricerca=[]):
                 queryset = queryset.filter(reduce(operator.or_, or_queries))
 
         return queryset
+
+
+def remove_none(obj):
+    """
+    Rimuove riorsivamente gli elementi None da una lista, tupla o insieme.
+    :param obj:
+    :return:
+    """
+    if isinstance(obj, (list, tuple, set)):
+        return type(obj)(remove_none(x) for x in obj if x is not None)
+    elif isinstance(obj, dict):
+        return type(obj)((remove_none(k), remove_none(v)) for k, v in obj.items() if k is not None and v is not None)
+    else:
+        return obj

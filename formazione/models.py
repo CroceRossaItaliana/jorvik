@@ -3,16 +3,18 @@
 """
 Questo modulo definisce i modelli del modulo di Formazione di Gaia.
 """
+import datetime
+
 from anagrafica.models import Sede, Persona
 from base.models import ConAutorizzazioni
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.models import ModelloSemplice
-from base.tratti import ConMarcaTemporale
+from base.tratti import ConMarcaTemporale, ConDelegati
 from social.models import ConCommenti, ConGiudizio
 from django.db import models
 
 
-class Corso(ModelloSemplice, ConMarcaTemporale, ConGeolocalizzazione, ConCommenti, ConGiudizio):
+class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazione, ConCommenti, ConGiudizio):
 
     class Meta:
         abstract = True
@@ -31,7 +33,7 @@ class Corso(ModelloSemplice, ConMarcaTemporale, ConGeolocalizzazione, ConComment
         (ANNULLATO, 'Annullato'),
     )
     stato = models.CharField('Stato', choices=STATO, max_length=1, default=PREPARAZIONE)
-    sede = models.ForeignKey(Sede, related_query_name='%(class)s_corso')
+    sede = models.ForeignKey(Sede, related_query_name='%(class)s_corso', help_text="La Sede organizzatrice del Corso.")
 
 
 class CorsoBase(Corso):
@@ -47,10 +49,54 @@ class CorsoBase(Corso):
         verbose_name = "Corso Base"
         verbose_name_plural = "Corsi Base"
 
-    data_inizio = models.DateTimeField(blank=False, null=False)
+    data_inizio = models.DateTimeField(blank=False, null=False, help_text="La data di inizio del corso. "
+                                                                          "Utilizzata per la gestione delle iscrizioni.")
     data_esame = models.DateTimeField(blank=False, null=False)
+    progressivo = models.SmallIntegerField(blank=False, null=False, db_index=True)
+    anno = models.SmallIntegerField(blank=False, null=False, db_index=True)
 
+    def __str__(self):
+        return "<CorsoBase id=%d, num=%d/%d>" % (self.pk, self.progressivo, self.anno)
 
+    @property
+    def url(self):
+        return "/aspirante/corso-base/%d/" % (self.pk,)
+
+    @property
+    def nome(self):
+        return "Corso Base %d/%d (%s)" % (self.progressivo, self.anno, self.sede)
+
+    @property
+    def link(self):
+        return "<a href=\"%s\" target=\"_new\">%s</a>" % (self.url, self.nome)
+
+    @property
+    def url_direttori(self):
+        return "/formazione/corsi-base/%d/direttori/" % (self.pk,)
+
+    @classmethod
+    def nuovo(cls, anno=datetime.date.today().year, **kwargs):
+        """
+        Metodo per creare un nuovo corso. Crea progressivo automaticamente.
+        :param anno: Anno di creazione del corso.
+        :param kwargs: Parametri per la creazione del corso.
+        :return:
+        """
+
+        try:  # Per il progressivo, cerca ultimo corso
+            ultimo = CorsoBase.objects.filter(anno=anno).latest('progressivo')
+            progressivo = ultimo.progressivo + 1
+
+        except:  # Se non esiste, inizia da 1
+            progressivo = 1
+
+        c = CorsoBase(
+            anno=anno,
+            progressivo=progressivo,
+            **kwargs
+        )
+        c.save()
+        return c
 
 
 class PartecipazioneCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
