@@ -54,7 +54,7 @@
 
                 {% block step_modulo %}
                     {% if modulo %}
-                        {% bootstrap_form modulo %}
+                        {% bootstrap_form modulo layout='horizontal' form_group_class='form-group row' %}
                     {% endif %}
                 {% endblock %}
 

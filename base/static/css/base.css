@@ -199,3 +199,7 @@ body, p, span, div {
 .monospace {
     font-family: "Bitstream Vera Sans Mono", Monaco, "Courier New", Courier, monospace;
 }
+
+.enorme {
+    font-size: 72px;
+}

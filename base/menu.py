@@ -13,7 +13,7 @@ def menu(request):
     """
     Ottiene il menu per una data richiesta.
     """
-    me = request.me
+    me = request.me if hasattr(request, 'me') else None
 
     gestione_corsi_sede = me.ha_permesso(GESTIONE_CORSI_SEDE) if me else False
 
@@ -91,5 +91,15 @@ def menu(request):
                 ("Elenco Corsi di Formazione", "fa-list", "/formazione/corsi-formazione/"),
                 ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-formazione/nuovo/"),
             )) if False else None,
+        ),
+        "aspirante": (
+            ("Aspirante", (
+                ("Home page", "fa-home", "/aspirante/"),
+                ("Impostazioni", "fa-gears", "/aspirante/impostazioni/")
+            )),
+            ("Nelle vicinanze", (
+                ("Corsi Base", "fa-list", "/aspirante/corsi-base/"),
+                ("Sedi CRI", "fa-list", "/aspirante/sedi/"),
+            )),
         ),
     })

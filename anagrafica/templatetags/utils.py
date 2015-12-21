@@ -140,6 +140,7 @@ class NodoMappa(template.Node):
           }
           var map = new google.maps.Map(document.getElementById("laMappa"), opzioni);
           var messaggio = [], marcatore = [];
+          var latlngbounds = new google.maps.LatLngBounds();
         """
 
         i = 0
@@ -155,8 +156,10 @@ class NodoMappa(template.Node):
             messaggio.push(new google.maps.InfoWindow({
                 content: \"""" + contenuto + """\"
             }));
+            var latlng = new google.maps.LatLng(""" + str(elemento.locazione.geo.y) + """, """ + str(elemento.locazione.geo.x) + """);
+            latlngbounds.extend(latlng);
             marcatore.push(new google.maps.Marker({
-                position: new google.maps.LatLng(""" + str(elemento.locazione.geo.y) + """, """ + str(elemento.locazione.geo.x) + """),
+                position: latlng,
                 map: map, animation: google.maps.Animation.DROP, icon: 'https://maps.google.com/mapfiles/ms/icons/""" + colore + """-dot.png'
             }));
             google.maps.event.addListener(marcatore[""" + str(i) + """], 'click', function() {
@@ -166,6 +169,9 @@ class NodoMappa(template.Node):
             i += 1
 
         output += """
+            map.setCenter(latlngbounds.getCenter());
+            map.fitBounds(latlngbounds);
+
             }
             function loadScript() {
               var script = document.createElement("script");

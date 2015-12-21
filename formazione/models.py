@@ -130,14 +130,17 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
     persona = models.OneToOneField(Persona, related_name='aspirante')
 
     # Numero minimo di Comitati nelle vicinanze
-    MINIMO_COMITATI = 10
-    RAGGIO_STEP = .1
+    MINIMO_COMITATI = 15
+    RAGGIO_STEP = 1
 
     # Massimo iterazioni nella ricerca
-    MASSIMO_ITERAZIONI = 25
+    MASSIMO_ITERAZIONI = 50
 
     class Meta:
         verbose_name_plural = "Aspiranti"
+
+    def __str__(self):
+        return "Aspirante %s" % (self.persona.nome_completo,)
 
     def sedi(self, tipo=Sede.COMITATO, **kwargs):
         """
@@ -172,3 +175,10 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
 
         return self.raggio
 
+    def post_locazione(self):
+        """
+        Ricalcola il raggio automaticamente ogni volta che viene impostata
+        una nuova locazione.
+        """
+        self.calcola_raggio()
+        return super(Aspirante, self).post_locazione()

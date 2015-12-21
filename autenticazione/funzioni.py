@@ -66,7 +66,7 @@ def pagina_anonima(funzione, pagina='/utente/'):
 
         contesto.update({"me": None})
         contesto.update({"request": request})
-        contesto.update({"menu": MENU})
+        contesto.update({"menu": menu(request)})
         return render_to_response(template, RequestContext(request, contesto))
 
     return _pagina_anonima

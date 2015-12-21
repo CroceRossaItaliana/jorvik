@@ -5,6 +5,19 @@
 
 {% block app_contenuto %}
 
+    {% if me.aspirante %}
+        <div class="alert alert-success">
+            <h4>
+                <i class="fa fa-fw fa-info-circle"></i>
+                Vuoi trovare Corsi Base vicino a te?
+            </h4>
+            <p>
+                Clicca su "Aspirante" in alto a questa pagina per vedere i Corsi Base
+                e le Sedi CRI nelle tue vicinanze.
+            </p>
+        </div>
+    {% endif %}
+
     <div
             id="benvenuto"
             class="well well-lg allinea-centro" style="
@@ -24,6 +37,7 @@
         <p>&nbsp;</p>
         <p>&nbsp;</p>
     </div>
+
 
 
     {% if not me.numeri_telefono.exists %}

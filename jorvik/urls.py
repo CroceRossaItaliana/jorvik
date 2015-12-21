@@ -111,13 +111,18 @@ urlpatterns = [
     url(r'^us/elenco/(?P<elenco_id>.*)/modulo/$', 'ufficio_soci.viste.us_elenco_modulo'),
     url(r'^us/elenco/(?P<elenco_id>.*)/$', 'ufficio_soci.viste.us_elenco'),
 
+    url(r'^aspirante/$', 'formazione.viste.aspirante_home'),
+    url(r'^aspirante/impostazioni/$', 'formazione.viste.aspirante_impostazioni'),
+    url(r'^aspirante/corsi-base/$', 'formazione.viste.aspirante_corsi_base'),
+    url(r'^aspirante/sedi/$', 'formazione.viste.aspirante_sedi'),
+    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/$', 'formazione.viste.aspirante_corso_base_scheda'),
+
     url(r'^formazione/$', 'formazione.viste.formazione'),
     url(r'^formazione/corsi-base/elenco/$', 'formazione.viste.formazione_corsi_base_elenco'),
     url(r'^formazione/corsi-base/domanda/$', 'formazione.viste.formazione_corsi_base_domanda'),
     url(r'^formazione/corsi-base/nuovo/$', 'formazione.viste.formazione_corsi_base_nuovo'),
     url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/direttori/$', 'formazione.viste.formazione_corsi_base_direttori'),
 
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/$', 'formazione.viste.aspirante_corso_base_scheda'),
 
     url(r'^geo/localizzatore/imposta/$', 'base.viste.geo_localizzatore_imposta'),
     url(r'^geo/localizzatore/$', 'base.viste.geo_localizzatore'),

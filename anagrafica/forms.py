@@ -8,7 +8,7 @@ from autenticazione.models import Utenza
 import autocomplete_light
 
 
-class ModuloStepComitato(ModelForm):
+class ModuloStepComitato(autocomplete_light.ModelForm):
     class Meta:
         model = Appartenenza
         fields = ['sede', 'inizio', ]
@@ -56,6 +56,7 @@ class ModuloStepAnagrafica(ModelForm):
     class Meta:
         model = Persona
         fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita', 'provincia_nascita', 'stato_nascita',
+                  'codice_fiscale',
                   'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
                   'cap_residenza']
 

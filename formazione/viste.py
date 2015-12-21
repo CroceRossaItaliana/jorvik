@@ -75,4 +75,37 @@ def formazione_corsi_base_direttori(request, me, pk):
 
 @pagina_privata
 def aspirante_corso_base_scheda(request, me, pk):
-    pass
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    contesto = {
+        "corso": corso,
+    }
+    return 'aspirante_corso_base_scheda.html'
+
+
+@pagina_privata
+def aspirante_home(request, me):
+    contesto = {}
+    return 'aspirante_home.html', contesto
+
+
+@pagina_privata
+def aspirante_corsi_base(request, me):
+    contesto = {
+        "corsi": me.ottieni_o_genera_aspirante().corsi(),
+    }
+    return 'aspirante_corsi_base.html', contesto
+
+
+@pagina_privata
+def aspirante_sedi(request, me):
+    contesto = {
+        "sedi": me.ottieni_o_genera_aspirante().sedi(),
+    }
+    return 'aspirante_sedi.html', contesto
+
+
+@pagina_privata
+def aspirante_impostazioni(request, me):
+    contesto = {}
+    return 'aspirante_impostazioni.html', contesto
+

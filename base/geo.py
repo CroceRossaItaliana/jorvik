@@ -6,7 +6,7 @@ import googlemaps
 from django_countries.fields import CountryField
 
 from base.tratti import ConMarcaTemporale
-from django.contrib.gis.measure import Distance
+from django.contrib.gis.measure import Distance, D
 from jorvik.settings import GOOGLE_KEY
 
 
@@ -134,6 +134,13 @@ class ConGeolocalizzazione(models.Model):
 
     locazione = models.ForeignKey(Locazione, null=True, blank=True, related_name="%(app_label)s_%(class)s", on_delete=SET_NULL)
 
+    def post_locazione(self):
+        """
+        Callback sovrascrivibile. Cosa fare dopo l'impostazione della nuova locazione.
+        :return:
+        """
+        pass
+
     def imposta_locazione(self, indirizzo):
         """
         Imposta la locazione dell'oggetto dato un indirizzo.
@@ -149,6 +156,7 @@ class ConGeolocalizzazione(models.Model):
             return None
         self.locazione = l
         self.save()
+        self.post_locazione()
         return l
 
 
@@ -185,4 +193,3 @@ class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
         :return: La ricerca filtrata
         """
         return ricerca.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=self.raggio)))
-

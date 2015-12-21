@@ -1,0 +1,66 @@
+{% extends "aspirante_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+
+{% block app_contenuto %}
+
+
+
+    <h2 class="allinea-centro">Il Volontariato in CRI ti cambier&agrave; la vita.</h2>
+
+    <p>&nbsp;</p>
+    <div class="col-md-8 col-md-offset-2">
+        <div class="row allinea-centro well well-sm">
+
+            <div class="col-md-6">
+                <h1 class="enorme">
+                    {{ me.aspirante.corsi.count }}
+                </h1>
+                <h3 class="text-success">
+                    Corsi Base attivi
+                </h3>
+                <p>
+                    <a href="/aspirante/corsi-base/" class="btn btn-xs btn-success btn-block">
+                        <i class="fa fa-list"></i>
+                        Elenco dei corsi nelle vicinanze
+                    </a>
+                </p>
+
+            </div>
+
+            <div class="col-md-6">
+                <h1 class="enorme">
+                    {{ me.aspirante.sedi.count }}
+                </h1>
+                <h3 class="text-success">
+                    Sedi CRI
+                </h3>
+                <p>
+                    <a href="/aspirante/sedi/" class="btn btn-xs btn-success btn-block">
+                        <i class="fa fa-list"></i>
+                        Elenco delle sedi nelle vicinanze
+                    </a>
+                </p>
+
+
+            </div>
+
+        </div>
+        <div class="alert alert-info">
+            <i class="fa fa-fw fa-map-marker"></i> Nel raggio di {{ me.aspirante.raggio }} km da:<br />
+            <strong>{{ me.aspirante.locazione }}</strong>
+            (<a href="/aspirante/impostazioni/"><i class="fa fa-fw fa-pencil"></i> cambia</a>)
+        </div>
+
+        <div class="alert alert-success">
+            <i class="fa fa-fw fa-envelope"></i> Niente paura: Ti invieremo una e-mail all'indirizzo che ci hai fornito
+            <strong>{{ me.email }}</strong> (<a href="/utente/contatti/"><i class="fa fa-fw fa-pencil"></i> cambia</a>) ogni volta che un nuovo corso verr&agrave; attivato nelle tue vicinanze.
+        </div>
+
+
+    </div>
+
+
+
+{% endblock %}

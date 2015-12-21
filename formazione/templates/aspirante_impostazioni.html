@@ -1,0 +1,24 @@
+{% extends "aspirante_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+
+{% block app_contenuto %}
+
+
+
+    <h2><i class="fa fa-fw fa-globe"></i> Dove vuoi fare il Corso Base?</h2>
+
+    <div class="alert alert-info">
+        <i class="fa fa-fw fa-info-circle"></i>
+        Da questa pagina puoi cambiare l'indirizzo che verr&agrave; usato da Gaia
+        per trovare Corsi Base e Sedi CRI nelle vicinanze. Questo pu&ograve; essere
+        diverso dal tuo indirizzo di residenza.
+    </div>
+
+    {% localizzatore me.aspirante %}
+
+
+
+{% endblock %}

@@ -28,7 +28,8 @@ from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, R
 
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, APPLICAZIONI_SLUG_DICT, PERMESSI_NOMI_DICT
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
-from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO
+from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
+    GESTIONE_SEDE
 from anagrafica.permessi.delega import delega_permessi
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
@@ -83,11 +84,11 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     comune_nascita = models.CharField("Comune di Nascita", max_length=64, blank=True)
     provincia_nascita = models.CharField("Provincia di Nascita", max_length=2, blank=True)
     stato_nascita = CountryField("Stato di nascita", default="IT")
-    indirizzo_residenza = models.CharField("Indirizzo di residenza", max_length=512, blank=True)
-    comune_residenza = models.CharField("Comune di residenza", max_length=64, blank=True)
-    provincia_residenza = models.CharField("Provincia di residenza", max_length=2, blank=True)
+    indirizzo_residenza = models.CharField("Indirizzo di residenza", max_length=512, null=True)
+    comune_residenza = models.CharField("Comune di residenza", max_length=64, null=True)
+    provincia_residenza = models.CharField("Provincia di residenza", max_length=2, null=True)
     stato_residenza = CountryField("Stato di residenza", default="IT")
-    cap_residenza = models.CharField("CAP di Residenza", max_length=16, blank=True)
+    cap_residenza = models.CharField("CAP di Residenza", max_length=16, null=True)
     email_contatto = models.EmailField("Email di contatto", max_length=64, blank=True)
 
     avatar = models.ImageField("Avatar", blank=True, null=True, upload_to=GeneratoreNomeFile('avatar/'))
@@ -400,14 +401,21 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
 
         if self.volontario:
             lista += [('/utente/', 'Volontario', 'fa-user')]
+
         else:
             lista += [('/utente/', 'Utente', 'fa-user')]
+
+        if hasattr(self, 'aspirante'):
+            lista += [('/aspirante/', 'Aspirante', 'fa-user', self.ottieni_o_genera_aspirante().corsi().count())]
 
         lista += [('/attivita/', 'Attività', 'fa-calendar')]
         lista += [('/posta/', 'Posta', 'fa-envelope')]
 
         if self.ha_pannello_autorizzazioni:
             lista += [('/autorizzazioni/', 'Richieste', 'fa-user-plus', self.autorizzazioni_in_attesa().count())]
+
+        if self.ha_permesso(GESTIONE_SEDE):
+            lista += [('/presidente/', 'Sedi CRI', 'fa-home')]
 
         if self.ha_permesso(GESTIONE_SOCI):
             lista += [('/us/', 'Soci', 'fa-users')]
@@ -593,6 +601,20 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
             appartenenza.terminazione = "E"
             appartenenza.fine = datetime.today()
 
+    def ottieni_o_genera_aspirante(self):
+        try:
+            return self.aspirante
+        except:
+            from formazione.models import Aspirante
+            a = Aspirante(
+                persona=self,
+            )
+            a.save()
+            a.imposta_locazione("%s, %s %s, %s" % (
+                self.indirizzo_residenza, self.cap_residenza,
+                self.comune_residenza, self.stato_residenza
+            ))
+            return a
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """
@@ -996,7 +1018,11 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
         return self.appartenenze_persona(persona, membro=membro, figli=figli, **kwargs).exists()
 
     def __str__(self):
-        return self.nome
+        if self.estensione == TERRITORIALE and self.genitore is not None:
+            return "%s: %s" % (self.genitore.nome, self.genitore,)
+
+        else:
+            return "%s" % (self.nome,)
 
     @property
     def nome_completo(self):

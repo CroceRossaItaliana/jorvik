@@ -14,7 +14,7 @@ from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
-from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega
+from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO
 from autenticazione.funzioni import pagina_anonima, pagina_privata
@@ -47,7 +47,7 @@ STEP_NOMI = {
 # Definisce i vari step di registrazione, in ordine, per ogni tipo di registrazione.
 STEP = {
     TIPO_VOLONTARIO: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_ANAGRAFICA, STEP_CREDENZIALI, STEP_FINE],
-    TIPO_ASPIRANTE: [STEP_ANAGRAFICA, STEP_CREDENZIALI, STEP_FINE],
+    TIPO_ASPIRANTE: [STEP_CODICE_FISCALE, STEP_ANAGRAFICA, STEP_CREDENZIALI, STEP_FINE],
     TIPO_DIPENDENTE: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_ANAGRAFICA, STEP_CREDENZIALI, STEP_FINE],
 }
 
@@ -183,21 +183,33 @@ def registrati_conferma(request, tipo):
     p.invia_email_benvenuto_registrazione(tipo=tipo)
 
     if tipo == TIPO_ASPIRANTE:
-        # TODO Registrazione aspirante
-        pass
+        #  Genera semplicemente oggetto aspirante.
+        p.ottieni_o_genera_aspirante()
 
     elif tipo == TIPO_VOLONTARIO:
-        pass
-        # TODO Registrazione volontario
+        #  Richiede appartenenza come Volontario.
+        a = Appartenenza(
+            inizio=modulo.cleaned_data['inizio'],
+            sede=modulo.cleaned_data['sede'],
+            membro=Appartenenza.VOLONTARIO,
+        )
+        a.save()
+        a.richiedi()
 
     elif tipo == TIPO_DIPENDENTE:
-        pass
-        # TODO Registrazione dipendente
+        #  Richiede appartenenza come Dipendente.
+        a = Appartenenza(
+            inizio=modulo.cleaned_data['inizio'],
+            sede=modulo.cleaned_data['sede'],
+            membro=Appartenenza.DIPENDENTE,
+        )
+        a.save()
+        a.richiedi()
 
     else:
         raise ValueError("Non so come gestire questa iscrizione.")
 
-    return redirect('/manutenzione/')
+    return redirect('/utente/')
 
 
 @pagina_privata
