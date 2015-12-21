@@ -1092,6 +1092,13 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
     firmatario = models.ForeignKey(Persona, db_index=True, null=True, default=None, related_name='deleghe_firmate',
                                    related_query_name='delega_firmata')
 
+    def __str__(self):
+        return "Delega %s di %s come %s per %s" % (
+            "attuale" if self.attuale() else "passata",
+            self.persona.codice_fiscale,
+            self.get_tipo_display(), self.oggetto,
+        )
+
     def permessi(self):
         """
         Ottiene un elenco di permessi che scaturiscono dalla delega.

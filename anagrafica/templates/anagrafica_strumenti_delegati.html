@@ -9,7 +9,7 @@
     <div class="container-fluid">
 
         <div class="row">
-            {% if oggetto.deleghe.count >= almeno %}
+            {% if oggetto.deleghe_attuali.count >= almeno %}
                 <div class="alert alert-success">
                     {% if continua_url %}
                         <a href="{{ continua_url }}" target="_top" class="btn btn-success pull-right">

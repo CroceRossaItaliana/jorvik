@@ -7,7 +7,7 @@ potrebbe necessitare l'implementazione di metodi o proprieta'
 particolari. Fare riferimento alla documentazione del tratto
 utilizzato.
 """
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from django.apps import AppConfig, apps
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ObjectDoesNotExist
@@ -86,7 +86,7 @@ class ConStorico(models.Model):
 
     @classmethod
     @concept
-    def query_attuale(cls, al_giorno=date.today(), **kwargs):
+    def query_attuale(cls, al_giorno=datetime.now(), **kwargs):
         """
         Restituisce l'oggetto Q per filtrare le entita' attuali.
 
@@ -95,20 +95,30 @@ class ConStorico(models.Model):
         :return: Q!
         """
 
+        if isinstance(al_giorno, datetime):  # Se orario esatto
+            inizio = fine = al_giorno
+
+        else:  # Altrimenti, se solo giorno
+            inizio = datetime.combine(al_giorno, datetime.max.time())  # 23.59
+            fine = datetime.combine(al_giorno, datetime.min.time())  # 0.00
+
+        fine += timedelta(minutes=1)  # Anti-bug
+
         return Q(
-            Q(inizio__lte=al_giorno),
-            Q(fine__isnull=True) | Q(fine__gte=al_giorno),
+            Q(inizio__lte=inizio),
+            Q(fine__isnull=True) | Q(fine__gt=fine),
             cls.CONDIZIONE_ATTUALE_AGGIUNTIVA,
             **kwargs
         )
 
-    def attuale(self, al_giorno=date.today()):
+    def attuale(self, al_giorno=datetime.now()):
         """
         Controlla se l'entita' e' attuale o meno.
         :param al_giorno: Giorno per considerare la verifica per l'attuale. Default oggi.
         :return: True o False.
         """
         return self.__class__.objects.filter(self.query_attuale(al_giorno).q, pk=self.pk).exists()
+
 
 
 class ConDelegati(models.Model):
