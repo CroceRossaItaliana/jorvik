@@ -450,6 +450,7 @@ def strumenti_delegati(request, me):
         d.tipo = delega
         d.oggetto = oggetto
         d.save()
+        d.invia_notifica_creazione()
 
     contesto = {
         "locazione": oggetto.locazione,
@@ -480,6 +481,7 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
 
     delega.fine = datetime.datetime.now()
     delega.save()
+    delega.invia_notifica_terminazione(me)
 
     return redirect("/strumenti/delegati/")
 

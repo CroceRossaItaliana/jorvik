@@ -1,0 +1,15 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p class="grassetto">Ciao {{ delega.persona.nome }}.</p>
+    <p>Ricevi questo messaggio perch&eacute; {{ mittente.nome_completo }} ha terminato la tua delega:<br />
+        <strong>{{ delega.get_tipo_display }}</strong> per <strong>{{ delega.oggetto }}.</strong></p>
+
+    <p>La delega aveva inizio {{ delega.inizio }} ed &egrave; terminata il {{ delega.fine }}.</p>
+    <p>Sono state quindi disattivate le funzioni relative per '{{ delega.get_tipo_display }}' su Gaia.</p>
+
+    <p>Per maggiori informazioni sulla terminazione della delega, rispondi
+        a questo messaggio per contattare {{ mittente.nome_completo }}.</p>
+
+{% endblock %}

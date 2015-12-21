@@ -1116,6 +1116,30 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
                                              destinatario_oggetto_tipo__pk=oggetto_tipo.pk,
                                              destinatario_oggetto_id=self.oggetto.pk)
 
+    def invia_notifica_creazione(self):
+        return Messaggio.costruisci_e_invia(
+            oggetto="%s per %s" % (self.get_tipo_display(), self.oggetto,),
+            modello="email_delega_notifica_creazione.html",
+            corpo={
+                "delega": self,
+            },
+            mittente=self.firmatario,
+            destinatari=[self.persona],
+        )
+
+    def invia_notifica_terminazione(self, mittente=None):
+        if mittente is None:
+            mittente = self.firmatario
+        return Messaggio.costruisci_e_invia(
+            oggetto="TERMINATO: %s per %s" % (self.get_tipo_display(), self.oggetto,),
+            modello="email_delega_notifica_terminazione.html",
+            corpo={
+                "delega": self,
+                "mittente": mittente,
+            },
+            mittente=mittente,
+            destinatari=[self.persona],
+        )
 
 class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
     """

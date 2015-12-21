@@ -1,0 +1,19 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p class="grassetto">Ciao {{ delega.persona.nome }}!</p>
+    <p>Ricevi questo messaggio perch&eacute; {{ delega.firmatario.nome_completo }} ti ha delegato come:<br />
+        <strong>{{ delega.get_tipo_display }}</strong> per <strong>{{ delega.oggetto }}.</strong></p>
+
+    <p>La delega ha inizio {{ delega.inizio }} e fine
+        {% if delega.fine %}
+            {{ delega.fine }}.
+        {% else %}
+            indeterminata.
+        {% endif %}
+    </p>
+    <p>Puoi ora accedere alle funzioni riservate per '{{ delega.get_tipo_display }}' su Gaia.</p>
+
+
+{% endblock %}
