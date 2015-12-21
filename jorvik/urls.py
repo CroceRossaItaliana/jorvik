@@ -115,10 +115,14 @@ urlpatterns = [
     url(r'^formazione/corsi-base/elenco/$', 'formazione.viste.formazione_corsi_base_elenco'),
     url(r'^formazione/corsi-base/domanda/$', 'formazione.viste.formazione_corsi_base_domanda'),
     url(r'^formazione/corsi-base/nuovo/$', 'formazione.viste.formazione_corsi_base_nuovo'),
-    url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/$', 'formazione.viste.formazione_corsi_base_scheda'),
+    url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/direttori/$', 'formazione.viste.formazione_corsi_base_direttori'),
+
+    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/$', 'formazione.viste.aspirante_corso_base_scheda'),
 
     url(r'^geo/localizzatore/imposta/$', 'base.viste.geo_localizzatore_imposta'),
     url(r'^geo/localizzatore/$', 'base.viste.geo_localizzatore'),
+    url(r'^strumenti/delegati/$', 'anagrafica.viste.strumenti_delegati'),
+    url(r'^strumenti/delegati/(?P<delega_pk>[0-9]+)/termina/$', 'anagrafica.viste.strumenti_delegati_termina'),
 
     url(r'^social/commenti/nuovo/', 'social.viste.commenti_nuovo'),
     url(r'^social/commenti/cancella/(?P<pk>[0-9]+)/', 'social.viste.commenti_cancella'),

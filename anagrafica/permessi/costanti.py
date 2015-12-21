@@ -10,7 +10,7 @@ Questo file gestisce i permessi in Gaia.
    https://github.com/CroceRossaItaliana/jorvik/wiki/Deleghe,-Permessi-e-Livelli-di-Accesso
  ============================================================================================
 """
-from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA, REFERENTE
+from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA, REFERENTE, DIRETTORE_CORSO
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 
 GESTIONE_SEDE = "GESTIONE_SEDE"
@@ -31,7 +31,7 @@ PERMESSI_OGGETTI = (
     (GESTIONE_ATTIVITA_AREA,    ('attivita',   'Area')),
     (GESTIONE_ATTIVITA,         ('attivita',   'Attivita')),
     (GESTIONE_CORSI_SEDE,       ('anagrafica', 'Sede')),
-    (GESTIONE_CORSO,            ('formazione', 'Corso')),
+    (GESTIONE_CORSO,            ('formazione', 'CorsoBase')),
 )
 
 # Tipologia degli oggetti assegnati ad ogni Delega.
@@ -41,6 +41,7 @@ DELEGHE_OGGETTI = (
     (DELEGATO_AREA,     'Area'),
     (RESPONSABILE_AREA, 'Area'),
     (REFERENTE,         'Attivita'),
+    (DIRETTORE_CORSO,   'Corso'),
 )
 
 

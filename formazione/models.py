@@ -56,7 +56,7 @@ class CorsoBase(Corso):
     anno = models.SmallIntegerField(blank=False, null=False, db_index=True)
 
     def __str__(self):
-        return "<CorsoBase id=%d, num=%d/%d>" % (self.pk, self.progressivo, self.anno)
+        return self.nome
 
     @property
     def url(self):

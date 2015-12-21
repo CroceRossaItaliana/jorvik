@@ -21,6 +21,7 @@ RESPONSABILE_FORMAZIONE = 'RF'
 RESPONSABILE_AUTOPARCO = 'AP'
 RESPONSABILE_PATENTI = 'PA'
 RESPONSABILE_DONAZIONI = 'DO'
+DIRETTORE_CORSO = 'DC'
 
 # Nomi assegnati
 PERMESSI_NOMI = (
@@ -38,6 +39,7 @@ PERMESSI_NOMI = (
     (REFERENTE,                 "Referente Attività"),
     (DELEGATO_CO,               "Delegato Centrale Operativa"),
     (RESPONSABILE_FORMAZIONE,   "Responsabile Formazione"),
+    (DIRETTORE_CORSO,           "Direttore Corso"),
     (RESPONSABILE_AUTOPARCO,    "Responsabile Autoparco"),
     (RESPONSABILE_PATENTI,      "Responsabile Patenti"),
     (RESPONSABILE_DONAZIONI,    "Responsabile Donazioni Sangue"),

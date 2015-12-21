@@ -79,8 +79,10 @@ class ConStorico(models.Model):
     # condizione di attualita' (es. partecipazione confermata, ecc.)
     CONDIZIONE_ATTUALE_AGGIUNTIVA = Q()
 
-    inizio = models.DateField("Inizio", db_index=True, null=False)
-    fine = models.DateField("Fine", db_index=True, null=True, blank=True, default=None)
+    inizio = models.DateTimeField("Inizio", db_index=True, null=False)
+    fine = models.DateTimeField("Fine", db_index=True, null=True, blank=True, default=None, help_text="Lasciare il campo "
+                                                                                                  "vuoto per impostare "
+                                                                                                  "fine indeterminata.")
 
     @classmethod
     @concept

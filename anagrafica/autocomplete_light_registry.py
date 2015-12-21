@@ -21,8 +21,8 @@ class PersonaAutocompletamento(AutocompletamentoBase):
 
     def choices_for_request(self):
         if not self.request.user.is_staff:  #TODO udpate
-            self.choices = self.choices.filter(appartenenze__sede=self.persona.appartenenze_attuali().first().sede)
-
+            #self.choices = self.choices.filter(appartenenze__sede=self.persona.appartenenze_attuali().first().sede)
+            pass
         return super(PersonaAutocompletamento, self).choices_for_request()
 
     choice_html_format = u'''

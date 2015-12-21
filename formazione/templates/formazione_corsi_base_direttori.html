@@ -1,0 +1,26 @@
+{% extends 'formazione_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load utils %}
+
+{% block pagina_titolo %}
+    Seleziona Direttore/i Corso Base
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro text-success">
+        Seleziona Direttore/i Corso Base
+    </h2>
+
+    <div class="alert alert-block alert-info">
+        <h4>Di</h4>
+    </div>
+
+    {% delegati delega corso continua_url=corso.url almeno=1 %}
+
+
+
+
+{% endblock %}

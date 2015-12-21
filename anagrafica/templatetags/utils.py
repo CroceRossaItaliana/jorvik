@@ -5,9 +5,11 @@ from django.template import Library
 from django.template.loader import render_to_string
 
 from anagrafica.models import Persona
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import PERMESSI_TESTO, NESSUNO
 from base.geo import ConGeolocalizzazione
 from base.stringhe import genera_uuid_casuale
+from base.tratti import ConDelegati
 from ufficio_soci.elenchi import Elenco
 
 register = Library()
@@ -48,7 +50,7 @@ def elenco(context, oggetto_elenco=None,):
 def localizzatore(context, oggetto_localizzatore=None, continua_url=None):
 
     if not isinstance(oggetto_localizzatore, ConGeolocalizzazione):
-        raise ValueError("Il tag localizzatore puo' solo essere usato con un oggetto ConGeoolocalizzazione, ma e' stato usato con un oggetto %s." % (oggetto_localizzatore.__class__.__name__,))
+        raise ValueError("Il tag localizzatore puo' solo essere usato con un oggetto ConGeolocalizzazione, ma e' stato usato con un oggetto %s." % (oggetto_localizzatore.__class__.__name__,))
 
     oggetto_tipo = ContentType.objects.get_for_model(oggetto_localizzatore)
 
@@ -63,6 +65,24 @@ def localizzatore(context, oggetto_localizzatore=None, continua_url=None):
     })
     return render_to_string('base_iframe_4_3.html', context)
 
+
+@register.simple_tag(takes_context=True)
+def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None, almeno=0):
+    if not isinstance(oggetto, ConDelegati):
+        raise ValueError("Il tag delegati puo' solo essere usato con un oggetto ConDelegati, ma e' stato usato con un oggetto %s." % (oggetto_localizzatore.__class__.__name__,))
+
+    oggetto_tipo = ContentType.objects.get_for_model(oggetto)
+    context.request.session['app_label'] = oggetto_tipo.app_label
+    context.request.session['model'] = oggetto_tipo.model
+    context.request.session['pk'] = oggetto.pk
+    context.request.session['continua_url'] = continua_url
+    context.request.session['delega'] = delega
+    context.request.session['almeno'] = almeno
+    url = "/strumenti/delegati/"
+    context.update({
+        'iframe_url': url,
+    })
+    return render_to_string('base_iframe_4_3.html', context)
 
 
 @register.assignment_tag(takes_context=True)

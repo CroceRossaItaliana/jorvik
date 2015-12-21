@@ -1,3 +1,6 @@
+import datetime
+
+from django.db.models.loading import get_model
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.contrib.auth import login
@@ -6,16 +9,17 @@ from django.contrib.auth import login
 from django.views.generic import ListView
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
-    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento
+    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
-from anagrafica.models import Persona, Documento, Telefono, Estensione
-from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI
-from anagrafica.permessi.costanti import ERRORE_PERMESSI
+from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT
+from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
+from base.errori import errore_generico
 from base.files import Zip
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
@@ -412,3 +416,70 @@ def profilo_messaggio(request, me, pk=None):
     persona = get_object_or_404(Persona, pk=pk)
     qs = Persona.objects.filter(pk=persona.pk)
     return imposta_destinatari_e_scrivi_messaggio(request, qs)
+
+
+@pagina_privata
+def strumenti_delegati(request, me):
+    app_label = request.session['app_label']
+    model = request.session['model']
+    pk = int(request.session['pk'])
+    continua_url = request.session['continua_url']
+    almeno = request.session['almeno']
+    delega = request.session['delega']
+    oggetto = get_model(app_label, model)
+    oggetto = oggetto.objects.get(pk=pk)
+
+    modulo = ModuloCreazioneDelega(request.POST or None, initial={
+        "inizio": datetime.date.today(),
+    })
+
+    if modulo.is_valid():
+        d = modulo.save(commit=False)
+
+        if oggetto.deleghe.all().filter(Delega.query_attuale().q, tipo=delega, persona=d.persona).exists():
+            return errore_generico(
+                request, me,
+                titolo="%s è già delegato" % (d.persona.nome_completo,),
+                messaggio="%s ha già una delega attuale come %s per %s" % (d.persona.nome_completo, PERMESSI_NOMI_DICT[delega], oggetto),
+                torna_titolo="Torna indietro",
+                torna_url="/strumenti/delegati/",
+            )
+
+        d.inizio = datetime.date.today()
+        d.firmatario = me
+        d.tipo = delega
+        d.oggetto = oggetto
+        d.save()
+
+    contesto = {
+        "locazione": oggetto.locazione,
+        "continua_url": continua_url,
+        "almeno": almeno,
+        "delega": PERMESSI_NOMI_DICT[delega],
+        "modulo": modulo,
+        "oggetto": oggetto,
+    }
+
+    return 'anagrafica_strumenti_delegati.html', contesto
+
+
+@pagina_privata
+def strumenti_delegati_termina(request, me, delega_pk=None):
+    app_label = request.session['app_label']
+    model = request.session['model']
+    pk = int(request.session['pk'])
+    continua_url = request.session['continua_url']
+    almeno = request.session['almeno']
+    delega = request.session['delega']
+    oggetto = get_model(app_label, model)
+    oggetto = oggetto.objects.get(pk=pk)
+
+    delega = get_object_or_404(Delega, pk=delega_pk)
+    if not me.permessi_almeno(delega.oggetto, COMPLETO):
+        return redirect(ERRORE_PERMESSI)
+
+    delega.fine = datetime.datetime.now()
+    delega.save()
+
+    return redirect("/strumenti/delegati/")
+

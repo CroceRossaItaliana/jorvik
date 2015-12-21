@@ -1084,7 +1084,7 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
         verbose_name_plural = "Deleghe"
         app_label = 'anagrafica'
 
-    persona = models.ForeignKey(Persona, db_index=True, related_name='deleghe', related_query_name='delega')
+    persona = models.ForeignKey(Persona, db_index=True, related_name='deleghe', related_query_name='delega',)
     tipo = models.CharField(max_length=2, db_index=True, choices=PERMESSI_NOMI)
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True)
     oggetto_id = models.PositiveIntegerField(db_index=True)

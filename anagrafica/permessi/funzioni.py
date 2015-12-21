@@ -2,7 +2,7 @@
 Questo modulo contiene tutte le funzioni per testare i permessi
 a partire da un oggetto sul quale ho una delega ed un oggetto da testare.
 """
-from anagrafica.permessi.applicazioni import PRESIDENTE
+from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.applicazioni import DELEGATO_AREA
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
@@ -109,6 +109,19 @@ def permessi_referente(attivita):
     ]
 
 
+def permessi_direttore_corso(corso):
+    """
+    Permessi della delega di DIRETTORE CORSO.
+
+    :param corso: Il Corso di cui si e' referenti
+    :return: Lista di permessi.
+    """
+    from formazione.models import CorsoBase
+    return [
+        (GESTIONE_CORSO,         CorsoBase.objects.filter(pk=corso.pk))
+    ]
+
+
 # Non modificare
 
 
@@ -120,6 +133,7 @@ PERMESSI_FUNZIONI = (
     (DELEGATO_AREA,     permessi_delegato_area),
     (RESPONSABILE_AREA, permessi_responsabile_area),
     (REFERENTE,         permessi_referente),
+    (DIRETTORE_CORSO,   permessi_direttore_corso),
 )
 
 # Tieni in memoria anche come dizionari, per lookup veloci

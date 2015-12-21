@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 
-from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_CORSO
+from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
+from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO
 from autenticazione.funzioni import pagina_privata
 from formazione.forms import ModuloCreazioneCorsoBase
 from formazione.models import CorsoBase
@@ -60,5 +61,18 @@ def formazione_corsi_base_nuovo(request, me):
 
 
 @pagina_privata
-def formazione_corsi_base_scheda(request, me, pk):
+def formazione_corsi_base_direttori(request, me, pk):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    if not me.permessi_almeno(corso, COMPLETO):
+        return redirect(ERRORE_PERMESSI)
+    contesto = {
+        "delega": DIRETTORE_CORSO,
+        "corso": corso,
+    }
+
+    return 'formazione_corsi_base_direttori.html', contesto
+
+
+@pagina_privata
+def aspirante_corso_base_scheda(request, me, pk):
     pass

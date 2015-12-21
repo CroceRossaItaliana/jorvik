@@ -1,0 +1,137 @@
+{% extends 'base_bootstrap.html' %}
+
+{% block pagina_titolo %}Delegati {{ oggetto }}{% endblock %}
+
+{% load bootstrap3 %}
+
+{% block pagina_corpo %}
+
+    <div class="container-fluid">
+
+        <div class="row">
+            {% if oggetto.deleghe.count >= almeno %}
+                <div class="alert alert-success">
+                    {% if continua_url %}
+                        <a href="{{ continua_url }}" target="_top" class="btn btn-success pull-right">
+                            <i class="fa fa-fw fa-check-circle"></i>
+                            Continua
+                        </a>
+                    {% endif %}
+
+                    <p>Puoi aggiungere o rimuovere delegati come {{ delega }} per {{ oggetto }}.</p>
+
+                    {% if continua_url %}
+                        <p>Altrimenti, per continuare, clicca sul pulsante 'Continua'.</p>
+                    {% endif %}
+                </div>
+
+            {% elif almeno > 0 %}
+                <div class="alert alert-warning grassetto">
+                    <i class="fa fa-warning"></i> Per proseguire, aggiungi
+                    almeno n. {{ almeno }} persone come {{ delega }} per {{ oggetto }}.
+                </div>
+
+            {% endif %}
+
+
+            <div class="col-sm-12">
+
+
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            <i class="fa fa-fw fa-plus-circle"></i>
+                            Aggiungi un nuovo {{ delega }} per {{ oggetto }}
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            {% bootstrap_form modulo %}
+
+                            <button class="btn btn-block btn-primary">
+                                <i class="fa fa-fw fa-check"></i>
+                                Aggiungi come {{ delega }} per {{ oggetto }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            <i class="fa fa-fw fa-list"></i>
+                            Elenco delegati come {{ delega }} per {{ oggetto }}
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                         <table class="table table-bordered table-striped">
+                            <thead>
+                                <th>Persona</th>
+                                <th>Validità</th>
+                                <th>Azioni</th>
+                            </thead>
+
+                            <tbody>
+                                {% for del in oggetto.deleghe.all %}
+                                    <tr class="{% if del.attuale %}success{% endif %}">
+                                        <td class="grassetto">
+                                            {{ del.persona.link|safe }}
+                                        </td>
+
+                                        <td class="piu-piccolo">
+                                            <i class="fa fa-fw fa-calendar"></i> Inizio:
+                                                {{ del.inizio }}<br />
+                                            <i class="fa fa-fw fa-clock-o"></i> Fine:
+                                                {% if del.fine %}{{ del.fine }}
+                                                {% else %}Indeterminata{% endif %}
+                                        </td>
+
+                                        <td>
+                                            {% if del.attuale %}
+                                                <a href="/strumenti/delegati/{{ del.pk }}/termina/" class="btn btn-sm btn-danger"
+                                                    data-conferma="Terminare ora la delega di {{ del.persona.nome_completo }} come {{ delega }} per {{ oggetto }}?">
+                                                    <i class="fa fa-fw fa-times"></i>
+                                                    Termina ora
+                                                </a>
+
+                                            {% else %}
+                                                N/A
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                    </tr>
+
+
+                                {% empty %}
+                                    <tr class="warning">
+                                        <td colspan="3">
+                                            <h4><i class="fa fa-fw fa-warning"></i> Nessuna persona selezionata</h4>
+                                            <p>Nessuna persona ricopre il ruolo di <strong>{{ delega }}</strong> per <strong>{{ oggetto }}</strong>.</p>
+                                        </td>
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+
+
+            </div>
+
+
+
+
+        </div>
+
+    </div>
+
+{% endblock %}
