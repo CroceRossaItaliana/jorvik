@@ -122,6 +122,7 @@ urlpatterns = [
     url(r'^formazione/corsi-base/domanda/$', 'formazione.viste.formazione_corsi_base_domanda'),
     url(r'^formazione/corsi-base/nuovo/$', 'formazione.viste.formazione_corsi_base_nuovo'),
     url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/direttori/$', 'formazione.viste.formazione_corsi_base_direttori'),
+    url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/fine/$', 'formazione.viste.formazione_corsi_base_fine'),
 
 
     url(r'^geo/localizzatore/imposta/$', 'base.viste.geo_localizzatore_imposta'),

@@ -53,6 +53,8 @@ def formazione_corsi_base_nuovo(request, me):
             corso.locazione = corso.sede.locazione
             corso.save()
 
+        request.session['corso_base_creato'] = corso.pk
+
         return redirect(corso.url_direttori)
 
     contesto = {
@@ -66,13 +68,39 @@ def formazione_corsi_base_direttori(request, me, pk):
     corso = get_object_or_404(CorsoBase, pk=pk)
     if not me.permessi_almeno(corso, COMPLETO):
         return redirect(ERRORE_PERMESSI)
+
+    continua_url = corso.url
+    print("A %s %s" % (request.session['corso_base_creato'], pk,))
+
+    if 'corso_base_creato' in request.session and int(request.session['corso_base_creato']) == int(pk):
+        print("B %s %s" % (request.session['corso_base_creato'], pk,))
+        continua_url = "/formazione/corsi-base/4/fine/"
+        del request.session['corso_base_creato']
+
+    print("Continua a %s" % (continua_url,))
+
     contesto = {
         "delega": DIRETTORE_CORSO,
         "corso": corso,
+        "continua_url": continua_url
     }
 
     return 'formazione_corsi_base_direttori.html', contesto
 
+
+@pagina_privata
+def formazione_corsi_base_fine(request, me, pk):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    if not me.permessi_almeno(corso, COMPLETO):
+        return redirect(ERRORE_PERMESSI)
+
+    if me in corso.delegati_attuali():  # Se sono direttore, continuo.
+        redirect(corso.url)
+
+    contesto = {
+        "corso": corso,
+    }
+    return 'formazione_corsi_base_fine.html', contesto
 
 @pagina_privata
 def aspirante_corso_base_scheda(request, me, pk):
