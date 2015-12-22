@@ -42,6 +42,7 @@ from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo
 from base.utils import is_list, sede_slugify
 from autoslug import AutoSlugField
+
 from posta.models import Messaggio
 from django.apps import apps
 
@@ -1066,10 +1067,10 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
             except:
                 return None
 
-
     @property
     def domanda_formativa(self):
-        return 42  # TODO
+        from formazione.models import Aspirante
+        return self.circonferenze_contenenti(Aspirante.objects.all()).count()
 
     def espandi(self, includi_me=False, pubblici=False):
         """

@@ -1,7 +1,7 @@
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import fromstr, Point
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import SET_NULL
+from django.db.models import SET_NULL, F
 import googlemaps
 from django_countries.fields import CountryField
 
@@ -174,6 +174,19 @@ class ConGeolocalizzazione(models.Model):
     @property
     def icona_colore(self):
         return 'red'
+
+    def circonferenze_contenenti(self, queryset):
+        """
+        Dato un queryset di oggetti "ConGeolocalizzazioneRaggio", li filtra
+         pescando solo quelli che contengono questo elemento.
+        """
+        if not self.locazione:
+            return queryset.none()
+
+        return queryset.exclude(locazione__geo__isnull=True).extra(
+            where=['ST_DWithin(geo, ST_PointFromText(%s, 4326), raggio)'],
+            params=[self.locazione.geo.wkt]
+        )
 
 
 class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
