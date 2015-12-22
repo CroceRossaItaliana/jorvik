@@ -39,6 +39,7 @@ def formazione_corsi_base_domanda(request, me):
 def formazione_corsi_base_nuovo(request, me):
     modulo = ModuloCreazioneCorsoBase(request.POST or None, initial={"data_inizio":
                                                                      datetime.now() + timedelta(days=14)})
+    modulo.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
 
     if modulo.is_valid():
         corso = CorsoBase.nuovo(
