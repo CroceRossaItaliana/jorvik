@@ -24,7 +24,8 @@
     <div class="col-md-4">
 
         {% for msg in messaggi %}
-            <div class="panel panel-{% if messaggio and messaggio.pk == msg.pk %}primary{% else %}info{% endif %}">
+            <div class="panel-messaggio panel panel-{% if messaggio and messaggio.pk == msg.pk %}primary{% else %}info{% endif %}"
+                onclick="location.href='/posta/{{ direzione }}/{{ pagina }}/{{ msg.pk }}/#leggi';return false;">
                 <div class="panel-heading">
                     <h3 class="panel-title hidden-xs hidden-sm">
                         <a href="/posta/{{ direzione }}/{{ pagina }}/{{ msg.pk }}/"

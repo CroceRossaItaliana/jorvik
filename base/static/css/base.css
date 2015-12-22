@@ -203,3 +203,7 @@ body, p, span, div {
 .enorme {
     font-size: 72px;
 }
+
+.panel-messaggio {
+    cursor: pointer;
+}
