@@ -54,6 +54,7 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
+    MIN_PASSWORD_LENGTH = 6
 
     def get_absolute_url(self):
         return "/utenti/%s/" % urlquote(self.email)

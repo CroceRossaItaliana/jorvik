@@ -35,8 +35,9 @@ class ModuloStepCodiceFiscale(ModelForm):
 
 
 class ModuloStepCredenziali(forms.Form):
-    email = forms.EmailField()
-    password = forms.CharField(widget=forms.PasswordInput)
+    email = forms.EmailField(help_text="Deve essere un indirizzo e-mail personale sotto il tuo solo controllo.")
+    password = forms.CharField(help_text="Scegli una password complessa per proteggere la tua privacy.", widget=forms.PasswordInput)
+    ripeti_password = forms.CharField(widget=forms.PasswordInput)
 
     # Effettua dei controlli personalizzati sui sui campi
     def clean(self):
@@ -46,6 +47,16 @@ class ModuloStepCredenziali(forms.Form):
         email = cleaned_data.get('email')
         if Utenza.objects.filter(email=email).exists():  # Esiste gia'?
             self._errors['email'] = self.error_class(['Questa e-mail esiste in Gaia.'])
+
+        # Fa il controllo di univocita' sull'indirizzo e-mail
+        password = cleaned_data.get('password')
+        password2 = cleaned_data.get('ripeti_password')
+        if password != password2:
+            self._errors['password'] = self.error_class(['La password digitata non corrisponde.'])
+            self._errors['ripeti_password'] = self.error_class(['La password digitata non corrisponde.'])
+
+        if len(password) < Utenza.MIN_PASSWORD_LENGTH:
+            self._errors['password'] = self.error_class(["La password deve avere almeno %d caratteri." % (Utenza.MIN_PASSWORD_LENGTH,)])
 
         # TODO Controllo robustezza password
 

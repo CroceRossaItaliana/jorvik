@@ -610,9 +610,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
                 persona=self,
             )
             a.save()
-            a.imposta_locazione("%s, %s %s, %s" % (
+            a.imposta_locazione("%s, %s %s, %s, %s" % (
                 self.indirizzo_residenza, self.cap_residenza,
-                self.comune_residenza, self.stato_residenza
+                self.comune_residenza, self.provincia_residenza,
+                self.stato_residenza
             ))
             return a
 

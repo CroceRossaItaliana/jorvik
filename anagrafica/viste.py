@@ -41,7 +41,7 @@ STEP_NOMI = {
     STEP_CODICE_FISCALE: 'Codice Fiscale',
     STEP_ANAGRAFICA: 'Dati anagrafici',
     STEP_CREDENZIALI: 'Credenziali',
-    STEP_FINE: 'Fine',
+    STEP_FINE: 'Conferma',
 }
 
 # Definisce i vari step di registrazione, in ordine, per ogni tipo di registrazione.
@@ -182,9 +182,12 @@ def registrati_conferma(request, tipo):
     # Da' il benvenuto all'utente
     p.invia_email_benvenuto_registrazione(tipo=tipo)
 
+    redirect_url = "/utente/"
+
     if tipo == TIPO_ASPIRANTE:
         #  Genera semplicemente oggetto aspirante.
         p.ottieni_o_genera_aspirante()
+        redirect_url = "/aspirante/"
 
     elif tipo == TIPO_VOLONTARIO:
         #  Richiede appartenenza come Volontario.
@@ -209,7 +212,7 @@ def registrati_conferma(request, tipo):
     else:
         raise ValueError("Non so come gestire questa iscrizione.")
 
-    return redirect('/utente/')
+    return redirect(redirect_url)
 
 
 @pagina_privata
@@ -241,9 +244,6 @@ def utente_anagrafica(request, me):
         "modulo_dati": modulo_dati,
         "modulo_avatar": modulo_avatar
     })
-
-    print(modulo_dati.errors)
-    print(modulo_avatar.errors)
 
     return 'anagrafica_utente_anagrafica.html', contesto
 
