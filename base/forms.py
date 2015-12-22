@@ -15,6 +15,7 @@ class ModuloMotivoNegazione(forms.Form):
 
 
 class ModuloLocalizzatore(forms.Form):
-    indirizzo = forms.CharField(label='Indirizzo', required=False,)
-    comune = forms.CharField()
+    indirizzo = forms.CharField(label='Indirizzo', required=False, help_text="es. Via Rosmini, 42. (Opzionale)")
+    comune = forms.CharField(help_text="es. Cinisello Balsamo.")
+    provincia = forms.CharField(required=True, min_length=3, help_text="es. Milano. (per intero)")
     stato = LazyTypedChoiceField(choices=countries, initial="IT")

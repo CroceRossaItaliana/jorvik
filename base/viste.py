@@ -231,8 +231,10 @@ def geo_localizzatore(request, me):
 
     modulo = ModuloLocalizzatore(request.POST or None,)
     if modulo.is_valid():
+        comune = modulo.cleaned_data['comune'] if not modulo.cleaned_data['comune'] \
+                    else "%s, Province of %s" % (modulo.cleaned_data['comune'], modulo.cleaned_data['provincia'])
         stringa = "%s, %s, %s" % (modulo.cleaned_data['indirizzo'],
-                                  modulo.cleaned_data['comune'],
+                                  comune,
                                   modulo.cleaned_data['stato'],)
         risultati = Locazione.cerca(stringa)
         ricerca = True

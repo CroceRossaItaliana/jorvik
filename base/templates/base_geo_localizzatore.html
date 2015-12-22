@@ -29,10 +29,11 @@
 
             <div class="col-sm-6">
 
+                <h2>1. <i class="fa fa-fw fa-search"></i> Cerca l'indirizzo</h2>
 
                 <form method="POST">
                     {% csrf_token %}
-                    {% bootstrap_form modulo %}
+                    {% bootstrap_form modulo size='sm' %}
 
                     <button class="btn btn-block btn-primary btn-lg">
                         <i class="fa fa-fw fa-search"></i>
@@ -46,42 +47,39 @@
 
                 {% if ricerca %}
 
-                    <h2><i class="fa fa-fw fa-search"></i> Indirizzi trovati</h2>
+                    <h2>2. <i class="fa fa-fw fa-list"></i> Seleziona l'indirizzo</h2>
 
-                    <p>Clicca sull'indirizzo da impostare.</p>
+                    <p>Conferma l'indirizzo da selezionare tra i n. {{ risultati.length }} risultati.</p>
+                    <form action="/geo/localizzatore/imposta/" method="POST">
+                    {% csrf_token %}
 
-                    {% for risultato in risultati %}
+                        {% for risultato in risultati %}
 
-                        <form action="/geo/localizzatore/imposta/" method="POST">
-
-                            {% csrf_token %}
                             <button type="submit" name="indirizzo" value="{{ risultato.0 }}"
                                     class="btn btn-block btn-success">
                                 <i class="fa fa-fw fa-map-marker"></i> {{ risultato.0 }}
                             </button>
 
-                        </form>
+                        {% empty %}
+                            <div class="alert alert-warning alert-block">
+                                <h4>
+                                    <i class="fa fa-fw fa-warning"></i>
+                                     Indirizzo non trovato.
+                                </h4>
+                                <p>Nessun indirizzo &egrave; stato trovato. Prova a
+                                    modificare l'indirizzo di ricerca, rendendolo pi&ugrave;
+                                    generico.</p>
+                                <p>Se non riesci comunque a trovare l'indirizzo desiderato,
+                                    prova a controllare se ti &egrave; possibile trovare
+                                    l'indirizzo su <a href="http://maps.google.com" target="_new">
+                                        Google Maps
+                                    </a>. Altrimenti, devi prima aggiungere l'indirizzo
+                                    a Google Maps.</p>
 
+                            </div>
 
-                    {% empty %}
-                        <div class="alert alert-warning alert-block">
-                            <h4>
-                                <i class="fa fa-fw fa-warning"></i>
-                                 Indirizzo non trovato.
-                            </h4>
-                            <p>Nessun indirizzo &egrave; stato trovato. Prova a
-                                modificare l'indirizzo di ricerca, rendendolo pi&ugrave;
-                                generico.</p>
-                            <p>Se non riesci comunque a trovare l'indirizzo desiderato,
-                                prova a controllare se ti &egrave; possibile trovare
-                                l'indirizzo su <a href="http://maps.google.com" target="_new">
-                                    Google Maps
-                                </a>. Altrimenti, devi prima aggiungere l'indirizzo
-                                a Google Maps.</p>
-
-                        </div>
-
-                    {% endfor %}
+                        {% endfor %}
+                    </form>
 
                 {% else %}
 
