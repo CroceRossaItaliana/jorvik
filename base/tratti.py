@@ -106,7 +106,7 @@ class ConStorico(models.Model):
 
         return Q(
             Q(inizio__lte=inizio),
-            Q(fine__isnull=True) | Q(fine__gt=fine),
+            Q(Q(fine__isnull=True) | Q(fine__gt=fine)),
             cls.CONDIZIONE_ATTUALE_AGGIUNTIVA,
             **kwargs
         )
