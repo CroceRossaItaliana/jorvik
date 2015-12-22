@@ -1019,7 +1019,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
 
     def __str__(self):
         if self.estensione == TERRITORIALE and self.genitore is not None:
-            return "%s: %s" % (self.genitore.nome, self.genitore,)
+            return "%s: %s" % (self.genitore.nome, self.nome,)
 
         else:
             return "%s" % (self.nome,)
