@@ -39,7 +39,7 @@ class PersonaAutocompletamento(AutocompletamentoBase):
 
 
 class SedeAutocompletamento(AutocompletamentoBase):
-    search_fields = ['^nome', ]
+    search_fields = ['^nome', 'genitore__nome', ]
     model = Sede
 
 
