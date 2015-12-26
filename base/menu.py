@@ -19,16 +19,17 @@ def menu(request):
 
     return remove_none({
         "utente": (
-            (("Volontario" if me and me.volontario else "Persona", (
+            (("Persona", (
                 ("Benvenuto", "fa-bolt", "/utente/"),
                 ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
                 ("Storico", "fa-clock-o", "/utente/storico/"),
                 ("Documenti", "fa-folder", "/utente/documenti/"),
                 ("Contatti", "fa-envelope", "/utente/contatti/"),
+            )),
+            ("Volontario", (
                 ("Estensione", "fa-arrow-right", "/utente/estensione/"),
                 ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
-
-            )),
+            )) if me and me.volontario else None,
             ("Sicurezza", (
                 ("Cambia password", "fa-key", "/utente/cambia-password/"),
             )),
@@ -100,6 +101,10 @@ def menu(request):
             ("Nelle vicinanze", (
                 ("Corsi Base", "fa-list", "/aspirante/corsi-base/"),
                 ("Sedi CRI", "fa-list", "/aspirante/sedi/"),
+            )),
+        ) if me and hasattr(me, 'aspirante') else (
+            ("Gestione Corsi", (
+                ("Elenco Corsi Base", "fa-list", "/formazione/corsi-base/elenco/"),
             )),
         ),
     })

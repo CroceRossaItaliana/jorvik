@@ -46,6 +46,19 @@ def elenco(context, oggetto_elenco=None,):
     return render_to_string('us_elenchi_inc_iframe.html', context)
 
 
+@register.simple_tag()
+def checkbox(booleano, extra_classe='', con_testo=1):
+    classe = "text-danger fa-square"
+    testo = ""
+    if booleano:
+        classe = "text-success fa-check-square"
+    if con_testo:
+        testo = "<span class='text-success'>FATTO</span>" if booleano else \
+            "<span class='text-danger'>DA FARE</span>"
+
+    return " <i class='fa fa-fw %s %s'></i> %s" % (classe, extra_classe, testo)
+
+
 @register.simple_tag(takes_context=True)
 def localizzatore(context, oggetto_localizzatore=None, continua_url=None):
 

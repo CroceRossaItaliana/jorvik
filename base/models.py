@@ -547,3 +547,14 @@ class ConAllegati(models.Model):
 
     class Meta:
         abstract = True
+
+
+class ConVecchioID(models.Model):
+    """
+    Aggiunge un vecchio_id opzionale usato per retro-compatibilita.
+    """
+
+    class Meta:
+        abstract = True
+
+    vecchio_id = models.IntegerField(default=None, null=True, blank=True, db_index=True)

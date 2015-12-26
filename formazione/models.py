@@ -5,11 +5,15 @@ Questo modulo definisce i modelli del modulo di Formazione di Gaia.
 """
 import datetime
 
+from django.db.models import Q
+from django.utils import timezone
+
 from anagrafica.models import Sede, Persona
 from base.models import ConAutorizzazioni
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.models import ModelloSemplice
 from base.tratti import ConMarcaTemporale, ConDelegati
+from base.utils import concept
 from social.models import ConCommenti, ConGiudizio
 from django.db import models
 
@@ -22,13 +26,11 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazion
     # Stato del corso
     PREPARAZIONE = 'P'
     ATTIVO = 'A'
-    INIZIATO = 'I'
-    ANNULLATO = 'A'
+    ANNULLATO = 'X'
     TERMINATO = 'T'  # TODO Terminare il corso automaticamente!
     STATO = (
         (PREPARAZIONE, 'In preparazione'),
         (ATTIVO, 'Attivo'),
-        (INIZIATO, 'Iniziato'),
         (TERMINATO, 'Terminato'),
         (ANNULLATO, 'Annullato'),
     )
@@ -45,6 +47,8 @@ class CorsoBase(Corso):
     #)
     #tipo = models.CharField('Tipo', choices=TIPO, max_length=2, default=BASE)
 
+    MAX_PARTECIPANTI = 30
+
     class Meta:
         verbose_name = "Corso Base"
         verbose_name_plural = "Corsi Base"
@@ -54,6 +58,19 @@ class CorsoBase(Corso):
     data_esame = models.DateTimeField(blank=False, null=False)
     progressivo = models.SmallIntegerField(blank=False, null=False, db_index=True)
     anno = models.SmallIntegerField(blank=False, null=False, db_index=True)
+    descrizione = models.TextField(blank=True, null=True)
+
+    @classmethod
+    @concept
+    def pubblici(cls):
+        """
+        Concept per Corsi Base pubblici (attivi e non ancora iniziati...)
+        """
+        return Q(data_inizio__gte=timezone.now(), stato=cls.ATTIVO)
+
+    @property
+    def iniziato(self):
+        return self.data_inizio >= timezone.now()
 
     def __str__(self):
         return self.nome
@@ -73,6 +90,22 @@ class CorsoBase(Corso):
     @property
     def url_direttori(self):
         return "/formazione/corsi-base/%d/direttori/" % (self.pk,)
+
+    @property
+    def url_attiva(self):
+        return "%sattiva/" % (self.url,)
+
+    @property
+    def url_mappa(self):
+        return "%smappa/" % (self.url,)
+
+    @property
+    def url_lezioni_modifica(self):
+        return "%slezioni/" % (self.url,)
+
+    @property
+    def url_report(self):
+        return "%sreport/" % (self.url,)
 
     @classmethod
     def nuovo(cls, anno=datetime.date.today().year, **kwargs):
@@ -98,11 +131,54 @@ class CorsoBase(Corso):
         c.save()
         return c
 
+    def attivabile(self):
+        """
+        Controlla se il corso base e' attivabile.
+        """
+        if not self.locazione:
+            return False
 
-class PartecipazioneCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
+        if not self.descrizione:
+            return False
+
+        return True
+
+    def attiva(self):
+        """
+        Effettua l'attivazione del corso base.
+        """
+        self.stato = self.ATTIVO
+        self.save()
+
+    @property
+    def aspiranti_nelle_vicinanze(self):
+        from formazione.models import Aspirante
+        return self.circonferenze_contenenti(Aspirante.objects.all()).count()
+
+    def partecipazioni_confermate(self):
+        return self.partecipazioni.all().filter(stato=PartecipazioneCorsoBase.CONFERMATA)
+
+    def partecipazioni_in_attesa(self):
+        return self.partecipazioni.all().filter(stato=PartecipazioneCorsoBase.IN_ATTESA)
+
+    def partecipazioni_negate(self):
+        return self.partecipazioni.all().filter(stato=PartecipazioneCorsoBase.NEGATA)
+
+
+class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale):
 
     persona = models.ForeignKey(Persona, related_name='partecipazioni_corsi')
     corso = models.ForeignKey(CorsoBase, related_name='partecipazioni')
+
+    IN_ATTESA = 'A'
+    CONFERMATA = 'C'
+    NEGATA = 'N'
+    STATO = (
+        (IN_ATTESA, "In attesa"),
+        (CONFERMATA, "Confermata"),
+        (NEGATA, "Negata"),
+    )
+    stato = models.CharField(choices=STATO, default=IN_ATTESA, max_length=1, db_index=True)
 
     class Meta:
         verbose_name = "Richiesta di partecipazione"
@@ -150,13 +226,12 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
         """
         return self.nel_raggio(Sede.objects.filter(tipo=tipo, **kwargs))
 
-    def corsi(self, stato=Corso.ATTIVO, **kwargs):
+    def corsi(self, **kwargs):
         """
         Ritorna un elenco di Corsi (Base) nelle vicinanze dell'Aspirante.
-        :param stato: Stato del corso. Default=Corso.ATTIVO.
         :return: Un elenco di Corsi.
         """
-        return self.nel_raggio(CorsoBase.objects.filter(stato=stato, **kwargs))
+        return self.nel_raggio(CorsoBase.pubblici().filter(**kwargs))
 
     def calcola_raggio(self):
         """

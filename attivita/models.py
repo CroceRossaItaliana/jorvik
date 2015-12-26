@@ -6,12 +6,12 @@ Questo modulo definisce i modelli del modulo Attivita' di Gaia.
 from django.db import models
 
 from social.models import ConGiudizio, ConCommenti
-from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati
+from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati, ConVecchioID
 from base.tratti import ConMarcaTemporale, ConDelegati
 from base.geo import ConGeolocalizzazione
 
 class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiudizio, ConCommenti,
-               ConAllegati, ConDelegati):
+               ConAllegati, ConDelegati, ConVecchioID):
 
     class Meta:
         verbose_name = "Attività"

@@ -37,7 +37,7 @@ from attivita.models import Turno
 
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
-    Autorizzazione
+    Autorizzazione, ConVecchioID
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo
 from base.utils import is_list, sede_slugify
@@ -49,7 +49,7 @@ from django.apps import apps
 from base.notifiche import NOTIFICA_INVIA, NOTIFICA_NON_INVIARE
 
 
-class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
+class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     """
     Rappresenta un record anagrafico in Gaia.
     """
@@ -407,7 +407,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati):
             lista += [('/utente/', 'Utente', 'fa-user')]
 
         if hasattr(self, 'aspirante'):
-            lista += [('/aspirante/', 'Aspirante', 'fa-user', self.ottieni_o_genera_aspirante().corsi().count())]
+            lista += [('/aspirante/', 'Aspirante', 'fa-user', self.aspirante.corsi().count())]
 
         lista += [('/attivita/', 'Attività', 'fa-calendar')]
         lista += [('/posta/', 'Posta', 'fa-envelope')]
@@ -879,7 +879,7 @@ class SedeQuerySet(QuerySet):
         return qs
 
 
-class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione):
+class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID):
 
     class Meta:
         verbose_name = "Sede CRI"

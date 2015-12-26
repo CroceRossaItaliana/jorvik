@@ -30,10 +30,12 @@ from django.template.backends import django
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from base.geo import Locazione
+from ufficio_soci.models import Quota, Tesseramento
 import argparse
 import ftfy
 
 from datetime import datetime, date
+from django.utils import timezone
 
 __author__ = 'alfioemanuele'
 
@@ -78,6 +80,9 @@ parser.add_argument('--salta-turni', dest='turni', action='store_const',
 parser.add_argument('--salta-partecipazioni', dest='partecipazioni', action='store_const',
                    const=False, default=True,
                    help='salta importazione partecipazioni (usa cache precedente)')
+parser.add_argument('--salta-quote', dest='quote', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione quote (usa cache precedente)')
 parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
                    const=True, default=False,
                    help='ignora errori di integrità (solo test)')
@@ -177,6 +182,12 @@ ASSOC_ID_TURNI = {}
 #  es. ASSOC_ID_PARTECIPAZIONI[123] = 465
 ASSOC_ID_PARTECIPAZIONI = {}
 
+# Questo dizionario mantiene le associazioni ID dei tesseramenti
+ASSOC_ID_TESSERAMENTI = {}
+
+# Questo dizionario mantiene le associazioni ID delle quote
+ASSOC_ID_QUOTE = {}
+
 
 def parse_numero(numero, paese="IT"):
     try:
@@ -194,7 +205,7 @@ def ottieni_comitato(tipo='nazionali', id=1):
     cursore = db.cursor()
     cursore.execute("""
         SELECT
-            id, nome, X(geo), Y(geo)
+            id, nome, X(geo), Y(geo)""" + (", principale" if tipo == 'comitati' else " ") + """
         FROM
             """ + tipo + """
         WHERE id = %s
@@ -240,14 +251,14 @@ def mysql_cancella_tabella(tabella):
     cursore.execute(query)
     cursore.close()
 
-def data_da_timestamp(timestamp, default=datetime.now()):
+def data_da_timestamp(timestamp, default=timezone.now()):
     if not timestamp:
         return default
     timestamp = int(timestamp)
     if not timestamp:  # timestamp 0, 1970-1-1
         return default
     try:
-        return datetime.fromtimestamp(timestamp)
+        return timezone.now().fromtimestamp(timestamp)
     except ValueError:
         return default
 
@@ -355,6 +366,7 @@ def carica_anagrafiche():
             cap_residenza=dict.get('CAPResidenza') if dict.get('CAPResidenza') else '',
             email_contatto=dict.get('emailServizio', ''),
             creazione=data_da_timestamp(dict.get('timestamp')),
+            vecchio_id=int(id),
         )
         try:
             p.save()
@@ -651,15 +663,22 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
 
     comitato = ottieni_comitato(tipo, id)
 
-    c = Sede(
-        genitore=ref,
-        nome=stringa(comitato['nome']),
-        tipo=Sede.COMITATO,
-        estensione=COMITATO_ESTENSIONE[tipo],
-    )
-    c.save()
+    if 'principale' in comitato and int(comitato['principale']) == 1:
+        ASSOC_ID_COMITATI[COMITATO_OID[tipo]].update({id: (Sede, ref.pk)})
+        c = ref
 
-    ASSOC_ID_COMITATI[COMITATO_OID[tipo]].update({id: (Sede, c.pk)})
+    else:
+
+        c = Sede(
+            genitore=ref,
+            nome=stringa(comitato['nome']),
+            tipo=Sede.COMITATO,
+            estensione=COMITATO_ESTENSIONE[tipo],
+            vecchio_id=int(id),
+        )
+        c.save()
+
+        ASSOC_ID_COMITATI[COMITATO_OID[tipo]].update({id: (Sede, c.pk)})
 
     if posizione and 'formattato' in comitato['dati'] and comitato['dati']['formattato']:
         c.imposta_locazione(stringa(comitato['dati']['formattato']))
@@ -943,6 +962,7 @@ def carica_attivita():
             area=area,
             apertura=apertura,
             stato=stato,
+            vecchio_id=int(id),
         )
         a.save()
 
@@ -1195,6 +1215,134 @@ def carica_partecipazioni():
             a.save()
 
 
+def carica_tesseramenti():
+    print("  - Caricamento dei Tesseramenti...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, stato, inizio, fine, anno, attivo, ordinario, benemerito
+        FROM
+            tesseramenti
+        """
+    )
+    tesseramenti = cursore.fetchall()
+
+    for tesseramento in tesseramenti:
+        id = int(tesseramento[0])
+        stato = Tesseramento.APERTO if int(tesseramento[1]) == 10 else Tesseramento.CHIUSO
+        inizio = data_da_timestamp(tesseramento[2])
+        anno = int(tesseramento[4])
+        quota_attivo = float(tesseramento[5])
+        quota_ordinario = float(tesseramento[6])
+        quota_benemerito = float(tesseramento[7])
+
+        print("    - %d: %f eur attivo, %f eur ordinario, %f eur benemerito" % (anno, quota_attivo, quota_ordinario, quota_benemerito))
+
+        t = Tesseramento(
+            anno=anno,
+            stato=stato,
+            inizio=inizio,
+            quota_attivo=quota_attivo,
+            quota_ordinario=quota_ordinario,
+            quota_benemerito=quota_benemerito,
+        )
+        t.save()
+
+        ASSOC_ID_TESSERAMENTI[id] = t.pk
+
+    cursore.close()
+
+def carica_quote():
+    print("  - Caricamento delle Quote...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+        quote.id, quote.appartenenza, appartenenza.volontario, appartenenza.comitato,
+        quote.timestamp, quote.tConferma, quote.pConferma, quote.quota,
+        quote.causale, quote.offerta, quote.anno, quote.pAnnullata, quote.tAnnullata,
+        quote.progressivo, quote.benemerito
+
+        FROM
+        quote INNER JOIN appartenenza
+            ON quote.appartenenza = appartenenza.id
+        INNER JOIN anagrafica
+            ON quote.pConferma = anagrafica.id
+        INNER JOIN anagrafica AS a2
+            ON appartenenza.volontario = a2.id
+
+
+        WHERE
+        quote.quota IS NOT NULL       	AND
+        quote.anno IS NOT NULL        	AND
+        quote.timestamp IS NOT NULL   	AND
+        quote.causale IS NOT NULL 		AND
+        appartenenza.comitato IS NOT NULL
+        """
+    )
+    quote = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for quota in quote:
+        contatore += 1
+        id = int(quota[0])
+        appartenenza_id = ASSOC_ID_APPARTENENZE[int(quota[1])]
+        print("Persona: %d, %d" % (int(quota[2]), ASSOC_ID_PERSONE[int(quota[2])]))
+        persona = Persona.objects.get(pk=ASSOC_ID_PERSONE[int(quota[2])])
+        sede = Sede.objects.get(pk=ASSOC_ID_COMITATI[int(quota[3])]).comitato
+        data_versamento = data_da_timestamp(quota[4], data_da_timestamp(quota[5]))
+        data_creazione = data_da_timestamp(quota[5])
+        registrato_da = ASSOC_ID_PERSONE(int(quota[6]))
+
+        importo = float(quota[7])
+
+        causale = quota[8] or ''
+        causale_extra = quota[9] or ''
+        anno = int(quota[10])
+
+        annullato_da = ASSOC_ID_PERSONE[int(quota[11])] if quota[11] else None
+        data_annullamento = data_da_timestamp(quota[12], data_creazione)
+
+        stato = Quota.REGISTRATA if annullato_da is None else Quota.ANNULLATA
+
+        progressivo = int(quota[13])
+
+        tesseramento = Tesseramento.objects.get(anno=anno)
+        da_pagare = tesseramento.importo_da_pagare(persona)
+        if importo > da_pagare:
+            importo_extra = importo - da_pagare
+            importo = da_pagare
+
+        print("   - %s: Quota, sede=%d, numero=%d/%d",
+              (progresso(contatore, totale), sede.pk,
+               progressivo, anno,))
+
+        q = Quota(
+            appartenenza=appartenenza_id,
+            persona=persona.pk,
+            sede=sede,
+            progressivo=progressivo,
+            anno=anno,
+            data_versamento=data_versamento,
+            data_annullamento=data_annullamento,
+            registrato_da=registrato_da,
+            annullato_da=annullato_da,
+            stato=stato,
+            importo=importo,
+            importo_extra=importo_extra,
+            causale=causale,
+            causale_extra=causale_extra,
+        )
+        q.save()
+
+
+        ASSOC_ID_QUOTE[id] = q.pk
+
+    cursore.close()
+
+
 
 # Importazione dei Comitati
 
@@ -1311,6 +1459,28 @@ if args.partecipazioni:
 else:
     print("  ~ Carico tabella delle corrispondenze (partecipazioni.pickle-tmp)")
     ASSOC_ID_PARTECIPAZIONI = pickle.load(open("partecipazioni.pickle-tmp", "rb"))
+
+
+# Importazione delle quote
+print("> Importazione delle Quote")
+if args.quote:
+    print("  - Eliminazione attuali")
+    Tesseramento.objects.all().delete()
+    Quota.objects.all().delete()
+
+    carica_tesseramenti()
+    carica_quote()
+
+    print("  ~ Persisto tabella delle corrispondenze (tesseramenti.pickle-tmp)")
+    pickle.dump(ASSOC_ID_TESSERAMENTI, open("tesseramenti.pickle-tmp", "wb"))
+    print("  ~ Persisto tabella delle corrispondenze (quote.pickle-tmp)")
+    pickle.dump(ASSOC_ID_QUOTE, open("quote.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (tesseramenti.pickle-tmp)")
+    ASSOC_ID_TESSERAMENTI = pickle.load(open("tesseramenti.pickle-tmp", "rb"))
+    print("  ~ Carico tabella delle corrispondenze (quote.pickle-tmp)")
+    ASSOC_ID_QUOTE = pickle.load(open("quote.pickle-tmp", "rb"))
 
 
 # print(ASSOC_ID_COMITATI)

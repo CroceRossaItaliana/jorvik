@@ -115,7 +115,7 @@ urlpatterns = [
     url(r'^aspirante/impostazioni/$', 'formazione.viste.aspirante_impostazioni'),
     url(r'^aspirante/corsi-base/$', 'formazione.viste.aspirante_corsi_base'),
     url(r'^aspirante/sedi/$', 'formazione.viste.aspirante_sedi'),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/$', 'formazione.viste.aspirante_corso_base_scheda'),
+    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/$', 'formazione.viste.aspirante_corso_base_informazioni'),
 
     url(r'^formazione/$', 'formazione.viste.formazione'),
     url(r'^formazione/corsi-base/elenco/$', 'formazione.viste.formazione_corsi_base_elenco'),

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
-from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO
+from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA
 from autenticazione.funzioni import pagina_privata
 from formazione.forms import ModuloCreazioneCorsoBase
 from formazione.models import CorsoBase
@@ -103,38 +103,52 @@ def formazione_corsi_base_fine(request, me, pk):
     return 'formazione_corsi_base_fine.html', contesto
 
 @pagina_privata
-def aspirante_corso_base_scheda(request, me, pk):
+def aspirante_corso_base_informazioni(request, me, pk):
     corso = get_object_or_404(CorsoBase, pk=pk)
+    puo_modificare = me.permessi_almeno(corso, MODIFICA)
     contesto = {
         "corso": corso,
+        "puo_modificare": puo_modificare
     }
-    return 'aspirante_corso_base_scheda.html'
+    return 'aspirante_corso_base_informazioni.html', contesto
 
 
 @pagina_privata
 def aspirante_home(request, me):
+    if not hasattr(me, 'aspirante'):
+        redirect(ERRORE_PERMESSI)
+
     contesto = {}
     return 'aspirante_home.html', contesto
 
 
 @pagina_privata
 def aspirante_corsi_base(request, me):
+    if not hasattr(me, 'aspirante'):
+        redirect(ERRORE_PERMESSI)
+
     contesto = {
-        "corsi": me.ottieni_o_genera_aspirante().corsi(),
+        "corsi": me.aspirante.corsi(),
     }
     return 'aspirante_corsi_base.html', contesto
 
 
 @pagina_privata
 def aspirante_sedi(request, me):
+    if not hasattr(me, 'aspirante'):
+        redirect(ERRORE_PERMESSI)
+
     contesto = {
-        "sedi": me.ottieni_o_genera_aspirante().sedi(),
+        "sedi": me.aspirante.sedi(),
     }
     return 'aspirante_sedi.html', contesto
 
 
 @pagina_privata
 def aspirante_impostazioni(request, me):
+    if not hasattr(me, 'aspirante'):
+        redirect(ERRORE_PERMESSI)
+
     contesto = {}
     return 'aspirante_impostazioni.html', contesto
 
