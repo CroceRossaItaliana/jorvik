@@ -1,0 +1,26 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p><strong>{{ commento.autore.nome_completo }}</strong> ha
+        aggiunto un commento a
+
+        {% if commento.oggetto.link %}
+            <strong>{{ commento.oggetto.link|safe }}</strong>
+
+        {% else %}
+            <strong>{{ commento.oggetto }}</strong>
+
+        {% endif %}
+
+
+        che potrebbe
+        interessarti:</p>
+    <hr />
+    <pre style="font-style: italic;">{{ commento.commento }}
+
+
+&mdash; {{ commento.autore.nome_completo }}, {{ commento.creazione }}</pre>
+    <hr />
+    <p class="piu-piccolo">Ricevi questa e-mail perch&eacute; la tua interazione
+      recente (120gg) con Gaia sembra suggerire che tu sia interessato/a in: {{ commento.oggetto }}.</p>
+{% endblock %}

@@ -138,3 +138,12 @@ class ConCommenti(models.Model):
         object_id_field='oggetto_id'
     )
 
+    def commento_notifica_destinatari(self, mittente):
+        """
+        SOVRASCRIVIMI!
+        Ritorna il queryset di persone che devono ricevere
+         una notifica ogni volta che un commento viene aggiunto
+         da un dato mittente.
+        """
+        from anagrafica.models import Persona
+        return Persona.objects.none()

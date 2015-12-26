@@ -3,8 +3,11 @@
 """
 Questo modulo definisce i modelli del modulo Attivita' di Gaia.
 """
+from datetime import timedelta
 from django.db import models
+from django.utils import timezone
 
+from anagrafica.permessi.costanti import MODIFICA
 from social.models import ConGiudizio, ConCommenti
 from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati, ConVecchioID
 from base.tratti import ConMarcaTemporale, ConDelegati
@@ -75,6 +78,20 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     @property
     def url_report(self):
         return self.url + "report/"
+
+    def commento_notifica_destinatari(self, mittente):
+        from anagrafica.models import Persona
+
+        # Se posso modificare l'attività, notifica a tutti
+        #  i partecipanti (sono presidente, oppure referente).
+        if mittente.permessi_almeno(self, MODIFICA):
+            return Persona.objects.filter(
+                partecipazioni__turno__attivita=self,
+                partecipazioni__stato=Partecipazione.RICHIESTA,
+                partecipazioni__turno__inizio__gte=timezone.now() - timedelta(days=120),
+            )
+
+        return Persona.objects.none()
 
 
 class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):

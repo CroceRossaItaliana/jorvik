@@ -18,6 +18,11 @@ def commenti(context, oggetto=None, numero=20, altezza_massima=None):
         raise ValueError("Numero (%d) non valido (1 < n < 200)" % (numero,))
 
     next = context['request'].path
+
+    num_avvisati = 0
+    if hasattr(context['request'], 'me'):
+        num_avvisati = oggetto.commento_notifica_destinatari(context['request'].me).count()
+
     oggetto_tipo = ContentType.objects.get_for_model(oggetto)
     commenti = oggetto.commenti.all().order_by('-creazione')[0:numero]
     for commento in commenti:
@@ -33,6 +38,7 @@ def commenti(context, oggetto=None, numero=20, altezza_massima=None):
         'social_oggetto_model': oggetto_tipo.model,
         'social_lunghezza_massima': Commento.LUNGHEZZA_MASSIMA,
         'social_altezza_massima': altezza_massima,
+        'social_num_avvisati': num_avvisati,
     })
 
     return render_to_string('social_commenti_tag_elenco.html', context)

@@ -38,6 +38,18 @@ def commenti_nuovo(request, me):
     )
     c.save()
 
+    if oggetto.commento_notifica_destinatari(me).exists():
+        from posta.models import Messaggio
+        Messaggio.costruisci_e_accoda(
+            oggetto="Commento di %s su %s" % (me.nome_completo, oggetto,),
+            modello="email_commento.html",
+            corpo={
+                "commento": c,
+            },
+            mittente=me,
+            destinatari=oggetto.commento_notifica_destinatari(me),
+        )
+
     return redirect(next)
 
 @pagina_privata

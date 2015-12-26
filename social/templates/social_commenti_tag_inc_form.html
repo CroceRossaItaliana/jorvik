@@ -39,4 +39,11 @@
 
 
     </div>
+
+    {% if social_num_avvisati %}
+        <div class="panel-footer piu-piccolo">
+            <i class="fa fa-fw fa-bullhorn"></i> Il tuo commento ver&agrave; notificato per
+                e-mail a {{ social_num_avvisati }} persone interessate.
+        </div>
+    {% endif %}
 </div>
