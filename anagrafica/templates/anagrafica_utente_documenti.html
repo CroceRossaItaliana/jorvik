@@ -20,58 +20,72 @@
         <div class="row">
 
             <div class="col-lg-8">
+                <div class="panel panel-info">
 
-                <h4><i class="fa fa-folder-o fa-fw"></i> Documenti caricati</h4>
-
-                <table class="table table-condensed table-bordered table-responsive">
-
-                    <thead>
-                        <th>Data caricamento</th>
-                        <th>Tipo documento</th>
-                        <th>Visualizza</th>
-                        <th>Cancella</th>
-                    </thead>
-
-                    <tbody>
-                    {% for d in documenti %}
-                        <tr>
-                            <td>{{ d.creazione }}</td>
-                            <td>{{ d.get_tipo_display }}</td>
-                            <td>
-                                <a href="{{ d.file.url }}" download title="Scarica il documento">
-                                    <i class="fa fa-download"></i> Scarica
-                                    {% if d.file and d.file.size %}
-                                        ({{ d.file.size|filesizeformat }})
-                                    {% endif %}
-                                </a>
-                            </td>
-                            <td>
-                                <a href="/utente/documenti/cancella/{{ d.pk }}/" title="Cancella il documento">
-                                    <i class="fa fa-remove"></i> Cancella
-                                </a>
-                            </td>
-                        </tr>
-
-                    {% empty %}
-                        <tr>
-                            <td colspan="4" class="bg-warning">
-                                <i class="fa fa-info"></i> Nessun documento caricato.
-                            </td>
-                        </tr>
-
-                    {% endfor %}
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-folder-o fa-fw"></i> Documenti caricati
+                        </h4>
 
 
-                    </tbody>
+                    </div>
 
-                </table>
+                    <div class="panel-body">
 
-                {% if documenti %}
-                    <a class="btn btn-default btn-block btn-sm" href="/utente/documenti/zip/">
-                        <i class="fa fa-download fa-fw"></i>
-                        Scarica tutti i documenti (ZIP)
-                    </a>
-                {% endif %}
+
+                        <table class="table table-condensed table-responsive">
+
+                            <thead>
+                                <th>Data caricamento</th>
+                                <th>Tipo</th>
+                                <th>Visualizza</th>
+                                <th>Cancella</th>
+                            </thead>
+
+                            <tbody>
+                            {% for d in documenti %}
+                                <tr>
+                                    <td>{{ d.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                    <td>{{ d.get_tipo_display }}</td>
+                                    <td>
+                                        <a href="{{ d.file.url }}" download title="Scarica il documento">
+                                            <i class="fa fa-download"></i> Scarica
+                                            {% if d.file and d.file.size %}
+                                                ({{ d.file.size|filesizeformat }})
+                                            {% endif %}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="/utente/documenti/cancella/{{ d.pk }}/" title="Cancella il documento">
+                                            <i class="fa fa-remove"></i> Cancella
+                                        </a>
+                                    </td>
+                                </tr>
+
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="bg-warning">
+                                        <i class="fa fa-info"></i> Nessun documento caricato.
+                                    </td>
+                                </tr>
+
+                            {% endfor %}
+
+
+                            </tbody>
+
+                        </table>
+
+                        {% if documenti %}
+                            <a class="btn btn-default btn-block btn-sm" href="/utente/documenti/zip/">
+                                <i class="fa fa-download fa-fw"></i>
+                                Scarica tutti i documenti (ZIP)
+                            </a>
+                        {% endif %}
+
+                    </div>
+
+                </div>
 
 
 
@@ -79,14 +93,28 @@
 
             <div class="col-lg-4">
 
-                <h4><i class="fa fa-plus"></i> Aggiungi documento</h4>
+                <div class="panel panel-primary">
 
-                {% bootstrap_form modulo_aggiunta %}
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-plus"></i> Aggiungi documento
+                        </h4>
 
-                <button class="btn btn-primary">
-                    <i class="fa fa-check"></i>
-                    Carica
-                </button>
+                    </div>
+
+                    <div class="panel-body">
+                        {% bootstrap_form modulo_aggiunta %}
+
+                        <button class="btn btn-primary btn-block">
+                            <i class="fa fa-check"></i>
+                            Carica
+                        </button>
+
+                    </div>
+
+                </div>
+
+
 
 
 

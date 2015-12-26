@@ -20,104 +20,156 @@
         <div class="row">
 
             <div class="col-lg-6">
-                <h4>
-                    <i class="fa fa-fw fa-key"></i>
-                    E-mail di accesso
-                </h4>
-                <p>
-                    Questo indirizzo e-mail viene usato per effettuare l'accesso a Gaia, assieme alla tua password.
-                    Per motivi di sicurezza, &egrave; fondamentale che l'indirizzo sia sotto il tuo completo e
-                    solo controllo.
-                </p>
-                {% bootstrap_form modulo_email_accesso %}
-                 <button class="btn btn-block btn-lg btn-success" type="submit">
-                     <i class="fa fa-save fa-fw"></i>
-                     Salva E-mail di accesso
-                 </button>
 
-                 <p>&nbsp;</p>
-                 <hr />
 
-                <h4>
-                    <i class="fa fa-fw fa-envelope"></i>
-                    E-mail di contatto
-                    <span class="text-muted">(opzionale)</span>
-                </h4>
-                <p>
-                    Questo indirizzo e-mail viene usato per inviarti tutte le notifiche relative a Gaia, nonch&eacute;
-                    tutti i messaggi inviati dagli utenti, come ad esempio le comunicazioni di massa. Se non impostato,
-                    verr&agrave; usato l'indirizzo E-mail di accesso.
-                </p>
-                {% bootstrap_form modulo_email_contatto %}
-                 <button class="btn btn-block btn-lg btn-success" type="submit">
-                     <i class="fa fa-save fa-fw"></i>
-                     Salva E-mail di contatto
-                 </button>
+                <div class="panel panel-info">
+
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-fw fa-key"></i>
+                            E-mail di accesso
+                        </h4>
+
+                    </div>
+
+                    <div class="panel-body">
+                        <p>
+                            Questo indirizzo e-mail viene usato per effettuare l'accesso a Gaia, assieme alla tua password.
+                            Per motivi di sicurezza, &egrave; fondamentale che l'indirizzo sia sotto il tuo completo e
+                            solo controllo.
+                        </p>
+                        {% bootstrap_form modulo_email_accesso %}
+                         <button class="btn btn-block btn-info" type="submit">
+                             <i class="fa fa-save fa-fw"></i>
+                             Salva E-mail di accesso
+                         </button>
+
+                    </div>
+
+                </div>
+
+                <div class="panel panel-info">
+
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-fw fa-envelope"></i>
+                            E-mail di contatto
+                            <span class="text-muted">(opzionale)</span>
+                        </h4>
+
+                    </div>
+
+                    <div class="panel-body">
+                         <p>
+                            Questo indirizzo e-mail viene usato per inviarti tutte le notifiche relative a Gaia, nonch&eacute;
+                            tutti i messaggi inviati dagli utenti, come ad esempio le comunicazioni di massa. Se non impostato,
+                            verr&agrave; usato l'indirizzo E-mail di accesso.
+                        </p>
+                        {% bootstrap_form modulo_email_contatto %}
+                         <button class="btn btn-block btn-info" type="submit">
+                             <i class="fa fa-save fa-fw"></i>
+                             Salva E-mail di contatto
+                         </button>
+                    </div>
+
+                </div>
+
+
+
+
 
             </div>
 
             <div class="col-lg-6">
 
-                <h4>
-                    <i class="fa fa-fw fa-phone"></i>
-                    Numeri di telefono cellulare
-                </h4>
 
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <th>Numero</th>
-                        <th>Tipologia</th>
-                        <th>Azioni</th>
-                    </thead>
-                    <tbody>
-                        {% for numero in numeri %}
-                            <tr>
-                                <td class="grassetto">
-                                    {{ numero }}
-                                </td>
-                                <td>
-                                    {% if numero.servizio %}
-                                       Di servizio
-                                    {% else %}
-                                        Personale
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="/utente/contatti/cancella-numero/{{ numero.id }}/"
-                                            data-conferma="Vuoi davvero cancellare il numero {{ numero }}?">
-                                        <i class="fa fa-trash"></i>
-                                        Cancella
-                                    </a>
-                                </td>
-                            </tr>
+                <div class="panel panel-info">
 
-                        {% empty %}
-                            <tr class="warning">
-                                <td colspan="3">
-                                    <p class="grassetto">
-                                        <i class="fa fa-fw fa-warning"></i> Nessun numero telefonico registrato.
-                                    </p>
-                                    <p>
-                                        Aggiungi almeno un numero di telefono, questo verr&agrave; condiviso con i
-                                        responsabili delle attivit&agrave; a cui partecipi (o se sei un responsabile,
-                                        con i volontari che partecipano alle attivit&agrave; da te organizzate).
-                                    </p>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                    <div class="panel-heading">
 
-                <p>&nbsp;</p>
-                <h4>
-                    <i class="fa fa-fw fa-plus-circle"></i>
-                    Aggiungi un numero
-                </h4>
-                {% bootstrap_form modulo_numero_telefono %}
-                 <button class="btn btn-block btn-success" type="submit">
-                     <i class="fa fa-check fa-fw"></i>
-                     Aggiungi numero
-                 </button>
+                        <h4 class="panel-title">
+                            <i class="fa fa-fw fa-phone"></i>
+                            Numeri di telefono cellulare
+                        </h4>
+
+                    </div>
+
+
+                    <div class="panel-body">
+
+                        <table class="table">
+                            <thead>
+                                <th>Numero</th>
+                                <th>Tipologia</th>
+                                <th>Azioni</th>
+                            </thead>
+                            <tbody>
+                                {% for numero in numeri %}
+                                    <tr>
+                                        <td class="grassetto">
+                                            {{ numero }}
+                                        </td>
+                                        <td>
+                                            {% if numero.servizio %}
+                                               Di servizio
+                                            {% else %}
+                                                Personale
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="/utente/contatti/cancella-numero/{{ numero.id }}/"
+                                                    data-conferma="Vuoi davvero cancellare il numero {{ numero }}?">
+                                                <i class="fa fa-trash"></i>
+                                                Cancella
+                                            </a>
+                                        </td>
+                                    </tr>
+
+                                {% empty %}
+                                    <tr class="warning">
+                                        <td colspan="3">
+                                            <p class="grassetto">
+                                                <i class="fa fa-fw fa-warning"></i> Nessun numero telefonico registrato.
+                                            </p>
+                                            <p>
+                                                Aggiungi almeno un numero di telefono, questo verr&agrave; condiviso con i
+                                                responsabili delle attivit&agrave; a cui partecipi (o se sei un responsabile,
+                                                con i volontari che partecipano alle attivit&agrave; da te organizzate).
+                                            </p>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+
+                                <h4 class="panel-title">
+                                    <i class="fa fa-fw fa-plus-circle"></i>
+                                    Aggiungi un numero
+                                </h4>
+
+                            </div>
+
+                            <div class="panel-body">
+
+                                {% bootstrap_form modulo_numero_telefono %}
+                                 <button class="btn btn-block btn-primary" type="submit">
+                                     <i class="fa fa-check fa-fw"></i>
+                                     Aggiungi numero
+                                 </button>
+                            </div>
+
+
+
+
+                        </div>
+                    </div>
+
+                </div>
+
 
             </div>
         </div>

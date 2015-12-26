@@ -3,31 +3,32 @@
 
     <div class="row calendario-turno-riga1">
 
-        <div class="col-md-3">
+        <div class="col-md-2">
             <i class="fa fa-fw fa-clock-o text-muted"></i>
             <span class="grassetto">
                 {{ turno.inizio.time }}&mdash;{{ turno.fine.time }}
             </span>
         </div>
 
-        <div class="col-md-7">
+        <div class="col-md-10">
 
+
+            <a class="piu-grande" href="{{ turno.attivita.url }}">
+                {{ turno.attivita.nome }}
+            </a>,
             <a href="{{ turno.url }}" class="grassetto">
                 {{ turno.nome }}
             </a>
 
-            &mdash;
-            <a href="{{ turno.attivita.url }}">
-                {{ turno.attivita.nome }}
-            </a>
 
-        </div>
+            {% if turno.attivita.commenti.count %}
+            <span class="badge pull-right">
+                <i class="fa fa-fw fa-comments"></i>
+                {{ turno.attivita.commenti.count }}
+            </span>
+            {% endif %}
 
-        <div class="col-md-2 hidden-sm hidden-xs hidden-print">
-            <a href="{{ turno.url }}" target="_new" class="btn btn-primary btn-xs btn-block">
-                Dettagli turno
-                <i class="fa fa-fw fa-mail-forward"></i>
-            </a>
+
         </div>
 
     </div>
@@ -52,7 +53,7 @@
         </div>
 
 
-        <div class="col-md-4">
+        <div class="col-md-5 piu-piccolo">
             <i class="fa fa-fw fa-map-marker text-muted"></i>
 
             {% if turno.attivita.locazione %}
@@ -67,19 +68,12 @@
 
         </div>
 
-        <div class="col-md-2">
+        <div class="col-md-4 piu-piccolo">
 
             <i class="fa fa-fw fa-home text-muted"></i>
             <a href="{{ turno.attivita.sede.url }}" target="_new">
                 {{ turno.attivita.sede.nome_completo }}
             </a>
-
-        </div>
-
-        <div class="col-md-3">
-
-            <i class="fa fa-fw fa-comments text-muted"></i>
-            <strong>{{ turno.attivita.commenti.count }}</strong> commento/i
 
         </div>
 
