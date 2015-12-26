@@ -3,6 +3,7 @@ Questo modulo definisce i modelli del modulo di Posta di Gaia.
 """
 from smtplib import SMTPException
 from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives
+from django.db.models import QuerySet
 from django.template import Context
 from django.template.loader import get_template
 from django.utils.html import strip_tags
@@ -154,6 +155,10 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             corpo=get_template(modello).render(Context(corpo))
         )
         m.save()
+
+        # Se QuerySet, rendi distinti.
+        if isinstance(destinatari, QuerySet):
+            destinatari = destinatari.distinct()
 
         for d in destinatari:
             m.aggiungi_destinatario(d)

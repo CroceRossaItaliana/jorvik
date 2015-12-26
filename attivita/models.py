@@ -5,6 +5,7 @@ Questo modulo definisce i modelli del modulo Attivita' di Gaia.
 """
 from datetime import timedelta
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 from anagrafica.permessi.costanti import MODIFICA
@@ -82,16 +83,19 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     def commento_notifica_destinatari(self, mittente):
         from anagrafica.models import Persona
 
+        # Come destinatari, sempre i delegati dell'attivita'... tranne me.
+        destinatari = self.delegati_attuali().exclude(pk=mittente.pk)
+
         # Se posso modificare l'attività, notifica a tutti
         #  i partecipanti (sono presidente, oppure referente).
         if mittente.permessi_almeno(self, MODIFICA):
-            return Persona.objects.filter(
+            destinatari |= Persona.objects.filter(
                 partecipazioni__turno__attivita=self,
                 partecipazioni__stato=Partecipazione.RICHIESTA,
                 partecipazioni__turno__inizio__gte=timezone.now() - timedelta(days=120),
             )
 
-        return Persona.objects.none()
+        return destinatari.distinct()
 
 
 class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):

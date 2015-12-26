@@ -34,6 +34,14 @@
             <a href="{{ attivita.url }}">
                 <i class="fa fa-fw fa-info"></i>
                 Informazioni
+
+                {% if attivita.commenti.count %}&nbsp;
+                <span class="badge pull-right">
+                    <i class="fa fa-fw fa-comments"></i>
+                    {{ attivita.commenti.count }}
+                </span>
+                {% endif %}
+
             </a>
         </li>
         {% if attivita.locazione %}
