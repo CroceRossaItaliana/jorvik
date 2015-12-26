@@ -184,7 +184,7 @@ class ConGeolocalizzazione(models.Model):
             return queryset.none()
 
         return queryset.exclude(locazione__geo__isnull=True).extra(
-            where=['ST_DWithin(geo, ST_PointFromText(%s, 4326), raggio)'],
+            where=['ST_distance_sphere(geo, ST_PointFromText(%s, 4326)) <= (raggio*1000)'],
             params=[self.locazione.geo.wkt]
         )
 
