@@ -1,5 +1,7 @@
 from django.db import models
 
+from anagrafica.permessi.applicazioni import PRESIDENTE
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from base.models import ModelloSemplice, ConAutorizzazioni
 from base.tratti import ConMarcaTemporale
 
@@ -146,3 +148,16 @@ class Donazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     def autorizzazione_nega_modulo(self):
         # Nessun modulo per la negazione dell'autorizzazione.
         return None
+
+    def richiedi(self):
+        from anagrafica.models import Appartenenza
+
+        if not self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO).exists():
+            return True
+
+        sede = self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO)[0].comitato
+
+        self.autorizzazione_richiedi(
+            self.persona,
+            ((PRESIDENTE, sede), (UFFICIO_SOCI, sede))
+        )

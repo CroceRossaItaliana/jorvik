@@ -7,6 +7,8 @@ from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione
 from autenticazione.models import Utenza
 import autocomplete_light
 
+from sangue.models import Donatore, Donazione
+
 
 class ModuloStepComitato(autocomplete_light.ModelForm):
     class Meta:
@@ -161,3 +163,16 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
         if inizio < datetime.date.today():
             raise forms.ValidationError("La data di inzio non può essere passata.")
         return inizio
+
+
+class ModuloDonatore(autocomplete_light.ModelForm):
+    class Meta:
+        model = Donatore
+        fields = ['gruppo_sanguigno', 'fattore_rh', 'fanotipo_rh',
+                  'kell', 'codice_sit', 'sede_sit',]
+
+
+class ModuloDonazione(autocomplete_light.ModelForm):
+    class Meta:
+        model = Donazione
+        fields = ['sede', 'data', 'tipo',]

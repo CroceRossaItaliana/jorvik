@@ -30,6 +30,11 @@ def menu(request):
                 ("Estensione", "fa-arrow-right", "/utente/estensione/"),
                 ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
             )) if me and me.volontario else None,
+            ("Donatore", (
+                ("Profilo Donatore", "fa-user", "/utente/donazioni/profilo/"),
+                ("Donazioni di Sangue", "fa-flask", "/utente/donazioni/sangue/")
+                    if hasattr(me, 'donatore') else None,
+            )) if me and me.volontario else None,
             ("Sicurezza", (
                 ("Cambia password", "fa-key", "/utente/cambia-password/"),
             )),

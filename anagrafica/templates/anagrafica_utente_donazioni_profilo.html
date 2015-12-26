@@ -1,0 +1,91 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Profilo Donatore{% endblock %}
+
+{% block app_contenuto %}
+
+
+
+    <div class="col-md-5">
+        <div class="panel panel-info">
+
+            <div class="panel-heading">
+                <i class="fa fa-fw fa-flask"></i>
+                Donazioni di Sangue
+            </div>
+
+            <div class="panel-body">
+
+                {% if me.donatore %}
+                    <p>
+                        <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire il tuo Profilo come Donatore di Sangue.
+                        Se vuoi gestire le tue donazioni, clicca sul pulsante seguente.
+                    </p>
+
+                    <a href="/utente/donazioni/sangue/" class="btn btn-info btn-block">
+                        Donazioni di Sangue
+                    </a>
+
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fa fa-warning fa-fw"></i> Completa questa pagina per creare il tuo Profilo come Donatore di Sangue.
+                        Una volta creato, potrai accedere alle funzioni di Donazione Sangue.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <div class="panel panel-default">
+
+            <div class="panel-heading">
+                <i class="fa fa-fw fa-comments-o"></i>
+                Feedback
+            </div>
+
+            <div class="panel-body">
+
+                <p>Vorresti contribuire al miglioramento della sezione Donazioni? Scrivici una e-mail.</p>
+                <a href="mailto:feedback.donazionisangue@gaia.cri.it"
+                    class="btn btn-sm btn-block btn-default">
+                    <i class="fa fa-fw fa-envelope-o"></i>
+                    feedback.donazionisangue@gaia.cri.it
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-7">
+        <div class="panel panel-primary">
+
+            <div class="panel-heading">
+                <i class="fa fa-fw fa-user"></i>
+                Profilo Donatore
+            </div>
+
+            <form class="panel-body" method="POST" enctype="multipart/form-data">
+
+                {% csrf_token %}
+                {% bootstrap_form modulo %}
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-fw fa-save"></i>
+                    Salva profilo
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+{% endblock %}

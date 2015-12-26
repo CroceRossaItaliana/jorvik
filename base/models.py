@@ -232,6 +232,13 @@ class ConAutorizzazioni(models.Model):
         object_id_field='oggetto_id'
     )
 
+    def delete(self):
+        """
+        Cancella tutte le autorizzazioni prima di cancellare.
+        """
+        self.autorizzazioni.all().delete()
+        super(ConAutorizzazioni, self).delete()
+
     confermata = models.BooleanField("Confermata", default=True, db_index=True)
     ritirata = models.BooleanField("Ritirata", default=False, db_index=True)
 

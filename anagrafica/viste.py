@@ -9,7 +9,8 @@ from django.contrib.auth import login
 from django.views.generic import ListView
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
-    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega
+    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
+    ModuloDonatore, ModuloDonazione
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -23,6 +24,7 @@ from base.errori import errore_generico
 from base.files import Zip
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
+from sangue.models import Donatore, Donazione
 
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
@@ -364,6 +366,54 @@ def utente_contatti_cancella_numero(request, me, pk):
 
     tel.delete()
     return redirect('/utente/contatti/')
+
+@pagina_privata
+def utente_donazioni_profilo(request, me):
+
+    modulo = ModuloDonatore(request.POST or None, instance=me.donatore if hasattr(me, 'donatore') else None)
+
+    if modulo.is_valid():
+
+        if hasattr(me, 'donatore'):
+            modulo.save()
+
+        else:
+            donatore = modulo.save(commit=False)
+            donatore.persona = me
+            donatore.save()
+
+    contesto = {
+        "modulo": modulo
+    }
+    return 'anagrafica_utente_donazioni_profilo.html', contesto
+
+@pagina_privata
+def utente_donazioni_sangue(request, me):
+    modulo = ModuloDonazione(request.POST or None)
+
+    if modulo.is_valid():
+
+        donazione = modulo.save(commit=False)
+        donazione.persona = me
+        donazione.save()
+        donazione.richiedi()
+
+    donazioni = me.donazioni_sangue.all()
+
+    contesto = {
+        "modulo": modulo,
+        "donazioni": donazioni
+    }
+    return 'anagrafica_utente_donazioni_sangue.html', contesto
+
+@pagina_privata
+def utente_donazioni_sangue_cancella(request, me, pk):
+    donazione = get_object_or_404(Donazione, pk=pk)
+    if not donazione.persona == me:
+        return redirect(ERRORE_PERMESSI)
+
+    donazione.delete()
+    return redirect("/utente/donazioni/sangue/")
 
 @pagina_privata
 def utente_estensione(request, me):

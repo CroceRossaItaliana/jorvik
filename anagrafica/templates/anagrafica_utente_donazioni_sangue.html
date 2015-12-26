@@ -1,0 +1,101 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Profilo Donatore{% endblock %}
+
+{% block app_contenuto %}
+
+
+
+    <div class="col-md-4">
+        <div class="panel panel-primary">
+
+            <div class="panel-heading">
+                <i class="fa fa-fw fa-flask"></i>
+                Registra Donazione
+            </div>
+
+            <form class="panel-body" method="POST">
+
+                <p>
+                    <i class="fa fa-fw fa-info-circle"></i>
+                    Hai donato? Registra la tua donazione compilando questo modulo.
+                </p>
+
+                {% csrf_token %}
+                {% bootstrap_form modulo %}
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa fa-fw fa-check"></i>
+                    Registra Donazione
+                </button>
+
+            </form>
+
+        </div>
+
+
+
+    </div>
+
+    <div class="col-md-8">
+        <div class="panel panel-info">
+
+            <div class="panel-heading">
+                <i class="fa fa-fw fa-list"></i>
+                Donazioni Registrate
+            </div>
+
+            <div class="panel-body">
+
+                <table class="table table-striped">
+
+                    <thead>
+                        <th>Donazione</th>
+                        <th>Data e Luogo</th>
+                        <th><i class="fa fa-trash"></i></th>
+                    </thead>
+
+                    <tbody>
+                        {% for donazione in donazioni %}
+                        <tr>
+                            <td><strong>{{ donazione.esito }}</strong>
+                                <br />
+                                {{ donazione.get_tipo_display }}</td>
+                            <td>
+                                <i class="fa fa-fw fa-calendar"></i> {{ donazione.data }}<br />
+                                <i class="fa fa-fw fa-home"></i> {{ donazione.sede }}
+                            </td>
+                            <td>
+                                <a href="/utente/donazioni/sangue/{{ donazione.pk }}/cancella/"
+                                    data-conferma="Sicuro/a di voler cancellare la donazione {{ donazione.get_tipo_display }} in data {{ donazione.data }}?"
+                                    class="btn btn-xs btn-danger"
+                                    title="Cancella questa donazione"
+                                >
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+
+                        {% empty %}
+                        <tr class="warning">
+                            <td colspan="3">
+                                <i class="fa fa-fw fa-info-circle"></i>
+                                Nessuna donazione registrata.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+
+
+            </div>
+        </div>
+
+    </div>
+
+
+{% endblock %}

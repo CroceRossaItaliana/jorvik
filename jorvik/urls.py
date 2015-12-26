@@ -60,6 +60,9 @@ urlpatterns = [
     url(r'^utente/contatti/$', 'anagrafica.viste.utente_contatti'),
     url(r'^utente/contatti/cancella-numero/(?P<pk>.*)/$', 'anagrafica.viste.utente_contatti_cancella_numero'),
     url(r'^utente/estensione/(?P<pk>.*)/termina/$', 'anagrafica.viste.utente_estensione_termina'),
+    url(r'^utente/donazioni/profilo/$', 'anagrafica.viste.utente_donazioni_profilo'),
+    url(r'^utente/donazioni/sangue/(?P<pk>.*)/cancella/$', 'anagrafica.viste.utente_donazioni_sangue_cancella'),
+    url(r'^utente/donazioni/sangue/$', 'anagrafica.viste.utente_donazioni_sangue'),
     url(r'^utente/cambia-password/?$', pagina_privata_no_cambio_firma(password_change), {
         "template_name": "anagrafica_utente_cambia_password.html",
         "password_change_form": ModuloModificaPassword,
