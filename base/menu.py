@@ -30,6 +30,13 @@ def menu(request):
                 ("Estensione", "fa-arrow-right", "/utente/estensione/"),
                 ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
             )) if me and me.volontario else None,
+            ("Curriculum", (
+                ("Competenze personali", "fa-arrow-right", "/utente/estensione/"),
+                ("Patenti Civili", "fa-arrow-right", "/utente/trasferimento/"),
+                ("Patenti CRI", "fa-arrow-right", "/utente/trasferimento/"),
+                ("Titoli di Studio", "fa-arrow-right", "/utente/trasferimento/"),
+                ("Titoli CRI", "fa-arrow-right", "/utente/trasferimento/"),
+            )),
             ("Donatore", (
                 ("Profilo Donatore", "fa-user", "/utente/donazioni/profilo/"),
                 ("Donazioni di Sangue", "fa-flask", "/utente/donazioni/sangue/")

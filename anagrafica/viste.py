@@ -547,3 +547,12 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
 
     return redirect("/strumenti/delegati/")
 
+
+@pagina_privata
+def utente_curriculum(request, me, tipo=None):
+    pass
+
+@pagina_privata
+def utente_curriculum_cancella(request, me, pk=None):
+    pass
+

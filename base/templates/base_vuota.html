@@ -1,6 +1,7 @@
 {% extends "base_bootstrap.html" %}
 
 {% block pagina_titolo %}Senza titolo{% endblock %}
+{% load static %}
 
 {% block pagina_corpo %}
 
@@ -15,6 +16,10 @@
             <span class="icon-bar"></span>
           </button>
           <a class="navbar-brand" {% if me %}href="/utente/"{% else %}href="/"{% endif %}>
+              <img id="navbar-logo" class="pull-left" src="{% static 'img/logo-semplice.png' %}" alt="CRI" />
+
+              <span class="rosso-scuro">Croce Rossa Italiana</span>
+              |
               Gaia <strong>Jorvik</strong><sup class="piu-piccolo">Beta</sup>
           </a>
         </div>
@@ -83,7 +88,7 @@
                 &copy;2015 <strong>Il Progetto Gaia</strong>
             </p>
             <p class="piu-piccolo">
-                <strong class="rosso-scuro">Croce Rossa Italiana</strong>. Persone in prima persona.</p>
+                <strong class="rosso-scuro">Croce Rossa Italiana</strong>. Un'Italia che aiuta.</p>
             </p>
           </div>
 

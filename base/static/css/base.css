@@ -199,3 +199,8 @@ body, p, span, div {
 .monospace {
     font-family: "Bitstream Vera Sans Mono", Monaco, "Courier New", Courier, monospace;
 }
+
+#navbar-logo {
+    margin-top: -7px;
+    margin-right: 5px;
+}
