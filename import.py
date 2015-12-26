@@ -16,6 +16,7 @@ from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, REFERENT
 from attivita.models import Area, Attivita, Partecipazione, Turno
 from base.models import Autorizzazione
 from curriculum.models import TitoloPersonale, Titolo
+from social.models import Commento
 
 import pickle
 import sangue.models as sangue
@@ -92,6 +93,9 @@ parser.add_argument('--salta-titoli', dest='titoli', action='store_const',
 parser.add_argument('--salta-sangue', dest='sangue', action='store_const',
                    const=False, default=True,
                    help='salta importazione donazioni di sangue (usa cache precedente)')
+parser.add_argument('--salta-commenti', dest='commenti', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione commenti alle attivita (usa cache precedente)')
 parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
                    const=True, default=False,
                    help='ignora errori di integrità (solo test)')
@@ -208,6 +212,9 @@ ASSOC_ID_SANGUE_DONATORI = {}
 ASSOC_ID_SANGUE_DONAZIONI = {}
 ASSOC_ID_SANGUE_MERITI = {}
 ASSOC_ID_SANGUE_SEDI = {}
+
+# Dizionario per il modulo social
+ASSOC_ID_COMMENTI = {}
 
 
 
@@ -1861,6 +1868,66 @@ def carica_sangue_donazioni():
 
     cursore.close()
 
+
+def carica_commenti():
+
+    print("  - Caricamento dei commenti...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, attivita, commento, volontario, tCommenta
+        FROM commenti
+        WHERE commento IS NOT NULL
+        """
+    )
+
+    commenti = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for commento in commenti:
+        contatore += 1
+
+        id = int(commento[0])
+        try:
+            attivita_id = ASSOC_ID_ATTIVITA[int(commento[1])]
+
+        except KeyError:
+            print("    - SALTATO Attivita id=%d non esistente, commento saltato" % (int(commento[1]),))
+            continue
+
+        except ValueError:
+            print("    - SALTATO Attivita id=%s non valida, commento saltato" % (commento[1],))
+            continue
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[int(commento[3])]
+
+        except KeyError:
+            print("    - SALTATO Persona id=%d non esistente, commento saltato" % (int(commento[3]),))
+            continue
+
+        testo = stringa(commento[2])
+        creazione = data_da_timestamp(commento[4])
+
+        print("    - %s: Commento id=%d" % (
+            progresso(contatore, totale), id,
+        ))
+
+        c = Commento(
+            autore_id=persona_id,
+            commento=testo,
+            creazione=creazione,
+            oggetto=Attivita.objects.get(pk=attivita_id)
+        )
+        c.save()
+
+        ASSOC_ID_COMMENTI[id] = c.pk
+
+    cursore.close()
+
+
 # Importazione dei Comitati
 
 print("> Importazione dei Comitati")
@@ -2056,5 +2123,21 @@ else:
     print("  ~ Carico tabella delle corrispondenze (sangue-donazioni.pickle-tmp)")
     ASSOC_ID_SANGUE_DONAZIONI = pickle.load(open("sangue-donazioni.pickle-tmp", "rb"))
 
+
+# Importazione dei commenti alle attivita
+print("> Importazione dei commenti alle attivita")
+if args.commenti:
+    print("  - Eliminazione attuali")
+
+    Commento.objects.all().delete()
+
+    carica_commenti()
+
+    print("  ~ Persisto tabella delle corrispondenze (commenti.pickle-tmp)")
+    pickle.dump(ASSOC_ID_COMMENTI, open("commenti.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (commenti.pickle-tmp)")
+    ASSOC_ID_COMMENTI = pickle.load(open("commenti.pickle-tmp", "rb"))
 
 # print(ASSOC_ID_COMITATI)
