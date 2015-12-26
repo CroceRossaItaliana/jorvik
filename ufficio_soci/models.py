@@ -62,7 +62,7 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
         elif socio.ordinario:  # Quota socio ordinario
             return self.quota_ordinario
 
-        elif socio.aspirante:  # Quota Aspirante
+        elif hasattr(socio, 'aspirante'):  # Quota Aspirante
             return self.quota_aspirante
 
         return 0.0
@@ -81,7 +81,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale):
     appartenenza = models.ForeignKey('anagrafica.Appartenenza', null=True, related_name='quote', db_index=True)
     sede = models.ForeignKey('anagrafica.Sede', related_name='quote', db_index=True)
 
-    progressivo = models.SmallIntegerField(db_index=True)
+    progressivo = models.IntegerField(db_index=True)
     anno = models.SmallIntegerField(db_index=True, default=default_anno)
 
     data_versamento = models.DateField(help_text="La data di versamento dell'importo.")

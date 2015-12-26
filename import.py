@@ -4,6 +4,7 @@ import os, sys
 
 import phonenumbers
 
+
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
 from django.contrib.contenttypes.models import ContentType
@@ -14,8 +15,10 @@ from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, REFERENT
     RESPONSABILE_AUTOPARCO, RESPONSABILE_DONAZIONI
 from attivita.models import Area, Attivita, Partecipazione, Turno
 from base.models import Autorizzazione
+from curriculum.models import TitoloPersonale, Titolo
 
 import pickle
+import sangue.models as sangue
 from django.contrib.gis.geos import Point
 from autenticazione.models import Utenza
 
@@ -83,6 +86,12 @@ parser.add_argument('--salta-partecipazioni', dest='partecipazioni', action='sto
 parser.add_argument('--salta-quote', dest='quote', action='store_const',
                    const=False, default=True,
                    help='salta importazione quote (usa cache precedente)')
+parser.add_argument('--salta-titoli', dest='titoli', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione titoli e titoli personali (usa cache precedente)')
+parser.add_argument('--salta-sangue', dest='sangue', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione donazioni di sangue (usa cache precedente)')
 parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
                    const=True, default=False,
                    help='ignora errori di integrità (solo test)')
@@ -187,6 +196,19 @@ ASSOC_ID_TESSERAMENTI = {}
 
 # Questo dizionario mantiene le associazioni ID delle quote
 ASSOC_ID_QUOTE = {}
+
+# Questo dizionario mantiene le associazioni ID dei titoli
+ASSOC_ID_TITOLI = {}
+
+# Questo dizionario mantiene le associazioni ID delle quote
+ASSOC_ID_TITOLIPERSONALI = {}
+
+# Dizionari per il modulo donazioni sangue
+ASSOC_ID_SANGUE_DONATORI = {}
+ASSOC_ID_SANGUE_DONAZIONI = {}
+ASSOC_ID_SANGUE_MERITI = {}
+ASSOC_ID_SANGUE_SEDI = {}
+
 
 
 def parse_numero(numero, paese="IT"):
@@ -1045,7 +1067,7 @@ def carica_turni():
         ASSOC_ID_TURNI.update({id: t.pk})
 
 
-
+@transaction.atomic
 def carica_partecipazioni():
 
     # Dizionario per le autorizzazioni. Es:
@@ -1253,6 +1275,7 @@ def carica_tesseramenti():
 
     cursore.close()
 
+
 def carica_quote():
     print("  - Caricamento delle Quote...")
 
@@ -1278,9 +1301,9 @@ def carica_quote():
         quote.anno IS NOT NULL        	AND
         quote.timestamp IS NOT NULL   	AND
         quote.causale IS NOT NULL 		AND
+        quote.progressivo IS NOT NULL   AND
         appartenenza.comitato IS NOT NULL
-        """
-    )
+    """)
     quote = cursore.fetchall()
     totale = cursore.rowcount
     contatore = 0
@@ -1288,18 +1311,36 @@ def carica_quote():
     for quota in quote:
         contatore += 1
         id = int(quota[0])
-        appartenenza_id = ASSOC_ID_APPARTENENZE[int(quota[1])]
-        print("Persona: %d, %d" % (int(quota[2]), ASSOC_ID_PERSONE[int(quota[2])]))
+
+        try:
+            appartenenza_id = ASSOC_ID_APPARTENENZE[int(quota[1])]
+
+        except KeyError:
+            print("   - Quota Saltata (%d) appartenenza non esistente (%d)" % (
+                id, int(quota[1]),
+            ))
+            continue
+
+        #print("Persona: %d, %d" % (int(quota[2]), ASSOC_ID_PERSONE[int(quota[2])]))
         persona = Persona.objects.get(pk=ASSOC_ID_PERSONE[int(quota[2])])
-        sede = Sede.objects.get(pk=ASSOC_ID_COMITATI[int(quota[3])]).comitato
+
+        try:
+            sede = Sede.objects.get(pk=ASSOC_ID_COMITATI["Comitato"][int(quota[3])][1]).comitato
+
+        except KeyError:
+            print("   - Quota Saltata (%d) comitato non esistente (%d)" % (
+                id, int(quota[3]),
+            ))
+            continue
+
         data_versamento = data_da_timestamp(quota[4], data_da_timestamp(quota[5]))
         data_creazione = data_da_timestamp(quota[5])
-        registrato_da = ASSOC_ID_PERSONE(int(quota[6]))
+        registrato_da = ASSOC_ID_PERSONE[int(quota[6])]
 
         importo = float(quota[7])
 
-        causale = quota[8] or ''
-        causale_extra = quota[9] or ''
+        causale = stringa(quota[8]) or ''
+        causale_extra = stringa(quota[9]) or ''
         anno = int(quota[10])
 
         annullato_da = ASSOC_ID_PERSONE[int(quota[11])] if quota[11] else None
@@ -1311,38 +1352,514 @@ def carica_quote():
 
         tesseramento = Tesseramento.objects.get(anno=anno)
         da_pagare = tesseramento.importo_da_pagare(persona)
+        importo_extra = 0.0
+
         if importo > da_pagare:
             importo_extra = importo - da_pagare
             importo = da_pagare
 
-        print("   - %s: Quota, sede=%d, numero=%d/%d",
+        print("   - %s: Quota, sede=%d, numero=%d/%d" %
               (progresso(contatore, totale), sede.pk,
                progressivo, anno,))
 
-        q = Quota(
-            appartenenza=appartenenza_id,
-            persona=persona.pk,
-            sede=sede,
-            progressivo=progressivo,
-            anno=anno,
-            data_versamento=data_versamento,
-            data_annullamento=data_annullamento,
-            registrato_da=registrato_da,
-            annullato_da=annullato_da,
-            stato=stato,
-            importo=importo,
-            importo_extra=importo_extra,
-            causale=causale,
-            causale_extra=causale_extra,
-        )
-        q.save()
+        try:
+            q = Quota(
+                appartenenza_id=appartenenza_id,
+                persona=persona,
+                sede=sede,
+                progressivo=progressivo,
+                anno=anno,
+                data_versamento=data_versamento,
+                data_annullamento=data_annullamento,
+                registrato_da_id=registrato_da,
+                annullato_da_id=annullato_da,
+                stato=stato,
+                importo=importo,
+                importo_extra=importo_extra,
+                causale=causale,
+                causale_extra=causale_extra,
+            )
+            q.save()
 
+        except IntegrityError:
+            print("     - id=%d QUOTA DUPLICATA SALTATA" % (id, ))
+            continue
 
         ASSOC_ID_QUOTE[id] = q.pk
 
     cursore.close()
 
+@transaction.atomic
+def carica_titoli():
+    print("  - Caricamento dei Titoli e Patenti...")
 
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+        id, nome, tipo
+        FROM titoli
+        WHERE nome IS NOT NULL
+        AND nome <> ''
+        """
+    )
+    titoli = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for titolo in titoli:
+        contatore += 1
+        id = int(titolo[0])
+        nome = stringa(titolo[1])
+        tipon = int(titolo[2])
+
+        if tipon == 0:
+            tipo = Titolo.COMPETENZA_PERSONALE
+            richiede_conferma = False
+            richiede_data_ottenimento = False
+            richiede_luogo_ottenimento = False
+            richiede_data_scadenza = False
+            richiede_codice = False
+            inseribile_in_autonomia = True
+
+        elif tipon == 1:
+            tipo = Titolo.PATENTE_CIVILE
+            richiede_conferma = False
+            richiede_data_ottenimento = True
+            richiede_luogo_ottenimento = True
+            richiede_data_scadenza = True
+            richiede_codice = True
+            inseribile_in_autonomia = True
+
+        elif tipon == 2:
+            tipo = Titolo.PATENTE_CRI
+            richiede_conferma = True
+            richiede_data_ottenimento = True
+            richiede_luogo_ottenimento = True
+            richiede_data_scadenza = True
+            richiede_codice = True
+            inseribile_in_autonomia = True
+
+        elif tipon == 3:
+            tipo = Titolo.TITOLO_STUDIO
+            richiede_conferma = False
+            richiede_data_ottenimento = True
+            richiede_luogo_ottenimento = True
+            richiede_data_scadenza = True
+            richiede_codice = True
+            inseribile_in_autonomia = True
+
+        elif tipon == 4:
+            tipo = Titolo.TITOLO_CRI
+            richiede_conferma = True
+            richiede_data_ottenimento = True
+            richiede_luogo_ottenimento = True
+            richiede_data_scadenza = True
+            richiede_codice = True
+            inseribile_in_autonomia = True
+
+        else:
+            raise ValueError("Tipo non riconosciuto: %d" % (tipon, ))
+
+        print(" - %s, titolo nome='%s' tipo=%s" % (progresso(contatore,totale), nome, tipo,))
+        t = Titolo(
+            nome=nome,
+            vecchio_id=id,
+            tipo=tipo,
+            richiede_conferma=richiede_conferma,
+            richiede_data_ottenimento=richiede_data_ottenimento,
+            richiede_luogo_ottenimento=richiede_luogo_ottenimento,
+            richiede_data_scadenza=richiede_data_scadenza,
+            richiede_codice=richiede_codice,
+            inseribile_in_autonomia=inseribile_in_autonomia,
+        )
+        t.save()
+
+        ASSOC_ID_TITOLI[id] = t.pk
+
+    cursore.close()
+
+@transaction.atomic
+def carica_titoli_personali():
+
+    print("  - Caricamento dei Titoli e Patenti...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+        titoliPersonali.id, titoliPersonali.volontario, titoliPersonali.titolo,
+        titoliPersonali.inizio, titoliPersonali.fine, titoliPersonali.luogo,
+        titoliPersonali.codice, titoliPersonali.corso, titoliPersonali.tConferma,
+        titoliPersonali.pConferma
+        FROM titoliPersonali INNER JOIN anagrafica ON
+            titoliPersonali.volontario = anagrafica.id
+        WHERE titoliPersonali.volontario IS NOT NULL
+        AND titoliPersonali.titolo IS NOT NULL
+        AND titoliPersonali.titolo IN (select id from titoli)
+        AND (titoliPersonali.pConferma IS NULL
+                OR titoliPersonali.pConferma IN (select id from anagrafica))
+
+        """
+    )
+    titoli = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for titolo in titoli:
+        contatore += 1
+        id = int(titolo[0])
+
+        try:
+            persona = ASSOC_ID_PERSONE[int(titolo[1])]
+
+        except KeyError:
+            print("    - SALTATO Persona non trovata %d " % (int(titolo[1]),))
+            continue
+
+        titolo_id = ASSOC_ID_TITOLI[int(titolo[2])]
+        inizio = data_da_timestamp(titolo[3], None)
+        fine = data_da_timestamp(titolo[4], None)
+        luogo = stringa(titolo[5])
+        codice = stringa(titolo[6]) or None
+        corso = stringa(titolo[7]) or None
+        tConferma = data_da_timestamp(titolo[8], None)
+        pConferma = ASSOC_ID_PERSONE[int(titolo[9])] if titolo[9] else None
+
+        print("   - %s, persona=%d, titolo=%d, tConferma=%s" % (
+            progresso(contatore, totale), persona, titolo_id, tConferma
+        ))
+
+        t = TitoloPersonale(
+            titolo_id=titolo_id,
+            persona_id=persona,
+            data_ottenimento=inizio,
+            data_scadenza=fine,
+            luogo_ottenimento=luogo,
+            codice=codice,
+            codice_corso=corso,
+            certificato=True if corso else False,
+            certificato_da_id=pConferma if corso else None,
+        )
+        t.save()
+
+        ASSOC_ID_TITOLIPERSONALI[id] = t.pk
+
+        if not pConferma:
+
+            print("     - richiesta al presidente e us")
+            persona = Persona.objects.get(pk=persona)
+
+            sedi_attuali = persona.sedi_attuali()
+            if not sedi_attuali:
+                print("     - nessuna appartenenza, salto")
+                continue
+            sede = sedi_attuali[0].comitato
+
+            t.autorizzazione_richiedi(
+                persona,
+                (
+                    (PRESIDENTE, sede),
+                    (UFFICIO_SOCI, sede),
+                )
+            )
+
+        else:
+
+            print("     - autorizzazione firmata")
+            a = Autorizzazione(
+                oggetto=t,
+                richiedente_id=persona,
+                firmatario_id=pConferma,
+                concessa=True,
+                destinatario_ruolo=PRESIDENTE,
+                destinatario_oggetto=t,
+            )
+            a.save()
+
+    cursore.close()
+
+
+def carica_sangue_sedi():
+    print("  - Caricamento delle sedi di donazione sangue...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+        id, citta, provincia, regione, nome
+        FROM
+        donazioni_sedi
+        """
+    )
+    sedi = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for sede in sedi:
+        contatore += 1
+        id = int(sede[0])
+        citta = stringa(sede[1])
+        provincia = stringa(sede[2])
+        regione = stringa(sede[3])
+        nome = stringa(sede[4])
+
+        s = sangue.Sede(
+            citta=citta,
+            provincia=provincia,
+            regione=regione,
+            nome=nome,
+        )
+        print("    - %s: Sede %s" % (
+            progresso(contatore, totale), str(s),
+        ))
+        s.save()
+
+        ASSOC_ID_SANGUE_SEDI[id] = s.pk
+
+    cursore.close()
+
+
+@transaction.atomic
+def carica_sangue_donatori():
+    print("  - Caricamento dei donatori di sangue...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+        id, volontario, sangue_gruppo, fattore_rh, fanotipo_rh, kell, codice_sit, sede_sit
+        FROM
+        donazioni_anagrafica
+        """
+    )
+    donatori = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for donatore in donatori:
+        contatore += 1
+
+        id = int(donatore[0])
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[int(donatore[1])]
+
+        except KeyError:
+            print("   - Profilo saltato, persona non trovata, donatore id=%d, persona=%d" % (
+                id, int(donatore[1])
+            ))
+            continue  # Persona non trovata - profilo saltato.
+
+        sangue_gruppo = int(donatore[2])
+        sangue_gruppo = {
+            1: sangue.Donatore.GRUPPO_0,
+            2: sangue.Donatore.GRUPPO_A,
+            3: sangue.Donatore.GRUPPO_B,
+            4: sangue.Donatore.GRUPPO_AB,
+        }[sangue_gruppo]
+
+        fattore_rh = int(donatore[3])
+        fattore_rh = {
+            0: None,
+            1: sangue.Donatore.RH_POS,
+            2: sangue.Donatore.RH_NEG,
+        }[fattore_rh]
+
+        fanotipo_rh = int(donatore[4])
+        fanotipo_rh = [
+            None,
+            'CCDee',
+            'ccDEE',
+            'CcDee',
+            'ccDEe',
+            'ccDee',
+            'CCDEE',
+            'CCDEe',
+            'CcDEE',
+            'CcDEe',
+            'Ccddee',
+            'CCddee',
+            'ccddEe',
+            'ccddEE',
+            'ccddee',
+            'CcddEe',
+        ][fanotipo_rh]
+
+        kell = int(donatore[5])
+        kell = [
+            None,
+            'K+k+',
+            'K+k-',
+            'K-k+',
+            'Kp(a+b+)',
+            'Kp(a-b+)',
+        ][kell]
+
+        codice_sit = stringa(donatore[6])
+        if codice_sit == "0":
+            codice_sit = None
+
+        sede_sit = int(donatore[7])
+        if sede_sit == 0:
+            sede_sit = None
+
+        else:
+            sede_sit = ASSOC_ID_SANGUE_SEDI[sede_sit]
+
+        d = sangue.Donatore(
+            persona_id=persona_id,
+            gruppo_sanguigno=sangue_gruppo,
+            fattore_rh=fattore_rh,
+            fanotipo_rh=fanotipo_rh,
+            kell=kell,
+            codice_sit=codice_sit,
+            sede_sit_id=sede_sit,
+        )
+        print("    - %s: Donatore %s" % (
+            progresso(contatore, totale), str(d),
+        ))
+
+        d.save()
+        ASSOC_ID_SANGUE_DONATORI[id] = d.pk
+
+    cursore.close()
+
+
+def carica_sangue_meriti():
+    print("  - Caricamento dei meriti di donazione...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+        id, volontario, donazione, merito
+        FROM
+        donazioni_merito
+        """
+    )
+
+    meriti = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for merito in meriti:
+        contatore += 1
+
+        id = int(merito[0])
+        try:
+            persona_id = ASSOC_ID_PERSONE[int(merito[1])]
+
+        except KeyError:
+            print("    - Persona id=%d non esistente, merito saltato" % (int(merito[1]),))
+            continue
+
+        merito = stringa(merito[2])
+
+        print("    - %s: Merito id=%d" % (
+            progresso(contatore, totale), id,
+        ))
+
+
+        m = sangue.Merito(
+            persona_id=persona_id,
+            merito=merito,
+        )
+        m.save()
+
+        ASSOC_ID_SANGUE_MERITI[id] = m.pk
+
+    cursore.close()
+
+
+def carica_sangue_donazioni():
+    print("  - Caricamento delle donazioni di sangue...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+        id, volontario, donazione, data, luogo, tConferma, pConferma
+        FROM
+        donazioni_personale
+        WHERE
+        data IS NOT NULL
+        """
+    )
+
+    donazioni = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for donazione in donazioni:
+        contatore += 1
+
+        id = int(donazione[0])
+        try:
+            persona_id = ASSOC_ID_PERSONE[int(donazione[1])]
+
+        except KeyError:
+            print("    - Persona id=%d non esistente, donazione saltata" % (int(donazione[1]),))
+            continue
+
+        tipo = {
+            '1':    'DD',
+            '2':    'SI',
+            '3':    'PL',
+            '4':    'PP',
+            '5':    'PI',
+            '6':    'EP',
+            '7':    '2R',
+            '8':    '2P',
+            '10':   'RP',
+            '11':   'MO',
+        }[stringa(donazione[2])]
+
+        data = date.fromtimestamp(int(donazione[3]))
+        luogo = ASSOC_ID_SANGUE_SEDI[int(donazione[4])] if donazione[4] else None
+
+        tConferma = data_da_timestamp(int(donazione[5]), None) if donazione[5] else None
+        pConferma = ASSOC_ID_PERSONE[int(donazione[6])] if donazione[6] else None
+
+        d = sangue.Donazione(
+            tipo=tipo,
+            persona_id=persona_id,
+            data=data,
+            sede_id=luogo,
+        )
+        d.save()
+
+        print("    - %s: Donazione id=%d" % (
+            progresso(contatore, totale), id,
+        ))
+
+
+        if tConferma:
+            a = Autorizzazione(
+                richiedente_id=persona_id,
+                firmatario_id=pConferma,
+                concessa=True,
+                oggetto=d,
+                destinatario_ruolo=PRESIDENTE,
+                destinatario_oggetto=d,
+            )
+            a.save()
+
+        else:
+            persona = Persona.objects.get(pk=persona_id)
+
+            try:
+                sede = persona.sedi_attuali()[0].comitato
+
+            except:
+                d.delete()
+                continue
+
+            d.autorizzazione_richiedi(
+                persona,
+                (
+                    (PRESIDENTE, sede),
+                    (UFFICIO_SOCI, sede)
+                )
+            )
+
+        ASSOC_ID_SANGUE_DONAZIONI[id] = d.pk
+
+    cursore.close()
 
 # Importazione dei Comitati
 
@@ -1481,6 +1998,63 @@ else:
     ASSOC_ID_TESSERAMENTI = pickle.load(open("tesseramenti.pickle-tmp", "rb"))
     print("  ~ Carico tabella delle corrispondenze (quote.pickle-tmp)")
     ASSOC_ID_QUOTE = pickle.load(open("quote.pickle-tmp", "rb"))
+
+
+# Importazione delle competenze e titoli
+print("> Importazione dei Titoli")
+if args.titoli:
+    print("  - Eliminazione attuali")
+    Titolo.objects.all().delete()
+    TitoloPersonale.objects.all().delete()
+
+    carica_titoli()
+    carica_titoli_personali()
+
+    print("  ~ Persisto tabella delle corrispondenze (titoli.pickle-tmp)")
+    pickle.dump(ASSOC_ID_TITOLI, open("titoli.pickle-tmp", "wb"))
+    print("  ~ Persisto tabella delle corrispondenze (titolipersonali.pickle-tmp)")
+    pickle.dump(ASSOC_ID_TITOLIPERSONALI, open("titolipersonali.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (titoli.pickle-tmp)")
+    ASSOC_ID_TITOLI = pickle.load(open("titoli.pickle-tmp", "rb"))
+    print("  ~ Carico tabella delle corrispondenze (titolipersonali.pickle-tmp)")
+    ASSOC_ID_TITOLIPERSONALI = pickle.load(open("titolipersonali.pickle-tmp", "rb"))
+
+
+# Importazione delle donazioni sangue
+print("> Importazione delle Donazioni Sangue")
+if args.sangue:
+    print("  - Eliminazione attuali")
+
+    sangue.Sede.objects.all().delete()
+    sangue.Donatore.objects.all().delete()
+    sangue.Merito.objects.all().delete()
+    sangue.Donazione.objects.all().delete()
+
+    carica_sangue_sedi()
+    carica_sangue_donatori()
+    carica_sangue_meriti()
+    carica_sangue_donazioni()
+
+    print("  ~ Persisto tabella delle corrispondenze (sangue-sedi.pickle-tmp)")
+    pickle.dump(ASSOC_ID_SANGUE_SEDI, open("sangue-sedi.pickle-tmp", "wb"))
+    print("  ~ Persisto tabella delle corrispondenze (sangue-donatori.pickle-tmp)")
+    pickle.dump(ASSOC_ID_SANGUE_DONATORI, open("sangue-donatori.pickle-tmp", "wb"))
+    print("  ~ Persisto tabella delle corrispondenze (sangue-meriti.pickle-tmp)")
+    pickle.dump(ASSOC_ID_SANGUE_MERITI, open("sangue-meriti.pickle-tmp", "wb"))
+    print("  ~ Persisto tabella delle corrispondenze (sangue-donazioni.pickle-tmp)")
+    pickle.dump(ASSOC_ID_SANGUE_DONAZIONI, open("sangue-donazioni.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (sangue-sedi.pickle-tmp)")
+    ASSOC_ID_SANGUE_SEDI = pickle.load(open("sangue-sedi.pickle-tmp", "rb"))
+    print("  ~ Carico tabella delle corrispondenze (sangue-donatori.pickle-tmp)")
+    ASSOC_ID_SANGUE_DONATORI = pickle.load(open("sangue-donatori.pickle-tmp", "rb"))
+    print("  ~ Carico tabella delle corrispondenze (sangue-meriti.pickle-tmp)")
+    ASSOC_ID_SANGUE_MERITI = pickle.load(open("sangue-meriti.pickle-tmp", "rb"))
+    print("  ~ Carico tabella delle corrispondenze (sangue-donazioni.pickle-tmp)")
+    ASSOC_ID_SANGUE_DONAZIONI = pickle.load(open("sangue-donazioni.pickle-tmp", "rb"))
 
 
 # print(ASSOC_ID_COMITATI)

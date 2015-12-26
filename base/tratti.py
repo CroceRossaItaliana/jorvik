@@ -15,6 +15,7 @@ from django.db import models
 from django.db.models import Q
 from anagrafica.costanti import ESTENSIONE, ESTENSIONE_MINORE
 from base.utils import concept
+from django.utils import timezone
 
 
 class ConMarcaTemporale(models.Model):
@@ -154,7 +155,7 @@ class ConDelegati(models.Model):
         Persona = apps.get_model(app_label='anagrafica', model_name='Persona')
         return Persona.objects.filter(delega__in=self.deleghe_attuali(al_giorno))
 
-    def aggiungi_delegato(self, tipo, persona, firmatario=None, inizio=date.today(), fine=None):
+    def aggiungi_delegato(self, tipo, persona, firmatario=None, inizio=timezone.now(), fine=None):
         """
         Aggiunge un delegato per l'oggetto. Nel caso in cui una nuova delega (attuale)
          viene inserita, contemporaneamente ad una delega attuale per la stessa persona,
@@ -168,7 +169,7 @@ class ConDelegati(models.Model):
         """
 
         # Se il nuovo inserimento e' attuale
-        if inizio <= date.today() and (fine is None or fine >= date.today()):
+        if inizio <= timezone.now() and (fine is None or fine >= timezone.now()):
 
             # Cerca eventuali deleghe pari gia' esistenti.
             delega_pari = self.deleghe_attuali().filter(persona=persona, tipo=tipo)

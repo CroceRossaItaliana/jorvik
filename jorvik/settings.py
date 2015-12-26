@@ -45,6 +45,7 @@ INSTALLED_APPS = (
     'veicoli',
     'social',
     'posta',
+    'sangue',
     'formazione',
     'bootstrap3',
     'django_countries',
