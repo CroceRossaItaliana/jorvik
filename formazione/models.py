@@ -12,7 +12,7 @@ from anagrafica.models import Sede, Persona
 from base.models import ConAutorizzazioni
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.models import ModelloSemplice
-from base.tratti import ConMarcaTemporale, ConDelegati
+from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico
 from base.utils import concept
 from social.models import ConCommenti, ConGiudizio
 from django.db import models
@@ -185,19 +185,24 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale):
         verbose_name_plural = "Richieste di partecipazione"
 
 
-class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
+class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
 
     corso = models.ForeignKey(CorsoBase, related_name='lezioni')
+    nome = models.CharField(max_length=128)
 
     class Meta:
-        verbose_name_plural = "Lezioni Corsi Base"
+        verbose_name = "Lezione di Corso Base"
+        verbose_name_plural = "Lezioni di Corsi Base"
 
 
 class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
 
-    corso = models.ForeignKey(CorsoBase, related_name='assenze')
+    lezione = models.ForeignKey(LezioneCorsoBase, related_name='assenze')
+    persona = models.ForeignKey(Persona, related_name='assenze_corsi_base')
+    registrata_da = models.ForeignKey(Persona, related_name='assenze_corsi_base_registrate')
 
     class Meta:
+        verbose_name = "Assenza a Corso Base"
         verbose_name_plural = "Assenze ai Corsi Base"
 
 

@@ -12,7 +12,7 @@ from django.db import transaction, IntegrityError
 from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, REFERENTE, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     DELEGATO_CO, UFFICIO_SOCI, RESPONSABILE_PATENTI, RESPONSABILE_FORMAZIONE, UFFICIO_SOCI_TEMPORANEO, \
-    RESPONSABILE_AUTOPARCO, RESPONSABILE_DONAZIONI
+    RESPONSABILE_AUTOPARCO, RESPONSABILE_DONAZIONI, DIRETTORE_CORSO
 from attivita.models import Area, Attivita, Partecipazione, Turno
 from base.models import Autorizzazione
 from curriculum.models import TitoloPersonale, Titolo
@@ -22,7 +22,7 @@ import pickle
 import sangue.models as sangue
 from django.contrib.gis.geos import Point
 from autenticazione.models import Utenza
-
+import formazione.models as formazione
 
 from safedelete import HARD_DELETE
 from jorvik.settings import MYSQL_CONF
@@ -96,6 +96,12 @@ parser.add_argument('--salta-sangue', dest='sangue', action='store_const',
 parser.add_argument('--salta-commenti', dest='commenti', action='store_const',
                    const=False, default=True,
                    help='salta importazione commenti alle attivita (usa cache precedente)')
+parser.add_argument('--salta-corsibase', dest='corsibase', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione corsi base e relativi (usa cache precedente)')
+parser.add_argument('--salta-aspiranti', dest='aspiranti', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione aspiranti e localizzazione (usa cache precedente)')
 parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
                    const=True, default=False,
                    help='ignora errori di integrità (solo test)')
@@ -216,6 +222,13 @@ ASSOC_ID_SANGUE_SEDI = {}
 # Dizionario per il modulo social
 ASSOC_ID_COMMENTI = {}
 
+# Dizionario per il modulo corsi base
+ASSOC_ID_CORSIBASE = {}
+ASSOC_ID_CORSIBASE_LEZIONI = {}
+ASSOC_ID_CORSIBASE_ASSENZE = {}
+ASSOC_ID_CORSIBASE_PARTECIPAZIONI = {}
+
+ASSOC_ID_ASPIRANTI = {}
 
 
 def parse_numero(numero, paese="IT"):
@@ -1928,6 +1941,275 @@ def carica_commenti():
     cursore.close()
 
 
+def carica_corsibase():
+
+    print("  - Caricamento dei corsi base...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, luogo, organizzatore,
+            direttore, inizio, progressivo,
+            anno, descrizione, stato,
+            aggiornamento, tEsame
+        FROM corsibase
+        """
+    )
+
+    corsi = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for corso in corsi:
+        contatore += 1
+
+        id = int(corso[0])
+
+        luogo = stringa(corso[1])
+
+        organizzatore = comitato_oid(stringa(corso[2]))
+
+        if not organizzatore:
+            print("    - SALTATO Organizzatore non esistente (%s)" % (stringa(corso[2]), ))
+            continue
+
+        data_inizio = data_da_timestamp(corso[4])
+        progressivo = int(corso[5])
+        anno = int(corso[6])
+        descrizione = stringa(corso[7]) or ''
+        stato = int(corso[8])
+
+        if stato == 0:
+            stato = formazione.CorsoBase.ANNULLATO
+
+        elif stato == 10:
+            stato = formazione.CorsoBase.PREPARAZIONE
+
+        elif stato == 20:
+            stato = formazione.CorsoBase.TERMINATO
+
+        elif stato == 30:
+            stato = formazione.CorsoBase.ATTIVO
+
+        else:
+            raise ValueError("Valore non aspettato per corso base")
+
+        aggiornamento = data_da_timestamp(corso[9])
+        data_esame = data_da_timestamp(corso[10])
+
+        print("    - %s: Corso base id=%d, num=%d/%d" % (
+            progresso(contatore, totale), id, progressivo, anno
+        ))
+
+        c = formazione.CorsoBase(
+            sede=organizzatore,
+            data_inizio=data_inizio,
+            data_esame=data_esame,
+            creazione=min(data_inizio, aggiornamento),
+            ultima_modifica=aggiornamento,
+            descrizione=descrizione,
+            progressivo=progressivo,
+            anno=anno,
+            stato=stato,
+        )
+        c.save()
+
+        try:
+            direttore_id = ASSOC_ID_PERSONE[int(corso[3])]
+            direttore = Persona.objects.get(pk=direttore_id)
+            print("      - Associo direttore %s" % (
+                direttore_id.codice_fiscale,
+            ))
+            c.aggiungi_delegato(
+                DIRETTORE_CORSO,
+                direttore,
+                inizio=c.creazione,
+            )
+
+        except:
+
+            # OK Nessun direttore
+            pass
+
+        if args.geo and luogo:
+            print("      - Imposto locazione %s" % (
+                luogo,
+            ))
+            c.imposta_locazione(luogo)
+
+        ASSOC_ID_CORSIBASE[id] = c.pk
+
+    cursore.close()
+
+
+def carica_corsibase_lezioni():
+
+    print("  - Caricamento delle lezioni ai corsi base...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, nome, inizio, fine, corso
+        FROM
+            lezioni
+        WHERE
+            inizio IS NOT NULL AND fine IS NOT NULL
+            AND corso IS NOT NULL
+        """
+    )
+
+    lezioni = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for lezione in lezioni:
+        contatore += 1
+
+        id = int(lezione[0])
+        nome = stringa(lezione[1])
+
+        inizio = data_da_timestamp(lezione[2])
+        fine = data_da_timestamp(lezione[3])
+
+        try:
+            corso = ASSOC_ID_CORSIBASE[int(lezione[4])]
+
+        except IndexError:
+            print ("    - SALTATO corso non trovato id=%d" % (int(lezione[4]),))
+            continue
+
+        print("    - %s: Lezione id=%d, corso=%d" % (
+            progresso(contatore, totale), id, int(lezione[4])
+        ))
+
+        l = formazione.LezioneCorsoBase(
+            corso_id=corso,
+            nome=nome,
+            inizio=inizio,
+            fine=fine,
+        )
+        l.save()
+
+        ASSOC_ID_CORSIBASE_LEZIONI[id] = l.pk
+
+    cursore.close()
+
+
+def carica_corsibase_assenze():
+
+    print("  - Caricamento delle assenze alle lezioni ai corsi base...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, lezione, utente, pConferma, tConferma
+        FROM
+            lezioni_assenza
+        """
+    )
+
+    assenze = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for assenza in assenze:
+        contatore += 1
+
+        id = int(assenza[0])
+
+        try:
+            lezione_id = ASSOC_ID_CORSIBASE_LEZIONI[int(assenza[1])]
+        except KeyError:
+            print("    - SALTATO Lezione id=%d non esistente" % (int(assenza[1]),))
+            continue
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[int(assenza[2])]
+        except KeyError:
+            print("    - SALTATO Persona id=%d non esistente" % (int(assenza[2]),))
+            continue
+
+        try:
+            registrato_da_id = ASSOC_ID_PERSONE[int(assenza[3])]
+        except KeyError:
+            print("    - SALTATO Registrato da Persona id=%d non esistente" % (int(assenza[3]),))
+            continue
+
+        tConferma = data_da_timestamp(assenza[4])
+
+        print("    - %s: Assenza id=%d, lezione=%d" % (
+            progresso(contatore, totale), id, lezione_id,
+        ))
+
+        a = formazione.AssenzaCorsoBase(
+            lezione_id=lezione_id,
+            persona_id=persona_id,
+            registrato_da_id=registrato_da_id,
+            creazione=tConferma,
+            ultima_modifica=tConferma,
+        )
+        a.save()
+
+        ASSOC_ID_CORSIBASE_ASSENZE[id] = a.pk
+
+    cursore.close()
+
+
+def carica_aspiranti():
+
+    print("  - Caricamento degli aspiranti...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            aspiranti.id, aspiranti.data, aspiranti.utente, aspiranti.luogo
+        FROM
+            aspiranti
+        INNER JOIN anagrafica ON aspiranti.utente = anagrafica.id
+        """
+    )
+
+    aspiranti = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for aspirante in aspiranti:
+        contatore += 1
+
+        id = int(aspirante[0])
+
+        data = data_da_timestamp(aspirante[1])
+        luogo = stringa(aspirante[3])
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[int(aspirante[2])]
+        except KeyError:
+            print("    - SALTATO Persona id=%d non esistente" % (int(aspirante[2]),))
+            continue
+
+        print("    - %s: Aspirante id=%d, persona=%d" % (
+            progresso(contatore, totale), id, persona_id,
+        ))
+
+        a = formazione.Aspirante(
+            persona_id=persona_id,
+            creazione=data,
+            ultima_modifica=data,
+        )
+        a.save()
+
+        if args.geo:
+            print("    - Impostazione locazione e calcola raggio: %s" % (luogo,))
+            a.imposta_locazione(luogo)
+
+        ASSOC_ID_ASPIRANTI[id] = a.pk
+
+    cursore.close()
+
+
+
+
+
 # Importazione dei Comitati
 
 print("> Importazione dei Comitati")
@@ -2139,5 +2421,56 @@ if args.commenti:
 else:
     print("  ~ Carico tabella delle corrispondenze (commenti.pickle-tmp)")
     ASSOC_ID_COMMENTI = pickle.load(open("commenti.pickle-tmp", "rb"))
+
+
+# Importazione dei corsi base e relativi
+print("> Importazione dei corsi base")
+if args.corsibase:
+    print("  - Eliminazione attuali")
+
+    formazione.CorsoBase.objects.all().delete()
+    formazione.PartecipazioneCorsoBase.objects.all().delete()
+    formazione.LezioneCorsoBase.objects.all().delete()
+    formazione.AssenzaCorsoBase.objects.all().delete()
+
+    carica_corsibase()
+    carica_corsibase_lezioni()
+
+    print("  ~ Persisto tabella delle corrispondenze (formazione-corsibase.pickle-tmp)")
+    pickle.dump(ASSOC_ID_CORSIBASE, open("formazione-corsibase.pickle-tmp", "wb"))
+    print("  ~ Persisto tabella delle corrispondenze (formazione-corsibase-lezioni.pickle-tmp)")
+    pickle.dump(ASSOC_ID_CORSIBASE_LEZIONI, open("formazione-corsibase-lezioni.pickle-tmp", "wb"))
+    print("  ~ Persisto tabella delle corrispondenze (formazione-corsibase-assenze.pickle-tmp)")
+    pickle.dump(ASSOC_ID_CORSIBASE_ASSENZE, open("formazione-corsibase-assenze.pickle-tmp", "wb"))
+    print("  ~ Persisto tabella delle corrispondenze (formazione-corsibase-partecipazioni.pickle-tmp)")
+    pickle.dump(ASSOC_ID_CORSIBASE_PARTECIPAZIONI, open("formazione-corsibase-partecipazioni.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (formazione-corsibase.pickle-tmp)")
+    ASSOC_ID_CORSIBASE = pickle.load(open("formazione-corsibase.pickle-tmp", "rb"))
+    print("  ~ Carico tabella delle corrispondenze (formazione-corsibase-lezioni.pickle-tmp)")
+    ASSOC_ID_CORSIBASE_LEZIONI = pickle.load(open("formazione-corsibase-lezioni.pickle-tmp", "rb"))
+    print("  ~ Carico tabella delle corrispondenze (formazione-corsibase-assenze.pickle-tmp)")
+    ASSOC_ID_CORSIBASE_ASSENZE = pickle.load(open("formazione-corsibase-assenze.pickle-tmp", "rb"))
+    print("  ~ Carico tabella delle corrispondenze (formazione-corsibase-partecipazioni.pickle-tmp)")
+    ASSOC_ID_CORSIBASE_PARTECIPAZIONI = pickle.load(open("formazione-corsibase-partecipazioni.pickle-tmp", "rb"))
+
+
+
+# Importazione degli aspiranti
+print("> Importazione degli aspiranti")
+if args.aspiranti:
+    print("  - Eliminazione attuali")
+
+    formazione.Aspirante.objects.all().delete()
+
+    carica_aspiranti()
+
+    print("  ~ Persisto tabella delle corrispondenze (formazione-aspiranti.pickle-tmp)")
+    pickle.dump(ASSOC_ID_ASPIRANTI, open("formazione-aspiranti.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (formazione-aspiranti.pickle-tmp)")
+    ASSOC_ID_ASPIRANTI = pickle.load(open("formazione-aspiranti.pickle-tmp", "rb"))
 
 # print(ASSOC_ID_COMITATI)
