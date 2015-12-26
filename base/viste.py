@@ -1,3 +1,5 @@
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import Count
 from django.db.models.loading import get_model
 from django.http import HttpResponse
 from django.shortcuts import render, render_to_response, get_object_or_404, redirect
@@ -105,17 +107,38 @@ def informazioni_sede(request, me, slug):
     return 'base_informazioni_sede.html', contesto
 
 @pagina_privata
-def autorizzazioni(request, me):
+def autorizzazioni(request, me, content_type_pk=None):
     """
     Mostra elenco delle autorizzazioni in attesa.
     """
-    richieste = me.autorizzazioni_in_attesa().order_by('creazione')
+    richieste = me._autorizzazioni_in_attesa()
+
+    sezioni = ()  # Ottiene le sezioni
+    sezs = richieste.values('oggetto_tipo_id').annotate(Count('oggetto_tipo_id'))
+
+    for sez in sezs:
+        modello = ContentType.objects.get(pk=int(sez['oggetto_tipo_id']))
+        modello = modello.model_class()
+        modello = modello.RICHIESTA_NOME
+        sezioni += ((modello, sez['oggetto_tipo_id__count'], int(sez['oggetto_tipo_id'])),)
+
+    richieste = richieste.order_by('creazione')
+
+    if content_type_pk is not None:
+        richieste = richieste.filter(oggetto_tipo_id=int(content_type_pk))
+
     for richiesta in richieste:
         if richiesta.oggetto.autorizzazione_concedi_modulo():
             richiesta.modulo = richiesta.oggetto.autorizzazione_concedi_modulo()
 
+    request.session['autorizzazioni_torna_url'] = "/autorizzazioni/"
+    if sezioni and content_type_pk:
+        request.session['autorizzazioni_torna_url'] = "/autorizzazioni/%d/" % (int(content_type_pk),)
+
     contesto = {
-        "richieste": richieste
+        "richieste": richieste,
+        "sezioni": sezioni,
+        "content_type_pk": int(content_type_pk) if content_type_pk else None,
     }
 
     return 'base_autorizzazioni.html', contesto
@@ -134,7 +157,7 @@ def autorizzazione_concedi(request, me, pk=None):
             titolo="Richiesta non trovata",
             messaggio="E' possibile che la richiesta sia stata già approvata o respinta da qualcun altro.",
             torna_titolo="Richieste in attesa",
-            torna_url="/autorizzazioni/"
+            torna_url=request.session['autorizzazioni_torna_url'],
         )
 
     modulo = None
@@ -158,6 +181,7 @@ def autorizzazione_concedi(request, me, pk=None):
     contesto = {
         "modulo": modulo,
         "richiesta": richiesta,
+        "torna_url": request.session['autorizzazioni_torna_url'],
     }
 
     return 'base_autorizzazioni_concedi.html', contesto
@@ -176,7 +200,7 @@ def autorizzazione_nega(request, me, pk=None):
             titolo="Richiesta non trovata",
             messaggio="E' possibile che la richiesta sia stata già approvata o respinta da qualcun altro.",
             torna_titolo="Richieste in attesa",
-            torna_url="/autorizzazioni/"
+            torna_url=request.session['autorizzazioni_torna_url'],
         )
 
     modulo = None
@@ -199,6 +223,7 @@ def autorizzazione_nega(request, me, pk=None):
     contesto = {
         "modulo": modulo,
         "richiesta": richiesta,
+        "torna_url": request.session['autorizzazioni_torna_url'],
     }
 
     return 'base_autorizzazioni_nega.html', contesto

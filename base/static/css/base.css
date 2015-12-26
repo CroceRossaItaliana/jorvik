@@ -122,15 +122,15 @@
     text-shadow: none;
 }
 
-#sezione {
+#sezione, #sezione-2 {
     padding: 0px 0px;
 }
 
-#sezione li a {
+#sezione li a, #sezione-2 li a {
     padding: 5px 10px;
 }
 
-#sezione hr {
+#sezione hr, #sezione-2 hr {
     margin: 5px 0px;
 }
 
@@ -198,12 +198,4 @@ body, p, span, div {
 
 .monospace {
     font-family: "Bitstream Vera Sans Mono", Monaco, "Courier New", Courier, monospace;
-}
-
-.enorme {
-    font-size: 72px;
-}
-
-.panel-messaggio {
-    cursor: pointer;
 }

@@ -43,6 +43,8 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         verbose_name = "Titolo personale"
         verbose_name_plural = "Titoli personali"
 
+    RICHIESTA_NOME = 'titolo'
+
     titolo = models.ForeignKey(Titolo)
     persona = models.ForeignKey("anagrafica.Persona", related_name="titoli_personali")
 

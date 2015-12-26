@@ -73,6 +73,7 @@ urlpatterns = [
 
     url(r'^autorizzazioni/$', 'base.viste.autorizzazioni'),
     url(r'^autorizzazioni/storico/$', 'base.viste.autorizzazioni_storico'),
+    url(r'^autorizzazioni/(?P<content_type_pk>[0-9]+)/$', 'base.viste.autorizzazioni'),
     url(r'^autorizzazioni/(?P<pk>[0-9]+)/concedi/$', 'base.viste.autorizzazione_concedi'),
     url(r'^autorizzazioni/(?P<pk>[0-9]+)/nega/$', 'base.viste.autorizzazione_nega'),
 

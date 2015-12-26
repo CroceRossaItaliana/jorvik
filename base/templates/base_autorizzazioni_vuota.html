@@ -8,33 +8,69 @@
 
 
 {% block menu_laterale %}
-<div class="col-lg-2 well well-sm">
+<div class="col-lg-3">
+
+    <div class="well well-sm">
 
 
-    <ul id="sezione" class="nav nav-pills nav-stacked navbar-collapse collapse">
+        <ul id="sezione" class="nav nav-pills nav-stacked navbar-collapse collapse">
 
-        {% for sezione_nome, sezione_pagine in menu.autorizzazioni %}
+            {% for sezione_nome, sezione_pagine in menu.autorizzazioni %}
 
-            <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
+                <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
 
-            {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
+                {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
 
-                <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
-                    <a href="{{ link_url|urlencode }}">
-                        <i class="fa {{ link_icona }} fa-fw"></i>
-                        {{ link_nome }}
+                    <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
+                        <a href="{{ link_url|urlencode }}">
+                            <i class="fa {{ link_icona }} fa-fw"></i>
+                            {{ link_nome }}
+                        </a>
+                    </li>
+
+                {% endfor %}
+
+                <hr />
+
+            {% endfor %}
+
+        </ul>
+
+
+
+    </div>
+
+    {% if sezioni %}
+    <div class="well well-sm">
+
+        <ul id="sezione-2" class="nav nav-pills nav-stacked navbar-collapse collapse">
+
+
+            <li class="dropdown-header grassetto piu-grande">Filtra per...</li>
+
+            {% for sez_nome, sez_numero, sez_link in sezioni %}
+
+                <li role="presentation" {% if sez_link == content_type_pk %}class="active"{% endif %}>
+                    <a href="/autorizzazioni/{{ sez_link|urlencode }}/">
+                        {{ sez_nome|title }}
+                        <span class="badge pull-right">
+                            {{ sez_numero }}
+                        </span>
                     </a>
                 </li>
 
             {% endfor %}
 
-            <hr />
 
-        {% endfor %}
 
-    </ul>
+        </ul>
+
+    </div>
+
+    {% endif %}
 
 </div>
+
 {% endblock %}
 
-{% block app_contenuto_col %}col-lg-10{% endblock %}
+{% block app_contenuto_col %}col-lg-9{% endblock %}

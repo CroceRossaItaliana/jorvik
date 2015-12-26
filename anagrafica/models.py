@@ -573,12 +573,19 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             r |= delega.autorizzazioni()
         return r
 
+    def _autorizzazioni_in_attesa(self):
+        """
+        Ritorna tutte le autorizzazioni firmabili da qesto utente e in attesa di firma.
+        :return: QuerySet<Autorizzazione>
+        """
+        return self.autorizzazioni().filter(necessaria=True)
+
     def autorizzazioni_in_attesa(self):
         """
         Ritorna tutte le autorizzazioni firmabili da qesto utente e in attesa di firma.
         :return: QuerySet<Autorizzazione>
         """
-        return self.autorizzazioni().filter(necessaria=True).order_by('creazione')
+        return self._autorizzazioni_in_attesa().order_by('creazione')
 
 
     @property
@@ -846,7 +853,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         """
         # TODO: Inviare e-mail di autorizzazione concessa!
 
-    def autorizzazione_negata(self, motivo=None):
+    def autorizzazione_negata(self, modulo=None):
         # TOOD: Fare qualcosa
         self.confermata = False
 

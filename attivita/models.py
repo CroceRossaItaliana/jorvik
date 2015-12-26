@@ -180,7 +180,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         # TODO
         pass
 
-    def autorizzazione_negata(self, motivo=None):
+    def autorizzazione_negata(self, modulo=None):
         """
         (Automatico)
         Invia notifica di autorizzazione negata.
