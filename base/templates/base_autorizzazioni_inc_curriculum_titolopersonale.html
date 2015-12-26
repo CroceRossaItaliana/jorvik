@@ -1,0 +1,25 @@
+<p>{{ richiesta.richiedente.link|safe }} chiede la conferma di
+
+    {% if richiesta.oggetto.titolo.tipo == richiesta.oggetto.titolo.TITOLO_CRI or richiesta.oggetto.titolo.tipo == richiesta.oggetto.titolo.TITOLO_STUDIO %}
+        un
+    {% else %}
+        una
+    {% endif %}
+
+    {{ richiesta.oggetto.titolo.get_tipo_display }}: <strong>{{ richiesta.oggetto.titolo.nome }}</strong>.</p>
+
+<p>
+    {% if richiesta.oggetto.data_ottenimento %}
+        Ottenuta/o il {{ richiesta.oggetto.data_ottenimento }}{% if richiesta.oggetto.luogo_ottenimento %}
+            a {{ richiesta.oggetto.luogo_ottenimento }}.
+        {% endif %}
+    {% endif %}
+
+    {% if richiesta.oggetto.data_scadenza %}
+        Scadenza il {{ richiesta.oggetto.data_scadenza }}.
+    {% endif %}
+
+    {% if richiesta.oggetto.codice %}
+        <strong>Num./Codice: {{ richiesta.oggetto.codice }}.</strong>
+    {% endif %}
+</p>
