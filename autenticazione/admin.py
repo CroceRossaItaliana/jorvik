@@ -27,3 +27,7 @@ class AdminUtenza(UserAdmin):
     search_fields = ('email', 'persona__nome', 'persona__cognome', 'persona__codice_fiscale',)
     ordering = ('email',)
     raw_id_fields = ('persona', )
+
+    # Permette login come utente
+    change_form_template = 'loginas/change_form.html'
+

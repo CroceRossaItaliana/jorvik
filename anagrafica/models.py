@@ -1204,16 +1204,23 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     persona = models.ForeignKey(Persona, related_name='trasferimenti')
     destinazione = models.ForeignKey(Sede, related_name='trasferimenti_destinazione')
     appartenenza = models.ForeignKey(Appartenenza, related_name='trasferimento')
-    protocollo_numero = models.PositiveIntegerField('Numero di protocollo', null=True, blank=True)
+    protocollo_numero = models.CharField('Numero di protocollo', max_length=16, null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
+    motivo = models.CharField(max_length=2048, null=True, blank=False,)
 
-    NOME_RICHIESTA = "Trasferimento"
+    NOME_RICHIESTA = "trasferimento"
+
+    PROTOCOLLO_AUTO = "AUTO"  # Applicato a protocollo_numero se approvazione automatica
 
     def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiTrasferimento
         return ModuloConsentiTrasferimento
 
     def autorizzazione_concessa(self, modulo=None):
+
+        # Invia notifica tramite e-mail
+
+
         app = Appartenenza(
             membro=Appartenenza.ESTESO,
             persona=self.persona,
@@ -1222,7 +1229,6 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
             fine=datetime.today() + timedelta(days=365)
         )
         app.save()
-        app.richiedi()
         self.appartenenza = app
         self.save()
 

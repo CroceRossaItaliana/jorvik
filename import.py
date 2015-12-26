@@ -32,7 +32,7 @@ application = get_wsgi_application()
 
 from django.template.backends import django
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
-from anagrafica.models import Sede, Persona, Appartenenza, Delega
+from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento
 from base.geo import Locazione
 from ufficio_soci.models import Quota, Tesseramento
 import argparse
@@ -102,6 +102,9 @@ parser.add_argument('--salta-corsibase', dest='corsibase', action='store_const',
 parser.add_argument('--salta-aspiranti', dest='aspiranti', action='store_const',
                    const=False, default=True,
                    help='salta importazione aspiranti e localizzazione (usa cache precedente)')
+parser.add_argument('--salta-trasferimenti', dest='trasferimenti', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione trasferimenti (usa cache precedente)')
 parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
                    const=True, default=False,
                    help='ignora errori di integrità (solo test)')
@@ -229,6 +232,8 @@ ASSOC_ID_CORSIBASE_ASSENZE = {}
 ASSOC_ID_CORSIBASE_PARTECIPAZIONI = {}
 
 ASSOC_ID_ASPIRANTI = {}
+
+ASSOC_ID_TRASFERIMENTI = {}
 
 
 def parse_numero(numero, paese="IT"):
@@ -2207,6 +2212,152 @@ def carica_aspiranti():
     cursore.close()
 
 
+def carica_trasferimenti():
+
+
+    print("  - Caricamento dei trasferimenti...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, stato, appartenenza,
+            volontario, protNumero, protData,
+            motivo, negazione, timestamp,
+            pConferma, tConferma, cProvenienza
+        FROM
+            trasferimenti
+        """
+    )
+
+    trasferimenti = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for trasf in trasferimenti:
+        contatore += 1
+
+        id = int(trasf[0])
+
+        stato = int(trasf[1])
+
+        try:
+            appartenenza_id = ASSOC_ID_APPARTENENZE[int(trasf[2])]
+        except KeyError:
+            print("    - SALTATO Appartenenza non trovata id=%d" % (int(trasf[2]),))
+            continue
+
+        appartenenza = Appartenenza.objects.get(pk=appartenenza_id)
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[int(trasf[3])]
+        except KeyError:
+            print("    - SALTATO Persona non trovata id=%d" % (int(trasf[3])))
+            continue
+
+        protocollo_numero = stringa(trasf[4]) if trasf[4] else None
+        protocollo_data = data_da_timestamp(trasf[5]) if trasf[5] else None
+
+        motivo = stringa(trasf[6]) if trasf[6] else None
+        motivo_negazione = stringa(trasf[7]) if trasf[7] else None
+
+        creazione = data_da_timestamp(trasf[8])
+
+        try:
+            pConferma_id = ASSOC_ID_PERSONE[int(trasf[9])] if trasf[9] else None
+        except KeyError:
+            print("    - SALTATO Persona firmatario non trovata id=%d" % (int(trasf[9])))
+            continue
+
+        tConferma = data_da_timestamp(trasf[10]) if trasf[10] else None
+
+        try:
+            provenienza_id = ASSOC_ID_COMITATI['Comitato'][int(trasf[11])][1]
+
+        except KeyError:
+            print("    - SALTATO Comitato di provenienza non trovato id=%d" % (int(trasf[10]),))
+
+        print("    - %s: Trasferimento id=%d, persona=%d, appartenenza=%d" % (
+            progresso(contatore, totale), id, persona_id, appartenenza_id,
+        ))
+
+        precedente = Appartenenza.objects.filter(
+            terminazione=Appartenenza.TRASFERIMENTO,
+            persona_id=persona_id,
+            sede_id=provenienza_id,
+        )
+        if precedente.exists():
+            print("      - Aggiorna precedente appartenenza")
+            appartenenza.precedente_id = precedente.first().pk
+            appartenenza.save()
+
+        t = Trasferimento(
+            richiedente_id=persona_id,
+            persona_id=persona_id,
+            destinazione=appartenenza.sede,
+            appartenenza=appartenenza,
+            protocollo_numero=protocollo_numero,
+            protocollo_data=protocollo_data,
+            motivo=motivo,
+            creazione=creazione,
+            ultima_modifica=creazione,
+            confermata=True if stato == 30 or stato == 40 else False,
+        )
+        t.save()
+
+        if stato == 10:  # Trasferimento negato.
+            a = Autorizzazione(
+                oggetto=t,
+                destinatario_ruolo=PRESIDENTE,
+                destinatario_oggetto=Sede.objects.get(pk=provenienza_id),
+                concessa=False,
+                richiedente_id=persona_id,
+                firmatario_id=pConferma_id,
+                motivo_negazione=motivo_negazione,
+                creazione=creazione,
+                ultima_modifica=tConferma,
+            )
+            a.save()
+
+        elif stato == 20:  # Trasferimento in corso.
+            a = Autorizzazione(
+                oggetto=t,
+                destinatario_ruolo=PRESIDENTE,
+                destinatario_oggetto=Sede.objects.get(pk=provenienza_id),
+                concessa=None,
+                richiedente_id=persona_id,
+                creazione=creazione,
+            )
+            a.save()
+
+        elif stato == 25:  # Annullata / Ritirata
+            t.autorizzazioni_ritira()
+
+        elif stato == 30 or stato == 40:  # OK!
+
+            if stato == 40:  # Approvazione automatica
+                t.protocollo_numero = t.PROTOCOLLO_AUTO
+                t.save()
+
+            else:  # Manuale, crea approvazione.
+                a = Autorizzazione(
+                    oggetto=t,
+                    destinatario_ruolo=PRESIDENTE,
+                    destinatario_oggetto=Sede.objects.get(pk=provenienza_id),
+                    concessa=True,
+                    richiedente_id=persona_id,
+                    creazione=creazione,
+                    ultima_modifica=tConferma,
+                )
+                a.save()
+
+        else:
+            raise ValueError("Valore stato non permesso %d" % (stato,))
+
+        ASSOC_ID_TRASFERIMENTI[id] = t.pk
+
+    cursore.close()
+
+
 
 
 
@@ -2472,5 +2623,21 @@ if args.aspiranti:
 else:
     print("  ~ Carico tabella delle corrispondenze (formazione-aspiranti.pickle-tmp)")
     ASSOC_ID_ASPIRANTI = pickle.load(open("formazione-aspiranti.pickle-tmp", "rb"))
+
+
+# Importazione dei trasferimenti
+print("> Importazione dei trasferimetni")
+if args.trasferimenti:
+    print("  - Eliminazione attuali")
+
+    Trasferimento.objects.all().delete()
+    carica_trasferimenti()
+
+    print("  ~ Persisto tabella delle corrispondenze (trasferimenti.pickle-tmp)")
+    pickle.dump(ASSOC_ID_TRASFERIMENTI, open("trasferimenti.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (formazione-aspiranti.pickle-tmp)")
+    ASSOC_ID_TRASFERIMENTI = pickle.load(open("trasferimenti.pickle-tmp", "rb"))
 
 # print(ASSOC_ID_COMITATI)

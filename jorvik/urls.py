@@ -141,6 +141,7 @@ urlpatterns = [
 
     # Amministrazione
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', include('loginas.urls')),   # Login come utente
 
     # Autocompletamento
     url(r'^autocomplete/', include('autocomplete_light.urls')),
