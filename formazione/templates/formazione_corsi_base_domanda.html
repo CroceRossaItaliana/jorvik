@@ -33,13 +33,13 @@
 
                     {{ node.domanda_formativa }} aspiranti interessati
 
-                    {% if node.domanda_formativa > 100 %}
+                    {% if node.domanda_formativa > 300 %}
                         <span class="label label-danger">
                             <i class="fa fa-fw fa-warning"></i>
                             Attivazione nuovo corso fortemente consigliata
                         </span>
 
-                    {% elif node.domanda_formativa > 35 %}
+                    {% elif node.domanda_formativa > 100 %}
                         <span class="label label-warning">
                             <i class="fa fa-fw fa-info-circle"></i>
                             Considera l'attivazione di un nuovo corso
