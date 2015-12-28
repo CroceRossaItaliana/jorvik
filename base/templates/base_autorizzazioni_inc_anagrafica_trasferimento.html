@@ -1,0 +1,14 @@
+<p>{{ richiesta.oggetto.persona.link|safe }} chiede il trasferimento verso
+    {{ richiesta.oggetto.destinazione.link|safe }}
+   con la seguente motivazione:
+    {% if richiesta.oggetto.motivo %}
+        {{ richiesta.oggetto.motivo }}.
+    {% else %}
+        (nessuna motivazione fornita).
+    {% endif %}</p>
+
+<p>Puoi scaricare la richiesta di trasferimento in formato PDF
+    <a href="{{ richiesta.oggetto.url }}" target="_new" download>cliccando qui</a>.</p>
+
+<p>Nota bene: Questa richiesta di trasferimento verr&agrave; processata automaticamente se non gestita in 30gg,
+   come previsto dal Regolamento dei Volontari.</p>

@@ -58,6 +58,29 @@
         </div>
     {% endif %}
 
+    {% if me.titoli_personali.all.count < 3 %}
+        <div class="alert alert-info">
+            <h4>
+                <i class="fa fa-fw fa-info-circle"></i>
+                Completa il tuo Curriculum
+                <a href="/utente/curriculum/" target="_new">
+                    &mdash; vai alla sezione Competenze Personali
+                </a>
+
+            </h4>
+            <p>
+                {% if me.titoli_personali.all.exists %}
+                    Hai solo {{ me.titoli_personali.all.count }} elementi nel
+                    tuo curriculum tra competenze, patenti e titoli di studio.
+                {% endif %}
+                Usa il men&ugrave; "Curriculum" sulla sinistra per completare la tua scheda personale.
+                Questo ti permetter&agrave; di partecipare alle attivit&agrave; che richiedono qualifiche
+                particolari e di arricchire il tuo profilo.
+            </p>
+        </div>
+    {% endif %}
+
+
 
 
 {% endblock %}

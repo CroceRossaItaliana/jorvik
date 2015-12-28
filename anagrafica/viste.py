@@ -22,6 +22,8 @@ from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.errori import errore_generico
 from base.files import Zip
+from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
+from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
@@ -550,9 +552,94 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
 
 @pagina_privata
 def utente_curriculum(request, me, tipo=None):
-    pass
+
+    if not tipo:
+        return redirect("/utente/curriculum/CP/")
+
+    if tipo not in dict(Titolo.TIPO):  # Tipo permesso?
+        redirect(ERRORE_PERMESSI)
+
+    passo = 1
+    tipo_display = dict(Titolo.TIPO)[tipo]
+    request.session['titoli_tipo'] = tipo
+
+    titolo_selezionato = None
+    modulo = ModuloNuovoTitoloPersonale(tipo, tipo_display, request.POST or None)
+    valida_secondo_form = True
+    if modulo.is_valid():
+        titolo_selezionato = modulo.cleaned_data['titolo']
+        passo = 2
+        valida_secondo_form = False
+
+    if 'titolo_selezionato_id' in request.POST:
+        titolo_selezionato = Titolo.objects.get(pk=request.POST['titolo_selezionato_id'])
+        passo = 2
+
+    if passo == 2:
+        modulo = ModuloDettagliTitoloPersonale(request.POST if request.POST and valida_secondo_form else None)
+
+        if not titolo_selezionato.richiede_data_ottenimento:
+            del modulo.fields['data_ottenimento']
+
+        if not titolo_selezionato.richiede_data_scadenza:
+            del modulo.fields['data_scadenza']
+
+        if not titolo_selezionato.richiede_luogo_ottenimento:
+            del modulo.fields['luogo_ottenimento']
+
+        if not titolo_selezionato.richiede_codice:
+            del modulo.fields['codice']
+
+        if modulo.is_valid():
+
+            tp = modulo.save(commit=False)
+            tp.persona = me
+            tp.titolo = titolo_selezionato
+            tp.save()
+
+            if titolo_selezionato.richiede_conferma:
+                sede_attuale = me.sedi_attuali(membro__in=Appartenenza.MEMBRO_DIRETTO).first()
+                if not sede_attuale:
+                    return errore_generico(
+                        request, me,
+                        titolo="Necessaria appartenenza,",
+                        messaggio="Per l'aggiunta di '%s' al tuo curriculum è necessaria "
+                                  "la verifica di un Presidente o delegato Ufficio Soci. "
+                                  "Non hai alcuna appartenenza confermata su Gaia." % (
+                            titolo_selezionato.nome,
+                        ),
+                        torna_titolo="Torna indietro",
+                        torna_url="/utente/curriculum/%s/" % (tipo,),
+                    )
+
+                tp.autorizzazione_richiedi(
+                    me,
+                        ((PRESIDENTE, sede_attuale), (UFFICIO_SOCI, sede_attuale))
+                )
+
+            return redirect("/utente/curriculum/%s/?inserimento=ok" % (tipo,))
+
+    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo)
+
+    contesto = {
+        "tipo": tipo,
+        "tipo_display": tipo_display,
+        "passo": passo,
+        "modulo": modulo,
+        "titoli": titoli,
+        "titolo": titolo_selezionato
+    }
+    return 'anagrafica_utente_curriculum.html', contesto
 
 @pagina_privata
 def utente_curriculum_cancella(request, me, pk=None):
-    pass
+
+    titolo_personale = get_object_or_404(TitoloPersonale, pk=pk)
+    if not titolo_personale.persona == me:
+        return redirect(ERRORE_PERMESSI)
+
+    tipo = titolo_personale.titolo.tipo
+    titolo_personale.delete()
+
+    return redirect("/utente/curriculum/%s/" % (tipo,))
 

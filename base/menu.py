@@ -31,11 +31,11 @@ def menu(request):
                 ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
             )) if me and me.volontario else None,
             ("Curriculum", (
-                ("Competenze personali", "fa-arrow-right", "/utente/estensione/"),
-                ("Patenti Civili", "fa-arrow-right", "/utente/trasferimento/"),
-                ("Patenti CRI", "fa-arrow-right", "/utente/trasferimento/"),
-                ("Titoli di Studio", "fa-arrow-right", "/utente/trasferimento/"),
-                ("Titoli CRI", "fa-arrow-right", "/utente/trasferimento/"),
+                ("Competenze personali", "fa-arrow-right", "/utente/curriculum/CP/"),
+                ("Patenti Civili", "fa-arrow-right", "/utente/curriculum/PP/"),
+                ("Patenti CRI", "fa-arrow-right", "/utente/curriculum/PC/"),
+                ("Titoli di Studio", "fa-arrow-right", "/utente/curriculum/TS/"),
+                ("Titoli CRI", "fa-arrow-right", "/utente/curriculum/TC/"),
             )),
             ("Donatore", (
                 ("Profilo Donatore", "fa-user", "/utente/donazioni/profilo/"),

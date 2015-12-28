@@ -1208,7 +1208,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
     motivo = models.CharField(max_length=2048, null=True, blank=False,)
 
-    NOME_RICHIESTA = "trasferimento"
+    RICHIESTA_NOME = "trasferimento"
 
     PROTOCOLLO_AUTO = "AUTO"  # Applicato a protocollo_numero se approvazione automatica
 
@@ -1245,6 +1245,8 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
             ),
         )
 
+    def url(self):
+        return "#"
 
 class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     """

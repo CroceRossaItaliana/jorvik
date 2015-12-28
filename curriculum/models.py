@@ -36,6 +36,9 @@ class Titolo(ModelloSemplice, ConVecchioID):
 
     nome = models.CharField(max_length=255, db_index=True)
 
+    def __str__(self):
+        return self.nome
+
 
 class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
@@ -65,3 +68,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     @property
     def attuale(self):
         return self.data_scadenza is None or timezone.now() >= self.data_scadenza
+
+    def autorizzazione_negata(self, modulo=None):
+        # Alla negazione, cancella titolo personale.
+        self.delete()
