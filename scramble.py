@@ -57,8 +57,10 @@ for sede in (args.membri_sedi if args.membri_sedi else []):
         membro.cognome = ottieni_random().cognome
         membro.save()
 
+        tentativi_cf = 0
         while True:
             try:
+                tentativi_cf += 1
                 nuovo_codice_fiscale = oscura(ottieni_random().codice_fiscale, 50)
                 membro.codice_fiscale = nuovo_codice_fiscale
                 membro.save()
@@ -67,8 +69,10 @@ for sede in (args.membri_sedi if args.membri_sedi else []):
             except IntegrityError:  # Riprova fino a che CF univoco
                 pass
 
+        tentativi_email_contatto = 0
         while True:
             try:
+                tentativi_email_contatto += 1
                 membro.email_contatto = oscura(ottieni_random().email_contatto, 35)
                 membro.save()
                 break
@@ -76,6 +80,22 @@ for sede in (args.membri_sedi if args.membri_sedi else []):
             except IntegrityError:  # Riprova fino a che CF univoco
                 pass
 
-        print("Miscelato %d di %d (%f percento)" % (contatore, totale, (contatore/totale*100)))
+        tentativi_utenza = 0
+        if membro.utenza and not membro.utenza.is_staff:
+            while True:
+                try:
+                    tentativi_utenza += 1
+                    utenza = membro.utenza
+                    nuova_email = oscura(utenza.email, 75).lower()
+                    utenza.email = nuova_email
+                    utenza.save()
+                    break
+
+                except IntegrityError:  # Riprova fino a che CF univoco
+                    pass
+
+        print("Miscelato %d di %d (%f percento): T.CF %d, T.EC %d, T.EU %d" % (
+            contatore, totale, (contatore/totale*100), tentativi_cf, tentativi_email_contatto, tentativi_utenza)
+        )
 
 print("Finita esecuzione.")
