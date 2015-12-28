@@ -276,6 +276,7 @@ def ottieni_comitato(tipo='nazionali', id=1):
         'nome': comitato[1],
         'x': comitato[2],
         'y': comitato[3],
+        'principale': (True if comitato[4] else False) if len(comitato) > 4 else False,
         'dati': dict
     }
 
@@ -710,7 +711,7 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
 
     comitato = ottieni_comitato(tipo, id)
 
-    if 'principale' in comitato and int(comitato['principale']) == 1:
+    if comitato['principale']:
         ASSOC_ID_COMITATI[COMITATO_OID[tipo]].update({id: (Sede, ref.pk)})
         c = ref
 
@@ -743,7 +744,7 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
         c.save()
 
     if args.verbose:
-        print("    - " + ("-"*num) + " " + c.nome + ": " + stringa(c.locazione))
+        print("    - %s [%d] %s: %s" % ("-" * num, comitato['principale'], c.nome, stringa(c.locazione)))
 
     totale = 1
     for (a, b) in ottieni_figli(tipo,id):
