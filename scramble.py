@@ -12,7 +12,6 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 from anagrafica.models import Sede, Persona
-
 import argparse
 
 
@@ -81,18 +80,21 @@ for sede in (args.membri_sedi if args.membri_sedi else []):
                 pass
 
         tentativi_utenza = 0
-        if membro.utenza and not membro.utenza.is_staff:
-            while True:
-                try:
-                    tentativi_utenza += 1
-                    utenza = membro.utenza
-                    nuova_email = oscura(utenza.email, 75).lower()
-                    utenza.email = nuova_email
-                    utenza.save()
-                    break
+        try:
+            if membro.utenza and not membro.utenza.is_staff:
+                while True:
+                    try:
+                        tentativi_utenza += 1
+                        utenza = membro.utenza
+                        nuova_email = oscura(utenza.email, 75).lower()
+                        utenza.email = nuova_email
+                        utenza.save()
+                        break
 
-                except IntegrityError:  # Riprova fino a che CF univoco
-                    pass
+                    except IntegrityError:  # Riprova fino a che CF univoco
+                        pass
+        except:
+            pass
 
         print("Miscelato %d di %d (%f percento): T.CF %d, T.EC %d, T.EU %d" % (
             contatore, totale, (contatore/totale*100), tentativi_cf, tentativi_email_contatto, tentativi_utenza)
