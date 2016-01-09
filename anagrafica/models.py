@@ -1176,6 +1176,7 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             destinatari=[self.persona],
         )
 
+
 class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
     """
     Rappresenta una fototessera per la persona.

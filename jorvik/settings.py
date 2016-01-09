@@ -52,6 +52,7 @@ INSTALLED_APPS = (
     'autocomplete_light',
     'django_extensions',
     'loginas',
+    'sorl.thumbnail',
 )
 
 # Classi middleware (intercetta & computa)
