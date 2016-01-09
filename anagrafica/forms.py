@@ -3,7 +3,8 @@ import datetime
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 from django.forms import ModelForm
-from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega
+from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega, \
+    Trasferimento
 from autenticazione.models import Utenza
 import autocomplete_light
 
@@ -134,7 +135,7 @@ class ModuloConsentiEstensione(forms.Form):
 
 class ModuloCreazioneTrasferimento(ModelForm):
     class Meta:
-        model = Estensione
+        model = Trasferimento
         fields = ['destinazione']
 
 

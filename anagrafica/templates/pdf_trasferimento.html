@@ -1,0 +1,33 @@
+{% extends 'pdf_standard.html' %}
+
+{% block corpo %}
+
+<P ALIGN=RIGHT STYLE="margin-bottom: 0cm">Al Presidente del
+{{ sede_attuale }}</P>
+<P ALIGN=RIGHT STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P ALIGN=RIGHT STYLE="margin-bottom: 0cm">E, p.c. al Presidente del
+{{ trasferimento.destinazione }}</P>
+<P ALIGN=RIGHT STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P STYLE="margin-bottom: 0.35cm">Con la presente il sottoscritto
+{{ trasferimento.persona.nome }} {{ trasferimento.persona.cognome }} nato a {{ trasferimento.persona.comune_nascita }} il {{ trasferimento.persona.data_nascita }}, volontario presso il {{ sede_attuale }}, dal {{ trasferimento.persona.ingresso|date:"Y" }}.</P>
+<P STYLE="margin-bottom: 0.35cm">Secondo l'articolo 9 del
+Regolamento dei Volontari della Croce Rossa Italiana emanato con
+Ordinanza Commissariale 567/12 del 3 Dicembre 2012:</P>
+<P ALIGN=CENTER STYLE="margin-bottom: 0.35cm"><FONT SIZE=5><B>CHIEDE</B></FONT></P>
+<P STYLE="margin-bottom: 0.35cm"><A NAME="_GoBack"></A>Il
+trasferimento presso il {{ trasferimento.destinazione }} per {{ trasferimento.motivo }}</P>
+<P ALIGN=RIGHT STYLE="margin-bottom: 0.35cm"><BR><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0.35cm">{{ trasferimento.creazione }}</P>
+<div align="right" style="margin-top: 10px; padding-top: 10px align: right;">
+			<span style="text-align: right; position: relative; right;">
+				In Fede <br/>
+			</span>
+			<span style="text-align: right; position: relative; right;">
+				F.to {{ trasferimento.persona.nome }} {{ trasferimento.persona.cognome }}
+			</span>
+		</div>
+
+{% endblock %}

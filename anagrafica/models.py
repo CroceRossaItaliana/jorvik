@@ -34,7 +34,7 @@ from anagrafica.permessi.delega import delega_permessi
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
 from attivita.models import Turno
-
+from base.files import PDF
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
     Autorizzazione, ConVecchioID
@@ -1203,7 +1203,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     richiedente = models.ForeignKey(Persona, related_name='trasferimenti_richiesti_da')
     persona = models.ForeignKey(Persona, related_name='trasferimenti')
     destinazione = models.ForeignKey(Sede, related_name='trasferimenti_destinazione')
-    appartenenza = models.ForeignKey(Appartenenza, related_name='trasferimento')
+    appartenenza = models.ForeignKey(Appartenenza, related_name='trasferimento', null=True, blank=True)
     protocollo_numero = models.CharField('Numero di protocollo', max_length=16, null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
     motivo = models.CharField(max_length=2048, null=True, blank=False,)
@@ -1247,6 +1247,18 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     def url(self):
         return "#"
+
+    def genera_pdf(self):
+        pdf = PDF(oggetto=self)
+        pdf.genera_e_salva(
+          nome="Trasferimento %s.pdf" % (self.persona.nome_completo, ),
+          corpo={
+            "trasferimento": self,
+            "sede_attuale": self.persona.sedi_attuali(al_giorno=self.creazione)[0]
+          },
+          modello="pdf_trasferimento.html",
+        )
+        return pdf
 
 class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     """
