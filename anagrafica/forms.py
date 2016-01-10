@@ -89,6 +89,15 @@ class ModuloModificaAnagrafica(ModelForm):
                   'cap_residenza']
 
 
+class ModuloProfiloModificaAnagrafica(ModelForm):
+    class Meta:
+        model = Persona
+        fields = ['nome', 'cognome', 'data_nascita',
+                  'comune_nascita', 'provincia_nascita', 'stato_nascita',
+                  'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
+                  'cap_residenza', 'email_contatto',]
+
+
 class ModuloModificaAvatar(ModelForm):
     class Meta:
         model = Persona

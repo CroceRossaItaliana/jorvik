@@ -1,0 +1,70 @@
+{% extends "base_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    {{ persona.nome_completo }}
+{% endblock %}
+
+{% block pagina_principale %}
+<div class="container">
+
+    <h2 class="allinea-centro text-success">
+        {{ persona.nome_completo }}
+    </h2>
+
+    <p>&nbsp;</p>
+
+    <ul class="nav nav-tabs grassetto">
+        <li role="presentation" {% if request.path == persona.url %}class="active"{% endif %}>
+            <a href="{{ persona.url }}">
+                <i class="fa fa-fw fa-info-circle"></i>
+                Profilo
+            </a>
+        </li>
+
+        {% if puo_modificare %}
+            <li role="presentation" {% if request.path == persona.url_modifica_anagrafica %}class="active"{% endif %}>
+                <a href="{{ persona.url_modifica_anagrafica }}" class="text-danger">
+                    <i class="fa fa-fw fa-edit"></i>
+                    Anagrafica
+                </a>
+            </li>
+
+            <li role="presentation" {% if request.path == persona.url_modifica_storico %}class="active"{% endif %}>
+                <a href="{{ persona.url_modifica_storico }}" class="text-danger">
+                    <i class="fa fa-fw fa-clock-o"></i>
+                    Storico
+                </a>
+            </li>
+
+            <li role="presentation" {% if request.path == persona.url_modifica_foto %}class="active"{% endif %}>
+                <a href="{{ persona.url_modifica_storico }}" class="text-danger">
+                    <i class="fa fa-fw fa-picture-o"></i>
+                    Foto
+                </a>
+            </li>
+
+            <li role="presentation" {% if request.path == persona.url_modifica_foto %}class="active"{% endif %}>
+                <a href="{{ persona.url_modifica_storico }}" class="text-danger">
+                    <i class="fa fa-fw fa-key"></i>
+                    Credenziali
+                </a>
+            </li>
+
+
+
+
+        {% endif %}
+
+
+    </ul>
+    <p>&nbsp;</p>
+
+
+    {% block profilo_corpo %}
+    {% endblock %}
+
+
+</div>
+{% endblock %}

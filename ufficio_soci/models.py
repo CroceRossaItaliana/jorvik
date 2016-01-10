@@ -22,6 +22,8 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         verbose_name = "Richiesta Tesserino Associativo"
         verbose_name_plural = "Richieste Tesserino Associativo"
 
+    persona = models.ForeignKey('anagrafica.Persona', related_name='tesserini')
+
 
 class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     class Meta:

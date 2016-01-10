@@ -94,6 +94,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     stato_residenza = CountryField("Stato di residenza", default="IT")
     cap_residenza = models.CharField("CAP di Residenza", max_length=16, null=True)
     email_contatto = models.EmailField("Email di contatto", max_length=64, blank=True)
+    note = models.TextField("Note aggiuntive", max_length=10000, blank=True, null=True,)
 
     avatar = models.ImageField("Avatar", blank=True, null=True,
                                upload_to=GeneratoreNomeFile('avatar/'),
@@ -539,7 +540,23 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def url(self):
-        return "/profilo/" + str(self.pk) + "/"
+        return "/profilo/%d/" % (self.pk,)
+
+    @property
+    def url_modifica_anagrafica(self):
+        return "%sanagrafica/" % (self.url,)
+
+    @property
+    def url_modifica_foto(self):
+        return "%sfotografie/" % (self.url,)
+
+    @property
+    def url_modifica_credenziali(self):
+        return "%scredenziali/" % (self.url,)
+
+    @property
+    def url_modifica_storico(self):
+        return "%sstorico/" % (self.url,)
 
     @property
     def messaggio_url(self):

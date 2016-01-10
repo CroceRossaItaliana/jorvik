@@ -1,0 +1,25 @@
+{% extends 'anagrafica_profilo.html' %}
+
+{% load bootstrap3 %}
+
+{% block profilo_corpo %}
+
+    <div class="row">
+
+        <div class="col-md-6">
+
+            <form method="POST">
+                {% csrf_token %}
+                {% bootstrap_form modulo %}
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-fw fa-save"></i>
+                    Salva modifiche
+                </button>
+
+            </form>
+        </div>
+
+    </div>
+
+{% endblock %}
