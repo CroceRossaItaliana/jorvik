@@ -61,7 +61,7 @@ class Locazione(ConMarcaTemporale, models.Model):
         :return: Lista di risultati.
         """
         gmaps = googlemaps.Client(key=GOOGLE_KEY)
-        risultati = gmaps.geocode(indirizzo)
+        risultati = gmaps.geocode(indirizzo, region="it", language="it")
         return [
             (x['formatted_address'], x['geometry']['location'],
              cls.scomponi_indirizzo(x))
