@@ -85,7 +85,7 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=date.tod
     permessi = []
 
     # I permessi base di ogni persona
-    permessi += espandi_persona(al_giorno=al_giorno)
+    permessi += espandi_persona(persona=persona, al_giorno=al_giorno)
 
     # Per ogni delega attuale, aggiungi i permessi
     for d in persona.deleghe_attuali(al_giorno=al_giorno):

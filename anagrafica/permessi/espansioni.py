@@ -17,7 +17,7 @@ Questo file gestisce la espansione dei permessi in Gaia.
 """
 
 
-def espandi_persona(al_giorno=date.today()):
+def espandi_persona(persona, al_giorno=date.today()):
     return [
 
     ]
