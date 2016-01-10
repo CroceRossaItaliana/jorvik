@@ -275,7 +275,7 @@ def ottieni_comitato(tipo='nazionali', id=1):
     cursore = db.cursor()
     cursore.execute("""
         SELECT
-            id, nome, X(geo), Y(geo)""" + (", principale" if tipo == 'comitati' else " ") + """
+            id, nome, X(geo), Y(geo)""" + (", principale, attivo" if tipo == 'comitati' else " ") + """
         FROM
             """ + tipo + """
         WHERE id = %s
@@ -300,6 +300,7 @@ def ottieni_comitato(tipo='nazionali', id=1):
         'x': comitato[2],
         'y': comitato[3],
         'principale': (True if comitato[4] else False) if len(comitato) > 4 else False,
+        'attivo': (True if int(comitato[5]) == 1 else False) if len(comitato) > 5 else True,
         'dati': dict
     }
 
@@ -748,6 +749,10 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
         ASSOC_ID_COMITATI[COMITATO_OID[tipo]].update({id: (Sede, ref.pk)})
         c = ref
 
+    attiva = True
+    if not comitato['attivo']:
+        attiva = False
+
     else:
 
         c = Sede(
@@ -756,6 +761,7 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
             tipo=Sede.COMITATO,
             estensione=COMITATO_ESTENSIONE[tipo],
             vecchio_id=int(id),
+            attiva=attiva,
         )
         c.save()
 
