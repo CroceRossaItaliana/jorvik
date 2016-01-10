@@ -24,3 +24,4 @@ django-multiupload==0.5
 ftfy==4.0
 django-loginas==0.1.8
 sorl-thumbnail==12
+python-stdnum==1.2

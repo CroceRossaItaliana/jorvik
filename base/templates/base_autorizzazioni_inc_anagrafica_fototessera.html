@@ -1,0 +1,22 @@
+{% load thumbnail %}
+
+<a href="{{ richiesta.oggetto.file.url }}" target="_new" title="Vedi fototessera">
+    {% thumbnail richiesta.oggetto.file "400x400" crop="center" as im %}
+        <img src="{{ im.url }}" width="150" height="150"
+             align="left" alt="Anteprima fototessera"
+             style="margin-right: 8px; margin-bottom: 5px; border: 1px solid black;" />
+    {% endthumbnail %}
+</a>
+
+<p>{{ richiesta.oggetto.persona.link|safe }} chiede l'approvazione della seguente fotografia
+    per l'uso come fototessera.
+    <a href="{{ richiesta.oggetto.file.url }}" target="_new" title="Vedi fototessera">
+        Vedi fotografia.
+    </a>
+</p>
+
+<p>&Egrave; necessario assicurarsi che la fottoessera rispetti le norme riportate
+    <a target="_new" href="http://wiki.gaia.cri.it/index.php?title=Manuale_del_Volontario#Norme_generali">
+        in questa pagina
+    </a>.</p>
+

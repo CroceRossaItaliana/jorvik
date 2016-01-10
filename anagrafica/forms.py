@@ -3,7 +3,8 @@ import datetime
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 from django.forms import ModelForm
-from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega
+from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega, \
+    Fototessera
 from autenticazione.models import Utenza
 import autocomplete_light
 
@@ -69,15 +70,21 @@ class ModuloStepAnagrafica(ModelForm):
     class Meta:
         model = Persona
         fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita', 'provincia_nascita', 'stato_nascita',
-                  'codice_fiscale',
+                  'codice_fiscale', 'genere',
                   'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
                   'cap_residenza']
+
+    def clean_codice_fiscale(self):
+        codice_fiscale = self.cleaned_data.get('codice_fiscale')
+        # Qui si potrebbe controllare la validita' del codice fiscale,
+        #  cosa che attualmente abbiamo deciso di non fare.
+        return codice_fiscale
 
 
 class ModuloModificaAnagrafica(ModelForm):
     class Meta:
         model = Persona
-        fields = ['data_nascita', 'comune_nascita', 'provincia_nascita', 'stato_nascita',
+        fields = ['comune_nascita', 'provincia_nascita', 'stato_nascita',
                   'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
                   'cap_residenza']
 
@@ -86,6 +93,12 @@ class ModuloModificaAvatar(ModelForm):
     class Meta:
         model = Persona
         fields = ['avatar']
+
+
+class ModuloNuovaFototessera(ModelForm):
+    class Meta:
+        model = Fototessera
+        fields = ['file']
 
 
 class ModuloCreazioneDocumento(ModelForm):

@@ -33,13 +33,15 @@ from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DIC
 from anagrafica.permessi.delega import delega_permessi
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
+from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
+    crea_validatore_dimensione_file
 from attivita.models import Turno
 
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
     Autorizzazione, ConVecchioID
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
-from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo
+from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati
 from base.utils import is_list, sede_slugify
 from autoslug import AutoSlugField
 
@@ -74,7 +76,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     # Informazioni anagrafiche
     nome = models.CharField("Nome", max_length=64)
     cognome = models.CharField("Cognome", max_length=64)
-    codice_fiscale = models.CharField("Codice Fiscale", max_length=16, blank=False, unique=True, db_index=True)
+    codice_fiscale = models.CharField("Codice Fiscale", max_length=16, blank=False,
+                                      unique=True, db_index=True, validators=[valida_codice_fiscale,])
     data_nascita = models.DateField("Data di nascita", db_index=True, null=True)
     genere = models.CharField("Genere", max_length=1, choices=GENERE, db_index=True)
 
@@ -92,7 +95,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     cap_residenza = models.CharField("CAP di Residenza", max_length=16, null=True)
     email_contatto = models.EmailField("Email di contatto", max_length=64, blank=True)
 
-    avatar = models.ImageField("Avatar", blank=True, null=True, upload_to=GeneratoreNomeFile('avatar/'))
+    avatar = models.ImageField("Avatar", blank=True, null=True,
+                               upload_to=GeneratoreNomeFile('avatar/'),
+                               validators=[crea_validatore_dimensione_file(mb=5)])
 
     @property
     def nome_completo(self):
@@ -120,6 +125,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         if self.email_contatto:
             return self.email_contatto
         return self.email_utenza
+
+    @property
+    def genere_codice_fiscale(self):
+        return ottieni_genere_da_codice_fiscale(self.codice_fiscale, default=None)
 
     @property
     def email_firma(self):
@@ -264,6 +273,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         Se non esiste, lancia ObjectDoesNotExist.
         """
         return self.fototessere.filter(confermata=True).latest('ultima_modifica')
+
+    def fototessere_pending(self):
+        """
+        Ottiene il queryset di fototessere in attesa di conferma.
+        :return: QuerySet<Fototessera>
+        """
+        return Fototessera.con_esito_pending().filter(persona=self)
 
     @property
     def eta(self, al_giorno=date.today()):
@@ -530,6 +546,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.url + "messaggio/"
 
     @property
+    def url_messaggio(self):
+        return self.messaggio_url
+
+    @property
     def link(self):
         return "<a href='" + str(self.url) + "'>" + str(self.nome_completo) + "</a>"
 
@@ -587,6 +607,17 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return self._autorizzazioni_in_attesa().order_by('creazione')
 
+    def deleghe_anagrafica(self):
+        """
+        Ritora un queryset di tutte le deleghe attuali alle persone che sono
+        autorizzate a gestire la scheda anagrafica di questa persona.
+        :return: QuerySet<Delega>
+        """
+        i = Delega.objects.none()
+        for s in self.sedi_attuali(membro__in=Appartenenza.MEMBRO_DIRETTO):
+            i |= s.deleghe_attuali().filter(tipo__in=[PRESIDENTE, UFFICIO_SOCI])
+        return i
+
 
     @property
     def trasferimento(self):
@@ -624,6 +655,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 self.stato_residenza
             ))
             return a
+
+    def sede_riferimento(self):
+        sedi = self.sedi_attuali(membro__in=Appartenenza.MEMBRO_DIRETTO).order_by('-appartenenze__inizio').first()
+        if sedi:
+            return sedi.comitato
+        return sedi
+
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """
@@ -751,7 +789,8 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
 
     tipo = models.CharField(choices=TIPO, max_length=1, default=CARTA_IDENTITA, db_index=True)
     persona = models.ForeignKey(Persona, related_name="documenti", db_index=True)
-    file = models.FileField("File", upload_to=GeneratoreNomeFile('documenti/'))
+    file = models.FileField("File", upload_to=GeneratoreNomeFile('documenti/'),
+                            validators=[crea_validatore_dimensione_file(mb=10)])
 
     class Meta:
         verbose_name_plural = "Documenti"
@@ -886,7 +925,7 @@ class SedeQuerySet(QuerySet):
         return qs
 
 
-class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID):
+class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID, ConDelegati):
 
     class Meta:
         verbose_name = "Sede CRI"
@@ -1186,7 +1225,10 @@ class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
         verbose_name_plural = "Fototessere"
 
     persona = models.ForeignKey(Persona, related_name="fototessere", db_index=True)
-    file = models.ImageField("Fototessera", upload_to=GeneratoreNomeFile('fototessere/'))
+    file = models.ImageField("Fototessera", upload_to=GeneratoreNomeFile('fototessere/'),
+                             validators=[crea_validatore_dimensione_file(mb=8)])
+
+    RICHIESTA_NOME = "Fototessera"
 
 
 class Dimissione(ModelloSemplice, ConMarcaTemporale):

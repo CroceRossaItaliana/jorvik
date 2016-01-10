@@ -3,7 +3,10 @@
 import os, sys
 
 import phonenumbers
+from django.core.files import File
 
+from anagrafica.validators import ottieni_genere_da_codice_fiscale
+from base.stringhe import GeneratoreNomeFile
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
@@ -66,6 +69,9 @@ parser.add_argument('--salta-comitati', dest='comitati', action='store_const',
 parser.add_argument('--salta-anagrafiche', dest='anagrafiche', action='store_const',
                    const=False, default=True,
                    help='salta importazione anagrafiche (usa cache precedente)')
+parser.add_argument('--salta-avatar', dest='avatar', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione avatar')
 parser.add_argument('--salta-appartenenze', dest='appartenenze', action='store_const',
                    const=False, default=True,
                    help='salta importazione appartenenze (usa cache precedente)')
@@ -105,9 +111,14 @@ parser.add_argument('--salta-aspiranti', dest='aspiranti', action='store_const',
 parser.add_argument('--salta-trasferimenti', dest='trasferimenti', action='store_const',
                    const=False, default=True,
                    help='salta importazione trasferimenti (usa cache precedente)')
+
+parser.add_argument('--uploads', dest='uploads', action='store',
+                   help='path assoluta alla cartella upload/ di Gaia vecchio')
+
 parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
                    const=True, default=False,
                    help='ignora errori di integrità (solo test)')
+
 
 args = parser.parse_args()
 
@@ -280,6 +291,14 @@ def ottieni_comitato(tipo='nazionali', id=1):
         'dati': dict
     }
 
+def path(filename):
+    if not args.uploads:
+        raise ValueError("Path non specificata. Usare --uploads.")
+    return args.uploads + (str(filename))
+
+def esiste(filename):
+    return os.path.isfile(filename)
+
 def mysql_copia_tabella_in_memoria(vecchia, nuova, campi_text=[], indici=['id']):
     query = "DROP TABLE IF EXISTS " + nuova + ";\n"
     for campo in campi_text:
@@ -397,12 +416,14 @@ def carica_anagrafiche():
         provincia_residenza = stringa(dict.get('provinciaResidenza')[0:2]) if dict.get('provinciaResidenza') else ''
         provincia_nascita = stringa(dict.get('provinciaNascita')[0:2]) if dict.get('provinciaNascita') else provincia_residenza
         data_nascita = data_da_timestamp(dict.get('dataNascita'), default=None)
+        genere_registrato = Persona.MASCHIO if dati['sesso'] == 1 else Persona.FEMMINA
+        genere = ottieni_genere_da_codice_fiscale(dati['codiceFiscale'], default=genere_registrato)
         p = Persona(
             nome=dati['nome'],
             cognome=dati['cognome'],
             codice_fiscale=dati['codiceFiscale'],
             data_nascita=data_nascita,
-            genere=Persona.MASCHIO if dati['sesso'] == 1 else Persona.FEMMINA,
+            genere=genere,
             stato=Persona.PERSONA,
             comune_nascita=stringa(dict.get('comuneNascita')) if dict.get('comuneNascita') else '',
             provincia_nascita=provincia_nascita,
@@ -2359,6 +2380,59 @@ def carica_trasferimenti():
     cursore.close()
 
 
+def carica_avatar():
+
+    print("  - Caricamento degli avatar...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, utente, timestamp
+        FROM
+            avatar
+        WHERE
+                utente IS NOT NULL
+        """
+    )
+
+    avatars = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    generatore = GeneratoreNomeFile('avatar/')
+
+    for avatar in avatars:
+        contatore += 1
+
+        try:
+            id = int(avatar[0])
+            utente = int(avatar[1])
+
+        except ValueError:
+            print("    - SALTATO Record non valido.")
+            continue
+
+        try:
+            persona = Persona.objects.get(pk=ASSOC_ID_PERSONE[utente])
+        except KeyError:
+            print("    - SALTATO Persona id=%d non esiste" % (utente,))
+            continue
+
+        nomefile = path("avatar/80/%d.jpg" % (id,))
+        try:
+            originale = open(nomefile, 'rb')
+        except:
+            print("    - SALTATO File non esiste path=%s" % (nomefile,))
+            continue
+
+        dfile = File(originale)
+        nuovonome = generatore(persona, nomefile)
+        persona.avatar.save(nuovonome, dfile, save=True)
+        print("     %s OK persona id=%d, avatar=%s" % (progresso(contatore, totale), utente, nuovonome,))
+
+
+    cursore.close()
+
 
 
 
@@ -2380,7 +2454,6 @@ else:
     ASSOC_ID_COMITATI = pickle.load(open("comitati.pickle-tmp", "rb"))
 
 # Importazione delle Anagrafiche
-
 print("> Importazione delle Anagrafiche")
 if args.anagrafiche:
     print("  - Eliminazione attuali")
@@ -2395,6 +2468,16 @@ else:
     print("  ~ Carico tabella delle corrispondenze (persone.pickle-tmp)")
     ASSOC_ID_PERSONE = pickle.load(open("persone.pickle-tmp", "rb"))
 
+# Importazione degli Avatar
+print("> Importazione degli Avatar")
+if args.avatar:
+    if not args.uploads:
+        raise ValueError("Path non specificata. Usa --uploads.")
+
+    print("  - Eliminazione attuali")
+    Persona.objects.all().exclude(avatar__isnull=True).update(avatar=None)
+    print("  - Importazione avatar (path: %s)" % (args.uploads,))
+    carica_avatar()
 
 # Importazione delle Appartenenze
 print("> Importazione delle Appartenenze")

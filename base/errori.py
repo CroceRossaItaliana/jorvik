@@ -55,3 +55,14 @@ def errore_generico(request, me=None,
         "errore_torna_url": torna_url,
     }
     return 'base_errore_generico.html', contesto
+
+
+def errore_nessuna_appartenenza(request, me=None, torna_url="/utente/"):
+    return errore_generico(request, me,
+                            titolo="Necessaria appartenenza,",
+                            messaggio="Per effettuare questa azione è necessaria "
+                                      "la verifica di un Presidente o delegato Ufficio Soci. "
+                                      "Non hai alcuna appartenenza a una Sede CRI confermata su Gaia.",
+                            torna_titolo="Torna indietro",
+                            torna_url=torna_url,
+                           )

@@ -1,0 +1,70 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Gestione Fotografia{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="row">
+
+        <div class="col-md-4">
+            <div class="list-group">
+                <a href="/utente/fotografia/avatar/" class="list-group-item
+                {% if me.avatar %}
+                    list-group-item-success
+                {% else %}
+                    list-group-item-danger
+                {% endif %}
+
+                {% if "avatar" in request.path %}active{% endif %}
+
+                ">
+                    <h4 class="list-group-item-heading">
+                        Foto del profilo (informale)
+                    </h4>
+                    <p class="list-group-item-text">
+                        Questa foto viene mostrata agli altri volontari, come ad esempio
+                        nelle attivit&agrave; a cui partecipi o accanto ai tuoi commenti.
+                    </p>
+                </a>
+            </div>
+
+
+            <div class="list-group">
+                <a href="/utente/fotografia/fototessera/" class="list-group-item  list-group-item
+                {% if me.fototessera_attuale %}
+                    list-group-item-success
+                {% elif me.fototessere.all %}
+                    list-group-item-warning
+                {% else %}
+                    list-group-item-danger
+                {% endif %}
+
+                {% if "fototessera" in request.path %}active{% endif %}
+
+                ">
+                    <h4 class="list-group-item-heading">
+                        Fototessera (formale)
+                    </h4>
+                    <p class="list-group-item-text">
+                        Questa fotografia viene mostrata solo ai delegati ed &egrave; usata
+                        per identificarti. Per i volontari, questa &egrave; la foto che viene
+                        stampata sul tesserino.
+                    </p>
+                </a>
+            </div>
+
+
+        </div>
+
+        <div class="col-md-8">
+
+            {% block fotografia_corpo %}
+            {% endblock %}
+
+        </div>
+    </div>
+
+
+{% endblock %}

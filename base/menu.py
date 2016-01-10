@@ -25,11 +25,12 @@ def menu(request):
                 ("Storico", "fa-clock-o", "/utente/storico/"),
                 ("Documenti", "fa-folder", "/utente/documenti/"),
                 ("Contatti", "fa-envelope", "/utente/contatti/"),
+                ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
             )),
             ("Volontario", (
                 ("Estensione", "fa-arrow-right", "/utente/estensione/"),
                 ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
-            )) if me and me.volontario else None,
+            )) ,
             ("Curriculum", (
                 ("Competenze personali", "fa-arrow-right", "/utente/curriculum/CP/"),
                 ("Patenti Civili", "fa-arrow-right", "/utente/curriculum/PP/"),

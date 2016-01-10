@@ -9,6 +9,7 @@ from safedelete import safedelete_mixin_factory, SOFT_DELETE
 from mptt.models import MPTTModel, TreeForeignKey
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
 from anagrafica.permessi.costanti import DELEGHE_OGGETTI_DICT
+from anagrafica.validators import crea_validatore_dimensione_file
 from base.forms import ModuloMotivoNegazione
 from base.notifiche import NOTIFICA_NON_INVIARE
 from base.stringhe import GeneratoreNomeFile
@@ -423,6 +424,7 @@ class ConAutorizzazioni(models.Model):
         :return:
         """
         self.ritirata = True
+        self.save()
 
         # Non diventa piu' necessaria alcuna autorizzazione tra quelle richieste
         self.autorizzazioni.update(necessaria=False)
@@ -507,8 +509,9 @@ class Allegato(ConMarcaTemporale, ConScadenza, ModelloSemplice):
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True, blank=True, null=True, related_name="allegato_come_oggetto")
     oggetto_id = models.PositiveIntegerField(db_index=True, blank=True, null=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
-    file = models.FileField("File", upload_to=GeneratoreNomeFile('allegati/'))
-    nome = models.CharField("Nome file", max_length=64, default="File", blank=False, null=False)
+    file = models.FileField("File", upload_to=GeneratoreNomeFile('allegati/'),
+                            validators=[crea_validatore_dimensione_file(mb=3)])
+    nome = models.CharField("Nome file", max_length=255, default="File", blank=False, null=False)
 
     @property
     def download_url(self):

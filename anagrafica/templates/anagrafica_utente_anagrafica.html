@@ -1,6 +1,7 @@
 {% extends "anagrafica_utente_vuota.html" %}
 
 {% load bootstrap3 %}
+{% load thumbnail %}
 
 {% block pagina_titolo %}Modifica Anagrafica{% endblock %}
 
@@ -12,24 +13,15 @@
             Non &egrave; pi&ugrave; necessario che le modifiche alla tua anagrafica vengano approvate.
             Tieni presente che ogni modifica verr&agrave; registrata.
         </p>
-        <p>
-            <i class="fa fa-warning fa-fw"></i> Nota bene: Per motivi di sicurezza, le correzioni al tuo nome
-            (<strong>{{ me.nome_completo }}</strong>) o al tuo codice fiscale (<strong>{{ me.codice_fiscale }}</strong>),
-            possono essere effettuate solo dall'Ufficio Soci o il Presidente della tua Sede di appartenenza.
-        </p>
     </div>
 
     <form action="/utente/anagrafica/" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
 
 
-
-
-
-
         <div class="row">
 
-            <div class="col-lg-8">
+            <div class="col-lg-7">
 
                 <div class="panel panel-primary">
 
@@ -54,58 +46,87 @@
 
             </div>
 
-            <div class="col-lg-4">
+            <div class="col-lg-5">
 
                 <div class="panel panel-info">
 
                     <div class="panel-heading">
-                        Immagine di profilo
+                        <i class="fa fa-fw fa-user"></i> Informazioni di base
                     </div>
 
                     <div class="panel-body">
 
-                        {% if me.avatar %}
-                            <img src="{{ me.avatar.url }}" alt="La tua immagine di profilo">
-                        {% endif %}
+                        <p>Le informazioni di base non possono essere modificate direttamente
+                            per motivi di sicurezza. Queste sono qui elencate:</p>
+
+                        <table class="table table-responsive table-striped">
+                            <tr>
+                                <td>Nome</td>
+                                <td class="grassetto">{{ me.nome }}</td>
+                            </tr>
+                            <tr>
+                                <td>Cognome</td>
+                                <td class="grassetto">{{ me.cognome }}</td>
+                            </tr>
+                            <tr>
+                                <td>Codice Fiscale</td>
+                                <td class="monospace">{{ me.codice_fiscale }}</td>
+                            </tr>
+                            <tr>
+                                <td>Data di nascita</td>
+                                <td>{{ me.data_nascita }}</td>
+                            </tr>
+
+                        </table>
+
+                            <p>Se qualcosa &egrave; sbagliato tra le informazioni qui sopra,
+                                puoi richiederne la modifica cos&iacute;:</p>
+
+                            <ol>
+
+                                <li>Assicurati di aver caricato un documento d'identit&agrave;
+                                    valido e recente <a href="/utente/documenti/">nella sezione
+                                    documenti</a>;</li>
+
+                                {% if delegati %}
+                                    <li>
+                                        Usa i collegamenti seguenti per contattare
+                                        il delegato Ufficio Soci, oppure il tuo Presidente,
+                                        spiegando l'errore che hai individuato e richiedendo
+                                        la modifica dei tuoi dati su Gaia:
+
+                                        <ul>
+                                            {% for delega in delegati %}
+                                                <li>
+                                                    <a href="{{ delega.persona.url_messaggio }}">
+                                                        {{ delega.persona.nome_completo }}
+                                                    </a>
+                                                    ({{ delega.get_tipo_display }})
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </li>
+
+                                {% else %}
+
+                                    <li>
+                                        Contatta il <a href="/supporto"/>Supporto di Gaia</a>, spiegando
+                                        l'errore che hai individuato e richiedendo la modifica dei tuoi
+                                        dati.
+                                    </li>
+
+                                {% endif %}
+
+                            </ol>
 
 
-                        {% if not me.avatar %}
-                            <p class="alert bg-warning">
-                                <i class="fa fa-warning"></i> Nessuna immagine di profilo caricata. Usa il pulsante qui sotto per scegliere una immagine da usare come immagine di profilo.
-                            </p>
-                        {% endif %}
 
-                        {% bootstrap_form modulo_avatar %}
 
                     </div>
 
                 </div>
 
 
-                <div class="panel panel-primary">
-
-                    <div class="panel-heading">
-                        Fototessera
-                    </div>
-
-                    <div class="panel-body">
-
-                        {% if me.avatar %}
-                            <img src="{{ me.avatar.url }}" alt="La tua immagine di profilo">
-                        {% endif %}
-
-
-                        {% if not me.avatar %}
-                            <p class="alert bg-warning">
-                                <i class="fa fa-warning"></i> Nessuna fototessera caricata. Usa il pulsante qui sotto per scegliere una immagine da usare come fototessera.
-                            </p>
-                        {% endif %}
-
-                        {% bootstrap_form modulo_avatar %}
-
-                    </div>
-
-                </div>
 
 
             </div>
