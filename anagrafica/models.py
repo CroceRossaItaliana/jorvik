@@ -41,7 +41,7 @@ from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
     Autorizzazione, ConVecchioID
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
-from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati
+from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
 from base.utils import is_list, sede_slugify
 from autoslug import AutoSlugField
 
@@ -1254,7 +1254,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     appartenenza = models.ForeignKey(Appartenenza, related_name='dimissione')
 
 
-class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
+class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     """
     Rappresenta una pratica di trasferimento.
     """
@@ -1319,7 +1319,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         )
         return pdf
 
-class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
+class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     """
     Rappresenta una pratica di estensione.
     """

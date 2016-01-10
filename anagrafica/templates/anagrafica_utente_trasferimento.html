@@ -30,7 +30,7 @@
                     <td>{{ trasferimento.richiedente }}</td>
                     <td>{{ trasferimento.destinazione }}</td>
                     <td>{{ trasferimento.esito}}</td>
-                    <td></td>
+                    <td><a href="{{ trasferimento.url_pdf }}" class="">Scarica PDF</a> </td>
                 </tr>
                 {% empty %}
                     <tr>
