@@ -6,6 +6,7 @@ import phonenumbers
 from django.core.files import File
 
 from anagrafica.validators import ottieni_genere_da_codice_fiscale
+from base.notifiche import NOTIFICA_NON_INVIARE
 from base.stringhe import GeneratoreNomeFile
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
@@ -35,7 +36,7 @@ application = get_wsgi_application()
 
 from django.template.backends import django
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
-from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento
+from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Fototessera
 from base.geo import Locazione
 from ufficio_soci.models import Quota, Tesseramento
 import argparse
@@ -72,6 +73,9 @@ parser.add_argument('--salta-anagrafiche', dest='anagrafiche', action='store_con
 parser.add_argument('--salta-avatar', dest='avatar', action='store_const',
                    const=False, default=True,
                    help='salta importazione avatar')
+parser.add_argument('--salta-fototessere', dest='fototessere', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione fototessere')
 parser.add_argument('--salta-appartenenze', dest='appartenenze', action='store_const',
                    const=False, default=True,
                    help='salta importazione appartenenze (usa cache precedente)')
@@ -2433,6 +2437,86 @@ def carica_avatar():
 
     cursore.close()
 
+def carica_fototessere():
+
+    print("  - Caricamento delle fototessere...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, utente, timestamp, stato
+        FROM
+            fototessera
+        WHERE
+                utente IS NOT NULL
+        AND     utente IN (SELECT id FROM anagrafica)
+
+        """
+    )
+
+    fts = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    generatore = GeneratoreNomeFile('fototessere/')
+
+    for ft in fts:
+        contatore += 1
+
+        try:
+            id = int(ft[0])
+            utente = int(ft[1])
+
+        except ValueError:
+            print("    - SALTATO Record non valido.")
+            continue
+
+        creazione = data_da_timestamp(ft[2])
+        stato = int(ft[3])
+
+        try:
+            persona = Persona.objects.get(pk=ASSOC_ID_PERSONE[utente])
+        except KeyError:
+            print("    - SALTATO Persona id=%d non esiste" % (utente,))
+            continue
+
+        nomefile = path("fototessere/80/%d.jpg" % (id,))
+        try:
+            originale = open(nomefile, 'rb')
+        except:
+            print("    - SALTATO File non esiste path=%s" % (nomefile,))
+            continue
+
+        dfile = File(originale)
+        nuovonome = generatore(persona, nomefile)
+
+        print("     %s persona id=%d, fototessera=%s" % (progresso(contatore, totale), utente, nuovonome,))
+
+        f = Fototessera(
+            persona=persona,
+            creazione=creazione,
+            ultima_modifica=creazione,
+        )
+        f.save()
+        f.file.save(nuovonome, dfile, save=True)
+
+        if stato == 0:  # Se pending.
+            s = persona.sede_riferimento()
+            if not s:
+                print("    - SALTATO pending, ma non ha appartenenza attuale.")
+                f.delete()
+                continue
+            print("    - richiesta autorizzazione a presidente e us sede pk=%d" % (s.pk,))
+            f.autorizzazione_richiedi(richiedente=persona,
+                                      destinatario=(
+                                          (PRESIDENTE,  s,  NOTIFICA_NON_INVIARE),
+                                          (UFFICIO_SOCI, s, NOTIFICA_NON_INVIARE)
+                                      ),
+                                      creazione=creazione)
+
+
+    cursore.close()
+
 
 
 
@@ -2478,6 +2562,17 @@ if args.avatar:
     Persona.objects.all().exclude(avatar__isnull=True).update(avatar=None)
     print("  - Importazione avatar (path: %s)" % (args.uploads,))
     carica_avatar()
+
+# Importazione delle fototessere
+print("> Importazione delle fototessere")
+if args.fototessere:
+    if not args.uploads:
+        raise ValueError("Path non specificata. Usa --uploads.")
+
+    print("  - Eliminazione attuali")
+    Fototessera.objects.all().delete()
+    print("  - Importazione fototessere (path: %s)" % (args.uploads,))
+    carica_fototessere()
 
 # Importazione delle Appartenenze
 print("> Importazione delle Appartenenze")
