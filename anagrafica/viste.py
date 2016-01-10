@@ -484,6 +484,8 @@ def utente_estensione(request, me):
             est = modulo.save(commit=False)
             if est.destinazione in me.sedi_attuali():
                 modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
+            elif est.destinazione in [x.destinazione for x in me.estensioni_attuali_e_in_attesa()]:
+                modulo.add_error('destinazione', 'Estensione già richiesta a questa sede.')
             else:
 
                 est.richiedente = me

@@ -6,13 +6,14 @@ from django.shortcuts import render, render_to_response, get_object_or_404, redi
 # Le viste base vanno qui.
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
-from anagrafica.permessi.costanti import ERRORE_PERMESSI
+from anagrafica.permessi.costanti import ERRORE_PERMESSI, LETTURA
 from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_privata
 from base import errori
 from base.errori import errore_generico
 from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLocalizzatore
 from base.geo import Locazione
 from base.models import Autorizzazione
+from base.tratti import ConPDF
 
 
 @pagina_pubblica
@@ -289,3 +290,16 @@ def geo_localizzatore_imposta(request, me):
     oggetto.imposta_locazione(request.POST['indirizzo'])
 
     return redirect("/geo/localizzatore/")
+
+@pagina_privata
+def pdf(request, me, app_label, model, pk):
+    oggetto = get_model(app_label, model)
+    oggetto = oggetto.objects.get(pk=pk)
+    if not isinstance(oggetto, ConPDF):
+        return errore_generico(request, None,
+                               messaggio="Impossibile generare un PDF per il tipo specificato.")
+    if not me.permessi_almeno(oggetto, LETTURA):
+        return redirect(ERRORE_PERMESSI)
+    pdf = oggetto.genera_pdf()
+    return redirect(pdf.download_url)
+

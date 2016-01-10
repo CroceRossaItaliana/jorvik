@@ -145,6 +145,8 @@ urlpatterns = [
 
     url(r'^media/(?P<path>.*)$', 'django.views.static.serve', {"document_root": MEDIA_ROOT}),
 
+    url(r'^pdf/(?P<app_label>.*)/(?P<model>.*)/(?P<pk>[0-9]+)/$', 'base.viste.pdf'),
+
     # Amministrazione
     url(r'^admin/', include(admin.site.urls)),
     url(r'^admin/', include('loginas.urls')),   # Login come utente

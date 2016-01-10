@@ -3,11 +3,23 @@
 {% load bootstrap3 %}
 
 <div class="row">
-    <hr>
-    <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        {% bootstrap_form modulo %}
-        <button type="submit" class="btn btn-primary">Invia</button>
-    </form>
-    <hr>
+    <div class="col-md-12">
+        <hr>
+        <div class="alert alert-block alert-info ">
+            <div class="row-fluid">
+                <span class="span7">
+                    <h4>Vuoi richiedere l'estesione su di un altro Comitato ?</h4>
+                    <p>Con questo modulo puoi richiedere l'estensione ad un altro Comitato</p>
+                    <p>Seleziona il Comitato su cui vuoi richiedere l'estensione e
+                    clicca su invia richiesta.</p>
+                </span>
+            </div>
+        </div>
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% bootstrap_form modulo %}
+            <button type="submit" class="btn btn-primary">Invia</button>
+        </form>
+        <hr>
+    </div>
 </div>

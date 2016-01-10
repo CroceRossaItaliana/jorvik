@@ -12,39 +12,95 @@
         </p>
     </div>
 
-    {% include "anagrafica_utente_estensione_stato.html" %}
+    <div class="row">
 
-    {% include "anagrafica_utente_estensione_richiedi.html" %}
+    <div class="col-md-8">
+        <div class="panel panel-info">
+
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-folder-o fa-fw"></i> Storico estensioni
+                </h4>
 
 
+            </div>
 
-<div class="row" style="margin-top: 5px;">
-    <div class="col-md-12">
-        <h3>Storico estesioni</h3>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Richiedente</th>
-                    <th>Destinazione</th>
-                    <th>Esito</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for estensione in storico %}
-                <tr>
-                    <td>{{ estensione.richiedente }}</td>
-                    <td>{{ estensione.destinazione }}</td>
-                    <td>{{ estensione.esito }}</td>
-                </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="5" class="bg-warning">
-                            <i class="fa fa-info"></i> Nessuna estensione passata.
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            <div class="panel-body">
+
+                <div class="row" style="margin-top: 5px;">
+                    <div class="col-md-12">
+                        <h3>Storico estesioni</h3>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Stato</th>
+                                    <th>Richiedente</th>
+                                    <th>Destinazione</th>
+
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for estensione in storico %}
+                                <tr {% if d.esito == estensione.ESITO_OK and d.attuale %}class="bg-success"
+                                    {% elif d.esito == estensione.ESITO_PENDING %}class="gb-warning"
+                                    {% endif %}>
+                                    <td>
+                                        {% if estensione.esito == estensione.ESITO_OK %}
+
+                                            {% if estensione.attuale %}
+                                                <i class="fa fa-check fa-fw"></i>
+                                                Attuale
+                                            {% else %}
+                                                <i class="fa fa-folder fa-fw"></i>
+                                                Passata
+                                            {% endif %}
+
+                                        {% elif estensione.esito == estensione.ESITO_PENDING %}
+                                            <i class="fa fa-clock-o fa-fw"></i>
+                                            In attesa
+                                        {% else %}
+                                            <i class="fa fa-remove fa-fw"></i>
+                                            Negata
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ estensione.richiedente }}</td>
+                                    <td>{{ estensione.destinazione.link|safe }}</td>
+                                </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="bg-warning">
+                                            <i class="fa fa-info"></i> Nessuna estensione passata.
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="panel panel-primary">
+
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-plus"></i> Richiedi Estensione
+                </h4>
+
+            </div>
+
+            <div class="panel-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
+                    <button type="submit" class="btn btn-primary">Invia</button>
+                </form>
+
+            </div>
+
+        </div>
     </div>
 </div>
+
 {% endblock %}

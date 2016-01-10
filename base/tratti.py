@@ -10,6 +10,7 @@ utilizzato.
 from datetime import date, datetime, timedelta
 from django.apps import AppConfig, apps
 from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
@@ -190,3 +191,21 @@ class ConDelegati(models.Model):
         d = Delega(oggetto=self, persona=persona, inizio=inizio, fine=fine, tipo=tipo, firmatario=firmatario)
         d.save()
         return d
+
+class ConPDF():
+
+    def genera_pdf(self):
+        raise NotImplemented('La classe non implementa il metodo "genera_pdf"')
+
+
+    @property
+    def url_pdf(self):
+        content_type = ContentType.objects.get_for_model(self)
+        app_label = content_type.app_label
+        model = content_type.model
+        pk = self.pk
+        return "/pdf/%s/%s/%d/" % (
+            app_label,
+            model,
+            pk
+        )
