@@ -1337,6 +1337,13 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
 
     RICHIESTA_NOME = "Estensione"
 
+    def attuale(self, **kwargs):
+        """
+        Controlla che l'estensione sia stata confermata e
+         l'appartenenza creata sia in corso.
+        """
+        return self.esito == self.ESITO_OK and self.appartenenza.attuale(**kwargs)
+
     def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiEstensione
         return ModuloConsentiEstensione
