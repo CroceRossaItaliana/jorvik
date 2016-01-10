@@ -1333,7 +1333,6 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     appartenenza = models.ForeignKey(Appartenenza, related_name='estensione', null=True, blank=True)
     protocollo_numero = models.PositiveIntegerField('Numero di protocollo', null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
-    attuale = models.CharField('Attualità della richiesta', max_length=1, default='s')
     motivo = models.CharField(max_length=2048, null=True, blank=False,)
 
     RICHIESTA_NOME = "Estensione"

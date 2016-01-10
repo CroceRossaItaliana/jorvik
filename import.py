@@ -36,7 +36,7 @@ application = get_wsgi_application()
 
 from django.template.backends import django
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
-from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Fototessera, Documento
+from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Fototessera, Documento, Estensione
 from base.geo import Locazione
 from ufficio_soci.models import Quota, Tesseramento
 import argparse
@@ -118,6 +118,9 @@ parser.add_argument('--salta-aspiranti', dest='aspiranti', action='store_const',
 parser.add_argument('--salta-trasferimenti', dest='trasferimenti', action='store_const',
                    const=False, default=True,
                    help='salta importazione trasferimenti (usa cache precedente)')
+parser.add_argument('--salta-estensioni', dest='estensioni', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione estensioni (usa cache precedente)')
 
 parser.add_argument('--uploads', dest='uploads', action='store',
                    help='path assoluta alla cartella upload/ di Gaia vecchio')
@@ -252,6 +255,8 @@ ASSOC_ID_CORSIBASE_PARTECIPAZIONI = {}
 ASSOC_ID_ASPIRANTI = {}
 
 ASSOC_ID_TRASFERIMENTI = {}
+
+ASSOC_ID_ESTENSIONI = {}
 
 
 def parse_numero(numero, paese="IT"):
@@ -2598,6 +2603,41 @@ def carica_documenti():
     cursore.close()
 
 
+def carica_estensioni():
+
+    print("  - Caricamento delle estensioni...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, stato, appartenenza, volontario, cProvenienza, protNumero, protData,
+            motivo, negazione, timestamp, pConferma, tConferma
+        FROM
+            documenti
+        WHERE
+                volontario IS NOT NULL
+            AND id IS NOT NULL
+        """
+    )
+
+    docs = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    generatore = GeneratoreNomeFile('documenti/')
+
+    for doc in docs:
+        contatore += 1
+
+        try:
+            id = stringa(doc[0])
+            utente = int(doc[1])
+
+        except ValueError:
+            print("    - SALTATO Record non valido.")
+            continue
+
+
 # Importazione dei Comitati
 
 print("> Importazione dei Comitati")
@@ -2907,5 +2947,21 @@ if args.trasferimenti:
 else:
     print("  ~ Carico tabella delle corrispondenze (formazione-aspiranti.pickle-tmp)")
     ASSOC_ID_TRASFERIMENTI = pickle.load(open("trasferimenti.pickle-tmp", "rb"))
+
+
+# Importazione delle estensioni
+print("> Importazione delle estensioni")
+if args.estensioni:
+    print("  - Eliminazione attuali")
+
+    Estensione.objects.all().delete()
+    carica_estensioni()
+
+    print("  ~ Persisto tabella delle corrispondenze (estensioni.pickle-tmp)")
+    pickle.dump(ASSOC_ID_ESTENSIONI, open("estensioni.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (estensioni.pickle-tmp)")
+    ASSOC_ID_ESTENSIONI = pickle.load(open("estensioni.pickle-tmp", "rb"))
 
 # print(ASSOC_ID_COMITATI)
