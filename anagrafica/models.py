@@ -975,6 +975,8 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     codice_fiscale = models.CharField("Codice Fiscale", max_length=32, blank=True)
     partita_iva = models.CharField("Partita IVA", max_length=32, blank=True)
 
+    attiva = models.BooleanField("Attiva", default=True, db_index=True)
+
     def sorgente_slug(self):
         if self.genitore:
             return str(self.genitore.slug) + "-" + self.nome
@@ -1379,6 +1381,15 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         self.appartenenza.terminazione = Appartenenza.FINE_ESTENSIONE
         self.attuale = 'n'
         self.save()
+
+
+class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
+              ConAutorizzazioni, ConPDF):
+    """
+    Rappresenta una pratica di riserva.
+    Questa puo' essere in corso o meno.
+    """
+
 
 
 class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocollo):
