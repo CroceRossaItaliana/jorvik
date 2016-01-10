@@ -1,3 +1,4 @@
+from django.utils import timezone
 from stdnum.it import codicefiscale
 from django.core.exceptions import ValidationError
 
@@ -46,3 +47,10 @@ def valida_dimensione_file_8mb(fieldfile_obj):
     megabyte_limit = 8
     if filesize > megabyte_limit*1024*1024:
         raise ValidationError("Seleziona un file più piccolo di %sMB" % str(megabyte_limit))
+
+
+def valida_almeno_14_anni(data):
+    anni = 14
+    al_giorno = timezone.now().date()
+    if (al_giorno.year - data.year - ((al_giorno.month, al_giorno.day) < (data.month, data.day))) <  anni:
+        raise ValidationError("Sono necessari almeno %d anni di età" % (anni,))

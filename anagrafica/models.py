@@ -13,6 +13,7 @@ Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 """
 from datetime import date, timedelta, datetime
 
+import codicefiscale
 import mptt
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -34,7 +35,7 @@ from anagrafica.permessi.delega import delega_permessi
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
 from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
-    crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb
+    crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb, valida_almeno_14_anni
 from attivita.models import Turno
 from base.files import PDF
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
@@ -78,7 +79,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     cognome = models.CharField("Cognome", max_length=64)
     codice_fiscale = models.CharField("Codice Fiscale", max_length=16, blank=False,
                                       unique=True, db_index=True, validators=[valida_codice_fiscale,])
-    data_nascita = models.DateField("Data di nascita", db_index=True, null=True)
+    data_nascita = models.DateField("Data di nascita", db_index=True, null=True,
+                                    validators=[valida_almeno_14_anni])
     genere = models.CharField("Genere", max_length=1, choices=GENERE, db_index=True)
 
     # Stato
@@ -292,7 +294,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def giovane(self, **kwargs):
-        return self.eta(**kwargs) <= self.ETA_GIOVANE
+        return self.eta <= self.ETA_GIOVANE
 
     """
     # Gestione della Privacy
@@ -694,6 +696,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         genere = self.genere_codice_fiscale or self.genere
         return 'o' if genere == self.MASCHIO else 'a'
+
+    def genera_inizio_codice_fiscale(self):
+        return codicefiscale.build(
+            self.cognome, self.nome, self.data_nascita,
+            self.genere_codice_fiscale, 'D969'
+        )[0:11]
+
+    def codice_fiscale_verosimile(self):
+        """
+        Controlla se il codice fiscale e' verosimile o meno
+        """
+        return self.genera_inizio_codice_fiscale() in self.codice_fiscale
 
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):

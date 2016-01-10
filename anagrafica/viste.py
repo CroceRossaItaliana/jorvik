@@ -22,6 +22,7 @@ from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.errori import errore_generico, errore_nessuna_appartenenza
 from base.files import Zip
+from base.models import Log
 from base.notifiche import NOTIFICA_INVIA
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
@@ -717,6 +718,7 @@ def profilo_anagrafica(request, me, pk):
 
     modulo = ModuloProfiloModificaAnagrafica(request.POST or None, instance=persona)
     if modulo.is_valid():
+        Log.registra_modifiche(me, modulo)
         modulo.save()
 
     contesto = {
