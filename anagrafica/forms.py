@@ -121,7 +121,7 @@ class ModuloCreazioneTelefono(forms.Form):
     tipologia = forms.ChoiceField(choices=TIPOLOGIA, initial=PERSONALE, widget=forms.RadioSelect())
 
 
-class ModuloCreazioneEstensione(ModelForm):
+class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
     class Meta:
         model = Estensione
         fields = ['destinazione']
@@ -132,7 +132,7 @@ class ModuloConsentiEstensione(forms.Form):
     protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data di registrazione del protocollo.")
 
 
-class ModuloCreazioneTrasferimento(ModelForm):
+class ModuloCreazioneTrasferimento(autocomplete_light.ModelForm):
     class Meta:
         model = Estensione
         fields = ['destinazione']
