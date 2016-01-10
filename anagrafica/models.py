@@ -662,6 +662,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return sedi.comitato
         return sedi
 
+    @property
+    def genere_o_a(self):
+        """
+        Ritorna 'o' per un uomo, 'a' per una donna.
+        """
+        genere = self.genere_codice_fiscale or self.genere
+        return 'o' if genere == self.MASCHIO else 'a'
+
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """
