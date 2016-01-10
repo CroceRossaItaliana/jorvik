@@ -99,7 +99,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     firmatario = models.ForeignKey("anagrafica.Persona", db_index=True, blank=True, null=True, default=None,
                                    related_name="autorizzazioni_firmate")
     concessa = models.NullBooleanField("Esito", db_index=True, blank=True, null=True, default=None)
-    motivo_negazione = models.CharField(blank=True, null=True, max_length=256)
+    motivo_negazione = models.CharField(blank=True, null=True, max_length=512)
 
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="autcomeoggetto")
     oggetto_id = models.PositiveIntegerField(db_index=True)

@@ -664,8 +664,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             ))
             return a
 
-    def sede_riferimento(self):
-        sedi = self.sedi_attuali(membro__in=Appartenenza.MEMBRO_DIRETTO).order_by('-appartenenze__inizio').first()
+    def sede_riferimento(self, **kwargs):
+        sedi = self.sedi_attuali(membro__in=Appartenenza.MEMBRO_DIRETTO, **kwargs).order_by('-appartenenze__inizio').first()
         if sedi:
             return sedi.comitato
         return sedi
@@ -1331,7 +1331,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     persona = models.ForeignKey(Persona, related_name='estensioni')
     destinazione = models.ForeignKey(Sede, related_name='estensioni_destinazione')
     appartenenza = models.ForeignKey(Appartenenza, related_name='estensione', null=True, blank=True)
-    protocollo_numero = models.PositiveIntegerField('Numero di protocollo', null=True, blank=True)
+    protocollo_numero = models.CharField('Numero di protocollo', max_length=512, null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
     motivo = models.CharField(max_length=2048, null=True, blank=False,)
 
