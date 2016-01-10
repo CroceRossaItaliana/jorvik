@@ -17,6 +17,12 @@ Questo file gestisce la espansione dei permessi in Gaia.
 """
 
 
+def espandi_persona(al_giorno=date.today()):
+    return [
+
+    ]
+
+
 def espandi_gestione_soci(qs_sedi, al_giorno=date.today()):
     from anagrafica.models import Persona, Appartenenza, Trasferimento, Estensione
     return [
@@ -29,7 +35,6 @@ def espandi_gestione_soci(qs_sedi, al_giorno=date.today()):
     ]
 
 
-
 def espandi_elenchi_soci(qs_sedi, al_giorno=date.today()):
     from anagrafica.models import Persona, Appartenenza, Sede
     return [
@@ -38,12 +43,14 @@ def espandi_elenchi_soci(qs_sedi, al_giorno=date.today()):
         (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ESTESO).via("appartenenze"))),
     ]
 
+
 def espandi_gestione_sede(qs_sedi, al_giorno=date.today()):
     from anagrafica.models import Sede
     return [
         (MODIFICA,  qs_sedi),
         (MODIFICA,  qs_sedi.espandi()),
     ]
+
 
 def espandi_gestione_attivita_sede(qs_sedi, al_giorno=date.today()):
     from attivita.models import Attivita
@@ -59,6 +66,7 @@ def espandi_gestione_attivita_area(qs_aree, al_giorno=date.today()):
     ] \
         + espandi_gestione_attivita(Attivita.objects.filter(area__in=qs_aree))
 
+
 def espandi_gestione_attivita(qs_attivita, al_giorno=date.today()):
     from anagrafica.models import Persona
     return [
@@ -66,12 +74,14 @@ def espandi_gestione_attivita(qs_attivita, al_giorno=date.today()):
         (LETTURA,   Persona.objects.filter(partecipazioni__turno__attivita__in=qs_attivita))
     ]
 
+
 def espandi_gestione_corsi_sede(qs_sedi, al_giorno=date.today()):
     from formazione.models import CorsoBase
     return [
         (COMPLETO,  CorsoBase.objects.filter(sede__in=qs_sedi)),
     ] \
         + espandi_gestione_corso(CorsoBase.objects.filter(sede__in=qs_sedi))
+
 
 def espandi_gestione_corso(qs_corsi, al_giorno=date.today()):
     from anagrafica.models import Persona
