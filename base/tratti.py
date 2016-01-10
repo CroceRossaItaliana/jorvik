@@ -190,3 +190,10 @@ class ConDelegati(models.Model):
         d = Delega(oggetto=self, persona=persona, inizio=inizio, fine=fine, tipo=tipo, firmatario=firmatario)
         d.save()
         return d
+
+class ConPDF():
+
+    def genera_pdf(self):
+        raise NotImplemented('La classe non implementa il metodo "genera_pdf"')
+
+
