@@ -749,11 +749,17 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
         ASSOC_ID_COMITATI[COMITATO_OID[tipo]].update({id: (Sede, ref.pk)})
         c = ref
 
-    attiva = True
-    if not comitato['attivo']:
-        attiva = False
+    # Sedi principali (locali con nome Provinciale diventano Provinciale)
+    elif ref and COMITATO_ESTENSIONE[tipo] == LOCALE \
+            and stringa(comitato['nome']) == ref.nome:
+        ASSOC_ID_COMITATI[COMITATO_OID[tipo]].update({id: (Sede, ref.pk)})
+        c = ref
 
     else:
+
+        attiva = True
+        if not comitato['attivo']:
+            attiva = False
 
         c = Sede(
             genitore=ref,
