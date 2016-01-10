@@ -229,7 +229,7 @@ class Log(ModelloSemplice, ConMarcaTemporale):
         ('E', 'Eliminazione'),
     )
 
-    persona = models.ForeignKey('anagrafica.Persona', 'azioni_recenti')
+    persona = models.ForeignKey('anagrafica.Persona', related_name='azioni_recenti')
     azione = models.CharField(choices=AZIONE, max_length=1)
 
     oggetto_repr = models.CharField(max_length=1024, blank=True, null=True)
@@ -250,7 +250,7 @@ class Log(ModelloSemplice, ConMarcaTemporale):
     def modifica(cls, persona, oggetto, campo, valore_precedente="", valore_successivo=""):
         app_label, model, pk = cls._scomponi(oggetto)
         l = Log(
-            persona=persona, azione=MODIFICA,
+            persona=persona, azione=cls.MODIFICA,
             oggetto_repr=str(oggetto), oggetto_app_label=app_label,
             oggetto_model=model, oggetto_pk=pk, oggetto_campo=campo,
             valore_precedente=valore_precedente, valore_successivo=valore_successivo
