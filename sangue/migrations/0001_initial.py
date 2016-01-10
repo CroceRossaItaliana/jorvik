@@ -14,15 +14,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Donatore',
             fields=[
-                ('id', models.AutoField(auto_created=True, serialize=False, primary_key=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('gruppo_sanguigno', models.CharField(choices=[('0', 'Gruppo 0'), ('A', 'Gruppo A'), ('B', 'Gruppo B'), ('AB', 'Gruppo AB')], max_length=3, db_index=True)),
-                ('fattore_rh', models.CharField(choices=[('P', 'Positivo'), ('N', 'Negativo')], max_length=2, null=True, db_index=True)),
-                ('fanotipo_rh', models.CharField(blank=True, choices=[('CCDee', 'CCDee'), ('ccDEE', 'ccDEE'), ('CcDee', 'CcDee'), ('ccDEe', 'ccDEe'), ('ccDee', 'ccDee'), ('CCDEE', 'CCDEE'), ('CCDEe', 'CCDEe'), ('CcDEE', 'CcDEE'), ('CcDEe', 'CcDEe'), ('Ccddee', 'Ccddee'), ('CCddee', 'CCddee'), ('ccddEe', 'ccddEe'), ('ccddEE', 'ccddEE'), ('ccddee', 'ccddee'), ('CcddEe', 'CcddEe')], max_length=8, null=True, db_index=True)),
-                ('kell', models.CharField(blank=True, choices=[('K+k+', 'K+k+'), ('K+k-', 'K+k-'), ('K-k+', 'K-k+'), ('Kp(a+b+)', 'Kp(a+b+)'), ('Kp(a-b+)', 'Kp(a-b+)')], max_length=16, null=True)),
-                ('codice_sit', models.CharField(max_length=32, blank=True, null=True, db_index=True)),
-                ('persona', models.OneToOneField(related_name='donatore', to='anagrafica.Persona')),
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
+                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
+                ('gruppo_sanguigno', models.CharField(db_index=True, choices=[('0', 'Gruppo 0'), ('A', 'Gruppo A'), ('B', 'Gruppo B'), ('AB', 'Gruppo AB')], max_length=3)),
+                ('fattore_rh', models.CharField(db_index=True, choices=[('P', 'Positivo'), ('N', 'Negativo')], max_length=2, null=True)),
+                ('fanotipo_rh', models.CharField(max_length=8, db_index=True, choices=[('CCDee', 'CCDee'), ('ccDEE', 'ccDEE'), ('CcDee', 'CcDee'), ('ccDEe', 'ccDEe'), ('ccDee', 'ccDee'), ('CCDEE', 'CCDEE'), ('CCDEe', 'CCDEe'), ('CcDEE', 'CcDEE'), ('CcDEe', 'CcDEe'), ('Ccddee', 'Ccddee'), ('CCddee', 'CCddee'), ('ccddEe', 'ccddEe'), ('ccddEE', 'ccddEE'), ('ccddee', 'ccddee'), ('CcddEe', 'CcddEe')], blank=True, null=True)),
+                ('kell', models.CharField(max_length=16, choices=[('K+k+', 'K+k+'), ('K+k-', 'K+k-'), ('K-k+', 'K-k+'), ('Kp(a+b+)', 'Kp(a+b+)'), ('Kp(a-b+)', 'Kp(a-b+)')], blank=True, null=True)),
+                ('codice_sit', models.CharField(db_index=True, max_length=32, blank=True, null=True)),
+                ('persona', models.OneToOneField(to='anagrafica.Persona', related_name='donatore')),
             ],
             options={
                 'verbose_name': 'Donatore di Sangue',
@@ -32,14 +32,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Donazione',
             fields=[
-                ('id', models.AutoField(auto_created=True, serialize=False, primary_key=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('confermata', models.BooleanField(verbose_name='Confermata', default=True, db_index=True)),
-                ('ritirata', models.BooleanField(verbose_name='Ritirata', default=False, db_index=True)),
-                ('tipo', models.CharField(choices=[('DD', 'Donazione Differita'), ('SI', 'Sangue Intero'), ('PL', 'Plasmaferesi'), ('PP', 'PlasmaPiastrinoaferesi'), ('PI', 'Piastrinoaferesi'), ('EP', 'EritroPlasmaferesi'), ('2R', 'Doppi Globuli Rossi'), ('2P', 'Doppie Piastrine'), ('RP', 'Globuli Rossi e Piastrine'), ('MO', 'Midollo Osseo')], max_length=2, db_index=True)),
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
+                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
+                ('confermata', models.BooleanField(db_index=True, default=True, verbose_name='Confermata')),
+                ('ritirata', models.BooleanField(db_index=True, default=False, verbose_name='Ritirata')),
+                ('tipo', models.CharField(db_index=True, choices=[('DD', 'Donazione Differita'), ('SI', 'Sangue Intero'), ('PL', 'Plasmaferesi'), ('PP', 'PlasmaPiastrinoaferesi'), ('PI', 'Piastrinoaferesi'), ('EP', 'EritroPlasmaferesi'), ('2R', 'Doppi Globuli Rossi'), ('2P', 'Doppie Piastrine'), ('RP', 'Globuli Rossi e Piastrine'), ('MO', 'Midollo Osseo')], max_length=2)),
                 ('data', models.DateField()),
-                ('persona', models.ForeignKey(to='anagrafica.Persona', related_name='donazioni_sangue')),
+                ('persona', models.ForeignKey(related_name='donazioni_sangue', to='anagrafica.Persona')),
             ],
             options={
                 'abstract': False,
@@ -48,12 +48,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Merito',
             fields=[
-                ('id', models.AutoField(auto_created=True, serialize=False, primary_key=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('donazione', models.CharField(max_length=1, choices=[('S', 'Donazione di Sangue')], default='S', db_index=True)),
-                ('merito', models.CharField(max_length=8, choices=[('1', '1'), ('10', '10'), ('20', '20'), ('40', '40')], default='1')),
-                ('persona', models.ForeignKey(to='anagrafica.Persona', related_name='meriti_donazioni')),
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
+                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
+                ('donazione', models.CharField(db_index=True, default='S', choices=[('S', 'Donazione di Sangue')], max_length=1)),
+                ('merito', models.CharField(default='1', choices=[('1', '1'), ('10', '10'), ('20', '20'), ('40', '40')], max_length=8)),
+                ('persona', models.ForeignKey(related_name='meriti_donazioni', to='anagrafica.Persona')),
             ],
             options={
                 'abstract': False,
@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Sede',
             fields=[
-                ('id', models.AutoField(auto_created=True, serialize=False, primary_key=True, verbose_name='ID')),
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
                 ('citta', models.CharField(max_length=32)),
                 ('provincia', models.CharField(max_length=32)),
                 ('regione', models.CharField(max_length=32)),
@@ -70,18 +70,18 @@ class Migration(migrations.Migration):
             ],
             options={
                 'verbose_name': 'Sede di Donazione Sangue',
-                'ordering': ['regione', 'provincia', 'citta', 'nome'],
                 'verbose_name_plural': 'Sedi di Donazione Sangue',
+                'ordering': ['regione', 'provincia', 'citta', 'nome'],
             },
         ),
         migrations.AddField(
             model_name='donazione',
             name='sede',
-            field=models.ForeignKey(to='sangue.Sede', related_name='donazioni_sangue', null=True),
+            field=models.ForeignKey(to='sangue.Sede', null=True, related_name='donazioni_sangue'),
         ),
         migrations.AddField(
             model_name='donatore',
             name='sede_sit',
-            field=models.ForeignKey(to='sangue.Sede', blank=True, null=True),
+            field=models.ForeignKey(to='sangue.Sede', null=True, blank=True),
         ),
     ]

@@ -1,7 +1,5 @@
 from datetime import date
 
-from anagrafica.models import Trasferimento, Estensione
-
 __author__ = 'alfioemanuele'
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
@@ -20,7 +18,7 @@ Questo file gestisce la espansione dei permessi in Gaia.
 
 
 def espandi_gestione_soci(qs_sedi, al_giorno=date.today()):
-    from anagrafica.models import Persona, Appartenenza
+    from anagrafica.models import Persona, Appartenenza, Trasferimento, Estensione
     return [
         (MODIFICA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO).via("appartenenze"))),
         (LETTURA,   Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ESTESO).via("appartenenze")))
