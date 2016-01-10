@@ -788,11 +788,13 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
     PATENTE_CIVILE = 'P'
     PATENTE_CRI = 'S'
     CODICE_FISCALE = 'C'
+    ALTRO = 'A'
     TIPO = (
         (CARTA_IDENTITA, 'Carta d\'identità'),
         (PATENTE_CIVILE, 'Patente Civile'),
         (PATENTE_CRI, 'Patente CRI'),
-        (CODICE_FISCALE, 'Codice Fiscale')
+        (CODICE_FISCALE, 'Codice Fiscale'),
+        (ALTRO, 'Altro'),
     )
 
     tipo = models.CharField(choices=TIPO, max_length=1, default=CARTA_IDENTITA, db_index=True)

@@ -36,7 +36,7 @@ application = get_wsgi_application()
 
 from django.template.backends import django
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
-from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Fototessera
+from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Fototessera, Documento
 from base.geo import Locazione
 from ufficio_soci.models import Quota, Tesseramento
 import argparse
@@ -76,6 +76,9 @@ parser.add_argument('--salta-avatar', dest='avatar', action='store_const',
 parser.add_argument('--salta-fototessere', dest='fototessere', action='store_const',
                    const=False, default=True,
                    help='salta importazione fototessere')
+parser.add_argument('--salta-documenti', dest='documenti', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione documenti')
 parser.add_argument('--salta-appartenenze', dest='appartenenze', action='store_const',
                    const=False, default=True,
                    help='salta importazione appartenenze (usa cache precedente)')
@@ -2437,6 +2440,7 @@ def carica_avatar():
 
     cursore.close()
 
+
 def carica_fototessere():
 
     print("  - Caricamento delle fototessere...")
@@ -2518,6 +2522,80 @@ def carica_fototessere():
     cursore.close()
 
 
+def carica_documenti():
+
+    print("  - Caricamento dei documenti...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, volontario, tipo, timestamp
+        FROM
+            documenti
+        WHERE
+                volontario IS NOT NULL
+            AND id IS NOT NULL
+        """
+    )
+
+    docs = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    generatore = GeneratoreNomeFile('documenti/')
+
+    for doc in docs:
+        contatore += 1
+
+        try:
+            id = stringa(doc[0])
+            utente = int(doc[1])
+
+        except ValueError:
+            print("    - SALTATO Record non valido.")
+            continue
+
+        tipo = int(doc[2])
+        timestamp = data_da_timestamp(doc[3])
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[utente]
+        except KeyError:
+            print("    - SALTATO Persona id=%d non esiste" % (utente,))
+            continue
+
+        nomefile = path("docs/o/%s.jpg" % (id,))
+        try:
+            originale = open(nomefile, 'rb')
+        except:
+            print("    - SALTATO File non esiste path=%s" % (nomefile,))
+            continue
+
+        if tipo == 10:
+            tipo = Documento.CARTA_IDENTITA
+        elif tipo == 20:
+            tipo = Documento.PATENTE_CIVILE
+        elif tipo == 40:
+            tipo = Documento.CODICE_FISCALE
+        elif tipo == 50:
+            tipo = Documento.PATENTE_CRI
+        else:
+            tipo = Documento.ALTRO
+
+        dfile = File(originale)
+
+        d = Documento(
+            tipo=tipo,
+            persona_id=persona_id,
+        )
+        d.save()
+
+        nuovonome = generatore(d, nomefile)
+        d.file.save(nuovonome, dfile, save=True)
+        print("     %s OK persona id=%d, documento=%s" % (progresso(contatore, totale), utente, nuovonome,))
+
+
+    cursore.close()
 
 
 # Importazione dei Comitati
@@ -2573,6 +2651,17 @@ if args.fototessere:
     Fototessera.objects.all().delete()
     print("  - Importazione fototessere (path: %s)" % (args.uploads,))
     carica_fototessere()
+
+# Importazione dei documenti
+print("> Importazione dei documenti")
+if args.documenti:
+    if not args.uploads:
+        raise ValueError("Path non specificata. Usa --uploads.")
+
+    print("  - Eliminazione attuali")
+    Documento.objects.all().delete()
+    print("  - Importazione documenti (path: %s)" % (args.uploads,))
+    carica_documenti()
 
 # Importazione delle Appartenenze
 print("> Importazione delle Appartenenze")
