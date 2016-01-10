@@ -34,7 +34,7 @@ from anagrafica.permessi.delega import delega_permessi
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
 from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
-    crea_validatore_dimensione_file
+    crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb
 from attivita.models import Turno
 
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
@@ -97,7 +97,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     avatar = models.ImageField("Avatar", blank=True, null=True,
                                upload_to=GeneratoreNomeFile('avatar/'),
-                               validators=[crea_validatore_dimensione_file(mb=5)])
+                               validators=[valida_dimensione_file_5mb])
 
     @property
     def nome_completo(self):
@@ -798,7 +798,7 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
     tipo = models.CharField(choices=TIPO, max_length=1, default=CARTA_IDENTITA, db_index=True)
     persona = models.ForeignKey(Persona, related_name="documenti", db_index=True)
     file = models.FileField("File", upload_to=GeneratoreNomeFile('documenti/'),
-                            validators=[crea_validatore_dimensione_file(mb=10)])
+                            validators=[valida_dimensione_file_8mb])
 
     class Meta:
         verbose_name_plural = "Documenti"
@@ -1234,7 +1234,7 @@ class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
 
     persona = models.ForeignKey(Persona, related_name="fototessere", db_index=True)
     file = models.ImageField("Fototessera", upload_to=GeneratoreNomeFile('fototessere/'),
-                             validators=[crea_validatore_dimensione_file(mb=8)])
+                             validators=[valida_dimensione_file_8mb])
 
     RICHIESTA_NOME = "Fototessera"
 

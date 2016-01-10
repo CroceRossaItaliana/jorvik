@@ -9,7 +9,7 @@ from safedelete import safedelete_mixin_factory, SOFT_DELETE
 from mptt.models import MPTTModel, TreeForeignKey
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
 from anagrafica.permessi.costanti import DELEGHE_OGGETTI_DICT
-from anagrafica.validators import crea_validatore_dimensione_file
+from anagrafica.validators import crea_validatore_dimensione_file, valida_dimensione_file_10mb
 from base.forms import ModuloMotivoNegazione
 from base.notifiche import NOTIFICA_NON_INVIARE
 from base.stringhe import GeneratoreNomeFile
@@ -510,7 +510,7 @@ class Allegato(ConMarcaTemporale, ConScadenza, ModelloSemplice):
     oggetto_id = models.PositiveIntegerField(db_index=True, blank=True, null=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
     file = models.FileField("File", upload_to=GeneratoreNomeFile('allegati/'),
-                            validators=[crea_validatore_dimensione_file(mb=3)])
+                            validators=[valida_dimensione_file_10mb])
     nome = models.CharField("Nome file", max_length=255, default="File", blank=False, null=False)
 
     @property
