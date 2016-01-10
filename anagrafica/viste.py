@@ -10,7 +10,7 @@ from django.views.generic import ListView
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
-    ModuloDonatore, ModuloDonazione
+    ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -20,8 +20,9 @@ from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
-from base.errori import errore_generico
+from base.errori import errore_generico, errore_nessuna_appartenenza
 from base.files import Zip
+from base.notifiche import NOTIFICA_INVIA
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio
@@ -226,31 +227,88 @@ def utente(request, me):
 @pagina_privata
 def utente_anagrafica(request, me):
 
-    contesto = {}
+    contesto = {
+        "delegati": me.deleghe_anagrafica(),
+    }
 
-    if request.method == "POST":
+    modulo_dati = ModuloModificaAnagrafica(request.POST or None, instance=me)
 
-        modulo_dati = ModuloModificaAnagrafica(request.POST, instance=me)
-        modulo_avatar = ModuloModificaAvatar(request.POST, request.FILES, instance=me)
+    if request.POST:
 
         if modulo_dati.is_valid():
             modulo_dati.save()
 
-        if modulo_avatar.is_valid():
-            modulo_avatar.save()
-
     else:
 
         modulo_dati = ModuloModificaAnagrafica(instance=me)
-        modulo_avatar = ModuloModificaAvatar(instance=me)
 
     contesto.update({
         "modulo_dati": modulo_dati,
-        "modulo_avatar": modulo_avatar
     })
 
     return 'anagrafica_utente_anagrafica.html', contesto
 
+@pagina_privata
+def utente_fotografia(request, me):
+   return redirect("/utente/fotografia/avatar/")
+
+@pagina_privata
+def utente_fotografia_avatar(request, me):
+
+    modulo_avatar = ModuloModificaAvatar(request.POST or None, request.FILES or None, instance=me)
+
+    if request.POST:
+        if modulo_avatar.is_valid():
+            modulo_avatar.save()
+
+    contesto = {
+        "modulo_avatar": modulo_avatar
+    }
+
+    return 'anagrafica_utente_fotografia_avatar.html', contesto
+
+@pagina_privata
+def utente_fotografia_fototessera(request, me):
+
+    modulo_fototessera = ModuloNuovaFototessera(request.POST or None, request.FILES or None)
+
+    sede = me.sede_riferimento()
+
+    if not sede:
+        return errore_nessuna_appartenenza(
+            request, me, torna_url="/utente/fotografia/avatar/"
+        )
+
+    if request.POST:
+
+        if modulo_fototessera.is_valid():
+
+            # Ritira eventuali richieste in attesa
+            if me.fototessere_pending().exists():
+                for x in me.fototessere_pending():
+                    x.autorizzazioni_ritira()
+
+            # Crea la fototessera
+            fototessera = modulo_fototessera.save(commit=False)
+            fototessera.persona = me
+            fototessera.save()
+
+            # Richiede l'autorizzazione
+            fototessera.autorizzazione_richiedi(
+                richiedente=me,
+                destinatario=(
+                    (PRESIDENTE, sede, NOTIFICA_INVIA),
+                    (UFFICIO_SOCI, sede, NOTIFICA_INVIA),
+                )
+            )
+
+
+
+    contesto = {
+        "modulo_fototessera": modulo_fototessera
+    }
+
+    return 'anagrafica_utente_fotografia_fototessera.html', contesto
 
 @pagina_privata
 def utente_documenti(request, me):
@@ -602,15 +660,8 @@ def utente_curriculum(request, me, tipo=None):
             if titolo_selezionato.richiede_conferma:
                 sede_attuale = me.sedi_attuali(membro__in=Appartenenza.MEMBRO_DIRETTO).first()
                 if not sede_attuale:
-                    return errore_generico(
+                    return errore_nessuna_appartenenza(
                         request, me,
-                        titolo="Necessaria appartenenza,",
-                        messaggio="Per l'aggiunta di '%s' al tuo curriculum è necessaria "
-                                  "la verifica di un Presidente o delegato Ufficio Soci. "
-                                  "Non hai alcuna appartenenza confermata su Gaia." % (
-                            titolo_selezionato.nome,
-                        ),
-                        torna_titolo="Torna indietro",
                         torna_url="/utente/curriculum/%s/" % (tipo,),
                     )
 

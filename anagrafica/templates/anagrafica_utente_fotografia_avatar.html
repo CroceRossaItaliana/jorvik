@@ -1,0 +1,54 @@
+{% extends 'anagrafica_utente_fotografia.html' %}
+
+{% load bootstrap3 %}
+{% load thumbnail %}
+
+{% block fotografia_corpo %}
+
+    <div class="panel panel-primary">
+
+        <div class="panel-heading">
+            <h4 class="panel-title">
+                <i class="fa fa-fw fa-user"></i>
+                Foto del profilo
+            </h4>
+        </div>
+
+        <div class="panel-body">
+
+            <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+                {% if me.avatar %}
+
+                    {% thumbnail me.avatar "500x500" crop="center" as im %}
+                        <img src="{{ im.url }}" class="img-responsive" alt="Immagine del profilo attuale" />
+                    {% endthumbnail %}
+
+                {% else %}
+
+                    <p class="text-warning">
+                        <i class="fa fa-fw fa-info-circle"></i>
+                        Non hai ancora caricato alcuna foto di profilo.
+                    </p>
+
+                {% endif %}
+
+
+                {% bootstrap_form modulo_avatar %}
+
+                <button type="submit" class="btn btn-block btn-primary">
+                    <i class="fa fa-fw fa-save"></i>
+                    Salva foto del profilo
+                </button>
+
+            </form>
+
+        </div>
+
+
+
+
+    </div>
+
+{% endblock %}

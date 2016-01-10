@@ -47,6 +47,9 @@ class ConEstensione(models.Model):
     Aggiunge un Sede ed un livello di estensione dell'oggetto.
     """
 
+    class Meta:
+        abstract = True
+
     sede = models.ForeignKey("anagrafica.Sede", db_index=True)
     estensione = models.CharField("Estensione", max_length=1, choices=ESTENSIONE, db_index=True)
 
