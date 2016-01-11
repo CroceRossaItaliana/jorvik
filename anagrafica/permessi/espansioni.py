@@ -1,4 +1,5 @@
 from datetime import date
+from veicoli.models import Collocazione
 
 __author__ = 'alfioemanuele'
 
@@ -74,6 +75,16 @@ def espandi_gestione_attivita(qs_attivita, al_giorno=date.today()):
     return [
         (MODIFICA,  qs_attivita),
         (LETTURA,   Persona.objects.filter(partecipazioni__turno__attivita__in=qs_attivita))
+    ]
+
+
+def espandi_gestione_autoparchi_sede(qs_sedi, al_giorno=date.today()):
+    from veicoli.models import Autoparco, Veicolo
+    return [
+        (MODIFICA,  Autoparco.objects.filter(sede__in=qs_sedi)),
+        (MODIFICA,  Veicolo.objects.filter(Collocazione.query_attuale().via("collocazioni"),
+                                           collocazioni__autoparco__sede__in=qs_sedi)),
+        (MODIFICA,  Collocazione.query_attuale(autoparco__sede__in=qs_sedi)),
     ]
 
 
