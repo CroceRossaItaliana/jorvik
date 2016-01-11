@@ -21,16 +21,30 @@
                     <th>Richiedente</th>
                     <th>Destinazione</th>
                     <th>Esito</th>
+                    <th>Data richiesta</th>
                     <th>Azioni</th>
                 </tr>
             </thead>
             <tbody>
                 {% for trasferimento in storico %}
-                <tr>
+                <tr
+                    {% if trasferimento.esito == trasferimento.ESITO_PENDING %}
+                        class="warning"
+                    {% endif %}
+                >
                     <td>{{ trasferimento.richiedente }}</td>
                     <td>{{ trasferimento.destinazione }}</td>
                     <td>{{ trasferimento.esito}}</td>
-                    <td><a href="{{ trasferimento.url_pdf }}" class="">Scarica PDF</a> </td>
+                    <td>{{ trasferimento.creazione|date:"SHORT_DATE_FORMAT" }}</td>
+                    <td>
+                        <a href="{{ trasferimento.url_pdf }}" target="_blank">Scarica PDF</a>
+                        {% if trasferimento.esito == trasferimento.ESITO_PENDING %} -
+                        <a href="/utente/trasferimento/{{ trasferimento.pk }}/ritira/"
+                           data-conferma="Vuoi veramente ritirare la richiesta di trasferimento?">
+                            Ritira Richiesta
+                        </a>
+                    {% endif %}
+                    </td>
                 </tr>
                 {% empty %}
                     <tr>

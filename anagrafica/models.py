@@ -643,6 +643,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def estensioni_attuali_e_in_attesa(self):
         return self.estensioni_attuali() | self.estensioni_in_attesa()
 
+
     def espelli(self):
         for appartenenza in self.appartenenze_attuali():
             appartenenza.terminazione = "E"
