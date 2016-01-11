@@ -160,6 +160,28 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
             tipo=Manutenzione.MANUTENZIONE,
         ).latest('data')
 
+    def fermo_tecnico(self):
+        return FermoTecnico.query_attuale(veicolo=self).first() or "No"
+
+    def collocazione(self):
+        return Collocazione.query_attuale(veicolo=self).first()
+
+    def media_consumi(self):
+        rifornimenti = Rifornimento.objects.filter(veicolo=self)
+        litri = km = 0
+        for rifornimento in rifornimenti:
+            litri+=rifornimento.consumo_carburante
+        try:
+            ultimo_rifornimento = Rifornimento.objects.filter(veicolo=self).latest("data")
+            primo_rifornimento = Rifornimento.objects.filter(veicolo=self).earliest("data")
+        except Rifornimento.DoesNotExist:
+            return 0
+        km = ultimo_rifornimento.contachilometri - primo_rifornimento.contachilometri
+        litri -= ultimo_rifornimento.consumo_carburante
+        if litri != 0:
+            return round(km/litri,2)
+        else:
+            return 0
 
 # class Immatricolazione(ModelloSemplice, ConMarcaTemporale):
 #     """

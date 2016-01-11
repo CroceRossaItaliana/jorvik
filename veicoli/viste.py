@@ -3,7 +3,8 @@ from django import forms
 from django.shortcuts import get_object_or_404, redirect
 from anagrafica.permessi.costanti import GESTIONE_AUTOPARCHI_SEDE, ERRORE_PERMESSI, MODIFICA
 from autenticazione.funzioni import pagina_privata
-from veicoli.forms import ModuloCreazioneVeicolo, ModuloCreazioneAutoparco
+from veicoli.forms import ModuloCreazioneVeicolo, ModuloCreazioneAutoparco, ModuloCreazioneManutenzione, \
+    ModuloCreazioneFermoTecnico, ModuloCreazioneRifornimento
 from veicoli.models import Veicolo, Autoparco, Collocazione, Manutenzione
 
 
@@ -132,6 +133,44 @@ def veicoli_autoparco_modifica_o_nuovo(request, me, pk=None):
     contesto = {
         "modulo": modulo,
     }
-
     return "veicoli_autoparco_modifica_o_nuovo.html", contesto
+
+@pagina_privata
+def veicoli_manutenzione(request, me, veicolo):
+    veicolo = get_object_or_404(Veicolo, pk=veicolo)
+    modulo = ModuloCreazioneManutenzione(request.POST)
+    if not me.permessi_almeno(MODIFICA, veicolo):
+        return redirect(ERRORE_PERMESSI)
+    if modulo.is_valid():
+        m = modulo.save()
+        m.veicolo = veicolo
+        m.save()
+        return redirect("/veicoli/")
+    return redirect("/veicoli/manutenzioni/")
+
+@pagina_privata
+def veicoli_rifornimento(request, me, veicolo):
+    veicolo = get_object_or_404(Veicolo, pk=veicolo)
+    modulo = ModuloCreazioneRifornimento(request.POST)
+    if not me.permessi_almeno(MODIFICA, veicolo):
+        return redirect(ERRORE_PERMESSI)
+    if modulo.is_valid():
+        r = modulo.save(commit=False)
+        r.veicolo = veicolo
+        r.save()
+        return redirect("/veicoli/")
+    return redirect("/veicoli/rifornimenti/")
+
+@pagina_privata
+def veicoli_fermo_tecnico(request, me, veicolo):
+    veicolo = get_object_or_404(Veicolo, pk=veicolo)
+    modulo = ModuloCreazioneFermoTecnico(request.POST)
+    if not me.permessi_almeno(MODIFICA, veicolo):
+        return redirect(ERRORE_PERMESSI)
+    if modulo.is_valid():
+        f = modulo.save()
+        f.veicolo = veicolo
+        f.save()
+        return redirect("/veicoli/")
+    return redirect("/veicoli/fermo/")
 

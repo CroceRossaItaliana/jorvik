@@ -56,6 +56,7 @@ def menu(request):
         ),
         "veicoli": (
             ("Veicoli", (
+                ("Dashboard", "fa-gears", "/veicoli/"),
                 ("Veicoli", "fa-car", "/veicoli/elenco/"),
                 ("Autoparchi", "fa-dashboard", "/veicoli/autoparchi/"),
             )),
