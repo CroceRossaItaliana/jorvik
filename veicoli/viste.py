@@ -1,24 +1,50 @@
+import datetime
+from django import forms
 from django.shortcuts import get_object_or_404, redirect
 from anagrafica.permessi.costanti import GESTIONE_AUTOPARCHI_SEDE, ERRORE_PERMESSI, MODIFICA
 from autenticazione.funzioni import pagina_privata
 from veicoli.forms import ModuloCreazioneVeicolo, ModuloCreazioneAutoparco
-from veicoli.models import Veicolo, Autoparco, Collocazione
+from veicoli.models import Veicolo, Autoparco, Collocazione, Manutenzione
 
 
 def _autoparchi_e_veicoli(persona):
-    autoparchi = persona.oggetti_permesso(GESTIONE_AUTOPARCHI_SEDE)
+    sedi = persona.oggetti_permesso(GESTIONE_AUTOPARCHI_SEDE)
+    autoparchi = Autoparco.objects.filter(sede__in=sedi)
     veicoli = Veicolo.objects.filter(
         Collocazione.query_attuale().via("collocazioni"),
-        collocazioni__sede__in=autoparchi
+        collocazioni__autoparco__in=autoparchi
     )
     return autoparchi, veicoli
 
 @pagina_privata
 def veicoli(request, me):
+    sedi = me.oggetti_permesso(GESTIONE_AUTOPARCHI_SEDE)
     autoparchi, veicoli = _autoparchi_e_veicoli(me)
+
+    veicoli_revisione = veicoli.filter(
+        manutenzioni__tipo=Manutenzione.REVISIONE,
+    )
+    ex = []
+    for i in veicoli_revisione:
+        if i.ultima_revisione < datetime.now() - datetime.timedelta(days=i.intervallo_revisione):
+            ex += [i.pk]
+    veicoli_revisione = veicoli_revisione.exclude(pk__in=ex)
+
+    veicoli_manutenzione = veicoli.filter(
+        manutenzioni__tipo=Manutenzione.MANUTENZIONE,
+    )
+    ex = []
+    for i in veicoli_manutenzione:
+        if i.ultima_manutenzione < datetime.now() - datetime.timedelta(days=365):
+            ex += [i.pk]
+    veicoli_manutenzione = veicoli_manutenzione.exclude(pk__in=ex)
+
     contesto = {
-        "veicoli": veicoli,
+        "revisione": veicoli_revisione,
+        "manutenzione": veicoli_manutenzione,
         "autoparchi": autoparchi,
+        "veicoli": veicoli,
+        "sedi": sedi,
     }
     return "veicoli_home.html", contesto
 
@@ -35,7 +61,7 @@ def veicoli_elenco(request, me):
 
 @pagina_privata
 def veicoli_autoparchi(request, me):
-    autoparchi = me.oggetti_permesso(GESTIONE_AUTOPARCHI_SEDE)
+    autoparchi, veicoli = _autoparchi_e_veicoli(me)
     contesto = {
         "autoparchi": autoparchi,
     }
@@ -67,9 +93,27 @@ def veicoli_veicolo_modifica_o_nuovo(request, me, pk=None):
             return redirect(ERRORE_PERMESSI)
 
     modulo = ModuloCreazioneVeicolo(request.POST or None, instance=veicolo)
+    if pk is None:
+        autoparchi, veicoli =_autoparchi_e_veicoli(me)
+        modulo.fields["autoparco"] = forms.ModelChoiceField(queryset=autoparchi)
+        modulo.fields["data_collocazione"] = forms.DateField(initial=datetime.date.today())
     if modulo.is_valid():
-        modulo.save()
-    return "veicoli_veicolo_nuovo_o_modifica.html"
+        v = modulo.save()
+        if pk is None:
+            collocazione = Collocazione(
+                autoparco=modulo.cleaned_data["autoparco"],
+                inizio=modulo.cleaned_data["data_collocazione"],
+                veicolo=v
+            )
+            collocazione.save()
+
+        return redirect("/veicoli/")
+
+    contesto = {
+        "modulo": modulo,
+    }
+
+    return "veicoli_veicolo_modifica_o_nuovo.html", contesto
 
 
 @pagina_privata
@@ -80,7 +124,14 @@ def veicoli_autoparco_modifica_o_nuovo(request, me, pk=None):
         if not me.permessi_almeno(MODIFICA, autoparco):
             return redirect(ERRORE_PERMESSI)
     modulo = ModuloCreazioneAutoparco(request.POST or None, instance=autoparco)
+    print(me.oggetti_permesso(GESTIONE_AUTOPARCHI_SEDE))
+    modulo.fields['sede'].choices = me.oggetti_permesso(GESTIONE_AUTOPARCHI_SEDE).values_list('id', 'nome')
     if modulo.is_valid():
         modulo.save()
-    return "veicoli_autoparco_nuovo_o_modifica.html"
+        return redirect("/veicoli/")
+    contesto = {
+        "modulo": modulo,
+    }
+
+    return "veicoli_autoparco_modifica_o_nuovo.html", contesto
 

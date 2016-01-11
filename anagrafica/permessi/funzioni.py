@@ -129,9 +129,8 @@ def permessi_responsabile_autoparco(sede):
     :param sede: La Sede di cui si gestiscono gli autoparchi
     :return: Lista di permessi.
     """
-    from formazione.models import CorsoBase
     return [
-        (GESTIONE_AUTOPARCHI_SEDE,         sede.espandi(includi_me=True))
+        (GESTIONE_AUTOPARCHI_SEDE,         sede.espandi(includi_me=True)),
     ]
 
 

@@ -1,8 +1,11 @@
+import datetime
+from django.core.exceptions import ValidationError
 from django.db import models
 from anagrafica.models import Persona, Sede
 from base.models import ModelloSemplice
 from base.tratti import ConEstensione, ConStorico
 from base.tratti import ConMarcaTemporale
+from veicoli.validators import valida_data_manutenzione
 
 __author__ = 'alfioemanuele'
 
@@ -14,6 +17,12 @@ class Autoparco(ModelloSemplice, ConEstensione, ConMarcaTemporale):
 
     class Meta:
         verbose_name_plural = "Autoparchi"
+
+    nome = models.CharField(max_length=256)
+
+    def __str__(self):
+        return self.nome
+
 
 
 
@@ -139,6 +148,18 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
     )
     intervallo_revisione = models.PositiveIntegerField("Intervallo Revisione", choices=INTERVALLO_REVISIONE, default=365)
 
+    def ultima_revisione(self):
+        return Manutenzione.objects.filter(
+            veicolo=self.pk,
+            tipo=Manutenzione.REVISIONE,
+        ).latest('data')
+
+    def ultima_manutenzione(self):
+        return Manutenzione.objects.filter(
+            veicolo=self.pk,
+            tipo=Manutenzione.MANUTENZIONE,
+        ).latest('data')
+
 
 # class Immatricolazione(ModelloSemplice, ConMarcaTemporale):
 #     """
@@ -182,6 +203,16 @@ class Manutenzione(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Intervento di Manutenzione"
         verbose_name_plural = "Interventi di Manutenzione"
+
+    REVISIONE = "R"
+    MANUTENZIONE ="M"
+    TIPO=(
+        (REVISIONE,     "Revisione veicolo"),
+        (MANUTENZIONE,  "Manutenzione veicolo")
+    )
+    tipo = models.CharField(choices=TIPO, max_length=1, default=MANUTENZIONE, db_index=True)
+    data = models.DateField(validators=[valida_data_manutenzione])
+    veicolo = models.ForeignKey(Veicolo, related_name="manutenzioni")
 
 
 class Segnalazione(ModelloSemplice, ConMarcaTemporale):
