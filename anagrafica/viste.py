@@ -1,4 +1,5 @@
 import datetime
+from collections import OrderedDict
 
 from django.db.models.loading import get_model
 from django.http import HttpResponse
@@ -17,7 +18,7 @@ from anagrafica.forms import ModuloStepAnagrafica
 # Tipi di registrazione permessi
 from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT
-from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA
+from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.errori import errore_generico, errore_nessuna_appartenenza
@@ -698,45 +699,117 @@ def utente_curriculum_cancella(request, me, pk=None):
     return redirect("/utente/curriculum/%s/" % (tipo,))
 
 
-@pagina_privata
-def profilo(request, me, pk):
-    persona = get_object_or_404(Persona, pk=pk)
+def _profilo_anagrafica(request, me, persona):
     puo_modificare = me.permessi_almeno(persona, MODIFICA)
-
-    contesto = {
-        "persona": persona,
-        "puo_modificare": puo_modificare,
-    }
-    return 'anagrafica_profilo_profilo.html', contesto
-
-
-@pagina_privata
-def profilo_anagrafica(request, me, pk):
-    persona = get_object_or_404(Persona, pk=pk)
-    if not me.permessi_almeno(persona, MODIFICA):
-        redirect(ERRORE_PERMESSI)
-
     modulo = ModuloProfiloModificaAnagrafica(request.POST or None, instance=persona)
-    if modulo.is_valid():
+    if puo_modificare and modulo.is_valid():
         Log.registra_modifiche(me, modulo)
         modulo.save()
-
     contesto = {
-        "persona": persona,
-        "puo_modificare": True,
         "modulo": modulo,
     }
     return 'anagrafica_profilo_anagrafica.html', contesto
 
 
+def _profilo_appartenenze(request, me, persona):
+    return 'anagrafica_profilo_appartenenze.html', {}
+
+
+def _profilo_deleghe(request, me, persona):
+    return 'anagrafica_profilo_deleghe.html', {}
+
+
+def _profilo_curriculum(request, me, persona):
+    contesto = {
+        "modulo": None
+    }
+    return 'anagrafica_profilo_curriculum.html', contesto
+
+
+def _profilo_documenti(request, me, persona):
+    puo_modificare = me.permessi_almeno(persona, MODIFICA)
+    modulo = ModuloCreazioneDocumento(request.POST or None, request.FILES or None)
+    if puo_modificare and modulo.is_valid():
+        f = modulo.save(commit=False)
+        f.persona = persona
+        f.save()
+
+    contesto = {
+        "modulo": modulo,
+    }
+    return 'anagrafica_profilo_documenti.html', contesto
+
 @pagina_privata
-def profilo_storico(request, me, pk):
+def profilo_documenti_cancella(request, me, pk, documento_pk):
     persona = get_object_or_404(Persona, pk=pk)
-    if not me.permessi_almeno(persona, MODIFICA):
-        redirect(ERRORE_PERMESSI)
+    documento = get_object_or_404(Documento, pk=documento_pk)
+    if (not me.permessi_almeno(persona, MODIFICA)) or not (documento.persona == persona):
+        print("NONONO")
+        return redirect(ERRORE_PERMESSI)
+    documento.delete()
+    return redirect("/profilo/%d/documenti/" % (persona.pk,))
+
+
+def _sezioni_profilo(puo_leggere, puo_modificare):
+    r = (
+        # (path, (
+        #   nome, icona, _funzione, permesso?,
+        # ))
+        ('anagrafica', (
+            'Anagrafica', 'fa-edit', _profilo_anagrafica, puo_leggere
+        )),
+        ('appartenenze', (
+            'Appartenenze', 'fa-clock-o', _profilo_appartenenze, puo_leggere
+        )),
+        ('deleghe', (
+            'Deleghe', 'fa-clock-o', _profilo_deleghe, puo_leggere
+        )),
+        ('documenti', (
+            'Documenti', 'fa-folder', _profilo_documenti, puo_leggere
+        )),
+        ('curriculum', (
+            'Curriculum', 'fa-list', _profilo_curriculum, puo_leggere
+        )),
+        ('sangue', (
+            'Sangue', 'fa-flask', _profilo_documenti, puo_leggere
+        )),
+        ('quote', (
+            'Quote', 'fa-money', _profilo_documenti, puo_leggere
+        )),
+        ('provvedimenti', (
+            'Provvedimenti', 'fa-legal', _profilo_documenti, puo_leggere
+        )),
+        ('credenziali', (
+            'Credenziali', 'fa-key', _profilo_documenti, puo_leggere
+        )),
+    )
+    return (x for x in r if len(x[1]) < 4 or x[1][3] == True)
+
+@pagina_privata
+def profilo(request, me, pk, sezione=None):
+    persona = get_object_or_404(Persona, pk=pk)
+    puo_modificare = me.permessi_almeno(persona, MODIFICA)
+    puo_leggere = me.permessi_almeno(persona, LETTURA)
+    sezioni = OrderedDict(_sezioni_profilo(puo_leggere, puo_modificare))
 
     contesto = {
         "persona": persona,
-        "puo_modificare": True,
+        "puo_modificare": puo_modificare,
+        "puo_leggere": puo_leggere,
+        "sezioni": sezioni,
+        "attuale": sezione,
     }
-    return 'anagrafica_profilo_profilo.html', contesto
+
+    if not sezione:  # Prima pagina
+        return 'anagrafica_profilo_profilo.html', contesto
+
+    else:  # Sezione aperta
+
+        if sezione not in sezioni:
+            return redirect(ERRORE_PERMESSI)
+
+        s = sezioni[sezione]
+
+        f_template, f_contesto = s[2](request, me, persona)
+        contesto.update(f_contesto)
+        return f_template, contesto

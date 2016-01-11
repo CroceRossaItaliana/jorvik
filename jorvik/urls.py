@@ -78,10 +78,9 @@ urlpatterns = [
         "template_name": "anagrafica_utente_cambia_password_fatto.html",
     }),
 
-    url(r'^profilo/(?P<pk>[0-9]+)/messaggio/$', 'anagrafica.viste.profilo_messaggio'),
+    url(r'^profilo/(?P<pk>[0-9]+)/documenti/(?P<documento_pk>[0-9]+)/cancella/$', 'anagrafica.viste.profilo_documenti_cancella'),
+    url(r'^profilo/(?P<pk>[0-9]+)/(?P<sezione>.*)/$', 'anagrafica.viste.profilo'),
     url(r'^profilo/(?P<pk>[0-9]+)/$', 'anagrafica.viste.profilo'),
-    url(r'^profilo/(?P<pk>[0-9]+)/anagrafica/$', 'anagrafica.viste.profilo_anagrafica'),
-    url(r'^profilo/(?P<pk>[0-9]+)/storico/$', 'anagrafica.viste.profilo_storico'),
 
     url(r'^autorizzazioni/$', 'base.viste.autorizzazioni'),
     url(r'^autorizzazioni/storico/$', 'base.viste.autorizzazioni_storico'),

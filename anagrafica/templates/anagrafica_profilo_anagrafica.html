@@ -1,6 +1,7 @@
 {% extends 'anagrafica_profilo.html' %}
 
 {% load bootstrap3 %}
+{% load thumbnail %}
 
 {% block profilo_corpo %}
 
@@ -12,8 +13,17 @@
 
                 <div class="panel-heading">
                     <h4 class="panel-title">
-                        <i class="fa fa-fw fa-edit"></i>
-                        Modifica dati {{ persona.nome_completo }}
+
+                        {% if puo_modificare %}
+                            <i class="fa fa-fw fa-edit"></i>
+                            Modifica scheda anagrafica
+
+                        {% else %}
+                            <i class="fa fa-fw fa-search"></i>
+                            Anteprima scheda anagrafica
+
+                        {% endif %}
+
                     </h4>
                 </div>
 
@@ -22,11 +32,13 @@
                         {% csrf_token %}
                         {% bootstrap_form modulo  %}
 
-                        <button type="submit"
-                                class="btn btn-primary btn-block">
-                            <i class="fa fa-fw fa-save"></i>
-                            Salva modifiche
-                        </button>
+                        {% if puo_modificare %}
+                            <button type="submit"
+                                    class="btn btn-primary btn-block">
+                                <i class="fa fa-fw fa-save"></i>
+                                Salva modifiche
+                            </button>
+                        {% endif %}
 
                     </form>
 
@@ -37,6 +49,34 @@
 
         <div class="col-md-6">
 
+            {% if persona.avatar or persona.fototessera_attuale %}
+
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <i class="fa fa-fw fa-picture-o"></i>
+                        Foto
+
+                    </h4>
+                </div>
+                <div class="panel-body">
+
+                    {% if persona.fototessera_attuale %}
+                        {% thumbnail persona.fototessera_attuale "500x500" crop="center" as im %}
+                            <img src="{{ im.url }}" class="img-responsive" alt="Immagine fototessera attuale" />
+                        {% endthumbnail %}
+
+                    {% elif persona.avatar %}
+                        {% thumbnail persona.avatar "500x500" crop="center" as im %}
+                            <img src="{{ im.url }}" class="img-responsive" alt="Immagine del profilo attuale" />
+                        {% endthumbnail %}
+
+                    {% endif %}
+
+                </div>
+            </div>
+
+            {% endif %}
 
             <div class="panel panel-info">
                 <div class="panel-heading">

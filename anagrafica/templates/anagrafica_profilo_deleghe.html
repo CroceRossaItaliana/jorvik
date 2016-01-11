@@ -1,0 +1,76 @@
+{% extends 'anagrafica_profilo.html' %}
+
+{% block profilo_corpo %}
+ <div class="panel panel-info">
+
+    <div class="panel-heading">
+        <h4 class="panel-title">
+            <i class="fa fa-fw fa-list"></i>
+            Deleghe ({{ persona.deleghe.count }})
+        </h4>
+    </div>
+
+    <div class="panel-body">
+
+
+        <table class="table table-striped">
+            <thead>
+                <th>Stato</th>
+                <th>Delega</th>
+                <th>Inizio e fine</th>
+                <th>Registrata</th>
+
+            </thead>
+            <tbody>
+
+            {% for d in persona.deleghe.all %}
+                <tr {% if d.attuale %}class="success"{% endif %}>
+                    <td>
+                        {% if d.attuale %}
+                            Attiva
+
+                        {% else %}
+                            Passata
+
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong>{{ d.get_tipo_display }}</strong> per<br />
+                        {{ d.oggetto.link|safe }}
+                    </td>
+                    <td>
+                        Inizio: {{ d.inizio|date:"SHORT_DATE_FORMAT" }}<br />
+                        Fine:   {% if d.fine %}
+                                    {{ d.fine|date:"SHORT_DATE_FORMAT" }}
+                                {% else %}
+                                    Indeterminata
+                                {% endif %}
+                    </td>
+                    <td>
+                        {{ d.creazione }}
+                        {% if d.firmatario %}
+                            <br />{{ d.firmatario.link|safe }}
+                        {% endif %}
+                    </td>
+
+                </tr>
+
+            {% empty %}
+                <tr class="warning">
+                    <td colspan="4">
+                        Nessuna delega registrata.
+                    </td>
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+</div>
+
+</div>
+
+{% endblock %}

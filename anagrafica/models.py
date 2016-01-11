@@ -518,8 +518,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         from posta.models import Messaggio
 
         Messaggio.costruisci_e_invia(
-            oggetto="Benvenuto/a su Gaia!",
-            modello="email_benvenuto_" + str(tipo) + "_registrazione.html",
+            oggetto="Benvenut%s su Gaia!" % (self.genere_o_a,),
+            modello="email_benvenuto_%s_registrazione.html" % (tipo,),
             corpo={
                 'nome': self.nome_completo,
             },
@@ -545,20 +545,33 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return "/profilo/%d/" % (self.pk,)
 
     @property
-    def url_modifica_anagrafica(self):
+    def url_profilo_anagrafica(self):
         return "%sanagrafica/" % (self.url,)
 
     @property
-    def url_modifica_foto(self):
+    def url_profilo_foto(self):
         return "%sfotografie/" % (self.url,)
 
     @property
-    def url_modifica_credenziali(self):
+    def url_profilo_credenziali(self):
         return "%scredenziali/" % (self.url,)
 
     @property
-    def url_modifica_storico(self):
-        return "%sstorico/" % (self.url,)
+    def url_profilo_appartenenze(self):
+        return "%sappartenenze/" % (self.url,)
+
+    @property
+    def url_profilo_deleghe(self):
+        return "%sdeleghe/" % (self.url,)
+
+    @property
+    def url_profilo_appartenenze(self):
+        return "%sdeleghe/" % (self.url,)
+
+    @property
+    def url_profilo_(self):
+        return "%sappartenenze/" % (self.url,)
+
 
     @property
     def messaggio_url(self):
@@ -1366,7 +1379,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     appartenenza = models.ForeignKey(Appartenenza, related_name='estensione', null=True, blank=True)
     protocollo_numero = models.CharField('Numero di protocollo', max_length=512, null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
-    motivo = models.CharField(max_length=2048, null=True, blank=False,)
+    motivo = models.CharField(max_length=4096, null=True, blank=False,)
 
     RICHIESTA_NOME = "Estensione"
 
