@@ -54,6 +54,12 @@ def menu(request):
                 ("In uscita", "fa-mail-forward", "/posta/in-uscita/"),
             )),
         ),
+        "veicoli": (
+            ("Veicoli", (
+                ("Veicoli", "fa-car", "/veicoli/elenco/"),
+                ("Autoparchi", "fa-dashboard", "/veicoli/autoparchi/"),
+            )),
+        ),
         "attivita": (
             ("Attività", (
                 ("Calendario", "fa-calendar", "/attivita/calendario/"),

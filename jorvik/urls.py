@@ -125,6 +125,11 @@ urlpatterns = [
     url(r'^us/elenco/(?P<elenco_id>.*)/modulo/$', 'ufficio_soci.viste.us_elenco_modulo'),
     url(r'^us/elenco/(?P<elenco_id>.*)/$', 'ufficio_soci.viste.us_elenco'),
 
+    url(r'veicoli/$', 'veicoli.viste.veicoli'),
+    url(r'veicoli/elenco/$', 'veicoli.viste.veicoli_elenco'),
+    url(r'veicoli/autoparchi/$', 'veicoli.viste.veicoli_autoparchi'),
+    url(r'veicolo/(P<pk>.*)/$', 'veicoli.viste.veicoli_veicolo'),
+
     url(r'^aspirante/$', 'formazione.viste.aspirante_home'),
     url(r'^aspirante/impostazioni/$', 'formazione.viste.aspirante_impostazioni'),
     url(r'^aspirante/corsi-base/$', 'formazione.viste.aspirante_corsi_base'),

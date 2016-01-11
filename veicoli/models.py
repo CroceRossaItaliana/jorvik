@@ -54,7 +54,7 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
 
     libretto = models.CharField("N. Libretto", help_text="Formato 201X-XXXXXXXXX", max_length=16, db_index=True, blank=False, null=False)
     targa = models.CharField("Targa (A)", help_text="Targa del Veicolo, senza spazi.", max_length=5, db_index=True, blank=False, null=False)
-    formato_targa = models.CharField("Formato Targa", max_length=1, choices=FORMATO_TARGA, default=TARGA_AUTOVEICOLI_A)
+    ##formato_targa = models.CharField("Formato Targa", max_length=1, choices=FORMATO_TARGA, default=TARGA_AUTOVEICOLI_A)
     prima_immatricolazione = models.DateField("Prima Immatricolazione (B)", db_index=True, blank=False, null=False)
 
     # Sezione C: Proprietario
@@ -140,22 +140,22 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
     intervallo_revisione = models.PositiveIntegerField("Intervallo Revisione", choices=INTERVALLO_REVISIONE, default=365)
 
 
-class Immatricolazione(ModelloSemplice, ConMarcaTemporale):
-    """
-    Rappresenta una pratica di immatricolazione di un Veicolo
-
-    Una pratica viene istruita da un ufficio motorizzazione per conto di una unita' CRI richiedente.
-    La stessa viene sottoposta a due stadi di approvazione, in seguito alla istruzione. Quando la
-    pratica termina, il veicolo viene immatricolato ed entra in servizio.
-    """
-
-    class Meta:
-        verbose_name = "Pratica di Immatricolazione"
-        verbose_name_plural = "Pratiche di Immatricolazione"
-
-    richiedente = models.ForeignKey(Sede, related_name='immatricolazioni_richieste')
-    ufficio = models.ForeignKey(Sede, related_name='immatricolazioni_istruite')
-    veicolo = models.ForeignKey(Veicolo, related_name='richieste_immatricolazione')
+# class Immatricolazione(ModelloSemplice, ConMarcaTemporale):
+#     """
+#     Rappresenta una pratica di immatricolazione di un Veicolo
+#
+#     Una pratica viene istruita da un ufficio motorizzazione per conto di una unita' CRI richiedente.
+#     La stessa viene sottoposta a due stadi di approvazione, in seguito alla istruzione. Quando la
+#     pratica termina, il veicolo viene immatricolato ed entra in servizio.
+#     """
+#
+#     class Meta:
+#         verbose_name = "Pratica di Immatricolazione"
+#         verbose_name_plural = "Pratiche di Immatricolazione"
+#
+#     richiedente = models.ForeignKey(Sede, related_name='immatricolazioni_richieste')
+#     ufficio = models.ForeignKey(Sede, related_name='immatricolazioni_istruite')
+#     veicolo = models.ForeignKey(Veicolo, related_name='richieste_immatricolazione')
 
 
 class Collocazione(ModelloSemplice, ConStorico):
@@ -232,7 +232,7 @@ class Rifornimento(ModelloSemplice, ConMarcaTemporale):
         (DISTRIBUTORE_CONVENZIONATO, "Distributore convenzionato"),
         (DISTRIBUTORE_OCCASIONALE, "Distributore occasionale")
     )
-    presso = models.CharField("Presso", choices=PRESSO, default=DISTRIBUTORE_OCCASIONALE, max_length=1)
+    presso = models.CharField("Presso", choices=PRESSO, max_length=1, default=None, null=True)
 
     contalitri = models.FloatField("(c/o Cisterna int.) Contalitri", blank=True, default=None, null=True, db_index=True)
     ricevuta = models.CharField("(c/o Distributore) N. Ricevuta", max_length=32, blank=True, default=None, null=True, db_index=True)

@@ -30,7 +30,7 @@ from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, R
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, APPLICAZIONI_SLUG_DICT, PERMESSI_NOMI_DICT
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
-    GESTIONE_SEDE
+    GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE
 from anagrafica.permessi.delega import delega_permessi
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
@@ -439,6 +439,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         if self.ha_permesso(GESTIONE_SOCI):
             lista += [('/us/', 'Soci', 'fa-users')]
+
+        if self.ha_permesso(GESTIONE_AUTOPARCHI_SEDE):
+            lista += [('/veicoli/', "Veicoli", "fa-car")]
 
         if self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE):
             lista += [('/formazione/', 'Formazione', 'fa-graduation-cap')]
@@ -1295,6 +1298,10 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
     Rappresenta una pratica di trasferimento.
     """
 
+    class Meta:
+        verbose_name = "Richiesta di trasferimento"
+        verbose_name_plural = "Richieste di trasferimento"
+
     richiedente = models.ForeignKey(Persona, related_name='trasferimenti_richiesti_da')
     persona = models.ForeignKey(Persona, related_name='trasferimenti')
     destinazione = models.ForeignKey(Sede, related_name='trasferimenti_destinazione')
@@ -1361,6 +1368,10 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     Rappresenta una pratica di estensione.
     """
 
+    class Meta:
+        verbose_name = "Richiesta di estensione"
+        verbose_name_plural = "Richieste di estensione"
+
     richiedente = models.ForeignKey(Persona, related_name='estensioni_richieste_da')
     persona = models.ForeignKey(Persona, related_name='estensioni')
     destinazione = models.ForeignKey(Sede, related_name='estensioni_destinazione')
@@ -1413,6 +1424,18 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         self.appartenenza.terminazione = Appartenenza.FINE_ESTENSIONE
         self.attuale = 'n'
         self.save()
+
+    def genera_pdf(self):
+        pdf = PDF(oggetto=self)
+        pdf.genera_e_salva(
+          nome="Estensione %s.pdf" % (self.persona.nome_completo, ),
+          corpo={
+            "estensione": self,
+            "sede_attuale": self.persona.sedi_attuali(al_giorno=self.creazione)[0]
+          },
+          modello="pdf_estensione.html",
+        )
+        return pdf
 
 
 class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,

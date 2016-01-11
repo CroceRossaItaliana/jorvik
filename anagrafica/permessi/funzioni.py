@@ -2,15 +2,14 @@
 Questo modulo contiene tutte le funzioni per testare i permessi
 a partire da un oggetto sul quale ho una delega ed un oggetto da testare.
 """
-from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO
+from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.applicazioni import DELEGATO_AREA
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
 from anagrafica.permessi.applicazioni import REFERENTE
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
-    GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO
-
+    GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, GESTIONE_AUTOPARCHI_SEDE
 
 
 def permessi_presidente(sede):
@@ -26,7 +25,8 @@ def permessi_presidente(sede):
     ] \
         + permessi_ufficio_soci(sede) \
         + permessi_responsabile_attivita(sede) \
-        + permessi_responsabile_formazione(sede)
+        + permessi_responsabile_formazione(sede) \
+        + permessi_responsabile_autoparco(sede)
 
 def permessi_ufficio_soci(sede):
     """
@@ -122,18 +122,32 @@ def permessi_direttore_corso(corso):
     ]
 
 
+def permessi_responsabile_autoparco(sede):
+    """
+    Permessi della delega di RESPONSABILE AUTOPARCO.
+
+    :param sede: La Sede di cui si gestiscono gli autoparchi
+    :return: Lista di permessi.
+    """
+    from formazione.models import CorsoBase
+    return [
+        (GESTIONE_AUTOPARCHI_SEDE,         sede.espandi(includi_me=True))
+    ]
+
+
 # Non modificare
 
 
 # Funzioni permessi
 # Nota bene: Non inserire () dopo il nome della funzione.
 PERMESSI_FUNZIONI = (
-    (PRESIDENTE,        permessi_presidente),
-    (UFFICIO_SOCI,      permessi_ufficio_soci),
-    (DELEGATO_AREA,     permessi_delegato_area),
-    (RESPONSABILE_AREA, permessi_responsabile_area),
-    (REFERENTE,         permessi_referente),
-    (DIRETTORE_CORSO,   permessi_direttore_corso),
+    (PRESIDENTE,                permessi_presidente),
+    (UFFICIO_SOCI,              permessi_ufficio_soci),
+    (DELEGATO_AREA,             permessi_delegato_area),
+    (RESPONSABILE_AREA,         permessi_responsabile_area),
+    (REFERENTE,                 permessi_referente),
+    (DIRETTORE_CORSO,           permessi_direttore_corso),
+    (RESPONSABILE_AUTOPARCO,    permessi_responsabile_autoparco)
 )
 
 # Tieni in memoria anche come dizionari, per lookup veloci

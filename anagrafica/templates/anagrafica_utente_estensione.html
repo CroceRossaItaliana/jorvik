@@ -35,7 +35,8 @@
                                     <th>Stato</th>
                                     <th>Richiedente e data</th>
                                     <th>Destinazione</th>
-
+                                    <th>Motivo</th>
+                                    <th>Azioni</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -67,6 +68,8 @@
                                         <i class="fa fa-fw fa-calendar"></i> {{ estensione.creazione|date:"SHORT_DATETIME_FORMAT" }}
                                     </td>
                                     <td>{{ estensione.destinazione.link|safe }}</td>
+                                    <td>{{ estensione.motivo }}</td>
+                                    <td><a href="{{ estensione.url_pdf }}" target="_blank">Scarica PDF</a></td>
                                 </tr>
                                 {% empty %}
                                     <tr>
