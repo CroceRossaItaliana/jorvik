@@ -1,6 +1,7 @@
 {% extends "anagrafica_utente_vuota.html" %}
 
 {% load bootstrap3 %}
+{% load utils %}
 
 {% block pagina_titolo %}Storico Appartenenze e Deleghe{% endblock %}
 
@@ -103,6 +104,49 @@
 
 
             <p>&nbsp;</p>
+            <h4><i class="fa fa-money fa-fw"></i> Quote versate</h4>
+
+            <table class="table table-condensed table-responsive">
+                <thead>
+                    <th>Numero</th>
+                    <th>Importo</th>
+                    <th>Registrazione</th>
+                    <th>Ricevuta</th>
+                </thead>
+                <tbody>
+
+                    {% for q in me.quote.all %}
+                        <tr>
+                            <td>{{ q.progressivo }}/<span class="piu-grande">{{ q.anno }}</span></td>
+                            <td>{% euro q.importo_totale %}</td>
+                            <td>
+
+                                <i class="fa fa-fw fa-check-circle"></i> Registrata da {{ q.registrato_da.link|safe }}
+                                    versata il {{ q.data_versamento }}<br />
+
+                                {% if q.stato == q.ANNULLATA %}
+                                    <i class="fa fa-fw fa-times"></i> Annullata da {{ q.annullato_da }}
+                                    in data {{ q.annullato_da }}
+
+                                {% endif %}
+
+                            </td>
+                            <td>
+                                <a href="{{ q.url_pdf }}" target="_blank">
+                                    Scarica PDF
+                                </a>
+                            </td>
+                        </tr>
+
+                    {% empty %}
+
+
+                    {% endfor %}
+                </tbody>
+            </table>
+
+
+            <p>&nbsp;</p>
 
             <h4><i class="fa fa-clock-o fa-fw"></i> Deleghe</h4>
 
@@ -115,7 +159,7 @@
                 </thead>
 
 
-<tbody>
+                <tbody>
                 {% for d in deleghe %}
                     <tr     {% if d.attuale %}class="bg-success"
                             {% endif %}>

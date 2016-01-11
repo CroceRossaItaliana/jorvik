@@ -1,5 +1,6 @@
 from django import template
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.humanize.templatetags.humanize import intcomma
 from django.db.models import QuerySet
 from django.template import Library
 from django.template.loader import render_to_string
@@ -131,6 +132,13 @@ def mappa(parser, token):
         nodelist_icona = parser.parse(('endmappa',))
         token = parser.next_token()
     return NodoMappa(nodelist, nodelist_icona, elementi)
+
+
+@register.simple_tag(takes_context=True)
+def euro(context, numero):
+    euro = round(float(numero), 2)
+    return ("%s%s &euro;" % (intcomma(int(euro)), ("%0.2f" % euro)[-3:])).replace('.', ',')
+
 
 class NodoMappa(template.Node):
     def __init__(self, nodelist, nodelist_icona, elementi):

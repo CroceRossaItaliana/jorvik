@@ -3,7 +3,7 @@ from datetime import timezone
 from django.db import models
 
 from base.models import ModelloSemplice, ConAutorizzazioni
-from base.tratti import ConMarcaTemporale
+from base.tratti import ConMarcaTemporale, ConPDF
 from base.utils import concept
 
 __author__ = 'alfioemanuele'
@@ -70,8 +70,7 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
         return 0.0
 
 
-class Quota(ModelloSemplice, ConMarcaTemporale):
-
+class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF):
 
     def default_anno(self):
         """
@@ -153,3 +152,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale):
 
         except:  # Se prima quota
             return 1
+
+    @property
+    def importo_totale(self):
+        return self.importo + self.importo_extra
