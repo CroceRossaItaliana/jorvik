@@ -25,3 +25,4 @@ ftfy==4.0
 django-loginas==0.1.8
 sorl-thumbnail==12.3
 python-stdnum==1.2
+codicefiscale==0.9

@@ -13,6 +13,7 @@ Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 """
 from datetime import date, timedelta, datetime
 
+import codicefiscale
 import mptt
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -34,7 +35,7 @@ from anagrafica.permessi.delega import delega_permessi
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
 from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
-    crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb
+    crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb, valida_almeno_14_anni
 from attivita.models import Turno
 from base.files import PDF
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
@@ -78,7 +79,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     cognome = models.CharField("Cognome", max_length=64)
     codice_fiscale = models.CharField("Codice Fiscale", max_length=16, blank=False,
                                       unique=True, db_index=True, validators=[valida_codice_fiscale,])
-    data_nascita = models.DateField("Data di nascita", db_index=True, null=True)
+    data_nascita = models.DateField("Data di nascita", db_index=True, null=True,
+                                    validators=[valida_almeno_14_anni])
     genere = models.CharField("Genere", max_length=1, choices=GENERE, db_index=True)
 
     # Stato
@@ -94,6 +96,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     stato_residenza = CountryField("Stato di residenza", default="IT")
     cap_residenza = models.CharField("CAP di Residenza", max_length=16, null=True)
     email_contatto = models.EmailField("Email di contatto", max_length=64, blank=True)
+    note = models.TextField("Note aggiuntive", max_length=10000, blank=True, null=True,)
 
     avatar = models.ImageField("Avatar", blank=True, null=True,
                                upload_to=GeneratoreNomeFile('avatar/'),
@@ -291,7 +294,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def giovane(self, **kwargs):
-        return self.eta(**kwargs) <= self.ETA_GIOVANE
+        return self.eta <= self.ETA_GIOVANE
 
     """
     # Gestione della Privacy
@@ -539,7 +542,23 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def url(self):
-        return "/profilo/" + str(self.pk) + "/"
+        return "/profilo/%d/" % (self.pk,)
+
+    @property
+    def url_modifica_anagrafica(self):
+        return "%sanagrafica/" % (self.url,)
+
+    @property
+    def url_modifica_foto(self):
+        return "%sfotografie/" % (self.url,)
+
+    @property
+    def url_modifica_credenziali(self):
+        return "%scredenziali/" % (self.url,)
+
+    @property
+    def url_modifica_storico(self):
+        return "%sstorico/" % (self.url,)
 
     @property
     def messaggio_url(self):
@@ -665,8 +684,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             ))
             return a
 
-    def sede_riferimento(self):
-        sedi = self.sedi_attuali(membro__in=Appartenenza.MEMBRO_DIRETTO).order_by('-appartenenze__inizio').first()
+    def sede_riferimento(self, **kwargs):
+        sedi = self.sedi_attuali(membro__in=Appartenenza.MEMBRO_DIRETTO, **kwargs).order_by('-appartenenze__inizio').first()
         if sedi:
             return sedi.comitato
         return sedi
@@ -678,6 +697,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         genere = self.genere_codice_fiscale or self.genere
         return 'o' if genere == self.MASCHIO else 'a'
+
+    def genera_inizio_codice_fiscale(self):
+        return codicefiscale.build(
+            self.cognome, self.nome, self.data_nascita,
+            self.genere_codice_fiscale, 'D969'
+        )[0:11]
+
+    def codice_fiscale_verosimile(self):
+        """
+        Controlla se il codice fiscale e' verosimile o meno
+        """
+        return self.genera_inizio_codice_fiscale() in self.codice_fiscale
 
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
@@ -975,6 +1006,8 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     email = models.CharField("Indirizzo e-mail", max_length=64, blank=True)
     codice_fiscale = models.CharField("Codice Fiscale", max_length=32, blank=True)
     partita_iva = models.CharField("Partita IVA", max_length=32, blank=True)
+
+    attiva = models.BooleanField("Attiva", default=True, db_index=True)
 
     def sorgente_slug(self):
         if self.genitore:
@@ -1322,6 +1355,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
         )
         return pdf
 
+
 class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     """
     Rappresenta una pratica di estensione.
@@ -1331,11 +1365,18 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     persona = models.ForeignKey(Persona, related_name='estensioni')
     destinazione = models.ForeignKey(Sede, related_name='estensioni_destinazione')
     appartenenza = models.ForeignKey(Appartenenza, related_name='estensione', null=True, blank=True)
-    protocollo_numero = models.PositiveIntegerField('Numero di protocollo', null=True, blank=True)
+    protocollo_numero = models.CharField('Numero di protocollo', max_length=512, null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
-    attuale = models.CharField('Attualità della richiesta', max_length=1, default='s')
+    motivo = models.CharField(max_length=2048, null=True, blank=False,)
 
     RICHIESTA_NOME = "Estensione"
+
+    def attuale(self, **kwargs):
+        """
+        Controlla che l'estensione sia stata confermata e
+         l'appartenenza creata sia in corso.
+        """
+        return self.esito == self.ESITO_OK and self.appartenenza.attuale(**kwargs)
 
     def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiEstensione
@@ -1372,6 +1413,15 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         self.appartenenza.terminazione = Appartenenza.FINE_ESTENSIONE
         self.attuale = 'n'
         self.save()
+
+
+class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
+              ConAutorizzazioni, ConPDF):
+    """
+    Rappresenta una pratica di riserva.
+    Questa puo' essere in corso o meno.
+    """
+
 
 
 class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocollo):

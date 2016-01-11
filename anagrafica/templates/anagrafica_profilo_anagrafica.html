@@ -1,0 +1,133 @@
+{% extends 'anagrafica_profilo.html' %}
+
+{% load bootstrap3 %}
+
+{% block profilo_corpo %}
+
+    <div class="row">
+
+        <div class="col-md-6">
+
+            <div class="panel panel-primary">
+
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <i class="fa fa-fw fa-edit"></i>
+                        Modifica dati {{ persona.nome_completo }}
+                    </h4>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo  %}
+
+                        <button type="submit"
+                                class="btn btn-primary btn-block">
+                            <i class="fa fa-fw fa-save"></i>
+                            Salva modifiche
+                        </button>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+
+
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <i class="fa fa-fw fa-info-circle"></i>
+                        Informazioni aggiuntive
+
+                    </h4>
+                </div>
+                <div class="panel-body">
+                    <p>Qui sono riassunte le informazioni aggiuntive o calcolate
+                        per il profilo di {{ persona.nome }}.</p>
+
+                    <table class="table table-striped table-responsive">
+                        <tbody>
+
+                            <tr>
+                                <td>Et&agrave;</td>
+                                <td>{{ persona.eta }} anni</td>
+                            </tr>
+                            <tr>
+                                <td>Giovane</td>
+                                <td>
+                                    {% if persona.giovane %}
+                                        <i class="fa fa-fw fa-check"></i>
+                                        S&iacute;
+                                        (meno di {{ persona.ETA_GIOVANE }} anni)
+
+                                    {% else %}
+                                        <i class="fa fa-fw fa-times"></i>
+                                        No
+                                        (pi&ugrave; di {{ persona.ETA_GIOVANE }} anni)
+
+                                    {% endif %}
+
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Genere (da CF)</td>
+                                <td>
+                                    {% if persona.genere_codice_fiscale == persona.MASCHIO %}
+                                        <i class="fa fa-fw fa-male"></i>
+                                        Maschio
+
+                                    {% elif persona.genere_codice_fiscale == persona.FEMMINA %}
+                                        <i class="fa fa-fw fa-female"></i>
+                                        Femmina
+
+                                    {% else %}
+                                        <i class="fa fa-fw fa-question-circle"></i>
+                                        Sconosciuto
+
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr
+                                {% if persona.codice_fiscale_verosimile %}
+                                    class="success"
+                                {% else %}
+                                    class="danger"
+                                {% endif %}
+                            >
+                                <td>Codice Fiscale</td>
+                                <td>
+                                    {% if persona.codice_fiscale_verosimile %}
+                                        <i class="fa fa-fw fa-check-circle"></i>
+                                        Sembra corretto
+
+                                    {% else %}
+                                        <i class="fa fa-fw fa-warning"></i>
+                                        Sembra errato!
+
+                                    {% endif %}
+
+                                    <br />
+                                    <span class="piu-piccolo">
+                                        Verifica di nome, cognome e data di nascita.
+                                    </span>
+
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+{% endblock %}

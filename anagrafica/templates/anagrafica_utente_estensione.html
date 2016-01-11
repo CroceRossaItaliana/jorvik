@@ -27,22 +27,21 @@
 
             <div class="panel-body">
 
-                <div class="row" style="margin-top: 5px;">
+                <div class="row">
                     <div class="col-md-12">
-                        <h3>Storico estesioni</h3>
                         <table class="table table-striped">
                             <thead>
                                 <tr>
                                     <th>Stato</th>
-                                    <th>Richiedente</th>
+                                    <th>Richiedente e data</th>
                                     <th>Destinazione</th>
 
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for estensione in storico %}
-                                <tr {% if d.esito == estensione.ESITO_OK and d.attuale %}class="bg-success"
-                                    {% elif d.esito == estensione.ESITO_PENDING %}class="gb-warning"
+                                <tr {% if estensione.attuale %}class="success"
+                                    {% elif estensione.esito == estensione.ESITO_PENDING %}class="warning"
                                     {% endif %}>
                                     <td>
                                         {% if estensione.esito == estensione.ESITO_OK %}
@@ -63,7 +62,10 @@
                                             Negata
                                         {% endif %}
                                     </td>
-                                    <td>{{ estensione.richiedente }}</td>
+                                    <td>
+                                        <i class="fa fa-fw fa-user"></i> {{ estensione.richiedente }}<br />
+                                        <i class="fa fa-fw fa-calendar"></i> {{ estensione.creazione|date:"SHORT_DATETIME_FORMAT" }}
+                                    </td>
                                     <td>{{ estensione.destinazione.link|safe }}</td>
                                 </tr>
                                 {% empty %}

@@ -10,18 +10,19 @@ from django.views.generic import ListView
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
-    ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera
+    ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
 from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT
-from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO
+from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.errori import errore_generico, errore_nessuna_appartenenza
 from base.files import Zip
+from base.models import Log
 from base.notifiche import NOTIFICA_INVIA
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
@@ -714,3 +715,46 @@ def utente_curriculum_cancella(request, me, pk=None):
 
     return redirect("/utente/curriculum/%s/" % (tipo,))
 
+
+@pagina_privata
+def profilo(request, me, pk):
+    persona = get_object_or_404(Persona, pk=pk)
+    puo_modificare = me.permessi_almeno(persona, MODIFICA)
+
+    contesto = {
+        "persona": persona,
+        "puo_modificare": puo_modificare,
+    }
+    return 'anagrafica_profilo_profilo.html', contesto
+
+
+@pagina_privata
+def profilo_anagrafica(request, me, pk):
+    persona = get_object_or_404(Persona, pk=pk)
+    if not me.permessi_almeno(persona, MODIFICA):
+        redirect(ERRORE_PERMESSI)
+
+    modulo = ModuloProfiloModificaAnagrafica(request.POST or None, instance=persona)
+    if modulo.is_valid():
+        Log.registra_modifiche(me, modulo)
+        modulo.save()
+
+    contesto = {
+        "persona": persona,
+        "puo_modificare": True,
+        "modulo": modulo,
+    }
+    return 'anagrafica_profilo_anagrafica.html', contesto
+
+
+@pagina_privata
+def profilo_storico(request, me, pk):
+    persona = get_object_or_404(Persona, pk=pk)
+    if not me.permessi_almeno(persona, MODIFICA):
+        redirect(ERRORE_PERMESSI)
+
+    contesto = {
+        "persona": persona,
+        "puo_modificare": True,
+    }
+    return 'anagrafica_profilo_profilo.html', contesto

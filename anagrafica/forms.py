@@ -89,6 +89,20 @@ class ModuloModificaAnagrafica(ModelForm):
                   'cap_residenza']
 
 
+class ModuloProfiloModificaAnagrafica(ModelForm):
+    class Meta:
+        model = Persona
+        fields = ['nome', 'cognome', 'data_nascita', 'codice_fiscale',
+                  'comune_nascita', 'provincia_nascita', 'stato_nascita',
+                  'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
+                  'cap_residenza', 'email_contatto',
+                  'note',]
+
+    def __init__(self, *args, **kwargs):
+        super(ModuloProfiloModificaAnagrafica, self).__init__(*args, **kwargs)
+        #self.fields['note'].widget = forms.Textarea
+
+
 class ModuloModificaAvatar(ModelForm):
     class Meta:
         model = Persona

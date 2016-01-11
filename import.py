@@ -36,7 +36,7 @@ application = get_wsgi_application()
 
 from django.template.backends import django
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
-from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Fototessera, Documento
+from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Fototessera, Documento, Estensione
 from base.geo import Locazione
 from ufficio_soci.models import Quota, Tesseramento
 import argparse
@@ -118,6 +118,9 @@ parser.add_argument('--salta-aspiranti', dest='aspiranti', action='store_const',
 parser.add_argument('--salta-trasferimenti', dest='trasferimenti', action='store_const',
                    const=False, default=True,
                    help='salta importazione trasferimenti (usa cache precedente)')
+parser.add_argument('--salta-estensioni', dest='estensioni', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione estensioni (usa cache precedente)')
 
 parser.add_argument('--uploads', dest='uploads', action='store',
                    help='path assoluta alla cartella upload/ di Gaia vecchio')
@@ -253,6 +256,8 @@ ASSOC_ID_ASPIRANTI = {}
 
 ASSOC_ID_TRASFERIMENTI = {}
 
+ASSOC_ID_ESTENSIONI = {}
+
 
 def parse_numero(numero, paese="IT"):
     try:
@@ -270,7 +275,7 @@ def ottieni_comitato(tipo='nazionali', id=1):
     cursore = db.cursor()
     cursore.execute("""
         SELECT
-            id, nome, X(geo), Y(geo)""" + (", principale" if tipo == 'comitati' else " ") + """
+            id, nome, X(geo), Y(geo)""" + (", principale, attivo" if tipo == 'comitati' else " ") + """
         FROM
             """ + tipo + """
         WHERE id = %s
@@ -295,6 +300,7 @@ def ottieni_comitato(tipo='nazionali', id=1):
         'x': comitato[2],
         'y': comitato[3],
         'principale': (True if comitato[4] else False) if len(comitato) > 4 else False,
+        'attivo': (True if int(comitato[5]) == 1 else False) if len(comitato) > 5 else True,
         'dati': dict
     }
 
@@ -743,7 +749,17 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
         ASSOC_ID_COMITATI[COMITATO_OID[tipo]].update({id: (Sede, ref.pk)})
         c = ref
 
+    # Sedi principali (locali con nome Provinciale diventano Provinciale)
+    elif ref and COMITATO_ESTENSIONE[tipo] == LOCALE \
+            and stringa(comitato['nome']) == ref.nome:
+        ASSOC_ID_COMITATI[COMITATO_OID[tipo]].update({id: (Sede, ref.pk)})
+        c = ref
+
     else:
+
+        attiva = True
+        if not comitato['attivo']:
+            attiva = False
 
         c = Sede(
             genitore=ref,
@@ -751,6 +767,7 @@ def carica_comitato(posizione=True, tipo='nazionali', id=1, ref=None, num=0):
             tipo=Sede.COMITATO,
             estensione=COMITATO_ESTENSIONE[tipo],
             vecchio_id=int(id),
+            attiva=attiva,
         )
         c.save()
 
@@ -2597,6 +2614,138 @@ def carica_documenti():
 
     cursore.close()
 
+@transaction.atomic
+def carica_estensioni():
+
+    print("  - Caricamento delle estensioni...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, stato, appartenenza, volontario, cProvenienza, protNumero, protData,
+            motivo, negazione, timestamp, pConferma, tConferma
+        FROM
+            estensioni
+        WHERE
+            volontario IN (SELECT id FROM anagrafica)
+        AND appartenenza IN (SELECT id FROM appartenenza)
+        AND cProvenienza IN (SELECT id FROM comitati)
+        """
+    )
+
+    ests = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for est in ests:
+        contatore += 1
+
+        id = int(est[0])
+        stato = int(est[1])
+        appartenenza_id = int(est[2])
+        persona_id = int(est[3])
+        # sede_provenienza = int(est[4])  # Non importa davvero piu.
+        protocollo_numero = stringa(est[5])
+        protocollo_data = data_da_timestamp(est[6], None) if est[6] else None
+        motivo = stringa(est[7])
+        negazione = stringa(est[8])
+        creazione = data_da_timestamp(est[9])
+        pConferma_id = int(est[10]) if est[10] else None
+        tConferma = data_da_timestamp(est[11], None) if est[11] else None
+
+        print("    %s estensione id=%d, persona=%d, appartenenza=%d" % (
+            progresso(contatore, totale),
+            id, persona_id, appartenenza_id,
+        ))
+
+        try:
+            appartenenza_id = ASSOC_ID_APPARTENENZE[appartenenza_id]
+            appartenenza = Appartenenza.objects.get(pk=appartenenza_id)
+
+        except KeyError:
+            print("     - SALTATO appartenenza id=%d non trovata " % (appartenenza_id, ))
+            continue
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[persona_id]
+            persona = Persona.objects.get(pk=persona_id)
+
+        except KeyError:
+            print("     - SALTATO persona id=%d non trovata " % (persona_id,))
+            continue
+
+        approvata = False
+        if stato == 40 or (pConferma_id is not None and not negazione):  # Se approvata
+            approvata = True
+
+        ultima_modifica = creazione if tConferma is None else max(creazione, tConferma)
+
+        confermata = True if approvata and stato != 10 and stato != 25 else False
+        ritirata = True if stato == 25 else False
+
+        sede_riferimento = persona.sede_riferimento(al_giorno=creazione)
+        if not sede_riferimento and stato == 20:
+            print("      - SALTATO Nessuna sede di riferimento al momento della creazione")
+            continue
+
+        e = Estensione(
+            richiedente_id=persona_id,
+            persona_id=persona_id,
+            destinazione=appartenenza.sede,
+            appartenenza=appartenenza if approvata else None,  # Collega appartenenza solo se approvata.
+            protocollo_numero=protocollo_numero or '',
+            protocollo_data=protocollo_data or None,
+            motivo=motivo if motivo else '',
+            creazione=creazione,
+            ultima_modifica=ultima_modifica,
+            confermata=confermata,
+            ritirata=ritirata,
+        )
+        e.save()
+
+        if stato == 20:  # In corso
+            firmatario_id = None
+            necessaria = True
+            concessa = None
+
+        elif stato == 10:
+            firmatario_id = pConferma_id
+            necessaria = False
+            concessa = False
+
+        elif stato == 25:
+            firmatario_id = None
+            necessaria = False
+            concessa = None
+
+        elif stato == 0 or stato == 30:
+            firmatario_id = pConferma_id
+            necessaria = False
+            concessa = True
+
+        if sede_riferimento and not stato == 40:  # Approvata automaticamente, nessuna autorizzazione.
+
+            print("     - Creo autorizzazione associata a presidente sede pk=%d" % (sede_riferimento.pk,))
+
+            a = Autorizzazione(
+                oggetto=e,
+                richiedente_id=persona_id,
+                firmatario_id=firmatario_id,
+                concessa=concessa,
+                motivo_negazione=negazione,
+                necessaria=necessaria,
+                destinatario_ruolo=PRESIDENTE,
+                destinatario_oggetto=sede_riferimento,
+            )
+            a.save()
+
+    cursore.close()
+
+
+
+
+
+
 
 # Importazione dei Comitati
 
@@ -2907,5 +3056,21 @@ if args.trasferimenti:
 else:
     print("  ~ Carico tabella delle corrispondenze (formazione-aspiranti.pickle-tmp)")
     ASSOC_ID_TRASFERIMENTI = pickle.load(open("trasferimenti.pickle-tmp", "rb"))
+
+
+# Importazione delle estensioni
+print("> Importazione delle estensioni")
+if args.estensioni:
+    print("  - Eliminazione attuali")
+
+    Estensione.objects.all().delete()
+    carica_estensioni()
+
+    print("  ~ Persisto tabella delle corrispondenze (estensioni.pickle-tmp)")
+    pickle.dump(ASSOC_ID_ESTENSIONI, open("estensioni.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (estensioni.pickle-tmp)")
+    ASSOC_ID_ESTENSIONI = pickle.load(open("estensioni.pickle-tmp", "rb"))
 
 # print(ASSOC_ID_COMITATI)

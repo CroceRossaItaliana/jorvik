@@ -39,9 +39,11 @@ class PersonaAutocompletamento(AutocompletamentoBase):
 
 
 class SedeAutocompletamento(AutocompletamentoBase):
-    search_fields = ['^nome', 'genitore__nome', ]
+    search_fields = ['nome', 'genitore__nome', ]
     model = Sede
 
+    def choices_for_request(self):
+        return Sede.objects.all().filter(attiva=True)
 
 class SedeNuovoCorsoAutocompletamento(SedeAutocompletamento):
     def choices_for_request(self):

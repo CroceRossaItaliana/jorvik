@@ -8,7 +8,7 @@ from django.forms import forms
 from safedelete import safedelete_mixin_factory, SOFT_DELETE
 from mptt.models import MPTTModel, TreeForeignKey
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
-from anagrafica.permessi.costanti import DELEGHE_OGGETTI_DICT
+from anagrafica.permessi.costanti import DELEGHE_OGGETTI_DICT, MODIFICA
 from anagrafica.validators import crea_validatore_dimensione_file, valida_dimensione_file_10mb
 from base.forms import ModuloMotivoNegazione
 from base.notifiche import NOTIFICA_NON_INVIARE
@@ -99,7 +99,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     firmatario = models.ForeignKey("anagrafica.Persona", db_index=True, blank=True, null=True, default=None,
                                    related_name="autorizzazioni_firmate")
     concessa = models.NullBooleanField("Esito", db_index=True, blank=True, null=True, default=None)
-    motivo_negazione = models.CharField(blank=True, null=True, max_length=256)
+    motivo_negazione = models.CharField(blank=True, null=True, max_length=512)
 
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="autcomeoggetto")
     oggetto_id = models.PositiveIntegerField(db_index=True)
@@ -216,6 +216,87 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             mittente=self.firmatario,
             destinatari=[self.richiedente]
         )
+
+
+class Log(ModelloSemplice, ConMarcaTemporale):
+
+    MODIFICA = 'M'
+    CREAZIONE = 'C'
+    ELIMINAZIONE = 'E'
+    AZIONE = (
+        ('M', 'Modifica'),
+        ('C', 'Creazione'),
+        ('E', 'Eliminazione'),
+    )
+
+    persona = models.ForeignKey('anagrafica.Persona', related_name='azioni_recenti')
+    azione = models.CharField(choices=AZIONE, max_length=1)
+
+    oggetto_repr = models.CharField(max_length=1024, blank=True, null=True)
+    oggetto_app_label = models.CharField(max_length=1024, blank=True, null=True, db_index=True)
+    oggetto_model = models.CharField(max_length=1024, blank=True, null=True, db_index=True)
+    oggetto_pk = models.IntegerField(blank=True, null=True, db_index=True)
+
+    oggetto_campo = models.CharField(max_length=64, db_index=True, blank=True, null=True)
+    valore_precedente = models.CharField(max_length=4096, blank=True, null=True)
+    valore_successivo = models.CharField(max_length=4096, blank=True, null=True)
+
+    @classmethod
+    def _scomponi(cls, i):
+        c = ContentType.objects.get_for_model(i)
+        return c.app_label, c.model, i.pk
+
+    @classmethod
+    def modifica(cls, persona, oggetto, campo, valore_precedente="", valore_successivo=""):
+        app_label, model, pk = cls._scomponi(oggetto)
+        l = Log(
+            persona=persona, azione=cls.MODIFICA,
+            oggetto_repr=str(oggetto), oggetto_app_label=app_label,
+            oggetto_model=model, oggetto_pk=pk, oggetto_campo=campo,
+            valore_precedente=valore_precedente, valore_successivo=valore_successivo
+        )
+        l.save()
+        return l
+
+    @classmethod
+    def registra_modifiche(cls, autore, modelform):
+        """
+        Dato un model form, registra le modifiche effettuate
+        """
+
+        righe = 0
+        try:
+            originale = modelform.instance.__class__.objects.get(pk=modelform.instance.pk)
+
+        except:
+            return righe
+
+        if modelform.instance:
+            # Modifica
+            for campo, valore_successivo in modelform.cleaned_data.items():
+
+                try:
+                    valore_precedente = getattr(originale, campo)
+
+                except AttributeError:
+                    # Valore non esistente
+                    continue
+
+                if valore_precedente == valore_successivo:
+                    continue  # Questo non e' stato modificato
+
+                righe += 1
+                cls.modifica(
+                    autore, modelform.instance, campo,
+                    valore_precedente, valore_successivo
+                )
+
+        else:
+            # Creazione
+            pass
+
+        return righe
+
 
 
 class ConAutorizzazioni(models.Model):
