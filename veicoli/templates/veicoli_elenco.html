@@ -1,0 +1,50 @@
+{% extends "veicoli_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Elenco Veicoli{% endblock %}
+
+{% block app_contenuto %}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-car fa-fw"></i> Elenco Veicoli
+                </h4>
+            </div>
+
+            <div class="panel-body">
+                <table class="table table-condensed table-responsive">
+                    <thead>
+                        <tr>
+                            <th>Targa</th>
+                            <th>Destinazione d'uso</th>
+                            <th>Consumo Medio</th>
+                            <th>Autoparco</th>
+                            <th>Fermo Tecnico</th>
+                            <th>Tipo</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for veicolo in veicoli %}
+                            <tr {% if veicolo.fermo_tecnico %} class="warning" {% endif %}>
+                                <td>{{ veicolo.targa }}</td>
+                                <td>{{ veicolo.destinazione }}</td>
+                                <td>{{ veicolo.media_consumi }} km/lt</td>
+                                <td>{{ veicolo.collocazione.autoparco }}</td>
+                                <td>{{ veicolo.fermo_tecnico }}</td>
+                                <td>{{ veicolo.categoria }}</td>
+                                <td></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

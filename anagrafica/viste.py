@@ -16,7 +16,7 @@ from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
-from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza
+from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA
 from autenticazione.funzioni import pagina_anonima, pagina_privata
@@ -512,6 +512,14 @@ def utente_estensione_termina(request, me, pk):
         estensione.termina()
         return redirect('/utente/estensione/')
 
+def utente_trasferimento_termina(request, me, pk):
+    trasferimento = get_object_or_404(Trasferimento, pk=pk)
+    if not trasferimento.persona == me:
+        return redirect(ERRORE_PERMESSI)
+    else:
+        trasferimento.ritira()
+        return redirect('/utente/trasferimento/')
+
 
 @pagina_privata
 def utente_trasferimento(request, me):
@@ -522,6 +530,8 @@ def utente_trasferimento(request, me):
             trasf = modulo.save(commit=False)
             if trasf.destinazione in me.sedi_attuali():
                 modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
+            elif me.trasferimento:
+                return errore_generico(request, me, messaggio="Non puoi richiedere piú di un trasferimento alla volta")
             else:
 
                 trasf.persona = me
@@ -535,6 +545,14 @@ def utente_trasferimento(request, me):
         "storico": storico
     }
     return "anagrafica_utente_trasferimento.html", contesto
+
+@pagina_privata
+def utente_trasferimento_ritira(request, me, pk):
+    trasf = get_object_or_404(Trasferimento, pk=pk)
+    if not trasf.persona == me:
+        return redirect(ERRORE_PERMESSI)
+    trasf.autorizzazioni_ritira()
+    return redirect("/utente/trasferimento/")
 
 
 @pagina_privata

@@ -151,7 +151,7 @@ class ModuloCreazioneTelefono(forms.Form):
 class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
     class Meta:
         model = Estensione
-        fields = ['destinazione']
+        fields = ['destinazione', 'motivo']
 
 
 class ModuloConsentiEstensione(forms.Form):
@@ -162,7 +162,7 @@ class ModuloConsentiEstensione(forms.Form):
 class ModuloCreazioneTrasferimento(autocomplete_light.ModelForm):
     class Meta:
         model = Trasferimento
-        fields = ['destinazione']
+        fields = ['destinazione', 'motivo']
 
 
 class ModuloConsentiTrasferimento(forms.Form):

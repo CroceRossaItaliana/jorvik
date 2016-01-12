@@ -3,7 +3,8 @@ from datetime import date
 __author__ = 'alfioemanuele'
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
-    GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, MODIFICA, LETTURA, COMPLETO
+    GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, MODIFICA, LETTURA, COMPLETO, \
+    GESTIONE_AUTOPARCHI_SEDE
 
 """
 Questo file gestisce la espansione dei permessi in Gaia.
@@ -18,8 +19,10 @@ Questo file gestisce la espansione dei permessi in Gaia.
 
 
 def espandi_persona(persona, al_giorno=date.today()):
+    from anagrafica.models import Persona, Appartenenza, Trasferimento, Estensione
     return [
-
+        (LETTURA,   Trasferimento.objects.filter(persona=persona)),
+        (LETTURA,   Estensione.objects.filter(persona=persona)),
     ]
 
 
@@ -75,6 +78,16 @@ def espandi_gestione_attivita(qs_attivita, al_giorno=date.today()):
     ]
 
 
+def espandi_gestione_autoparchi_sede(qs_sedi, al_giorno=date.today()):
+    from veicoli.models import Autoparco, Veicolo, Collocazione
+    return [
+        (MODIFICA,  Autoparco.objects.filter(sede__in=qs_sedi)),
+        (MODIFICA,  Veicolo.objects.filter(Collocazione.query_attuale().via("collocazioni"),
+                                           collocazioni__autoparco__sede__in=qs_sedi)),
+        (MODIFICA,  Collocazione.query_attuale(autoparco__sede__in=qs_sedi)),
+    ]
+
+
 def espandi_gestione_corsi_sede(qs_sedi, al_giorno=date.today()):
     from formazione.models import CorsoBase
     return [
@@ -101,4 +114,5 @@ ESPANDI_PERMESSI = {
     GESTIONE_ATTIVITA:      espandi_gestione_attivita,
     GESTIONE_CORSI_SEDE:    espandi_gestione_corsi_sede,
     GESTIONE_CORSO:         espandi_gestione_corso,
+    GESTIONE_AUTOPARCHI_SEDE:espandi_gestione_corsi_sede,
 }

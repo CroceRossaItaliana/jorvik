@@ -1,0 +1,19 @@
+{% extends "veicoli_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Autoparco{% endblock %}
+
+{% block app_contenuto %}
+
+<form method="POST">
+    {% csrf_token %}
+    {% bootstrap_form modulo %}
+
+    <button class="btn btn-block btn-primary btn-lg">
+        <i class="fa fa-fw fa-check"></i>
+        Salva
+    </button>
+</form>
+
+{% endblock %}

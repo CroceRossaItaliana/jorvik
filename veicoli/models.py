@@ -1,8 +1,11 @@
+import datetime
+from django.core.exceptions import ValidationError
 from django.db import models
 from anagrafica.models import Persona, Sede
 from base.models import ModelloSemplice
 from base.tratti import ConEstensione, ConStorico
 from base.tratti import ConMarcaTemporale
+from veicoli.validators import valida_data_manutenzione
 
 __author__ = 'alfioemanuele'
 
@@ -14,6 +17,12 @@ class Autoparco(ModelloSemplice, ConEstensione, ConMarcaTemporale):
 
     class Meta:
         verbose_name_plural = "Autoparchi"
+
+    nome = models.CharField(max_length=256)
+
+    def __str__(self):
+        return self.nome
+
 
 
 
@@ -54,7 +63,7 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
 
     libretto = models.CharField("N. Libretto", help_text="Formato 201X-XXXXXXXXX", max_length=16, db_index=True, blank=False, null=False)
     targa = models.CharField("Targa (A)", help_text="Targa del Veicolo, senza spazi.", max_length=5, db_index=True, blank=False, null=False)
-    formato_targa = models.CharField("Formato Targa", max_length=1, choices=FORMATO_TARGA, default=TARGA_AUTOVEICOLI_A)
+    ##formato_targa = models.CharField("Formato Targa", max_length=1, choices=FORMATO_TARGA, default=TARGA_AUTOVEICOLI_A)
     prima_immatricolazione = models.DateField("Prima Immatricolazione (B)", db_index=True, blank=False, null=False)
 
     # Sezione C: Proprietario
@@ -139,23 +148,57 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
     )
     intervallo_revisione = models.PositiveIntegerField("Intervallo Revisione", choices=INTERVALLO_REVISIONE, default=365)
 
+    def ultima_revisione(self):
+        return Manutenzione.objects.filter(
+            veicolo=self.pk,
+            tipo=Manutenzione.REVISIONE,
+        ).latest('data')
 
-class Immatricolazione(ModelloSemplice, ConMarcaTemporale):
-    """
-    Rappresenta una pratica di immatricolazione di un Veicolo
+    def ultima_manutenzione(self):
+        return Manutenzione.objects.filter(
+            veicolo=self.pk,
+            tipo=Manutenzione.MANUTENZIONE,
+        ).latest('data')
 
-    Una pratica viene istruita da un ufficio motorizzazione per conto di una unita' CRI richiedente.
-    La stessa viene sottoposta a due stadi di approvazione, in seguito alla istruzione. Quando la
-    pratica termina, il veicolo viene immatricolato ed entra in servizio.
-    """
+    def fermo_tecnico(self):
+        return FermoTecnico.query_attuale(veicolo=self).first() or "No"
 
-    class Meta:
-        verbose_name = "Pratica di Immatricolazione"
-        verbose_name_plural = "Pratiche di Immatricolazione"
+    def collocazione(self):
+        return Collocazione.query_attuale(veicolo=self).first()
 
-    richiedente = models.ForeignKey(Sede, related_name='immatricolazioni_richieste')
-    ufficio = models.ForeignKey(Sede, related_name='immatricolazioni_istruite')
-    veicolo = models.ForeignKey(Veicolo, related_name='richieste_immatricolazione')
+    def media_consumi(self):
+        rifornimenti = Rifornimento.objects.filter(veicolo=self)
+        litri = km = 0
+        for rifornimento in rifornimenti:
+            litri+=rifornimento.consumo_carburante
+        try:
+            ultimo_rifornimento = Rifornimento.objects.filter(veicolo=self).latest("data")
+            primo_rifornimento = Rifornimento.objects.filter(veicolo=self).earliest("data")
+        except Rifornimento.DoesNotExist:
+            return 0
+        km = ultimo_rifornimento.contachilometri - primo_rifornimento.contachilometri
+        litri -= ultimo_rifornimento.consumo_carburante
+        if litri != 0:
+            return round(km/litri,2)
+        else:
+            return 0
+
+# class Immatricolazione(ModelloSemplice, ConMarcaTemporale):
+#     """
+#     Rappresenta una pratica di immatricolazione di un Veicolo
+#
+#     Una pratica viene istruita da un ufficio motorizzazione per conto di una unita' CRI richiedente.
+#     La stessa viene sottoposta a due stadi di approvazione, in seguito alla istruzione. Quando la
+#     pratica termina, il veicolo viene immatricolato ed entra in servizio.
+#     """
+#
+#     class Meta:
+#         verbose_name = "Pratica di Immatricolazione"
+#         verbose_name_plural = "Pratiche di Immatricolazione"
+#
+#     richiedente = models.ForeignKey(Sede, related_name='immatricolazioni_richieste')
+#     ufficio = models.ForeignKey(Sede, related_name='immatricolazioni_istruite')
+#     veicolo = models.ForeignKey(Veicolo, related_name='richieste_immatricolazione')
 
 
 class Collocazione(ModelloSemplice, ConStorico):
@@ -182,6 +225,16 @@ class Manutenzione(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Intervento di Manutenzione"
         verbose_name_plural = "Interventi di Manutenzione"
+
+    REVISIONE = "R"
+    MANUTENZIONE ="M"
+    TIPO=(
+        (REVISIONE,     "Revisione veicolo"),
+        (MANUTENZIONE,  "Manutenzione veicolo")
+    )
+    tipo = models.CharField(choices=TIPO, max_length=1, default=MANUTENZIONE, db_index=True)
+    data = models.DateField(validators=[valida_data_manutenzione])
+    veicolo = models.ForeignKey(Veicolo, related_name="manutenzioni")
 
 
 class Segnalazione(ModelloSemplice, ConMarcaTemporale):
@@ -232,7 +285,7 @@ class Rifornimento(ModelloSemplice, ConMarcaTemporale):
         (DISTRIBUTORE_CONVENZIONATO, "Distributore convenzionato"),
         (DISTRIBUTORE_OCCASIONALE, "Distributore occasionale")
     )
-    presso = models.CharField("Presso", choices=PRESSO, default=DISTRIBUTORE_OCCASIONALE, max_length=1)
+    presso = models.CharField("Presso", choices=PRESSO, max_length=1, default=None, null=True)
 
     contalitri = models.FloatField("(c/o Cisterna int.) Contalitri", blank=True, default=None, null=True, db_index=True)
     ricevuta = models.CharField("(c/o Distributore) N. Ricevuta", max_length=32, blank=True, default=None, null=True, db_index=True)

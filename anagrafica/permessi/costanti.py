@@ -10,7 +10,8 @@ Questo file gestisce i permessi in Gaia.
    https://github.com/CroceRossaItaliana/jorvik/wiki/Deleghe,-Permessi-e-Livelli-di-Accesso
  ============================================================================================
 """
-from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA, REFERENTE, DIRETTORE_CORSO
+from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA, REFERENTE, DIRETTORE_CORSO, \
+    RESPONSABILE_AUTOPARCO
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 
 GESTIONE_SEDE = "GESTIONE_SEDE"
@@ -21,6 +22,7 @@ GESTIONE_ATTIVITA_AREA = "GESTIONE_ATTIVITA_AREA"
 GESTIONE_ATTIVITA = "GESTIONE_ATTIVITA"
 GESTIONE_CORSI_SEDE = "GESTIONE_CORSI_SEDE"
 GESTIONE_CORSO = "GESTIONE_CORSO"
+GESTIONE_AUTOPARCHI_SEDE = "GESTIONE_AUTOPARCHI_SEDE"
 
 # Tipologia degli oggetti assegnati ad ogni Permesso.
 PERMESSI_OGGETTI = (
@@ -32,16 +34,18 @@ PERMESSI_OGGETTI = (
     (GESTIONE_ATTIVITA,         ('attivita',   'Attivita')),
     (GESTIONE_CORSI_SEDE,       ('anagrafica', 'Sede')),
     (GESTIONE_CORSO,            ('formazione', 'CorsoBase')),
+    (GESTIONE_AUTOPARCHI_SEDE,  ('anagrafica', 'Sede'))
 )
 
 # Tipologia degli oggetti assegnati ad ogni Delega.
 DELEGHE_OGGETTI = (
-    (PRESIDENTE,        'Sede'),
-    (UFFICIO_SOCI,      'Sede'),
-    (DELEGATO_AREA,     'Area'),
-    (RESPONSABILE_AREA, 'Area'),
-    (REFERENTE,         'Attivita'),
-    (DIRETTORE_CORSO,   'Corso'),
+    (PRESIDENTE,                'Sede'),
+    (UFFICIO_SOCI,              'Sede'),
+    (DELEGATO_AREA,             'Area'),
+    (RESPONSABILE_AREA,         'Area'),
+    (REFERENTE,                 'Attivita'),
+    (DIRETTORE_CORSO,           'Corso'),
+    (RESPONSABILE_AUTOPARCO,    'Sede'),
 )
 
 
