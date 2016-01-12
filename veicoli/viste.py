@@ -5,7 +5,7 @@ from anagrafica.permessi.costanti import GESTIONE_AUTOPARCHI_SEDE, ERRORE_PERMES
 from autenticazione.funzioni import pagina_privata
 from veicoli.forms import ModuloCreazioneVeicolo, ModuloCreazioneAutoparco, ModuloCreazioneManutenzione, \
     ModuloCreazioneFermoTecnico, ModuloCreazioneRifornimento
-from veicoli.models import Veicolo, Autoparco, Collocazione, Manutenzione
+from veicoli.models import Veicolo, Autoparco, Collocazione, Manutenzione, FermoTecnico
 
 
 def _autoparchi_e_veicoli(persona):
@@ -27,16 +27,16 @@ def veicoli(request, me):
     )
     ex = []
     for i in veicoli_revisione:
-        if i.ultima_revisione < datetime.now() - datetime.timedelta(days=i.intervallo_revisione):
+        if i.ultima_revisione().data < datetime.date.today() - datetime.timedelta(days=i.intervallo_revisione):
             ex += [i.pk]
     veicoli_revisione = veicoli_revisione.exclude(pk__in=ex)
 
     veicoli_manutenzione = veicoli.filter(
-        manutenzioni__tipo=Manutenzione.MANUTENZIONE,
+        manutenzioni__tipo=Manutenzione.MANUTENZIONE_ORDINARIA,
     )
     ex = []
     for i in veicoli_manutenzione:
-        if i.ultima_manutenzione < datetime.now() - datetime.timedelta(days=365):
+        if i.ultima_manutenzione().data < datetime.date.today() - datetime.timedelta(days=365):
             ex += [i.pk]
     veicoli_manutenzione = veicoli_manutenzione.exclude(pk__in=ex)
 
@@ -138,39 +138,54 @@ def veicoli_autoparco_modifica_o_nuovo(request, me, pk=None):
 @pagina_privata
 def veicoli_manutenzione(request, me, veicolo):
     veicolo = get_object_or_404(Veicolo, pk=veicolo)
-    modulo = ModuloCreazioneManutenzione(request.POST)
-    if not me.permessi_almeno(MODIFICA, veicolo):
+    manutenzioni = veicolo.manutenzioni.all()
+    modulo = ModuloCreazioneManutenzione(request.POST or None)
+    if not me.permessi_almeno(veicolo, MODIFICA):
         return redirect(ERRORE_PERMESSI)
     if modulo.is_valid():
-        m = modulo.save()
+        m = modulo.save(commit=False)
         m.veicolo = veicolo
         m.save()
         return redirect("/veicoli/")
-    return redirect("/veicoli/manutenzioni/")
+    contesto = {
+        "modulo": modulo,
+        "manutenzioni": manutenzioni,
+    }
+    return "veicoli_manutenzione.html", contesto
 
 @pagina_privata
 def veicoli_rifornimento(request, me, veicolo):
     veicolo = get_object_or_404(Veicolo, pk=veicolo)
-    modulo = ModuloCreazioneRifornimento(request.POST)
-    if not me.permessi_almeno(MODIFICA, veicolo):
+    rifornimenti = veicolo.rifornimenti.all()
+    modulo = ModuloCreazioneRifornimento(request.POST or None)
+    if not me.permessi_almeno(veicolo, MODIFICA):
         return redirect(ERRORE_PERMESSI)
     if modulo.is_valid():
         r = modulo.save(commit=False)
         r.veicolo = veicolo
         r.save()
         return redirect("/veicoli/")
-    return redirect("/veicoli/rifornimenti/")
+    contesto = {
+        "modulo": modulo,
+        "rifornimenti": rifornimenti,
+    }
+    return "veicoli_rifornimento.html",contesto
 
 @pagina_privata
 def veicoli_fermo_tecnico(request, me, veicolo):
     veicolo = get_object_or_404(Veicolo, pk=veicolo)
-    modulo = ModuloCreazioneFermoTecnico(request.POST)
-    if not me.permessi_almeno(MODIFICA, veicolo):
+    fermi = veicolo.fermi_tecnici.all()
+    modulo = ModuloCreazioneFermoTecnico(request.POST or None)
+    if not me.permessi_almeno(veicolo, MODIFICA):
         return redirect(ERRORE_PERMESSI)
     if modulo.is_valid():
-        f = modulo.save()
+        f = modulo.save(commit=False)
         f.veicolo = veicolo
         f.save()
         return redirect("/veicoli/")
-    return redirect("/veicoli/fermo/")
+    contesto = {
+        "modulo": modulo,
+        "fermi": fermi,
+    }
+    return "veicoli_fermo_tecnico.html", contesto
 

@@ -157,7 +157,7 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
     def ultima_manutenzione(self):
         return Manutenzione.objects.filter(
             veicolo=self.pk,
-            tipo=Manutenzione.MANUTENZIONE,
+            tipo__in=[Manutenzione.MANUTENZIONE_ORDINARIA, Manutenzione.MANUTENZIONE_STRAORDINARIA],
         ).latest('data')
 
     def fermo_tecnico(self):
@@ -217,6 +217,7 @@ class FermoTecnico(ModelloSemplice, ConStorico, ConMarcaTemporale):
         verbose_name = "Fermo tecnico"
         verbose_name_plural = "Fermi tecnici"
 
+    motivo = models.CharField(max_length=512)
     veicolo = models.ForeignKey(Veicolo, related_name='fermi_tecnici')
 
 
@@ -227,14 +228,24 @@ class Manutenzione(ModelloSemplice, ConMarcaTemporale):
         verbose_name_plural = "Interventi di Manutenzione"
 
     REVISIONE = "R"
-    MANUTENZIONE ="M"
+    MANUTENZIONE_ORDINARIA = "O"
+    MANUTENZIONE_STRAORDINARIA = "S"
+
     TIPO=(
-        (REVISIONE,     "Revisione veicolo"),
-        (MANUTENZIONE,  "Manutenzione veicolo")
+        (REVISIONE,                     "Revisione veicolo"),
+        (MANUTENZIONE_ORDINARIA,        "Manutenzione ordinaria veicolo"),
+        (MANUTENZIONE_STRAORDINARIA,    "Manutenzione straordinaria veicolo")
     )
-    tipo = models.CharField(choices=TIPO, max_length=1, default=MANUTENZIONE, db_index=True)
+
+    tipo = models.CharField(choices=TIPO, max_length=1, default=MANUTENZIONE_ORDINARIA, db_index=True)
     data = models.DateField(validators=[valida_data_manutenzione])
+    descrizione = models.CharField(max_length=2048)
+    km = models.PositiveIntegerField()
     veicolo = models.ForeignKey(Veicolo, related_name="manutenzioni")
+    manutentore = models.CharField(max_length=512, help_text="es. autoriparato")
+    numero_fattura = models.CharField(max_length=20, help_text="es. 122/A")
+    costo = models.PositiveIntegerField()
+
 
 
 class Segnalazione(ModelloSemplice, ConMarcaTemporale):

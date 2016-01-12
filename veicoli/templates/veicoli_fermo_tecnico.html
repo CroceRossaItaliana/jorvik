@@ -1,10 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
+{% extends "veicoli_vuota.html" %}
 
-</body>
-</html>
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Nuovo fermo tecnico{% endblock %}
+
+{% block app_contenuto %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-car fa-fw"></i> Elenco Fermi Tecnici
+                </h4>
+            </div>
+
+            <div class="panel-body">
+                <table class="table table-condensed table-responsive">
+                    <thead>
+                        <tr>
+                            <th>Inizio</th>
+                            <th>Fine</th>
+                            <th>Motivo</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fermo in fermi %}
+                            <tr>
+                                <td>{{ fermo.creazione }}</td>
+                                <td>{{ fermo.ultima_modifica }}</td>
+                                <td>{{ fermo.motivo }}</td>
+                                <td>
+                                   termina?
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <form method="POST">
+            {% csrf_token %}
+            {% bootstrap_form modulo %}
+
+            <button class="btn btn-block btn-primary btn-lg">
+                <i class="fa fa-fw fa-check"></i>
+                Salva
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

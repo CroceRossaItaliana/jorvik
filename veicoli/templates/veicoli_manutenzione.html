@@ -1,10 +1,73 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
+{% extends "veicoli_vuota.html" %}
 
-</body>
-</html>
+{% load bootstrap3 %}
+{% load utils %}
+{% block pagina_titolo %}Nuova manutenzione{% endblock %}
+
+{% block app_contenuto %}
+
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-car fa-fw"></i> Elenco Manutenzioni
+                </h4>
+            </div>
+
+            <div class="panel-body">
+                <table class="table table-condensed table-responsive">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Data</th>
+                            <th>Descrizione</th>
+                            <th>Kilometri</th>
+                            <th>Azienda</th>
+                            <th>Costo</th>
+                            <th>Numero fattura</th>
+                            <th>Costo</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for manutenzione in manutenzioni %}
+                            <tr class="piu-piccolo">
+                                <td>{{ manutenzione.get_tipo_display }}</td>
+                                <td>{{ manutenzione.data|date:"SHORT_DATE_FORMAT" }}</td>
+                                <td>{{ manutenzione.descrizione }}</td>
+                                <td>{{ manutenzione.km }}</td>
+                                <td>{{ manutenzione.manutentore }}</td>
+                                <td>{% euro manutenzione.costo %}</td>
+                                <td>{{ manutenzione.numero_fattura }}</td>
+                                <td>{{ manutenzione.costo }}</td>
+                                <td>
+
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+
+        <form method="POST">
+            {% csrf_token %}
+            {% bootstrap_form modulo %}
+
+            <button class="btn btn-block btn-primary btn-lg">
+                <i class="fa fa-fw fa-check"></i>
+                Salva
+            </button>
+        </form>
+
+    </div>
+
+
+</div>
+
+
+{% endblock %}

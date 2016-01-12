@@ -1,10 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
+{% extends "veicoli_vuota.html" %}
 
-</body>
-</html>
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Nuovo rifornimento{% endblock %}
+
+{% block app_contenuto %}
+
+<form method="POST">
+    {% csrf_token %}
+    {% bootstrap_form modulo %}
+
+    <button class="btn btn-block btn-primary btn-lg">
+        <i class="fa fa-fw fa-check"></i>
+        Salva
+    </button>
+</form>
+
+{% endblock %}

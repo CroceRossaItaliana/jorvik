@@ -37,7 +37,11 @@
                                 <td>{{ veicolo.collocazione.autoparco }}</td>
                                 <td>{{ veicolo.fermo_tecnico }}</td>
                                 <td>{{ veicolo.categoria }}</td>
-                                <td></td>
+                                <td>
+                                    <a href="/veicolo/manutenzioni/{{ veicolo.pk }}/">Manutenzioni</a>
+                                    <a href="/veicolo/rifornimenti/{{ veicolo.pk }}/">Rifornimenti</a>
+                                    <a href="/veicolo/fermi-tecnici/{{ veicolo.pk }}/">Fermi tecnici</a>
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>

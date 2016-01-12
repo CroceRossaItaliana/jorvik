@@ -18,19 +18,19 @@ class ModuloCreazioneVeicolo(ModelForm):
 class ModuloCreazioneRifornimento(ModelForm):
     class Meta:
         model = Rifornimento
-        fields = "__all__"
+        exclude = ['veicolo']
 
 
 class ModuloCreazioneManutenzione(ModelForm):
     class Meta:
         model = Manutenzione
-        fields = "__all__"
+        exclude = ['veicolo']
 
 
 class ModuloCreazioneFermoTecnico(ModelForm):
     class Meta:
         model = FermoTecnico
-        fields = "__all__"
+        exclude = ['veicolo']
 
 
 class ModuloCreazioneCollocazione(ModelForm):

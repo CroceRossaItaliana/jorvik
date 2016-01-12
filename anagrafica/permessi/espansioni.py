@@ -114,5 +114,5 @@ ESPANDI_PERMESSI = {
     GESTIONE_ATTIVITA:      espandi_gestione_attivita,
     GESTIONE_CORSI_SEDE:    espandi_gestione_corsi_sede,
     GESTIONE_CORSO:         espandi_gestione_corso,
-    GESTIONE_AUTOPARCHI_SEDE:espandi_gestione_corsi_sede,
+    GESTIONE_AUTOPARCHI_SEDE:espandi_gestione_autoparchi_sede,
 }
