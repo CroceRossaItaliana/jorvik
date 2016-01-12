@@ -2,10 +2,12 @@ from django.contrib.admin import ModelAdmin
 from django.db.models import Q
 
 from anagrafica.models import Persona, Appartenenza
-from base.utils import filtra_queryset
-from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato
+from base.utils import filtra_queryset, testo_euro
+from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote
 from datetime import date
 from django.utils.timezone import now
+
+from ufficio_soci.models import Tesseramento, Quota
 
 
 class Elenco:
@@ -105,10 +107,13 @@ class ElencoVistaSoci(ElencoVistaAnagrafica):
         return 'us_elenchi_inc_soci.html'
 
     def excel_foglio(self, p):
-        if self.modulo_riempito and self.modulo_riempito.cleaned_data['al_giorno']:
-            return p.sedi_attuali(al_giorno=self.modulo_riempito.cleaned_data['al_giorno'], membro__in=Appartenenza.MEMBRO_SOCIO).first().nome
+        if self.modulo_riempito and 'al_giorno' in self.modulo_riempito.cleaned_data \
+                and self.modulo_riempito.cleaned_data['al_giorno']:
+            sede = p.sede_riferimento(al_giorno=self.modulo_riempito.cleaned_data['al_giorno'])
         else:
-            return p.sedi_attuali(membro__in=Appartenenza.MEMBRO_SOCIO).first().nome
+            sede = p.sede_riferimento()
+
+        return sede.nome if sede else 'Altro'
 
     def excel_colonne(self):
         return super(ElencoVistaSoci, self).excel_colonne() + (
@@ -169,6 +174,51 @@ class ElencoVolontari(ElencoVistaSoci):
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
         )
+
+
+class ElencoQuote(ElencoVistaSoci):
+    """
+    args: QuerySet<Sede> Sedi per le quali compilare gli elenchi quote associative
+    """
+    def modulo(self):
+        return ModuloElencoQuote
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        modulo = self.modulo_riempito
+
+        try:
+            tesseramento = Tesseramento.objects.get(anno=modulo.cleaned_data.get('anno'))
+
+        except Tesseramento.DoesNotExist:  # Errore tesseramento anno non esistente
+            raise ValueError("Anno di tesseramento non valido o gestito da Gaia.")
+
+        if modulo.cleaned_data['tipo'] == modulo.VERSATE:
+            origine = tesseramento.paganti()  # Persone con quote pagate
+
+        else:
+            origine = tesseramento.non_paganti()  # Persone con quote NON pagate
+
+        # Ora filtra per Sede
+        return origine.filter(
+            appartenenze__sede__in=qs_sedi,
+        ).prefetch_related('quote')
+
+    def excel_colonne(self):
+        anno = self.modulo_riempito.cleaned_data['anno']
+        return super(ElencoQuote, self).excel_colonne() + (
+            ("Importo quota", lambda p: ', '.join([testo_euro(q.importo_totale) for q in p.quote_anno(anno, stato=Quota.REGISTRATA)])),
+            ("Data versamento", lambda p: ', '.join([q.data_versamento.strftime('%d/%m/%y') for q in p.quote_anno(anno, stato=Quota.REGISTRATA)])),
+            ("Registrata da", lambda p: ', '.join([q.registrato_da.nome_completo for q in p.quote_anno(anno, stato=Quota.REGISTRATA)])),
+        )
+
+    def template(self):
+        modulo = self.modulo_riempito
+        if modulo.cleaned_data['tipo'] == modulo.VERSATE:
+            return 'us_elenchi_inc_quote.html'
+
+        return 'us_elenchi_inc_soci.html'
+
 
 
 class ElencoOrdinari(ElencoVistaSoci):

@@ -1,0 +1,118 @@
+{% extends 'anagrafica_profilo.html' %}
+
+{% load bootstrap3 %}
+
+{% block profilo_corpo %}
+<div class="row">
+
+    <div class="col-lg-8">
+        <div class="panel panel-info">
+
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-folder-o fa-fw"></i> Documenti caricati
+                </h4>
+
+
+            </div>
+
+            <div class="panel-body">
+
+
+                <table class="table table-condensed table-responsive">
+
+                    <thead>
+                        <th>Data caricamento</th>
+                        <th>Tipo</th>
+                        <th>Visualizza</th>
+                        <th>Azioni</th>
+                    </thead>
+
+                    <tbody>
+                    {% for d in persona.documenti.all %}
+                        <tr>
+                            <td>{{ d.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                            <td>{{ d.get_tipo_display }}</td>
+                            <td>
+                                <a href="{{ d.file.url }}" download title="Scarica il documento">
+                                    <i class="fa fa-download"></i> Scarica
+                                    {% if d.file and d.file.size %}
+                                        ({{ d.file.size|filesizeformat }})
+                                    {% endif %}
+                                </a>
+                            </td>
+                            <td>
+                                {% if puo_modificare %}
+                                    <a href="/profilo/{{ persona.pk }}/documenti/{{ d.pk }}/cancella/"
+                                       data-conferma="Vuoi davvero cancellare questo documento ({{ d.get_tipo_display }})?"
+                                       title="Cancella il documento">
+                                        <i class="fa fa-remove"></i> Cancella
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="bg-warning">
+                                <i class="fa fa-info"></i> Nessun documento caricato.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+
+                    </tbody>
+
+                </table>
+
+
+            </div>
+
+        </div>
+
+
+
+    </div>
+
+    <div class="col-lg-4">
+
+
+        {% if puo_modificare %}
+        <form method="POST" enctype="multipart/form-data">
+
+            {% csrf_token %}
+                <div class="panel panel-primary">
+
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-plus"></i> Aggiungi documento
+                        </h4>
+
+                    </div>
+
+                    <div class="panel-body">
+                        {% bootstrap_form modulo %}
+
+                        <button class="btn btn-primary btn-block">
+                            <i class="fa fa-check"></i>
+                            Carica
+                        </button>
+
+                    </div>
+
+                </div>
+
+        </form>
+        {% endif %}
+
+
+
+
+    </div>
+
+
+
+</div>
+
+{% endblock %}

@@ -1,5 +1,5 @@
 from django.core.paginator import Paginator
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.forms import ModuloNuovoProvvedimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare
@@ -9,7 +9,7 @@ from base.errori import errore_generico
 from base.files import Excel, FoglioExcel
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
-    ElencoElettoratoAlGiorno
+    ElencoElettoratoAlGiorno, ElencoQuote
 from ufficio_soci.forms import ModuloCreazioneEstensione
 
 
@@ -222,7 +222,7 @@ def us_elenco_download(request, me, elenco_id):
     fogli = {}
 
     for persona in persone:
-        foglio = elenco.excel_foglio(persona)
+        foglio = elenco.excel_foglio(persona)[:31]
         foglio_key = foglio.lower().strip()
         if foglio_key not in [x.lower() for x in fogli.keys()]:
             fogli.update({
@@ -361,6 +361,18 @@ def us_elenco_elettorato(request, me):
 
     contesto = {
         "elenco_nome": "Elenco Elettorato",
+        "elenco": elenco
+    }
+
+    return 'us_elenco_generico.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_quote(request, me):
+
+    elenco = ElencoQuote(me.oggetti_permesso(GESTIONE_SOCI))
+    contesto = {
+        "elenco_nome": "Elenco Quote",
         "elenco": elenco
     }
 

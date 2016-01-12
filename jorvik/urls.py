@@ -79,10 +79,9 @@ urlpatterns = [
         "template_name": "anagrafica_utente_cambia_password_fatto.html",
     }),
 
-    url(r'^profilo/(?P<pk>[0-9]+)/messaggio/$', 'anagrafica.viste.profilo_messaggio'),
+    url(r'^profilo/(?P<pk>[0-9]+)/documenti/(?P<documento_pk>[0-9]+)/cancella/$', 'anagrafica.viste.profilo_documenti_cancella'),
+    url(r'^profilo/(?P<pk>[0-9]+)/(?P<sezione>.*)/$', 'anagrafica.viste.profilo'),
     url(r'^profilo/(?P<pk>[0-9]+)/$', 'anagrafica.viste.profilo'),
-    url(r'^profilo/(?P<pk>[0-9]+)/anagrafica/$', 'anagrafica.viste.profilo_anagrafica'),
-    url(r'^profilo/(?P<pk>[0-9]+)/storico/$', 'anagrafica.viste.profilo_storico'),
 
     url(r'^autorizzazioni/$', 'base.viste.autorizzazioni'),
     url(r'^autorizzazioni/storico/$', 'base.viste.autorizzazioni_storico'),
@@ -118,6 +117,7 @@ urlpatterns = [
 
 
     url(r'^us/elenchi/(?P<elenco_tipo>.*)/$', 'ufficio_soci.viste.us_elenchi'),
+    url(r'^us/quote/$', 'ufficio_soci.viste.us_quote'),
 
     url(r'^us/elenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', 'ufficio_soci.viste.us_elenco'),
     url(r'^us/elenco/(?P<elenco_id>.*)/download/$', 'ufficio_soci.viste.us_elenco_download'),

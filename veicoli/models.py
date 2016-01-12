@@ -2,6 +2,7 @@ import datetime
 from django.core.exceptions import ValidationError
 from django.db import models
 from anagrafica.models import Persona, Sede
+from base.geo import ConGeolocalizzazione
 from base.models import ModelloSemplice
 from base.tratti import ConEstensione, ConStorico
 from base.tratti import ConMarcaTemporale
@@ -10,7 +11,7 @@ from veicoli.validators import valida_data_manutenzione
 __author__ = 'alfioemanuele'
 
 
-class Autoparco(ModelloSemplice, ConEstensione, ConMarcaTemporale):
+class Autoparco(ModelloSemplice, ConEstensione, ConMarcaTemporale, ConGeolocalizzazione):
     """
     Rappresenta un Autoparco CRI
     """
@@ -19,6 +20,8 @@ class Autoparco(ModelloSemplice, ConEstensione, ConMarcaTemporale):
         verbose_name_plural = "Autoparchi"
 
     nome = models.CharField(max_length=256)
+
+    telefono = models.CharField("Telefono", max_length=64, blank=True)
 
     def __str__(self):
         return self.nome

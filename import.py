@@ -9,6 +9,7 @@ from anagrafica.validators import ottieni_genere_da_codice_fiscale
 from base.notifiche import NOTIFICA_NON_INVIARE
 from base.stringhe import GeneratoreNomeFile
 
+
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
 from django.contrib.contenttypes.models import ContentType
@@ -21,6 +22,12 @@ from attivita.models import Area, Attivita, Partecipazione, Turno
 from base.models import Autorizzazione
 from curriculum.models import TitoloPersonale, Titolo
 from social.models import Commento
+
+from veicoli.models import Autoparco
+from veicoli.models import Collocazione
+from veicoli.models import Manutenzione
+from veicoli.models import Rifornimento
+from veicoli.models import Veicolo
 
 import pickle
 import sangue.models as sangue
@@ -121,6 +128,9 @@ parser.add_argument('--salta-trasferimenti', dest='trasferimenti', action='store
 parser.add_argument('--salta-estensioni', dest='estensioni', action='store_const',
                    const=False, default=True,
                    help='salta importazione estensioni (usa cache precedente)')
+parser.add_argument('--salta-veicoli', dest='veicoli', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione autoparco, veicoli e correlati (usa cache precedente)')
 
 parser.add_argument('--uploads', dest='uploads', action='store',
                    help='path assoluta alla cartella upload/ di Gaia vecchio')
@@ -2522,7 +2532,7 @@ def carica_fototessere():
         f.file.save(nuovonome, dfile, save=True)
 
         if stato == 0:  # Se pending.
-            s = persona.sede_riferimento()
+            s = persona.comitato_riferimento()
             if not s:
                 print("    - SALTATO pending, ma non ha appartenenza attuale.")
                 f.delete()
@@ -2683,7 +2693,7 @@ def carica_estensioni():
         confermata = True if approvata and stato != 10 and stato != 25 else False
         ritirata = True if stato == 25 else False
 
-        sede_riferimento = persona.sede_riferimento(al_giorno=creazione)
+        sede_riferimento = persona.comitato_riferimento(al_giorno=creazione)
         if not sede_riferimento and stato == 20:
             print("      - SALTATO Nessuna sede di riferimento al momento della creazione")
             continue
@@ -2742,7 +2752,64 @@ def carica_estensioni():
     cursore.close()
 
 
+def carica_autoparchi():
 
+    print("  - Caricamento degli autoparchi...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            a.id, a.nome, a.comitato,
+            b.valore
+        FROM
+            autoparchi AS a LEFT JOIN dettagliAutoparco as b
+            on a.id = b.id
+
+            WHERE b.id  NOT IN (
+                SELECT DISTINCT(id) FROM dettagliAutoparco WHERE nome='formattato'
+                )
+		    OR b.nome ='formattato'
+        GROUP BY a.id
+        """
+    )
+
+    auts = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for aut in auts:
+        contatore += 1
+
+        id = int(aut[0])
+        nome = stringa(aut[1])
+        comitato = comitato_oid(aut[2])
+        posizione = stringa(aut[3]) if stringa(aut[3]) and ',' in stringa(aut[3]) else None
+
+        ck = db.cursor()
+        ck.execute("SELECT valore FROM dettagliAutoparco WHERE id=%d AND nome='telefono'" % (id,))
+        tel = ck.fetchall()
+        if tel:
+            tel = stringa(tel[0][0])
+        else:
+            tel = None
+        ck.close()
+
+        print("   %s Autoparco id=%d, nome=%s, comitato id=%d" % (
+            progresso(contatore, totale), id, nome, comitato.pk,
+        ))
+        a = Autoparco(
+            nome=nome,
+            sede=comitato,
+            estensione=comitato.estensione,
+        )
+        a.save()
+
+        if posizione and args.geo:
+            a.imposta_locazione(posizione)
+            print("     - Posizione: %s" % (posizione,))
+
+
+    cursore.close()
 
 
 
@@ -3073,4 +3140,23 @@ else:
     print("  ~ Carico tabella delle corrispondenze (estensioni.pickle-tmp)")
     ASSOC_ID_ESTENSIONI = pickle.load(open("estensioni.pickle-tmp", "rb"))
 
+
+# Importazione del modulo autoparco
+print("> Importazione modulo autoparco")
+if args.veicoli:
+    print("  - Eliminazione attuali")
+    Veicolo.objects.all().delete()
+    Collocazione.objects.all().delete()
+    Autoparco.objects.all().delete()
+    Rifornimento.objects.all().delete()
+    Manutenzione.objects.all().delete()
+
+    carica_autoparchi()
+    #carica_veicoli()
+    #carica_collocazioni()
+    #carica_rifornimenti()
+    #carica_manutenzioni()
+
+else:
+    print("  ~ Saltato")
 # print(ASSOC_ID_COMITATI)

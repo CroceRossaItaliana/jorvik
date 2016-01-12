@@ -1,0 +1,165 @@
+{% extends 'anagrafica_profilo.html' %}
+
+{% load bootstrap3 %}
+{% block profilo_corpo %}
+
+<div class="row">
+
+    <div class="col-lg-8">
+        <div class="panel panel-info">
+
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-folder-o fa-fw"></i> Curriculum ({{ persona.titoli_personali.count }})
+                </h4>
+
+
+            </div>
+
+            <div class="panel-body">
+
+                <p>Il curriculum di un volontario include competenze personali,
+                    titoli CRI, patenti civili e CRI.</p>
+
+                <table class="table table-striped">
+                    <thead>
+                        <th>Tipo</th>
+                        <th>Nome e Stato</th>
+                        <th>Dettagli</th>
+                        <th><i class="fa fa-trash"></i></th>
+                    </thead>
+
+                    <tbody>
+                        {% for t in persona.titoli_personali.all %}
+                            <tr>
+                                <td class="grassetto piu-grande">
+                                    {{ t.titolo.get_tipo_display }}
+                                </td>
+                                <td>
+
+                                    <p class="grassetto">
+                                        {{ t.titolo.nome }}
+                                    </p>
+
+                                    {% if t.certificato %}
+                                        <span class="text-success">
+                                            <i class="fa fa-fw fa-asterisk"></i>
+                                            Certificato
+                                        </span>
+
+                                    {% elif t.esito == t.ESITO_OK %}
+                                        <span class="text-success">
+                                            <i class="fa fa-fw fa-check"></i>
+                                            {{ t.esito }}
+                                        </span>
+
+                                    {% elif t.esito == t.ESITO_PENDING %}
+                                        <span class="text-warning">
+                                            <i class="fa fa-fw fa-clock-o"></i>
+                                            In attesa di conferma
+                                        </span>
+
+                                    {% else %}
+                                        <span class="text-danger">
+                                            {{ t.esito }}
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+                                <td class="piu-piccolo" style="width: 30% !important;">
+                                    {% if t.data_ottenimento %}
+                                        <i class="fa fa-fw text-muted fa-calendar"></i>
+                                        {{ t.data_ottenimento|date:"SHORT_DATE_FORMAT" }}
+                                        <br />
+                                    {% endif %}
+
+                                    {% if t.luogo_ottenimento %}
+                                        <i class="fa fa-fw text-muted fa-map-marker"></i>
+                                        {{ t.luogo_ottenimento }}
+                                        <br />
+                                    {% endif %}
+
+                                    {% if t.data_scadenza %}
+                                        <i class="fa fa-fw text-muted fa-clock-o"></i>
+                                        {{ t.data_scadenza|date:"SHORT_DATE_FORMAT" }}
+                                        <br />
+                                    {% endif %}
+
+                                    {% if t.codice %}
+                                        <i class="fa fa-fw text-muted fa-barcode"></i>
+                                        <span class="monospace">{{ t.codice }}</span>
+                                        <br />
+                                    {% endif %}
+
+                                </td>
+                                <td>
+                                    <a href="/profilo/{{ persona.pk }}/curriculum/{{ t.pk }}/cancella/"
+                                       data-conferma="Sei sicuro/a di voler rimuovere {{ t.titolo.nome }} dal curriculum di {{ persona.nome }}?"
+                                       class="btn btn-xs btn-danger" title="Rimuovi dal curriculum">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+
+                        {% empty %}
+                            <tr class="warning">
+                                <td colspan="4">
+                                    <p>Nessun contenuto inserito nel curriculum.</p>
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+
+        </div>
+
+
+
+    </div>
+
+    <div class="col-lg-4">
+
+
+        {% if puo_modificare %}
+        <form method="POST" enctype="multipart/form-data">
+
+            {% csrf_token %}
+                <div class="panel panel-primary">
+
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-plus"></i> Aggiungi documento
+                        </h4>
+
+                    </div>
+
+                    <div class="panel-body">
+                        {% bootstrap_form modulo %}
+
+                        <button class="btn btn-primary btn-block">
+                            <i class="fa fa-check"></i>
+                            Carica
+                        </button>
+
+                    </div>
+
+                </div>
+
+        </form>
+        {% endif %}
+
+
+
+
+    </div>
+
+
+
+</div>
+
+
+{% endblock %}

@@ -15,55 +15,49 @@
 
     <p>&nbsp;</p>
 
-    <ul class="nav nav-tabs grassetto">
-        <li role="presentation" {% if request.path == persona.url %}class="active"{% endif %}>
-            <a href="{{ persona.url }}">
-                <i class="fa fa-fw fa-info-circle"></i>
-                Profilo
-            </a>
-        </li>
+    <div class="row">
 
-        {% if puo_modificare %}
-            <li role="presentation" {% if request.path == persona.url_modifica_anagrafica %}class="active"{% endif %}>
-                <a href="{{ persona.url_modifica_anagrafica }}" class="text-danger">
-                    <i class="fa fa-fw fa-edit"></i>
-                    Anagrafica
-                </a>
-            </li>
+        <div class="col-md-2">
+                <ul class="nav nav-pills nav-stacked grassetto">
 
-            <li role="presentation" {% if request.path == persona.url_modifica_storico %}class="active"{% endif %}>
-                <a href="{{ persona.url_modifica_storico }}" class="text-danger">
-                    <i class="fa fa-fw fa-clock-o"></i>
-                    Storico
-                </a>
-            </li>
+                    <li role="presentation" {% if request.path == persona.url %}class="active"{% endif %}>
+                        <a href="{{ persona.url }}">
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Profilo
+                        </a>
+                    </li>
 
-            <li role="presentation" {% if request.path == persona.url_modifica_foto %}class="active"{% endif %}>
-                <a href="{{ persona.url_modifica_storico }}" class="text-danger">
-                    <i class="fa fa-fw fa-picture-o"></i>
-                    Foto
-                </a>
-            </li>
+                    {% for chiave, sezione in sezioni.items %}
 
-            <li role="presentation" {% if request.path == persona.url_modifica_foto %}class="active"{% endif %}>
-                <a href="{{ persona.url_modifica_storico }}" class="text-danger">
-                    <i class="fa fa-fw fa-key"></i>
-                    Credenziali
-                </a>
-            </li>
+                        {% if sezione|length_is:4 or sezione.3 %}
+
+                            <li role="presentation" {% if attuale == chiave %}class="active"{% endif %}>
+                                <a href="/profilo/{{ persona.pk }}/{{ chiave }}/" class="">
+                                    <i class="fa fa-fw {{ sezione.1 }}"></i>
+                                    {{ sezione.0 }}
+                                </a>
+                            </li>
 
 
+                        {% endif %}
+                    {% endfor %}
 
 
-        {% endif %}
+                 </ul>
+
+        </div>
+
+        <div class="col-md-10">
 
 
-    </ul>
-    <p>&nbsp;</p>
+            {% block profilo_corpo %}
+            {% endblock %}
+
+        </div>
 
 
-    {% block profilo_corpo %}
-    {% endblock %}
+    </div>
+
 
 
 </div>

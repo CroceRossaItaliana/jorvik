@@ -43,7 +43,11 @@ class SedeAutocompletamento(AutocompletamentoBase):
     model = Sede
 
     def choices_for_request(self):
-        return Sede.objects.all().filter(attiva=True)
+        self.choices = self.choices.filter(
+            attiva=True
+        )
+        return super(SedeAutocompletamento, self).choices_for_request()
+
 
 class SedeNuovoCorsoAutocompletamento(SedeAutocompletamento):
     def choices_for_request(self):

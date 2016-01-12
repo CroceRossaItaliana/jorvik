@@ -1,5 +1,6 @@
 from django import template
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.humanize.templatetags.humanize import intcomma
 from django.db.models import QuerySet
 from django.template import Library
 from django.template.loader import render_to_string
@@ -10,6 +11,7 @@ from anagrafica.permessi.costanti import PERMESSI_TESTO, NESSUNO
 from base.geo import ConGeolocalizzazione
 from base.stringhe import genera_uuid_casuale
 from base.tratti import ConDelegati
+from base.utils import testo_euro
 from ufficio_soci.elenchi import Elenco
 
 register = Library()
@@ -131,6 +133,12 @@ def mappa(parser, token):
         nodelist_icona = parser.parse(('endmappa',))
         token = parser.next_token()
     return NodoMappa(nodelist, nodelist_icona, elementi)
+
+
+@register.simple_tag(takes_context=True)
+def euro(context, numero):
+    return testo_euro(numero, simbolo_html=True)
+
 
 class NodoMappa(template.Node):
     def __init__(self, nodelist, nodelist_icona, elementi):

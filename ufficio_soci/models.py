@@ -1,9 +1,11 @@
-from datetime import timezone
+from datetime import timezone, date
 
 from django.db import models
+from django.db.models import Q
 
+from anagrafica.models import Persona, Appartenenza, Sede
 from base.models import ModelloSemplice, ConAutorizzazioni
-from base.tratti import ConMarcaTemporale
+from base.tratti import ConMarcaTemporale, ConPDF
 from base.utils import concept
 
 __author__ = 'alfioemanuele'
@@ -69,9 +71,53 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
 
         return 0.0
 
+    def passibili_pagamento(self):
+        """
+        Ritorna un elenco di tutti i passibili di pagamento di quota
+         associativa per il tesseramento in essere.
+        :return: QuerySet<Persona>
+        """
 
-class Quota(ModelloSemplice, ConMarcaTemporale):
+        # Soci che hanno almeno una appartenenza confermata
+        #  durante l'anno presso un Comitato CRI
+        return Persona.objects.filter(
+            Appartenenza.query_attuale_in_anno(self.anno).via("appartenenze"),              # Membri nell'anno
+            appartenenze__membro__in=Appartenenza.MEMBRO_SOCIO,                             # ...di un socio cri
+            appartenenze__sede__tipo=Sede.COMITATO,                                         # ...presso un Comitato
+        )
 
+    def paganti(self):
+        """
+        Ritorna un elenco di persone che hanno pagato la quota associativa
+         per il tesseramento in essere.
+        :return: QuerySet<Persona>
+        """
+        return Persona.objects.filter(pk__in=Persona.objects.filter(
+            Q(
+                Q(  # Ordinario che ha pagato almeno quota ordinario
+                    Appartenenza.query_attuale_in_anno(self.anno).via("appartenenze"),
+                    appartenenze__membro=Appartenenza.ORDINARIO,
+                    quote__importo__gte=self.quota_ordinario,
+                ) | Q(  # Oppure volontario che ha pagato almeno quota volontario
+                    Appartenenza.query_attuale_in_anno(self.anno).via("appartenenze"),
+                    appartenenze__membro=Appartenenza.VOLONTARIO,
+                    quote__importo__gte=self.quota_attivo,
+                )
+            ),
+            quote__anno=self.anno,
+            quote__stato=Quota.REGISTRATA,
+        ))
+
+    def non_paganti(self):
+        """
+        Ritorna un elenco di persone che sono passibili per la quota associativa
+         per il tesseramento in essere MA non sono paganti (non hanno gia' pagato).
+        :return: QuerySet<Persona>
+        """
+        return self.passibili_pagamento().exclude(pk__in=self.paganti())
+
+
+class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF):
 
     def default_anno(self):
         """
@@ -153,3 +199,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale):
 
         except:  # Se prima quota
             return 1
+
+    @property
+    def importo_totale(self):
+        return self.importo + self.importo_extra
