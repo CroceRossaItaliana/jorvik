@@ -122,5 +122,5 @@ def remove_none(obj):
 
 def testo_euro(numero, simbolo_html=False):
     euro = round(float(numero), 2)
-    simbolo = "&eur;" if simbolo_html else "€"
+    simbolo = "&euro;" if simbolo_html else "€"
     return ("%s%s %s" % (intcomma(int(euro)), ("%0.2f" % euro)[-3:], simbolo)).replace('.', ',')
