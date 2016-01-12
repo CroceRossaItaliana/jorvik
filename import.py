@@ -2522,7 +2522,7 @@ def carica_fototessere():
         f.file.save(nuovonome, dfile, save=True)
 
         if stato == 0:  # Se pending.
-            s = persona.sede_riferimento()
+            s = persona.comitato_riferimento()
             if not s:
                 print("    - SALTATO pending, ma non ha appartenenza attuale.")
                 f.delete()
@@ -2683,7 +2683,7 @@ def carica_estensioni():
         confermata = True if approvata and stato != 10 and stato != 25 else False
         ritirata = True if stato == 25 else False
 
-        sede_riferimento = persona.sede_riferimento(al_giorno=creazione)
+        sede_riferimento = persona.comitato_riferimento(al_giorno=creazione)
         if not sede_riferimento and stato == 20:
             print("      - SALTATO Nessuna sede di riferimento al momento della creazione")
             continue

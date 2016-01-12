@@ -274,7 +274,7 @@ def utente_fotografia_fototessera(request, me):
 
     modulo_fototessera = ModuloNuovaFototessera(request.POST or None, request.FILES or None)
 
-    sede = me.sede_riferimento()
+    sede = me.comitato_riferimento()
 
     if not sede:
         return errore_nessuna_appartenenza(

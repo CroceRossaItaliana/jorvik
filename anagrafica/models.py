@@ -697,10 +697,22 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return a
 
     def sede_riferimento(self, **kwargs):
-        sedi = self.sedi_attuali(membro__in=Appartenenza.MEMBRO_DIRETTO, **kwargs).order_by('-appartenenze__inizio').first()
-        if sedi:
-            return sedi.comitato
-        return sedi
+        return self.sedi_attuali(membro__in=Appartenenza.MEMBRO_DIRETTO, **kwargs).\
+            order_by('-appartenenze__inizio').first()
+
+    def comitato_riferimento(self, **kwargs):
+        sede = self.sede_riferimento(**kwargs)
+        if sede:
+            return sede.comitato
+        return sede
+
+    def quote_anno(self, anno, **kwargs):
+        from ufficio_soci.models import Quota
+        return Quota.objects.filter(
+            persona=self,
+            anno=anno,
+            **kwargs
+        )
 
     @property
     def genere_o_a(self):

@@ -116,6 +116,48 @@ class ConStorico(models.Model):
             **kwargs
         )
 
+    @classmethod
+    @concept
+    def query_attuale_tra_date(cls, inizio, fine, **kwargs):
+        """
+        Restituisce l'oggetto Q per filtrare le entita' che sono state
+         attuali in qualsiasi momento in un periodo compreso tra due date.
+
+        NOTA BENE: https://pypi.python.org/pypi/django-conceptq/0.1.0
+        :param inizio: Giorno di inizio (es. primo dell'anno)
+        :param fine: Giorno di fine (es. ultimo dell'anno)
+        :return: Q!
+        """
+
+        return Q(
+            Q(Q(fine__gte=inizio) | Q(fine__isnull=True)),
+            cls.CONDIZIONE_ATTUALE_AGGIUNTIVA,
+            inizio__lte=fine,
+            **kwargs
+        )
+
+    @classmethod
+    @concept
+    def query_attuale_in_anno(cls, anno, **kwargs):
+        """
+        Restituisce l'oggetto Q per filtrare le entita' attuali.
+
+        NOTA BENE: https://pypi.python.org/pypi/django-conceptq/0.1.0
+        :param inizio: Giorno di inizio (es. primo dell'anno)
+        :param fine: Giorno di fine (es. ultimo dell'anno)
+        :return: Q!
+        """
+
+        inizio = date(anno, 1, 1)
+        fine = date(anno, 12, 31)
+
+        return Q(
+            Q(Q(fine__gte=inizio) | Q(fine__isnull=True)),
+            cls.CONDIZIONE_ATTUALE_AGGIUNTIVA,
+            inizio__lte=fine,
+            **kwargs
+        )
+
     def attuale(self, al_giorno=datetime.now()):
         """
         Controlla se l'entita' e' attuale o meno.
@@ -123,7 +165,6 @@ class ConStorico(models.Model):
         :return: True o False.
         """
         return self.__class__.objects.filter(self.query_attuale(al_giorno).q, pk=self.pk).exists()
-
 
 
 class ConDelegati(models.Model):

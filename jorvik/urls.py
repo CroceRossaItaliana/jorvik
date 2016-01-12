@@ -116,6 +116,7 @@ urlpatterns = [
 
 
     url(r'^us/elenchi/(?P<elenco_tipo>.*)/$', 'ufficio_soci.viste.us_elenchi'),
+    url(r'^us/quote/$', 'ufficio_soci.viste.us_quote'),
 
     url(r'^us/elenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', 'ufficio_soci.viste.us_elenco'),
     url(r'^us/elenco/(?P<elenco_id>.*)/download/$', 'ufficio_soci.viste.us_elenco_download'),

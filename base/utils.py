@@ -10,6 +10,7 @@ import copy
 import operator
 from functools import reduce
 
+from django.contrib.humanize.templatetags.humanize import intcomma
 from django.db import models
 from django.db.models import Q, F
 
@@ -117,3 +118,9 @@ def remove_none(obj):
         return type(obj)((remove_none(k), remove_none(v)) for k, v in obj.items() if k is not None and v is not None)
     else:
         return obj
+
+
+def testo_euro(numero, simbolo_html=False):
+    euro = round(float(numero), 2)
+    simbolo = "&eur;" if simbolo_html else "€"
+    return ("%s%s %s" % (intcomma(int(euro)), ("%0.2f" % euro)[-3:], simbolo)).replace('.', ',')

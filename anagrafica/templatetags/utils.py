@@ -11,6 +11,7 @@ from anagrafica.permessi.costanti import PERMESSI_TESTO, NESSUNO
 from base.geo import ConGeolocalizzazione
 from base.stringhe import genera_uuid_casuale
 from base.tratti import ConDelegati
+from base.utils import testo_euro
 from ufficio_soci.elenchi import Elenco
 
 register = Library()
@@ -136,8 +137,7 @@ def mappa(parser, token):
 
 @register.simple_tag(takes_context=True)
 def euro(context, numero):
-    euro = round(float(numero), 2)
-    return ("%s%s &euro;" % (intcomma(int(euro)), ("%0.2f" % euro)[-3:])).replace('.', ',')
+    return testo_euro(numero, simbolo_html=True)
 
 
 class NodoMappa(template.Node):
