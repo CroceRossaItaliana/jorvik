@@ -23,7 +23,7 @@ from base.models import Autorizzazione
 from curriculum.models import TitoloPersonale, Titolo
 from social.models import Commento
 
-from veicoli.models import Autoparco
+from veicoli.models import Autoparco, FermoTecnico
 from veicoli.models import Collocazione
 from veicoli.models import Manutenzione
 from veicoli.models import Rifornimento
@@ -3201,6 +3201,67 @@ def carica_rifornimenti():
     cursore.close()
 
 
+def carica_fermi_tecnici():
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, veicolo, inizio,
+            fine, motivo, pInizio,
+            tInizio, pFine, tFine
+        FROM
+            fermotecnico
+        WHERE
+            veicolo IN (SELECT id FROM veicoli)
+        AND pInizio IN (SELECT id FROM anagrafica)
+        """
+    )
+
+    ferms = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for ferm in ferms:
+        contatore += 1
+
+        id = int(ferm[0])
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[iint(ferm[5])]
+        except KeyError:
+            print("   SALTATO persona non esistente ")
+            continue
+
+        try:
+            veicolo_id = ASSOC_ID_VEICOLI[iint(ferm[1])]
+        except KeyError:
+            print("   SALTATO veicolo non esistente ")
+            continue
+
+        inizio = data_da_timestamp(ferm[2])
+        fine = data_da_timestamp(ferm[3], default=None)
+        motivo = stringa(ferm[4]) or 'N/D'
+        creazione = data_da_timestamp(ferm[6])
+        ultima_modifica = data_da_timestamp(ferm[8], creazione)
+
+        print("   %s fermo tecnico id=%d, veicolo=%d" % (
+            progresso(contatore, totale), id, veicolo_id,
+        ))
+
+        f = FermoTecnico(
+            motivo=motivo,
+            veicolo_id=veicolo_id,
+            creato_da_id=persona_id,
+            inizio=inizio,
+            fine=fine,
+            creazione=creazione,
+            ultima_modifica=ultima_modifica,
+        )
+        f.save()
+
+    cursore.close()
+
+
 
 
 # Importazione dei Comitati
@@ -3542,9 +3603,11 @@ if args.veicoli:
 
     carica_autoparchi()
     carica_veicoli()
+    carica_fermi_tecnici()
     carica_collocazioni()
     carica_rifornimenti()
     carica_manutenzioni()
+
     print("  ~ Persisto tabella delle corrispondenze (veicoli.pickle-tmp)")
     pickle.dump(ASSOC_ID_VEICOLI, open("veicoli.pickle-tmp", "wb"))
     print("  ~ Persisto tabella delle corrispondenze (autoparchi.pickle-tmp)")

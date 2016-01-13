@@ -223,6 +223,7 @@ class FermoTecnico(ModelloSemplice, ConStorico, ConMarcaTemporale):
 
     motivo = models.CharField(max_length=512)
     veicolo = models.ForeignKey(Veicolo, related_name='fermi_tecnici')
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='fermi_tecnici_creati')
 
     def termina(self):
         self.fine = datetime.date.today()
