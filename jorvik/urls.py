@@ -137,6 +137,7 @@ urlpatterns = [
     url(r'^veicolo/manutenzioni/(?P<veicolo>.*)/$', 'veicoli.viste.veicoli_manutenzione'),
     url(r'^veicolo/rifornimenti/(?P<veicolo>.*)/$', 'veicoli.viste.veicoli_rifornimento'),
     url(r'^veicolo/fermi-tecnici/(?P<veicolo>.*)/$', 'veicoli.viste.veicoli_fermo_tecnico'),
+    url(r'^veicolo/termina/fermo-tecnico/(?P<fermo>.*)/$', 'veicoli.viste.veicoli_termina_fermo_tecnico'),
 
     url(r'^aspirante/$', 'formazione.viste.aspirante_home'),
     url(r'^aspirante/impostazioni/$', 'formazione.viste.aspirante_impostazioni'),

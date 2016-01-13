@@ -1,3 +1,4 @@
+import autocomplete_light
 from django import forms
 from django.forms import ModelForm
 from veicoli.models import Veicolo, Autoparco, Rifornimento, Manutenzione, FermoTecnico, Collocazione, Segnalazione
@@ -15,7 +16,7 @@ class ModuloCreazioneVeicolo(ModelForm):
         fields = "__all__"
 
 
-class ModuloCreazioneRifornimento(ModelForm):
+class ModuloCreazioneRifornimento(autocomplete_light.ModelForm):
     class Meta:
         model = Rifornimento
         exclude = ['veicolo']
@@ -30,7 +31,7 @@ class ModuloCreazioneManutenzione(ModelForm):
 class ModuloCreazioneFermoTecnico(ModelForm):
     class Meta:
         model = FermoTecnico
-        exclude = ['veicolo']
+        fields = ['motivo']
 
 
 class ModuloCreazioneCollocazione(ModelForm):

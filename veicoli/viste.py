@@ -146,10 +146,10 @@ def veicoli_manutenzione(request, me, veicolo):
         m = modulo.save(commit=False)
         m.veicolo = veicolo
         m.save()
-        return redirect("/veicoli/")
     contesto = {
         "modulo": modulo,
         "manutenzioni": manutenzioni,
+         "veicolo": veicolo,
     }
     return "veicoli_manutenzione.html", contesto
 
@@ -164,28 +164,39 @@ def veicoli_rifornimento(request, me, veicolo):
         r = modulo.save(commit=False)
         r.veicolo = veicolo
         r.save()
-        return redirect("/veicoli/")
     contesto = {
         "modulo": modulo,
         "rifornimenti": rifornimenti,
+         "veicolo": veicolo,
     }
     return "veicoli_rifornimento.html",contesto
 
 @pagina_privata
 def veicoli_fermo_tecnico(request, me, veicolo):
     veicolo = get_object_or_404(Veicolo, pk=veicolo)
-    fermi = veicolo.fermi_tecnici.all()
+    fermi = veicolo.fermi_tecnici.all().order_by("-creazione")
     modulo = ModuloCreazioneFermoTecnico(request.POST or None)
     if not me.permessi_almeno(veicolo, MODIFICA):
         return redirect(ERRORE_PERMESSI)
     if modulo.is_valid():
         f = modulo.save(commit=False)
+        f.inizio = datetime.date.today()
         f.veicolo = veicolo
         f.save()
-        return redirect("/veicoli/")
     contesto = {
         "modulo": modulo,
         "fermi": fermi,
+        "veicolo": veicolo,
     }
     return "veicoli_fermo_tecnico.html", contesto
+
+@pagina_privata
+def veicoli_termina_fermo_tecnico(request, me, fermo):
+    fermo = get_object_or_404(FermoTecnico, pk=fermo)
+    if me.permessi_almeno(fermo.veicolo, MODIFICA):
+        fermo.termina()
+        return redirect("/veicolo/fermi-tecnici/%s/" %(fermo.veicolo.pk,))
+    else:
+        return redirect(ERRORE_PERMESSI)
+
 

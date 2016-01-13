@@ -1,19 +1,72 @@
 {% extends "veicoli_vuota.html" %}
 
 {% load bootstrap3 %}
+{% load utils %}
 
 {% block pagina_titolo %}Nuovo rifornimento{% endblock %}
 
 {% block app_contenuto %}
 
-<form method="POST">
-    {% csrf_token %}
-    {% bootstrap_form modulo %}
 
-    <button class="btn btn-block btn-primary btn-lg">
-        <i class="fa fa-fw fa-check"></i>
-        Salva
-    </button>
-</form>
+<div class="row">
+    <div class="col-lg-12">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-car fa-fw"></i> Elenco Rifornimenti Veicolo {{ veicolo.targa }}
+                </h4>
+            </div>
 
+            <div class="panel-body">
+                <table class="table table-condensed table-responsive">
+                    <thead>
+                        <tr>
+                            <th>Numero</th>
+                            <th>Conducente</th>
+                            <th>Data</th>
+                            <th>Contachilometri</th>
+                            <th>Costo</th>
+                            <th>Litri</th>
+                            <th>Presso</th>
+                            <th>Contalitri</th>
+                            <th>Ricevuta Numero</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rifornimento in rifornimenti %}
+                            <tr class="piu-piccolo">
+                                <td>{{ rifornimento.numero }}</td>
+                                <td>{{ rifornimento.conducente }}</td>
+                                <td>{{ rifornimento.data|date:"SHORT_DATE_FORMAT" }}</td>
+                                <td>{{ rifornimento.contachilometri }}</td>
+                                <td>{% euro rifornimento.costo %}</td>
+                                <td>{{ rifornimento.consumo_carburante }}</td>
+                                <td>{{ rifornimento.get_presso_display }}</td>
+                                <td>{{ rifornimento.contalitri }}</td>
+                                <td>{{ rifornimento.ricevuta }}</td>
+                                <td>
+
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-8 col-lg-offset-2">
+        <form method="POST">
+            {% csrf_token %}
+            {% bootstrap_form modulo %}
+
+            <button class="btn btn-block btn-primary btn-lg">
+                <i class="fa fa-fw fa-check"></i>
+                Salva
+            </button>
+        </form>
+    </div>
+</div>
 {% endblock %}

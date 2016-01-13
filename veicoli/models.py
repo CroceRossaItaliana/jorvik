@@ -164,7 +164,7 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
         ).latest('data')
 
     def fermo_tecnico(self):
-        return FermoTecnico.query_attuale(veicolo=self).first() or "No"
+        return FermoTecnico.query_attuale(veicolo=self).first() or None
 
     def collocazione(self):
         return Collocazione.query_attuale(veicolo=self).first()
@@ -222,6 +222,10 @@ class FermoTecnico(ModelloSemplice, ConStorico, ConMarcaTemporale):
 
     motivo = models.CharField(max_length=512)
     veicolo = models.ForeignKey(Veicolo, related_name='fermi_tecnici')
+
+    def termina(self):
+        self.fine = datetime.date.today()
+        self.save()
 
 
 class Manutenzione(ModelloSemplice, ConMarcaTemporale):
@@ -285,11 +289,12 @@ class Rifornimento(ModelloSemplice, ConMarcaTemporale):
     conducente = models.ForeignKey(Persona, related_name='rifornimenti')
     data = models.DateTimeField("Data rifornimento", db_index=True)
     contachilometri = models.PositiveIntegerField("Contachilometri", db_index=True)
+    costo = models.FloatField("Costo", db_index=True)
 
-    consumo_carburante = models.FloatField("Consumo carburante lt.", blank=True, default=None, null=True, db_index=True)
-    consumo_olio_m = models.FloatField("Consumo Olio motori Kg.", blank=True, default=None, null=True, db_index=True)
-    consumo_olio_t = models.FloatField("Consumo Olio trasmissioni Kg.", blank=True, default=None, null=True, db_index=True)
-    consumo_olio_i = models.FloatField("Consumo Olio idraulico Kg.", blank=True, default=None, null=True, db_index=True)
+    consumo_carburante = models.FloatField("Consumo carburante lt.", default=0.0, db_index=True, help_text="Litri di carburante immessi")
+    #consumo_olio_m = models.FloatField("Consumo Olio motori Kg.", blank=True, default=None, null=True, db_index=True)
+    #consumo_olio_t = models.FloatField("Consumo Olio trasmissioni Kg.", blank=True, default=None, null=True, db_index=True)
+    #consumo_olio_i = models.FloatField("Consumo Olio idraulico Kg.", blank=True, default=None, null=True, db_index=True)
 
     CISTERNA_INTERNA = 'I'
     DISTRIBUTORE_CONVENZIONATO = 'C'
