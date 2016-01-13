@@ -239,20 +239,21 @@ class Manutenzione(ModelloSemplice, ConMarcaTemporale):
     MANUTENZIONE_ORDINARIA = "O"
     MANUTENZIONE_STRAORDINARIA = "S"
 
-    TIPO=(
+    TIPO = (
         (REVISIONE,                     "Revisione veicolo"),
         (MANUTENZIONE_ORDINARIA,        "Manutenzione ordinaria veicolo"),
         (MANUTENZIONE_STRAORDINARIA,    "Manutenzione straordinaria veicolo")
     )
 
     tipo = models.CharField(choices=TIPO, max_length=1, default=MANUTENZIONE_ORDINARIA, db_index=True)
-    data = models.DateField(validators=[valida_data_manutenzione])
-    descrizione = models.CharField(max_length=2048)
+    data = models.DateField(validators=[valida_data_manutenzione], db_index=True)
+    descrizione = models.TextField(max_length=4096, blank=False, null=True)
     km = models.PositiveIntegerField()
     veicolo = models.ForeignKey(Veicolo, related_name="manutenzioni")
     manutentore = models.CharField(max_length=512, help_text="es. autoriparato")
-    numero_fattura = models.CharField(max_length=20, help_text="es. 122/A")
+    numero_fattura = models.CharField(max_length=64, help_text="es. 122/A")
     costo = models.PositiveIntegerField()
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='manutenzioni_registrate')
 
 
 

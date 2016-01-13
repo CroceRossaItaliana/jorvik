@@ -155,7 +155,7 @@ def iint(n, default=0):
         return iint(default)
     except TypeError:
         return iint(default)
-    
+
 # .conect(host, username, password, database)
 db = MySQLdb.connect(
     MYSQL_CONF.get('client', 'host'),
@@ -2772,20 +2772,13 @@ def carica_autoparchi():
 
     print("  - Caricamento degli autoparchi...")
 
+    dett = generatore_funzione_dettaglio('dettagliAutoparco')
     cursore = db.cursor()
     cursore.execute("""
         SELECT
-            a.id, a.nome, a.comitato,
-            b.valore
+            a.id, a.nome, a.comitato
         FROM
-            autoparchi AS a LEFT JOIN dettagliAutoparco as b
-            on a.id = b.id
-
-            WHERE b.id  NOT IN (
-                SELECT DISTINCT(id) FROM dettagliAutoparco WHERE nome='formattato'
-                )
-		    OR b.nome ='formattato'
-        GROUP BY a.id
+            autoparchi AS a
         """
     )
 
@@ -2793,22 +2786,16 @@ def carica_autoparchi():
     totale = cursore.rowcount
     contatore = 0
 
+
     for aut in auts:
         contatore += 1
 
         id = int(aut[0])
         nome = stringa(aut[1])
         comitato = comitato_oid(aut[2])
-        posizione = stringa(aut[3]) if stringa(aut[3]) and ',' in stringa(aut[3]) else None
 
-        ck = db.cursor()
-        ck.execute("SELECT valore FROM dettagliAutoparco WHERE id=%d AND nome='telefono'" % (id,))
-        tel = ck.fetchall()
-        if tel:
-            tel = stringa(tel[0][0])
-        else:
-            tel = None
-        ck.close()
+        posizione = dett(id, 'formattato', default=None)
+        tel = dett(id, 'telefono', default='')
 
         print("   %s Autoparco id=%d, nome=%s, comitato id=%d" % (
             progresso(contatore, totale), id, nome, comitato.pk,
@@ -2817,6 +2804,7 @@ def carica_autoparchi():
             nome=nome,
             sede=comitato,
             estensione=comitato.estensione,
+            telefono=tel,
         )
         a.save()
 
@@ -3067,6 +3055,85 @@ def carica_collocazioni():
         c.save()
     cursore.close()
 
+
+def carica_manutenzioni():
+
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, veicolo, intervento,
+            tIntervento, tRegistra, pRegistra, km,
+            tipo, costo, fattura, azienda
+        FROM
+            manutenzioni
+        WHERE
+            tIntervento IS NOT NULL
+        AND tRegistra IS NOT NULL
+        AND veicolo IN (SELECT id FROM veicoli)
+
+        """
+    )
+
+    mans = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+
+    for man in mans:
+        contatore += 1
+
+        id = int(man[0])
+        try:
+            veicolo = ASSOC_ID_VEICOLI[iint(man[1])]
+        except KeyError:
+            print("   SALTATO veicolo non esistente ")
+            continue
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[iint(man[5])]
+        except KeyError:
+            print("   SALTATO persona non esistente ")
+            continue
+
+        descrizione = stringa(man[2]) or 'N/D'
+        data = data_da_timestamp(man[3])
+        creazione = data_da_timestamp(man[4], data)
+        km = ffloat(man[6], default=0.0)
+        tipo = iint(man[7])
+        if tipo == 10:
+            tipo = Manutenzione.MANUTENZIONE_ORDINARIA
+        elif tipo == 30:
+            tipo = Manutenzione.REVISIONE
+        else:
+            tipo = Manutenzione.MANUTENZIONE_STRAORDINARIA
+
+        creato_da_id = persona_id
+        costo = ffloat(man[8], default=0.0)
+        if costo < 0:
+            costo = 0
+        numero_fattura = stringa(man[9])
+        manutentore = stringa(man[10])
+
+        print("   %s manutenzione id=%d, veicolo=%d, tipo=%s" % (
+            progresso(contatore,totale),
+            id, veicolo, tipo
+        ))
+
+        m = Manutenzione(
+            veicolo_id=veicolo,
+            tipo=tipo,
+            data=data,
+            descrizione=descrizione,
+            km=km,
+            manutentore=manutentore,
+            numero_fattura=numero_fattura,
+            costo=costo,
+            creato_da_id=creato_da_id
+        )
+        m.save()
+
+    cursore.close()
 
 # Importazione dei Comitati
 
@@ -3409,7 +3476,7 @@ if args.veicoli:
     carica_veicoli()
     carica_collocazioni()
     #carica_rifornimenti()
-    #carica_manutenzioni()
+    carica_manutenzioni()
     print("  ~ Persisto tabella delle corrispondenze (veicoli.pickle-tmp)")
     pickle.dump(ASSOC_ID_VEICOLI, open("veicoli.pickle-tmp", "wb"))
     print("  ~ Persisto tabella delle corrispondenze (autoparchi.pickle-tmp)")
