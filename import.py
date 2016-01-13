@@ -268,6 +268,9 @@ ASSOC_ID_TRASFERIMENTI = {}
 
 ASSOC_ID_ESTENSIONI = {}
 
+ASSOC_ID_AUTOPARCHI = {}
+ASSOC_ID_VEICOLI = {}
+
 
 def parse_numero(numero, paese="IT"):
     try:
@@ -2804,12 +2807,160 @@ def carica_autoparchi():
         )
         a.save()
 
+        ASSOC_ID_AUTOPARCHI[id] = a.pk
+
         if posizione and args.geo:
             a.imposta_locazione(posizione)
             print("     - Posizione: %s" % (posizione,))
 
 
     cursore.close()
+
+
+def ottieni_dettaglio(tabella, id, nome, default=None):
+    c = db.cursor()
+    c.execute("SELECT valore FROM %s WHERE id=%d" % (tabella, id,))
+    ca = c.fetchall()
+    if not ca:
+        va = default
+    else:
+        va = ca[0][0]
+    c.close()
+    return va
+
+
+def carica_veicoli():
+
+    print("  - Caricamento dei veicoli...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, targa, libretto, telaio, comitato, stato, pFuoriuso, tFuoriuso
+        FROM veicoli
+        WHERE targa IS NOT NULL
+                AND targa <> ''
+                AND comitato IS NOT NULL
+
+        """
+    )
+
+    ves = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    def dve(id, nome, default=None):
+        return ottieni_dettaglio('dettagliVeicolo', id, nome, default=None)
+
+    for ve in ves:
+        contatore += 1
+
+        id = int(ve[0])
+        targa = stringa(ve[1])
+        libretto = stringa(ve[2])
+        telaio = stringa(ve[3])
+        comitato = stringa(ve[4])
+        stato = int(ve[5]) if ve[5] else None
+        if stato == 20:
+            stato = Veicolo.DISMESSO
+        else:
+            stato = Veicolo.IN_SERVIZIO
+        tFuoriuso = data_da_timestamp(ve[7])
+
+        prima_immatricolazione = data_da_timestamp(dve(id, 'primaImmatricolazione', None))
+        cognome = stringa(dve(id, 'cognome', default='N/D'))
+        nome = stringa(dve(id, 'nome', default='N/D'))
+        indirizzo = stringa(dve(id, 'indirizzo', default='N/D'))
+        anteriori = stringa(dve(id, 'anteriori', default='N/D'))
+        posteriori = stringa(dve(id, 'posteriori', default='N/D'))
+        altAnt = stringa(dve(id, 'altAnt', default='N/D'))
+        altPost = stringa(dve(id, 'altPost', default='N/D'))
+        cambio = stringa(dve(id, 'cambio', default='N/D'))
+        lunghezza = float(dve(id, 'lunghezza', default=0.0))
+        larghezza = float(dve(id, 'larghezza', default=0.0))
+        sbalzo = float(dve(id, 'sbalzo', default=0.0))
+        tara = int(dve(id, 'tara', default=0))
+
+        marca = stringa(dve(id, 'marca', default='N/D'))
+        modello = stringa(dve(id, 'tipo', default='N/D'))
+        massa = int(dve(id, 'massa', default=1))
+        immatricolazione = data_da_timestamp(dve(id, 'immatricolazione', None))
+
+        categoria = stringa(dve(id, 'categoria', default='N/D'))
+        uso = stringa(dve(id, 'uso', default='N/D'))
+        carrozzeria = stringa(dve(id, 'carrozzeria', default='N/D'))
+        omologazione = stringa(dve(id, 'omologazione', default='N/D'))
+        assi = int(dve(id, 'assi', default=2))
+        rimorchio_frenato = float(dve(id, 'rimorchioFrenato', default=0.0))
+
+        cilindrata = int(dve(id, 'cilindrata', default=2))
+        potenza = int(dve(id, 'potenza', default=2))
+
+        alimentazione = stringa(dve(id, 'alimentazione', default='N/D'))
+        if alimentazione == 'BENZINA':
+            alimentazione = Veicolo.BENZINA
+        elif alimentazione == 'GASOLIO':
+            alimentazione = Veicolo.GASOLIO
+        else:
+            alimentazione = None
+
+        posti = int(dve(id, 'posti', default=2))
+        regime = int(dve(id, 'regime', default=2))
+
+        creazione = data_da_timestamp(dve(id, 'tInserimento'))
+
+        intervallo_revisione = int(dve(id, 'intervalloRevisione', default=31556926))
+        if intervallo_revisione == 63113852:
+            intervallo_revisione = 730
+        else:
+            intervallo_revisione = 365
+
+        print("   %s veicolo id=%d, targa=%s" % (
+            progresso(contatore, totale), id, targa
+        ))
+
+        v = Veicolo(
+            stato=stato,
+            libretto=libretto,
+            targa=targa,
+            prima_immatricolazione=prima_immatricolazione,
+            proprietario_nome=nome,
+            proprietario_cognome=cognome,
+            proprietario_indirizzo=indirizzo,
+            pneumatici_anteriori=anteriori,
+            pneumatici_posteriori=posteriori,
+            pneumatici_alt_anteriori=altAnt,
+            pneumatici_alt_posteriori=altPost,
+            cambio=cambio,
+            lunghezza=lunghezza,
+            larghezza=larghezza,
+            sbalzo=sbalzo,
+            tara=tara,
+            marca=marca,
+            modello=modello,
+            telaio=telaio,
+            massa_max=massa,
+            data_immatricolazione=immatricolazione,
+            categoria=categoria,
+            destinazione=uso,
+            carrozzeria=carrozzeria,
+            omologazione=omologazione,
+            num_assi=assi,
+            rimorchio_frenato=rimorchio_frenato,
+            cilindrata=cilindrata,
+            potenza_massima=potenza,
+            alimentazione=alimentazione,
+            posti=posti,
+            regime=regime,
+            intervallo_revisione=intervallo_revisione,
+            creazione=creazione or None,
+            ultima_modifica=creazione or None,
+        )
+        v.save()
+
+        ASSOC_ID_VEICOLI[id] = v.pk
+    cursore.close()
+
 
 
 
@@ -3152,11 +3303,19 @@ if args.veicoli:
     Manutenzione.objects.all().delete()
 
     carica_autoparchi()
-    #carica_veicoli()
+    carica_veicoli()
     #carica_collocazioni()
     #carica_rifornimenti()
     #carica_manutenzioni()
+    print("  ~ Persisto tabella delle corrispondenze (veicoli.pickle-tmp)")
+    pickle.dump(ASSOC_ID_VEICOLI, open("veicoli.pickle-tmp", "wb"))
+    print("  ~ Persisto tabella delle corrispondenze (autoparchi.pickle-tmp)")
+    pickle.dump(ASSOC_ID_AUTOPARCHI, open("autoparchi.pickle-tmp", "wb"))
 
 else:
-    print("  ~ Saltato")
+    print("  ~ Carico tabella delle corrispondenze (veicoli.pickle-tmp)")
+    ASSOC_ID_VEICOLI = pickle.load(open("veicoli.pickle-tmp", "rb"))
+    print("  ~ Carico tabella delle corrispondenze (autoparchi.pickle-tmp)")
+    ASSOC_ID_AUTOPARCHI = pickle.load(open("autoparchi.pickle-tmp", "rb"))
+
 # print(ASSOC_ID_COMITATI)

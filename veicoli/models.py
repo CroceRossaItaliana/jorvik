@@ -47,7 +47,7 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
     IN_SERVIZIO = 'OK'
     DISMESSO = 'KO'
     STATO = (
-        (IN_IMMATRICOLAZIONE, "In immatricolazione"),
+        # (IN_IMMATRICOLAZIONE, "In immatricolazione"),
         (IN_SERVIZIO, "In servizio"),
         (DISMESSO, "Dismesso/Fuori uso")
     )
@@ -130,13 +130,13 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
         (METANO, "Metano"),
         (ELETTRICA, "Elettrica"),
     )
-    alimentazione = models.CharField("Alimentazione (P.3)", max_length=1, choices=ALIMENTAZIONE, default=BENZINA)
+    alimentazione = models.CharField("Alimentazione (P.3)", max_length=1, choices=ALIMENTAZIONE, default=None, null=True)
 
     # Sezione S
     posti = models.SmallIntegerField("N. Posti a sedere conducente compreso (S.1)", default=5)
 
     # Sezione U
-    regine = models.PositiveIntegerField("Livello Sonoro: Regime del motore (U.2)")
+    regime = models.PositiveIntegerField("Livello Sonoro: Regime del motore (U.2)")
 
     # Informazioni aggiuntive
     telepass = models.CharField("Numero Telepass", max_length=64, blank=True, null=True)
