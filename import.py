@@ -142,6 +142,17 @@ parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
 
 args = parser.parse_args()
 
+def ffloat(n, default=0.0):
+    try:
+        return float(n)
+    except ValueError:
+        return float(default)
+
+def iint(n, default=0):
+    try:
+        return int(n)
+    except ValueError:
+        return iint(default)
 
 # .conect(host, username, password, database)
 db = MySQLdb.connect(
@@ -347,7 +358,7 @@ def mysql_cancella_tabella(tabella):
 def data_da_timestamp(timestamp, default=timezone.now()):
     if not timestamp:
         return default
-    timestamp = int(timestamp)
+    timestamp = iint(timestamp)
     if not timestamp:  # timestamp 0, 1970-1-1
         return default
     try:
@@ -2819,19 +2830,49 @@ def carica_autoparchi():
 
 def ottieni_dettaglio(tabella, id, nome, default=None):
     c = db.cursor()
-    c.execute("SELECT valore FROM %s WHERE id=%d" % (tabella, id,))
+    c.execute("SELECT valore FROM %s WHERE id=%d AND nome='%s'" % (tabella, id, nome,))
     ca = c.fetchall()
     if not ca:
         va = default
     else:
         va = ca[0][0]
+        if va is None or va == "":
+            va = default
     c.close()
     return va
 
 
+def generatore_funzione_dettaglio(tabella):
+    DE = {}
+
+    print("  - Caricamento dettagli (%s)... " % (tabella,))
+
+    ak = db.cursor()
+    ak.execute("SELECT id, nome, valore FROM %s" % (tabella,))
+    aks = ak.fetchall()
+    for d in aks:
+        try:
+            DE["%d:%s" % (int(d[0]), d[1],)] = d[2]
+        except ValueError:
+            pass
+    ak.close()
+    def _dve(id, nome, default=None):
+        try:
+            v = DE["%d:%s" % (int(id), nome)]
+        except KeyError:
+            v = default
+        except ValueError:
+            v = default
+        if not v or v == "":
+            v = default
+        return v
+    return _dve
+
+
+
 def carica_veicoli():
 
-    print("  - Caricamento dei veicoli...")
+    dve = generatore_funzione_dettaglio('dettagliVeicolo')
 
     cursore = db.cursor()
     cursore.execute("""
@@ -2849,8 +2890,7 @@ def carica_veicoli():
     totale = cursore.rowcount
     contatore = 0
 
-    def dve(id, nome, default=None):
-        return ottieni_dettaglio('dettagliVeicolo', id, nome, default=None)
+    TELAIO = {}
 
     for ve in ves:
         contatore += 1
@@ -2859,8 +2899,14 @@ def carica_veicoli():
         targa = stringa(ve[1])
         libretto = stringa(ve[2])
         telaio = stringa(ve[3])
+
+        if telaio:
+            while telaio in TELAIO:
+                telaio = "%s-bis" % (telaio,)
+            TELAIO[telaio] = True
+
         comitato = stringa(ve[4])
-        stato = int(ve[5]) if ve[5] else None
+        stato = iint(ve[5]) if ve[5] else None
         if stato == 20:
             stato = Veicolo.DISMESSO
         else:
@@ -2876,25 +2922,25 @@ def carica_veicoli():
         altAnt = stringa(dve(id, 'altAnt', default='N/D'))
         altPost = stringa(dve(id, 'altPost', default='N/D'))
         cambio = stringa(dve(id, 'cambio', default='N/D'))
-        lunghezza = float(dve(id, 'lunghezza', default=0.0))
-        larghezza = float(dve(id, 'larghezza', default=0.0))
-        sbalzo = float(dve(id, 'sbalzo', default=0.0))
-        tara = int(dve(id, 'tara', default=0))
+        lunghezza = ffloat(dve(id, 'lunghezza', default=0.0))
+        larghezza = ffloat(dve(id, 'larghezza', default=0.0))
+        sbalzo = ffloat(dve(id, 'sbalzo', default=0.0))
+        tara = iint(dve(id, 'tara', default=0))
 
         marca = stringa(dve(id, 'marca', default='N/D'))
         modello = stringa(dve(id, 'tipo', default='N/D'))
-        massa = int(dve(id, 'massa', default=1))
+        massa = iint(dve(id, 'massa', default=1))
         immatricolazione = data_da_timestamp(dve(id, 'immatricolazione', None))
 
         categoria = stringa(dve(id, 'categoria', default='N/D'))
         uso = stringa(dve(id, 'uso', default='N/D'))
         carrozzeria = stringa(dve(id, 'carrozzeria', default='N/D'))
         omologazione = stringa(dve(id, 'omologazione', default='N/D'))
-        assi = int(dve(id, 'assi', default=2))
-        rimorchio_frenato = float(dve(id, 'rimorchioFrenato', default=0.0))
+        assi = iint(dve(id, 'assi', default=2))
+        rimorchio_frenato = ffloat(dve(id, 'rimorchioFrenato', default=0.0))
 
-        cilindrata = int(dve(id, 'cilindrata', default=2))
-        potenza = int(dve(id, 'potenza', default=2))
+        cilindrata = iint(dve(id, 'cilindrata', default=2))
+        potenza = iint(dve(id, 'potenza', default=2))
 
         alimentazione = stringa(dve(id, 'alimentazione', default='N/D'))
         if alimentazione == 'BENZINA':
@@ -2904,12 +2950,12 @@ def carica_veicoli():
         else:
             alimentazione = None
 
-        posti = int(dve(id, 'posti', default=2))
-        regime = int(dve(id, 'regime', default=2))
+        posti = iint(dve(id, 'posti', default=2))
+        regime = iint(dve(id, 'regime', default=2))
 
         creazione = data_da_timestamp(dve(id, 'tInserimento'))
 
-        intervallo_revisione = int(dve(id, 'intervalloRevisione', default=31556926))
+        intervallo_revisione = iint(dve(id, 'intervalloRevisione', default=31556926))
         if intervallo_revisione == 63113852:
             intervallo_revisione = 730
         else:

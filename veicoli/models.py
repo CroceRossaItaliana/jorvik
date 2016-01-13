@@ -64,8 +64,8 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
         (TARGA_RIMORCHI, "Targa per Rimorchi")
     )
 
-    libretto = models.CharField("N. Libretto", help_text="Formato 201X-XXXXXXXXX", max_length=16, db_index=True, blank=False, null=False)
-    targa = models.CharField("Targa (A)", help_text="Targa del Veicolo, senza spazi.", max_length=5, db_index=True, blank=False, null=False)
+    libretto = models.CharField("N. Libretto", help_text="Formato 201X-XXXXXXXXX", max_length=32, db_index=True, blank=False, null=False)
+    targa = models.CharField("Targa (A)", help_text="Targa del Veicolo, senza spazi.", max_length=16, db_index=True, blank=False, null=False)
     ##formato_targa = models.CharField("Formato Targa", max_length=1, choices=FORMATO_TARGA, default=TARGA_AUTOVEICOLI_A)
     prima_immatricolazione = models.DateField("Prima Immatricolazione (B)", db_index=True, blank=False, null=False)
 
@@ -75,10 +75,10 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
     proprietario_indirizzo = models.CharField("Proprietario: Indirizzo (C2.3)", max_length=127, default=DEFAULT_PROPRIETARIO_INDIRIZZO)
 
     # Sezione Pneumatici
-    pneumatici_anteriori = models.CharField("Pneumatici: Anteriori", max_length=32, help_text="es. 215/70 R12C")
-    pneumatici_posteriori = models.CharField("Pneumatici: Posteriori", max_length=32, help_text="es. 215/70 R12C")
-    pneumatici_alt_anteriori = models.CharField("Pneumatici alternativi: Anteriori", max_length=32, help_text="es. 215/70 R12C", blank=True, null=True)
-    pneumatici_alt_posteriori = models.CharField("Pneumatici alternativi: Posteriori", max_length=32, help_text="es. 215/70 R12C", blank=True, null=True)
+    pneumatici_anteriori = models.CharField("Pneumatici: Anteriori", max_length=255, help_text="es. 215/70 R12C")
+    pneumatici_posteriori = models.CharField("Pneumatici: Posteriori", max_length=255, help_text="es. 215/70 R12C")
+    pneumatici_alt_anteriori = models.CharField("Pneumatici alternativi: Anteriori", max_length=255, help_text="es. 215/70 R12C", blank=True, null=True)
+    pneumatici_alt_posteriori = models.CharField("Pneumatici alternativi: Posteriori", max_length=255, help_text="es. 215/70 R12C", blank=True, null=True)
 
     # Sezione Caratteristiche e Dimensioni
     cambio = models.CharField("Cambio", max_length=32, help_text="Tipologia di Cambio", default="Meccanico")
@@ -92,7 +92,7 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
     modello = models.CharField("Tipo (D.2)", max_length=32, help_text="es. Ducato")
 
     # Sezione E:
-    telaio = models.CharField("Numero Identificazione Veicolo (E)", help_text="Numero di telaio del veicolo, es. ZXXXXXXXXXXXXXXX", max_length=24, db_index=True, unique=True)
+    telaio = models.CharField("Numero Identificazione Veicolo (E)", help_text="Numero di telaio del veicolo, es. ZXXXXXXXXXXXXXXX", max_length=64, db_index=True, null=True, unique=True)
 
     # Sezione F
     massa_max = models.PositiveIntegerField("Massa Massima a carico (F.2)")
@@ -101,15 +101,15 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
     data_immatricolazione = models.DateField("Data immatricolazione attuale (I)", db_index=True)
 
     # Sezione J
-    categoria = models.CharField("Categoria del Veicolo (J)", max_length=16, help_text="es. Ambulanza", db_index=True)
-    destinazione = models.CharField("Destinazione ed uso (J.1)", max_length=32, help_text="es. Amb. Soccorso (AMB-A)")
-    carrozzeria = models.CharField("Carrozzeria (J.2)", max_length=16, help_text="es. Chiuso")
+    categoria = models.CharField("Categoria del Veicolo (J)", max_length=128, help_text="es. Ambulanza", db_index=True)
+    destinazione = models.CharField("Destinazione ed uso (J.1)", max_length=128, help_text="es. Amb. Soccorso (AMB-A)")
+    carrozzeria = models.CharField("Carrozzeria (J.2)", max_length=128, help_text="es. Chiuso")
 
     # Sezione K
     omologazione = models.CharField("N. Omologazione (K)", max_length=32, help_text="es. OEXXXXXXXXXX", blank=True, null=True)
 
     # Sezione L
-    num_assi = models.PositiveSmallIntegerField("Num. Assi (L)", default=2)
+    num_assi = models.PositiveIntegerField("Num. Assi (L)", default=2)
 
     # Sezione O
     rimorchio_frenato = models.FloatField("Massa massima a Rimorchio frenato tecnicamente ammissibile (O) kg.", blank=True, null=True)
@@ -133,7 +133,7 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
     alimentazione = models.CharField("Alimentazione (P.3)", max_length=1, choices=ALIMENTAZIONE, default=None, null=True)
 
     # Sezione S
-    posti = models.SmallIntegerField("N. Posti a sedere conducente compreso (S.1)", default=5)
+    posti = models.PositiveIntegerField("N. Posti a sedere conducente compreso (S.1)", default=5)
 
     # Sezione U
     regime = models.PositiveIntegerField("Livello Sonoro: Regime del motore (U.2)")
