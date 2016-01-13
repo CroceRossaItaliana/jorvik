@@ -153,7 +153,9 @@ def iint(n, default=0):
         return int(n)
     except ValueError:
         return iint(default)
-
+    except TypeError:
+        return iint(default)
+    
 # .conect(host, username, password, database)
 db = MySQLdb.connect(
     MYSQL_CONF.get('client', 'host'),
@@ -3008,7 +3010,62 @@ def carica_veicoli():
     cursore.close()
 
 
+def carica_collocazioni():
 
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, veicolo, autoparco, pConferma, tConferma, inizio, fine, pFine, tFine
+        FROM collocazioneVeicoli
+
+        """
+    )
+
+    cos = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+
+    for co in cos:
+        contatore += 1
+
+        id = int(co[0])
+        try:
+            veicolo = ASSOC_ID_VEICOLI[iint(co[1])]
+        except KeyError:
+            print("   SALTATO veicolo non esistente ")
+            continue
+        try:
+            autoparco = ASSOC_ID_AUTOPARCHI[iint(co[2])]
+        except KeyError:
+            print("   SALTATO autoparco non esistente ")
+            continue
+        try:
+            pConferma = ASSOC_ID_PERSONE[iint(co[3])]
+        except KeyError:
+            print("   SALTATO persona non esistente ")
+            continue
+
+        tConferma = data_da_timestamp(co[4])
+        inizio = data_da_timestamp(co[5])
+        fine = data_da_timestamp(co[6], default=None)
+
+        print("   %s collocazione id=%d, veicolo=%d, autoparco=%d" % (
+            progresso(contatore, totale), id, veicolo, autoparco,
+        ))
+
+        c = Collocazione(
+            veicolo_id=veicolo,
+            autoparco_id=autoparco,
+            creazione=tConferma,
+            ultima_modifica=tConferma,
+            creato_da_id=pConferma,
+            inizio=inizio,
+            fine=fine,
+        )
+        c.save()
+    cursore.close()
 
 
 # Importazione dei Comitati
@@ -3350,7 +3407,7 @@ if args.veicoli:
 
     carica_autoparchi()
     carica_veicoli()
-    #carica_collocazioni()
+    carica_collocazioni()
     #carica_rifornimenti()
     #carica_manutenzioni()
     print("  ~ Persisto tabella delle corrispondenze (veicoli.pickle-tmp)")

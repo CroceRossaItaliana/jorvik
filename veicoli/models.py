@@ -204,7 +204,7 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
 #     veicolo = models.ForeignKey(Veicolo, related_name='richieste_immatricolazione')
 
 
-class Collocazione(ModelloSemplice, ConStorico):
+class Collocazione(ModelloSemplice, ConStorico, ConMarcaTemporale):
 
     class Meta:
         verbose_name = "Collocazione veicolo"
@@ -212,6 +212,7 @@ class Collocazione(ModelloSemplice, ConStorico):
 
     veicolo = models.ForeignKey(Veicolo, related_name='collocazioni')
     autoparco = models.ForeignKey(Autoparco, related_name='autoparco')
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='collocazioni_veicoli', null=True)
 
 
 class FermoTecnico(ModelloSemplice, ConStorico, ConMarcaTemporale):
