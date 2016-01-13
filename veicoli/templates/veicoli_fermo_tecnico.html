@@ -11,7 +11,7 @@
         <div class="panel panel-info">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <i class="fa fa-car fa-fw"></i> Elenco Fermi Tecnici
+                    <i class="fa fa-car fa-fw"></i> Elenco Fermi Tecnici Veicolo {{ veicolo.targa }}
                 </h4>
             </div>
 
@@ -27,12 +27,14 @@
                     </thead>
                     <tbody>
                         {% for fermo in fermi %}
-                            <tr>
-                                <td>{{ fermo.creazione }}</td>
-                                <td>{{ fermo.ultima_modifica }}</td>
+                            <tr {% if not fermo.fine %} class="success" {% endif %}>
+                                <td>{{ fermo.inizio|date:"SHORT_DATE_FORMAT" }}</td>
+                                <td>{% if fermo.fine %}{{ fermo.fine|date:"SHORT_DATE_FORMAT" }}{% else %}Indeterminato{% endif %}</td>
                                 <td>{{ fermo.motivo }}</td>
                                 <td>
-                                   termina?
+                                    {% if not fermo.fine %}
+                                    <a href="/veicolo/termina/fermo-tecnico/{{ fermo.pk }}/" class="btn btn-danger btn-sm"><i class="fa fa-trash-o"></i> Termina</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}
@@ -41,6 +43,7 @@
             </div>
         </div>
     </div>
+    {% if not veicolo.fermo_tecnico %}
     <div class="col-lg-4">
         <form method="POST">
             {% csrf_token %}
@@ -52,5 +55,6 @@
             </button>
         </form>
     </div>
+    {% endif %}
 </div>
 {% endblock %}
