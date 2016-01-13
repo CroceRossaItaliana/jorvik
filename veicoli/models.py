@@ -286,9 +286,9 @@ class Rifornimento(ModelloSemplice, ConMarcaTemporale):
     creata, ed assegnata al Rifornimento (tramite il campo `segnalazione`).
     """
 
-    numero = models.PositiveIntegerField("Num. rifornimento", default=1, db_index=True)
+    # numero = models.PositiveIntegerField("Num. rifornimento", default=1, db_index=True)
     veicolo = models.ForeignKey(Veicolo, related_name='rifornimenti')
-    conducente = models.ForeignKey(Persona, related_name='rifornimenti')
+    # conducente = models.ForeignKey(Persona, related_name='rifornimenti')
     data = models.DateTimeField("Data rifornimento", db_index=True)
     contachilometri = models.PositiveIntegerField("Contachilometri", db_index=True)
     costo = models.FloatField("Costo", db_index=True)
@@ -308,10 +308,10 @@ class Rifornimento(ModelloSemplice, ConMarcaTemporale):
     )
     presso = models.CharField("Presso", choices=PRESSO, max_length=1, default=None, null=True)
 
-    contalitri = models.FloatField("(c/o Cisterna int.) Contalitri", blank=True, default=None, null=True, db_index=True)
+    contalitri = models.FloatField("(c/o Cisterna int.) Contalitri", default=None, null=True, db_index=True)
     ricevuta = models.CharField("(c/o Distributore) N. Ricevuta", max_length=32, blank=True, default=None, null=True, db_index=True)
 
-    segnalazione = models.ForeignKey(Segnalazione, help_text="Rapporto conducente", blank=True, default=None, null=True, db_index=True)
+    # segnalazione = models.ForeignKey(Segnalazione, help_text="Rapporto conducente", blank=True, default=None, null=True, db_index=True)
 
     class Meta:
         verbose_name = "Rifornimento di carburante"

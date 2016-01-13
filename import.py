@@ -3135,6 +3135,74 @@ def carica_manutenzioni():
 
     cursore.close()
 
+
+def carica_rifornimenti():
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, pRegistra, tRegistra,
+            km, data, veicolo,
+            timestamp, litri, costo
+        FROM
+            rifornimento
+        WHERE
+            pRegistra IN (SELECT id FROM anagrafica)
+        AND veicolo IN (SELECT id FROM veicoli)
+        """
+    )
+
+    rifs = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for rif in rifs:
+        contatore += 1
+
+        id = int(rif[0])
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[iint(rif[1])]
+        except KeyError:
+            print("   SALTATO veicolo non esistente ")
+            continue
+
+        try:
+            veicolo_id = ASSOC_ID_VEICOLI[iint(rif[5])]
+        except KeyError:
+            print("   SALTATO veicolo non esistente ")
+            continue
+
+        tRegistra = data_da_timestamp(rif[2])
+
+        km = iint(rif[3], default=0)
+        data = data_da_timestamp(rif[4])
+        litri = ffloat(rif[7])
+        costo = ffloat(rif[8])
+
+        print("   %s rifornimento id=%d, veicolo=%d" % (
+            progresso(contatore, totale),
+            id, veicolo_id
+        ))
+
+        r = Rifornimento(
+            veicolo_id=veicolo_id,
+            data=data,
+            contachilometri=km,
+            costo=costo,
+            consumo_carburante=litri,
+            presso=None,
+            contalitri=None,
+            creazione=tRegistra,
+            ultima_modifica=tRegistra
+        )
+        r.save()
+
+    cursore.close()
+
+
+
+
 # Importazione dei Comitati
 
 print("> Importazione dei Comitati")
@@ -3475,7 +3543,7 @@ if args.veicoli:
     carica_autoparchi()
     carica_veicoli()
     carica_collocazioni()
-    #carica_rifornimenti()
+    carica_rifornimenti()
     carica_manutenzioni()
     print("  ~ Persisto tabella delle corrispondenze (veicoli.pickle-tmp)")
     pickle.dump(ASSOC_ID_VEICOLI, open("veicoli.pickle-tmp", "wb"))
