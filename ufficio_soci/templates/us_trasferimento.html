@@ -8,16 +8,16 @@
 
 {% block app_contenuto %}
 
-    <p>Da qui registro una nuova estensione per un Volontario...</p>
+    <p>Da qui registro una nuova richiesta di trasferimento per un Volontario...</p>
 
     <form method="POST">
         {% csrf_token %}
         {% bootstrap_form modulo %}
 
-        Dovrai in seguito accettare la richiesta di estensione del volontario!
+        Dovrai in seguito accettare la richiesta di trasferimento del volontario!
 
         <button type="submit" class="btn btn-block btn-primary">
-            Registra estensione
+            Registra trasferimento
         </button>
     </form>
 

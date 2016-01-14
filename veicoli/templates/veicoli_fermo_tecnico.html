@@ -37,6 +37,12 @@
                                     {% endif %}
                                 </td>
                             </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="bg-warning">
+                                    <i class="fa fa-info"></i> Nessun fermo tecnico.
+                                </td>
+                            </tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -45,15 +51,24 @@
     </div>
     {% if not veicolo.fermo_tecnico %}
     <div class="col-lg-4">
-        <form method="POST">
-            {% csrf_token %}
-            {% bootstrap_form modulo %}
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-plus"></i> Aggiungi fermo tecnico
+                </h4>
+            </div>
+            <div class="panel-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
 
-            <button class="btn btn-block btn-primary btn-lg">
-                <i class="fa fa-fw fa-check"></i>
-                Salva
-            </button>
-        </form>
+                    <button class="btn btn-block btn-primary btn-lg">
+                        <i class="fa fa-fw fa-check"></i>
+                        Salva
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
     {% endif %}
 </div>

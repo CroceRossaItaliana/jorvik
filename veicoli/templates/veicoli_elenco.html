@@ -10,6 +10,7 @@
     <div class="col-lg-12">
         <div class="panel panel-info">
             <div class="panel-heading">
+                <a class="btn btn-primary btn-xs pull-right" href="/veicolo/nuovo/"><i class="fa fa-plus-circle"></i> Aggiungi veicolo</a>
                 <h4 class="panel-title">
                     <i class="fa fa-car fa-fw"></i> Elenco Veicoli
                 </h4>
@@ -41,9 +42,17 @@
                                     <a href="/veicolo/manutenzioni/{{ veicolo.pk }}/">Manutenzioni</a>
                                     <a href="/veicolo/rifornimenti/{{ veicolo.pk }}/">Rifornimenti</a>
                                     <a href="/veicolo/fermi-tecnici/{{ veicolo.pk }}/">Fermi tecnici</a>
+                                    <a href="/veicolo/{{ veicolo.pk }}/collocazioni/">Collocazione</a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="bg-warning">
+                                    <i class="fa fa-info"></i> Nessun veicolo.
                                 </td>
                             </tr>
                         {% endfor %}
+
                     </tbody>
                 </table>
             </div>

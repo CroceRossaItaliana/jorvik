@@ -7,7 +7,7 @@ from veicoli.models import Veicolo, Autoparco, Rifornimento, Manutenzione, Fermo
 class ModuloCreazioneAutoparco(ModelForm):
     class Meta:
         model = Autoparco
-        fields = "__all__"
+        fields = ['nome','telefono','sede']
 
 
 class ModuloCreazioneVeicolo(ModelForm):
@@ -37,7 +37,7 @@ class ModuloCreazioneFermoTecnico(ModelForm):
 class ModuloCreazioneCollocazione(ModelForm):
     class Meta:
         model = Collocazione
-        fields = "__all__"
+        fields = ['autoparco']
 
 
 class ModuloCreazioneSegnalazione(ModelForm):

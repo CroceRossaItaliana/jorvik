@@ -214,6 +214,10 @@ class Collocazione(ModelloSemplice, ConStorico, ConMarcaTemporale):
     autoparco = models.ForeignKey(Autoparco, related_name='autoparco')
     creato_da = models.ForeignKey('anagrafica.Persona', related_name='collocazioni_veicoli', null=True)
 
+    def termina(self):
+        self.fine = datetime.date.today()
+        self.save()
+
 
 class FermoTecnico(ModelloSemplice, ConStorico, ConMarcaTemporale):
 
@@ -224,6 +228,9 @@ class FermoTecnico(ModelloSemplice, ConStorico, ConMarcaTemporale):
     motivo = models.CharField(max_length=512)
     veicolo = models.ForeignKey(Veicolo, related_name='fermi_tecnici')
     creato_da = models.ForeignKey('anagrafica.Persona', related_name='fermi_tecnici_creati')
+
+    def __str__(self):
+        return "Fermo tecnico"
 
     def termina(self):
         self.fine = datetime.date.today()
