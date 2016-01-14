@@ -738,6 +738,31 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return self.genera_inizio_codice_fiscale() in self.codice_fiscale
 
+    def reclamabile_in_sede(self, sede):
+        """
+        Controlla se la persona e' reclamabile come socio presso una
+            determinata sede.
+        :param sede: Sede presso la quale reclamare il socio
+        :return: True o False
+        """
+        if not self.sedi_attuali():
+            return True
+
+        regionale = sede.superiore(REGIONALE)
+
+        if self.appartenenze_attuali().filter(
+            sede=regionale,
+            membro=Appartenenza.ORDINARIO
+        ).exists() and not self.appartenenze_attuali().exclude(
+            sede=regionale,
+            membro=Appartenenza.ORDINARIO
+        ).exists():
+            return True
+
+        return False
+
+
+
 
 class Privacy(ModelloSemplice, ConMarcaTemporale):
     """
@@ -900,6 +925,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     # Membri sotto il diretto controllo della Sede
     MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE)
 
+    # Membro che puo' essere reclamato da una Sede
+    MEMBRO_RECLAMABILE = (VOLONTARIO, ORDINARIO, DIPENDENTE, SOSTENITORE,)
+
     # Membri soci
     MEMBRO_SOCIO = (VOLONTARIO, ORDINARIO,)
     MEMBRO_ANZIANITA = MEMBRO_SOCIO
@@ -948,6 +976,15 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     CONDIZIONE_ATTUALE_AGGIUNTIVA = Q(confermata=True)
 
     RICHIESTA_NOME = "Appartenenza"
+
+    @classmethod
+    def membro_permesso(cls, estensione=REGIONALE, membro=ORDINARIO):
+        """
+        Verifica che il tipo di membro sia permesso per la sede.
+        """
+        if estensione != REGIONALE and membro == cls.ORDINARIO:
+            return False
+        return True
 
     def richiedi(self):
         """

@@ -2,15 +2,18 @@ from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.forms import ModuloNuovoProvvedimento
-from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare
+from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI
+from autenticazione.forms import ModuloCreazioneUtenza
 from autenticazione.funzioni import pagina_privata
 from base.errori import errore_generico
 from base.files import Excel, FoglioExcel
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno, ElencoQuote
-from ufficio_soci.forms import ModuloCreazioneEstensione
+from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
+    ModuloReclamaQuota, ModuloReclama
+from ufficio_soci.models import Quota, Tesseramento
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
@@ -34,6 +37,133 @@ def us(request, me):
     }
 
     return 'us.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_aggiungi(request, me):
+
+    modulo_persona = ModuloAggiungiPersona(request.POST or None)
+
+    if modulo_persona.is_valid():
+        persona = modulo_persona.save()
+        return redirect("/us/reclama/%d/" % (persona.pk,))
+
+    contesto = {
+        "modulo_persona": modulo_persona
+    }
+    return 'us_aggiungi.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_reclama(request, me):
+    """
+    Mostra il modulo per reclamare una persona.
+    """
+
+    modulo = ModuloReclama(request.POST or None)
+
+    if modulo.is_valid():
+
+        try:
+            p = Persona.objects.get(codice_fiscale=modulo.cleaned_data['codice_fiscale'])
+
+            sedi = []
+            ss = me.oggetti_permesso(GESTIONE_SOCI)
+            for s in ss:  # Per ogni sede di mia competenza
+                if p.reclamabile_in_sede(s):  # Posso reclamare?
+                    sedi += [s]  # Aggiungi a elenco sedi
+
+            if sedi:
+                return redirect("/us/reclama/%d/" % (p.pk,))
+
+            else:
+                modulo.add_error('codice_fiscale', "Non puoi reclamare questa persona "
+                                                   "in nessuna delle tue Sedi. Potrebbe "
+                                                   "essere già appartenente a qualche "
+                                                   "Comitato. ")
+
+        except Persona.DoesNotExist:
+            modulo.add_error('codice_fiscale', "Nessuna Persona registrata in Gaia "
+                                               "con questo codice fiscale.")
+
+    contesto = {
+        "modulo": modulo
+    }
+
+    return 'us_reclama.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_reclama_persona(request, me, persona_pk):
+
+    persona = get_object_or_404(Persona, pk=persona_pk)
+
+    sedi = []
+    ss = me.oggetti_permesso(GESTIONE_SOCI)
+    for s in ss:  # Per ogni sede di mia competenza
+        if persona.reclamabile_in_sede(s):  # Posso reclamare?
+            sedi += [s]  # Aggiungi a elenco sedi
+
+    if not sedi:  # Se non posso reclamarlo in nessuna sede
+        return errore_generico(request, me, titolo="Impossibile relamare persona",
+                               messaggio="Questa persona non può essere reclamata in "
+                                         "nessuna delle sedi di tua competenza. ",
+                               torna_titolo="Torna indietro",
+                               torna_url="/us/reclama/")
+
+    sedi_qs = Sede.objects.filter(pk__in=[x.pk for x in sedi])
+
+    modulo_appartenenza = ModuloReclamaAppartenenza(request.POST or None, sedi=sedi_qs, prefix="app")
+    modulo_appartenenza.fields['membro'].choices = ((k, v) for k, v in dict(Appartenenza.MEMBRO).items()
+                                                    if k in Appartenenza.MEMBRO_RECLAMABILE)
+    modulo_quota = ModuloReclamaQuota(request.POST or None, prefix="quota")
+
+    if modulo_appartenenza.is_valid():
+
+        if modulo_quota.is_valid():
+
+            continua = True
+            if modulo_quota.cleaned_data['registra_quota'] == modulo_quota.SI:
+                if not Tesseramento.aperto_anno(
+                    modulo_quota.cleaned_data['data_versamento'].year
+                ):
+                    modulo_quota.add_error('data_versamento', "Spiacente, non è possibile registrare quote "
+                                                              "per l'anno selezionato. ")
+                    continua = False
+
+                if modulo_quota.cleaned_data['importo_totale'] <= 0:
+                    modulo_quota.add_error('importo_totale', "Importo obbligatorio.")
+                    continua = False
+
+            if continua:
+
+                app = modulo_appartenenza.save(commit=False)
+                app.persona = persona
+                app.save()
+
+                q = modulo_quota.cleaned_data
+
+                if q.get('registra_quota') == modulo_quota.SI:
+                    quota = Quota.nuova(
+                        appartenenza=app,
+                        data_versamento=q.get('data_versamento'),
+                        registrato_da=me,
+                        importo=q.get('importo_totale'),
+                        causale="Iscrizione %s anno %d" % (
+                            app.get_membro_display(),
+                            q.get('data_versamento').year,
+                        )
+                    )
+
+                return redirect(persona.url)
+
+    contesto = {
+        "modulo_appartenenza": modulo_appartenenza,
+        "modulo_quota": modulo_quota,
+        "persona": persona,
+    }
+
+    return 'us_reclama_persona.html', contesto
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))

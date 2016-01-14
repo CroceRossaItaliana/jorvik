@@ -1,0 +1,59 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Aggiungi Persona
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="row">
+        <div class="col-md-6">
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Aggiungi una Persona
+                </div>
+                <div class="panel-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            {% bootstrap_form modulo_persona %}
+                            <button type="submit" class="btn btn-block btn-primary">
+                                <i class="fa fa-fw fa-check-circle"></i>
+                                Inserisci persona
+                            </button>
+                        </form>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+            <h4><i class="fa fa-fw fa-support"></i> Guida alla compilazione</h4>
+            <p>Inserisci tutti i dati anagrafici della persona che vuoi inserire.</p>
+            <p>Al passo successivo potrai reclamare la persona come socio o sostenitore CRI.</p>
+            <p>&nbsp;</p>
+            <h4><i class="fa fa-fw fa-question-circle"></i> Gi&agrave; esisistente?</h4>
+            <p>
+                Se la persona che stai cercando di inserire:
+                <ul>
+                    <li>
+                        &Egrave; gi&agrave; iscritta in Gaia, <strong>e inoltre</strong>
+                        <ul>
+                            <li>Non &egrave; appartenente ad alcun comitato, <strong>oppure</strong></li>
+                            <li>&Egrave; un socio ordinario presso il comitato regionale</li>
+                        </ul>
+                    </li>
+                </ul>
+                allora puoi usare il nuovo strumento <a href="/us/reclama/">Reclama un Socio</a>
+                per associarlo alla tua Sede CRI come Socio o Sostenitore.
+            </p>
+            <p>&nbsp;</p>
+
+        </div>
+    </div>
+
+
+{% endblock %}

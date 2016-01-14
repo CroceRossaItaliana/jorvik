@@ -2,8 +2,11 @@ import datetime
 
 import autocomplete_light
 from django import forms
+from django.core.exceptions import ValidationError
 
-from anagrafica.models import Estensione, Appartenenza
+from anagrafica.forms import ModuloStepAnagrafica
+from anagrafica.models import Estensione, Appartenenza, Persona
+from autenticazione.forms import ModuloCreazioneUtenza
 from ufficio_soci.models import Tesseramento
 
 
@@ -57,3 +60,54 @@ class ModuloElencoQuote(forms.Form):
                               max_value=Tesseramento.objects.latest('anno').anno,
                               initial=min(datetime.datetime.now().year,
                                           Tesseramento.objects.latest('anno').anno))
+
+
+class ModuloAggiungiPersona(ModuloStepAnagrafica):
+    class Meta:
+        model = Persona
+        fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita',
+                  'provincia_nascita', 'stato_nascita', 'codice_fiscale',
+                  'indirizzo_residenza', 'comune_residenza', 'provincia_residenza',
+                  'stato_residenza', 'cap_residenza', 'email_contatto', ]
+
+
+class ModuloReclamaAppartenenza(forms.ModelForm):
+    class Meta:
+        model = Appartenenza
+        fields = ['inizio', 'sede', 'membro',]
+
+    def __init__(self, *args, sedi, **kwargs):
+        super(ModuloReclamaAppartenenza, self).__init__(*args, **kwargs)
+        self.fields['sede'].choices = (
+            (x.pk, x.nome_completo) for x in sedi
+        )
+
+    def clean_membro(self):
+        membro = self.cleaned_data['membro']
+        sede = self.cleaned_data['sede']
+
+        if not Appartenenza.membro_permesso(sede.estensione, membro):
+            raise ValidationError("La Sede selezionata non può avere questo "
+                                  "tipo di membri.")
+
+        return membro
+
+
+class ModuloReclamaQuota(forms.Form):
+
+    SI = 1
+    NO = 2
+    SCELTE = (
+        (SI, "Sì, registra la quota per il socio"),
+        (NO, "No, inserirò manualmente la quota più tardi"),
+    )
+    registra_quota = forms.ChoiceField(choices=SCELTE, initial=SI)
+
+    importo_totale = forms.FloatField(initial=0)
+    data_versamento = forms.DateField(initial=datetime.date.today)
+
+
+class ModuloReclama(forms.Form):
+
+    codice_fiscale = forms.CharField(min_length=9)
+

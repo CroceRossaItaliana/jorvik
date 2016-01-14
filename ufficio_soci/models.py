@@ -53,10 +53,19 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     quota_ordinario = models.FloatField(default=16.00)
     quota_benemerito = models.FloatField(default=20.00)
     quota_aspirante = models.FloatField(default=20.00)
+    quota_sostenitore = models.FloatField(default=20.00)
 
     @property
     def accetta_pagamenti(self):
         return self.stato == self.APERTO and timezone.now().date() >= self.inizio
+
+    @classmethod
+    def aperto_anno(cls, anno):
+        try:
+            t = Tesseramento.objects.get(anno=anno)
+            return t.accetta_pagamenti
+        except Tesseramento.DoesNotExist:
+            return False
 
     def importo_da_pagare(self, socio):
 

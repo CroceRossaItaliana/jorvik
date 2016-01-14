@@ -1,0 +1,100 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Reclama {{ persona.nome_completo }}
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="alert alert-info">
+        <i class="fa fa-fw fa-info-circle"></i>
+        Per reclamare <strong>{{ persona.nome_completo }}</strong>
+        come persona appartenente al tuo Comitato,
+        per favore completa i dettagli relativi all'appartenenza
+        e la quota associativa.
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+        <form method="POST">
+
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    1. Appartenenza al Comitato
+                </div>
+                <div class="panel-body">
+                            {% csrf_token %}
+                            {% bootstrap_form modulo_appartenenza %}
+
+                </div>
+            </div>
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    2. Quota associativa (opzionale)
+                </div>
+                <div class="panel-body">
+                            {% csrf_token %}
+                            {% bootstrap_form modulo_quota %}
+
+                </div>
+            </div>
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    3. Reclama
+                </div>
+                <div class="panel-body">
+                    <p>Accertati che le informazioni inserite sopra siano corrette.</p>
+                    <button type="submit" class="btn btn-primary btn-block btn-large">
+                        <i class="fa fa-fw fa-check"></i>
+                        Completa e vai alla scheda di {{ persona.nome }}
+                    </button>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+            <h4><i class="fa fa-fw fa-support"></i> Guida alla compilazione</h4>
+            <p>Per assegnare {{ persona.nome }} a una delle Sedi di tua competenza,
+                &egrave; necessario che completi questa pagina con le informazioni relative
+                a:</p>
+            <h4>1. Appartenenza al Comitato</h4>
+
+            <ul>
+                <li><strong>Inizio</strong> &egrave; la data nella quale {{ persona.nome }}
+                    ha iniziato a fare parte del Comitato. Se {{ persona.nome }} &egrave;
+                    appena entrato in CRI o non proviene da un altro Comitato, questa
+                    corrisponde alla data di ingresso in CRI;</li>
+                <li><strong>Tipo di membro</strong> &egrave; la tipologia di membro
+                    per la registrazione di {{ persona.nome }}. Nota che non tutte
+                    le tipologie di membro sono disponibili per tutte le sedi, ad es.
+                    non &egrave; pi&ugrave; possibile registrare Soci Ordinari presso i
+                    Comitati Locali.</li>
+            </ul>
+
+            <h4>2. Quota associativa (opzionale)</h4>
+            <ul>
+                <li><strong>Importo totale</strong> &egrave; l'importo della quota pagata.
+                Se questo &egrave; superiore alla quota definita nell'ordinanza del
+                tesseramento in corso, il rimanente verr&agrave; registrato come
+                donazione/offerta.</li>
+            </ul>
+            <p>Nota che se vuoi personalizzare la causale per la quota versata,
+                dovrai selezionare "No" e inserirla manualmente dal pannello Quote.</p>
+
+
+        </div>
+
+
+    </form>
+
+    </div>
+
+
+{% endblock %}

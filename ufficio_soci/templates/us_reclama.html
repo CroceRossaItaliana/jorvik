@@ -1,0 +1,70 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Reclama una persona
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="alert alert-info">
+        <i class="fa fa-fw fa-info-circle"></i>
+        Puoi utilizzare questo strumento per iscrivere al tuo Comitato
+        delle persone che sono iscritte a Gaia.
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Reclama appartenenza
+                </div>
+                <div class="panel-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fa fa-fw fa-check"></i>
+                        Continua
+                    </button>
+                </form>
+                </div>
+            </div>
+
+
+
+
+        </div>
+
+        <div class="col-md-6">
+            <h4><i class="fa fa-fw fa-question-circle"></i> Cosa posso fare?</h4>
+            <p>La nuova procedura di reclamo ti permette di reclamare una persona che
+                &eacute; gi&agrave; iscritta a Gaia come appartenente al tuo Comitato.</p>
+            <p>Per poter reclamare una persona, questa <strong>DEVE</strong>:</p>
+                <ul>
+                    <li>
+                        &Egrave; gi&agrave; iscritta in Gaia, <strong>e inoltre</strong>
+                        <ul>
+                            <li>Non &egrave; appartenente ad alcun comitato, <strong>oppure</strong></li>
+                            <li>&Egrave; un socio ordinario presso il comitato regionale</li>
+                        </ul>
+                    </li>
+                </ul>
+            <p>&nbsp;</p>
+
+            <h4><i class="fa fa-fw fa-support"></i> Guida alla compilazione</h4>
+            <p>Inserisci il Codice Fiscale della persona che vuoi reclamare.</p>
+            <p>&nbsp;</p>
+
+
+        </div>
+
+
+
+    </div>
+
+
+{% endblock %}

@@ -83,8 +83,8 @@ def menu(request):
                 ("Elettorato", "fa-list", "/us/elenchi/elettorato/"),
             )),
             ("Aggiungi", (
-                ("Volontario", "fa-plus-square", "/us/aggiungi/volontario/"),
-                ("Sostenitore", "fa-plus-square", "/us/aggiungi/sostenitore/"),
+                ("Persona", "fa-plus-square", "/us/aggiungi/"),
+                ("Reclama Socio", "fa-plus-square", "/us/reclama/"),
             )),
             ("Pratiche", (
                 ("Nuovo trasferimento", "fa-file-o", "/us/trasferimento/"),
