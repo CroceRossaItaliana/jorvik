@@ -80,6 +80,7 @@ urlpatterns = [
     }),
 
     url(r'^profilo/(?P<pk>[0-9]+)/documenti/(?P<documento_pk>[0-9]+)/cancella/$', 'anagrafica.viste.profilo_documenti_cancella'),
+    url(r'^profilo/(?P<pk>[0-9]+)/curriculum/(?P<tp_pk>[0-9]+)/cancella/$', 'anagrafica.viste.profilo_curriculum_cancella'),
     url(r'^profilo/(?P<pk>[0-9]+)/(?P<sezione>.*)/$', 'anagrafica.viste.profilo'),
     url(r'^profilo/(?P<pk>[0-9]+)/$', 'anagrafica.viste.profilo'),
 

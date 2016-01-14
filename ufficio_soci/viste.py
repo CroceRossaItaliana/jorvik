@@ -105,7 +105,7 @@ def us_reclama_persona(request, me, persona_pk):
             sedi += [s]  # Aggiungi a elenco sedi
 
     if not sedi:  # Se non posso reclamarlo in nessuna sede
-        return errore_generico(request, me, titolo="Impossibile relamare persona",
+        return errore_generico(request, me, titolo="Impossibile reclamare appartenenza",
                                messaggio="Questa persona non può essere reclamata in "
                                          "nessuna delle sedi di tua competenza. ",
                                torna_titolo="Torna indietro",
@@ -119,7 +119,6 @@ def us_reclama_persona(request, me, persona_pk):
     modulo_quota = ModuloReclamaQuota(request.POST or None, prefix="quota")
 
     if modulo_appartenenza.is_valid():
-
         if modulo_quota.is_valid():
 
             continua = True
@@ -131,8 +130,9 @@ def us_reclama_persona(request, me, persona_pk):
                                                               "per l'anno selezionato. ")
                     continua = False
 
-                if modulo_quota.cleaned_data['importo_totale'] <= 0:
-                    modulo_quota.add_error('importo_totale', "Importo obbligatorio.")
+                if modulo_quota.cleaned_data['importo_totale'] <= 1:
+                    modulo_quota.add_error('importo_totale', "Importo obbligatorio. Se non vuoi salvare la quota ora, "
+                                                             "seleziona 'No' su 'Registra Quota'.")
                     continua = False
 
             if continua:

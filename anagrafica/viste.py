@@ -11,7 +11,8 @@ from django.views.generic import ListView
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
-    ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica
+    ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
+    ModuloProfiloTitoloPersonale
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -738,8 +739,15 @@ def _profilo_deleghe(request, me, persona):
 
 
 def _profilo_curriculum(request, me, persona):
+    modulo = ModuloProfiloTitoloPersonale(request.POST or None)
+
+    if modulo.is_valid():
+        tp = modulo.save(commit=False)
+        tp.persona = persona
+        tp.save()
+
     contesto = {
-        "modulo": None
+        "modulo": modulo,
     }
     return 'anagrafica_profilo_curriculum.html', contesto
 
@@ -761,11 +769,20 @@ def _profilo_documenti(request, me, persona):
 def profilo_documenti_cancella(request, me, pk, documento_pk):
     persona = get_object_or_404(Persona, pk=pk)
     documento = get_object_or_404(Documento, pk=documento_pk)
-    if (not me.permessi_almeno(persona, MODIFICA)) or not (documento.persona == persona):
-        print("NONONO")
+    if (not me.permessi_almeno(persona, MODIFICA)) and not (documento.persona == persona):
         return redirect(ERRORE_PERMESSI)
     documento.delete()
     return redirect("/profilo/%d/documenti/" % (persona.pk,))
+
+
+@pagina_privata
+def profilo_curriculum_cancella(request, me, pk, tp_pk):
+    persona = get_object_or_404(Persona, pk=pk)
+    titolo_personale = get_object_or_404(TitoloPersonale, pk=tp_pk)
+    if (not me.permessi_almeno(persona, MODIFICA)) and not (titolo_personale.persona == persona):
+        return redirect(ERRORE_PERMESSI)
+    titolo_personale.delete()
+    return redirect("/profilo/%d/curriculum/" % (persona.pk,))
 
 
 def _sezioni_profilo(puo_leggere, puo_modificare):

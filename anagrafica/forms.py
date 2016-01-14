@@ -2,12 +2,14 @@ import datetime
 
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
+from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega, \
     Fototessera, Trasferimento
 from autenticazione.models import Utenza
 import autocomplete_light
 
+from curriculum.models import TitoloPersonale
 from sangue.models import Donatore, Donazione
 
 
@@ -101,6 +103,44 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
     def __init__(self, *args, **kwargs):
         super(ModuloProfiloModificaAnagrafica, self).__init__(*args, **kwargs)
         #self.fields['note'].widget = forms.Textarea
+
+
+class ModuloProfiloTitoloPersonale(autocomplete_light.ModelForm):
+
+    OBBLIGATORIO = "Questo campo è obbligatorio per questo titolo."
+
+    class Meta:
+        model = TitoloPersonale
+        fields = ['titolo', 'data_ottenimento', 'luogo_ottenimento',
+                  'data_scadenza', 'codice',]
+
+    def clean_data_ottenimento(self):
+        titolo = self.cleaned_data['titolo']
+        data_ottenimento = self.cleaned_data['data_ottenimento']
+        if titolo.richiede_data_ottenimento and not data_ottenimento:
+            raise ValidationError(self.OBBLIGATORIO)
+        return data_ottenimento
+
+    def clean_luogo_ottenimento(self):
+        titolo = self.cleaned_data['titolo']
+        luogo_ottenimento = self.cleaned_data['luogo_ottenimento']
+        if titolo.richiede_luogo_ottenimento and not luogo_ottenimento:
+            raise ValidationError(self.OBBLIGATORIO)
+        return luogo_ottenimento
+
+    def clean_data_scadenza(self):
+        titolo = self.cleaned_data['titolo']
+        data_scadenza = self.cleaned_data['data_scadenza']
+        if titolo.richiede_data_ottenimento and not data_scadenza:
+            raise ValidationError(self.OBBLIGATORIO)
+        return data_scadenza
+
+    def clean_codice(self):
+        titolo = self.cleaned_data['titolo']
+        codice = self.cleaned_data['codice']
+        if titolo.richiede_data_ottenimento and not codice:
+            raise ValidationError(self.OBBLIGATORIO)
+        return codice
 
 
 class ModuloModificaAvatar(ModelForm):

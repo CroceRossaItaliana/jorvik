@@ -95,8 +95,8 @@ class ModuloReclamaAppartenenza(forms.ModelForm):
 
 class ModuloReclamaQuota(forms.Form):
 
-    SI = 1
-    NO = 2
+    SI = "S"
+    NO = "N"
     SCELTE = (
         (SI, "Sì, registra la quota per il socio"),
         (NO, "No, inserirò manualmente la quota più tardi"),
