@@ -20,9 +20,17 @@ def us(request, me):
     """
 
     sedi = me.oggetti_permesso(GESTIONE_SOCI).espandi()
+    persone = Persona.objects.filter(
+        Appartenenza.query_attuale(sede__in=sedi).via("appartenenze")
+    )
+    attivi = Persona.objects.filter(
+        Appartenenza.query_attuale(sede__in=sedi, membro=Appartenenza.VOLONTARIO).via("appartenenze")
+    )
 
     contesto = {
         "sedi": sedi,
+        "persone": persone,
+        "attivi": attivi,
     }
 
     return 'us.html', contesto
@@ -34,9 +42,9 @@ def us_estensione(request, me):
     Vista per la creazione di una nuova estensione da ufficio soci.
     """
 
-    sedi = me.oggetti_permesso(GESTIONE_SOCI).espandi()  # es. per controllare che il volontario sia appartente attualmente
+    sedi = me.oggetti_permesso(GESTIONE_SOCI).espandi()  # es. per controllare che il volontario
+                                                         # sia appartente attualmente
                                                          #     ad una delle sedi che gestisco io
-
     modulo = ModuloCreazioneEstensione(request.POST or None)
 
     # qui dovrebbe salvare...

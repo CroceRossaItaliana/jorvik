@@ -92,9 +92,10 @@ def menu(request):
                 ("Messa in riserva", "fa-file-o", "/us/riserva/"),
                 ("Nuovo provvedimento", "fa-file-o", "/us/provvedimento/"),
             )),
-            ("Quote", (
+            ("Quote e ricevute", (
                 ("Quote associative", "fa-money", "/us/quote/"),
-                ("Ricerca", "fa-search", "/us/quote/ricerca/"),
+                ("Ricerca quote", "fa-search", "/us/quote/ricerca/"),
+                ("Ricevute", "fa-search", "/us/quote/ricevute/"),
             )),
             ("Tesserini", (
                 ("Non riconsegnati", "fa-credit-card", "/us/non-riconsegnati/"),

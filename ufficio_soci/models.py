@@ -145,6 +145,16 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF):
     )
     stato = models.CharField(max_length=1, db_index=True, choices=STATO, default=REGISTRATA)
 
+    QUOTA_SOCIO = 'Q'
+    QUOTA_SOSTENITORE = 'S'
+    RICEVUTA = 'R'
+    TIPO = (
+        (QUOTA_SOCIO, "Quota Socio"),
+        (QUOTA_SOSTENITORE, "Quota Sostenitore"),
+        (RICEVUTA, "Ricevuta")
+    )
+    tipo = models.CharField(max_length=1, default=QUOTA_SOCIO, choices=TIPO)
+
     importo = models.FloatField()
     importo_extra = models.FloatField(default=0.0)
 

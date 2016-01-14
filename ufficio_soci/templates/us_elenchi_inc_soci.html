@@ -7,8 +7,8 @@
 
 {% block elenco_riga_extra %}
 
-    <td>
-        {{ persona.sedi_attuali|join:", " }}
+    <td class="piu-piccolo">
+        {{ persona.sedi_attuali|join:", "|default:"Nessuna" }}
     </td>
 
 {% endblock %}
