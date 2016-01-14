@@ -1,0 +1,11 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+<p class="grassetto">Salve presidente.</p>
+<p>Riceve la richiesta di estensione appena effettuata dal volontario <strong>{{ estensione.persona.nome_completo }}</strong>.</p>
+<p>Richiesta di estensione presso il <strong>{{ estensione.sede }}</strong> inoltrata il <strong>{{ estensione.creazione }}</strong>.</p>
+<p><a href="{{ estensione.url_pdf }}">Clicca qui</a> per vedere la richiesta in PDF</p>
+<p>La richiesta è in attesa di essere protocollata dalla segreteria del Comitato.</p>
+
+{% endblock %}

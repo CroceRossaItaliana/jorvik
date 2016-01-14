@@ -1,0 +1,11 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+<p class="grassetto">Ciao {{ estensione.persona.nome_completo }}.</p>
+<p>La tua richiesta di estensione presso il <strong>{{ estensione.sede }}</strong> inoltrata il <strong>{{ estesione.creazione }}</strong> è in fase di elaborazione.</p>
+<p>La tua richiesta è in attesa di essere protocollata dalla segreteria del tuo Comitato.</p>
+<p><a href="{{ estensione.url_pdf }}">Clicca qui</a> per vedere la richiesta in PDF</p>
+<p>Se pensi che ci sia stato un errore, ti invitiamo a rispondere a questa email indicandoci cosa c'è da correggere.</p>
+
+{% endblock %}

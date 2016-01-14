@@ -1346,8 +1346,6 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
     def autorizzazione_concessa(self, modulo=None):
 
         # Invia notifica tramite e-mail
-
-
         app = Appartenenza(
             membro=Appartenenza.ESTESO,
             persona=self.persona,
@@ -1472,7 +1470,7 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
 
 
 
-class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocollo):
+class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocollo, ConStorico):
     AMMONIZIONE = "A"
     SOSPENSIONE = "S"
     ESPULSIONE = "E"
@@ -1482,23 +1480,23 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
         (ESPULSIONE, "Esplusione",),
     )
 
-    motivazione = models.CharField(max_length=500)
     persona = models.ForeignKey(Persona, related_name="provvedimenti")
-    tipo = models.CharField(max_length=1)
+    motivazione = models.CharField(max_length=500)
+    tipo = models.CharField(max_length=1, choices=TIPO, default="A")
 
     def esegui(self, lunghezza):
         if self.tipo == "E":
             self.persona.espelli()
-        if self.tipo == "S":
-            sospensione = Sospensione(
-                inzio=datetime.today(),
-                fine=datetime.today() + timedelta(days=lunghezza),
-                provvedimento=self.id
-            )
-            sospensione.save()
+        #if self.tipo == "S":
+         #   sospensione = Sospensione(
+          #      inzio=datetime.today(),
+           #     fine=datetime.today() + timedelta(days=lunghezza),
+            #    provvedimento=self.id
+            #)
+            #sospensione.save()
 
 
-class Sospensione(ProvvedimentoDisciplinare, ConStorico):
-    provvedimento = models.ForeignKey(ProvvedimentoDisciplinare, related_name="provvedimento")
+#class Sospensione(ProvvedimentoDisciplinare, ConStorico):
+ #   provvedimento = models.ForeignKey(ProvvedimentoDisciplinare, related_name="provvedimento")
 
 

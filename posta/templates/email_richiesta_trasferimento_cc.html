@@ -1,0 +1,12 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+
+<p class="grassetto">Salve presidente.</p>
+<p>Riceve per conoscenza la richiesta di trasferimento appena effettuata dal volontario <strong>{{ trasferimento.persona.nome_completo }}</strong>.</p>
+<p>Richiesta presso il suo comitato '<strong>{{ trasferimento.persona.sede }}</strong>' inoltrata il <strong>_TIME</strong>.</p>
+<p><a href="{{ trasferimento.url_pdf }}">Clicca qui</a> per vedere la richiesta in PDF</p>
+<p>La richiesta è in attesa di essere protocollata dalla segreteria del Comitato uscente: <strong>{{ trasferimento.persona.sede_riferimento }}</strong>.</p>
+
+{% endblock %}

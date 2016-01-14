@@ -111,11 +111,10 @@ urlpatterns = [
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/report/$', 'attivita.viste.attivita_scheda_report'),
 
     url(r'^us/$', 'ufficio_soci.viste.us'),
-    url(r'^us/provvedimenti/$', 'ufficio_soci.viste.us_provvedimento'),
+    url(r'^us/provvedimento/$', 'ufficio_soci.viste.us_provvedimento'),
     url(r'^us/estensione/$', 'ufficio_soci.viste.us_estensione'),
     url(r'^us/estensione/(?P<pk>.*)/termina/$', 'ufficio_soci.viste.us_estensione_termina'),
-    ##url(r'^us/trasferimento/$', 'ufficio_soci.viste.us_trasferimento'),
-    ##url(r'^us/trasferimento/(?P<pk>.*)/termina/$', 'ufficio_soci.viste.us_trasferimento_termina'),
+    url(r'^us/trasferimento/$', 'ufficio_soci.viste.us_trasferimento'),
 
 
     url(r'^us/elenchi/(?P<elenco_tipo>.*)/$', 'ufficio_soci.viste.us_elenchi'),

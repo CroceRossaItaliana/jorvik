@@ -1,0 +1,8 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+<p class="grassetto">Salve Presidente,</p>
+<p>Il volontario {{ estensione.persona.nome_completo }}, esteso presso il suo <strong>{{ estensione.sede }}</strong> ha <strong>terminato anticipatamente</strong> la sua estensione.</p>
+
+{% endblock %}

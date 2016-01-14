@@ -29,7 +29,7 @@ def veicoli(request, me):
     for i in veicoli_revisione:
         if i.ultima_revisione().data < datetime.date.today() - datetime.timedelta(days=i.intervallo_revisione):
             ex += [i.pk]
-    veicoli_revisione = veicoli_revisione.exclude(pk__in=ex)
+    veicoli_revisione = veicoli_revisione.exclude(pk__in=ex).distinct('pk')
 
     veicoli_manutenzione = veicoli.filter(
         manutenzioni__tipo=Manutenzione.MANUTENZIONE_ORDINARIA,
@@ -38,7 +38,7 @@ def veicoli(request, me):
     for i in veicoli_manutenzione:
         if i.ultima_manutenzione().data < datetime.date.today() - datetime.timedelta(days=365):
             ex += [i.pk]
-    veicoli_manutenzione = veicoli_manutenzione.exclude(pk__in=ex)
+    veicoli_manutenzione = veicoli_manutenzione.exclude(pk__in=ex).distinct('pk')
 
     contesto = {
         "revisione": veicoli_revisione,
@@ -140,7 +140,7 @@ def veicoli_autoparco_modifica_o_nuovo(request, me, pk=None):
 @pagina_privata
 def veicoli_manutenzione(request, me, veicolo):
     veicolo = get_object_or_404(Veicolo, pk=veicolo)
-    manutenzioni = veicolo.manutenzioni.all()
+    manutenzioni = veicolo.manutenzioni.all().order_by("-data")
     modulo = ModuloCreazioneManutenzione(request.POST or None)
     if not me.permessi_almeno(veicolo, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -158,7 +158,7 @@ def veicoli_manutenzione(request, me, veicolo):
 @pagina_privata
 def veicoli_rifornimento(request, me, veicolo):
     veicolo = get_object_or_404(Veicolo, pk=veicolo)
-    rifornimenti = veicolo.rifornimenti.all()
+    rifornimenti = veicolo.rifornimenti.all().order_by("-data")
     modulo = ModuloCreazioneRifornimento(request.POST or None)
     if not me.permessi_almeno(veicolo, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -204,7 +204,7 @@ def veicoli_termina_fermo_tecnico(request, me, fermo):
 @pagina_privata
 def veicoli_collocazioni(request, me, veicolo):
     veicolo = get_object_or_404(Veicolo, pk = veicolo)
-    collocazioni = veicolo.collocazioni.all()
+    collocazioni = veicolo.collocazioni.all().order_by("-data")
     modulo = ModuloCreazioneCollocazione(request.POST or None)
     if not me.permessi_almeno(veicolo, MODIFICA):
         return redirect(ERRORE_PERMESSI)

@@ -36,11 +36,12 @@
                                 <td>{{ veicolo.destinazione }}</td>
                                 <td>{{ veicolo.media_consumi }} km/lt</td>
                                 <td>{{ veicolo.collocazione.autoparco }}</td>
-                                <td>{{ veicolo.fermo_tecnico }}</td>
+                                <td>{{ veicolo.fermo_tecnico | default:"No"}}</td>
                                 <td>{{ veicolo.categoria }}</td>
                                 <td>
                                     <a href="/veicolo/manutenzioni/{{ veicolo.pk }}/">Manutenzioni</a>
                                     <a href="/veicolo/rifornimenti/{{ veicolo.pk }}/">Rifornimenti</a>
+                                    <br />
                                     <a href="/veicolo/fermi-tecnici/{{ veicolo.pk }}/">Fermi tecnici</a>
                                     <a href="/veicolo/{{ veicolo.pk }}/collocazioni/">Collocazione</a>
                                 </td>

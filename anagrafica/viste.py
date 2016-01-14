@@ -494,6 +494,39 @@ def utente_estensione(request, me):
             est.persona = me
             est.save()
             est.richiedi()
+            # Messaggio.costruisci_e_invia(
+            #     oggetto="Richiesta di estensione",
+            #     modello="email_richiesta_estensione.html",
+            #     corpo={
+            #         "trasferimento": est,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         est.persona,
+            #     ]
+            # )
+            # Messaggio.costruisci_e_invia(
+            #     oggetto="Richiesta di estensione",
+            #     modello="email_richiesta_estensione_cc.html",
+            #     corpo={
+            #         "trasferimento": est,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         ##presidente sede di estensione
+            #     ]
+            # )
+            # Messaggio.costruisci_e_invia(
+            #     oggetto="Richiesta di estensione",
+            #     modello="email_richiesta_estensione_presidente.html",
+            #     corpo={
+            #         "trasferimento": est,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         ##presidente sede riferimento
+            #     ]
+            # )
 
     contesto = {
         "modulo": modulo,
@@ -540,6 +573,40 @@ def utente_trasferimento(request, me):
             trasf.richiedente = me
             trasf.save()
             trasf.richiedi()
+            # Messaggio.costruisci_e_invia(
+            #     oggetto="Richiesta di trasferimento",
+            #     modello="email_richiesta_trasferimento.html",
+            #     corpo={
+            #         "trasferimento": trasf,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         trasf.persona,
+            #     ]
+            # )
+            # Messaggio.costruisci_e_invia(
+            #     oggetto="Richiesta di trasferimento",
+            #     modello="email_richiesta_trasferimento_cc.html",
+            #     corpo={
+            #         "trasferimento": trasf,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         ##presidente sede nuova
+            #     ]
+            # )
+            # Messaggio.costruisci_e_invia(
+            #     oggetto="Richiesta di trasferimento",
+            #     modello="email_richiesta_trasferimento_presidente.html",
+            #     corpo={
+            #         "trasferimento": trasf,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         ##presidente sede vecchia
+            #     ]
+            # )
+
     contesto = {
         "modulo": modulo,
         "storico": storico

@@ -21,8 +21,6 @@
                 <table class="table table-condensed table-responsive">
                     <thead>
                         <tr>
-                            <th>Numero</th>
-                            <th>Conducente</th>
                             <th>Data</th>
                             <th>Contachilometri</th>
                             <th>Costo</th>
@@ -36,8 +34,6 @@
                     <tbody>
                         {% for rifornimento in rifornimenti %}
                             <tr class="piu-piccolo">
-                                <td>{{ rifornimento.numero }}</td>
-                                <td>{{ rifornimento.conducente }}</td>
                                 <td>{{ rifornimento.data|date:"SHORT_DATE_FORMAT" }}</td>
                                 <td>{{ rifornimento.contachilometri }}</td>
                                 <td>{% euro rifornimento.costo %}</td>
