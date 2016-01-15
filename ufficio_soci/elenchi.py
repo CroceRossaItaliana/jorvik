@@ -3,7 +3,8 @@ from django.db.models import Q
 
 from anagrafica.models import Persona, Appartenenza
 from base.utils import filtra_queryset, testo_euro
-from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote
+from curriculum.models import TitoloPersonale
+from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote, ModuloElencoPerTitoli
 from datetime import date
 from django.utils.timezone import now
 
@@ -70,7 +71,7 @@ class ElencoVistaSemplice(Elenco):
         )
 
     def ordina(self, qs):
-        return qs.order_by('cognome', 'nome',)
+        return qs.order_by('cognome', 'nome', 'codice_fiscale',)
 
     def filtra(self, queryset, termine):
         return filtra_queryset(queryset, termini_ricerca=termine,
@@ -277,3 +278,47 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
     def modulo(self):
         return ModuloElencoElettorato
+
+
+class ElencoPerTitoli(ElencoVistaAnagrafica):
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+
+        metodo = self.modulo_riempito.cleaned_data['metodo']
+        titoli = self.modulo_riempito.cleaned_data['titoli']
+
+        base = Persona.objects.filter(
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_SOCIO,
+            ).via("appartenenze")
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        )
+
+        if metodo == self.modulo_riempito.METODO_OR:  # Almeno un titolo
+
+            return base.filter(titoli_personali__in=TitoloPersonale.con_esito_ok().filter(
+                    titolo__in=titoli,
+            )).distinct('cognome', 'nome', 'codice_fiscale')
+
+        else:  # Tutti i titoli
+
+            base = base.filter(
+                titoli_personali__in=TitoloPersonale.con_esito_ok()
+            )
+
+            for titolo in titoli:
+                base = base.filter(
+                    titoli_personali__titolo=titolo
+                )
+
+            return base.distinct('cognome', 'nome', 'codice_fiscale')
+
+    def modulo(self):
+        return ModuloElencoPerTitoli
+
+
+
+

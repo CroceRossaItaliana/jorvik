@@ -10,7 +10,7 @@ from base.errori import errore_generico
 from base.files import Excel, FoglioExcel
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
-    ElencoElettoratoAlGiorno, ElencoQuote
+    ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama
 from ufficio_soci.models import Quota, Tesseramento
@@ -252,12 +252,13 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
     if elenco.modulo():  # Se l'elenco richiede un modulo
 
         try:  # Prova a recuperare il modulo riempito
-            modulo = request.session["elenco_modulo_%s" % (elenco_id,)]
+            modulo = elenco.modulo()(request.session["elenco_modulo_%s" % (elenco_id,)])
 
         except KeyError:  # Se fallisce, il modulo non e' stato ancora compilato
             return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
 
         if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
+            print(request.session["elenco_modulo_%s" % (elenco_id,)])
             return redirect("/us/elenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
 
         elenco.modulo_riempito = modulo  # Imposta il modulo
@@ -316,8 +317,8 @@ def us_elenco_modulo(request, me, elenco_id):
     modulo = elenco.modulo()(request.POST or None)
 
     if request.POST and modulo.is_valid():  # Modulo ok
-        request.session["elenco_modulo_%s" % (elenco_id,)] = modulo     # Salva modulo in sessione
-        return redirect("/us/elenco/%s/1/" % (elenco_id,))              # Redirigi alla prima pagina
+        request.session["elenco_modulo_%s" % (elenco_id,)] = request.POST            # Salva modulo in sessione
+        return redirect("/us/elenco/%s/1/" % (elenco_id,))                           # Redirigi alla prima pagina
 
     contesto = {
         "modulo": modulo
@@ -338,7 +339,7 @@ def us_elenco_download(request, me, elenco_id):
     if elenco.modulo():  # Se l'elenco richiede un modulo
 
         try:  # Prova a recuperare il modulo riempito
-            modulo = request.session["elenco_modulo_%s" % (elenco_id,)]
+            modulo = elenco.modulo()(request.session["elenco_modulo_%s" % (elenco_id,)])
 
         except KeyError:  # Se fallisce, il modulo non e' stato ancora compilato
             return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
@@ -390,7 +391,7 @@ def us_elenco_messaggio(request, me, elenco_id):
     if elenco.modulo():  # Se l'elenco richiede un modulo
 
         try:  # Prova a recuperare il modulo riempito
-            modulo = request.session["elenco_modulo_%s" % (elenco_id,)]
+            modulo = elenco.modulo()(request.session["elenco_modulo_%s" % (elenco_id,)])
 
         except KeyError:  # Se fallisce, il modulo non e' stato ancora compilato
             return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
@@ -412,6 +413,7 @@ def us_elenchi(request, me, elenco_tipo):
         "soci": (ElencoSociAlGiorno, "Elenco dei Soci"),
         "sostenitori": (ElencoSostenitori, "Elenco dei Sostenitori"),
         "elettorato": (ElencoElettoratoAlGiorno, "Elenco Elettorato"),
+        "titoli": (ElencoPerTitoli, "Ricerca dei soci per titoli"),
     }
 
     if elenco_tipo not in tipi_elenco:

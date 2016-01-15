@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from anagrafica.forms import ModuloStepAnagrafica
 from anagrafica.models import Estensione, Appartenenza, Persona
 from autenticazione.forms import ModuloCreazioneUtenza
+from curriculum.models import Titolo, TitoloPersonale
 from ufficio_soci.models import Tesseramento
 
 
@@ -38,6 +39,18 @@ class ModuloElencoElettorato(forms.Form):
                                     required=True, initial=datetime.date.today)
     elettorato = forms.ChoiceField(choices=ELETTORATO, initial=ELETTORATO_PASSIVO)
 
+
+class ModuloElencoPerTitoli(forms.Form):
+    METODO_OR = "OR"
+    METODO_AND = "AND"
+    METODI = (
+        (METODO_OR, "Tutti i soci aventi ALMENO UNO dei titoli selezionati"),
+        (METODO_AND, "Tutti i soci aventi TUTTI i titoli selezionati"),
+    )
+    metodo = forms.ChoiceField(choices=METODI, initial=METODO_OR)
+
+    titoli = autocomplete_light.ModelMultipleChoiceField("TitoloAutocompletamento", help_text="Seleziona uno o più titoli per"
+                                                                                              " la tua ricerca.")
 
 class ModuloElencoQuote(forms.Form):
     MEMBRI_VOLONTARI = Appartenenza.VOLONTARIO
