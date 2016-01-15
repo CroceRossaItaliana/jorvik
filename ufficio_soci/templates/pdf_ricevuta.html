@@ -1,5 +1,6 @@
 {% extends 'pdf_standard.html' %}
 {% load utils %}
+{% load static %}
 {% block css_extra %}
 			body { padding-left: 1cm; padding-right: 1cm; padding-top: 0.5cm; padding-bottom: 0.1cm; background-image: url('{% static 'img/cartaintestata.jpg' %}'); background-position:-80px -70px; }
 			P { margin-bottom: 0.21cm; direction: ltr; color: #000000; widows: 2; orphans: 2; }
@@ -29,7 +30,7 @@
 			</TD>
 			<TD WIDTH=33% height="150" STYLE="border-top: none; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000; padding-top: 0cm; padding-bottom: 0.1cm; padding-left: 0.1cm; padding-right: 0.1cm">
 				<P>{% euro quota.importo %}</P>
-				<P>{% euro quota.importo_extra %}</P>
+				<P>{% if quota.causale_extra or quota.importo_extra %}{% euro quota.importo_extra %}{% endif %}</P>
 			</TD>
 		</TR>
 		<TR VALIGN=TOP>
@@ -41,9 +42,11 @@
 			</TD>
 		</TR>
 	</TABLE>
-    <P STYLE="margin-bottom: 0cm"></P><br/>&nbsp;
-	<P STYLE="margin-bottom: 0cm; color:#FF0000;">Quota annullata da {{ quota.annullato_da }} il {{ quota.data_annullamento }}</P>&nbsp;
-	<P STYLE="margin-bottom: 0cm"></P>
+    {% if quota.stato == quota.ANNULLATA %}
+        <P STYLE="margin-bottom: 0cm"></P><br/>&nbsp;
+        <P STYLE="margin-bottom: 0cm; color:#FF0000;">Quota annullata da {{ quota.annullato_da }} il {{ quota.data_annullamento }}</P>&nbsp;
+        <P STYLE="margin-bottom: 0cm"></P>
+    {% endif %}
 
 	<P STYLE="margin-bottom: 0cm"></P><br/>&nbsp;
 	<P STYLE="margin-bottom: 0cm">{{ quota.sede.nome }}, {{ quota.data_versamento }}</P>&nbsp;
