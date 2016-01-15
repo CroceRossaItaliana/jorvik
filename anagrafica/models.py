@@ -43,7 +43,7 @@ from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, Con
     Autorizzazione, ConVecchioID
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
-from base.utils import is_list, sede_slugify
+from base.utils import is_list, sede_slugify, UpperCaseCharField
 from autoslug import AutoSlugField
 
 from posta.models import Messaggio
@@ -77,8 +77,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     # Informazioni anagrafiche
     nome = models.CharField("Nome", max_length=64)
     cognome = models.CharField("Cognome", max_length=64)
-    codice_fiscale = models.CharField("Codice Fiscale", max_length=16, blank=False,
-                                      unique=True, db_index=True, validators=[valida_codice_fiscale,])
+    codice_fiscale = UpperCaseCharField("Codice Fiscale", max_length=16, blank=False,
+                                        unique=True, db_index=True, validators=[valida_codice_fiscale,])
     data_nascita = models.DateField("Data di nascita", db_index=True, null=True,
                                     validators=[valida_almeno_14_anni])
     genere = models.CharField("Genere", max_length=1, choices=GENERE, db_index=True)
