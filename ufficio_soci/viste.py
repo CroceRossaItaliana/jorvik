@@ -259,6 +259,7 @@ def us_provvedimento(request, me):
     modulo = ModuloNuovoProvvedimento(request.POST or None)
     if modulo.is_valid():
         modulo.save()
+        return redirect("/us/")
 
     contesto = {
         "modulo": modulo,

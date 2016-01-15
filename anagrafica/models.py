@@ -681,7 +681,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     def espelli(self):
         for appartenenza in self.appartenenze_attuali():
-            appartenenza.terminazione = "E"
+            appartenenza.terminazione = Appartenenza.ESPULSIONE
             appartenenza.fine = datetime.today()
 
     def ottieni_o_genera_aspirante(self):
