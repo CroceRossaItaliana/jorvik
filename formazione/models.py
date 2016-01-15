@@ -194,7 +194,6 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale):
     # Dati per la generazione del verbale (esito)
     esito_parte_1 = models.CharField(choices=ESITO, default=None, null=True)
     esito_parte_2 = models.CharField(choices=ESITO, default=None, null=True)
-    esito =
 
     class Meta:
         verbose_name = "Richiesta di partecipazione"
