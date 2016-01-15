@@ -119,6 +119,9 @@ urlpatterns = [
 
     url(r'^us/$', 'ufficio_soci.viste.us'),
     url(r'^us/provvedimento/$', 'ufficio_soci.viste.us_provvedimento'),
+    url(r'^us/aggiungi/$', 'ufficio_soci.viste.us_aggiungi'),
+    url(r'^us/reclama/$', 'ufficio_soci.viste.us_reclama'),
+    url(r'^us/reclama/(?P<persona_pk>.*)/$', 'ufficio_soci.viste.us_reclama_persona'),
     url(r'^us/estensione/$', 'ufficio_soci.viste.us_estensione'),
     url(r'^us/estensione/(?P<pk>.*)/termina/$', 'ufficio_soci.viste.us_estensione_termina'),
     url(r'^us/trasferimento/$', 'ufficio_soci.viste.us_trasferimento'),
