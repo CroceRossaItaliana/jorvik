@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Q
 
 from anagrafica.models import Persona, Appartenenza, Sede
+from base.files import PDF
 from base.models import ModelloSemplice, ConAutorizzazioni
 from base.tratti import ConMarcaTemporale, ConPDF
 from base.utils import concept
@@ -222,3 +223,16 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF):
     @property
     def importo_totale(self):
         return self.importo + self.importo_extra
+
+    def genera_pdf(self):
+        pdf = PDF(oggetto=self)
+        pdf.genera_e_salva(
+          nome="Ricevuta %s.pdf" % (self.persona.nome_completo, ),
+          corpo={
+            "quota": self,
+          },
+          modello="pdf_ricevuta.html",
+        )
+        return pdf
+
+
