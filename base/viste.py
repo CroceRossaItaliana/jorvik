@@ -14,6 +14,7 @@ from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLoca
 from base.geo import Locazione
 from base.models import Autorizzazione
 from base.tratti import ConPDF
+from base.utils import get_drive_file
 
 
 @pagina_pubblica
@@ -302,4 +303,15 @@ def pdf(request, me, app_label, model, pk):
         return redirect(ERRORE_PERMESSI)
     pdf = oggetto.genera_pdf()
     return redirect(pdf.download_url)
+
+#@cache_page(60*15)
+@pagina_pubblica
+def formazione(request, me=None):
+    file = "1tRrCVuGJRrMRVQhbMw0-X6s9TeEzvoOqz5zzGm4QgXQ"
+    contenuto = get_drive_file(file)
+    print(contenuto)
+    contesto={
+        "contenuto": contenuto
+    }
+    return "base_formazione.html", contesto
 

@@ -13,6 +13,9 @@ from functools import reduce
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.db import models
 from django.db.models import Q, F
+import urllib
+from lxml import html
+
 
 
 def is_list(x):
@@ -124,3 +127,14 @@ def testo_euro(numero, simbolo_html=False):
     euro = round(float(numero), 2)
     simbolo = "&euro;" if simbolo_html else "€"
     return ("%s%s %s" % (intcomma(int(euro)), ("%0.2f" % euro)[-3:], simbolo)).replace('.', ',')
+
+def get_drive_file(file):
+    req = urllib.request.Request("https://docs.google.com/feeds/download/documents/export/Export?id=%s&exportFormat=html" %(file,))
+    str = urllib.request.urlopen(req).read().decode('UTF-8')
+    doc = html.document_fromstring(str)
+    head = doc.xpath('//head')[0]
+    head.tag = 'div'
+    body = doc.xpath('//body')[0]
+    body.tag = 'div'
+    str = html.tostring(head)+html.tostring(body)
+    return str

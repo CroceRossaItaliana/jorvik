@@ -40,6 +40,9 @@ urlpatterns = [
     # Modulo di recupero password
     url(r'^recupera-password/$', 'base.viste.recupera_password'),
 
+    #Formazione
+    url(r'^formazione/$', 'base.viste.formazione'),
+
     # Informazioni
     url(r'^informazioni/$', 'base.viste.informazioni'),
     url(r'^informazioni/aggiornamenti/$', 'base.viste.informazioni_aggiornamenti'),
