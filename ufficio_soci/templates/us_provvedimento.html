@@ -8,14 +8,30 @@
 
 {% block app_contenuto %}
 
-    <p>Da qui registro un nuovo provvedimento disciplinare per un Volontario...</p>
+    <div class="alert alert-info">
+        <i class="fa fa-fw fa-info-circle"></i>
+        Da qui registro un nuovo provvedimento disciplinare per un Volontario...
+    </div>
 
-    <form method="POST">
-        {% csrf_token %}
-        {% bootstrap_form modulo %}
-        <button type="submit" class="btn btn-block btn-primary">
-            Registra provvedimento
-        </button>
-    </form>
+    <div class="row">
+        <div class="col-md-6">
+
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Registra provvedimento
+                </div>
+                <div class="panel-body">
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit" class="btn btn-block btn-primary">
+                            Registra provvedimento
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
 
 {% endblock %}

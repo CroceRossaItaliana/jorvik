@@ -1,12 +1,12 @@
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
 
-from anagrafica.forms import ModuloNuovoProvvedimento
+from anagrafica.forms import ModuloNuovoProvvedimento, ModuloCreazioneTrasferimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede
-from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI
+from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA
 from autenticazione.forms import ModuloCreazioneUtenza
 from autenticazione.funzioni import pagina_privata
-from base.errori import errore_generico
+from base.errori import errore_generico, errore_nessuna_appartenenza
 from base.files import Excel, FoglioExcel
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
@@ -258,17 +258,7 @@ def us_provvedimento(request, me):
 
     modulo = ModuloNuovoProvvedimento(request.POST or None)
     if modulo.is_valid():
-        provvedimento = ProvvedimentoDisciplinare(
-            persona = modulo.cleaned_data['persona'],
-            tipo = modulo.cleaned_data['tipo'],
-            motivazione = modulo.cleaned_data['motivo'],
-            provvedimento_inizio = modulo.cleaned_data['provvedimento_inizio'],
-            provvedimento_fine = modulo.cleaned_data['provvedimento_fine'],
-            protocollo_data = modulo.cleaned_data['protocollo_data'],
-            protocollo_numero = modulo.cleaned_data['protocollo_numero'],
-        )
-        provvedimento.save()
-        provvedimento.esegui()
+        modulo.save()
 
     contesto = {
         "modulo": modulo,
