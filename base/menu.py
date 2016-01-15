@@ -81,6 +81,7 @@ def menu(request):
                 ("Soci", "fa-list", "/us/elenchi/soci/"),
                 ("Sostenitori", "fa-list", "/us/elenchi/sostenitori/"),
                 ("Elettorato", "fa-list", "/us/elenchi/elettorato/"),
+                ("Per Titoli", "fa-search", "/us/elenchi/titoli/"),
             )),
             ("Aggiungi", (
                 ("Persona", "fa-plus-square", "/us/aggiungi/"),

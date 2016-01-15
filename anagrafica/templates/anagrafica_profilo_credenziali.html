@@ -1,0 +1,168 @@
+{% extends 'anagrafica_profilo.html' %}
+
+{% load bootstrap3 %}
+{% load utils %}
+
+{% block profilo_corpo %}
+<div class="row">
+
+
+    <div class="col-md-4">
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-fw fa-info-circle"></i>
+                    Stato Utenza
+                </h4>
+            </div>
+            <div class="panel-body">
+
+                {% if utenza and utenza.password %}
+
+                    <div class="alert alert-block alert-success">
+                        <h4>
+                            <i class="fa fa-fw fa-check-circle"></i>
+                            Credenziali attive
+                        </h4>
+                        <p>
+                            {{ persona.nome }} pu&ograve; accedere a Gaia usando
+                            la sua e-mail di accesso ({{ utenza.email }}) assieme
+                            alla ultima password impostata password.
+                        </p>
+                        <p class="piu-piccolo">
+                            {% if utenza.ultimo_accesso >= utenza.ultima_modifica %}
+                                <i class="fa fa-fw fa-check"></i>
+                                Questa persona ha effettuato l'ultimo accesso dopo
+                                l'ultimo cambio della password.
+
+                            {% elif not utenza.ultimo_accesso %}
+                                <i class="fa fa-fw fa-times"></i>
+                                Questa persona non ha mai effettuato l'accesso a Gaia.
+
+                            {% else %}
+                                <i class="fa fa-fw fa-question-circle"></i>
+                                Questa persona non ha effettuato l'accesso
+                                dall'ultimo cambio della password o aggiornamento
+                                di Gaia.
+
+                            {% endif %}
+                        </p>
+                    </div>
+
+                {% elif utenza %}
+
+                    <div class="alert alert-block alert-warning">
+                        <h4>
+                            <i class="fa fa-fw fa-warning"></i>
+                            Nessuna password
+                        </h4>
+                        <p>
+                            {{ persona.nome }} non ha ancora una password di
+                            accesso a Gaia. Puoi richiedere una nuova password
+                            per l'utente col pulsante sulla destra.
+                        </p>
+                        <p>
+                            {{ persona.nome }} potr&agrave; altrimenti accedere
+                            a Gaia in autonomia usando le funzionalit&agrave;
+                            di recupero password.
+                        </p>
+
+                    </div>
+
+
+                {% else %}
+                    <div class="alert alert-block alert-danger">
+                        <h4>
+                            <i class="fa fa-fw fa-times"></i>
+                            {{ persona.nome }} non ha credenziali
+                        </h4>
+                        <p>
+                            {{ persona.nome }} non pu&ograve; accedere a Gaia
+                            perch&eacute; non dispone di credenziali di accesso.
+                        </p>
+                        <p class="grassetto">
+                            Inserisci l'indirizzo e-mail di {{ persona.nome }}
+                            a destra. Invieremo tramite e-mail una password
+                            a {{ persona.nome }}, che potr&agrave; quindi accedere
+                            a Gaia.
+                        </p>
+
+                    </div>
+
+
+
+
+
+                {% endif %}
+
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-md-5">
+        <div class="panel panel-info">
+
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-key fa-fw"></i> Credenziali di accesso
+                </h4>
+
+            </div>
+
+            <div class="panel-body">
+
+                <div class="alert alert-block alert-success">
+                    <h4>
+                        <i class="fa fa-fw fa-check-circle"></i>
+
+                    </h4>
+                </div>
+
+
+
+            </div>
+
+        </div>
+
+
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Opzioni
+            </div>
+            <div class="panel-body piu-piccolo">
+
+                {% if utenza %}
+                    <a href="/profilo/{{ persona.pk }}/credenziali/password/"
+                        class="btn btn-sm btn-block btn-danger"
+                        data-conferma="SICURO/A? Continua solo se hai VERIFICATO DI PERSONA
+                         l'identità di {{ persona.nome_completo }} e {{ persona.nome }} ti ha
+                         richiesto di generare una nuova password.
+
+                         La password verrà inviata a {{ persona.nome }}
+                         (e-mail: {{ utenza.email }})."
+                    >
+                        <i class="fa fa-fw fa-refresh"></i>
+                        Genera nuova password
+
+                    </a>
+                {% endif %}
+
+            </div>
+        </div>
+
+    </div>
+
+
+
+
+</div>
+
+{% endblock %}

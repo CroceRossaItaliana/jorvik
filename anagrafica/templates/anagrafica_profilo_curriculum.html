@@ -26,7 +26,9 @@
                         <th>Tipo</th>
                         <th>Nome e Stato</th>
                         <th>Dettagli</th>
-                        <th><i class="fa fa-trash"></i></th>
+                        {% if puo_modificare %}
+                            <th><i class="fa fa-trash"></i></th>
+                        {% endif %}
                     </thead>
 
                     <tbody>
@@ -93,13 +95,15 @@
                                     {% endif %}
 
                                 </td>
-                                <td>
-                                    <a href="/profilo/{{ persona.pk }}/curriculum/{{ t.pk }}/cancella/"
-                                       data-conferma="Sei sicuro/a di voler rimuovere {{ t.titolo.nome }} dal curriculum di {{ persona.nome }}?"
-                                       class="btn btn-xs btn-danger" title="Rimuovi dal curriculum">
-                                        <i class="fa fa-trash"></i>
-                                    </a>
-                                </td>
+                                {% if puo_modificare %}
+                                    <td>
+                                        <a href="/profilo/{{ persona.pk }}/curriculum/{{ t.pk }}/cancella/"
+                                           data-conferma="Sei sicuro/a di voler rimuovere {{ t.titolo.nome }} dal curriculum di {{ persona.nome }}?"
+                                           class="btn btn-xs btn-danger" title="Rimuovi dal curriculum">
+                                            <i class="fa fa-trash"></i>
+                                        </a>
+                                    </td>
+                                {% endif %}
                             </tr>
 
                         {% empty %}
@@ -132,7 +136,7 @@
 
                     <div class="panel-heading">
                         <h4 class="panel-title">
-                            <i class="fa fa-plus"></i> Aggiungi documento
+                            <i class="fa fa-plus"></i> Aggiungi titolo
                         </h4>
 
                     </div>

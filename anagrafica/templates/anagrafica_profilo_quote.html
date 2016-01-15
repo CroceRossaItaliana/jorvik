@@ -1,0 +1,79 @@
+{% extends 'anagrafica_profilo.html' %}
+
+{% load bootstrap3 %}
+{% load utils %}
+
+{% block profilo_corpo %}
+<div class="row">
+
+    <div class="col-lg-12">
+        <div class="panel panel-info">
+
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-folder-o fa-fw"></i> Quote e ricevute
+                </h4>
+
+            </div>
+
+            <div class="panel-body">
+
+
+                <table class="table table-bordered table-striped table-responsive">
+                <thead>
+                    <th>Tipo</th>
+                    <th>Numero presso</th>
+                    <th>Importo</th>
+                    <th>Registrazione</th>
+                    <th>Ricevuta</th>
+                </thead>
+                <tbody>
+
+                    {% for q in persona.quote.all %}
+                        <tr>
+                            <td>{{ q.get_tipo_display }}</td>
+                            <td>{{ q.progressivo }}/{{ q.anno }}<br />
+                                {{ q.sede.link|safe }}
+                            </td>
+                            <td>{% euro q.importo_totale %}</td>
+                            <td>
+
+                                <i class="fa fa-fw fa-check-circle"></i> Registrata da {{ q.registrato_da.link|safe }}
+                                    <br />Versata il {{ q.data_versamento }}<br />
+
+                                {% if q.stato == q.ANNULLATA %}
+                                    <i class="fa fa-fw fa-times"></i> Annullata da {{ q.annullato_da }}
+                                    in data {{ q.annullato_da }}
+
+                                {% endif %}
+
+                            </td>
+                            <td>
+                                <a href="{{ q.url_pdf }}" target="_blank">
+                                    Scarica PDF
+                                </a>
+                            </td>
+                        </tr>
+
+                    {% empty %}
+
+
+                    {% endfor %}
+                </tbody>
+            </table>
+
+
+            </div>
+
+        </div>
+
+
+
+    </div>
+
+
+
+
+</div>
+
+{% endblock %}

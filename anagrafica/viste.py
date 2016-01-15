@@ -12,7 +12,7 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
-    ModuloProfiloTitoloPersonale
+    ModuloProfiloTitoloPersonale, ModuloUtenza
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -720,12 +720,21 @@ def utente_curriculum_cancella(request, me, pk=None):
 
 def _profilo_anagrafica(request, me, persona):
     puo_modificare = me.permessi_almeno(persona, MODIFICA)
-    modulo = ModuloProfiloModificaAnagrafica(request.POST or None, instance=persona)
+    modulo = ModuloProfiloModificaAnagrafica(request.POST or None, instance=persona, prefix="anagrafica")
+    modulo_numero_telefono = ModuloCreazioneTelefono(request.POST or None, prefix="telefono")
     if puo_modificare and modulo.is_valid():
         Log.registra_modifiche(me, modulo)
         modulo.save()
+
+    if puo_modificare and modulo_numero_telefono.is_valid():
+        persona.aggiungi_numero_telefono(
+            modulo_numero_telefono.cleaned_data.get('numero_di_telefono'),
+            modulo_numero_telefono.cleaned_data.get('tipologia') == modulo_numero_telefono.SERVIZIO,
+        )
+
     contesto = {
         "modulo": modulo,
+        "modulo_numero_telefono": modulo_numero_telefono,
     }
     return 'anagrafica_profilo_anagrafica.html', contesto
 
@@ -788,6 +797,29 @@ def _profilo_documenti(request, me, persona):
     }
     return 'anagrafica_profilo_documenti.html', contesto
 
+
+def _profilo_quote(request, me, persona):
+    contesto = {}
+    return 'anagrafica_profilo_quote.html', contesto
+
+
+def _profilo_credenziali(request, me, persona):
+    utenza = Utenza.objects.filter(persona=persona).first()
+    modulo_utenza = ModuloUtenza(request.POST or None, instance=utenza)
+
+    if modulo_utenza.is_valid():
+        utenza = modulo_utenza.save(commit=False)
+        utenza.persona = persona
+        utenza.save()
+
+    contesto = {
+        "utenza": utenza,
+        "modulo_utenza": modulo_utenza,
+
+    }
+    return 'anagrafica_profilo_credenziali.html', contesto
+
+
 @pagina_privata
 def profilo_documenti_cancella(request, me, pk, documento_pk):
     persona = get_object_or_404(Persona, pk=pk)
@@ -818,6 +850,16 @@ def profilo_sangue_cancella(request, me, pk, donazione_pk):
     return redirect("/profilo/%d/sangue/" % (persona.pk,))
 
 
+@pagina_privata
+def profilo_telefono_cancella(request, me, pk, tel_pk):
+    persona = get_object_or_404(Persona, pk=pk)
+    telefono = get_object_or_404(Telefono, pk=tel_pk)
+    if (not me.permessi_almeno(persona, MODIFICA)) or not (telefono.persona == persona):
+        return redirect(ERRORE_PERMESSI)
+    telefono.delete()
+    return redirect("/profilo/%d/anagrafica/" % (persona.pk,))
+
+
 def _sezioni_profilo(puo_leggere, puo_modificare):
     r = (
         # (path, (
@@ -839,16 +881,16 @@ def _sezioni_profilo(puo_leggere, puo_modificare):
             'Curriculum', 'fa-list', _profilo_curriculum, puo_leggere
         )),
         ('sangue', (
-            'Sangue', 'fa-flask', _profilo_sangue, puo_leggere
+            'Sangue', 'fa-flask', _profilo_sangue, puo_modificare
         )),
         ('quote', (
-            'Quote', 'fa-money', _profilo_documenti, puo_leggere
+            'Quote/Ricevute', 'fa-money', _profilo_quote, puo_leggere
         )),
         ('provvedimenti', (
             'Provvedimenti', 'fa-legal', _profilo_documenti, puo_leggere
         )),
         ('credenziali', (
-            'Credenziali', 'fa-key', _profilo_documenti, puo_leggere
+            'Credenziali', 'fa-key', _profilo_credenziali, puo_modificare
         )),
     )
     return (x for x in r if len(x[1]) < 4 or x[1][3] == True)

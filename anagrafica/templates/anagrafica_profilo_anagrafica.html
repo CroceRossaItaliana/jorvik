@@ -4,6 +4,8 @@
 {% load thumbnail %}
 
 {% block profilo_corpo %}
+<form method="POST">
+{% csrf_token %}
 
     <div class="row">
 
@@ -28,8 +30,6 @@
                 </div>
 
                 <div class="panel-body">
-                    <form method="POST">
-                        {% csrf_token %}
                         {% bootstrap_form modulo  %}
 
                         {% if puo_modificare %}
@@ -40,7 +40,6 @@
                             </button>
                         {% endif %}
 
-                    </form>
 
                 </div>
             </div>
@@ -79,6 +78,87 @@
             {% endif %}
 
             <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <i class="fa fa-fw fa-phone"></i>
+                        Numeri di telefono
+                    </h4>
+                </div>
+                <div class="panel-body">
+
+                    <table class="table">
+                        <thead>
+                            <th>Numero</th>
+                            <th>Tipologia</th>
+                            {% if puo_modificare %}
+                                <th>Azioni</th>
+                            {% endif %}
+                        </thead>
+                        <tbody>
+                            {% for numero in persona.numeri_telefono.all %}
+                                <tr>
+                                    <td class="grassetto">
+                                        {{ numero }}
+                                    </td>
+                                    <td>
+                                        {% if numero.servizio %}
+                                           Di servizio
+                                        {% else %}
+                                            Personale
+                                        {% endif %}
+                                    </td>
+                                    {% if puo_modificare %}
+                                        <td>
+                                            <a href="/profilo/{{ persona.pk }}/telefono/{{ numero.id }}/cancella/"
+                                                    data-conferma="Vuoi davvero cancellare il numero {{ numero }}?">
+                                                <i class="fa fa-trash"></i>
+                                                Cancella
+                                            </a>
+                                        </td>
+                                    {% endif %}
+                                </tr>
+
+                            {% empty %}
+                                <tr class="warning">
+                                    <td colspan="3">
+                                        <p class="grassetto">
+                                            <i class="fa fa-fw fa-warning"></i> Nessun numero telefonico registrato.
+                                        </p>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+
+
+                        </tbody>
+                    </table>
+
+                    {% if puo_modificare %}
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+
+                                <h4 class="panel-title">
+                                    <i class="fa fa-fw fa-plus-circle"></i>
+                                    Aggiungi un numero
+                                </h4>
+
+                            </div>
+
+                            <div class="panel-body">
+
+                                {% bootstrap_form modulo_numero_telefono %}
+                                 <button class="btn btn-block btn-primary" type="submit">
+                                     <i class="fa fa-check fa-fw"></i>
+                                     Aggiungi numero
+                                 </button>
+                            </div>
+
+                        </div>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <div class="panel panel-success">
                 <div class="panel-heading">
                     <h4 class="panel-title">
                         <i class="fa fa-fw fa-info-circle"></i>
@@ -169,5 +249,6 @@
         </div>
 
     </div>
+</form>
 
 {% endblock %}

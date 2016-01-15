@@ -243,3 +243,9 @@ class ModuloDonazione(autocomplete_light.ModelForm):
     class Meta:
         model = Donazione
         fields = ['sede', 'data', 'tipo',]
+
+
+class ModuloUtenza(ModelForm):
+    class Meta:
+        model = Utenza
+        fields = ['email',]
