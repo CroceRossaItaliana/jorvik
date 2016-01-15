@@ -752,6 +752,29 @@ def _profilo_curriculum(request, me, persona):
     return 'anagrafica_profilo_curriculum.html', contesto
 
 
+def _profilo_sangue(request, me, persona):
+    modulo_donatore = ModuloDonatore(request.POST or None, prefix="donatore", instance=Donatore.objects.filter(persona=persona).first())
+    modulo_donazione = ModuloDonazione(request.POST or None, prefix="donazione")
+
+    if modulo_donatore.is_valid():
+        donatore = modulo_donatore.save(commit=False)
+        donatore.persona = persona
+        donatore.save()
+
+    if modulo_donazione.is_valid():
+        donazione = modulo_donazione.save(commit=False)
+        donazione.persona = persona
+        r = donazione.save()
+        print(r)
+
+    contesto = {
+        "modulo_donatore": modulo_donatore,
+        "modulo_donazione": modulo_donazione,
+    }
+
+    return 'anagrafica_profilo_sangue.html', contesto
+
+
 def _profilo_documenti(request, me, persona):
     puo_modificare = me.permessi_almeno(persona, MODIFICA)
     modulo = ModuloCreazioneDocumento(request.POST or None, request.FILES or None)
@@ -769,7 +792,7 @@ def _profilo_documenti(request, me, persona):
 def profilo_documenti_cancella(request, me, pk, documento_pk):
     persona = get_object_or_404(Persona, pk=pk)
     documento = get_object_or_404(Documento, pk=documento_pk)
-    if (not me.permessi_almeno(persona, MODIFICA)) and not (documento.persona == persona):
+    if (not me.permessi_almeno(persona, MODIFICA)) or not (documento.persona == persona):
         return redirect(ERRORE_PERMESSI)
     documento.delete()
     return redirect("/profilo/%d/documenti/" % (persona.pk,))
@@ -779,10 +802,20 @@ def profilo_documenti_cancella(request, me, pk, documento_pk):
 def profilo_curriculum_cancella(request, me, pk, tp_pk):
     persona = get_object_or_404(Persona, pk=pk)
     titolo_personale = get_object_or_404(TitoloPersonale, pk=tp_pk)
-    if (not me.permessi_almeno(persona, MODIFICA)) and not (titolo_personale.persona == persona):
+    if (not me.permessi_almeno(persona, MODIFICA)) or not (titolo_personale.persona == persona):
         return redirect(ERRORE_PERMESSI)
     titolo_personale.delete()
     return redirect("/profilo/%d/curriculum/" % (persona.pk,))
+
+
+@pagina_privata
+def profilo_sangue_cancella(request, me, pk, donazione_pk):
+    persona = get_object_or_404(Persona, pk=pk)
+    donazione = get_object_or_404(Donazione, pk=donazione_pk)
+    if (not me.permessi_almeno(persona, MODIFICA)) or not (donazione.persona == persona):
+        return redirect(ERRORE_PERMESSI)
+    donazione.delete()
+    return redirect("/profilo/%d/sangue/" % (persona.pk,))
 
 
 def _sezioni_profilo(puo_leggere, puo_modificare):
@@ -806,7 +839,7 @@ def _sezioni_profilo(puo_leggere, puo_modificare):
             'Curriculum', 'fa-list', _profilo_curriculum, puo_leggere
         )),
         ('sangue', (
-            'Sangue', 'fa-flask', _profilo_documenti, puo_leggere
+            'Sangue', 'fa-flask', _profilo_sangue, puo_leggere
         )),
         ('quote', (
             'Quote', 'fa-money', _profilo_documenti, puo_leggere

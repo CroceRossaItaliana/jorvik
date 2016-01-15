@@ -1,0 +1,142 @@
+{% extends 'anagrafica_profilo.html' %}
+
+{% load bootstrap3 %}
+
+{% block profilo_corpo %}
+
+<form method="POST">
+{% csrf_token %}
+    <div class="row">
+
+        <div class="col-md-3">
+
+            <div class="panel panel-primary">
+
+                <div class="panel-heading">
+                    <i class="fa fa-fw fa-user"></i>
+                    Profilo Donatore
+                </div>
+
+                <div class="panel-body">
+
+                    {% bootstrap_form modulo_donatore %}
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-fw fa-save"></i>
+                        Salva profilo
+                    </button>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+        <div class="col-md-3">
+
+
+            <div class="panel panel-primary">
+
+                <div class="panel-heading">
+                    <i class="fa fa-fw fa-flask"></i>
+                    Registra Donazione
+                </div>
+
+                <div class="panel-body piu-piccolo">
+
+                    {% if persona.donatore %}
+                        <p>
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Registra una donazione di {{ persona.nome }} compilando questo modulo.
+                        </p>
+
+                        {% bootstrap_form modulo_donazione %}
+
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fa fa-fw fa-check"></i>
+                            Registra Donazione
+                        </button>
+
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fa fa-fw fa-info-circle"></i> Completa il profilo
+                            del donatore a sinistra per poter registrare una nuova
+                            donazione.
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+
+        </div>
+
+        <div class="col-md-6">
+
+            <div class="panel panel-info">
+
+            <div class="panel-heading">
+                <i class="fa fa-fw fa-list"></i>
+                Donazioni Registrate
+            </div>
+
+            <div class="panel-body">
+
+                <table class="table table-striped">
+
+                    <thead>
+                        <th>Donazione</th>
+                        <th>Data e Luogo</th>
+                        <th><i class="fa fa-trash"></i></th>
+                    </thead>
+
+                    <tbody>
+                        {% for donazione in persona.donazioni_sangue.all %}
+                        <tr>
+                            <td><strong>{{ donazione.esito }}</strong>
+                                <br />
+                                {{ donazione.get_tipo_display }}</td>
+                            <td>
+                                <i class="fa fa-fw fa-calendar"></i> {{ donazione.data }}<br />
+                                <i class="fa fa-fw fa-home"></i> {{ donazione.sede }}
+                            </td>
+                            <td>
+                                <a href="/profilo/{{ persona.pk }}/sangue/{{ donazione.pk }}/cancella/"
+                                    data-conferma="Sicuro/a di voler cancellare la donazione {{ donazione.get_tipo_display }} in data {{ donazione.data }}?"
+                                    class="btn btn-xs btn-danger"
+                                    title="Cancella questa donazione"
+                                >
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+
+                        {% empty %}
+                        <tr class="warning">
+                            <td colspan="3">
+                                <i class="fa fa-fw fa-info-circle"></i>
+                                Nessuna donazione registrata.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+
+
+            </div>
+            </div>
+
+        </div>
+
+
+    </div>
+</form>
+
+
+{% endblock %}

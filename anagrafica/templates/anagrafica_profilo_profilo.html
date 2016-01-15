@@ -2,18 +2,36 @@
 
 {% block profilo_corpo %}
 
-    <p>{{ persona.nome_completo }} attualmente &egrave;:</p>
 
-    <ul>
-        {% for a in persona.appartenenze_attuali %}
-            <li>{{ a.get_membro_display }} presso
-                {{ a.sede.link|safe }};
-            </li>
+    <div class="row">
 
-        {% empty %}
-            <li>{{ persona.nome }} non ha ancora un ruolo.</li>
+        <div class="col-md-3 allinea-centro">
 
-        {% endfor %}
-    </ul>
+            {% if persona.avatar %}
+                <img src="{{ persona.avatar.url }}" class="img-responsive" />
+            {% endif %}
+
+
+        </div>
+
+        <div class="col-md-9 piu-grande">
+            <p>{{ persona.nome_completo }} attualmente &egrave;:</p>
+
+            <ul>
+                {% for a in persona.appartenenze_attuali %}
+                    <li>{{ a.get_membro_display }} presso
+                        {{ a.sede.link|safe }};
+                    </li>
+
+                {% empty %}
+                    <li>{{ persona.nome }} non ha ancora un ruolo.</li>
+
+                {% endfor %}
+            </ul>
+
+        </div>
+
+
+    </div>
 
 {% endblock %}
