@@ -1,0 +1,9 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+<p class="grassetto">Ciao,</p>
+<p>L'estensione del volontario {{ estensione.persona.nome_completo }} presso il <strong>{{ estensione.sede }}</strong> è <strong>terminata</strong>. Ricorda che hai la possibilità di chiedere una nuova estensione.</p>
+<p>Se pensi che ci sia stato un errore, ti invitiamo a rispondere a questa email indicandoci cosa c'è da correggere.</p>
+
+{% endblock %}

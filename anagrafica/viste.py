@@ -480,23 +480,55 @@ def utente_donazioni_sangue_cancella(request, me, pk):
 
 @pagina_privata
 def utente_estensione(request, me):
+    if not me.sede_riferimento():
+        return errore_nessuna_appartenenza(request, me)
     storico = me.estensioni.all()
-    if request.POST:
-        modulo = ModuloCreazioneEstensione(request.POST)
-        if modulo.is_valid():
-            est = modulo.save(commit=False)
-            if est.destinazione in me.sedi_attuali():
-                modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
-            elif est.destinazione in [x.destinazione for x in me.estensioni_attuali_e_in_attesa()]:
-                modulo.add_error('destinazione', 'Estensione già richiesta a questa sede.')
-            else:
+    modulo = ModuloCreazioneEstensione(request.POST or None)
+    if modulo.is_valid():
+        est = modulo.save(commit=False)
+        if est.destinazione in me.sedi_attuali():
+            modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
+        elif est.destinazione in [x.destinazione for x in me.estensioni_attuali_e_in_attesa()]:
+            modulo.add_error('destinazione', 'Estensione già richiesta a questa sede.')
+        else:
+            est.richiedente = me
+            est.persona = me
+            est.save()
+            est.richiedi()
+            # Messaggio.costruisci_e_invia(
+            #     oggetto="Richiesta di estensione",
+            #     modello="email_richiesta_estensione.html",
+            #     corpo={
+            #         "trasferimento": est,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         est.persona,
+            #     ]
+            # )
+            # Messaggio.costruisci_e_invia(
+            #     oggetto="Richiesta di estensione",
+            #     modello="email_richiesta_estensione_cc.html",
+            #     corpo={
+            #         "trasferimento": est,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         ##presidente sede di estensione
+            #     ]
+            # )
+            # Messaggio.costruisci_e_invia(
+            #     oggetto="Richiesta di estensione",
+            #     modello="email_richiesta_estensione_presidente.html",
+            #     corpo={
+            #         "trasferimento": est,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         ##presidente sede riferimento
+            #     ]
+            # )
 
-                est.richiedente = me
-                est.persona = me
-                modulo.save()
-                est.richiedi()
-    else:
-        modulo = ModuloCreazioneEstensione()
     contesto = {
         "modulo": modulo,
         "storico": storico,
@@ -524,23 +556,58 @@ def utente_trasferimento_termina(request, me, pk):
 
 @pagina_privata
 def utente_trasferimento(request, me):
+    if not me.sede_riferimento():
+        return errore_nessuna_appartenenza(request, me)
     storico = me.trasferimenti.all()
-    if request.POST:
-        modulo = ModuloCreazioneTrasferimento(request.POST)
-        if modulo.is_valid():
-            trasf = modulo.save(commit=False)
-            if trasf.destinazione in me.sedi_attuali():
-                modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
-            elif me.trasferimento:
-                return errore_generico(request, me, messaggio="Non puoi richiedere piú di un trasferimento alla volta")
-            else:
 
-                trasf.persona = me
-                trasf.richiedente = me
-                modulo.save()
-                trasf.richiedi()
-    else:
-        modulo = ModuloCreazioneTrasferimento()
+    modulo = ModuloCreazioneTrasferimento(request.POST or None)
+    if modulo.is_valid():
+        trasf = modulo.save(commit=False)
+        if trasf.destinazione in me.sedi_attuali():
+            modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
+        elif trasf.destinazione.comitato != me.sede_riferimento().comitato and True:##che in realta' e' il discriminatore delle elezioni
+            return errore_generico(request, me, messaggio="Non puoi richiedere un trasferimento tra comitati durante il periodo elettorale")
+        elif me.trasferimento:
+            return errore_generico(request, me, messaggio="Non puoi richiedere piú di un trasferimento alla volta")
+        else:
+            trasf.persona = me
+            trasf.richiedente = me
+            trasf.save()
+            trasf.richiedi()
+            # Messaggio.costruisci_e_invia(
+            #     oggetto="Richiesta di trasferimento",
+            #     modello="email_richiesta_trasferimento.html",
+            #     corpo={
+            #         "trasferimento": trasf,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         trasf.persona,
+            #     ]
+            # )
+            # Messaggio.costruisci_e_invia(
+            #     oggetto="Richiesta di trasferimento",
+            #     modello="email_richiesta_trasferimento_cc.html",
+            #     corpo={
+            #         "trasferimento": trasf,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         ##presidente sede nuova
+            #     ]
+            # )
+            # Messaggio.costruisci_e_invia(
+            #     oggetto="Richiesta di trasferimento",
+            #     modello="email_richiesta_trasferimento_presidente.html",
+            #     corpo={
+            #         "trasferimento": trasf,
+            #     },
+            #     mittente=None,
+            #     destinatari=[
+            #         ##presidente sede vecchia
+            #     ]
+            # )
+
     contesto = {
         "modulo": modulo,
         "storico": storico

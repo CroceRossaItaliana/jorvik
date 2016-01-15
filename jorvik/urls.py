@@ -115,12 +115,10 @@ urlpatterns = [
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/report/$', 'attivita.viste.attivita_scheda_report'),
 
     url(r'^us/$', 'ufficio_soci.viste.us'),
-    url(r'^us/provvedimenti/$', 'ufficio_soci.viste.us_provvedimento'),
-    url(r'^us/aggiungi/$', 'ufficio_soci.viste.us_aggiungi'),
-    url(r'^us/reclama/$', 'ufficio_soci.viste.us_reclama'),
-    url(r'^us/reclama/(?P<persona_pk>.*)/$', 'ufficio_soci.viste.us_reclama_persona'),
+    url(r'^us/provvedimento/$', 'ufficio_soci.viste.us_provvedimento'),
     url(r'^us/estensione/$', 'ufficio_soci.viste.us_estensione'),
     url(r'^us/estensione/(?P<pk>.*)/termina/$', 'ufficio_soci.viste.us_estensione_termina'),
+    url(r'^us/trasferimento/$', 'ufficio_soci.viste.us_trasferimento'),
 
 
     url(r'^us/elenchi/(?P<elenco_tipo>.*)/$', 'ufficio_soci.viste.us_elenchi'),
@@ -145,6 +143,7 @@ urlpatterns = [
     url(r'^veicolo/rifornimenti/(?P<veicolo>.*)/$', 'veicoli.viste.veicoli_rifornimento'),
     url(r'^veicolo/fermi-tecnici/(?P<veicolo>.*)/$', 'veicoli.viste.veicoli_fermo_tecnico'),
     url(r'^veicolo/termina/fermo-tecnico/(?P<fermo>.*)/$', 'veicoli.viste.veicoli_termina_fermo_tecnico'),
+    url(r'^veicolo/(?P<veicolo>.*)/collocazioni/$', 'veicoli.viste.veicoli_collocazioni'),
 
     url(r'^aspirante/$', 'formazione.viste.aspirante_home'),
     url(r'^aspirante/impostazioni/$', 'formazione.viste.aspirante_impostazioni'),

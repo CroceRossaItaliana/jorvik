@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404, redirect
 from anagrafica.permessi.costanti import GESTIONE_AUTOPARCHI_SEDE, ERRORE_PERMESSI, MODIFICA
 from autenticazione.funzioni import pagina_privata
 from veicoli.forms import ModuloCreazioneVeicolo, ModuloCreazioneAutoparco, ModuloCreazioneManutenzione, \
-    ModuloCreazioneFermoTecnico, ModuloCreazioneRifornimento
+    ModuloCreazioneFermoTecnico, ModuloCreazioneRifornimento, ModuloCreazioneCollocazione
 from veicoli.models import Veicolo, Autoparco, Collocazione, Manutenzione, FermoTecnico
 
 
@@ -29,7 +29,7 @@ def veicoli(request, me):
     for i in veicoli_revisione:
         if i.ultima_revisione().data < datetime.date.today() - datetime.timedelta(days=i.intervallo_revisione):
             ex += [i.pk]
-    veicoli_revisione = veicoli_revisione.exclude(pk__in=ex)
+    veicoli_revisione = veicoli_revisione.exclude(pk__in=ex).distinct('pk')
 
     veicoli_manutenzione = veicoli.filter(
         manutenzioni__tipo=Manutenzione.MANUTENZIONE_ORDINARIA,
@@ -38,7 +38,7 @@ def veicoli(request, me):
     for i in veicoli_manutenzione:
         if i.ultima_manutenzione().data < datetime.date.today() - datetime.timedelta(days=365):
             ex += [i.pk]
-    veicoli_manutenzione = veicoli_manutenzione.exclude(pk__in=ex)
+    veicoli_manutenzione = veicoli_manutenzione.exclude(pk__in=ex).distinct('pk')
 
     contesto = {
         "revisione": veicoli_revisione,
@@ -100,6 +100,7 @@ def veicoli_veicolo_modifica_o_nuovo(request, me, pk=None):
         modulo.fields["data_collocazione"] = forms.DateField(initial=datetime.date.today())
     if modulo.is_valid():
         v = modulo.save()
+
         if pk is None:
             collocazione = Collocazione(
                 autoparco=modulo.cleaned_data["autoparco"],
@@ -107,9 +108,7 @@ def veicoli_veicolo_modifica_o_nuovo(request, me, pk=None):
                 veicolo=v
             )
             collocazione.save()
-
-        return redirect("/veicoli/")
-
+            return redirect("/veicoli/")
     contesto = {
         "modulo": modulo,
     }
@@ -122,23 +121,26 @@ def veicoli_autoparco_modifica_o_nuovo(request, me, pk=None):
     autoparco=None
     if pk is not None:
         autoparco = get_object_or_404(Autoparco, pk=pk)
-        if not me.permessi_almeno(MODIFICA, autoparco):
+        if not me.permessi_almeno(autoparco, MODIFICA):
             return redirect(ERRORE_PERMESSI)
+    else:
+        autoparco = None
     modulo = ModuloCreazioneAutoparco(request.POST or None, instance=autoparco)
     print(me.oggetti_permesso(GESTIONE_AUTOPARCHI_SEDE))
     modulo.fields['sede'].choices = me.oggetti_permesso(GESTIONE_AUTOPARCHI_SEDE).values_list('id', 'nome')
     if modulo.is_valid():
         modulo.save()
-        return redirect("/veicoli/")
+        return redirect("/veicoli/autoparchi/")
     contesto = {
         "modulo": modulo,
+        "autoparco": autoparco,
     }
     return "veicoli_autoparco_modifica_o_nuovo.html", contesto
 
 @pagina_privata
 def veicoli_manutenzione(request, me, veicolo):
     veicolo = get_object_or_404(Veicolo, pk=veicolo)
-    manutenzioni = veicolo.manutenzioni.all()
+    manutenzioni = veicolo.manutenzioni.all().order_by("-data")
     modulo = ModuloCreazioneManutenzione(request.POST or None)
     if not me.permessi_almeno(veicolo, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -156,7 +158,7 @@ def veicoli_manutenzione(request, me, veicolo):
 @pagina_privata
 def veicoli_rifornimento(request, me, veicolo):
     veicolo = get_object_or_404(Veicolo, pk=veicolo)
-    rifornimenti = veicolo.rifornimenti.all()
+    rifornimenti = veicolo.rifornimenti.all().order_by("-data")
     modulo = ModuloCreazioneRifornimento(request.POST or None)
     if not me.permessi_almeno(veicolo, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -198,5 +200,25 @@ def veicoli_termina_fermo_tecnico(request, me, fermo):
         return redirect("/veicolo/fermi-tecnici/%s/" %(fermo.veicolo.pk,))
     else:
         return redirect(ERRORE_PERMESSI)
+
+@pagina_privata
+def veicoli_collocazioni(request, me, veicolo):
+    veicolo = get_object_or_404(Veicolo, pk = veicolo)
+    collocazioni = veicolo.collocazioni.all().order_by("-data")
+    modulo = ModuloCreazioneCollocazione(request.POST or None)
+    if not me.permessi_almeno(veicolo, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+    if modulo.is_valid():
+        veicolo.collocazione().termina()
+        c = modulo.save(commit=False)
+        c.veicolo = veicolo
+        c.creato_da = me
+        c.save()
+    contesto = {
+        "veicolo": veicolo,
+        "collocazioni":collocazioni,
+        "modulo": modulo,
+    }
+    return "veicoli_collocazione.html", contesto
 
 

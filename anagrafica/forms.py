@@ -210,14 +210,11 @@ class ModuloConsentiTrasferimento(forms.Form):
     protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data di registrazione del protocollo.")
 
 
-class ModuloNuovoProvvedimento(forms.Form):
-    persona = forms.ModelChoiceField(queryset=Persona.objects.all(), label="Volontario")
-    motivazione = forms.CharField(label="Motivazione", help_text="Motivazione del provvedimento")
-    tipo = forms.ChoiceField(choices=ProvvedimentoDisciplinare.TIPO, label="Tipo", help_text="Tipo di Provvedimento")
-    provvedimeto_inizio = forms.DateField(label="Data di inizio provvedimento", help_text="Data di inizio del provvedimento (se applicabile)", required=False)
-    provvedimento_fine = forms.DateField(label="Data di fine provvedimento", help_text="Data di fine del provvedimento (se applicabile)", required=False)
-    protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data del protocollo")
-    protocollo_numero = forms.IntegerField(label="Numero del protocolo", help_text="Numero di protocollo")
+class ModuloNuovoProvvedimento(autocomplete_light.ModelForm):
+    class Meta:
+        model = ProvvedimentoDisciplinare
+        fields = ['persona', 'motivazione', 'tipo', 'inizio', 'fine']
+
 
 
 class ModuloCreazioneDelega(autocomplete_light.ModelForm):

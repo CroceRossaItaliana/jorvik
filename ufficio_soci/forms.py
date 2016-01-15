@@ -14,7 +14,13 @@ from ufficio_soci.models import Tesseramento
 class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
     class Meta:
         model = Estensione
-        fields = ['persona', 'destinazione', ]
+        fields = ['persona', 'destinazione', 'motivo']
+
+
+class ModuloCreazioneTrasferimento(autocomplete_light.ModelForm):
+    class Meta:
+        model = Estensione
+        fields = ['persona', 'destinazione', 'motivo']
 
 
 class ModuloElencoSoci(forms.Form):

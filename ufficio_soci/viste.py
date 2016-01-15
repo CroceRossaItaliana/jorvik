@@ -177,8 +177,54 @@ def us_estensione(request, me):
                                                          #     ad una delle sedi che gestisco io
     modulo = ModuloCreazioneEstensione(request.POST or None)
 
-    # qui dovrebbe salvare...
+    if modulo.is_valid():
+        est = modulo.save(commit=False)
+        if not est.persona.sede_riferimento():
+            return errore_nessuna_appartenenza(request, me)
+        if not me.permessi_almeno(est.persona, MODIFICA):
+            return redirect(ERRORE_PERMESSI)
+        if est.destinazione in est.persona.sedi_attuali():
+            modulo.add_error('destinazione', 'Il volontario è già appartenente a questa sede.')
+        elif est.destinazione in [x.destinazione for x in me.estensioni_attuali_e_in_attesa()]:
+            modulo.add_error('destinazione', 'Il volontario ha già una richiesta di estensione a questa sede.')
+        else:
+            est.richiedente = me
+            est.save()
+            est.richiedi()
+    contesto = {
+        "sedi": sedi,
+        "modulo": modulo,
+    }
 
+    return 'us_estensione.html', contesto
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_trasferimento(request, me):
+    """
+    Vista per la creazione di una nuova estensione da ufficio soci.
+    """
+
+    sedi = me.oggetti_permesso(GESTIONE_SOCI).espandi()  # es. per controllare che il volontario sia appartente attualmente
+                                                         #     ad una delle sedi che gestisco io
+
+    modulo = ModuloCreazioneTrasferimento(request.POST or None)
+
+    if modulo.is_valid():
+        trasf = modulo.save(commit=False)
+        if not trasf.persona.sede_riferimento():
+            return errore_nessuna_appartenenza(request, me)
+        if not me.permessi_almeno(trasf.persona, MODIFICA):
+            return redirect(ERRORE_PERMESSI)
+        if trasf.destinazione in trasf.persona.sedi_attuali():
+            modulo.add_error('destinazione', 'Il volontario è già appartenente a questa sede.')
+        elif trasf.destinazione.comitato != trasf.persona.sede_riferimento().comitato and True:##che in realta' e' il discriminatore delle elezioni
+            return errore_generico(request, me, messaggio="Non puoi richiedere un trasferimento tra comitati durante il periodo elettorale")
+        elif trasf.persona.trasferimento:
+            return errore_generico(request, me, messaggio="Il Volontario non può avere piú di una richiesta di trasferimento alla volta")
+        else:
+            trasf.richiedente = me
+            trasf.save()
+            trasf.richiedi()
     contesto = {
         "sedi": sedi,
         "modulo": modulo,
@@ -209,26 +255,24 @@ def us_estensione_termina(request, me, pk):
 
 @pagina_privata()
 def us_provvedimento(request, me):
-    if request.POST:
-        modulo = ModuloNuovoProvvedimento(request.POST)
-        if modulo.is_valid():
-            provvedimento = ProvvedimentoDisciplinare(
-                persona = modulo.cleaned_data['persona'],
-                tipo = modulo.cleaned_data['tipo'],
-                motivazione = modulo.cleaned_data['motivo'],
-                provvedimento_inizio = modulo.cleaned_data['provvedimento_inizio'],
-                provvedimento_fine = modulo.cleaned_data['provvedimento_fine'],
-                protocollo_data = modulo.cleaned_data['protocollo_data'],
-                protocollo_numero = modulo.cleaned_data['protocollo_numero'],
-            )
-            provvedimento.save()
-            provvedimento.esegui()
 
+    modulo = ModuloNuovoProvvedimento(request.POST or None)
+    if modulo.is_valid():
+        provvedimento = ProvvedimentoDisciplinare(
+            persona = modulo.cleaned_data['persona'],
+            tipo = modulo.cleaned_data['tipo'],
+            motivazione = modulo.cleaned_data['motivo'],
+            provvedimento_inizio = modulo.cleaned_data['provvedimento_inizio'],
+            provvedimento_fine = modulo.cleaned_data['provvedimento_fine'],
+            protocollo_data = modulo.cleaned_data['protocollo_data'],
+            protocollo_numero = modulo.cleaned_data['protocollo_numero'],
+        )
+        provvedimento.save()
+        provvedimento.esegui()
 
     contesto = {
         "modulo": modulo,
     }
-
 
     return "us_provvedimento.html", contesto
 

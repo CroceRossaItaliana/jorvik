@@ -72,6 +72,12 @@
                             <td>{{ veicolo.targa }}</td>
                             <td>{{ veicolo.ultima_revisione.data }}</td>
                         </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="bg-warning">
+                                    <i class="fa fa-info"></i> Nessun veicolo necessita revisione.
+                                </td>
+                            </tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -102,6 +108,12 @@
                             <td>{{ veicolo.targa }}</td>
                             <td>{{ veicolo.ultima_manutenzione.data }}</td>
                         </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="2" class="bg-warning">
+                                    <i class="fa fa-info"></i> Nessun veicolo richiede manutenzione.
+                                </td>
+                            </tr>
                         {% endfor %}
                 </table>
             </div>
