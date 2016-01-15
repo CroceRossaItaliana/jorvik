@@ -2232,6 +2232,35 @@ def carica_corsibase_assenze():
     cursore.close()
 
 
+def carica_corsibase_partecipazioni():
+
+    print("  - Caricamento delle partecipazioni lezioni ai corsi base...")
+
+
+    print("    - Caricamento dettagli in memoria...")
+    dd = generatore_funzione_dettaglio('datiPartecipazioniBase')
+
+    print("    - Caricamento partecipazioni...")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, nome, valore
+        FROM
+            lezioni_assenza
+        """
+    )
+
+    assenze = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for assenza in assenze:
+        contatore += 1
+
+        id = int(assenza[0])
+
+
 def carica_aspiranti():
 
     print("  - Caricamento degli aspiranti...")
@@ -3520,6 +3549,8 @@ if args.corsibase:
 
     carica_corsibase()
     carica_corsibase_lezioni()
+    carica_corsibase_assenze()
+    carica_corsibase_partecipazioni()
 
     print("  ~ Persisto tabella delle corrispondenze (formazione-corsibase.pickle-tmp)")
     pickle.dump(ASSOC_ID_CORSIBASE, open("formazione-corsibase.pickle-tmp", "wb"))

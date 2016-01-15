@@ -180,6 +180,22 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale):
     )
     stato = models.CharField(choices=STATO, default=IN_ATTESA, max_length=1, db_index=True)
 
+    POSITIVO = "P"
+    NEGATIVO = "N"
+    ESITO = (
+        (POSITIVO, "Positivo"),
+        (NEGATIVO, "Negativo")
+    )
+
+    IDONEO = "OK"
+    NON_IDONEO = "NO"
+
+
+    # Dati per la generazione del verbale (esito)
+    esito_parte_1 = models.CharField(choices=ESITO, default=None, null=True)
+    esito_parte_2 = models.CharField(choices=ESITO, default=None, null=True)
+    esito =
+
     class Meta:
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
