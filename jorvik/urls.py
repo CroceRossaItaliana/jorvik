@@ -40,9 +40,6 @@ urlpatterns = [
     # Modulo di recupero password
     url(r'^recupera-password/$', 'base.viste.recupera_password'),
 
-    #Formazione
-    url(r'^formazione/$', 'base.viste.formazione'),
-
     # Informazioni
     url(r'^informazioni/$', 'base.viste.informazioni'),
     url(r'^informazioni/aggiornamenti/$', 'base.viste.informazioni_aggiornamenti'),
@@ -51,6 +48,7 @@ urlpatterns = [
     url(r'^informazioni/verifica-tesserino/$', 'ufficio_soci.viste.verifica_tesserino'),
     url(r'^informazioni/sedi/$', 'base.viste.informazioni_sedi'),
     url(r'^informazioni/sedi/(?P<slug>.*)/$', 'base.viste.informazioni_sede'),
+    url(r'^informazioni/formazione/$', 'base.viste.formazione'),
 
     # Applicazioni
     url(r'^utente/$', 'anagrafica.viste.utente'),
@@ -130,6 +128,7 @@ urlpatterns = [
     url(r'^us/estensione/$', 'ufficio_soci.viste.us_estensione'),
     url(r'^us/estensione/(?P<pk>.*)/termina/$', 'ufficio_soci.viste.us_estensione_termina'),
     url(r'^us/trasferimento/$', 'ufficio_soci.viste.us_trasferimento'),
+    url(r'^us/dimissioni/(?P<pk>[0-9]+)/$', 'ufficio_soci.viste.us_dimissioni'),
 
 
     url(r'^us/elenchi/(?P<elenco_tipo>.*)/$', 'ufficio_soci.viste.us_elenchi'),

@@ -36,14 +36,14 @@ from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_per
     persona_permessi_almeno, persona_ha_permessi
 from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
     crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb, valida_almeno_14_anni
-from attivita.models import Turno
+from attivita.models import Turno, Partecipazione
 from base.files import PDF
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
     Autorizzazione, ConVecchioID
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
-from base.utils import is_list, sede_slugify, UpperCaseCharField
+from base.utils import is_list, sede_slugify, UpperCaseCharField, poco_fa
 from autoslug import AutoSlugField
 
 from posta.models import Messaggio
@@ -1348,13 +1348,6 @@ class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
     RICHIESTA_NOME = "Fototessera"
 
 
-class Dimissione(ModelloSemplice, ConMarcaTemporale):
-    """
-    Rappresenta una pratica di dimissione.
-    """
-    appartenenza = models.ForeignKey(Appartenenza, related_name='dimissione')
-
-
 class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     """
     Rappresenta una pratica di trasferimento.
@@ -1535,5 +1528,59 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
 
 #class Sospensione(ProvvedimentoDisciplinare, ConStorico):
  #   provvedimento = models.ForeignKey(ProvvedimentoDisciplinare, related_name="provvedimento")
+
+class Dimissione(ModelloSemplice, ConStorico):
+
+    class Meta:
+        verbose_name = "Documento di Dimissione"
+        verbose_name_plural = "Documenti di Dimissione"
+
+    persona = models.ForeignKey(Persona, related_name="dimissioni")
+    appartenenza = models.ForeignKey(Appartenenza, related_name="dimissioni")
+    sede = models.ForeignKey(Sede, related_name="dimissioni")
+
+    VOLONTARIE  = 'VOL'
+    TURNO       = 'TUR'
+    RISERVA     = 'RIS'
+    QUOTA       = 'QUO'
+    RADIAZIONE  = 'RAD'
+    DECEDUTO    = 'DEC'
+
+    MOTIVI = (
+        (VOLONTARIE, 'Dimissioni Volontarie'),
+        (TURNO, 'Mancato svolgimento turno'),
+        (RISERVA, 'Mancato rientro da riserva'),
+        (QUOTA, 'Mancato versamento quota annuale'),
+        (RADIAZIONE, 'Radiazione da Croce Rossa Italiana'),
+        (DECEDUTO,  'Decesso'),
+    )
+
+    motivo = models.CharField(choices=MOTIVI, max_length=2)
+    info = models.CharField(max_length=512)
+    richiedente = models.ForeignKey(Persona)
+
+    def applica(self):
+        from gruppi.models import Appartenenza as App
+        Appartenenza.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=self.creazione, terminazione=Appartenenza.DIMISSIONE)
+        Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=self.creazione)
+        App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=self.creazione)
+        #TODO reperibilita'
+        [
+            [x.ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
+            for y in [Estensione, Trasferimento, Partecipazione]
+        ]
+
+        Messaggio.costruisci_e_invia(
+            oggetto="Dimissioni",
+            modello="email_dimissioni.html",
+            corpo={
+                "Dimissione": self,
+            },
+            mittente=self.richiedente,
+
+            destinatari=[
+                self.persona
+            ]
+        )
 
 

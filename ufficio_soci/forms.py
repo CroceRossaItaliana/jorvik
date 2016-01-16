@@ -3,9 +3,10 @@ import datetime
 import autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
+from django.forms import ModelForm
 
 from anagrafica.forms import ModuloStepAnagrafica
-from anagrafica.models import Estensione, Appartenenza, Persona
+from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione
 from autenticazione.forms import ModuloCreazioneUtenza
 from curriculum.models import Titolo, TitoloPersonale
 from ufficio_soci.models import Tesseramento
@@ -146,3 +147,13 @@ class ModuloVerificaTesserino(forms.Form):
             raise ValidationError("I numeri di tessera iniziano con 8016.")
 
         return numero_tessera
+
+
+class ModuloCreazioneDimissioni(ModelForm):
+    class Meta:
+        model = Dimissione
+        fields = ['inizio', 'sede',]
+
+    trasforma_in_sostenitore = forms.BooleanField(help_text="In caso di Dimissioni Volontarie seleziona quest'opzione "
+                                                            "per trasformare il volontario in sostenitore")
+
