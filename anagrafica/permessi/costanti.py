@@ -23,6 +23,8 @@ GESTIONE_ATTIVITA = "GESTIONE_ATTIVITA"
 GESTIONE_CORSI_SEDE = "GESTIONE_CORSI_SEDE"
 GESTIONE_CORSO = "GESTIONE_CORSO"
 GESTIONE_AUTOPARCHI_SEDE = "GESTIONE_AUTOPARCHI_SEDE"
+GESTIONE_GRUPPI_SEDE = "GESTIONE_GRUPPI_SEDE"
+GESTIONE_GRUPPO = "GESTIONE_GRUPPO"
 
 # Tipologia degli oggetti assegnati ad ogni Permesso.
 PERMESSI_OGGETTI = (
@@ -34,7 +36,9 @@ PERMESSI_OGGETTI = (
     (GESTIONE_ATTIVITA,         ('attivita',   'Attivita')),
     (GESTIONE_CORSI_SEDE,       ('anagrafica', 'Sede')),
     (GESTIONE_CORSO,            ('formazione', 'CorsoBase')),
-    (GESTIONE_AUTOPARCHI_SEDE,  ('anagrafica', 'Sede'))
+    (GESTIONE_AUTOPARCHI_SEDE,  ('anagrafica', 'Sede')),
+    (GESTIONE_GRUPPI_SEDE,      ('anagrafica', 'Sede')),
+    (GESTIONE_GRUPPO,           ('gruppi',     'Gruppo'))
 )
 
 # Tipologia degli oggetti assegnati ad ogni Delega.

@@ -332,6 +332,7 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
         'messaggio_url': messaggio_url,
         'filtra': filtra,
     }
+    contesto.update(**elenco.kwargs)
 
     return elenco.template(), contesto
 

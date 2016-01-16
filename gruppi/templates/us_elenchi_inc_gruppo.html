@@ -1,0 +1,11 @@
+{% extends 'us_elenchi_inc_persone.html' %}
+
+
+{% block elenco_riga_azioni_extra %}
+
+    <a class="btn btn-danger btn-sm"
+       href="/attivita/gruppi/{{ gruppo.pk }}/espelli/{{ persona.pk }}/" target="_top">
+        <i class="fa fa-fw fa-times"></i> Espelli dal Gruppo
+    </a>
+
+{% endblock %}

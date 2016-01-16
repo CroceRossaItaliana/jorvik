@@ -1,0 +1,47 @@
+{% extends 'attivita_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load utils %}
+
+{% block pagina_titolo %}
+    Gruppo {{ gruppo.nome }}
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h3 class="allinea-centro">
+        <i class="fa fa-fw fa-users"></i>
+        Gruppo <strong>{{ gruppo.nome }}</strong>
+    </h3>
+
+    <div class="row allinea-centro">
+
+        <div class="col-md-4">
+            <i class="fa fa-fw fa-mail-reply"></i>
+            <a href="/attivita/gruppi/">
+                Torna all'elenco dei Gruppi
+            </a>
+        </div>
+        <div class="col-md-4">
+            <i class="fa fa-fw fa-home"></i> Sede:
+            {{ gruppo.sede.link|safe }}
+        </div>
+
+        <div class="col-md-4">
+            {% if gruppo.attivita %}
+                <i class="fa fa-fw fa-calendar"></i> Attivit&agrave;:
+                {{ gruppo.attivita.link|safe }}
+            {% endif %}
+
+        </div>
+    </div>
+
+    <p>&nbsp;</p>
+    <div class="alert alert-info">
+        <i class="fa fa-fw fa-info-circle"></i>
+        Da qui puoi gestire i membri del gruppo di lavoro.
+    </div>
+
+    {% elenco elenco %}
+
+{% endblock %}

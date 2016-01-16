@@ -10,10 +10,13 @@ import copy
 import operator
 from functools import reduce
 
+from datetime import timedelta
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.db import models
 from django.db.models import Q, F
 import urllib
+
+from django.utils import timezone
 from lxml import html
 from django.db import models
 
@@ -166,3 +169,10 @@ def ean13_carattere_di_controllo(first12digits):
     if (checkDigit == 10):
         return 0
     return checkDigit
+
+
+def poco_fa():
+    """
+    Un secondo fa. Utile per terminare o iniziare le appartenenze.
+    """
+    return timezone.now() - timedelta(seconds=2)

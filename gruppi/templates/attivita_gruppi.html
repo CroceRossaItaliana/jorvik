@@ -1,0 +1,101 @@
+{% extends 'attivita_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Storico partecipazione alle attivit&agrave;
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h3>
+        <i class="fa fa-fw fa-users"></i>
+        Gruppi di lavoro
+    </h3>
+
+    <div class="alert alert-info">
+        <i class="fa fa-fw fa-info-circle"></i> Da qui
+        potrai iscriverti ai gruppi di lavoro disponibili presso le tue
+        Sedi di appartenenza, iscriverti o abbandonare i gruppi a cui
+        fai gi&agrave; parte.
+    </div>
+
+    <table class="table table-striped table-responsive">
+        <thead>
+            <th>
+                Gruppo
+            </th>
+            <th>
+                Referenti
+            </th>
+            <th>
+                Azione
+            </th>
+        </thead>
+
+        <tbody>
+
+        {% for gruppo in gruppi_disponibili %}
+            <tr class="
+                {% if gruppo in gruppi_gestione %}warning
+                {% elif gruppo in miei_gruppi %}success
+                {% endif %}">
+                <td style="width: 60%;">
+                    <strong>
+                        {{ gruppo.nome }}
+                    </strong><br />
+
+                    {% if gruppo.attivita %}
+                        <strong>{{ gruppo.attivita.link|safe }}</strong><br />
+                    {% endif %}
+                    {{ gruppo.sede.link|safe }}
+                </td>
+                <td>
+                    {% for delegato in gruppo.delegati_attuali %}
+                        {{ delegato.link|safe }}<br />
+
+                    {% empty %}
+                        Nessun referente
+
+                    {% endfor %}
+                </td>
+                <td>
+                    <a href="/attivita/gruppi/{{ gruppo.pk }}/"
+                       class="btn btn-sm btn-block btn-warning">
+                        <i class="fa fa-fw fa-list"></i>
+                        Membri
+                    </a>
+
+                    {% if gruppo in miei_gruppi %}
+                        <a href="/attivita/gruppi/{{ gruppo.pk }}/abbandona/"
+                           class="btn btn-sm btn-block btn-danger">
+                            <i class="fa fa-fw fa-times"></i>
+                            Abbandona
+                        </a>
+
+                    {% else %}
+                        <a href="/attivita/gruppi/{{ gruppo.pk }}/iscriviti/"
+                           class="btn btn-sm btn-block btn-success">
+                            <i class="fa fa-fw fa-check"></i>
+                            Iscriviti
+                        </a>
+
+                    {% endif %}
+                </td>
+            </tr>
+
+        {% empty %}
+            <tr colspan="4" class="bg-info allinea-centro">
+                <h4><i class="fa fa-fw fa-info-circle"></i> Nessuna richiesta di partecipazione</h4>
+                <p>Vai al Calendario per trovare delle attivit&agrave; alle quali partecipare. Una volta richiesta
+                    la partecipazione, torna in questa pagina.</p>
+
+            </tr>
+            Nessuna richiesta.
+        {% endfor %}
+
+        </tbody>
+
+
+    </table>
+{% endblock %}

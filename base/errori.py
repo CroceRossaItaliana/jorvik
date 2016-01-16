@@ -57,6 +57,25 @@ def errore_generico(request, me=None,
     return 'base_errore_generico.html', contesto
 
 
+def messaggio_generico(request, me=None,
+             titolo="OK", messaggio="Azione effettuata.",
+             torna_titolo="Home page", torna_url="/"):
+    """
+    Ritorna un messaggio generico con un link per tornare indietro.
+    :param titolo: Il titolo del messaggio .
+    :param messaggio: Il messaggio .
+    :param torna_titolo: Il titolo del link per tornare alla pagina precedente.
+    :param torna_url: L'URL della pagina precedente alla quale tornare.
+    """
+    contesto = {
+        "messaggio_titolo": titolo,
+        "messaggio_messaggio": messaggio,
+        "messaggio_torna_titolo": torna_titolo,
+        "messaggio_torna_url": torna_url,
+    }
+    return 'base_messaggio_generico.html', contesto
+
+
 def errore_nessuna_appartenenza(request, me=None, torna_url="/utente/"):
     return errore_generico(request, me,
                             titolo="Necessaria appartenenza,",

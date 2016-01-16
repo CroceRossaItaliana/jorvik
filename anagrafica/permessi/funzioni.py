@@ -2,14 +2,15 @@
 Questo modulo contiene tutte le funzioni per testare i permessi
 a partire da un oggetto sul quale ho una delega ed un oggetto da testare.
 """
-from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO
+from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.applicazioni import DELEGATO_AREA
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
 from anagrafica.permessi.applicazioni import REFERENTE
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
-    GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, GESTIONE_AUTOPARCHI_SEDE
+    GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, GESTIONE_AUTOPARCHI_SEDE, \
+    GESTIONE_GRUPPI_SEDE, GESTIONE_GRUPPO
 
 
 def permessi_presidente(sede):
@@ -21,12 +22,14 @@ def permessi_presidente(sede):
     """
 
     return [
-       (GESTIONE_SEDE,      sede.espandi())
+        (GESTIONE_SEDE,         sede.espandi()),
+        (GESTIONE_GRUPPI_SEDE,  sede.espandi()),
     ] \
         + permessi_ufficio_soci(sede) \
         + permessi_responsabile_attivita(sede) \
         + permessi_responsabile_formazione(sede) \
         + permessi_responsabile_autoparco(sede)
+
 
 def permessi_ufficio_soci(sede):
     """
@@ -40,6 +43,7 @@ def permessi_ufficio_soci(sede):
         (ELENCHI_SOCI,      sede.espandi(includi_me=True, pubblici=True)),
     ]
 
+
 def permessi_responsabile_attivita(sede):
     """
     Permessi della delega di RESPONSABILE DELLE ATTIVITA'.
@@ -47,13 +51,29 @@ def permessi_responsabile_attivita(sede):
     :param sede: Sede di cui si e' responsabile attivita'.
     :return: Lista di permessi.
     """
-    from anagrafica.models import Sede
     from attivita.models import Area, Attivita
+    from gruppi.models import Gruppo
     return [
         (GESTIONE_ATTIVITA_SEDE,    sede.espandi()),
         (GESTIONE_ATTIVITA_AREA,    Area.objects.filter(sede__in=sede.espandi())),
-        (GESTIONE_ATTIVITA,         Attivita.objects.filter(sede__in=sede.espandi()))
+        (GESTIONE_ATTIVITA,         Attivita.objects.filter(sede__in=sede.espandi())),
+        (GESTIONE_GRUPPI_SEDE,      sede.espandi()),
+        (GESTIONE_GRUPPO,           Gruppo.objects.filter(sede__in=sede.espandi()))
     ]
+
+
+def permessi_referente_gruppo(gruppo):
+    """
+    Permessi della delega di REFERENTE DI GRUPPO.
+
+    :param gruppo: Gruppo di cui si e' referenti.
+    :return: Lista di permessi.
+    """
+    from gruppi.models import Gruppo
+    return [
+        (GESTIONE_GRUPPO,           Gruppo.objects.filter(pk=gruppo.pk))
+    ]
+
 
 def permessi_responsabile_formazione(sede):
     """
@@ -69,6 +89,7 @@ def permessi_responsabile_formazione(sede):
         (GESTIONE_CORSO,            CorsoBase.objects.filter(sede__in=sede.espandi(includi_me=True)))
 
     ]
+
 
 def permessi_delegato_area(area):
     """
@@ -146,7 +167,8 @@ PERMESSI_FUNZIONI = (
     (RESPONSABILE_AREA,         permessi_responsabile_area),
     (REFERENTE,                 permessi_referente),
     (DIRETTORE_CORSO,           permessi_direttore_corso),
-    (RESPONSABILE_AUTOPARCO,    permessi_responsabile_autoparco)
+    (RESPONSABILE_AUTOPARCO,    permessi_responsabile_autoparco),
+    (REFERENTE_GRUPPO,          permessi_referente_gruppo),
 )
 
 # Tieni in memoria anche come dizionari, per lookup veloci

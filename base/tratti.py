@@ -91,7 +91,7 @@ class ConStorico(models.Model):
 
     @classmethod
     @concept
-    def query_attuale(cls, al_giorno=datetime.now(), **kwargs):
+    def query_attuale(cls, al_giorno=timezone.now(), **kwargs):
         """
         Restituisce l'oggetto Q per filtrare le entita' attuali.
 
@@ -107,7 +107,7 @@ class ConStorico(models.Model):
             inizio = datetime.combine(al_giorno, datetime.max.time())  # 23.59
             fine = datetime.combine(al_giorno, datetime.min.time())  # 0.00
 
-        fine += timedelta(minutes=1)  # Anti-bug
+        fine += timedelta(seconds=1)  # Anti-bug
 
         return Q(
             Q(inizio__lte=inizio),

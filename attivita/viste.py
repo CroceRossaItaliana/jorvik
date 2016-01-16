@@ -3,12 +3,13 @@
 from datetime import date, timedelta, datetime
 from django.shortcuts import redirect, get_object_or_404
 
-from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI
+from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO
 from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni
 from attivita.models import Partecipazione, Attivita
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.files import Excel, FoglioExcel
+from gruppi.models import Gruppo
 
 
 def attivita(request):
@@ -142,14 +143,6 @@ def attivita_storico_excel(request, me):
     excel.genera_e_salva("Foglio di servizio.xlsx")
     return redirect(excel.download_url)
 
-
-@pagina_privata
-def attivita_gruppi(request, me):
-    """
-    Mostra i gruppi di cui faccio parte, assieme ai controlli necessari a iscriversi a nuovi gruppi.
-    """
-
-    return 'attivita_vuota.html'
 
 @pagina_privata
 def attivita_reperibilita(request, me):
