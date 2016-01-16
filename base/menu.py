@@ -65,7 +65,7 @@ def menu(request):
             ("Attività", (
                 ("Calendario", "fa-calendar", "/attivita/calendario/"),
                 ("Miei turni", "fa-list", "/attivita/storico/"),
-                ("Gruppi", "fa-users", "/attivita/gruppi/"),
+                ("Gruppi di lavoro", "fa-users", "/attivita/gruppi/"),
                 ("Reperibilità", "fa-thumb-tack", "/attivita/reperibilita/"),
             )),
         ),

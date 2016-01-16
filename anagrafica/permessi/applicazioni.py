@@ -16,6 +16,7 @@ DELEGATO_OBIETTIVO_5 = 'O5'
 DELEGATO_OBIETTIVO_6 = 'O6'
 RESPONSABILE_AREA = 'RA'
 REFERENTE = 'RE'
+REFERENTE_GRUPPO = 'GR'
 DELEGATO_CO = 'CO'
 RESPONSABILE_FORMAZIONE = 'RF'
 RESPONSABILE_AUTOPARCO = 'AP'
@@ -37,6 +38,7 @@ PERMESSI_NOMI = (
     (DELEGATO_OBIETTIVO_6,      "Delegato Obiettivo VI (Sviluppo)"),
     (RESPONSABILE_AREA,         "Responsabile d'Area"),
     (REFERENTE,                 "Referente Attività"),
+    (REFERENTE_GRUPPO,          "Referente Gruppo"),
     (DELEGATO_CO,               "Delegato Centrale Operativa"),
     (RESPONSABILE_FORMAZIONE,   "Responsabile Formazione"),
     (DIRETTORE_CORSO,           "Direttore Corso"),

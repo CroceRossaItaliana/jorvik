@@ -17,7 +17,7 @@ from django.db import transaction, IntegrityError
 from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, REFERENTE, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     DELEGATO_CO, UFFICIO_SOCI, RESPONSABILE_PATENTI, RESPONSABILE_FORMAZIONE, UFFICIO_SOCI_TEMPORANEO, \
-    RESPONSABILE_AUTOPARCO, RESPONSABILE_DONAZIONI, DIRETTORE_CORSO
+    RESPONSABILE_AUTOPARCO, RESPONSABILE_DONAZIONI, DIRETTORE_CORSO, REFERENTE_GRUPPO
 from attivita.models import Area, Attivita, Partecipazione, Turno
 from base.models import Autorizzazione
 from curriculum.models import TitoloPersonale, Titolo
@@ -34,6 +34,7 @@ import sangue.models as sangue
 from django.contrib.gis.geos import Point
 from autenticazione.models import Utenza
 import formazione.models as formazione
+import gruppi.models as gruppi
 from formazione.models import PartecipazioneCorsoBase
 
 from safedelete import HARD_DELETE
@@ -135,6 +136,9 @@ parser.add_argument('--salta-veicoli', dest='veicoli', action='store_const',
 parser.add_argument('--salta-tesserini', dest='tesserini', action='store_const',
                    const=False, default=True,
                    help='salta importazione richieste di tesserino (usa cache precedente)')
+parser.add_argument('--salta-gruppi', dest='gruppi', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione gruppi')
 
 parser.add_argument('--uploads', dest='uploads', action='store',
                    help='path assoluta alla cartella upload/ di Gaia vecchio')
@@ -288,6 +292,7 @@ ASSOC_ID_ESTENSIONI = {}
 ASSOC_ID_AUTOPARCHI = {}
 ASSOC_ID_VEICOLI = {}
 ASSOC_ID_TESSERINI = {}
+ASSOC_ID_GRUPPI = {}
 
 
 def parse_numero(numero, paese="IT"):
@@ -3613,6 +3618,151 @@ def carica_tesserini():
     cursore.close()
 
 
+def carica_gruppi():
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, comitato, nome,
+            obiettivo, area, referente,
+            attivita, estensione
+        FROM
+            gruppi
+        WHERE
+            comitato IS NOT NULL
+        AND nome IS NOT NULL
+        AND nome <> ''
+        """
+    )
+
+    grp = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for gr in grp:
+        contatore += 1
+
+        id = int(gr[0])
+        comitato = comitato_oid(gr[1])
+        nome = stringa(gr[2])
+        obiettivo = iint(gr[3], default=1)
+
+        try:
+            area_id = ASSOC_ID_AREE[int(gr[4])]
+        except KeyError:
+            print("   SALTATO area non esistente ")
+            continue
+
+        try:
+            referente_id = ASSOC_ID_PERSONE[int(gr[5])] if gr[5] else None
+        except KeyError:
+            print("   SALTATO referente non esistente ")
+            continue
+
+        try:
+            attivita_id = ASSOC_ID_ATTIVITA[int(gr[6])] if gr[6] else None
+            attivita = Attivita.objects.get(pk=attivita_id) if attivita_id else None
+        except KeyError:
+            print("   SALTATO attivita non esistente ")
+            continue
+
+        g = gruppi.Gruppo(
+            nome=nome,
+            obiettivo=obiettivo,
+            area_id=area_id,
+            attivita_id=attivita_id,
+            sede=comitato,
+            estensione=comitato.estensione,
+            creazione=attivita.creazione if attivita else timezone.now(),
+            ultima_modifica=attivita.ultima_modifica if attivita else timezone.now(),
+        )
+        g.save()
+
+        ASSOC_ID_GRUPPI[id] = g.pk
+
+        if referente_id:
+            referente = Persona.objects.get(pk=referente_id)
+            g.aggiungi_delegato(REFERENTE_GRUPPO, referente, referente,
+                                inizio=g.creazione)
+
+        print("   %s gruppo sede=%s, area_id=%d, ref_id=%d, nome=%s" % (
+            progresso(contatore, totale), comitato, area_id, referente_id or 0, nome,
+        ))
+
+    cursore.close()
+
+
+def carica_gruppi_appartenenze():
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, volontario, gruppo,
+            inizio, fine, timestamp,
+            motivazione, tNega, pNega
+        FROM
+            gruppiPersonali
+        WHERE
+            volontario IS NOT NULL
+        AND comitato IS NOT NULL
+        """
+    )
+
+    apps = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for app in apps:
+        contatore += 1
+
+        id = int(app[0])
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[iint(app[1])]
+        except KeyError:
+            print("   SALTATO persona non esistente ")
+            continue
+
+        try:
+            pNega_id = ASSOC_ID_PERSONE[iint(app[8])] if app[8] else None
+        except KeyError:
+            print("   SALTATO pNega non esistente ")
+            continue
+
+        try:
+            gruppo_id = ASSOC_ID_GRUPPI[iint(app[2])]
+        except KeyError:
+            print("   SALTATO Gruppo non esistente ")
+            continue
+
+        inizio = data_da_timestamp(app[3])
+        fine = data_da_timestamp(app[4], default=None)
+        creazione = data_da_timestamp(app[5])
+
+        motivo_negazione = stringa(app[6]) or ''
+        ultima_modifica = data_da_timestamp(app[7], default=creazione)
+
+        a = gruppi.Appartenenza(
+            gruppo_id=gruppo_id,
+            persona_id=persona_id,
+            motivo_negazione=motivo_negazione,
+            inizio=inizio,
+            fine=fine,
+            negato_da_id=pNega_id,
+            creazione=creazione,
+            ultima_modifica=ultima_modifica
+        )
+        a.save()
+
+        print("   %s app. gruppo, persona_id=%d, gruppo_id=%d" % (
+            progresso(contatore, totale), persona_id, gruppo_id
+        ))
+
+    cursore.close()
+
+
+
+
 # Importazione dei Comitati
 
 print("> Importazione dei Comitati")
@@ -3985,5 +4135,18 @@ if args.tesserini:
 else:
     print("  ~ Carico tabella delle corrispondenze (tesserini.pickle-tmp)")
     ASSOC_ID_TESSERINI = pickle.load(open("tesserini.pickle-tmp", "rb"))
+
+# Importazione dei gruppi
+print("> Importazione gruppi di lavoro")
+if args.gruppi:
+    print("  - Eliminazione attuali")
+    gruppi.Gruppo.objects.all().delete()
+    gruppi.Appartenenza.objects.all().delete()
+
+    carica_gruppi()
+    carica_gruppi_appartenenze()
+
+else:
+    print("  ~ Salto importazione dei gruppi di lavoro")
 
 # print(ASSOC_ID_COMITATI)
