@@ -165,20 +165,12 @@ class CorsoBase(Corso):
         return self.partecipazioni.all().filter(stato=PartecipazioneCorsoBase.NEGATA)
 
 
-class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale):
+class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     persona = models.ForeignKey(Persona, related_name='partecipazioni_corsi')
     corso = models.ForeignKey(CorsoBase, related_name='partecipazioni')
 
-    IN_ATTESA = 'A'
-    CONFERMATA = 'C'
-    NEGATA = 'N'
-    STATO = (
-        (IN_ATTESA, "In attesa"),
-        (CONFERMATA, "Confermata"),
-        (NEGATA, "Negata"),
-    )
-    stato = models.CharField(choices=STATO, default=IN_ATTESA, max_length=1, db_index=True)
+    # Dati per la generazione del verbale (esito)
 
     POSITIVO = "P"
     NEGATIVO = "N"
@@ -189,11 +181,35 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale):
 
     IDONEO = "OK"
     NON_IDONEO = "NO"
+    ESITO_IDONEO = (
+        (IDONEO, "Idoneo"),
+        (NON_IDONEO, "Non Idoneo")
+    )
+    esito_esame = models.CharField(max_length=2, choices=ESITO_IDONEO, default=None, null=True, db_index=True)
 
+    AMMESSO = "AM"
+    NON_AMMESSO = "NA"
+    ASSENTE = "AS"
+    AMMISSIONE = (
+        (AMMESSO, "Ammesso"),
+        (NON_AMMESSO, "Non Ammesso"),
+        (ASSENTE, "Assente"),
+    )
 
-    # Dati per la generazione del verbale (esito)
-    #esito_parte_1 = models.CharField(choices=ESITO, default=None, null=True)
-    #esito_parte_2 = models.CharField(choices=ESITO, default=None, null=True)
+    ammissione = models.CharField(max_length=2, choices=AMMISSIONE, default=None, blank=True, null=True, db_index=True)
+    motivo_non_ammissione = models.CharField(max_length=1025, blank=True, null=True)
+
+    esito_parte_1 = models.CharField(max_length=1, choices=ESITO, default=None, null=True, db_index=True,
+                                     help_text="La Croce Rossa")
+    argomento_parte_1 = models.TextField(max_length=1024, blank=True, null=True, help_text="es. Storia della CRI, DIU")
+
+    esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, null=True, db_index=True,
+                                     help_text="Gesti e manovre salvavita")
+    argomento_parte_2 = models.TextField(max_length=1024, blank=True, null=True, help_text="es. BLS, colpo di calore")
+
+    extra_1 = models.BooleanField(help_text="Prova pratica su Parte 2 sostituita da colloquio.", default=False)
+    extra_2 = models.BooleanField(help_text="Verifica effettuata solo sulla Parte 1 del programma del corso.",
+                                  default=False)
 
     class Meta:
         verbose_name = "Richiesta di partecipazione"

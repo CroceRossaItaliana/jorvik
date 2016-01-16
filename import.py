@@ -34,6 +34,7 @@ import sangue.models as sangue
 from django.contrib.gis.geos import Point
 from autenticazione.models import Utenza
 import formazione.models as formazione
+from formazione.models import PartecipazioneCorsoBase
 
 from safedelete import HARD_DELETE
 from jorvik.settings import MYSQL_CONF
@@ -2181,7 +2182,7 @@ def carica_corsibase_assenze():
         SELECT
             id, lezione, utente, pConferma, tConferma
         FROM
-            lezioni_assenza
+            lezioni_assenze
         """
     )
 
@@ -2221,7 +2222,7 @@ def carica_corsibase_assenze():
         a = formazione.AssenzaCorsoBase(
             lezione_id=lezione_id,
             persona_id=persona_id,
-            registrato_da_id=registrato_da_id,
+            registrata_da_id=registrato_da_id,
             creazione=tConferma,
             ultima_modifica=tConferma,
         )
@@ -2236,7 +2237,6 @@ def carica_corsibase_partecipazioni():
 
     print("  - Caricamento delle partecipazioni lezioni ai corsi base...")
 
-
     print("    - Caricamento dettagli in memoria...")
     dd = generatore_funzione_dettaglio('datiPartecipazioniBase')
 
@@ -2245,20 +2245,195 @@ def carica_corsibase_partecipazioni():
     cursore = db.cursor()
     cursore.execute("""
         SELECT
-            id, nome, valore
+            id, volontario, corsoBase,
+            stato, timestamp, tConferma,
+            pConferma, tAttestato, cAttestato
         FROM
-            lezioni_assenza
+            partecipazioniBase
+        WHERE
+            volontario IN (SELECT id FROM anagrafica)
+        AND corsoBase IN (SELECT id FROM corsibase)
         """
     )
 
-    assenze = cursore.fetchall()
+    pcbs = cursore.fetchall()
     totale = cursore.rowcount
     contatore = 0
 
-    for assenza in assenze:
+    for pcb in pcbs:
         contatore += 1
 
-        id = int(assenza[0])
+        id = int(pcb[0])
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[int(pcb[1])]
+        except KeyError:
+            print("    SALTATO persona non esistente")
+            continue
+
+        try:
+            pConferma_id = ASSOC_ID_PERSONE[int(pcb[6])] if pcb[6] else None
+        except KeyError:
+            print("    SALTATO persona pConferma non esistente")
+            continue
+
+        try:
+            pAttestato_id = ASSOC_ID_PERSONE[int(pcb[8])] if pcb[8] else None
+        except KeyError:
+            print("    SALTATO persona cAttestato non esistente")
+            continue
+
+        try:
+            corso_id = ASSOC_ID_CORSIBASE[int(pcb[2])]
+        except KeyError:
+            print("    SALTATO corso base non esistente")
+            continue
+
+        corso = formazione.CorsoBase.objects.get(pk=corso_id)
+
+        stato = int(pcb[3])
+
+        creazione = data_da_timestamp(pcb[4])
+
+        tConferma = data_da_timestamp(pcb[5], default=None)
+        tAttestato = data_da_timestamp(pcb[7], default=None)
+
+        ammissione = None
+        motivo_non_ammissione = ''
+        esito = None
+        esito_parte_1 = None
+        esito_parte_2 = None
+        argomento_parte_1 = None
+        argomento_parte_2 = None
+
+        ritirata = False
+        confermata = True
+
+        a = None
+
+        if stato == 50:  # Bocciato
+
+            esito = PartecipazioneCorsoBase.NON_IDONEO
+            motivo_non_ammissione = stringa(dd(id, 'motivo')) or 'Non specificato'
+
+            if motivo_non_ammissione == "non presente all'esame":
+                ammissione = PartecipazioneCorsoBase.ASSENTE
+
+            elif "non amesso per" in motivo_non_ammissione:
+                ammissione = PartecipazioneCorsoBase.NON_AMMESSO
+
+        elif stato == 40:  # Superato
+
+            esito = PartecipazioneCorsoBase.IDONEO
+
+            p = PartecipazioneCorsoBase.POSITIVO
+            n = PartecipazioneCorsoBase.NEGATIVO
+
+            extra_1 = bool(dd(id, 'e1', default=0))
+            extra_2 = bool(dd(id, 'e2', default=0))
+
+            esito_parte_1 = p
+            argomento_parte_1 = stringa(dd(id, 'a1')) or ''
+
+            if not extra_2:
+                esito_parte_2 = p if iint(dd(id, 'p2')) else n
+                argomento_parte_2 = stringa(dd(id, 'a2')) or ''
+
+
+        elif stato == 30:  # Iscritto e confermato
+
+            a = {
+                "richiedente_id": persona_id,
+                "firmatario_id": pConferma_id,
+                "concessa": True,
+                "necessaria": False,
+                "progressivo": 1,
+                "destinatario_ruolo": DIRETTORE_CORSO,
+                "destinatario_oggetto": corso,
+                "creazione": creazione,
+                "ultima_modifica": tConferma,
+            }
+
+        elif stato == 20:  # Richiesto (preiscritto)
+
+            confermata = False
+            a = {
+                "richiedente_id": persona_id,
+                "firmatario_id": None,
+                "concessa": None,
+                "necessaria": True,
+                "progressivo": 1,
+                "destinatario_ruolo": DIRETTORE_CORSO,
+                "destinatario_oggetto": corso,
+                "creazione": creazione,
+                "ultima_modifica": creazione,
+            }
+
+
+        elif stato == 10:  # Abbandono (non previsto)
+            raise ValueError("Abbandono non previsto.")
+
+        elif stato == 5:  # Negato
+            confermata = False
+            a = {
+                "richiedente_id": persona_id,
+                "firmatario_id": pConferma_id,
+                "concessa": False,
+                "necessaria": False,
+                "progressivo": 1,
+                "destinatario_ruolo": DIRETTORE_CORSO,
+                "destinatario_oggetto": corso,
+                "creazione": creazione,
+                "ultima_modifica": tConferma,
+            }
+
+        elif stato == 0:  # Ritirata
+            confermata = False
+            ritirata = True
+            a = {
+                "richiedente_id": persona_id,
+                "firmatario_id": None,
+                "concessa": None,
+                "necessaria": False,
+                "progressivo": 1,
+                "destinatario_ruolo": DIRETTORE_CORSO,
+                "destinatario_oggetto": corso,
+                "creazione": creazione,
+                "ultima_modifica": creazione,
+            }
+
+        p = PartecipazioneCorsoBase(
+            persona_id=persona_id,
+            corso=corso,
+            esito_esame=esito,
+            ammissione=ammissione,
+            motivo_non_ammissione=motivo_non_ammissione,
+            esito_parte_1=esito_parte_1,
+            argomento_parte_1=argomento_parte_1,
+            esito_parte_2=esito_parte_2,
+            argomento_parte_2=argomento_parte_2,
+            extra_1=extra_1,
+            extra_2=extra_2,
+            creazione=creazione,
+            ultima_modifica=tAttestato if tAttestato else (tConferma if tConferma else creazione),
+            confermata=confermata,
+            ritirata=ritirata,
+        )
+        p.save()
+
+        if a:
+            au = Autorizzazione(oggetto=p, **a)
+            au.save()
+
+        print("   %s partecipazione corsobase id=%d, persona id=%d, aut=%d" % (
+            progresso(contatore, totale), corso_id, persona_id, bool(a),
+        ))
+
+    cursore.close()
+
+
+
+
 
 
 def carica_aspiranti():
