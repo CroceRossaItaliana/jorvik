@@ -69,7 +69,7 @@ def stringa(s):
 parser = argparse.ArgumentParser(description='Importa i dati da un database MySQL di PHP-Gaia.')
 parser.add_argument('--no-geo', dest='geo', action='store_const',
                    const=False, default=True,
-                   help='disattiva le funzionalità geografiche (solo test)')
+                   help='disattiva le funzionalita geografiche (solo test)')
 parser.add_argument('-v', dest='verbose', action='store_const',
                    const=True, default=False,
                    help='mostra dettagli sul progresso (estremamente prolisso)')
