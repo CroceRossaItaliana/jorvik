@@ -1444,7 +1444,14 @@ def carica_quote():
 
         data_versamento = data_da_timestamp(quota[4], data_da_timestamp(quota[5]))
         data_creazione = data_da_timestamp(quota[5])
-        registrato_da = ASSOC_ID_PERSONE[int(quota[6])]
+
+        try:
+            registrato_da = ASSOC_ID_PERSONE[int(quota[6])]
+        except KeyError:
+            print("    - Quota Saltata (%d) registrato da persona non esistente (%d)" % (
+                id, int(quota[6]),
+            ))
+            continue
 
         importo = float(quota[7])
 
