@@ -145,7 +145,7 @@ parser.add_argument('--uploads', dest='uploads', action='store',
 
 parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
                    const=True, default=False,
-                   help='ignora errori di integrità (solo test)')
+                   help='ignora errori di integrita (solo test)')
 
 
 args = parser.parse_args()
