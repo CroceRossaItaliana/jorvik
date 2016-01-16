@@ -9,7 +9,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from anagrafica.models import Sede, Persona
-from base.models import ConAutorizzazioni
+from base.models import ConAutorizzazioni, ConVecchioID
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.models import ModelloSemplice
 from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico
@@ -38,7 +38,7 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazion
     sede = models.ForeignKey(Sede, related_query_name='%(class)s_corso', help_text="La Sede organizzatrice del Corso.")
 
 
-class CorsoBase(Corso):
+class CorsoBase(Corso, ConVecchioID):
 
     ## Tipologia di corso
     #BASE = 'BA'

@@ -430,8 +430,6 @@ def carica_anagrafiche():
         attuale.update({riga[1]: riga[2]})
         DETTAGLI_DICT.update({int(riga[0]): attuale})
 
-    print(DETTAGLI_DICT[218])
-
     totale = cursore.rowcount
     contatore = 0
     for persona in persone:
@@ -440,7 +438,6 @@ def carica_anagrafiche():
 
         if args.verbose:
             print("    - " + progresso(contatore, totale) + ": id=" + stringa(persona[0]) + ", codice_fiscale=" + stringa(persona[6]))
-            print("      - Scaricamento dati aggiuntivi")
 
         id = persona[0]
 
@@ -469,10 +466,11 @@ def carica_anagrafiche():
         data_nascita = data_da_timestamp(dict.get('dataNascita'), default=None)
         genere_registrato = Persona.MASCHIO if dati['sesso'] == 1 else Persona.FEMMINA
         genere = ottieni_genere_da_codice_fiscale(dati['codiceFiscale'], default=genere_registrato)
+        codice_fiscale = dati['codiceFiscale']
         p = Persona(
             nome=dati['nome'],
             cognome=dati['cognome'],
-            codice_fiscale=dati['codiceFiscale'],
+            codice_fiscale=codice_fiscale,
             data_nascita=data_nascita,
             genere=genere,
             stato=Persona.PERSONA,
@@ -2107,6 +2105,7 @@ def carica_corsibase():
             progressivo=progressivo,
             anno=anno,
             stato=stato,
+            vecchio_id=id,
         )
         c.save()
 
