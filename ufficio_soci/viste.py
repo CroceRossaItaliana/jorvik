@@ -1,3 +1,5 @@
+import random
+
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
 
@@ -5,15 +7,15 @@ from anagrafica.forms import ModuloNuovoProvvedimento, ModuloCreazioneTrasferime
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA
 from autenticazione.forms import ModuloCreazioneUtenza
-from autenticazione.funzioni import pagina_privata
+from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, errore_nessuna_appartenenza
 from base.files import Excel, FoglioExcel
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
-    ModuloReclamaQuota, ModuloReclama
-from ufficio_soci.models import Quota, Tesseramento
+    ModuloReclamaQuota, ModuloReclama, ModuloVerificaTesserino
+from ufficio_soci.models import Quota, Tesseramento, Tesserino
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
@@ -553,3 +555,33 @@ def us_quote(request, me):
     }
 
     return 'us_elenco_generico.html', contesto
+
+
+@pagina_pubblica
+def verifica_tesserino(request, me=None):
+
+    modulo = ModuloVerificaTesserino(request.POST or None)
+    ricerca = False
+    lettera_numero = 0
+    lettera = "?"
+    tesserino = None
+    if modulo.is_valid():
+        ricerca = True
+        try:
+            tesserino = Tesserino.objects.get(codice=modulo.cleaned_data['numero_tessera'])
+            cognome = tesserino.persona.cognome
+            lettera_numero = random.randint(0, len(cognome))
+            lettera = cognome[lettera_numero].upper()
+            lettera_numero += 1
+
+        except Tesserino.DoesNotExist:
+            tesserino = None
+
+    contesto = {
+        "modulo": modulo,
+        "tesserino": tesserino,
+        "lettera_numero": lettera_numero,
+        "lettera": lettera,
+        "ricerca": ricerca,
+    }
+    return 'informazioni_verifica_tesserino.html', contesto

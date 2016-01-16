@@ -130,3 +130,19 @@ class ModuloReclama(forms.Form):
 
     codice_fiscale = forms.CharField(min_length=9)
 
+
+class ModuloVerificaTesserino(forms.Form):
+
+    numero_tessera = forms.CharField(max_length=13, help_text="Come riportato sul retro della tessera, "
+                                                              "sotto al codice a barre.")
+
+    def clean_numero_tessera(self):
+        numero_tessera = self.cleaned_data['numero_tessera']
+
+        if len(numero_tessera) != 13:
+            raise ValidationError("Il numero della tessera è composto da 13 cifre.")
+
+        if "8016" not in numero_tessera:
+            raise ValidationError("I numeri di tessera iniziano con 8016.")
+
+        return numero_tessera

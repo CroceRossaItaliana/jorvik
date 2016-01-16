@@ -48,6 +48,7 @@ urlpatterns = [
     url(r'^informazioni/aggiornamenti/$', 'base.viste.informazioni_aggiornamenti'),
     url(r'^informazioni/sicurezza/$', 'base.viste.informazioni_sicurezza'),
     url(r'^informazioni/condizioni/$', 'base.viste.informazioni_condizioni'),
+    url(r'^informazioni/verifica-tesserino/$', 'ufficio_soci.viste.verifica_tesserino'),
     url(r'^informazioni/sedi/$', 'base.viste.informazioni_sedi'),
     url(r'^informazioni/sedi/(?P<slug>.*)/$', 'base.viste.informazioni_sede'),
 
