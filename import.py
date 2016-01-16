@@ -2,6 +2,8 @@
 
 import os, sys
 
+from django.utils.encoding import smart_str
+
 import phonenumbers
 from django.core.files import File
 
@@ -62,9 +64,9 @@ def stringa(s):
     if s is None:
         return ''
     # try:
-    #    #return str(s.encode('utf-8'))
+    #    #return smart_str(s.encode('utf-8'))
     #except:
-    return ftfy.fix_text(str(s), fix_entities=False)
+    return ftfy.fix_text(smart_str(s), fix_entities=False)
 
 parser = argparse.ArgumentParser(description='Importa i dati da un database MySQL di PHP-Gaia.')
 parser.add_argument('--no-geo', dest='geo', action='store_const',
@@ -343,7 +345,7 @@ def ottieni_comitato(tipo='nazionali', id=1):
 def path(filename):
     if not args.uploads:
         raise ValueError("Path non specificata. Usare --uploads.")
-    return args.uploads + (str(filename))
+    return args.uploads + (smart_str(filename))
 
 def esiste(filename):
     return os.path.isfile(filename)
@@ -870,7 +872,7 @@ def carica_deleghe():
 
         if args.verbose:
             print("    - " + progresso(contatore, totale) + "Delega: id=%s, sede=%s, persona=%s" %
-                  (id, str(sede.pk) if sede else None, persona.codice_fiscale if persona else None))
+                  (id, smart_str(sede.pk) if sede else None, persona.codice_fiscale if persona else None))
 
 
         tipo = int(delega[4])
@@ -1715,7 +1717,7 @@ def carica_sangue_sedi():
             nome=nome,
         )
         print("    - %s: Sede %s" % (
-            progresso(contatore, totale), str(s),
+            progresso(contatore, totale), smart_str(s),
         ))
         s.save()
 
@@ -1820,7 +1822,7 @@ def carica_sangue_donatori():
             sede_sit_id=sede_sit,
         )
         print("    - %s: Donatore %s" % (
-            progresso(contatore, totale), str(d),
+            progresso(contatore, totale), smart_str(d),
         ))
 
         d.save()
