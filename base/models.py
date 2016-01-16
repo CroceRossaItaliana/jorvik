@@ -16,6 +16,9 @@ from base.stringhe import GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale
 from datetime import datetime
 
+from base.utils import concept
+
+
 class ModelloSemplice(models.Model):
     """
     Questa classe astratta rappresenta un Modello generico.
@@ -339,65 +342,73 @@ class ConAutorizzazioni(models.Model):
     RICHIESTA_NOME = "autorizzazione"
 
     @classmethod
-    def con_esito(cls, esito):
+    @concept
+    def con_esito(cls, esito, **kwargs):
         """
         Ottiene QuerySet degli oggetti con esito selezionato.
         :param esito: L'esito: (*ConAutorizzazioni.ESITO_OK, .ESITO_NO, .ESITO_PENDING, .ESITO_RITIRATA).
         :return: QuerySet filtrato.
         """
         if esito == cls.ESITO_OK:
-            return cls.objects.filter(confermata=True, ritirata=False)
+            return Q(confermata=True, ritirata=False, **kwargs)
 
         elif esito == cls.ESITO_RITIRATA:
-            return cls.objects.filter(ritirata=True)
+            return Q(ritirata=True, **kwargs)
 
         elif esito == cls.ESITO_PENDING:
             # Confermata = False, ma almeno una autorizzazione e nessuna negata
             tipo = ContentType.objects.get_for_model(cls)
-            return cls.objects.filter(confermata=False, ritirata=False,
-                  pk__in=Autorizzazione.objects.filter(oggetto_tipo__pk=tipo.id).values_list('oggetto_id', flat=True))\
-                .exclude(
-                  pk__in=Autorizzazione.objects.filter(oggetto_tipo__pk=tipo.id, concessa=False).values_list('oggetto_id', flat=True)
-            )
+            return Q(
+                        Q(confermata=False, ritirata=False,
+                          pk__in=Autorizzazione.objects.filter(oggetto_tipo__pk=tipo.id).values_list('oggetto_id', flat=True)),
+                        ~Q(
+                          pk__in=Autorizzazione.objects.filter(oggetto_tipo__pk=tipo.id, concessa=False).values_list('oggetto_id', flat=True)
+                        ),
+                        **kwargs
+                    )
 
         else:  # ESITO_NO
             tipo = ContentType.objects.get_for_model(cls)
-            return cls.objects.filter(
-                # Confermata = False, ma non pendente
-                confermata=False,
-            ).exclude(pk__in=cls.con_esito(cls.ESITO_PENDING))
+            return Q(
+                        Q(
+                            # Confermata = False, ma non pendente
+                            confermata=False,
+                        ),
+                        ~Q(pk__in=cls.con_esito(cls.ESITO_PENDING)),
+                        **kwargs
+                   )
 
     @classmethod
-    def con_esito_ok(cls):
+    def con_esito_ok(cls, **kwargs):
         """
         Ottiene un QuerySet per tutti gli oggetti con esito ESITO_OK.
         :return:
         """
-        return cls.con_esito(cls.ESITO_OK)
+        return cls.con_esito(cls.ESITO_OK, **kwargs)
 
     @classmethod
-    def con_esito_ritirata(cls):
+    def con_esito_ritirata(cls, **kwargs):
         """
         Ottiene un QuerySet per tutti gli oggetti con esito ESITO_RITIRATA.
         :return:
         """
-        return cls.con_esito(cls.ESITO_RITIRATA)
+        return cls.con_esito(cls.ESITO_RITIRATA, **kwargs)
 
     @classmethod
-    def con_esito_pending(cls):
+    def con_esito_pending(cls, **kwargs):
         """
         Ottiene un QuerySet per tutti gli oggetti con esito ESITO_PENDING.
         :return:
         """
-        return cls.con_esito(cls.ESITO_PENDING)
+        return cls.con_esito(cls.ESITO_PENDING, **kwargs)
 
     @classmethod
-    def con_esito_no(cls):
+    def con_esito_no(cls, **kwargs):
         """
         Ottiene un QuerySet per tutti gli oggetti con esito ESITO_NO.
         :return:
         """
-        return cls.con_esito(cls.ESITO_NO)
+        return cls.con_esito(cls.ESITO_NO, **kwargs)
 
     @property
     def esito(self):

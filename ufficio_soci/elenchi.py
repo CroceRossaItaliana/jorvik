@@ -247,16 +247,18 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
     def risultati(self):
         qs_sedi = self.args[0]
 
-        oggi = now().date()
+        oggi = self.modulo_riempito.cleaned_data['al_giorno']
         nascita_minima = date(oggi.year - 18, oggi.month, oggi.day)
         anzianita_minima = date(oggi.year - Appartenenza.MEMBRO_ANZIANITA_ANNI, oggi.month, oggi.day)
 
         aggiuntivi = {
             # Anzianita' minima
-            "appartenenze__in": Appartenenza.con_esito_ok().filter(
-                membro__in=Appartenenza.MEMBRO_ANZIANITA,
-                inizio__lte=anzianita_minima
-            )
+            "pk__in": Persona.objects.filter(
+                Appartenenza.con_esito_ok(
+                    membro__in=Appartenenza.MEMBRO_ANZIANITA,
+                    inizio__lte=anzianita_minima
+                ).via("appartenenze")
+            ).only("id")
         }
         if self.modulo_riempito.cleaned_data['elettorato'] == ModuloElencoElettorato.ELETTORATO_PASSIVO:
             # Elettorato passivo,
@@ -265,16 +267,22 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
                 "data_nascita__lte": nascita_minima,
             })
 
-        return Persona.objects.filter(
+        r = Persona.objects.filter(
             Appartenenza.query_attuale(
-                al_giorno=self.modulo_riempito.cleaned_data['al_giorno'],
+                al_giorno=oggi,
                 sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_SOCIO,
             ).via("appartenenze"),
             Q(**aggiuntivi),
+
+        ).exclude(  # Escludi quelli con dimissione negli anni di anzianita'
+            appartenenze__terminazione=Appartenenza.DIMISSIONE,
+            appartenenze__fine__gte=anzianita_minima,
+
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
-        )
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+        return r
 
     def modulo(self):
         return ModuloElencoElettorato

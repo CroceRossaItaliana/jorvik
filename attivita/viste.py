@@ -67,7 +67,6 @@ def attivita_calendario(request, me=None, inizio=None, fine=None, vista="calenda
     # Elenco
     turni = me.calendario_turni(inizio, fine)
     raggruppati = turni_raggruppa_giorno(turni)
-    print(raggruppati)
 
     contesto = {
         "inizio": inizio,
