@@ -14,17 +14,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='sospensione',
-            name='provvedimento',
-        ),
-        migrations.RemoveField(
-            model_name='sospensione',
-            name='provvedimentodisciplinare_ptr',
-        ),
-        migrations.DeleteModel(
-            name='Sospensione',
-        ),
+
         migrations.AddField(
             model_name='provvedimentodisciplinare',
             name='fine',

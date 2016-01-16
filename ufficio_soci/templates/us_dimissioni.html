@@ -1,0 +1,37 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Nuove Dimissioni
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="alert alert-info">
+        <i class="fa fa-fw fa-info-circle"></i>
+        Da qui registro le dimissioni del Volontario {{ persona.nome_completo }}
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Registra provvedimento
+                </div>
+                <div class="panel-body">
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit" class="btn btn-block btn-primary">
+                            Registra dimissioni
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

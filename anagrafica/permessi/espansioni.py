@@ -49,6 +49,9 @@ def espandi_elenchi_soci(qs_sedi, al_giorno=date.today()):
         (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ESTESO).via("appartenenze"))),
         (LETTURA,  Quota.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ESTESO).via("persona__appartenenze"))),
         (LETTURA,  Quota.objects.filter(sede__in=qs_sedi.espandi())),
+        (LETTURA,  Persona.objects.filter(Appartenenza.con_esito_ok(sede__in=qs_sedi.espandi()).via("appartenenze"))),
+        (LETTURA,  Persona.objects.filter(Appartenenza.con_esito_pending(sede__in=qs_sedi.espandi()).via("appartenenze"))),
+        (LETTURA,  Persona.objects.filter(Appartenenza.con_esito_no(sede__in=qs_sedi.espandi()).via("appartenenze"))),
     ]
 
 

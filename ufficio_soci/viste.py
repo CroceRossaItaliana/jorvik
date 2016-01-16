@@ -1,3 +1,4 @@
+import datetime
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
 
@@ -12,7 +13,7 @@ from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
-    ModuloReclamaQuota, ModuloReclama
+    ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni
 from ufficio_soci.models import Quota, Tesseramento
 
 
@@ -164,6 +165,39 @@ def us_reclama_persona(request, me, persona_pk):
     }
 
     return 'us_reclama_persona.html', contesto
+
+
+
+@pagina_privata
+def us_dimissioni(request, me, pk):
+
+    modulo = ModuloCreazioneDimissioni(request.POST or None)
+    persona = get_object_or_404(Persona, pk=pk)
+
+    if not me.permessi_almeno(persona, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    if modulo.is_valid():
+        dim = modulo.save(commit=False)
+        dim.richiedente = me
+        dim.persona = persona
+        dim.sede = dim.persona.sede_riferimento()
+        if dim.trasforma_in_sostenitore and dim.motivo=="VOL":
+            app = Appartenenza(persona=dim.persona, sede=dim.persona.sede_riferimento(), inizio=datetime.date.today(),
+                               membro=Appartenenza.SOSTENITORE)
+            app.save()
+        dim = dim.save()
+        dim.applica()
+        return redirect (persona.url_profilo_appartenenze)
+
+    contesto = {
+        "modulo": modulo,
+        "persona": persona,
+    }
+
+    return 'us_dimissioni.html', contesto
+
+
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
