@@ -7,36 +7,36 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('anagrafica', '0002_auto_20160110_1425'),
         ('contenttypes', '0002_remove_content_type_name'),
+        ('anagrafica', '0002_auto_20160116_2302'),
     ]
 
     operations = [
         migrations.CreateModel(
             name='Commento',
             fields=[
-                ('id', models.AutoField(serialize=False, auto_created=True, primary_key=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
+                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
+                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
                 ('commento', models.TextField(verbose_name='Testo del commento')),
                 ('oggetto_id', models.PositiveIntegerField(db_index=True)),
-                ('autore', models.ForeignKey(to='anagrafica.Persona', related_name='commenti')),
+                ('autore', models.ForeignKey(related_name='commenti', to='anagrafica.Persona')),
                 ('oggetto_tipo', models.ForeignKey(to='contenttypes.ContentType')),
             ],
             options={
-                'verbose_name_plural': 'Commenti',
                 'abstract': False,
+                'verbose_name_plural': 'Commenti',
             },
         ),
         migrations.CreateModel(
             name='Giudizio',
             fields=[
-                ('id', models.AutoField(serialize=False, auto_created=True, primary_key=True, verbose_name='ID')),
-                ('creazione', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('ultima_modifica', models.DateTimeField(auto_now=True, db_index=True)),
-                ('positivo', models.BooleanField(default=True, db_index=True, verbose_name='Positivo')),
+                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
+                ('creazione', models.DateTimeField(db_index=True, auto_now_add=True)),
+                ('ultima_modifica', models.DateTimeField(db_index=True, auto_now=True)),
+                ('positivo', models.BooleanField(db_index=True, default=True, verbose_name='Positivo')),
                 ('oggetto_id', models.PositiveIntegerField(db_index=True)),
-                ('autore', models.ForeignKey(to='anagrafica.Persona', related_name='giudizi')),
+                ('autore', models.ForeignKey(related_name='giudizi', to='anagrafica.Persona')),
                 ('oggetto_tipo', models.ForeignKey(to='contenttypes.ContentType')),
             ],
             options={
