@@ -15,7 +15,7 @@ from django.db import models
 from django.db.models import Q, F
 import urllib
 from lxml import html
-
+from django.db import models
 
 
 def is_list(x):
@@ -128,6 +128,7 @@ def testo_euro(numero, simbolo_html=False):
     simbolo = "&euro;" if simbolo_html else "€"
     return ("%s%s %s" % (intcomma(int(euro)), ("%0.2f" % euro)[-3:], simbolo)).replace('.', ',')
 
+
 def get_drive_file(file):
     req = urllib.request.Request("https://docs.google.com/feeds/download/documents/export/Export?id=%s&exportFormat=html" %(file,))
     str = urllib.request.urlopen(req).read().decode('UTF-8')
@@ -139,7 +140,6 @@ def get_drive_file(file):
     str = html.tostring(head)+html.tostring(body)
     return str
 
-from django.db import models
 
 class UpperCaseCharField(models.CharField):
 
@@ -154,3 +154,15 @@ class UpperCaseCharField(models.CharField):
             return value
         else:
             return super(UpperCaseCharField, self).pre_save(model_instance, add)
+
+
+def ean13_carattere_di_controllo(first12digits):
+    charList = [char for char in first12digits]
+    ean13 = [1,3]
+    total = 0
+    for order, char in enumerate(charList):
+        total += int(char) * ean13[order % 2]
+    checkDigit = 10 - total % 10
+    if (checkDigit == 10):
+        return 0
+    return checkDigit

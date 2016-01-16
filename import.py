@@ -46,7 +46,7 @@ from django.template.backends import django
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
 from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Fototessera, Documento, Estensione
 from base.geo import Locazione
-from ufficio_soci.models import Quota, Tesseramento
+from ufficio_soci.models import Quota, Tesseramento, Tesserino
 import argparse
 import ftfy
 
@@ -132,6 +132,9 @@ parser.add_argument('--salta-estensioni', dest='estensioni', action='store_const
 parser.add_argument('--salta-veicoli', dest='veicoli', action='store_const',
                    const=False, default=True,
                    help='salta importazione autoparco, veicoli e correlati (usa cache precedente)')
+parser.add_argument('--salta-tesserini', dest='tesserini', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione richieste di tesserino (usa cache precedente)')
 
 parser.add_argument('--uploads', dest='uploads', action='store',
                    help='path assoluta alla cartella upload/ di Gaia vecchio')
@@ -284,6 +287,7 @@ ASSOC_ID_ESTENSIONI = {}
 
 ASSOC_ID_AUTOPARCHI = {}
 ASSOC_ID_VEICOLI = {}
+ASSOC_ID_TESSERINI = {}
 
 
 def parse_numero(numero, paese="IT"):
@@ -3466,6 +3470,147 @@ def carica_fermi_tecnici():
     cursore.close()
 
 
+def carica_tesserini():
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, volontario, stato,
+            tipo, codice, timestamp,
+            pRichiesta, tRichiesta, pConferma,
+            tConferma, motivo, struttura,
+            pRiconsegnato, tRiconsegnato
+        FROM
+            tesserinoRichiesta
+        WHERE
+            volontario IN (SELECT id FROM anagrafica)
+        AND (pRichiesta IS NULL OR pRichiesta IN (SELECT id FROM anagrafica))
+        AND (pConferma IS NULL OR pConferma IN (SELECT id FROM anagrafica))
+        AND (pRiconsegnato IS NULL OR pRiconsegnato IN (SELECT id FROM anagrafica))
+        """
+    )
+
+    tess = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for tes in tess:
+        contatore += 1
+
+        id = int(tes[0])
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[iint(tes[1])]
+        except KeyError:
+            print("   SALTATO persona non esistente ")
+            continue
+
+        try:
+            richiesto_da_id = ASSOC_ID_PERSONE[iint(tes[6])] if tes[6] else None
+        except KeyError:
+            print("   SALTATO pRichiesta non esistente ")
+            continue
+
+        try:
+            confermato_da_id = ASSOC_ID_PERSONE[iint(tes[8])] if tes[8] else None
+        except KeyError:
+            print("   SALTATO pRichiesta non esistente ")
+            continue
+
+        try:
+            riconsegnato_a_id = ASSOC_ID_PERSONE[iint(tes[12])] if tes[12] else None
+        except KeyError:
+            print("   SALTATO pRiconsegnato non esistente ")
+            continue
+
+        stato = int(tes[2])
+        tipo = int(tes[3])
+        codice = stringa(tes[4])
+
+        creazione = data_da_timestamp(tes[5])
+        tRichiesta = data_da_timestamp(tes[7])
+        tConferma = data_da_timestamp(tes[9], default=None)
+        motivo = stringa(tes[10])
+        struttura = comitato_oid(tes[11])
+        tRiconsegnato = data_da_timestamp(tes[13], default=None)
+
+        if tipo == 0:
+            tipo_richiesta = Tesserino.RILASCIO
+        elif tipo == 10:
+            tipo_richiesta = Tesserino.RINNOVO
+        elif tipo == 20:
+            tipo_richiesta = Tesserino.DUPLICATO
+        else:
+            raise ValueError("Tipo richiesta %d non aspettato" % (tipo,))
+
+        stato_emissione = None
+        if stato == 0:  # Rifiutato
+            stato_richiesta = Tesserino.RIFIUTATO
+            valido = False
+
+        elif stato == 10:  # Richiesto
+            stato_richiesta = Tesserino.RICHIESTO
+            valido = False
+
+        elif stato == 20:  # Stampato
+            stato_richiesta = Tesserino.ACCETTATO
+            stato_emissione = Tesserino.STAMPATO
+            valido = True
+
+        elif stato == 30:  # Spedito a casa
+            stato_richiesta = Tesserino.ACCETTATO
+            stato_emissione = Tesserino.SPEDITO_CASA
+            valido = True
+
+        elif stato == 40:  # Spedito in sede
+            stato_richiesta = Tesserino.ACCETTATO
+            stato_emissione = Tesserino.SPEDITO_SEDE
+            valido = True
+
+        elif stato == 50:  # Invalidato
+            stato_richiesta = Tesserino.ACCETTATO
+            stato_emissione = Tesserino.STAMPATO
+            valido = False
+
+        else:
+            raise ValueError("Stato tesserino non aspettato: stato=%d" % (stato,))
+
+        motivo_richiesta = ""
+        motivo_rifiutato = ""
+
+        if stato_richiesta == Tesserino.RIFIUTATO or (stato_emissione and not valido):
+            motivo_rifiutato = motivo
+
+        else:
+            motivo_richiesta = motivo
+
+        ultima_modifica = max([x for x in [creazione, tConferma, tRiconsegnato] if x is not None])
+
+        t = Tesserino(
+            persona_id=persona_id,
+            emesso_da=struttura,
+            tipo_richiesta=tipo_richiesta,
+            stato_richiesta=stato_richiesta,
+            motivo_richiesta=motivo_richiesta,
+            motivo_rifiutato=motivo_rifiutato,
+            stato_emissione=stato_emissione,
+            valido=valido,
+            codice=codice or None,
+            richiesto_da_id=richiesto_da_id,
+            confermato_da_id=confermato_da_id,
+            data_conferma=tConferma,
+            riconsegnato_a_id=riconsegnato_a_id,
+            data_riconsegna=tRiconsegnato,
+            creazione=creazione,
+            ultima_modifica=ultima_modifica,
+        )
+        t.save()
+
+        print("    %s tesserino codice=%s, persona_id=%d, emesso da=%s" % (
+            progresso(contatore, totale), codice, persona_id, struttura,
+        ))
+
+    cursore.close()
 
 
 # Importazione dei Comitati
@@ -3824,5 +3969,21 @@ else:
     ASSOC_ID_VEICOLI = pickle.load(open("veicoli.pickle-tmp", "rb"))
     print("  ~ Carico tabella delle corrispondenze (autoparchi.pickle-tmp)")
     ASSOC_ID_AUTOPARCHI = pickle.load(open("autoparchi.pickle-tmp", "rb"))
+
+
+# Importazione dei tesserini
+print("> Importazione richieste di tesserino")
+if args.tesserini:
+    print("  - Eliminazione attuali")
+    Tesserino.objects.all().delete()
+
+    carica_tesserini()
+
+    print("  ~ Persisto tabella delle corrispondenze (tesserini.pickle-tmp)")
+    pickle.dump(ASSOC_ID_TESSERINI, open("tesserini.pickle-tmp", "wb"))
+
+else:
+    print("  ~ Carico tabella delle corrispondenze (tesserini.pickle-tmp)")
+    ASSOC_ID_TESSERINI = pickle.load(open("tesserini.pickle-tmp", "rb"))
 
 # print(ASSOC_ID_COMITATI)

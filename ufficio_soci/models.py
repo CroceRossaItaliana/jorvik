@@ -1,3 +1,4 @@
+import random
 from datetime import timezone, date
 
 from django.db import models
@@ -7,7 +8,7 @@ from anagrafica.models import Persona, Appartenenza, Sede
 from base.files import PDF
 from base.models import ModelloSemplice, ConAutorizzazioni
 from base.tratti import ConMarcaTemporale, ConPDF
-from base.utils import concept
+from base.utils import concept, UpperCaseCharField, ean13_carattere_di_controllo
 
 __author__ = 'alfioemanuele'
 
@@ -19,13 +20,91 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         verbose_name_plural = "Richieste di Dimissione"
 
 
-class Tesserino(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
+class Tesserino(ModelloSemplice, ConMarcaTemporale):
 
     class Meta:
         verbose_name = "Richiesta Tesserino Associativo"
         verbose_name_plural = "Richieste Tesserino Associativo"
 
     persona = models.ForeignKey('anagrafica.Persona', related_name='tesserini')
+    emesso_da = models.ForeignKey('anagrafica.Sede', related_name='tesserini_emessi')
+
+    RILASCIO = "RIL"
+    RINNOVO = "RIN"
+    DUPLICATO = "DUP"
+    TIPO_RICHIESTA = (
+        (RILASCIO, "Rilascio"),
+        (RINNOVO, "Rinnovo"),
+        (DUPLICATO, "Duplicato"),
+    )
+    tipo_richiesta = models.CharField(max_length=3, choices=TIPO_RICHIESTA, default=RILASCIO, db_index=True)
+
+    RIFIUTATO = "RIF"
+    RICHIESTO = "ATT"
+    ACCETTATO = "OK"
+    STATO_RICHIESTA = (
+        (RIFIUTATO, "Emissione Rifiutata"),
+        (RICHIESTO, "Emissione Richiesta"),
+        (ACCETTATO, "Emissione Accettata"),
+    )
+    stato_richiesta = models.CharField(max_length=3, choices=STATO_RICHIESTA, default=RICHIESTO, db_index=True)
+    motivo_richiesta = models.CharField(max_length=512, blank=True, null=True)
+    motivo_rifiutato = models.CharField(max_length=512, blank=True, null=True)
+
+    STAMPATO = "STAMPAT"
+    SPEDITO_CASA = "SP_CASA"
+    SPEDITO_SEDE = "SP_SEDE"
+    STATO_EMISSIONE = (
+        (STAMPATO, "Stampato"),
+        (SPEDITO_CASA, "Spedito a casa"),
+        (SPEDITO_SEDE, "Spedito alla Sede CRI")
+    )
+    stato_emissione = models.CharField(max_length=8, choices=STATO_EMISSIONE, blank=True, null=True, default=None)
+
+    valido = models.BooleanField(default=False, db_index=True)
+
+    codice = UpperCaseCharField(max_length=13, unique=True, db_index=True, null=True, default=None)
+
+    richiesto_da = models.ForeignKey('anagrafica.Persona', related_name='tesserini_stampati_richiesti', null=False)
+
+    confermato_da = models.ForeignKey('anagrafica.Persona', related_name='tesserini_confermati', null=True)
+    data_conferma = models.DateTimeField(null=True, db_index=True)
+
+    riconsegnato_a = models.ForeignKey('anagrafica.Persona', related_name='tesserini_riconsegnati', null=True)
+    data_riconsegna = models.DateTimeField(null=True, db_index=True)
+
+    def assicura_presenza_codice(self):
+        """
+        Questa funzione si assicura che il tesserino attuale abbia un codice.
+         Se il codice e' gia' stato assegnato a questa richiesta, non viene
+         mai sovrascritto.
+        """
+        if not self.codice:
+            self._assegna_nuovo_codice()
+        return self.codice
+
+    @classmethod
+    def _genera_nuovo_codice(cls):
+        """
+        Ottiene un codice vergine.
+        """
+        while True:
+            # Genera un codice casuale
+            interno = str(random.randint(10000000, 99999999))
+            codice = "8016%s" % (interno,)
+            codice = "%s%s" % (
+                codice, ean13_carattere_di_controllo(codice),
+            )
+            if not cls.objects.filter(codice=codice).exists():
+                return codice
+
+    def _assegna_nuovo_codice(self):
+        """
+        NON USARE DIRETTAMENTE! Genera un nuovo codice.
+         Se vuoi assicurarti che il tesserino abbia un codice,
+         usa invece il metodo assicura_presenza_codice.
+        """
+        self.codice = Tesserino._genera_nuovo_codice()
 
 
 class Tesseramento(ModelloSemplice, ConMarcaTemporale):
