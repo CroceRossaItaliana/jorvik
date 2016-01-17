@@ -248,7 +248,7 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
 
     # Numero minimo di Comitati nelle vicinanze
     MINIMO_COMITATI = 15
-    RAGGIO_STEP = 1
+    RAGGIO_STEP = 1.4
 
     # Massimo iterazioni nella ricerca
     MASSIMO_ITERAZIONI = 50
