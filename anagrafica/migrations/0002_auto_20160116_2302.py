@@ -8,71 +8,86 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0001_initial'),
         ('anagrafica', '0001_initial'),
         ('contenttypes', '0002_remove_content_type_name'),
+        ('base', '0001_initial'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='sede',
             name='locazione',
-            field=models.ForeignKey(blank=True, related_name='anagrafica_sede', null=True, to='base.Locazione', on_delete=django.db.models.deletion.SET_NULL),
+            field=models.ForeignKey(related_name='anagrafica_sede', on_delete=django.db.models.deletion.SET_NULL, blank=True, to='base.Locazione', null=True),
         ),
         migrations.AddField(
             model_name='sede',
             name='membri',
-            field=models.ManyToManyField(to='anagrafica.Persona', through='anagrafica.Appartenenza'),
+            field=models.ManyToManyField(through='anagrafica.Appartenenza', to='anagrafica.Persona'),
         ),
         migrations.AddField(
             model_name='provvedimentodisciplinare',
             name='persona',
-            field=models.ForeignKey(to='anagrafica.Persona', related_name='provvedimenti'),
+            field=models.ForeignKey(related_name='provvedimenti', to='anagrafica.Persona'),
         ),
         migrations.AddField(
             model_name='privacy',
             name='persona',
-            field=models.ForeignKey(to='anagrafica.Persona', related_name='privacy'),
+            field=models.ForeignKey(related_name='privacy', to='anagrafica.Persona'),
         ),
         migrations.AddField(
             model_name='fototessera',
             name='persona',
-            field=models.ForeignKey(to='anagrafica.Persona', related_name='fototessere'),
+            field=models.ForeignKey(related_name='fototessere', to='anagrafica.Persona'),
         ),
         migrations.AddField(
             model_name='estensione',
             name='appartenenza',
-            field=models.ForeignKey(blank=True, related_name='estensione', null=True, to='anagrafica.Appartenenza'),
+            field=models.ForeignKey(related_name='estensione', blank=True, to='anagrafica.Appartenenza', null=True),
         ),
         migrations.AddField(
             model_name='estensione',
             name='destinazione',
-            field=models.ForeignKey(to='anagrafica.Sede', related_name='estensioni_destinazione'),
+            field=models.ForeignKey(related_name='estensioni_destinazione', to='anagrafica.Sede'),
         ),
         migrations.AddField(
             model_name='estensione',
             name='persona',
-            field=models.ForeignKey(to='anagrafica.Persona', related_name='estensioni'),
+            field=models.ForeignKey(related_name='estensioni', to='anagrafica.Persona'),
         ),
         migrations.AddField(
             model_name='estensione',
             name='richiedente',
-            field=models.ForeignKey(to='anagrafica.Persona', related_name='estensioni_richieste_da'),
+            field=models.ForeignKey(related_name='estensioni_richieste_da', to='anagrafica.Persona'),
         ),
         migrations.AddField(
             model_name='documento',
             name='persona',
-            field=models.ForeignKey(to='anagrafica.Persona', related_name='documenti'),
+            field=models.ForeignKey(related_name='documenti', to='anagrafica.Persona'),
         ),
         migrations.AddField(
             model_name='dimissione',
             name='appartenenza',
-            field=models.ForeignKey(to='anagrafica.Appartenenza', related_name='dimissione'),
+            field=models.ForeignKey(related_name='dimissioni', to='anagrafica.Appartenenza'),
+        ),
+        migrations.AddField(
+            model_name='dimissione',
+            name='persona',
+            field=models.ForeignKey(related_name='dimissioni', to='anagrafica.Persona'),
+        ),
+        migrations.AddField(
+            model_name='dimissione',
+            name='richiedente',
+            field=models.ForeignKey(to='anagrafica.Persona'),
+        ),
+        migrations.AddField(
+            model_name='dimissione',
+            name='sede',
+            field=models.ForeignKey(related_name='dimissioni', to='anagrafica.Sede'),
         ),
         migrations.AddField(
             model_name='delega',
             name='firmatario',
-            field=models.ForeignKey(default=None, related_query_name='delega_firmata', related_name='deleghe_firmate', null=True, to='anagrafica.Persona'),
+            field=models.ForeignKey(related_name='deleghe_firmate', related_query_name='delega_firmata', default=None, to='anagrafica.Persona', null=True),
         ),
         migrations.AddField(
             model_name='delega',
@@ -82,27 +97,22 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='delega',
             name='persona',
-            field=models.ForeignKey(related_query_name='delega', related_name='deleghe', to='anagrafica.Persona'),
+            field=models.ForeignKey(related_name='deleghe', related_query_name='delega', to='anagrafica.Persona'),
         ),
         migrations.AddField(
             model_name='appartenenza',
             name='persona',
-            field=models.ForeignKey(to='anagrafica.Persona', related_name='appartenenze'),
+            field=models.ForeignKey(related_name='appartenenze', to='anagrafica.Persona'),
         ),
         migrations.AddField(
             model_name='appartenenza',
             name='precedente',
-            field=models.ForeignKey(default=None, blank=True, null=True, related_name='successiva', to='anagrafica.Appartenenza', on_delete=django.db.models.deletion.SET_NULL),
+            field=models.ForeignKey(related_name='successiva', on_delete=django.db.models.deletion.SET_NULL, blank=True, default=None, to='anagrafica.Appartenenza', null=True),
         ),
         migrations.AddField(
             model_name='appartenenza',
             name='sede',
-            field=models.ForeignKey(to='anagrafica.Sede', related_name='appartenenze'),
-        ),
-        migrations.AddField(
-            model_name='sospensione',
-            name='provvedimento',
-            field=models.ForeignKey(to='anagrafica.ProvvedimentoDisciplinare', related_name='provvedimento'),
+            field=models.ForeignKey(related_name='appartenenze', to='anagrafica.Sede'),
         ),
         migrations.AlterUniqueTogether(
             name='privacy',

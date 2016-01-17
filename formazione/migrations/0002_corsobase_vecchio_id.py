@@ -7,13 +7,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('ufficio_soci', '0003_quota_tipo'),
+        ('formazione', '0001_initial'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='tesseramento',
-            name='quota_sostenitore',
-            field=models.FloatField(default=20.0),
+            model_name='corsobase',
+            name='vecchio_id',
+            field=models.IntegerField(blank=True, null=True, default=None, db_index=True),
         ),
     ]

@@ -8,3 +8,11 @@ media_root = /tmp/media/
 
 # URL pubblico, relativo, ove servire i dati
 media_url = /media/
+
+[static]
+
+# Dove devono essere salvati i dati statici (file path locale)
+static_root = /tmp/static/
+
+# URL pubblico, ove servire i dati
+static_url = /static/

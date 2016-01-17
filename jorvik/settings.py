@@ -147,8 +147,6 @@ SITE_ID = 1
 # File statici (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
-STATIC_URL = '/assets/'
-STATIC_ROOT = 'assets/'
 TEMPLATE_DIRS = (
     'base/templates',
     os.path.join(BASE_DIR,  'templates'),
@@ -184,6 +182,8 @@ MEDIA_CONF = configparser.ConfigParser()
 MEDIA_CONF.read(MEDIA_CONF_FILE)
 MEDIA_ROOT = MEDIA_CONF.get('media', 'media_root')
 MEDIA_URL = MEDIA_CONF.get('media', 'media_url')
+STATIC_ROOT = MEDIA_CONF.get('static', 'static_root', fallback='assets/')
+STATIC_URL = MEDIA_CONF.get('static', 'static_url', fallback='/assets/')
 
 # Configurazione debug e produzione
 DEBUG_CONF = configparser.ConfigParser()
@@ -197,4 +197,5 @@ ALLOWED_HOST = ['localhost', '127.0.0.1', DEBUG_CONF.get('production', 'host')]
 APIS_CONF = configparser.ConfigParser()
 APIS_CONF.read(APIS_CONF_FILE)
 GOOGLE_KEY = APIS_CONF.get('google', 'api_key')
-DOMPDF_ENDPOINT = APIS_CONF.get('dompdf', 'endpoint', fallback='http://pdf-server.alacriter.uk.92-222-162-128.alacriter.uk/render/www/render.php')
+DOMPDF_ENDPOINT = APIS_CONF.get('dompdf', 'endpoint',
+                                fallback='http://pdf-server.alacriter.uk.92-222-162-128.alacriter.uk/render/www/render.php')

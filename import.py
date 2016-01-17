@@ -2,6 +2,8 @@
 
 import os, sys
 
+from django.utils.encoding import smart_str
+
 import phonenumbers
 from django.core.files import File
 
@@ -62,14 +64,14 @@ def stringa(s):
     if s is None:
         return ''
     # try:
-    #    #return str(s.encode('utf-8'))
+    #    #return smart_str(s.encode('utf-8'))
     #except:
-    return ftfy.fix_text(str(s), fix_entities=False)
+    return ftfy.fix_text(smart_str(s), fix_entities=False)
 
 parser = argparse.ArgumentParser(description='Importa i dati da un database MySQL di PHP-Gaia.')
 parser.add_argument('--no-geo', dest='geo', action='store_const',
                    const=False, default=True,
-                   help='disattiva le funzionalità geografiche (solo test)')
+                   help='disattiva le funzionalita geografiche (solo test)')
 parser.add_argument('-v', dest='verbose', action='store_const',
                    const=True, default=False,
                    help='mostra dettagli sul progresso (estremamente prolisso)')
@@ -145,7 +147,7 @@ parser.add_argument('--uploads', dest='uploads', action='store',
 
 parser.add_argument('--ignora-errori-db', dest='ignora', action='store_const',
                    const=True, default=False,
-                   help='ignora errori di integrità (solo test)')
+                   help='ignora errori di integrita (solo test)')
 
 
 args = parser.parse_args()
@@ -343,7 +345,7 @@ def ottieni_comitato(tipo='nazionali', id=1):
 def path(filename):
     if not args.uploads:
         raise ValueError("Path non specificata. Usare --uploads.")
-    return args.uploads + (str(filename))
+    return args.uploads + (smart_str(filename))
 
 def esiste(filename):
     return os.path.isfile(filename)
@@ -428,8 +430,6 @@ def carica_anagrafiche():
         attuale.update({riga[1]: riga[2]})
         DETTAGLI_DICT.update({int(riga[0]): attuale})
 
-    print(DETTAGLI_DICT[218])
-
     totale = cursore.rowcount
     contatore = 0
     for persona in persone:
@@ -438,7 +438,6 @@ def carica_anagrafiche():
 
         if args.verbose:
             print("    - " + progresso(contatore, totale) + ": id=" + stringa(persona[0]) + ", codice_fiscale=" + stringa(persona[6]))
-            print("      - Scaricamento dati aggiuntivi")
 
         id = persona[0]
 
@@ -467,10 +466,11 @@ def carica_anagrafiche():
         data_nascita = data_da_timestamp(dict.get('dataNascita'), default=None)
         genere_registrato = Persona.MASCHIO if dati['sesso'] == 1 else Persona.FEMMINA
         genere = ottieni_genere_da_codice_fiscale(dati['codiceFiscale'], default=genere_registrato)
+        codice_fiscale = dati['codiceFiscale']
         p = Persona(
             nome=dati['nome'],
             cognome=dati['cognome'],
-            codice_fiscale=dati['codiceFiscale'],
+            codice_fiscale=codice_fiscale,
             data_nascita=data_nascita,
             genere=genere,
             stato=Persona.PERSONA,
@@ -870,7 +870,7 @@ def carica_deleghe():
 
         if args.verbose:
             print("    - " + progresso(contatore, totale) + "Delega: id=%s, sede=%s, persona=%s" %
-                  (id, str(sede.pk) if sede else None, persona.codice_fiscale if persona else None))
+                  (id, smart_str(sede.pk) if sede else None, persona.codice_fiscale if persona else None))
 
 
         tipo = int(delega[4])
@@ -1442,7 +1442,14 @@ def carica_quote():
 
         data_versamento = data_da_timestamp(quota[4], data_da_timestamp(quota[5]))
         data_creazione = data_da_timestamp(quota[5])
-        registrato_da = ASSOC_ID_PERSONE[int(quota[6])]
+
+        try:
+            registrato_da = ASSOC_ID_PERSONE[int(quota[6])]
+        except KeyError:
+            print("    - Quota Saltata (%d) registrato da persona non esistente (%d)" % (
+                id, int(quota[6]),
+            ))
+            continue
 
         importo = float(quota[7])
 
@@ -1457,13 +1464,18 @@ def carica_quote():
 
         progressivo = int(quota[13])
 
-        tesseramento = Tesseramento.objects.get(anno=anno)
-        da_pagare = tesseramento.importo_da_pagare(persona)
         importo_extra = 0.0
 
-        if importo > da_pagare:
-            importo_extra = importo - da_pagare
-            importo = da_pagare
+        causale_lowercase = causale.lower()
+        if "iscrizione" in causale_lowercase or "ordinar" in causale_lowercase:
+            if importo > 16.0:
+                importo_extra = importo - 16.00
+                importo = 16.0
+
+        elif "attivo" in causale_lowercase:
+            if importo > 8.0:
+                importo_extra = importo - 8.0
+                importo = 8.0
 
         print("   - %s: Quota, sede=%d, numero=%d/%d" %
               (progresso(contatore, totale), sede.pk,
@@ -1485,6 +1497,8 @@ def carica_quote():
                 importo_extra=importo_extra,
                 causale=causale,
                 causale_extra=causale_extra,
+                creazione=data_versamento,
+                ultima_modifica=data_annullamento if data_annullamento else data_versamento,
             )
             q.save()
 
@@ -1622,6 +1636,13 @@ def carica_titoli_personali():
             print("    - SALTATO Persona non trovata %d " % (int(titolo[1]),))
             continue
 
+        try:
+            pConferma = ASSOC_ID_PERSONE[int(titolo[9])] if titolo[9] else None
+
+        except KeyError:
+            print("    - SALTATO pConferma non trovata %d " % (int(titolo[9]),))
+            continue
+
         titolo_id = ASSOC_ID_TITOLI[int(titolo[2])]
         inizio = data_da_timestamp(titolo[3], None)
         fine = data_da_timestamp(titolo[4], None)
@@ -1715,7 +1736,7 @@ def carica_sangue_sedi():
             nome=nome,
         )
         print("    - %s: Sede %s" % (
-            progresso(contatore, totale), str(s),
+            progresso(contatore, totale), smart_str(s),
         ))
         s.save()
 
@@ -1820,7 +1841,7 @@ def carica_sangue_donatori():
             sede_sit_id=sede_sit,
         )
         print("    - %s: Donatore %s" % (
-            progresso(contatore, totale), str(d),
+            progresso(contatore, totale), smart_str(d),
         ))
 
         d.save()
@@ -2098,6 +2119,7 @@ def carica_corsibase():
             progressivo=progressivo,
             anno=anno,
             stato=stato,
+            vecchio_id=id,
         )
         c.save()
 

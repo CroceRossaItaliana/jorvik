@@ -188,6 +188,10 @@ class ElencoQuote(ElencoVistaSoci):
         qs_sedi = self.args[0]
         modulo = self.modulo_riempito
 
+        membri = modulo.cleaned_data['membri']
+        attivi = membri == modulo.MEMBRI_VOLONTARI
+        ordinari = membri == modulo.MEMBRI_ORDINARI
+
         try:
             tesseramento = Tesseramento.objects.get(anno=modulo.cleaned_data.get('anno'))
 
@@ -195,10 +199,10 @@ class ElencoQuote(ElencoVistaSoci):
             raise ValueError("Anno di tesseramento non valido o gestito da Gaia.")
 
         if modulo.cleaned_data['tipo'] == modulo.VERSATE:
-            origine = tesseramento.paganti()  # Persone con quote pagate
+            origine = tesseramento.paganti(attivi=attivi, ordinari=ordinari)  # Persone con quote pagate
 
         else:
-            origine = tesseramento.non_paganti()  # Persone con quote NON pagate
+            origine = tesseramento.non_paganti(attivi=attivi, ordinari=ordinari)  # Persone con quote NON pagate
 
         # Ora filtra per Sede
         return origine.filter(
@@ -215,10 +219,7 @@ class ElencoQuote(ElencoVistaSoci):
 
     def template(self):
         modulo = self.modulo_riempito
-        if modulo.cleaned_data['tipo'] == modulo.VERSATE:
-            return 'us_elenchi_inc_quote.html'
-
-        return 'us_elenchi_inc_soci.html'
+        return 'us_elenchi_inc_quote.html'
 
 
 
