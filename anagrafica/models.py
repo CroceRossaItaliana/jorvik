@@ -157,7 +157,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                              "formazione, servizi sanitari, servizi sociali, ecc.)"),
         (CONOSCENZA_ALTRO, "Altro"),
     )
-    conoscenza = models.CharField(max_length=2, choices=CONOSCENZA, default=None, blank=True, null=True, db_index=True,
+    conoscenza = models.CharField(max_length=2, choices=CONOSCENZA, default=None, blank=False, null=True, db_index=True,
                                   help_text="Come sei venuto/a a conoscenza delle opportunità di "
                                             "volontariato della CRI?")
 
