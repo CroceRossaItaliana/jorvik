@@ -1008,6 +1008,12 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             self.url, self.nome_completo
         )
 
+    def presidente(self):
+        """
+        Ritorna il presidente attuale o None.
+        """
+        return self.comitato.deleghe_attuali(tipo=PRESIDENTE).first()
+
     @property
     def colore_mappa(self):
         dict = {

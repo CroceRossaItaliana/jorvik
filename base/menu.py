@@ -111,9 +111,9 @@ def menu(request):
                 # ("Ricerca quote", "fa-search", "/us/quote/ricerca/"),
                 ("Elenco ricevute", "fa-list", "/us/ricevute/"),
             )),
-            ("Tesserini", (
-                ("Non riconsegnati", "fa-credit-card", "/us/non-riconsegnati/"),
-            )),
+            #("Tesserini", (
+            #    ("Non riconsegnati", "fa-credit-card", "/us/non-riconsegnati/"),
+            #)),
         ),
         "formazione": (
             ("Corsi Base", (
