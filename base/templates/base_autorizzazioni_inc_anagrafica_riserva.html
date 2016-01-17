@@ -1,8 +1,6 @@
-
-<p class="grassetto">Salve Presidente</p>
-<p>Riceve la richiesta di riserva appena effettuata dal volontario <strong>{{ richiesta.oggetto.persona.link|safe }} </strong>.</p>
-<p>Richiesta di riserva con la seguente motivazione <strong>{{ richiesta.oggetto.motivo }} </strong> effettuata il <strong>{{ richiesta.oggetto.creazione }} </strong>.</p>
+<p>{{ richiesta.oggetto.persona.link|safe }} chiede</p>
+<p>la riserva tra il {{ richiesta.oggetto.inizio }} e il {{ richiesta.oggetto.fine }} con la seguente motivazione {{ richiesta.oggetto.motivo }}.</p>
 <p>La richiesta è in attesa di essere protocollata dalla segreteria del Comitato.</p>
 
-<p>Può scaricare la richiesta di trasferimento in formato PDF
+<p>Può scaricare la richiesta di riserva in formato PDF
     <a href="{{ richiesta.oggetto.url_pdf }}" target="_new" download>cliccando qui</a>.</p>

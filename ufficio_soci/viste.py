@@ -5,7 +5,7 @@ from django.db.models import Sum
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.forms import ModuloNuovoProvvedimento, ModuloCreazioneTrasferimento
-from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede
+from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione
 from anagrafica.permessi.applicazioni import PRESIDENTE
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA
 from autenticazione.forms import ModuloCreazioneUtenza
@@ -188,11 +188,12 @@ def us_dimissioni(request, me, pk):
         dim.persona = persona
         dim.sede = dim.persona.sede_riferimento()
         dim.appartenenza = persona.appartenenze_attuali().first()
-        if dim.trasforma_in_sostenitore and dim.motivo=="VOL":
-            app = Appartenenza(persona=dim.persona, sede=dim.persona.sede_riferimento(), inizio=datetime.date.today(),
+        if modulo.cleaned_data['trasforma_in_sostenitore']:
+            app = Appartenenza(precedente=dim.appartenenza, persona=dim.persona, sede=dim.persona.sede_riferimento(),
+                               inizio=datetime.date.today(),
                                membro=Appartenenza.SOSTENITORE)
             app.save()
-        dim = dim.save()
+        dim.save()
         dim.applica()
         return messaggio_generico(request, me, titolo="Dimissioni registrate",
                                       messaggio="Le dimissioni sono"
