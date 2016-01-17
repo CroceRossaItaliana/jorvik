@@ -1,3 +1,4 @@
+from django.contrib.auth import load_backend, login
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count
 from django.db.models.loading import get_model
@@ -8,13 +9,16 @@ from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, LETTURA
 from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_privata
+from autenticazione.models import Utenza
 from base import errori
-from base.errori import errore_generico
+from base.errori import errore_generico, messaggio_generico
 from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLocalizzatore
 from base.geo import Locazione
-from base.models import Autorizzazione
+from base.models import Autorizzazione, Token
 from base.tratti import ConPDF
 from base.utils import get_drive_file
+from jorvik import settings
+from posta.models import Messaggio
 
 
 @pagina_pubblica
@@ -42,9 +46,22 @@ def recupera_password(request):
         if modulo.is_valid():
 
             try:
-                per = Persona.objects.get(codice_fiscale=modulo.codice_fiscale, utenza__email=modulo.email)
+                per = Persona.objects.get(codice_fiscale=modulo.cleaned_data['codice_fiscale'].upper(),
+                                          utenza__email=modulo.cleaned_data['email'].lower())
 
+                Messaggio.costruisci_e_invia(
+                    oggetto="Nuova password",
+                    modello=""
 
+                )
+
+                return messaggio_generico(request, None,
+                                          titolo="Controlla la tua casella e-mail",
+                                          messaggio="Ti abbiamo inviato le istruzioni per cambiare la "
+                                                    "tua password tramite e-mail. Controlla la tua "
+                                                    "casella al più presto. ",
+                                          torna_url="/utente/cambia-password/",
+                                          torna_titolo="Accedi e cambia la tua password")
 
             except Persona.DoesNotExist:
                 contesto.update({'errore': True})
@@ -315,3 +332,22 @@ def formazione(request, me=None):
     }
     return "base_formazione.html", contesto
 
+
+@pagina_pubblica
+def verifica_token(request, me, token):
+    verifica = Token.verifica(token, redirect=True)
+    if not verifica:
+        return errore_generico(request, me, titolo="Token scaduto",
+                               messaggio="Potresti aver seguito un link che è scaduto.")
+
+    persona, url = verifica
+
+    user = Utenza.objects.get(persona=persona)
+    if not hasattr(user, 'backend'):
+        for backend in settings.AUTHENTICATION_BACKENDS:
+            if user == load_backend(backend).get_user(user.pk):
+                user.backend = backend
+                break
+    if hasattr(user, 'backend'):
+        login(request, user)
+    return redirect(url)

@@ -177,6 +177,8 @@ EMAIL_USE_TLS = EMAIL_CONF.getboolean('email', 'tls')
 EMAIL_SSL_KEYFILE = EMAIL_CONF.get('email', 'ssl_keyfile')
 EMAIL_SSL_CERTFILE = EMAIL_CONF.get('email', 'ssl_certfile')
 
+DEFAULT_FROM_EMAIL = 'Gaia <noreply@gaia.cri.it>'
+
 # Configurazione media
 MEDIA_CONF = configparser.ConfigParser()
 MEDIA_CONF.read(MEDIA_CONF_FILE)

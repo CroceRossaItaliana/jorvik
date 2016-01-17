@@ -184,6 +184,8 @@ urlpatterns = [
 
     url(r'^pdf/(?P<app_label>.*)/(?P<model>.*)/(?P<pk>[0-9]+)/$', 'base.viste.pdf'),
 
+    url(r'^token-sicuro/(?P<codice>.*)/$', 'base.viste.verifica_token'),
+
     # Amministrazione
     url(r'^admin/', include(admin.site.urls)),
     url(r'^admin/', include('loginas.urls')),   # Login come utente

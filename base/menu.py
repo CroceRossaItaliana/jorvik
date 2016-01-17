@@ -71,8 +71,8 @@ def menu(request):
                 #  ("Reperibilità", "fa-thumb-tack", "/attivita/reperibilita/"),
             )),
             ("Gestione", (
-                ("Elenco attività", "fa-list", "/attivita/gestisci/") if me.oggetti_permesso(GESTIONE_ATTIVITA).exists() else None,
-                ("Organizza nuova", "fa-asterisk", "/attivita/organizza/") if me.oggetti_permesso(GESTIONE_ATTIVITA_AREA).exists() else None
+                ("Elenco attività", "fa-list", "/attivita/gestisci/") if me and me.oggetti_permesso(GESTIONE_ATTIVITA).exists() else None,
+                ("Organizza nuova", "fa-asterisk", "/attivita/organizza/") if me and me.oggetti_permesso(GESTIONE_ATTIVITA_AREA).exists() else None
             ))
         ),
         "autorizzazioni": (
@@ -87,7 +87,7 @@ def menu(request):
                 ("Soci", "fa-list", "/us/elenchi/soci/"),
                 ("Sostenitori", "fa-list", "/us/elenchi/sostenitori/"),
                 ("Dipendenti", "fa-list", "/us/elenchi/dipendenti/"),
-                ("Ordinari", "fa-list", "/us/elenchi/ordinari/") if me.oggetti_permesso(ELENCHI_SOCI).filter(estensione=REGIONALE).exists() else None,
+                ("Ordinari", "fa-list", "/us/elenchi/ordinari/") if me and me.oggetti_permesso(ELENCHI_SOCI).filter(estensione=REGIONALE).exists() else None,
                 ("Elettorato", "fa-list", "/us/elenchi/elettorato/"),
                 ("Per Titoli", "fa-search", "/us/elenchi/titoli/"),
             )),

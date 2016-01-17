@@ -13,7 +13,7 @@ from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_
 from base.files import Excel, FoglioExcel
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
-    ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli
+    ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute
 from ufficio_soci.models import Quota, Tesseramento, Tesserino
@@ -507,6 +507,7 @@ def us_elenchi(request, me, elenco_tipo):
 
     tipi_elenco = {
         "volontari": (ElencoVolontari, "Elenco dei Volontari"),
+        "dipendenti": (ElencoDipendenti, "Elenco dei Dipendenti"),
         "ordinari": (ElencoOrdinari, "Elenco dei Soci Ordinari"),
         "soci": (ElencoSociAlGiorno, "Elenco dei Soci"),
         "sostenitori": (ElencoSostenitori, "Elenco dei Sostenitori"),

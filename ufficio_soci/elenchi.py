@@ -177,6 +177,23 @@ class ElencoVolontari(ElencoVistaSoci):
         )
 
 
+class ElencoDipendenti(ElencoVistaSoci):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
+    """
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro=Appartenenza.DIPENDENTE,
+            ).via("appartenenze")
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        )
+
+
 class ElencoQuote(ElencoVistaSoci):
     """
     args: QuerySet<Sede> Sedi per le quali compilare gli elenchi quote associative

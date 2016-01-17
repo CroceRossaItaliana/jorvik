@@ -12,9 +12,9 @@ from anagrafica.permessi.costanti import DELEGHE_OGGETTI_DICT, MODIFICA
 from anagrafica.validators import crea_validatore_dimensione_file, valida_dimensione_file_10mb
 from base.forms import ModuloMotivoNegazione
 from base.notifiche import NOTIFICA_NON_INVIARE
-from base.stringhe import GeneratoreNomeFile
+from base.stringhe import GeneratoreNomeFile, genera_uuid_casuale
 from base.tratti import ConMarcaTemporale
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from base.utils import concept
 
@@ -587,7 +587,50 @@ class ConScadenza:
 
 
 class Token(ModelloSemplice, ConMarcaTemporale):
-    pass
+    persona = models.ForeignKey('anagrafica.Persona', related_name='tokens')
+    codice = models.CharField(max_length=128, unique=True, db_index=True, null=False)
+    redirect = models.CharField(max_length=128, db_index=True, null=True)
+    valido_ore = models.IntegerField(default=24)
+
+    def valido(self):
+        return timezone.now() <= self.creazione + timedelta(hours=self.valido_ore)
+
+    @classmethod
+    def genera(cls, persona, redirect="/", valido_ore=24):
+        """
+        Genera un codice per una data persona.
+        :param persona:
+        :param valido_ore:
+        :return:
+        """
+        codice = genera_uuid_casuale()
+        t = cls(
+            persona=persona,
+            codice=codice,
+            valido_ore=valido_ore,
+            redirect=redirect,
+        )
+        t.save()
+        return codice
+
+    @property
+    def url(self):
+        return "/token-sicuro/%s/" % (self.codice,)
+
+    @classmethod
+    def verifica(cls, token, redirect=True):
+        """
+        Verifica se un token e' valido per una data persona.
+
+        """
+        try:
+            token = cls.get(codice=token)
+            if token.valido():
+                return token.persona, token.redirect
+            else:
+                return False
+        except cls.DoesNotExist:
+            return False
 
 
 class Allegato(ConMarcaTemporale, ConScadenza, ModelloSemplice):
