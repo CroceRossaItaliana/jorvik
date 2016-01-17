@@ -8,18 +8,22 @@ from django.contrib.auth import login
 
 # Le viste base vanno qui.
 from django.views.generic import ListView
+
+from anagrafica.costanti import TERRITORIALE
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
-    ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloModificaPrivacy
+    ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloModificaPrivacy, ModuloPresidenteSede
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
 from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento, \
     ProvvedimentoDisciplinare, Sede
-from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
+    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
+    RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
@@ -27,6 +31,7 @@ from base.errori import errore_generico, errore_nessuna_appartenenza
 from base.files import Zip
 from base.models import Log
 from base.notifiche import NOTIFICA_INVIA
+from base.utils import remove_none
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio
@@ -680,6 +685,9 @@ def strumenti_delegati(request, me):
         d.save()
         d.invia_notifica_creazione()
 
+    deleghe = oggetto.deleghe.filter(tipo=delega)
+    deleghe_attuali = oggetto.deleghe_attuali(tipo=delega)
+
     contesto = {
         "locazione": oggetto.locazione,
         "continua_url": continua_url,
@@ -687,6 +695,8 @@ def strumenti_delegati(request, me):
         "delega": PERMESSI_NOMI_DICT[delega],
         "modulo": modulo,
         "oggetto": oggetto,
+        "deleghe": deleghe,
+        "deleghe_attuali": deleghe_attuali,
     }
 
     return 'anagrafica_strumenti_delegati.html', contesto
@@ -1024,10 +1034,66 @@ def presidente(request, me):
     return 'anagrafica_presidente.html', contesto
 
 
+def _presidente_sede_ruoli(sede):
+
+    sezioni = OrderedDict()
+
+    sezioni.update({
+        "Obiettivi Strategici": [
+            (DELEGATO_OBIETTIVO_1, "Obiettivo Startegico I", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_1).count()),
+            (DELEGATO_OBIETTIVO_2, "Obiettivo Startegico II", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_2).count()),
+            (DELEGATO_OBIETTIVO_3, "Obiettivo Startegico III", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count()),
+            (DELEGATO_OBIETTIVO_4, "Obiettivo Startegico IV", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_4).count()),
+            (DELEGATO_OBIETTIVO_5, "Obiettivo Startegico V", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_5).count()),
+            (DELEGATO_OBIETTIVO_6, "Obiettivo Startegico VI", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_6).count()),
+        ]
+
+    }) if sede.estensione != TERRITORIALE else False
+
+    sezioni.update({
+        "Responsabili": [
+            (UFFICIO_SOCI, "Ufficio Soci", sede.delegati_attuali(tipo=UFFICIO_SOCI).count()),
+            (RESPONSABILE_FORMAZIONE, "Formazione", sede.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE).count()),
+            (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count()),
+            (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count()),
+        ]
+    })
+
+    return sezioni
+
+
+
+
 @pagina_privata
 def presidente_sede(request, me, sede_pk):
     sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    modulo = ModuloPresidenteSede(request.POST or None, instance=sede)
+    if modulo.is_valid():
+        modulo.save()
+
+    sezioni = _presidente_sede_ruoli(sede)
+
     contesto = {
-        "sede": sede
+        "sede": sede,
+        "modulo": modulo,
+        "sezioni": sezioni,
     }
     return 'anagrafica_presidente_sede.html', contesto
+
+
+@pagina_privata
+def presidente_sede_delegati(request, me, sede_pk, delega):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    contesto = {
+        "sede": sede,
+        "delega": delega,
+        "continua_url": "/presidente/sedi/%d/" % (sede.pk,),
+    }
+    return 'anagrafica_presidente_sede_delegati.html', contesto
+

@@ -1,0 +1,117 @@
+{% extends 'presidente_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load utils %}
+
+{% block pagina_titolo %}
+    Gestione {{ sede.nome_completo }}
+{% endblock %}
+
+{% block app_contenuto %}
+
+
+    <div class="alert alert-info">
+        <p><i class="fa fa-fw fa-info-circle"></i>
+        Da questa pagina puoi gestire le informazioni relative
+            alla Sede CRI: <strong>{{ sede.nome_completo }}</strong>.</p>
+    </div>
+
+
+    <div class="row">
+
+        <div class="col-md-6">
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-info-circle"></i>
+                        Informazioni
+                    </h2>
+                </div>
+                <div class="panel-body">
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit"
+                        class="btn btn-primary btn-block">
+                            <i class="fa fa-fw fa-save"></i>
+                            Salva informazioni
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i>
+                        Delegati e Responsabili
+                    </h2>
+                </div>
+                <div class="panel-body">
+
+                    <p>Seleziona il ruolo per il quale vuoi vedere, creare o
+                        terminare una delega.</p>
+
+                    {% for sezione, ruoli in sezioni.items %}
+
+                        <h4>{{ sezione }}</h4>
+                        <ul>
+                        {% for chiave, valore, numero in ruoli %}
+
+                            <li>
+                                <span class="badge">
+                                    {{ numero }}
+                                </span>
+                                <a href="/presidente/sedi/{{ sede.pk }}/delegati/{{ chiave }}/">
+                                    {{ valore }}
+                                </a>
+
+                            </li>
+
+                        {% endfor %}
+                        </ul>
+
+                    {% endfor %}
+
+                </div>
+            </div>
+
+        </div>
+
+
+
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-map-marker"></i>
+                        Indirizzo e posizione geografica
+                    </h2>
+                </div>
+                <div class="panel-body">
+
+                    {% localizzatore sede %}
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+
+{% endblock %}

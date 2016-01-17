@@ -259,3 +259,11 @@ class ModuloUtenza(ModelForm):
     class Meta:
         model = Utenza
         fields = ['email',]
+
+
+class ModuloPresidenteSede(ModelForm):
+    class Meta:
+        model = Sede
+        fields = ['telefono', 'fax', 'email', 'codice_fiscale',
+                  'partita_iva', ]
+        

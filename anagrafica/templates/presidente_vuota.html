@@ -8,7 +8,7 @@
 
 
 {% block menu_laterale %}
-<div class="col-lg-3 well well-sm">
+<div class="col-lg-2 well well-sm">
 
 
     <ul id="sezione" class="nav nav-pills nav-stacked navbar-collapse collapse">
@@ -19,7 +19,7 @@
 
             {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
 
-                <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
+                <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
                     <a href="{{ link_url|urlencode }}">
                         <i class="fa {{ link_icona }} fa-fw"></i>
                         {{ link_nome }}
@@ -37,4 +37,4 @@
 </div>
 {% endblock %}
 
-{% block app_contenuto_col %}col-lg-9{% endblock %}
+{% block app_contenuto_col %}col-lg-10{% endblock %}

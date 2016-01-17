@@ -83,7 +83,7 @@ def menu(request):
         ),
         "presidente": (
             ("Sedi CRI", (
-                ("Gestione", "fa-cogs", "/presidente/"),
+                ("Elenco", "fa-list", "/presidente/"),
             )),
         ),
         "us": (

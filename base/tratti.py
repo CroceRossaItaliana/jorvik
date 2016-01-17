@@ -183,23 +183,23 @@ class ConDelegati(models.Model):
         object_id_field='oggetto_id'
     )
 
-    def deleghe_attuali(self, al_giorno=datetime.today()):
+    def deleghe_attuali(self, al_giorno=datetime.today(), **kwargs):
         """
         Ottiene QuerySet per gli oggetti Delega validi ad un determinato giorno.
         :param al_giorno: Giorno da verificare. Se assente, oggi.
         :return: QuerySet di oggetti Delega.
         """
         Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
-        return self.deleghe.filter(Delega.query_attuale(al_giorno).q)
+        return self.deleghe.filter(Delega.query_attuale(al_giorno, **kwargs).q)
 
-    def delegati_attuali(self, al_giorno=datetime.today()):
+    def delegati_attuali(self, al_giorno=datetime.today(), **kwargs):
         """
         Ottiene QuerySet per gli oggetti Persona delegati ad un determinato giorno.
         :param al_giorno: Giorno da verificare. Se assente, oggi.
         :return: QuerySet di oggetti Persona.
         """
         Persona = apps.get_model(app_label='anagrafica', model_name='Persona')
-        return Persona.objects.filter(delega__in=self.deleghe_attuali(al_giorno))
+        return Persona.objects.filter(delega__in=self.deleghe_attuali(al_giorno, **kwargs))
 
     def aggiungi_delegato(self, tipo, persona, firmatario=None, inizio=timezone.now(), fine=None):
         """

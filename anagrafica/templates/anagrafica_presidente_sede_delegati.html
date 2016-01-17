@@ -1,0 +1,42 @@
+{% extends 'presidente_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load utils %}
+
+{% block pagina_titolo %}
+    Gestione {{ sede.nome_completo }}
+{% endblock %}
+
+{% block app_contenuto %}
+
+
+    <div class="row">
+
+
+        <div class="col-md-12">
+
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-list"></i>
+                        Delegati e Responsabili
+                    </h2>
+                </div>
+                <div class="panel-body">
+
+                    {% delegati delega sede continua_url=continua_url almeno=1 %}
+
+
+                </div>
+            </div>
+
+        </div>
+
+
+
+    </div>
+
+
+
+{% endblock %}

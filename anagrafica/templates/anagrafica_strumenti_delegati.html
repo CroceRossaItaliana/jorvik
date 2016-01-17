@@ -9,7 +9,7 @@
     <div class="container-fluid">
 
         <div class="row">
-            {% if oggetto.deleghe_attuali.count >= almeno %}
+            {% if deleghe_attuali.count >= almeno %}
                 <div class="alert alert-success">
                     {% if continua_url %}
                         <a href="{{ continua_url }}" target="_top" class="btn btn-success pull-right">
@@ -74,7 +74,7 @@
                             </thead>
 
                             <tbody>
-                                {% for del in oggetto.deleghe.all %}
+                                {% for del in deleghe %}
                                     <tr class="{% if del.attuale %}success{% endif %}">
                                         <td class="grassetto">
                                             {{ del.persona.link|safe }}
