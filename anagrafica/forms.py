@@ -217,10 +217,9 @@ class ModuloNuovoProvvedimento(autocomplete_light.ModelForm):
 
     def clean_fine(self):
         fine = self.cleaned_data['fine']
-        tipo = self.cleaned_data['tipo']
-        if tipo == "S":
-            if not fine or fine == "":
-                raise forms.ValidationError("La fine di una sospensione non puo' essere indeterminata")
+        inizio = self.cleaned_data['inizo']
+        if not fine or fine < inizio:
+            raise forms.ValidationError("La fine di una sospensione non puo' essere indeterminata")
         return fine
 
 

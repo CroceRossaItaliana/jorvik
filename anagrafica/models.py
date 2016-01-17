@@ -163,6 +163,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def sospeso(self):
         return ProvvedimentoDisciplinare.query_attuale(persona=self,
                                                        tipo=ProvvedimentoDisciplinare.SOSPENSIONE).exists()
+    @property
+    def in_riserva(self):
+        return Riserva.query_attuale(persona=self).exists()
 
     def __str__(self):
         return self.nome_completo
@@ -1502,8 +1505,9 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
     Rappresenta una pratica di riserva.
     Questa puo' essere in corso o meno.
     """
-
-
+    persona = models.ForeignKey(Persona, related_name="Riserva")
+    motivo = models.CharField(max_length=4096)
+    appartenenza = models.ForeignKey(Appartenenza, related_name="Riserva")
 
 class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocollo, ConStorico):
     AMMONIZIONE = "A"
