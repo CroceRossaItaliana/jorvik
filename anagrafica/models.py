@@ -1412,9 +1412,24 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
     Rappresenta una pratica di riserva.
     Questa puo' essere in corso o meno.
     """
-    persona = models.ForeignKey(Persona, related_name="Riserva")
+    persona = models.ForeignKey(Persona, related_name="riserve")
     motivo = models.CharField(max_length=4096)
-    appartenenza = models.ForeignKey(Appartenenza, related_name="Riserva")
+    appartenenza = models.ForeignKey(Appartenenza, related_name="riserve")
+
+    def invia_mail(self):
+        pass
+
+    def genera_pdf(self):
+        pdf = PDF(oggetto=self)
+        pdf.genera_e_salva(
+          nome="Riserva %s.pdf" % (self.persona.nome_completo, ),
+          corpo={
+            "riserva": self,
+            "sede_attuale": self.persona.sedi_attuali(al_giorno=self.creazione)[0]
+          },
+          modello="pdf_riserva.html",
+        )
+        return pdf
 
 class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocollo, ConStorico):
     AMMONIZIONE = "A"

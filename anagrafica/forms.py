@@ -5,7 +5,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega, \
-    Fototessera, Trasferimento
+    Fototessera, Trasferimento, Riserva
 from autenticazione.models import Utenza
 import autocomplete_light
 
@@ -224,10 +224,24 @@ class ModuloNuovoProvvedimento(autocomplete_light.ModelForm):
 
     def clean_fine(self):
         fine = self.cleaned_data['fine']
-        inizio = self.cleaned_data['inizo']
+        inizio = self.cleaned_data['inizio']
         if not fine or fine < inizio:
-            raise forms.ValidationError("La fine di una sospensione non puo' essere indeterminata")
+            raise forms.ValidationError("La fine di un provvedimento non può avvenire prima del suo inizio")
         return fine
+
+
+class ModuloCreazioneRiserva(ModelForm):
+    class Meta:
+        model = Riserva
+        fields = ['inizio','fine', 'motivo']
+
+    def clean_fine(self):
+        fine = self.cleaned_data['fine']
+        inizio = self.cleaned_data['inizio']
+        if not fine or fine < inizio:
+            raise forms.ValidationError("La fine di una riserva non può avvenire prima del suo inizio")
+        return fine
+
 
 
 class ModuloCreazioneDelega(autocomplete_light.ModelForm):

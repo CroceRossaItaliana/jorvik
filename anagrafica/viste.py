@@ -12,18 +12,18 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
-    ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloModificaPrivacy
+    ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
 from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento, \
-    ProvvedimentoDisciplinare, Sede
+    ProvvedimentoDisciplinare, Sede, Riserva
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
-from base.errori import errore_generico, errore_nessuna_appartenenza
+from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
 from base.files import Zip
 from base.models import Log
 from base.notifiche import NOTIFICA_INVIA
@@ -629,6 +629,32 @@ def utente_trasferimento(request, me):
         "storico": storico
     }
     return "anagrafica_utente_trasferimento.html", contesto
+
+@pagina_privata
+def utente_riserva(request, me):
+    storico = me.riserve.all()
+    modulo = ModuloCreazioneRiserva(request.POST or None)
+    if modulo.is_valid():
+        modulo.save()
+        return messaggio_generico(request, me, titolo="Riserva registrata",
+                                      messaggio="La riserva è stato registrata con successo",
+                                      torna_titolo="Torna alla dash",
+                                      torna_url="/utente/")
+    contesto = {
+        "modulo": modulo,
+        "storico": storico,
+    }
+    return "anagrafica_utente_riserva.html", contesto
+
+
+@pagina_privata
+def utente_riserva_termina(request, me, pk):
+    riserva = get_object_or_404(Riserva, pk=pk)
+    if not riserva.persona == me:
+        return redirect(ERRORE_PERMESSI)
+    riserva.autorizzazioni_ritira()
+    return redirect("/utente/")
+
 
 @pagina_privata
 def utente_trasferimento_ritira(request, me, pk):

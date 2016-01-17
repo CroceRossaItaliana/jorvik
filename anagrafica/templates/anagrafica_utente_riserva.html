@@ -1,0 +1,94 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Richiesta Trasferimento{% endblock %}
+
+{% block app_contenuto %}
+
+<div class="row">
+            <div class="col-lg-8">
+                <div class="panel panel-info">
+
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-folder-o fa-fw"></i> Documenti caricati
+
+                        </h4>
+
+
+                    </div>
+
+                    <div class="panel-body">
+
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Inizio</th>
+                                    <th>Fine</th>
+                                    <th>Esito</th>
+                                    <th>Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in storico %}
+                                <tr
+                                    {% if r.esito == r.ESITO_PENDING %}
+                                        class="warning"
+                                    {% endif %}
+                                >
+                                    <td>{{ r.inizio|date:"SHORT_DATE_FORMAT" }}</td>
+                                    <td>{{ r.fine|date:"SHORT_DATE_FORMAT" }}</td>
+                                    <td>{{ r.esito}}</td>
+                                    <td>
+                                        <a href="{{ r.url_pdf }}" target="_blank">Scarica PDF</a>
+                                        {% if r.esito == r.ESITO_PENDING %} -
+                                        <a href="/utente/riserva/{{ r.pk }}/ritira/"
+                                           data-conferma="Vuoi veramente ritirare la richiesta di riserva?">
+                                            Ritira Richiesta
+                                        </a>
+                                        {% elif r.esito == r.ESITO_OK %}
+                                            <a href="/utente/riserva/{{ r.pk }}/termina/"
+                                           data-conferma="Vuoi veramente terminare riserva?">
+                                            Termina Riserva
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="bg-warning">
+                                            <i class="fa fa-info"></i> Nessuna riserva passata.
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+    <div class="col-md-4">
+        <div class="panel panel-primary">
+
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-plus"></i> Registra Riserva
+                </h4>
+
+            </div>
+
+            <div class="panel-body">
+                {% bootstrap_form modulo %}
+
+                <button class="btn btn-primary btn-block">
+                    <i class="fa fa-check"></i>
+                    Registra Riserva
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

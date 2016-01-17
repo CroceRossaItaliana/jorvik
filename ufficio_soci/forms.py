@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
 from anagrafica.forms import ModuloStepAnagrafica
-from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione
+from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva
 from autenticazione.forms import ModuloCreazioneUtenza
 from curriculum.models import Titolo, TitoloPersonale
 from ufficio_soci.models import Tesseramento, Quota
@@ -111,6 +111,19 @@ class ModuloReclamaAppartenenza(forms.ModelForm):
                                   "tipo di membri.")
 
         return membro
+
+
+class ModuloCreazioneRiserva(autocomplete_light.ModelForm):
+    class Meta:
+        model = Riserva
+        fields = ['persona', 'inizio','fine', 'motivo']
+
+    def clean_fine(self):
+        fine = self.cleaned_data['fine']
+        inizio = self.cleaned_data['inizio']
+        if not fine or fine < inizio:
+            raise forms.ValidationError("La fine di una riserva non può avvenire prima del suo inizio")
+        return fine
 
 
 class ModuloReclamaQuota(forms.Form):

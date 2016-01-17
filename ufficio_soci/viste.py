@@ -15,7 +15,8 @@ from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
-    ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute
+    ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
+    ModuloCreazioneRiserva
 from ufficio_soci.models import Quota, Tesseramento, Tesserino
 
 
@@ -282,7 +283,7 @@ def us_trasferimento(request, me):
 
     return 'us_estensione.html', contesto
 
-@pagina_privata()
+@pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensioni(request, me):
     sedi = me.oggetti_permesso(GESTIONE_SOCI).espandi()
     estensioni = Estensione.filter(destinazione__in=(sedi))
@@ -293,7 +294,7 @@ def us_estensioni(request, me):
 
     return 'us_estensioni.html', contesto
 
-@pagina_privata()
+@pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensione_termina(request, me, pk):
     estensione = get_object_or_404(Estensione, pk=pk)
     if estensione not in me.oggetti_permesso(GESTIONE_SOCI).espandi():
@@ -307,7 +308,7 @@ def us_estensione_termina(request, me, pk):
                                       torna_url="/us/estensione/")
 
 
-@pagina_privata()
+@pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_provvedimento(request, me):
 
     modulo = ModuloNuovoProvvedimento(request.POST or None)
@@ -554,6 +555,27 @@ def us_elenco_soci(request, me):
 
     return 'us_elenco_generico.html', contesto
 
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_riserva(request, me):
+    modulo = ModuloCreazioneRiserva(request.POST or None)
+
+    if modulo.is_valid():
+        if not me.permessi_almeno(modulo.cleaned_data['persona'], MODIFICA):
+            modulo.add_error('persona', "Non puoi registrare riserve per questo Volontario!")
+        else:
+            riserva = modulo.save(commit=False)
+            riserva.apparteneza = riserva.persona.appartenenze_attuali().first()
+            riserva.invia_mail()
+            return messaggio_generico(request, me, titolo="Riserva registrata",
+                                      messaggio="La riserva è stato registrata con successo",
+                                      torna_titolo="Inserisci nuova riserva",
+                                      torna_url="/us/riserva/")
+
+    contesto = {
+        "modulo": modulo,
+    }
+
+    return "us_riserva.html", contesto
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_elenco_sostenitori(request, me):
