@@ -1,0 +1,84 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load utils %}
+
+{% block pagina_titolo %}Preferenze sulla Privacy{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="alert bg-info">
+        <p>
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai
+            controllare la tua Privacy su Gaia.
+        </p>
+
+    </div>
+
+
+
+    <div class="row">
+
+        <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-info-circle"></i>
+                        La tua privacy su Gaia
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        La tua privacy &egrave; molto importante per noi.
+                        Prenditi un minuto per controllare che le tue impostazioni
+                        sulla Privacy ti soddisfino pienamentegit  utilizzando il
+                        modulo in questa pagina.
+                    </p>
+                    <p>
+                        Per qualunque dubbio in merito alla nostra politica sulla
+                        protezione dei dati personali degli utenti,
+                        non esitare a contattarci.
+                    </p>
+                    <p>&nbsp;</p>
+                    <a href="/informazioni/condizioni/" class="btn btn-block btn-info">
+                        <i class="fa fa-fw fa-info-circle"></i>
+                        Leggi l'informativa sulla Privacy
+                    </a>
+                    <a href="/supporto/" class="btn btn-block btn-default btn-sm">
+                        <i class="fa fa-fw fa-question-circle"></i>
+                        Contatta il Supporto
+                    </a>
+
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-6">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-cogs"></i>
+                        Impostazioni Privacy
+                    </h2>
+                </div>
+                <div class="panel-body">
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-save"></i> Salva modifiche
+                        </button>
+                    </form>
+
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+{% endblock %}

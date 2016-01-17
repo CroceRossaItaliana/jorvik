@@ -12,7 +12,7 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
-    ModuloProfiloTitoloPersonale, ModuloUtenza
+    ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloModificaPrivacy
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -382,6 +382,21 @@ def utente_storico(request, me):
     }
 
     return 'anagrafica_utente_storico.html', contesto
+
+
+@pagina_privata
+def utente_privacy(request, me):
+
+    modulo = ModuloModificaPrivacy(request.POST or None, instance=me)
+
+    if modulo.is_valid():
+        modulo.save()
+
+    contesto = {
+        "modulo": modulo
+    }
+    return 'anagrafica_utente_privacy.html', contesto
+
 
 @pagina_privata
 def utente_contatti(request, me):

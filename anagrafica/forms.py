@@ -149,6 +149,13 @@ class ModuloModificaAvatar(ModelForm):
         fields = ['avatar']
 
 
+class ModuloModificaPrivacy(ModelForm):
+    class Meta:
+        model = Persona
+        fields = ['privacy_contatti', 'privacy_curriculum',
+                  'privacy_deleghe', ]
+
+
 class ModuloNuovaFototessera(ModelForm):
     class Meta:
         model = Fototessera

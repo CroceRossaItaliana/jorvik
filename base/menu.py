@@ -46,6 +46,7 @@ def menu(request):
             )) if me and me.volontario else None,
             ("Sicurezza", (
                 ("Cambia password", "fa-key", "/utente/cambia-password/"),
+                ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
             )),
         )),
         "posta": (

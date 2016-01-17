@@ -104,7 +104,7 @@
 
 
             <p>&nbsp;</p>
-            <h4><i class="fa fa-money fa-fw"></i> Quote versate</h4>
+            <h4><i class="fa fa-money fa-fw"></i> Ricevute e quote associative</h4>
 
             <table class="table table-condensed table-responsive">
                 <thead>
@@ -140,6 +140,13 @@
 
                     {% empty %}
 
+                        <tr class="warning">
+                            <td colspan="4">
+                                <p><i class="fa fa-fw fa-info-circle"></i>
+                                    Nessuna ricevuta o quota associativa registrata.
+                                </p>
+                            </td>
+                        </tr>
 
                     {% endfor %}
                 </tbody>
