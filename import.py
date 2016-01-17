@@ -154,6 +154,12 @@ parser.add_argument('--salta-dimissioni', dest='dimissioni', action='store_const
 parser.add_argument('--salta-privacy', dest='privacy', action='store_const',
                    const=False, default=True,
                    help='salta importazione privacy')
+parser.add_argument('--salta-riserve', dest='riserve', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione riserve')
+parser.add_argument('--salta-dettagli', dest='dettagli', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione dettagli (iv, cm, conoscenza)')
 
 parser.add_argument('--uploads', dest='uploads', action='store',
                    help='path assoluta alla cartella upload/ di Gaia vecchio')
@@ -4046,6 +4052,8 @@ def carica_riserve():
         AND volontario IN (select id from anagrafica)
         AND pConferma IN (select id from anagrafica)
         AND fine IS NOT NULL
+        AND stato <> '10'
+        AND stato <> '6'
 
         """
     )
@@ -4089,8 +4097,78 @@ def carica_riserve():
 
         ritirata = False
         confermata = True
+        a2 = None
 
-        # --
+        if stato in [0, 5, 30, 35] and pConferma_id:  # Confermata
+            ritirata = False
+            confermata = True
+
+            sede = Persona.objects.get(pk=pConferma_id).sede_riferimento()
+            if not sede:
+                continue
+
+            a = Autorizzazione(
+                richiedente_id=persona_id,
+                firmatario_id=pConferma_id,
+                concessa=True,
+                necessaria=False,
+                progressivo=1,
+                destinatario_ruolo=PRESIDENTE,
+                destinatario_oggetto=sede.comitato,
+                creazione=creazione,
+            )
+
+        elif stato in [20]:  # In attesa
+            confermata = False
+            ritirata = False
+
+            a = Autorizzazione(
+                richiedente_id=persona_id,
+                firmatario_id=None,
+                concessa=None,
+                necessaria=True,
+                progressivo=1,
+                destinatario_ruolo=PRESIDENTE,
+                destinatario_oggetto=sede.comitato,
+                creazione=creazione
+            )
+            a2 = Autorizzazione(
+                richiedente_id=persona_id,
+                firmatario_id=None,
+                concessa=None,
+                necessaria=True,
+                progressivo=1,
+                destinatario_ruolo=UFFICIO_SOCI,
+                destinatario_oggetto=sede.comitato,
+                creazione=creazione
+            )
+
+        else:
+            raise ValueError("Stato non aspettato %d" % (stato,))
+
+        print("   %s riserva persona_id=%d, app_id=%d" % (
+            progresso(contatore, totale), persona_id, appartenenza_id,
+        ))
+
+        r = Riserva(
+            persona_id=persona_id,
+            motivo=motivo,
+            appartenenza_id=appartenenza_id,
+            inizio=inizio,
+            fine=fine,
+            creazione=creazione,
+            confermata=confermata,
+            ritirata=ritirata,
+        )
+        r.save()
+
+        a.oggetto = r
+        a.save()
+
+        if a2:
+            a2.oggetto = r
+            a2.save()
+
 
     cursore.close()
 
@@ -4195,6 +4273,89 @@ def carica_privacy():
             persone = Persona.objects.filter(pk__in=persone)
             print("     - n. %d persone => %d" % (persone.count(), valore,))
             persone.update(**dizionario)
+
+
+def carica_dettagli():
+
+
+    print("   - Caricamento CMs..")
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT  id FROM dettagliPersona WHERE nome = 'cm' and valore <> ''
+    """
+    )
+    cms = cursore.fetchall()
+    cursore.close()
+    cm_id = []
+    for cm in cms:
+        try:
+            cm_id += [ASSOC_ID_PERSONE[int(cm[0])]]
+        except KeyError:
+            continue
+
+    print("   - Caricamento IV..")
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT  id FROM dettagliPersona WHERE nome = 'iv' and valore <> ''
+    """
+    )
+    ivs = cursore.fetchall()
+    cursore.close()
+    iv_id = []
+    for iv in ivs:
+        try:
+            iv_id += [ASSOC_ID_PERSONE[int(iv[0])]]
+        except KeyError:
+            continue
+
+    print("   Aggiornamento CM")
+    persone = Persona.objects.filter(pk__in=cm_id)
+    print("     - %d" % (persone.count(),))
+    persone.update(cm=True)
+    print("   Aggiornamento IV")
+    persone = Persona.objects.filter(pk__in=iv_id)
+    print("     - %d" % (persone.count(),))
+    persone.update(iv=True)
+    print("   FATTO")
+
+
+    dizionario = {
+        Persona.CONOSCENZA_SITI: 1,
+        Persona.CONOSCENZA_FACEBOOK: 10,
+        Persona.CONOSCENZA_TWITTER: 20,
+        Persona.CONOSCENZA_NEWSLETTER: 30,
+        Persona.CONOSCENZA_TV: 40,
+        Persona.CONOSCENZA_RADIO: 50,
+        Persona.CONOSCENZA_GIORNALI: 60,
+        Persona.CONOSCENZA_AMICO: 73,
+        Persona.CONOSCENZA_AFFISSIONI: 76,
+        Persona.CONOSCENZA_EVENTI: 79,
+        Persona.CONOSCENZA_SERVIZI: 80,
+        Persona.CONOSCENZA_ALTRO: 83,
+    }
+
+    for chiave, valore in dizionario.items():
+
+        valore = str(valore)
+
+        print("   - Caricamento statistiche conosciuto %s.." % (valore,))
+        cursore = db.cursor()
+        cursore.execute("SELECT id FROM dettagliPersona WHERE nome = 'conosciuto' AND valore='%s'" % (valore,))
+        ids = cursore.fetchall()
+        cursore.close()
+
+        id_list = []
+        for i in ids:
+            try:
+                id_list += [ASSOC_ID_PERSONE[int(i[0])]]
+            except KeyError:
+                continue
+
+        print(Persona.objects.filter(pk__in=id_list).update(conoscenza=chiave))
+
+
+
+
 
 
 # Importazione dei Comitati
@@ -4637,6 +4798,15 @@ if args.privacy:
 
 else:
     print("  ~ Salto importazione dimissioni")
+
+
+print("> Importazione dei dettagli")
+if args.dettagli:
+
+    carica_dettagli()
+
+else:
+    print("  ~ Salto importazione dettagli")
 
 
 

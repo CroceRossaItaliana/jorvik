@@ -127,6 +127,38 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                                                help_text="A chi mostrare i miei incarichi, come presidenze, "
                                                          "referenze attività, deleghe, ecc.")
 
+    iv = models.BooleanField(default=False, db_index=True)
+    cm = models.BooleanField(default=False, db_index=True)
+
+    CONOSCENZA_SITI = "SI"
+    CONOSCENZA_FACEBOOK = "FB"
+    CONOSCENZA_TWITTER = "TW"
+    CONOSCENZA_NEWSLETTER = "NW"
+    CONOSCENZA_TV = "TV"
+    CONOSCENZA_RADIO = "RA"
+    CONOSCENZA_GIORNALI = "GI"
+    CONOSCENZA_AMICO = "AM"
+    CONOSCENZA_AFFISSIONI = "AF"
+    CONOSCENZA_EVENTI = "EV"
+    CONOSCENZA_SERVIZI = "SE"
+    CONOSCENZA_ALTRO = "AL"
+    CONOSCENZA = (
+        (CONOSCENZA_SITI, "Siti web della Croce Rossa Italiana"),
+        (CONOSCENZA_FACEBOOK, "Facebook"),
+        (CONOSCENZA_TWITTER, "Twitter"),
+        (CONOSCENZA_NEWSLETTER, "Newsletter"),
+        (CONOSCENZA_TV, "TV o Web TV"),
+        (CONOSCENZA_RADIO, "Radio"),
+        (CONOSCENZA_GIORNALI, "Giornali (online o cartacei)"),
+        (CONOSCENZA_AMICO, "Da un amico, collega o familiare"),
+        (CONOSCENZA_AFFISSIONI, "Affissioni (locandine, manifesti, ecc.)"),
+        (CONOSCENZA_EVENTI, "Eventi organizzati dalla CRI (es. stand informativi, manifestazioni, open day, ecc.)"),
+        (CONOSCENZA_SERVIZI, "Partecipazione ad attività e/o fruizione di servizi erogati dalla CRI (es. corsi di "
+                             "formazione, servizi sanitari, servizi sociali, ecc.)"),
+        (CONOSCENZA_ALTRO, "Altro"),
+    )
+    conoscenza = models.CharField(max_length=2, default=None, blank=True, null=True, db_index=True)
+
     @property
     def nome_completo(self):
         """

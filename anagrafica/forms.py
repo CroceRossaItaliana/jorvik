@@ -74,7 +74,7 @@ class ModuloStepAnagrafica(ModelForm):
         fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita', 'provincia_nascita', 'stato_nascita',
                   'codice_fiscale',
                   'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
-                  'cap_residenza']
+                  'cap_residenza', 'conoscenza', ]
 
     def clean_codice_fiscale(self):
         codice_fiscale = self.cleaned_data.get('codice_fiscale')
@@ -88,7 +88,7 @@ class ModuloModificaAnagrafica(ModelForm):
         model = Persona
         fields = ['comune_nascita', 'provincia_nascita', 'stato_nascita',
                   'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
-                  'cap_residenza']
+                  'cap_residenza',]
 
 
 class ModuloProfiloModificaAnagrafica(ModelForm):
@@ -97,7 +97,7 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
         fields = ['nome', 'cognome', 'data_nascita', 'codice_fiscale',
                   'comune_nascita', 'provincia_nascita', 'stato_nascita',
                   'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
-                  'cap_residenza', 'email_contatto',
+                  'cap_residenza', 'email_contatto', 'iv', 'cm',
                   'note',]
 
     def __init__(self, *args, **kwargs):
