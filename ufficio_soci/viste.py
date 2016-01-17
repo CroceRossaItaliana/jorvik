@@ -1,20 +1,22 @@
 import datetime
+import random
 from django.core.paginator import Paginator
+from django.db.models import Sum
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.forms import ModuloNuovoProvvedimento, ModuloCreazioneTrasferimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA
 from autenticazione.forms import ModuloCreazioneUtenza
-from autenticazione.funzioni import pagina_privata
+from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
 from base.files import Excel, FoglioExcel
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
-    ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni
-from ufficio_soci.models import Quota, Tesseramento
+    ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute
+from ufficio_soci.models import Quota, Tesseramento, Tesserino
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
@@ -612,3 +614,86 @@ def us_quote(request, me):
     }
 
     return 'us_elenco_generico.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_ricevute(request, me):
+
+    modulo = ModuloElencoRicevute(request.POST or (request.GET or None))
+
+    tipi = [x[0] for x in Quota.TIPO]
+    anno = Tesseramento.ultimo_anno()
+    if modulo.is_valid():
+        tipi = modulo.cleaned_data.get('tipi_ricevute')
+        anno = modulo.cleaned_data.get('anno')
+
+    dict_tipi = dict(Quota.TIPO)
+    tipi_testo = [dict_tipi[t] for t in tipi]
+
+    sedi = me.oggetti_permesso(GESTIONE_SOCI)
+    ricevute = Quota.objects.filter(
+        sede__in=sedi,
+        anno=anno,
+        tipo__in=tipi,
+    ).order_by('progressivo')
+
+    non_annullate = ricevute.filter(stato=Quota.REGISTRATA)
+    importo = non_annullate.aggregate(Sum('importo'))['importo__sum']
+    importo_extra = non_annullate.aggregate(Sum('importo_extra'))['importo_extra__sum']
+    importo_totale = importo + importo_extra
+
+    contesto = {
+        "modulo": modulo,
+        "anno": anno,
+        "ricevute": ricevute,
+        "tipi_testo": tipi_testo,
+        "importo_totale": importo_totale,
+    }
+
+    return 'us_ricevute.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_ricevute_annulla(request, me, pk):
+    ricevuta = get_object_or_404(Quota, pk=pk)
+
+    if ricevuta.sede not in me.oggetti_permesso(GESTIONE_SOCI):
+        return redirect(ERRORE_PERMESSI)
+
+    if ricevuta.stato == ricevuta.REGISTRATA:
+        ricevuta.stato = ricevuta.ANNULLATA
+        ricevuta.annullato_da = me
+        ricevuta.data_annullamento = datetime.date.today()
+        ricevuta.save()
+
+    return redirect("/us/ricevute/?anno=%d&tipi_ricevute=%s" % (ricevuta.anno, ricevuta.tipo,))
+
+
+@pagina_pubblica
+def verifica_tesserino(request, me=None):
+
+    modulo = ModuloVerificaTesserino(request.POST or None)
+    ricerca = False
+    lettera_numero = 0
+    lettera = "?"
+    tesserino = None
+    if modulo.is_valid():
+        ricerca = True
+        try:
+            tesserino = Tesserino.objects.get(codice=modulo.cleaned_data['numero_tessera'])
+            cognome = tesserino.persona.cognome
+            lettera_numero = random.randint(0, len(cognome))
+            lettera = cognome[lettera_numero].upper()
+            lettera_numero += 1
+
+        except Tesserino.DoesNotExist:
+            tesserino = None
+
+    contesto = {
+        "modulo": modulo,
+        "tesserino": tesserino,
+        "lettera_numero": lettera_numero,
+        "lettera": lettera,
+        "ricerca": ricerca,
+    }
+    return 'informazioni_verifica_tesserino.html', contesto

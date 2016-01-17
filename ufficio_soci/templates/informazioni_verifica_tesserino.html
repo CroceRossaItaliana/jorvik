@@ -1,0 +1,146 @@
+{% extends "base_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+
+{% block pagina_titolo %}Verifica un Tesserino CRI{% endblock %}
+
+{% block pagina_principale %}
+
+    <p>&nbsp;</p>
+
+    <div class="container">
+
+        <div class="alert alert-block alert-info">
+            <h4><i class="fa fa-fw fa-barcode"></i> Questa pagina ti permette di verificare la validit&agrave; di
+                un tesserino di un Socio della Croce Rossa Italiana.</h4>
+            <p>Ti preghiamo di inserire i dati che ti verranno richiesti per completare la procedura. Tieni il tesserino che vuoi verificare a portata di mano!</p>
+        </div>
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">
+                            Inserisci i dati del tesserino
+
+                        </h2>
+
+                    </div>
+
+                    <div class="panel-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            {% bootstrap_form modulo %}
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fa fa-fw fa-check"></i>
+                                Verifica
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="col-md-6">
+            {% if ricerca %}
+
+                {% if tesserino and tesserino.valido %}
+
+                    <div class="panel panel-success">
+                        <div class="panel-heading">
+                            <h2 class="panel-title">
+                                <i class="fa fa-fw fa-check"></i>
+                                Tesserino valido
+                            </h2>
+                        </div>
+
+                        <div class="panel-body">
+                            <p>Il tesserino di cui hai richiesto la verifica risulta
+                                <strong>valido</strong>, e in particolare:</p>
+                            <ul>
+                                <li>La lettera in posizione <strong>{{ lettera_numero }}</strong>
+                                    del cognome del volontario &egrave; <strong>{{ lettera }}</strong>;</li>
+                                <li>Il tesserino appartiene ad un volontario della Croce Rossa;</li>
+                                <li>Il Volontario &egrave; in regola con la quota associativa.</li>
+                            </ul>
+
+
+                        </div>
+
+                    </div>
+
+
+                {% else %}
+
+                    <div class="panel panel-danger">
+                        <div class="panel-heading">
+                            <h2 class="panel-title">
+                                <i class="fa fa-fw fa-times"></i>
+                                Tesserino non valido
+                            </h2>
+                        </div>
+
+                        <div class="panel-body">
+                            <p>Il tesserino di cui hai richiesto la verifica risulta
+                                <strong>non valido</strong>. La causa pu&ograve; essere
+                                una delle seguenti:</p>
+                            <ul>
+                                <li>Hai inserito in modo errato il numero di tessera;</li>
+                                <li>Il tesserino appartiene ad una persona non pi&ugrave; in Croce Rossa Italiana;</li>
+                                <li>Il Volontario &egrave; in regola con la quota associativa.</li>
+                            </ul>
+
+
+                        </div>
+
+                    </div>
+
+
+                {% endif %}
+
+
+
+
+            {% else %}
+
+
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Tesserini CRI
+                        </h2>
+                    </div>
+
+                    <div class="panel-body">
+                        <p>I tesserini CRI vengono rilasciati ai Soci di Croce Rossa
+                            Italiana.</p>
+                        <p>Con questo strumento potrai verificare la validit&agrave;
+                            di un tesserino. Ti verr&agrave; fornita anche una lettera
+                            del cognome della persona, per aiutarti a verificarne
+                            la veridicit&agrave;.</p>
+                        <p>Ecco il retro di esempio di un tesserino, che mostra
+                            dove trovare il numero del tesserino sotto al
+                            codice a barre.</p>
+                        <img src="{% static 'img/teserinoretroesempio.jpg' %}"
+                            class="img-responsive" title="Esempio retro tessera" />
+
+
+                    </div>
+
+                </div>
+
+
+            {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+{% endblock %}

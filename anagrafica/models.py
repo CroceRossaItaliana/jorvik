@@ -159,6 +159,11 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return hasattr(self, 'utenza') and self.utenza.is_staff
 
+    @property
+    def sospeso(self):
+        return ProvvedimentoDisciplinare.query_attuale(persona=self,
+                                                       tipo=ProvvedimentoDisciplinare.SOSPENSIONE).exists()
+
     def __str__(self):
         return self.nome_completo
 
@@ -572,8 +577,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return "%sdeleghe/" % (self.url,)
 
     @property
-    def url_profilo_(self):
-        return "%sappartenenze/" % (self.url,)
+    def url_profilo_quote(self):
+        return "%squote/" % (self.url,)
 
 
     @property
@@ -1516,19 +1521,9 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
     tipo = models.CharField(max_length=1, choices=TIPO, default="A")
 
     def esegui(self, lunghezza):
-        if self.tipo == "E":
+        if self.tipo == self.ESPULSIONE:
             self.persona.espelli()
-        #if self.tipo == "S":
-         #   sospensione = Sospensione(
-          #      inzio=datetime.today(),
-           #     fine=datetime.today() + timedelta(days=lunghezza),
-            #    provvedimento=self.id
-            #)
-            #sospensione.save()
 
-
-#class Sospensione(ProvvedimentoDisciplinare, ConStorico):
- #   provvedimento = models.ForeignKey(ProvvedimentoDisciplinare, related_name="provvedimento")
 
 class Dimissione(ModelloSemplice, ConStorico):
 
