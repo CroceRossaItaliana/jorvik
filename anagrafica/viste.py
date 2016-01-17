@@ -18,9 +18,9 @@ from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
 from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento, \
-    ProvvedimentoDisciplinare
+    ProvvedimentoDisciplinare, Sede
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT
-from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA
+from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.errori import errore_generico, errore_nessuna_appartenenza
@@ -1013,3 +1013,21 @@ def profilo(request, me, pk, sezione=None):
         f_template, f_contesto = s[2](request, me, persona)
         contesto.update(f_contesto)
         return f_template, contesto
+
+
+@pagina_privata
+def presidente(request, me):
+    sedi = me.oggetti_permesso(GESTIONE_SEDE)
+    contesto = {
+        "sedi": sedi
+    }
+    return 'anagrafica_presidente.html', contesto
+
+
+@pagina_privata
+def presidente_sede(request, me, sede_pk):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    contesto = {
+        "sede": sede
+    }
+    return 'anagrafica_presidente_sede.html', contesto

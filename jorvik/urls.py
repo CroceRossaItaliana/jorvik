@@ -121,6 +121,11 @@ urlpatterns = [
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/modifica/$', 'attivita.viste.attivita_scheda_turni_modifica'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/report/$', 'attivita.viste.attivita_scheda_report'),
 
+    url(r'^presidente/$', 'anagrafica.viste.presidente'),
+    url(r'^presidente/sedi/(?P<sede_pk>.*)/$', 'anagrafica.viste.presidente'),
+    url(r'^presidente/sedi/(?P<sede_pk>.*)/anagrafica/$', 'anagrafica.viste.presidente'),
+    url(r'^presidente/sedi/(?P<sede_pk>.*)/delegati/(?P<pk>[0-9]+)/$', 'anagrafica.viste.presidente'),
+
     url(r'^us/$', 'ufficio_soci.viste.us'),
     url(r'^us/provvedimento/$', 'ufficio_soci.viste.us_provvedimento'),
     url(r'^us/aggiungi/$', 'ufficio_soci.viste.us_aggiungi'),

@@ -81,6 +81,11 @@ def menu(request):
                 ("Storico", "fa-clock-o", "/autorizzazioni/storico/"),
             )),
         ),
+        "presidente": (
+            ("Sedi CRI", (
+                ("Gestione", "fa-cogs", "/presidente/"),
+            )),
+        ),
         "us": (
             ("Elenchi", (
                 ("Volontari", "fa-list", "/us/elenchi/volontari/"),

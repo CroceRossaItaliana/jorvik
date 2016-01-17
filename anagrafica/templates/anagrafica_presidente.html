@@ -1,0 +1,62 @@
+{% extends 'presidente_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+
+
+{% block pagina_titolo %}
+    Presidente
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro text-success">
+        Presidente CRI
+    </h2>
+
+    <p class="allinea-centro">
+        <img  alt="Emblema CRI" src="https://upload.wikimedia.org/wikipedia/it/thumb/4/4a/Emblema_CRI.svg/300px-Emblema_CRI.svg.png" width="180" height="180" />
+    </p>
+
+
+    <div class="alert alert-info">
+        <h4><i class="fa fa-info-circle"></i> Benvenuto nella sezione dedicata alla Presidenza.</h4>
+        <p>Da questa sezione &egrave; possibile accedere alle funzioni di gestione delle Sedi CRI, come:</p>
+        <ul>
+            <li>Gestione dei Delegati,</li>
+            <li>Gestione dei Responsabili,</li>
+            <li>Gestione dati anagrafici della Sede.</li>
+        </ul>
+    </div>
+
+
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                <i class="fa fa-fw fa-warning"></i>
+                Seleziona una Sede CRI
+            </h2>
+        </div>
+        <div class="panel-body piu-grande">
+            <ul class="root">
+                {% recursetree sedi %}
+                    <li>
+                        <p>
+                            <a href="/presidente/sedi/{{ node.pk }}/"><strong>{{ node.nome }}</strong></a>, {{ node.get_estensione_display }}
+                        </p>
+                        {% if not node.estensione == massimo_lista and not node.is_leaf_node %}
+                            <ul class="children">
+                                {{ children }}
+                            </ul>
+                        {% endif %}
+                    </li>
+                {% endrecursetree %}
+            </ul>
+
+        </div>
+    </div>
+
+
+
+
+{% endblock %}
