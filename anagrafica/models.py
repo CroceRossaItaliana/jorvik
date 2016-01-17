@@ -159,6 +159,11 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return hasattr(self, 'utenza') and self.utenza.is_staff
 
+    @property
+    def sospeso(self):
+        return ProvvedimentoDisciplinare.query_attuale(persona=self,
+                                                       tipo=ProvvedimentoDisciplinare.SOSPENSIONE).exists()
+
     def __str__(self):
         return self.nome_completo
 
@@ -1513,23 +1518,26 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
     )
 
     persona = models.ForeignKey(Persona, related_name="provvedimenti")
+    sede = models.ForeignKey(Sede, related_name="provvedimenti")
     motivazione = models.CharField(max_length=500)
     tipo = models.CharField(max_length=1, choices=TIPO, default="A")
 
     def esegui(self, lunghezza):
-        if self.tipo == "E":
+
+        Messaggio.costruisci_e_invia(
+            oggetto="Nuovo Provvedimento Disciplinare",
+            modello="email_provvedimento.html",
+            corpo={
+                "provvedimento": self,
+            },
+            mittente=None,destinatari=[
+                self.persona
+            ]
+        )
+
+        if self.tipo == self.ESPULSIONE:
             self.persona.espelli()
-        #if self.tipo == "S":
-         #   sospensione = Sospensione(
-          #      inzio=datetime.today(),
-           #     fine=datetime.today() + timedelta(days=lunghezza),
-            #    provvedimento=self.id
-            #)
-            #sospensione.save()
 
-
-#class Sospensione(ProvvedimentoDisciplinare, ConStorico):
- #   provvedimento = models.ForeignKey(ProvvedimentoDisciplinare, related_name="provvedimento")
 
 class Dimissione(ModelloSemplice, ConStorico):
 
@@ -1557,7 +1565,7 @@ class Dimissione(ModelloSemplice, ConStorico):
         (DECEDUTO,  'Decesso'),
     )
 
-    motivo = models.CharField(choices=MOTIVI, max_length=2)
+    motivo = models.CharField(choices=MOTIVI, max_length=3)
     info = models.CharField(max_length=512)
     richiedente = models.ForeignKey(Persona)
 

@@ -9,7 +9,7 @@ from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDi
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA
 from autenticazione.forms import ModuloCreazioneUtenza
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
-from base.errori import errore_generico, errore_nessuna_appartenenza
+from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
 from base.files import Excel, FoglioExcel
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
@@ -184,13 +184,18 @@ def us_dimissioni(request, me, pk):
         dim.richiedente = me
         dim.persona = persona
         dim.sede = dim.persona.sede_riferimento()
+        dim.appartenenza = persona.appartenenze_attuali().first()
         if dim.trasforma_in_sostenitore and dim.motivo=="VOL":
             app = Appartenenza(persona=dim.persona, sede=dim.persona.sede_riferimento(), inizio=datetime.date.today(),
                                membro=Appartenenza.SOSTENITORE)
             app.save()
         dim = dim.save()
         dim.applica()
-        return redirect (persona.url_profilo_appartenenze)
+        return messaggio_generico(request, me, titolo="Dimissioni registrate",
+                                      messaggio="Le dimissioni sono"
+                                                "state registrate con successo",
+                                      torna_titolo="Vai allo storico appartenenze",
+                                      torna_url=persona.url_profilo_appartenenze)
 
     contesto = {
         "modulo": modulo,
@@ -227,6 +232,11 @@ def us_estensione(request, me):
             est.richiedente = me
             est.save()
             est.richiedi()
+            return messaggio_generico(request, me, titolo="Estensione richiesta",
+                                      messaggio="L'estensione è stata"
+                                                "registrata con successo",
+                                      torna_titolo="Registra nuova estensione",
+                                      torna_url="/us/estensione/")
     contesto = {
         "sedi": sedi,
         "modulo": modulo,
@@ -261,6 +271,10 @@ def us_trasferimento(request, me):
             trasf.richiedente = me
             trasf.save()
             trasf.richiedi()
+            return messaggio_generico(request, me, titolo="Trasferimento richiesto",
+                                      messaggio="Il trasferimento è stato richiesto",
+                                      torna_titolo="Richiedi nuovo trasferimento",
+                                      torna_url="/us/trasferimento/")
     contesto = {
         "sedi": sedi,
         "modulo": modulo,
@@ -286,16 +300,28 @@ def us_estensione_termina(request, me, pk):
         return redirect(ERRORE_PERMESSI)
     else:
         estensione.termina()
-        return redirect('/us/estensioni/')
+        return messaggio_generico(request, me, titolo="Estensione terminata",
+                                      messaggio="L'estensione è stata"
+                                                "terminata con successo",
+                                      torna_titolo="Registra nuova estensione",
+                                      torna_url="/us/estensione/")
 
 
 @pagina_privata()
 def us_provvedimento(request, me):
 
     modulo = ModuloNuovoProvvedimento(request.POST or None)
+    modulo.fields['sede'].queryset=me.oggetti_permesso(GESTIONE_SOCI)
     if modulo.is_valid():
-        modulo.save()
-        return redirect("/us/")
+        if not me.permessi_almeno(modulo.cleaned_data['persona'], MODIFICA):
+            modulo.add_error('persona', "Non puoi registrare provvedimenti per questo Volontario!")
+        else:
+            provvedimento = modulo.save()
+            provvedimento.esegui()
+            return messaggio_generico(request, me, titolo="Provvedimento inserito",
+                                      messaggio="Il provvedimento è stato inserito con successo",
+                                      torna_titolo="Inserisci nuovo provvedimento",
+                                      torna_url="/us/provvedimento/")
 
     contesto = {
         "modulo": modulo,
