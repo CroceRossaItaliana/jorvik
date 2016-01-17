@@ -152,10 +152,18 @@ class ModuloVerificaTesserino(forms.Form):
 class ModuloCreazioneDimissioni(ModelForm):
     class Meta:
         model = Dimissione
-        fields = ['inizio', 'motivo', 'info',]
+        fields = ['motivo', 'info', ]
 
     trasforma_in_sostenitore = forms.BooleanField(help_text="In caso di Dimissioni Volontarie seleziona quest'opzione "
-                                                            "per trasformare il volontario in sostenitore")
+                                                            "per trasformare il volontario in sostenitore. ")
+
+    def clean_trasforma_in_sostenitore(self):
+        trasforma_in_sostenitore = self.cleaned_data['trasforma_in_sostenitore']
+        motivo = self.cleaned_data['motivo']
+        if trasforma_in_sostenitore and motivo != Dimissione.VOLONTARIE:
+            raise ValidationError("Puoi richiedere la trasformazione in sostenitore solo in "
+                                  "caso di dimissioni volontarie.")
+        return trasforma_in_sostenitore
 
 
 class ModuloElencoRicevute(forms.Form):
