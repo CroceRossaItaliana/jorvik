@@ -1,0 +1,10 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+<p class="grassetto">Ciao {{ riserva.persona.nome_completo }}.</p>
+<p>La tua richiesta di riserva inoltrata il <strong>{{ riserva.creazione }} </strong> è in fase di elaborazione.</p>
+<p>La tua richiesta è in attesa di essere protocollata dalla segreteria del tuo Comitato. </p>
+<p>Se pensi che ci sia stato un errore, ti invitiamo a rispondere a questa email indicandoci cosa c'è da correggere.</p>
+
+{% endblock %}

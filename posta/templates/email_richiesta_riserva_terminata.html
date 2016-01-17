@@ -1,0 +1,10 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+<p class="grassetto">Ciao</p>
+<p>La richiesta di riserva del volontario <strong>{{ riserva.persona.nome_completo }}</strong> dal <strong> {{ riserva.inzio|date:"SHORT_DATE" }} </strong> al <strong> {{ riserva.inzio|date:"SHORT_DATE" }} </strong> è stata <srong>annullata</srong> dal volontario stesso.</p>
+
+<p>Se pensi che ci sia stato un errore, ti invitiamo a rispondere a questa email indicandoci cosa c'è da correggere.</p>
+
+{% endblock %}

@@ -1417,7 +1417,18 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
     appartenenza = models.ForeignKey(Appartenenza, related_name="riserve")
 
     def invia_mail(self):
-        pass
+
+        Messaggio.costruisci_e_invia(
+           oggetto="Richiesta di riserva",
+           modello="email_richiesta_riserva.html",
+           corpo={
+               "riserva": riserva,
+           },
+           mittente=None,
+           destinatari=[
+                riserva.persona,
+           ]
+        )
 
     def genera_pdf(self):
         pdf = PDF(oggetto=self)

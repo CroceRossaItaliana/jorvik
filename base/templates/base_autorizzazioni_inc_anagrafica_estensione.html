@@ -1,2 +1,5 @@
 <p>{{ richiesta.oggetto.persona.link|safe }} chiede un'estensione temporanea alla
 Sede CRI di {{ richiesta.oggetto.destinazione.link|safe }}.</p>
+
+<p>Puoi scaricare la richiesta di estensione in formato PDF
+    <a href="{{ richiesta.oggetto.url_pdf }}" target="_new" download>cliccando qui</a>.</p>

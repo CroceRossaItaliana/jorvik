@@ -590,39 +590,39 @@ def utente_trasferimento(request, me):
             trasf.richiedente = me
             trasf.save()
             trasf.richiedi()
-            # Messaggio.costruisci_e_invia(
-            #     oggetto="Richiesta di trasferimento",
-            #     modello="email_richiesta_trasferimento.html",
-            #     corpo={
-            #         "trasferimento": trasf,
-            #     },
-            #     mittente=None,
-            #     destinatari=[
-            #         trasf.persona,
-            #     ]
-            # )
-            # Messaggio.costruisci_e_invia(
-            #     oggetto="Richiesta di trasferimento",
-            #     modello="email_richiesta_trasferimento_cc.html",
-            #     corpo={
-            #         "trasferimento": trasf,
-            #     },
-            #     mittente=None,
-            #     destinatari=[
-            #         ##presidente sede nuova
-            #     ]
-            # )
-            # Messaggio.costruisci_e_invia(
-            #     oggetto="Richiesta di trasferimento",
-            #     modello="email_richiesta_trasferimento_presidente.html",
-            #     corpo={
-            #         "trasferimento": trasf,
-            #     },
-            #     mittente=None,
-            #     destinatari=[
-            #         ##presidente sede vecchia
-            #     ]
-            # )
+            Messaggio.costruisci_e_invia(
+                oggetto="Richiesta di trasferimento",
+                modello="email_richiesta_trasferimento.html",
+                corpo={
+                    "trasferimento": trasf,
+                },
+                mittente=None,
+                destinatari=[
+                    trasf.persona,
+                ]
+            )
+            Messaggio.costruisci_e_invia(
+                oggetto="Richiesta di trasferimento",
+                modello="email_richiesta_trasferimento_cc.html",
+                corpo={
+                    "trasferimento": trasf,
+                },
+                mittente=None,
+                destinatari=[
+                    trasf.persona.destinazione.presidente()
+                ]
+            )
+            Messaggio.costruisci_e_invia(
+                oggetto="Richiesta di trasferimento",
+                modello="email_richiesta_trasferimento_presidente.html",
+                corpo={
+                    "trasferimento": trasf,
+                },
+                mittente=None,
+                destinatari=[
+                    trasf.persona.sede_rifermento().presidente()
+                ]
+            )
 
     contesto = {
         "modulo": modulo,
@@ -632,10 +632,23 @@ def utente_trasferimento(request, me):
 
 @pagina_privata
 def utente_riserva(request, me):
+    if not me.appartenenze_attuali() or not me.sede_riferimento():
+        return errore_generico(titolo="Errore", messaggio="Si è verificato un errore generico.", request=request)
     storico = me.riserve.all()
     modulo = ModuloCreazioneRiserva(request.POST or None)
     if modulo.is_valid():
-        modulo.save()
+        r = modulo.save(commit=False)
+        r.persona = me
+        r.appartenenza = me.appartenenze_attuali().first()
+        r.save()
+        r.invia_mail()
+        r.autorizzazione_richiedi(
+            richiedente=me,
+            destinatario=(
+                (PRESIDENTE, me.sede_riferimento(), NOTIFICA_INVIA),
+            )
+        )
+
         return messaggio_generico(request, me, titolo="Riserva registrata",
                                       messaggio="La riserva è stato registrata con successo",
                                       torna_titolo="Torna alla dash",
@@ -648,11 +661,31 @@ def utente_riserva(request, me):
 
 
 @pagina_privata
-def utente_riserva_termina(request, me, pk):
+def utente_riserva_ritira(request, me, pk):
     riserva = get_object_or_404(Riserva, pk=pk)
     if not riserva.persona == me:
         return redirect(ERRORE_PERMESSI)
     riserva.autorizzazioni_ritira()
+    Messaggio.costruisci_e_invia(
+           oggetto="Riserva terminata",
+           modello="email_richiesta_riserva_terminata.html",
+           corpo={
+               "riserva": riserva,
+           },
+           mittente=riserva.persona,
+           destinatari=[
+                riserva.persona.sede_riferimento().presidente()
+           ]
+        )
+    return redirect("/utente/")
+
+@pagina_privata
+def utente_riserva_termina(request, me, pk):
+    riserva = get_object_or_404(Riserva, pk=pk)
+    if not riserva.persona == me:
+        return redirect(ERRORE_PERMESSI)
+    riserva.fine = datetime.date.today()
+    riserva.save()
     return redirect("/utente/")
 
 

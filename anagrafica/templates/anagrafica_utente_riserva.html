@@ -2,7 +2,7 @@
 
 {% load bootstrap3 %}
 
-{% block pagina_titolo %}Richiesta Trasferimento{% endblock %}
+{% block pagina_titolo %}Richiesta Riserva{% endblock %}
 
 {% block app_contenuto %}
 
@@ -12,7 +12,7 @@
 
                     <div class="panel-heading">
                         <h4 class="panel-title">
-                            <i class="fa fa-folder-o fa-fw"></i> Documenti caricati
+                            <i class="fa fa-folder-o fa-fw"></i> Storico riserve
 
                         </h4>
 
@@ -47,7 +47,7 @@
                                            data-conferma="Vuoi veramente ritirare la richiesta di riserva?">
                                             Ritira Richiesta
                                         </a>
-                                        {% elif r.esito == r.ESITO_OK %}
+                                        {% elif r.esito == r.ESITO_OK  and r.attuale %}
                                             <a href="/utente/riserva/{{ r.pk }}/termina/"
                                            data-conferma="Vuoi veramente terminare riserva?">
                                             Termina Riserva
@@ -78,13 +78,16 @@
             </div>
 
             <div class="panel-body">
-                {% bootstrap_form modulo %}
+                <form method="POST" enctype="multipart/form-data">
 
-                <button class="btn btn-primary btn-block">
-                    <i class="fa fa-check"></i>
-                    Registra Riserva
-                </button>
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
 
+                    <button class="btn btn-primary btn-block">
+                        <i class="fa fa-check"></i>
+                        Registra Riserva
+                    </button>
+                </form>
             </div>
 
         </div>

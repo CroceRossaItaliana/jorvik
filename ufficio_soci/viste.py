@@ -6,11 +6,13 @@ from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.forms import ModuloNuovoProvvedimento, ModuloCreazioneTrasferimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede
+from anagrafica.permessi.applicazioni import PRESIDENTE
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA
 from autenticazione.forms import ModuloCreazioneUtenza
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
 from base.files import Excel, FoglioExcel
+from base.notifiche import NOTIFICA_INVIA
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti
@@ -560,11 +562,19 @@ def us_riserva(request, me):
     modulo = ModuloCreazioneRiserva(request.POST or None)
 
     if modulo.is_valid():
+        if not modulo.cleaned_data['persona'].appartenenze_attuali() or not modulo.cleaned_data['persona'].sede_riferimento():
+            return errore_generico(titolo="Errore", messaggio="Si è verificato un errore generico.", request=request)
         if not me.permessi_almeno(modulo.cleaned_data['persona'], MODIFICA):
             modulo.add_error('persona', "Non puoi registrare riserve per questo Volontario!")
         else:
             riserva = modulo.save(commit=False)
             riserva.apparteneza = riserva.persona.appartenenze_attuali().first()
+            riserva.autorizzazione_richiedi(
+            richiedente=riserva.persona,
+            destinatario=(
+                (PRESIDENTE, riserva.persona.sede_riferimento(), NOTIFICA_INVIA),
+            )
+        )
             riserva.invia_mail()
             return messaggio_generico(request, me, titolo="Riserva registrata",
                                       messaggio="La riserva è stato registrata con successo",
