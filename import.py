@@ -1497,6 +1497,8 @@ def carica_quote():
                 importo_extra=importo_extra,
                 causale=causale,
                 causale_extra=causale_extra,
+                creazione=data_versamento,
+                ultima_modifica=data_annullamento if data_annullamento else data_versamento,
             )
             q.save()
 

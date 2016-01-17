@@ -227,6 +227,14 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
             l += [Appartenenza.ORDINARIO]
         return self.passibili_pagamento(membri=l).exclude(pk__in=self.paganti(attivi=attivi, ordinari=ordinari))
 
+    @classmethod
+    def anni_scelta(cls):
+        return ((y, y) for y in [x['anno'] for x in cls.objects.all().values("anno")])
+
+    @classmethod
+    def ultimo_anno(cls):
+        return cls.objects.latest('anno').anno
+
 
 class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF):
 

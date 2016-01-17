@@ -1,0 +1,175 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load utils %}
+
+{% block pagina_titolo %}
+    Ricevute {{ anno }}
+{% endblock %}
+
+{% block app_contenuto %}
+
+
+    <div class="row">
+
+        <div class="col-md-6">
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-search"></i>
+                        Filtra le ricevute
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-search"></i>
+                            Filtra ricevute
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-info-circle"></i>
+                        Statistiche
+                    </h2>
+                </div>
+                <div class="panel-body">
+
+                    <table class="table table-striped">
+                        <tr>
+                            <td>Anno</td>
+                            <td>{{ anno }}</td>
+                        </tr>
+                        <tr>
+                            <td>Tipo</td>
+                            <td>
+                                {% for t in tipi_testo %}
+                                    <li>{{ t }}</li>
+                                {% endfor %}
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>Num. ricevute</td>
+                            <td class="piu-grande">
+                                {{ ricevute.count }}
+                            </td>
+                        </tr>
+                        <tr class="success">
+                            <td>Totale</td>
+                            <td class="piu-grande">
+                                {% euro importo_totale %}
+                            </td>
+                        </tr>
+                    </table>
+
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Num.</th>
+                    <th>Pagante</th>
+                    <th>Importo</th>
+                    <th>Data</th>
+                    <th>Registrazione</th>
+                    <th>Azione</th>
+                </tr>
+            </thead>
+
+            {% for ricevuta in ricevute %}
+
+                <tr {% if ricevuta.stato == ricevuta.ANNULLATA %}class="warning"{% endif %}>
+                    <td class="grassetto">
+                        {{ ricevuta.anno }}/{{ ricevuta.progressivo }}
+                        {% if ricevuta.stato == ricevuta.ANNULLATA %}<br />
+                            <span class="text-danger">ANNULLATA</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {{ ricevuta.persona.link|safe }}<br />
+                        <span class="piu-piccolo monospace">
+                            {{ ricevuta.persona.codice_fiscale }}
+                        </span>
+                    </td>
+
+                    <td class="grassetto">
+                        {% euro ricevuta.importo_totale %}
+                    </td>
+
+                    <td>
+                        {{ ricevuta.data_versamento|date:"SHORT_DATE_FORMAT" }}
+                    </td>
+
+                    <td class="piu-piccolo">
+                        Registrato da {{ ricevuta.registrato_da.link|safe }}<br />
+                        il {{ ricevuta.creazione|date:"SHORT_DATETIME_FORMAT" }}
+
+                        {% if ricevuta.stato == ricevuta.ANNULLATA %}<br />
+                        <span class="text-danger">
+                            Annullato da {{ ricevuta.annullato_da.link|safe }}
+                            {% if ricevuta.data_annullamento %}<br />
+                                il {{ ricevuta.data_annullamento|date:"SHORT_DATE_FORMAT" }}
+                            {% endif %}
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <a href="{{ ricevuta.url_pdf }}" download class="grassetto">
+                            <i class="fa fa-fw fa-file-pdf-o"></i>Scarica
+                        </a>
+
+                        {% if ricevuta.stato == ricevuta.REGISTRATA %}<br />
+                            <a href="/us/ricevute/{{ ricevuta.pk }}/annulla/"
+                               data-conferma="Sicuro/a di voler annullare la ricevuta n. {{ ricevuta.anno }}/{{ ricevuta.progressivo }}?"
+                               class="text-danger">
+                                <i class="fa fa-fw fa-times"></i>Annulla
+                            </a>
+                        {% endif %}
+
+
+                    </td>
+
+
+                </tr>
+
+
+            {% empty %}
+
+                <tr class="warning">
+                    <td colspan="6">
+                        <p>
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Nessuna ricevuta registrata per le Sedi di tua
+                             competenza nell'anno {{ anno }}.
+
+                        </p>
+                    </td>
+
+                </tr>
+
+
+            {% endfor %}
+        </table>
+
+
+{% endblock %}

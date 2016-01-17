@@ -32,7 +32,7 @@
                     {% for q in persona.quote.all %}
                         <tr>
                             <td>{{ q.get_tipo_display }}</td>
-                            <td>{{ q.progressivo }}/{{ q.anno }}<br />
+                            <td>{{ q.anno }}/{{ q.progressivo }}<br />
                                 {{ q.sede.link|safe }}
                             </td>
                             <td>{% euro q.importo_totale %}</td>

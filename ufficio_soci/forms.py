@@ -9,7 +9,7 @@ from anagrafica.forms import ModuloStepAnagrafica
 from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione
 from autenticazione.forms import ModuloCreazioneUtenza
 from curriculum.models import Titolo, TitoloPersonale
-from ufficio_soci.models import Tesseramento
+from ufficio_soci.models import Tesseramento, Quota
 
 
 class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
@@ -157,3 +157,9 @@ class ModuloCreazioneDimissioni(ModelForm):
     trasforma_in_sostenitore = forms.BooleanField(help_text="In caso di Dimissioni Volontarie seleziona quest'opzione "
                                                             "per trasformare il volontario in sostenitore")
 
+
+class ModuloElencoRicevute(forms.Form):
+
+    tipi_ricevute = forms.MultipleChoiceField(choices=Quota.TIPO, initial=[x[0] for x in Quota.TIPO])
+    anno = forms.ChoiceField(choices=Tesseramento.anni_scelta(),
+                             initial=Tesseramento.ultimo_anno())

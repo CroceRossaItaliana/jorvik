@@ -99,8 +99,8 @@ def menu(request):
             )),
             ("Quote e ricevute", (
                 ("Quote associative", "fa-money", "/us/quote/"),
-                ("Ricerca quote", "fa-search", "/us/quote/ricerca/"),
-                ("Ricevute", "fa-search", "/us/quote/ricevute/"),
+                # ("Ricerca quote", "fa-search", "/us/quote/ricerca/"),
+                ("Elenco ricevute", "fa-list", "/us/ricevute/"),
             )),
             ("Tesserini", (
                 ("Non riconsegnati", "fa-credit-card", "/us/non-riconsegnati/"),
