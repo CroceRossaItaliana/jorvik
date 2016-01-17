@@ -1518,19 +1518,20 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
     )
 
     persona = models.ForeignKey(Persona, related_name="provvedimenti")
+    registrato_da = models.ForeignKey(Persona, related_name="provvedimenti_registrati")
     sede = models.ForeignKey(Sede, related_name="provvedimenti")
     motivazione = models.CharField(max_length=500)
-    tipo = models.CharField(max_length=1, choices=TIPO, default="A")
+    tipo = models.CharField(max_length=1, choices=TIPO, default=AMMONIZIONE)
 
-    def esegui(self, lunghezza):
+    def esegui(self):
 
         Messaggio.costruisci_e_invia(
-            oggetto="Nuovo Provvedimento Disciplinare",
+            oggetto="Provvedimento Disciplinare: %s" % (self.get_tipo_display(),),
             modello="email_provvedimento.html",
             corpo={
                 "provvedimento": self,
             },
-            mittente=None,destinatari=[
+            mittente=self.registrato_da, destinatari=[
                 self.persona
             ]
         )
@@ -1539,7 +1540,7 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
             self.persona.espelli()
 
 
-class Dimissione(ModelloSemplice, ConStorico):
+class Dimissione(ModelloSemplice, ConMarcaTemporale):
 
     class Meta:
         verbose_name = "Documento di Dimissione"
@@ -1549,12 +1550,12 @@ class Dimissione(ModelloSemplice, ConStorico):
     appartenenza = models.ForeignKey(Appartenenza, related_name="dimissioni")
     sede = models.ForeignKey(Sede, related_name="dimissioni")
 
-    VOLONTARIE  = 'VOL'
-    TURNO       = 'TUR'
-    RISERVA     = 'RIS'
-    QUOTA       = 'QUO'
-    RADIAZIONE  = 'RAD'
-    DECEDUTO    = 'DEC'
+    VOLONTARIE = 'VOL'
+    TURNO = 'TUR'
+    RISERVA = 'RIS'
+    QUOTA = 'QUO'
+    RADIAZIONE = 'RAD'
+    DECEDUTO = 'DEC'
 
     MOTIVI = (
         (VOLONTARIE, 'Dimissioni Volontarie'),

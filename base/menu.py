@@ -1,4 +1,5 @@
-from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA
+from anagrafica.costanti import REGIONALE
+from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI
 from base.utils import remove_none
 
 __author__ = 'alfioemanuele'
@@ -84,6 +85,8 @@ def menu(request):
                 ("Volontari", "fa-list", "/us/elenchi/volontari/"),
                 ("Soci", "fa-list", "/us/elenchi/soci/"),
                 ("Sostenitori", "fa-list", "/us/elenchi/sostenitori/"),
+                ("Dipendenti", "fa-list", "/us/elenchi/dipendenti/"),
+                ("Ordinari", "fa-list", "/us/elenchi/ordinari/") if me.oggetti_permesso(ELENCHI_SOCI).filter(estensione=REGIONALE).exists() else None,
                 ("Elettorato", "fa-list", "/us/elenchi/elettorato/"),
                 ("Per Titoli", "fa-search", "/us/elenchi/titoli/"),
             )),

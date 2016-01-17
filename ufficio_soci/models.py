@@ -6,7 +6,7 @@ from django.db.models import Q
 
 from anagrafica.models import Persona, Appartenenza, Sede
 from base.files import PDF
-from base.models import ModelloSemplice, ConAutorizzazioni
+from base.models import ModelloSemplice, ConAutorizzazioni, ConVecchioID
 from base.tratti import ConMarcaTemporale, ConPDF
 from base.utils import concept, UpperCaseCharField, ean13_carattere_di_controllo
 
@@ -236,7 +236,7 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
         return cls.objects.latest('anno').anno
 
 
-class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF):
+class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF, ConVecchioID):
 
     def default_anno(self):
         """

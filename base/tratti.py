@@ -40,8 +40,9 @@ class ConProtocollo(models.Model):
     class Meta:
         abstract = True
 
-    protocollo_data = models.DateField(db_index=True)
-    protocollo_numero = models.IntegerField()
+    protocollo_numero = models.CharField('Numero di protocollo', max_length=512, null=True)
+    protocollo_data = models.DateField('Data di presa in carico', null=True)
+
 
 class ConEstensione(models.Model):
     """

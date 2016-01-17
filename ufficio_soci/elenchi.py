@@ -276,7 +276,7 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
             Q(**aggiuntivi),
 
         ).exclude(  # Escludi quelli con dimissione negli anni di anzianita'
-            appartenenze__terminazione=Appartenenza.DIMISSIONE,
+            appartenenze__terminazione__in=[Appartenenza.DIMISSIONE, Appartenenza.ESPULSIONE],
             appartenenze__fine__gte=anzianita_minima,
 
         ).prefetch_related(

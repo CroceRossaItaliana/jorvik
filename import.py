@@ -3,6 +3,7 @@
 import os, sys
 
 from django.utils.encoding import smart_str
+os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
 import phonenumbers
 from django.core.files import File
@@ -10,9 +11,8 @@ from django.core.files import File
 from anagrafica.validators import ottieni_genere_da_codice_fiscale
 from base.notifiche import NOTIFICA_NON_INVIARE
 from base.stringhe import GeneratoreNomeFile
+from base.utils import poco_fa
 
-
-os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction, IntegrityError
@@ -47,7 +47,8 @@ application = get_wsgi_application()
 
 from django.template.backends import django
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
-from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Fototessera, Documento, Estensione
+from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Fototessera, Documento, Estensione, \
+    ProvvedimentoDisciplinare, Dimissione
 from base.geo import Locazione
 from ufficio_soci.models import Quota, Tesseramento, Tesserino
 import argparse
@@ -141,6 +142,18 @@ parser.add_argument('--salta-tesserini', dest='tesserini', action='store_const',
 parser.add_argument('--salta-gruppi', dest='gruppi', action='store_const',
                    const=False, default=True,
                    help='salta importazione gruppi')
+parser.add_argument('--salta-dipendenti', dest='dipendenti', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione dipendenti')
+parser.add_argument('--salta-provvedimenti', dest='provvedimenti', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione provvedimenti disciplinari')
+parser.add_argument('--salta-dimissioni', dest='dimissioni', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione dimissioni')
+parser.add_argument('--salta-privacy', dest='privacy', action='store_const',
+                   const=False, default=True,
+                   help='salta importazione privacy')
 
 parser.add_argument('--uploads', dest='uploads', action='store',
                    help='path assoluta alla cartella upload/ di Gaia vecchio')
@@ -1510,6 +1523,7 @@ def carica_quote():
                 causale_extra=causale_extra,
                 creazione=data_versamento,
                 ultima_modifica=data_annullamento if data_annullamento else data_versamento,
+                vecchio_id=id,
             )
             q.save()
 
@@ -3794,6 +3808,210 @@ def carica_gruppi_appartenenze():
     cursore.close()
 
 
+def carica_dipendenti():
+
+    print("  - Carico dipendenti")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, valore
+        FROM
+            dettagliPersona
+        WHERE
+            nome = 'dipendenteComitato'
+        """
+    )
+
+    apps = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for app in apps:
+        contatore += 1
+
+        persid = ASSOC_ID_PERSONE[int(app[0])]
+        comitato = comitato_oid(app[1])
+
+        print("   %s dipendente persona_id=%d, sede=%s" % (
+            progresso(contatore, totale), persid, comitato,
+        ))
+
+        a = Appartenenza(
+            membro=Appartenenza.DIPENDENTE,
+            persona_id=persid,
+            sede=comitato,
+            inizio=poco_fa(),
+            fine=None,
+        )
+        a.save()
+
+    cursore.close()
+
+
+def carica_provvedimenti():
+
+    print("  - Carico provvedimenti disciplinari")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, tipo, volontario,
+            appartenenza, motivo, inizio,
+            fine, protData, protNumero,
+            pConferma, tConferma
+        FROM
+            provvedimenti
+
+        """
+    )
+
+    provvs = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for pr in provvs:
+        contatore += 1
+
+        id = int(pr[0])
+        tipo = int(pr[1])
+
+        if tipo == 10:
+            tipo = ProvvedimentoDisciplinare.AMMONIZIONE
+        elif tipo == 20:
+            tipo = ProvvedimentoDisciplinare.SOSPENSIONE
+        elif tipo == 30:
+            tipo = ProvvedimentoDisciplinare.ESPULSIONE
+        else:
+            print(tipo)
+            raise ValueError("Tipo provvedimento non aspettato")
+
+        persona_id = ASSOC_ID_PERSONE[int(pr[2])]
+        try:
+            app_id = ASSOC_ID_APPARTENENZE[int(pr[3])]
+        except KeyError:
+            print("   SALTATO appartenenza non esistente")
+            continue
+
+        sede = Appartenenza.objects.get(pk=app_id).sede
+        motivo = stringa(pr[4])
+        inizio = data_da_timestamp(pr[5])
+        fine = data_da_timestamp(pr[6])
+        protData = data_da_timestamp(pr[7])
+        protNumero = stringa(pr[8])
+        pConferma_id = ASSOC_ID_PERSONE[int(pr[9])]
+        tConferma = data_da_timestamp(pr[10])
+
+        print("   %s provvedimento id=%d, persona_id=%d, sede=%s" % (
+            progresso(contatore, totale), id, persona_id, sede,
+        ))
+
+        p = ProvvedimentoDisciplinare(
+            persona_id=persona_id,
+            motivazione=motivo,
+            sede=sede,
+            inizio=inizio,
+            fine=fine,
+            protocollo_data=protData,
+            protocollo_numero=protNumero,
+            tipo=tipo,
+            creazione=tConferma,
+            ultima_modifica=tConferma,
+            registrato_da_id=pConferma_id,
+        )
+        p.save()
+
+
+
+    cursore.close()
+
+
+
+def carica_dimissioni():
+
+    print("  - Carico dimissioni")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, volontario, appartenenza,
+            comitato, motivo, info,
+            tConferma, pConferma
+        FROM
+            dimissioni
+        WHERE
+            appartenenza IS NOT NULL
+        AND volontario IN (SELECT id FROM anagrafica)
+        AND motivo IS NOT NULL
+        """
+    )
+
+    dimm = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for dim in dimm:
+        contatore += 1
+
+        id = int(dim[0])
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[int(dim[1])]
+        except KeyError:
+            print("   SALTATO persona_id non esistente")
+            continue
+
+        try:
+            pConferma_id = ASSOC_ID_PERSONE[int(dim[7])]
+        except KeyError:
+            print("   SALTATO pConferma_id non esistente")
+            continue
+
+        try:
+            app_id = ASSOC_ID_APPARTENENZE[int(dim[2])]
+        except KeyError:
+            print("   SALTATO app_id non esistente")
+            continue
+
+        comitato = comitato_oid("Comitato:%d" % (int(dim[3]),))
+
+        motivo = int(dim[4])
+
+        if motivo == 10:
+            motivo = Dimissione.VOLONTARIE
+        elif motivo == 20:
+            motivo = Dimissione.TURNO
+        elif motivo == 25:
+            motivo = Dimissione.RISERVA
+        elif motivo == 30:
+            motivo = Dimissione.QUOTA
+        elif motivo == 40:
+            motivo = Dimissione.RADIAZIONE
+        elif motivo == 50:
+            motivo = Dimissione.DECEDUTO
+        else:
+            raise ValueError("Valore motivo non aspettato %d" % (motivo,))
+
+        info = stringa(dim[5])
+        tConferma = data_da_timestamp(dim[6])
+
+        print("   %s dimissione persona_id=%d, sede=%s" % (
+            progresso(contatore, totale), persona_id, comitato
+        ))
+
+        d = Dimissione(
+            persona_id=persona_id,
+            appartenenza_id=app_id,
+            sede=comitato,
+            motivo=motivo,
+            info=info,
+            richiedente_id=pConferma_id,
+            creazione=tConferma,
+            ultima_modifica=tConferma,
+        )
+        d.save()
+
+    cursore.close()
 
 
 # Importazione dei Comitati
@@ -4181,5 +4399,52 @@ if args.gruppi:
 
 else:
     print("  ~ Salto importazione dei gruppi di lavoro")
+
+
+# Importazione dei dipendenti
+print("> Importazione dei dipendenti")
+if args.dipendenti:
+    print("  - Eliminazione attuali")
+    Appartenenza.objects.filter(membro=Appartenenza.DIPENDENTE).delete()
+    carica_dipendenti()
+
+else:
+    print("  ~ Salto importazione dei dipendenti")
+
+
+# Importazione dei provvedimenti disciplinari
+print("> Importazione dei provvedimenti")
+if args.provvedimenti:
+    print("  - Eliminazione attuali")
+    ProvvedimentoDisciplinare.objects.all().delete()
+
+    carica_provvedimenti()
+
+else:
+    print("  ~ Salto importazione provvedimenti disciplinari")
+
+
+print("> Importazione dei dimissioni")
+if args.dimissioni:
+    print("  - Eliminazione attuali")
+    Dimissione.objects.all().delete()
+
+    carica_dimissioni()
+
+else:
+    print("  ~ Salto importazione dimissioni")
+
+
+print("> Importazione delle regole sulla privacy")
+if args.privacy:
+    print("  - Eliminazione attuali")
+    #Priva.objects.all().delete()
+
+    #carica_dimissioni()
+
+else:
+    print("  ~ Salto importazione dimissioni")
+
+
 
 # print(ASSOC_ID_COMITATI)
