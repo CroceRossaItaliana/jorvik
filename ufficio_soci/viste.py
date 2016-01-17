@@ -317,6 +317,7 @@ def us_provvedimento(request, me):
             modulo.add_error('persona', "Non puoi registrare provvedimenti per questo Volontario!")
         else:
             provvedimento = modulo.save()
+            provvedimento.registrato_da = me
             provvedimento.esegui()
             return messaggio_generico(request, me, titolo="Provvedimento inserito",
                                       messaggio="Il provvedimento è stato inserito con successo",
