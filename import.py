@@ -1464,13 +1464,18 @@ def carica_quote():
 
         progressivo = int(quota[13])
 
-        tesseramento = Tesseramento.objects.get(anno=anno)
-        da_pagare = tesseramento.importo_da_pagare(persona)
         importo_extra = 0.0
 
-        if importo > da_pagare:
-            importo_extra = importo - da_pagare
-            importo = da_pagare
+        causale_lowercase = causale.lower()
+        if "iscrizione" in causale_lowercase or "ordinar" in causale_lowercase:
+            if importo > 16.0:
+                importo_extra = importo - 16.00
+                importo = 16.0
+
+        elif "attivo" in causale_lowercase:
+            if importo > 8.0:
+                importo_extra = importo - 8.0
+                importo = 8.0
 
         print("   - %s: Quota, sede=%d, numero=%d/%d" %
               (progresso(contatore, totale), sede.pk,
@@ -1627,6 +1632,13 @@ def carica_titoli_personali():
 
         except KeyError:
             print("    - SALTATO Persona non trovata %d " % (int(titolo[1]),))
+            continue
+
+        try:
+            pConferma = ASSOC_ID_PERSONE[int(titolo[9])] if titolo[9] else None
+
+        except KeyError:
+            print("    - SALTATO pConferma non trovata %d " % (int(titolo[9]),))
             continue
 
         titolo_id = ASSOC_ID_TITOLI[int(titolo[2])]

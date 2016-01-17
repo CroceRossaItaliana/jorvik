@@ -152,10 +152,11 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
 
         return 0.0
 
-    def passibili_pagamento(self):
+    def passibili_pagamento(self, membri=Appartenenza.MEMBRO_SOCIO):
         """
         Ritorna un elenco di tutti i passibili di pagamento di quota
          associativa per il tesseramento in essere.
+        :param membri: Lista o tupla di appartenenze da considerare
         :return: QuerySet<Persona>
         """
 
@@ -163,39 +164,68 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
         #  durante l'anno presso un Comitato CRI
         return Persona.objects.filter(
             Appartenenza.query_attuale_in_anno(self.anno).via("appartenenze"),              # Membri nell'anno
-            appartenenze__membro__in=Appartenenza.MEMBRO_SOCIO,                             # ...di un socio cri
+            appartenenze__membro__in=membri,                                                # ...di un socio cri
             appartenenze__sede__tipo=Sede.COMITATO,                                         # ...presso un Comitato
         )
 
-    def paganti(self):
+    def _q_pagante(self):
+        return Q(
+            quote__tipo=Quota.QUOTA_SOCIO,      # Solo quote socio
+            quote__stato=Quota.REGISTRATA,      # Escludi quote annullate
+        )
+
+    def _q_ordinari(self, solo_paganti=True):
+        return Q(  # Ordinario che ha pagato almeno quota ordinario
+                    Appartenenza.query_attuale_in_anno(self.anno).via("appartenenze"),
+                    self._q_pagante() if solo_paganti else Q(),
+                    appartenenze__membro=Appartenenza.ORDINARIO,
+                )
+
+    def _q_volontari(self, solo_paganti=True):
+        return Q(  # Oppure volontario che ha pagato almeno quota volontario
+                    Appartenenza.query_attuale_in_anno(self.anno).via("appartenenze"),
+                    self._q_pagante() if solo_paganti else Q(),
+                    appartenenze__membro=Appartenenza.VOLONTARIO,
+                )
+
+    def paganti(self, attivi=True, ordinari=True):
         """
         Ritorna un elenco di persone che hanno pagato la quota associativa
          per il tesseramento in essere.
         :return: QuerySet<Persona>
         """
+        if (not attivi) and (not ordinari):
+            return Persona.objects.none()
+
+        a = Q()
+
+        if attivi and ordinari:
+            q = self._q_ordinari(solo_paganti=True) | self._q_volontari(solo_paganti=True)
+
+        elif attivi:
+            a = self._q_volontari(solo_paganti=True)
+
+        else:
+            a = self._q_ordinari(solo_paganti=True)
+
         return Persona.objects.filter(pk__in=Persona.objects.filter(
-            Q(
-                Q(  # Ordinario che ha pagato almeno quota ordinario
-                    Appartenenza.query_attuale_in_anno(self.anno).via("appartenenze"),
-                    appartenenze__membro=Appartenenza.ORDINARIO,
-                    quote__importo__gte=self.quota_ordinario,
-                ) | Q(  # Oppure volontario che ha pagato almeno quota volontario
-                    Appartenenza.query_attuale_in_anno(self.anno).via("appartenenze"),
-                    appartenenze__membro=Appartenenza.VOLONTARIO,
-                    quote__importo__gte=self.quota_attivo,
-                )
-            ),
+            a,
             quote__anno=self.anno,
             quote__stato=Quota.REGISTRATA,
         ))
 
-    def non_paganti(self):
+    def non_paganti(self, attivi=True, ordinari=True):
         """
         Ritorna un elenco di persone che sono passibili per la quota associativa
          per il tesseramento in essere MA non sono paganti (non hanno gia' pagato).
         :return: QuerySet<Persona>
         """
-        return self.passibili_pagamento().exclude(pk__in=self.paganti())
+        l = []
+        if attivi:
+            l += [Appartenenza.VOLONTARIO]
+        if ordinari:
+            l += [Appartenenza.ORDINARIO]
+        return self.passibili_pagamento(membri=l).exclude(pk__in=self.paganti(attivi=attivi, ordinari=ordinari))
 
 
 class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF):

@@ -57,6 +57,17 @@
 
                     {% empty %}
 
+                        <tr>
+                            <td class="warning" colspan="5">
+                                <p>
+                                    <i class="fa fa-fw fa-info-circle"></i>
+                                    Nessuna quota o ricevuta registrata per
+                                     {{ persona.nome_completo }}.
+                                </p>
+                            </td>
+                        </tr>
+
+
 
                     {% endfor %}
                 </tbody>

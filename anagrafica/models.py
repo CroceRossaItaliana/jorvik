@@ -572,8 +572,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return "%sdeleghe/" % (self.url,)
 
     @property
-    def url_profilo_(self):
-        return "%sappartenenze/" % (self.url,)
+    def url_profilo_quote(self):
+        return "%squote/" % (self.url,)
 
 
     @property
