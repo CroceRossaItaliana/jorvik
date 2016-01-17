@@ -135,7 +135,7 @@ class ModuloReclama(forms.Form):
 class ModuloCreazioneDimissioni(ModelForm):
     class Meta:
         model = Dimissione
-        fields = ['inizio', 'sede',]
+        fields = ['inizio', 'motivo', 'info',]
 
     trasforma_in_sostenitore = forms.BooleanField(help_text="In caso di Dimissioni Volontarie seleziona quest'opzione "
                                                             "per trasformare il volontario in sostenitore")

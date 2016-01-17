@@ -1511,6 +1511,7 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
     )
 
     persona = models.ForeignKey(Persona, related_name="provvedimenti")
+    sede = models.ForeignKey(Sede, related_name="provvedimenti")
     motivazione = models.CharField(max_length=500)
     tipo = models.CharField(max_length=1, choices=TIPO, default="A")
 
@@ -1555,7 +1556,7 @@ class Dimissione(ModelloSemplice, ConStorico):
         (DECEDUTO,  'Decesso'),
     )
 
-    motivo = models.CharField(choices=MOTIVI, max_length=2)
+    motivo = models.CharField(choices=MOTIVI, max_length=3)
     info = models.CharField(max_length=512)
     richiedente = models.ForeignKey(Persona)
 

@@ -213,7 +213,7 @@ class ModuloConsentiTrasferimento(forms.Form):
 class ModuloNuovoProvvedimento(autocomplete_light.ModelForm):
     class Meta:
         model = ProvvedimentoDisciplinare
-        fields = ['persona', 'motivazione', 'tipo', 'inizio', 'fine', 'protocollo_data', 'protocollo_numero']
+        fields = ['persona','sede', 'motivazione', 'tipo', 'inizio', 'fine', 'protocollo_data', 'protocollo_numero']
 
     def clean_fine(self):
         fine = self.cleaned_data['fine']
@@ -221,6 +221,7 @@ class ModuloNuovoProvvedimento(autocomplete_light.ModelForm):
         if tipo == "S":
             if not fine or fine == "":
                 raise forms.ValidationError("La fine di una sospensione non puo' essere indeterminata")
+        return fine
 
 
 class ModuloCreazioneDelega(autocomplete_light.ModelForm):

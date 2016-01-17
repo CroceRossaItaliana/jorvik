@@ -17,7 +17,8 @@ from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
-from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento
+from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento, \
+    ProvvedimentoDisciplinare
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA
 from autenticazione.funzioni import pagina_anonima, pagina_privata
@@ -864,6 +865,13 @@ def _profilo_documenti(request, me, persona):
     }
     return 'anagrafica_profilo_documenti.html', contesto
 
+def _profilo_provvedimenti(request, me, persona):
+        provvedimenti = ProvvedimentoDisciplinare.objects.filter(persona=persona)
+        contesto = {
+            "provvedimenti": provvedimenti,
+        }
+
+        return 'anagrafica_profilo_provvedimenti.html', contesto
 
 def _profilo_quote(request, me, persona):
     contesto = {}
@@ -954,7 +962,7 @@ def _sezioni_profilo(puo_leggere, puo_modificare):
             'Quote/Ricevute', 'fa-money', _profilo_quote, puo_leggere
         )),
         ('provvedimenti', (
-            'Provvedimenti', 'fa-legal', _profilo_documenti, puo_leggere
+            'Provvedimenti', 'fa-legal', _profilo_provvedimenti, puo_leggere
         )),
         ('credenziali', (
             'Credenziali', 'fa-key', _profilo_credenziali, puo_modificare
