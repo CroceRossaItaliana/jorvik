@@ -78,7 +78,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     nome = models.CharField("Nome", max_length=64)
     cognome = models.CharField("Cognome", max_length=64)
     codice_fiscale = UpperCaseCharField("Codice Fiscale", max_length=16, blank=False,
-                                        unique=True, db_index=True, validators=[valida_codice_fiscale,])
+                                        unique=True, db_index=True, validators=[valida_codice_fiscale, ])
     data_nascita = models.DateField("Data di nascita", db_index=True, null=True,
                                     validators=[valida_almeno_14_anni])
     genere = models.CharField("Genere", max_length=1, choices=GENERE, db_index=True)
@@ -101,6 +101,31 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     avatar = models.ImageField("Avatar", blank=True, null=True,
                                upload_to=GeneratoreNomeFile('avatar/'),
                                validators=[valida_dimensione_file_5mb])
+
+
+    # Privacy
+
+    POLICY_PUBBLICO = 9
+    POLICY_REGISTRATI = 7
+    POLICY_SEDE = 5
+    POLICY_RISTRETTO = 3
+
+    POLICY = (
+        (POLICY_PUBBLICO, "Pubblico, inclusi utenti non registrati"),
+        (POLICY_REGISTRATI, "Solo utenti registrati di Gaia"),
+        (POLICY_SEDE, "A tutti i membri della mia Sede CRI"),
+        (POLICY_RISTRETTO, "Ai Responsabili della mia Sede CRI"),
+    )
+
+    privacy_contatti = models.SmallIntegerField(choices=POLICY, default=POLICY_SEDE, db_index=True,
+                                                help_text="A chi mostrare il mio indirizzo e-mail e i miei numeri "
+                                                          "di telefono.")
+    privacy_curriculum = models.SmallIntegerField(choices=POLICY, default=POLICY_RISTRETTO, db_index=True,
+                                                  help_text="A chi mostrare il mio curriculum (competenze pers., "
+                                                            "patenti, titoli di studio e CRI)")
+    privacy_deleghe = models.SmallIntegerField(choices=POLICY, default=POLICY_RISTRETTO, db_index=True,
+                                               help_text="A chi mostrare i miei incarichi, come presidenze, "
+                                                         "referenze attività, deleghe, ecc.")
 
     @property
     def nome_completo(self):
@@ -300,68 +325,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     @property
     def giovane(self, **kwargs):
         return self.eta <= self.ETA_GIOVANE
-
-    """
-    # Gestione della Privacy
-
-    * Ottenere il livello di Privacy su di un elemento
-      `p.policy(CELLULARE) => Privacy.POLICY_SEDE`
-
-    * Imposta il livello di Privacy su di un elemento
-      `p.policy(CELLULARE, Privacy.POLICY_PUBBLICO)`
-
-    * Ottenere una informazione su una Persona "p", solo
-      se ho la Policy minima indicata.
-      `p.ottieni(Privacy.POLICY_SEDE, CELLULARE)
-        > "numero di cellulare", oppure None
-    """
-    def policy(self, campo, nuova_policy=None):
-        """
-        Ottiene o cambia la Privacy policy per un campo.
-         * Ottenere: `p.policy(CELLULARE) => Privacy.POLICY_SEDE`
-         * Cambiare: `p.policy(CELLULARE, Privacy.POLICY_PUBBLICO)`
-        """
-
-        if nuova_policy:  # Se sto impostando nuova policy
-
-            try:  # Prova a modificare
-                p = Privacy.objects.get(persona=self, campo=campo)
-                p.policy = nuova_policy
-                p.save()
-
-            except ObjectDoesNotExist:  # Altrimenti crea policy
-                p = Privacy(
-                    persona=self,
-                    campo=campo,
-                    policy=nuova_policy
-                )
-                p.save()
-
-            return
-
-        # Se sto invece ottenendo
-        try:
-            p = Privacy.objects.get(persona=self, campo=campo)
-            return p.policy
-
-        except ObjectDoesNotExist:  # Policy di default
-            return Privacy.POLICY_DEFAULT
-
-    def ottieni(self, policy_minima, campo):
-        """
-        Ottiene il campo se e solo se la policy minima e' soddisfatta.
-        Altrimenti ritorna None.
-        """
-        policy = self.policy(campo)
-
-        if policy >= policy_minima:
-
-            if campo not in Privacy.CAMPO_OTTIENI_DICT:
-                raise ValueError("Campo %s non specificato nelle Privacy Policy." % (campo,))
-
-            return Privacy.CAMPO_OTTIENI_DICT[campo](self)
-
-        return None
 
     def ultimo_accesso_testo(self):
         """
@@ -765,64 +728,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return True
 
         return False
-
-
-
-
-class Privacy(ModelloSemplice, ConMarcaTemporale):
-    """
-    Rappresenta una singola politica di Privacy selezionata da una Persona.
-
-    ## Come creare un nuovo campo Privacy
-       1. Aggiungere la costante (es. EMAIL = 'email')
-       2. Aggiungere la descrizione del campo in CAMPI (es. (EMAIL, "Indirizzo E-mail"))
-       3. Aggiungere la funzione lambda in CAMPO_OTTIENI (es. (EMAIL, lambda p: p.email()))
-    """
-
-    # Campi privacy
-    EMAIL = 'email'
-    CELLULARE = 'cellulare'
-    # ... TODO
-
-    CAMPI = (
-        (EMAIL, "Indirizzo E-mail"),
-        (CELLULARE, "Numeri di Cellulare"),
-    )
-
-    # Per ogni campo definire una funzione lambda
-    # per ottenere il campo.
-    CAMPO_OTTIENI = (
-        (EMAIL, lambda p: p.email()),
-        (CELLULARE, lambda p: p.cellulare())
-
-    )
-    CAMPO_OTTIENI_DICT = dict(CAMPO_OTTIENI)
-
-    # Tipi di Policy
-    # ORDINE CRESCENTE (Aperto > Ristretto)
-    POLICY_PUBBLICO = 8
-    POLICY_REGISTRATI = 6
-    POLICY_SEDE = 4
-    POLICY_RISTRETTO = 2
-    POLICY_PRIVATO = 0
-    POLICY = (
-        (POLICY_PUBBLICO, "Pubblico"),
-        (POLICY_REGISTRATI, "Utenti di Gaia"),
-        (POLICY_SEDE, "A tutti i membri della mia Sede CRI"),
-        (POLICY_RISTRETTO, "Ai Responsabili della mia Sede CRI"),
-        (POLICY_PRIVATO, "Solo a me")
-    )
-
-    POLICY_DEFAULT = POLICY_RISTRETTO
-
-    persona = models.ForeignKey(Persona, related_name="privacy", db_index=True)
-    campo = models.CharField(max_length=8, choices=CAMPI, db_index=True)
-    policy = models.PositiveSmallIntegerField(choices=POLICY, db_index=True)
-
-    class Meta:
-        verbose_name = "Politica di Privacy"
-        verbose_name_plural = "Politiche di Privacy"
-        unique_together = (('persona', 'campo'), )
 
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):

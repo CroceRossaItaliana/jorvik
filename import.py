@@ -4014,6 +4014,108 @@ def carica_dimissioni():
     cursore.close()
 
 
+def carica_privacy():
+
+
+
+    vecchia = {
+        "10": Persona.POLICY_RISTRETTO,
+        "20": Persona.POLICY_SEDE,
+        "30": Persona.POLICY_REGISTRATI,
+        "40": Persona.POLICY_PUBBLICO
+    }
+
+    nuovi = {
+        "contatti": {
+            Persona.POLICY_RISTRETTO: [],
+            Persona.POLICY_SEDE: [],
+            Persona.POLICY_REGISTRATI: [],
+            Persona.POLICY_PUBBLICO: [],
+        },
+        "curriculum": {
+            Persona.POLICY_RISTRETTO: [],
+            Persona.POLICY_SEDE: [],
+            Persona.POLICY_REGISTRATI: [],
+            Persona.POLICY_PUBBLICO: [],
+        },
+        "deleghe": {
+            Persona.POLICY_RISTRETTO: [],
+            Persona.POLICY_SEDE: [],
+            Persona.POLICY_REGISTRATI: [],
+            Persona.POLICY_PUBBLICO: [],
+        },
+
+    }
+
+    print("   - Caricamento policy personalizzate contatti...")
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT  volontario, contatti
+        FROM    privacy
+        WHERE   contatti IS NOT NULL AND contatti <> '20'
+        AND     volontario IN (select id from anagrafica)
+        """
+    )
+    contatti = cursore.fetchall()
+    default = Persona.POLICY_SEDE
+    for c in contatti:
+        try:
+            persona_id = ASSOC_ID_PERSONE[int(c[0])]
+        except KeyError:
+            continue
+        nuovi['contatti'][vecchia[str(c[1])]] += [persona_id]
+    cursore.close()
+
+    print("   - Caricamento policy personalizzate curriculum...")
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT  volontario, curriculum
+        FROM    privacy
+        WHERE   curriculum IS NOT NULL AND curriculum <> '10'
+        AND     volontario IN (select id from anagrafica)
+        """
+    )
+    contatti = cursore.fetchall()
+    default = Persona.POLICY_RISTRETTO
+    for c in contatti:
+        try:
+            persona_id = ASSOC_ID_PERSONE[int(c[0])]
+        except KeyError:
+            continue
+        nuovi['curriculum'][vecchia[str(c[1])]] += [persona_id]
+    cursore.close()
+
+    print("   - Caricamento policy personalizzate deleghe...")
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT  volontario, incarichi
+        FROM    privacy
+        WHERE   incarichi IS NOT NULL AND incarichi <> '10'
+        AND     volontario IN (select id from anagrafica)
+        """
+    )
+    contatti = cursore.fetchall()
+    default = Persona.POLICY_RISTRETTO
+    for c in contatti:
+        try:
+            persona_id = ASSOC_ID_PERSONE[int(c[0])]
+        except KeyError:
+            continue
+        nuovi['deleghe'][vecchia[str(c[1])]] += [persona_id]
+    cursore.close()
+
+    for tipo, policies in nuovi.items():
+        print("   - Applicazione policy %s" % (tipo,))
+        for valore, persone in policies.items():
+            chiave = "privacy_%s" % (tipo,)
+            dizionario = {
+                chiave: valore
+            }
+            persone = Persona.objects.filter(pk__in=persone)
+            print("     - n. %d persone => %d" % (persone.count(), valore,))
+            persone.update(**dizionario)
+
+
 # Importazione dei Comitati
 
 print("> Importazione dei Comitati")
@@ -4438,9 +4540,8 @@ else:
 print("> Importazione delle regole sulla privacy")
 if args.privacy:
     print("  - Eliminazione attuali")
-    #Priva.objects.all().delete()
 
-    #carica_dimissioni()
+    carica_privacy()
 
 else:
     print("  ~ Salto importazione dimissioni")
