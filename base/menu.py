@@ -31,6 +31,7 @@ def menu(request):
             ("Volontario", (
                 ("Estensione", "fa-arrow-right", "/utente/estensione/"),
                 ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
+                ("Riserva", "fa-arrow-right", "/utente/riserva/"),
             )) ,
             ("Curriculum", (
                 ("Competenze personali", "fa-arrow-right", "/utente/curriculum/CP/"),

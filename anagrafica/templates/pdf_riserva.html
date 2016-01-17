@@ -1,0 +1,43 @@
+{% extends 'pdf_standard.html' %}
+
+{% block corpo %}
+
+<P ALIGN=RIGHT STYLE="margin-bottom: 0cm">Al Presidente del
+{{ riserva.appartenenza.sede }}</P>
+<P ALIGN=RIGHT STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P ALIGN=RIGHT STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P ALIGN=RIGHT STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P STYLE="margin-bottom: 0.35cm">Con la presente il sottoscritto
+{{ riserva.persona.nome_completo }} nato a {{ riserva.persona.luogo_nascita }} il {{ riserva.persona.data_nascita }}, volontario dal {{ riserva.persona.ingresso|date:"Y" }}.</P>
+<P STYLE="margin-bottom: 0.35cm">Secondo l'articolo 8 del
+Regolamento dei Volontari della Croce Rossa Italiana emanato con
+Ordinanza Commissariale 567/12 del 3 Dicembre 2012:</P>
+<P ALIGN=CENTER STYLE="margin-bottom: 0.35cm"><FONT SIZE=5><B>CHIEDE</B></FONT></P>
+<P STYLE="margin-bottom: 0.35cm"><A NAME="_GoBack"></A>Il
+transito nel ruolo di riserva dal {{ riserva.inizio|date:"DATE_FORMAT" }} fino al {{ riserva.fine|date:"DATE_FORMAT" }} per {{ riserva.motivo }}</P>
+<P ALIGN=RIGHT STYLE="margin-bottom: 0.35cm"><BR><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0.35cm">{{ riserva.creazione|date:"DATE_FORMAT" }}</P>
+<div align="right" style="margin-top: 10px; padding-top: 10px align: right;">
+			<span style="text-align: right; position: relative; right;">
+				In Fede <br/>
+			</span>
+			<span style="text-align: right; position: relative; right;">
+				F.to {{ riserva.persona.nome_completo }}
+			</span>
+		</div>
+<P ALIGN=RIGHT STYLE="margin-bottom: 0.35cm"><BR><BR>
+</P>
+<P ALIGN=RIGHT STYLE="margin-bottom: 0.35cm"><BR><BR>
+</P>
+<P ALIGN=RIGHT STYLE="margin-bottom: 0.35cm"><BR><BR>
+</P>
+<P ALIGN=RIGHT STYLE="margin-bottom: 0.50cm"><BR><BR>
+</P>
+<P ALIGN=RIGHT STYLE="margin-bottom: 0.50cm"><BR>
+</P>
+
+{%  endblock %}

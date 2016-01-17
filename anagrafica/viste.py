@@ -14,20 +14,20 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
-    ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloModificaPrivacy, ModuloPresidenteSede
+    ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
 from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento, \
-    ProvvedimentoDisciplinare, Sede
+    ProvvedimentoDisciplinare, Sede, Riserva
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
-from base.errori import errore_generico, errore_nessuna_appartenenza
+from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
 from base.files import Zip
 from base.models import Log
 from base.notifiche import NOTIFICA_INVIA
@@ -595,45 +595,104 @@ def utente_trasferimento(request, me):
             trasf.richiedente = me
             trasf.save()
             trasf.richiedi()
-            # Messaggio.costruisci_e_invia(
-            #     oggetto="Richiesta di trasferimento",
-            #     modello="email_richiesta_trasferimento.html",
-            #     corpo={
-            #         "trasferimento": trasf,
-            #     },
-            #     mittente=None,
-            #     destinatari=[
-            #         trasf.persona,
-            #     ]
-            # )
-            # Messaggio.costruisci_e_invia(
-            #     oggetto="Richiesta di trasferimento",
-            #     modello="email_richiesta_trasferimento_cc.html",
-            #     corpo={
-            #         "trasferimento": trasf,
-            #     },
-            #     mittente=None,
-            #     destinatari=[
-            #         ##presidente sede nuova
-            #     ]
-            # )
-            # Messaggio.costruisci_e_invia(
-            #     oggetto="Richiesta di trasferimento",
-            #     modello="email_richiesta_trasferimento_presidente.html",
-            #     corpo={
-            #         "trasferimento": trasf,
-            #     },
-            #     mittente=None,
-            #     destinatari=[
-            #         ##presidente sede vecchia
-            #     ]
-            # )
+            Messaggio.costruisci_e_invia(
+                oggetto="Richiesta di trasferimento",
+                modello="email_richiesta_trasferimento.html",
+                corpo={
+                    "trasferimento": trasf,
+                },
+                mittente=None,
+                destinatari=[
+                    trasf.persona,
+                ]
+            )
+            Messaggio.costruisci_e_invia(
+                oggetto="Richiesta di trasferimento",
+                modello="email_richiesta_trasferimento_cc.html",
+                corpo={
+                    "trasferimento": trasf,
+                },
+                mittente=None,
+                destinatari=[
+                    trasf.persona.destinazione.presidente()
+                ]
+            )
+            Messaggio.costruisci_e_invia(
+                oggetto="Richiesta di trasferimento",
+                modello="email_richiesta_trasferimento_presidente.html",
+                corpo={
+                    "trasferimento": trasf,
+                },
+                mittente=None,
+                destinatari=[
+                    trasf.persona.sede_rifermento().presidente()
+                ]
+            )
 
     contesto = {
         "modulo": modulo,
         "storico": storico
     }
     return "anagrafica_utente_trasferimento.html", contesto
+
+@pagina_privata
+def utente_riserva(request, me):
+    if not me.appartenenze_attuali() or not me.sede_riferimento():
+        return errore_generico(titolo="Errore", messaggio="Si è verificato un errore generico.", request=request)
+    storico = me.riserve.all()
+    modulo = ModuloCreazioneRiserva(request.POST or None)
+    if modulo.is_valid():
+        r = modulo.save(commit=False)
+        r.persona = me
+        r.appartenenza = me.appartenenze_attuali().first()
+        r.save()
+        r.invia_mail()
+        r.autorizzazione_richiedi(
+            richiedente=me,
+            destinatario=(
+                (PRESIDENTE, me.sede_riferimento(), NOTIFICA_INVIA),
+            )
+        )
+
+        return messaggio_generico(request, me, titolo="Riserva registrata",
+                                      messaggio="La riserva è stato registrata con successo",
+                                      torna_titolo="Torna alla dash",
+                                      torna_url="/utente/")
+    contesto = {
+        "modulo": modulo,
+        "storico": storico,
+    }
+    return "anagrafica_utente_riserva.html", contesto
+
+
+@pagina_privata
+def utente_riserva_ritira(request, me, pk):
+    riserva = get_object_or_404(Riserva, pk=pk)
+    if not riserva.persona == me:
+        return redirect(ERRORE_PERMESSI)
+    riserva.autorizzazioni_ritira()
+    Messaggio.costruisci_e_invia(
+           oggetto="Riserva terminata",
+           modello="email_richiesta_riserva_terminata.html",
+           corpo={
+               "riserva": riserva,
+           },
+           mittente=riserva.persona,
+           destinatari=[
+                riserva.persona.sede_riferimento().presidente()
+           ]
+        )
+    return redirect("/utente/")
+
+@pagina_privata
+def utente_riserva_termina(request, me, pk):
+    riserva = get_object_or_404(Riserva, pk=pk)
+    if not riserva.persona == me:
+        return redirect(ERRORE_PERMESSI)
+    riserva.fine = datetime.date.today()
+    riserva.save()
+    return redirect("/utente/")
+
 
 @pagina_privata
 def utente_trasferimento_ritira(request, me, pk):
