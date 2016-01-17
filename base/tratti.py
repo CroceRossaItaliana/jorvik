@@ -27,7 +27,7 @@ class ConMarcaTemporale(models.Model):
     class Meta:
         abstract = True
 
-    creazione = models.DateTimeField(auto_now_add=True, db_index=True)
+    creazione = models.DateTimeField(default=timezone.now, db_index=True)
     ultima_modifica = models.DateTimeField(auto_now=True, db_index=True)
 
 

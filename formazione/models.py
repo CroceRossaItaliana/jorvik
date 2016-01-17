@@ -60,6 +60,11 @@ class CorsoBase(Corso, ConVecchioID):
     anno = models.SmallIntegerField(blank=False, null=False, db_index=True)
     descrizione = models.TextField(blank=True, null=True)
 
+    data_attivazione = models.DateField(blank=True, null=True)
+    data_convocazione = models.DateField(blank=True, null=True)
+    op_attivazione = models.CharField(max_length=255, blank=True, null=True)
+    op_convocazione = models.CharField(max_length=255, blank=True, null=True)
+
     @classmethod
     @concept
     def pubblici(cls):

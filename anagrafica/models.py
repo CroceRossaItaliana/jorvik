@@ -1422,6 +1422,7 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
     motivo = models.CharField(max_length=4096)
     appartenenza = models.ForeignKey(Appartenenza, related_name="Riserva")
 
+
 class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocollo, ConStorico):
     AMMONIZIONE = "A"
     SOSPENSIONE = "S"

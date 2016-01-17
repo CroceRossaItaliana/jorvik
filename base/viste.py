@@ -149,6 +149,7 @@ def autorizzazioni(request, me, content_type_pk=None):
     for richiesta in richieste:
         if richiesta.oggetto is None:
             richiesta.delete()
+            continue
         if richiesta.oggetto.autorizzazione_concedi_modulo():
             richiesta.modulo = richiesta.oggetto.autorizzazione_concedi_modulo()
 

@@ -48,7 +48,7 @@ application = get_wsgi_application()
 from django.template.backends import django
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
 from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Fototessera, Documento, Estensione, \
-    ProvvedimentoDisciplinare, Dimissione
+    ProvvedimentoDisciplinare, Dimissione, Riserva
 from base.geo import Locazione
 from ufficio_soci.models import Quota, Tesseramento, Tesserino
 import argparse
@@ -2065,6 +2065,7 @@ def carica_commenti():
             autore_id=persona_id,
             commento=testo,
             creazione=creazione,
+            ultima_modifica=creazione,
             oggetto=Attivita.objects.get(pk=attivita_id)
         )
         c.save()
@@ -2075,6 +2076,9 @@ def carica_commenti():
 
 
 def carica_corsibase():
+
+    print("  - Caricamento dettagli corsi base...")
+    dc = generatore_funzione_dettaglio('dettagliCorsibase')
 
     print("  - Caricamento dei corsi base...")
 
@@ -2112,6 +2116,11 @@ def carica_corsibase():
         descrizione = stringa(corso[7]) or ''
         stato = int(corso[8])
 
+        data_attivazione = data_da_timestamp(dc(id, 'dataAttivazione', default=None), default=None)
+        data_convocazione = data_da_timestamp(dc(id, 'dataConvocazione', default=None), default=None)
+        op_attivazione = stringa(dc(id, 'opAttivazione', default=''))
+        op_convocazione = stringa(dc(id, 'opConvocazione', default=''))
+
         if stato == 0:
             stato = formazione.CorsoBase.ANNULLATO
 
@@ -2145,6 +2154,10 @@ def carica_corsibase():
             anno=anno,
             stato=stato,
             vecchio_id=id,
+            op_attivazione=op_attivazione,
+            op_convocazione=op_convocazione,
+            data_attivazione=data_attivazione,
+            data_convocazione=data_convocazione,
         )
         c.save()
 
@@ -2152,7 +2165,7 @@ def carica_corsibase():
             direttore_id = ASSOC_ID_PERSONE[int(corso[3])]
             direttore = Persona.objects.get(pk=direttore_id)
             print("      - Associo direttore %s" % (
-                direttore_id.codice_fiscale,
+                direttore.codice_fiscale,
             ))
             c.aggiungi_delegato(
                 DIRETTORE_CORSO,
@@ -4014,6 +4027,74 @@ def carica_dimissioni():
     cursore.close()
 
 
+def carica_riserve():
+
+    print("  - Carico riserve")
+
+    cursore = db.cursor()
+    cursore.execute("""
+        SELECT
+            id, stato, appartenenza,
+            volontario, inizio, fine,
+            protNumero, protData, motivo,
+            negazione, timestamp, pConferma,
+            tConferma
+        FROM
+            riserve
+        WHERE
+            appartenenza IN (select id from appartenenza)
+        AND volontario IN (select id from anagrafica)
+        AND pConferma IN (select id from anagrafica)
+        AND fine IS NOT NULL
+
+        """
+    )
+
+    riss = cursore.fetchall()
+    totale = cursore.rowcount
+    contatore = 0
+
+    for ris in riss:
+        contatore += 1
+
+        id = int(ris[0])
+        stato = int(ris[1])
+
+        try:
+            appartenenza_id = ASSOC_ID_APPARTENENZE[int(ris[2])]
+        except KeyError:
+            print("   SALTATO app_id non esistente")
+            continue
+
+        try:
+            persona_id = ASSOC_ID_PERSONE[int(ris[3])]
+        except KeyError:
+            print("   SALTATO persona_id non esistente")
+            continue
+
+        try:
+            pConferma_id = ASSOC_ID_PERSONE[int(ris[11])] if ris[11] else None
+        except KeyError:
+            print("   SALTATO pConferma non esistente")
+            continue
+
+        inizio = data_da_timestamp(ris[4])
+        fine = data_da_timestamp(ris[5])
+        protNumero = stringa(ris[6])
+        protData = data_da_timestamp(ris[7], default=None)
+        motivo = stringa(ris[8]) or 'ND'
+        negazione = stringa(ris[9]) or ''
+        creazione = data_da_timestamp(ris[10])
+        tConferma = data_da_timestamp(ris[12], default=None)
+
+        ritirata = False
+        confermata = True
+
+        # --
+
+    cursore.close()
+
+
 def carica_privacy():
 
 
@@ -4535,6 +4616,17 @@ if args.dimissioni:
 
 else:
     print("  ~ Salto importazione dimissioni")
+
+
+print("> Importazione delle riserve")
+if args.riserve:
+    print("  - Eliminazione attuali")
+    Riserva.objects.all().delete()
+
+    carica_riserve()
+
+else:
+    print("  ~ Salto importazione riserve")
 
 
 print("> Importazione delle regole sulla privacy")

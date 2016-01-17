@@ -12,23 +12,37 @@
 
     <div class="row">
 
-        <form method="POST" class="col-md-7">
 
-            <h3>
-                <i class="fa fa-fw fa-pencil-square-o"></i>
-                Modifica dettagli attivit&agrave;
-            </h3>
-            <p>&nbsp;</p>
+        <div class="col-md-7">
 
-            {% csrf_token %}
-            {% bootstrap_form modulo %}
+            <div class="panel panel-primary">
 
-            <p>&nbsp;</p>
-            <button type="submit" class="btn btn-lg btn-success">
-                <i class="fa fa-fw fa-save"></i>
-                Salva modifiche
-            </button>
-        </form>
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-pencil-square-o"></i>
+                        Modifica dettagli attivit&agrave;
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST">
+
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+
+                        <p>&nbsp;</p>
+                        <button type="submit" class="btn btn-lg btn-success">
+                            <i class="fa fa-fw fa-save"></i>
+                            Salva modifiche
+                        </button>
+                    </form>
+
+                </div>
+
+
+            </div>
+        </div>
+
 
         <div class="col-md-5">
            <h3 class="text-info">
@@ -89,12 +103,22 @@
 
         <div class="col-md-12">
 
-            <h3>
-                <i class="fa fa-fw fa-globe"></i>
-                Indirizzo dell'attivit&agrave;
-            </h3>
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-globe"></i>
+                        Indirizzo dell'attivit&agrave;
+                    </h2>
+                </div>
 
-            {% localizzatore attivita %}
+                <div class="panel-body">
+                    {% localizzatore attivita %}
+
+                </div>
+
+            </div>
+
+
 
         </div>
 
