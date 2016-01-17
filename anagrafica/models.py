@@ -571,10 +571,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return "%sdeleghe/" % (self.url,)
 
     @property
-    def url_profilo_appartenenze(self):
-        return "%sdeleghe/" % (self.url,)
-
-    @property
     def url_profilo_quote(self):
         return "%squote/" % (self.url,)
 
@@ -1327,7 +1323,8 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
         return ModuloConsentiTrasferimento
 
     def autorizzazione_concessa(self, modulo=None):
-
+        self.protocollo_data = modulo.cleaned_data['protocollo_data']
+        self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
         # Invia notifica tramite e-mail
         app = Appartenenza(
             membro=Appartenenza.ESTESO,
@@ -1450,9 +1447,23 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
     Rappresenta una pratica di riserva.
     Questa puo' essere in corso o meno.
     """
+
+    class Meta:
+        verbose_name = "Richiesta di trasferimento"
+        verbose_name_plural = "Richieste di trasferimento"
+
+    RICHIESTA_NOME = "riserva"
     persona = models.ForeignKey(Persona, related_name="riserve")
     motivo = models.CharField(max_length=4096)
     appartenenza = models.ForeignKey(Appartenenza, related_name="riserve")
+
+    def autorizzazione_concedi_modulo(self):
+        from anagrafica.forms import ModuloConsentiRiserva
+        return ModuloConsentiRiservaUr
+
+    def autorizzazione_concessa(self, modulo=None):
+        self.protocollo_data = modulo.cleaned_data['protocollo_data']
+        self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
 
     def invia_mail(self):
 
@@ -1460,11 +1471,11 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
            oggetto="Richiesta di riserva",
            modello="email_richiesta_riserva.html",
            corpo={
-               "riserva": riserva,
+               "riserva": self,
            },
            mittente=None,
            destinatari=[
-                riserva.persona,
+                self.persona,
            ]
         )
 
@@ -1541,7 +1552,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     )
 
     motivo = models.CharField(choices=MOTIVI, max_length=3)
-    info = models.CharField(max_length=512)
+    info = models.CharField(max_length=512, help_text="Maggiori informazioni sulla causa della dimissione")
     richiedente = models.ForeignKey(Persona)
 
     def applica(self):

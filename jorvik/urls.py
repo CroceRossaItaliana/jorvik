@@ -139,6 +139,7 @@ urlpatterns = [
     url(r'^us/dimissioni/(?P<pk>[0-9]+)/$', 'ufficio_soci.viste.us_dimissioni'),
 
 
+
     url(r'^us/elenchi/(?P<elenco_tipo>.*)/$', 'ufficio_soci.viste.us_elenchi'),
     url(r'^us/quote/$', 'ufficio_soci.viste.us_quote'),
     url(r'^us/ricevute/$', 'ufficio_soci.viste.us_ricevute'),
