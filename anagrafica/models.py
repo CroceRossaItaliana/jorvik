@@ -1521,6 +1521,18 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
     tipo = models.CharField(max_length=1, choices=TIPO, default="A")
 
     def esegui(self, lunghezza):
+
+        Messaggio.costruisci_e_invia(
+            oggetto="Nuovo Provvedimento Disciplinare",
+            modello="email_provvedimento.html",
+            corpo={
+                "provvedimento": self,
+            },
+            mittente=None,destinatari=[
+                self.persona
+            ]
+        )
+
         if self.tipo == self.ESPULSIONE:
             self.persona.espelli()
 

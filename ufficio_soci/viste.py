@@ -316,7 +316,8 @@ def us_provvedimento(request, me):
         if not me.permessi_almeno(modulo.cleaned_data['persona'], MODIFICA):
             modulo.add_error('persona', "Non puoi registrare provvedimenti per questo Volontario!")
         else:
-            modulo.save()
+            provvedimento = modulo.save()
+            provvedimento.esegui()
             return messaggio_generico(request, me, titolo="Provvedimento inserito",
                                       messaggio="Il provvedimento è stato inserito con successo",
                                       torna_titolo="Inserisci nuovo provvedimento",
