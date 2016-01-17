@@ -972,6 +972,8 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
 
     persona = models.ForeignKey("anagrafica.Persona", related_name="appartenenze", db_index=True)
     sede = models.ForeignKey("anagrafica.Sede", related_name="appartenenze", db_index=True)
+    vecchia_sede = models.ForeignKey("anagrafica.Sede", related_name="appartenenze_vecchie", db_index=True,
+                                     null=True, blank=True)
 
     CONDIZIONE_ATTUALE_AGGIUNTIVA = Q(confermata=True)
 
@@ -1081,7 +1083,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             return self.nome
 
     slug = AutoSlugField(populate_from=sorgente_slug, slugify=sede_slugify, always_update=True)
-    membri = models.ManyToManyField(Persona, through='Appartenenza')
+    membri = models.ManyToManyField(Persona, through='Appartenenza', through_fields=('sede', 'persona'))
 
     @property
     def url(self):
@@ -1249,7 +1251,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             return self.get_descendants(include_self=includi_me)
 
         # Sede privata... espandi con unita' territoriali.
-        if self.estensione in [PROVINCIALE, LOCALE]:
+        if self.estensione in [REGIONALE, PROVINCIALE, LOCALE]:
             return self.get_children().filter(estensione=TERRITORIALE) | Sede.objects.filter(pk=self.pk)
 
         # Sede territoriale. Solo me, se richiesto.

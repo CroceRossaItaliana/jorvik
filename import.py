@@ -623,6 +623,8 @@ def carica_appartenenze():
         define('MEMBRO_PRESIDENTE',        70);
         """
 
+        vecchia_sede = None
+
         ## Trasferimento ed Estensione in corso, non sono piu' stati validi.
         if stato in [20, 25]:
             if args.verbose:
@@ -638,6 +640,7 @@ def carica_appartenenze():
 
         elif stato in [2, 4, 16]:
             membro = Appartenenza.ORDINARIO
+            vecchia_sede = comitato
             comitato = comitato.superiore(REGIONALE)
 
         else:
@@ -672,6 +675,9 @@ def carica_appartenenze():
         if args.verbose:
             print("      - Creazione appartenenza")
 
+        creazione = data_da_timestamp(app[4], default=inizio)
+        ultima_modifica = creazione
+
         # Creazione della nuova appartenenza
         a = Appartenenza(
             persona=persona,
@@ -681,6 +687,9 @@ def carica_appartenenze():
             confermata=confermata,
             membro=membro,
             terminazione=terminazione,
+            vecchia_sede=vecchia_sede,
+            creazione=creazione,
+            ultima_modifica=ultima_modifica,
         )
         a.save()
 
@@ -692,6 +701,8 @@ def carica_appartenenze():
             a.autorizzazione_richiedi(
                 persona,
                 ((PRESIDENTE, comitato.comitato),),
+                creazione=creazione,
+                ultima_modifica=ultima_modifica,
             )
 
         ASSOC_ID_APPARTENENZE.update({id: a.pk})
