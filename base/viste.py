@@ -26,6 +26,13 @@ from posta.models import Messaggio
 
 @pagina_pubblica
 def index(request, me):
+
+    # Redirect
+    if 'p' in request.GET:
+        p = request.GET['p']
+        if p == 'public.formazione':
+            return redirect("/informazioni/formazione/")
+
     contesto = {
         'numero_comitati': Sede.objects.count(),
     }
@@ -399,3 +406,7 @@ def supporto(request, me=None):
         "modulo": modulo
     }
     return 'supporto.html', contesto
+
+
+def redirect_semplice(nuovo_url='/', **kwargs):
+    return redirect(nuovo_url)
