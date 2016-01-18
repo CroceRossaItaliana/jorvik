@@ -94,7 +94,7 @@ def ci_siamo_quasi(request, me):
                                         "Grazie per la pazienza -- Ti preghiamo di considerare che date "
                                         "le imminenti elezioni, stiamo dando priorità alle funzioni relative alla "
                                         "gestione dei soci e dell'elettorato.",
-                              torna_titolo="Home page", torna_url="/utente/")
+                              torna_titolo="Home page", torna_url="/")
 
 
 @pagina_pubblica
