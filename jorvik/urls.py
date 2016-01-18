@@ -33,12 +33,14 @@ urlpatterns = [
     url(r'^errore/permessi/$', 'base.errori.permessi'),
 
     # Login e logout
-    url(r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'base_login.html'}),
+    url(r'^login/$', 'base.errori.vista_ci_siamo_quasi'),
+    # url(r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'base_login.html'}),
     url(r'^logout/$', 'django.contrib.auth.views.logout', {'template_name': 'base_logout.html'}),
     url('^', include('django.contrib.auth.urls')),
 
     # Modulo di recupero password
-    url(r'^recupera-password/$', 'base.viste.recupera_password'),
+    url(r'^recupera-password/$', 'base.errori.vista_ci_siamo_quasi'),
+    # url(r'^recupera-password/$', 'base.viste.recupera_password'),
 
     # Informazioni
     url(r'^informazioni/$', 'base.viste.informazioni'),

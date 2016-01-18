@@ -85,3 +85,19 @@ def errore_nessuna_appartenenza(request, me=None, torna_url="/utente/"):
                             torna_titolo="Torna indietro",
                             torna_url=torna_url,
                            )
+
+
+def ci_siamo_quasi(request, me):
+    return messaggio_generico(request, me, titolo="Questa funzionalità sarà disponibile a breve",
+                              messaggio="Stiamo perfezionando l'attivazione dei nuovi servizi di Gaia. "
+                                        "Questa funzionalità non è ancora attiva, ma niente paura, non ci vorrà molto. "
+                                        "Grazie per la pazienza -- Ti preghiamo di considerare che date "
+                                        "le imminenti elezioni, stiamo dando priorità alle funzioni relative alla "
+                                        "gestione dei soci e dell'elettorato.",
+                              torna_titolo="Home page", torna_url="/utente/")
+
+
+@pagina_pubblica
+def vista_ci_siamo_quasi(request, me):
+    return ci_siamo_quasi(request, me)
+

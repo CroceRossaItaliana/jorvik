@@ -8,6 +8,7 @@ from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni
 from attivita.models import Partecipazione, Attivita
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
+from base.errori import ci_siamo_quasi
 from base.files import Excel, FoglioExcel
 from gruppi.models import Gruppo
 
@@ -188,6 +189,9 @@ def attivita_scheda_turni(request, me=None, pk=None, turno=None):
     Mostra la scheda "Informazioni" di una attivita'.
     """
 
+    if True:
+        return ci_siamo_quasi(request, me)
+
     attivita = get_object_or_404(Attivita, pk=pk)
     puo_modificare = me and me.permessi_almeno(attivita, MODIFICA)
     contesto = {
@@ -196,7 +200,7 @@ def attivita_scheda_turni(request, me=None, pk=None, turno=None):
 
     }
 
-    return 'attivita_scheda_turni.html', contesto
+    # return 'attivita_scheda_turni.html', contesto
 
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def attivita_scheda_informazioni_modifica(request, me, pk=None):
@@ -228,6 +232,10 @@ def attivita_scheda_turni_modifica(request, me, pk=None):
     """
     Mostra la pagina di modifica di una attivita'.
     """
+
+    if True:
+        return ci_siamo_quasi(request, me)
+
     attivita = get_object_or_404(Attivita, pk=pk)
     if not me.permessi_almeno(attivita, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -244,6 +252,10 @@ def attivita_scheda_report(request, me, pk=None):
     """
     Mostra la pagina di modifica di una attivita'.
     """
+
+    if True:
+        return ci_siamo_quasi(request, me)
+
     attivita = get_object_or_404(Attivita, pk=pk)
     if not me.permessi_almeno(attivita, MODIFICA):
         return redirect(ERRORE_PERMESSI)

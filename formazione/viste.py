@@ -5,6 +5,7 @@ from django.shortcuts import redirect, get_object_or_404
 from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA
 from autenticazione.funzioni import pagina_privata
+from base.errori import ci_siamo_quasi
 from formazione.forms import ModuloCreazioneCorsoBase
 from formazione.models import CorsoBase
 
@@ -104,6 +105,10 @@ def formazione_corsi_base_fine(request, me, pk):
 
 @pagina_privata
 def aspirante_corso_base_informazioni(request, me, pk):
+
+    if True:
+        return ci_siamo_quasi(request, me)
+
     corso = get_object_or_404(CorsoBase, pk=pk)
     puo_modificare = me.permessi_almeno(corso, MODIFICA)
     contesto = {
