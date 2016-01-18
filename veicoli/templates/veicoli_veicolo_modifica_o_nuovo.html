@@ -6,14 +6,33 @@
 
 {% block app_contenuto %}
 
-<form method="POST">
-    {% csrf_token %}
-    {% bootstrap_form modulo %}
 
-    <button class="btn btn-block btn-primary btn-lg">
-        <i class="fa fa-fw fa-check"></i>
-        Salva
-    </button>
-</form>
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h2 class="panel-title">
+            {% if veicolo %}
+                <i class="fa fa-fw fa-edit"></i>
+                Modifica veicolo {{ veicolo.targa }}
+
+            {% else %}
+                <i class="fa fa-fw fa-plus-circle"></i>
+                Registra nuovo veicolo
+
+            {% endif %}
+        </h2>
+    </div>
+    <div class="panel-body">
+        <form method="POST">
+            {% csrf_token %}
+            {% bootstrap_form modulo %}
+
+            <button class="btn btn-block btn-primary">
+                <i class="fa fa-fw fa-save"></i>
+                Salva veicolo
+            </button>
+        </form>
+
+    </div>
+</div>
 
 {% endblock %}

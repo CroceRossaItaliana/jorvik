@@ -21,7 +21,6 @@
                     <thead>
                         <tr>
                             <th>Targa</th>
-                            <th>Destinazione d'uso</th>
                             <th>Consumo Medio</th>
                             <th>Autoparco</th>
                             <th>Fermo Tecnico</th>
@@ -31,19 +30,40 @@
                     </thead>
                     <tbody>
                         {% for veicolo in veicoli %}
-                            <tr {% if veicolo.fermo_tecnico %} class="warning" {% endif %}>
-                                <td>{{ veicolo.targa }}</td>
-                                <td>{{ veicolo.destinazione }}</td>
-                                <td>{{ veicolo.media_consumi }} km/lt</td>
-                                <td>{{ veicolo.collocazione.autoparco }}</td>
-                                <td>{{ veicolo.fermo_tecnico | default:"No"}}</td>
-                                <td>{{ veicolo.categoria }}</td>
+                            <tr {% if veicolo.fermo_tecnico %} class="warning" {% elif veicolo.stato == veicolo.DISMESSO %}class="danger error"{% endif %}>
                                 <td>
-                                    <a href="/veicolo/manutenzioni/{{ veicolo.pk }}/">Manutenzioni</a>
-                                    <a href="/veicolo/rifornimenti/{{ veicolo.pk }}/">Rifornimenti</a>
-                                    <br />
-                                    <a href="/veicolo/fermi-tecnici/{{ veicolo.pk }}/">Fermi tecnici</a>
-                                    <a href="/veicolo/{{ veicolo.pk }}/collocazioni/">Collocazione</a>
+                                    <span class="grassetto monospace piu-grande">{{ veicolo.targa }}</span><br />
+                                    <span class="piu-piccolo">{{ veicolo.destinazione }}</span>
+                                    <br /><span class="text-muted">{{ veicolo.get_stato_display }}</span>
+                                </td>
+                                <td>
+                                    {% if veicolo.media_consumi %}
+                                        {{ veicolo.media_consumi }} km/lt
+                                    {% else %}
+                                        <i class="fa fa-fw fa-question-circle text-muted"></i>
+                                    {% endif %}
+                                </td>
+                                <td>{{ veicolo.collocazione.autoparco }}</td>
+                                <td>
+                                    {% if veicolo.fermo_tecnico %}
+                                        <span class="text-danger piu-piccolo grassetto">
+                                            <i class="fa fa-fw fa-warning"></i> Fermo dal
+                                            {{ veicolo.fermo_tecnico.inizio|date:"SHORT_DATE_FORMAT" }}
+
+                                        </span>
+                                    {% else %}
+                                        No
+                                    {% endif %}
+                                </td>
+                                <td>{{ veicolo.categoria }}</td>
+                                <td class="piu-piccolo">
+                                    <div class="btn-group-vertical">
+                                        <a class="btn btn-primary btn-xs" href="/veicolo/modifica/{{ veicolo.pk }}/"><i class="fa fa-fw fa-edit"></i>Modifica</a>
+                                        <a class="btn btn-default btn-xs" href="/veicolo/manutenzioni/{{ veicolo.pk }}/"><i class="fa fa-fw fa-wrench"></i>Manutenzioni</a>
+                                        <a class="btn btn-default btn-xs" href="/veicolo/rifornimenti/{{ veicolo.pk }}/"><i class="fa fa-fw fa-plus-circle"></i>Rifornimenti</a>
+                                        <a class="btn btn-default btn-xs" href="/veicolo/fermi-tecnici/{{ veicolo.pk }}/"><i class="fa fa-fw fa-cogs"></i>Fermi tecnici</a>
+                                        <a class="btn btn-default btn-xs" href="/veicolo/{{ veicolo.pk }}/collocazioni/"><i class="fa fa-fw fa-home"></i>Collocazione</a>
+                                    </div>
                                 </td>
                             </tr>
                         {% empty %}
