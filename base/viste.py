@@ -32,6 +32,8 @@ def index(request, me):
         p = request.GET['p']
         if p == 'public.formazione':
             return redirect("/informazioni/formazione/")
+        elif p == 'riconoscimento':
+            return redirect("/registrati/aspirante/")
 
     contesto = {
         'numero_comitati': Sede.objects.count(),
