@@ -131,6 +131,7 @@ def autorizzazioni(request, me, content_type_pk=None):
     Mostra elenco delle autorizzazioni in attesa.
     """
     richieste = me._autorizzazioni_in_attesa()
+    ricarica = False
 
     sezioni = ()  # Ottiene le sezioni
     sezs = richieste.values('oggetto_tipo_id').annotate(Count('oggetto_tipo_id'))
@@ -149,9 +150,13 @@ def autorizzazioni(request, me, content_type_pk=None):
     for richiesta in richieste:
         if richiesta.oggetto is None:
             richiesta.delete()
+            ricarica = True
             continue
         if richiesta.oggetto.autorizzazione_concedi_modulo():
             richiesta.modulo = richiesta.oggetto.autorizzazione_concedi_modulo()
+
+    if ricarica:  # Ricarica?
+        return redirect(request.path)
 
     request.session['autorizzazioni_torna_url'] = "/autorizzazioni/"
     if sezioni and content_type_pk:
