@@ -17,6 +17,7 @@ from base.geo import Locazione
 from base.models import Autorizzazione, Token
 from base.tratti import ConPDF
 from base.utils import get_drive_file
+from formazione.models import PartecipazioneCorsoBase
 from jorvik import settings
 from posta.models import Messaggio
 
@@ -125,12 +126,18 @@ def informazioni_sede(request, me, slug):
     }
     return 'base_informazioni_sede.html', contesto
 
+
+IGNORA_AUTORIZZAZIONI = [
+    ContentType.objects.get_for_model(PartecipazioneCorsoBase).pk
+]
+
 @pagina_privata
 def autorizzazioni(request, me, content_type_pk=None):
     """
     Mostra elenco delle autorizzazioni in attesa.
     """
-    richieste = me._autorizzazioni_in_attesa()
+
+    richieste = me._autorizzazioni_in_attesa().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
     ricarica = False
 
     sezioni = ()  # Ottiene le sezioni
@@ -261,7 +268,7 @@ def autorizzazioni_storico(request, me):
     """
     Mostra storico delle autorizzazioni.
     """
-    richieste = me.autorizzazioni_firmate.all().order_by('-ultima_modifica')[0:50]
+    richieste = me.autorizzazioni_firmate.all().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI).order_by('-ultima_modifica')[0:50]
     contesto = {
         "richieste": richieste
     }
