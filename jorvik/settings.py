@@ -53,7 +53,13 @@ INSTALLED_APPS = (
     'django_extensions',
     'loginas',
     'sorl.thumbnail',
+    'django_cron',
 )
+
+# Cronjob attivi
+CRON_CLASSES = [
+    "posta.cron.CronSmaltisciCodaPosta",
+]
 
 # Classi middleware (intercetta & computa)
 MIDDLEWARE_CLASSES = (

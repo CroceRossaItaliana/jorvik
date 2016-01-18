@@ -26,3 +26,4 @@ django-loginas==0.1.8
 sorl-thumbnail==12.3
 python-stdnum==1.2
 codicefiscale==0.9
+django-cron==0.4.6

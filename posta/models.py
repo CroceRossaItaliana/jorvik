@@ -7,10 +7,12 @@ from django.db.models import QuerySet
 from django.template import Context
 from django.template.loader import get_template
 from django.utils.html import strip_tags
+
 from base.models import *
 from base.tratti import *
 from social.models import ConGiudizio
 from lxml import html
+
 
 class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
@@ -86,7 +88,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         plain_text = strip_tags(self.corpo)
         successo = True
 
-        if not self.oggetti_destinatario:
+        # E-mail al supporto
+        if not self.oggetti_destinatario.all().exists():
             try:
                 msg = EmailMultiAlternatives(
                     subject=self.oggetto,
@@ -100,7 +103,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             except SMTPException:
                 successo = False
 
-        for d in self.oggetti_destinatario.all():
+        # E-mail a delle persone
+        for d in self.oggetti_destinatario.filter(inviato=False):
 
             try:
                 msg = EmailMultiAlternatives(
@@ -122,6 +126,14 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 successo = True
                 d.errore = "Nessun indirizzo e-mail. Saltato"
 
+            if not successo:
+                print("%s  (!) errore invio id=%d, destinatario=%d, errore=%s" % (
+                    datetime.now().isoformat(' '),
+                    self.pk,
+                    d.pk,
+                    d.errore,
+                ))
+
             d.tentativo = datetime.now()
             d.save()
 
@@ -140,6 +152,33 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         """
         d = Destinatario(messaggio=self, persona=persona)
         return d.save()
+
+    @classmethod
+    def in_coda(cls):
+        return cls.objects.filter(terminato=None).order_by('ultima_modifica')
+
+    @classmethod
+    def smaltisci_coda(cls, dimensione_massima=50):
+        da_smaltire = cls.in_coda()[:dimensione_massima]
+        print("%s == ricerca messaggi da smaltire, coda=%d" % (
+            datetime.now().isoformat(' '),
+            dimensione_massima,
+        ))
+        totale = 0
+        for messaggio in da_smaltire:
+            totale += 1
+            print("%s invio messaggio id=%d, destinatari=(totale=%d, in_attesa=%d)" % (
+                datetime.now().isoformat(' '),
+                messaggio.pk,
+                messaggio.oggetti_destinatario.all().count(),
+                messaggio.oggetti_destinatario.filter(inviato=False).count(),
+            ))
+            messaggio.invia()
+        print("%s -- fine elaborazione, elaborati=%d" % (
+            datetime.now().isoformat(' '),
+            totale,
+        ))
+
 
     @classmethod
     def costruisci(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo={}, mittente=None, destinatari=[], allegati=[], **kwargs):
