@@ -13,7 +13,7 @@ class ModuloCreazioneAutoparco(ModelForm):
 class ModuloCreazioneVeicolo(ModelForm):
     class Meta:
         model = Veicolo
-        fields = "__all__"
+        fields = ['stato', 'libretto', 'targa', 'prima_immatricolazione', 'proprietario_cognome', 'proprietario_nome', 'proprietario_indirizzo', 'pneumatici_anteriori', 'pneumatici_posteriori', 'pneumatici_alt_anteriori', 'pneumatici_alt_posteriori', 'cambio', 'lunghezza', 'larghezza', 'sbalzo', 'tara', 'marca', 'modello', 'telaio', 'massa_max', 'data_immatricolazione', 'categoria', 'destinazione', 'carrozzeria', 'omologazione', 'num_assi', 'rimorchio_frenato', 'cilindrata', 'potenza_massima', 'alimentazione', 'posti', 'regime', 'card_rifornimento', 'selettiva_radio', 'telepass']
 
 
 class ModuloCreazioneRifornimento(autocomplete_light.ModelForm):
@@ -43,4 +43,4 @@ class ModuloCreazioneCollocazione(ModelForm):
 class ModuloCreazioneSegnalazione(ModelForm):
     class Meta:
         model = Segnalazione
-        fields = "__all__"
+        fields = ['descrizione', 'manutenzione']

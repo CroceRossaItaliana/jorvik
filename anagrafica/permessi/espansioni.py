@@ -27,7 +27,7 @@ def espandi_persona(persona, al_giorno=date.today()):
 
 
 def espandi_gestione_soci(qs_sedi, al_giorno=date.today()):
-    from anagrafica.models import Persona, Appartenenza, Trasferimento, Estensione
+    from anagrafica.models import Persona, Appartenenza, Trasferimento, Estensione, Riserva
     from ufficio_soci.models import Quota
     return [
         (MODIFICA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO).via("appartenenze"))),
@@ -36,12 +36,13 @@ def espandi_gestione_soci(qs_sedi, al_giorno=date.today()):
         ##(LETTURA,   Trasferimento.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO).via("persona__appartenenze__precedente")))
         (MODIFICA,   Estensione.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO).via("persona__appartenenze"))),
         (LETTURA,   Estensione.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ESTESO).via("persona__appartenenze"))),
-        (MODIFICA, Quota.objects.filter(sede__in=qs_sedi.espandi()))
+        (MODIFICA, Quota.objects.filter(sede__in=qs_sedi.espandi())),
+        (LETTURA, Riserva.objects.filter(appartenenza__sede__in=qs_sedi.espandi()))
     ]
 
 
 def espandi_elenchi_soci(qs_sedi, al_giorno=date.today()):
-    from anagrafica.models import Persona, Appartenenza, Sede
+    from anagrafica.models import Persona, Appartenenza, Sede, Riserva
     from ufficio_soci.models import Quota
     return [
         (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi.espandi()).via("appartenenze"))),
@@ -52,6 +53,7 @@ def espandi_elenchi_soci(qs_sedi, al_giorno=date.today()):
         (LETTURA,  Persona.objects.filter(Appartenenza.con_esito_ok(sede__in=qs_sedi.espandi()).via("appartenenze"))),
         (LETTURA,  Persona.objects.filter(Appartenenza.con_esito_pending(sede__in=qs_sedi.espandi()).via("appartenenze"))),
         (LETTURA,  Persona.objects.filter(Appartenenza.con_esito_no(sede__in=qs_sedi.espandi()).via("appartenenze"))),
+        (LETTURA,  Riserva.objects.filter(Appartenenza.con_esito_ok(sede__in=qs_sedi.espandi()).via("persona__appartenenze")))
     ]
 
 
