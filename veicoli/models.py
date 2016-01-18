@@ -202,9 +202,9 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
 #         verbose_name = "Pratica di Immatricolazione"
 #         verbose_name_plural = "Pratiche di Immatricolazione"
 #
-#     richiedente = models.ForeignKey(Sede, related_name='immatricolazioni_richieste')
-#     ufficio = models.ForeignKey(Sede, related_name='immatricolazioni_istruite')
-#     veicolo = models.ForeignKey(Veicolo, related_name='richieste_immatricolazione')
+#     richiedente = models.ForeignKey(Sede, related_name='immatricolazioni_richieste', null=True, on_delete=models.SET_NULL)
+#     ufficio = models.ForeignKey(Sede, related_name='immatricolazioni_istruite', on_delete=models.PROTECT)
+#     veicolo = models.ForeignKey(Veicolo, related_name='richieste_immatricolazione', on_delete=models.CASCADE)
 
 
 class Collocazione(ModelloSemplice, ConStorico, ConMarcaTemporale):
@@ -213,9 +213,9 @@ class Collocazione(ModelloSemplice, ConStorico, ConMarcaTemporale):
         verbose_name = "Collocazione veicolo"
         verbose_name_plural = "Collocazioni veicolo"
 
-    veicolo = models.ForeignKey(Veicolo, related_name='collocazioni')
-    autoparco = models.ForeignKey(Autoparco, related_name='autoparco')
-    creato_da = models.ForeignKey('anagrafica.Persona', related_name='collocazioni_veicoli', null=True)
+    veicolo = models.ForeignKey(Veicolo, related_name='collocazioni', on_delete=models.CASCADE)
+    autoparco = models.ForeignKey(Autoparco, related_name='autoparco', on_delete=models.PROTECT)
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='collocazioni_veicoli', null=True, on_delete=models.SET_NULL)
 
     def termina(self):
         self.fine = datetime.date.today()
@@ -229,8 +229,8 @@ class FermoTecnico(ModelloSemplice, ConStorico, ConMarcaTemporale):
         verbose_name_plural = "Fermi tecnici"
 
     motivo = models.CharField(max_length=512)
-    veicolo = models.ForeignKey(Veicolo, related_name='fermi_tecnici')
-    creato_da = models.ForeignKey('anagrafica.Persona', related_name='fermi_tecnici_creati')
+    veicolo = models.ForeignKey(Veicolo, related_name='fermi_tecnici', on_delete=models.CASCADE)
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='fermi_tecnici_creati', on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return "Fermo tecnico"
@@ -260,11 +260,11 @@ class Manutenzione(ModelloSemplice, ConMarcaTemporale):
     data = models.DateField(validators=[valida_data_manutenzione], db_index=True)
     descrizione = models.TextField(max_length=4096, blank=False, null=True)
     km = models.PositiveIntegerField()
-    veicolo = models.ForeignKey(Veicolo, related_name="manutenzioni")
+    veicolo = models.ForeignKey(Veicolo, related_name="manutenzioni", on_delete=models.CASCADE)
     manutentore = models.CharField(max_length=512, help_text="es. autoriparato")
     numero_fattura = models.CharField(max_length=64, help_text="es. 122/A")
     costo = models.PositiveIntegerField()
-    creato_da = models.ForeignKey('anagrafica.Persona', related_name='manutenzioni_registrate')
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='manutenzioni_registrate', null=True, on_delete=models.SET_NULL)
 
 
 
@@ -276,10 +276,10 @@ class Segnalazione(ModelloSemplice, ConMarcaTemporale):
     La Segnalazione NON puo' essere rimossa. Viene archiviata una volta che viene assegnata ad una manutenzione.
     """
 
-    autore = models.ForeignKey(Persona, related_name='segnalazioni')
+    autore = models.ForeignKey(Persona, related_name='segnalazioni', on_delete=models.CASCADE)
     descrizione = models.TextField("Descrizione", max_length=1024, )
-    manutenzione = models.ForeignKey(Manutenzione, related_name='segnalazioni', blank=True, null=True)
-    veicolo = models.ForeignKey(Veicolo, related_name='segnalazioni')
+    manutenzione = models.ForeignKey(Manutenzione, related_name='segnalazioni', blank=True, null=True, on_delete=models.SET_NULL)
+    veicolo = models.ForeignKey(Veicolo, related_name='segnalazioni', on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = "Segnalazione di malfunzionamento o incidente"
@@ -298,11 +298,12 @@ class Rifornimento(ModelloSemplice, ConMarcaTemporale):
     """
 
     # numero = models.PositiveIntegerField("Num. rifornimento", default=1, db_index=True)
-    veicolo = models.ForeignKey(Veicolo, related_name='rifornimenti')
-    # conducente = models.ForeignKey(Persona, related_name='rifornimenti')
+    veicolo = models.ForeignKey(Veicolo, related_name='rifornimenti', on_delete=models.CASCADE)
+    # conducente = models.ForeignKey(Persona, related_name='rifornimenti', on_delete=models.CASCADE)
     data = models.DateTimeField("Data rifornimento", db_index=True)
     contachilometri = models.PositiveIntegerField("Contachilometri", db_index=True)
     costo = models.FloatField("Costo", db_index=True)
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='rifornimenti_registrate', null=True, on_delete=models.SET_NULL)
 
     consumo_carburante = models.FloatField("Consumo carburante lt.", default=0.0, db_index=True, help_text="Litri di carburante immessi")
     #consumo_olio_m = models.FloatField("Consumo Olio motori Kg.", blank=True, default=None, null=True, db_index=True)
@@ -322,7 +323,7 @@ class Rifornimento(ModelloSemplice, ConMarcaTemporale):
     contalitri = models.FloatField("(c/o Cisterna int.) Contalitri", default=None, null=True, db_index=True)
     ricevuta = models.CharField("(c/o Distributore) N. Ricevuta", max_length=32, blank=True, default=None, null=True, db_index=True)
 
-    # segnalazione = models.ForeignKey(Segnalazione, help_text="Rapporto conducente", blank=True, default=None, null=True, db_index=True)
+    # segnalazione = models.ForeignKey(Segnalazione, help_text="Rapporto conducente", blank=True, default=None, null=True, db_index=True, on_delete=models.SET_NULL)
 
     class Meta:
         verbose_name = "Rifornimento di carburante"

@@ -48,8 +48,8 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     RICHIESTA_NOME = 'titolo'
 
-    titolo = models.ForeignKey(Titolo)
-    persona = models.ForeignKey("anagrafica.Persona", related_name="titoli_personali")
+    titolo = models.ForeignKey(Titolo, on_delete=models.CASCADE)
+    persona = models.ForeignKey("anagrafica.Persona", related_name="titoli_personali", on_delete=models.CASCADE)
 
     data_ottenimento = models.DateField(null=True, blank=True, help_text="Data di ottenimento del Titolo o Patente. "
                                                                          "Ove applicabile, data dell'esame.")
@@ -63,7 +63,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     codice_corso = models.CharField(max_length=128, null=True, blank=True, db_index=True)
 
     certificato = models.BooleanField(default=False,)
-    certificato_da = models.ForeignKey("anagrafica.Persona", null=True, related_name="titoli_da_me_certificati")
+    certificato_da = models.ForeignKey("anagrafica.Persona", null=True, related_name="titoli_da_me_certificati", on_delete=models.SET_NULL)
 
     @property
     def attuale(self):

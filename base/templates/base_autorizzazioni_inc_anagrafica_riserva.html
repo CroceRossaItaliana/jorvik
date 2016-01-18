@@ -1,6 +1,6 @@
-<p>{{ richiesta.oggetto.persona.link|safe }} chiede</p>
-<p>la riserva tra il {{ richiesta.oggetto.inizio }} e il {{ richiesta.oggetto.fine }} con la seguente motivazione {{ richiesta.oggetto.motivo }}.</p>
-<p>La richiesta è in attesa di essere protocollata dalla segreteria del Comitato.</p>
+{{ richiesta.oggetto.persona.link|safe }} chiede
+<p>la riserva tra il {{ richiesta.oggetto.inizio }} e il {{ richiesta.oggetto.fine }} con la seguente motivazione {{ richiesta.oggetto.motivo }}.
+La richiesta è in attesa di essere protocollata dalla segreteria del Comitato.</p>
 
 <p>Può scaricare la richiesta di riserva in formato PDF
     <a href="{{ richiesta.oggetto.url_pdf }}" target="_new" download>cliccando qui</a>.</p>

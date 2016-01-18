@@ -172,8 +172,8 @@ class CorsoBase(Corso, ConVecchioID):
 
 class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
-    persona = models.ForeignKey(Persona, related_name='partecipazioni_corsi')
-    corso = models.ForeignKey(CorsoBase, related_name='partecipazioni')
+    persona = models.ForeignKey(Persona, related_name='partecipazioni_corsi', on_delete=models.CASCADE)
+    corso = models.ForeignKey(CorsoBase, related_name='partecipazioni', on_delete=models.PROTECT)
 
     # Dati per la generazione del verbale (esito)
 
@@ -223,7 +223,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
 
-    corso = models.ForeignKey(CorsoBase, related_name='lezioni')
+    corso = models.ForeignKey(CorsoBase, related_name='lezioni', on_delete=models.PROTECT)
     nome = models.CharField(max_length=128)
 
     class Meta:
@@ -233,9 +233,9 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
 
 class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
 
-    lezione = models.ForeignKey(LezioneCorsoBase, related_name='assenze')
-    persona = models.ForeignKey(Persona, related_name='assenze_corsi_base')
-    registrata_da = models.ForeignKey(Persona, related_name='assenze_corsi_base_registrate')
+    lezione = models.ForeignKey(LezioneCorsoBase, related_name='assenze', on_delete=models.CASCADE)
+    persona = models.ForeignKey(Persona, related_name='assenze_corsi_base', on_delete=models.CASCADE)
+    registrata_da = models.ForeignKey(Persona, related_name='assenze_corsi_base_registrate', null=True, on_delete=models.SET_NULL)
 
     class Meta:
         verbose_name = "Assenza a Corso Base"

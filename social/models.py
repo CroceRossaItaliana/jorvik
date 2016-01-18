@@ -17,9 +17,9 @@ class Giudizio(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name_plural = "Giudizi"
 
-    autore = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="giudizi")
+    autore = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="giudizi", on_delete=models.CASCADE)
     positivo = models.BooleanField("Positivo", db_index=True, default=True)
-    oggetto_tipo = models.ForeignKey(ContentType, db_index=True)
+    oggetto_tipo = models.ForeignKey(ContentType, db_index=True, on_delete=models.SET_NULL, null=True)
     oggetto_id = models.PositiveIntegerField(db_index=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
 
@@ -35,9 +35,9 @@ class Commento(ModelloSemplice, ConMarcaTemporale):
         app_label = "social"
         abstract = False
 
-    autore = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="commenti")
+    autore = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="commenti", on_delete=models.CASCADE)
     commento = models.TextField("Testo del commento")
-    oggetto_tipo = models.ForeignKey(ContentType, db_index=True)
+    oggetto_tipo = models.ForeignKey(ContentType, db_index=True, on_delete=models.SET_NULL, null=True)
     oggetto_id = models.PositiveIntegerField(db_index=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
 

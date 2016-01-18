@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from django.db.models import Sum
 from django.shortcuts import redirect, get_object_or_404
 
-from anagrafica.forms import ModuloNuovoProvvedimento, ModuloCreazioneTrasferimento
+from anagrafica.forms import ModuloNuovoProvvedimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione
 from anagrafica.permessi.applicazioni import PRESIDENTE
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA
@@ -19,7 +19,7 @@ from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVo
     ElencoVolontariGiovani, ElencoEstesi
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
-    ModuloCreazioneRiserva
+    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento
 from ufficio_soci.models import Quota, Tesseramento, Tesserino
 
 
@@ -269,9 +269,9 @@ def us_trasferimento(request, me):
         if trasf.destinazione in trasf.persona.sedi_attuali():
             modulo.add_error('destinazione', 'Il volontario è già appartenente a questa sede.')
         elif trasf.destinazione.comitato != trasf.persona.sede_riferimento().comitato and True:##che in realta' e' il discriminatore delle elezioni
-            return errore_generico(request, me, messaggio="Non puoi richiedere un trasferimento tra comitati durante il periodo elettorale")
+            return errore_generico(request, me, messaggio="Non puoi richiedere un trasferimento tra comitati durante il periodo elettorale", torna_url="/us/trasferimento/")
         elif trasf.persona.trasferimento:
-            return errore_generico(request, me, messaggio="Il Volontario non può avere piú di una richiesta di trasferimento alla volta")
+            return errore_generico(request, me, messaggio="Il Volontario non può avere piú di una richiesta di trasferimento alla volta", torna_url="/us/trasferimento/")
         else:
             trasf.richiedente = me
             trasf.save()
@@ -285,7 +285,7 @@ def us_trasferimento(request, me):
         "modulo": modulo,
     }
 
-    return 'us_estensione.html', contesto
+    return 'us_trasferimento.html', contesto
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensioni(request, me):

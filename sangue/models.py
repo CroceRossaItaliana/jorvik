@@ -72,7 +72,7 @@ class Donatore(ModelloSemplice, ConMarcaTemporale):
     kell = models.CharField(max_length=16, choices=KELL_OPZIONI, blank=True, null=True)
 
     codice_sit = models.CharField(max_length=32, db_index=True, blank=True, null=True,)
-    sede_sit = models.ForeignKey('sangue.Sede', null=True, blank=True)
+    sede_sit = models.ForeignKey('sangue.Sede', null=True, blank=True, on_delete=models.PROTECT)
 
     class Meta:
         verbose_name = "Donatore di Sangue"
@@ -104,7 +104,7 @@ class Sede(ModelloSemplice):
 
 class Merito(ModelloSemplice, ConMarcaTemporale, ConTipoDonazione):
 
-    persona = models.ForeignKey('anagrafica.Persona', related_name='meriti_donazioni')
+    persona = models.ForeignKey('anagrafica.Persona', related_name='meriti_donazioni', on_delete=models.CASCADE)
 
     MERITO = (
         1, 10, 20, 40
@@ -139,9 +139,9 @@ class Donazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     )
     tipo = models.CharField(max_length=2, choices=TIPO, db_index=True)
 
-    persona = models.ForeignKey('anagrafica.Persona', related_name='donazioni_sangue')
+    persona = models.ForeignKey('anagrafica.Persona', related_name='donazioni_sangue', on_delete=models.CASCADE)
     data = models.DateField()
-    sede = models.ForeignKey(Sede, related_name='donazioni_sangue', blank=False, null=True)
+    sede = models.ForeignKey(Sede, related_name='donazioni_sangue', blank=False, null=True, on_delete=models.PROTECT)
 
     RICHIESTA_NOME = "conferma donazione sangue"
 

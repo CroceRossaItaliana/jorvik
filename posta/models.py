@@ -31,7 +31,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     terminato = models.DateTimeField(blank=True, null=True, default=None)
 
     # Il mittente e' una persona o None (il sistema di Gaia)
-    mittente = models.ForeignKey("anagrafica.Persona", default=None, null=True, blank=True)
+    mittente = models.ForeignKey("anagrafica.Persona", default=None, null=True, blank=True, on_delete=models.CASCADE)
 
     @property
     def destinatari(self):
@@ -253,8 +253,8 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
         verbose_name = "Destinatario di posta"
         verbose_name_plural = "Destinatario di posta"
 
-    messaggio = models.ForeignKey(Messaggio, null=False, blank=True, related_name='oggetti_destinatario')
-    persona = models.ForeignKey("anagrafica.Persona", null=True, blank=True, default=None)
+    messaggio = models.ForeignKey(Messaggio, null=False, blank=True, related_name='oggetti_destinatario', on_delete=models.CASCADE)
+    persona = models.ForeignKey("anagrafica.Persona", null=True, blank=True, default=None, on_delete=models.CASCADE)
 
     inviato = models.BooleanField(default=False)
     tentativo = models.DateTimeField(default=None, blank=True, null=True)

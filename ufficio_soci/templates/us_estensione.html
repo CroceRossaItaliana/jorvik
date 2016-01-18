@@ -3,22 +3,43 @@
 {% load bootstrap3 %}
 
 {% block pagina_titolo %}
-    Nuova Estensione
+    Richiedi Estensione
 {% endblock %}
 
 {% block app_contenuto %}
 
-    <p>Da qui registro una nuova estensione per un Volontario...</p>
+    <div class="alert alert-info">
+        <i class="fa fa-fw fa-info-circle"></i>
+        Da qui richiedo un'estensione per un Volontario...
+        <p>La richiesta di estensione dovrà essere successivamente accettata</p>
+    </div>
 
-    <form method="POST">
-        {% csrf_token %}
-        {% bootstrap_form modulo %}
+    <div class="row">
+        <div class="col-md-6">
 
-        Dovrai in seguito accettare la richiesta di estensione del volontario!
 
-        <button type="submit" class="btn btn-block btn-primary">
-            Registra estensione
-        </button>
-    </form>
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Richiedi Estensione
+                </div>
+                <div class="panel-body">
 
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit" class="btn btn-block btn-primary">
+                            Richiedi Estensione
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+
+        <h4><i class="fa fa-fw fa-support"></i> Guida alla compilazione</h4>
+            <p>Compila il modulo per richiedere un estensione</p>
+            <p>&nbsp;</p>
+
+    </div>
+    </div>
 {% endblock %}

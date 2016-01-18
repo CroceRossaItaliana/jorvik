@@ -146,6 +146,7 @@ def veicoli_manutenzione(request, me, veicolo):
     if modulo.is_valid():
         m = modulo.save(commit=False)
         m.veicolo = veicolo
+        m.creato_da = me
         m.save()
     contesto = {
         "modulo": modulo,
@@ -164,6 +165,7 @@ def veicoli_rifornimento(request, me, veicolo):
     if modulo.is_valid():
         r = modulo.save(commit=False)
         r.veicolo = veicolo
+        r.creato_da = me
         r.save()
     contesto = {
         "modulo": modulo,

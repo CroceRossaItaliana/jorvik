@@ -18,8 +18,8 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale):
         verbose_name = "Richiesta Tesserino Associativo"
         verbose_name_plural = "Richieste Tesserino Associativo"
 
-    persona = models.ForeignKey('anagrafica.Persona', related_name='tesserini')
-    emesso_da = models.ForeignKey('anagrafica.Sede', related_name='tesserini_emessi')
+    persona = models.ForeignKey('anagrafica.Persona', related_name='tesserini', on_delete=models.CASCADE)
+    emesso_da = models.ForeignKey('anagrafica.Sede', related_name='tesserini_emessi', on_delete=models.PROTECT)
 
     RILASCIO = "RIL"
     RINNOVO = "RIN"
@@ -57,12 +57,12 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale):
 
     codice = UpperCaseCharField(max_length=13, unique=True, db_index=True, null=True, default=None)
 
-    richiesto_da = models.ForeignKey('anagrafica.Persona', related_name='tesserini_stampati_richiesti', null=False)
+    richiesto_da = models.ForeignKey('anagrafica.Persona', related_name='tesserini_stampati_richiesti', null=False, on_delete=models.CASCADE)
 
-    confermato_da = models.ForeignKey('anagrafica.Persona', related_name='tesserini_confermati', null=True)
+    confermato_da = models.ForeignKey('anagrafica.Persona', related_name='tesserini_confermati', null=True, on_delete=models.SET_NULL)
     data_conferma = models.DateTimeField(null=True, db_index=True)
 
-    riconsegnato_a = models.ForeignKey('anagrafica.Persona', related_name='tesserini_riconsegnati', null=True)
+    riconsegnato_a = models.ForeignKey('anagrafica.Persona', related_name='tesserini_riconsegnati', null=True, on_delete=models.SET_NULL)
     data_riconsegna = models.DateTimeField(null=True, db_index=True)
 
     def assicura_presenza_codice(self):
@@ -244,17 +244,17 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF, ConVecchioID):
         """
         return timezone.now().year
 
-    persona = models.ForeignKey('anagrafica.Persona', related_name='quote', db_index=True)
-    appartenenza = models.ForeignKey('anagrafica.Appartenenza', null=True, related_name='quote', db_index=True)
-    sede = models.ForeignKey('anagrafica.Sede', related_name='quote', db_index=True)
+    persona = models.ForeignKey('anagrafica.Persona', related_name='quote', db_index=True, on_delete=models.CASCADE)
+    appartenenza = models.ForeignKey('anagrafica.Appartenenza', null=True, related_name='quote', db_index=True, on_delete=models.SET_NULL)
+    sede = models.ForeignKey('anagrafica.Sede', related_name='quote', db_index=True, on_delete=models.PROTECT)
 
     progressivo = models.IntegerField(db_index=True)
     anno = models.SmallIntegerField(db_index=True, default=default_anno)
 
     data_versamento = models.DateField(help_text="La data di versamento dell'importo.")
     data_annullamento = models.DateField(null=True, blank=True)
-    registrato_da = models.ForeignKey('anagrafica.Persona', related_name='quote_registrate')
-    annullato_da = models.ForeignKey('anagrafica.Persona', related_name='quote_annullate', blank=True, null=True)
+    registrato_da = models.ForeignKey('anagrafica.Persona', related_name='quote_registrate', null=True, on_delete=models.SET_NULL)
+    annullato_da = models.ForeignKey('anagrafica.Persona', related_name='quote_annullate', blank=True, null=True, on_delete=models.SET_NULL)
 
     REGISTRATA = 'R'
     ANNULLATA = 'X'

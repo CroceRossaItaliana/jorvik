@@ -36,9 +36,9 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     )
 
     nome = models.CharField(max_length=255, default="Nuova attività", db_index=True)
-    sede = models.ForeignKey('anagrafica.Sede', related_name='attivita')
-    area = models.ForeignKey("Area", related_name='attivita')
-    estensione = models.ForeignKey('anagrafica.Sede', null=True, default=None, related_name='attivita_estensione')
+    sede = models.ForeignKey('anagrafica.Sede', related_name='attivita', on_delete=models.PROTECT)
+    area = models.ForeignKey("Area", related_name='attivita', on_delete=models.SET_NULL, null=True)
+    estensione = models.ForeignKey('anagrafica.Sede', null=True, default=None, related_name='attivita_estensione', on_delete=models.PROTECT)
     stato = models.CharField(choices=STATO, default=BOZZA, max_length=1, db_index=True)
     apertura = models.CharField(choices=APERTURA, default=APERTA, max_length=1, db_index=True)
     descrizione = models.TextField(blank=True)
@@ -103,7 +103,7 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     class Meta:
         verbose_name_plural = "Turni"
 
-    attivita = models.ForeignKey(Attivita, related_name='turni')
+    attivita = models.ForeignKey(Attivita, related_name='turni', on_delete=models.CASCADE)
 
     nome = models.CharField(max_length=128, default="Nuovo turno", db_index=True)
 
@@ -150,8 +150,8 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         (NON_PRESENTATO, "Non presentato/a"),
     )
 
-    persona = models.ForeignKey("anagrafica.Persona", related_name='partecipazioni')
-    turno = models.ForeignKey(Turno, related_name='partecipazioni')
+    persona = models.ForeignKey("anagrafica.Persona", related_name='partecipazioni', on_delete=models.CASCADE)
+    turno = models.ForeignKey(Turno, related_name='partecipazioni', on_delete=models.CASCADE)
     stato = models.CharField(choices=STATO, default=RICHIESTA, max_length=1, db_index=True)
 
     def __str__(self):
@@ -214,7 +214,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
 class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
 
-    sede = models.ForeignKey('anagrafica.Sede', related_name='aree')
+    sede = models.ForeignKey('anagrafica.Sede', related_name='aree', on_delete=models.PROTECT)
     nome = models.CharField(max_length=256, db_index=True, default='Generale', blank=False)
     obiettivo = models.SmallIntegerField(null=False, blank=False, default=1, db_index=True)
 

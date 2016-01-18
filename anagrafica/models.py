@@ -769,7 +769,7 @@ class Telefono(ConMarcaTemporale, ModelloSemplice):
     NON USARE DIRETTAMENTE. Usare i metodi in Persona.
     """
 
-    persona = models.ForeignKey(Persona, related_name="numeri_telefono", db_index=True)
+    persona = models.ForeignKey(Persona, related_name="numeri_telefono", db_index=True, on_delete=models.CASCADE)
     numero = models.CharField("Numero di telefono", max_length=16)
     servizio = models.BooleanField("Numero di servizio", default=False)
 
@@ -834,7 +834,7 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
     )
 
     tipo = models.CharField(choices=TIPO, max_length=1, default=CARTA_IDENTITA, db_index=True)
-    persona = models.ForeignKey(Persona, related_name="documenti", db_index=True)
+    persona = models.ForeignKey(Persona, related_name="documenti", db_index=True, on_delete=models.CASCADE)
     file = models.FileField("File", upload_to=GeneratoreNomeFile('documenti/'),
                             validators=[valida_dimensione_file_8mb])
 
@@ -913,10 +913,10 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     precedente = models.ForeignKey('self', related_name='successiva', on_delete=models.SET_NULL, default=None,
                                    blank=True, null=True)
 
-    persona = models.ForeignKey("anagrafica.Persona", related_name="appartenenze", db_index=True)
-    sede = models.ForeignKey("anagrafica.Sede", related_name="appartenenze", db_index=True)
+    persona = models.ForeignKey("anagrafica.Persona", related_name="appartenenze", db_index=True, on_delete=models.CASCADE)
+    sede = models.ForeignKey("anagrafica.Sede", related_name="appartenenze", db_index=True, on_delete=models.PROTECT)
     vecchia_sede = models.ForeignKey("anagrafica.Sede", related_name="appartenenze_vecchie", db_index=True,
-                                     null=True, blank=True)
+                                     null=True, blank=True, on_delete=models.SET_NULL)
 
     CONDIZIONE_ATTUALE_AGGIUNTIVA = Q(confermata=True)
 
@@ -1226,13 +1226,13 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
         verbose_name_plural = "Deleghe"
         app_label = 'anagrafica'
 
-    persona = models.ForeignKey(Persona, db_index=True, related_name='deleghe', related_query_name='delega',)
+    persona = models.ForeignKey(Persona, db_index=True, related_name='deleghe', related_query_name='delega', on_delete=models.CASCADE)
     tipo = models.CharField(max_length=2, db_index=True, choices=PERMESSI_NOMI)
-    oggetto_tipo = models.ForeignKey(ContentType, db_index=True)
+    oggetto_tipo = models.ForeignKey(ContentType, db_index=True, on_delete=models.SET_NULL, null=True)
     oggetto_id = models.PositiveIntegerField(db_index=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
     firmatario = models.ForeignKey(Persona, db_index=True, null=True, default=None, related_name='deleghe_firmate',
-                                   related_query_name='delega_firmata')
+                                   related_query_name='delega_firmata', on_delete=models.SET_NULL)
 
     def __str__(self):
         return "Delega %s di %s come %s per %s" % (
@@ -1292,7 +1292,7 @@ class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
     class Meta:
         verbose_name_plural = "Fototessere"
 
-    persona = models.ForeignKey(Persona, related_name="fototessere", db_index=True)
+    persona = models.ForeignKey(Persona, related_name="fototessere", db_index=True, on_delete=models.CASCADE)
     file = models.ImageField("Fototessera", upload_to=GeneratoreNomeFile('fototessere/'),
                              validators=[valida_dimensione_file_8mb])
 
@@ -1308,10 +1308,10 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
         verbose_name = "Richiesta di trasferimento"
         verbose_name_plural = "Richieste di trasferimento"
 
-    richiedente = models.ForeignKey(Persona, related_name='trasferimenti_richiesti_da')
-    persona = models.ForeignKey(Persona, related_name='trasferimenti')
-    destinazione = models.ForeignKey(Sede, related_name='trasferimenti_destinazione')
-    appartenenza = models.ForeignKey(Appartenenza, related_name='trasferimento', null=True, blank=True)
+    richiedente = models.ForeignKey(Persona, related_name='trasferimenti_richiesti_da', on_delete=models.SET_NULL, null=True)
+    persona = models.ForeignKey(Persona, related_name='trasferimenti', on_delete=models.CASCADE)
+    destinazione = models.ForeignKey(Sede, related_name='trasferimenti_destinazione', on_delete=models.PROTECT)
+    appartenenza = models.ForeignKey(Appartenenza, related_name='trasferimento', null=True, blank=True, on_delete=models.PROTECT)
     protocollo_numero = models.CharField('Numero di protocollo', max_length=16, null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
     motivo = models.CharField(max_length=2048, null=True, blank=False,)
@@ -1377,10 +1377,10 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         verbose_name = "Richiesta di estensione"
         verbose_name_plural = "Richieste di estensione"
 
-    richiedente = models.ForeignKey(Persona, related_name='estensioni_richieste_da')
-    persona = models.ForeignKey(Persona, related_name='estensioni')
-    destinazione = models.ForeignKey(Sede, related_name='estensioni_destinazione')
-    appartenenza = models.ForeignKey(Appartenenza, related_name='estensione', null=True, blank=True)
+    richiedente = models.ForeignKey(Persona, related_name='estensioni_richieste_da', on_delete=models.SET_NULL, null=True)
+    persona = models.ForeignKey(Persona, related_name='estensioni', on_delete=models.CASCADE)
+    destinazione = models.ForeignKey(Sede, related_name='estensioni_destinazione', on_delete=models.PROTECT)
+    appartenenza = models.ForeignKey(Appartenenza, related_name='estensione', null=True, blank=True, on_delete=models.PROTECT)
     protocollo_numero = models.CharField('Numero di protocollo', max_length=512, null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
     motivo = models.CharField(max_length=4096, null=True, blank=False,)
@@ -1455,13 +1455,13 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
         verbose_name_plural = "Richieste di trasferimento"
 
     RICHIESTA_NOME = "riserva"
-    persona = models.ForeignKey(Persona, related_name="riserve")
+    persona = models.ForeignKey(Persona, related_name="riserve", on_delete=models.CASCADE)
     motivo = models.CharField(max_length=4096)
-    appartenenza = models.ForeignKey(Appartenenza, related_name="riserve")
+    appartenenza = models.ForeignKey(Appartenenza, related_name="riserve", on_delete=models.PROTECT)
 
     def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiRiserva
-        return ModuloConsentiRiservaUr
+        return ModuloConsentiRiserva
 
     def autorizzazione_concessa(self, modulo=None):
         self.protocollo_data = modulo.cleaned_data['protocollo_data']
@@ -1504,9 +1504,9 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
         (ESPULSIONE, "Esplusione",),
     )
 
-    persona = models.ForeignKey(Persona, related_name="provvedimenti")
-    registrato_da = models.ForeignKey(Persona, related_name="provvedimenti_registrati")
-    sede = models.ForeignKey(Sede, related_name="provvedimenti")
+    persona = models.ForeignKey(Persona, related_name="provvedimenti", on_delete=models.CASCADE)
+    registrato_da = models.ForeignKey(Persona, related_name="provvedimenti_registrati", on_delete=models.SET_NULL, null=True)
+    sede = models.ForeignKey(Sede, related_name="provvedimenti", on_delete=models.PROTECT)
     motivazione = models.CharField(max_length=500)
     tipo = models.CharField(max_length=1, choices=TIPO, default=AMMONIZIONE)
 
@@ -1533,9 +1533,9 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         verbose_name = "Documento di Dimissione"
         verbose_name_plural = "Documenti di Dimissione"
 
-    persona = models.ForeignKey(Persona, related_name="dimissioni")
-    appartenenza = models.ForeignKey(Appartenenza, related_name="dimissioni")
-    sede = models.ForeignKey(Sede, related_name="dimissioni")
+    persona = models.ForeignKey(Persona, related_name="dimissioni", on_delete=models.CASCADE)
+    appartenenza = models.ForeignKey(Appartenenza, related_name="dimissioni", on_delete=models.PROTECT)
+    sede = models.ForeignKey(Sede, related_name="dimissioni", on_delete=models.PROTECT)
 
     VOLONTARIE = 'VOL'
     TURNO = 'TUR'
@@ -1555,7 +1555,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
 
     motivo = models.CharField(choices=MOTIVI, max_length=3)
     info = models.CharField(max_length=512, help_text="Maggiori informazioni sulla causa della dimissione")
-    richiedente = models.ForeignKey(Persona)
+    richiedente = models.ForeignKey(Persona, on_delete=models.SET_NULL, null=True)
 
     def applica(self):
         from gruppi.models import Appartenenza as App

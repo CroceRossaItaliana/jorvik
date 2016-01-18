@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
 from anagrafica.forms import ModuloStepAnagrafica
-from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva
+from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva, Trasferimento
 from autenticazione.forms import ModuloCreazioneUtenza
 from curriculum.models import Titolo, TitoloPersonale
 from ufficio_soci.models import Tesseramento, Quota
@@ -20,7 +20,7 @@ class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
 
 class ModuloCreazioneTrasferimento(autocomplete_light.ModelForm):
     class Meta:
-        model = Estensione
+        model = Trasferimento
         fields = ['persona', 'destinazione', 'motivo']
 
 

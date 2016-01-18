@@ -98,13 +98,13 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         app_label = "base"
         abstract = False
 
-    richiedente = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="autorizzazioni_richieste")
+    richiedente = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="autorizzazioni_richieste", on_delete=models.CASCADE)
     firmatario = models.ForeignKey("anagrafica.Persona", db_index=True, blank=True, null=True, default=None,
-                                   related_name="autorizzazioni_firmate")
+                                   related_name="autorizzazioni_firmate", on_delete=models.SET_NULL)
     concessa = models.NullBooleanField("Esito", db_index=True, blank=True, null=True, default=None)
     motivo_negazione = models.CharField(blank=True, null=True, max_length=512)
 
-    oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="autcomeoggetto")
+    oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="autcomeoggetto", on_delete=models.SET_NULL, null=True)
     oggetto_id = models.PositiveIntegerField(db_index=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
 
@@ -112,7 +112,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     progressivo = models.PositiveSmallIntegerField("Progressivo contesto", default=1)
 
     destinatario_ruolo = models.CharField(max_length=2, choices=PERMESSI_NOMI)
-    destinatario_oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="autcomedestinatari")
+    destinatario_oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="autcomedestinatari", null=True, on_delete=models.SET_NULL)
     destinatario_oggetto_id = models.PositiveIntegerField(db_index=True)
     destinatario_oggetto = GenericForeignKey('destinatario_oggetto_tipo', 'destinatario_oggetto_id')
 
@@ -232,7 +232,7 @@ class Log(ModelloSemplice, ConMarcaTemporale):
         ('E', 'Eliminazione'),
     )
 
-    persona = models.ForeignKey('anagrafica.Persona', related_name='azioni_recenti')
+    persona = models.ForeignKey('anagrafica.Persona', related_name='azioni_recenti', on_delete=models.SET_NULL, null=True)
     azione = models.CharField(choices=AZIONE, max_length=1)
 
     oggetto_repr = models.CharField(max_length=1024, blank=True, null=True)
@@ -587,7 +587,7 @@ class ConScadenza:
 
 
 class Token(ModelloSemplice, ConMarcaTemporale):
-    persona = models.ForeignKey('anagrafica.Persona', related_name='tokens')
+    persona = models.ForeignKey('anagrafica.Persona', related_name='tokens', on_delete=models.CASCADE)
     codice = models.CharField(max_length=128, unique=True, db_index=True, null=False)
     redirect = models.CharField(max_length=128, db_index=True, null=True)
     valido_ore = models.IntegerField(default=24)
@@ -641,7 +641,7 @@ class Allegato(ConMarcaTemporale, ConScadenza, ModelloSemplice):
     class Meta:
         verbose_name_plural = "Allegati"
 
-    oggetto_tipo = models.ForeignKey(ContentType, db_index=True, blank=True, null=True, related_name="allegato_come_oggetto")
+    oggetto_tipo = models.ForeignKey(ContentType, db_index=True, blank=True, null=True, related_name="allegato_come_oggetto", on_delete=models.SET_NULL)
     oggetto_id = models.PositiveIntegerField(db_index=True, blank=True, null=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
     file = models.FileField("File", upload_to=GeneratoreNomeFile('allegati/'),
