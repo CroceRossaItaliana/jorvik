@@ -338,7 +338,6 @@ def pdf(request, me, app_label, model, pk):
 
 
 @pagina_pubblica
-@cache_page(60*5)
 def formazione(request, me=None):
     file = "1tRrCVuGJRrMRVQhbMw0-X6s9TeEzvoOqz5zzGm4QgXQ"
     contenuto = get_drive_file(file)
