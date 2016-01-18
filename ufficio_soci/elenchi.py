@@ -177,6 +177,57 @@ class ElencoVolontari(ElencoVistaSoci):
         )
 
 
+class ElencoVolontariGiovani(ElencoVolontari):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
+    """
+
+    def risultati(self):
+        oggi = date.today()
+        nascita_minima = date(oggi.year - Persona.ETA_GIOVANE, oggi.month, oggi.day)
+        return super(ElencoVolontariGiovani, self).risultati().filter(
+            data_nascita__gte=nascita_minima
+        )
+
+
+class ElencoDimessi(ElencoVistaAnagrafica):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi
+    """
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        return Persona.objects.filter(
+            ~Appartenenza.query_attuale(
+                sede__in=qs_sedi,
+            ).via("appartenenze"),
+            appartenenze__sede__in=qs_sedi,
+            appartenenze__terminazione__in=[Appartenenza.DIMISSIONE, Appartenenza.ESPULSIONE],
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+
+class ElencoTrasferiti(ElencoVistaAnagrafica):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi
+    """
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        return Persona.objects.filter(
+            ~Appartenenza.query_attuale(
+                sede__in=qs_sedi,
+            ).via("appartenenze"),
+            appartenenze__sede__in=qs_sedi,
+            appartenenze__terminazione__in=[Appartenenza.TRASFERIMENTO,],
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+
 class ElencoDipendenti(ElencoVistaSoci):
     """
     args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori

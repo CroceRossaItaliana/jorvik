@@ -90,9 +90,12 @@ def menu(request):
         "us": (
             ("Elenchi", (
                 ("Volontari", "fa-list", "/us/elenchi/volontari/"),
+                ("Vol. giovani", "fa-list", "/us/elenchi/giovani/"),
                 ("Soci", "fa-list", "/us/elenchi/soci/"),
                 ("Sostenitori", "fa-list", "/us/elenchi/sostenitori/"),
                 ("Dipendenti", "fa-list", "/us/elenchi/dipendenti/"),
+                ("Dimessi", "fa-list", "/us/elenchi/dimessi/"),
+                ("Trasferiti", "fa-list", "/us/elenchi/trasferiti/"),
                 ("Ordinari", "fa-list", "/us/elenchi/ordinari/") if me and me.oggetti_permesso(ELENCHI_SOCI).filter(estensione=REGIONALE).exists() else None,
                 ("Elettorato", "fa-list", "/us/elenchi/elettorato/"),
                 ("Per Titoli", "fa-search", "/us/elenchi/titoli/"),
