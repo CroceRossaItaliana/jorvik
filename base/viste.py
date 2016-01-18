@@ -5,6 +5,8 @@ from django.db.models.loading import get_model
 from django.http import HttpResponse
 from django.shortcuts import render, render_to_response, get_object_or_404, redirect
 # Le viste base vanno qui.
+from django.views.decorators.cache import cache_page
+
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, LETTURA
@@ -334,13 +336,13 @@ def pdf(request, me, app_label, model, pk):
     pdf = oggetto.genera_pdf()
     return redirect(pdf.download_url)
 
-#@cache_page(60*15)
+
 @pagina_pubblica
+@cache_page(60*5)
 def formazione(request, me=None):
     file = "1tRrCVuGJRrMRVQhbMw0-X6s9TeEzvoOqz5zzGm4QgXQ"
     contenuto = get_drive_file(file)
-    print(contenuto)
-    contesto={
+    contesto = {
         "contenuto": contenuto
     }
     return "base_formazione.html", contesto
