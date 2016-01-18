@@ -72,3 +72,8 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     def autorizzazione_negata(self, modulo=None):
         # Alla negazione, cancella titolo personale.
         self.delete()
+
+    def __str__(self):
+        return "%s di %s" % (
+            self.titolo, self.persona,
+        )

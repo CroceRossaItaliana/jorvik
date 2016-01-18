@@ -19,7 +19,7 @@ class Autoparco(ModelloSemplice, ConEstensione, ConMarcaTemporale, ConGeolocaliz
     class Meta:
         verbose_name_plural = "Autoparchi"
 
-    nome = models.CharField(max_length=256)
+    nome = models.CharField(max_length=256, db_index=True)
 
     telefono = models.CharField("Telefono", max_length=64, blank=True)
 
@@ -150,6 +150,9 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
         (730, "2 anni (730 giorni)")
     )
     intervallo_revisione = models.PositiveIntegerField("Intervallo Revisione", choices=INTERVALLO_REVISIONE, default=365)
+
+    def __str__(self):
+        return self.targa
 
     def ultima_revisione(self):
         return Manutenzione.objects.filter(

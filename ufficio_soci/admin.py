@@ -3,6 +3,30 @@ from ufficio_soci.models import Tesserino, Quota, Tesseramento
 
 __author__ = 'alfioemanuele'
 
-admin.site.register(Tesserino)
-admin.site.register(Quota)
-admin.site.register(Tesseramento)
+
+@admin.register(Quota)
+class AdminQuota(admin.ModelAdmin):
+    search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale",
+                     "sede__nome", ]
+    list_display = ("persona", "tipo", "stato", "sede", "progressivo", "anno", "data_versamento",)
+    list_filter = ("stato", "tipo", "data_versamento", "anno",)
+    raw_id_fields = ("persona", "appartenenza", "sede", "registrato_da", "annullato_da",)
+
+
+@admin.register(Tesserino)
+class AdminTesserino(admin.ModelAdmin):
+    search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale",
+                     "codice", ]
+    list_display = ("codice", "persona", "valido", "tipo_richiesta", "stato_richiesta", "stato_emissione",)
+    list_filter = ("stato_emissione", "stato_richiesta", "valido", "tipo_richiesta",)
+    raw_id_fields = ("persona", "emesso_da", "richiesto_da", "confermato_da", "riconsegnato_a",)
+
+
+@admin.register(Tesseramento)
+class AdminTesseramento(admin.ModelAdmin):
+    search_fields = ["anno", ]
+    list_display = ("anno", "stato", "inizio", "quota_attivo", "quota_ordinario", "quota_sostenitore",
+                    "quota_benemerito", "quota_aspirante",)
+    list_filter = ("anno", "stato",)
+    raw_id_fields = ()
+

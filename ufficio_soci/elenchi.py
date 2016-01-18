@@ -118,7 +118,7 @@ class ElencoVistaSoci(ElencoVistaAnagrafica):
 
     def excel_colonne(self):
         return super(ElencoVistaSoci, self).excel_colonne() + (
-            ("Ingresso in CRI", lambda p: p.ingresso()),
+            ("Ingresso in CRI", lambda p: p.ingresso().date()),
         )
 
 

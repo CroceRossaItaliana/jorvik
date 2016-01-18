@@ -71,7 +71,7 @@ class AdminDelega(admin.ModelAdmin):
 class AdminDocumento(admin.ModelAdmin):
     search_fields = ["tipo", "persona__nome", "persona__cognome", "persona__codice_fiscale"]
     list_display = ("tipo", "persona", "creazione")
-    list_filter = ("tipo", "persona", "creazione")
+    list_filter = ("tipo", "creazione")
     raw_id_fields = RAW_ID_FIELDS_DOCUMENTO
 
 
@@ -80,23 +80,23 @@ class AdminDocumento(admin.ModelAdmin):
 class AdminFototessera(admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale"]
     list_display = ("persona", "creazione", "esito")
-    list_filter = ("persona",)
+    list_filter = ("creazione",)
     raw_id_fields = RAW_ID_FIELDS_FOTOTESSERA
 
 
 # admin.site.register(Estensione)
 @admin.register(Estensione)
 class AdminEstensione(admin.ModelAdmin):
-    search_fields = ["persona__nome", "persona__cognome", "richiedente", "destinazione"]
-    list_display = ("persona",)
-    list_filter = ("persona",)
+    search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale", "destinazione__nome"]
+    list_display = ("persona", "destinazione", "richiedente", )
+    list_filter = ("confermata", "ritirata", "creazione",)
     raw_id_fields = RAW_ID_FIELDS_ESTENSIONE
 
 
 # admin.site.register(Trasferimento)
 @admin.register(Trasferimento)
 class AdminTrasferimento(admin.ModelAdmin):
-    search_fields = ["persona__nome", "persona__cognome",  "richiedente", "destinazione"]
-    list_display = ("persona",)
-    list_filter = ("persona",)
+    search_fields = ["persona__nome", "persona__cognome",  "persona__codice_fiscale", "destinazione_nome"]
+    list_display = ("persona", "destinazione", "creazione", )
+    list_filter = ("creazione", "confermata", "ritirata",)
     raw_id_fields = RAW_ID_FIELDS_TRASFERIMENTO

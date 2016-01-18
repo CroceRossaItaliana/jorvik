@@ -202,9 +202,11 @@ class Excel(Allegato):
                 riga += 1  # Indice shiftato per intestazione
                 for colonna, testo in enumerate(colonne):
                     if isinstance(testo, datetime):
-                        testo = testo.strftime("%d/%m/%y %H:%M")
+                        testo = testo.strftime("%d/%m/%Y %H:%M")
                     if isinstance(testo, date):
-                        testo = testo.strftime("%d/%m/%y")
+                        testo = testo.strftime("%d/%m/%Y")
+                    if testo == ", ":  # Rimuove campi ', '
+                        testo = ""
                     worksheet.write(riga, colonna, str(testo))
 
         workbook.close()

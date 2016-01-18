@@ -75,8 +75,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     ETA_GIOVANE = 32
 
     # Informazioni anagrafiche
-    nome = models.CharField("Nome", max_length=64)
-    cognome = models.CharField("Cognome", max_length=64)
+    nome = models.CharField("Nome", max_length=64, db_index=True)
+    cognome = models.CharField("Cognome", max_length=64, db_index=True)
     codice_fiscale = UpperCaseCharField("Codice Fiscale", max_length=16, blank=False,
                                         unique=True, db_index=True, validators=[valida_codice_fiscale, ])
     data_nascita = models.DateField("Data di nascita", db_index=True, null=True,
