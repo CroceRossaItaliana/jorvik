@@ -1,0 +1,113 @@
+{% extends "base_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Supporto{% endblock %}
+
+{% block pagina_principale %}
+
+    <h2 class="text-success allinea-centro">
+        <i class="fa fa-fw fa-support"></i>
+        Siamo qui per aiutarti.
+    </h2>
+    <p>&nbsp;</p>
+
+
+    <div class="container">
+        <div class="col-md-6">
+
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-info-circle"></i>
+                        Il servizio di supporto
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+
+                    <p>
+                        <strong>Niente paura</strong> &mdash;
+                        La nostra instancabile squadra di assistenza &egrave; sempre al lavoro per
+                        assistere i Volontari di Croce Rossa Italiana e gli aspiranti volontari nell'utilizzo di Gaia.
+                    </p>
+
+                    <p>
+                        Da questa pagina potrai inoltrare una richiesta di supporto
+                        compilando un semplice modulo.
+                    </p>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-send"></i>
+                        Nuova richiesta
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+
+                    {% if modulo %}
+                        <form method="POST">
+                            {% csrf_token %}
+                            {% bootstrap_form modulo %}
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fa fa-fw fa-check"></i>
+                                Invia richiesta
+                            </button>
+                        </form>
+
+
+
+                    {% else %}
+
+                        <h4>
+                            <i class="fa fa-fw fa-key"></i>
+                            Accedi a Gaia per ricevere supporto velocemente
+                        </h4>
+                        <p>
+                            Chiediamo agli utenti di Gaia devono effettuare l'accesso
+                            prima di inviare una richiesta di supporto. In questo modo
+                            possiamo verificare rapidamente l'identit&agrave;
+                            del mittente, evitando inutili sprechi di tempo,
+                            ed assicurarci di star tutelando la
+                            privacy degli utenti.
+                        </p>
+                        <p>&nbsp;</p>
+
+                        <h4>
+                            <i class="fa fa-fw fa-question-circle"></i>
+                            Non riesci ad accedere a Gaia?
+                        </h4>
+                        <p>Se non riesci ad accedere a Gaia, contattaci utilizzando il
+                            nostro indirizzo e-mail di assistenza, inviandoci un messaggio
+                            dalla tua casella persona. Tieni presente che potrebbe
+                            volerci del tempo per verificare
+                            la tua identit&agrave;</p>
+                        <p>&nbsp;</p>
+
+                        <a href="/login/?next=/supporto/" class="btn btn-primary btn-block">
+                            <i class="fa fa-fw fa-key"></i>
+                            Accedi e manda una richiesta di supporto
+                        </a>
+                        <a href="mailto:supporto@gaia.cri.it" class="btn btn-default btn-sm btn-block">
+                            <i class="fa fa-fw fa-envelope-o"></i>
+                            Non riesco ad accedere<br />
+                            <strong>supporto@gaia.cri.it</strong>
+                        </a>
+
+
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

@@ -12,7 +12,7 @@ from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_priv
 from autenticazione.models import Utenza
 from base import errori
 from base.errori import errore_generico, messaggio_generico
-from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLocalizzatore
+from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLocalizzatore, ModuloRichiestaSupporto
 from base.geo import Locazione
 from base.models import Autorizzazione, Token
 from base.tratti import ConPDF
@@ -352,3 +352,37 @@ def verifica_token(request, me, token):
     if hasattr(user, 'backend'):
         login(request, user)
     return redirect(url)
+
+
+@pagina_pubblica
+def supporto(request, me=None):
+    modulo = None
+    if me:
+        modulo = ModuloRichiestaSupporto(request.POST or None)
+
+    if modulo and modulo.is_valid():
+        tipo = modulo.cleaned_data['tipo']
+        oggetto = modulo.cleaned_data['oggetto']
+        descrizione = modulo.cleaned_data['descrizione']
+
+        oggetto = "[%s] %s" % (tipo, oggetto)
+        Messaggio.costruisci_e_invia(
+            oggetto=oggetto,
+            modello="email_supporto.html",
+            mittente=me,
+            destinatari=[],
+            corpo={
+                "testo": descrizione,
+                "mittente": me,
+            },
+        )
+        return messaggio_generico(request, me, titolo="Richiesta inoltrata",
+                                  messaggio="Grazie per aver contattato il supporto. La tua richiesta con "
+                                            "oggetto '%s' è stata correttamente inoltrata. Riceverai a minuti "
+                                            "un messaggio di conferma del codice ticket assegnato alla "
+                                            "tua richiesta." % (oggetto,))
+
+    contesto = {
+        "modulo": modulo
+    }
+    return 'supporto.html', contesto

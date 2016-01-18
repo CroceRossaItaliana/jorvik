@@ -83,7 +83,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             if not mittente_email:
                 mittente_email = self.NOREPLY_EMAIL
 
-        mittente = "%s <%s>" % (mittente_nome, mittente_email)
+        mittente = "%s <%s>" % (mittente_nome, self.NOREPLY_EMAIL)
+        reply_to = "%s <%s>" % (mittente_nome, mittente_email)
 
         plain_text = strip_tags(self.corpo)
         successo = True
@@ -95,6 +96,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     subject=self.oggetto,
                     body=plain_text,
                     from_email=mittente,
+                    reply_to=[reply_to],
                     to=[self.SUPPORTO_EMAIL],
                     attachments=self.allegati_pronti(),
                 )
@@ -111,6 +113,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     subject=self.oggetto,
                     body=plain_text,
                     from_email=mittente,
+                    reply_to=[reply_to],
                     to=[d.persona.email],
                     attachments=self.allegati_pronti(),
                 )

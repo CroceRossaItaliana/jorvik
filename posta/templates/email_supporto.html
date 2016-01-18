@@ -1,0 +1,21 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p>{{ testo }}</p>
+
+    <hr />
+
+    <p style="font-family: monospace; font-size: smaller;">
+        <strong>Informazioni tecniche associate</strong><br />:
+        ID={{ mittente.pk }}, Nome="{{ mittente.nome_completo }}", Codice Fiscale="{{ mittente.codice_fiscale }}",<br />
+        Admin={
+            <a href="https://gaia.cri.it/admin/anagrafica/persona/{{ mittente.pk }}/">
+                Persona
+            </a>,
+            <a href="https://gaia.cri.it/admin/autenticazione/utenza/{{ mittente.utenza.pk }}/">
+                Utenza
+            </a>
+        }
+    </p>
+
+{% endblock %}

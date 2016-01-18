@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import Textarea
 from django_countries.fields import LazyTypedChoiceField
 from django_countries import countries
 
@@ -19,3 +20,25 @@ class ModuloLocalizzatore(forms.Form):
     comune = forms.CharField(help_text="es. Cinisello Balsamo.")
     provincia = forms.CharField(required=True, min_length=3, help_text="es. Milano. (per intero)")
     stato = LazyTypedChoiceField(choices=countries, initial="IT")
+
+
+class ModuloRichiestaSupporto(forms.Form):
+
+    PRIMO_LIVELLO = "LIV1"
+    SECONDO_LIVELLO = "LIV2"
+    TERZO_LIVELLO = "LIV3"
+    FEEDBACK = "FEEDBACK"
+    SANGUE = "SANGUE"
+    TIPO = (
+        (PRIMO_LIVELLO, "Aiuto con l'utilizzo di Gaia"),
+        (SECONDO_LIVELLO, "Modifica informazioni o correzioni"),
+        (TERZO_LIVELLO, "Errori o segnalazioni di sicurezza"),
+        (FEEDBACK, "Feedback (suggerimenti, critiche, idee)"),
+        (SANGUE, "Feedback in merito alla donazione sangue"),
+    )
+
+    tipo = forms.ChoiceField(TIPO, help_text="Seleziona una delle tipologie di richiesta "
+                                             "per aiutarci a smistarla rapidamente.")
+
+    oggetto = forms.CharField(help_text="Una breve descrizione del problema.")
+    descrizione = forms.CharField(widget=Textarea)
