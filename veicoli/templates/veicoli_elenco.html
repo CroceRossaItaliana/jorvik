@@ -30,14 +30,31 @@
                     </thead>
                     <tbody>
                         {% for veicolo in veicoli %}
-                            <tr {% if veicolo.fermo_tecnico %} class="warning" {% endif %}>
+                            <tr {% if veicolo.fermo_tecnico %} class="warning" {% elif veicolo.stato == veicolo.DISMESSO %}class="danger error"{% endif %}>
                                 <td>
-                                    <span class="grassetto monospace">{{ veicolo.targa }}</span><br />
-                                    {{ veicolo.destinazione }}
+                                    <span class="grassetto monospace piu-grande">{{ veicolo.targa }}</span><br />
+                                    <span class="piu-piccolo">{{ veicolo.destinazione }}</span>
+                                    <br /><span class="text-muted">{{ veicolo.get_stato_display }}</span>
                                 </td>
-                                <td>{{ veicolo.media_consumi }} km/lt</td>
+                                <td>
+                                    {% if veicolo.media_consumi %}
+                                        {{ veicolo.media_consumi }} km/lt
+                                    {% else %}
+                                        <i class="fa fa-fw fa-question-circle text-muted"></i>
+                                    {% endif %}
+                                </td>
                                 <td>{{ veicolo.collocazione.autoparco }}</td>
-                                <td>{{ veicolo.fermo_tecnico | default:"No"}}</td>
+                                <td>
+                                    {% if veicolo.fermo_tecnico %}
+                                        <span class="text-danger piu-piccolo grassetto">
+                                            <i class="fa fa-fw fa-warning"></i> Fermo dal
+                                            {{ veicolo.fermo_tecnico.inizio|date:"SHORT_DATE_FORMAT" }}
+
+                                        </span>
+                                    {% else %}
+                                        No
+                                    {% endif %}
+                                </td>
                                 <td>{{ veicolo.categoria }}</td>
                                 <td class="piu-piccolo">
                                     <div class="btn-group-vertical">
