@@ -322,16 +322,6 @@ def utente_fotografia_fototessera(request, me):
 @pagina_privata
 def utente_documenti(request, me):
 
-    Messaggio.costruisci_e_invia(
-        oggetto="Oggetto del messaggio",
-        modello="email_testo.html",
-        corpo={
-            'testo': "Ciao!",
-        },
-        mittente=me,
-        destinatari=[me, me]
-    )
-
     contesto = {
         "documenti": me.documenti.all()
     }
