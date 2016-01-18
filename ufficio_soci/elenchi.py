@@ -177,6 +177,52 @@ class ElencoVolontari(ElencoVistaSoci):
         )
 
 
+class ElencoEstesi(ElencoVistaSoci):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
+    """
+
+    def modulo(self):
+        from .forms import ModuloElencoEstesi
+        return ModuloElencoEstesi
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+
+        if self.modulo_riempito.cleaned_data['estesi'] == self.modulo_riempito.ESTESI_INGRESSO:
+            # Estesi in ingresso
+            risultati = Persona.objects.filter(
+                Appartenenza.query_attuale(
+                    sede__in=qs_sedi, membro=Appartenenza.ESTESO,
+                ).via("appartenenze")
+            )
+
+        else:
+            # Estesi in uscita
+            estesi_da_qualche_parte = Persona.objects.filter(
+                Appartenenza.query_attuale(
+                    membro=Appartenenza.ESTESO
+                ).via("appartenenze")
+            ).values_list('pk', flat=True)
+
+            volontari_da_me = Persona.objects.filter(
+                Appartenenza.query_attuale(
+                    sede__in=qs_sedi, membro=Appartenenza.VOLONTARIO,
+                ).via("appartenenze")
+            ).values_list('pk', flat=True)
+
+            risultati = Persona.objects.filter(
+                pk__in=volontari_da_me
+            ).filter(
+                pk__in=estesi_da_qualche_parte
+            )
+
+        return risultati.prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+
 class ElencoVolontariGiovani(ElencoVolontari):
     """
     args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori

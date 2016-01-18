@@ -47,6 +47,16 @@ class ModuloElencoElettorato(forms.Form):
     elettorato = forms.ChoiceField(choices=ELETTORATO, initial=ELETTORATO_PASSIVO)
 
 
+class ModuloElencoEstesi(forms.Form):
+    ESTESI_INGRESSO = "I"
+    ESTESI_USCITA = "U"
+    ESTESI = (
+        (ESTESI_INGRESSO, "Estensioni in ingresso (ex. volontari estesi)"),
+        (ESTESI_USCITA, "Estensioni in uscita (ex. volontari in estensione)")
+    )
+    estesi = forms.ChoiceField(choices=ESTESI, initial=ESTESI_INGRESSO)
+
+
 class ModuloElencoPerTitoli(forms.Form):
     METODO_OR = "OR"
     METODO_AND = "AND"
