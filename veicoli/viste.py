@@ -126,7 +126,6 @@ def veicoli_autoparco_modifica_o_nuovo(request, me, pk=None):
     else:
         autoparco = None
     modulo = ModuloCreazioneAutoparco(request.POST or None, instance=autoparco)
-    print(me.oggetti_permesso(GESTIONE_AUTOPARCHI_SEDE))
     modulo.fields['sede'].choices = me.oggetti_permesso(GESTIONE_AUTOPARCHI_SEDE).values_list('id', 'nome')
     if modulo.is_valid():
         modulo.save()
