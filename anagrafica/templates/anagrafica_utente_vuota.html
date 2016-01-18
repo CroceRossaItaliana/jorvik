@@ -11,7 +11,7 @@
 
     <div class="row allinea-centro">
 
-        <ul class="nav nav-tabs nav-justified piu-grande">
+        <ul class="nav nav-tabs nav-justified">
             {% for app_slug, app_nome, app_icona, app_num in user.applicazioni_disponibili %}
                 <li role="presentation"{% if app_slug in request.path %} class="active"{% endif %}>
                     <a href="{{ app_slug }}" class="grassetto">
