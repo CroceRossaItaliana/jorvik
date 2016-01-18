@@ -31,6 +31,7 @@ class ModuloRichiestaSupporto(forms.Form):
     FEEDBACK = "FEEDBACK"
     SANGUE = "SANGUE"
     TIPO = (
+        (None, "-- Seleziona una opzione --"),
         (PRIMO_LIVELLO, "Aiuto con l'utilizzo di Gaia"),
         (SECONDO_LIVELLO, "Modifica informazioni o correzioni"),
         (TERZO_LIVELLO, "Errori o segnalazioni di sicurezza"),
@@ -38,7 +39,8 @@ class ModuloRichiestaSupporto(forms.Form):
         (SANGUE, "Feedback in merito alla donazione sangue"),
     )
 
-    tipo = forms.ChoiceField(TIPO, help_text="Seleziona una delle tipologie di richiesta "
+    tipo = forms.ChoiceField(TIPO, required=True,
+                                   help_text="Seleziona una delle tipologie di richiesta "
                                              "per aiutarci a smistarla rapidamente.")
 
     oggetto = forms.CharField(help_text="Una breve descrizione del problema.")

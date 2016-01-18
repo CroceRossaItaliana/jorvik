@@ -365,7 +365,7 @@ def supporto(request, me=None):
         oggetto = modulo.cleaned_data['oggetto']
         descrizione = modulo.cleaned_data['descrizione']
 
-        oggetto = "[%s] %s" % (tipo, oggetto)
+        oggetto = "(%s) %s" % (tipo, oggetto)
         Messaggio.costruisci_e_invia(
             oggetto=oggetto,
             modello="email_supporto.html",
