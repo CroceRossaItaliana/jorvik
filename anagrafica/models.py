@@ -1451,8 +1451,8 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
     """
 
     class Meta:
-        verbose_name = "Richiesta di trasferimento"
-        verbose_name_plural = "Richieste di trasferimento"
+        verbose_name = "Richiesta di riserva"
+        verbose_name_plural = "Richieste di riserva"
 
     RICHIESTA_NOME = "riserva"
     persona = models.ForeignKey(Persona, related_name="riserve", on_delete=models.CASCADE)
