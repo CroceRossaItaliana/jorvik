@@ -90,7 +90,7 @@ def veicoli_veicolo_modifica_o_nuovo(request, me, pk=None):
     veicolo = None
     if pk is not None:
         veicolo = get_object_or_404(Veicolo, pk=pk)
-        if not me.permessi_almeno(MODIFICA, veicolo):
+        if not me.permessi_almeno(veicolo, MODIFICA):
             return redirect(ERRORE_PERMESSI)
 
     modulo = ModuloCreazioneVeicolo(request.POST or None, instance=veicolo)
@@ -111,6 +111,7 @@ def veicoli_veicolo_modifica_o_nuovo(request, me, pk=None):
             return redirect("/veicoli/")
     contesto = {
         "modulo": modulo,
+        "veicolo": veicolo,
     }
 
     return "veicoli_veicolo_modifica_o_nuovo.html", contesto
