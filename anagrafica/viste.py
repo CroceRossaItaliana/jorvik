@@ -182,6 +182,7 @@ def registrati_conferma(request, tipo):
 
     # Crea la persona
     p = Persona(**dati_persona)
+    p.email_contatto = dati['email']
     p.save()
 
     # Associa l'utenza
