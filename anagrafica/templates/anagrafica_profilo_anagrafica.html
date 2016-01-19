@@ -61,7 +61,7 @@
                 <div class="panel-body">
 
                     {% if persona.fototessera_attuale %}
-                        {% thumbnail persona.fototessera_attuale "500x500" crop="center" as im %}
+                        {% thumbnail persona.fototessera_attuale.file "500x500" crop="center" as im %}
                             <img src="{{ im.url }}" class="img-responsive" alt="Immagine fototessera attuale" />
                         {% endthumbnail %}
 
