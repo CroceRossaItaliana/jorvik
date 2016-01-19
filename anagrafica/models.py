@@ -72,7 +72,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     )
 
     # Costanti
-    ETA_GIOVANE = 32
+    ETA_GIOVANE = 31
 
     # Informazioni anagrafiche
     nome = models.CharField("Nome", max_length=64, db_index=True)
