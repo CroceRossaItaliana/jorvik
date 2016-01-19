@@ -95,7 +95,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     provincia_residenza = models.CharField("Provincia di residenza", max_length=2, null=True)
     stato_residenza = CountryField("Stato di residenza", default="IT")
     cap_residenza = models.CharField("CAP di Residenza", max_length=16, null=True)
-    email_contatto = models.EmailField("Email di contatto", max_length=64, blank=True)
+    email_contatto = models.EmailField("Email di contatto", max_length=255, blank=True)
     note = models.TextField("Note aggiuntive", max_length=10000, blank=True, null=True,)
 
     avatar = models.ImageField("Avatar", blank=True, null=True,
