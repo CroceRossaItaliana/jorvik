@@ -177,7 +177,7 @@ urlpatterns = [
     url(r'^formazione/$', 'formazione.viste.formazione'),
     url(r'^formazione/corsi-base/elenco/$', 'formazione.viste.formazione_corsi_base_elenco'),
     url(r'^formazione/corsi-base/domanda/$', 'formazione.viste.formazione_corsi_base_domanda'),
-    url(r'^formazione/corsi-base/nuovo/$', 'base.viste.vista_ci_siamo_quasi'),
+    url(r'^formazione/corsi-base/nuovo/$', 'base.errori.vista_ci_siamo_quasi'),
     # url(r'^formazione/corsi-base/nuovo/$', 'formazione.viste.formazione_corsi_base_nuovo'),
     url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/direttori/$', 'formazione.viste.formazione_corsi_base_direttori'),
     url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/fine/$', 'formazione.viste.formazione_corsi_base_fine'),
