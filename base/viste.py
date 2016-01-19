@@ -35,6 +35,9 @@ def index(request, me):
         elif p == 'riconoscimento':
             return redirect("/registrati/aspirante/")
 
+    if me:  # Porta utenti identificati a /utente/
+        return redirect("/utente/")
+
     contesto = {
         'numero_comitati': Sede.objects.count(),
     }
