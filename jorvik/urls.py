@@ -33,8 +33,8 @@ urlpatterns = [
     url(r'^errore/permessi/$', 'base.errori.permessi'),
 
     # Login e logout
-    url(r'^login/$', 'base.errori.vista_ci_siamo_quasi'),
-    # url(r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'base_login.html'}),
+    # url(r'^login/$', 'base.errori.vista_ci_siamo_quasi'),
+    url(r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'base_login.html'}),
     url(r'^logout/$', 'django.contrib.auth.views.logout', {'template_name': 'base_logout.html'}),
     url('^', include('django.contrib.auth.urls')),
 
