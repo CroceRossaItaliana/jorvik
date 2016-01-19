@@ -1,0 +1,59 @@
+{% extends 'anagrafica_profilo.html' %}
+
+{% load bootstrap3 %}
+{% load utils %}
+
+{% block profilo_corpo %}
+<div class="row">
+
+    <div class="col-lg-12">
+        <div class="panel panel-info">
+
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-folder-o fa-fw"></i> Storico Riserve
+                </h4>
+
+            </div>
+
+            <div class="panel-body">
+
+
+                <table class="table table-bordered table-striped table-responsive">
+                <thead>
+                    <th>Stato</th>
+                    <th>Inizio</th>
+                    <th>Fine</th>
+                    <th>Motivo</th>
+                </thead>
+                <tbody>
+
+                    {% for r in riserve %}
+                        <tr>
+                            <td>{% if r.attuale %}Attuale{% else %}Passato{% endif %}</td>
+                            <td>{{ r.inizio|date:"SHORT_DATE_FORMAT" }}</td>
+                            <td>{{ r.fine|date:"SHORT_DATE_FORMAT" }}</td>
+                            <td>{{ r.motivo }}</td>
+                        </tr>
+
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="bg-warning">
+                                <i class="fa fa-info"></i> Nessuna riserva passata.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+                </tbody>
+            </table>
+
+
+            </div>
+
+        </div>
+
+
+
+    </div>
+</div>
+{% endblock %}

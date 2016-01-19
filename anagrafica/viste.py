@@ -888,6 +888,17 @@ def _profilo_appartenenze(request, me, persona):
 def _profilo_deleghe(request, me, persona):
     return 'anagrafica_profilo_deleghe.html', {}
 
+def _profilo_riserve(request, me, persona):
+
+    riserve = Riserva.objects.filter(persona=persona)
+
+    contesto = {
+        "riserve": riserve,
+    }
+
+
+    return 'anagrafica_profilo_riserve.html', contesto
+
 
 def _profilo_curriculum(request, me, persona):
     modulo = ModuloProfiloTitoloPersonale(request.POST or None)
@@ -1022,6 +1033,9 @@ def _sezioni_profilo(puo_leggere, puo_modificare):
         )),
         ('deleghe', (
             'Deleghe', 'fa-clock-o', _profilo_deleghe, puo_leggere
+        )),
+        ('riserve', (
+            'Riserve', 'fa-pause', _profilo_riserve, puo_leggere
         )),
         ('documenti', (
             'Documenti', 'fa-folder', _profilo_documenti, puo_leggere
