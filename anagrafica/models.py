@@ -244,7 +244,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         Ritorna una ricerca per le deleghe che son attuali.
         """
-        return self.deleghe.filter(Delega.query_attuale(al_giorno).q, **kwargs)
+        return self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno).q, **kwargs)
 
     def sedi_deleghe_attuali(self, al_giorno=date.today(), espandi=False, **kwargs):
         sedi = Sede.objects.none()

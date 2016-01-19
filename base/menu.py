@@ -92,6 +92,7 @@ def menu(request):
                 ("Volontari", "fa-list", "/us/elenchi/volontari/"),
                 ("Vol. giovani", "fa-list", "/us/elenchi/giovani/"),
                 ("Estesi", "fa-list", "/us/elenchi/estesi/"),
+                ("In Riserva", "fa-list", "/us/elenchi/riserva/"),
                 ("Soci", "fa-list", "/us/elenchi/soci/"),
                 ("Sostenitori", "fa-list", "/us/elenchi/sostenitori/"),
                 ("Dipendenti", "fa-list", "/us/elenchi/dipendenti/"),

@@ -1,7 +1,7 @@
 from django.contrib.admin import ModelAdmin
 from django.db.models import Q
 
-from anagrafica.models import Persona, Appartenenza
+from anagrafica.models import Persona, Appartenenza, Riserva
 from base.utils import filtra_queryset, testo_euro
 from curriculum.models import TitoloPersonale
 from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote, ModuloElencoPerTitoli
@@ -348,6 +348,25 @@ class ElencoOrdinari(ElencoVistaSoci):
             Appartenenza.query_attuale(
                 sede__in=qs_sedi, membro=Appartenenza.ORDINARIO,
             ).via("appartenenze")
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        )
+
+
+class ElencoInRiserva(ElencoVistaSoci):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi in riserva
+    """
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        return Persona.objects.filter(
+            Riserva.query_attuale(appartenenza__in=
+                Appartenenza.query_attuale(
+                    sede__in=qs_sedi
+                )
+            ).via("riserve")
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
