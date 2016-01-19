@@ -690,8 +690,8 @@ def us_ricevute(request, me):
     ).order_by('progressivo')
 
     non_annullate = ricevute.filter(stato=Quota.REGISTRATA)
-    importo = non_annullate.aggregate(Sum('importo'))['importo__sum']
-    importo_extra = non_annullate.aggregate(Sum('importo_extra'))['importo_extra__sum']
+    importo = non_annullate.aggregate(Sum('importo'))['importo__sum'] or 0.0
+    importo_extra = non_annullate.aggregate(Sum('importo_extra'))['importo_extra__sum'] or 0.0
     importo_totale = importo + importo_extra
 
     contesto = {
