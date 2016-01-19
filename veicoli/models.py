@@ -174,9 +174,9 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
 
     def media_consumi(self):
         rifornimenti = Rifornimento.objects.filter(veicolo=self)
-        litri = km = 0
+        litri = 0
         for rifornimento in rifornimenti:
-            litri+=rifornimento.consumo_carburante
+            litri += rifornimento.consumo_carburante
         try:
             ultimo_rifornimento = Rifornimento.objects.filter(veicolo=self).latest("data")
             primo_rifornimento = Rifornimento.objects.filter(veicolo=self).earliest("data")
@@ -185,7 +185,7 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
         km = ultimo_rifornimento.contachilometri - primo_rifornimento.contachilometri
         litri -= ultimo_rifornimento.consumo_carburante
         if litri != 0:
-            return round(km/litri,2)
+            return round(km/litri, 2)
         else:
             return 0
 
@@ -215,7 +215,8 @@ class Collocazione(ModelloSemplice, ConStorico, ConMarcaTemporale):
 
     veicolo = models.ForeignKey(Veicolo, related_name='collocazioni', on_delete=models.CASCADE)
     autoparco = models.ForeignKey(Autoparco, related_name='autoparco', on_delete=models.PROTECT)
-    creato_da = models.ForeignKey('anagrafica.Persona', related_name='collocazioni_veicoli', null=True, on_delete=models.SET_NULL)
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='collocazioni_veicoli', null=True,
+                                  on_delete=models.SET_NULL)
 
     def termina(self):
         self.fine = datetime.date.today()
@@ -230,7 +231,8 @@ class FermoTecnico(ModelloSemplice, ConStorico, ConMarcaTemporale):
 
     motivo = models.CharField(max_length=512)
     veicolo = models.ForeignKey(Veicolo, related_name='fermi_tecnici', on_delete=models.CASCADE)
-    creato_da = models.ForeignKey('anagrafica.Persona', related_name='fermi_tecnici_creati', on_delete=models.SET_NULL, null=True)
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='fermi_tecnici_creati', on_delete=models.SET_NULL,
+                                  null=True)
 
     def __str__(self):
         return "Fermo tecnico"
@@ -264,7 +266,8 @@ class Manutenzione(ModelloSemplice, ConMarcaTemporale):
     manutentore = models.CharField(max_length=512, help_text="es. autoriparato")
     numero_fattura = models.CharField(max_length=64, help_text="es. 122/A")
     costo = models.PositiveIntegerField()
-    creato_da = models.ForeignKey('anagrafica.Persona', related_name='manutenzioni_registrate', null=True, on_delete=models.SET_NULL)
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='manutenzioni_registrate', null=True,
+                                  on_delete=models.SET_NULL)
 
 
 
@@ -278,7 +281,8 @@ class Segnalazione(ModelloSemplice, ConMarcaTemporale):
 
     autore = models.ForeignKey(Persona, related_name='segnalazioni', on_delete=models.CASCADE)
     descrizione = models.TextField("Descrizione", max_length=1024, )
-    manutenzione = models.ForeignKey(Manutenzione, related_name='segnalazioni', blank=True, null=True, on_delete=models.SET_NULL)
+    manutenzione = models.ForeignKey(Manutenzione, related_name='segnalazioni', blank=True, null=True,
+                                     on_delete=models.SET_NULL)
     veicolo = models.ForeignKey(Veicolo, related_name='segnalazioni', on_delete=models.CASCADE)
 
     class Meta:
@@ -303,9 +307,11 @@ class Rifornimento(ModelloSemplice, ConMarcaTemporale):
     data = models.DateTimeField("Data rifornimento", db_index=True)
     contachilometri = models.PositiveIntegerField("Contachilometri", db_index=True)
     costo = models.FloatField("Costo", db_index=True)
-    creato_da = models.ForeignKey('anagrafica.Persona', related_name='rifornimenti_registrate', null=True, on_delete=models.SET_NULL)
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='rifornimenti_registrate', null=True,
+                                  on_delete=models.SET_NULL)
 
-    consumo_carburante = models.FloatField("Consumo carburante lt.", default=0.0, db_index=True, help_text="Litri di carburante immessi")
+    consumo_carburante = models.FloatField("Consumo carburante lt.", default=0.0, db_index=True,
+                                           help_text="Litri di carburante immessi")
     #consumo_olio_m = models.FloatField("Consumo Olio motori Kg.", blank=True, default=None, null=True, db_index=True)
     #consumo_olio_t = models.FloatField("Consumo Olio trasmissioni Kg.", blank=True, default=None, null=True, db_index=True)
     #consumo_olio_i = models.FloatField("Consumo Olio idraulico Kg.", blank=True, default=None, null=True, db_index=True)
@@ -321,7 +327,8 @@ class Rifornimento(ModelloSemplice, ConMarcaTemporale):
     presso = models.CharField("Presso", choices=PRESSO, max_length=1, default=None, null=True)
 
     contalitri = models.FloatField("(c/o Cisterna int.) Contalitri", default=None, null=True, db_index=True)
-    ricevuta = models.CharField("(c/o Distributore) N. Ricevuta", max_length=32, blank=True, default=None, null=True, db_index=True)
+    ricevuta = models.CharField("(c/o Distributore) N. Ricevuta", max_length=32, blank=True, default=None, null=True,
+                                db_index=True)
 
     # segnalazione = models.ForeignKey(Segnalazione, help_text="Rapporto conducente", blank=True, default=None, null=True, db_index=True, on_delete=models.SET_NULL)
 

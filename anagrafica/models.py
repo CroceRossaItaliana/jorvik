@@ -1103,7 +1103,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             f = self.appartenenze
 
         f = f.filter(
-            Appartenenza.query_attuale(al_giorno).q,
+            Appartenenza.query_attuale(al_giorno=al_giorno).q,
             **kwargs
         )
 

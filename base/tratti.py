@@ -166,7 +166,7 @@ class ConStorico(models.Model):
         :param al_giorno: Giorno per considerare la verifica per l'attuale. Default oggi.
         :return: True o False.
         """
-        return self.__class__.objects.filter(self.query_attuale(al_giorno).q, pk=self.pk).exists()
+        return self.__class__.objects.filter(self.query_attuale(al_giorno=al_giorno).q, pk=self.pk).exists()
 
 
 class ConDelegati(models.Model):
@@ -191,7 +191,7 @@ class ConDelegati(models.Model):
         :return: QuerySet di oggetti Delega.
         """
         Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
-        return self.deleghe.filter(Delega.query_attuale(al_giorno, **kwargs).q)
+        return self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno, **kwargs).q)
 
     def delegati_attuali(self, al_giorno=datetime.today(), **kwargs):
         """
