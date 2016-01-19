@@ -107,6 +107,7 @@ urlpatterns = [
     url(r'^posta/', 'posta.viste.posta_home'),
 
     url(r'^attivita/$', 'attivita.viste.attivita'),
+    url(r'^attivita/organizza/$', 'base.errori.vista_ci_siamo_quasi'),
     url(r'^attivita/calendario/$', 'attivita.viste.attivita_calendario'),
     url(r'^attivita/calendario/(?P<inizio>[0-9\-]+)/(?P<fine>[0-9\-]+)/$', 'attivita.viste.attivita_calendario'),
     url(r'^attivita/storico/$', 'attivita.viste.attivita_storico'),
