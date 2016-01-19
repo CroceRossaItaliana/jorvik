@@ -60,6 +60,9 @@ DELEGHE_OGGETTI = (
 # - Scrittura e cancellazione
 COMPLETO = 40
 
+# - Scrittura e gestione deleghe
+GESTIONE = 35
+
 # - Scrittura
 MODIFICA = 30
 

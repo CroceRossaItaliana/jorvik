@@ -4,7 +4,7 @@ __author__ = 'alfioemanuele'
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
     GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, MODIFICA, LETTURA, COMPLETO, \
-    GESTIONE_AUTOPARCHI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI_SEDE
+    GESTIONE_AUTOPARCHI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI_SEDE, GESTIONE
 
 """
 Questo file gestisce la espansione dei permessi in Gaia.
@@ -60,8 +60,8 @@ def espandi_elenchi_soci(qs_sedi, al_giorno=date.today()):
 def espandi_gestione_sede(qs_sedi, al_giorno=date.today()):
     from anagrafica.models import Sede
     return [
-        (MODIFICA,  qs_sedi),
-        (MODIFICA,  qs_sedi.espandi()),
+        (GESTIONE,  qs_sedi),
+        (GESTIONE,  qs_sedi.espandi()),
     ]
 
 
@@ -71,6 +71,7 @@ def espandi_gestione_attivita_sede(qs_sedi, al_giorno=date.today()):
         (COMPLETO,  Attivita.objects.filter(sede__in=qs_sedi.espandi())),
     ] \
         + espandi_gestione_attivita(Attivita.objects.filter(sede__in=qs_sedi.espandi()))
+
 
 def espandi_gestione_attivita_area(qs_aree, al_giorno=date.today()):
     from attivita.models import Attivita

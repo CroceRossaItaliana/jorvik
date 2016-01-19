@@ -24,7 +24,7 @@ from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, 
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO
-from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE
+from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
@@ -763,7 +763,7 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
     oggetto = oggetto.objects.get(pk=pk)
 
     delega = get_object_or_404(Delega, pk=delega_pk)
-    if not me.permessi_almeno(delega.oggetto, COMPLETO):
+    if not me.permessi_almeno(delega.oggetto, GESTIONE):
         return redirect(ERRORE_PERMESSI)
 
     delega.fine = datetime.datetime.now()
