@@ -61,7 +61,7 @@ class AdminAppartenenza(admin.ModelAdmin):
 # admin.site.register(Delega)
 @admin.register(Delega)
 class AdminDelega(admin.ModelAdmin):
-    search_fields = ["tipo", "persona__nome", "persona__codice_fiscale", "tipo", "oggetto_id"]
+    search_fields = ["tipo", "persona__nome", "persona__cognome", "persona__codice_fiscale", "tipo", "oggetto_id"]
     list_display = ("tipo", "oggetto", "persona", "inizio", "fine", "attuale")
     list_filter = ("tipo", "inizio", "fine")
     raw_id_fields = RAW_ID_FIELDS_DELEGA
