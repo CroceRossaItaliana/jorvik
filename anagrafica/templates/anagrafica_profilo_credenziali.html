@@ -28,10 +28,10 @@
                         <p>
                             {{ persona.nome }} pu&ograve; accedere a Gaia usando
                             la sua e-mail di accesso ({{ utenza.email }}) assieme
-                            alla ultima password impostata password.
+                            alla ultima password impostata.
                         </p>
                         <p class="piu-piccolo">
-                            {% if utenza.ultimo_accesso >= utenza.ultima_modifica %}
+                            {% if utenza.ultimo_accesso and utenza.ultimo_accesso >= utenza.ultima_modifica %}
                                 <i class="fa fa-fw fa-check"></i>
                                 Questa persona ha effettuato l'ultimo accesso dopo
                                 l'ultimo cambio della password.
@@ -139,21 +139,7 @@
             </div>
             <div class="panel-body piu-piccolo">
 
-                {% if utenza %}
-                    <a href="/profilo/{{ persona.pk }}/credenziali/password/"
-                        class="btn btn-sm btn-block btn-danger"
-                        data-conferma="SICURO/A? Continua solo se hai VERIFICATO DI PERSONA
-                         l'identità di {{ persona.nome_completo }} e {{ persona.nome }} ti ha
-                         richiesto di generare una nuova password.
 
-                         La password verrà inviata a {{ persona.nome }}
-                         (e-mail: {{ utenza.email }})."
-                    >
-                        <i class="fa fa-fw fa-refresh"></i>
-                        Genera nuova password
-
-                    </a>
-                {% endif %}
 
             </div>
         </div>
