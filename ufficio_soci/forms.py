@@ -178,7 +178,7 @@ class ModuloCreazioneDimissioni(ModelForm):
         fields = ['motivo', 'info', ]
 
     trasforma_in_sostenitore = forms.BooleanField(help_text="In caso di Dimissioni Volontarie seleziona quest'opzione "
-                                                            "per trasformare il volontario in sostenitore. ")
+                                                            "per trasformare il volontario in sostenitore. ", required=False)
 
     def clean_trasforma_in_sostenitore(self):
         trasforma_in_sostenitore = self.cleaned_data['trasforma_in_sostenitore']

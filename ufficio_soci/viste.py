@@ -574,13 +574,14 @@ def us_riserva(request, me):
             modulo.add_error('persona', "Non puoi registrare riserve per questo Volontario!")
         else:
             riserva = modulo.save(commit=False)
-            riserva.apparteneza = riserva.persona.appartenenze_attuali().first()
+            riserva.appartenenza = riserva.persona.appartenenze_attuali().first()
+            riserva.save()
             riserva.autorizzazione_richiedi(
-            richiedente=riserva.persona,
-            destinatario=(
-                (PRESIDENTE, riserva.persona.sede_riferimento(), NOTIFICA_INVIA),
+                richiedente=riserva.persona,
+                destinatario=(
+                    (PRESIDENTE, riserva.persona.sede_riferimento(), NOTIFICA_INVIA),
+                )
             )
-        )
             riserva.invia_mail()
             return messaggio_generico(request, me, titolo="Riserva registrata",
                                       messaggio="La riserva è stato registrata con successo",
