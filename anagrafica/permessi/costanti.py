@@ -89,7 +89,7 @@ PERMESSI_TESTO = {
 # Ove non specificato, il minimo e' NESSUNO.
 # Utilizzare permesso_minimo(Tipo) per ottenere il minimo.
 PERMESSI_MINIMO = {
- 'Persona':   LETTURA,
+ 'Persona':   NESSUNO,
  'Sede':      LETTURA,
  'Commento':  LETTURA,
 }

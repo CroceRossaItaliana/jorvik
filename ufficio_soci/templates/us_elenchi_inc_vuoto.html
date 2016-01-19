@@ -38,7 +38,7 @@
 
             <div class="col-sm-4">
 
-                <ul class="pagination" style="margin-top: 0px;">
+                <ul class="pagination piu-piccolo" style="margin-top: 0px;">
 
                     {% if ha_precedente %}
                         <li class="prev">
@@ -55,7 +55,7 @@
 
                     {% endif %}
 
-                    <li class="active piu-piccolo">
+                    <li class="active">
                         <a href="#">Pag. {{ pagina }} di {{ pagine }} ({{ totale }} pp.)</a>
                     </li>
 
@@ -82,12 +82,31 @@
 
             <div class="col-sm-4">
                 <div class="btn-group">
-                    <a class="btn btn-primary" href="{{ download_url }}"
-                       data-caricamento
-                    >
+
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fa fa-fw fa-download"></i>
                         Scarica
-                    </a>
+                          <!--<span class="caret"></span>-->
+                      </button>
+                      <ul class="dropdown-menu">
+                        <li>
+                            <a href="{{ download_url }}" data-caricamento target="_blank">
+                                <i class="fa fa-fw fa-file-excel-o"></i>
+                                <i class="fa fa-fw fa-files-o"></i>
+                                Excel: Un foglio per sede
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ download_url }}?foglio_singolo=1" data-caricamento target="_blank">
+                                <i class="fa fa-fw fa-file-excel-o"></i>
+                                <i class="fa fa-fw fa-file-o"></i>
+                                Excel: Foglio unico
+                            </a>
+                        </li>
+                      </ul>
+                    </div>
+
                     <a class="btn btn-primary"
                         data-conferma="Vuoi scrivere un nuovo messaggio da inviare a tutte le {{ totale }} persone in elenco?"
                         href="{{ messaggio_url }}" target="_new" data-caricamento

@@ -199,7 +199,10 @@ DEBUG_CONF.read(DEBUG_CONF_FILE)
 DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
 TEMPLATE_DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
 SECRET_KEY = DEBUG_CONF.get('production', 'secret_key')
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', DEBUG_CONF.get('production', 'host')]
+
+host = "%s" % (DEBUG_CONF.get('production', 'host'),)
+www_host = "www.%s" % (host,)
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', host, www_host]
 
 # Configurazione dei servizi API
 APIS_CONF = configparser.ConfigParser()

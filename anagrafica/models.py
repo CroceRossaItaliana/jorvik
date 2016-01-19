@@ -246,6 +246,17 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return self.deleghe.filter(Delega.query_attuale(al_giorno).q, **kwargs)
 
+    def sedi_deleghe_attuali(self, al_giorno=date.today(), espandi=False, **kwargs):
+        sedi = Sede.objects.none()
+        for d in self.deleghe_attuali(al_giorno=al_giorno, oggetto_tipo=ContentType.objects.get_for_model(Sede)):
+            if espandi:
+                pks = [x.pk for x in d.oggetto.espandi(includi_me=True)]
+            else:
+                pks = [d.oggetto.pk]
+
+            sedi |= Sede.objects.filter(pk__in=pks)
+        return sedi
+
     def aggiungi_numero_telefono(self, numero, servizio=False, paese="IT"):
         """
         Aggiunge un numero di telefono per la persona.

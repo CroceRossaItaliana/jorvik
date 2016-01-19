@@ -1,6 +1,7 @@
 import os
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core import urlresolvers
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
@@ -26,6 +27,10 @@ class ModelloSemplice(models.Model):
 
     class Meta:
         abstract = True
+
+    def url_admin(self):
+        content_type = ContentType.objects.get_for_model(self.__class__)
+        return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.id,))
 
 
 # Policy di cancellazioen morbida impostata su SOFT_DELETE

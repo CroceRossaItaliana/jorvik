@@ -45,6 +45,7 @@ class AdminSede(MPTTModelAdmin):
     search_fields = ['nome', 'genitore__nome']
     list_display = ('nome', 'genitore', 'tipo', 'estensione', 'creazione', 'ultima_modifica', )
     list_filter = ('tipo', 'estensione', 'creazione', )
+    raw_id_fields = ('genitore', 'locazione',)
 
 # admin.site.register(Appartenenza)
 

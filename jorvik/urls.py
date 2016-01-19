@@ -33,8 +33,8 @@ urlpatterns = [
     url(r'^errore/permessi/$', 'base.errori.permessi'),
 
     # Login e logout
-    url(r'^login/$', 'base.errori.vista_ci_siamo_quasi'),
-    # url(r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'base_login.html'}),
+    # url(r'^login/$', 'base.errori.vista_ci_siamo_quasi'),
+    url(r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'base_login.html'}),
     url(r'^logout/$', 'django.contrib.auth.views.logout', {'template_name': 'base_logout.html'}),
     url('^', include('django.contrib.auth.urls')),
 
@@ -107,6 +107,7 @@ urlpatterns = [
     url(r'^posta/', 'posta.viste.posta_home'),
 
     url(r'^attivita/$', 'attivita.viste.attivita'),
+    url(r'^attivita/organizza/$', 'base.errori.vista_ci_siamo_quasi'),
     url(r'^attivita/calendario/$', 'attivita.viste.attivita_calendario'),
     url(r'^attivita/calendario/(?P<inizio>[0-9\-]+)/(?P<fine>[0-9\-]+)/$', 'attivita.viste.attivita_calendario'),
     url(r'^attivita/storico/$', 'attivita.viste.attivita_storico'),
@@ -177,7 +178,8 @@ urlpatterns = [
     url(r'^formazione/$', 'formazione.viste.formazione'),
     url(r'^formazione/corsi-base/elenco/$', 'formazione.viste.formazione_corsi_base_elenco'),
     url(r'^formazione/corsi-base/domanda/$', 'formazione.viste.formazione_corsi_base_domanda'),
-    url(r'^formazione/corsi-base/nuovo/$', 'formazione.viste.formazione_corsi_base_nuovo'),
+    url(r'^formazione/corsi-base/nuovo/$', 'base.errori.vista_ci_siamo_quasi'),
+    # url(r'^formazione/corsi-base/nuovo/$', 'formazione.viste.formazione_corsi_base_nuovo'),
     url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/direttori/$', 'formazione.viste.formazione_corsi_base_direttori'),
     url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/fine/$', 'formazione.viste.formazione_corsi_base_fine'),
 

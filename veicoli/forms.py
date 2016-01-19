@@ -19,7 +19,7 @@ class ModuloCreazioneVeicolo(ModelForm):
 class ModuloCreazioneRifornimento(autocomplete_light.ModelForm):
     class Meta:
         model = Rifornimento
-        exclude = ['data', 'contachilometri', 'costo', 'consumo_carburante_lt', 'presso', 'contalitri', 'ricevuta']
+        fields = ['data', 'contachilometri', 'costo', 'consumo_carburante', 'presso', 'contalitri', 'ricevuta']
 
 
 class ModuloCreazioneManutenzione(autocomplete_light.ModelForm):
