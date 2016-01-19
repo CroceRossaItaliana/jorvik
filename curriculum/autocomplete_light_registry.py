@@ -10,7 +10,7 @@ class TitoloAutocompletamento(autocomplete_light.AutocompleteModelBase):
     def choices_for_request(self):
         try:
             if 'titoli_tipo' in self.request.session and 'curriculum' in self.request.META.get('HTTP_REFERER', ''):
-                return self.choices.filter(inseribile_in_autonomia=True, tipo=self.request.session['titoli_tipo'])
+                self.choices = self.choices.filter(inseribile_in_autonomia=True, tipo=self.request.session['titoli_tipo'])
         except:
             pass
         self.choices = self.choices.filter(inseribile_in_autonomia=True)
