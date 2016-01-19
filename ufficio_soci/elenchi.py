@@ -169,7 +169,7 @@ class ElencoVolontari(ElencoVistaSoci):
         qs_sedi = self.args[0]
         return Persona.objects.filter(
             Appartenenza.query_attuale(
-                sede__in=qs_sedi, membro=Appartenenza.VOLONTARIO,
+                sede__in=qs_sedi, membro__in=[Appartenenza.VOLONTARIO, Appartenenza.ESTESO],
             ).via("appartenenze")
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
