@@ -453,6 +453,12 @@ def us_elenco_download(request, me, elenco_id):
 
         elenco.modulo_riempito = modulo  # Imposta il modulo
 
+    FOGLIO_DEFAULT = "Foglio 1"
+
+    fogli_multipli = True
+    if 'foglio_singolo' in request.GET:
+        fogli_multipli = False
+
     # Ottiene elenco
     persone = elenco.ordina(elenco.risultati())
 
@@ -464,8 +470,11 @@ def us_elenco_download(request, me, elenco_id):
     colonne = [x[1] for x in elenco.excel_colonne()]
     fogli = {}
 
+    def __semplifica_nome(nome):
+        return nome.replace("/", "")
+
     for persona in persone:
-        foglio = elenco.excel_foglio(persona)[:31]
+        foglio = __semplifica_nome(elenco.excel_foglio(persona)[:31]) if fogli_multipli else FOGLIO_DEFAULT
         foglio_key = foglio.lower().strip()
         if foglio_key not in [x.lower() for x in fogli.keys()]:
             fogli.update({
