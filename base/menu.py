@@ -103,7 +103,7 @@ def menu(request):
             )),
             ("Aggiungi", (
                 ("Persona", "fa-plus-square", "/us/aggiungi/"),
-                ("Reclama Socio", "fa-plus-square", "/us/reclama/"),
+                ("Reclama Persona", "fa-plus-square", "/us/reclama/"),
             )),
             ("Pratiche", (
                 ("Nuovo trasferimento", "fa-file-o", "/us/trasferimento/"),
