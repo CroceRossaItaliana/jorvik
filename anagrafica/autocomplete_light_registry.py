@@ -29,7 +29,7 @@ class PersonaAutocompletamento(AutocompletamentoBase):
                 Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_attuali()).via("appartenenze"),)
                 # 2. Appartenente a una sede di mia delega
                 | Q(Appartenenza.query_attuale(sede__in=[
-                    x.oggetto for x in self.request.user.persona.deleghe_attuali(
+                    x.oggetto.espandi() for x in self.request.user.persona.deleghe_attuali(
                         oggetto_tipo=ContentType.objects.get_for_model(Sede)
                     )
                 ]).via("appartenenze"))
