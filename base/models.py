@@ -469,7 +469,7 @@ class ConAutorizzazioni(models.Model):
 
     def autorizzazione_richiedi_sede_riferimento(self, richiedente, incarico, invia_notifiche=[],
                                                  invia_notifica_presidente=False, invia_notifica_ufficio_soci=False,
-                                                 **kwargs):
+                                                 forza_sede_riferimento=None, **kwargs):
         """
         Richiede una autorizzazione per l'oggetto attuale nel caso di incarico relativo
          alla sede di riferimento della Persona.
@@ -482,9 +482,12 @@ class ConAutorizzazioni(models.Model):
         :param kwargs: Aventuali argomenti aggiuntivi per autorizzazione.
         :return: False se persona non ha sede di riferimento, True altrimenti.
         """
-        sede_riferimento = richiedente.sede_riferimento()
-        if not sede_riferimento:
-            return False
+        if forza_sede_riferimento:
+            sede_riferimento = forza_sede_riferimento
+        else:
+            sede_riferimento = richiedente.sede_riferimento()
+            if not sede_riferimento:
+                return False
 
         if invia_notifica_presidente:
             presidente = sede_riferimento.presidente()

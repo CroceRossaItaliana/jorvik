@@ -972,7 +972,8 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
             INCARICO_GESTIONE_APPARTENENZE,
-            invia_notifica_presidente=True
+            invia_notifica_presidente=True,
+            forza_sede_riferimento=self.sede,
         )
 
     def autorizzazione_concessa(self, modulo=None):
@@ -1007,7 +1008,7 @@ class SedeQuerySet(QuerySet):
         :param pubblici: Espand i Comitati pubblici al tutti i Comitati sottostanti.
         """
 
-        qs = self | self.filter(estensione=TERRITORIALE, genitore__in=(self.filter(estensione__in=[PROVINCIALE, LOCALE])))
+        qs = self | Sede.objects.filter(estensione=TERRITORIALE, genitore__in=(self.filter(estensione__in=[PROVINCIALE, LOCALE])))
 
         if pubblici:
             qs |= self.filter(estensione__in=[NAZIONALE, REGIONALE]).get_descendants(include_self=True)
@@ -1245,7 +1246,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
         # Sede privata... espandi con unita' territoriali.
         if self.estensione in [PROVINCIALE, LOCALE]:
-            return self.get_children().filter(estensione=TERRITORIALE) | Sede.objects.filter(pk=self.pk)
+            return self.get_children().filter(estensione=TERRITORIALE) | self.queryset_modello()
 
         # Sede territoriale. Solo me, se richiesto.
 

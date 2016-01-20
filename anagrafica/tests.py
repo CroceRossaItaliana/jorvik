@@ -4,8 +4,10 @@ from django.test import TestCase
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
 from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Delega
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE
-from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA
+from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
+from base.models import Autorizzazione
+from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza
 
 
@@ -546,4 +548,102 @@ class TestAnagrafica(TestCase):
         )
 
 
+    def test_permessi_ufficio_soci(self):
+
+        stefano = crea_persona()
+        catania = crea_sede(presidente=stefano, estensione=LOCALE)
+        maletto = crea_sede(estensione=TERRITORIALE, genitore=catania)
+
+        ufficio_soci_catania_locale = crea_persona()
+        Delega.objects.create(persona=ufficio_soci_catania_locale, tipo=UFFICIO_SOCI, oggetto=catania, inizio=poco_fa())
+
+        ufficio_soci_catania_unita = crea_persona()
+        Delega.objects.create(persona=ufficio_soci_catania_unita, tipo=UFFICIO_SOCI_UNITA, oggetto=catania, inizio=poco_fa())
+
+        ufficio_soci_maletto = crea_persona()
+        Delega.objects.create(persona=ufficio_soci_maletto, tipo=UFFICIO_SOCI_UNITA, oggetto=maletto, inizio=poco_fa())
+
+        self.assertTrue(
+            ufficio_soci_catania_locale.oggetti_permesso(GESTIONE_SOCI).filter(pk=catania.pk),
+            msg="US Catania Locale puo' gestire soci Catania"
+        )
+
+        self.assertTrue(
+            ufficio_soci_catania_locale.oggetti_permesso(GESTIONE_SOCI).filter(pk=maletto.pk),
+            msg="US Catania Locale puo' gestire soci Maletto"
+        )
+
+        self.assertTrue(
+            ufficio_soci_catania_unita.oggetti_permesso(GESTIONE_SOCI).filter(pk=catania.pk),
+            msg="US Catania Unita puo' gestire soci Catania"
+        )
+
+        self.assertFalse(
+            ufficio_soci_catania_unita.oggetti_permesso(GESTIONE_SOCI).filter(pk=maletto.pk),
+            msg="US Catania Unita NON puo' gestire soci Maletto"
+        )
+
+        self.assertFalse(
+            ufficio_soci_maletto.oggetti_permesso(GESTIONE_SOCI).filter(pk=catania.pk),
+            msg="US Maletto NON puo' gestire soci Catania"
+        )
+
+        self.assertTrue(
+            ufficio_soci_maletto.oggetti_permesso(GESTIONE_SOCI).filter(pk=maletto.pk),
+            msg="US Maletto puo' gestire soci Maletto"
+        )
+
+
+        # Inizialmente nessuno ha autorizzazioni
+        self.assertFalse(
+            ufficio_soci_catania_locale.autorizzazioni_in_attesa().exists()
+            or ufficio_soci_catania_unita.autorizzazioni_in_attesa().exists()
+            or ufficio_soci_maletto.autorizzazioni_in_attesa().exists()
+            or stefano.autorizzazioni_in_attesa().exists(),
+            msg="Inizialmente nessuno ha autorizzzioni in attesa"
+        )
+
+        tizio_nuovo = crea_persona()
+        app = Appartenenza.objects.create(persona=tizio_nuovo, membro=Appartenenza.VOLONTARIO, inizio=poco_fa(), sede=maletto)
+        app.richiedi()
+
+
+        self.assertFalse(
+            ufficio_soci_catania_unita.autorizzazioni_in_attesa().exists(),
+            msg="Il delegato Catania Unita non vede la richiesta"
+        )
+
+        self.assertTrue(
+            ufficio_soci_catania_locale.autorizzazioni_in_attesa().exists(),
+            msg="Il delegato Catania Locale vede la richiesta"
+        )
+
+        self.assertTrue(
+            ufficio_soci_maletto.autorizzazioni_in_attesa().exists(),
+            msg="Il delegato Maletto vede la richiesta"
+        )
+
+        # Accettiamo la richiesta.
+        for x in app.autorizzazioni.all():
+            x.concedi(stefano, modulo=None)
+
+        self.assertFalse(
+            ufficio_soci_catania_unita.permessi_almeno(tizio_nuovo, MODIFICA),
+            msg="Il delegato Catania Unita non puo gestire volontario"
+        )
+
+        self.assertFalse(
+            ufficio_soci_catania_unita.permessi_almeno(tizio_nuovo, LETTURA),
+            msg="Il delegato Catania Unita non puo gestire volontario"
+        )
+
+        self.assertTrue(
+            ufficio_soci_catania_locale.permessi_almeno(tizio_nuovo, MODIFICA),
+            msg="Il delegato Catania Locale puo gestire volontario"
+        )
+
+        self.assertTrue(
+            ufficio_soci_maletto.permessi_almeno(tizio_nuovo, MODIFICA),
+            msg="Il delegato Maletto puo gestire volontario"
+        )
 
