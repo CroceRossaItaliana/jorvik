@@ -1635,9 +1635,9 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
 
     def applica(self):
         from gruppi.models import Appartenenza as App
-        Appartenenza.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=self.creazione, terminazione=Appartenenza.DIMISSIONE)
-        Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=self.creazione)
-        App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=self.creazione)
+        Appartenenza.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa(), terminazione=Appartenenza.DIMISSIONE)
+        Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
+        App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
         #TODO reperibilita'
         [
             [x.ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
