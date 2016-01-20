@@ -203,7 +203,7 @@ class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
 
 
 class ModuloConsentiEstensione(forms.Form):
-    protocollo_numero = forms.IntegerField(label="Numero di protocollo", help_text="Numero di protocollo con cui è stata registrata la richiesta.")
+    protocollo_numero = forms.CharField(max_length=32, label="Numero di protocollo", help_text="Numero di protocollo con cui è stata registrata la richiesta.")
     protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data di registrazione del protocollo.")
 
 
@@ -218,7 +218,7 @@ class ModuloCreazioneTrasferimento(autocomplete_light.ModelForm):
 
 
 class ModuloConsentiTrasferimento(forms.Form):
-    protocollo_numero = forms.IntegerField(label="Numero di protocollo", help_text="Numero di protocollo con cui è stata registrata la richiesta.")
+    protocollo_numero = forms.CharField(max_length=32, label="Numero di protocollo", help_text="Numero di protocollo con cui è stata registrata la richiesta.")
     protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data di registrazione del protocollo.")
 
 class ModuloConsentiRiserva(ModuloConsentiTrasferimento):
