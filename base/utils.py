@@ -184,4 +184,4 @@ def poco_fa():
     """
     Un secondo fa. Utile per terminare o iniziare le appartenenze.
     """
-    return timezone.now() - timedelta(seconds=2)
+    return timezone.now() - timedelta(minutes=1)

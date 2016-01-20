@@ -32,7 +32,7 @@ from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_
 from base.files import Zip
 from base.models import Log
 from base.notifiche import NOTIFICA_INVIA
-from base.utils import remove_none
+from base.utils import remove_none, poco_fa
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio
@@ -726,7 +726,7 @@ def strumenti_delegati(request, me):
                 torna_url="/strumenti/delegati/",
             )
 
-        d.inizio = datetime.date.today()
+        d.inizio = poco_fa()
         d.firmatario = me
         d.tipo = delega
         d.oggetto = oggetto
@@ -765,7 +765,7 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
     if not me.permessi_almeno(delega.oggetto, GESTIONE):
         return redirect(ERRORE_PERMESSI)
 
-    delega.fine = datetime.datetime.now()
+    delega.fine = poco_fa()
     delega.save()
     delega.invia_notifica_terminazione(me)
 

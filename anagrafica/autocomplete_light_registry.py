@@ -11,6 +11,11 @@ class AutocompletamentoBase(autocomplete_light.AutocompleteModelBase):
     def persona(self):
         return self.request.user.persona
 
+    empty_html_format = "<span class=\"block allinea-centro text-muted\">" \
+                        "<strong><i class=\"fa fa-fw fa-search\"></i> Nessun risultato.</strong><br />" \
+                        "&nbsp;Prova a cambiare il termine di ricerca.&nbsp;" \
+                        "<!--%s--></span>"
+
 
 class PersonaAutocompletamento(AutocompletamentoBase):
     search_fields = ['nome', 'cognome', 'codice_fiscale',]
@@ -22,15 +27,12 @@ class PersonaAutocompletamento(AutocompletamentoBase):
     }
 
     def choices_for_request(self):
-        if not self.request.user.is_staff:  #TODO udpate
-
-            self.choices = self.choices.filter(
-                # 1. Appartenente alla stessa mia sede
-                Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_attuali()).via("appartenenze"),)
-                # 2. Appartenente a una sede di mia delega
-                | Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_deleghe_attuali(espandi=True)).via("appartenenze"))
-            )
-
+        self.choices = self.choices.filter(
+            # 1. Appartenente alla stessa mia sede
+            Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_attuali()).via("appartenenze"),)
+            # 2. Appartenente a una sede di mia delega
+            | Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_deleghe_attuali()).via("appartenenze"))
+        )
         return super(PersonaAutocompletamento, self).choices_for_request()
 
     choice_html_format = u'''
@@ -42,7 +44,7 @@ class PersonaAutocompletamento(AutocompletamentoBase):
         return self.choice_html_format % (
             self.choice_value(choice),
             self.choice_label(choice),
-            ("(%s a %s)" % (app.get_membro_display(), app.sede)) if app else '',
+            ("(%s del %s)" % (app.get_membro_display(), app.sede)) if app else '',
         )
 
 

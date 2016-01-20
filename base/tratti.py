@@ -160,13 +160,13 @@ class ConStorico(models.Model):
             **kwargs
         )
 
-    def attuale(self, al_giorno=datetime.now()):
+    def attuale(self, al_giorno=timezone.now()):
         """
         Controlla se l'entita' e' attuale o meno.
         :param al_giorno: Giorno per considerare la verifica per l'attuale. Default oggi.
         :return: True o False.
         """
-        return self.__class__.objects.filter(self.query_attuale(al_giorno=al_giorno).q, pk=self.pk).exists()
+        return self.query_attuale(al_giorno=al_giorno, pk=self.pk).exists()
 
 
 class ConDelegati(models.Model):

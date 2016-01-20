@@ -29,7 +29,8 @@ def us(request, me):
     Ritorna la home page per la gestione dei soci.
     """
 
-    sedi = me.oggetti_permesso(GESTIONE_SOCI).espandi()
+    sedi = me.oggetti_permesso(GESTIONE_SOCI)
+
     persone = Persona.objects.filter(
         Appartenenza.query_attuale(sede__in=sedi).via("appartenenze")
     )
@@ -218,7 +219,7 @@ def us_estensione(request, me):
     Vista per la creazione di una nuova estensione da ufficio soci.
     """
 
-    sedi = me.oggetti_permesso(GESTIONE_SOCI).espandi()  # es. per controllare che il volontario
+    sedi = me.oggetti_permesso(GESTIONE_SOCI)            # es. per controllare che il volontario
                                                          # sia appartente attualmente
                                                          #     ad una delle sedi che gestisco io
     modulo = ModuloCreazioneEstensione(request.POST or None)
@@ -255,7 +256,7 @@ def us_trasferimento(request, me):
     Vista per la creazione di una nuova estensione da ufficio soci.
     """
 
-    sedi = me.oggetti_permesso(GESTIONE_SOCI).espandi()  # es. per controllare che il volontario sia appartente attualmente
+    sedi = me.oggetti_permesso(GESTIONE_SOCI)            # es. per controllare che il volontario sia appartente attualmente
                                                          #     ad una delle sedi che gestisco io
 
     modulo = ModuloCreazioneTrasferimento(request.POST or None)
@@ -289,7 +290,7 @@ def us_trasferimento(request, me):
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensioni(request, me):
-    sedi = me.oggetti_permesso(GESTIONE_SOCI).espandi()
+    sedi = me.oggetti_permesso(GESTIONE_SOCI)
     estensioni = Estensione.filter(destinazione__in=(sedi))
 
     contesto = {
@@ -301,7 +302,7 @@ def us_estensioni(request, me):
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensione_termina(request, me, pk):
     estensione = get_object_or_404(Estensione, pk=pk)
-    if estensione not in me.oggetti_permesso(GESTIONE_SOCI).espandi():
+    if estensione not in me.oggetti_permesso(GESTIONE_SOCI):
         return redirect(ERRORE_PERMESSI)
     else:
         estensione.termina()
