@@ -760,16 +760,19 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return 'o' if genere == self.MASCHIO else 'a'
 
     def genera_inizio_codice_fiscale(self):
-        return codicefiscale.build(
-            self.cognome, self.nome, self.data_nascita,
-            self.genere_codice_fiscale, 'D969'
-        )[0:11]
+        try:
+            return codicefiscale.build(
+                self.cognome, self.nome, self.data_nascita,
+                self.genere_codice_fiscale, 'D969'
+            )[0:11]
+        except:
+            return ''
 
     def codice_fiscale_verosimile(self):
         """
         Controlla se il codice fiscale e' verosimile o meno
         """
-        return self.genera_inizio_codice_fiscale() in self.codice_fiscale
+        return codicefiscale.isvalid(self.codice_fiscale) and self.genera_inizio_codice_fiscale() in self.codice_fiscale
 
     def reclamabile_in_sede(self, sede):
         """
