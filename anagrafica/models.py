@@ -1003,18 +1003,22 @@ class SedeQuerySet(QuerySet):
         """
         return self.filter(estensione__in=[NAZIONALE, REGIONALE, PROVINCIALE, LOCALE])
 
-    def espandi(self, pubblici=False):
+    def espandi(self, pubblici=False, ignora_disattivi=True):
         """
         Espande il QuerySet.
         Se pubblico, me e tutte le sedi sottostanti.
         Se privato, me e le unita' territoriali incluse.
         :param pubblici: Espand i Comitati pubblici al tutti i Comitati sottostanti.
+        :param ignora_disattivi: Ignora le sedi disattive.
         """
 
         qs = self | Sede.objects.filter(estensione=TERRITORIALE, genitore__in=(self.filter(estensione__in=[PROVINCIALE, LOCALE])))
 
         if pubblici:
             qs |= self.filter(estensione__in=[NAZIONALE, REGIONALE]).get_descendants(include_self=True)
+
+        if ignora_disattivi:
+            qs = qs.filter(attiva=True)
 
         return qs
 
@@ -1234,30 +1238,39 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         from formazione.models import Aspirante
         return self.circonferenze_contenenti(Aspirante.objects.all()).count()
 
-    def espandi(self, includi_me=False, pubblici=False):
+    def espandi(self, includi_me=False, pubblici=False, ignora_disattive=True):
         """
         Espande la Sede.
         Se pubblico, me e tutte le sedi sottostanti.
         Se privato, me e le unita' territoriali incluse.
         :param includi_me: Includimi nel queryset ritornato.
         :param pubblici: Espandi i pubblici, ritornando tutto al di sotto.
+        :param ignora_disattive: Nasconde le sedi disattive.
         """
 
         # Sede pubblica... ritorna tutto sotto di se.
         if pubblici and self.estensione in [NAZIONALE, REGIONALE]:
-            return self.get_descendants(include_self=includi_me)
+            queryset = self.get_descendants(include_self=includi_me)
 
         # Sede privata... espandi con unita' territoriali.
-        if self.estensione in [PROVINCIALE, LOCALE]:
-            return self.get_children().filter(estensione=TERRITORIALE) | self.queryset_modello()
+        elif self.estensione in [PROVINCIALE, LOCALE]:
+            queryset = self.get_children().filter(estensione=TERRITORIALE) | self.queryset_modello()
 
         # Sede territoriale. Solo me, se richiesto.
-
-        if includi_me:
-            return self.queryset_modello()
+        elif includi_me:
+            queryset = self.queryset_modello()
 
         else:
-            return Sede.objects.none()
+            queryset = self.__class__.objects.none()
+
+
+        # Cosa fare con le sedi disattive?
+        if ignora_disattive:
+            return queryset.filter(attiva=True)
+
+        else:
+            return queryset
+
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):

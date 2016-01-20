@@ -28,7 +28,7 @@ def forwards_func(apps, schema_editor):
     #pp = p.objects.using(db_alias).filter(email_contatto__exact='').exclude(utenza__email__isnull=True)
     #tot = pp.count()
     tot = 0
-    print("  => deleghe da ripristinare come unita territoriale: %d" % (len(coppie),))
+    print("  => 0020 deleghe da ripristinare come unita territoriale: %d" % (len(coppie),))
     for persona_vecchio_id, comitato_vecchio_id, locale_vecchio_id in coppie:
 
         try:
@@ -53,7 +53,7 @@ def forwards_func(apps, schema_editor):
             pass
 
 
-    print("  ==> ripristinate %d deleghe" % (tot,))
+    print("  ==> 0020 ripristinate %d deleghe" % (tot,))
 
 class Migration(migrations.Migration):
 

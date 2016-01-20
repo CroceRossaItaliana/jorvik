@@ -20,7 +20,7 @@ def forwards_func(apps, schema_editor):
     #pp = p.objects.using(db_alias).filter(email_contatto__exact='').exclude(utenza__email__isnull=True)
     #tot = pp.count()
     tot = 0
-    print(" Ci sono %d autorizzazioni da aggiornare" % (p.objects.using(db_alias).all().count(),))
+    print("  => 0018 ci sono %d autorizzazioni da aggiornare" % (p.objects.using(db_alias).all().count(),))
     for vecchio_ruolo, nuovo_ruolo in corrispondenze.items():
         #print(" => Aggiorno ruolo autorizzazioni: %s => %s..." % (vecchio_ruolo, nuovo_ruolo,))
         auuts = p.objects.using(db_alias).filter(destinatario_ruolo=vecchio_ruolo)
@@ -30,7 +30,7 @@ def forwards_func(apps, schema_editor):
         auuts.update(destinatario_ruolo=nuovo_ruolo)
         tot += auuts.count()
 
-    print(" Aggiornate %d autorizzazioni." % (tot,))
+    print(" ==> 0018 aggiornate %d autorizzazioni." % (tot,))
 
 
 def reverse_func(apps, schema_editor):
