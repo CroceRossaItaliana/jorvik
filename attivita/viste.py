@@ -94,7 +94,7 @@ def attivita_storico(request, me):
     """
     Mostra uno storico delle attivita' a cui ho chiesto di partecipare/partecipato.
     """
-    storico = Partecipazione.objects.filter(persona=me).order_by('-creazione')
+    storico = Partecipazione.objects.filter(persona=me).order_by('-turno__inizio')
 
     contesto = {
         "storico": storico
@@ -108,7 +108,7 @@ def attivita_storico_excel(request, me):
     Scarica il foglio di servizio
     """
 
-    storico = Partecipazione.confermate().filter(persona=me).order_by('-creazione')
+    storico = Partecipazione.confermate().filter(persona=me).order_by('-turno__inizio')
 
     anni = storico.dates('turno__inizio', 'year', order='DESC')
 

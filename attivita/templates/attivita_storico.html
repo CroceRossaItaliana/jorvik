@@ -71,8 +71,8 @@
                     </a>
                 </td>
                 <td>
-                    Inizio: <strong>{{ richiesta.turno.inizio }}</strong><br />
-                    Fine: {{ richiesta.turno.fine }}
+                    Inizio: <strong>{{ richiesta.turno.inizio|date:"SHORT_DATETIME_FORMAT" }}</strong><br />
+                    Fine: {{ richiesta.turno.fine|date:"SHORT_DATETIME_FORMAT" }}
                 </td>
                 <td>
                     {% if richiesta.stato == richiesta.RICHIESTA %}
