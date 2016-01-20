@@ -206,7 +206,7 @@ def veicoli_termina_fermo_tecnico(request, me, fermo):
 @pagina_privata
 def veicoli_collocazioni(request, me, veicolo):
     veicolo = get_object_or_404(Veicolo, pk=veicolo)
-    collocazioni = veicolo.collocazioni.all().order_by("-data")
+    collocazioni = veicolo.collocazioni.all().order_by("-inizio")
     modulo = ModuloCreazioneCollocazione(request.POST or None)
     sedi = me.oggetti_permesso(GESTIONE_AUTOPARCHI_SEDE)
     autoparchi = Autoparco.objects.filter(sede__in=sedi)
