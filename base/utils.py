@@ -30,6 +30,15 @@ def is_list(x):
     return isinstance(x, list)
 
 
+def iterabile(oggetto):
+    try:
+        iterator = iter(oggetto)
+    except TypeError:
+        return False
+    else:
+        return True
+
+
 def prefix(accessor, q):
     """
     Take a Q object, and prefix its keys so that it can be used from a related

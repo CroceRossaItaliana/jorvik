@@ -27,11 +27,11 @@ from model_utils.managers import PassThroughManagerMixin
 
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 
-from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, APPLICAZIONI_SLUG_DICT, PERMESSI_NOMI_DICT
+from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI_NOMI_DICT
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
     GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE
-from anagrafica.permessi.delega import delega_permessi
+from anagrafica.permessi.delega import delega_permessi, delega_incarichi
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
 from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
@@ -630,15 +630,34 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return self.deleghe_attuali().exists() or self.autorizzazioni_in_attesa().exists()
 
+    def incarichi(self):
+        # r = Autorizzazione.objects.none()
+
+        incarichi_persona = {}
+        for delega in self.deleghe_attuali():
+            incarichi_delega = delega.espandi_incarichi()
+            for incarico in incarichi_delega:
+                if not incarico[0] in incarichi_persona:
+                    incarichi_persona.update({incarico[0]: incarico[1]})
+                else:
+                    incarichi_persona[incarico[0]] |= incarico[1]
+        incarichi_persona = incarichi_persona.items()
+        return incarichi_persona
+
     def autorizzazioni(self):
         """
         Ritorna tutte le autorizzazioni firmabili da questo utente.
         :return: QuerySet<Autorizzazione>.
         """
-        r = Autorizzazione.objects.none()
-        for delega in self.deleghe_attuali():
-            r |= delega.autorizzazioni()
-        return r
+        a = Autorizzazione.objects.none()
+        for incarico in self.incarichi():
+            a |= Autorizzazione.objects.filter(
+                destinatario_ruolo=incarico[0],
+                destinatario_oggetto_tipo=ContentType.objects.get_for_model(incarico[1].model),
+                destinatario_oggetto_id__in=incarico[1].values_list('id', flat=True)
+            )
+        return a
+
 
     def _autorizzazioni_in_attesa(self):
         """
@@ -1217,7 +1236,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         # Sede territoriale. Solo me, se richiesto.
 
         if includi_me:
-            return Sede.objects.filter(pk=self.pk)
+            return self.queryset_modello()
 
         else:
             return Sede.objects.none()
@@ -1259,7 +1278,16 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
         """
         return delega_permessi(self)
 
-    def autorizzazioni(self):
+
+    def espandi_incarichi(self):
+        """
+        Ottiene un elenco di incarichi che scaturiscono dalla delega.
+        :return: Una lista di tuple (INCARICO, qs_oggetto)
+        """
+        return delega_incarichi(self)
+
+
+    def autorizzazioni(self):  # TODO Rimuovere
         """
         Ottiene le autorizzazioni firmabili da questo ruolo.
         :return: QuerySet

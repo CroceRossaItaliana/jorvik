@@ -9,15 +9,16 @@ from django.forms import forms
 from safedelete import safedelete_mixin_factory, SOFT_DELETE
 from mptt.models import MPTTModel, TreeForeignKey
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
-from anagrafica.permessi.costanti import DELEGHE_OGGETTI_DICT, MODIFICA
+from anagrafica.permessi.costanti import MODIFICA
+from anagrafica.permessi.incarichi import INCARICHI, INCARICHI_TIPO_DICT
 from anagrafica.validators import crea_validatore_dimensione_file, valida_dimensione_file_10mb
 from base.forms import ModuloMotivoNegazione
-from base.notifiche import NOTIFICA_NON_INVIARE
+from base.notifiche import NOTIFICA_NON_INVIARE, NOTIFICA_INVIA
 from base.stringhe import GeneratoreNomeFile, genera_uuid_casuale
 from base.tratti import ConMarcaTemporale
 from datetime import datetime, timezone, timedelta
 
-from base.utils import concept
+from base.utils import concept, iterabile
 
 
 class ModelloSemplice(models.Model):
@@ -31,6 +32,25 @@ class ModelloSemplice(models.Model):
     def url_admin(self):
         content_type = ContentType.objects.get_for_model(self.__class__)
         return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.id,))
+
+    def queryset_modello(self):
+        """
+        Ritorna un queryset contenente solo il modello specificato.
+        :return: QuerySet<{Mio tipo}>
+        """
+        return self.__class__.objects.filter(pk=self.pk)
+
+    @classmethod
+    def stringa_modello(cls):
+        """
+        Ritorna stringa del tipo "app_label.ModelName"
+        :return:
+        """
+        return "%s.%s" % (
+            cls._meta.app_label,
+            cls._meta.object_name
+        )
+
 
 
 # Policy di cancellazioen morbida impostata su SOFT_DELETE
@@ -116,7 +136,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     necessaria = models.BooleanField("Necessaria", db_index=True, default=True)
     progressivo = models.PositiveSmallIntegerField("Progressivo contesto", default=1)
 
-    destinatario_ruolo = models.CharField(max_length=2, choices=PERMESSI_NOMI)
+    destinatario_ruolo = models.CharField(max_length=16, choices=INCARICHI, db_index=True)
     destinatario_oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="autcomedestinatari", null=True, on_delete=models.SET_NULL)
     destinatario_oggetto_id = models.PositiveIntegerField(db_index=True)
     destinatario_oggetto = GenericForeignKey('destinatario_oggetto_tipo', 'destinatario_oggetto_id')
@@ -180,17 +200,13 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             self.oggetto._meta.object_name.lower()
         )
 
-    def notifica_richiesta(self):
+    def notifica_richiesta(self, persona):
         from anagrafica.models import Delega, Persona
         from posta.models import Messaggio
 
-        tipo = ContentType.objects.get_for_model(self.destinatario_oggetto)
-        destinatari = [d.persona for d in
-                       Delega.query_attuale().filter(tipo=self.destinatario_ruolo,
-                                                     oggetto_tipo__pk=tipo.pk,
-                                                     oggetto_id=self.destinatario_oggetto.pk)]
-        if not destinatari:
+        if not persona:
             return  # Nessun destinatario, nessuna e-mail.
+
         Messaggio.costruisci_e_invia(
             oggetto="Richiesta di %s da %s" % (self.oggetto.RICHIESTA_NOME, self.richiedente.nome_completo,),
             modello="email_autorizzazione_richiesta.html",
@@ -198,7 +214,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                 "richiesta": self,
             },
             mittente=self.richiedente,
-            destinatari=destinatari,
+            destinatari=[persona],
         )
 
     def notifica_concessa(self):
@@ -452,13 +468,36 @@ class ConAutorizzazioni(models.Model):
         tipo = ContentType.objects.get_for_model(self)
         return Autorizzazione.objects.filter(oggetto_tipo__pk=tipo.id, oggetto_id=self.id)
 
-    def autorizzazione_richiedi(self, richiedente, destinatario, **kwargs):
+    def autorizzazione_richiedi_sede_riferimento(self, richiedente, incarico, invia_notifica=True, **kwargs):
+        """
+        Richiede una autorizzazione per l'oggetto attuale nel caso di incarico relativo
+         alla sede di riferimento della Persona.
+
+        Se la persona non ha sede di riferimento, ritorna False.
+        Se la persona ha sede di riferimetno e tutto va bene, ritorna True.
+        :param richiedente: La persona richiedente. Deve essere MEMBRO_DIRETTO attuale da qualche parte.
+        :param incarico: Incarico necessario per la firma.
+        :param invia_notifica: Inviare una notifica?
+        :param kwargs: Aventuali argomenti aggiuntivi per autorizzazione.
+        :return: False se persona non ha sede di riferimento, True altrimenti.
+        """
+        sede_riferimento = richiedente.sede_riferimento()
+        if not sede_riferimento:
+            return False
+
+        notifica = NOTIFICA_INVIA if invia_notifica else NOTIFICA_NON_INVIARE
+        self.autorizzazione_richiedi(richiedente, (incarico, sede_riferimento, notifica), **kwargs)
+        return True
+
+    def autorizzazione_richiedi(self, richiedente, destinatario, invia_notifiche=None, **kwargs):
         """
         Richiede una autorizzazione per l'oggetto attuale
 
         :param richiedente: Colui che inoltra la richiesta.
-        :param destinatario: Il ruolo che deve firmare l'autorizzazione, in forma
-                      (RUOLO, OGGETTO). Puo' anche essere tupla ((Ruolo1, Ogg1), (Ruolo2, Ogg2), ...)
+        :param destinatario: Gli incarichi che deve firmare l'autorizzazione, in forma
+                      (INCARICO, OGGETTO). Puo' anche essere tupla ((INCARICO, Ogg1), (INCARICO, Ogg2), ...)
+        :param invia_notifiche: Il ruolo che deve ricevere notifica della richiesta di autorizzazione,
+                      (DELEGATIPO, OGGETTO). Puo' anche essere tupla ((DELEGATIPO, Ogg1), (DELEGATIPO, Ogg2), ...)
         :param kwargs:
         :return:
         """
@@ -479,21 +518,16 @@ class ConAutorizzazioni(models.Model):
         # Per ogni destinatario aspettato
         for i in destinatario:
 
-            # Policy se non specificata
-            notifica_invia = NOTIFICA_NON_INVIARE
+            (ruolo, oggetto) = i
 
-            try:  # Controlla se la policy e' specificata
-                (ruolo, oggetto, notifica_invia) = i
-
-            except ValueError:  # Altrimenti, estrai comunque ruolo e oggetto
-                (ruolo, oggetto) = i
-
-            if ruolo not in DELEGHE_OGGETTI_DICT:
+            if ruolo not in INCARICHI_TIPO_DICT:
                 raise ValueError("Il ruolo che si richiede firmi questa autorizzazione non esiste.")
 
-            if oggetto.__class__.__name__ != DELEGHE_OGGETTI_DICT[ruolo]:
+            if oggetto.__class__.stringa_modello() != INCARICHI_TIPO_DICT[ruolo]:
                 raise ValueError("L'oggetto specificato non e' valido per il ruolo che si richiede firmi "
                                  "l'autorizzazione.")
+
+            print("Richiesta autorizzazione a %s presso %s" % (ruolo, oggetto,))
 
             r = Autorizzazione(
                 richiedente=richiedente,
@@ -505,8 +539,22 @@ class ConAutorizzazioni(models.Model):
             )
             r.save()
 
-            if notifica_invia:
-                r.notifica_richiesta()
+            if invia_notifiche:
+
+                if not iterabile(invia_notifiche):
+                    invia_notifiche = [invia_notifiche]
+
+                for persona in invia_notifiche:  # Per ogni person aa cui inviare notifica
+                    if persona.autorizzazioni().filter(pk=r.pk).exists():
+                        # Assicurati che la persona abbia autorizzazione
+                        # ed eventualmente notifica la richiesta in arrivo.
+                        r.notifica_richiesta(invia_notifiche)
+
+                        print("Richiesta aut. %d notificata a %s come richiesto." % (r.pk, persona,))
+
+                    else:
+                        print("Richiesta aut. %d NON notificata a %s perché la persona non sembra "
+                              "possa accedere alla notifica." % (r.pk, persona,))
 
         # Rimuovi eventuale stato di confermata
         self.confermata = False

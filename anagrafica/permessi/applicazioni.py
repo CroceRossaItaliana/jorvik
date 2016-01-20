@@ -6,6 +6,7 @@ __author__ = 'alfioemanuele'
 
 PRESIDENTE = 'PR'
 UFFICIO_SOCI = 'US'
+UFFICIO_SOCI_UNITA = 'UU'
 UFFICIO_SOCI_TEMPORANEO = 'UT'
 DELEGATO_AREA = 'DA'
 DELEGATO_OBIETTIVO_1 = 'O1'
@@ -28,7 +29,8 @@ DIRETTORE_CORSO = 'DC'
 PERMESSI_NOMI = (
     (PRESIDENTE,                "Presidente"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
-    (UFFICIO_SOCI_TEMPORANEO,   "Ufficio Soci Temporaneo"),
+    (UFFICIO_SOCI_UNITA,        "Ufficio Soci Unità Territoriale"),
+#    (UFFICIO_SOCI_TEMPORANEO,   "Ufficio Soci Temporaneo"),
     (DELEGATO_AREA,             "Delegato d'Area"),
     (DELEGATO_OBIETTIVO_1,      "Delegato Obiettivo I (Salute)"),
     (DELEGATO_OBIETTIVO_2,      "Delegato Obiettivo II (Sociale)"),
@@ -43,19 +45,8 @@ PERMESSI_NOMI = (
     (RESPONSABILE_FORMAZIONE,   "Responsabile Formazione"),
     (DIRETTORE_CORSO,           "Direttore Corso"),
     (RESPONSABILE_AUTOPARCO,    "Responsabile Autoparco"),
-    (RESPONSABILE_PATENTI,      "Responsabile Patenti"),
-    (RESPONSABILE_DONAZIONI,    "Responsabile Donazioni Sangue"),
-)
-
-# Slug applicazioni
-APPLICAZIONI_SLUG = (
-    (PRESIDENTE, "presidente"),
-    (UFFICIO_SOCI, "ufficio-soci"),
-    (DELEGATO_AREA, "delegato-area"),
-    (RESPONSABILE_AREA, "responsabile-area"),
-    (REFERENTE, "referente-attivita"),
-    (DELEGATO_CO, "centrale-operativa"),
+    #(RESPONSABILE_PATENTI,      "Responsabile Patenti"),
+    #(RESPONSABILE_DONAZIONI,    "Responsabile Donazioni Sangue"),
 )
 
 PERMESSI_NOMI_DICT = dict(PERMESSI_NOMI)
-APPLICAZIONI_SLUG_DICT = dict(APPLICAZIONI_SLUG)
