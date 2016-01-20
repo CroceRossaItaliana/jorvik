@@ -145,6 +145,16 @@ IGNORA_AUTORIZZAZIONI = [
     ContentType.objects.get_for_model(PartecipazioneCorsoBase).pk
 ]
 
+
+def pulisci_autorizzazioni(richieste):
+    pulite = False
+    for richiesta in richieste:
+        if richiesta.oggetto is None:
+            richiesta.delete()
+            pulite = True
+    return pulite
+
+
 @pagina_privata
 def autorizzazioni(request, me, content_type_pk=None):
     """
@@ -152,7 +162,6 @@ def autorizzazioni(request, me, content_type_pk=None):
     """
 
     richieste = me._autorizzazioni_in_attesa().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
-    ricarica = False
 
     sezioni = ()  # Ottiene le sezioni
     sezs = richieste.values('oggetto_tipo_id').annotate(Count('oggetto_tipo_id'))
@@ -168,11 +177,10 @@ def autorizzazioni(request, me, content_type_pk=None):
     if content_type_pk is not None:
         richieste = richieste.filter(oggetto_tipo_id=int(content_type_pk))
 
+    ricarica = pulisci_autorizzazioni(richieste)
+
     for richiesta in richieste:
-        if richiesta.oggetto is None:
-            richiesta.delete()
-            ricarica = True
-            continue
+
         if richiesta.oggetto.autorizzazione_concedi_modulo():
             richiesta.modulo = richiesta.oggetto.autorizzazione_concedi_modulo()
 
@@ -283,6 +291,11 @@ def autorizzazioni_storico(request, me):
     Mostra storico delle autorizzazioni.
     """
     richieste = me.autorizzazioni_firmate.all().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI).order_by('-ultima_modifica')[0:50]
+
+    ricarica = pulisci_autorizzazioni(richieste)
+    if ricarica:
+        return redirect("/autorizzazioni/storico/")
+
     contesto = {
         "richieste": richieste
     }

@@ -2,7 +2,7 @@ import datetime
 
 from django.test import TestCase
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
-from anagrafica.forms import ModuloCreazioneEstensione
+from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Delega
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI
@@ -264,7 +264,7 @@ class TestAnagrafica(TestCase):
             msg="Il membro non ha davvero alcuna carta di identita"
         )
 
-    def test_estensione_accettata_accettata(self):
+    def test_estensione_accettata(self):
         presidente1 = crea_persona()
         presidente2 = crea_persona()
 
@@ -272,8 +272,8 @@ class TestAnagrafica(TestCase):
 
         sede2 = crea_sede(presidente2)
 
-        self.assertTrue(
-            da_estendere.estensione is None,
+        self.assertFalse(
+            da_estendere.estensioni_attuali_e_in_attesa().exists(),
             msg="Non esiste estensione alcuna"
         )
 
@@ -291,8 +291,13 @@ class TestAnagrafica(TestCase):
         est.richiedi()
 
         self.assertTrue(
-            da_estendere.estensione == est,
+            da_estendere.estensioni_attuali_e_in_attesa().exists(),
             msg="L'estensione creata correttamente"
+        )
+
+        self.assertFalse(
+            da_estendere.estensioni_attuali().exists(),
+            msg="L'estensione creata correttamente (in attesa, non attuale)"
         )
 
         self.assertTrue(
@@ -319,9 +324,9 @@ class TestAnagrafica(TestCase):
 
         aut.concedi(presidente1, modulo=modulo)
 
-        self.assertTrue(
+        self.assertFalse(
             presidente2.autorizzazioni_in_attesa().exists(),
-            msg="Il presidente ha autorizzazioni in attesa"
+            msg="Il presidente di dest. non ha autorizzazioni in attesa"
         )
 
         est.refresh_from_db()
@@ -344,115 +349,10 @@ class TestAnagrafica(TestCase):
             est.appartenenza.membro == Appartenenza.ESTESO,
             msg="l'appartenenza e' di tipo esteso"
         )
-
-        self.assertTrue(
-            est.appartenenza.esito == Appartenenza.ESITO_PENDING,
-            msg="l'appartenenza e' pendente"
-        )
-
-        aut2 = presidente2.autorizzazioni_in_attesa().first()
-
-        aut2.concedi(presidente2)
-
-        est.appartenenza.refresh_from_db()
 
         self.assertTrue(
             est.appartenenza.esito == Appartenenza.ESITO_OK,
             msg="l'appartenenza e' accettata"
-        )
-
-    def test_estensione_accettata_negata(self):
-        presidente1 = crea_persona()
-        presidente2 = crea_persona()
-
-        da_estendere, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
-
-        sede2 = crea_sede(presidente2)
-
-        self.assertTrue(
-            da_estendere.estensione is None,
-            msg="Non esiste estensione alcuna"
-        )
-
-        self.assertFalse(
-            presidente1.autorizzazioni_in_attesa().exists(),
-            msg="Il presidente non ha autorizzazioni in attesa"
-        )
-
-        modulo = ModuloCreazioneEstensione()
-        est = modulo.save(commit=False)
-        est.richiedente = da_estendere
-        est.persona = da_estendere
-        est.destinazione = sede2
-        est.save()
-        est.richiedi()
-
-        self.assertTrue(
-            da_estendere.estensione == est,
-            msg="L'estensione creata correttamente"
-        )
-
-        self.assertTrue(
-            presidente1.autorizzazioni_in_attesa().exists(),
-            msg="Il presidente ha autorizzazioni da processare"
-        )
-
-        self.assertFalse(
-            presidente2.autorizzazioni_in_attesa().exists(),
-            msg="Il presidente non ha autorizzazioni in attesa"
-        )
-
-        aut = presidente1.autorizzazioni_in_attesa().first()
-
-        self.assertFalse(
-            est.appartenenza is not None,
-            msg="l'estensione non ha un'appartenenza"
-        )
-
-        modulo = est.autorizzazione_concedi_modulo()({
-            "protocollo_numero": 31,
-            "protocollo_data": datetime.date.today()
-        })
-        aut.concedi(presidente1, modulo=modulo)
-
-        self.assertTrue(
-            presidente2.autorizzazioni_in_attesa().exists(),
-            msg="Il presidente ha autorizzazioni in attesa"
-        )
-
-        est.refresh_from_db()
-        self.assertTrue(
-            est.appartenenza is not None,
-            msg="l'estensione ha un'appartenenza"
-        )
-
-        self.assertTrue(
-            est.appartenenza.persona == da_estendere,
-            msg="l'appartenenza contiene il volontario esatto"
-        )
-
-        self.assertTrue(
-            est.appartenenza.sede == sede2,
-            msg="l'appartenenza contiene la sede esatta"
-        )
-
-        self.assertTrue(
-            est.appartenenza.membro == Appartenenza.ESTESO,
-            msg="l'appartenenza e' di tipo esteso"
-        )
-
-        self.assertTrue(
-            est.appartenenza.esito == Appartenenza.ESITO_PENDING,
-            msg="l'appartenenza e' pendente"
-        )
-
-        aut2 = presidente2.autorizzazioni_in_attesa().first()
-
-        aut2.nega(presidente2, "Motivazione qualsiasi")
-
-        self.assertTrue(
-            est.appartenenza.esito == Appartenenza.ESITO_NO,
-            msg="l'appartenenza e' rifiutata"
         )
 
 
@@ -465,8 +365,8 @@ class TestAnagrafica(TestCase):
 
         sede2 = crea_sede(presidente2)
 
-        self.assertTrue(
-            da_estendere.estensione is None,
+        self.assertFalse(
+            da_estendere.estensioni_attuali_e_in_attesa().exists(),
             msg="Non esiste estensione alcuna"
         )
 
@@ -486,7 +386,7 @@ class TestAnagrafica(TestCase):
         
         
         self.assertTrue(
-            da_estendere.estensione == est,
+            da_estendere.estensioni_attuali_e_in_attesa().filter(pk=est.pk).exists(),
             msg="L'estensione creata correttamente"
         )
 
@@ -507,7 +407,7 @@ class TestAnagrafica(TestCase):
             msg="l'estensione non ha un'appartenenza"
         )
 
-        aut.nega(presidente1, motivo="Il volontario qualcosa")
+        aut.nega(presidente1, modulo=ModuloNegaEstensione({"motivo": "Un motivo qualsiasi"}))
 
 
         est.refresh_from_db()
@@ -522,8 +422,8 @@ class TestAnagrafica(TestCase):
         )
 
         da_estendere.refresh_from_db()
-        self.assertIsNone(
-            da_estendere.estensione,
+        self.assertFalse(
+            da_estendere.estensioni_attuali().exists(),
             msg="Il volontario non ha estensioni in corso"
         )
 
@@ -589,33 +489,49 @@ class TestAnagrafica(TestCase):
         for x in [italia, _sicilia, __catania, ___maletto, ___giarre, ____riposto, ____salfio, lombardia, _milano]:
             x.refresh_from_db()
 
+
         self.assertTrue(
-            italia.espandi(includi_me=True).count() == (italia.get_descendants().count() + 1),
+            italia.espandi(includi_me=True, pubblici=True).count() == (italia.get_descendants().count() + 1),
             msg="Espansione dal Nazionale ritorna tutti i Comitati - inclusa Italia",
         )
 
         self.assertTrue(
-            italia.espandi(includi_me=False).count() == italia.get_descendants().count(),
+            italia.espandi(includi_me=True, pubblici=False).count() == 1,
+            msg="Espansione dal Nazionale solo se stessa se pubblici=False",
+        )
+
+        self.assertTrue(
+            italia.espandi(includi_me=False, pubblici=True).count() == italia.get_descendants().count(),
             msg="Espansione dal Nazionale ritorna tutti i Comitati - escludendo Italia",
         )
 
         self.assertTrue(
-            _sicilia.espandi(includi_me=True).count() == (_sicilia.get_descendants().count() + 1),
+            _sicilia.espandi(includi_me=True, pubblici=True).count() == (_sicilia.get_descendants().count() + 1),
             msg="Espansione dal Regionale ritrna tutti i Comitati - Inclusa Regione"
         )
 
         self.assertTrue(
-            __catania in _sicilia.espandi(),
+            _sicilia.espandi(includi_me=True, pubblici=False).count() == 1,
+            msg="Espansione dal Regionale ritrna solo se stessa se pubblici=False"
+        )
+
+        self.assertTrue(
+            __catania in _sicilia.espandi(pubblici=True),
             msg="Espansione Regionale ritorna Provinciale"
         )
 
         self.assertTrue(
-            ____salfio in _sicilia.espandi(),
+            ____salfio in _sicilia.espandi(pubblici=True),
             msg="Espansione Regionale ritorna Territoriale"
         )
 
         self.assertTrue(
-            ____riposto in ___giarre.espandi(),
+            ____riposto in ___giarre.espandi(pubblici=True),
+            msg="Espansione Locale ritorna Territoriale"
+        )
+
+        self.assertTrue(
+            ____riposto in ___giarre.espandi(pubblici=False),
             msg="Espansione Locale ritorna Territoriale"
         )
 

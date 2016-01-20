@@ -1244,7 +1244,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             return self.get_descendants(include_self=includi_me)
 
         # Sede privata... espandi con unita' territoriali.
-        if self.estensione in [REGIONALE, PROVINCIALE, LOCALE]:
+        if self.estensione in [PROVINCIALE, LOCALE]:
             return self.get_children().filter(estensione=TERRITORIALE) | Sede.objects.filter(pk=self.pk)
 
         # Sede territoriale. Solo me, se richiesto.
@@ -1449,16 +1449,19 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         from anagrafica.forms import ModuloConsentiEstensione
         return ModuloConsentiEstensione
 
+    def autorizzazione_nega_modulo(self):
+        from anagrafica.forms import ModuloNegaEstensione
+        return ModuloNegaEstensione
+
     def autorizzazione_concessa(self, modulo=None):
         app = Appartenenza(
             membro=Appartenenza.ESTESO,
             persona=self.persona,
             sede=self.destinazione,
-            inizio=datetime.today(),
+            inizio=poco_fa(),
             fine=datetime.today() + timedelta(days=365)
         )
         app.save()
-        app.richiedi()
         self.appartenenza = app
         self.save()
 

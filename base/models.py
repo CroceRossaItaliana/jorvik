@@ -121,7 +121,6 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name_plural = "Autorizzazioni"
         app_label = "base"
-        abstract = False
 
     richiedente = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="autorizzazioni_richieste", on_delete=models.CASCADE)
     firmatario = models.ForeignKey("anagrafica.Persona", db_index=True, blank=True, null=True, default=None,
@@ -536,7 +535,7 @@ class ConAutorizzazioni(models.Model):
                 raise ValueError("L'oggetto specificato non e' valido per il ruolo che si richiede firmi "
                                  "l'autorizzazione.")
 
-            print("Richiesta autorizzazione a %s presso %s" % (ruolo, oggetto,))
+            # print("Richiesta autorizzazione a %s presso %s" % (ruolo, oggetto,))
 
             r = Autorizzazione(
                 richiedente=richiedente,
@@ -559,7 +558,7 @@ class ConAutorizzazioni(models.Model):
                         # ed eventualmente notifica la richiesta in arrivo.
                         r.notifica_richiesta(persona)
 
-                        print("Richiesta aut. %d notificata a %s come richiesto." % (r.pk, persona,))
+                        # print("Richiesta aut. %d notificata a %s come richiesto." % (r.pk, persona,))
 
                     else:
                         print("Richiesta aut. %d NON notificata a %s perché la persona non sembra "

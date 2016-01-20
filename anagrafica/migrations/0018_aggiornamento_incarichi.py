@@ -22,11 +22,11 @@ def forwards_func(apps, schema_editor):
     tot = 0
     print(" Ci sono %d autorizzazioni da aggiornare" % (p.objects.using(db_alias).all().count(),))
     for vecchio_ruolo, nuovo_ruolo in corrispondenze.items():
-        print(" => Aggiorno ruolo autorizzazioni: %s => %s..." % (vecchio_ruolo, nuovo_ruolo,))
+        #print(" => Aggiorno ruolo autorizzazioni: %s => %s..." % (vecchio_ruolo, nuovo_ruolo,))
         auuts = p.objects.using(db_alias).filter(destinatario_ruolo=vecchio_ruolo)
-        print(" ===> %d autorizzazioni da aggiornare " % (auuts.count(),))
+        #print(" ===> %d autorizzazioni da aggiornare " % (auuts.count(),))
         tot += auuts.count()
-        print(" ===> Aggiornamento...")
+        #print(" ===> Aggiornamento...")
         auuts.update(destinatario_ruolo=nuovo_ruolo)
         tot += auuts.count()
 
@@ -43,6 +43,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('anagrafica', '0017_auto_20160120_1524'),
+        ('base', '0004_auto_20160120_1524')
 
     ]
 

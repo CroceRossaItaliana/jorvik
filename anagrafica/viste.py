@@ -208,8 +208,9 @@ def registrati_conferma(request, tipo):
     elif tipo == TIPO_VOLONTARIO:
         #  Richiede appartenenza come Volontario.
         a = Appartenenza(
-            inizio=modulo.cleaned_data['inizio'],
-            sede=modulo.cleaned_data['sede'],
+            persona=p,
+            inizio=dati['inizio'],
+            sede=dati['sede'],
             membro=Appartenenza.VOLONTARIO,
         )
         a.save()
@@ -218,8 +219,9 @@ def registrati_conferma(request, tipo):
     elif tipo == TIPO_DIPENDENTE:
         #  Richiede appartenenza come Dipendente.
         a = Appartenenza(
-            inizio=modulo.cleaned_data['inizio'],
-            sede=modulo.cleaned_data['sede'],
+            persona=p,
+            inizio=dati['inizio'],
+            sede=dati['sede'],
             membro=Appartenenza.DIPENDENTE,
         )
         a.save()

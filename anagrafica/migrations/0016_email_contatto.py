@@ -14,7 +14,7 @@ def forwards_func(apps, schema_editor):
     i = 0
     for x in pp:
         i += 1
-        print("  Aggiornamento e-mail %d di %d" % (i, tot,))
+        #print("  Aggiornamento e-mail %d di %d" % (i, tot,))
         x.email_contatto = x.utenza.email
         x.save()
 
