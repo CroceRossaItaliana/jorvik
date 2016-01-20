@@ -586,13 +586,7 @@ def us_riserva(request, me):
             riserva = modulo.save(commit=False)
             riserva.appartenenza = riserva.persona.appartenenze_attuali().first()
             riserva.save()
-            riserva.autorizzazione_richiedi(
-                richiedente=riserva.persona,
-                destinatario=(
-                    (PRESIDENTE, riserva.persona.sede_riferimento(), NOTIFICA_INVIA),
-                )
-            )
-            riserva.invia_mail()
+            riserva.richiedi()
             return messaggio_generico(request, me, titolo="Riserva registrata",
                                       messaggio="La riserva è stato registrata con successo",
                                       torna_titolo="Inserisci nuova riserva",

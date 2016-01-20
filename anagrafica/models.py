@@ -27,11 +27,13 @@ from model_utils.managers import PassThroughManagerMixin
 
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 
-from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI_NOMI_DICT
+from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI_NOMI_DICT, UFFICIO_SOCI_UNITA
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
     GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE
 from anagrafica.permessi.delega import delega_permessi, delega_incarichi
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_APPARTENENZE, INCARICO_GESTIONE_TRASFERIMENTI, \
+    INCARICO_GESTIONE_ESTENSIONI, INCARICO_GESTIONE_RISERVE
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
 from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
@@ -967,12 +969,10 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         """
         # Import qui per non essere ricorsivo e rompere il mondo
 
-        self.autorizzazione_richiedi(
+        self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
-            (
-                (PRESIDENTE, self.sede, NOTIFICA_INVIA),
-                (UFFICIO_SOCI, self.sede, NOTIFICA_NON_INVIARE)
-            )
+            INCARICO_GESTIONE_APPARTENENZE,
+            invia_notifica_presidente=True
         )
 
     def autorizzazione_concessa(self, modulo=None):
@@ -1067,12 +1067,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         return "<a href='%s' target='_new'>%s</a>" % (
             self.url, self.nome_completo
         )
-
-    def presidente(self):
-        """
-        Ritorna il presidente attuale o None.
-        """
-        return self.comitato.deleghe_attuali(tipo=PRESIDENTE).first()
 
     @property
     def colore_mappa(self):
@@ -1169,6 +1163,26 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
         else:
             return "%s" % (self.nome,)
+
+    def presidente(self):
+        return self.comitato.delegati_attuali(tipo=PRESIDENTE).first()
+
+    def delegati_ufficio_soci(self):
+        """
+        Ottiene le persone in questo ordine:
+        1. Prova con ufficio soci di questa sede; se non esiste
+        2. Prova con ufficio soci del comitato di questa sede; se non esiste
+        3. Prova com presidente di questa sede; se non esiste
+        4. Ritorna un queryset vuoto Persona.
+        :return:
+        """
+        delegati = self.delegati_attuali(tipo__in=[UFFICIO_SOCI, UFFICIO_SOCI_UNITA])
+        if not delegati.exists():
+            delegati = self.comitato.delegati_attuali(tipo__in=[UFFICIO_SOCI, UFFICIO_SOCI_UNITA])
+        if not delegati.exists():
+            delegati = self.comitato.delegati_attuali(tipo=PRESIDENTE)
+        return delegati
+
 
     @property
     def nome_completo(self):
@@ -1379,16 +1393,14 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
         self.save()
 
     def richiedi(self):
-        if not self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO).exists():
-            raise ValueError("Impossibile richiedere trasferimento: Nessuna appartenenza attuale.")
-        sede = self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO)[0]
 
-        self.autorizzazione_richiedi(
-            richiedente=self.persona,
-            destinatario=(
-                (PRESIDENTE, sede, NOTIFICA_INVIA),
-                (UFFICIO_SOCI, sede, NOTIFICA_NON_INVIARE)
-            ),
+        if not self.persona.sede_riferimento():
+            raise ValueError("Impossibile richiedere trasferimento: Nessuna appartenenza attuale.")
+
+        self.autorizzazione_richiedi_sede_riferimento(
+            self.persona,
+            INCARICO_GESTIONE_TRASFERIMENTI,
+            invia_notifica_presidente=True
         )
 
     def url(self):
@@ -1451,16 +1463,13 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         self.save()
 
     def richiedi(self):
-        if not self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO).exists():
+        if not self.persona.sede_riferimento():
             raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
-        sede = self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO)[0]
 
-        self.autorizzazione_richiedi(
-            richiedente=self.persona,
-            destinatario=(
-                (PRESIDENTE, sede, NOTIFICA_INVIA),
-                (UFFICIO_SOCI, sede, NOTIFICA_NON_INVIARE)
-            ),
+        self.autorizzazione_richiedi_sede_riferimento(
+            self.persona,
+            INCARICO_GESTIONE_ESTENSIONI,
+            invia_notifica_presidente=True
         )
 
     def termina(self):
@@ -1497,6 +1506,14 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
     persona = models.ForeignKey(Persona, related_name="riserve", on_delete=models.CASCADE)
     motivo = models.CharField(max_length=4096)
     appartenenza = models.ForeignKey(Appartenenza, related_name="riserve", on_delete=models.PROTECT)
+
+    def richiedi(self):
+        self.autorizzazione_richiedi_sede_riferimento(
+            self.persona,
+            INCARICO_GESTIONE_RISERVE,
+            invia_notifica_presidente=True
+        )
+        self.invia_mail()
 
     def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiRiserva

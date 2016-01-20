@@ -25,6 +25,7 @@ from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
@@ -278,7 +279,7 @@ def utente_fotografia_avatar(request, me):
     return 'anagrafica_utente_fotografia_avatar.html', contesto
 
 @pagina_privata
-def utente_fotografia_fototessera(request, me):
+def utente_fotografia_fototessera(request, me, INCARICATO_GESTIONE_FOTOTESSERE=None):
 
     modulo_fototessera = ModuloNuovaFototessera(request.POST or None, request.FILES or None)
 
@@ -304,14 +305,11 @@ def utente_fotografia_fototessera(request, me):
             fototessera.save()
 
             # Richiede l'autorizzazione
-            fototessera.autorizzazione_richiedi(
-                richiedente=me,
-                destinatario=(
-                    (PRESIDENTE, sede, NOTIFICA_INVIA),
-                    (UFFICIO_SOCI, sede, NOTIFICA_INVIA),
-                )
+            fototessera.autorizzazione_richiedi_sede_riferimento(
+                me, INCARICATO_GESTIONE_FOTOTESSERE,
+                invia_notifica_ufficio_soci=True,
+                invia_notifica_presidente=True
             )
-
 
 
     contesto = {
@@ -638,11 +636,9 @@ def utente_riserva(request, me):
         r.appartenenza = me.appartenenze_attuali().first()
         r.save()
         r.invia_mail()
-        r.autorizzazione_richiedi(
-            richiedente=me,
-            destinatario=(
-                (PRESIDENTE, me.sede_riferimento(), NOTIFICA_INVIA),
-            )
+        r.autorizzazione_richiedi_sede_riferimento(
+            me, INCARICO_GESTIONE_RISERVE,
+            invia_notifica_presidente=True,
         )
 
         return messaggio_generico(request, me, titolo="Riserva registrata",
@@ -822,16 +818,15 @@ def utente_curriculum(request, me, tipo=None):
             tp.save()
 
             if titolo_selezionato.richiede_conferma:
-                sede_attuale = me.sedi_attuali(membro__in=Appartenenza.MEMBRO_DIRETTO).first()
+                sede_attuale = me.sede_riferimento()
                 if not sede_attuale:
                     return errore_nessuna_appartenenza(
                         request, me,
                         torna_url="/utente/curriculum/%s/" % (tipo,),
                     )
 
-                tp.autorizzazione_richiedi(
-                    me,
-                        ((PRESIDENTE, sede_attuale), (UFFICIO_SOCI, sede_attuale))
+                tp.autorizzazione_richiedi_sede_riferimento(
+                    me, INCARICO_GESTIONE_TITOLI
                 )
 
             return redirect("/utente/curriculum/%s/?inserimento=ok" % (tipo,))

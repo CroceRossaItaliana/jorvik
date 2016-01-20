@@ -468,7 +468,9 @@ class ConAutorizzazioni(models.Model):
         tipo = ContentType.objects.get_for_model(self)
         return Autorizzazione.objects.filter(oggetto_tipo__pk=tipo.id, oggetto_id=self.id)
 
-    def autorizzazione_richiedi_sede_riferimento(self, richiedente, incarico, invia_notifica=True, **kwargs):
+    def autorizzazione_richiedi_sede_riferimento(self, richiedente, incarico, invia_notifiche=[],
+                                                 invia_notifica_presidente=False, invia_notifica_ufficio_soci=False,
+                                                 **kwargs):
         """
         Richiede una autorizzazione per l'oggetto attuale nel caso di incarico relativo
          alla sede di riferimento della Persona.
@@ -485,8 +487,15 @@ class ConAutorizzazioni(models.Model):
         if not sede_riferimento:
             return False
 
-        notifica = NOTIFICA_INVIA if invia_notifica else NOTIFICA_NON_INVIARE
-        self.autorizzazione_richiedi(richiedente, (incarico, sede_riferimento, notifica), **kwargs)
+        if invia_notifica_presidente:
+            presidente = sede_riferimento.presidente()
+            invia_notifiche = list(invia_notifiche) + ([presidente] if presidente else [])
+
+        if invia_notifica_ufficio_soci:
+            ufficio_soci = list(sede_riferimento.delegati_ufficio_soci())
+            invia_notifiche = list(invia_notifiche) + ufficio_soci
+
+        self.autorizzazione_richiedi(richiedente, (incarico, sede_riferimento), invia_notifiche=invia_notifiche, **kwargs)
         return True
 
     def autorizzazione_richiedi(self, richiedente, destinatario, invia_notifiche=None, **kwargs):
@@ -548,7 +557,7 @@ class ConAutorizzazioni(models.Model):
                     if persona.autorizzazioni().filter(pk=r.pk).exists():
                         # Assicurati che la persona abbia autorizzazione
                         # ed eventualmente notifica la richiesta in arrivo.
-                        r.notifica_richiesta(invia_notifiche)
+                        r.notifica_richiesta(persona)
 
                         print("Richiesta aut. %d notificata a %s come richiesto." % (r.pk, persona,))
 

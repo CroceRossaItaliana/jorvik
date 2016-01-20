@@ -66,6 +66,8 @@ def espandi_incarichi_ufficio_soci_unita(qs_sede, al_giorno=date.today()):
         (INCARICO_GESTIONE_TRASFERIMENTI,               qs_sede),
         (INCARICO_GESTIONE_ESTENSIONI,                  qs_sede),
         (INCARICO_GESTIONE_FOTOTESSERE,                 qs_sede),
+        (INCARICO_GESTIONE_TITOLI,                      qs_sede),
+        (INCARICO_GESTIONE_RISERVE,                     qs_sede),
     ]
 
 

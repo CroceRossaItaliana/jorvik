@@ -2,6 +2,7 @@ from django.db import models
 
 from anagrafica.permessi.applicazioni import PRESIDENTE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_SANGUE
 from base.models import ModelloSemplice, ConAutorizzazioni
 from base.tratti import ConMarcaTemporale
 
@@ -157,7 +158,6 @@ class Donazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
         sede = self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO)[0].comitato
 
-        self.autorizzazione_richiedi(
-            self.persona,
-            ((PRESIDENTE, sede), (UFFICIO_SOCI, sede))
+        self.autorizzazione_richiedi_sede_riferimento(
+            self.persona, INCARICO_GESTIONE_SANGUE
         )
