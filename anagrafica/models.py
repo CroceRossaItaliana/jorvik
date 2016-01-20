@@ -27,7 +27,8 @@ from model_utils.managers import PassThroughManagerMixin
 
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 
-from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI_NOMI_DICT, UFFICIO_SOCI_UNITA
+from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI_NOMI_DICT, UFFICIO_SOCI_UNITA, \
+    DELEGHE_RUBRICA
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
     GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE
@@ -241,12 +242,25 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     #    - Per avere un elenco di numeri di telefono formattati, usare ad esempio
     #       numeri = [str(x) for x in Persona.numeri_telefono]
     #    - Usare Persona.aggiungi_numero_telefono per aggiungere un numero di telefono.
+    def numeri_pubblici(self):
+        numeri_servizio = self.numeri_telefono.filter(servizio=True)
+        if numeri_servizio.exists():
+            return numeri_servizio
+        return self.numeri_telefono.all()
 
     def deleghe_attuali(self, al_giorno=date.today(), **kwargs):
         """
         Ritorna una ricerca per le deleghe che son attuali.
         """
         return self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno).q, **kwargs)
+
+    def deleghe_attuali_rubrica(self, al_giorno=date.today(), **kwargs):
+        """
+        Ritorna una ricerca per le deleghe che son attuali.
+        """
+        return self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno).q,
+                                   tipo__in=DELEGHE_RUBRICA,
+                                   **kwargs)
 
     def sedi_deleghe_attuali(self, al_giorno=date.today(), espandi=False, **kwargs):
         sedi = Sede.objects.none()
@@ -906,6 +920,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     # Membro che puo' essere reclamato da una Sede
     MEMBRO_RECLAMABILE = (VOLONTARIO, ORDINARIO, DIPENDENTE, SOSTENITORE,)
 
+    # Membro che puo' accedere alla rubrica di una Sede
+    MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE,)
+
     # Membri soci
     MEMBRO_SOCIO = (VOLONTARIO, ORDINARIO,)
     MEMBRO_ANZIANITA = MEMBRO_SOCIO
@@ -920,9 +937,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         (ORDINARIO, 'Socio Ordinario'),
         (SOSTENITORE, 'Sostenitore'),
         (DIPENDENTE, 'Dipendente'),
-        (INFERMIERA, 'Infermiera Volontaria'),
-        (MILITARE, 'Membro Militare'),
-        (DONATORE, 'Donatore Finanziario'),
+        #(INFERMIERA, 'Infermiera Volontaria'),
+        #(MILITARE, 'Membro Militare'),
+        #(DONATORE, 'Donatore Finanziario'),
     )
     membro = models.CharField("Tipo membro", max_length=2, choices=MEMBRO, default=VOLONTARIO, db_index=True)
 

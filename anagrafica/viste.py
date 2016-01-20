@@ -1,6 +1,7 @@
 import datetime
 from collections import OrderedDict
 
+from django.contrib.contenttypes.models import ContentType
 from django.db.models.loading import get_model
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
@@ -23,8 +24,9 @@ from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, 
     ProvvedimentoDisciplinare, Sede, Riserva
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
-    RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA
-from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE
+    RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA
+from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
+    ELENCHI_SOCI
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
@@ -430,6 +432,47 @@ def utente_contatti(request, me):
     }
 
     return 'anagrafica_utente_contatti.html', contesto
+
+
+@pagina_privata
+def utente_rubrica_referenti(request, me):
+    sedi_volontario = Sede.objects.filter(pk__in=me.sedi_attuali(membro__in=Appartenenza.MEMBRO_RUBRICA).values_list("id", flat=True))
+    referenti = Persona.objects.filter(
+        Delega.query_attuale(
+            oggetto_tipo=ContentType.objects.get_for_model(Sede),
+            oggetto_id__in=sedi_volontario,
+            tipo__in=DELEGHE_RUBRICA,
+        ).via("delega")
+    ).order_by('nome', 'cognome', 'codice_fiscale').distinct('nome', 'cognome', 'codice_fiscale')
+
+    contesto = {
+        "referenti": referenti,
+    }
+    return 'anagrafica_utente_rubrica_referenti.html', contesto
+
+
+@pagina_privata
+def utente_rubrica_volontari(request, me):
+    sedi_volontario = Sede.objects.filter(pk__in=me.sedi_attuali(membro__in=Appartenenza.MEMBRO_RUBRICA).values_list("id", flat=True))
+    sedi_gestione = me.oggetti_permesso(ELENCHI_SOCI)
+    volontari_volontario = Persona.objects.filter(
+        Appartenenza.query_attuale(membro__in=Appartenenza.MEMBRO_RUBRICA, sede__in=sedi_volontario).via("appartenenze"),
+        privacy_contatti__gte=Persona.POLICY_SEDE,
+    )
+    #volontari_gestione = Persona.objects.filter(
+    #    Appartenenza.query_attuale(membro__in=Appartenenza.MEMBRO_RUBRICA, sede__in=sedi_gestione).via("appartenenze"),
+    #    privacy_contatti__gte=Persona.POLICY_RISTRETTO,
+    #)
+    volontari = volontari_volontario #  | volontari_gestione
+    volontari = volontari.prefetch_related('appartenenze', 'fototessere').order_by('nome', 'cognome')
+    ci_sono = volontari_volontario.filter(pk=me.pk).exists()
+
+    contesto = {
+        "volontari": volontari,
+        "ci_sono": ci_sono,
+    }
+    return 'anagrafica_utente_rubrica_volontari.html', contesto
+
 
 @pagina_privata
 def utente_contatti_cancella_numero(request, me, pk):

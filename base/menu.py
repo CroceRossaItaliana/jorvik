@@ -33,6 +33,10 @@ def menu(request):
                 ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
                 ("Riserva", "fa-arrow-right", "/utente/riserva/"),
             )) ,
+            ("Rubrica", (
+                ("Referenti", "fa-book", "/utente/rubrica/referenti/"),
+                ("Volontari", "fa-book", "/utente/rubrica/volontari/"),
+            )) ,
             ("Curriculum", (
                 ("Competenze personali", "fa-arrow-right", "/utente/curriculum/CP/"),
                 ("Patenti Civili", "fa-arrow-right", "/utente/curriculum/PP/"),
