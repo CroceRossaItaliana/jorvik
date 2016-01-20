@@ -205,9 +205,12 @@ def veicoli_termina_fermo_tecnico(request, me, fermo):
 
 @pagina_privata
 def veicoli_collocazioni(request, me, veicolo):
-    veicolo = get_object_or_404(Veicolo, pk = veicolo)
-    collocazioni = veicolo.collocazioni.all().order_by("-data")
+    veicolo = get_object_or_404(Veicolo, pk=veicolo)
+    collocazioni = veicolo.collocazioni.all().order_by("-inizio")
     modulo = ModuloCreazioneCollocazione(request.POST or None)
+    sedi = me.oggetti_permesso(GESTIONE_AUTOPARCHI_SEDE)
+    autoparchi = Autoparco.objects.filter(sede__in=sedi)
+    modulo.fields['autoparco'].queryset = autoparchi
     if not me.permessi_almeno(veicolo, MODIFICA):
         return redirect(ERRORE_PERMESSI)
     if modulo.is_valid():

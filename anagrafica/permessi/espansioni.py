@@ -92,10 +92,10 @@ def espandi_gestione_attivita(qs_attivita, al_giorno=date.today()):
 def espandi_gestione_autoparchi_sede(qs_sedi, al_giorno=date.today()):
     from veicoli.models import Autoparco, Veicolo, Collocazione
     return [
-        (MODIFICA,  Autoparco.objects.filter(sede__in=qs_sedi)),
+        (MODIFICA,  Autoparco.objects.filter(sede__in=qs_sedi.espandi())),
         (MODIFICA,  Veicolo.objects.filter(Collocazione.query_attuale().via("collocazioni"),
-                                           collocazioni__autoparco__sede__in=qs_sedi)),
-        (MODIFICA,  Collocazione.query_attuale(autoparco__sede__in=qs_sedi)),
+                                           collocazioni__autoparco__sede__in=qs_sedi.espandi())),
+        (MODIFICA,  Collocazione.query_attuale(autoparco__sede__in=qs_sedi.espandi())),
     ]
 
 
