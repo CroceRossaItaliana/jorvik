@@ -7,7 +7,7 @@ __author__ = 'alfioemanuele'
 
 @admin.register(Messaggio)
 class AdminMessaggio(admin.ModelAdmin):
-    search_fields = ['oggetto', 'mittente__codice_fiscale', 'mittente__email', 'mittente__utenza__email']
+    search_fields = ['oggetto', 'mittente__codice_fiscale', 'mittente__email_contatto', 'mittente__utenza__email']
     list_display = ('oggetto', 'mittente', 'creazione', 'ultimo_tentativo', 'terminato', )
     list_filter = ('creazione', 'terminato', 'ultimo_tentativo',)
     raw_id_fields = ('mittente',)
