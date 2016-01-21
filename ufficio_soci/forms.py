@@ -83,7 +83,7 @@ class ModuloElencoQuote(forms.Form):
     anno = forms.IntegerField(min_value=Tesseramento.objects.earliest('anno').anno if Tesseramento.objects.all().exists() else None,
                               max_value=Tesseramento.objects.latest('anno').anno if Tesseramento.objects.all().exists() else None,
                               initial=min(datetime.datetime.now().year,
-                                          Tesseramento.objects.latest('anno').anno if Tesseramento.objects.all().exists() else None))
+                                          Tesseramento.objects.latest('anno').anno if Tesseramento.objects.all().exists() else 9999))
 
 
 class ModuloAggiungiPersona(ModuloStepAnagrafica):
