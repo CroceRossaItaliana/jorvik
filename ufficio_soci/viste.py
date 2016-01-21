@@ -475,10 +475,20 @@ def us_elenco_download(request, me, elenco_id):
     fogli = {}
 
     def __semplifica_nome(nome):
-        return nome.replace("/", "")
+        return nome\
+            .replace("/", "")\
+            .replace(": ", "-")\
+            .replace("Comitato ", "")\
+            .replace("Locale ", "")\
+            .replace("Provinciale ", "")\
+            .replace("Di ", "")\
+            .replace("di ", "")\
+            .replace("Della ", "")\
+            .replace("Dell'", "")\
+            .replace("Del ", "")
 
     for persona in persone:
-        foglio = __semplifica_nome(elenco.excel_foglio(persona)[:31]) if fogli_multipli else FOGLIO_DEFAULT
+        foglio = __semplifica_nome(elenco.excel_foglio(persona))[:31] if fogli_multipli else FOGLIO_DEFAULT
         foglio_key = foglio.lower().strip()
         if foglio_key not in [x.lower() for x in fogli.keys()]:
             fogli.update({
