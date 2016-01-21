@@ -212,6 +212,7 @@ def veicoli_collocazioni(request, me, veicolo):
     autoparchi = Autoparco.objects.filter(sede__in=sedi)
     modulo.fields['autoparco'].queryset = autoparchi
     if not me.permessi_almeno(veicolo, MODIFICA):
+
         return redirect(ERRORE_PERMESSI)
     if modulo.is_valid():
         veicolo.collocazione().termina()
