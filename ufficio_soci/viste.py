@@ -469,6 +469,9 @@ def us_elenco_download(request, me, elenco_id):
     # Ottiene intestazione e funzioni colonne
     intestazione = [x[0] for x in elenco.excel_colonne()]
     colonne = [x[1] for x in elenco.excel_colonne()]
+    if not fogli_multipli:
+        intestazione += ["Elenco"]
+
     fogli = {}
 
     def __semplifica_nome(nome):
@@ -483,6 +486,9 @@ def us_elenco_download(request, me, elenco_id):
             })
 
         persona_colonne = [y if y is not None else "" for y in [x(persona) for x in colonne]]
+        if not fogli_multipli:
+            persona_colonne += [elenco.excel_foglio(persona)]
+
         fogli[foglio_key].aggiungi_riga(
             *persona_colonne
         )
