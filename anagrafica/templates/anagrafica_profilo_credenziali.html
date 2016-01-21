@@ -83,7 +83,7 @@
                         </p>
                         <p class="grassetto">
                             Inserisci l'indirizzo e-mail di {{ persona.nome }}
-                            a destra. Invieremo tramite e-mail una password
+                            qui accanto. Invieremo tramite e-mail una password
                             a {{ persona.nome }}, che potr&agrave; quindi accedere
                             a Gaia.
                         </p>
@@ -114,13 +114,39 @@
 
             <div class="panel-body">
 
-                <div class="alert alert-block alert-success">
-                    <h4>
-                        <i class="fa fa-fw fa-check-circle"></i>
+                {% if modulo %}
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <p>
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            <strong>Nota bene</strong>: Invieremo le credenziali
+                            per e-mail a {{ persona.nome }}, con le istruzioni
+                            sul come accedere a Gaia nonch&eacute; impostare delle
+                            credenziali di proprio piacimento.
+                        </p>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fa fa-fw fa-gears"></i>
+                            Invia credenziali a {{ persona.nome }}
+                        </button>
 
-                    </h4>
-                </div>
+                    </form>
 
+                {% else %}
+                    <p>
+                        <i class="fa fa-fw fa-info-circle"></i>
+                        Se {{ persona.nome }} ha perso la password,
+                        puoi consigliargli di visitare in autonomia
+                        l'indirizzo seguente, che gli permetter&agrave;
+                        di recuperare la password al suo indirizzo
+                        e-mail {{ persona.utenza.email }}:
+                    </p>
+
+                    <p class="monospace">
+                        https://gaia.cri.it/password-dimenticata/
+                    </p>
+
+                {% endif %}
 
 
             </div>
@@ -135,10 +161,11 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                Opzioni
+                Ultimo accesso
             </div>
-            <div class="panel-body piu-piccolo">
-
+            <div class="panel-body">
+                <i class="fa fa-fw fa-clock-o"></i>
+                {{ persona.ultimo_accesso_testo }}
 
 
             </div>

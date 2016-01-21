@@ -394,13 +394,17 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         Ottiene l'ultimo accesso in testo, senza ledere la privacy.
         """
-        if not self.utenza or not self.utenza.ultimo_accesso:
+        try:
+            if not self.utenza.ultimo_accesso:
+                return "Mai"
+
+        except:
             return "Mai"
 
-        if self.utenza.ultimo_accesso > date.today().timedelta(days=-5):
+        if self.utenza.ultimo_accesso < datetime.now() - timedelta(days=5):
             return "Recentemente"
 
-        if self.utenza.ultimo_accesso > date.today().timedelta(months=-1):
+        if self.utenza.ultimo_accesso < datetime.now() - timedelta(days=31):
             return "Nell'ultimo mese"
 
         return "Più di un mese fà"

@@ -201,9 +201,13 @@ urlpatterns = [
 
     url(r'^token-sicuro/(?P<codice>.*)/$', 'base.viste.verifica_token'),
 
+    url(r'^password-dimenticata/$', 'base.viste.redirect_semplice', {"nuovo_url": "/password_reset/"}),
+
     # Amministrazione
     url(r'^admin/', include(admin.site.urls)),
     url(r'^admin/', include('loginas.urls')),   # Login come utente
+
+
 
     # Autocompletamento
     url(r'^autocomplete/', include('autocomplete_light.urls')),

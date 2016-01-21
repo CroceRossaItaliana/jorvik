@@ -61,7 +61,6 @@ def espandi_gestione_sede(qs_sedi, al_giorno=date.today()):
     from anagrafica.models import Sede
     return [
         (GESTIONE,  qs_sedi),
-        (GESTIONE,  qs_sedi.espandi()),
     ]
 
 

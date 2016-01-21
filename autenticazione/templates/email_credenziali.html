@@ -1,0 +1,41 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p>Ciao {{ persona.nome }}!</p>
+
+    <p>
+        Il {{ utenza.ultima_modifica }} sono state generate delle nuove credenziali per il tuo accesso a Gaia:
+    </p>
+
+    <ul>
+        <li>
+            <p>Indirizzo per l'accesso:<br />
+            <a href="https://gaia.cri.it/login/">Clicca qui</a></p>
+        </li>
+        <li>
+            <p>Indirizzo e-mail di accesso:<br />
+            <span style="font-family: monospace; font-weight: bold;">
+                {{ utenza.email }}
+            </span></p>
+        </li>
+        <li>
+            <p>Nuova password temporanea:<br />
+            <span style="font-family: monospace; font-weight: bold;">
+                {{ nuova_password }}
+            </span></p>
+        </li>
+    </ul>
+
+    <p>
+        <strong>IMPORTANTE</strong>:
+        Per motivi di sicurezza, ricorda di cambiare immediatamente la password con una
+        di tua scelta. Puoi farlo dalla pagina:
+        <a href="https://gaia.cri.it/utente/cambia-password/">https://gaia.cri.it/utente/cambia-password/</a>.
+    </p>
+
+    {% if richiedente %}
+        <p>La richiesta di generazione delle credenziali ci &egrave; pervenuta da {{ richiedente.nome_completo }}.</p>
+    {% endif %}
+
+{% endblock %}

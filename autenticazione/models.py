@@ -6,7 +6,9 @@ from django.db import models
 from django.db.models import OneToOneField
 from django.utils.http import urlquote
 from base.models import ModelloSemplice
+from base.stringhe import genera_uuid_casuale
 from base.tratti import ConMarcaTemporale
+from posta.models import Messaggio
 
 
 class GestoreUtenti(BaseUserManager):
@@ -78,6 +80,25 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
 
     def email_user(self, subject, message, from_email=None):
         send_mail(subject, message, from_email, [self.email])
+
+    def genera_credenziali(self, richiedente=None):
+        nuova_password = genera_uuid_casuale()
+        self.set_password(nuova_password)
+        self.save()
+
+        Messaggio.costruisci_e_invia(
+            oggetto="Credenziali per accedere a Gaia",
+            modello="email_credenziali.html",
+            corpo={
+                "nuova_password": nuova_password,
+                "utenza": self,
+                "persona": self.persona,
+                "richiedente": richiedente,
+            },
+            mittente=None,
+            destinatari=[self.persona],
+        )
+
 
     @property
     def applicazioni_disponibili(self):

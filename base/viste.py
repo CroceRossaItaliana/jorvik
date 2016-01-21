@@ -426,5 +426,5 @@ def supporto(request, me=None):
     return 'supporto.html', contesto
 
 
-def redirect_semplice(nuovo_url='/', **kwargs):
+def redirect_semplice(request, nuovo_url='/'):
     return redirect(nuovo_url)

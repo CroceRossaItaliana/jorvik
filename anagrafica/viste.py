@@ -1006,16 +1006,21 @@ def _profilo_quote(request, me, persona):
 
 def _profilo_credenziali(request, me, persona):
     utenza = Utenza.objects.filter(persona=persona).first()
-    modulo_utenza = ModuloUtenza(request.POST or None, instance=utenza)
 
-    if modulo_utenza.is_valid():
+    modulo_utenza = None
+    if not utenza:
+        modulo_utenza = ModuloUtenza(request.POST or None, instance=utenza, initial={"email": persona.email_contatto})
+
+    if modulo_utenza and modulo_utenza.is_valid():
         utenza = modulo_utenza.save(commit=False)
         utenza.persona = persona
         utenza.save()
+        utenza.genera_credenziali()
+        return redirect(persona.url_profilo_credenziali)
 
     contesto = {
         "utenza": utenza,
-        "modulo_utenza": modulo_utenza,
+        "modulo": modulo_utenza,
 
     }
     return 'anagrafica_profilo_credenziali.html', contesto
@@ -1123,11 +1128,15 @@ def profilo(request, me, pk, sezione=None):
             return redirect(ERRORE_PERMESSI)
 
         s = sezioni[sezione]
+        risposta = s[2](request, me, persona)
 
-        f_template, f_contesto = s[2](request, me, persona)
-        contesto.update(f_contesto)
-        return f_template, contesto
+        try:
+            f_template, f_contesto = risposta
+            contesto.update(f_contesto)
+            return f_template, contesto
 
+        except ValueError:
+            return risposta
 
 @pagina_privata
 def presidente(request, me):
