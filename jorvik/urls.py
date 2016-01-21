@@ -204,6 +204,9 @@ urlpatterns = [
     url(r'^password-dimenticata/$', 'base.viste.redirect_semplice', {"nuovo_url": "/password_reset/"}),
 
     # Amministrazione
+
+    url(r'^admin/import/volontari/$', 'anagrafica.viste.admin_import_volontari'),
+
     url(r'^admin/', include(admin.site.urls)),
     url(r'^admin/', include('loginas.urls')),   # Login come utente
 

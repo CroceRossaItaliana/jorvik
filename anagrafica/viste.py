@@ -1,3 +1,4 @@
+import csv
 import datetime
 from collections import OrderedDict
 
@@ -15,11 +16,13 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
-    ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede
+    ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
+    ModuloImportVolontari
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
+from anagrafica.importa import VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari
 from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento, \
     ProvvedimentoDisciplinare, Sede, Riserva
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
@@ -34,6 +37,7 @@ from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_
 from base.files import Zip
 from base.models import Log
 from base.notifiche import NOTIFICA_INVIA
+from base.stringhe import genera_uuid_casuale
 from base.utils import remove_none, poco_fa
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
@@ -1211,3 +1215,55 @@ def presidente_sede_delegati(request, me, sede_pk, delega):
     }
     return 'anagrafica_presidente_sede_delegati.html', contesto
 
+
+def handle_uploaded_file(f):
+    nome = '/tmp/csv-%s.txt' % (genera_uuid_casuale(),)
+    with open(nome, 'wb+') as destination:
+        for chunk in f.chunks():
+            destination.write(chunk)
+    return nome
+
+@pagina_privata
+def admin_import_volontari(request, me):
+    from anagrafica.importa import import_valida_volontari
+    if not me.utenza.is_staff:
+        return redirect(ERRORE_PERMESSI)
+
+    risultati = []
+    modulo = ModuloImportVolontari(request.POST or None, request.FILES or None)
+    righe = []
+
+    importati = 0
+
+    if modulo.is_valid():
+
+
+        nome_file = handle_uploaded_file(request.FILES['file_csv'])
+        with open(nome_file, 'r') as csvfile:
+            riga = csv.reader(csvfile, delimiter=modulo.cleaned_data['delimitatore'])
+            intestazione = True
+            for r in riga:
+                if intestazione:
+                    intestazione = False
+                    continue
+                righe += [r]
+
+        try:
+            risultati = import_valida_volontari(righe)
+            if modulo.cleaned_data['azione'] == modulo.IMPORTA:
+                importati = import_import_volontari(risultati)
+
+        except IndexError:
+            return errore_generico(request, me, titolo="Delimitatore errato",
+                                   messaggio="File non valido o delimitatore errato")
+
+        risultati = zip(righe, risultati)
+    contesto = {
+        "modulo": modulo,
+        "risultati": risultati,
+        "ERRORE": VALIDAZIONE_ERRORE,
+        "AVVISO": VALIDAZIONE_AVVISO,
+        "OK": VALIDAZIONE_OK,
+        "importati": importati,
+    }
+    return 'admin_import_volontari.html', contesto
