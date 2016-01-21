@@ -74,7 +74,10 @@
                             {% if avviso.0 == OK %}
                                 <tr class="success">
                                     <td colspan="{{ riga.0|length }}">
-                                        <i class="fa fa-fw fa-check-circle"></i> OK
+                                        <i class="fa fa-fw fa-check-circle"></i> <strong>OK</strong>
+                                        {% if importati %}Volontario caricato correttamente su Gaia.
+                                            {% else %}Il volontario &egrave; pronto per essere caricato.
+                                            {% endif %}
                                     </td>
                                 </tr>
 
@@ -88,7 +91,9 @@
                             {% elif avviso.0 == ERRORE %}
                                 <tr class="danger error">
                                     <td colspan="{{ riga.0|length }}">
-                                        <i class="fa fa-fw fa-times"></i> {{ avviso.1 }}
+                                        <i class="fa fa-fw fa-times"></i>
+                                        <strong>IMPOSSIBLE CARICARE</strong>:
+                                        {{ avviso.1 }}
                                     </td>
                                 </tr>
 

@@ -1235,12 +1235,17 @@ def admin_import_volontari(request, me):
 
     importati = 0
 
+    def unicode_csv_reader(utf8_data, dialect=csv.excel, **kwargs):
+        csv_reader = csv.reader(utf8_data, dialect=dialect, **kwargs)
+        for row in csv_reader:
+            yield [cell.decode('UTF-8') if hasattr(cell, 'decode') else cell for cell in row]
+
     if modulo.is_valid():
 
 
         nome_file = handle_uploaded_file(request.FILES['file_csv'])
         with open(nome_file, 'r') as csvfile:
-            riga = csv.reader(csvfile, delimiter=modulo.cleaned_data['delimitatore'])
+            riga = unicode_csv_reader(csvfile, delimiter=modulo.cleaned_data['delimitatore'])
             intestazione = True
             for r in riga:
                 if intestazione:

@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
 from anagrafica.models import Persona, Sede, Appartenenza
+from autenticazione.models import Utenza
 from base.stringhe import normalizza_nome
 from base.utils import poco_fa
 from formazione.models import Aspirante
@@ -15,6 +16,9 @@ VALIDAZIONE_AVVISO = "AVVISO"
 VALIDAZIONE_ERRORE = "ERRORE"
 
 def import_valida_volontario_riga(riga):
+
+    for i in range(0, len(riga)):
+        riga[i] = riga[i]
 
     log = []
 
@@ -58,6 +62,18 @@ def import_valida_volontario_riga(riga):
         log += [(VALIDAZIONE_ERRORE, "Sede non trovata: %s" % (sede,))]
         sede = None
 
+
+    email = riga[10]
+    email_2 = riga[11]
+    email = email or email_2
+
+    if email:
+        try:
+            validate_email(email)
+        except ValidationError:
+            log += [(VALIDAZIONE_ERRORE, "E-mail non valida")]
+
+
     precedente = Persona.objects.filter(codice_fiscale=codice_fiscale).first()
     if sede:
         if precedente:
@@ -73,14 +89,28 @@ def import_valida_volontario_riga(riga):
                 log += [(VALIDAZIONE_ERRORE, "Già appartenente presso Sede fuori da %s" % (sede.comitato.nome,))]
 
             elif aspirante:
-                log += [(VALIDAZIONE_AVVISO, "Esiste in Gaia ma come aspirante")]
+                log += [(VALIDAZIONE_AVVISO, "Persona pre-esistente in Gaia, iscritta come aspirante. Verrà aggiornata la "
+                                             "sua appartenenza e disattivata la possibilita di partecipare a nuovi corsi base. ")]
 
             else:
                 log += [(VALIDAZIONE_AVVISO, "Esiste in Gaia ma senza alcuna appartenenza")]
 
         else:
 
-            log += [(VALIDAZIONE_AVVISO, "Non esistente in Gaia")]
+            # log += [(VALIDAZIONE_AVVISO, "Non pre-esistente in Gaia")]
+
+            if email and Utenza.objects.filter(email__iexact=email).exists():
+                log += [(VALIDAZIONE_AVVISO, "Impossibile attivare credenziali automaticamente, email gia esistente (%s), "
+                                             "sarà necessario attivare delle credenziali manualmente dal pannello credenziali"
+                                             " della sua scheda." % (email,))]
+
+            elif not email:
+                log += [(VALIDAZIONE_AVVISO, "Impossibile attivare credenziali automaticamente, email non specificata, "
+                             "sarà necessario attivare delle credenziali manualmente dal pannello credenziali"
+                             " della sua scheda.")]
+
+
+
 
     indirizzo_residenza = "%s, %s" % (riga[5], riga[6])
     if indirizzo_residenza == ", ":
@@ -97,19 +127,6 @@ def import_valida_volontario_riga(riga):
     cap = riga[9]
     if not cap:
         log += [(VALIDAZIONE_ERRORE, "CAP di residenza obbligatorio")]
-
-    email = riga[10]
-    email_2 = riga[11]
-    email = email or email_2
-
-    if email:
-        try:
-            validate_email(email)
-        except ValidationError:
-            log += [(VALIDAZIONE_ERRORE, "E-mail non valida")]
-
-    else:
-        log += [(VALIDAZIONE_AVVISO, "E-mail non presente")]
 
     telefono = riga[12]
     telefono_servizio = riga[13]
@@ -216,6 +233,15 @@ def import_import_volontari(risultato):
         )
         app.save()
 
+        if dati['email'] and not Utenza.objects.filter(persona=persona).exists():
+            # Non ha utenza
+            if not Utenza.objects.filter(email__iexact=dati['email']):
+                # Non esiste, prova a creare
+                u = Utenza(persona=persona, email=dati['email'])
+                u.save()
+                u.genera_credenziali()
+
         i += 1
 
     return i
+
