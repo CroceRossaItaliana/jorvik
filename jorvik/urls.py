@@ -72,6 +72,7 @@ urlpatterns = [
     url(r'^utente/curriculum/(?P<tipo>.*)/$', 'anagrafica.viste.utente_curriculum'),
     url(r'^utente/riserva/$', 'anagrafica.viste.utente_riserva'),
     url(r'^utente/riserva/(?P<pk>.*)/termina/$', 'anagrafica.viste.utente_riserva_termina'),
+    url(r'^utente/riserva/(?P<pk>.*)/ritira/$', 'anagrafica.viste.utente_riserva_ritira'),
     url(r'^utente/contatti/cancella-numero/(?P<pk>.*)/$', 'anagrafica.viste.utente_contatti_cancella_numero'),
     url(r'^utente/estensione/(?P<pk>.*)/termina/$', 'anagrafica.viste.utente_estensione_termina'),
     url(r'^utente/trasferimento/(?P<pk>.*)/ritira/$', 'anagrafica.viste.utente_trasferimento_ritira'),
