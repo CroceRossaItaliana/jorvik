@@ -3,6 +3,13 @@
 
 {% partecipazione turno as part %}
 
+{% if puo_modificare %}
+    <a href="{{ turno.url_modifica }}" class="btn btn-sm btn-block btn-default">
+        <i class="fa fa-fw fa-pencil"></i>
+        Gestione turno
+    </a>
+{% endif %}
+
 <div class="btn-group-vertical btn-block">
 
 

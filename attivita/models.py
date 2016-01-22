@@ -15,7 +15,7 @@ from anagrafica.permessi.costanti import MODIFICA
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI, INCARICO_PRESIDENZA
 from base.utils import concept
 from social.models import ConGiudizio, ConCommenti
-from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati, ConVecchioID
+from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati, ConVecchioID, Autorizzazione
 from base.tratti import ConMarcaTemporale, ConDelegati
 from base.geo import ConGeolocalizzazione
 
@@ -130,12 +130,12 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
     nome = models.CharField(max_length=128, default="Nuovo turno", db_index=True)
 
+    inizio = models.DateTimeField("Data e ora di inizio", db_index=True, null=False)
+    fine = models.DateTimeField("Data e ora di fine", db_index=True, null=True, blank=True, default=None)
     prenotazione = models.DateTimeField("Prenotazione entro", db_index=True, null=False)
-    inizio = models.DateTimeField("Inizio", db_index=True, null=False)
-    fine = models.DateTimeField("Fine", db_index=True, null=True, blank=True, default=None)
 
-    minimo = models.SmallIntegerField(db_index=True, default=1)
-    massimo = models.SmallIntegerField(db_index=True, null=True, default=None)
+    minimo = models.SmallIntegerField(verbose_name="Num. minimo di partecipanti", db_index=True, default=1)
+    massimo = models.SmallIntegerField(verbose_name="Num. massimo di partecipanti", db_index=True, blank=True, null=True, default=None)
 
     PER_PAGINA = 10
 
@@ -234,7 +234,7 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
     @property
     def pieno(self):
-        return self.partecipazioni_confermate().count() >= self.massimo
+        return self.massimo and self.partecipazioni_confermate().count() >= self.massimo
 
     @property
     def futuro(self):
@@ -243,6 +243,10 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     @property
     def url(self):
         return "%sturni/link-permanente/%d/" % (self.attivita.url, self.pk)
+
+    @property
+    def url_modifica(self):
+        return "%sturni/modifica/link-permanente/%d/" % (self.attivita.url, self.pk)
 
     @property
     def url_partecipa(self):
@@ -281,16 +285,50 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         return floor((self.elenco_posizione() / self.PER_PAGINA) + 1)
 
     def partecipazioni_in_attesa(self):
-        return Partecipazione.con_esito_pending(turno=self)
+        return Partecipazione.con_esito_pending().filter(turno=self)
 
     def partecipazioni_confermate(self):
-        return Partecipazione.con_esito_ok(turno=self)
+        return Partecipazione.con_esito_ok().filter(turno=self)
 
     def partecipazioni_negate(self):
-        return Partecipazione.con_esito_no(turno=self)
+        return Partecipazione.con_esito_no().filter(turno=self)
 
     def partecipazioni_ritirate(self):
-        return Partecipazione.con_esito_ritirata(turno=self)
+        return Partecipazione.con_esito_ritirata().filter(turno=self)
+
+    def aggiungi_partecipante(self, persona, richiedente=None):
+        """
+        Aggiunge di ufficio una persona.
+        :return: Oggetto Partecipazione.
+        """
+
+        ## Persona gia' partecipante?
+        p = Partecipazione.con_esito_ok().filter(turno=self, persona=persona).first()
+        if p:
+            return p
+
+        ## Elimina eventuali vecchie partecipazioni in attesa
+        Partecipazione.con_esito_pending().filter(turno=self, persona=persona).delete()
+
+        p = Partecipazione(
+            turno=self,
+            persona=persona,
+        )
+        p.save()
+
+        if richiedente:
+            a = Autorizzazione(
+                destinatario_ruolo=INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI,
+                destinatario_oggetto=self.attivita,
+                oggetto=p,
+                richiedente=persona,
+                firmatario=richiedente,
+                concessa=True,
+                necessaria=False,
+            )
+            a.save()
+
+        return p
 
 
 
@@ -300,6 +338,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     class Meta:
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
+        ordering = ['stato', 'persona__nome', 'persona__cognome']
 
     RICHIESTA = 'K'
     NON_PRESENTATO = 'N'
@@ -316,6 +355,12 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     def __str__(self):
         return "%s a %s" % (self.persona.codice_fiscale, str(self.turno))
+
+    @property
+    def url_cancella(self):
+        return "/attivita/scheda/%d/partecipazione/%d/cancella/" % (
+            self.turno.attivita.pk, self.pk,
+        )
 
     def richiedi(self):
         """

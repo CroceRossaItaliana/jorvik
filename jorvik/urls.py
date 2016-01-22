@@ -110,6 +110,7 @@ urlpatterns = [
 
     url(r'^attivita/$', 'attivita.viste.attivita'),
     url(r'^attivita/organizza/$', 'base.errori.vista_ci_siamo_quasi'),
+    url(r'^attivita/gestisci/$', 'base.errori.vista_ci_siamo_quasi'),
     url(r'^attivita/calendario/$', 'attivita.viste.attivita_calendario'),
     url(r'^attivita/calendario/(?P<inizio>[0-9\-]+)/(?P<fine>[0-9\-]+)/$', 'attivita.viste.attivita_calendario'),
     url(r'^attivita/storico/$', 'attivita.viste.attivita_storico'),
@@ -127,8 +128,12 @@ urlpatterns = [
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/(?P<turno_pk>[0-9]+)/partecipa/$', 'attivita.viste.attivita_scheda_turni_partecipa'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/(?P<turno_pk>[0-9]+)/ritirati/$', 'attivita.viste.attivita_scheda_turni_ritirati'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/link-permanente/(?P<turno_pk>[0-9]+)/$', 'attivita.viste.attivita_scheda_turni_link_permanente'),
-    url(r'^attivita/scheda/(?P<pk>[0-9]+)/modifica/$', 'attivita.viste.attivita_scheda_informazioni_modifica'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/modifica/$', 'attivita.viste.attivita_scheda_turni_modifica'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/nuovo/$', 'attivita.viste.attivita_scheda_turni_nuovo'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/partecipazione/(?P<partecipazione_pk>[0-9]+)/cancella/$', 'attivita.viste.attivita_scheda_partecipazione_cancella'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/modifica/(?P<pagina>[0-9]+)/$', 'attivita.viste.attivita_scheda_turni_modifica'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/modifica/link-permanente/(?P<turno_pk>[0-9]+)/$', 'attivita.viste.attivita_scheda_turni_modifica_link_permanente'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/modifica/$', 'attivita.viste.attivita_scheda_informazioni_modifica'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/report/$', 'attivita.viste.attivita_scheda_report'),
 
     url(r'^presidente/$', 'anagrafica.viste.presidente'),
