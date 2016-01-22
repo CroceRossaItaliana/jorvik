@@ -122,6 +122,18 @@ def permessi_almeno(context, oggetto, minimo="lettura"):
     return almeno
 
 
+@register.assignment_tag(takes_context=True)
+def partecipazione(context, turno):
+    """
+    Controlla lo stato di partecipazione tra turno e attivita'.
+    """
+
+    if not hasattr(context.request, 'me'):
+        return turno.TURNO_NON_PUOI_PARTECIPARE_ACCEDI
+
+    return turno.persona(context.request.me)
+
+
 @register.tag()
 def mappa(parser, token):
     nodelist = parser.parse(('icona_colore', 'endmappa',))

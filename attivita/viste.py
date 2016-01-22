@@ -10,7 +10,7 @@ from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni
 from attivita.models import Partecipazione, Attivita, Turno
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
-from base.errori import ci_siamo_quasi
+from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico
 from base.files import Excel, FoglioExcel
 from gruppi.models import Gruppo
 
@@ -225,6 +225,70 @@ def attivita_scheda_turni(request, me=None, pk=None, pagina=None):
 
     }
     return 'attivita_scheda_turni.html', contesto
+
+
+@pagina_privata
+def attivita_scheda_turni_partecipa(request, me, pk=None, turno_pk=None):
+    """
+    Mostra la scheda "Informazioni" di una attivita'.
+    """
+
+    turno = get_object_or_404(Turno, pk=turno_pk)
+    stato = turno.persona(me)
+
+    if stato not in turno.TURNO_PUOI_PARTECIPARE:
+        return errore_generico(request, me, titolo="Non puoi partecipare a questo turno",
+                               messaggio="Siamo spiacenti, ma ci risulta che tu non possa "
+                                         "richiedere partecipazione a questo turno. Vai "
+                                         "all'elenco dei turni per maggiori informazioni "
+                                         "sulla motivazione. ",
+                               torna_titolo="Turni dell'attività",
+                               torna_url=turno.url,
+                               )
+
+    p = Partecipazione(
+        turno=turno,
+        persona=me,
+    )
+    p.save()
+    p.richiedi()
+
+    return messaggio_generico(request, me, titolo="Ottimo! Richiesta inoltrata.",
+                              messaggio="La tua richiesta è stata inoltrata ai referenti di "
+                                        "questa attività, che potranno confermarla o negarla. "
+                                        "Ti manderemo una e-mail non appena risponderanno alla "
+                                        "tua richiesta. Puoi sempre controllare lo stato delle tue"
+                                        "richieste di partecipazione da 'Attivita' > 'I miei turni'. ",
+                              torna_titolo="Vai a 'I miei turni'",
+                              torna_url="/attivita/storico/")
+
+
+@pagina_privata
+def attivita_scheda_turni_ritirati(request, me, pk=None, turno_pk=None):
+
+    turno = get_object_or_404(Turno, pk=turno_pk)
+    stato = turno.persona(me)
+
+    if stato != turno.TURNO_PRENOTATO_PUOI_RITIRARTI:
+        return errore_generico(request, me, titolo="Non puoi ritirare la tua partecipazione",
+                               messaggio="Una volta che la tua partecipazione è stata confermata, "
+                                         "non puoi più ritirarla da Gaia. Se non puoi presentarti, "
+                                         "scrivi a un referente dell'attività, che potrà valutare "
+                                         "la situazione e rimuoverti dai partecipanti.",
+                               torna_titolo="Torna al turno",
+                               torna_url=turno.url)
+
+    partecipazione = Partecipazione.con_esito_pending(turno=turno, persona=me).first()
+    if not partecipazione:
+        raise ValueError("TURNO_PRENOTATO_PUOI_RITIRARTI assegnato, ma nessuna partecipazione"
+                         "trovata. ")
+
+    partecipazione.autorizzazioni_ritira()
+    return messaggio_generico(request, me, titolo="Richiesta ritirata.",
+                              messaggio="La tua richiesta di partecipazione a questo turno "
+                                        "è stata ritirata con successo.",
+                              torna_titolo="Torna al turno",
+                              torna_url=turno.url)
 
 
 @pagina_privata

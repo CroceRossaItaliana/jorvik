@@ -10,7 +10,9 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
+from anagrafica.permessi.applicazioni import REFERENTE
 from anagrafica.permessi.costanti import MODIFICA
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI
 from base.utils import concept
 from social.models import ConGiudizio, ConCommenti
 from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati, ConVecchioID
@@ -48,6 +50,9 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
 
     def __str__(self):
         return self.nome
+
+    def referenti_attuali(self):
+        return self.delegati_attuali(tipo=REFERENTE)
 
     @property
     def url(self):
@@ -134,6 +139,86 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
     PER_PAGINA = 10
 
+    TURNO_PUOI_PARTECIPARE_PRENOTA = "P"
+    TURNO_PUOI_PARTECIPARE_DISPONIBILITA = "D"
+    TURNO_PUOI_PARTECIPARE = (
+        TURNO_PUOI_PARTECIPARE_DISPONIBILITA,
+        TURNO_PUOI_PARTECIPARE_PRENOTA
+    )
+
+    TURNO_NON_PUOI_PARTECIPARE_RISERVA = "NPPR"
+    TURNO_NON_PUOI_PARTECIPARE_FUORI_SEDE = "NPPF"
+    TURNO_NON_PUOI_PARTECIPARE_PASSATO = "NPPP"
+    TURNO_NON_PUOI_PARTECIPARE_NEGATO = "NPNE"
+    TURNO_NON_PUOI_PARTECIPARE_ACCEDI = "NPNA"
+    TURNO_NON_PUOI_PARTECIPARE = (
+        TURNO_NON_PUOI_PARTECIPARE_RISERVA,
+        TURNO_NON_PUOI_PARTECIPARE_FUORI_SEDE,
+        TURNO_NON_PUOI_PARTECIPARE_PASSATO,
+        TURNO_NON_PUOI_PARTECIPARE_NEGATO,
+        TURNO_NON_PUOI_PARTECIPARE_ACCEDI,
+    )
+
+    TURNO_PRENOTATO_PUOI_RITIRARTI = "PPR"
+    TURNO_PRENOTATO_NON_PUOI_RITIRARTI = "TP"
+    TURNO_PRENOTATO = (
+        TURNO_PRENOTATO_PUOI_RITIRARTI,
+        TURNO_PRENOTATO_NON_PUOI_RITIRARTI,
+    )
+
+    def persona(self, persona):
+        """
+        Ritorna uno stato TURNO_ per la persona.
+        :return:
+        """
+        from anagrafica.models import Appartenenza
+
+        # Cerca la ultima richiesta di partecipazione al turno
+        partecipazione = Partecipazione.objects.filter(persona=persona, turno=self).order_by('-creazione').first()
+
+        # Se esiste una richiesta di partecipazione
+        if partecipazione:
+
+            esito = partecipazione.esito
+
+            if esito == partecipazione.ESITO_OK:
+                return self.TURNO_PRENOTATO_NON_PUOI_RITIRARTI
+
+            elif esito == partecipazione.ESITO_PENDING:
+                return self.TURNO_PRENOTATO_PUOI_RITIRARTI
+
+            elif esito == partecipazione.ESITO_RITIRATA:
+                return self.TURNO_PUOI_PARTECIPARE_PRENOTA
+
+            else:  # esito == partecipazione.ESITO_NO
+                return self.TURNO_NON_PUOI_PARTECIPARE_NEGATO
+
+        # Altrimenti, se non esiste, controlla i requisiti di partecipazione
+
+        ## Turno passato, puoi solo essere inserito
+        if not self.futuro:
+            return self.TURNO_NON_PUOI_PARTECIPARE_PASSATO
+
+        ## Sede valida
+        if not self.attivita.estensione.ottieni_discendenti(includimi=True).filter(
+                pk__in=persona.sedi_attuali(membro__in=Appartenenza.MEMBRO_ATTIVITA).values_list('id', flat=True)
+        ).exists():
+            return self.TURNO_NON_PUOI_PARTECIPARE_FUORI_SEDE
+
+        ## In riserva
+        if persona.in_riserva:
+            return self.TURNO_NON_PUOI_PARTECIPARE_RISERVA
+
+        # Se tutti i requisiti sono passati, puoi partecipare.
+
+        ## Turno pieno? Allora dai disponibilita'.
+        if self.pieno:
+            return self.TURNO_PUOI_PARTECIPARE_DISPONIBILITA
+
+        ## In tutti gli altri casi.
+        return self.TURNO_PUOI_PARTECIPARE_PRENOTA
+
+
     def __str__(self):
         return "%s (%s)" % (self.nome, self.attivita.nome if self.attivita else "Nessuna attività")
 
@@ -142,12 +227,24 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         return self.partecipazioni_confermate().count() < self.minimo
 
     @property
+    def pieno(self):
+        return self.partecipazioni_confermate().count() >= self.massimo
+
+    @property
     def futuro(self):
         return self.fine > timezone.now()
 
     @property
     def url(self):
         return "%sturni/link-permanente/%d/" % (self.attivita.url, self.pk)
+
+    @property
+    def url_partecipa(self):
+        return "%sturni/%d/partecipa/" % (self.attivita.url, self.pk)
+
+    @property
+    def url_ritirati(self):
+        return "%sturni/%d/ritirati/" % (self.attivita.url, self.pk)
 
     @property
     def link(self):
@@ -212,12 +309,18 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     def __str__(self):
         return "%s a %s" % (self.persona.codice_fiscale, str(self.turno))
 
-    def ritira(self):
+    def richiedi(self):
         """
-        Ritira la partecipazione, annulla eventuali richieste pendenti.
+        Richiede autorizzazione di partecipazione all'attività.
+        :return:
         """
-        self.stato = self.RITIRATA
-        self.autorizzazioni_ritira()
+        self.autorizzazione_richiedi(
+            self.persona,
+                (
+                    (INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI, self.turno.attivita)
+                ),
+            invia_notifiche=self.turno.attivita.referenti_attuali()
+        )
 
     def autorizzazione_concessa(self, modulo):
         """

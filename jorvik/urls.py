@@ -124,6 +124,8 @@ urlpatterns = [
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/mappa/$', 'attivita.viste.attivita_scheda_mappa'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/$', 'attivita.viste.attivita_scheda_turni'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/(?P<pagina>[0-9]+)/$', 'attivita.viste.attivita_scheda_turni'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/(?P<turno_pk>[0-9]+)/partecipa/$', 'attivita.viste.attivita_scheda_turni_partecipa'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/(?P<turno_pk>[0-9]+)/ritirati/$', 'attivita.viste.attivita_scheda_turni_ritirati'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/link-permanente/(?P<turno_pk>[0-9]+)/$', 'attivita.viste.attivita_scheda_turni_link_permanente'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/modifica/$', 'attivita.viste.attivita_scheda_informazioni_modifica'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/modifica/$', 'attivita.viste.attivita_scheda_turni_modifica'),

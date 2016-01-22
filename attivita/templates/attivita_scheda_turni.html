@@ -2,6 +2,7 @@
 
 {% load humanize %}
 {% load thumbnail %}
+{% load gravatar %}
 
 {% block scheda_titolo %}
     Turni
@@ -30,20 +31,26 @@
                             <i class="fa fa-fw fa-clock-o"></i>
                             <strong>{{ turno.inizio.date|naturalday:"SHORT_DATE_FORMAT" }} alle {{ turno.inizio.time }}</strong><br />
                         </span>
-                        fino a {{ turno.inizio.date|naturalday:"SHORT_DATE_FORMAT" }} alle {{ turno.inizio.time }}<br />
+                        fino a {{ turno.fine.date|naturalday:"SHORT_DATE_FORMAT" }} alle {{ turno.fine.time }}<br />
 
                     </p>
                 </td>
 
                 <td>
                     <p>
-                       <i class="fa fa-fw fa-users"></i> <strong>{{ turno.partecipazioni_confermate.count }} partecipanti</strong>
+                       <i class="fa fa-fw fa-users"></i> <strong>{{ turno.partecipazioni_confermate.count }} partecipanti confermati</strong>
                      <span class="text-muted">(minimo {{ turno.minimo }}, massimo {{ turno.massimo }})</span>
                     </p>
 
                     {% if turno.scoperto %}
                         <p class="text-danger">
                             <i class="fa fa-fw fa-warning"></i> Scoperto!
+                        </p>
+                    {% endif %}
+
+                    {% if turno.pieno %}
+                        <p class="text-danger">
+                            <i class="fa fa-fw fa-warning"></i> Pieno!
                         </p>
                     {% endif %}
 
@@ -55,6 +62,14 @@
                                             alt="{{ p.persona.nome_completo }}"
                                             title="{{ p.persona.nome_completo }} "/>
                                 </a>
+
+                            {% empty %}
+                                <a href="{{ p.persona.url }}" title="{{ p.persona.nome_completo }}">
+                                    <img    src="{% gravatar_url p.persona.email 50 %}" class="img-rounded"
+                                            alt="{{ p.persona.nome_completo }}"
+                                            title="{{ p.persona.nome_completo }} "/>
+                                </a>
+
                             {% endthumbnail %}
                         {% endfor %}
 
@@ -65,32 +80,7 @@
 
                 <td>
 
-                    <div class="btn-group-vertical btn-block">
-                        <a href="#"
-                           class="btn btn-primary">
-                            <i class="fa fa-fw fa-check"></i>
-                            Chiedi di partecipare
-                        </a>
-
-                        <a href="#"
-                           class="btn btn-primary disabled">
-                            <i class="fa fa-fw fa-clock-o"></i>
-                            In attesa di conferma
-                        </a>
-
-                        <a href="#"
-                           class="btn btn-danger">
-                            <i class="fa fa-fw fa-times"></i>
-                            Ritira partecipazione
-                        </a>
-
-                        <a href="#"
-                           class="btn btn-success disabled">
-                            <i class="fa fa-fw fa-check"></i>
-                            Confermato
-                        </a>
-
-                    </div>
+                    {% include 'attivita_turno_inc_azioni.html' %}
 
 
                 </td>
