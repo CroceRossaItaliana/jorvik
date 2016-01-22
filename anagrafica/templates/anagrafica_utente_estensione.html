@@ -66,10 +66,21 @@
                                     <td>
                                         <i class="fa fa-fw fa-user"></i> {{ estensione.richiedente }}<br />
                                         <i class="fa fa-fw fa-calendar"></i> {{ estensione.creazione|date:"SHORT_DATETIME_FORMAT" }}
+                                        {% if estensione.appartenenza.fine %}
+                                        <i class="fa fa-fw fa-calendar"></i> {{ estensione.appartenenza.fine|date:"SHORT_DATETIME_FORMAT" }}
+                                        {% endif %}
                                     </td>
                                     <td>{{ estensione.destinazione.link|safe }}</td>
                                     <td>{{ estensione.motivo }}</td>
-                                    <td><a href="{{ estensione.url_pdf }}" target="_blank">Scarica PDF</a></td>
+                                    <td>
+                                        <a href="{{ estensione.url_pdf }}" target="_blank">Scarica PDF</a>
+                                        {% if estensione.attuale %}
+                                        <a href="/utente/estensione/{{ estensione.pk }}/estendi/"
+                                           data-conferma="Vuoi veramente estendere l'estensione?">
+                                            Estendi
+                                        </a>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 {% empty %}
                                     <tr>

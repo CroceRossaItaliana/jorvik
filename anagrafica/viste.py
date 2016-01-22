@@ -730,6 +730,16 @@ def utente_riserva_termina(request, me, pk):
 
 
 @pagina_privata
+def utente_estensione_estendi(request, me, pk):
+    estensione = get_object_or_404(Estensione, pk=pk)
+    if not estensione.persona == me:
+        return redirect(ERRORE_PERMESSI)
+    estensione.appartenenza.fine = datetime.date.today()+datetime.timedelta(days=365)
+    estensione.appartenenza.save()
+    return redirect("/utente/estensione")
+
+
+@pagina_privata
 def utente_trasferimento_ritira(request, me, pk):
     trasf = get_object_or_404(Trasferimento, pk=pk)
     if not trasf.persona == me:
