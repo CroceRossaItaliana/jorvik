@@ -79,8 +79,8 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=date.tod
     if permesso_minimo(oggetto.__class__) >= minimo:
         return True
 
-    if persona.admin:
-        return True
+    #if persona.admin:
+    #    return True
 
     permessi = []
 

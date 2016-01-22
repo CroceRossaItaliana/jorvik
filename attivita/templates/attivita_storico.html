@@ -64,11 +64,9 @@
 
         {% for richiesta in storico %}
             <tr>
-                <td>
-                    <span class="piu-grande">{{ richiesta.turno.nome }}</span><br />
-                    <a href="{{ richiesta.turno.attivita.url }}" target="_new">
-                        {{ richiesta.turno.attivita.nome }}
-                    </a>
+                <td style="width: 45%;">
+                    <span class="piu-grande">{{ richiesta.turno.link|safe }}</span><br />
+                    {{ richiesta.turno.attivita.link|safe }}
                 </td>
                 <td>
                     Inizio: <strong>{{ richiesta.turno.inizio|date:"SHORT_DATETIME_FORMAT" }}</strong><br />
@@ -78,10 +76,21 @@
                     {% if richiesta.stato == richiesta.RICHIESTA %}
 
                         {% if richiesta.esito == richiesta.ESITO_OK %}
-                            <span class="text-success grassetto piu-grande">
-                                <i class="fa fa-fw fa-check"></i>
-                                Approvata
-                            </span>
+
+                            {% if richiesta.stato == richiesta.RICHIESTA %}
+                                <span class="text-success grassetto piu-grande">
+                                    <i class="fa fa-fw fa-check"></i>
+                                    Approvata
+                                </span>
+
+                            {% else %}
+                                <span class="text-success grassetto piu-grande">
+                                    <i class="fa fa-fw fa-times"></i>
+                                    Assente
+                                </span>
+
+                            {% endif %}
+
 
                         {% elif richiesta.esito == richiesta.ESITO_PENDING %}
                             <span class="text-warning grassetto piu-grande">

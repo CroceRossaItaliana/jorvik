@@ -54,6 +54,8 @@ INSTALLED_APPS = (
     'loginas',
     'sorl.thumbnail',
     'django_cron',
+    'django.contrib.humanize',
+    'django_gravatar',
 )
 
 # Cronjob attivi
@@ -184,6 +186,7 @@ EMAIL_SSL_KEYFILE = EMAIL_CONF.get('email', 'ssl_keyfile')
 EMAIL_SSL_CERTFILE = EMAIL_CONF.get('email', 'ssl_certfile')
 
 DEFAULT_FROM_EMAIL = 'Gaia <noreply@gaia.cri.it>'
+GRAVATAR_DEFAULT_IMAGE = 'identicon'
 
 # Configurazione media
 MEDIA_CONF = configparser.ConfigParser()

@@ -1,0 +1,40 @@
+{% extends 'attivita_scheda.html' %}
+
+{% load humanize %}
+{% load thumbnail %}
+{% load gravatar %}
+{% load bootstrap3 %}
+
+{% block scheda_titolo %}
+    Turni
+{% endblock %}
+
+{% block scheda_contenuto %}
+
+    <div class="alert alert-info">
+        <i class="fa fa-fw fa-info-circle"></i>
+        <strong>Turni periodici?</strong>
+        A breve sar&agrave; possibile generare decine di turni
+        con un solo click.
+    </div>
+
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                <i class="fa fa-fw fa-info-circle"></i>
+                Crea nuovo turno
+            </h2>
+        </div>
+        <div class="panel-body">
+            <form method="POST">
+                {% csrf_token %}
+                {% bootstrap_form modulo %}
+                <button type="submit" class="btn btn-block btn-primary">
+                    <i class="fa fa-fw fa-save"></i>
+                    Salva il turno
+                </button>
+            </form>
+        </div>
+    </div>
+
+{% endblock %}
