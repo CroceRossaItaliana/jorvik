@@ -85,6 +85,7 @@ def espandi_incarichi_direttore_corso(qs_corso, al_giorno=date.today()):
 def espandi_incarichi_presidente(qs_sede, al_giorno=date.today()):
     return [
        (INCARICO_GESTIONE_SANGUE,                       qs_sede),
+       (INCARICO_PRESIDENZA,                            qs_sede),
 
     ] \
         + espandi_incarichi_ufficio_soci(qs_sede, al_giorno=al_giorno)

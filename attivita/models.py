@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from anagrafica.permessi.applicazioni import REFERENTE
 from anagrafica.permessi.costanti import MODIFICA
-from anagrafica.permessi.incarichi import INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI, INCARICO_PRESIDENZA
 from base.utils import concept
 from social.models import ConGiudizio, ConCommenti
 from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati, ConVecchioID
@@ -151,12 +151,14 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     TURNO_NON_PUOI_PARTECIPARE_PASSATO = "NPPP"
     TURNO_NON_PUOI_PARTECIPARE_NEGATO = "NPNE"
     TURNO_NON_PUOI_PARTECIPARE_ACCEDI = "NPNA"
+    TURNO_NON_PUOI_PARTECIPARE_ATTIVITA_CHIUSA = "NPAC"
     TURNO_NON_PUOI_PARTECIPARE = (
         TURNO_NON_PUOI_PARTECIPARE_RISERVA,
         TURNO_NON_PUOI_PARTECIPARE_FUORI_SEDE,
         TURNO_NON_PUOI_PARTECIPARE_PASSATO,
         TURNO_NON_PUOI_PARTECIPARE_NEGATO,
         TURNO_NON_PUOI_PARTECIPARE_ACCEDI,
+        TURNO_NON_PUOI_PARTECIPARE_ATTIVITA_CHIUSA,
     )
 
     TURNO_PRENOTATO_PUOI_RITIRARTI = "PPR"
@@ -198,6 +200,10 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         ## Turno passato, puoi solo essere inserito
         if not self.futuro:
             return self.TURNO_NON_PUOI_PARTECIPARE_PASSATO
+
+        ## Attivita chiusa
+        if not self.attivita.apertura == self.attivita.APERTA:
+            return self.TURNO_NON_PUOI_PARTECIPARE_ATTIVITA_CHIUSA
 
         ## Sede valida
         if not self.attivita.estensione.ottieni_discendenti(includimi=True).filter(
@@ -302,6 +308,8 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         (NON_PRESENTATO, "Non presentato/a"),
     )
 
+    RICHIESTA_NOME = "partecipazione attività"
+
     persona = models.ForeignKey("anagrafica.Persona", related_name='partecipazioni', on_delete=models.CASCADE)
     turno = models.ForeignKey(Turno, related_name='partecipazioni', on_delete=models.CASCADE)
     stato = models.CharField(choices=STATO, default=RICHIESTA, max_length=1, db_index=True)
@@ -314,6 +322,9 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         Richiede autorizzazione di partecipazione all'attività.
         :return:
         """
+
+        from anagrafica.models import Appartenenza
+
         self.autorizzazione_richiedi(
             self.persona,
                 (
@@ -321,6 +332,18 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                 ),
             invia_notifiche=self.turno.attivita.referenti_attuali()
         )
+
+        # Se fuori sede, chiede autorizzazione al Presidente del mio Comitato.
+        if not self.turno.attivita.sede.comitato.espandi(includi_me=True).filter(
+                pk__in=self.persona.sedi_attuali(membro__in=Appartenenza.MEMBRO_ATTIVITA).values_list('id', flat=True)
+        ).exists():
+            self.autorizzazione_richiedi(
+                self.persona,
+                    (
+                        (INCARICO_PRESIDENZA, self.persona.sede_riferimento())
+                    ),
+                invia_notifiche=self.persona.sede_riferimento().presidente()
+            )
 
     def autorizzazione_concessa(self, modulo):
         """

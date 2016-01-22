@@ -66,6 +66,13 @@
                 Attivit&agrave; non aperta alla tua Sede
             </a>
 
+        {% elif part == turno.TURNO_NON_PUOI_PARTECIPARE_ATTIVITA_CHIUSA %}
+
+            <a class="btn btn-warning btn-sm disabled">
+                <i class="fa fa-fw fa-lock"></i>
+                Attivit&agrave; chiusa
+            </a>
+
         {% elif part == turno.TURNO_NON_PUOI_PARTECIPARE_PASSATO %}
 
             <a class="btn btn-warning btn-sm disabled">
