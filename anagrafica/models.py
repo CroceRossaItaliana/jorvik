@@ -1492,12 +1492,15 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         return ModuloNegaEstensione
 
     def autorizzazione_concessa(self, modulo=None):
+        self.protocollo_data = modulo.cleaned_data['protocollo_data']
+        self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
         app = Appartenenza(
             membro=Appartenenza.ESTESO,
             persona=self.persona,
             sede=self.destinazione,
             inizio=poco_fa(),
             fine=datetime.today() + timedelta(days=365)
+
         )
         app.save()
         self.appartenenza = app
@@ -1563,6 +1566,7 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
     def autorizzazione_concessa(self, modulo=None):
         self.protocollo_data = modulo.cleaned_data['protocollo_data']
         self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
+
 
     def invia_mail(self):
 
