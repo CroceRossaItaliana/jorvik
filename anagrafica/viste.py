@@ -1157,12 +1157,12 @@ def _presidente_sede_ruoli(sede):
 
     sezioni.update({
         "Obiettivi Strategici": [
-            (DELEGATO_OBIETTIVO_1, "Obiettivo Startegico I", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_1).count()),
-            (DELEGATO_OBIETTIVO_2, "Obiettivo Startegico II", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_2).count()),
-            (DELEGATO_OBIETTIVO_3, "Obiettivo Startegico III", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count()),
-            (DELEGATO_OBIETTIVO_4, "Obiettivo Startegico IV", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_4).count()),
-            (DELEGATO_OBIETTIVO_5, "Obiettivo Startegico V", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_5).count()),
-            (DELEGATO_OBIETTIVO_6, "Obiettivo Startegico VI", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_6).count()),
+            (DELEGATO_OBIETTIVO_1, "Obiettivo Strategico I", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_1).count()),
+            (DELEGATO_OBIETTIVO_2, "Obiettivo Strategico II", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_2).count()),
+            (DELEGATO_OBIETTIVO_3, "Obiettivo Strategico III", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count()),
+            (DELEGATO_OBIETTIVO_4, "Obiettivo Strategico IV", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_4).count()),
+            (DELEGATO_OBIETTIVO_5, "Obiettivo Strategico V", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_5).count()),
+            (DELEGATO_OBIETTIVO_6, "Obiettivo Strategico VI", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_6).count()),
         ]
 
     })
