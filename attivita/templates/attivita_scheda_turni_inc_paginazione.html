@@ -1,0 +1,47 @@
+<div class="row allinea-centro">
+    <ul class="pagination">
+
+        {% if ha_precedente %}
+            <li class="prev">
+                <a href="/attivita/scheda/{{ attivita.pk }}/turni/{{ pagina_precedente }}/">
+                    <i class="fa fa-arrow-left"></i>
+                </a>
+            </li>
+        {% else %}
+            <li class="prev disabled">
+                <a href="#">
+                    <i class="fa fa-arrow-left"></i>
+                </a>
+            </li>
+
+        {% endif %}
+
+        <li class="disabled">
+            <a href="#">Pag. {{ pagina }} di {{ pagine }} &mdash; {{ totale }} turni</a>
+        </li>
+
+        <li>
+            <a href="/attivita/scheda/{{ attivita.pk }}/turni/">
+                <i class="fa fa-fw fa-calendar"></i>
+                Vai a oggi
+            </a>
+        </li>
+
+        {% if ha_successivo %}
+            <li class="prev">
+                <a href="/attivita/scheda/{{ attivita.pk }}/turni/{{ pagina_successiva }}/">
+                    <i class="fa fa-arrow-right"></i>
+                </a>
+            </li>
+        {% else %}
+            <li class="prev disabled">
+                <a href="#">
+                    <i class="fa fa-arrow-right"></i>
+                </a>
+            </li>
+
+        {% endif %}
+
+    </ul>
+
+</div>

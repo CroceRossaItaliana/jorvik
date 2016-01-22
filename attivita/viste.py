@@ -1,11 +1,13 @@
 # coding=utf8
 
 from datetime import date, timedelta, datetime
+
+from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO
 from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni
-from attivita.models import Partecipazione, Attivita
+from attivita.models import Partecipazione, Attivita, Turno
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi
@@ -184,23 +186,56 @@ def attivita_scheda_mappa(request, me=None, pk=None):
     return 'attivita_scheda_mappa.html', contesto
 
 @pagina_privata
-def attivita_scheda_turni(request, me=None, pk=None, turno=None):
+def attivita_scheda_turni(request, me=None, pk=None, pagina=None):
     """
     Mostra la scheda "Informazioni" di una attivita'.
     """
 
-    if True:
+    if False:
         return ci_siamo_quasi(request, me)
 
     attivita = get_object_or_404(Attivita, pk=pk)
+
+    if pagina is None:
+        pagina = "/attivita/scheda/%d/turni/%d/" % (attivita.pk, attivita.pagina_turni_oggi())
+        return redirect(pagina)
+
+    turni = attivita.turni.all()
+
     puo_modificare = me and me.permessi_almeno(attivita, MODIFICA)
+
+    pagina = int(pagina)
+    if pagina < 0:
+        pagina = 1
+
+    p = Paginator(turni, Turno.PER_PAGINA)
+    pg = p.page(pagina)
+
     contesto = {
+        'pagina': pagina,
+        'pagine': p.num_pages,
+        'totale': p.count,
+        'turni': pg.object_list,
+        'ha_precedente': pg.has_previous(),
+        'ha_successivo': pg.has_next(),
+        'pagina_precedente': pagina-1,
+        'pagina_successiva': pagina+1,
         "attivita": attivita,
         "puo_modificare": puo_modificare,
 
     }
+    return 'attivita_scheda_turni.html', contesto
 
-    # return 'attivita_scheda_turni.html', contesto
+
+@pagina_privata
+def attivita_scheda_turni_link_permanente(request, me, pk=None, turno_pk=None):
+    turno = get_object_or_404(Turno, pk=turno_pk)
+    attivita = turno.attivita
+    pagina = turno.elenco_pagina()
+
+    return redirect("/attivita/scheda/%d/turni/%d/" % (attivita.pk, pagina,))
+
+
 
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def attivita_scheda_informazioni_modifica(request, me, pk=None):

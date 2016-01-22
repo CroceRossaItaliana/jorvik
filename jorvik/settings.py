@@ -54,6 +54,7 @@ INSTALLED_APPS = (
     'loginas',
     'sorl.thumbnail',
     'django_cron',
+    'django.contrib.humanize',
 )
 
 # Cronjob attivi

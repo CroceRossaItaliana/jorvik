@@ -4,11 +4,14 @@
 Questo modulo definisce i modelli del modulo Attivita' di Gaia.
 """
 from datetime import timedelta
+from math import floor
+
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
 from anagrafica.permessi.costanti import MODIFICA
+from base.utils import concept
 from social.models import ConGiudizio, ConCommenti
 from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati, ConVecchioID
 from base.tratti import ConMarcaTemporale, ConDelegati
@@ -64,6 +67,13 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     def url_turni(self):
         return self.url + "turni/"
 
+    def pagina_turni_oggi(self):
+        posizione = Turno.objects.filter(
+            attivita=self,
+            fine__lte=timezone.now(),
+        ).count() + 1
+        return floor(posizione / Turno.PER_PAGINA) + 1
+
     @property
     def url_modifica(self):
         return self.url + "modifica/"
@@ -97,11 +107,19 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
 
         return destinatari.distinct()
 
+    def turni_futuri(self, *args, **kwargs):
+        return Turno.query_futuri(
+            *args,
+            attivita=self,
+            **kwargs
+        )
+
 
 class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
     class Meta:
         verbose_name_plural = "Turni"
+        ordering = ['inizio', 'fine', 'id',]
 
     attivita = models.ForeignKey(Attivita, related_name='turni', on_delete=models.CASCADE)
 
@@ -114,25 +132,64 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     minimo = models.SmallIntegerField(db_index=True, default=1)
     massimo = models.SmallIntegerField(db_index=True, null=True, default=None)
 
+    PER_PAGINA = 10
+
     def __str__(self):
         return "%s (%s)" % (self.nome, self.attivita.nome if self.attivita else "Nessuna attività")
-
-    def partecipazioni_confermate(self):
-        return Partecipazione.con_esito_ok().filter(turno=self)
 
     @property
     def scoperto(self):
         return self.partecipazioni_confermate().count() < self.minimo
 
     @property
+    def futuro(self):
+        return self.fine > timezone.now()
+
+    @property
     def url(self):
-        return "%sturni/%d/" % (self.attivita.url, self.pk)
+        return "%sturni/link-permanente/%d/" % (self.attivita.url, self.pk)
 
     @property
     def link(self):
         return "<a href='%s' target='_new'>%s</a>" % (
             self.url, self.nome
         )
+
+    @classmethod
+    @concept
+    def query_futuri(cls, *args, ora=timezone.now(), **kwargs):
+        return Q(
+            *args,
+            fine__gt=ora,
+            **kwargs
+        )
+
+    def elenco_posizione(self):
+        """
+        :return: Ottiene la posizione approssimativa di questo turno in elenco (5=quinto).
+        """
+        return Turno.objects.filter(
+            attivita=self.attivita,
+            inizio__lte=self.inizio,
+            fine__lte=self.fine,
+        ).exclude(pk=self.pk).count() + 1
+
+    def elenco_pagina(self):
+        return floor((self.elenco_posizione() / self.PER_PAGINA) + 1)
+
+    def partecipazioni_in_attesa(self):
+        return Partecipazione.con_esito_pending(turno=self)
+
+    def partecipazioni_confermate(self):
+        return Partecipazione.con_esito_ok(turno=self)
+
+    def partecipazioni_negate(self):
+        return Partecipazione.con_esito_no(turno=self)
+
+    def partecipazioni_ritirate(self):
+        return Partecipazione.con_esito_ritirata(turno=self)
+
+
 
 
 class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
@@ -142,11 +199,9 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         verbose_name_plural = "Richieste di partecipazione"
 
     RICHIESTA = 'K'
-    RITIRATA = 'X'
     NON_PRESENTATO = 'N'
     STATO = (
         (RICHIESTA, "Part. Richiesta"),
-        (RITIRATA, "Part. Ritirata"),
         (NON_PRESENTATO, "Non presentato/a"),
     )
 
@@ -156,35 +211,6 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     def __str__(self):
         return "%s a %s" % (self.persona.codice_fiscale, str(self.turno))
-
-    @classmethod
-    def ritirate(cls):
-        """
-        Ottiene il QuerySet per tutte le partecipazioni ritirate.
-        """
-        return cls.con_esito_ritirata()
-
-    @classmethod
-    def confermate(cls):
-        """
-        Ottiene il QuerySet per tutte le partecipazioni confermate.
-        """
-        return cls.con_esito_ok()
-
-    @classmethod
-    def negate(cls):
-        """
-        Ottiene il QuerySet per tutte le partecipazioni negate.
-        """
-        return cls.con_esito_no()
-
-    @property
-    @classmethod
-    def in_attesa(cls):
-        """
-        Ottiene il QuerySet per tutte le partecipazioni in attesa di autorizzazione.
-        """
-        return cls.con_esito_pending
 
     def ritira(self):
         """
