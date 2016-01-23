@@ -71,7 +71,7 @@ def formazione_corsi_base_direttori(request, me, pk):
         return redirect(ERRORE_PERMESSI)
 
     continua_url = corso.url
-    print("A %s %s" % (request.session['corso_base_creato'], pk,))
+    #print("A %s %s" % (request.session['corso_base_creato'], pk,))
 
     if 'corso_base_creato' in request.session and int(request.session['corso_base_creato']) == int(pk):
         print("B %s %s" % (request.session['corso_base_creato'], pk,))
@@ -106,7 +106,7 @@ def formazione_corsi_base_fine(request, me, pk):
 @pagina_privata
 def aspirante_corso_base_informazioni(request, me, pk):
 
-    if True:
+    if False:
         return ci_siamo_quasi(request, me)
 
     corso = get_object_or_404(CorsoBase, pk=pk)
@@ -115,7 +115,7 @@ def aspirante_corso_base_informazioni(request, me, pk):
         "corso": corso,
         "puo_modificare": puo_modificare
     }
-    return 'aspirante_corso_base_informazioni.html', contesto
+    return 'aspirante_corso_base_scheda_informazioni.html', contesto
 
 
 @pagina_privata

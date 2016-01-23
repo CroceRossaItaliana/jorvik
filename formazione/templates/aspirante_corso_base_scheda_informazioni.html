@@ -1,0 +1,163 @@
+{% extends 'aspirante_corso_base_scheda.html' %}
+
+{% load utils %}
+{% load social %}
+{% load humanize %}
+
+{% block scheda_contenuto %}
+
+<div class="row">
+
+    {% if me.aspirante %}
+
+
+    {% endif %}
+</div>
+
+ <div class="row">
+
+    <div class="col-md-3">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-user"></i>
+                    Direttori
+                    <span class="pull-right">
+                        {{ corso.delegati_attuali.count }}
+                    </span>
+                </h3>
+            </div>
+
+            <div class="panel-body">
+                <div class="btn-group btn-group-vertical">
+                {% for direttore in corso.delegati_attuali %}
+                    {% card direttore extra_class='' %}
+
+                {% empty %}
+                    <i class="fa fa-fw fa-warning"></i>
+                    Nessun direttore.
+
+                {% endfor %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-home"></i>
+                    Organizzatore
+                </h3>
+            </div>
+
+            <div class="panel-body">
+                <strong>
+                    <a href="{{ corso.sede.url }}" target="_new">
+                        {{ corso.sede.nome }}
+                    </a>
+                </strong><br />
+                {{ corso.sede.get_tipo_display }} &mdash;
+                {{ corso.sede.get_estensione_display }}
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-calendar"></i>
+                    Data di inizio
+                </h3>
+            </div>
+
+            <div class="panel-body">
+                {{ corso.data_inizio }}
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-calendar"></i>
+                    Data di esame
+                </h3>
+            </div>
+
+            <div class="panel-body">
+                {{ corso.data_esame }}
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
+        {{ corso.descrizione|safe }}
+
+    </div>
+
+    <div class="col-md-4">
+        <h3>
+            <i class="fa fa-fw fa-calendar"></i> Lezioni
+            <span class="text-muted">
+                {{ corso.lezioni.count }}
+            </span>
+
+        </h3>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Argomento</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% for lezione in corso.lezioni.all %}
+                    <tr class="piu-piccolo">
+                        <td>
+                            {{ lezione.inizio.date|naturalday:"DATE_FORMAT" }}<br />
+                            {{ lezione.inizio.time|date:"TIME_FORMAT" }}
+                            &mdash;{{ lezione.fine.time|date:"TIME_FORMAT" }}
+                        </td>
+                        <th>
+                            {{ lezione.nome }}
+                        </th>
+                    </tr>
+
+
+
+                {% endfor %}
+
+            </tbody>
+        </table>
+
+    </div>
+
+    <div class="col-md-5">
+        <h3>
+            <i class="fa fa-fw fa-comments-o"></i>
+            Commenti
+            <span class="text-muted">
+                {{ corso.commenti.count }}
+            </span>
+        </h3>
+        {% commenti corso 10 %}
+
+    </div>
+
+</div>
+
+{% endblock %}

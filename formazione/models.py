@@ -161,13 +161,16 @@ class CorsoBase(Corso, ConVecchioID):
         return self.circonferenze_contenenti(Aspirante.objects.all()).count()
 
     def partecipazioni_confermate(self):
-        return self.partecipazioni.all().filter(stato=PartecipazioneCorsoBase.CONFERMATA)
+        return PartecipazioneCorsoBase.con_esito_ok().filter(corso=self)
 
     def partecipazioni_in_attesa(self):
-        return self.partecipazioni.all().filter(stato=PartecipazioneCorsoBase.IN_ATTESA)
+        return PartecipazioneCorsoBase.con_esito_pending().filter(corso=self)
 
     def partecipazioni_negate(self):
-        return self.partecipazioni.all().filter(stato=PartecipazioneCorsoBase.NEGATA)
+        return PartecipazioneCorsoBase.con_esito_no().filter(corso=self)
+
+    def partecipazioni_ritirate(self):
+        return PartecipazioneCorsoBase.con_esito_ritirata().filter(corso=self)
 
 
 class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
@@ -219,6 +222,8 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     class Meta:
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
+
+    RICHIESTA_NOME = "Iscrizione Corso Base"
 
 
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):

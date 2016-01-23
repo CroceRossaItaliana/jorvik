@@ -674,9 +674,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             a |= Autorizzazione.objects.filter(
                 destinatario_ruolo=incarico[0],
                 destinatario_oggetto_tipo=ContentType.objects.get_for_model(incarico[1].model),
-                destinatario_oggetto_id__in=incarico[1].values_list('id', flat=True)
+                destinatario_oggetto_id__in=incarico[1].values_list('id', flat=True),
             )
-        return a
+        a = a.distinct('progressivo', 'oggetto_tipo_id', 'oggetto_id',)
+        return Autorizzazione.objects.filter(
+            pk__in=a.values_list('id', flat=True)
+        )
 
 
     def _autorizzazioni_in_attesa(self):
