@@ -1,3 +1,4 @@
+import codecs
 import csv
 import datetime
 from collections import OrderedDict
@@ -1244,7 +1245,7 @@ def admin_import_volontari(request, me):
 
 
         nome_file = handle_uploaded_file(request.FILES['file_csv'])
-        with open(nome_file, 'r') as csvfile:
+        with codecs.open(nome_file, encoding="utf-8") as csvfile:
             riga = unicode_csv_reader(csvfile, delimiter=modulo.cleaned_data['delimitatore'])
             intestazione = True
             for r in riga:
