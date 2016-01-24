@@ -45,10 +45,9 @@
                     <i class="fa fa-fw fa-calendar"></i>
                         Esami: {{ corso.data_esame|date:"SHORT_DATETIME_FORMAT" }}<br />
                     <i class="fa fa-fw fa-user"></i>
-                        Direttore ({{ corso.deleghe.all }}:
+                        Direttore ({{ corso.deleghe.count }}):
                         {% for d in corso.deleghe.all %}
-
-                            {{ d.creazione }}
+                            {{ d.persona.link|safe }}
                         {% endfor %}
                 </td>
 

@@ -166,7 +166,7 @@ class ConGeolocalizzazione(models.Model):
         :param km: Raggio di ricerca in kilometri.
         :return: Una ricerca filtrata.
         """
-        if self.locazione is None:
+        if not self.locazione:
             return queryset.none()
 
         return queryset.filter(locazione__geo__distance_lte=(self.locazione.geo, Distance(km=km)))
@@ -205,4 +205,7 @@ class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
         Filtra una ricerca, per gli elementi nel raggio di questo elemento.
         :return: La ricerca filtrata
         """
+        if not self.locazione:
+            return self.__class__.objects.none()
+
         return ricerca.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=self.raggio)))

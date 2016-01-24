@@ -5,10 +5,11 @@ from django.shortcuts import redirect, get_object_or_404
 from anagrafica.models import Persona
 from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA
-from autenticazione.funzioni import pagina_privata
-from base.errori import ci_siamo_quasi
-from formazione.forms import ModuloCreazioneCorsoBase, ModuloModificaLezione
-from formazione.models import CorsoBase, AssenzaCorsoBase, LezioneCorsoBase
+from autenticazione.funzioni import pagina_privata, pagina_pubblica
+from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico
+from formazione.elenchi import ElencoPartecipantiCorsiBase
+from formazione.forms import ModuloCreazioneCorsoBase, ModuloModificaLezione, ModuloModificaCorsoBase
+from formazione.models import CorsoBase, AssenzaCorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase
 from django.utils import timezone
 
 @pagina_privata
@@ -105,16 +106,64 @@ def formazione_corsi_base_fine(request, me, pk):
     return 'formazione_corsi_base_fine.html', contesto
 
 
-@pagina_privata
-def aspirante_corso_base_informazioni(request, me, pk):
+@pagina_pubblica
+def aspirante_corso_base_informazioni(request, me=None, pk=None):
 
     corso = get_object_or_404(CorsoBase, pk=pk)
-    puo_modificare = me.permessi_almeno(corso, MODIFICA)
+    puo_modificare = me and me.permessi_almeno(corso, MODIFICA)
+    puoi_partecipare = corso.persona(me) if me else None
+
     contesto = {
         "corso": corso,
-        "puo_modificare": puo_modificare
+        "puo_modificare": puo_modificare,
+        "puoi_partecipare": puoi_partecipare,
     }
     return 'aspirante_corso_base_scheda_informazioni.html', contesto
+
+
+@pagina_privata
+def aspirante_corso_base_iscriviti(request, me=None, pk=None):
+
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    puoi_partecipare = corso.persona(me)
+    if not puoi_partecipare in corso.PUOI_ISCRIVERTI:
+        return errore_generico(request, me, titolo="Non puoi partecipare a questo corso",
+                               messaggio="Siamo spiacenti, ma non sembra che tu possa partecipare "
+                                         "a questo corso per qualche motivo. ",
+                               torna_titolo="Torna al corso",
+                               torna_url=corso.url)
+
+    p = PartecipazioneCorsoBase(persona=me, corso=corso)
+    p.save()
+    p.richiedi()
+    return messaggio_generico(request, me, titolo="Sei iscritto al corso base",
+                              messaggio="Complimenti! Abbiamo inoltrato la tua richiesta al direttore "
+                                        "del corso, che ti contatterà appena possibile.",
+                              torna_titolo="Torna al corso",
+                              torna_url=corso.url)
+
+
+@pagina_privata
+def aspirante_corso_base_ritirati(request, me=None, pk=None):
+
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    puoi_partecipare = corso.persona(me)
+    if not puoi_partecipare == corso.SEI_ISCRITTO_PUOI_RITIRARTI:
+        return errore_generico(request, me, titolo="Non puoi ritirarti da questo corso",
+                               messaggio="Siamo spiacenti, ma non sembra che tu possa ritirarti "
+                                         "da questo corso per qualche motivo. ",
+                               torna_titolo="Torna al corso",
+                               torna_url=corso.url)
+
+    p = PartecipazioneCorsoBase.con_esito_pending(corso=corso, persona=me).first()
+    p.ritira()
+
+    return messaggio_generico(request, me, titolo="Ti sei ritirato dal corso",
+                              messaggio="Siamo spiacenti che hai deciso di ritirarti da questo corso. "
+                                        "La tua partecipazione è stata ritirata correttamente. "
+                                        "Non esitare a iscriverti a questo o un altro corso, nel caso cambiassi idea.",
+                              torna_titolo="Torna alla pagina del corso",
+                              torna_url=corso.url)
 
 
 @pagina_privata
@@ -203,6 +252,51 @@ def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
 
     lezione.delete()
     return redirect(corso.url_lezioni)
+
+@pagina_privata
+def aspirante_corso_base_modifica(request, me, pk):
+
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    if not me.permessi_almeno(corso, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    modulo = ModuloModificaCorsoBase(request.POST or None, instance=corso)
+    if modulo.is_valid():
+        modulo.save()
+
+    contesto = {
+        "corso": corso,
+        "puo_modificare": True,
+        "modulo": modulo,
+    }
+    return 'aspirante_corso_base_scheda_modifica.html', contesto
+
+
+@pagina_privata
+def aspirante_corso_base_iscritti(request, me, pk):
+
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    if not me.permessi_almeno(corso, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    elenco = ElencoPartecipantiCorsiBase(corso.queryset_modello())
+    in_attesa = corso.partecipazioni_in_attesa()
+    contesto = {
+        "corso": corso,
+        "puo_modificare": True,
+        "elenco": elenco,
+        "in_attesa": in_attesa,
+    }
+    return 'aspirante_corso_base_scheda_iscritti.html', contesto
+
+
+@pagina_privata
+def aspirante_corso_base_report(request, me, pk):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    if not me.permessi_almeno(corso, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    return ci_siamo_quasi(request, me)
 
 
 @pagina_privata

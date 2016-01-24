@@ -2,6 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
+from base.wysiwyg import WYSIWYGSemplice
 from formazione.models import CorsoBase, LezioneCorsoBase
 
 
@@ -41,3 +42,14 @@ class ModuloModificaLezione(ModelForm):
         fine = self.cleaned_data['fine']
         if inizio >= fine:
             self.add_error('fine', "La fine deve essere successiva all'inizio.")
+
+
+class ModuloModificaCorsoBase(ModelForm):
+    class Meta:
+        model = CorsoBase
+        fields = ['data_inizio', 'data_esame', 'descrizione',
+                  'data_attivazione', 'data_convocazione',
+                  'op_attivazione', 'op_convocazione',]
+        widgets = {
+            "descrizione": WYSIWYGSemplice(),
+        }
