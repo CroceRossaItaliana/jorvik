@@ -404,7 +404,7 @@ class ElencoInRiserva(ElencoVistaSoci):
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
-        )
+        ).distinct('cognome', 'nome', 'codice_fiscale')
 
 
 class ElencoElettoratoAlGiorno(ElencoVistaSoci):
