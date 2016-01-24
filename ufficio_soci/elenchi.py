@@ -180,11 +180,55 @@ class ElencoVolontari(ElencoVistaSoci):
     args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
     """
 
+    def modulo(self):
+        from .forms import ModuloElencoVolontari
+        return ModuloElencoVolontari
+
     def risultati(self):
         qs_sedi = self.args[0]
+
+        modulo = self.modulo_riempito
+        if modulo.cleaned_data['includi_estesi'] == modulo.SI:
+            appartenenze = [Appartenenza.VOLONTARIO, Appartenenza.ESTESO]
+        else:
+            appartenenze = [Appartenenza.VOLONTARIO,]
+
         return Persona.objects.filter(
             Appartenenza.query_attuale(
-                sede__in=qs_sedi, membro__in=[Appartenenza.VOLONTARIO, Appartenenza.ESTESO],
+                sede__in=qs_sedi, membro__in=appartenenze,
+            ).via("appartenenze")
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+
+class ElencoIVCM(ElencoVistaSoci):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
+    """
+
+    def modulo(self):
+        from .forms import ModuloElencoIVCM
+        return ModuloElencoIVCM
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+
+        modulo = self.modulo_riempito
+        query = Q()
+        if modulo.IV == modulo.cleaned_data['includi']:
+            query &= Q(iv=True)
+        if modulo.CM == modulo.cleaned_data['includi']:
+            query &= Q(cm=True)
+        return Persona.objects.filter(
+            query,
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO,
             ).via("appartenenze")
         ).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
@@ -255,7 +299,7 @@ class ElencoVolontariGiovani(ElencoVolontari):
         oggi = date.today()
         nascita_minima = date(oggi.year - Persona.ETA_GIOVANE, oggi.month, oggi.day)
         return super(ElencoVolontariGiovani, self).risultati().filter(
-            data_nascita__gte=nascita_minima
+            data_nascita__gt=nascita_minima
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
 
@@ -404,7 +448,7 @@ class ElencoInRiserva(ElencoVistaSoci):
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
-        )
+        ).distinct('cognome', 'nome', 'codice_fiscale')
 
 
 class ElencoElettoratoAlGiorno(ElencoVistaSoci):

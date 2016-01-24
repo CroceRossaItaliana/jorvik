@@ -1,3 +1,4 @@
+import codecs
 import csv
 import datetime
 from collections import OrderedDict
@@ -704,9 +705,12 @@ def utente_riserva(request, me):
 @pagina_privata
 def utente_riserva_ritira(request, me, pk):
     riserva = get_object_or_404(Riserva, pk=pk)
+    print(riserva)
+    print(riserva.esito)
     if not riserva.persona == me:
         return redirect(ERRORE_PERMESSI)
     riserva.autorizzazioni_ritira()
+    print(riserva.esito)
     Messaggio.costruisci_e_invia(
            oggetto="Riserva terminata",
            modello="email_richiesta_riserva_terminata.html",
@@ -728,6 +732,16 @@ def utente_riserva_termina(request, me, pk):
     riserva.fine = datetime.date.today()
     riserva.save()
     return redirect("/utente/")
+
+
+@pagina_privata
+def utente_estensione_estendi(request, me, pk):
+    estensione = get_object_or_404(Estensione, pk=pk)
+    if not estensione.persona == me:
+        return redirect(ERRORE_PERMESSI)
+    estensione.appartenenza.fine = datetime.date.today()+datetime.timedelta(days=365)
+    estensione.appartenenza.save()
+    return redirect("/utente/estensione")
 
 
 @pagina_privata
@@ -1244,7 +1258,7 @@ def admin_import_volontari(request, me):
 
 
         nome_file = handle_uploaded_file(request.FILES['file_csv'])
-        with open(nome_file, 'r') as csvfile:
+        with codecs.open(nome_file, encoding="utf-8") as csvfile:
             riga = unicode_csv_reader(csvfile, delimiter=modulo.cleaned_data['delimitatore'])
             intestazione = True
             for r in riga:

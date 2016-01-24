@@ -233,7 +233,10 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
 
     @classmethod
     def ultimo_anno(cls):
-        return cls.objects.latest('anno').anno
+        try:
+            return cls.objects.latest('anno').anno
+        except Tesseramento.DoesNotExist:
+            return None
 
 
 class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF, ConVecchioID):

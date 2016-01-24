@@ -13,6 +13,10 @@
         {{ elenco_nome }}
     </h2>
 
+    {% if elenco_template %}
+        {% include elenco_template %}
+    {% endif %}
+
     <hr />
 
     {% load utils %}

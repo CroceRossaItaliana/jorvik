@@ -29,6 +29,9 @@ class Gruppo(ModelloSemplice, ConEstensione, ConMarcaTemporale, ConDelegati):
     class Meta:
         verbose_name_plural = "Gruppi"
 
+    def __str__(self):
+        return "Gruppo %s" % (self.nome,)
+
 
 class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale):
 

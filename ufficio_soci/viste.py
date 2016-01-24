@@ -16,7 +16,7 @@ from base.notifiche import NOTIFICA_INVIA
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti, ElencoDimessi, ElencoTrasferiti, \
-    ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva
+    ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva, ElencoIVCM
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
     ModuloCreazioneRiserva, ModuloCreazioneTrasferimento
@@ -540,6 +540,7 @@ def us_elenchi(request, me, elenco_tipo):
     tipi_elenco = {
         "volontari": (ElencoVolontari, "Elenco dei Volontari"),
         "giovani": (ElencoVolontariGiovani, "Elenco dei Volontari Giovani"),
+        "ivcm": (ElencoIVCM, "Elenco IV e CM"),
         "dimessi": (ElencoDimessi, "Elenco Dimessi"),
         "riserva": (ElencoInRiserva, "Elenco Volontari in Riserva"),
         "trasferiti": (ElencoTrasferiti, "Elenco Trasferiti"),
@@ -548,7 +549,7 @@ def us_elenchi(request, me, elenco_tipo):
         "estesi": (ElencoEstesi, "Elenco dei Volontari Estesi/In Estensione"),
         "soci": (ElencoSociAlGiorno, "Elenco dei Soci"),
         "sostenitori": (ElencoSostenitori, "Elenco dei Sostenitori"),
-        "elettorato": (ElencoElettoratoAlGiorno, "Elenco Elettorato"),
+        "elettorato": (ElencoElettoratoAlGiorno, "Elenco Elettorato", "us_elenco_inc_elettorato.html"),
         "titoli": (ElencoPerTitoli, "Ricerca dei soci per titoli"),
     }
 
@@ -556,6 +557,7 @@ def us_elenchi(request, me, elenco_tipo):
         return redirect("/us/")
 
     elenco_nome = tipi_elenco[elenco_tipo][1]
+    elenco_template = tipi_elenco[elenco_tipo][2] if len(tipi_elenco[elenco_tipo]) > 2 else None
 
     if request.POST:  # Ho selezionato delle sedi. Elabora elenco.
 
@@ -565,6 +567,7 @@ def us_elenchi(request, me, elenco_tipo):
         return 'us_elenco_generico.html', {
             "elenco": elenco,
             "elenco_nome": elenco_nome,
+            "elenco_template": elenco_template,
         }
 
     else:  # Devo selezionare delle Sedi.
@@ -574,6 +577,7 @@ def us_elenchi(request, me, elenco_tipo):
         return 'us_elenco_sede.html', {
             "sedi": sedi,
             "elenco_nome": elenco_nome,
+            "elenco_template": elenco_template,
         }
 
 
