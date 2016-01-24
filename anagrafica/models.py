@@ -701,7 +701,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         i = Delega.objects.none()
         for s in self.sedi_attuali(membro__in=Appartenenza.MEMBRO_DIRETTO):
-            i |= s.deleghe_attuali().filter(tipo__in=[PRESIDENTE, UFFICIO_SOCI])
+            i |= s.deleghe_attuali().filter(tipo__in=[PRESIDENTE, UFFICIO_SOCI, UFFICIO_SOCI_UNITA])
+            i |= s.comitato.deleghe_attuali().filter(tipo__in=[PRESIDENTE, UFFICIO_SOCI])
         return i
 
 
