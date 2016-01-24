@@ -548,7 +548,7 @@ def us_elenchi(request, me, elenco_tipo):
         "estesi": (ElencoEstesi, "Elenco dei Volontari Estesi/In Estensione"),
         "soci": (ElencoSociAlGiorno, "Elenco dei Soci"),
         "sostenitori": (ElencoSostenitori, "Elenco dei Sostenitori"),
-        "elettorato": (ElencoElettoratoAlGiorno, "Elenco Elettorato"),
+        "elettorato": (ElencoElettoratoAlGiorno, "Elenco Elettorato", "us_elenco_inc_elettorato.html"),
         "titoli": (ElencoPerTitoli, "Ricerca dei soci per titoli"),
     }
 
@@ -556,6 +556,7 @@ def us_elenchi(request, me, elenco_tipo):
         return redirect("/us/")
 
     elenco_nome = tipi_elenco[elenco_tipo][1]
+    elenco_template = tipi_elenco[elenco_tipo][2] if len(tipi_elenco[elenco_tipo]) > 2 else None
 
     if request.POST:  # Ho selezionato delle sedi. Elabora elenco.
 
@@ -565,6 +566,7 @@ def us_elenchi(request, me, elenco_tipo):
         return 'us_elenco_generico.html', {
             "elenco": elenco,
             "elenco_nome": elenco_nome,
+            "elenco_template": elenco_template,
         }
 
     else:  # Devo selezionare delle Sedi.
@@ -574,6 +576,7 @@ def us_elenchi(request, me, elenco_tipo):
         return 'us_elenco_sede.html', {
             "sedi": sedi,
             "elenco_nome": elenco_nome,
+            "elenco_template": elenco_template,
         }
 
 
