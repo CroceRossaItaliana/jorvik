@@ -255,7 +255,7 @@ class ElencoVolontariGiovani(ElencoVolontari):
         oggi = date.today()
         nascita_minima = date(oggi.year - Persona.ETA_GIOVANE, oggi.month, oggi.day)
         return super(ElencoVolontariGiovani, self).risultati().filter(
-            data_nascita__gte=nascita_minima
+            data_nascita__gt=nascita_minima
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
 

@@ -75,7 +75,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     )
 
     # Costanti
-    ETA_GIOVANE = 31
+    ETA_GIOVANE = 32
 
     # Informazioni anagrafiche
     nome = models.CharField("Nome", max_length=64, db_index=True)
@@ -388,7 +388,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def giovane(self, **kwargs):
-        return self.eta <= self.ETA_GIOVANE
+        return self.eta < self.ETA_GIOVANE
 
     def ultimo_accesso_testo(self):
         """
