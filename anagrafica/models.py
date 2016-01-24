@@ -1537,7 +1537,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         return pdf
 
 
-class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico,
+class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
               ConAutorizzazioni, ConPDF):
     """
     Rappresenta una pratica di riserva.
