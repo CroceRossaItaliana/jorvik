@@ -207,6 +207,39 @@ class ElencoVolontari(ElencoVistaSoci):
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
 
+class ElencoIVCM(ElencoVistaSoci):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
+    """
+
+    def modulo(self):
+        from .forms import ModuloElencoIVCM
+        return ModuloElencoIVCM
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+
+        modulo = self.modulo_riempito
+        query = Q()
+        if modulo.IV == modulo.cleaned_data['includi']:
+            query &= Q(iv=True)
+        if modulo.CM == modulo.cleaned_data['includi']:
+            query &= Q(cm=True)
+        return Persona.objects.filter(
+            query,
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO,
+            ).via("appartenenze")
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+
 class ElencoEstesi(ElencoVistaSoci):
     """
     args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori

@@ -16,7 +16,7 @@ from base.notifiche import NOTIFICA_INVIA
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti, ElencoDimessi, ElencoTrasferiti, \
-    ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva
+    ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva, ElencoIVCM
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
     ModuloCreazioneRiserva, ModuloCreazioneTrasferimento
@@ -540,6 +540,7 @@ def us_elenchi(request, me, elenco_tipo):
     tipi_elenco = {
         "volontari": (ElencoVolontari, "Elenco dei Volontari"),
         "giovani": (ElencoVolontariGiovani, "Elenco dei Volontari Giovani"),
+        "ivcm": (ElencoIVCM, "Elenco IV e CM"),
         "dimessi": (ElencoDimessi, "Elenco Dimessi"),
         "riserva": (ElencoInRiserva, "Elenco Volontari in Riserva"),
         "trasferiti": (ElencoTrasferiti, "Elenco Trasferiti"),

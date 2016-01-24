@@ -199,3 +199,15 @@ class ModuloElencoVolontari(forms.Form):
         (NO, "No, non includere i volontari estesi (in ingresso) presso le mie Sedi"),
     )
     includi_estesi = forms.ChoiceField(choices=SCELTE, initial=SI)
+
+
+class ModuloElencoIVCM(forms.Form):
+
+    IV = "IV"
+    CM = "CM"
+    SCELTE = (
+        (IV, "IV"),
+        (CM, "CM"),
+    )
+    includi = forms.ChoiceField(choices=SCELTE)
+
