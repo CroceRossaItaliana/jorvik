@@ -97,15 +97,15 @@ class CorsoBase(Corso, ConVecchioID):
         return "/formazione/corsi-base/%d/direttori/" % (self.pk,)
 
     @property
-    def url_attiva(self):
-        return "%sattiva/" % (self.url,)
+    def url_iscritti(self):
+        return "%siscritti/" % (self.url,)
 
     @property
     def url_mappa(self):
         return "%smappa/" % (self.url,)
 
     @property
-    def url_lezioni_modifica(self):
+    def url_lezioni(self):
         return "%slezioni/" % (self.url,)
 
     @property
@@ -234,6 +234,13 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
     class Meta:
         verbose_name = "Lezione di Corso Base"
         verbose_name_plural = "Lezioni di Corsi Base"
+        ordering = ['inizio']
+
+    @property
+    def url_cancella(self):
+        return "%s%d/cancella/" % (
+            self.corso.url_lezioni, self.pk
+        )
 
 
 class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):

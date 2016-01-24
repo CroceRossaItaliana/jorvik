@@ -186,6 +186,9 @@ urlpatterns = [
     url(r'^aspirante/corsi-base/$', 'formazione.viste.aspirante_corsi_base'),
     url(r'^aspirante/sedi/$', 'formazione.viste.aspirante_sedi'),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/$', 'formazione.viste.aspirante_corso_base_informazioni'),
+    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/mappa/$', 'formazione.viste.aspirante_corso_base_mappa'),
+    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/lezioni/$', 'formazione.viste.aspirante_corso_base_lezioni'),
+    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/lezioni/(?P<lezione_pk>[0-9]+)/cancella/$', 'formazione.viste.aspirante_corso_base_lezioni_cancella'),
 
     url(r'^formazione/$', 'formazione.viste.formazione'),
     url(r'^formazione/corsi-base/elenco/$', 'formazione.viste.formazione_corsi_base_elenco'),

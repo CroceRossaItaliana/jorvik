@@ -105,8 +105,8 @@
                     Gestione corso
                 </a>
             </li>
-            <li role="presentation" {% if corso.url_lezioni_modifica in request.path %}class="active"{% endif %}>
-                <a href="{{ corso.url_lezioni_modifica }}" class="text-danger">
+            <li role="presentation" {% if corso.url_lezioni in request.path %}class="active"{% endif %}>
+                <a href="{{ corso.url_lezioni }}" class="text-danger">
                     <i class="fa fa-fw fa-calendar"></i>
                     Lezioni
                 </a>

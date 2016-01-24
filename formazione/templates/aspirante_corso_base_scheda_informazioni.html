@@ -101,13 +101,13 @@
 </div>
 
 <div class="row">
-    <div class="col-md-3">
+    <div class="col-md-6">
         <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
         {{ corso.descrizione|safe }}
 
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-6">
         <h3>
             <i class="fa fa-fw fa-calendar"></i> Lezioni
             <span class="text-muted">
@@ -146,7 +146,10 @@
 
     </div>
 
-    <div class="col-md-5">
+</div>
+
+<div class="row">
+    <div class="col-md-6 col-md-offset-3">
         <h3>
             <i class="fa fa-fw fa-comments-o"></i>
             Commenti
@@ -157,7 +160,6 @@
         {% commenti corso 10 %}
 
     </div>
-
 </div>
 
 {% endblock %}
