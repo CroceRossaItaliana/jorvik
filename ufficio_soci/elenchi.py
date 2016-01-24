@@ -180,11 +180,22 @@ class ElencoVolontari(ElencoVistaSoci):
     args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
     """
 
+    def modulo(self):
+        from .forms import ModuloElencoVolontari
+        return ModuloElencoVolontari
+
     def risultati(self):
         qs_sedi = self.args[0]
+
+        modulo = self.modulo_riempito
+        if modulo.cleaned_data['includi_estesi'] == modulo.SI:
+            appartenenze = [Appartenenza.VOLONTARIO, Appartenenza.ESTESO]
+        else:
+            appartenenze = [Appartenenza.VOLONTARIO,]
+
         return Persona.objects.filter(
             Appartenenza.query_attuale(
-                sede__in=qs_sedi, membro__in=[Appartenenza.VOLONTARIO, Appartenenza.ESTESO],
+                sede__in=qs_sedi, membro__in=appartenenze,
             ).via("appartenenze")
         ).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),

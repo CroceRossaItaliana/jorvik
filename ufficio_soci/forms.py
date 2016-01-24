@@ -188,3 +188,14 @@ class ModuloElencoRicevute(forms.Form):
     tipi_ricevute = forms.MultipleChoiceField(choices=Quota.TIPO, initial=[x[0] for x in Quota.TIPO])
     anno = forms.ChoiceField(choices=Tesseramento.anni_scelta(),
                              initial=Tesseramento.ultimo_anno())
+
+
+class ModuloElencoVolontari(forms.Form):
+
+    SI = "SI"
+    NO = "NO"
+    SCELTE = (
+        (SI, "Sì, includi volontari estesi (in ingresso) presso le mie Sedi"),
+        (NO, "No, non includere i volontari estesi (in ingresso) presso le mie Sedi"),
+    )
+    includi_estesi = forms.ChoiceField(choices=SCELTE, initial=SI)
