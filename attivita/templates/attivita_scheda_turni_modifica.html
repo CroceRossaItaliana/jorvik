@@ -1,11 +1,266 @@
 {% extends 'attivita_scheda.html' %}
 
+{% load humanize %}
+{% load thumbnail %}
+{% load gravatar %}
+{% load bootstrap3 %}
+
 {% block scheda_titolo %}
-    Gestione Turni
+    Turni
 {% endblock %}
 
 {% block scheda_contenuto %}
 
-    Gestione turni
+    {% include 'attivita_scheda_turni_inc_paginazione.html' %}
+
+    <form class="table-responsive" method="POST">
+    {% csrf_token %}
+        <table class="table table-striped table-responsive">
+            <thead>
+                <tr class="piu-grande">
+                    <th>
+                        <i class="fa fa-fw fa-pencil"></i>
+                        Modifica turno
+                    </th>
+                    <th>
+                        <i class="fa fa-fw fa-users"></i>
+                        Richieste di partecipazione
+                    </th>
+                    <th>
+                        <i class="fa fa-fw fa-bolt"></i>
+                        Azioni
+                    </th>
+
+                </tr>
+            </thead>
+            <tbody>
+            {% for turno, modulo, modulo_aggiungi_partecipanti in turni %}
+                <tr id="{{ turno.pk }}">
+                    <td style="width: 25%;">
+                        {% bootstrap_form modulo size='small' %}
+                        <button type="submit" class="btn btn-sm btn-block btn-primary">
+                            <i class="fa fa-fw fa-save"></i>
+                            Salva modifiche
+                        </button>
+                    </td>
+                    <td>
+
+                        <table class="table table-condensed table-striped">
+                            <tbody>
+
+                            <tr><td>
+
+                                <h4 class="text-success">
+                                    <i class="fa fa-fw fa-check"></i>
+                                    Partecipazioni confermate:
+                                    {{ turno.partecipazioni_confermate.count }}
+                                </h4>
+                                <table class="table table-condensed piu-piccolo">
+
+                                    <thead>
+                                        <tr>
+                                            <th>Pres.</th>
+                                            <th>Nome</th>
+                                            <th>Richiesta</th>
+                                            <th>Azione</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for p in turno.partecipazioni_confermate %}
+                                            <tr {% if p.stato == p.NON_PRESENTATO %}class="danger"{% endif %}>
+                                                <td class="warning">
+                                                    <input type="hidden" name="presenza-{{ p.pk }}" value="0" />
+                                                    <label>
+                                                        <input
+                                                                type="checkbox" name="presenza-{{ p.pk }}" value="1"
+                                                                {% if p.stato == p.RICHIESTA %}checked="checked"{% endif %}
+                                                        />
+                                                        S&iacute;
+                                                    </label>
+
+                                                </td>
+                                                <td>{{ p.persona.link|safe }}</td>
+                                                <td>{{ p.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                                <td>
+                                                    <a  href="{{ p.url_cancella }}"
+                                                        data-conferma="Sei sicuro di voler rimuovere {{ p.persona.nome_completo }} dal turno?">
+                                                        <i class="fa fa-fw fa-times"></i>
+                                                        Rimuovi
+                                                    </a>
+                                                </td>
+                                            </tr>
+
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="3">
+                                                    <i class="fa fa-fw fa-info-circle"></i>
+                                                    Nessun partecipante confermato.
+                                                </td>
+                                            </tr>
+
+                                        {% endfor %}
+
+                                        {% if turno.partecipazioni_confermate %}
+                                            <tr>
+                                                <td class="warning">
+                                                    <button type="submit" class="btn btn-xs btn-warning">
+                                                        <i class="fa fa-fw fa-save"></i>
+                                                    </button>
+                                                </td>
+                                                <td class="text-warning" colspan="3">
+                                                    Usa il pulsante <i class="fa fa-fw fa-save"></i>
+                                                    per salvare le presenze.
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+
+
+                            </td></tr>
+
+                            <tr><td>
+
+                                <h4 class="text-warning">
+                                    <i class="fa fa-fw fa-clock-o"></i>
+                                    Partecipazioni in attesa:
+                                    {{ turno.partecipazioni_in_attesa.count }}
+                                </h4>
+                                <table class="table table-condensed table-striped">
+                                    <tbody class="piu-piccolo">
+                                        {% for p in turno.partecipazioni_in_attesa %}
+                                            <tr>
+                                                <td>{{ p.persona.link|safe }}</td>
+                                                <td>{{ p.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                            </tr>
+
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+
+                                {% if turno.partecipazioni_in_attesa %}
+                                    <p class="text-info">
+                                        <i class="fa fa-fw fa-info-circle"></i>
+                                        I referenti delle attivit&agrave; possono confermare o
+                                        negare le partecipazioni dal
+                                        <a href="/autorizzazioni/30/">pannello "Richieste"</a>.
+                                    </p>
+                                {% endif %}
+
+
+                            </td></tr>
+
+                            <tr><td>
+
+                                <h4 class="text-danger">
+                                    <i class="fa fa-fw fa-times"></i>
+                                    Partecipazioni negate:
+                                    {{ turno.partecipazioni_negate.count }}
+                                </h4>
+                                <table class="table table-condensed table-striped">
+                                    <tbody class="piu-piccolo">
+                                        {% for p in turno.partecipazioni_negate %}
+                                            <tr>
+                                                <td>{{ p.persona.link|safe }}</td>
+                                                <td>{{ p.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                            </tr>
+
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </td></tr>
+
+
+
+
+                            </tbody>
+                        </table>
+
+                        {% if turno.partecipazioni_negate or turno.partecipazioni_in_attesa %}
+                            <p class="text-info">
+                                <i class="fa fa-fw fa-info-circle"></i>
+                                Per inserire d'ufficio una persona, anche
+                                 se ha gi&agrave; fatto richiesta di partecipazione,
+                                 puoi usare il pulsante "Aggiungi Partecipante".
+                            </p>
+                        {% endif %}
+
+                    </td>
+                    <td>
+
+                        <button type="button" class="btn btn-primary btn-block"
+                                data-toggle="modal" data-target="#aggiungi-{{ turno.pk }}">
+                            <i class="fa fa-fw fa-plus-circle"></i>
+                            Aggiungi partecipante
+                        </button>
+
+                        <!-- Modale inserimento partecipante -->
+                        <div class="modal fade" id="aggiungi-{{ turno.pk }}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                          <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Chiudi">
+                                    <span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title">
+                                    Aggiungi partecipanti ({{ turno.nome }}, {{ turno.inizio|date:"DATETIME_FORMAT" }})
+                                </h4>
+                              </div>
+                              <div class="modal-body">
+                                  <p>
+                                      Seleziona una o pi&ugrave; persone che vuoi aggiungere come partecipanti
+                                       al turno. Nota che dovrai avvisare queste persone separatamente.
+
+                                  </p>
+                                  {% bootstrap_form modulo_aggiungi_partecipanti %}
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">
+                                    Annulla
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-fw fa-check"></i>
+                                    Inserisci
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <p>&nbsp;</p>
+
+                        <a href="{{ turno.attivita.url_report }}"
+                           class="btn btn-default btn-sm btn-block">
+                            <i class="fa fa-fw fa-file-excel-o"></i>
+                            Scarica report
+                        </a>
+
+                        <a href="{{ turno.attivita.url_report }}"
+                           class="btn btn-default btn-sm btn-block">
+                            <i class="fa fa-fw fa-copy"></i>
+                            Ripeti turno
+                        </a>
+
+                    </td>
+                </tr>
+            {% empty %}
+
+                <tr class="warning allinea-centro">
+                    <td colspan="3">
+                        <p>
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Nessun turno trovato.
+                        </p>
+                    </td>
+                </tr>
+
+
+            {% endfor %}
+            </tbody>
+        </table>
+
+    </form>
+
+    {% include 'attivita_scheda_turni_inc_paginazione.html' %}
+
 
 {% endblock %}

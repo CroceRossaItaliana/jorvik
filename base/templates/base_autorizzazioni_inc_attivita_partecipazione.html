@@ -3,17 +3,22 @@
 
 <table class="table table-bordered table-condensed table-striped allinea-centro piu-piccolo">
     <tr>
-        <td>{{ richiesta.richiedente.nome_completo }}</td>
-        <td>
+        <td class="grassetto">
+            {{ richiesta.oggetto.turno.link|safe }}<br />
             {{ richiesta.oggetto.turno.attivita.link|safe }}
+        </td>
+        <td>
+            <i class="fa fa-fw fa-home"></i>
+                {{ richiesta.oggetto.turno.attivita.sede.link|safe }}
+
             {% if richiesta.oggetto.turno.attivita.locazione %}
-                <i class="fa fa-fw fa-map-marker"></i>
+                <br /><i class="fa fa-fw fa-map-marker"></i>
                 {{ richiesta.oggetto.turno.attivita.locazione }}
             {% endif %}
         </td>
-        <td class="grassetto">{{ richiesta.oggetto.turno.link|safe }}</td>
         <td>
-            {{ richiesta.oggetto.turno.inizio|date:"SHORT_DATETIME_FORMAT" }}&mdash;{{ richiesta.oggetto.turno.fine|date:"SHORT_DATETIME_FORMAT" }}
+            Inizio: {{ richiesta.oggetto.turno.inizio|date:"SHORT_DATETIME_FORMAT" }}<br />
+            Fine: {{ richiesta.oggetto.turno.fine|date:"SHORT_DATETIME_FORMAT" }}
         </td>
     </tr>
 </table>

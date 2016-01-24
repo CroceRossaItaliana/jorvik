@@ -1,7 +1,8 @@
 from django.contrib.admin import ModelAdmin
-from django.db.models import Q
+from django.db.models import Q, F
+from django.utils.encoding import force_text
 
-from anagrafica.models import Persona, Appartenenza, Riserva
+from anagrafica.models import Persona, Appartenenza, Riserva, Sede
 from base.utils import filtra_queryset, testo_euro
 from curriculum.models import TitoloPersonale
 from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote, ModuloElencoPerTitoli
@@ -108,17 +109,27 @@ class ElencoVistaSoci(ElencoVistaAnagrafica):
         return 'us_elenchi_inc_soci.html'
 
     def excel_foglio(self, p):
-        if self.modulo_riempito and 'al_giorno' in self.modulo_riempito.cleaned_data \
+        if hasattr(p, 'appartenenza_sede'):
+            sede = Sede.objects.get(pk=p.appartenenza_sede)
+
+        elif self.modulo_riempito and 'al_giorno' in self.modulo_riempito.cleaned_data \
                 and self.modulo_riempito.cleaned_data['al_giorno']:
             sede = p.sede_riferimento(al_giorno=self.modulo_riempito.cleaned_data['al_giorno'])
         else:
             sede = p.sede_riferimento()
 
-        return sede.nome if sede else 'Altro'
+        return sede.nome_completo if sede else 'Altro'
 
     def excel_colonne(self):
+
+        def _tipo_socio(p):
+            scelte = dict(Appartenenza._meta.get_field_by_name('membro')[0].flatchoices)
+            return force_text(scelte[p.appartenenza_tipo], strings_only=True)
+
         return super(ElencoVistaSoci, self).excel_colonne() + (
             ("Ingresso in CRI", lambda p: p.ingresso().date()),
+            ("Tipo Attuale", lambda p: _tipo_socio(p) if p.appartenenza_tipo else "N/A"),
+            ("A partire dal", lambda p: p.appartenenza_inizio.date() if p.appartenenza_inizio else "N/A")
         )
 
 
@@ -134,10 +145,14 @@ class ElencoSociAlGiorno(ElencoVistaSoci):
                 al_giorno=self.modulo_riempito.cleaned_data['al_giorno'],
                 sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_SOCIO,
             ).via("appartenenze")
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
-        )
+        ).distinct('cognome', 'nome', 'codice_fiscale')
 
     def modulo(self):
         return ModuloElencoSoci
@@ -171,10 +186,14 @@ class ElencoVolontari(ElencoVistaSoci):
             Appartenenza.query_attuale(
                 sede__in=qs_sedi, membro__in=[Appartenenza.VOLONTARIO, Appartenenza.ESTESO],
             ).via("appartenenze")
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
-        )
+        ).distinct('cognome', 'nome', 'codice_fiscale')
 
 
 class ElencoEstesi(ElencoVistaSoci):
@@ -217,7 +236,11 @@ class ElencoEstesi(ElencoVistaSoci):
                 pk__in=estesi_da_qualche_parte
             )
 
-        return risultati.prefetch_related(
+        return risultati.annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
@@ -232,7 +255,7 @@ class ElencoVolontariGiovani(ElencoVolontari):
         oggi = date.today()
         nascita_minima = date(oggi.year - Persona.ETA_GIOVANE, oggi.month, oggi.day)
         return super(ElencoVolontariGiovani, self).risultati().filter(
-            data_nascita__gte=nascita_minima
+            data_nascita__gt=nascita_minima
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
 
@@ -285,6 +308,10 @@ class ElencoDipendenti(ElencoVistaSoci):
             Appartenenza.query_attuale(
                 sede__in=qs_sedi, membro=Appartenenza.DIPENDENTE,
             ).via("appartenenze")
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
@@ -348,6 +375,10 @@ class ElencoOrdinari(ElencoVistaSoci):
             Appartenenza.query_attuale(
                 sede__in=qs_sedi, membro=Appartenenza.ORDINARIO,
             ).via("appartenenze")
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
@@ -367,10 +398,13 @@ class ElencoInRiserva(ElencoVistaSoci):
                     sede__in=qs_sedi
                 ).via("appartenenza")
             ).via("riserve")
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
-        )
+        ).distinct('cognome', 'nome', 'codice_fiscale')
 
 
 class ElencoElettoratoAlGiorno(ElencoVistaSoci):
@@ -412,6 +446,10 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
             appartenenze__terminazione__in=[Appartenenza.DIMISSIONE, Appartenenza.ESPULSIONE],
             appartenenze__fine__gte=anzianita_minima,
 
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'

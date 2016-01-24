@@ -287,4 +287,23 @@ class ModuloPresidenteSede(ModelForm):
         model = Sede
         fields = ['telefono', 'fax', 'email', 'codice_fiscale',
                   'partita_iva', ]
-        
+
+
+class ModuloImportVolontari(forms.Form):
+    file_csv = forms.FileField()
+
+    VALIDA = "V"
+    IMPORTA = "I"
+    SCELTE = (
+        (VALIDA, "Valida solamente"),
+        (IMPORTA, "Valida e importa le righe valide"),
+    )
+    azione = forms.ChoiceField(choices=SCELTE, initial=VALIDA)
+
+    VIRGOLA = ','
+    PUNTO_E_VIRGOLA = ';'
+    DELIMITATORI = (
+        (VIRGOLA, "Virgola"),
+        (PUNTO_E_VIRGOLA, "Punto e virgola")
+    )
+    delimitatore = forms.ChoiceField(choices=DELIMITATORI, initial=VIRGOLA)

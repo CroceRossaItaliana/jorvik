@@ -172,7 +172,8 @@ class Excel(Allegato):
 
         self.fogli.append(foglio)
 
-    def genera_e_salva(self, nome='File.xlsx', scadenza=domani(), **kwargs):
+    def genera_e_salva(self, nome='File.xlsx', scadenza=domani(),
+                       ordina_fogli=True, **kwargs):
         """
         Genera il file e lo salva su database.
         :param nome: Il nome del file da allegare (opzionale, default 'File.xlsx').
@@ -209,6 +210,8 @@ class Excel(Allegato):
                         testo = ""
                     worksheet.write(riga, colonna, str(testo))
 
+        if ordina_fogli:
+            workbook.worksheets_objs.sort(key=lambda x: x.name)
         workbook.close()
 
         self.file = zname

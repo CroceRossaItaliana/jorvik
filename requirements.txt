@@ -27,3 +27,4 @@ sorl-thumbnail==12.3
 python-stdnum==1.2
 codicefiscale==0.9
 django-cron==0.4.6
+django-gravatar2==1.4.0

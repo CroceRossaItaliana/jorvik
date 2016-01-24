@@ -1,0 +1,122 @@
+{% extends 'base_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Importazione volontari
+{% endblock %}
+
+
+{% block pagina_principale %}
+
+    <p>&nbsp;</p>
+
+    <div class="container-fluid">
+
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    Modulo importazione
+                </h2>
+            </div>
+            <div class="panel-body">
+                <form method="POST" enctype="multipart/form-data">
+
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-fw fa-check-circle"></i> OK
+                    </button>
+
+                </form>
+
+            </div>
+        </div>
+
+        <hr />
+
+        {% if importati %}
+            <div class="alert alert-block alert-success">
+                <h4>
+                    <i class="fa fa-fw fa-check-circle"></i> Importati {{ importati }} volontari
+                </h4>
+                <p>Data di importazione: {% now "DATETIME_FORMAT" %}.</p>
+                <p>
+                    Per favore salva questa pagina in formato PDF a colori
+                    (<a href="javascript:window.print();">Stampa</a>) e
+                    inoltrala al richiedente tramite Kayako.
+                </p>
+            </div>
+        {% endif %}
+
+        <div class="panel panel-info">
+
+
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    Risultati analisi e importazione
+                </h2>
+            </div>
+
+            <div class="panel-body">
+                <table class="table table-responsive table-condensed table-bordered">
+                    {% for riga in risultati %}
+
+                        <tr class="monospace piu-piccolo">
+                            {% for colonna in riga.0  %}
+                                <td>{{ colonna }}</td>
+                            {% endfor %}
+                        </tr>
+
+                        {% for avviso in riga.1 %}
+
+                            {% if avviso.0 == OK %}
+                                <tr class="success">
+                                    <td colspan="{{ riga.0|length }}">
+                                        <i class="fa fa-fw fa-check-circle"></i> <strong>OK</strong>
+                                        {% if importati %}Volontario caricato correttamente su Gaia.
+                                            {% else %}Il volontario &egrave; pronto per essere caricato.
+                                            {% endif %}
+                                    </td>
+                                </tr>
+
+                            {% elif avviso.0 == AVVISO %}
+                                <tr class="warning">
+                                    <td colspan="{{ riga.0|length }}">
+                                        <i class="fa fa-fw fa-warning"></i> {{ avviso.1 }}
+                                    </td>
+                                </tr>
+
+                            {% elif avviso.0 == ERRORE %}
+                                <tr class="danger error">
+                                    <td colspan="{{ riga.0|length }}">
+                                        <i class="fa fa-fw fa-times"></i>
+                                        <strong>IMPOSSIBLE CARICARE</strong>:
+                                        {{ avviso.1 }}
+                                    </td>
+                                </tr>
+
+                            {% endif %}
+
+                        {% endfor %}
+
+                        <tr class="monospace piu-piccolo">
+                            <td colspan="{{ riga.0|length }}">
+                                &nbsp;
+                            </td>
+                        </tr>
+
+
+                    {% endfor %}
+                </table>
+
+            </div>
+        </div>
+
+    </div>
+
+
+
+{% endblock %}
+
