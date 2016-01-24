@@ -16,10 +16,10 @@ Sei interessato a partecipare allo sviluppo di Gaia/Jorvik? Contattaci all'indir
 
 Jorvik viene installato e testato sulle recenti versioni di Python 3, in modo automatico, da Travis CI ad ogni push.
 
-Stato attuale di `master` (sviluppo): [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=master)](https://travis-ci.org/CroceRossaItaliana/jorvik)
-Stato attuale di `produzione` (online*): [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=produzione)](https://travis-ci.org/CroceRossaItaliana/jorvik)
+* Stato attuale di `master` (sviluppo): [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=master)](https://travis-ci.org/CroceRossaItaliana/jorvik)
+* Stato attuale di `produzione` (online*): [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=produzione)](https://travis-ci.org/CroceRossaItaliana/jorvik)
 
-\*: *Il deployment **non** viene effettuato automaticamente.*
+\*: *Il deployment non viene effettuato automaticamente.*
 
 ### Documentazione
 
@@ -27,7 +27,7 @@ Puoi trovare la **[Documentazione sul Wiki del progetto](https://github.com/Croc
 
 ### Requisiti
 
-* **[Python 3.x](https://www.python.org/downloads/)** (es. `python3`)
+* **[Python 3.4 e superiore](https://www.python.org/downloads/)** (es. `python3`)
 * **[PIP 3](https://www.python.org/downloads/)** (es. `pip3`)
 * **[PostgreSQL](http://www.postgresql.org/) 9.4+** con [PostGIS](http://postgis.net/))
 * **[GEOS](http://trac.osgeo.org/geos/)** (Geometry Engine Open Source)
@@ -65,7 +65,7 @@ Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 
     python3 manage.py syncdb
     ```
 
-5. **Installare PyCharm Professional** da [JetBrains](https://www.jetbrains.com/pycharm/). La licenza e' gratis per gli studenti. Contattaci se necessiti di una licenza per lavorare su Jorvik.
+5. **Installare PyCharm Professional** da [JetBrains](https://www.jetbrains.com/pycharm/). La licenza e' gratis per gli studenti. Contattaci se necessiti di una licenza per lavorare su Jorvik: abbiamo un numero limitato di licenze, quindi approfitta del trial di 30 giorni per assicurarti di voler collaborare.
 6. **Configurare PyCharm per usare Vagrant**:
   * Preferenze > Progetto > Interprete > Aggiungi interprete remoto
     ![image](https://cloud.githubusercontent.com/assets/621062/10762277/4da18088-7cbd-11e5-924e-a2737d7783e1.png)
