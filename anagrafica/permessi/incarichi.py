@@ -6,7 +6,8 @@ from datetime import date
 
 from django.contrib.contenttypes.models import ContentType
 
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, REFERENTE, DIRETTORE_CORSO
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, REFERENTE, DIRETTORE_CORSO, \
+    RESPONSABILE_FORMAZIONE
 
 INCARICO_PRESIDENZA = "PRES"
 INCARICO_GESTIONE_SOCI = "US-GEN"
@@ -82,6 +83,15 @@ def espandi_incarichi_direttore_corso(qs_corso, al_giorno=date.today()):
         (INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,      qs_corso)
     ]
 
+
+def espandi_incarichi_responsabile_formazione(qs_sede, al_giorno=date.today()):
+    from formazione.models import CorsoBase
+    print(qs_sede)
+    return [
+
+    ] + espandi_incarichi_direttore_corso(CorsoBase.objects.filter(sede__in=qs_sede.espandi()))
+
+
 def espandi_incarichi_presidente(qs_sede, al_giorno=date.today()):
     return [
        (INCARICO_GESTIONE_SANGUE,                       qs_sede),
@@ -98,6 +108,7 @@ ESPANSIONE_DELEGHE = {
     PRESIDENTE:             espandi_incarichi_presidente,
     REFERENTE:              espandi_incarichi_referente_attivita,
     DIRETTORE_CORSO:        espandi_incarichi_direttore_corso,
+    RESPONSABILE_FORMAZIONE:espandi_incarichi_responsabile_formazione,
 
 }
 
