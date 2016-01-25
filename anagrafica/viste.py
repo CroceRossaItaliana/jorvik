@@ -448,7 +448,8 @@ def utente_rubrica_referenti(request, me):
             oggetto_id__in=sedi_volontario,
             tipo__in=DELEGHE_RUBRICA,
         ).via("delega")
-    ).order_by('nome', 'cognome', 'codice_fiscale').distinct('nome', 'cognome', 'codice_fiscale')
+    ).order_by('nome', 'cognome', 'codice_fiscale')\
+        .distinct('nome', 'cognome', 'codice_fiscale')
 
     contesto = {
         "referenti": referenti,
@@ -469,7 +470,10 @@ def utente_rubrica_volontari(request, me):
     #    privacy_contatti__gte=Persona.POLICY_RISTRETTO,
     #)
     volontari = volontari_volontario #  | volontari_gestione
-    volontari = volontari.prefetch_related('appartenenze', 'fototessere').order_by('nome', 'cognome')
+    volontari = volontari\
+        .prefetch_related('appartenenze', 'fototessere')\
+        .order_by('nome', 'cognome', 'codice_fiscale')\
+        .distinct('nome', 'cognome', 'codice_fiscale')
     ci_sono = volontari_volontario.filter(pk=me.pk).exists()
 
     contesto = {
