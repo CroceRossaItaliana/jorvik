@@ -18,7 +18,7 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
-    ModuloImportVolontari
+    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -941,7 +941,27 @@ def _profilo_anagrafica(request, me, persona):
 
 
 def _profilo_appartenenze(request, me, persona):
-    return 'anagrafica_profilo_appartenenze.html', {}
+    puo_modificare = me.permessi_almeno(persona, MODIFICA)
+
+    moduli = []
+    for app in persona.appartenenze.all():
+        modulo = None
+        if puo_modificare and app.attuale():
+            modulo = ModuloModificaDataInizioAppartenenza(request.POST or None,
+                                                          instance=app,
+                                                          prefix="%d" % (app.pk,))
+            if ("%s-inizio" % (app.pk,)) in request.POST and modulo.is_valid():
+                modulo.save()
+
+        moduli += [modulo]
+
+    appartenenze = zip(persona.appartenenze.all(), moduli)
+
+    contesto = {
+        "appartenenze": appartenenze
+    }
+
+    return 'anagrafica_profilo_appartenenze.html', contesto
 
 
 def _profilo_deleghe(request, me, persona):
