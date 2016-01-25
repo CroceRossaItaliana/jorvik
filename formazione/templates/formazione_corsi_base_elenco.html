@@ -41,7 +41,7 @@
                     {% endif %}
                 </td>
 
-                <td>
+                <td class="piu-piccolo">
                     <i class="fa fa-fw fa-map-marker"></i>
                         {% if corso.locazione %}
                             {{ corso.locazione }}
@@ -57,7 +57,16 @@
                 </td>
 
                 <td>
-                    {{ corso.partecipazioni.count }} richieste
+
+                    <strong>{{ corso.partecipazioni_confermate_o_in_attesa.count }} richieste</strong>
+                    <br />
+                    <span class="piu-piccolo text-muted">
+                        <i class="fa fa-fw fa-check"></i> {{ corso.partecipazioni_confermate.count }} confermate<br />
+                        <i class="fa fa-fw fa-clock-o"></i> {{ corso.partecipazioni_in_attesa.count }} in attesa<br />
+                        <i class="fa fa-fw fa-times"></i> {{ corso.partecipazioni_negate.count }} negate<br />
+
+
+                    </span>
                 </td>
 
             </tr>

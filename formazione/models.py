@@ -53,6 +53,7 @@ class CorsoBase(Corso, ConVecchioID):
     class Meta:
         verbose_name = "Corso Base"
         verbose_name_plural = "Corsi Base"
+        ordering = ['-data_inizio']
 
     data_inizio = models.DateTimeField(blank=False, null=False, help_text="La data di inizio del corso. "
                                                                           "Utilizzata per la gestione delle iscrizioni.")
@@ -208,6 +209,9 @@ class CorsoBase(Corso, ConVecchioID):
     def aspiranti_nelle_vicinanze(self):
         from formazione.models import Aspirante
         return self.circonferenze_contenenti(Aspirante.objects.all()).count()
+
+    def partecipazioni_confermate_o_in_attesa(self):
+        return self.partecipazioni_confermate() | self.partecipazioni_in_attesa()
 
     def partecipazioni_confermate(self):
         return PartecipazioneCorsoBase.con_esito_ok().filter(corso=self)
