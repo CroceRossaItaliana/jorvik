@@ -108,6 +108,16 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         # E-mail a delle persone
         for d in self.oggetti_destinatario.filter(inviato=False):
 
+            # Evita duplicati in invii lunghi (se ci sono problemi con lock)...
+            d.refresh_from_db()
+            if d.inviato:
+                print("%s  (*) msg=%d, dest=%d, protezione invio duplicato" % (
+                    datetime.now().isoformat(' '),
+                    self.pk,
+                    d.pk,
+                ))
+                continue
+
             try:
                 msg = EmailMultiAlternatives(
                     subject=self.oggetto,
