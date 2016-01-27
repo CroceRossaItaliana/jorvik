@@ -215,7 +215,7 @@ class Collocazione(ModelloSemplice, ConStorico, ConMarcaTemporale):
 
     veicolo = models.ForeignKey(Veicolo, related_name='collocazioni', on_delete=models.CASCADE)
     autoparco = models.ForeignKey(Autoparco, related_name='autoparco', on_delete=models.PROTECT)
-    creato_da = models.ForeignKey('anagrafica.Persona', related_name='collocazioni_veicoli', null=True,
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='collocazioni_veicoli', null=True, blank=True,
                                   on_delete=models.SET_NULL)
 
     def termina(self):
@@ -232,7 +232,7 @@ class FermoTecnico(ModelloSemplice, ConStorico, ConMarcaTemporale):
     motivo = models.CharField(max_length=512)
     veicolo = models.ForeignKey(Veicolo, related_name='fermi_tecnici', on_delete=models.CASCADE)
     creato_da = models.ForeignKey('anagrafica.Persona', related_name='fermi_tecnici_creati', on_delete=models.SET_NULL,
-                                  null=True)
+                                  null=True, blank=True)
 
     def __str__(self):
         return "Fermo tecnico"
@@ -266,7 +266,7 @@ class Manutenzione(ModelloSemplice, ConMarcaTemporale):
     manutentore = models.CharField(max_length=512, help_text="es. autoriparato")
     numero_fattura = models.CharField(max_length=64, help_text="es. 122/A")
     costo = models.PositiveIntegerField()
-    creato_da = models.ForeignKey('anagrafica.Persona', related_name='manutenzioni_registrate', null=True,
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='manutenzioni_registrate', null=True, blank=True,
                                   on_delete=models.SET_NULL)
 
 
@@ -307,7 +307,7 @@ class Rifornimento(ModelloSemplice, ConMarcaTemporale):
     data = models.DateTimeField("Data rifornimento", db_index=True)
     contachilometri = models.PositiveIntegerField("Contachilometri", db_index=True)
     costo = models.FloatField("Costo", db_index=True)
-    creato_da = models.ForeignKey('anagrafica.Persona', related_name='rifornimenti_registrate', null=True,
+    creato_da = models.ForeignKey('anagrafica.Persona', related_name='rifornimenti_registrate', null=True, blank=True,
                                   on_delete=models.SET_NULL)
 
     consumo_carburante = models.FloatField("Consumo carburante lt.", default=0.0, db_index=True,
