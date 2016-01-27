@@ -35,8 +35,13 @@ class GestoreUtenti(BaseUserManager):
         return self._create_user(email, password, True, True,
                                  **extra_fields)
 
+    def get_by_natural_key(self, username):
+        return self.get(email__iexact=username)
+
 
 class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
+
+    objects = GestoreUtenti()
 
     class Meta:
         verbose_name_plural = "Utenze"
@@ -51,8 +56,6 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
         help_text='Se l\'utente è un amministratore o meno.')
     is_active = models.BooleanField('Attivo', default=True,
         help_text='Utenti attivi. Impostare come disattivo invece di cancellare.')
-
-    objects = GestoreUtenti()
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
