@@ -1,6 +1,7 @@
 from django.contrib import admin
 from mptt.admin import MPTTModelAdmin
-from anagrafica.models import Persona, Sede, Appartenenza, Delega, Documento, Fototessera, Estensione, Trasferimento
+from anagrafica.models import Persona, Sede, Appartenenza, Delega, Documento, Fototessera, Estensione, Trasferimento, \
+    Riserva, Dimissione
 
 RAW_ID_FIELDS_PERSONA = []
 RAW_ID_FIELDS_SEDE = []
@@ -10,7 +11,8 @@ RAW_ID_FIELDS_DOCUMENTO = ['persona']
 RAW_ID_FIELDS_FOTOTESSERA = ['persona']
 RAW_ID_FIELDS_ESTENSIONE = ["persona", "richiedente", "destinazione", "appartenenza"]
 RAW_ID_FIELDS_TRASFERIMENTO = ["persona", "richiedente", "destinazione", "appartenenza"]
-
+RAW_ID_FIELDS_RISERVA = ['persona', 'appartenenza']
+RAW_ID_FIELDS_DIMISSIONE = ['persona', 'appartenenza', 'richiedente', 'sede']
 
 # Aggiugni al pannello di amministrazione
 class InlineAppartenenzaPersona(admin.TabularInline):
@@ -101,3 +103,21 @@ class AdminTrasferimento(admin.ModelAdmin):
     list_display = ("persona", "destinazione", "creazione", )
     list_filter = ("creazione", "confermata", "ritirata",)
     raw_id_fields = RAW_ID_FIELDS_TRASFERIMENTO
+
+
+# admin.site.register(Riserva)
+@admin.register(Riserva)
+class AdminRiserva(admin.ModelAdmin):
+    search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale"]
+    list_display = ("persona",)
+    list_filter = ("confermata", "ritirata", "creazione",)
+    raw_id_fields = RAW_ID_FIELDS_RISERVA
+
+
+# admin.site.register(Riserva)
+@admin.register(Dimissione)
+class AdminDimissione(admin.ModelAdmin):
+    search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale"]
+    list_display = ("persona", "richiedente")
+    list_filter = ("creazione",)
+    raw_id_fields = RAW_ID_FIELDS_DIMISSIONE

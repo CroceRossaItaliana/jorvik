@@ -720,7 +720,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     def estensioni_attuali(self):
         return self.estensioni.all().filter(
-            Q(pk__in=Estensione.con_esito_ok())
+            Q(pk__in=Estensione.con_esito_ok()),
+            Appartenenza.query_attuale().via("appartenenza"),
         )
 
     def estensioni_in_attesa(self):
