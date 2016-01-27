@@ -228,7 +228,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                                                        tipo=ProvvedimentoDisciplinare.SOSPENSIONE).exists()
     @property
     def in_riserva(self):
-        return Riserva.query_attuale(persona=self).exists()
+        return Riserva.query_attuale(Riserva.con_esito_ok().q, persona=self).exists()
 
     def __str__(self):
         return self.nome_completo

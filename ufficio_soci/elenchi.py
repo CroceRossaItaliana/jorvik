@@ -394,6 +394,7 @@ class ElencoInRiserva(ElencoVistaSoci):
         qs_sedi = self.args[0]
         return Persona.objects.filter(
             Riserva.query_attuale(
+                Riserva.con_esito_ok().q,
                 Appartenenza.query_attuale(
                     sede__in=qs_sedi
                 ).via("appartenenza")
