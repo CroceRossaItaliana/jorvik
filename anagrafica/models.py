@@ -1637,7 +1637,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         verbose_name_plural = "Documenti di Dimissione"
 
     persona = models.ForeignKey(Persona, related_name="dimissioni", on_delete=models.CASCADE)
-    appartenenza = models.ForeignKey(Appartenenza, related_name="dimissioni", on_delete=models.PROTECT)
+    appartenenza = models.ForeignKey(Appartenenza, related_name="dimissioni", on_delete=models.CASCADE)
     sede = models.ForeignKey(Sede, related_name="dimissioni", on_delete=models.PROTECT)
 
     VOLONTARIE = 'VOL'
