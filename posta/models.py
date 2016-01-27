@@ -56,6 +56,20 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         #    return self.corpo
         #print html.parse('http://someurl.at.domain').xpath('//body')[0].text_content()
 
+    def _processa_link(self):
+        """
+        Controlla i link nella e-mail relativi e li rende assoluti.
+        """
+        doc = html.document_fromstring(self.corpo)
+        links = doc.xpath('//a')
+        for el in links:
+            try:
+                url = el.attrib['href']
+                if '://' not in url:
+                    el.attrib['href'] = "https://gaia.cri.it%s" % (url,)
+            except KeyError:
+                continue
+        self.corpo = html.tostring(doc, pretty_print=True).decode('UTF-8')
 
     def accoda(self):
         """
@@ -206,6 +220,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             mittente=mittente,
             corpo=get_template(modello).render(Context(corpo))
         )
+        m._processa_link()
         m.save()
 
         # Se QuerySet, rendi distinti.
