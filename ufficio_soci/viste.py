@@ -276,9 +276,19 @@ def us_trasferimento(request, me):
         else:
             trasf.richiedente = me
             trasf.save()
-            trasf.richiedi()
-            return messaggio_generico(request, me, titolo="Trasferimento richiesto",
-                                      messaggio="Il trasferimento è stato richiesto",
+            if me.sede_riferimento().comitato == trasf.destinazione.comitato:
+                trasf.esegui()
+                return messaggio_generico(request, me, titolo="Trasferimento effettuato",
+                                      messaggio="Il trasferimento è stato automaticamente effettuato in quanto il "
+                                                "la destinazione e' un'unita' territoriale "
+                                                "appartenente al suo comitato",
+                                      torna_titolo="Richiedi nuovo trasferimento",
+                                      torna_url="/us/trasferimento/")
+            else:
+                trasf.richiedi()
+
+                return messaggio_generico(request, me, titolo="Trasferimento richiesto",
+                                      messaggio="Il trasferimento è stato richiesto, ora dovrai accettare la richiesta!",
                                       torna_titolo="Richiedi nuovo trasferimento",
                                       torna_url="/us/trasferimento/")
     contesto = {

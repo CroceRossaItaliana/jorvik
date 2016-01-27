@@ -31,7 +31,7 @@ class PersonaAutocompletamento(AutocompletamentoBase):
             # 1. Appartenente alla stessa mia sede
             Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_attuali()).via("appartenenze"),)
             # 2. Appartenente a una sede di mia delega
-            | Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_deleghe_attuali()).via("appartenenze"))
+            | Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_deleghe_attuali(espandi=True)).via("appartenenze"))
         )
         return super(PersonaAutocompletamento, self).choices_for_request()
 

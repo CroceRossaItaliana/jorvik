@@ -1421,13 +1421,22 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
     def autorizzazione_concessa(self, modulo=None):
         self.protocollo_data = modulo.cleaned_data['protocollo_data']
         self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
-        # Invia notifica tramite e-mail
+        self.save()
+        self.esegui()
+
+
+    def esegui(self):
+        appartenenzaVecchia = Appartenenza.objects.filter(Appartenenza.query_attuale().q,
+                                                   membro=Appartenenza.VOLONTARIO, persona=self.persona).first()
+        appartenenzaVecchia.fine = poco_fa()
+        appartenenzaVecchia.terminazione = Appartenenza.TRASFERIMENTO
+        appartenenzaVecchia.save()
+         # Invia notifica tramite e-mail
         app = Appartenenza(
-            membro=Appartenenza.ESTESO,
+            membro=Appartenenza.VOLONTARIO,
             persona=self.persona,
             sede=self.destinazione,
-            inizio=datetime.today(),
-            fine=datetime.today() + timedelta(days=365)
+            inizio=poco_fa(),
         )
         app.save()
         self.appartenenza = app
