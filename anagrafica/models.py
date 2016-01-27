@@ -1527,11 +1527,14 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
 
     def genera_pdf(self):
         pdf = PDF(oggetto=self)
+        appartenenza = Appartenenza.objects.filter(Appartenenza.query_attuale(al_giorno=self.creazione).q,
+                                                   membro=Appartenenza.VOLONTARIO, persona=self.persona).first()
         pdf.genera_e_salva(
           nome="Estensione %s.pdf" % (self.persona.nome_completo, ),
           corpo={
             "estensione": self,
-            "sede_attuale": self.persona.sedi_attuali(al_giorno=self.creazione)[0]
+            "sede_attuale": self.persona.sedi_attuali(al_giorno=self.creazione)[0],
+            "appartenenza": appartenenza,
           },
           modello="pdf_estensione.html",
         )
