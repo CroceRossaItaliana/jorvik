@@ -2,6 +2,7 @@ from django.contrib import admin
 from mptt.admin import MPTTModelAdmin
 from anagrafica.models import Persona, Sede, Appartenenza, Delega, Documento, Fototessera, Estensione, Trasferimento, \
     Riserva, Dimissione
+from autenticazione.models import Utenza
 
 RAW_ID_FIELDS_PERSONA = []
 RAW_ID_FIELDS_SEDE = []
@@ -13,6 +14,7 @@ RAW_ID_FIELDS_ESTENSIONE = ["persona", "richiedente", "destinazione", "appartene
 RAW_ID_FIELDS_TRASFERIMENTO = ["persona", "richiedente", "destinazione", "appartenenza"]
 RAW_ID_FIELDS_RISERVA = ['persona', 'appartenenza']
 RAW_ID_FIELDS_DIMISSIONE = ['persona', 'appartenenza', 'richiedente', 'sede']
+
 
 # Aggiugni al pannello di amministrazione
 class InlineAppartenenzaPersona(admin.TabularInline):
@@ -34,12 +36,19 @@ class InlineDocumentoPersona(admin.TabularInline):
     extra = 0
 
 
+class InlineUtenzaPersona(admin.StackedInline):
+    model = Utenza
+    extra = 0
+
+
 @admin.register(Persona)
 class AdminPersona(admin.ModelAdmin):
     search_fields = ['nome', 'cognome', 'codice_fiscale', 'utenza__email', 'email_contatto']
-    list_display = ('nome', 'cognome', 'utenza', 'email_contatto', 'codice_fiscale', 'data_nascita', 'stato', 'ultima_modifica', )
+    list_display = ('nome', 'cognome', 'utenza', 'email_contatto', 'codice_fiscale', 'data_nascita', 'stato',
+                    'ultima_modifica', )
     list_filter = ('stato', )
-    inlines = [InlineAppartenenzaPersona, InlineDelegaPersona, InlineDocumentoPersona]
+    list_display_links = ('nome', 'cognome', 'codice_fiscale',)
+    inlines = [InlineUtenzaPersona, InlineAppartenenzaPersona, InlineDelegaPersona, InlineDocumentoPersona,]
 
 
 @admin.register(Sede)
@@ -48,6 +57,7 @@ class AdminSede(MPTTModelAdmin):
     list_display = ('nome', 'genitore', 'tipo', 'estensione', 'creazione', 'ultima_modifica', )
     list_filter = ('tipo', 'estensione', 'creazione', )
     raw_id_fields = ('genitore', 'locazione',)
+    list_display_links = ('nome', 'estensione',)
 
 # admin.site.register(Appartenenza)
 
