@@ -109,14 +109,15 @@ class ConStorico(models.Model):
             fine = datetime.combine(al_giorno, datetime.min.time())  # 0.00
 
         fine += timedelta(seconds=1)  # Anti-bug
+        fine -= timedelta(minutes=5)  # Anti-bug
 
-        return Q(
+        risultato = Q(
             Q(inizio__lte=inizio),
             Q(Q(fine__isnull=True) | Q(fine__gt=fine)),
-            cls.CONDIZIONE_ATTUALE_AGGIUNTIVA,
             *args,
             **kwargs
         )
+        return risultato
 
     @classmethod
     @concept
@@ -166,7 +167,8 @@ class ConStorico(models.Model):
         :param al_giorno: Giorno per considerare la verifica per l'attuale. Default oggi.
         :return: True o False.
         """
-        return self.query_attuale(al_giorno=al_giorno, pk=self.pk).exists()
+        questo_oggetto_attuale = self.query_attuale(al_giorno=al_giorno, pk=self.pk)
+        return questo_oggetto_attuale.exists()
 
 
 class ConDelegati(models.Model):
