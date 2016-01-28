@@ -83,7 +83,7 @@ class ConStorico(models.Model):
 
     # Puo' essere sovrascritto per aggiungere una ulteriore
     # condizione di attualita' (es. partecipazione confermata, ecc.)
-    CONDIZIONE_ATTUALE_AGGIUNTIVA = Q()
+    CONDIZIONE_ATTUALE_AGGIUNTIVA = None
 
     inizio = models.DateTimeField("Inizio", db_index=True, null=False)
     fine = models.DateTimeField("Fine", db_index=True, null=True, blank=True, default=None, help_text="Lasciare il campo "
@@ -117,6 +117,10 @@ class ConStorico(models.Model):
             *args,
             **kwargs
         )
+
+        if cls.CONDIZIONE_ATTUALE_AGGIUNTIVA is not None:
+            risultato = Q(risultato, cls.CONDIZIONE_ATTUALE_AGGIUNTIVA)
+
         return risultato
 
     @classmethod
@@ -132,12 +136,17 @@ class ConStorico(models.Model):
         :return: Q!
         """
 
-        return Q(
+        risultato = Q(
             Q(Q(fine__gte=inizio) | Q(fine__isnull=True)),
-            cls.CONDIZIONE_ATTUALE_AGGIUNTIVA,
             inizio__lte=fine,
             **kwargs
         )
+
+        if cls.CONDIZIONE_ATTUALE_AGGIUNTIVA is not None:
+            risultato = Q(risultato, cls.CONDIZIONE_ATTUALE_AGGIUNTIVA)
+
+        return risultato
+
 
     @classmethod
     @concept
@@ -154,12 +163,16 @@ class ConStorico(models.Model):
         inizio = date(anno, 1, 1)
         fine = date(anno, 12, 31)
 
-        return Q(
+        risultato = Q(
             Q(Q(fine__gte=inizio) | Q(fine__isnull=True)),
-            cls.CONDIZIONE_ATTUALE_AGGIUNTIVA,
             inizio__lte=fine,
             **kwargs
         )
+
+        if cls.CONDIZIONE_ATTUALE_AGGIUNTIVA is not None:
+            risultato = Q(risultato, cls.CONDIZIONE_ATTUALE_AGGIUNTIVA)
+
+        return risultato
 
     def attuale(self, al_giorno=timezone.now()):
         """
