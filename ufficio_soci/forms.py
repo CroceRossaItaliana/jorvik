@@ -140,7 +140,7 @@ class ModuloReclamaQuota(forms.Form):
     SI = "S"
     NO = "N"
     SCELTE = (
-        (SI, "Sì, registra la quota per il socio"),
+    #    (SI, "Sì, registra la quota per il socio"),
         (NO, "No, inserirò manualmente la quota più tardi"),
     )
     registra_quota = forms.ChoiceField(choices=SCELTE, initial=SI)
