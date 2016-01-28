@@ -142,7 +142,7 @@ def informazioni_sede(request, me, slug):
 
 
 IGNORA_AUTORIZZAZIONI = [
-    ContentType.objects.get_for_model(PartecipazioneCorsoBase).pk
+    # ContentType.objects.get_for_model(PartecipazioneCorsoBase).pk
 ]
 
 
@@ -172,7 +172,7 @@ def autorizzazioni(request, me, content_type_pk=None):
         modello = modello.RICHIESTA_NOME
         sezioni += ((modello, sez['oggetto_tipo_id__count'], int(sez['oggetto_tipo_id'])),)
 
-    richieste = richieste.order_by('creazione')
+    richieste = richieste.order_by('creazione', 'id')
 
     if content_type_pk is not None:
         richieste = richieste.filter(oggetto_tipo_id=int(content_type_pk))

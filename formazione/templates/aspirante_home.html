@@ -9,6 +9,54 @@
 
     <h2 class="allinea-centro">Il Volontariato in CRI ti cambier&agrave; la vita.</h2>
 
+    {% if me.aspirante.corso %}
+
+        <div class="alert alert-block alert-success">
+            <h4>
+                <i class="fa fa-fw fa-flag"></i>
+                Sei iscritt{{ me.genere_o_a }} a un Corso Base!
+            </h4>
+            <p>
+               Fantastico. Ora non ti resta che presentarti presso il luogo indicato per lo svolgimento
+                    delle lezioni che puoi vedere premendo il pulsante presente qui sotto.
+            </p>
+            <p>
+                <a href="{{ me.aspirante.corso.url }}" class="btn btn-success btn-block">
+                    <i class="fa fa-fw fa-info-circle"></i>
+                    Vai alla pagina del Corso Base
+                </a>
+            </p>
+        </div>
+
+    {% endif %}
+
+    {% if me.aspirante.richiesta_corso %}
+
+        <div class="alert alert-block alert-success">
+            <h4>
+                <i class="fa fa-fw fa-flag"></i>
+                Hai fatto domanda di iscrizione a un Corso Base!
+            </h4>
+            <p>
+               Fantastico. Ora non ti resta che presentarti presso il luogo indicato per lo svolgimento
+                    delle lezioni che puoi vedere premendo il pulsante presente qui sotto.
+            </p>
+            <p class="piu-piccolo">
+                Il direttore del corso non ha ancora confermato la tua partecipazione,
+                ma non preoccuparti &mdash; puoi comunque presentarti alla prima lezione
+                del corso. Tieni solo presente che il direttore ha facolt&agrave; di limitare l'accesso
+                    ai primi {{ me.aspirante.richiesta_corso.MAX_PARTECIPANTI }} iscritti.
+            </p>
+            <p>
+                <a href="{{ me.aspirante.richiesta_corso.url }}" class="btn btn-success btn-block">
+                    <i class="fa fa-fw fa-info-circle"></i>
+                    Vai alla pagina del Corso Base
+                </a>
+            </p>
+        </div>
+
+    {% endif %}
+
     <p>&nbsp;</p>
     <div class="col-md-8 col-md-offset-2">
         <div class="row allinea-centro well well-sm">

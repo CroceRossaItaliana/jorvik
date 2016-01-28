@@ -1,12 +1,13 @@
 from datetime import date
 from anagrafica.permessi.costanti import permesso_minimo, LETTURA
 from anagrafica.permessi.espansioni import ESPANDI_PERMESSI, espandi_persona
+from django.utils import timezone
 
 __author__ = 'alfioemanuele'
 
 
 
-def persona_oggetti_permesso(persona, permesso, al_giorno=date.today()):
+def persona_oggetti_permesso(persona, permesso, al_giorno=timezone.now()):
     """
     Dato un permesso, ritorna un queryset agli oggetti che sono coperti direttamente
     dal permesso. Es.: GESTINE_SOCI -> Elenco dei Comitati in cui si ha gestione dei soci.
@@ -28,7 +29,7 @@ def persona_oggetti_permesso(persona, permesso, al_giorno=date.today()):
 
     return qs
 
-def persona_permessi(persona, oggetto, al_giorno=date.today()):
+def persona_permessi(persona, oggetto, al_giorno=timezone.now()):
     """
     Ritorna il livello di permessi che si ha su un qualunque oggetto.
 

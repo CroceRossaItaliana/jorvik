@@ -15,7 +15,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
 from anagrafica.costanti import ESTENSIONE, ESTENSIONE_MINORE
-from base.utils import concept
+from base.utils import concept, poco_fa
 from django.utils import timezone
 
 
@@ -184,7 +184,7 @@ class ConDelegati(models.Model):
         object_id_field='oggetto_id'
     )
 
-    def deleghe_attuali(self, al_giorno=datetime.today(), **kwargs):
+    def deleghe_attuali(self, al_giorno=timezone.now(), **kwargs):
         """
         Ottiene QuerySet per gli oggetti Delega validi ad un determinato giorno.
         :param al_giorno: Giorno da verificare. Se assente, oggi.
@@ -193,7 +193,7 @@ class ConDelegati(models.Model):
         Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
         return self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno, **kwargs).q)
 
-    def delegati_attuali(self, al_giorno=datetime.today(), **kwargs):
+    def delegati_attuali(self, al_giorno=timezone.now(), **kwargs):
         """
         Ottiene QuerySet per gli oggetti Persona delegati ad un determinato giorno.
         :param al_giorno: Giorno da verificare. Se assente, oggi.
@@ -202,7 +202,7 @@ class ConDelegati(models.Model):
         Persona = apps.get_model(app_label='anagrafica', model_name='Persona')
         return Persona.objects.filter(delega__in=self.deleghe_attuali(al_giorno, **kwargs))
 
-    def aggiungi_delegato(self, tipo, persona, firmatario=None, inizio=timezone.now(), fine=None):
+    def aggiungi_delegato(self, tipo, persona, firmatario=None, inizio=None, fine=None):
         """
         Aggiunge un delegato per l'oggetto. Nel caso in cui una nuova delega (attuale)
          viene inserita, contemporaneamente ad una delega attuale per la stessa persona,
@@ -214,6 +214,8 @@ class ConDelegati(models.Model):
         :param fine: Fine della delega. Se non specificato o None, fine indeterminata.
         :return: Oggetto delegato inserito.
         """
+        if inizio is None:
+            inizio = poco_fa()
 
         # Se il nuovo inserimento e' attuale
         if inizio <= timezone.now() and (fine is None or fine >= timezone.now()):

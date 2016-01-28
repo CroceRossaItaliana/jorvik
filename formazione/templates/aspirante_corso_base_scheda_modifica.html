@@ -1,0 +1,46 @@
+{% extends 'aspirante_corso_base_scheda.html' %}
+
+{% block scheda_titolo %}
+    Modifica
+{% endblock %}
+
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block scheda_contenuto %}
+
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                <i class="fa fa-fw fa-pencil"></i>
+                Modifica corso
+            </h2>
+        </div>
+        <div class="panel-body">
+            <form method="POST">
+                {% csrf_token %}
+                {% bootstrap_form modulo %}
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa fa-fw fa-save"></i>
+                    Salva modifiche
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                <i class="fa fa-fw fa-globe"></i>
+                Modifica posizione
+            </h2>
+        </div>
+        <div class="panel-body">
+            {% localizzatore corso %}
+
+        </div>
+    </div>
+
+{% endblock %}

@@ -307,3 +307,16 @@ class ModuloImportVolontari(forms.Form):
         (PUNTO_E_VIRGOLA, "Punto e virgola")
     )
     delimitatore = forms.ChoiceField(choices=DELIMITATORI, initial=VIRGOLA)
+
+
+class ModuloModificaDataInizioAppartenenza(ModelForm):
+    class Meta:
+        model = Appartenenza
+        fields = ['inizio', ]
+
+    def clean_inizio(self):
+        from django.utils import timezone
+        inizio = self.cleaned_data['inizio']
+        if inizio > timezone.now():
+            raise ValidationError("La data non può essere nel futuro.")
+        return inizio

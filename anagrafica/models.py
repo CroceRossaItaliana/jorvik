@@ -628,19 +628,17 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         :param fine: datetime.date per il giorno di fine (incl.)
         :return: QuerySet per Turno
         """
+        from attivita.models import Attivita
         sedi = self.sedi_attuali(membro__in=Appartenenza.MEMBRO_ATTIVITA)
         return Turno.objects.filter(
-            # Attivita visibile
-
-
             # Attivtia organizzate dai miei comitati
             Q(attivita__sede__in=sedi)
             # Attivita aperte ai miei comitati
             | Q(attivita__estensione__in=Sede.objects.get_queryset_ancestors(sedi, include_self=True))
-
             # Attivita che gesticsco
             | Q(attivita__in=self.oggetti_permesso(GESTIONE_ATTIVITA))
-            , inizio__gte=inizio, fine__lt=(fine + timedelta(1))
+            , inizio__gte=inizio, fine__lt=(fine + timedelta(1)),
+              attivita__stato=Attivita.VISIBILE,
         ).order_by('inizio')
 
     @property
@@ -675,9 +673,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             a |= Autorizzazione.objects.filter(
                 destinatario_ruolo=incarico[0],
                 destinatario_oggetto_tipo=ContentType.objects.get_for_model(incarico[1].model),
-                destinatario_oggetto_id__in=incarico[1].values_list('id', flat=True)
+                destinatario_oggetto_id__in=incarico[1].values_list('id', flat=True),
             )
-        return a
+        a = a.distinct('progressivo', 'oggetto_tipo_id', 'oggetto_id',)
+        return Autorizzazione.objects.filter(
+            pk__in=a.values_list('id', flat=True)
+        )
 
 
     def _autorizzazioni_in_attesa(self):
@@ -1026,6 +1027,16 @@ class SedeQuerySet(QuerySet):
         Filtra per Comitati.
         """
         return self.filter(estensione__in=[NAZIONALE, REGIONALE, PROVINCIALE, LOCALE])
+
+    def ottieni_comitati(self):
+        """
+        Filtra per comitati e ottiene i comitati dei presenti
+        """
+        presenti = self
+        comitati_presenti = presenti.filter(estensione__in=[NAZIONALE, REGIONALE, PROVINCIALE, LOCALE])
+        territoriali_presenti = presenti.filter(estensione=TERRITORIALE)
+        comitati_dei_territoriali_presenti = Sede.objects.filter(figli__in=territoriali_presenti)
+        return comitati_presenti | comitati_dei_territoriali_presenti
 
     def espandi(self, pubblici=False, ignora_disattivi=True):
         """

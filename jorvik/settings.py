@@ -151,7 +151,6 @@ USE_TZ = False
 
 SITE_ID = 1
 
-
 # File statici (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 

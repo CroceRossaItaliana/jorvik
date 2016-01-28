@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from anagrafica.models import Sede, Persona
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI
 from base.models import ConAutorizzazioni, ConVecchioID
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.models import ModelloSemplice
@@ -52,6 +53,7 @@ class CorsoBase(Corso, ConVecchioID):
     class Meta:
         verbose_name = "Corso Base"
         verbose_name_plural = "Corsi Base"
+        ordering = ['-data_inizio']
 
     data_inizio = models.DateTimeField(blank=False, null=False, help_text="La data di inizio del corso. "
                                                                           "Utilizzata per la gestione delle iscrizioni.")
@@ -65,6 +67,38 @@ class CorsoBase(Corso, ConVecchioID):
     op_attivazione = models.CharField(max_length=255, blank=True, null=True)
     op_convocazione = models.CharField(max_length=255, blank=True, null=True)
 
+    PUOI_ISCRIVERTI_OK = "IS"
+    PUOI_ISCRIVERTI = (PUOI_ISCRIVERTI_OK,)
+
+    SEI_ISCRITTO_PUOI_RITIRARTI = "GIA"
+    SEI_ISCRITTO_NON_PUOI_RITIRARTI = "NP"
+    SEI_ISCRITTO = (SEI_ISCRITTO_PUOI_RITIRARTI, SEI_ISCRITTO_NON_PUOI_RITIRARTI,)
+
+    NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO = "VOL"
+    NON_PUOI_ISCRIVERTI_TROPPO_TARDI = "TAR"
+    NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO = "ALT"
+    NON_PUOI_ISCRIVERTI = (NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO, NON_PUOI_ISCRIVERTI_TROPPO_TARDI,
+                           NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO,)
+
+    def persona(self, persona):
+        if not Aspirante.objects.filter(persona=persona).exists():
+            return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
+
+        if PartecipazioneCorsoBase.con_esito_ok(persona=persona, corso__stato=self.ATTIVO).exclude(corso=self).exists():
+            return self.NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO
+
+        # Controlla se gia' iscritto.
+        if PartecipazioneCorsoBase.con_esito_ok(persona=persona, corso=self).exists():
+            return self.SEI_ISCRITTO_NON_PUOI_RITIRARTI
+
+        if PartecipazioneCorsoBase.con_esito_pending(persona=persona, corso=self).exists():
+            return self.SEI_ISCRITTO_PUOI_RITIRARTI
+
+        if self.troppo_tardi_per_iscriverti:
+            return self.NON_PUOI_ISCRIVERTI_TROPPO_TARDI
+
+        return self.PUOI_ISCRIVERTI_OK
+
     @classmethod
     @concept
     def pubblici(cls):
@@ -75,7 +109,11 @@ class CorsoBase(Corso, ConVecchioID):
 
     @property
     def iniziato(self):
-        return self.data_inizio >= timezone.now()
+        return self.data_inizio < timezone.now()
+
+    @property
+    def troppo_tardi_per_iscriverti(self):
+        return timezone.now() > (self.data_inizio + datetime.timedelta(days=7))
 
     def __str__(self):
         return self.nome
@@ -97,15 +135,27 @@ class CorsoBase(Corso, ConVecchioID):
         return "/formazione/corsi-base/%d/direttori/" % (self.pk,)
 
     @property
-    def url_attiva(self):
-        return "%sattiva/" % (self.url,)
+    def url_modifica(self):
+        return "%smodifica/" % (self.url,)
+
+    @property
+    def url_iscritti(self):
+        return "%siscritti/" % (self.url,)
+
+    @property
+    def url_iscriviti(self):
+        return "%siscriviti/" % (self.url,)
+
+    @property
+    def url_ritirati(self):
+        return "%sritirati/" % (self.url,)
 
     @property
     def url_mappa(self):
         return "%smappa/" % (self.url,)
 
     @property
-    def url_lezioni_modifica(self):
+    def url_lezioni(self):
         return "%slezioni/" % (self.url,)
 
     @property
@@ -160,14 +210,20 @@ class CorsoBase(Corso, ConVecchioID):
         from formazione.models import Aspirante
         return self.circonferenze_contenenti(Aspirante.objects.all()).count()
 
+    def partecipazioni_confermate_o_in_attesa(self):
+        return self.partecipazioni_confermate() | self.partecipazioni_in_attesa()
+
     def partecipazioni_confermate(self):
-        return self.partecipazioni.all().filter(stato=PartecipazioneCorsoBase.CONFERMATA)
+        return PartecipazioneCorsoBase.con_esito_ok().filter(corso=self)
 
     def partecipazioni_in_attesa(self):
-        return self.partecipazioni.all().filter(stato=PartecipazioneCorsoBase.IN_ATTESA)
+        return PartecipazioneCorsoBase.con_esito_pending().filter(corso=self)
 
     def partecipazioni_negate(self):
-        return self.partecipazioni.all().filter(stato=PartecipazioneCorsoBase.NEGATA)
+        return PartecipazioneCorsoBase.con_esito_no().filter(corso=self)
+
+    def partecipazioni_ritirate(self):
+        return PartecipazioneCorsoBase.con_esito_ritirata().filter(corso=self)
 
 
 class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
@@ -220,6 +276,26 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
 
+    RICHIESTA_NOME = "Iscrizione Corso Base"
+
+    def autorizzazione_concessa(self, modulo=None):
+        # Quando un aspirante viene iscritto, tutte le richieste presso altri corsi devono essere cancellati.
+
+        # Cancella tutte altre partecipazioni con esito pending - ce ne puo' essere solo una.
+        PartecipazioneCorsoBase.con_esito_pending().exclude(corso=self.corso).delete()
+
+    def ritira(self):
+        self.autorizzazioni_ritira()
+
+    def richiedi(self):
+        self.autorizzazione_richiedi(
+            self.persona,
+                (
+                    (INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI, self.corso)
+                ),
+            invia_notifiche=self.corso.delegati_attuali(),
+        )
+
 
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
 
@@ -229,6 +305,13 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
     class Meta:
         verbose_name = "Lezione di Corso Base"
         verbose_name_plural = "Lezioni di Corsi Base"
+        ordering = ['inizio']
+
+    @property
+    def url_cancella(self):
+        return "%s%d/cancella/" % (
+            self.corso.url_lezioni, self.pk
+        )
 
 
 class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
@@ -266,6 +349,18 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
         :return: Un elenco di Sedi.
         """
         return self.nel_raggio(Sede.objects.filter(tipo=tipo, **kwargs))
+
+    def corso(self):
+        return CorsoBase.objects.filter(
+            PartecipazioneCorsoBase.con_esito_ok(persona=self.persona).via("partecipazioni"),
+            stato=Corso.ATTIVO,
+        ).first()
+
+    def richiesta_corso(self):
+        return CorsoBase.objects.filter(
+            PartecipazioneCorsoBase.con_esito_pending(persona=self.persona).via("partecipazioni"),
+            stato=Corso.ATTIVO,
+        ).first()
 
     def corsi(self, **kwargs):
         """

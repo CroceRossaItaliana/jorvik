@@ -72,20 +72,6 @@
                 Informazioni
             </a>
         </li>
-        <li role="presentation" {% if request.path == corso.url_iscritti %}class="active"{% endif %}>
-            <a href="{{ corso.url_iscritti }}">
-                <i class="fa fa-fw fa-group"></i>
-                Iscritti
-                <span class="badge">
-                    <i class="fa fa-fw fa-check"></i>
-                    {{ corso.partecipazioni_confermate.count }}
-                </span>
-                <span class="badge">
-                    <i class="fa fa-fw fa-clock-o"></i>
-                    {{ corso.partecipazioni_in_attesa.count }}
-                </span>
-            </a>
-        </li>
 
         {% if corso.locazione %}
             <li role="presentation" {% if corso.url_mappa in request.path %}class="active"{% endif %}>
@@ -97,14 +83,30 @@
         {% endif %}
 
         {% if puo_modificare %}
+
+            <li role="presentation" {% if request.path == corso.url_iscritti %}class="active"{% endif %}>
+                <a href="{{ corso.url_iscritti }}" class="text-danger">
+                    <i class="fa fa-fw fa-group"></i>
+                    Iscrizioni
+                    <span class="badge">
+                        <i class="fa fa-fw fa-check"></i>
+                        {{ corso.partecipazioni_confermate.count }}
+                    </span>
+                    <span class="badge">
+                        <i class="fa fa-fw fa-clock-o"></i>
+                        {{ corso.partecipazioni_in_attesa.count }}
+                    </span>
+                </a>
+            </li>
+
             <li role="presentation" {% if request.path == corso.url_modifica %}class="active"{% endif %}>
                 <a href="{{ corso.url_modifica }}" class="text-danger">
                     <i class="fa fa-fw fa-pencil"></i>
                     Gestione corso
                 </a>
             </li>
-            <li role="presentation" {% if corso.url_lezioni_modifica in request.path %}class="active"{% endif %}>
-                <a href="{{ corso.url_lezioni_modifica }}" class="text-danger">
+            <li role="presentation" {% if corso.url_lezioni in request.path %}class="active"{% endif %}>
+                <a href="{{ corso.url_lezioni }}" class="text-danger">
                     <i class="fa fa-fw fa-calendar"></i>
                     Lezioni
                 </a>
@@ -120,6 +122,7 @@
 
 
     </ul>
+
 
     <p>&nbsp;</p>
     {% block scheda_contenuto %}

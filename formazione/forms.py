@@ -2,7 +2,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
-from formazione.models import CorsoBase
+from base.wysiwyg import WYSIWYGSemplice
+from formazione.models import CorsoBase, LezioneCorsoBase
 
 
 class ModuloCreazioneCorsoBase(ModelForm):
@@ -27,3 +28,28 @@ class ModuloCreazioneCorsoBase(ModelForm):
             raise forms.ValidationError("La Sede CRI selezionata non ha alcun indirizzo impostato. "
                                         "Il Presidente può modificare i dettagli della Sede, tra cui l'indirizzo della stessa.")
         return self.cleaned_data['sede']
+
+
+class ModuloModificaLezione(ModelForm):
+    class Meta:
+        model = LezioneCorsoBase
+        fields = ['nome', 'inizio', 'fine']
+
+    fine = forms.DateTimeField()
+
+    def clean(self):
+        inizio = self.cleaned_data['inizio']
+        fine = self.cleaned_data['fine']
+        if inizio >= fine:
+            self.add_error('fine', "La fine deve essere successiva all'inizio.")
+
+
+class ModuloModificaCorsoBase(ModelForm):
+    class Meta:
+        model = CorsoBase
+        fields = ['data_inizio', 'data_esame', 'descrizione',
+                  'data_attivazione', 'data_convocazione',
+                  'op_attivazione', 'op_convocazione',]
+        widgets = {
+            "descrizione": WYSIWYGSemplice(),
+        }

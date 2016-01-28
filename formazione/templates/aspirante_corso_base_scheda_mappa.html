@@ -1,4 +1,4 @@
-{% extends 'attivita_scheda.html' %}
+{% extends 'aspirante_corso_base_scheda.html' %}
 
 {% block scheda_titolo %}
     Mappa
@@ -6,10 +6,13 @@
 
 {% block scheda_contenuto %}
 
-    {% if not attivita.locazione %}
+    {% if corso.locazione %}
+
+
+    {% else %}
         <div class="alert alert-warning">
             <h4><i class="fa fa-fw fa-warning"></i> Locazione sconosciuta</h4>
-            <p>Non &egrave; stato ancora impostato alcun indirizzo per questa attivit&agrave;.</p>
+            <p>Non &egrave; stato ancora impostato alcun indirizzo per questo corso.</p>
             <p>Vai su <a href="../">Informazioni</a> e contatta il referente per maggiori informazioni.</p>
         </div>
 
@@ -17,7 +20,7 @@
 
 
     {% load utils %}
-    {% mappa attivita %}
+    {% mappa corso %}
         <strong>{{ elemento.nome }}</strong><br />
         {{ elemento.locazione.formattato }}
 

@@ -18,7 +18,7 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
-    ModuloImportVolontari
+    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -448,7 +448,8 @@ def utente_rubrica_referenti(request, me):
             oggetto_id__in=sedi_volontario,
             tipo__in=DELEGHE_RUBRICA,
         ).via("delega")
-    ).order_by('nome', 'cognome', 'codice_fiscale').distinct('nome', 'cognome', 'codice_fiscale')
+    ).order_by('nome', 'cognome', 'codice_fiscale')\
+        .distinct('nome', 'cognome', 'codice_fiscale')
 
     contesto = {
         "referenti": referenti,
@@ -469,7 +470,10 @@ def utente_rubrica_volontari(request, me):
     #    privacy_contatti__gte=Persona.POLICY_RISTRETTO,
     #)
     volontari = volontari_volontario #  | volontari_gestione
-    volontari = volontari.prefetch_related('appartenenze', 'fototessere').order_by('nome', 'cognome')
+    volontari = volontari\
+        .prefetch_related('appartenenze', 'fototessere')\
+        .order_by('nome', 'cognome', 'codice_fiscale')\
+        .distinct('nome', 'cognome', 'codice_fiscale')
     ci_sono = volontari_volontario.filter(pk=me.pk).exists()
 
     contesto = {
@@ -798,7 +802,6 @@ def strumenti_delegati(request, me):
     deleghe_attuali = oggetto.deleghe_attuali(tipo=delega)
 
     contesto = {
-        "locazione": oggetto.locazione,
         "continua_url": continua_url,
         "almeno": almeno,
         "delega": PERMESSI_NOMI_DICT[delega],
@@ -941,7 +944,27 @@ def _profilo_anagrafica(request, me, persona):
 
 
 def _profilo_appartenenze(request, me, persona):
-    return 'anagrafica_profilo_appartenenze.html', {}
+    puo_modificare = me.permessi_almeno(persona, MODIFICA)
+
+    moduli = []
+    for app in persona.appartenenze.all():
+        modulo = None
+        if puo_modificare and app.attuale():
+            modulo = ModuloModificaDataInizioAppartenenza(request.POST or None,
+                                                          instance=app,
+                                                          prefix="%d" % (app.pk,))
+            if ("%s-inizio" % (app.pk,)) in request.POST and modulo.is_valid():
+                modulo.save()
+
+        moduli += [modulo]
+
+    appartenenze = zip(persona.appartenenze.all(), moduli)
+
+    contesto = {
+        "appartenenze": appartenenze
+    }
+
+    return 'anagrafica_profilo_appartenenze.html', contesto
 
 
 def _profilo_deleghe(request, me, persona):

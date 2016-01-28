@@ -26,7 +26,7 @@
                 </thead>
                 <tbody>
 
-                {% for app in persona.appartenenze.all %}
+                {% for app, modulo in appartenenze %}
                     <tr {% if app.attuale %}class="success"{% endif %}>
                         <td>
                             {{ app.esito }}
@@ -45,7 +45,46 @@
                             {{ app.sede.link|safe }}
                         </td>
                         <td>
-                            Inizio: {{ app.inizio|date:"SHORT_DATE_FORMAT" }}<br />
+                            Inizio: {{ app.inizio|date:"SHORT_DATE_FORMAT" }}
+
+                            {% if modulo %}
+
+                                <!-- Button trigger modal -->
+                                <button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#mod{{ app.pk }}">
+                                  <i class="fa fa-fw fa-pencil"></i>
+                                </button>
+
+                                <!-- Modal -->
+                                <form method="POST">
+                                    <div class="modal fade" id="mod{{ app.pk }}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                                      <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                          <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                            <h4 class="modal-title" id="myModalLabel">Modifica data inizio appartenenza</h4>
+                                          </div>
+                                          <div class="modal-body">
+                                                  {% csrf_token %}
+                                                  {% bootstrap_form modulo %}
+                                          </div>
+                                          <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">
+                                                Chiudi
+                                            </button>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fa fa-fw fa-save"></i> Salva modifica
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                </form>
+
+
+                            {% endif %}
+
+
+                            <br />
                             Fine:   {% if app.fine %}
                                         {{ app.fine|date:"SHORT_DATE_FORMAT" }}
                                     {% else %}

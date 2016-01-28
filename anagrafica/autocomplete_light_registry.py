@@ -32,7 +32,9 @@ class PersonaAutocompletamento(AutocompletamentoBase):
             Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_attuali()).via("appartenenze"),)
             # 2. Appartenente a una sede di mia delega
             | Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_deleghe_attuali(espandi=True)).via("appartenenze"))
-        )
+        )\
+            .order_by('nome', 'cognome', 'codice_fiscale')\
+            .distinct('nome', 'cognome', 'codice_fiscale')
         return super(PersonaAutocompletamento, self).choices_for_request()
 
     choice_html_format = u'''

@@ -59,8 +59,6 @@ def import_valida_volontario_riga(riga):
     try:
         sede = Sede.objects.get(nome__iexact=sede)
     except Sede.DoesNotExist:
-        sede = Sede.objects.get(nome__iexact=riga[16])
-
         log += [(VALIDAZIONE_ERRORE, "Sede non trovata: %s" % (sede,))]
         sede = None
 
