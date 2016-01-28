@@ -6,7 +6,7 @@ from django.db.models import QuerySet
 
 from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, \
     UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, \
-    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6
+    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.applicazioni import DELEGATO_AREA
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
@@ -260,6 +260,7 @@ PERMESSI_FUNZIONI = (
     (DELEGATO_OBIETTIVO_4,      permessi_delegato_obiettivo_4),
     (DELEGATO_OBIETTIVO_5,      permessi_delegato_obiettivo_5),
     (DELEGATO_OBIETTIVO_6,      permessi_delegato_obiettivo_6),
+    (RESPONSABILE_FORMAZIONE,   permessi_responsabile_formazione),
 )
 
 # Tieni in memoria anche come dizionari, per lookup veloci
