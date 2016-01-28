@@ -1,25 +1,194 @@
 # coding=utf8
 
 from datetime import date, timedelta, datetime
+
+from django.db.models import Count
 from django.utils import timezone
 
 
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
 
-from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO
+from anagrafica.costanti import NAZIONALE
+from anagrafica.models import Sede
+from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE
+from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO, \
+    GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA
 from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, ModuloModificaTurno, \
-    ModuloAggiungiPartecipanti, ModuloCreazioneTurno
-from attivita.models import Partecipazione, Attivita, Turno
+    ModuloAggiungiPartecipanti, ModuloCreazioneTurno, ModuloCreazioneArea, ModuloOrganizzaAttivita, \
+    ModuloOrganizzaAttivitaReferente
+from attivita.models import Partecipazione, Attivita, Turno, Area
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico
 from base.files import Excel, FoglioExcel
+from base.utils import poco_fa
 from gruppi.models import Gruppo
 
 
 def attivita(request):
     return redirect('/attivita/calendario/')
+
+
+@pagina_privata
+def attivita_aree(request, me):
+    sedi = me.oggetti_permesso(GESTIONE_AREE_SEDE)
+    contesto = {
+        "sedi": sedi,
+    }
+    return 'attivita_aree.html', contesto
+
+
+@pagina_privata
+def attivita_aree_sede(request, me, sede_pk=None):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not sede in me.oggetti_permesso(GESTIONE_AREE_SEDE):
+        return redirect(ERRORE_PERMESSI)
+    aree = sede.aree.all()
+    modulo = ModuloCreazioneArea(request.POST or None)
+    if modulo.is_valid():
+        area = modulo.save(commit=False)
+        area.sede = sede
+        area.save()
+        return redirect("/attivita/aree/%d/%d/responsabili/" % (
+            sede.pk, area.pk,
+        ))
+    contesto = {
+        "sede": sede,
+        "aree": aree,
+        "modulo": modulo,
+    }
+    return 'attivita_aree_sede.html', contesto
+
+
+@pagina_privata
+def attivita_aree_sede_area_responsabili(request, me, sede_pk=None, area_pk=None):
+    area = get_object_or_404(Area, pk=area_pk)
+    if not me.permessi_almeno(area, COMPLETO):
+        return redirect(ERRORE_PERMESSI)
+    sede = area.sede
+    delega = DELEGATO_AREA
+    contesto = {
+        "area": area,
+        "delega": delega,
+        "continua_url": "/attivita/aree/%d/" % (sede.pk,)
+    }
+    return 'attivita_aree_sede_area_responsabili.html', contesto
+
+
+@pagina_privata
+def attivita_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
+    area = get_object_or_404(Area, pk=area_pk)
+    if not me.permessi_almeno(area, COMPLETO):
+        return redirect(ERRORE_PERMESSI)
+    sede = area.sede
+    if area.attivita.exists():
+        return errore_generico(request, me, titolo="L'area ha delle attività associate",
+                               messaggio="Non è possibile cancellare delle aree che hanno delle "
+                                         "attività associate.",
+                               torna_titolo="Torna indietro",
+                               torna_url="/attivita/aree/%d/" % (sede.pk,))
+    area.delete()
+    return redirect("/attivita/aree/%d/" % (sede.pk,))
+
+
+@pagina_privata
+def attivita_gestisci(request, me, stato="aperte"):
+    # stato = "aperte" | "chiuse"
+
+    attivita_tutte = me.oggetti_permesso(GESTIONE_ATTIVITA)
+    attivita_aperte = attivita_tutte.filter(apertura=Attivita.APERTA)
+    attivita_chiuse = attivita_tutte.filter(apertura=Attivita.CHIUSA)
+
+    if stato == "aperte":
+        attivita = attivita_aperte
+    else:  # stato == "chiuse"
+        attivita = attivita_chiuse
+
+    attivita_referenti_modificabili = me.oggetti_permesso(GESTIONE_REFERENTI_ATTIVITA)
+
+    attivita = attivita.annotate(num_turni=Count('turni'))
+    contesto = {
+        "stato": stato,
+        "attivita": attivita,
+        "attivita_aperte": attivita_aperte,
+        "attivita_chiuse": attivita_chiuse,
+        "attivita_referenti_modificabili": attivita_referenti_modificabili,
+    }
+    return 'attivita_gestisci.html', contesto
+
+
+@pagina_privata
+def attivita_organizza(request, me):
+    aree = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
+    sedi = Sede.objects.filter(aree__in=aree)
+    if not aree:
+        return messaggio_generico(request, me, titolo="Crea un'area di intervento, prima!",
+                                  messaggio="Le aree di intervento fungono da 'contenitori' per le "
+                                            "attività. Per organizzare un'attività, è necessario creare "
+                                            "almeno un'area di intervento. ",
+                                  torna_titolo="Gestisci le Aree di intervento",
+                                  torna_url="/attivita/aree/")
+    modulo_referente = ModuloOrganizzaAttivitaReferente(request.POST or None)
+    modulo = ModuloOrganizzaAttivita(request.POST or None)
+    modulo.fields['area'].queryset = aree
+    if modulo_referente.is_valid() and modulo.is_valid():
+        attivita = modulo.save(commit=False)
+        attivita.sede = attivita.area.sede
+        attivita.estensione = attivita.sede.comitato
+        attivita.save()
+
+        if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
+            # Io sono il referente.
+            attivita.aggiungi_delegato(REFERENTE, me, firmatario=me, inizio=poco_fa())
+            return redirect(attivita.url_modifica)
+
+        else:  # Il referente e' qualcun altro.
+            return redirect("/attivita/organizza/%d/referenti/" % (attivita.pk,))
+
+    contesto = {
+        "modulo": modulo,
+        "modulo_referente": modulo_referente,
+    }
+    return 'attivita_organizza.html', contesto
+
+
+@pagina_privata
+def attivita_organizza_fatto(request, me, pk=None):
+    attivita = get_object_or_404(Attivita, pk=pk)
+    if not me.permessi_almeno(attivita, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    return messaggio_generico(request, me, titolo="Attività organizzata",
+                              messaggio="Abbiamo inviato un messaggio ai referenti che hai "
+                                        "selezionato. Appena accederanno a Gaia, gli chiederemo "
+                                        "di darci maggiori informazioni sull'attività, come "
+                                        "gli orari dei turni e l'indirizzo.",
+                              torna_titolo="Torna a Gestione Attività",
+                              torna_url="/attivita/gestisci/")
+
+
+@pagina_privata
+def attivita_referenti(request, me, pk=None, nuova=False):
+    attivita = get_object_or_404(Attivita, pk=pk)
+    if not me.permessi_almeno(attivita, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    delega = REFERENTE
+
+    if nuova:
+        continua_url = "/attivita/organizza/%d/fatto/" % (attivita.pk,)
+    else:
+        continua_url = "/attivita/gestisci/"
+
+    contesto = {
+        "delega": delega,
+        "attivita": attivita,
+        "continua_url": continua_url
+    }
+    return 'attivita_referenti.html', contesto
+
+
 
 @pagina_privata
 def attivita_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
@@ -384,13 +553,11 @@ def attivita_scheda_informazioni_modifica(request, me, pk=None):
     if not me.permessi_almeno(attivita, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    if request.POST:
-        modulo = ModuloAttivitaInformazioni(request.POST, instance=attivita)
-        if modulo.is_valid():
-            modulo.save()
+    modulo = ModuloAttivitaInformazioni(request.POST or None, instance=attivita)
+    modulo.fields['estensione'].queryset = attivita.sede.get_ancestors(include_self=True).exclude(estensione=NAZIONALE)
+    if modulo.is_valid():
+        modulo.save()
 
-    else:
-        modulo = ModuloAttivitaInformazioni(instance=attivita)
 
     contesto = {
         "attivita": attivita,

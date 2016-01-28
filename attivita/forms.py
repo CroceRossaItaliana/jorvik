@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.forms.extras import SelectDateWidget
 
-from attivita.models import Attivita, Turno
+from attivita.models import Attivita, Turno, Area
 from base.wysiwyg import WYSIWYGSemplice
 
 
@@ -18,7 +18,7 @@ class ModuloStoricoTurni(forms.Form):
 class ModuloAttivitaInformazioni(ModelForm):
     class Meta:
         model = Attivita
-        fields = ['apertura', 'estensione', 'descrizione', 'stato', ]
+        fields = [ 'stato', 'apertura', 'estensione', 'descrizione', ]
         widgets = {
             "descrizione": WYSIWYGSemplice(),
         }
@@ -59,3 +59,29 @@ class ModuloAggiungiPartecipanti(forms.Form):
     persone = autocomplete_light.forms.ModelMultipleChoiceField("PersonaAutocompletamento",
                                                                 help_text="Seleziona uno o più persone da "
                                                                           "aggiungere come partecipanti.")
+
+
+class ModuloCreazioneArea(ModelForm):
+    class Meta:
+        model = Area
+        fields = ['nome', 'obiettivo',]
+
+
+class ModuloOrganizzaAttivita(ModelForm):
+    class Meta:
+        model = Attivita
+        fields = ['nome', 'area', ]
+
+
+class ModuloOrganizzaAttivitaReferente(forms.Form):
+
+    SONO_IO = "IO"
+    SCEGLI_REFERENTI = "SC"
+    SCELTA = (
+        (None,  "-- Scegli un'opzione --"),
+        (SONO_IO, "Sarò io il referente per questa attività"),
+        (SCEGLI_REFERENTI, "Fammi scegliere uno o più referenti che gestiranno "
+                           "quest'attività")
+    )
+
+    scelta = forms.ChoiceField(choices=SCELTA, help_text="Scegli l'opzione appropriata.")

@@ -802,7 +802,6 @@ def strumenti_delegati(request, me):
     deleghe_attuali = oggetto.deleghe_attuali(tipo=delega)
 
     contesto = {
-        "locazione": oggetto.locazione,
         "continua_url": continua_url,
         "almeno": almeno,
         "delega": PERMESSI_NOMI_DICT[delega],

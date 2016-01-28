@@ -1,5 +1,6 @@
 from anagrafica.costanti import REGIONALE
-from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI
+from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, \
+    GESTIONE_AREE_SEDE
 from base.utils import remove_none
 
 __author__ = 'alfioemanuele'
@@ -76,8 +77,9 @@ def menu(request):
                 #  ("Reperibilità", "fa-thumb-tack", "/attivita/reperibilita/"),
             )),
             ("Gestione", (
+                ("Organizza attività", "fa-asterisk", "/attivita/organizza/") if me and me.oggetti_permesso(GESTIONE_ATTIVITA_AREA).exists() else None,
                 ("Elenco attività", "fa-list", "/attivita/gestisci/") if me and me.oggetti_permesso(GESTIONE_ATTIVITA).exists() else None,
-                ("Organizza nuova", "fa-asterisk", "/attivita/organizza/") if me and me.oggetti_permesso(GESTIONE_ATTIVITA_AREA).exists() else None
+                ("Aree di intervento", "fa-list", "/attivita/aree/") if me and me.oggetti_permesso(GESTIONE_AREE_SEDE).exists() else None,
             ))
         ),
         "autorizzazioni": (

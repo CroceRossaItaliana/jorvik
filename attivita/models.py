@@ -6,6 +6,7 @@ Questo modulo definisce i modelli del modulo Attivita' di Gaia.
 from datetime import timedelta
 from math import floor
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -25,6 +26,7 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     class Meta:
         verbose_name = "Attività"
         verbose_name_plural = "Attività"
+        ordering = ['-creazione', 'nome',]
 
     BOZZA = 'B'
     VISIBILE = 'V'
@@ -40,7 +42,8 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
         (APERTA, 'Aperta')
     )
 
-    nome = models.CharField(max_length=255, default="Nuova attività", db_index=True)
+    nome = models.CharField(max_length=255, default="Nuova attività", db_index=True,
+                            help_text="es. Aggiungi un posto a tavola")
     sede = models.ForeignKey('anagrafica.Sede', related_name='attivita', on_delete=models.PROTECT)
     area = models.ForeignKey("Area", related_name='attivita', on_delete=models.SET_NULL, null=True)
     estensione = models.ForeignKey('anagrafica.Sede', null=True, default=None, related_name='attivita_estensione', on_delete=models.PROTECT)
@@ -82,6 +85,10 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     @property
     def url_modifica(self):
         return self.url + "modifica/"
+
+    @property
+    def url_referenti(self):
+        return self.url + "referenti/"
 
     @property
     def url_mappa_modifica(self):
@@ -408,15 +415,24 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         pass
 
 
+def valida_numero_obiettivo(numero):
+    if numero < 1 or numero > 6:
+        raise ValidationError("Inserisci un numero di obiettivo (1, 2, 3, 4, 5 o 6).")
+
 
 class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
 
     sede = models.ForeignKey('anagrafica.Sede', related_name='aree', on_delete=models.PROTECT)
     nome = models.CharField(max_length=256, db_index=True, default='Generale', blank=False)
-    obiettivo = models.SmallIntegerField(null=False, blank=False, default=1, db_index=True)
+    obiettivo = models.SmallIntegerField(null=False, blank=False, default=1, db_index=True,
+                                         validators=[valida_numero_obiettivo])
 
     class Meta:
         verbose_name_plural = "Aree"
+        ordering = ['sede', 'obiettivo', 'nome',]
 
     def __str__(self):
-        return "%s (Ob. %d)" % (self.nome, self.obiettivo)
+        return "%s, Ob. %d: %s" % (
+            self.sede.nome_completo, self.obiettivo,
+            self.nome,
+        )
