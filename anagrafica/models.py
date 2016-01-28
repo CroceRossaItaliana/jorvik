@@ -249,13 +249,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return numeri_servizio
         return self.numeri_telefono.all()
 
-    def deleghe_attuali(self, al_giorno=timezone.now(), **kwargs):
+    def deleghe_attuali(self, al_giorno=None, **kwargs):
         """
         Ritorna una ricerca per le deleghe che son attuali.
         """
         return self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno).q, **kwargs)
 
-    def deleghe_attuali_rubrica(self, al_giorno=timezone.now(), **kwargs):
+    def deleghe_attuali_rubrica(self, al_giorno=None, **kwargs):
         """
         Ritorna una ricerca per le deleghe che son attuali.
         """
@@ -263,7 +263,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                                    tipo__in=DELEGHE_RUBRICA,
                                    **kwargs)
 
-    def sedi_deleghe_attuali(self, al_giorno=timezone.now(), espandi=False, **kwargs):
+    def sedi_deleghe_attuali(self, al_giorno=None, espandi=False, **kwargs):
         sedi = Sede.objects.none()
         for d in self.deleghe_attuali(al_giorno=al_giorno, oggetto_tipo=ContentType.objects.get_for_model(Sede)):
             if espandi:
@@ -380,11 +380,11 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return Fototessera.con_esito_pending().filter(persona=self)
 
     @property
-    def eta(self, al_giorno=date.today()):
+    def eta(self, al_giorno=None):
         """
         Ottiene l'eta' in anni del volontario.
         """
-
+        al_giorno = al_giorno or date.today()
         return al_giorno.year - self.data_nascita.year - ((al_giorno.month, al_giorno.day) < (self.data_nascita.month, self.data_nascita.day))
 
     @property
@@ -493,7 +493,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return lista
 
 
-    def oggetti_permesso(self, permesso, al_giorno=timezone.now()):
+    def oggetti_permesso(self, permesso, al_giorno=None):
         """
         Dato un permesso, ritorna un queryset agli oggetti che sono coperti direttamente
         dal permesso. Es.: GESTIONE_SOCI -> Elenco dei Comitati in cui si ha gestione dei soci.
@@ -507,7 +507,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         else:
             return apps.get_model(PERMESSI_OGGETTI_DICT[permesso][0], PERMESSI_OGGETTI_DICT[permesso][1]).objects.none()
 
-    def permessi(self, oggetto, al_giorno=timezone.now()):
+    def permessi(self, oggetto, al_giorno=None):
         """
         Ritorna il livello di permessi che si ha su un qualunque oggetto.
 
@@ -522,7 +522,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return persona_permessi(self, oggetto, al_giorno=al_giorno)
 
-    def permessi_almeno(self, oggetto, minimo, al_giorno=timezone.now()):
+    def permessi_almeno(self, oggetto, minimo, al_giorno=None):
         """
         Controlla se ho i permessi minimi richiesti specificati su un dato oggetto.
 
@@ -533,7 +533,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return persona_permessi_almeno(self, oggetto, minimo=minimo, al_giorno=al_giorno)
 
-    def ha_permesso(self, permesso, al_giorno=timezone.now()):
+    def ha_permesso(self, permesso, al_giorno=None):
         """
         Dato un permesso, ritorna true se il permesso e' posseduto.
         :param permesso: Permesso singolo.
@@ -1141,7 +1141,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                 return None
             attuale = attuale.genitore
 
-    def appartenenze_attuali(self, membro=None, figli=False, al_giorno=timezone.now(), **kwargs):
+    def appartenenze_attuali(self, membro=None, figli=False, al_giorno=None, **kwargs):
         """
         Ritorna l'elenco di appartenenze attuali ad un determinato giorno.
         Altri parametri (**kwargs) possono essere aggiunti.
@@ -1173,7 +1173,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         # NB: Vengono collegate via Join le tabelle Persona e Sede per maggiore efficienza.
         return f.select_related('persona', 'sede')
 
-    def membri_attuali(self, figli=False, al_giorno=timezone.now(), **kwargs):
+    def membri_attuali(self, figli=False, al_giorno=None, **kwargs):
         """
         Ritorna i membri attuali, eventualmente filtrati per tipo, del sede.
         :param figli: Se vero, ricerca anche tra i comitati figli.

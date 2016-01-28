@@ -7,7 +7,7 @@ __author__ = 'alfioemanuele'
 
 
 
-def persona_oggetti_permesso(persona, permesso, al_giorno=timezone.now()):
+def persona_oggetti_permesso(persona, permesso, al_giorno=None):
     """
     Dato un permesso, ritorna un queryset agli oggetti che sono coperti direttamente
     dal permesso. Es.: GESTINE_SOCI -> Elenco dei Comitati in cui si ha gestione dei soci.
@@ -29,7 +29,7 @@ def persona_oggetti_permesso(persona, permesso, al_giorno=timezone.now()):
 
     return qs
 
-def persona_permessi(persona, oggetto, al_giorno=timezone.now()):
+def persona_permessi(persona, oggetto, al_giorno=None):
     """
     Ritorna il livello di permessi che si ha su un qualunque oggetto.
 
@@ -67,7 +67,7 @@ def persona_permessi(persona, oggetto, al_giorno=timezone.now()):
 
     return massimo
 
-def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=date.today()):
+def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=None):
     """
     Controlla se ho i permessi minimi richiesti specificati su un dato oggetto.
 
@@ -107,7 +107,7 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=date.tod
 
     return False
 
-def persona_ha_permesso(persona, permesso, al_giorno=date.today()):
+def persona_ha_permesso(persona, permesso, al_giorno=None):
     """
     Dato un permesso, ritorna true se il permesso e' posseduto.
     :param permesso: Permesso singolo.

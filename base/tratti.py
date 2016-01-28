@@ -92,7 +92,7 @@ class ConStorico(models.Model):
 
     @classmethod
     @concept
-    def query_attuale(cls, *args, al_giorno=timezone.now(), **kwargs):
+    def query_attuale(cls, *args, al_giorno=None, **kwargs):
         """
         Restituisce l'oggetto Q per filtrare le entita' attuali.
 
@@ -100,6 +100,8 @@ class ConStorico(models.Model):
         :param al_giorno: Giorno per considerare la verifica per l'attuale. Default oggi.
         :return: Q!
         """
+
+        al_giorno = al_giorno or timezone.now()
 
         if isinstance(al_giorno, datetime):  # Se orario esatto
             inizio = fine = al_giorno
@@ -174,7 +176,7 @@ class ConStorico(models.Model):
 
         return risultato
 
-    def attuale(self, al_giorno=timezone.now()):
+    def attuale(self, al_giorno=None):
         """
         Controlla se l'entita' e' attuale o meno.
         :param al_giorno: Giorno per considerare la verifica per l'attuale. Default oggi.
@@ -199,7 +201,7 @@ class ConDelegati(models.Model):
         object_id_field='oggetto_id'
     )
 
-    def deleghe_attuali(self, al_giorno=timezone.now(), **kwargs):
+    def deleghe_attuali(self, al_giorno=None, **kwargs):
         """
         Ottiene QuerySet per gli oggetti Delega validi ad un determinato giorno.
         :param al_giorno: Giorno da verificare. Se assente, oggi.
@@ -208,7 +210,7 @@ class ConDelegati(models.Model):
         Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
         return self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno, **kwargs).q)
 
-    def delegati_attuali(self, al_giorno=timezone.now(), **kwargs):
+    def delegati_attuali(self, al_giorno=None, **kwargs):
         """
         Ottiene QuerySet per gli oggetti Persona delegati ad un determinato giorno.
         :param al_giorno: Giorno da verificare. Se assente, oggi.

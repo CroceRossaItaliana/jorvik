@@ -19,7 +19,7 @@ Questo file gestisce la espansione dei permessi in Gaia.
 """
 
 
-def espandi_persona(persona, al_giorno=date.today()):
+def espandi_persona(persona, al_giorno=None):
     from anagrafica.models import Persona, Appartenenza, Trasferimento, Estensione
     return [
         (LETTURA,   Trasferimento.objects.filter(persona=persona)),
@@ -27,7 +27,7 @@ def espandi_persona(persona, al_giorno=date.today()):
     ]
 
 
-def espandi_gestione_soci(qs_sedi, al_giorno=date.today()):
+def espandi_gestione_soci(qs_sedi, al_giorno=None):
     from anagrafica.models import Persona, Appartenenza, Trasferimento, Estensione, Riserva
     from ufficio_soci.models import Quota
     return [
@@ -42,7 +42,7 @@ def espandi_gestione_soci(qs_sedi, al_giorno=date.today()):
     ]
 
 
-def espandi_elenchi_soci(qs_sedi, al_giorno=date.today()):
+def espandi_elenchi_soci(qs_sedi, al_giorno=None):
     from anagrafica.models import Persona, Appartenenza, Sede, Riserva
     from ufficio_soci.models import Quota
     return [
@@ -58,14 +58,14 @@ def espandi_elenchi_soci(qs_sedi, al_giorno=date.today()):
     ]
 
 
-def espandi_gestione_sede(qs_sedi, al_giorno=date.today()):
+def espandi_gestione_sede(qs_sedi, al_giorno=None):
     from anagrafica.models import Sede
     return [
         (GESTIONE,  qs_sedi),
     ]
 
 
-def espandi_gestione_attivita_sede(qs_sedi, al_giorno=date.today()):
+def espandi_gestione_attivita_sede(qs_sedi, al_giorno=None):
     from attivita.models import Attivita
     return [
         (COMPLETO,  Attivita.objects.filter(sede__in=qs_sedi.espandi())),
@@ -73,7 +73,7 @@ def espandi_gestione_attivita_sede(qs_sedi, al_giorno=date.today()):
         + espandi_gestione_attivita(Attivita.objects.filter(sede__in=qs_sedi.espandi()))
 
 
-def espandi_gestione_aree_sede(qs_sedi, al_giorno=date.today()):
+def espandi_gestione_aree_sede(qs_sedi, al_giorno=None):
     from attivita.models import Area
     from anagrafica.models import Sede
     return [
@@ -81,7 +81,7 @@ def espandi_gestione_aree_sede(qs_sedi, al_giorno=date.today()):
     ]
 
 
-def espandi_gestione_attivita_area(qs_aree, al_giorno=date.today()):
+def espandi_gestione_attivita_area(qs_aree, al_giorno=None):
     from attivita.models import Attivita
     return [
         (COMPLETO,  Attivita.objects.filter(area__in=qs_aree)),
@@ -89,7 +89,7 @@ def espandi_gestione_attivita_area(qs_aree, al_giorno=date.today()):
         + espandi_gestione_attivita(Attivita.objects.filter(area__in=qs_aree))
 
 
-def espandi_gestione_attivita(qs_attivita, al_giorno=date.today()):
+def espandi_gestione_attivita(qs_attivita, al_giorno=None):
     from anagrafica.models import Persona
     return [
         (MODIFICA,  qs_attivita),
@@ -97,12 +97,12 @@ def espandi_gestione_attivita(qs_attivita, al_giorno=date.today()):
     ]
 
 
-def espandi_gestione_referenti_attivita(qs_attivita, al_giorno=date.today()):
+def espandi_gestione_referenti_attivita(qs_attivita, al_giorno=None):
     return [
     ]
 
 
-def espandi_gestione_autoparchi_sede(qs_sedi, al_giorno=date.today()):
+def espandi_gestione_autoparchi_sede(qs_sedi, al_giorno=None):
     from veicoli.models import Autoparco, Veicolo, Collocazione
     return [
         (MODIFICA,  Autoparco.objects.filter(sede__in=qs_sedi.espandi())),
@@ -112,7 +112,7 @@ def espandi_gestione_autoparchi_sede(qs_sedi, al_giorno=date.today()):
     ]
 
 
-def espandi_gestione_corsi_sede(qs_sedi, al_giorno=date.today()):
+def espandi_gestione_corsi_sede(qs_sedi, al_giorno=None):
     from formazione.models import CorsoBase
     return [
         (COMPLETO,  CorsoBase.objects.filter(sede__in=qs_sedi)),
@@ -120,7 +120,7 @@ def espandi_gestione_corsi_sede(qs_sedi, al_giorno=date.today()):
         + espandi_gestione_corso(CorsoBase.objects.filter(sede__in=qs_sedi))
 
 
-def espandi_gestione_corso(qs_corsi, al_giorno=date.today()):
+def espandi_gestione_corso(qs_corsi, al_giorno=None):
     from anagrafica.models import Persona
     return [
         (MODIFICA,  qs_corsi),
@@ -129,7 +129,7 @@ def espandi_gestione_corso(qs_corsi, al_giorno=date.today()):
     ]
 
 
-def espandi_gestione_gruppo(qs_gruppi, al_giorno=date.today()):
+def espandi_gestione_gruppo(qs_gruppi, al_giorno=None):
     from anagrafica.models import Persona
     from gruppi.models import Appartenenza
     return [
@@ -139,7 +139,7 @@ def espandi_gestione_gruppo(qs_gruppi, al_giorno=date.today()):
     ]
 
 
-def espandi_gestione_gruppi_sede(qs_sedi, al_giorno=date.today()):
+def espandi_gestione_gruppi_sede(qs_sedi, al_giorno=None):
     from gruppi.models import Gruppo
     return [
 

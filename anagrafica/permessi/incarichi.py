@@ -53,14 +53,14 @@ INCARICHI_TIPO = (
 INCARICHI_TIPO_DICT = dict(INCARICHI_TIPO)
 
 
-def espandi_incarichi_ufficio_soci(qs_sede, al_giorno=date.today()):
+def espandi_incarichi_ufficio_soci(qs_sede, al_giorno=None):
     return [
 
     ] \
         + espandi_incarichi_ufficio_soci_unita(qs_sede.espandi(), al_giorno=al_giorno)
 
 
-def espandi_incarichi_ufficio_soci_unita(qs_sede, al_giorno=date.today()):
+def espandi_incarichi_ufficio_soci_unita(qs_sede, al_giorno=None):
     return [
         (INCARICO_GESTIONE_SOCI,                        qs_sede),
         (INCARICO_GESTIONE_APPARTENENZE,                qs_sede),
@@ -72,26 +72,26 @@ def espandi_incarichi_ufficio_soci_unita(qs_sede, al_giorno=date.today()):
     ]
 
 
-def espandi_incarichi_referente_attivita(qs_attivita, al_giorno=date.today()):
+def espandi_incarichi_referente_attivita(qs_attivita, al_giorno=None):
     return [
         (INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI,       qs_attivita),
     ]
 
 
-def espandi_incarichi_direttore_corso(qs_corso, al_giorno=date.today()):
+def espandi_incarichi_direttore_corso(qs_corso, al_giorno=None):
     return [
         (INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,      qs_corso)
     ]
 
 
-def espandi_incarichi_responsabile_formazione(qs_sede, al_giorno=date.today()):
+def espandi_incarichi_responsabile_formazione(qs_sede, al_giorno=None):
     from formazione.models import CorsoBase
     return [
 
     ] + espandi_incarichi_direttore_corso(CorsoBase.objects.filter(sede__in=qs_sede.espandi()))
 
 
-def espandi_incarichi_presidente(qs_sede, al_giorno=date.today()):
+def espandi_incarichi_presidente(qs_sede, al_giorno=None):
     return [
        (INCARICO_GESTIONE_SANGUE,                       qs_sede),
        (INCARICO_PRESIDENZA,                            qs_sede),
