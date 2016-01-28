@@ -246,7 +246,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         (IDONEO, "Idoneo"),
         (NON_IDONEO, "Non Idoneo")
     )
-    esito_esame = models.CharField(max_length=2, choices=ESITO_IDONEO, default=None, null=True, db_index=True)
+    esito_esame = models.CharField(max_length=2, choices=ESITO_IDONEO, default=None, blank=True, null=True, db_index=True)
 
     AMMESSO = "AM"
     NON_AMMESSO = "NA"
@@ -260,11 +260,11 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     ammissione = models.CharField(max_length=2, choices=AMMISSIONE, default=None, blank=True, null=True, db_index=True)
     motivo_non_ammissione = models.CharField(max_length=1025, blank=True, null=True)
 
-    esito_parte_1 = models.CharField(max_length=1, choices=ESITO, default=None, null=True, db_index=True,
+    esito_parte_1 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True,
                                      help_text="La Croce Rossa")
     argomento_parte_1 = models.TextField(max_length=1024, blank=True, null=True, help_text="es. Storia della CRI, DIU")
 
-    esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, null=True, db_index=True,
+    esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True,null=True, db_index=True,
                                      help_text="Gesti e manovre salvavita")
     argomento_parte_2 = models.TextField(max_length=1024, blank=True, null=True, help_text="es. BLS, colpo di calore")
 
@@ -296,6 +296,11 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
             invia_notifiche=self.corso.delegati_attuali(),
         )
 
+    def __str__(self):
+        return "Richiesta di part. di %s a %s" % (
+            self.persona, self.corso
+        )
+
 
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
 
@@ -306,6 +311,9 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         verbose_name = "Lezione di Corso Base"
         verbose_name_plural = "Lezioni di Corsi Base"
         ordering = ['inizio']
+
+    def __str__(self):
+        return "Lezione: %s" % (self.nome,)
 
     @property
     def url_cancella(self):
@@ -323,6 +331,11 @@ class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Assenza a Corso Base"
         verbose_name_plural = "Assenze ai Corsi Base"
+
+    def __str__(self):
+        return "Assenza di %s a %s" % (
+            self.persona.codice_fiscale, self.lezione
+        )
 
 
 class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
