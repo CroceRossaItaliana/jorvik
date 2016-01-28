@@ -79,11 +79,16 @@ class ModuloElencoQuote(forms.Form):
         (DA_VERSARE, 'Elenco quote NON versate')
     )
     tipo = forms.ChoiceField(choices=TIPO, initial=DA_VERSARE)
+    anno = forms.IntegerField()
 
-    anno = forms.IntegerField(min_value=Tesseramento.objects.earliest('anno').anno if Tesseramento.objects.all().exists() else None,
-                              max_value=Tesseramento.objects.latest('anno').anno if Tesseramento.objects.all().exists() else None,
-                              initial=min(datetime.datetime.now().year,
-                                          Tesseramento.objects.latest('anno').anno if Tesseramento.objects.all().exists() else 9999))
+    def __init__(self, *args, **kwargs):
+        super(ModuloElencoQuote, self).__init__(*args, **kwargs)
+        try:
+            self.fields['anno'].min_value = Tesseramento.objects.earliest('anno').anno
+            self.fields['anno'].max_value = Tesseramento.objects.latest('anno').anno
+            self.fields['anno'].initial = min(datetime.datetime.now().year, Tesseramento.objects.latest('anno').anno if Tesseramento.objects.all().exists() else 9999)
+        except Tesseramento.DoesNotExist:
+            pass
 
 
 class ModuloAggiungiPersona(ModuloStepAnagrafica):
@@ -186,8 +191,12 @@ class ModuloCreazioneDimissioni(ModelForm):
 class ModuloElencoRicevute(forms.Form):
 
     tipi_ricevute = forms.MultipleChoiceField(choices=Quota.TIPO, initial=[x[0] for x in Quota.TIPO])
-    anno = forms.ChoiceField(choices=Tesseramento.anni_scelta(),
-                             initial=Tesseramento.ultimo_anno())
+    anno = forms.ChoiceField()
+
+    def __init__(self, *args, **kwargs):
+        super(ModuloElencoRicevute, self).__init__(*args, **kwargs)
+        self.fields['anno'].choices = Tesseramento.anni_scelta()
+        self.fields['anno'].initial = Tesseramento.ultimo_anno()
 
 
 class ModuloElencoVolontari(forms.Form):

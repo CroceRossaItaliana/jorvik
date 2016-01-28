@@ -86,7 +86,6 @@ def espandi_incarichi_direttore_corso(qs_corso, al_giorno=date.today()):
 
 def espandi_incarichi_responsabile_formazione(qs_sede, al_giorno=date.today()):
     from formazione.models import CorsoBase
-    print(qs_sede)
     return [
 
     ] + espandi_incarichi_direttore_corso(CorsoBase.objects.filter(sede__in=qs_sede.espandi()))

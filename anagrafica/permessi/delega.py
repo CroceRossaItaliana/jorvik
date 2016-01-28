@@ -20,7 +20,6 @@ def delega_incarichi(delega):
     :param delega:
     :return: Una lista di tuple (incarico, qs_oggetto)
     """
-    print(delega.tipo)
     if delega.tipo in ESPANSIONE_DELEGHE and delega.oggetto is not None:
         return ESPANSIONE_DELEGHE[delega.tipo](delega.oggetto.queryset_modello())
     return []
