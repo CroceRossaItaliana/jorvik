@@ -236,6 +236,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     class Meta:
         verbose_name_plural = "Persone"
         app_label = 'anagrafica'
+        index_together = [
+            ['nome', 'cognome',],
+            ['nome', 'cognome', 'codice_fiscale',],
+        ]
 
     # Q: Qual e' il numero di telefono di questa persona?
     # A: Una persona puo' avere da zero ad illimitati numeri di telefono.
@@ -908,6 +912,14 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     class Meta:
         verbose_name_plural = "Appartenenze"
         app_label = 'anagrafica'
+        index_together = [
+            ['persona', 'sede',],
+            ['persona', 'inizio', 'fine'],
+            ['sede', 'membro',],
+            ['inizio', 'fine',],
+            ['sede', 'inizio', 'fine'],
+            ['sede', 'membro', 'inizio', 'fine'],
+        ]
 
     # Tipo di membro
     VOLONTARIO = 'VO'
@@ -1064,6 +1076,11 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         verbose_name = "Sede CRI"
         verbose_name_plural = "Sedi CRI"
         app_label = 'anagrafica'
+        index_together = [
+            ['estensione', 'tipo'],
+            ['attiva', 'estensione'],
+            ['attiva', 'tipo'],
+        ]
 
     # Nome gia' presente in Modello Albero
 
@@ -1321,6 +1338,16 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
     class Meta:
         verbose_name_plural = "Deleghe"
         app_label = 'anagrafica'
+        index_together = [
+            ['oggetto_tipo', 'oggetto_id'],
+            ['tipo', 'oggetto_tipo', 'oggetto_id'],
+            ['persona', 'tipo'],
+            ['inizio', 'fine'],
+            ['persona', 'inizio', 'fine', 'tipo',],
+            ['persona', 'inizio', 'fine', 'tipo', 'oggetto_id', 'oggetto_tipo',],
+            ['inizio', 'fine', 'tipo',],
+            ['inizio', 'fine', 'tipo', 'oggetto_id', 'oggetto_tipo'],
+        ]
 
     persona = models.ForeignKey(Persona, db_index=True, related_name='deleghe', related_query_name='delega', on_delete=models.CASCADE)
     tipo = models.CharField(max_length=2, db_index=True, choices=PERMESSI_NOMI)
@@ -1571,6 +1598,10 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
     class Meta:
         verbose_name = "Richiesta di riserva"
         verbose_name_plural = "Richieste di riserva"
+        index_together = [
+            ['inizio', 'fine'],
+            ['persona', 'inizio', 'fine'],
+        ]
 
     RICHIESTA_NOME = "riserva"
     persona = models.ForeignKey(Persona, related_name="riserve", on_delete=models.CASCADE)

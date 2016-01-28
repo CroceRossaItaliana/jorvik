@@ -121,6 +121,15 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name_plural = "Autorizzazioni"
         app_label = "base"
+        index_together = [
+            ['necessaria', 'progressivo'],
+            ['necessaria', 'concessa'],
+            ['destinatario_ruolo', 'destinatario_oggetto_tipo',],
+            ['necessaria', 'destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+            ['destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+            ['destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+            ['necessaria', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+        ]
 
     richiedente = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="autorizzazioni_richieste", on_delete=models.CASCADE)
     firmatario = models.ForeignKey("anagrafica.Persona", db_index=True, blank=True, null=True, default=None,

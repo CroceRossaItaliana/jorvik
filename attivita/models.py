@@ -132,6 +132,11 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     class Meta:
         verbose_name_plural = "Turni"
         ordering = ['inizio', 'fine', 'id',]
+        index_together = [
+            ['inizio', 'fine',],
+            ['attivita', 'inizio',],
+            ['attivita', 'inizio', 'fine'],
+        ]
 
     attivita = models.ForeignKey(Attivita, related_name='turni', on_delete=models.CASCADE)
 
@@ -346,6 +351,11 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
         ordering = ['stato', 'persona__nome', 'persona__cognome']
+        index_together = [
+            ['persona', 'turno'],
+            ['persona', 'turno', 'stato'],
+            ['turno', 'stato'],
+        ]
 
     RICHIESTA = 'K'
     NON_PRESENTATO = 'N'
