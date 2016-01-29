@@ -131,8 +131,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                                                help_text="A chi mostrare i miei incarichi, come presidenze, "
                                                          "referenze attività, deleghe, ecc.")
 
-    iv = models.BooleanField(default=False, db_index=True)
-    cm = models.BooleanField(default=False, db_index=True)
+    iv = models.BooleanField(verbose_name="Infermiera V.", default=False, db_index=True)
+    cm = models.BooleanField(verbose_name="Corpo Militare", default=False, db_index=True)
 
     CONOSCENZA_SITI = "SI"
     CONOSCENZA_FACEBOOK = "FB"
