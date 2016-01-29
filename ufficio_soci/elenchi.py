@@ -484,7 +484,7 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
         r = Persona.objects.filter(
             Appartenenza.query_attuale(
                 al_giorno=oggi,
-                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_SOCIO,
+                sede__in=qs_sedi, membro=Appartenenza.VOLONTARIO,
             ).via("appartenenze"),
             Q(**aggiuntivi),
 
