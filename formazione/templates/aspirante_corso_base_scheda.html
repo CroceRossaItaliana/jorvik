@@ -52,11 +52,12 @@
                 Inserisci l'indirizzo del Corso dalla scheda "Gestione corso";
             </p>
             <p>
-                <a class="btn btn-warning {% if not attivabile %}disabled{% endif %}"
-                    {% if attivabile %}href="{{ corso.url_attiva }}"{% endif %}
+                <a class="btn btn-warning {% if not corso.attivabile %}disabled{% endif %}"
+                    {% if corso.attivabile %}href="{{ corso.url_attiva }}"{% endif %}
                 >
                     <i class="fa fa-fw fa-check-circle"></i>
-                    Attiva il corso e informa gli aspiranti in zona (pi&ugrave; di {{ corso.aspiranti_nelle_vicinanze }})
+                    Attiva il corso e informa gli aspiranti in zona (pi&ugrave; di
+                    {{ corso.aspiranti_nelle_vicinanze.count }})
                 </a>
             </p>
 
