@@ -15,6 +15,7 @@ from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.models import ModelloSemplice
 from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico
 from base.utils import concept
+from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
 from django.db import models
 
@@ -139,6 +140,10 @@ class CorsoBase(Corso, ConVecchioID):
         return "%smodifica/" % (self.url,)
 
     @property
+    def url_attiva(self):
+        return "%sattiva/" % (self.url,)
+
+    @property
     def url_iscritti(self):
         return "%siscritti/" % (self.url,)
 
@@ -192,6 +197,7 @@ class CorsoBase(Corso, ConVecchioID):
         """
         Controlla se il corso base e' attivabile.
         """
+
         if not self.locazione:
             return False
 
@@ -200,17 +206,9 @@ class CorsoBase(Corso, ConVecchioID):
 
         return True
 
-    def attiva(self):
-        """
-        Effettua l'attivazione del corso base.
-        """
-        self.stato = self.ATTIVO
-        self.save()
-
-    @property
     def aspiranti_nelle_vicinanze(self):
         from formazione.models import Aspirante
-        return self.circonferenze_contenenti(Aspirante.objects.all()).count()
+        return self.circonferenze_contenenti(Aspirante.objects.all())
 
     def partecipazioni_confermate_o_in_attesa(self):
         return self.partecipazioni_confermate() | self.partecipazioni_in_attesa()
@@ -226,6 +224,27 @@ class CorsoBase(Corso, ConVecchioID):
 
     def partecipazioni_ritirate(self):
         return PartecipazioneCorsoBase.con_esito_ritirata().filter(corso=self)
+
+    def attiva(self):
+        if not self.attivabile():
+            raise ValueError("Questo corso non è attivabile.")
+
+        self._invia_email_agli_aspiranti()
+        self.stato = self.ATTIVO
+        self.save()
+
+    def _invia_email_agli_aspiranti(self):
+        for aspirante in self.aspiranti_nelle_vicinanze():
+            persona = aspirante.persona
+            Messaggio.costruisci_e_accoda(
+                oggetto="Nuovo Corso per Volontari CRI",
+                modello="email_aspirante_corso.html",
+                corpo={
+                    "persona": persona,
+                    "corso": self,
+                },
+                destinatari=[persona],
+            )
 
 
 class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):

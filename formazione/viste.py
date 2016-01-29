@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 
 from django.shortcuts import redirect, get_object_or_404
+from django.template import Context
+from django.template.loader import get_template
 
 from anagrafica.models import Persona
 from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
@@ -270,6 +272,44 @@ def aspirante_corso_base_modifica(request, me, pk):
         "modulo": modulo,
     }
     return 'aspirante_corso_base_scheda_modifica.html', contesto
+
+
+@pagina_privata
+def aspirante_corso_base_attiva(request, me, pk):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    if not me.permessi_almeno(corso, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+    if corso.stato != corso.PREPARAZIONE:
+        return messaggio_generico(request, me, titolo="Il corso è già attivo",
+                                  messaggio="Non puoi attivare un corso già attivo",
+                                  torna_titolo="Torna al Corso",
+                                  torna_url=corso.url)
+    if not corso.attivabile():
+        return errore_generico(request, me, titolo="Impossibile attivare questo corso",
+                               messaggio="Non sono soddisfatti tutti i criteri di attivazione. "
+                                         "Torna alla pagina del corso e verifica che tutti i "
+                                         "criteri siano stati soddisfatti prima di attivare un "
+                                         "nuovo corso.",
+                               torna_titolo="Torna al Corso",
+                               torna_url=corso.url)
+
+    corpo = {"corso": corso, "persona": me}
+    testo = get_template("email_aspirante_corso_inc_testo.html").render(Context(corpo))
+
+    if request.POST:
+        corso.attiva()
+        return messaggio_generico(request, me, titolo="Corso attivato con successo",
+                                  messaggio="A breve tutti gli aspiranti nelle vicinanze verranno informati "
+                                            "dell'attivazione di questo corso base.",
+                                  torna_titolo="Torna al Corso",
+                                  torna_url=corso.url)
+
+    contesto = {
+        "corso": corso,
+        "puo_modificare": True,
+        "testo": testo,
+    }
+    return 'aspirante_corso_base_scheda_attiva.html', contesto
 
 
 @pagina_privata

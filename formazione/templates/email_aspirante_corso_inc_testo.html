@@ -1,0 +1,24 @@
+<p>Ciao {{ persona.nome }},</p>
+<p>ti scriviamo in riferimento alla tua richiesta di diventare volontario della Croce
+    Rossa Italiana fatta attraverso <a href="/">Gaia</a>.</p>
+
+<p>Nelle tue vicinanze è stato attivato un "corso base" per Volontari CRI!</p>
+<p class="grassetto">Il corso è stato organizzato dal {{ corso.sede.link|safe }} ed avrà inizio il
+    {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}, al seguente indirizzo:
+    <a href="{{ corso.url_mappa }}">{{ corso.locazione }} (vedi in mappa)</a>.</p>
+<p>Alcune informazioni su questo corso:</p>
+
+<blockquote>{{ corso.descrizione|safe }}</blockquote>
+
+<hr />
+
+<p style="font-size: larger;"><a href="/login/?next={{ corso.url }}">Entra in Gaia (clicca qui)</a> per
+    maggiori informazioni, metterti in contatto col direttore del corso e per effettuare la preiscrizione.</p>
+
+<p><strong>Prima di rispondere a questa email, ti chiediamo di leggere alcune informazioni importanti</strong>:</p>
+<p>- Nel caso il cui il corso base fosse troppo distante dal tuo indirizzo di preferenza, puoi contattare
+    un Comitato presso il quale vorresti fare il corso cliccando <a href="/aspirante/sedi/">qui</a>;</p>
+<p>- Se volessi conoscere i corsi attualmente attivi vicino al tuo indirizzo di preferenza è
+    necessario <a href="/aspirante/corsi-base/">cliccare qui</a>;</p>
+<p>- Per qualsiasi informazione inerente il tuo corso l'unico riferimento sarà il Direttore di corso,
+    potrai contattarlo <a href="/login/?next={{ corso.url }}">accedendo a Gaia</a>.</p>
