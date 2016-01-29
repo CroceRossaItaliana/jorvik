@@ -27,6 +27,14 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
         verbose_name = "Attività"
         verbose_name_plural = "Attività"
         ordering = ['-creazione', 'nome',]
+        index_together = [
+            ['sede', 'estensione'],
+            ['sede', 'estensione', 'apertura',],
+            ['sede', 'estensione', 'stato',],
+            ['sede', 'estensione', 'apertura', 'stato',],
+            ['sede', 'apertura'],
+            ['estensione', 'apertura'],
+        ]
 
     BOZZA = 'B'
     VISIBILE = 'V'
@@ -440,6 +448,9 @@ class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
     class Meta:
         verbose_name_plural = "Aree"
         ordering = ['sede', 'obiettivo', 'nome',]
+        index_together = [
+            ['sede', 'obiettivo'],
+        ]
 
     def __str__(self):
         return "%s, Ob. %d: %s" % (

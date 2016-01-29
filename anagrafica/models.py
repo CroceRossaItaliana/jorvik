@@ -838,6 +838,9 @@ class Telefono(ConMarcaTemporale, ModelloSemplice):
         verbose_name = "Numero di telefono"
         verbose_name_plural = "Numeri di telefono"
         app_label = 'anagrafica'
+        index_together = [
+            ['persona', 'servizio'],
+        ]
 
     def _phonenumber(self):
         return phonenumbers.parse(self.numero)
@@ -915,10 +918,16 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         index_together = [
             ['persona', 'sede',],
             ['persona', 'inizio', 'fine'],
+            ['persona', 'inizio', 'fine', 'membro'],
+            ['persona', 'inizio', 'fine', 'membro', 'confermata'],
             ['sede', 'membro',],
             ['inizio', 'fine',],
             ['sede', 'inizio', 'fine'],
             ['sede', 'membro', 'inizio', 'fine'],
+            ['membro', 'confermata'],
+            ['membro', 'confermata', 'inizio', 'fine'],
+            ['membro', 'confermata', 'persona'],
+            ['confermata', 'persona'],
         ]
 
     # Tipo di membro
@@ -1078,8 +1087,13 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         app_label = 'anagrafica'
         index_together = [
             ['estensione', 'tipo'],
+            ['genitore', 'estensione'],
             ['attiva', 'estensione'],
             ['attiva', 'tipo'],
+            ['lft', 'rght'],
+            ['lft', 'rght', 'attiva'],
+            ['lft', 'rght', 'attiva', 'estensione'],
+            ['lft', 'rght', 'tree_id'],
         ]
 
     # Nome gia' presente in Modello Albero
@@ -1344,6 +1358,7 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             ['persona', 'tipo'],
             ['inizio', 'fine'],
             ['persona', 'inizio', 'fine', 'tipo',],
+            ['persona', 'inizio', 'fine',],
             ['persona', 'inizio', 'fine', 'tipo', 'oggetto_id', 'oggetto_tipo',],
             ['inizio', 'fine', 'tipo',],
             ['inizio', 'fine', 'tipo', 'oggetto_id', 'oggetto_tipo'],

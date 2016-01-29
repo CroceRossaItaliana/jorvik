@@ -129,6 +129,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             ['destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
             ['destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
             ['necessaria', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+            ['necessaria', 'destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
         ]
 
     richiedente = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="autorizzazioni_richieste", on_delete=models.CASCADE)
