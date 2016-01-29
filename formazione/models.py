@@ -53,7 +53,7 @@ class CorsoBase(Corso, ConVecchioID):
     class Meta:
         verbose_name = "Corso Base"
         verbose_name_plural = "Corsi Base"
-        ordering = ['-data_inizio']
+        ordering = ['-anno', '-progressivo']
 
     data_inizio = models.DateTimeField(blank=False, null=False, help_text="La data di inizio del corso. "
                                                                           "Utilizzata per la gestione delle iscrizioni.")
@@ -163,13 +163,15 @@ class CorsoBase(Corso, ConVecchioID):
         return "%sreport/" % (self.url,)
 
     @classmethod
-    def nuovo(cls, anno=datetime.date.today().year, **kwargs):
+    def nuovo(cls, anno=None, **kwargs):
         """
         Metodo per creare un nuovo corso. Crea progressivo automaticamente.
         :param anno: Anno di creazione del corso.
         :param kwargs: Parametri per la creazione del corso.
         :return:
         """
+
+        anno = anno or datetime.date.today().year
 
         try:  # Per il progressivo, cerca ultimo corso
             ultimo = CorsoBase.objects.filter(anno=anno).latest('progressivo')

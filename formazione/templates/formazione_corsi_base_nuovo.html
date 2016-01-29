@@ -9,22 +9,34 @@
 
 {% block app_contenuto %}
 
-    <h2 class="allinea-centro text-success">
-        Pianifica un Corso Base
-    </h2>
-
     <div class="row">
 
         <div class="col-md-6">
-            <form method="POST">
-                {% csrf_token %}
-                {% bootstrap_form modulo %}
-                <button type="submit" class="btn btn-lg btn-success"
-                    data-conferma="Confermi di voler pianificare il corso?">
-                    <i class="fa fa-fw fa-asterisk"></i>
-                    Pianifica il Corso
-                </button>
-            </form>
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-calendar"></i>
+                        Pianifica un Corso Base
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit" class="btn btn-block btn-primary"
+                            data-conferma="Confermi di voler pianificare il corso?">
+                            <i class="fa fa-fw fa-asterisk"></i>
+                            Pianifica il Corso
+                        </button>
+                    </form>
+
+
+                </div>
+
+
+            </div>
 
         </div>
 
