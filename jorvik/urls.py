@@ -200,14 +200,14 @@ urlpatterns = [
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/ritirati/$', 'formazione.viste.aspirante_corso_base_ritirati'),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/report/$', 'formazione.viste.aspirante_corso_base_report'),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/modifica/$', 'formazione.viste.aspirante_corso_base_modifica'),
+    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/attiva/$', 'formazione.viste.aspirante_corso_base_attiva'),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/lezioni/$', 'formazione.viste.aspirante_corso_base_lezioni'),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/lezioni/(?P<lezione_pk>[0-9]+)/cancella/$', 'formazione.viste.aspirante_corso_base_lezioni_cancella'),
 
     url(r'^formazione/$', 'formazione.viste.formazione'),
     url(r'^formazione/corsi-base/elenco/$', 'formazione.viste.formazione_corsi_base_elenco'),
     url(r'^formazione/corsi-base/domanda/$', 'formazione.viste.formazione_corsi_base_domanda'),
-    url(r'^formazione/corsi-base/nuovo/$', 'base.errori.vista_ci_siamo_quasi'),
-    # url(r'^formazione/corsi-base/nuovo/$', 'formazione.viste.formazione_corsi_base_nuovo'),
+    url(r'^formazione/corsi-base/nuovo/$', 'formazione.viste.formazione_corsi_base_nuovo'),
     url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/direttori/$', 'formazione.viste.formazione_corsi_base_direttori'),
     url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/fine/$', 'formazione.viste.formazione_corsi_base_fine'),
 
