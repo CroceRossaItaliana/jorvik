@@ -127,6 +127,7 @@ class ElencoVistaSoci(ElencoVistaAnagrafica):
             return force_text(scelte[p.appartenenza_tipo], strings_only=True)
 
         return super(ElencoVistaSoci, self).excel_colonne() + (
+            ("Giovane", lambda p: "Si" if p.giovane else "No"),
             ("Ingresso in CRI", lambda p: p.ingresso().date()),
             ("Tipo Attuale", lambda p: _tipo_socio(p) if p.appartenenza_tipo else "N/A"),
             ("A partire dal", lambda p: p.appartenenza_inizio.date() if p.appartenenza_inizio else "N/A")
