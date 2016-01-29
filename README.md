@@ -19,7 +19,7 @@ Jorvik viene installato e testato sulle recenti versioni di Python 3, in modo au
 * Stato attuale di `master` (sviluppo): [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=master)](https://travis-ci.org/CroceRossaItaliana/jorvik)
 * Stato attuale di `produzione` (online*): [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=produzione)](https://travis-ci.org/CroceRossaItaliana/jorvik)
 
-\*: *Il deployment non viene effettuato automaticamente.*
+\*: *Il deployment non viene ancora effettuato automaticamente.*
 
 ### Documentazione
 
