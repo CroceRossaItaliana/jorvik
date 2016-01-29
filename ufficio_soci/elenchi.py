@@ -6,7 +6,7 @@ from anagrafica.models import Persona, Appartenenza, Riserva, Sede
 from base.utils import filtra_queryset, testo_euro
 from curriculum.models import TitoloPersonale
 from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote, ModuloElencoPerTitoli
-from datetime import date
+from datetime import date, datetime
 from django.utils.timezone import now
 
 from ufficio_soci.models import Tesseramento, Quota
@@ -463,7 +463,7 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         oggi = self.modulo_riempito.cleaned_data['al_giorno']
         nascita_minima = date(oggi.year - 18, oggi.month, oggi.day)
-        anzianita_minima = date(oggi.year - Appartenenza.MEMBRO_ANZIANITA_ANNI, oggi.month, oggi.day)
+        anzianita_minima = datetime(oggi.year - Appartenenza.MEMBRO_ANZIANITA_ANNI, oggi.month, oggi.day, 23, 59, 59)
 
         aggiuntivi = {
             # Anzianita' minima
