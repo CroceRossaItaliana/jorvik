@@ -90,4 +90,14 @@ class ModuloOrganizzaAttivitaReferente(forms.Form):
 
 class ModuloStatisticheAttivita(forms.Form):
 
+    SETTIMANA = 7
+    QUINDICI_GIORNI = 15
+    MESE = 30
+    SCELTE = (
+        (SETTIMANA, "Per settimana"),
+        (QUINDICI_GIORNI, "Per 15 giorni"),
+        (MESE, "Per mese"),
+    )
+
     sedi = forms.ModelMultipleChoiceField(queryset=Sede.objects.all())
+    periodo = forms.ChoiceField(choices=SCELTE, initial=SETTIMANA)

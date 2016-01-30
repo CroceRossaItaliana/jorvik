@@ -726,18 +726,28 @@ def attivita_statistiche(request, me):
     statistiche = []
     chart = {}
 
-    settimane = 12
+    periodi = 12
 
     if modulo.is_valid():
 
         oggi = date.today()
 
-        for settimana in range(settimane, 0, -1):
+        giorni = int(modulo.cleaned_data['periodo'])
+        if giorni == modulo.SETTIMANA:
+            etichetta = "sett."
+        elif giorni == modulo.QUINDICI_GIORNI:
+            etichetta = "fortn."
+        elif giorni == modulo.MESE:
+            etichetta = "mesi"
+        else:
+            raise ValueError("Etichetta mancante.")
+
+        for periodo in range(periodi, 0, -1):
 
             dati = {}
 
-            fine = oggi - timedelta(days=(7*settimana))
-            inizio = fine - timedelta(days=6)
+            fine = oggi - timedelta(days=(giorni*periodo))
+            inizio = fine - timedelta(days=giorni-1)
 
             fine = datetime.combine(fine, time(23, 59, 59))
             inizio = datetime.combine(inizio, time(0, 0, 0))
@@ -754,7 +764,7 @@ def attivita_statistiche(request, me):
             ore_uomo_di_servizio = qs_part.annotate(durata=F('turno__fine') - F('turno__inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore']
 
             # Poi, associa al dizionario statistiche.
-            dati['sett'] = settimana
+            dati['etichetta'] = "%d %s fa" % (periodo, etichetta,)
             dati['num_turni'] = qs_turni.count()
             dati['ore_di_servizio'] = ore_di_servizio
             dati['ore_uomo_di_servizio'] = ore_uomo_di_servizio
@@ -762,7 +772,7 @@ def attivita_statistiche(request, me):
 
             statistiche.append(dati)
 
-        chart['labels'] = json.dumps(["%d sett. fa" % x['sett'] for x in statistiche])
+        chart['labels'] = json.dumps([x['etichetta'] for x in statistiche])
         chart['num_turni'] = json.dumps([x['num_turni'] for x in statistiche])
         chart['ore_di_servizio'] = json.dumps([timedelta_ore(x['ore_di_servizio']) for x in statistiche])
         chart['ore_uomo_di_servizio'] = json.dumps([timedelta_ore(x['ore_uomo_di_servizio']) for x in statistiche])
@@ -772,6 +782,5 @@ def attivita_statistiche(request, me):
         "modulo": modulo,
         "statistiche": statistiche,
         "chart": chart,
-        "settimane": settimane,
     }
     return 'attivita_statistiche.html', contesto
