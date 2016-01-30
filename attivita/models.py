@@ -89,7 +89,7 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
             attivita=self,
             fine__lte=timezone.now(),
         ).count() + 1
-        return floor(posizione / Turno.PER_PAGINA) + 1
+        return floor((posizione-1) / Turno.PER_PAGINA) + 1
 
     @property
     def url_modifica(self):
@@ -395,10 +395,12 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
             attivita=self.attivita,
             inizio__lte=self.inizio,
             fine__lte=self.fine,
+            id__lt=self.pk,
         ).exclude(pk=self.pk).count() + 1
 
     def elenco_pagina(self):
-        return floor((self.elenco_posizione() / self.PER_PAGINA) + 1)
+        print(self.elenco_posizione())
+        return floor(((self.elenco_posizione() - 1) / self.PER_PAGINA)) + 1
 
     def partecipazioni_in_attesa(self):
         return Partecipazione.con_esito_pending().filter(turno=self)
