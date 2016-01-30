@@ -6,12 +6,14 @@
         html, body {
             /* Margini della pagina */
             padding: 30px 30px 30px 30px;
+            font-family: 'Times New Roman', 'Tahoma';
+            color: #333;
         }
         {% block css_extra %}
         {% endblock %}
     </style>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <body style="font-family: 'Times New Roman', 'Tahoma'; color: #333;">
+    <body>
 
         {% block corpo %}
             <p>Il testo del PDF va qui (block 'corpo').</p>

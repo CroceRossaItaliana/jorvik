@@ -3,17 +3,18 @@
 """
 Questo modulo definisce i modelli del modulo Attivita' di Gaia.
 """
-from datetime import timedelta
+from datetime import timedelta, date
 from math import floor
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, F, Sum, Avg
 from django.utils import timezone
 
 from anagrafica.permessi.applicazioni import REFERENTE
 from anagrafica.permessi.costanti import MODIFICA
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI, INCARICO_PRESIDENZA
+from base.files import PDF
 from base.utils import concept
 from social.models import ConGiudizio, ConCommenti
 from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati, ConVecchioID, Autorizzazione
@@ -95,6 +96,10 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
         return self.url + "modifica/"
 
     @property
+    def url_partecipanti(self):
+        return self.url + "partecipanti/"
+
+    @property
     def url_referenti(self):
         return self.url + "referenti/"
 
@@ -133,6 +138,82 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
             attivita=self,
             **kwargs
         )
+
+    def turni_passati(self, *args, **kwargs):
+        return Turno.query_passati(
+            *args,
+            attivita=self,
+            **kwargs
+        )
+
+    def ore_di_servizio(self, solo_turni_passati=True):
+        """
+        Calcola e ritorna il numero di ore di servizio
+        :return: timedelta
+        """
+        turni = self.turni_passati() if solo_turni_passati else self.turni.all()
+        turni = turni.annotate(durata=F('fine') - F('inizio'))
+        a = turni.aggregate(totale_ore=Sum('durata'))
+        try:
+            return a['totale_ore']
+        except KeyError:
+            return timedelta(minutes=0)
+
+    def ore_uomo_di_servizio(self, solo_turni_passati=True):
+        """
+        Calcola e ritorna il numero di ore di servizio per uomo
+        :return: timedelta
+        """
+        turni = self.turni_passati() if solo_turni_passati else self.turni.all()
+        p = Partecipazione.con_esito_ok(turno__attivita=self).annotate(durata=F('turno__fine') - F('turno__inizio'))
+        a = p.aggregate(totale_ore=Sum('durata'))
+        try:
+            return a['totale_ore']
+        except KeyError:
+            return timedelta(minutes=0)
+
+    def eta_media_partecipanti(self):
+        from anagrafica.models import Persona
+        l = self.partecipanti_confermati().values_list('data_nascita', flat=True)
+        today = date.today()
+        try:
+            average_age = sum((today - x for x in l), timedelta(0)) / len(l)
+        except ZeroDivisionError:
+            return 0
+        return round(average_age.days / 365, 1)
+
+    def partecipanti_confermati(self):
+        """
+        Ottiene il queryset di tutti i partecipanti confermati
+        :return:
+        """
+        from anagrafica.models import Persona
+        return Persona.objects.filter(
+            Partecipazione.con_esito_ok(turno__attivita=self).via("partecipazioni")
+        ).distinct('nome', 'cognome', 'codice_fiscale').order_by('nome', 'cognome', 'codice_fiscale')
+
+    def genera_report(self):
+        """
+        Genera il report in formato PDF.
+        :return:
+        """
+        from anagrafica.models import Persona
+        turni = self.turni_passati()
+        turni_e_partecipanti = []
+        for turno in turni:
+            partecipanti = Persona.objects.filter(partecipazioni__in=turno.partecipazioni_confermate())
+            turni_e_partecipanti.append((turno, partecipanti))
+        pdf = PDF(oggetto=self)
+        pdf.genera_e_salva(
+            nome="Report.pdf",
+            modello="pdf_attivita_report.html",
+            corpo={
+                "attivita": self,
+                "turni_e_partecipanti": turni_e_partecipanti,
+            },
+            orientamento=PDF.ORIENTAMENTO_ORIZZONTALE,
+        )
+        return pdf
 
 
 class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
@@ -277,6 +358,10 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         return "%sturni/%d/ritirati/" % (self.attivita.url, self.pk)
 
     @property
+    def url_partecipanti(self):
+        return "%sturni/%d/partecipanti/" % (self.attivita.url, self.pk)
+
+    @property
     def link(self):
         return "<a href='%s' target='_new'>%s</a>" % (
             self.url, self.nome
@@ -284,10 +369,21 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
     @classmethod
     @concept
-    def query_futuri(cls, *args, ora=timezone.now(), **kwargs):
+    def query_futuri(cls, *args, ora=None, **kwargs):
+        ora = ora or timezone.now()
         return Q(
             *args,
             fine__gt=ora,
+            **kwargs
+        )
+
+    @classmethod
+    @concept
+    def query_passati(cls, *args, ora=None, **kwargs):
+        ora = ora or timezone.now()
+        return Q(
+            *args,
+            fine__lt=ora,
             **kwargs
         )
 

@@ -188,11 +188,6 @@
                     </td>
                     <td>
 
-                        <button type="button" class="btn btn-primary btn-block"
-                                data-toggle="modal" data-target="#aggiungi-{{ turno.pk }}">
-                            <i class="fa fa-fw fa-plus-circle"></i>
-                            Aggiungi partecipante
-                        </button>
 
                         <!-- Modale inserimento partecipante -->
                         <div class="modal fade" id="aggiungi-{{ turno.pk }}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -226,19 +221,28 @@
                           </div>
                         </div>
 
+                        <div class="btn-group-vertical btn-block">
+
+                            <button type="button" class="btn btn-primary"
+                                    data-toggle="modal" data-target="#aggiungi-{{ turno.pk }}">
+                                <i class="fa fa-fw fa-plus-circle"></i>
+                                Aggiungi partecipante
+                            </button>
+
+                            <a href="{{ turno.url_partecipanti }}"
+                               class="btn btn-info">
+                                <i class="fa fa-fw fa-list"></i>
+                                Elenco Partecipanti
+                            </a>
+                        </div>
                         <p>&nbsp;</p>
-
-                        <a href="{{ turno.attivita.url_report }}"
-                           class="btn btn-default btn-sm btn-block">
-                            <i class="fa fa-fw fa-file-excel-o"></i>
-                            Scarica report
-                        </a>
-
-                        <a href="{{ turno.attivita.url_report }}"
-                           class="btn btn-default btn-sm btn-block">
-                            <i class="fa fa-fw fa-copy"></i>
-                            Ripeti turno
-                        </a>
+                        <p>
+                            <a href="{{ turno.attivita.url_report }}"
+                               class="btn btn-default btn-sm btn-block">
+                                <i class="fa fa-fw fa-copy"></i>
+                                Ripeti turno
+                            </a>
+                        </p>
 
                     </td>
                 </tr>
