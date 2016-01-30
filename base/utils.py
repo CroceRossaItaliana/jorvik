@@ -185,3 +185,8 @@ def poco_fa():
     Un secondo fa. Utile per terminare o iniziare le appartenenze.
     """
     return timezone.now() - timedelta(minutes=1)
+
+
+def timedelta_ore(td):
+    g, h = td.days, td.seconds/3600
+    return h + 24*g

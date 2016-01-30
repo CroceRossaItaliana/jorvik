@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.forms.extras import SelectDateWidget
 
+from anagrafica.models import Sede
 from attivita.models import Attivita, Turno, Area
 from base.wysiwyg import WYSIWYGSemplice
 
@@ -85,3 +86,8 @@ class ModuloOrganizzaAttivitaReferente(forms.Form):
     )
 
     scelta = forms.ChoiceField(choices=SCELTA, help_text="Scegli l'opzione appropriata.")
+
+
+class ModuloStatisticheAttivita(forms.Form):
+
+    sedi = forms.ModelMultipleChoiceField(queryset=Sede.objects.all())

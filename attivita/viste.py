@@ -1,8 +1,8 @@
 # coding=utf8
+import json
+from datetime import date, timedelta, datetime, time
 
-from datetime import date, timedelta, datetime
-
-from django.db.models import Count
+from django.db.models import Count, F, Sum
 from django.utils import timezone
 
 
@@ -13,17 +13,17 @@ from anagrafica.costanti import NAZIONALE
 from anagrafica.models import Sede
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE
 from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO, \
-    GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA
+    GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE
 from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, ModuloModificaTurno, \
     ModuloAggiungiPartecipanti, ModuloCreazioneTurno, ModuloCreazioneArea, ModuloOrganizzaAttivita, \
-    ModuloOrganizzaAttivitaReferente
+    ModuloOrganizzaAttivitaReferente, ModuloStatisticheAttivita
 from attivita.models import Partecipazione, Attivita, Turno, Area
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico
 from base.files import Excel, FoglioExcel
-from base.utils import poco_fa
+from base.utils import poco_fa, timedelta_ore
 from gruppi.models import Gruppo
 
 
@@ -715,3 +715,63 @@ def attivita_scheda_report(request, me, pk=None):
 
     return 'attivita_scheda_report.html', contesto
 
+
+@pagina_privata
+def attivita_statistiche(request, me):
+    sedi = me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE)
+
+    modulo = ModuloStatisticheAttivita(request.POST or None, initial={"sedi": sedi})
+    modulo.fields['sedi'].queryset = sedi
+
+    statistiche = []
+    chart = {}
+
+    settimane = 12
+
+    if modulo.is_valid():
+
+        oggi = date.today()
+
+        for settimana in range(settimane, 0, -1):
+
+            dati = {}
+
+            fine = oggi - timedelta(days=(7*settimana))
+            inizio = fine - timedelta(days=6)
+
+            fine = datetime.combine(fine, time(23, 59, 59))
+            inizio = datetime.combine(inizio, time(0, 0, 0))
+
+            dati['inizio'] = inizio
+            dati['fine'] = fine
+
+            # Prima, ottiene tutti i queryset.
+            qs_attivita = Attivita.objects.filter(stato=Attivita.VISIBILE, sede__in=sedi)
+            qs_turni = Turno.objects.filter(attivita__in=qs_attivita, inizio__lte=fine, fine__gte=inizio)
+            qs_part = Partecipazione.con_esito_ok(turno__in=qs_turni)
+
+            ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore']
+            ore_uomo_di_servizio = qs_part.annotate(durata=F('turno__fine') - F('turno__inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore']
+
+            # Poi, associa al dizionario statistiche.
+            dati['sett'] = settimana
+            dati['num_turni'] = qs_turni.count()
+            dati['ore_di_servizio'] = ore_di_servizio
+            dati['ore_uomo_di_servizio'] = ore_uomo_di_servizio
+            dati['rapporto'] = round(ore_uomo_di_servizio / ore_di_servizio, 3)
+
+            statistiche.append(dati)
+
+        chart['labels'] = json.dumps(["%d sett. fa" % x['sett'] for x in statistiche])
+        chart['num_turni'] = json.dumps([x['num_turni'] for x in statistiche])
+        chart['ore_di_servizio'] = json.dumps([timedelta_ore(x['ore_di_servizio']) for x in statistiche])
+        chart['ore_uomo_di_servizio'] = json.dumps([timedelta_ore(x['ore_uomo_di_servizio']) for x in statistiche])
+        chart['rapporto'] = json.dumps([x['rapporto'] for x in statistiche])
+
+    contesto = {
+        "modulo": modulo,
+        "statistiche": statistiche,
+        "chart": chart,
+        "settimane": settimane,
+    }
+    return 'attivita_statistiche.html', contesto
