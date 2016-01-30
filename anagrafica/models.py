@@ -1582,10 +1582,9 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         )
 
     def termina(self):
-        self.appartenenza.fine = datetime.today()
+        self.appartenenza.fine = poco_fa()
         self.appartenenza.terminazione = Appartenenza.FINE_ESTENSIONE
-        self.attuale = 'n'
-        self.save()
+        self.appartenenza.save()
 
     def genera_pdf(self):
         pdf = PDF(oggetto=self)
@@ -1638,6 +1637,10 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
     def autorizzazione_concessa(self, modulo=None):
         self.protocollo_data = modulo.cleaned_data['protocollo_data']
         self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
+
+    def termina(self):
+        self.fine = poco_fa()
+        self.save()
 
 
     def invia_mail(self):
