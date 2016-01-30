@@ -1,3 +1,4 @@
+import newrelic
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser
 from django.shortcuts import render_to_response, redirect
@@ -30,6 +31,8 @@ def pagina_pubblica(funzione):
     """
 
     def _pagina_pubblica(request, *args, **kwargs):
+
+        newrelic.agent.set_transaction_name(funzione.__name__, "pubblica")
 
         request.me = request.user.persona if request.user and hasattr(request.user, 'persona') else None
         (template, contesto, richiesta) = _spacchetta(funzione(request, request.me, *args, **kwargs))
@@ -89,6 +92,8 @@ def pagina_privata(funzione=None, pagina=LOGIN_URL, permessi=[]):
 
     def _pagina_privata(request, *args, **kwargs):
 
+        newrelic.agent.set_transaction_name(funzione.__name__, "privata")
+
         if isinstance(request.user, AnonymousUser):
             return redirect(LOGIN_URL + "?" + urlencode({"next": request.path}))
 
@@ -133,6 +138,8 @@ def pagina_privata_no_cambio_firma(funzione=None, pagina=LOGIN_URL, permessi=[])
         return functools.partial(pagina_privata, pagina=pagina, permessi=permessi)
 
     def _pagina_privata(request, *args, **kwargs):
+
+        newrelic.agent.set_transaction_name(funzione.__name__, "privata")
 
         if isinstance(request.user, AnonymousUser):
             return redirect(LOGIN_URL)
