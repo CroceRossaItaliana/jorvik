@@ -607,7 +607,7 @@ def utente_estensione_termina(request, me, pk):
         return redirect(ERRORE_PERMESSI)
     else:
         estensione.termina()
-        return redirect('/utente/estensione/')
+        return redirect('/utente/')
 
 def utente_trasferimento_termina(request, me, pk):
     trasferimento = get_object_or_404(Trasferimento, pk=pk)
@@ -733,8 +733,7 @@ def utente_riserva_termina(request, me, pk):
     riserva = get_object_or_404(Riserva, pk=pk)
     if not riserva.persona == me:
         return redirect(ERRORE_PERMESSI)
-    riserva.fine = datetime.date.today()
-    riserva.save()
+    riserva.termina()
     return redirect("/utente/")
 
 
