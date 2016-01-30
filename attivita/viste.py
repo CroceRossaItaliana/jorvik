@@ -14,6 +14,7 @@ from anagrafica.models import Sede
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE
 from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO, \
     GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA
+from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, ModuloModificaTurno, \
     ModuloAggiungiPartecipanti, ModuloCreazioneTurno, ModuloCreazioneArea, ModuloOrganizzaAttivita, \
     ModuloOrganizzaAttivitaReferente
@@ -496,6 +497,38 @@ def attivita_scheda_turni_ritirati(request, me, pk=None, turno_pk=None):
                               torna_titolo="Torna al turno",
                               torna_url=turno.url)
 
+
+@pagina_privata
+def attivita_scheda_turni_partecipanti(request, me, pk=None, turno_pk=None):
+    turno = get_object_or_404(Turno, pk=turno_pk)
+    if not me.permessi_almeno(turno.attivita, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    elenco = ElencoPartecipantiTurno(turno.queryset_modello())
+    contesto = {
+        "attivita": turno.attivita,
+        "turno": turno,
+        "elenco": elenco,
+        "puo_modificare": True
+    }
+    return "attivita_scheda_turni_elenco.html", contesto
+
+
+@pagina_privata
+def attivita_scheda_partecipanti(request, me, pk=None):
+    attivita = get_object_or_404(Attivita, pk=pk)
+    if not me.permessi_almeno(attivita, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+    elenco = ElencoPartecipantiAttivita(attivita.queryset_modello())
+    contesto = {
+        "attivita": attivita,
+        "elenco": elenco,
+        "puo_modificare": True
+    }
+    return "attivita_scheda_partecipanti.html", contesto
+
+
+
 @pagina_privata
 def attivita_scheda_turni_rimuovi(request, me, pk=None, turno_pk=None, partecipante_pk=None):
 
@@ -664,12 +697,16 @@ def attivita_scheda_report(request, me, pk=None):
     Mostra la pagina di modifica di una attivita'.
     """
 
-    if True:
+    if False:
         return ci_siamo_quasi(request, me)
 
     attivita = get_object_or_404(Attivita, pk=pk)
     if not me.permessi_almeno(attivita, MODIFICA):
         return redirect(ERRORE_PERMESSI)
+
+    if request.POST:
+        pdf = attivita.genera_report()
+        return redirect(pdf.download_url)
 
     contesto = {
         "attivita": attivita,

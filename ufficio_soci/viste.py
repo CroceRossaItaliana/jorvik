@@ -541,7 +541,8 @@ def us_elenco_messaggio(request, me, elenco_id):
 
         elenco.modulo_riempito = modulo  # Imposta il modulo
 
-    return imposta_destinatari_e_scrivi_messaggio(request, elenco.ordina(elenco.risultati()))
+    persone = elenco.ordina(elenco.risultati())
+    return imposta_destinatari_e_scrivi_messaggio(request, persone)
 
 
 @pagina_privata(permessi=(ELENCHI_SOCI,))

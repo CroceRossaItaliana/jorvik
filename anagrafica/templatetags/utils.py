@@ -101,6 +101,11 @@ def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None, alme
 
 
 @register.assignment_tag(takes_context=True)
+def giorni_ore_minuti(context, tdelta):
+    return tdelta.days, tdelta.seconds//3600, (tdelta.seconds//60)%60
+
+
+@register.assignment_tag(takes_context=True)
 def permessi_almeno(context, oggetto, minimo="lettura"):
     """
     Controlla che l'utente attuale -estrapolato dal contesto- abbia i permessi

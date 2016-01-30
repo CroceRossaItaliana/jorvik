@@ -1,0 +1,63 @@
+{% extends 'pdf_standard.html' %}
+
+{% block css_extra %}
+    body {
+        font-family: Arial;
+    }
+{% endblock %}
+
+{% block corpo %}
+    <h2>{{ attivita.nome }}</h2>
+    <h4>Report attivit&agrave;</h4>
+    <hr />
+    <p>Attivit&agrave; organizzata dal {{ attivita.sede.nome_completo }} in data {{ attivita.creazione|date:"SHORT_DATE_FORMAT" }}.</p>
+    <p>Area d'intervento di riferimento: Obiettivo Strategico {{ attivita.area.obiettivo }}, {{ attivita.area.nome }}.</p>
+    <p>Localit&agrave; del servizio: {{ attivita.locazione|default:"Non specificata." }}.</p>
+    <hr />
+    <h3>Elenco dei turni e dei partecipanti</h3>
+    <table border="1" style="width: 95%;">
+        <thead>
+        <tr>
+            <th>
+                Turno
+            </th>
+            <th>
+                Partecipanti
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for turno, partecipanti in turni_e_partecipanti %}
+        <tr>
+
+            <td style="font-size: larger;">
+                <p>
+                    <strong>{{ turno.nome }}</strong><br />
+                    Inizio: {{ turno.inizio|date:"SHORT_DATETIME_FORMAT" }}<br />
+                    Fine: {{ turno.fine|date:"SHORT_DATETIME_FORMAT" }}<br />
+                </p>
+                <p>&nbsp;</p>
+
+
+            </td>
+            <td>
+                <p>
+                {% for partecipante in partecipanti %}
+                    <span style="font-family: monospace;">{{ partecipante.codice_fiscale }}</span> {{ partecipante.nome_completo }}<br />
+
+                {% empty %}
+                    <i>Nessun partecipante registrato.</i>
+
+                {% endfor %}
+                </p>
+                <p>&nbsp;</p>
+            </td>
+        </tr>
+
+        {% endfor %}
+
+        </tbody>
+    </table>
+
+{% endblock %}

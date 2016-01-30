@@ -1,0 +1,12 @@
+{% extends 'us_elenchi_inc_persone.html' %}
+
+{% block elenco_intestazione_extra %}
+    <th>Turno</th>
+{% endblock %}
+
+{% block elenco_riga_extra %}
+    <td class="piu-piccolo">
+        <strong>{{ persona.partecipazioni__turno__nome }}</strong><br />
+        {{ persona.partecipazioni__turno__inizio|date:"SHORT_DATETIME_FORMAT" }}&mdash;{{ persona.partecipazioni__turno__fine|date:"SHORT_DATETIME_FORMAT" }}
+    </td>
+{% endblock %}
