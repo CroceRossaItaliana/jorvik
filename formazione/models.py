@@ -8,6 +8,7 @@ import datetime
 from django.db.models import Q
 from django.utils import timezone
 
+from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE
 from anagrafica.models import Sede, Persona
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI
 from base.models import ConAutorizzazioni, ConVecchioID
@@ -388,6 +389,9 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
         """
         return self.nel_raggio(Sede.objects.filter(tipo=tipo, **kwargs))
 
+    def comitati(self):
+        return self.sedi().filter(estensione__in=[LOCALE, PROVINCIALE, TERRITORIALE])
+
     def corso(self):
         return CorsoBase.objects.filter(
             PartecipazioneCorsoBase.con_esito_ok(persona=self.persona).via("partecipazioni"),
@@ -424,7 +428,7 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
             self.raggio += self.RAGGIO_STEP
             self.save()
 
-            if iterazione >= self.MASSIMO_ITERAZIONI or self.sedi().count() >= self.MINIMO_COMITATI:
+            if iterazione >= self.MASSIMO_ITERAZIONI or self.comitati().count() >= self.MINIMO_COMITATI:
                 break
 
         return self.raggio
