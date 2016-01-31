@@ -19,7 +19,8 @@ class Locazione(ConMarcaTemporale, models.Model):
     indirizzo = models.CharField("Indirizzo", max_length=255, unique=True)
 
     objects = models.GeoManager()
-    geo = models.PointField(blank=True, default='POINT(0.0 0.0)', srid=4326)
+    geo = models.PointField(blank=True, default='POINT(0.0 0.0)', db_index=True,
+                            spatial_index=True, srid=4326, geography=True)
 
     via = models.CharField("Via", max_length=64, blank=True)
     civico = models.CharField("Civico", max_length=16, blank=True)
@@ -183,10 +184,11 @@ class ConGeolocalizzazione(models.Model):
         if not self.locazione:
             return queryset.none()
 
-        return queryset.exclude(locazione__geo__isnull=True).extra(
-            where=['ST_distance_sphere(geo, ST_PointFromText(%s, 4326)) <= (raggio*1000)'],
+        q = queryset.exclude(locazione__geo__isnull=True).extra(
+            where=['ST_DWithin(geo, ST_GeogFromText(%s), raggio*1000)'],
             params=[self.locazione.geo.wkt]
         )
+        return q
 
 
 class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
@@ -195,7 +197,7 @@ class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
     un'area circolare con raggio in kilometri.
     """
 
-    raggio = models.FloatField("Raggio KM", default=0.0, null=True, blank=True)
+    raggio = models.FloatField("Raggio KM", default=0.0, null=True, blank=True, db_index=True)
 
     class Meta:
         abstract = True
@@ -208,4 +210,7 @@ class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
         if not self.locazione:
             return self.__class__.objects.none()
 
-        return ricerca.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=self.raggio)))
+        q = ricerca.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=self.raggio)))
+        #q = ricerca.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=self.raggio)))
+        #print(q.query)
+        return q

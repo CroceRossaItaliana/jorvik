@@ -364,11 +364,15 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
     persona = models.OneToOneField(Persona, related_name='aspirante')
 
     # Numero minimo di Comitati nelle vicinanze
-    MINIMO_COMITATI = 15
-    RAGGIO_STEP = 1.4
+    MINIMO_COMITATI = 7
+
+    MINIMO_RAGGIO = 5  # Almeno 4 km.
+    MASSIMO_RAGGIO = 50  # Max 40 km.
+
+    RAGGIO_STEP = 1.8
 
     # Massimo iterazioni nella ricerca
-    MASSIMO_ITERAZIONI = 50
+    MASSIMO_ITERAZIONI = (MASSIMO_RAGGIO - MINIMO_RAGGIO) // RAGGIO_STEP
 
     class Meta:
         verbose_name_plural = "Aspiranti"
@@ -408,8 +412,13 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
         Calcola il raggio minimo necessario.
         :return: Il nuovo raggio.
         """
+        if not self.locazione:
+            self.raggio = 0
+            self.save()
+            return 0
+
         iterazione = 0
-        self.raggio = .0
+        self.raggio = self.MINIMO_RAGGIO
         while True:
             iterazione += 1
             self.raggio += self.RAGGIO_STEP

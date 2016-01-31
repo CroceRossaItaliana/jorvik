@@ -60,8 +60,14 @@ class AdminAssenzaCorsoBase(admin.ModelAdmin):
     raw_id_fields = RAW_ID_FIELDS_ASSENZACORSOBASE
 
 
+def ricalcola_raggio(modeladmin, request, queryset):
+    for a in queryset:
+        a.calcola_raggio()
+ricalcola_raggio.short_description = "Ricalcola il raggio per gli aspiranti selezionati"
+
 @admin.register(Aspirante)
 class AdminAspirante(admin.ModelAdmin):
     search_fields = ['persona__nome', 'persona__cognome', 'persona__codice_fiscale']
     list_display = ['persona', 'creazione', ]
     raw_id_fields = RAW_ID_FIELDS_ASPIRANTE
+    actions = [ricalcola_raggio,]
