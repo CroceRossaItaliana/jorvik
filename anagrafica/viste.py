@@ -886,6 +886,7 @@ def utente_curriculum(request, me, tipo=None):
             if titolo_selezionato.richiede_conferma:
                 sede_attuale = me.sede_riferimento()
                 if not sede_attuale:
+                    tp.delete()
                     return errore_nessuna_appartenenza(
                         request, me,
                         torna_url="/utente/curriculum/%s/" % (tipo,),
