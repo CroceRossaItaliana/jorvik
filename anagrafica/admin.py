@@ -1,12 +1,12 @@
 from django.contrib import admin
 from mptt.admin import MPTTModelAdmin
 from anagrafica.models import Persona, Sede, Appartenenza, Delega, Documento, Fototessera, Estensione, Trasferimento, \
-    Riserva, Dimissione
+    Riserva, Dimissione, Telefono
 from autenticazione.models import Utenza
 
 RAW_ID_FIELDS_PERSONA = []
 RAW_ID_FIELDS_SEDE = []
-RAW_ID_FIELDS_APPARTENENZA = ['persona', 'sede', 'precedente']
+RAW_ID_FIELDS_APPARTENENZA = ['persona', 'sede', 'precedente', 'vecchia_sede']
 RAW_ID_FIELDS_DELEGA = ['persona', 'firmatario', ]
 RAW_ID_FIELDS_DOCUMENTO = ['persona']
 RAW_ID_FIELDS_FOTOTESSERA = ['persona']
@@ -14,6 +14,7 @@ RAW_ID_FIELDS_ESTENSIONE = ["persona", "richiedente", "destinazione", "appartene
 RAW_ID_FIELDS_TRASFERIMENTO = ["persona", "richiedente", "destinazione", "appartenenza"]
 RAW_ID_FIELDS_RISERVA = ['persona', 'appartenenza']
 RAW_ID_FIELDS_DIMISSIONE = ['persona', 'appartenenza', 'richiedente', 'sede']
+RAW_ID_FIELDS_TELEFONO = ['persona']
 
 
 # Aggiugni al pannello di amministrazione
@@ -41,6 +42,11 @@ class InlineUtenzaPersona(admin.StackedInline):
     extra = 0
 
 
+class InlineTelefonoPersona(admin.StackedInline):
+    model = Telefono
+    extra = 0
+
+
 @admin.register(Persona)
 class AdminPersona(admin.ModelAdmin):
     search_fields = ['nome', 'cognome', 'codice_fiscale', 'utenza__email', 'email_contatto']
@@ -48,7 +54,7 @@ class AdminPersona(admin.ModelAdmin):
                     'ultima_modifica', )
     list_filter = ('stato', )
     list_display_links = ('nome', 'cognome', 'codice_fiscale',)
-    inlines = [InlineUtenzaPersona, InlineAppartenenzaPersona, InlineDelegaPersona, InlineDocumentoPersona,]
+    inlines = [InlineUtenzaPersona, InlineAppartenenzaPersona, InlineDelegaPersona, InlineDocumentoPersona, InlineTelefonoPersona]
 
 
 @admin.register(Sede)
@@ -131,3 +137,11 @@ class AdminDimissione(admin.ModelAdmin):
     list_display = ("persona", "richiedente")
     list_filter = ("creazione",)
     raw_id_fields = RAW_ID_FIELDS_DIMISSIONE
+
+
+@admin.register(Telefono)
+class AdminTelefono(admin.ModelAdmin):
+    search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale"]
+    list_display = ("persona", "numero", "servizio", "creazione",)
+    list_filter = ("servizio", "creazione",)
+    raw_id_fields = RAW_ID_FIELDS_TELEFONO
