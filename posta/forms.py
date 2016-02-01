@@ -10,7 +10,7 @@ from base.wysiwyg import WYSIWYGSemplice
 class ModuloScriviMessaggioSenzaDestinatari(forms.Form):
 
     oggetto = forms.CharField(required=True, max_length=100,)
-    testo = forms.CharField(required=False, max_length=10000, widget=WYSIWYGSemplice())
+    testo = forms.CharField(required=False, max_length=100000, widget=WYSIWYGSemplice())
     allegati = MultiFileField(min_num=0, max_num=3, max_file_size=1024*1024*10, required=False,
                               help_text="Puoi selezionare fino a 3 allegati, per un totale di 10MB.")
 
