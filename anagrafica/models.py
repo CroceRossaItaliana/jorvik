@@ -267,11 +267,11 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                                    tipo__in=DELEGHE_RUBRICA,
                                    **kwargs)
 
-    def sedi_deleghe_attuali(self, al_giorno=None, espandi=False, **kwargs):
+    def sedi_deleghe_attuali(self, al_giorno=None, espandi=False, pubblici=False, **kwargs):
         sedi = Sede.objects.none()
         for d in self.deleghe_attuali(al_giorno=al_giorno, oggetto_tipo=ContentType.objects.get_for_model(Sede)):
             if espandi:
-                pks = [x.pk for x in d.oggetto.espandi(includi_me=True)]
+                pks = [x.pk for x in d.oggetto.espandi(includi_me=True, pubblici=pubblici)]
             else:
                 pks = [d.oggetto.pk]
 
