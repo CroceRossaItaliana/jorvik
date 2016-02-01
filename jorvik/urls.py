@@ -76,6 +76,7 @@ urlpatterns = [
     url(r'^utente/contatti/cancella-numero/(?P<pk>.*)/$', 'anagrafica.viste.utente_contatti_cancella_numero'),
     url(r'^utente/estensione/(?P<pk>.*)/estendi/$', 'anagrafica.viste.utente_estensione_estendi'),
     url(r'^utente/estensione/(?P<pk>.*)/termina/$', 'anagrafica.viste.utente_estensione_termina'),
+    url(r'^utente/riserva/(?P<pk>.*)/termina/$', 'anagrafica.viste.utente_riserva_termina'),
     url(r'^utente/trasferimento/(?P<pk>.*)/ritira/$', 'anagrafica.viste.utente_trasferimento_ritira'),
     url(r'^utente/donazioni/profilo/$', 'anagrafica.viste.utente_donazioni_profilo'),
     url(r'^utente/donazioni/sangue/(?P<pk>.*)/cancella/$', 'anagrafica.viste.utente_donazioni_sangue_cancella'),
@@ -162,6 +163,7 @@ urlpatterns = [
     url(r'^us/estensione/(?P<pk>.*)/termina/$', 'ufficio_soci.viste.us_estensione_termina'),
     url(r'^us/trasferimento/$', 'ufficio_soci.viste.us_trasferimento'),
     url(r'^us/riserva/$', 'ufficio_soci.viste.us_riserva'),
+    url(r'^us/riserva/(?P<pk>.*)/termina/$', 'ufficio_soci.viste.us_riserva_termina'),
     url(r'^us/dimissioni/(?P<pk>[0-9]+)/$', 'ufficio_soci.viste.us_dimissioni'),
 
 

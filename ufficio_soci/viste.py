@@ -5,7 +5,7 @@ from django.db.models import Sum
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.forms import ModuloNuovoProvvedimento
-from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione
+from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione, Riserva
 from anagrafica.permessi.applicazioni import PRESIDENTE
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA
 from autenticazione.forms import ModuloCreazioneUtenza
@@ -321,6 +321,19 @@ def us_estensione_termina(request, me, pk):
                                                 "terminata con successo",
                                       torna_titolo="Registra nuova estensione",
                                       torna_url="/us/estensione/")
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_riserva_termina(request, me, pk):
+    riserva = get_object_or_404(Riserva, pk=pk)
+    if riserva not in me.oggetti_permesso(GESTIONE_SOCI):
+        return redirect(ERRORE_PERMESSI)
+    else:
+        riserva.termina()
+        return messaggio_generico(request, me, titolo="Riserva terminata",
+                                      messaggio="La riserva è stata"
+                                                "terminata con successo",
+                                      torna_titolo="Registra nuova riserva",
+                                      torna_url="/us/riserva/")
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))

@@ -22,6 +22,7 @@
                     <th>Sede</th>
                     <th>Inizio e fine</th>
                     <th>Registrata</th>
+                    <th>Azioni</th>
 
                 </thead>
                 <tbody>
@@ -96,6 +97,19 @@
                         </td>
                         <td>
                             {{ app.creazione }}
+                        </td>
+                        <td>
+
+                            {% for e in app.estensioni.all %}
+                                {% if e.attuale and e.esito == e.ESITO_OK %}
+
+                                    <a href="/us/estensione/{{ r.pk }}/termina/"
+                                   data-conferma="Vuoi veramente terminare l'estensione?">
+                                    Termina Estensione
+                                    </a>
+
+                                {% endif %}
+                            {% endfor %}
                         </td>
 
                     </tr>
