@@ -30,7 +30,9 @@ class PersonaAutocompletamento(AutocompletamentoBase):
         self.choices = self.choices.filter(
             # 1. Appartenente alla stessa mia sede
             Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_attuali()).via("appartenenze"),)
-            # 2. Appartenente a una sede di mia delega
+            # 1.bis Appartenenza al mio stesso comitato
+            | Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_attuali().ottieni_comitati().espandi()).via("appartenenze"),)
+            # 2. Appartenente a una sede di mia delega presso una sede
             | Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_deleghe_attuali(espandi=True, pubblici=True)).via("appartenenze"))
         )\
             .order_by('nome', 'cognome', 'codice_fiscale')\

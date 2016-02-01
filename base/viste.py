@@ -207,13 +207,15 @@ def autorizzazione_concedi(request, me, pk=None):
     """
     richiesta = get_object_or_404(Autorizzazione, pk=pk)
 
+    torna_url = request.session.get('autorizzazioni_torna_url', default="/autorizzazioni/")
+
     # Controlla che io possa firmare questa autorizzazione
     if not me.autorizzazioni_in_attesa().filter(pk=richiesta.pk).exists():
         return errore_generico(request, me,
             titolo="Richiesta non trovata",
             messaggio="E' possibile che la richiesta sia stata già approvata o respinta da qualcun altro.",
             torna_titolo="Richieste in attesa",
-            torna_url=request.session['autorizzazioni_torna_url'],
+            torna_url=torna_url,
         )
 
     modulo = None
@@ -237,7 +239,7 @@ def autorizzazione_concedi(request, me, pk=None):
     contesto = {
         "modulo": modulo,
         "richiesta": richiesta,
-        "torna_url": request.session['autorizzazioni_torna_url'],
+        "torna_url": torna_url,
     }
 
     return 'base_autorizzazioni_concedi.html', contesto
