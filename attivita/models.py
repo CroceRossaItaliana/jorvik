@@ -253,6 +253,7 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     TURNO_NON_PUOI_PARTECIPARE_NEGATO = "NPNE"
     TURNO_NON_PUOI_PARTECIPARE_ACCEDI = "NPNA"
     TURNO_NON_PUOI_PARTECIPARE_ATTIVITA_CHIUSA = "NPAC"
+    TURNO_NON_PUOI_PARTECIPARE_TROPPO_TARDI = "NPTT"
     TURNO_NON_PUOI_PARTECIPARE = (
         TURNO_NON_PUOI_PARTECIPARE_RISERVA,
         TURNO_NON_PUOI_PARTECIPARE_FUORI_SEDE,
@@ -260,6 +261,7 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         TURNO_NON_PUOI_PARTECIPARE_NEGATO,
         TURNO_NON_PUOI_PARTECIPARE_ACCEDI,
         TURNO_NON_PUOI_PARTECIPARE_ATTIVITA_CHIUSA,
+        TURNO_NON_PUOI_PARTECIPARE_TROPPO_TARDI,
     )
 
     TURNO_PRENOTATO_PUOI_RITIRARTI = "PPR"
@@ -302,6 +304,9 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         if not self.futuro:
             return self.TURNO_NON_PUOI_PARTECIPARE_PASSATO
 
+        if self.troppo_tardi:
+            return self.TURNO_NON_PUOI_PARTECIPARE_TROPPO_TARDI
+
         ## Attivita chiusa
         if not self.attivita.apertura == self.attivita.APERTA:
             return self.TURNO_NON_PUOI_PARTECIPARE_ATTIVITA_CHIUSA
@@ -340,6 +345,10 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     @property
     def futuro(self):
         return self.fine > timezone.now()
+
+    @property
+    def troppo_tardi(self):
+        return self.prenotazione and timezone.now() > self.prenotazione
 
     @property
     def url(self):

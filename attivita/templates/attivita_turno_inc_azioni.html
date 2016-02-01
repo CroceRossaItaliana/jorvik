@@ -80,6 +80,13 @@
                 Attivit&agrave; chiusa
             </a>
 
+        {% elif part == turno.TURNO_NON_PUOI_PARTECIPARE_TROPPO_TARDI %}
+
+            <a class="btn btn-warning btn-sm disabled">
+                <i class="fa fa-fw fa-lock"></i>
+                Turno chiuso
+            </a>
+
         {% elif part == turno.TURNO_NON_PUOI_PARTECIPARE_PASSATO %}
 
             <a class="btn btn-warning btn-sm disabled">
