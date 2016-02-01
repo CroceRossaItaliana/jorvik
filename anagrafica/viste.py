@@ -31,7 +31,8 @@ from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_
     RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
     ELENCHI_SOCI
-from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
+    INCARICO_GESTIONE_FOTOTESSERE
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
@@ -288,7 +289,7 @@ def utente_fotografia_avatar(request, me):
     return 'anagrafica_utente_fotografia_avatar.html', contesto
 
 @pagina_privata
-def utente_fotografia_fototessera(request, me, INCARICATO_GESTIONE_FOTOTESSERE=None):
+def utente_fotografia_fototessera(request, me):
 
     modulo_fototessera = ModuloNuovaFototessera(request.POST or None, request.FILES or None)
 
@@ -315,7 +316,7 @@ def utente_fotografia_fototessera(request, me, INCARICATO_GESTIONE_FOTOTESSERE=N
 
             # Richiede l'autorizzazione
             fototessera.autorizzazione_richiedi_sede_riferimento(
-                me, INCARICATO_GESTIONE_FOTOTESSERE,
+                me, INCARICO_GESTIONE_FOTOTESSERE,
                 invia_notifica_ufficio_soci=True,
                 invia_notifica_presidente=True
             )
