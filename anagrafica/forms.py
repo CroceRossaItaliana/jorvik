@@ -81,6 +81,7 @@ class ModuloStepAnagrafica(ModelForm):
         codice_fiscale = self.cleaned_data.get('codice_fiscale')
         # Qui si potrebbe controllare la validita' del codice fiscale,
         #  cosa che attualmente abbiamo deciso di non fare.
+        codice_fiscale = codice_fiscale.upper()
         return codice_fiscale
 
 
