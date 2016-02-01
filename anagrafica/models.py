@@ -85,7 +85,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                                         unique=True, db_index=True, validators=[valida_codice_fiscale, ])
     data_nascita = models.DateField("Data di nascita", db_index=True, null=True,
                                     validators=[valida_almeno_14_anni])
-    genere = models.CharField("Genere", max_length=1, choices=GENERE, db_index=True)
+    genere = models.CharField("Sesso", max_length=1, choices=GENERE, db_index=True)
 
     # Stato
     stato = models.CharField("Stato", max_length=1, choices=STATO, default=PERSONA, db_index=True)
