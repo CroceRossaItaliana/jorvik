@@ -31,11 +31,15 @@ class ModuloModificaTurno(ModelForm):
         fields = ['nome', 'inizio', 'fine', 'minimo', 'massimo', 'prenotazione']
 
     def clean(self):
-        fine = self.cleaned_data['fine']
-        inizio = self.cleaned_data['inizio']
-        minimo = self.cleaned_data['minimo']
-        massimo = self.cleaned_data['massimo']
-        prenotazione = self.cleaned_data['prenotazione']
+        try:
+            fine = self.cleaned_data['fine']
+            inizio = self.cleaned_data['inizio']
+            minimo = self.cleaned_data['minimo']
+            massimo = self.cleaned_data['massimo']
+            prenotazione = self.cleaned_data['prenotazione']
+
+        except KeyError:
+            raise ValidationError("Compila correttamente tutti i campi.")
 
         if fine <= inizio:
             self.add_error("fine", "L'orario di fine turno deve essere successivo "
