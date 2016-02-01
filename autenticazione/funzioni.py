@@ -101,6 +101,7 @@ def pagina_privata(funzione=None, pagina=LOGIN_URL, permessi=[]):
             return redirect(ERRORE_ORFANO)
 
         request.me = request.user.persona
+        newrelic.agent.add_custom_parameter("persona_id", "%d" % (request.me.pk,))
 
         if not request.me.ha_permessi(permessi):  # Controlla che io lo abbia
             return redirect(ERRORE_PERMESSI)  # Altrimenti, buttami fuori
