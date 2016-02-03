@@ -11,4 +11,4 @@ class CronSmaltisciCodaPosta(CronJobBase):
     code = 'posta.smaltisci'
 
     def do(self):
-        Messaggio.smaltisci_coda(dimensione_massima=200)
+        Messaggio.smaltisci_coda(dimensione_massima=250)
