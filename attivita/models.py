@@ -404,7 +404,6 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
             attivita=self.attivita,
             inizio__lte=self.inizio,
             fine__lte=self.fine,
-            id__lt=self.pk,
         ).exclude(pk=self.pk).count() + 1
 
     def elenco_pagina(self):
@@ -538,6 +537,12 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         """
         # TODO
         pass
+
+    def coturno(self):
+        from centrale_operativa.models import Turno as Coturno
+        if not (self.esito == self.ESITO_OK):
+            return None
+        return Coturno.objects.filter(persona=self.persona, turno=self.turno).first()
 
 
 def valida_numero_obiettivo(numero):

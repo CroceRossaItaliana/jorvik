@@ -56,6 +56,7 @@ INSTALLED_APPS = (
     'django_cron',
     'django.contrib.humanize',
     'django_gravatar',
+    'centrale_operativa',
 )
 
 # Cronjob attivi

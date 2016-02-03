@@ -5,7 +5,7 @@ __author__ = 'alfioemanuele'
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
     GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, MODIFICA, LETTURA, COMPLETO, \
     GESTIONE_AUTOPARCHI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI_SEDE, GESTIONE, GESTIONE_AREE_SEDE, \
-    GESTIONE_REFERENTI_ATTIVITA
+    GESTIONE_REFERENTI_ATTIVITA, GESTIONE_CENTRALE_OPERATIVA_SEDE
 
 """
 Questo file gestisce la espansione dei permessi in Gaia.
@@ -99,6 +99,14 @@ def espandi_gestione_attivita(qs_attivita, al_giorno=None):
     ]
 
 
+def espandi_gestione_centrale_operativa_sede(qs_sedi, al_giorno=None):
+    from anagrafica.models import Persona, Appartenenza
+    return [
+        (LETTURA,   Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi).via("appartenenze"), reperibilita__isnull=False)),
+        (LETTURA,   Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi).via("appartenenze"), coturni__isnull=False)),
+    ]
+
+
 def espandi_gestione_referenti_attivita(qs_attivita, al_giorno=None):
     return [
     ]
@@ -162,4 +170,5 @@ ESPANDI_PERMESSI = {
     GESTIONE_AUTOPARCHI_SEDE:       espandi_gestione_autoparchi_sede,
     GESTIONE_GRUPPO:                espandi_gestione_gruppo,
     GESTIONE_GRUPPI_SEDE:           espandi_gestione_gruppi_sede,
+    GESTIONE_CENTRALE_OPERATIVA_SEDE:espandi_gestione_centrale_operativa_sede,
 }

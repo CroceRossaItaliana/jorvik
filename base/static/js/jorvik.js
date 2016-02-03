@@ -47,8 +47,18 @@ $(document).ready(function() {
         menubar: false,
         language: 'it',
         resize: 'both',
+    });
 
 
 
-    })
+
 });
+
+// Funzione per autoscroll.
+//   es. $(document).load(function() { autoscroll("#turno-123"); });
+function autoscroll(id) {
+    var $anchor = $(id).offset();
+    var top = Math.max(0, ($anchor.top - $("#navbar").height()));
+    $('body').animate({ scrollTop: top }, 800);
+    return false;
+}

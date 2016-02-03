@@ -35,7 +35,7 @@
             </thead>
             <tbody>
             {% for turno, modulo, modulo_aggiungi_partecipanti in turni %}
-                <tr id="{{ turno.pk }}">
+                <tr id="turno-{{ turno.pk }}">
                     <td style="width: 25%;">
                         {% bootstrap_form modulo size='small' %}
                         <button type="submit" class="btn btn-sm btn-block btn-primary">
@@ -266,5 +266,15 @@
 
     {% include 'attivita_scheda_turni_inc_paginazione.html' %}
 
+
+    {% if evidenzia_turno %}
+        <!-- Salta al turno evidenziato -->
+        <script type="text/javascript">
+            $(document).ready(function() {
+                autoscroll("#turno-{{ evidenzia_turno.pk }}");
+                $("#turno-{{ evidenzia_turno.pk }}").hide().show("highlight", 3000);
+            });
+        </script>
+    {% endif %}
 
 {% endblock %}

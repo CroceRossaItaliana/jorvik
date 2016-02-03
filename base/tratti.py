@@ -86,9 +86,7 @@ class ConStorico(models.Model):
     CONDIZIONE_ATTUALE_AGGIUNTIVA = None
 
     inizio = models.DateTimeField("Inizio", db_index=True, null=False)
-    fine = models.DateTimeField("Fine", db_index=True, null=True, blank=True, default=None, help_text="Lasciare il campo "
-                                                                                                  "vuoto per impostare "
-                                                                                                  "fine indeterminata.")
+    fine = models.DateTimeField("Fine", db_index=True, null=True, blank=True, default=None)
 
     @classmethod
     @concept

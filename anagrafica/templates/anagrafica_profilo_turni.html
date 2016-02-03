@@ -1,0 +1,26 @@
+{% extends 'anagrafica_profilo.html' %}
+
+{% block profilo_corpo %}
+
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <a href="{{ persona.url_profilo_turni_foglio }}"
+               class="btn btn-xs pull-right btn-primary">
+                <i class="fa fa-fw fa-download"></i>
+                Scarica foglio di servizio
+            </a>
+
+            <h2 class="panel-title">
+                <i class="fa fa-fw fa-list"></i>
+                Storico delle richieste di partecipazione
+            </h2>
+
+        </div>
+        <div class="panel-body">
+
+            {% include 'anagrafica_profilo_turni_inc_tabella.html' %}
+
+        </div>
+    </div>
+
+{% endblock %}

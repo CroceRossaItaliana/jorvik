@@ -23,7 +23,9 @@ class Zip(Allegato):
     class Meta:
         proxy = True
 
-    _file_in_attesa = []
+    def __init__(self, *args, **kwargs):
+        super(Zip, self).__init__(*args, **kwargs)
+        self._file_in_attesa = []
 
     def aggiungi_file(self, file_path, nome_file=None):
         """
@@ -83,7 +85,7 @@ class PDF(Allegato):
 
     FORMATO_A4 = 'a4'
 
-    def genera_e_salva(self, nome='File.pdf', scadenza=domani(), corpo={}, modello='pdf_vuoto.html',
+    def genera_e_salva(self, nome='File.pdf', scadenza=None, corpo={}, modello='pdf_vuoto.html',
                        orientamento=ORIENTAMENTO_VERTICALE, formato=FORMATO_A4):
         """
         Genera un file PDF con i parametri specificati e salva.
@@ -95,6 +97,8 @@ class PDF(Allegato):
         :param formato: PDF.FORMATO_A4 o niente.
         :return:
         """
+
+        scadenza = scadenza or domani()
 
         url = DOMPDF_ENDPOINT
         corpo.update({"timestamp": datetime.now()})
@@ -160,7 +164,9 @@ class Excel(Allegato):
     class Meta:
         proxy = True
 
-    fogli = []
+    def __init__(self, *args, **kwargs):
+        super(Excel, self).__init__(*args, **kwargs)
+        self.fogli = []
 
     def aggiungi_foglio(self, foglio):
         """
@@ -172,7 +178,7 @@ class Excel(Allegato):
 
         self.fogli.append(foglio)
 
-    def genera_e_salva(self, nome='File.xlsx', scadenza=domani(),
+    def genera_e_salva(self, nome='File.xlsx', scadenza=None,
                        ordina_fogli=True, **kwargs):
         """
         Genera il file e lo salva su database.
@@ -181,6 +187,8 @@ class Excel(Allegato):
         :param kwargs:
         :return:
         """
+
+        scadenza = scadenza or domani()
 
         generatore = GeneratoreNomeFile('allegati/')
         zname = generatore(self, nome)

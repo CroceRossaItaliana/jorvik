@@ -1,0 +1,14 @@
+{% extends 'attivita_storico_inc_tabella.html' %}
+
+{% block storico_empty %}
+
+    <tr class="info allinea-centro">
+        <td colspan="4">
+        <h4><i class="fa fa-fw fa-info-circle"></i> Nessuna richiesta di partecipazione</h4>
+        <p>{{ persona.nome }} non ha ancora chiesto di partecipare
+            e non &egrave; stato inserito in alcuna attivit&agrave; su Gaia.</p>
+        </td>
+    </tr>
+
+
+{% endblock %}

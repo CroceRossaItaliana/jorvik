@@ -92,6 +92,7 @@ urlpatterns = [
     }),
 
     url(r'^profilo/(?P<pk>[0-9]+)/messaggio/$', 'anagrafica.viste.profilo_messaggio'),
+    url(r'^profilo/(?P<pk>[0-9]+)/turni/foglio/$', 'anagrafica.viste.profilo_turni_foglio'),
     url(r'^profilo/(?P<pk>[0-9]+)/telefono/(?P<tel_pk>[0-9]+)/cancella/$', 'anagrafica.viste.profilo_telefono_cancella'),
     url(r'^profilo/(?P<pk>[0-9]+)/documenti/(?P<documento_pk>[0-9]+)/cancella/$', 'anagrafica.viste.profilo_documenti_cancella'),
     url(r'^profilo/(?P<pk>[0-9]+)/curriculum/(?P<tp_pk>[0-9]+)/cancella/$', 'anagrafica.viste.profilo_curriculum_cancella'),
@@ -131,7 +132,8 @@ urlpatterns = [
     url(r'^attivita/gruppi/(?P<pk>[0-9]+)/iscriviti/$', 'gruppi.viste.attivita_gruppi_gruppo_iscriviti'),
     url(r'^attivita/gruppi/(?P<pk>[0-9]+)/espelli/(?P<persona_pk>[0-9]+)/$', 'gruppi.viste.attivita_gruppi_gruppo_espelli'),
     url(r'^attivita/gruppi/(?P<pk>[0-9]+)/abbandona/$', 'gruppi.viste.attivita_gruppi_gruppo_abbandona'),
-    url(r'^attivita/reperibilita/$', 'attivita.viste.attivita_reperibilita'),
+    url(r'^attivita/reperibilita/$', 'centrale_operativa.viste.attivita_reperibilita'),
+    url(r'^attivita/reperibilita/(?P<reperibilita_pk>[0-9]+)/cancella/$', 'centrale_operativa.viste.attivita_reperibilita_cancella'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/$', 'attivita.viste.attivita_scheda_informazioni'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/mappa/$', 'attivita.viste.attivita_scheda_mappa'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/partecipanti/$', 'attivita.viste.attivita_scheda_partecipanti'),
@@ -153,6 +155,12 @@ urlpatterns = [
     url(r'^presidente/$', 'anagrafica.viste.presidente'),
     url(r'^presidente/sedi/(?P<sede_pk>[0-9]+)/$', 'anagrafica.viste.presidente_sede'),
     url(r'^presidente/sedi/(?P<sede_pk>[0-9]+)/delegati/(?P<delega>.*)/$', 'anagrafica.viste.presidente_sede_delegati'),
+
+    url(r'^centrale-operativa/$', 'centrale_operativa.viste.co'),
+    url(r'^centrale-operativa/reperibilita/$', 'centrale_operativa.viste.co_reperibilita'),
+    url(r'^centrale-operativa/turni/$', 'centrale_operativa.viste.co_turni'),
+    url(r'^centrale-operativa/turni/(?P<partecipazione_pk>[0-9]+)/monta/$', 'centrale_operativa.viste.co_turni_monta'),
+    url(r'^centrale-operativa/turni/(?P<partecipazione_pk>[0-9]+)/smonta/$', 'centrale_operativa.viste.co_turni_smonta'),
 
     url(r'^us/$', 'ufficio_soci.viste.us'),
     url(r'^us/provvedimento/$', 'ufficio_soci.viste.us_provvedimento'),
