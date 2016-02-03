@@ -92,6 +92,7 @@ urlpatterns = [
     }),
 
     url(r'^profilo/(?P<pk>[0-9]+)/messaggio/$', 'anagrafica.viste.profilo_messaggio'),
+    url(r'^profilo/(?P<pk>[0-9]+)/turni/foglio/$', 'anagrafica.viste.profilo_turni_foglio'),
     url(r'^profilo/(?P<pk>[0-9]+)/telefono/(?P<tel_pk>[0-9]+)/cancella/$', 'anagrafica.viste.profilo_telefono_cancella'),
     url(r'^profilo/(?P<pk>[0-9]+)/documenti/(?P<documento_pk>[0-9]+)/cancella/$', 'anagrafica.viste.profilo_documenti_cancella'),
     url(r'^profilo/(?P<pk>[0-9]+)/curriculum/(?P<tp_pk>[0-9]+)/cancella/$', 'anagrafica.viste.profilo_curriculum_cancella'),

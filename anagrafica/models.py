@@ -41,7 +41,7 @@ from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_per
 from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
     crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb, valida_almeno_14_anni
 from attivita.models import Turno, Partecipazione
-from base.files import PDF
+from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
 from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
     Autorizzazione, ConVecchioID
@@ -597,6 +597,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return "%sfotografie/" % (self.url,)
 
     @property
+    def url_profilo_turni(self):
+        return "%sturni/" % (self.url,)
+
+    @property
+    def url_profilo_turni_foglio(self):
+        return "%sturni/foglio/" % (self.url,)
+
+    @property
     def url_profilo_credenziali(self):
         return "%scredenziali/" % (self.url,)
 
@@ -822,6 +830,44 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return True
 
         return False
+
+    def genera_foglio_di_servizio(self):
+        storico = Partecipazione.con_esito_ok().filter(persona=self, stato=Partecipazione.RICHIESTA)\
+            .order_by('-turno__inizio')
+
+        anni = storico.dates('turno__inizio', 'year', order='DESC')
+        excel = Excel(oggetto=self)
+
+        fogli = []
+        # Per ogni anno, crea un foglio
+        for anno in anni:
+            anno = anno.year
+            # Crea il nuovo foglio di lavoro
+            foglio = FoglioExcel(
+                nome="Anno %d" % (anno,),
+                intestazione=(
+                    "Attivita", "Localita", "Turno", "Inizio", "Fine",
+                )
+            )
+
+            # Aggiungi le partecipazioni
+            for part in storico.filter(turno__inizio__year=anno):
+                foglio.aggiungi_riga(
+                    part.turno.attivita.nome,
+                    part.turno.attivita.locazione if part.turno.attivita.locazione else 'N/A',
+                    part.turno.nome,
+                    part.turno.inizio,
+                    part.turno.fine,
+                )
+
+            fogli.append(foglio)
+
+        for y in fogli:
+            excel.aggiungi_foglio(y)
+
+        # Salva file excel e scarica
+        excel.genera_e_salva("Foglio di servizio.xlsx")
+        return excel
 
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):

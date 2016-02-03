@@ -33,6 +33,8 @@ from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LE
     ELENCHI_SOCI
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
     INCARICO_GESTIONE_FOTOTESSERE
+from attivita.models import Partecipazione
+from attivita.viste import attivita_storico_excel
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
@@ -765,6 +767,15 @@ def profilo_messaggio(request, me, pk=None):
 
 
 @pagina_privata
+def profilo_turni_foglio(request, me, pk=None):
+    persona = get_object_or_404(Persona, pk=pk)
+    if not me.permessi_almeno(persona, LETTURA):
+        return redirect(ERRORE_PERMESSI)
+    excel = persona.genera_foglio_di_servizio()
+    return redirect(excel.download_url)
+
+
+@pagina_privata
 def strumenti_delegati(request, me):
     app_label = request.session['app_label']
     model = request.session['model']
@@ -971,6 +982,15 @@ def _profilo_appartenenze(request, me, persona):
 def _profilo_deleghe(request, me, persona):
     return 'anagrafica_profilo_deleghe.html', {}
 
+
+def _profilo_turni(request, me, persona):
+    storico = Partecipazione.objects.filter(persona=persona).order_by('-turno__inizio')
+    contesto = {
+        "storico": storico,
+    }
+    return 'anagrafica_profilo_turni.html', contesto
+
+
 def _profilo_riserve(request, me, persona):
 
     riserve = Riserva.objects.filter(persona=persona)
@@ -1121,6 +1141,9 @@ def _sezioni_profilo(puo_leggere, puo_modificare):
         )),
         ('deleghe', (
             'Deleghe', 'fa-clock-o', _profilo_deleghe, puo_leggere
+        )),
+        ('turni', (
+            'Turni', 'fa-calendar', _profilo_turni, puo_leggere
         )),
         ('riserve', (
             'Riserve', 'fa-pause', _profilo_riserve, puo_leggere

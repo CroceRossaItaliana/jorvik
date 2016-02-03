@@ -10,7 +10,6 @@
 
     <div class="row">
         <div class="col-md-8">
-            <h2>Storico delle richieste di partecipazione</h2>
 
             <div class="alert alert-info">
                 <i class="fa fa-fw fa-info-circle"></i> Da questa pagina puoi seguire lo stato e controllare lo storico delle
@@ -20,167 +19,49 @@
         </div>
 
         <div class="col-md-4">
-            <h3><i class="fa fa-fw fa-file"></i> Foglio di servizio</h3>
-            {% if storico.exists %}
-                <p>Clicca sul pulsante per scaricare il tuo foglio di servizio in formato Excel. Il file conterr&agrave;
-                    un foglio per ogni anno di servizio.</p>
-                <a href="/attivita/storico/excel/" class="btn btn-block btn-success" download>
-                    <i class="fa fa-fw fa-download"></i> Scarica Excel
-                </a>
 
-            {% else %}
-                <span class="text-muted">
-                    <i class="fa fa-fw fa-info-circle"></i>
-                    Nessun foglio di servizio disponibile: questo sar&agrave; disponibile
-                    non appena ti sar&agrave; confermata la partecipazione a un'attivit&agrave;.
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-file"></i>
+                        Foglio di servizio
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    {% if storico.exists %}
+                        <p>Il file, in formato Excel, conterr&agrave;
+                            un foglio per ogni anno di servizio.</p>
+                        <a href="/attivita/storico/excel/" class="btn btn-block btn-primary" download>
+                            <i class="fa fa-fw fa-download"></i> Scarica Excel
+                        </a>
 
-                </span>
+                    {% else %}
+                        <span class="text-muted">
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Nessun foglio di servizio disponibile: questo sar&agrave; disponibile
+                            non appena ti sar&agrave; confermata la partecipazione a un'attivit&agrave;.
 
-            {% endif %}
-        </div>
-
-    </div>
-    <table class="table table-striped table-bordered">
-        <thead>
-            <th>
-                <i class="fa fa-fw fa-calendar"></i>
-                Turno e Attivit&agrave;
-            </th>
-            <th>
-                <i class="fa fa-fw fa-clock-o"></i>
-                Data e ora
-            </th>
-            <th>
-                <i class="fa fa-fw fa-info-circle"></i>
-                Stato
-            </th>
-            <th>
-                <i class="fa fa-fw fa-times"></i>
-                Aggiornamento
-            </th>
-        </thead>
-
-        <tbody>
-
-        {% for richiesta in storico %}
-            <tr>
-                <td style="width: 45%;">
-                    <span class="piu-grande">{{ richiesta.turno.link|safe }}</span><br />
-                    {{ richiesta.turno.attivita.link|safe }}
-                </td>
-                <td>
-                    Inizio: <strong>{{ richiesta.turno.inizio|date:"SHORT_DATETIME_FORMAT" }}</strong><br />
-                    Fine: {{ richiesta.turno.fine|date:"SHORT_DATETIME_FORMAT" }}
-                </td>
-                <td>
-                    {% if richiesta.stato == richiesta.RICHIESTA %}
-
-                        {% if richiesta.esito == richiesta.ESITO_OK %}
-
-                            {% if richiesta.stato == richiesta.RICHIESTA %}
-                                <span class="text-success grassetto piu-grande">
-                                    <i class="fa fa-fw fa-check"></i>
-                                    Approvata
-                                </span>
-
-                            {% else %}
-                                <span class="text-success grassetto piu-grande">
-                                    <i class="fa fa-fw fa-times"></i>
-                                    Assente
-                                </span>
-
-                            {% endif %}
-
-
-                        {% elif richiesta.esito == richiesta.ESITO_PENDING %}
-                            <span class="text-warning grassetto piu-grande">
-                                <i class="fa fa-fw fa-clock-o"></i>
-                                In attesa
-                            </span>
-
-                        {% elif richiesta.esito == richiesta.ESITO_NO %}
-                            <span class="text-danger grassetto piu-grande">
-                                <i class="fa fa-fw fa-times"></i>
-                                Non approvata
-                            </span>
-
-                        {% endif %}
-
-                        <br />
-                        <button type="button" class="btn btn-xs btn-block btn-default" data-container="body"
-                                data-toggle="popover" data-placement="top"
-                                data-html="true" data-title="Dettagli" data-content="
-
-                            <table class='table table-condensed table-striped piu-piccolo'>
-                            <tbody>
-                            {% for autorizzazione in richiesta.autorizzazioni %}
-                                <tr>
-                                    <td>{{ autorizzazione.firmatario.nome_completo }}</td>
-                                    <td>{{ autorizzazione.ultima_modifica }}</td>
-                                    <td>
-                                        {% if autorizzazione.concessa == True %}
-                                            <i class='fa fa-fw fa-check'></i>
-                                            Approvata
-
-                                        {% elif autorizazzione.concessa == False %}
-                                            <i class='fa fa-fw fa-times'></i>
-                                            Negata
-
-                                        {% else %}
-                                            <i class='fa fa-fw fa-clock-o'></i>
-                                            In attesa
-                                        {% endif %}
-
-                                    </td>
-                                </tr>
-
-
-                            {% endfor %}
-                            </tbody>
-                            </table>
-
-
-                        ">
-                          Dettagli
-                        </button>
-
-                    {% elif richiesta.stato == richiesta.RITIRATA %}
-                        <span class="text-warning grassetto">
-                            <i class="fa fa-fw fa-times"></i>
-                            Ritirata
-                        </span>
-
-                    {% elif richiesta.stato == richiesta.NON_PRESENTATO %}
-                        <span class="text-danger grassetto">
-                            <i class="fa fa-fw fa-warning"></i>
-                            Non presentato/a
                         </span>
 
                     {% endif %}
 
-                </td>
-                <td>
-                    {{ richiesta.ultima_modifica }}<br />
-                    <span class="piu-piccolo">
-                        Richiesta: {{ richiesta.creazione }}
-                    </span>
-                </td>
-            </tr>
+                </div>
+            </div>
+        </div>
 
-        {% empty %}
-            <tr class="info allinea-centro">
-                <td colspan="4">
-                <h4><i class="fa fa-fw fa-info-circle"></i> Nessuna richiesta di partecipazione</h4>
-                <p>Vai al Calendario per trovare delle attivit&agrave; alle quali partecipare. Una volta richiesta
-                    la partecipazione, torna in questa pagina.</p>
+    </div>
 
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                <i class="fa fa-fw fa-list"></i>
+                Storico delle richieste di partecipazione
+            </h2>
+        </div>
+        <div class="panel-body">
 
-                </td>
-            </tr>
-        {% endfor %}
+            {% include 'attivita_storico_inc_tabella.html' %}
 
-        </tbody>
-
-
-    </table>
+        </div>
+    </div>
 {% endblock %}
