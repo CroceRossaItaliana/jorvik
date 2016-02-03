@@ -304,7 +304,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         # Quando un aspirante viene iscritto, tutte le richieste presso altri corsi devono essere cancellati.
 
         # Cancella tutte altre partecipazioni con esito pending - ce ne puo' essere solo una.
-        PartecipazioneCorsoBase.con_esito_pending().exclude(corso=self.corso).delete()
+        PartecipazioneCorsoBase.con_esito_pending(persona=self.persona).exclude(corso=self.corso).delete()
 
     def ritira(self):
         self.autorizzazioni_ritira()
