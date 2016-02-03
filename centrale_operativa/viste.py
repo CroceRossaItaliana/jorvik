@@ -81,7 +81,8 @@ def co_turni(request, me):
             | Q(turno__coturni__montato_da__isnull=False,
                 turno__coturni__smontato_da__isnull=True)                   # d) Da smontare
         ).select_related('turno', 'turno__attivita', 'turno__attivita__sede')\
-         .order_by('turno__inizio', 'turno__fine', 'turno__id')
+         .order_by('turno__inizio', 'turno__fine', 'turno__id', 'persona__id')\
+         .distinct('turno__inizio', 'turno__fine', 'turno__id', 'persona__id')
     contesto = {
         "partecipazioni": partecipazioni,
     }
