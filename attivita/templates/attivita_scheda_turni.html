@@ -17,7 +17,10 @@
         <tbody>
         {% for turno in turni %}
 
-            <tr {% if turno.scoperto and turno.futuro %}class="warning"{% endif %}>
+            <tr id="turno-{{ turno.pk }}"
+                {% if turno.scoperto and turno.futuro %}
+                    class="warning"
+                {% endif %}>
                 <td class="row">
 
                     <div class="col-md-3">
@@ -96,5 +99,14 @@
 
     {% include 'attivita_scheda_turni_inc_paginazione.html' %}
 
+    {% if evidenzia_turno %}
+        <!-- Salta al turno evidenziato -->
+        <script type="text/javascript">
+            $(document).ready(function() {
+                autoscroll("#turno-{{ evidenzia_turno.pk }}");
+                $("#turno-{{ evidenzia_turno.pk }}").hide().show("highlight", 3000);
+            });
+        </script>
+    {% endif %}
 
 {% endblock %}

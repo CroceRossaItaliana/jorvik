@@ -404,7 +404,6 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
             attivita=self.attivita,
             inizio__lte=self.inizio,
             fine__lte=self.fine,
-            id__lt=self.pk,
         ).exclude(pk=self.pk).count() + 1
 
     def elenco_pagina(self):
