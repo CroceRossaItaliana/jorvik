@@ -74,7 +74,8 @@
                     <td>
                         {% if p.coturno.smontabile %}
                             <a href="/centrale-operativa/turni/{{ p.pk }}/smonta/"
-                                class="btn btn-xs btn-block btn-danger">
+                                class="btn btn-xs btn-block btn-danger"
+                                data-caricamento="Attendi...">
                                 <i class="fa fa-fw fa-arrow-down"></i>
                                 Smonta
                             </a>
@@ -89,7 +90,8 @@
                         {% else %}
 
                             <a href="/centrale-operativa/turni/{{ p.pk }}/monta/"
-                                class="btn btn-xs btn-block btn-success">
+                                class="btn btn-xs btn-block btn-success"
+                                data-caricamento="Attendi...">
                                 <i class="fa fa-fw fa-arrow-up"></i>
                                 Monta
                             </a>
