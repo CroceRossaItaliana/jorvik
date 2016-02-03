@@ -64,6 +64,7 @@
                         <tr>
                             <th>Targa</th>
                             <th>Ultima revisione</th>
+                            <th>Intervallo revisione</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -71,6 +72,7 @@
                         <tr>
                             <td>{{ veicolo.targa }}</td>
                             <td>{{ veicolo.ultima_revisione.data }}</td>
+                            <td>{{ veicolo.get_intervallo_revisione_display }}</td>
                         </tr>
                         {% empty %}
                             <tr>

@@ -27,7 +27,7 @@ def veicoli(request, me):
     )
     ex = []
     for i in veicoli_revisione:
-        if i.ultima_revisione().data < datetime.date.today() - datetime.timedelta(days=i.intervallo_revisione):
+        if i.ultima_revisione().data > datetime.date.today() - datetime.timedelta(days=i.intervallo_revisione):
             ex += [i.pk]
     veicoli_revisione = veicoli_revisione.exclude(pk__in=ex).distinct('pk')
 
@@ -36,7 +36,7 @@ def veicoli(request, me):
     )
     ex = []
     for i in veicoli_manutenzione:
-        if i.ultima_manutenzione().data < datetime.date.today() - datetime.timedelta(days=365):
+        if i.ultima_manutenzione().data > datetime.date.today() - datetime.timedelta(days=365):
             ex += [i.pk]
     veicoli_manutenzione = veicoli_manutenzione.exclude(pk__in=ex).distinct('pk')
 
