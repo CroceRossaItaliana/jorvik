@@ -28,13 +28,22 @@ class InlineAssenzaCorsoBase(admin.TabularInline):
     extra = 0
 
 
+def admin_corsi_base_attivi_invia_messaggi(modeladmin, request, queryset):
+    corsi = queryset.filter(stato=CorsoBase.ATTIVO)
+    for corso in corsi:
+        corso._invia_email_agli_aspiranti()
+admin_corsi_base_attivi_invia_messaggi.short_description = "(Solo corsi attivi) Reinvia messaggio di attivazione agli " \
+                                                           "aspiranti nelle vicinanze"
+
+
 @admin.register(CorsoBase)
 class AdminCorsoBase(admin.ModelAdmin):
     search_fields = ['sede__nome', 'sede__genitore__nome', 'progressivo', 'anno', ]
-    list_display = ['progressivo', 'anno', 'sede', 'data_inizio', 'data_esame', ]
-    list_filter = ['anno', 'creazione', 'data_inizio', ]
+    list_display = ['progressivo', 'anno', 'stato', 'sede', 'data_inizio', 'data_esame', ]
+    list_filter = ['anno', 'creazione', 'stato', 'data_inizio', ]
     raw_id_fields = RAW_ID_FIELDS_CORSOBASE
     inlines = [InlinePartecipazioneCorsoBase, InlineLezioneCorsoBase]
+    actions = [admin_corsi_base_attivi_invia_messaggi]
 
 
 @admin.register(PartecipazioneCorsoBase)
