@@ -32,7 +32,7 @@ from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI
     DELEGHE_RUBRICA
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
-    GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE
+    GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE
 from anagrafica.permessi.delega import delega_permessi, delega_incarichi
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_APPARTENENZE, INCARICO_GESTIONE_TRASFERIMENTI, \
     INCARICO_GESTIONE_ESTENSIONI, INCARICO_GESTIONE_RISERVE
@@ -476,13 +476,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             lista += [('/autorizzazioni/', 'Richieste', 'fa-user-plus', self.autorizzazioni_in_attesa().count())]
 
         if self.ha_permesso(GESTIONE_SEDE):
-            lista += [('/presidente/', 'Sedi CRI', 'fa-home')]
+            lista += [('/presidente/', 'Sedi', 'fa-home')]
 
         if self.ha_permesso(GESTIONE_SOCI):
             lista += [('/us/', 'Soci', 'fa-users')]
 
         if self.ha_permesso(GESTIONE_AUTOPARCHI_SEDE):
             lista += [('/veicoli/', "Veicoli", "fa-car")]
+
+        if self.ha_permesso(GESTIONE_CENTRALE_OPERATIVA_SEDE):
+            lista += [('/centrale-operativa/', "CO", "fa-compass")]
 
         if self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE):
             lista += [('/formazione/', 'Formazione', 'fa-graduation-cap')]

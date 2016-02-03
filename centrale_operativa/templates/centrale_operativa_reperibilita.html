@@ -1,0 +1,135 @@
+{% extends 'centrale_operativa_vuota.html' %}
+
+{% block pagina_titolo %}
+    Reperibilit&agrave;
+{% endblock %}
+
+{% block base_head_extra %}
+    {% if not reperibilita %}
+        <meta http-equiv="refresh" content="45">
+    {% endif %}
+{% endblock %}
+
+{% block app_contenuto %}
+
+<div class="row">
+
+    <div class="col-md-6">
+        <div class="alert alert-block alert-info">
+            <p>
+                <i class="fa fa-fw fa-info-circle"></i>
+                Da qui puoi vedere i dettagli dei Volontari che hanno segnalato la propria reperibilit&agrave;
+                    per per la giornata di oggi su Gaia, alle ore: <br />
+            </p>
+            <p class="allinea-centro piu-grande">
+                <i class="fa fa-fw fa-clock-o"></i>
+                <span class="monospace ">
+                    {{ ora|time:"TIME_FORMAT" }}
+                </span>
+
+            </p>
+            <p>
+                <a href="/centrale-operativa/reperibilita/?refresh" class="btn btn-sm btn-block btn-info">
+                    <i class="fa fa-fw fa-refresh"></i>
+                    Aggiorna questa pagina
+                </a>
+            </p>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="alert alert-block alert-info">
+            <p>
+                <i class="fa fa-fw fa-question-circle"></i>
+                I Volontari possono segnalare la propria disponibilit&agrave; dal men&ugrave; "Attivit&agrave;", cliccando
+                    quindi su "Reperibilit&agrave;".
+            </p>
+            <p>
+                <i class="fa fa-fw fa-mobile-phone"></i>
+                La funzionalit&agrave; &egrave; anche disponibile da dispositivi mobili.
+            </p>
+        </div>
+
+    </div>
+ </div>
+
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <h2 class="panel-title">
+            <i class="fa fa-fw fa-list"></i>
+            Reperibilit&agrave; segnalate
+        </h2>
+    </div>
+    <div class="panel-body">
+
+        <p class="text-info">
+            <i class="fa fa-fw fa-info-circle"></i>
+            Le reperibilit&agrave; sono mostrate in ordine di tempo di attivazione.
+        </p>
+
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Nome e cognome</th>
+                <th>Reperibilit&agrave;</th>
+                <th>Attivazione</th>
+                <th>Cellulare</th>
+            </tr>
+            </thead>
+
+            {% for r in reperibilita %}
+
+                <tr>
+                    <td>
+                        <span class="grassetto">
+                            {{ r.persona.link|safe }}
+                        </span><br />
+                        {{ r.persona.sede_riferimento.link|safe }}
+                    </td>
+                    <td>
+                        {{ r.inizio|date:"SHORT_DATETIME_FORMAT" }} (inizio)<br />
+                        {{ r.fine|date:"SHORT_DATETIME_FORMAT" }} (fine)
+                    </td>
+                    <td class="piu-grande">
+                        in {{ r.attivazione }}
+                    </td>
+                    <td>
+                        {% for t in r.persona.numeri_telefono.all %}
+                                {{ t }} ({% if t.servizio %}Servizio{% else %}Personale{% endif %})<br />
+                        {% empty %}
+                            Nessun numero di telefono.
+                        {% endfor %}
+                    </td>
+                </tr>
+
+
+
+            {% empty %}
+                <tr class="warning allinea-centro">
+                    <td colspan="5">
+                        <p>
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Nessuna reperibilit&agrave; segnalata in questo momento ({{ ora|time:"TIME_FORMAT" }}).
+                        </p>
+
+                        <p>
+                            <a href="/centrale-operativa/reperibilita/?refresh" class="btn btn-warning btn-sm">
+                                <i class="fa fa-fw fa-refresh"></i>
+                                Ricontrolla
+                            </a>
+                        </p>
+
+                    </td>
+                </tr>
+
+            {% endfor %}
+
+
+        </table>
+
+
+    </div>
+</div>
+
+
+
+{% endblock %}

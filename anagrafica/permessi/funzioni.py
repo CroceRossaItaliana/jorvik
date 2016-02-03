@@ -6,7 +6,7 @@ from django.db.models import QuerySet
 
 from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, \
     UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, \
-    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE
+    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.applicazioni import DELEGATO_AREA
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
@@ -14,7 +14,8 @@ from anagrafica.permessi.applicazioni import REFERENTE
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
     GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, GESTIONE_AUTOPARCHI_SEDE, \
-    GESTIONE_GRUPPI_SEDE, GESTIONE_GRUPPO, GESTIONE_AREE_SEDE, GESTIONE_REFERENTI_ATTIVITA
+    GESTIONE_GRUPPI_SEDE, GESTIONE_GRUPPO, GESTIONE_AREE_SEDE, GESTIONE_REFERENTI_ATTIVITA, \
+    GESTIONE_CENTRALE_OPERATIVA_SEDE
 
 
 def permessi_presidente(sede):
@@ -33,7 +34,8 @@ def permessi_presidente(sede):
         + permessi_ufficio_soci(sede) \
         + permessi_responsabile_attivita(sede) \
         + permessi_responsabile_formazione(sede) \
-        + permessi_responsabile_autoparco(sede)
+        + permessi_responsabile_autoparco(sede) \
+        + permessi_delegato_centrale_operativa(sede)
 
 
 def permessi_ufficio_soci_unita(sede):
@@ -189,6 +191,13 @@ def permessi_delegato_area(area):
     ]
 
 
+def permessi_delegato_centrale_operativa(sede):
+    sede_espansa = sede.espandi(includi_me=True)
+    return [
+        (GESTIONE_CENTRALE_OPERATIVA_SEDE,  sede_espansa),
+    ]
+
+
 def permessi_responsabile_area(area):
     """
     Permessi della delega di RESPONSABILE D'AREA.
@@ -249,6 +258,7 @@ PERMESSI_FUNZIONI = (
     (UFFICIO_SOCI,              permessi_ufficio_soci),
     (UFFICIO_SOCI_UNITA,        permessi_ufficio_soci_unita),
     (DELEGATO_AREA,             permessi_delegato_area),
+    (DELEGATO_CO,               permessi_delegato_centrale_operativa),
     (RESPONSABILE_AREA,         permessi_responsabile_area),
     (REFERENTE,                 permessi_referente),
     (DIRETTORE_CORSO,           permessi_direttore_corso),

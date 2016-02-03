@@ -1,0 +1,39 @@
+{% extends 'centrale_operativa_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Centrale Operativa
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro text-success">
+        Centrale Operativa
+    </h2>
+
+    <p class="allinea-centro">
+        <img  alt="Emblema CRI" src="https://upload.wikimedia.org/wikipedia/it/thumb/4/4a/Emblema_CRI.svg/300px-Emblema_CRI.svg.png" width="180" height="180" />
+    </p>
+
+
+    <div class="alert alert-info">
+        <h4><i class="fa fa-info-circle"></i> Benvenuto nella sezione dedicata alla Centrale Operativa.</h4>
+    </div>
+
+    <div class="row ">
+
+        <div class="col-md-6 col-md-offset-3">
+            <p>Sei abilitato alla gestione della Centrale Operativa per le seguenti sedi:</p>
+            <ul>
+                {% for sede in sedi %}
+                    <li>{{ sede.link|safe }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+    </div>
+
+
+
+{% endblock %}

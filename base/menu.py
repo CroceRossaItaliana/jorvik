@@ -74,7 +74,7 @@ def menu(request):
                 ("Calendario", "fa-calendar", "/attivita/calendario/"),
                 ("Miei turni", "fa-list", "/attivita/storico/"),
                 ("Gruppi di lavoro", "fa-users", "/attivita/gruppi/"),
-                #  ("Reperibilità", "fa-thumb-tack", "/attivita/reperibilita/"),
+                ("Reperibilità", "fa-thumb-tack", "/attivita/reperibilita/"),
             )),
             ("Gestione", (
                 ("Organizza attività", "fa-asterisk", "/attivita/organizza/") if me and me.oggetti_permesso(GESTIONE_ATTIVITA_AREA).exists() else None,
@@ -128,6 +128,12 @@ def menu(request):
             #("Tesserini", (
             #    ("Non riconsegnati", "fa-credit-card", "/us/non-riconsegnati/"),
             #)),
+        ),
+        "co": (
+            ("Centrale Operativa", (
+                ("Reperibilità", "fa-clock-o", "/centrale-operativa/reperibilita/"),
+                ("Turni", "fa-calendar", "/centrale-operativa/turni/"),
+            )),
         ),
         "formazione": (
             ("Corsi Base", (

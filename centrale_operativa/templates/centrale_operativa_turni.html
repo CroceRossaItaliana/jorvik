@@ -1,0 +1,132 @@
+{% extends 'centrale_operativa_vuota.html' %}
+
+{% block pagina_titolo %}
+    Turni
+{% endblock %}
+
+{% block app_contenuto %}
+
+<div class="alert alert-block alert-info">
+    <i class="fa fa-fw fa-info-circle"></i>
+    Da qui puoi montare e smontare i Volontari in servizio nella giornata di oggi.
+</div>
+
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <h2 class="panel-title">
+            <i class="fa fa-fw fa-list"></i>
+            Attivit&agrave; e Volontari in servizio
+        </h2>
+    </div>
+    <div class="panel-body">
+
+        <p class="text-info">
+            <i class="fa fa-fw fa-info-circle"></i>
+            Le reperibilit&agrave; sono mostrate in ordine di tempo di attivazione.
+        </p>
+
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>&nbsp;</th>
+                <th>&nbsp;</th>
+                <th>Volontario</th>
+                <th>Cellulare</th>
+                <th>Azione</th>
+            </tr>
+            </thead>
+
+            {% for p in partecipazioni %}
+
+                {% ifchanged p.turno.attivita.pk %}
+                <tr class="success">
+                    <td class="grassetto" colspan="5">
+                        <i class="fa fa-fw fa-calendar"></i>
+                        {{ p.turno.attivita.link|safe }}
+                    </td>
+                </tr>
+                {% endifchanged %}
+
+                {% ifchanged p.turno.pk %}
+                <tr class="info">
+                    <td>&nbsp;</td>
+                    <td colspan="5">
+                        <i class="fa fa-fw fa-clock-o"></i>
+                        {{ p.turno.link|safe }}
+                        ({{ p.turno.inizio|date:"SHORT_DATETIME_FORMAT" }} &mdash;
+                         {{ p.turno.fine|date:"SHORT_DATETIME_FORMAT" }})
+                    </td>
+                </tr>
+                {% endifchanged %}
+
+                <tr>
+                    <td colspan="2">&nbsp;</td>
+                    <td>
+                        {{ p.persona.link|safe }}
+                    </td>
+                    <td>
+                        {% for t in p.persona.numeri_telefono.all %}
+                                {{ t }} ({% if t.servizio %}Servizio{% else %}Personale{% endif %})<br />
+                        {% empty %}
+                            Nessun numero di telefono.
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if p.coturno.smontabile %}
+                            <a href="/centrale-operativa/turni/{{ p.pk }}/smonta/"
+                                class="btn btn-xs btn-block btn-danger">
+                                <i class="fa fa-fw fa-arrow-down"></i>
+                                Smonta
+                            </a>
+
+                        {% elif p.coturno.smontato %}
+
+                            <a class="btn btn-xs btn-block btn-warning disabled">
+                                <i class="fa fa-fw fa-check"></i>
+                                Smontato
+                            </a>
+
+                        {% else %}
+
+                            <a href="/centrale-operativa/turni/{{ p.pk }}/monta/"
+                                class="btn btn-xs btn-block btn-success">
+                                <i class="fa fa-fw fa-arrow-up"></i>
+                                Monta
+                            </a>
+
+                        {% endif %}
+                    </td>
+                </tr>
+
+
+
+            {% empty %}
+                <tr class="warning allinea-centro">
+                    <td colspan="5">
+                        <p>
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Nessun turno di attivit&agrave; attivo in questo momento ({{ ora|time:"TIME_FORMAT" }}).
+                        </p>
+
+                        <p>
+                            <a href="/centrale-operativa/turni/?refresh" class="btn btn-warning btn-sm">
+                                <i class="fa fa-fw fa-refresh"></i>
+                                Ricontrolla
+                            </a>
+                        </p>
+
+                    </td>
+                </tr>
+
+            {% endfor %}
+
+
+        </table>
+
+
+    </div>
+</div>
+
+
+
+{% endblock %}

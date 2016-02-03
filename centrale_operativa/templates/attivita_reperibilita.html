@@ -1,0 +1,114 @@
+{% extends 'attivita_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load humanize %}
+
+{% block pagina_titolo %}
+    Reperibilit&agrave;
+{% endblock %}
+
+{% block app_contenuto %}
+
+<div class="alert alert-block alert-info">
+    <i class="fa fa-fw fa-info-circle"></i>
+    Da qui puoi fornire la tua reperibilit&agrave; per la Centrale Operativa del Comitato, nonch&egrave;
+    visionare lo storico delle tue ultime reperibilit&agrave; segnalate.
+</div>
+
+
+<div class="row">
+
+    <div class="col-md-8">
+
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-list"></i>
+                    Ultime reperibilit&agrave; segnalate
+                </h2>
+            </div>
+            <div class="panel-body">
+
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Orario</th>
+                        <th>Attivazione</th>
+                        <th>Data segnalazione</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for r in reperibilita %}
+                        <tr>
+                            <td class="grassetto">
+                                {{ r.inizio }} (inizio)<br />
+                                {{ r.fine }} (fine)
+                            </td>
+                            <td>
+                                {{ r.attivazione }}
+                            </td>
+                            <td>
+                                {{ r.creazione|naturaltime }}<br />
+                                <a href="/attivita/reperibilita/{{ r.pk }}/cancella/"
+                                    data-conferma="Vuoi cancellare la reperibilità selezionata?">
+                                    <i class="fa fa-fw fa-trash"></i>
+                                    Cancella
+                                </a>
+                            </td>
+                        </tr>
+
+                    {% empty %}
+                        <tr class="warning">
+                            <td colspan="3">
+                                <i class="fa fa-fw fa-warning"></i>
+                                Ancora nessuna reperibilit&agrave; segnalata.
+                            </td>
+                        </tr>
+
+
+                    {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+
+
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-plus-circle"></i>
+                    Segnala reperibilit&agrave;
+                </h2>
+            </div>
+            <div class="panel-body">
+
+                <p>Compila questo modulo per segnalare la tua reperibilit&agrave;. Verrai
+                    contattato dalla Centrale Operativa in caso di necessit&agrave;.</p>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
+                    <button type="submit" class="btn btn-block btn-primary">
+                        <i class="fa fa-fw fa-check"></i>
+                        Segnala
+                    </button>
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+{% endblock %}

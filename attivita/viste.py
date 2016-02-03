@@ -286,14 +286,6 @@ def attivita_storico_excel(request, me):
     return redirect(excel.download_url)
 
 
-@pagina_privata
-def attivita_reperibilita(request, me):
-    """
-    Mostra uno storico delle reperibilita' segnalate, assieme ai controlli necessari per segnalarne di nuove.
-    """
-
-    return 'attivita_vuota.html'
-
 @pagina_pubblica
 def attivita_scheda_informazioni(request, me=None, pk=None):
     """

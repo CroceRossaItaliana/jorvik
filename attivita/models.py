@@ -538,6 +538,12 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         # TODO
         pass
 
+    def coturno(self):
+        from centrale_operativa.models import Turno as Coturno
+        if not (self.esito == self.ESITO_OK):
+            return None
+        return Coturno.objects.filter(persona=self.persona, turno=self.turno).first()
+
 
 def valida_numero_obiettivo(numero):
     if numero < 1 or numero > 6:
