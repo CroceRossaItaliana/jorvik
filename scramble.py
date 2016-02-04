@@ -145,6 +145,9 @@ if args.esempio:
     presidente.cognome = "Adams"
     presidente.save()
 
+    a = Appartenenza(persona=presidente, sede=s1, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+    a.save()
+
     # Assegno una utenza
     print(" - Creo credenziali...")
     utenza = Utenza(persona=presidente, email="supporto@gaia.cri.it",
