@@ -3,15 +3,24 @@
 import os, sys
 import random
 
+from anagrafica.permessi.applicazioni import PRESIDENTE
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
+
 import phonenumbers
 from django.db import IntegrityError
 from django.db.models import Count
 
-os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
+from anagrafica.costanti import NAZIONALE, PROVINCIALE, TERRITORIALE
+from autenticazione.models import Utenza
+from base.utils import poco_fa
+from base.utils_tests import crea_persona
+from veicoli.models import Autoparco
+
 
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
-from anagrafica.models import Sede, Persona
+from anagrafica.models import Sede, Persona, Appartenenza, Delega
 import argparse
 
 
@@ -21,10 +30,12 @@ parser = argparse.ArgumentParser(description='Mischia i dati anagrafici.')
 
 parser.add_argument('--membri-sede', dest='membri_sedi', action='append',
                    help='dato pk di una sede, mischia i dati degli appartenenti passati e attuali')
+parser.add_argument('--dati-di-esempio', dest='esempio', action='store_const',
+                    default=False, const=True,
+                    help='installa dei dati di esempio')
 
 args = parser.parse_args()
 
-print("Avvio miscelatore anagrafico.")
 
 
 def ottieni_random():  # Ottiene una persona a caso.
@@ -42,6 +53,9 @@ def oscura(stringa, percentuale):
     for r in range(len(stringa)):
         out += stringa[r] if stringa[r] in ['@', '.'] or random.randint(0,100) > percentuale else chr(random.randint(64,90))
     return out
+
+if args.membri_sedi:
+    print("Avvio miscelatore anagrafico.")
 
 for sede in (args.membri_sedi if args.membri_sedi else []):
     sede = Sede.objects.get(pk=sede)
@@ -99,5 +113,53 @@ for sede in (args.membri_sedi if args.membri_sedi else []):
         print("Miscelato %d di %d (%f percento): T.CF %d, T.EC %d, T.EU %d" % (
             contatore, totale, (contatore/totale*100), tentativi_cf, tentativi_email_contatto, tentativi_utenza)
         )
+
+if args.esempio:
+    print("Installo dei dati di esempio")
+
+    print("Creo le Sedi fittizzie...")
+    italia = Sede.objects.filter(estensione=NAZIONALE).first()
+    c = Sede(nome="Comitato di Gaia", genitore=italia, estensione=PROVINCIALE)
+    c.save()
+    s1 = Sede(nome="York", genitore=c, estensione=TERRITORIALE)
+    s1.save()
+    s2 = Sede(nome="Bergamo", genitore=c, estensione=TERRITORIALE)
+    s2.save()
+    s3 = Sede(nome="Catania", genitore=c, estensione=TERRITORIALE)
+    s3.save()
+    a1 = Autoparco(nome="Autorimessa Principato", sede=s3)
+    a1.save()
+
+    print("Genero dei membri della Sede a caso...")
+    for sede in [c, s1, s2, s3]:  # Per ogni Sede
+        for membro in [Appartenenza.VOLONTARIO, Appartenenza.SOSTENITORE]:
+            for i in range(0, 20):  # Creo 20 volontari
+                p = crea_persona()
+                a = Appartenenza(persona=p, sede=sede, inizio=poco_fa(), membro=membro)
+                a.save()
+
+    print("Ne creo un presidente...")
+    # Creo il presidente
+    presidente = crea_persona()
+    presidente.nome = "Douglas"
+    presidente.cognome = "Adams"
+    presidente.save()
+
+    a = Appartenenza(persona=presidente, sede=s1, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+    a.save()
+
+    # Assegno una utenza
+    print(" - Creo credenziali...")
+    utenza = Utenza(persona=presidente, email="supporto@gaia.cri.it",
+                    password='pbkdf2_sha256$20000$ldk8aPLgcMXK$Cwni1ubmmKpzxO8xM75ZuwNR+k6ZHA5JTVxJFbgIzgo=')
+    utenza.save()
+
+    # Assegno una delelga presidente
+    print(" - Nomino presidente")
+    d = Delega(persona=presidente, tipo=PRESIDENTE, oggetto=c, inizio=poco_fa())
+    d.save()
+
+    print("= Fatto.")
+
 
 print("Finita esecuzione.")
