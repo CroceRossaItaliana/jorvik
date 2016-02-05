@@ -57,6 +57,13 @@ INSTALLED_APPS = (
     'django.contrib.humanize',
     'django_gravatar',
     'centrale_operativa',
+    'compressor',
+)
+
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'compressor.finders.CompressorFinder',
 )
 
 # Cronjob attivi
@@ -121,6 +128,7 @@ PASSWORD_HASHERS = (
     'autenticazione.retro.RetroGaiaHasher'
 )
 
+COMPRESS_ENABLED = True
 
 DATABASES = {
     'default': {
