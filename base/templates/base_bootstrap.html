@@ -49,26 +49,32 @@
     {% block pagina_javascript %}
 
         {% compress js %}
-        <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/jquery-ui.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/chartist.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'tinymce/tinymce.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/jorvik.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/jquery-ui.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/chartist.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'tinymce/tinymce.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/jorvik.js' %}"></script>
+
+            <script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+              ga('create', 'UA-51942737-1', 'auto');
+              ga('send', 'pageview');
+            </script>
+
+            {% block pagina_javascript_extra %}
+            {% endblock %}
+
+            {% include 'autocomplete_light/static.html' %}
         {% endcompress %}
 
-        {% include 'autocomplete_light/static.html' %}
+        {% compress css %}
+            {% include 'autocomplete_light/static.html' %}
+        {% endcompress %}
 
-        {% block pagina_javascript_extra %}
-        {% endblock %}
 
-        <script>
-          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-          ga('create', 'UA-51942737-1', 'auto');
-          ga('send', 'pageview');
-        </script>
 
     {% endblock %}
 
