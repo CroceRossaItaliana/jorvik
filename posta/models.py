@@ -39,7 +39,19 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         Ritorna la lista di tutti gli oggetti Persona destinatari di questo messaggio.
         :return:
         """
-        return [x.persona for x in self.oggetti_destinatario.all()]
+        from anagrafica.models import Persona
+        return Persona.objects.filter(oggetti_sono_destinatario__messaggio=self)
+
+    def destinatario(self, persona):
+        """
+        Controlla se la persona e' tra i destinatari.
+        :param persona:
+        :return:
+        """
+        return self.oggetti_destinatario.filter(persona=persona).exists()
+
+    def primi_oggetti_destinatario(self):
+        return self.oggetti_destinatario.all()[:50]
 
     @property
     def corpo_body(self):
@@ -279,7 +291,8 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
         verbose_name_plural = "Destinatario di posta"
 
     messaggio = models.ForeignKey(Messaggio, null=False, blank=True, related_name='oggetti_destinatario', on_delete=models.CASCADE)
-    persona = models.ForeignKey("anagrafica.Persona", null=True, blank=True, default=None, on_delete=models.CASCADE)
+    persona = models.ForeignKey("anagrafica.Persona", null=True, blank=True, default=None,
+                                related_name='oggetti_sono_destinatario', on_delete=models.CASCADE)
 
     inviato = models.BooleanField(default=False)
     tentativo = models.DateTimeField(default=None, blank=True, null=True)
