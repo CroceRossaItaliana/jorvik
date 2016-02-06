@@ -2,7 +2,7 @@
 Questo modulo definisce i modelli del modulo di Posta di Gaia.
 """
 from smtplib import SMTPException
-from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives
+from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives, get_connection
 from django.db.models import QuerySet
 from django.template import Context
 from django.template.loader import get_template
@@ -93,12 +93,14 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     def allegati_pronti(self):
         return ()
 
-    def invia(self):
+    def invia(self, connection=None):
         """
         Salva e invia immediatamente il messaggio.
         :return:
         """
         self.save()  # Assicurati che sia salvato
+
+        connection = connection or get_connection()
 
         if self.mittente is None:
             mittente_nome = self.SUPPORTO_NOME
@@ -125,6 +127,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     reply_to=[reply_to],
                     to=[self.SUPPORTO_EMAIL],
                     attachments=self.allegati_pronti(),
+                    connection=connection,
                 )
                 msg.attach_alternative(self.corpo, "text/html")
                 msg.send()
@@ -152,6 +155,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     reply_to=[reply_to],
                     to=[d.persona.email],
                     attachments=self.allegati_pronti(),
+                    connection=connection,
                 )
                 msg.attach_alternative(self.corpo, "text/html")
                 msg.send()
@@ -204,6 +208,10 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             dimensione_massima,
         ))
         totale = 0
+        print("%s apro connessione al backed di invio posta" % (
+            datetime.now().isoformat(' '),
+        ))
+        connection = get_connection()
         for messaggio in da_smaltire:
             totale += 1
             print("%s invio messaggio id=%d, destinatari=(totale=%d, in_attesa=%d)" % (
@@ -212,7 +220,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 messaggio.oggetti_destinatario.all().count(),
                 messaggio.oggetti_destinatario.filter(inviato=False).count(),
             ))
-            messaggio.invia()
+            messaggio.invia(connection)
         print("%s -- fine elaborazione, elaborati=%d" % (
             datetime.now().isoformat(' '),
             totale,
