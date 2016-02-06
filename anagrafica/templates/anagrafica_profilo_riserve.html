@@ -35,12 +35,14 @@
                             <td>{{ r.inizio|date:"SHORT_DATE_FORMAT" }}</td>
                             <td>{{ r.fine|date:"SHORT_DATE_FORMAT" }}</td>
                             <td>{{ r.motivo }}</td>
-                            {% if r.esito == r.ESITO_OK  and r.attuale and puo_modificare %}
-                                <a href="/us/riserva/{{ r.pk }}/termina/"
-                               data-conferma="Vuoi veramente terminare riserva?">
-                                Termina Riserva
-                                </a>
-                            {% endif %}
+                            <td>
+                                {% if r.esito == r.ESITO_OK  and r.attuale and puo_modificare %}
+                                    <a href="/us/riserva/{{ r.pk }}/termina/"
+                                   data-conferma="Vuoi veramente terminare riserva?">
+                                    Termina Riserva
+                                    </a>
+                                {% endif %}
+                            </td>
                         </tr>
 
                     {% empty %}

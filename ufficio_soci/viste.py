@@ -325,7 +325,7 @@ def us_estensione_termina(request, me, pk):
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_riserva_termina(request, me, pk):
     riserva = get_object_or_404(Riserva, pk=pk)
-    if riserva not in me.oggetti_permesso(GESTIONE_SOCI):
+    if not me.permessi_almeno(riserva.persona, MODIFICA):
         return redirect(ERRORE_PERMESSI)
     else:
         riserva.termina()
