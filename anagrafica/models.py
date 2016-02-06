@@ -1797,7 +1797,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
             oggetto="Dimissioni",
             modello="email_dimissioni.html",
             corpo={
-                "Dimissione": self,
+                "dimissione": self,
             },
             mittente=self.richiedente,
 
