@@ -1,7 +1,7 @@
 """
 Questo modulo definisce i modelli del modulo di Posta di Gaia.
 """
-from smtplib import SMTPException
+from smtplib import SMTPException, SMTPResponseException
 from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives, get_connection
 from django.db.models import QuerySet
 from django.template import Context
@@ -162,7 +162,13 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 d.inviato = True
 
             except SMTPException as e:
-                successo = False
+
+                if isinstance(e, SMTPResponseException) and e.smtp_code == 501:
+                    successo = True  # E-mail di destinazione rotta: ignora.
+
+                else:
+                    successo = False  # Altro errore... riprova piu' tardi.
+
                 d.errore = str(e)
 
             except TypeError as e:
