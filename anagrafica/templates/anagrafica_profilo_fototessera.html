@@ -1,0 +1,119 @@
+{% extends 'anagrafica_profilo.html' %}
+
+{% load thumbnail %}
+{% load bootstrap3 %}
+
+{% block profilo_corpo %}
+<div class="row">
+
+    <div class="col-md-8">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-fw fa-list"></i>
+                    Storico richieste fototessere
+                </h4>
+
+            </div>
+
+            <div class="panel-body">
+                <p>Qui vengono mostrate le fototessere che caricate e richieste.</p>
+
+                <table class="table table-striped table-responsive">
+                    <thead>
+                        <th>Stato verifica</th>
+                        <th>Fotografia</th>
+                        <th>Inviata il</th>
+                    </thead>
+                    <tbody>
+
+                        {% for t in persona.fototessere.all %}
+
+                            <tr class="
+                                {% if t == persona.fototessera_attuale %}
+                                    success
+                                {% elif t.esito == t.ESITO_PENDING %}
+                                    warning
+                                {% endif %}
+                            ">
+
+                                <td class="grassetto">{{ t.esito }}</td>
+                                <td>
+                                    <a href="{{ t.file.url }}" target="_new"
+                                        title="Vedi pi&ugrave; grande">
+                                        {% thumbnail t.file "100x100" crop="center" as im %}
+                                            <img src="{{ im.url }}" width="50" height="50" />
+                                        {% endthumbnail %}
+
+                                    </a>
+                                </td>
+                                <td>{{ t.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+
+
+
+                            </tr>
+                        {% empty %}
+                            <tr class="warning">
+                                <td colspan="3">
+                                    <i class="fa fa-fw fa-warning"></i>
+                                    Nessuna fototessera caricata.
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+    {% if puo_modificare %}
+        <div class="panel panel-primary">
+
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-fw fa-user"></i>
+                    Fototessera
+                </h4>
+            </div>
+
+            <div class="panel-body">
+
+                <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+
+                    {% bootstrap_form modulo %}
+
+                    <p class="text-warning">
+                        <i class="fa fa-fw fa-warning"></i>
+                        Assicurati che rispetti le norme per le
+                        fototessere riportate <a target="_new"
+                            href="http://wiki.gaia.cri.it/index.php?title=Manuale_del_Volontario#Norme_generali">
+                        in questa pagina</a>.
+                    </p>
+
+                    <button type="submit" class="btn btn-block btn-primary">
+                        <i class="fa fa-fw fa-save"></i>
+                        Salva fototessera
+                    </button>
+
+                </form>
+
+            </div>
+
+
+
+
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

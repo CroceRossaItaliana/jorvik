@@ -600,6 +600,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return "%sfotografie/" % (self.url,)
 
     @property
+    def url_profilo_fototessera(self):
+        return "%sfototessera/" % (self.url,)
+
+    @property
     def url_profilo_turni(self):
         return "%sturni/" % (self.url,)
 
