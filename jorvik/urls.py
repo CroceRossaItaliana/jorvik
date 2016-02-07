@@ -174,12 +174,16 @@ urlpatterns = [
     url(r'^us/riserva/(?P<pk>.*)/termina/$', 'ufficio_soci.viste.us_riserva_termina'),
     url(r'^us/dimissioni/(?P<pk>[0-9]+)/$', 'ufficio_soci.viste.us_dimissioni'),
 
-
-
     url(r'^us/elenchi/(?P<elenco_tipo>.*)/$', 'ufficio_soci.viste.us_elenchi'),
     url(r'^us/quote/$', 'ufficio_soci.viste.us_quote'),
     url(r'^us/ricevute/$', 'ufficio_soci.viste.us_ricevute'),
     url(r'^us/ricevute/(?P<pk>[0-9]+)/annulla/$', 'ufficio_soci.viste.us_ricevute_annulla'),
+
+    url(r'^us/tesserini/$', 'ufficio_soci.viste.us_tesserini'),
+    url(r'^us/tesserini/da-richiedere/$', 'ufficio_soci.viste.us_tesserini_da_richiedere'),
+    url(r'^us/tesserini/senza-fototessera/$', 'ufficio_soci.viste.us_tesserini_senza_fototessera'),
+    url(r'^us/tesserini/richiesti/$', 'ufficio_soci.viste.us_tesserini_richiesti'),
+    url(r'^us/tesserini/richiedi/(?P<persona_pk>[0-9]+)/$', 'ufficio_soci.viste.us_tesserini_richiedi'),
 
     url(r'^us/elenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', 'ufficio_soci.viste.us_elenco'),
     url(r'^us/elenco/(?P<elenco_id>.*)/download/$', 'ufficio_soci.viste.us_elenco_download'),

@@ -108,6 +108,7 @@ def menu(request):
                 ("Trasferiti", "fa-list", "/us/elenchi/trasferiti/"),
                 ("Ordinari", "fa-list", "/us/elenchi/ordinari/") if me and me.oggetti_permesso(ELENCHI_SOCI).filter(estensione=REGIONALE).exists() else None,
                 ("Elettorato", "fa-list", "/us/elenchi/elettorato/"),
+                ("Tesserini", "fa-list", "/us/tesserini/"),
                 ("Per Titoli", "fa-search", "/us/elenchi/titoli/"),
             )),
             ("Aggiungi", (

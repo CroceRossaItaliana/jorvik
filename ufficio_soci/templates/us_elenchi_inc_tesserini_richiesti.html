@@ -1,0 +1,20 @@
+{% extends "us_elenchi_inc_persone.html" %}
+
+
+{% block elenco_intestazione_extra %}
+    <th>Tesserino no.</th>
+{% endblock %}
+
+
+{% block elenco_riga_extra %}
+    <td class="monospace">
+        <a href="#">
+            <i class="fa fa-fw fa-search"></i>
+            {{ persona.tesserino_codice|default:"N/A" }}
+        </a>
+    </td>
+{% endblock %}
+
+{% block elenco_riga_azioni_extra %}
+    <!-- link tesserini passati -->
+{% endblock %}

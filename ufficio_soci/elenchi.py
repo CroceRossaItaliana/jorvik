@@ -2,14 +2,14 @@ from django.contrib.admin import ModelAdmin
 from django.db.models import Q, F
 from django.utils.encoding import force_text
 
-from anagrafica.models import Persona, Appartenenza, Riserva, Sede
+from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera
 from base.utils import filtra_queryset, testo_euro
 from curriculum.models import TitoloPersonale
 from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote, ModuloElencoPerTitoli
 from datetime import date, datetime
 from django.utils.timezone import now
 
-from ufficio_soci.models import Tesseramento, Quota
+from ufficio_soci.models import Tesseramento, Quota, Tesserino
 
 
 class Elenco:
@@ -546,5 +546,82 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
         return ModuloElencoPerTitoli
 
 
+class ElencoTesseriniRichiesti(ElencoVistaAnagrafica):
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
+            ).via("appartenenze"),
+            tesserini__stato_richiesta__in=(Tesserino.ACCETTATO, Tesserino.RICHIESTO),
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
+                tesserino_codice=F('tesserini__codice'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+    def template(self):
+        return "us_elenchi_inc_tesserini_richiesti.html"
 
 
+class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        tesserini_richiesti = super(ElencoTesseriniDaRichiedere, self).risultati()
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
+            ).via("appartenenze"),
+
+            # Con fototessera confermata
+            Fototessera.con_esito_ok().via("fototessere"),
+
+        ).exclude(  # Escludi quelli richiesti da genitore
+            pk__in=tesserini_richiesti.values_list('id', flat=True)
+
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+    def template(self):
+        return "us_elenchi_inc_tesserini_da_richiedere.html"
+
+
+class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        tesserini_da_richiedere = super(ElencoTesseriniSenzaFototessera, self).risultati()
+        tesserini_richiesti = super(ElencoTesseriniDaRichiedere, self).risultati()
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
+            ).via("appartenenze"),
+
+        ).exclude(  # Escludi quelli che posso richiedere
+            pk__in=tesserini_da_richiedere.values_list('id', flat=True)
+        ).exclude(  # Escludi quelli gia richiesti
+            pk__in=tesserini_richiesti.values_list('id', flat=True),
+
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+    def template(self):
+        return "us_elenchi_inc_tesserini_senza_fototessera.html"

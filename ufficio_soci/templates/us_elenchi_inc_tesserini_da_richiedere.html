@@ -1,0 +1,8 @@
+{% extends "us_elenchi_inc_persone.html" %}
+
+{% block elenco_riga_azioni_extra %}
+    <a href="/us/tesserini/richiedi/{{ persona.pk }}/?next={{ request.path }}"
+       target="_self" class="btn btn-primary">
+        <i class="fa fa-fw fa-check"></i> Richiedi Tesserino
+    </a>
+{% endblock %}

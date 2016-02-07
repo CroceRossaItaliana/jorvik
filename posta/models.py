@@ -304,7 +304,8 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
         verbose_name = "Destinatario di posta"
         verbose_name_plural = "Destinatario di posta"
 
-    messaggio = models.ForeignKey(Messaggio, null=False, blank=True, related_name='oggetti_destinatario', on_delete=models.CASCADE)
+    messaggio = models.ForeignKey(Messaggio, null=False, blank=True, related_name='oggetti_destinatario',
+                                  on_delete=models.CASCADE)
     persona = models.ForeignKey("anagrafica.Persona", null=True, blank=True, default=None,
                                 related_name='oggetti_sono_destinatario', on_delete=models.CASCADE)
 

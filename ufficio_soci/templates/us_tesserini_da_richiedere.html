@@ -1,0 +1,16 @@
+{% extends "us_tesserini.html" %}
+
+{% load utils %}
+
+{% block tesserini_contenuto %}
+
+    <div class="alert alert-info alert-block">
+        <i class="fa fa-fw fa-info-circle"></i>
+        Sono qui elencati tutti i Volontari che hanno su Gaia una fototessera
+        che &egrave; stata controllata e confermata,
+        per i quali non &egrave; ancora stata richiesta la stampa di un tesserino.
+    </div>
+
+    {% elenco elenco %}
+
+{% endblock %}
