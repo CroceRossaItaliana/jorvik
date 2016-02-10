@@ -2,7 +2,7 @@ import random
 from datetime import timezone, date
 
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Max
 
 from anagrafica.models import Persona, Appartenenza, Sede
 from base.files import PDF
@@ -333,12 +333,9 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF, ConVecchioID):
         anno = self.anno
         sede = self.sede
 
-        try:  # Ottiene ultima quota
-            ultima_quota = Quota.per_sede(sede).filter(anno=anno).order_by('-progressivo').first()
-            return ultima_quota.progressivo + 1  # Ritorna prossimo progressivo
-
-        except:  # Se prima quota
-            return 1
+        prec = Quota.per_sede(sede).filter(anno=anno) \
+                    .aggregate(max=Max('progressivo'))['max'] or 0
+        return prec + 1
 
     @property
     def importo_totale(self):
