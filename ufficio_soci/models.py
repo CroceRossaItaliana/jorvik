@@ -334,7 +334,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF, ConVecchioID):
         sede = self.sede
 
         try:  # Ottiene ultima quota
-            ultima_quota = Quota.per_sede(sede).filter(anno=anno).latest('progressivo')
+            ultima_quota = Quota.per_sede(sede).filter(anno=anno).order_by('-progressivo').first()
             return ultima_quota.progressivo + 1  # Ritorna prossimo progressivo
 
         except:  # Se prima quota
