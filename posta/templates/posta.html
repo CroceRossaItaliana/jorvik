@@ -49,11 +49,11 @@
                         <i class="fa fa-fw fa-clock-o"></i> Ricevuto: {{ msg.creazione|date:"SHORT_DATETIME_FORMAT" }}
 
                     {% else %}
-                        {% if msg.destinatari|length < 2 %}
-                            <i class="fa fa-fw fa-user"></i> A: <strong>{{ msg.destinatari.0.link|safe }}</strong>
+                        {% if msg.destinatari.count < 2 %}
+                            <i class="fa fa-fw fa-user"></i> A: <strong>{{ msg.destinatari.first.link|safe }}</strong>
 
                         {% else %}
-                            <i class="fa fa-fw fa-group"></i> A: <strong>({{ msg.destinatari|length }} destinatari)</strong>
+                            <i class="fa fa-fw fa-group"></i> A: <strong>({{ msg.destinatari.count }} destinatari)</strong>
 
                         {% endif %}
                             <br />
@@ -175,17 +175,17 @@
 
                         {% else %}
 
-                            {% if messaggio.destinatari|length < 2 %}
+                            {% if messaggio.destinatari.count < 2 %}
                                 <span class="text-muted">
                                     <i class="fa fa-fw fa-mail-forward"></i> Destinatario
                                 </span><br />
-                                <strong>{{ messaggio.destinatari.0.link|safe }}</strong>
+                                <strong>{{ messaggio.destinatari.first.link|safe }}</strong>
 
                             {% else %}
                                 <span class="text-muted">
                                     <i class="fa fa-fw fa-mail-forward"></i> Destinatari
                                 </span><br />
-                                <strong>{{ messaggio.destinatari|length }} persone</strong>
+                                <strong>{{ messaggio.destinatari.count }} persone</strong>
 
                             {% endif %}
                             <br />
@@ -222,7 +222,7 @@
                                     </th>
                                 </thead>
                                 <tbody>
-                                    {% for oggetto_destinatario in messaggio.oggetti_destinatario.all %}
+                                    {% for oggetto_destinatario in messaggio.primi_oggetti_destinatario %}
                                         <tr {% if oggetto_destinatario.inviato %}class="success"{% else %}class="warning"{% endif %}>
                                             <td>{{ oggetto_destinatario.persona.link|safe }}</td>
                                             <td>
@@ -238,7 +238,7 @@
                                                 {% endif %}
                                             </td>
                                             <td>
-                                                {{ oggetto_destinatario.tentativo }}
+                                                {{ oggetto_destinatario.tentativo|default:"A breve" }}
                                             </td>
 
                                         </tr>

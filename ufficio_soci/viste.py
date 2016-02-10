@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.db.models import Sum
 from django.shortcuts import redirect, get_object_or_404
 
+from anagrafica.costanti import REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione, Riserva
 from anagrafica.permessi.applicazioni import PRESIDENTE
@@ -13,10 +14,12 @@ from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
 from base.files import Excel, FoglioExcel
 from base.notifiche import NOTIFICA_INVIA
+from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti, ElencoDimessi, ElencoTrasferiti, \
-    ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva, ElencoIVCM
+    ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva, ElencoIVCM, ElencoTesseriniSenzaFototessera, \
+    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
     ModuloCreazioneRiserva, ModuloCreazioneTrasferimento
@@ -788,3 +791,130 @@ def verifica_tesserino(request, me=None):
         "ricerca": ricerca,
     }
     return 'informazioni_verifica_tesserino.html', contesto
+
+
+@pagina_privata
+def us_tesserini(request, me):
+    return redirect("/us/tesserini/da-richiedere/")
+
+
+@pagina_privata
+def us_tesserini_da_richiedere(request, me):
+    """
+    Mostra l'elenco dei volontari che hanno i requisiti per la
+     richiesta del tesserino ma non hanno una richiesta di tesserino,
+     con link per effettuare la richiesta.
+    """
+    sedi = me.oggetti_permesso(GESTIONE_SOCI)
+    elenco = ElencoTesseriniDaRichiedere(sedi)
+    contesto = {
+        "elenco": elenco
+    }
+    return "us_tesserini_da_richiedere.html", contesto
+
+
+@pagina_privata
+def us_tesserini_senza_fototessera(request, me):
+    """
+    Mostra l'elenco dei volontari che non hanno ancora
+     una fototessera caricata.
+    """
+    sedi = me.oggetti_permesso(GESTIONE_SOCI)
+    elenco = ElencoTesseriniSenzaFototessera(sedi)
+    contesto = {
+        "elenco": elenco
+    }
+    return "us_tesserini_senza_fototessera.html", contesto
+
+
+@pagina_privata
+def us_tesserini_richiesti(request, me):
+    """
+    Mostra un elenco di tutti i volontari con un tesserino richiesto,
+     con un link a maggiori informazioni.
+    """
+    sedi = me.oggetti_permesso(GESTIONE_SOCI)
+    elenco = ElencoTesseriniRichiesti(sedi)
+    contesto = {
+        "elenco": elenco
+    }
+    return "us_tesserini_richiesti.html", contesto
+
+
+@pagina_privata
+def us_tesserini_richiedi(request, me, persona_pk=None):
+    """
+    Effettua la richiesta di tesserino per il volontario.
+    """
+    persona = get_object_or_404(Persona, pk=persona_pk)
+
+    if not me.permessi_almeno(persona, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    torna = {
+        "torna_url": request.GET.get("next", default="/us/tesserini/"),
+        "torna_titolo": "Torna indietro",
+    }
+
+    sede = persona.sede_riferimento(membro=Appartenenza.MEMBRO_TESSERINO)
+    if not sede:
+        return errore_generico(request, me, titolo="La persona non è un volontario",
+                               messaggio="È solo possibile richiedere un tesserino per "
+                                         "i volontari.", **torna)
+
+    if sede not in me.oggetti_permesso(GESTIONE_SOCI):
+        return redirect(ERRORE_PERMESSI)
+
+    if not persona.fototessera_attuale():
+        return errore_generico(request, me, titolo="Nessuna fototessera",
+                               messaggio="È solo possibile richiedere un tesserino per "
+                                         "i volontari in possesso di una fototessera "
+                                         "confermata su Gaia.", **torna)
+
+    if persona.tesserini.filter(stato_richiesta__in=(Tesserino.RICHIESTO, Tesserino.ACCETTATO)).exists():
+        return errore_generico(request, me, titolo="Tesserino già richiesto",
+                               messaggio="Una richiesta è già stata inoltrata per "
+                                         "il volontario selezionato.", **torna)
+
+    comitato = sede.comitato
+    if not comitato.locazione:
+        return errore_generico(request, me, titolo="Il Comitato non ha un indirizzo",
+                               messaggio="La sede di appartenenza del volontario (%s) non ha "
+                                         "un indirizzo impostato. Questo è necessario, in quanto "
+                                         "viene stampato sul retro del tesserino. Il Presidente "
+                                         "può impostare l'indirizzo della Sede dalla sezione "
+                                         "'Sedi'." % (comitato,),
+                               **torna)
+
+    regionale = comitato.superiore(estensione=REGIONALE)
+    if not regionale:
+        raise ValueError("%s non ha un comitato regionale." % (comitato,))
+
+    # Crea la richiesta di tesserino
+    tesserino = Tesserino(
+        persona=persona,
+        emesso_da=regionale,
+        tipo_richiesta=Tesserino.RILASCIO,
+        stato_richiesta=Tesserino.RICHIESTO,
+        richiesto_da=me
+    )
+    tesserino.save()
+
+    # Manda l'email al volontario
+    Messaggio.costruisci_e_invia(
+        oggetto="Richiesta Tesserino inoltrata",
+        modello="posta_richiesta_tesserino.html",
+        corpo={
+            "persona": persona,
+            "tesserino": tesserino,
+        },
+        mittente=me,
+        destinatari=[persona]
+    )
+
+    # Mostra un messaggio
+    return messaggio_generico(request, me, titolo="Richiesta inoltrata",
+                              messaggio="La richiesta di stampa è stata inoltrata correttamente alla Sede di "
+                                        "emissione (%s) per il Volontario %s." % (
+                                  tesserino.emesso_da, persona.nome_completo,
+                              ), **torna)

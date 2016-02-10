@@ -1,0 +1,28 @@
+{% extends "us_tesserini.html" %}
+
+{% load utils %}
+
+{% block tesserini_contenuto %}
+
+    <div class="alert alert-info alert-block">
+        <p>
+            <i class="fa fa-fw fa-info-circle"></i>
+            Sono qui elencati tutti i Volontari che NON hanno ancora una fototessera
+            su Gaia, per i quali non &egrave; quindi ancora possibile richiedere
+            la stampa del tesserino.
+        </p>
+        <p>
+            <i class="fa fa-fw fa-pencil"></i> <strong>Suggerimento</strong> &mdash;
+            Usa la funzione "Invia un messaggio", su questo elenco, e scrivi un
+            messaggio a tutti questi volontari chiedendogli di caricare una
+            fototessera in autonomia su Gaia. Possono farlo accedendo a
+            Gaia e andando su "Volontario" >
+            "Fotografie" > "Fototessera".
+        </p>
+    </div>
+
+
+    {% elenco elenco %}
+
+
+{% endblock %}

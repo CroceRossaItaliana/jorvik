@@ -52,7 +52,7 @@ def posta(request, me, direzione="in-arrivo", pagina=1, messaggio_id=None):
         #  - Devo essere o mittente o destinatario
         #  - Se vista "in-uscita", controllo di essere davvero il mittente
         #     (in quanto saro' in grado di leggere l'elenco dei destinatari).
-        if me != messaggio.mittente and me not in messaggio.destinatari:
+        if me != messaggio.mittente and not messaggio.destinatario(me):
             return redirect(ERRORE_PERMESSI)
 
         if not direzione == "in-arrivo" and not me == messaggio.mittente:

@@ -601,6 +601,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return "%sfotografie/" % (self.url,)
 
     @property
+    def url_profilo_fototessera(self):
+        return "%sfototessera/" % (self.url,)
+
+    @property
     def url_profilo_turni(self):
         return "%sturni/" % (self.url,)
 
@@ -771,8 +775,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             ))
             return a
 
-    def sede_riferimento(self, **kwargs):
-        return self.sedi_attuali(membro__in=Appartenenza.MEMBRO_DIRETTO, **kwargs).\
+    def sede_riferimento(self, membro=None, **kwargs):
+        membro = membro or Appartenenza.MEMBRO_DIRETTO
+        return self.sedi_attuali(membro__in=membro, **kwargs).\
             order_by('-appartenenze__inizio').first()
 
     def comitato_riferimento(self, **kwargs):
@@ -1001,6 +1006,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
 
     # Membro che puo' accedere alla rubrica di una Sede
     MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE,)
+
+    # Membri che possono richiedere il tesserino
+    MEMBRO_TESSERINO = (VOLONTARIO,)
 
     # Membri soci
     MEMBRO_SOCIO = (VOLONTARIO, ORDINARIO,)

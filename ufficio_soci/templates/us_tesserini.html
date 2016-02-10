@@ -1,0 +1,43 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Richieste Tesserini
+{% endblock %}
+
+{% block app_contenuto %}
+
+
+<ul class="nav nav-tabs grassetto">
+
+  <li role="presentation" {% if "da-richiedere" in request.path %}class="active"{% endif %}>
+      <a class="text-warning" href="/us/tesserini/da-richiedere/">
+          <i class="fa fa-fw fa-warning"></i>
+          Da Richiedere
+      </a>
+  </li>
+
+  <li role="presentation" {% if "senza-fototessera" in request.path %}class="active"{% endif %}>
+      <a class="text-danger" href="/us/tesserini/senza-fototessera/">
+          <i class="fa fa-fw fa-times"></i>
+          Senza Fototessera
+      </a>
+  </li>
+
+  <li role="presentation" {% if "richiesti" in request.path %}class="active"{% endif %}>
+      <a class="text-success" href="/us/tesserini/richiesti/">
+          <i class="fa fa-fw fa-clock-o"></i>
+          Richiesta effettuata
+      </a>
+  </li>
+
+</ul>
+
+<p>&nbsp;</p>
+
+    {% block tesserini_contenuto %}
+        Contenuto qui...
+    {% endblock %}
+
+{% endblock %}

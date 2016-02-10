@@ -1,0 +1,12 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p class="grassetto">Ciao {{ persona.nome }}, buone notizie.</p>
+    <p>Il tuo Comitato ha avviato la richiesta di stampa del tuo tesserino.</p>
+    <p>La richiesta &egrave; stata inoltrata da {{ tesserino.richiesto_da }} il
+        {{ tesserino.creazione|date:"SHORT_DATETIME_FORMAT" }}.</p>
+    <p>La richiesta di stampa &egrave; stata inoltrata alla Sede di emissione ({{ tesserino.emesso_da }}),
+        che la processer&agrave; non appena possibile.</p>
+    <p>Se pensi che ci sia stato un errore, ti invitiamo a contattare il tuo ufficio soci.</p>
+
+{% endblock %}

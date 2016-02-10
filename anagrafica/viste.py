@@ -979,6 +979,29 @@ def _profilo_appartenenze(request, me, persona):
     return 'anagrafica_profilo_appartenenze.html', contesto
 
 
+def _profilo_fototessera(request, me, persona):
+    puo_modificare = me.permessi_almeno(persona, MODIFICA)
+
+    modulo = ModuloNuovaFototessera(request.POST or None, request.FILES or None)
+    if modulo.is_valid():
+        fototessera = modulo.save(commit=False)
+        fototessera.persona = persona
+        fototessera.save()
+
+        # Ritira eventuali fototessere in attesa
+        if persona.fototessere_pending().exists():
+            for x in persona.fototessere_pending():
+                x.autorizzazioni_ritira()
+
+        Log.crea(me, fototessera)
+
+    contesto = {
+        "puo_modificare": puo_modificare,
+        "modulo": modulo,
+    }
+    return 'anagrafica_profilo_fototessera.html', contesto
+
+
 def _profilo_deleghe(request, me, persona):
     return 'anagrafica_profilo_deleghe.html', {}
 
@@ -1147,6 +1170,9 @@ def _sezioni_profilo(puo_leggere, puo_modificare):
         )),
         ('riserve', (
             'Riserve', 'fa-pause', _profilo_riserve, puo_leggere
+        )),
+        ('fototessera', (
+            'Fototessera', 'fa-photo', _profilo_fototessera, puo_leggere
         )),
         ('documenti', (
             'Documenti', 'fa-folder', _profilo_documenti, puo_leggere

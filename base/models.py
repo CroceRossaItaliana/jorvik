@@ -292,6 +292,17 @@ class Log(ModelloSemplice, ConMarcaTemporale):
         return l
 
     @classmethod
+    def crea(cls, persona, oggetto):
+        app_label, model, pk = cls._scomponi(oggetto)
+        l = Log(
+            persona=persona, azione=cls.CREAZIONE,
+            oggetto_repr=str(oggetto), oggetto_app_label=app_label,
+            oggetto_model=model, oggetto_pk=pk,
+        )
+        l.save()
+        return l
+
+    @classmethod
     def registra_modifiche(cls, autore, modelform):
         """
         Dato un model form, registra le modifiche effettuate

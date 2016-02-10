@@ -52,7 +52,6 @@
             <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
             <script type="text/javascript" src="{% static 'js/jquery-ui.min.js' %}"></script>
             <script type="text/javascript" src="{% static 'js/chartist.min.js' %}"></script>
-            <script type="text/javascript" src="{% static 'tinymce/tinymce.min.js' %}"></script>
             <script type="text/javascript" src="{% static 'js/jorvik.js' %}"></script>
 
             <script>
@@ -69,6 +68,8 @@
 
             {% include 'autocomplete_light/static.html' %}
         {% endcompress %}
+
+        <script type="text/javascript" src="{% static 'tinymce/tinymce.min.js' %}"></script>
 
         {% compress css %}
             {% include 'autocomplete_light/static.html' %}

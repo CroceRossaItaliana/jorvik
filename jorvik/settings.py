@@ -128,6 +128,8 @@ PASSWORD_HASHERS = (
     'autenticazione.retro.RetroGaiaHasher'
 )
 
+COMPRESS_ENABLED = True
+
 DATABASES = {
     'default': {
         #'TEST': {

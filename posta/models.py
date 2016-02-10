@@ -1,8 +1,8 @@
 """
 Questo modulo definisce i modelli del modulo di Posta di Gaia.
 """
-from smtplib import SMTPException
-from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives
+from smtplib import SMTPException, SMTPResponseException
+from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives, get_connection
 from django.db.models import QuerySet
 from django.template import Context
 from django.template.loader import get_template
@@ -39,7 +39,19 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         Ritorna la lista di tutti gli oggetti Persona destinatari di questo messaggio.
         :return:
         """
-        return [x.persona for x in self.oggetti_destinatario.all()]
+        from anagrafica.models import Persona
+        return Persona.objects.filter(oggetti_sono_destinatario__messaggio=self)
+
+    def destinatario(self, persona):
+        """
+        Controlla se la persona e' tra i destinatari.
+        :param persona:
+        :return:
+        """
+        return self.oggetti_destinatario.filter(persona=persona).exists()
+
+    def primi_oggetti_destinatario(self):
+        return self.oggetti_destinatario.all()[:50]
 
     @property
     def corpo_body(self):
@@ -81,12 +93,14 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     def allegati_pronti(self):
         return ()
 
-    def invia(self):
+    def invia(self, connection=None):
         """
         Salva e invia immediatamente il messaggio.
         :return:
         """
         self.save()  # Assicurati che sia salvato
+
+        connection = connection or get_connection()
 
         if self.mittente is None:
             mittente_nome = self.SUPPORTO_NOME
@@ -113,6 +127,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     reply_to=[reply_to],
                     to=[self.SUPPORTO_EMAIL],
                     attachments=self.allegati_pronti(),
+                    connection=connection,
                 )
                 msg.attach_alternative(self.corpo, "text/html")
                 msg.send()
@@ -140,13 +155,20 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     reply_to=[reply_to],
                     to=[d.persona.email],
                     attachments=self.allegati_pronti(),
+                    connection=connection,
                 )
                 msg.attach_alternative(self.corpo, "text/html")
                 msg.send()
                 d.inviato = True
 
             except SMTPException as e:
-                successo = False
+
+                if isinstance(e, SMTPResponseException) and e.smtp_code == 501:
+                    successo = True  # E-mail di destinazione rotta: ignora.
+
+                else:
+                    successo = False  # Altro errore... riprova piu' tardi.
+
                 d.errore = str(e)
 
             except TypeError as e:
@@ -192,6 +214,10 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             dimensione_massima,
         ))
         totale = 0
+        print("%s apro connessione al backed di invio posta" % (
+            datetime.now().isoformat(' '),
+        ))
+        connection = get_connection()
         for messaggio in da_smaltire:
             totale += 1
             print("%s invio messaggio id=%d, destinatari=(totale=%d, in_attesa=%d)" % (
@@ -200,7 +226,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 messaggio.oggetti_destinatario.all().count(),
                 messaggio.oggetti_destinatario.filter(inviato=False).count(),
             ))
-            messaggio.invia()
+            messaggio.invia(connection)
         print("%s -- fine elaborazione, elaborati=%d" % (
             datetime.now().isoformat(' '),
             totale,
@@ -278,8 +304,10 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
         verbose_name = "Destinatario di posta"
         verbose_name_plural = "Destinatario di posta"
 
-    messaggio = models.ForeignKey(Messaggio, null=False, blank=True, related_name='oggetti_destinatario', on_delete=models.CASCADE)
-    persona = models.ForeignKey("anagrafica.Persona", null=True, blank=True, default=None, on_delete=models.CASCADE)
+    messaggio = models.ForeignKey(Messaggio, null=False, blank=True, related_name='oggetti_destinatario',
+                                  on_delete=models.CASCADE)
+    persona = models.ForeignKey("anagrafica.Persona", null=True, blank=True, default=None,
+                                related_name='oggetti_sono_destinatario', on_delete=models.CASCADE)
 
     inviato = models.BooleanField(default=False)
     tentativo = models.DateTimeField(default=None, blank=True, null=True)
