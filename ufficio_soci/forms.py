@@ -220,3 +220,12 @@ class ModuloElencoIVCM(forms.Form):
     )
     includi = forms.ChoiceField(choices=SCELTE)
 
+
+class ModuloQuotaVolontario(forms.Form):
+    volontario = autocomplete_light.ModelChoiceField("PersonaAutocompletamento",
+                                                     help_text="Seleziona il Volontario per il quale registrare"
+                                                               " la quota associativa.")
+
+    importo = forms.FloatField(help_text="Il totale versato in euro, comprensivo dell'eventuale "
+                                         "donazione aggiuntiva.")
+    data_versamento = forms.DateField()

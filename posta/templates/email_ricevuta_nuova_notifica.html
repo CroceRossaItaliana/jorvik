@@ -1,0 +1,18 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p class="grassetto">Ciao {{ ricevuta.persona.nome_completo }},</p>
+
+    <p>Ecco la Ricevuta n. {{ ricevuta.progressivo }} del {{ ricevuta.anno }} per
+    "<strong>{{ ricevuta.causale }}</strong>", versata in data {{ ricevuta.data_versamento }}.</p>
+
+    <p>Puoi scaricare la ricevuta in formato PDF <a href="{{ ricevuta.url_pdf }}" download>cliccando qui</a>.</p>
+
+    <p>La ricevuta &egrave; stata registrata da {{ ricevuta.registrato_da.link|safe }} il {{ ricevuta.creazione }}.</p>
+
+    <p>Se pensi che ci sia stato un errore, rispondi a questa e-mail.</p>
+
+
+{% endblock %}
+

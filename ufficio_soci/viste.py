@@ -14,6 +14,7 @@ from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
 from base.files import Excel, FoglioExcel
 from base.notifiche import NOTIFICA_INVIA
+from base.utils import poco_fa
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
@@ -22,7 +23,7 @@ from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVo
     ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
-    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento
+    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario
 from ufficio_soci.models import Quota, Tesseramento, Tesserino
 
 
@@ -163,7 +164,9 @@ def us_reclama_persona(request, me, persona_pk):
                         causale="Iscrizione %s anno %d" % (
                             app.get_membro_display(),
                             q.get('data_versamento').year,
-                        )
+                        ),
+                        tipo=Quota.QUOTA_SOCIO,
+                        invia_notifica=True
                     )
 
                 return redirect(persona.url)
@@ -711,6 +714,77 @@ def us_quote(request, me):
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_quote_nuova(request, me):
+
+    sedi = me.oggetti_permesso(GESTIONE_SOCI)
+
+    questo_anno = poco_fa().year
+
+    modulo = None
+    appena_registrata = Quota.objects.get(pk=request.GET['appena_registrata']) \
+        if 'appena_registrata' in request.GET else None
+
+    if Tesseramento.aperto_anno(questo_anno):
+        tesseramento = Tesseramento.objects.get(anno=questo_anno)
+        dati_iniziali = {
+            "importo": tesseramento.quota_attivo,
+            "data_versamento": poco_fa(),
+        }
+        modulo = ModuloQuotaVolontario(request.POST or None, initial=dati_iniziali)
+
+    if modulo and modulo.is_valid():
+
+        volontario = modulo.cleaned_data['volontario']
+        importo = modulo.cleaned_data['importo']
+        data_versamento = modulo.cleaned_data['data_versamento']
+
+        if tesseramento.pagante(volontario, attivi=True, ordinari=False):
+            modulo.add_error('volontario', 'Questo volontario ha già pagato la Quota '
+                                           'associativa per l\'anno %d' % questo_anno)
+
+
+        elif not tesseramento.non_pagante(volontario, attivi=True, ordinari=False):
+            modulo.add_error('volontario', 'Questo volontario non è passibile al pagamento '
+                                           'della Quota associativa come Volontario presso '
+                                           'una delle tue Sedi, per l\'anno %d.' % questo_anno)
+
+        else:
+
+            appartenenza = volontario.appartenenze_attuali(al_giorno=data_versamento, membro=Appartenenza.VOLONTARIO).first()
+
+            if appartenenza.sede not in sedi:
+                modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
+
+            elif not appartenenza:
+                modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
+                                                    'alla Sede.')
+
+            else:
+                # OK, paga quota!
+                ricevuta = Quota.nuova(
+                    appartenenza=appartenenza,
+                    data_versamento=data_versamento,
+                    registrato_da=me,
+                    importo=importo,
+                    causale="Rinnovo Quota Associativa %d" % (questo_anno,),
+                    tipo=Quota.QUOTA_SOCIO,
+                    invia_notifica=True
+                )
+                return redirect("/us/quote/nuova/?appena_registrata=%d" % (ricevuta.pk,))
+
+
+    ultime_quote = Quota.objects.filter(registrato_da=me).order_by('-creazione')[:15]
+
+    contesto = {
+        "modulo": modulo,
+        "ultime_quote": ultime_quote,
+        "anno": questo_anno,
+        "appena_registrata": appena_registrata,
+    }
+    return 'us_quote_nuova.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_ricevute(request, me):
 
     modulo = ModuloElencoRicevute(request.POST or (request.GET or None))
@@ -755,10 +829,7 @@ def us_ricevute_annulla(request, me, pk):
         return redirect(ERRORE_PERMESSI)
 
     if ricevuta.stato == ricevuta.REGISTRATA:
-        ricevuta.stato = ricevuta.ANNULLATA
-        ricevuta.annullato_da = me
-        ricevuta.data_annullamento = datetime.date.today()
-        ricevuta.save()
+        ricevuta.annulla(annullato_da=me, invia_notifica=True)
 
     return redirect("/us/ricevute/?anno=%d&tipi_ricevute=%s" % (ricevuta.anno, ricevuta.tipo,))
 

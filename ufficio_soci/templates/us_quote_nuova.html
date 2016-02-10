@@ -1,0 +1,135 @@
+{% extends 'us_vuota.html' %}
+
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Nuova Quota Volontario
+{% endblock %}
+
+{% block app_contenuto %}
+
+<div class="row">
+
+    <div class="col-md-8">
+
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-clock-o"></i>
+                    Ultime quote associative registrate da {{ me.nome_completo }}
+                </h2>
+            </div>
+            <div class="panel-body">
+
+                <table class="table table-striped table-condensed">
+                    <thead>
+                        <tr>
+                            <th>Ricevuta</th>
+                            <th>Volontario</th>
+                            <th>Registrata <i class="fa fa-fw fa-caret-down"></i></th>
+                            <th>Scarica</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for r in ultime_quote %}
+
+                        <tr {% if r.stato == r.ANNULLATA %}
+                                class="danger"
+                            {% elif r == appena_registrata %}
+                                class="success"
+                            {% endif %}
+                        >
+
+                            <td>
+                                {{ r.anno }}/{{ r.progressivo }}
+                            </td>
+                            <td>{{ r.persona.link|safe }}</td>
+                            <td>{{ r.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                            <td>
+                                <a href="{{ r.url_pdf }}" download>
+                                    <i class="fa fa-fw fa-file-pdf-o"></i> Ricevuta
+                                </a>
+                            </td>
+                        </tr>
+
+
+                        {% empty %}
+                        <tr class="warning">
+                            <td colspan="4">
+                                Nessuna quota associativa registrata.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+            <div class="panel-footer">
+                <i class="fa fa-fw fa-info-circle"></i>
+                Per un elenco di tutte le ricevute registrate nell'anno per il Comitato,
+                visita la pagina <a href="/us/ricevute/">Elenco Ricevute</a>.
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="panel {% if modulo %}panel-primary{% else %}panel-warning{% endif %}">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-plus-circle"></i>
+                    Registra Quota Associativa
+                </h2>
+            </div>
+            {% if modulo %}
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fa fa-fw fa-check"></i>
+                            Registra Quota Volontario
+                        </button>
+                    </form>
+
+                </div>
+                <div class="panel-footer">
+                    <i class="fa fa-fw fa-envelope-o"></i>
+                    Notificheremo al Volontario la registrazione del pagamento,
+                     e gli manderemo la Ricevuta tramite e-mail.
+                </div>
+
+
+            {% else %}
+                <div class="panel-body">
+                    <p class="text-warning grassetto">
+                        <i class="fa fa-fw fa-warning"></i>
+                        Tesseramento {{ anno }} chiuso
+                    </p>
+                    <p>
+                        Il tesseramento per l'anno in corso &egrave;
+                        chiuso e non &egrave; quindi possibile registrare
+                        nuove quote associative in questo momento.
+                    </p>
+                </div>
+
+
+
+            {% endif %}
+        </div>
+
+
+
+    </div>
+
+
+
+
+</div>
+
+
+{% endblock %}
