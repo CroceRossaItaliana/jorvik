@@ -3,7 +3,7 @@ import random
 from django.core.paginator import Paginator
 from django.db.models import Sum
 from django.shortcuts import redirect, get_object_or_404
-
+from django.utils import timezone
 from anagrafica.costanti import REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione, Riserva
@@ -14,7 +14,7 @@ from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
 from base.files import Excel, FoglioExcel
 from base.notifiche import NOTIFICA_INVIA
-from base.utils import poco_fa
+from base.utils import poco_fa, testo_euro, oggi
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
@@ -738,7 +738,17 @@ def us_quote_nuova(request, me):
         importo = modulo.cleaned_data['importo']
         data_versamento = modulo.cleaned_data['data_versamento']
 
-        if tesseramento.pagante(volontario, attivi=True, ordinari=False):
+        if importo < tesseramento.quota_attivo:
+            modulo.add_error('importo', 'L\'importo minimo per il %d e\' di EUR %s.' % (
+                questo_anno, testo_euro(tesseramento.quota_attivo)
+            ))
+
+        elif data_versamento.year != questo_anno or data_versamento > oggi():
+            modulo.add_error('data_versamento', 'La data di versamento deve essere nel %d e '
+                                                'non può essere nel futuro.' % questo_anno)
+
+
+        elif tesseramento.pagante(volontario, attivi=True, ordinari=False):
             modulo.add_error('volontario', 'Questo volontario ha già pagato la Quota '
                                            'associativa per l\'anno %d' % questo_anno)
 
