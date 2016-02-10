@@ -75,14 +75,10 @@ def formazione_corsi_base_direttori(request, me, pk):
         return redirect(ERRORE_PERMESSI)
 
     continua_url = corso.url
-    #print("A %s %s" % (request.session['corso_base_creato'], pk,))
 
     if 'corso_base_creato' in request.session and int(request.session['corso_base_creato']) == int(pk):
-        print("B %s %s" % (request.session['corso_base_creato'], pk,))
-        continua_url = "/formazione/corsi-base/4/fine/"
+        continua_url = "/formazione/corsi-base/%d/fine/" % (int(pk),)
         del request.session['corso_base_creato']
-
-    print("Continua a %s" % (continua_url,))
 
     contesto = {
         "delega": DIRETTORE_CORSO,
