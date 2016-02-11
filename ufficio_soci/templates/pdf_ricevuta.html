@@ -10,12 +10,11 @@
 	<div align=right STYLE="padding-top: 0.3cm; margin-right: 4cm;"><strong>Croce Rossa Italiana</strong></div>
 	<div align=right STYLE="margin-right: 4cm"><strong>{{ quota.sede.comitato }}</strong></div>
 	<P STYLE="margin-bottom: 0cm"><BR></P>
+
+            <P STYLE="margin-bottom: 0cm"><em>Ricevuta N.</em> {{ quota.anno }}/{{ quota.progressivo }}</P>
+
     <TABLE WIDTH=100% CELLPADDING=4 CELLSPACING=0>
-		<TR VALIGN=TOP>
-            <TD WIDTH=100% STYLE="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: none; padding-top: 0.1cm; padding-bottom: 0.1cm; padding-left: 0.1cm; padding-right: 0cm">
-                <P STYLE="margin-bottom: 0cm"><em>Ricevuta N.</em> {{ quota.anno }}/{{ quota.progressivo }}</P>
-            </TD>
-		</TR>
+
         <TR VALIGN=TOP>
             <TD WIDTH=50% STYLE="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: none; padding-top: 0.1cm; padding-bottom: 0.1cm; padding-left: 0.1cm; padding-right: 0cm">
                 <P STYLE="margin-bottom: 0cm"><em>Volontario:</em>{{ quota.persona.nome_completo }}</P>
