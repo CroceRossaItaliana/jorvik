@@ -324,9 +324,8 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF, ConVecchioID):
     @classmethod
     @concept
     def per_sede(cls, sede):
-        comitato = sede.comitato
         return Q(
-            appartenenza__sede=comitato,
+            sede=sede.comitato,
         )
 
     def _genera_progessivo(self):
