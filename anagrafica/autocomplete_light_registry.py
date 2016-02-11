@@ -52,6 +52,12 @@ class PersonaAutocompletamento(AutocompletamentoBase):
         )
 
 
+class SostenitoreAutocompletamento(PersonaAutocompletamento):
+    def choices_for_request(self):
+        self.choices = self.choices.filter(Appartenenza.query_attuale(membro=Appartenenza.SOSTENITORE).via("appartenenze"))
+        return super(SostenitoreAutocompletamento, self).choices_for_request()
+
+
 class SedeAutocompletamento(AutocompletamentoBase):
     search_fields = ['nome', 'genitore__nome', ]
     model = Sede
@@ -69,5 +75,6 @@ class SedeNuovoCorsoAutocompletamento(SedeAutocompletamento):
 
 
 autocomplete_light.register(PersonaAutocompletamento)
+autocomplete_light.register(SostenitoreAutocompletamento)
 autocomplete_light.register(SedeAutocompletamento)
 autocomplete_light.register(SedeNuovoCorsoAutocompletamento)

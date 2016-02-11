@@ -2,13 +2,14 @@ import random
 from datetime import timezone, date
 
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Max
 
 from anagrafica.models import Persona, Appartenenza, Sede
 from base.files import PDF
 from base.models import ModelloSemplice, ConAutorizzazioni, ConVecchioID
 from base.tratti import ConMarcaTemporale, ConPDF
-from base.utils import concept, UpperCaseCharField, ean13_carattere_di_controllo
+from base.utils import concept, UpperCaseCharField, ean13_carattere_di_controllo, questo_anno, oggi
+from posta.models import Messaggio
 
 __author__ = 'alfioemanuele'
 
@@ -112,14 +113,8 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     )
     stato = models.CharField(choices=STATO, default=APERTO, max_length=1)
 
-    def default_anno(self):
-        return timezone.now().year
-
-    def default_inizio(self):
-        return timezone.now().date()
-
-    anno = models.SmallIntegerField(db_index=True, unique=True, default=default_anno)
-    inizio = models.DateField(db_index=True, default=default_inizio)
+    anno = models.SmallIntegerField(db_index=True, unique=True, default=questo_anno)
+    inizio = models.DateField(db_index=True, default=oggi)
 
     quota_attivo = models.FloatField(default=8.00)
     quota_ordinario = models.FloatField(default=16.00)
@@ -129,7 +124,7 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
 
     @property
     def accetta_pagamenti(self):
-        return self.stato == self.APERTO and timezone.now().date() >= self.inizio
+        return self.stato == self.APERTO and oggi() >= self.inizio
 
     @classmethod
     def aperto_anno(cls, anno):
@@ -227,6 +222,12 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
             l += [Appartenenza.ORDINARIO]
         return self.passibili_pagamento(membri=l).exclude(pk__in=self.paganti(attivi=attivi, ordinari=ordinari))
 
+    def non_pagante(self, persona, **kwargs):
+        return self.non_paganti(**kwargs).filter(pk=persona.pk).exists()
+
+    def pagante(self, persona, **kwargs):
+        return self.paganti(**kwargs).filter(pk=persona.pk).exists()
+
     @classmethod
     def anni_scelta(cls):
         return ((y, y) for y in [x['anno'] for x in cls.objects.all().values("anno")])
@@ -239,20 +240,16 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
             return None
 
 
-class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF, ConVecchioID):
 
-    def default_anno(self):
-        """
-        Anno di default per la compilazione di una nuova quota.
-        """
-        return timezone.now().year
+
+class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF, ConVecchioID):
 
     persona = models.ForeignKey('anagrafica.Persona', related_name='quote', db_index=True, on_delete=models.CASCADE)
     appartenenza = models.ForeignKey('anagrafica.Appartenenza', null=True, related_name='quote', db_index=True, on_delete=models.SET_NULL)
     sede = models.ForeignKey('anagrafica.Sede', related_name='quote', db_index=True, on_delete=models.PROTECT)
 
     progressivo = models.IntegerField(db_index=True)
-    anno = models.SmallIntegerField(db_index=True, default=default_anno)
+    anno = models.SmallIntegerField(db_index=True, default=questo_anno)
 
     data_versamento = models.DateField(help_text="La data di versamento dell'importo.")
     data_annullamento = models.DateField(null=True, blank=True)
@@ -294,7 +291,8 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF, ConVecchioID):
         return Tesseramento.objects.get(anno=self.anno)
 
     @classmethod
-    def nuova(cls, appartenenza, data_versamento, registrato_da, importo, causale, **kwargs):
+    def nuova(cls, appartenenza, data_versamento, registrato_da, importo,
+              causale, tipo=QUOTA_SOCIO, invia_notifica=True, **kwargs):
         q = Quota(
             appartenenza=appartenenza,
             sede=appartenenza.sede.comitato,
@@ -303,34 +301,40 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF, ConVecchioID):
             registrato_da=registrato_da,
             importo=importo,
             causale=causale,
+            tipo=tipo,
             **kwargs
         )
 
         # Scompone l'importo in Quota e Extra (Donazione)
-        da_pagare = q.tesseramento.importo_da_pagare(q.persona)
+        da_pagare = q.tesseramento().importo_da_pagare(q.persona)
         if importo > da_pagare:
             q.importo = da_pagare
             q.importo_extra = importo - da_pagare
             q.causale_extra = "Donazione"
 
-        q._assegna_progressivo()
+        q.anno = data_versamento.year
+        q.progressivo = q._genera_progessivo()
         q.save()
+
+        if invia_notifica:
+            q._invia_notifica_registrazione()
+
+        return q
 
     @classmethod
     @concept
     def per_sede(cls, sede):
-        comitato = sede.comitato
-        return cls.objects.filter(
-            appartenenza__sede=comitato,
+        return Q(
+            sede=sede.comitato,
         )
 
-    def _assegna_progressivo(self, sede, anno):
-        try:  # Ottiene ultima quota
-            ultima_quota = self.per_sede(sede).filter(anno=anno).latest('progressivo')
-            return ultima_quota.progressivo + 1  # Ritorna prossimo progressivo
+    def _genera_progessivo(self):
+        anno = self.anno
+        sede = self.sede
 
-        except:  # Se prima quota
-            return 1
+        prec = Quota.per_sede(sede).filter(anno=anno) \
+                    .aggregate(max=Max('progressivo'))['max'] or 0
+        return prec + 1
 
     @property
     def importo_totale(self):
@@ -347,4 +351,32 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF, ConVecchioID):
         )
         return pdf
 
+    def annulla(self, annullato_da, invia_notifica=True):
+        self.stato = self.ANNULLATA
+        self.annullato_da = annullato_da
+        self.data_annullamento = oggi()
+        self.save()
+        if invia_notifica:
+            self._invia_notifica_annullamento()
 
+    def _invia_notifica_registrazione(self):
+        Messaggio.costruisci_e_invia(
+            oggetto="Ricevuta %d del %d: %s" % (
+                self.progressivo, self.anno, self.causale
+            ),
+            modello="email_ricevuta_nuova_notifica.html",
+            corpo={"ricevuta": self},
+            mittente=self.registrato_da,
+            destinatari=[self.persona],
+        )
+
+    def _invia_notifica_annullamento(self):
+        Messaggio.costruisci_e_invia(
+            oggetto="ANNULLATA Ricevuta %d del %d" % (
+                self.progressivo, self.anno
+            ),
+            modello="email_ricevuta_annullata_notifica.html",
+            corpo={"ricevuta": self},
+            mittente=self.registrato_da,
+            destinatari=[self.persona],
+        )

@@ -187,6 +187,14 @@ def poco_fa():
     return timezone.now() - timedelta(minutes=1)
 
 
+def oggi():
+    return poco_fa().date()
+
+
+def questo_anno():
+    return poco_fa().year
+
+
 def timedelta_ore(td):
     g, h = td.days, td.seconds/3600
     return h + 24*g

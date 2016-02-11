@@ -113,8 +113,7 @@ def menu(request):
             )),
             ("Aggiungi", (
                 ("Persona", "fa-plus-square", "/us/aggiungi/"),
-                ("Reclama Persona", "fa-plus-square", "/us/reclama/"),
-            )),
+                ("Reclama Persona", "fa-plus-square", "/us/reclama/"),            )),
             ("Pratiche", (
                 ("Nuovo trasferimento", "fa-file-o", "/us/trasferimento/"),
                 ("Nuova estensione", "fa-file-o", "/us/estensione/"),
@@ -122,6 +121,7 @@ def menu(request):
                 ("Nuovo provvedimento", "fa-file-o", "/us/provvedimento/"),
             )),
             ("Quote e ricevute", (
+                ("Registra Quota Associativa", "fa-plus-square", "/us/quote/nuova/"),
                 ("Quote associative", "fa-money", "/us/quote/"),
                 # ("Ricerca quote", "fa-search", "/us/quote/ricerca/"),
                 ("Elenco ricevute", "fa-list", "/us/ricevute/"),

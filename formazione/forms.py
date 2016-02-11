@@ -1,3 +1,4 @@
+import autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
@@ -53,3 +54,10 @@ class ModuloModificaCorsoBase(ModelForm):
         widgets = {
             "descrizione": WYSIWYGSemplice(),
         }
+
+
+class ModuloIscrittiCorsoBaseAggiungi(forms.Form):
+
+    persone = autocomplete_light.ModelMultipleChoiceField("SostenitoreAutocompletamento",
+                                                          help_text="Seleziona i Sostenitori CRI da iscrivere a questo"
+                                                                    " Corso Base.")

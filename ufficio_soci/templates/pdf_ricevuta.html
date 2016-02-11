@@ -2,7 +2,7 @@
 {% load utils %}
 {% load static %}
 {% block css_extra %}
-			body { padding-left: 1cm; padding-right: 1cm; padding-top: 0.5cm; padding-bottom: 0.1cm; background-image: url('{% static 'img/cartaintestata.jpg' %}'); background-position:-80px -70px; }
+			body { padding-left: 1cm; padding-right: 1cm; padding-top: 0.5cm; padding-bottom: 0.1cm; background-image: url('{% static 'img/cartaintestata.jpg' %}'); background-position:-300px -70px; }
 			P { margin-bottom: 0.21cm; direction: ltr; color: #000000; widows: 2; orphans: 2; }
 {% endblock %}
 {% block corpo %}
@@ -68,12 +68,10 @@
         <P STYLE="margin-bottom: 0cm"></P>
     {% endif %}
 
-	<P STYLE="margin-bottom: 0cm"></P><br/>&nbsp;
+
 	<P STYLE="margin-bottom: 0cm">{{ quota.sede.nome }}, {{ quota.data_versamento }}</P>&nbsp;
 	<P STYLE="margin-bottom: 0cm"></P>
 	<P style="font-size: 17px">Contributi ed oblazioni sono esenti dall'imposta di bollo per il combinato disposto degli art. 7 e 8 tabella B del DPR 26-10-1972 n. 642 e successive modificazioni ed integrazioni.</P>
-	<P STYLE="margin-bottom: 0cm"></P>
-	<P STYLE="margin-bottom: 0cm"><br/></P>
-	<P STYLE="margin-bottom: 0cm"><br/></P>
+
 
 {% endblock %}

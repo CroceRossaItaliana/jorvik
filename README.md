@@ -21,6 +21,24 @@ Jorvik viene installato e testato sulle recenti versioni di Python 3, in modo au
 
 \*: *Il deployment non viene ancora effettuato automaticamente.*
 
+
+### Ambienti di sviluppo e staging
+
+| Nome            | Link                                              | Branch              | Stato CI                                                                                                                                         | Destinazione d'uso              | Auto update |
+|-----------------|---------------------------------------------------|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------|-------------|
+| **`leia`**      | [URL](http://leia.staging.sviluppo-gaia.ovh)      | `staging-leia`      | [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=staging-leia)](https://travis-ci.org/CroceRossaItaliana/jorvik)      | Staging, pre-produzione         | Sì          |
+| **`hansolo`**   | [URL](http://hansolo.staging.sviluppo-gaia.ovh)   | `staging-hansolo`   | [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=staging-hansolo)](https://travis-ci.org/CroceRossaItaliana/jorvik)   | Supporto, formazione supporto   | Sì          |
+| **`luke`**      | [URL](http://luke.staging.sviluppo-gaia.ovh)      | `staging-luke`      | [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=staging-luke)](https://travis-ci.org/CroceRossaItaliana/jorvik)      | Testing, QA                     | Sì          |
+| **`chewbacca`** | [URL](http://chewbacca.staging.sviluppo-gaia.ovh) | `staging-chewbacca` | [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=staging-chewbacca)](https://travis-ci.org/CroceRossaItaliana/jorvik) | Sviluppo, pre-staging           | Sì          |
+| **`obiwan`**    | [URL](http://obiwan.staging.sviluppo-gaia.ovh)    | `staging-obiwan`    | [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=staging-obiwan)](https://travis-ci.org/CroceRossaItaliana/jorvik)    | Eventi di formazione, supporter | Sì          |
+
+* Gli ambienti di sviluppo e staging sono ospitati presso la macchina dedicata per la squadra di supporto e sviluppo (`sviluppo-gaia.ovh`), 
+* Le installazioni su questa macchina si aggiornano automaticamente col codice del relativo branch di staging, 
+* Il database viene scaricato settimanalmente dalla installazione in produzione, e tutte le modifiche effettuate nella settimana precedente vengono distrutte, 
+* Le installazioni di staging **non** sono in grado di inoltrare i messaggi di posta -nonostante si illudano di farlo correttamente-,
+* Inoltre, le procedure programmate e periodiche (cron jobs) non vengono eseguite su queste installazioni,
+* Le installazioni sono da considerarsi condivise e, nel caso di utilizzo, l'utente non deve aspettarsi alcuna forma di privacy relativamente ai dati inseriti, garanzia sul servizio, o alcuna forma di affetto da parte degli sviluppatori.
+
 ### Documentazione
 
 Puoi trovare la **[Documentazione sul Wiki del progetto](https://github.com/CroceRossaItaliana/jorvik/wiki)**.

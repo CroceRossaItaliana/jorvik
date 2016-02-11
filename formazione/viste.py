@@ -9,10 +9,15 @@ from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico
+from base.models import Log
 from formazione.elenchi import ElencoPartecipantiCorsiBase
-from formazione.forms import ModuloCreazioneCorsoBase, ModuloModificaLezione, ModuloModificaCorsoBase
+from formazione.forms import ModuloCreazioneCorsoBase, ModuloModificaLezione, ModuloModificaCorsoBase, \
+    ModuloIscrittiCorsoBaseAggiungi
 from formazione.models import CorsoBase, AssenzaCorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase
 from django.utils import timezone
+
+from posta.models import Messaggio
+
 
 @pagina_privata
 def formazione(request, me):
@@ -75,14 +80,10 @@ def formazione_corsi_base_direttori(request, me, pk):
         return redirect(ERRORE_PERMESSI)
 
     continua_url = corso.url
-    #print("A %s %s" % (request.session['corso_base_creato'], pk,))
 
     if 'corso_base_creato' in request.session and int(request.session['corso_base_creato']) == int(pk):
-        print("B %s %s" % (request.session['corso_base_creato'], pk,))
-        continua_url = "/formazione/corsi-base/4/fine/"
+        continua_url = "/formazione/corsi-base/%d/fine/" % (int(pk),)
         del request.session['corso_base_creato']
-
-    print("Continua a %s" % (continua_url,))
 
     contesto = {
         "delega": DIRETTORE_CORSO,
@@ -328,6 +329,59 @@ def aspirante_corso_base_iscritti(request, me, pk):
         "in_attesa": in_attesa,
     }
     return 'aspirante_corso_base_scheda_iscritti.html', contesto
+
+
+@pagina_privata
+def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    if not me.permessi_almeno(corso, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    if not corso.possibile_aggiungere_iscritti:
+        return errore_generico(request, me, titolo="Impossibile aggiungere iscritti",
+                               messaggio="Non si possono aggiungere altri iscritti a questo "
+                                         "stadio della vita del corso base.",
+                               torna_titolo="Torna al corso base", torna_url=corso.url_iscritti)
+
+    modulo = ModuloIscrittiCorsoBaseAggiungi(request.POST or None)
+    risultati = []
+    if modulo.is_valid():
+
+        for persona in modulo.cleaned_data['persone']:
+            esito = corso.persona(persona)
+            ok = False
+
+            if esito in corso.PUOI_ISCRIVERTI or \
+                            esito in corso.NON_PUOI_ISCRIVERTI_SOLO_SE_IN_AUTONOMIA:
+                ok = True
+                p = PartecipazioneCorsoBase(persona=persona, corso=corso)
+                p.save()
+                Log.crea(me, p)
+                Messaggio.costruisci_e_invia(
+                    oggetto="Iscrizione a Corso Base",
+                    modello="email_corso_base_iscritto.html",
+                    corpo={
+                        "persona": persona,
+                        "corso": corso,
+                    },
+                    mittente=me,
+                    destinatari=[persona]
+                )
+
+            risultati += [{
+                "persona": persona,
+                "esito": esito,
+                "ok": ok,
+            }]
+
+    print(risultati)
+    contesto = {
+        "corso": corso,
+        "puo_modificare": True,
+        "modulo": modulo,
+        "risultati": risultati,
+    }
+    return 'aspirante_corso_base_scheda_iscritti_aggiungi.html', contesto
 
 
 @pagina_privata

@@ -1,0 +1,134 @@
+{% extends 'aspirante_corso_base_scheda.html' %}
+
+{% block scheda_titolo %}
+    Aggiungi Iscritti
+{% endblock %}
+
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block scheda_contenuto %}
+
+<div class="row">
+
+    <div class="col-md-4">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-plus-circle"></i>
+                    Aggiungi iscritti
+                </h2>
+            </div>
+            <div class="panel-body">
+                <p>Con questo modulo puoi selezionare uno o pi&ugrave;
+                    <strong>Sostenitori</strong> da iscrivere a questo
+                    corso base.</p>
+                <p>Presidente e Ufficio Soci possono inserire i sostenitori
+                    dal pannello "Soci" > "Aggiungi Persona".</p>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
+                    <p><button type="submit" class="btn btn-block btn-primary">
+                        <i class="fa fa-fw fa-check"></i>
+                        Controlla e iscrivi
+                    </button></p>
+                </form>
+                <p>
+                    <a href="{{ corso.url_iscritti }}" class="btn btn-default btn-block">
+                        <i class="fa fa-fw fa-mail-reply"></i>
+                        Torna all'elenco
+                    </a>
+                </p>
+            </div>
+            <div class="panel-footer">
+                <i class="fa fa-fw fa-envelope-o"></i>
+                Avviseremo per e-mail le persone che verranno
+                 iscritte al corso.
+            </div>
+        </div>
+
+
+    </div>
+
+    <div class="col-md-8">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-cogs"></i>
+                    Esito iscrizione
+                </h2>
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                    <tr>
+                        <th>Persona</th>
+                        <th>Può iscriversi?</th>
+                        <th>Iscritto/a</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in risultati %}
+                        <tr
+                            {% if r.ok %}
+                                class="success"
+                            {% else %}
+                                class="danger"
+                            {% endif %}
+                        >
+                            <td>{{ r.persona.link|safe }}</td>
+                            <td>
+                                {% if r.esito in corso.PUOI_ISCRIVERTI %}
+                                    Può iscriversi
+
+                                {% elif r.esito in corso.SEI_ISCRITTO %}
+                                    Già iscritt{{ r.persona.genere_o_a }} al corso
+
+                                {% elif r.esito in corso.NON_PUOI_ISCRIVERTI_SOLO_SE_IN_AUTONOMIA %}
+                                    Iscrivibile, ma non in autonomia
+
+                                {% elif r.esito in corso.NON_PUOI_ISCRIVERTI  %}
+                                    {% if r.esito == corso.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO %}
+                                        Già volontario
+
+                                    {% elif r.esito == corso.NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO %}
+                                        Già iscritt{{ r.persona.genere_o_a }} a un altro corso
+
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            <td class="grassetto">
+                                {% if r.ok %}
+                                    <i class="fa fa-fw fa-check"></i>
+                                    Sì
+
+                                {% else %}
+                                    <i class="fa fa-fw fa-times"></i>
+                                    No
+
+                                {% endif %}
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+                            <tr class="warning">
+                                <td colspan="3">
+                                    Seleziona una o pi&ugrave; persone da iscrivere al
+                                    corso base. Qui vedrai l'esito della procedura
+                                    di iscrizione.
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
