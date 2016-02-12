@@ -87,6 +87,12 @@
                 </td>
 
                 <td>
+
+                    {% if a in attivita_referenti_modificabili and a.cancellabile %}
+                        <a href="{{ a.url_cancella }}" class="text-danger">
+                            <i class="fa fa-fw fa-trash"></i> cancella attivit&agrave;
+                        </a><br />
+                    {% endif %}
                     <a href="{{ a.url_modifica }}">
                         <i class="fa fa-fw fa-pencil"></i> modifica info
                     </a><br />

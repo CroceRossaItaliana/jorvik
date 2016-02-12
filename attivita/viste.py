@@ -302,6 +302,23 @@ def attivita_scheda_informazioni(request, me=None, pk=None):
 
     return 'attivita_scheda_informazioni.html', contesto
 
+
+@pagina_privata
+def attivita_scheda_cancella(request, me, pk):
+    attivita = get_object_or_404(Attivita, pk=pk)
+    if not me.permessi_almeno(attivita, COMPLETO):
+        return redirect(ERRORE_PERMESSI)
+
+    if not attivita.cancellabile:
+        return errore_generico(request, me, titolo="Attività non cancellabile",
+                               messaggio="Questa attività non può essere cancellata.")
+
+    attivita.delete()
+    return messaggio_generico(request, me, titolo="Attività cancellata",
+                              messaggio="L'attività è stata cancellata con successo.",
+                              torna_titolo="Gestione attività", torna_url="/attivita/gestisci/")
+
+
 @pagina_pubblica
 def attivita_scheda_mappa(request, me=None, pk=None):
     """

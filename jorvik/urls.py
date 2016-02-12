@@ -135,6 +135,7 @@ urlpatterns = [
     url(r'^attivita/reperibilita/$', 'centrale_operativa.viste.attivita_reperibilita'),
     url(r'^attivita/reperibilita/(?P<reperibilita_pk>[0-9]+)/cancella/$', 'centrale_operativa.viste.attivita_reperibilita_cancella'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/$', 'attivita.viste.attivita_scheda_informazioni'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/cancella/$', 'attivita.viste.attivita_scheda_cancella'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/mappa/$', 'attivita.viste.attivita_scheda_mappa'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/partecipanti/$', 'attivita.viste.attivita_scheda_partecipanti'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/$', 'attivita.viste.attivita_scheda_turni'),
