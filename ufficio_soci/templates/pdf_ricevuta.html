@@ -13,26 +13,9 @@
 
             <P STYLE="margin-bottom: 0cm"><em>Ricevuta N.</em> {{ quota.anno }}/{{ quota.progressivo }}</P>
 
-    <TABLE WIDTH=100% CELLPADDING=4 CELLSPACING=0>
+    <P STYLE="margin-bottom: 0cm"><em>Volontario:</em> {{ quota.persona.nome_completo }}</P>
+    <P STYLE="margin-bottom: 0cm"><em>Codice Fiscale:</em> {{ quota.persona.codice_fiscale }}</P>
 
-        <TR VALIGN=TOP>
-            <TD WIDTH=50% STYLE="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: none; padding-top: 0.1cm; padding-bottom: 0.1cm; padding-left: 0.1cm; padding-right: 0cm">
-                <P STYLE="margin-bottom: 0cm"><em>Volontario:</em> {{ quota.persona.nome_completo }}</P>
-            </TD>
-            <TD WIDTH=50% STYLE="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000; padding-top: 0.1cm; padding-bottom: 0.1cm; padding-left: 0.1cm; padding-right: 0cm">
-                <P STYLE="margin-bottom: 0cm"><em>Richiedente:</em> {{ quota.sede.comitato }}</P>
-            </TD>
-        </TR>
-        <TR VALIGN=TOP>
-            <TD WIDTH=50% STYLE="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: none; padding-top: 0.1cm; padding-bottom: 0.1cm; padding-left: 0.1cm; padding-right: 0cm">
-                <P STYLE="margin-bottom: 0cm"><em>Codice Fiscale:</em> {{ quota.persona.codice_fiscale }}</P>
-            </TD>
-            <TD WIDTH=50% STYLE="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000; padding-top: 0.1cm; padding-bottom: 0.1cm; padding-left: 0.1cm; padding-right: 0cm">
-                <P STYLE="margin-bottom: 0cm"><em>Partita IVA:</em> {{ quota.sede.partita_iva }}</P>
-            </TD>
-		</TR>
-
-    </TABLE>
 
 	<P STYLE="margin-bottom: 0cm"><BR></P>
 	<TABLE WIDTH=100% CELLPADDING=4 CELLSPACING=0>
@@ -73,6 +56,16 @@
 	<P STYLE="margin-bottom: 0cm">{{ quota.sede.nome }}, {{ quota.data_versamento }}</P>&nbsp;
 	<P STYLE="margin-bottom: 0cm"></P>
 	<P style="font-size: 17px">Contributi ed oblazioni sono esenti dall'imposta di bollo per il combinato disposto degli art. 7 e 8 tabella B del DPR 26-10-1972 n. 642 e successive modificazioni ed integrazioni.</P>
+
+    <P STYLE="margin-bottom: 0cm"></P><br/>&nbsp;
+            <P STYLE="text-align: right; margin-bottom: 0cm"> {{ quota.sede.locazione.via }}, {{ quota.sede.locazione.civico   }}, {{ quota.sede.locazione.cap }}, {{ quota.sede.locazione.comune }}, Italia<br/>
+
+             <em>Tel.:</em> {{ quota.sede.telefono }}<br/>
+
+            <em>C.F.:</em> {{ quota.sede.partita_iva }}<br/>
+
+           <em>P. IVA:</em> {{ quota.sede.partita_iva }}<br/>
+        </P>
 
 
 {% endblock %}
