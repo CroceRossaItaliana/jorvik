@@ -17,7 +17,7 @@ from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PER
 from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, ModuloModificaTurno, \
     ModuloAggiungiPartecipanti, ModuloCreazioneTurno, ModuloCreazioneArea, ModuloOrganizzaAttivita, \
-    ModuloOrganizzaAttivitaReferente, ModuloStatisticheAttivita
+    ModuloOrganizzaAttivitaReferente, ModuloStatisticheAttivita, ModuloRipetiTurno
 from attivita.models import Partecipazione, Attivita, Turno, Area
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
@@ -381,14 +381,47 @@ def attivita_scheda_turni_nuovo(request, me=None, pk=None):
       "inizio": tra_una_settimana, "fine": tra_una_settimana_e_una_ora,
     })
 
+    modulo_ripeti = ModuloRipetiTurno(request.POST or None, prefix="ripeti")
+
     if modulo.is_valid():
         turno = modulo.save(commit=False)
         turno.attivita = attivita
         turno.save()
+
+        if request.POST.get('ripeti', default="no") == 'si' \
+                and modulo_ripeti.is_valid():
+            numero_ripetizioni = modulo_ripeti.cleaned_data['numero_ripetizioni']
+            giorni = modulo_ripeti.cleaned_data['giorni']
+            print(giorni)
+
+            giorni_ripetuti = 0
+            giorni_nel_futuro = 1
+            while giorni_ripetuti < numero_ripetizioni:
+
+                ripetizione = Turno(
+                    attivita=attivita,
+                    inizio=turno.inizio + timedelta(days=giorni_nel_futuro),
+                    fine=turno.fine + timedelta(days=giorni_nel_futuro),
+                    prenotazione=turno.prenotazione + timedelta(days=giorni_nel_futuro),
+                    minimo=turno.minimo,
+                    massimo=turno.massimo,
+                    nome=turno.nome,
+                )
+
+                if str(ripetizione.inizio.weekday()) in giorni:
+                    giorni_ripetuti += 1
+                    ripetizione.save()
+
+                giorni_nel_futuro += 1
+
+            pass
+
         return redirect(turno.url)
+
 
     contesto = {
         "modulo": modulo,
+        "modulo_ripeti": modulo_ripeti,
         "attivita": attivita,
         "puo_modificare": True
     }

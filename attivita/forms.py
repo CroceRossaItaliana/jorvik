@@ -105,3 +105,35 @@ class ModuloStatisticheAttivita(forms.Form):
 
     sedi = forms.ModelMultipleChoiceField(queryset=Sede.objects.all())
     periodo = forms.ChoiceField(choices=SCELTE, initial=SETTIMANA)
+
+
+class ModuloRipetiTurno(forms.Form):
+
+    # Giorni della settimana numerici, come
+    #  da datetime.weekday()
+    LUNEDI = 0
+    MARTEDI = 1
+    MERCOLEDI = 2
+    GIOVEDI = 3
+    VENERDI = 4
+    SABATO = 5
+    DOMENICA = 6
+    GIORNI = (
+        (LUNEDI, "Lunedì"),
+        (MARTEDI, "Martedì"),
+        (MERCOLEDI, "Mercoledì"),
+        (GIOVEDI, "Giovedì"),
+        (VENERDI, "Venerdì"),
+        (SABATO, "Sabato"),
+        (DOMENICA, "Domenica")
+    )
+
+    TUTTI = (LUNEDI, MARTEDI, MERCOLEDI, GIOVEDI, VENERDI, SABATO, DOMENICA)
+
+    giorni = forms.MultipleChoiceField(choices=GIORNI, initial=TUTTI, required=True,
+                                       help_text="In quali giorni della settimana si svolgerà "
+                                                 "questo turno? Tieni premuto CTRL per selezionare "
+                                                 "più giorni. ")
+
+    numero_ripetizioni = forms.IntegerField(min_value=1, max_value=30, initial=3,
+                                            help_text="Per quanti giorni vuoi ripetere questo turno? ")
