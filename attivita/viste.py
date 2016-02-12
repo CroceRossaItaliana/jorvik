@@ -367,9 +367,6 @@ def attivita_scheda_turni_nuovo(request, me=None, pk=None):
     Pagina di creazione di un nuovo turno
     """
 
-    if False:
-        return ci_siamo_quasi(request, me)
-
     attivita = get_object_or_404(Attivita, pk=pk)
     if not me.permessi_almeno(attivita, MODIFICA):
         redirect(ERRORE_PERMESSI)
@@ -426,6 +423,23 @@ def attivita_scheda_turni_nuovo(request, me=None, pk=None):
         "puo_modificare": True
     }
     return 'attivita_scheda_turni_nuovo.html', contesto
+
+
+@pagina_privata
+def attivita_scheda_turni_turno_cancella(request, me, pk=None, turno_pk=None):
+    turno = Turno.objects.get(pk=turno_pk)
+    attivita = turno.attivita
+    if not me.permessi_almeno(attivita, MODIFICA):
+        redirect(ERRORE_PERMESSI)
+
+    precedente = attivita.turni.all().filter(inizio__lt=turno.inizio).order_by('inizio').last()
+    if precedente:
+        url_torna = precedente.url_modifica
+    else:
+        url_torna = attivita.url_turni_modifica
+
+    turno.delete()
+    return redirect(url_torna)
 
 
 @pagina_privata

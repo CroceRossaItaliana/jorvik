@@ -359,6 +359,10 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         return "%sturni/modifica/link-permanente/%d/" % (self.attivita.url, self.pk)
 
     @property
+    def url_cancella(self):
+        return "%sturni/cancella/%d/" % (self.attivita.url, self.pk)
+
+    @property
     def url_partecipa(self):
         return "%sturni/%d/partecipa/" % (self.attivita.url, self.pk)
 

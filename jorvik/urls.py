@@ -143,6 +143,7 @@ urlpatterns = [
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/(?P<turno_pk>[0-9]+)/ritirati/$', 'attivita.viste.attivita_scheda_turni_ritirati'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/(?P<turno_pk>[0-9]+)/partecipanti/$', 'attivita.viste.attivita_scheda_turni_partecipanti'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/link-permanente/(?P<turno_pk>[0-9]+)/$', 'attivita.viste.attivita_scheda_turni_link_permanente'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/cancella/(?P<turno_pk>[0-9]+)/$', 'attivita.viste.attivita_scheda_turni_turno_cancella'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/modifica/$', 'attivita.viste.attivita_scheda_turni_modifica'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/nuovo/$', 'attivita.viste.attivita_scheda_turni_nuovo'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/partecipazione/(?P<partecipazione_pk>[0-9]+)/cancella/$', 'attivita.viste.attivita_scheda_partecipazione_cancella'),
