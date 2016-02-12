@@ -761,6 +761,7 @@ def us_quote_nuova(request, me):
         else:
 
             appartenenza = volontario.appartenenze_attuali(al_giorno=data_versamento, membro=Appartenenza.VOLONTARIO).first()
+            comitato = appartenenza.sede.comitato
 
             if appartenenza.sede not in sedi:
                 modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
@@ -768,6 +769,18 @@ def us_quote_nuova(request, me):
             elif not appartenenza:
                 modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
                                                     'alla Sede.')
+
+            elif not comitato.locazione:
+                return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
+                                       messaggio="Per poter rilasciare ricevute, è necessario impostare un indirizzo "
+                                                 "per la Sede del Comitato di %s. Il Presidente può gestire i dati "
+                                                 "della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+
+            elif not comitato.codice_fiscale:
+                return errore_generico(request, me, titolo="Necessario impostare codice fiscale del Comitato",
+                                       messaggio="Per poter rilasciare ricevute, è necessario impostare un "
+                                                 "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
+                                                 "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
 
             else:
                 # OK, paga quota!

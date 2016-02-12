@@ -1180,6 +1180,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     attiva = models.BooleanField("Attiva", default=True, db_index=True)
 
+    @property
     def sorgente_slug(self):
         if self.genitore:
             return str(self.genitore.slug) + "-" + self.nome
