@@ -108,8 +108,8 @@ class ConStorico(models.Model):
             inizio = datetime.combine(al_giorno, datetime.max.time())  # 23.59
             fine = datetime.combine(al_giorno, datetime.min.time())  # 0.00
 
-        fine += timedelta(seconds=1)  # Anti-bug
-        fine -= timedelta(minutes=5)  # Anti-bug
+        #fine += timedelta(seconds=1)  # Anti-bug
+        #fine -= timedelta(minutes=5)  # Anti-bug
 
         risultato = Q(
             Q(inizio__lte=inizio),
