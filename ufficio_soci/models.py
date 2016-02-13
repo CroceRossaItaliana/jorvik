@@ -1,11 +1,13 @@
 import random
-from datetime import timezone, date
+from datetime import timezone, date, timedelta
 
+import barcode
+from barcode.writer import ImageWriter
 from django.db import models
 from django.db.models import Q, Max
 
 from anagrafica.models import Persona, Appartenenza, Sede
-from base.files import PDF
+from base.files import PDF, EAN13
 from base.models import ModelloSemplice, ConAutorizzazioni, ConVecchioID
 from base.tratti import ConMarcaTemporale, ConPDF
 from base.utils import concept, UpperCaseCharField, ean13_carattere_di_controllo, questo_anno, oggi
@@ -22,6 +24,8 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
 
     persona = models.ForeignKey('anagrafica.Persona', related_name='tesserini', on_delete=models.CASCADE)
     emesso_da = models.ForeignKey('anagrafica.Sede', related_name='tesserini_emessi', on_delete=models.PROTECT)
+
+    SCADENZA_ANNI = 5
 
     RILASCIO = "RIL"
     RINNOVO = "RIN"
@@ -77,6 +81,10 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
             self._assegna_nuovo_codice()
         return self.codice
 
+    @property
+    def data_scadenza(self):
+        return self.creazione.date() + timedelta(days=365 * self.SCADENZA_ANNI)
+
     @classmethod
     def _genera_nuovo_codice(cls):
         """
@@ -92,6 +100,14 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
             if not cls.objects.filter(codice=codice).exists():
                 return codice
 
+    def genera_codice_a_barre_png(self):
+        codice = EAN13(oggetto=self)
+        codice.genera_e_salva(
+            codice=self.codice,
+            nome="%s.png" % self.codice,
+        )
+        return codice
+
     def _assegna_nuovo_codice(self):
         """
         NON USARE DIRETTAMENTE! Genera un nuovo codice.
@@ -101,6 +117,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
         self.codice = Tesserino._genera_nuovo_codice()
 
     def genera_pdf(self):
+        codice = self.genera_codice_a_barre_png()
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva(
             "Tesserino %s.pdf" % self.codice,
@@ -109,6 +126,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
                 "tesserino": self,
                 "persona": self.persona,
                 "sede": self.persona.sede_riferimento(al_giorno=self.creazione),
+                "codice": codice,
             },
             formato=PDF.FORMATO_CR80,
             orientamento=PDF.ORIENTAMENTO_ORIZZONTALE,

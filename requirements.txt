@@ -32,3 +32,4 @@ newrelic==2.60.0.46
 django_compressor==2.0
 csscompressor==0.9.4
 slimit==0.8.1
+pyBarcode==0.7

@@ -47,7 +47,10 @@
 			display: block;
 			float: left;
 			position: absolute;
-			font-family: "Arial";
+			font-family: "Helvetica";
+        {% comment %}
+            font-family: "Arial";
+        {% endcomment %}
 			font-size: 10pt;
 		}
 
@@ -60,7 +63,10 @@
 			float: left;
 			position: absolute;
 			font-weight: bold;
-			font-family: "Arial";
+			font-family: "Helvetica";
+        {% comment %}
+            font-family: "Arial";
+        {% endcomment %}
 			font-size: 6pt;
 		}
 
@@ -68,7 +74,10 @@
 			display: block;
 			float: left;
 			position: absolute;
-			font-family: "Arial";
+			font-family: "Helvetica";
+        {% comment %}
+            font-family: "Arial";
+        {% endcomment %}
 			font-size: 10pt;
 			font-weight: bold;
 			color: rgb(123, 121, 121);
@@ -81,8 +90,10 @@
 			display: block;
 			float: left;
 			position: absolute;
-			font-family: "Arial Italic";
-			font-size: 4pt;
+			font-family: "Helvetica Italic";
+        {% comment %}
+            font-family: "Arial Italic";
+        {% endcomment %}
 			font-style: italic;
 		}
 
@@ -115,13 +126,15 @@
 		}
 
 		.testo-comitato {
-			top: 3.18cm;
+			top: 3.16cm;
 			left: 1.30cm;
+            font-size: 4.7pt;
 		}
 
 		.testo-scadenza {
-			top: 3.45cm;
+			top: 3.40cm;
 			left: 5.65cm;
+            font-size: 5.4pt;
 		}
 
 		.testo-volontario {
@@ -162,7 +175,7 @@
 	<!-- Fronte -->
     <div class="fronte">
         <img id="fronte_img" src="{% static 'img/tesserino/FronteAttivo.jpg' %}" alt="FRONTE" />
-        <span class="testo-volontario">VOLONTAR{{ persona.genere_a_o|upper }}</span>
+        <span class="testo-volontario">VOLONTARI{{ persona.genere_o_a|upper }}</span>
         <span class="testo-nome"		>{{ persona.nome }}</span>
         <span class="testo-cognome"		>{{ persona.cognome }}</span>
         <span class="testo-cf"		>{{ persona.codice_fiscale }}</span>
@@ -185,9 +198,9 @@
         <span class="testo-comitato">
             {{ sede.locazione }}
         </span>.
-        <span class="testo-scadenza"> <i>Data di scadenza:</i> {{ tesserino.data_scadenza|date:"%d/%m" }}</span>
+        <span class="testo-scadenza"> <i>Data di scadenza:</i> {{ tesserino.data_scadenza|date:"d/m" }}</span>
         <div id="barcode" alt="barcode">
-        	<img src="_BARCODE" />
+        	<img src="{{ codice.file.url }}" />
         </div>
 
     </div>

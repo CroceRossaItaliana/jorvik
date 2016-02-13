@@ -1,6 +1,9 @@
 import os
 from datetime import datetime, date
 from zipfile import ZipFile
+
+from barcode import generate
+from barcode.writer import ImageWriter
 from django.core.files import File
 from django.template import Context
 from django.template.loader import get_template
@@ -67,6 +70,34 @@ class Zip(Allegato):
         :return:
         """
         self.comprimi(nome, **kwargs)
+        self.nome = nome
+        self.scadenza = scadenza
+        self.save()
+
+
+class EAN13(Allegato):
+    """
+    Rappresenta una immagine di un codice EAN13 in formato PNG.
+    """
+
+    class Meta:
+        proxy = True
+
+    def genera_e_salva(self, codice, nome="Immagine.png", scadenza=None):
+        generatore = GeneratoreNomeFile('allegati/')
+        zname = generatore(self, nome)
+        self.prepara_cartelle(MEDIA_ROOT + zname)
+        pngfile = open(MEDIA_ROOT + zname, 'wb')
+        writer = ImageWriter()
+        writer.dpi = 400
+        generate("EAN13", codice, writer=writer, output=pngfile, writer_options={
+            "quiet_zone": 0.5,
+            "text_distance": 0.5,
+            "module_height": 5.5,
+            "font_size": 13,
+        })
+        pngfile.close()
+        self.file = zname
         self.nome = nome
         self.scadenza = scadenza
         self.save()
