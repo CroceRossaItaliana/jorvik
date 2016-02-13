@@ -198,7 +198,7 @@
         <span class="testo-comitato">
             {{ sede.locazione }}
         </span>.
-        <span class="testo-scadenza"> <i>Data di scadenza:</i> {{ tesserino.data_scadenza|date:"d/m" }}</span>
+        <span class="testo-scadenza"> <i>Data di scadenza:</i> {{ tesserino.data_scadenza|date:"m/Y" }}</span>
         <div id="barcode" alt="barcode">
         	<img src="{{ codice.file.url }}" />
         </div>
