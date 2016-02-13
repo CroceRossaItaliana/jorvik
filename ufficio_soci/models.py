@@ -13,7 +13,8 @@ from posta.models import Messaggio
 
 __author__ = 'alfioemanuele'
 
-class Tesserino(ModelloSemplice, ConMarcaTemporale):
+
+class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
 
     class Meta:
         verbose_name = "Richiesta Tesserino Associativo"
@@ -98,6 +99,21 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale):
          usa invece il metodo assicura_presenza_codice.
         """
         self.codice = Tesserino._genera_nuovo_codice()
+
+    def genera_pdf(self):
+        pdf = PDF(oggetto=self)
+        pdf.genera_e_salva(
+            "Tesserino %s.pdf" % self.codice,
+            modello='pdf_tesserino.html',
+            corpo={
+                "tesserino": self,
+                "persona": self.persona,
+                "sede": self.persona.sede_riferimento(al_giorno=self.creazione),
+            },
+            formato=PDF.FORMATO_CR80,
+            orientamento=PDF.ORIENTAMENTO_ORIZZONTALE,
+        )
+        return pdf
 
 
 class Tesseramento(ModelloSemplice, ConMarcaTemporale):
@@ -283,6 +299,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF, ConVecchioID):
     class Meta:
         verbose_name_plural = "Quote"
         unique_together = ('progressivo', 'anno', 'sede',)
+        ordering = ['anno', 'progressivo']
 
     def tesseramento(self):
         """

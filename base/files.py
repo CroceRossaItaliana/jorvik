@@ -84,6 +84,7 @@ class PDF(Allegato):
     ORIENTAMENTO_VERTICALE = 'portrait'
 
     FORMATO_A4 = 'a4'
+    FORMATO_CR80 = 'cr80'
 
     def genera_e_salva(self, nome='File.pdf', scadenza=None, corpo={}, modello='pdf_vuoto.html',
                        orientamento=ORIENTAMENTO_VERTICALE, formato=FORMATO_A4):
