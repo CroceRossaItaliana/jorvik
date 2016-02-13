@@ -38,19 +38,23 @@
                     {{ sede.get_estensione_display }}
                 </h4>
 
+                <dl class="dl-horizontal">
                 {% if sede.email %}
-                    <p>
-                        <i class="fa fa-fw fa-envelope-o"></i>
-                        <a href="mailto:{{ sede.email }}">{{ sede.email }}</a>
-                    </p>
+                    <dt>E-mail <i class="fa fa-fw fa-envelope-o"></i></dt>
+                    <dd><a href="mailto:{{ sede.email }}">{{ sede.email }}</a></dd>
                 {% endif %}
 
                 {% if sede.telefono %}
-                    <p>
-                        <i class="fa fa-fw fa-phone"></i>
-                        {{ sede.telefono }}
-                    </p>
+                    <dt>Numero di telefono <i class="fa fa-fw fa-phone"></i></dt>
+                    <dd>{{ sede.telefono }}</dd>
                 {% endif %}
+
+                {% if presidente %}
+                    <dt>Presidente <i class="fa fa-fw fa-user"></i></dt>
+                    <dd>{{ presidente.link|safe }}</dd>
+                {% endif %}
+
+                </dl>
 
 
 

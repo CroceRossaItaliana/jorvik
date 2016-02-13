@@ -137,6 +137,7 @@ def informazioni_sede(request, me, slug):
         'sede': sede,
         'vicini': vicini,
         'da_mostrare': vicini | sede.ottieni_discendenti(includimi=True),
+        'presidente': sede.presidente(),
     }
     return 'base_informazioni_sede.html', contesto
 
