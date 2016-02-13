@@ -118,6 +118,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
 
     def genera_pdf(self):
         codice = self.genera_codice_a_barre_png()
+        sede = self.persona.sede_riferimento(al_giorno=self.creazione).comitato
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva(
             "Tesserino %s.pdf" % self.codice,
@@ -125,7 +126,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
             corpo={
                 "tesserino": self,
                 "persona": self.persona,
-                "sede": self.persona.sede_riferimento(al_giorno=self.creazione),
+                "sede": sede,
                 "codice": codice,
             },
             formato=PDF.FORMATO_CR80,
