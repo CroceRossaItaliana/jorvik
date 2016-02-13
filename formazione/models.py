@@ -236,15 +236,15 @@ class CorsoBase(Corso, ConVecchioID):
     def partecipazioni_ritirate(self):
         return PartecipazioneCorsoBase.con_esito_ritirata().filter(corso=self)
 
-    def attiva(self):
+    def attiva(self, rispondi_a=None):
         if not self.attivabile():
             raise ValueError("Questo corso non è attivabile.")
 
-        self._invia_email_agli_aspiranti()
+        self._invia_email_agli_aspiranti(rispondi_a=rispondi_a)
         self.stato = self.ATTIVO
         self.save()
 
-    def _invia_email_agli_aspiranti(self):
+    def _invia_email_agli_aspiranti(self, rispondi_a=None):
         for aspirante in self.aspiranti_nelle_vicinanze():
             persona = aspirante.persona
             Messaggio.costruisci_e_accoda(
@@ -255,6 +255,7 @@ class CorsoBase(Corso, ConVecchioID):
                     "corso": self,
                 },
                 destinatari=[persona],
+                rispondi_a=rispondi_a
             )
 
 

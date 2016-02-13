@@ -298,7 +298,7 @@ def aspirante_corso_base_attiva(request, me, pk):
     testo = get_template("email_aspirante_corso_inc_testo.html").render(Context(corpo))
 
     if request.POST:
-        corso.attiva()
+        corso.attiva(rispondi_a=me)
         return messaggio_generico(request, me, titolo="Corso attivato con successo",
                                   messaggio="A breve tutti gli aspiranti nelle vicinanze verranno informati "
                                             "dell'attivazione di questo corso base.",
