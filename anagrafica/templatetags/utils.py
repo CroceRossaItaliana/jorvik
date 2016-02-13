@@ -102,6 +102,8 @@ def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None, alme
 
 @register.assignment_tag(takes_context=True)
 def giorni_ore_minuti(context, tdelta):
+    if not tdelta:
+        return 0, 0, 0
     return tdelta.days, tdelta.seconds//3600, (tdelta.seconds//60)%60
 
 
