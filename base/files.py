@@ -61,7 +61,7 @@ class Zip(Allegato):
 
         self.file = zname
 
-    def comprimi_e_salva(self, nome='Archivio.zip', scadenza=domani(), **kwargs):
+    def comprimi_e_salva(self, nome='Archivio.zip', scadenza=None, **kwargs):
         """
         Scorciatoia per comprimi() e effettuare il salvataggio dell'allegato in database.
         :param nome: Il nome del file da allegare (opzionale, default 'Archivio.zip').
@@ -69,6 +69,7 @@ class Zip(Allegato):
         :param kwargs:
         :return:
         """
+        scadenza = scadenza or domani()
         self.comprimi(nome, **kwargs)
         self.nome = nome
         self.scadenza = scadenza
@@ -97,6 +98,7 @@ class EAN13(Allegato):
             "font_size": 13,
         })
         pngfile.close()
+        scadenza = scadenza or domani()
         self.file = zname
         self.nome = nome
         self.scadenza = scadenza
