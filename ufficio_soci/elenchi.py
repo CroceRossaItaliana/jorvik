@@ -393,6 +393,10 @@ class ElencoQuote(ElencoVistaSoci):
         # Ora filtra per Sede
         return origine.filter(
             appartenenze__sede__in=qs_sedi,
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related('quote').distinct('cognome', 'nome', 'codice_fiscale')
 
     def excel_colonne(self):
