@@ -275,9 +275,7 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
             return None
 
 
-
-
-class Quota(ModelloSemplice, ConMarcaTemporale, ConPDF, ConVecchioID):
+class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
 
     persona = models.ForeignKey('anagrafica.Persona', related_name='quote', db_index=True, on_delete=models.CASCADE)
     appartenenza = models.ForeignKey('anagrafica.Appartenenza', null=True, related_name='quote', db_index=True, on_delete=models.SET_NULL)

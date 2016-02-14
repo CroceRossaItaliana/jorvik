@@ -359,8 +359,15 @@ def pdf(request, me, app_label, model, pk):
     if not isinstance(oggetto, ConPDF):
         return errore_generico(request, None,
                                messaggio="Impossibile generare un PDF per il tipo specificato.")
-    if not me.permessi_almeno(oggetto, LETTURA):
+
+    if 'token' in request.GET:
+        if not oggetto.token_valida(request.GET['token']):
+            return errore_generico(request, me, titolo="Token scaduta",
+                                   messaggio="Il link usato è scaduto.")
+
+    elif not me.permessi_almeno(oggetto, LETTURA):
         return redirect(ERRORE_PERMESSI)
+
     pdf = oggetto.genera_pdf()
     return redirect(pdf.download_url)
 

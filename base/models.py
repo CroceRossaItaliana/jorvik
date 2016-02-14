@@ -678,7 +678,8 @@ class Token(ModelloSemplice, ConMarcaTemporale):
     valido_ore = models.IntegerField(default=24)
 
     def valido(self):
-        return timezone.now() <= self.creazione + timedelta(hours=self.valido_ore)
+        from django.utils import timezone
+        return timezone.now() <= (self.creazione + timedelta(hours=self.valido_ore))
 
     @classmethod
     def genera(cls, persona, redirect="/", valido_ore=24):
@@ -709,7 +710,7 @@ class Token(ModelloSemplice, ConMarcaTemporale):
 
         """
         try:
-            token = cls.get(codice=token)
+            token = cls.objects.get(codice=token)
             if token.valido():
                 return token.persona, token.redirect
             else:
