@@ -388,6 +388,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         Ottiene l'eta' in anni del volontario.
         """
+        if not self.data_nascita:
+            return 0
         al_giorno = al_giorno or date.today()
         return al_giorno.year - self.data_nascita.year - ((al_giorno.month, al_giorno.day) < (self.data_nascita.month, self.data_nascita.day))
 
