@@ -4,22 +4,21 @@
 {% load bootstrap3 %}
 
 {% block pagina_titolo %}
-    Nuova Quota Volontario
+    Nuova Ricevuta
 {% endblock %}
 
 {% block app_contenuto %}
 
-
 <div class="alert alert-info">
     <p class="grassetto">
         <i class="fa fa-fw fa-info-circle"></i>
-        Da questa pagina puoi registrare la ricezione di una Quota Associativa
-         da un Volontario.
+        Da questa pagina puoi registrare una nuova ricevuta generica, oppure una
+         ricevuta del versamento di un Sostenitore CRI.
     </p>
     <p>
         <i class="fa fa-fw fa-question-circle"></i>
-        Vuoi registrare invece una ricevuta generica o una ricevuta per un Sostenitore CRI?
-        Vai a <a href="/us/ricevute/nuova/">Registra Ricevuta</a>.
+        Vuoi registrare invece una Quota Associativa per un Volontario?
+        Vai a <a href="/us/quote/nuova/">Registra Quota Associativa</a>.
     </p>
 </div>
 
@@ -31,7 +30,7 @@
             <div class="panel-heading">
                 <h2 class="panel-title">
                     <i class="fa fa-fw fa-clock-o"></i>
-                    Ultime quote associative registrate da {{ me.nome_completo }}
+                    Ultime ricevute registrate da {{ me.nome_completo }}
                 </h2>
             </div>
             <div class="panel-body">
@@ -40,7 +39,7 @@
                     <thead>
                         <tr>
                             <th>Ricevuta</th>
-                            <th>Volontario</th>
+                            <th>Persona</th>
                             <th>Registrata <i class="fa fa-fw fa-caret-down"></i></th>
                             <th>Scarica</th>
                         </tr>
@@ -72,7 +71,7 @@
                         {% empty %}
                         <tr class="warning">
                             <td colspan="4">
-                                Nessuna quota associativa registrata.
+                                Nessuna ricevuta registrata.
                             </td>
                         </tr>
 
@@ -96,44 +95,27 @@
             <div class="panel-heading">
                 <h2 class="panel-title">
                     <i class="fa fa-fw fa-plus-circle"></i>
-                    Registra Quota Associativa
+                    Registra Ricevuta
                 </h2>
             </div>
-            {% if modulo %}
-                <div class="panel-body">
-                    <form method="POST">
-                        {% csrf_token %}
-                        {% bootstrap_form modulo %}
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fa fa-fw fa-check"></i>
-                            Registra Quota Volontario
-                        </button>
-                    </form>
+            <div class="panel-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fa fa-fw fa-check"></i>
+                        Registra Ricevuta
+                    </button>
+                </form>
 
-                </div>
-                <div class="panel-footer">
-                    <i class="fa fa-fw fa-envelope-o"></i>
-                    Notificheremo al Volontario la registrazione del pagamento,
-                     e gli manderemo la Ricevuta tramite e-mail.
-                </div>
-
-
-            {% else %}
-                <div class="panel-body">
-                    <p class="text-warning grassetto">
-                        <i class="fa fa-fw fa-warning"></i>
-                        Tesseramento {{ anno }} chiuso
-                    </p>
-                    <p>
-                        Il tesseramento per l'anno in corso &egrave;
-                        chiuso e non &egrave; quindi possibile registrare
-                        nuove quote associative in questo momento.
-                    </p>
-                </div>
+            </div>
+            <div class="panel-footer">
+                <i class="fa fa-fw fa-envelope-o"></i>
+                Notificheremo alla persona la registrazione del pagamento,
+                 e gli manderemo la Ricevuta tramite e-mail.
+            </div>
 
 
-
-            {% endif %}
         </div>
 
 

@@ -23,7 +23,7 @@ from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVo
     ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
-    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario
+    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta
 from ufficio_soci.models import Quota, Tesseramento, Tesserino
 
 
@@ -795,8 +795,7 @@ def us_quote_nuova(request, me):
                 )
                 return redirect("/us/quote/nuova/?appena_registrata=%d" % (ricevuta.pk,))
 
-
-    ultime_quote = Quota.objects.filter(registrato_da=me).order_by('-creazione')[:15]
+    ultime_quote = Quota.objects.filter(registrato_da=me, tipo=Quota.QUOTA_SOCIO).order_by('-creazione')[:15]
 
     contesto = {
         "modulo": modulo,
@@ -805,6 +804,77 @@ def us_quote_nuova(request, me):
         "appena_registrata": appena_registrata,
     }
     return 'us_quote_nuova.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_ricevute_nuova(request, me):
+
+    sedi = me.oggetti_permesso(GESTIONE_SOCI)
+
+    questo_anno = poco_fa().year
+
+    appena_registrata = Quota.objects.get(pk=request.GET['appena_registrata']) \
+        if 'appena_registrata' in request.GET else None
+
+    modulo = ModuloNuovaRicevuta(request.POST or None)
+
+    if modulo.is_valid():
+
+        persona = modulo.cleaned_data['persona']
+        tipo_ricevuta = modulo.cleaned_data['tipo_ricevuta']
+        causale = modulo.cleaned_data['causale']
+        importo = modulo.cleaned_data['importo']
+        data_versamento = modulo.cleaned_data['data_versamento']
+
+        appartenenza = persona.appartenenze_attuali(al_giorno=data_versamento,
+                                                    sede__in=sedi).first()
+        comitato = appartenenza.sede.comitato
+
+        if not appartenenza:
+            modulo.add_error('data_versamento', 'In questa data, la persona non risulta appartenente '
+                                                'come Volontario o Sostenitore per alla Sede.')
+
+        elif tipo_ricevuta == Quota.QUOTA_SOSTENITORE and appartenenza.membro != Appartenenza.SOSTENITORE:
+            modulo.add_error('persona', 'Questa persona non è registrata come Sostenitore CRI '
+                                        'della Sede. Non è quindi possibile registrare la Ricevuta '
+                                        'come Sostenitore CRI.')
+
+        elif not comitato.locazione:
+            return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
+                                   messaggio="Per poter rilasciare ricevute, è necessario impostare un indirizzo "
+                                             "per la Sede del Comitato di %s. Il Presidente può gestire i dati "
+                                             "della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+
+        elif not comitato.codice_fiscale:
+            return errore_generico(request, me, titolo="Necessario impostare codice fiscale del Comitato",
+                                   messaggio="Per poter rilasciare ricevute, è necessario impostare un "
+                                             "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
+                                             "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+
+        else:
+            # OK, paga quota!
+            ricevuta = Quota.nuova(
+                appartenenza=appartenenza,
+                data_versamento=data_versamento,
+                registrato_da=me,
+                importo=importo,
+                causale=causale,
+                tipo=tipo_ricevuta,
+                invia_notifica=True
+            )
+            return redirect("/us/ricevute/nuova/?appena_registrata=%d" % (ricevuta.pk,))
+
+    ultime_quote = Quota.objects.filter(
+        registrato_da=me, tipo__in=[Quota.RICEVUTA, Quota.QUOTA_SOSTENITORE]
+    ).order_by('-creazione')[:15]
+
+    contesto = {
+        "modulo": modulo,
+        "ultime_quote": ultime_quote,
+        "anno": questo_anno,
+        "appena_registrata": appena_registrata,
+    }
+    return 'us_ricevute_nuova.html', contesto
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))

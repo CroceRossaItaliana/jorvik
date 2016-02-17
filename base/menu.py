@@ -124,6 +124,7 @@ def menu(request):
                 ("Registra Quota Associativa", "fa-plus-square", "/us/quote/nuova/"),
                 ("Quote associative", "fa-money", "/us/quote/"),
                 # ("Ricerca quote", "fa-search", "/us/quote/ricerca/"),
+                ("Registra Ricevuta", "fa-plus-square", "/us/ricevute/nuova/"),
                 ("Elenco ricevute", "fa-list", "/us/ricevute/"),
             )),
             #("Tesserini", (

@@ -7,8 +7,7 @@ from django.forms import ModelForm
 
 from anagrafica.forms import ModuloStepAnagrafica
 from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva, Trasferimento
-from autenticazione.forms import ModuloCreazioneUtenza
-from curriculum.models import Titolo, TitoloPersonale
+from ufficio_soci.validators import valida_data_non_nel_futuro
 from ufficio_soci.models import Tesseramento, Quota
 
 
@@ -37,7 +36,7 @@ class ModuloElencoElettorato(forms.Form):
         (ELETTORATO_PASSIVO, "Passivo"),
     )
     al_giorno = forms.DateField(help_text="La data delle elezioni.",
-                                    required=True, initial=datetime.date.today)
+                                required=True, initial=datetime.date.today)
     elettorato = forms.ChoiceField(choices=ELETTORATO, initial=ELETTORATO_PASSIVO)
 
 
@@ -228,4 +227,22 @@ class ModuloQuotaVolontario(forms.Form):
 
     importo = forms.FloatField(help_text="Il totale versato in euro, comprensivo dell'eventuale "
                                          "donazione aggiuntiva.")
-    data_versamento = forms.DateField()
+    data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro])
+
+
+class ModuloNuovaRicevuta(forms.Form):
+
+    TIPI = (
+        (Quota.QUOTA_SOSTENITORE, "Ricevuta Sostenitore CRI"),
+        (Quota.RICEVUTA, "Ricevuta Semplice"),
+    )
+    tipo_ricevuta = forms.ChoiceField(choices=TIPI, initial=Quota.QUOTA_SOSTENITORE)
+
+    persona = autocomplete_light.ModelChoiceField("PersonaAutocompletamento",
+                                                  help_text="Seleziona la persona per la quale registrare"
+                                                            " la ricevuta.")
+
+    causale = forms.CharField(min_length=8, max_length=128)
+    importo = forms.FloatField(min_value=0.01, help_text="Il totale versato in euro.")
+
+    data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro])
