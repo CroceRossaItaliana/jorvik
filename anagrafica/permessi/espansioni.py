@@ -5,7 +5,7 @@ __author__ = 'alfioemanuele'
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
     GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, MODIFICA, LETTURA, COMPLETO, \
     GESTIONE_AUTOPARCHI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI_SEDE, GESTIONE, GESTIONE_AREE_SEDE, \
-    GESTIONE_REFERENTI_ATTIVITA, GESTIONE_CENTRALE_OPERATIVA_SEDE
+    GESTIONE_REFERENTI_ATTIVITA, GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI
 
 """
 Questo file gestisce la espansione dei permessi in Gaia.
@@ -32,7 +32,7 @@ def espandi_persona(persona, al_giorno=None):
 
 def espandi_gestione_soci(qs_sedi, al_giorno=None):
     from anagrafica.models import Persona, Appartenenza, Trasferimento, Estensione, Riserva
-    from ufficio_soci.models import Quota
+    from ufficio_soci.models import Quota, Tesserino
     return [
         (MODIFICA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO).via("appartenenze"))),
         (LETTURA,   Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ESTESO).via("appartenenze"))),
@@ -41,7 +41,14 @@ def espandi_gestione_soci(qs_sedi, al_giorno=None):
         (MODIFICA,  Estensione.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO).via("persona__appartenenze"))),
         (LETTURA,   Estensione.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ESTESO).via("persona__appartenenze"))),
         (MODIFICA,  Quota.objects.filter(sede__in=qs_sedi)),
-        (LETTURA,   Riserva.objects.filter(appartenenza__sede__in=qs_sedi))
+        (LETTURA,   Riserva.objects.filter(appartenenza__sede__in=qs_sedi)),
+    ]
+
+
+def espandi_emissione_tesserini(qs_sedi, al_giorno=None):
+    from ufficio_soci.models import Quota, Tesserino
+    return [
+        (MODIFICA,  Tesserino.objects.filter(emesso_da__in=qs_sedi)),
     ]
 
 
@@ -161,6 +168,7 @@ def espandi_gestione_gruppi_sede(qs_sedi, al_giorno=None):
 ESPANDI_PERMESSI = {
     GESTIONE_SOCI:                  espandi_gestione_soci,
     ELENCHI_SOCI:                   espandi_elenchi_soci,
+    EMISSIONE_TESSERINI:            espandi_emissione_tesserini,
     GESTIONE_SEDE:                  espandi_gestione_sede,
     GESTIONE_AREE_SEDE:             espandi_gestione_aree_sede,
     GESTIONE_ATTIVITA_SEDE:         espandi_gestione_attivita_sede,
