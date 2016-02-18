@@ -8,7 +8,7 @@ from django.forms import ModelForm
 from anagrafica.forms import ModuloStepAnagrafica
 from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva, Trasferimento
 from ufficio_soci.validators import valida_data_non_nel_futuro
-from ufficio_soci.models import Tesseramento, Quota
+from ufficio_soci.models import Tesseramento, Quota, Tesserino
 
 
 class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
