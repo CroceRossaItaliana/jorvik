@@ -42,6 +42,65 @@
         </h2>
     </div>
     <div class="panel-body">
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">
+                            <i class="fa fa-fw fa-check-square"></i>
+                            Strumenti di selezione
+                        </h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="btn-group-vertical btn-block">
+                            <button type="button" class="btn btn-default" id="seleziona-tutti">
+                                <i class="fa fa-fw fa-check-square"></i>
+                                Seleziona tutti ({{ tesserini.count }})
+                            </button>
+                            <button type="button" class="btn btn-default" id="deseleziona-tutti">
+                                <i class="fa fa-fw fa-check-square-o"></i>
+                                Deseleziona tutti (<span class="contatore-selezionati">0</span>)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">
+                            <i class="fa fa-fw fa-cogs"></i>
+                            Processa Selezionati (<span class="contatore-selezionati">0</span>)
+                        </h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="btn-group-vertical btn-block">
+                            <button type="submit" name="azione" value="lavora"
+                                    class="btn btn-primary">
+                                <i class="fa fa-fw fa-download"></i>&nbsp;
+                                Scarica tesserini
+                            </button>
+                            <button type="submit" name="azione" value="lavora"
+                                    class="btn btn-primary">
+                               <i class="fa fa-fw fa-cogs"></i>&nbsp;
+                                Lavora pratica
+                            </button>
+                            <button type="submit" name="azione" value="lavora"
+                                    class="btn btn-primary">
+                               <i class="fa fa-fw fa-cogs"></i>
+                                + <i class="fa fa-fw fa-download"></i> &nbsp;&nbsp;
+                                Lavora pratica e scarica
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
         <table class="table table-condensed table-striped">
             <thead>
             <tr>
@@ -49,8 +108,8 @@
                 <th>Data richiesta</th>
                 <th>Volontario</th>
                 <th>Tesserino</th>
-                <th>Stato richiesta/emissione</th>
-                <th>Azioni</th>
+                <th>Stato richiesta</th>
+                <th>Stato emissione</th>
             </tr>
             </thead>
             <tbody>
@@ -60,33 +119,24 @@
                     <td><input type="checkbox" name="tesserini[]" value="{{ t.pk }}" /></td>
                     <td>{{ t.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
                     <td>{{ t.persona.link|safe }}</td>
-                    <td class="monospace">{{ t.codice|default:"N/A" }}</td>
                     <td>
-                        {{ t.get_stato_richiesta_display }}<br />
-                        <strong>
-                            {{ t.get_stato_emissione_display|default:"NON EMESSO" }}
-                            {% if t.data_conferma %}
-                                il {{ t.data_conferma|date:"SHORT_DATETIME_FORMAT" }}
-                            {% endif %}
-                        </strong>
-                    </td>
-                    <td>
-                        {% if t.stato_richiesta == t.RICHIESTO %}
-                            <form action="/us/tesserini/emissione/processa/" method="POST">
-                                {% csrf_token %}
-                                <input type="hidden" name="tesserini[]" value="{{ t.pk }}" />
-                                <button type="submit" class="btn btn-xs">
-                                    Processa
-                                </button>
-                            </form>
-
-                        {% elif t.stato_richiesta == t.ACCETTATO %}
-                            <a download href="{{ t.pdf_url }}">
-                                Scarica
+                        <span class="monospace">{{ t.codice|default:"N/A" }}</span>
+                        {% if t.stato_richiesta == t.ACCETTATO %}
+                            <a download href="{{ t.url_pdf }}">
+                                <i class="fa fa-fw fa-download"></i> PDF
                             </a>
 
                         {% endif %}
 
+                    </td>
+                    <td>
+                        {{ t.get_stato_richiesta_display }}
+                    </td>
+                    <td class="grassetto">
+                        {{ t.get_stato_emissione_display|default:"NON EMESSO" }}
+                        {% if t.data_conferma %}
+                            il {{ t.data_conferma|date:"SHORT_DATETIME_FORMAT" }}
+                        {% endif %}
 
                     </td>
                 </tr>
@@ -105,6 +155,12 @@
 </style>
 
 <script type="text/javascript">
+
+function aggiorna_contatore() {
+    numero = $("table input:checked").length;
+    $(".contatore-selezionati").text(numero);
+}
+
 $(document).ready(function() {
     var classe_selezionata = "info";
     $(".riga-tesserino").each(function(i, e) {
@@ -118,8 +174,21 @@ $(document).ready(function() {
                   $(e).removeClass(classe_selezionata);
               }
           }
+          aggiorna_contatore();
       })
-    })
+    });
+
+    $("#seleziona-tutti").click(function(){
+        $("table input").prop("checked", true);
+        $(".riga-tesserino").addClass(classe_selezionata);
+        aggiorna_contatore();
+    });
+
+    $("#deseleziona-tutti").click(function(){
+        $("table input").prop("checked", false);
+        $(".riga-tesserino").removeClass(classe_selezionata);
+        aggiorna_contatore();
+    });
 })
 </script>
 

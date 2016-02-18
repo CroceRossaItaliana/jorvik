@@ -1092,13 +1092,18 @@ def us_tesserini_emissione(request, me):
 
     modulo = ModuloFiltraEmissioneTesserini(request.POST or None)
     if modulo.is_valid():
+        stato_emissione = modulo.cleaned_data['stato_emissione']
+        stato_emissione_q = Q(stato_emissione__in=stato_emissione)
+        if '' in stato_emissione:
+            stato_emissione_q |= Q(stato_emissione__isnull=True)
+
         tesserini = Tesserino.objects.filter(
             Q(
                 Q(persona__codice_fiscale__icontains=modulo.cleaned_data['cerca']) |
                 Q(codice__icontains=modulo.cleaned_data['cerca'])
             ),
+            stato_emissione_q,
             emesso_da__in=sedi,
-            stato_emissione__in=modulo.cleaned_data['stato_emissione'],
             tipo_richiesta__in=modulo.cleaned_data['tipo_richiesta'],
             stato_richiesta__in=modulo.cleaned_data['stato_richiesta']
         ).order_by(modulo.cleaned_data['ordine'])
@@ -1109,3 +1114,26 @@ def us_tesserini_emissione(request, me):
 
     }
     return "us_tesserini_emissione.html", contesto
+
+
+@pagina_privata
+def us_tesserini_emissione_processa(request, me):
+
+    tesserini_pk = request.POST.getlist('tesserini')
+    sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
+
+    # Ottengo tutti i tesserini
+    tesserini = Tesserino.objects.filter(
+        pk__in=tesserini_pk, emesso_da__in=sedi
+    )
+
+    contesto = {
+        "tesserini": tesserini,
+    }
+    return "us_tesserini_emissione_processa.html", contesto
+
+
+@pagina_privata
+def us_tesserini_emissione_scarica(request, me):
+
+    pass
