@@ -53,6 +53,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
     SPEDITO_CASA = "SP_CASA"
     SPEDITO_SEDE = "SP_SEDE"
     STATO_EMISSIONE = (
+        ("", "(Non emesso)"),
         (STAMPATO, "Stampato"),
         (SPEDITO_CASA, "Spedito a casa"),
         (SPEDITO_SEDE, "Spedito alla Sede CRI")

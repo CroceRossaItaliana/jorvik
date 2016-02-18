@@ -1,0 +1,127 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Emissione Tesserini
+{% endblock %}
+
+{% block app_contenuto %}
+
+
+<div class="alert alert-info">
+    <i class="fa fa-fw fa-info-circle"></i>
+    Da questa pagina &egrave; possibile gestire l'emissione dei tesserini. Usa il modulo
+    per filtrare le richieste di tesserino.
+</div>
+
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h2 class="panel-title">
+            <i class="fa fa-fw fa-search"></i>
+            Filtra Richieste di Tesserino
+        </h2>
+    </div>
+    <div class="panel-body">
+        <form method="POST">
+            {% csrf_token %}
+            <p>{% bootstrap_form modulo layout='horizontal' %}</p>
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fa fa-fw fa-search"></i>
+                Filtra Richieste di Tesserino
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <h2 class="panel-title">
+            <i class="fa fa-fw fa-list"></i>
+            Richieste di Tesserino ({{ tesserini.count }})
+        </h2>
+    </div>
+    <div class="panel-body">
+        <table class="table table-condensed table-striped">
+            <thead>
+            <tr>
+                <th><i class="fa fa-fw fa-check-square"></i></th>
+                <th>Data richiesta</th>
+                <th>Volontario</th>
+                <th>Tesserino</th>
+                <th>Stato richiesta/emissione</th>
+                <th>Azioni</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for t in tesserini %}
+
+                <tr class="piu-piccolo riga-tesserino">
+                    <td><input type="checkbox" name="tesserini[]" value="{{ t.pk }}" /></td>
+                    <td>{{ t.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                    <td>{{ t.persona.link|safe }}</td>
+                    <td class="monospace">{{ t.codice|default:"N/A" }}</td>
+                    <td>
+                        {{ t.get_stato_richiesta_display }}<br />
+                        <strong>
+                            {{ t.get_stato_emissione_display|default:"NON EMESSO" }}
+                            {% if t.data_conferma %}
+                                il {{ t.data_conferma|date:"SHORT_DATETIME_FORMAT" }}
+                            {% endif %}
+                        </strong>
+                    </td>
+                    <td>
+                        {% if t.stato_richiesta == t.RICHIESTO %}
+                            <form action="/us/tesserini/emissione/processa/" method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="tesserini[]" value="{{ t.pk }}" />
+                                <button type="submit" class="btn btn-xs">
+                                    Processa
+                                </button>
+                            </form>
+
+                        {% elif t.stato_richiesta == t.ACCETTATO %}
+                            <a download href="{{ t.pdf_url }}">
+                                Scarica
+                            </a>
+
+                        {% endif %}
+
+
+                    </td>
+                </tr>
+
+
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.riga-tesserino {
+    cursor: pointer;
+}
+</style>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    var classe_selezionata = "info";
+    $(".riga-tesserino").each(function(i, e) {
+      $(e).click(function() {
+          var checkbox = $(e).find("input");
+          if (!checkbox.prop('disabled')) {
+              checkbox.prop("checked", !checkbox.prop("checked"));
+              if (checkbox.prop("checked")) {
+                  $(e).addClass(classe_selezionata);
+              } else {
+                  $(e).removeClass(classe_selezionata);
+              }
+          }
+      })
+    })
+})
+</script>
+
+
+{% endblock %}

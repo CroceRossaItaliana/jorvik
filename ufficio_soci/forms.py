@@ -9,7 +9,7 @@ from anagrafica.forms import ModuloStepAnagrafica
 from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva, Trasferimento
 from autenticazione.forms import ModuloCreazioneUtenza
 from curriculum.models import Titolo, TitoloPersonale
-from ufficio_soci.models import Tesseramento, Quota
+from ufficio_soci.models import Tesseramento, Quota, Tesserino
 
 
 class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
@@ -229,3 +229,29 @@ class ModuloQuotaVolontario(forms.Form):
     importo = forms.FloatField(help_text="Il totale versato in euro, comprensivo dell'eventuale "
                                          "donazione aggiuntiva.")
     data_versamento = forms.DateField()
+
+
+class ModuloFiltraEmissioneTesserini(forms.Form):
+
+    stato_richiesta = forms.MultipleChoiceField(choices=Tesserino.STATO_RICHIESTA, initial=(Tesserino.RICHIESTO,))
+    tipo_richiesta = forms.MultipleChoiceField(choices=Tesserino.TIPO_RICHIESTA, initial=(Tesserino.RILASCIO,
+                                                                                          Tesserino.RINNOVO,
+                                                                                          Tesserino.DUPLICATO))
+    stato_emissione = forms.MultipleChoiceField(choices=Tesserino.STATO_EMISSIONE, initial=(("", Tesserino.STAMPATO,
+                                                                                             Tesserino.SPEDITO_CASA,
+                                                                                             Tesserino.SPEDITO_SEDE)),)
+
+    DATA_RICHIESTA_DESC = '-creazione'
+    DATA_RICHIESTA_ASC = 'creazione'
+    DATA_CONFERMA_DESC = '-data_conferma'
+    DATA_CONFERMA_ASC = 'data_conferma'
+    ORDINE = (
+        (DATA_RICHIESTA_DESC, "Data di Richiesta (Decrescente)"),
+        (DATA_RICHIESTA_ASC, "Data di Richiesta (Crescente)"),
+        (DATA_CONFERMA_DESC, "Data di Conferma (Decrescente)"),
+        (DATA_CONFERMA_ASC, "Data di Conferma (Crescente)"),
+    )
+    ordine = forms.ChoiceField(choices=ORDINE, initial=DATA_RICHIESTA_DESC)
+
+    cerca = forms.CharField(initial="", required=False, help_text="(Opzionale) Parte del Codice Fiscale o "
+                                                                  " codice tesserino.")

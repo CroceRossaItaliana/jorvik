@@ -1,14 +1,14 @@
 import datetime
 import random
 from django.core.paginator import Paginator
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.shortcuts import redirect, get_object_or_404
 from django.utils import timezone
 from anagrafica.costanti import REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione, Riserva
 from anagrafica.permessi.applicazioni import PRESIDENTE
-from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA
+from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA, EMISSIONE_TESSERINI
 from autenticazione.forms import ModuloCreazioneUtenza
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
@@ -23,7 +23,7 @@ from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVo
     ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
-    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario
+    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloFiltraEmissioneTesserini
 from ufficio_soci.models import Quota, Tesseramento, Tesserino
 
 
@@ -1012,3 +1012,30 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
                                         "emissione (%s) per il Volontario %s." % (
                                   tesserino.emesso_da, persona.nome_completo,
                               ), **torna)
+
+
+@pagina_privata
+def us_tesserini_emissione(request, me):
+    sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
+
+    tesserini = Tesserino.objects.none()
+
+    modulo = ModuloFiltraEmissioneTesserini(request.POST or None)
+    if modulo.is_valid():
+        tesserini = Tesserino.objects.filter(
+            Q(
+                Q(persona__codice_fiscale__icontains=modulo.cleaned_data['cerca']) |
+                Q(codice__icontains=modulo.cleaned_data['cerca'])
+            ),
+            emesso_da__in=sedi,
+            stato_emissione__in=modulo.cleaned_data['stato_emissione'],
+            tipo_richiesta__in=modulo.cleaned_data['tipo_richiesta'],
+            stato_richiesta__in=modulo.cleaned_data['stato_richiesta']
+        ).order_by(modulo.cleaned_data['ordine'])
+
+    contesto = {
+        "tesserini": tesserini,
+        "modulo": modulo,
+
+    }
+    return "us_tesserini_emissione.html", contesto
