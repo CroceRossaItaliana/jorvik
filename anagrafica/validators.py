@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.utils import timezone
 from stdnum.it import codicefiscale
 from django.core.exceptions import ValidationError
@@ -54,3 +56,4 @@ def valida_almeno_14_anni(data):
     al_giorno = timezone.now().date()
     if (al_giorno.year - data.year - ((al_giorno.month, al_giorno.day) < (data.month, data.day))) <  anni:
         raise ValidationError("Sono necessari almeno %d anni di età" % (anni,))
+
