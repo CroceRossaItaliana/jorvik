@@ -828,7 +828,7 @@ def us_ricevute_nuova(request, me):
 
         appartenenza = persona.appartenenze_attuali(al_giorno=data_versamento,
                                                     sede__in=sedi).first()
-        comitato = appartenenza.sede.comitato
+        comitato = appartenenza.sede.comitato if appartenenza else None
 
         if not appartenenza:
             modulo.add_error('data_versamento', 'In questa data, la persona non risulta appartenente '
