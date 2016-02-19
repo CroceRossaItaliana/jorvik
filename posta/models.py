@@ -1,7 +1,7 @@
 """
 Questo modulo definisce i modelli del modulo di Posta di Gaia.
 """
-from smtplib import SMTPException, SMTPResponseException
+from smtplib import SMTPException, SMTPResponseException, SMTPServerDisconnected
 from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives, get_connection
 from django.db.models import QuerySet
 from django.template import Context
@@ -146,6 +146,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         # E-mail a delle persone
         for d in self.oggetti_destinatario.filter(inviato=False):
 
+            # Assicurati che la connessione sia aperta
+            connection.open()
+
             # Evita duplicati in invii lunghi (se ci sono problemi con lock)...
             d.refresh_from_db()
             if d.inviato:
@@ -174,6 +177,12 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
                 if isinstance(e, SMTPResponseException) and e.smtp_code == 501:
                     successo = True  # E-mail di destinazione rotta: ignora.
+
+                elif isinstance(e, SMTPServerDisconnected):
+                    # Se il server si e' disconnesso, riconnetti.
+                    successo = False    # Questo messaggio verra' inviato al prossimo tentativo.
+                    connection.close()  # Chiudi handle alla connessione
+                    connection.open()   # Riconnettiti
 
                 else:
                     successo = False  # Altro errore... riprova piu' tardi.
