@@ -24,6 +24,11 @@
     </div>
     <div class="panel-body">
         <form method="POST">
+            <p class="text-info piu-piccolo">
+                <i class="fa fa-fw fa-info-circle"></i>
+                Suggerimento &mdash; Tieni premuto il tasto CTRL (PC) o Command (Mac)
+                 per selezionare pi&ugrave; opzioni.
+            </p>
             {% csrf_token %}
             <p>{% bootstrap_form modulo layout='horizontal' %}</p>
             <button type="submit" class="btn btn-primary btn-block">
@@ -77,7 +82,7 @@
                     </div>
                     <div class="panel-body">
                         <div class="btn-group-vertical btn-block">
-                            <button type="submit" name="azione" value="lavora"
+                            <button type="submit" name="azione" value="scarica"
                                     class="btn btn-primary">
                                 <i class="fa fa-fw fa-download"></i>&nbsp;
                                 Scarica tesserini
@@ -87,7 +92,7 @@
                                <i class="fa fa-fw fa-cogs"></i>&nbsp;
                                 Lavora pratica
                             </button>
-                            <button type="submit" name="azione" value="lavora"
+                            <button type="submit" name="azione" value="scarica_e_lavora"
                                     class="btn btn-primary">
                                <i class="fa fa-fw fa-cogs"></i>
                                 + <i class="fa fa-fw fa-download"></i> &nbsp;&nbsp;
@@ -140,6 +145,28 @@
 
                     </td>
                 </tr>
+
+            {% empty %}
+
+                {% if modulo_compilato %}
+                    <tr class="warning">
+                        <td colspan="6">
+                            <i class="fa fa-fw fa-warning"></i>
+                            <strong>Nessuna richiesta di tesserino trovata.</strong><br />
+                            Prova a modificare i parametri di ricerca.
+                        </td>
+                    </tr>
+
+                {% else %}
+                    <tr class="success">
+                        <td colspan="6">
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            <strong>Qui appariranno i risultati di ricerca.</strong><br />
+                            Utilizza il modulo sopra per impostare i parametri di ricerca.
+                        </td>
+                    </tr>
+
+                {% endif %}
 
 
             {% endfor %}

@@ -1091,6 +1091,8 @@ def us_tesserini_emissione(request, me):
     tesserini = Tesserino.objects.none()
 
     modulo = ModuloFiltraEmissioneTesserini(request.POST or None)
+    modulo_compilato = True if request.POST else False
+
     if modulo.is_valid():
         stato_emissione = modulo.cleaned_data['stato_emissione']
         stato_emissione_q = Q(stato_emissione__in=stato_emissione)
@@ -1111,7 +1113,7 @@ def us_tesserini_emissione(request, me):
     contesto = {
         "tesserini": tesserini,
         "modulo": modulo,
-
+        "modulo_compilato": modulo_compilato
     }
     return "us_tesserini_emissione.html", contesto
 
@@ -1119,13 +1121,42 @@ def us_tesserini_emissione(request, me):
 @pagina_privata
 def us_tesserini_emissione_processa(request, me):
 
-    tesserini_pk = request.POST.getlist('tesserini')
     sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
+
+    if not request.POST:  # Qui si arriva tramite POST.
+        return redirect("/us/tesserini/emissione/")
+
+    if 'tesserini' in request.POST:
+        tesserini_pk = [int(x) for x in request.POST.getlist('tesserini')]
+        azione = request.POST.get('azione', default='')
+        request.session['tesserini'] = tesserini_pk
+        request.session['tesserini_azione'] = azione
+
+    else:
+        tesserini_pk = request.session.get('tesserini', default=[])
+        azione = request.session.get('tesserini_azione', default="scarica")
+
+    assert azione in ['scarica', 'lavora', 'scarica_e_lavora']
 
     # Ottengo tutti i tesserini
     tesserini = Tesserino.objects.filter(
         pk__in=tesserini_pk, emesso_da__in=sedi
     )
+
+    modulo_lavora = False
+    if azione in ['lavora', 'scarica_e_lavora']:
+        modulo_lavora = ModuloLavoraTesserini(request.POST if not 'tesserini' in request.POST else None)
+        if modulo_lavora.is_valid():
+            pass
+
+
+
+    if not tesserini.exists():
+        return errore_generico(request, me, titolo="Nessuna richiesta selezionata",
+                               messaggio="Devi selezionare una o più richieste che intendi "
+                                         "processare. ",
+                               torna_titolo="Indietro", torna_url="/us/tesserini/emissione/")
+
 
     contesto = {
         "tesserini": tesserini,

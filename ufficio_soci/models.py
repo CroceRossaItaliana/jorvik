@@ -41,8 +41,8 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
     RICHIESTO = "ATT"
     ACCETTATO = "OK"
     STATO_RICHIESTA = (
-        (RIFIUTATO, "Emissione Rifiutata"),
         (RICHIESTO, "Emissione Richiesta"),
+        (RIFIUTATO, "Emissione Rifiutata"),
         (ACCETTATO, "Emissione Accettata"),
     )
     stato_richiesta = models.CharField(max_length=3, choices=STATO_RICHIESTA, default=RICHIESTO, db_index=True)

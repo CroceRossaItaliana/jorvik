@@ -250,7 +250,7 @@ class ModuloNuovaRicevuta(forms.Form):
 
 class ModuloFiltraEmissioneTesserini(forms.Form):
 
-    stato_richiesta = forms.MultipleChoiceField(choices=Tesserino.STATO_RICHIESTA, initial=(Tesserino.RICHIESTO,))
+    stato_richiesta = forms.MultipleChoiceField(choices=Tesserino.STATO_RICHIESTA)
     tipo_richiesta = forms.MultipleChoiceField(choices=Tesserino.TIPO_RICHIESTA, initial=(Tesserino.RILASCIO,
                                                                                           Tesserino.RINNOVO,
                                                                                           Tesserino.DUPLICATO))
