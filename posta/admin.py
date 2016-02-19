@@ -10,7 +10,7 @@ class AdminMessaggio(admin.ModelAdmin):
     search_fields = ['oggetto', 'mittente__codice_fiscale', 'mittente__email_contatto', 'mittente__utenza__email']
     list_display = ('oggetto', 'mittente', 'creazione', 'ultimo_tentativo', 'terminato', )
     list_filter = ('creazione', 'terminato', 'ultimo_tentativo',)
-    raw_id_fields = ('mittente',)
+    raw_id_fields = ('mittente', 'rispondi_a')
 
 
 @admin.register(Destinatario)
