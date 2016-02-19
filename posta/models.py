@@ -323,6 +323,6 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
     persona = models.ForeignKey("anagrafica.Persona", null=True, blank=True, default=None,
                                 related_name='oggetti_sono_destinatario', on_delete=models.CASCADE)
 
-    inviato = models.BooleanField(default=False)
-    tentativo = models.DateTimeField(default=None, blank=True, null=True)
-    errore = models.CharField(max_length=256, blank=True, null=True, default=None)
+    inviato = models.BooleanField(default=False, db_index=True)
+    tentativo = models.DateTimeField(default=None, blank=True, null=True, db_index=True)
+    errore = models.CharField(max_length=256, blank=True, null=True, default=None, db_index=True)
