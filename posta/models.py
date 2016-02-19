@@ -184,6 +184,10 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 successo = True
                 d.errore = "Nessun indirizzo e-mail. Saltato"
 
+            except UnicodeEncodeError as e:
+                successo = True
+                d.errore = "Indirizzo e-mail non valido. Saltato."
+
             if not successo:
                 print("%s  (!) errore invio id=%d, destinatario=%d, errore=%s" % (
                     datetime.now().isoformat(' '),
