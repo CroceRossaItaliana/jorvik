@@ -15,7 +15,8 @@ class AdminMessaggio(admin.ModelAdmin):
 
 @admin.register(Destinatario)
 class AdminDestinatario(admin.ModelAdmin):
-    search_fields = ['messaggio__oggetto', 'persona__codice_fiscale', 'persona__email_contatto', 'persona__utenza__email']
+    search_fields = ['messaggio__oggetto', 'persona__codice_fiscale', 'persona__email_contatto',
+                     'persona__utenza__email', 'errore',]
     list_display = ('messaggio', 'persona', 'inviato', 'tentativo', 'errore')
     list_filter = ('inviato', 'tentativo', )
     raw_id_fields = ('persona', 'messaggio',)
