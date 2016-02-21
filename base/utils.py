@@ -198,3 +198,15 @@ def questo_anno():
 def timedelta_ore(td):
     g, h = td.days, td.seconds/3600
     return h + 24*g
+
+
+def rimuovi_scelte(scelte=[], tupla=()):
+    """
+    Rimuove una lista di scelte da una tupla choices
+     e ritorna la nuova tupla.
+    """
+    nuova_tupla = ()
+    for chiave, valore in tupla:
+        if not chiave in scelte:
+            nuova_tupla += ((chiave, valore),)
+    return nuova_tupla

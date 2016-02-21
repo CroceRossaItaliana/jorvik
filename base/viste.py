@@ -18,7 +18,7 @@ from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLoca
 from base.geo import Locazione
 from base.models import Autorizzazione, Token
 from base.tratti import ConPDF
-from base.utils import get_drive_file
+from base.utils import get_drive_file, rimuovi_scelte
 from formazione.models import PartecipazioneCorsoBase
 from jorvik import settings
 from posta.models import Messaggio
@@ -407,6 +407,12 @@ def supporto(request, me=None):
     modulo = None
     if me:
         modulo = ModuloRichiestaSupporto(request.POST or None)
+
+        if not me.deleghe_attuali().exists():
+            scelte = modulo.fields['tipo'].choices
+            scelte = rimuovi_scelte([modulo.TERZO_LIVELLO, modulo.SECONDO_LIVELLO], scelte)
+            modulo.fields['tipo'].choices = scelte
+
 
     if modulo and modulo.is_valid():
         tipo = modulo.cleaned_data['tipo']
