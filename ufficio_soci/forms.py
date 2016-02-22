@@ -279,8 +279,12 @@ class ModuloLavoraTesserini(forms.Form):
 
     MINIMO_CARATTERI_MOTIVO_RIFIUTATO = 16
 
-    stato_richiesta = forms.ChoiceField(choices=rimuovi_scelte([Tesserino.RICHIESTO], Tesserino.STATO_RICHIESTA))
-    stato_emissione = forms.ChoiceField(choices=Tesserino.STATO_EMISSIONE, required=False)
+    stato_richiesta = forms.ChoiceField(choices=rimuovi_scelte([Tesserino.RICHIESTO], Tesserino.STATO_RICHIESTA),
+                                        help_text="Scegli se accettare o negare la richiesta "
+                                                  "di emissione dei tesserini.")
+    stato_emissione = forms.ChoiceField(choices=Tesserino.STATO_EMISSIONE, required=False,
+                                        help_text="Scegli se registrare i tesserini come emessi. "
+                                                  "I tesserini verranno attivati una volta emessi. ")
     motivo_rifiutato = forms.CharField(help_text="Se hai negato le richieste, inserisci qui la motivazione. "
                                                  "Es.: Fototessera non conforme. ", required=False)
 

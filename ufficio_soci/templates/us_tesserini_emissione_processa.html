@@ -55,13 +55,30 @@
                     {% bootstrap_form modulo %}
 
                     <p>&nbsp;</p>
-                    {% if da_scaricare %}
+                    <h4><i class="fa fa-fw fa-info-circle"></i> Avvertenze</h4>
+                    {% if da_lavorare %}
                         <p class="alert alert-info">
-                            <i class="fa fa-fw fa-download"></i>
-                            Confermando, inizier&agrave; lo scaricamento
-                             dei tesserini.
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Tutte le richieste approvate riceveranno
+                            un codice di tesserino univoco. Registrando
+                            inoltre l'emissione, il tesserino verr&agrave;
+                            attivato: assicurati di verificarne la consegna
+                            fino al volontario o la distruzione.
                         </p>
                     {% endif %}
+
+
+                    {% if da_scaricare %}
+                        <p class="alert alert-warning">
+                            <i class="fa fa-fw fa-warning"></i>
+                            Confermando, inizier&agrave; lo scaricamento
+                             dei tesserini su questo computer. Per favore
+                             assicurati che il sistema sia protetto, libero
+                             da virus e fai attenzione a cancellare i file
+                             una volta stampati i tesserini.
+                        </p>
+                    {% endif %}
+                    <p>&nbsp;</p>
 
                     <button type="submit" class="btn btn-block btn-primary">
                         <i class="fa fa-fw fa-check-circle"></i>

@@ -140,6 +140,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
             },
             formato=PDF.FORMATO_CR80,
             orientamento=PDF.ORIENTAMENTO_ORIZZONTALE,
+            posizione="tesserini/",
         )
         return pdf
 

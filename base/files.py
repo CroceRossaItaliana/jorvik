@@ -120,7 +120,8 @@ class PDF(Allegato):
     FORMATO_CR80 = 'cr80'
 
     def genera_e_salva(self, nome='File.pdf', scadenza=None, corpo={}, modello='pdf_vuoto.html',
-                       orientamento=ORIENTAMENTO_VERTICALE, formato=FORMATO_A4):
+                       orientamento=ORIENTAMENTO_VERTICALE, formato=FORMATO_A4,
+                       posizione='allegati/'):
         """
         Genera un file PDF con i parametri specificati e salva.
         :param nome: Il nome del file PDF da salvare.
@@ -129,6 +130,7 @@ class PDF(Allegato):
         :param modello: Il modello del file PDF.
         :param orientamento: PDF.ORIENTAMENTO_VERTICALE o PDF.ORIENTAMENTO_VERTICALE.
         :param formato: PDF.FORMATO_A4 o niente.
+        :param posizione: Cartella dove salvare il file. Default allegati/.
         :return:
         """
 
@@ -148,7 +150,7 @@ class PDF(Allegato):
         req = urllib.request.Request(url, data)
         response = urllib.request.urlopen(req)
 
-        generatore = GeneratoreNomeFile('allegati/')
+        generatore = GeneratoreNomeFile(posizione)
         zname = generatore(self, nome)
         self.prepara_cartelle(MEDIA_ROOT + zname)
         pdffile = open(MEDIA_ROOT + zname, 'wb')

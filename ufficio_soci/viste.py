@@ -1185,7 +1185,7 @@ def us_tesserini_emissione_processa(request, me):
             fine = True
 
     else:
-        modulo = ModuloScaricaTesserini(request.POST or None)
+        modulo = ModuloScaricaTesserini(request.POST if 'tesserini' not in request.POST else None)
         if modulo.is_valid():
             fine = True
 
@@ -1202,6 +1202,8 @@ def us_tesserini_emissione_processa(request, me):
     contesto = {
         "tesserini": tesserini,
         "modulo": modulo,
+        "da_scaricare": da_scaricare,
+        "da_lavorare": da_lavorare,
     }
     return "us_tesserini_emissione_processa.html", contesto
 
