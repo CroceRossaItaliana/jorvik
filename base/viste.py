@@ -1,3 +1,6 @@
+import mimetypes
+import os
+
 from django.contrib.auth import load_backend, login
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count
@@ -369,7 +372,33 @@ def pdf(request, me, app_label, model, pk):
         return redirect(ERRORE_PERMESSI)
 
     pdf = oggetto.genera_pdf()
+
+    # Se sto scaricando un tesserino, forza lo scaricamento.
+    if 'tesserini' in pdf.file.path:
+        return pdf_forza_scaricamento(request, pdf)
+
     return redirect(pdf.download_url)
+
+
+def pdf_forza_scaricamento(request, pdf):
+    """
+    Forza lo scaricamento di un file pdf.
+    Da usare con cautela, perche' carica il file in memoria
+    e blocca il thread fino al completamento della richiesta.
+    :param request:
+    :param pdf:
+    :return:
+    """
+
+    percorso_completo = pdf.file.path
+
+    with open(percorso_completo, 'rb') as f:
+        data = f.read()
+
+    response = HttpResponse(data, content_type=mimetypes.guess_type(percorso_completo)[0])
+    response['Content-Disposition'] = "attachment; filename={0}".format(pdf.nome)
+    response['Content-Length'] = os.path.getsize(percorso_completo)
+    return response
 
 
 @pagina_pubblica
