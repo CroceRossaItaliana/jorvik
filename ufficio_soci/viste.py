@@ -1225,7 +1225,7 @@ def us_tesserini_emissione_scarica(request, me):
 
     contesto = {
         "tesserini": tesserini,
-        "tesserini_secondi": 4,
+        "tesserini_secondi": 3,
         "tesserini_link_json": json.dumps(tesserini_link),
         "tesserini_link": tesserini_link,
     }
