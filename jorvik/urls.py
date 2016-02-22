@@ -256,6 +256,7 @@ urlpatterns = [
     # Amministrazione
 
     url(r'^admin/import/volontari/$', 'anagrafica.viste.admin_import_volontari'),
+    url(r'^admin/statistiche/$', 'anagrafica.viste.admin_statistiche'),
 
     url(r'^admin/', include(admin.site.urls)),
     url(r'^admin/', include('loginas.urls')),   # Login come utente

@@ -11,6 +11,7 @@ from django.contrib.auth import login
 
 # Le viste base vanno qui.
 from django.views.generic import ListView
+from django.utils import timezone
 
 from anagrafica.costanti import TERRITORIALE
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
@@ -1359,3 +1360,31 @@ def admin_import_volontari(request, me):
         "importati": importati,
     }
     return 'admin_import_volontari.html', contesto
+
+
+@pagina_privata
+def admin_statistiche(request, me):
+    if not me.utenza.is_staff:
+        return redirect(ERRORE_PERMESSI)
+
+    oggi = datetime.date.today()
+    nascita_minima_35 = datetime.date(oggi.year - 36, oggi.month, oggi.day)
+    persone = Persona.objects.all()
+    soci = Persona.objects.filter(
+        Appartenenza.query_attuale(membro__in=Appartenenza.MEMBRO_SOCIO).via("appartenenze")
+    )
+    soci_giovani_35 = soci.filter(
+        data_nascita__gt=nascita_minima_35,
+    )
+    sedi = Sede.objects.filter(attiva=True)
+
+    contesto = {
+        "persone_numero": persone.count(),
+        "soci_numero": soci.count(),
+        "soci_percentuale": soci.count() / persone.count() * 100,
+        "soci_giovani_35_numero": soci_giovani_35.count(),
+        "soci_giovani_35_percentuale": soci_giovani_35.count() / soci.count() * 100,
+        "sedi_numero": sedi.count(),
+        "ora": timezone.now(),
+    }
+    return 'admin_statistiche.html', contesto

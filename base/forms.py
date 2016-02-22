@@ -25,21 +25,21 @@ class ModuloLocalizzatore(forms.Form):
 
 class ModuloRichiestaSupporto(forms.Form):
 
-    PRIMO_LIVELLO = "LIV1"
-    SECONDO_LIVELLO = "LIV2"
-    TERZO_LIVELLO = "LIV3"
-    FEEDBACK = "FEEDBACK"
-    SANGUE = "SANGUE"
+    PRIMO_LIVELLO = "INF"
+    SECONDO_LIVELLO = "REQ"
+    TERZO_LIVELLO = "INC"
+    FEEDBACK = "FEE"
+    SANGUE = "BLO"
     TIPO = (
         (None, "-- Seleziona una opzione --"),
-        (PRIMO_LIVELLO, "Aiuto con l'utilizzo di Gaia"),
-        (SECONDO_LIVELLO, "Modifica informazioni o correzioni"),
-        (TERZO_LIVELLO, "Errori o segnalazioni di sicurezza"),
-        (FEEDBACK, "Feedback (suggerimenti, critiche, idee)"),
+        (PRIMO_LIVELLO, "Informazione: Aiuto con l'utilizzo di Gaia"),
+        (SECONDO_LIVELLO, "Richiesta: Modifica informazioni o correzioni"),
+        (TERZO_LIVELLO, "Incidente: Errori o segnalazioni di sicurezza"),
+        (FEEDBACK, "Feedback GAIA (suggerimenti, critiche, idee)"),
         (SANGUE, "Feedback in merito alla donazione sangue"),
     )
 
-    tipo = forms.ChoiceField(TIPO, required=True,
+    tipo = forms.ChoiceField(TIPO, required=True, initial=None,
                                    help_text="Seleziona una delle tipologie di richiesta "
                                              "per aiutarci a smistarla rapidamente.")
 
