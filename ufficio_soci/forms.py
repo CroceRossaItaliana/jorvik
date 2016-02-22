@@ -7,6 +7,7 @@ from django.forms import ModelForm
 
 from anagrafica.forms import ModuloStepAnagrafica
 from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva, Trasferimento
+from base.utils import rimuovi_scelte
 from ufficio_soci.validators import valida_data_non_nel_futuro
 from ufficio_soci.models import Tesseramento, Quota, Tesserino
 
@@ -272,3 +273,31 @@ class ModuloFiltraEmissioneTesserini(forms.Form):
 
     cerca = forms.CharField(initial="", required=False, help_text="(Opzionale) Parte del Codice Fiscale o "
                                                                   " codice tesserino.")
+
+
+class ModuloLavoraTesserini(forms.Form):
+
+    MINIMO_CARATTERI_MOTIVO_RIFIUTATO = 16
+
+    stato_richiesta = forms.ChoiceField(choices=rimuovi_scelte([Tesserino.RICHIESTO], Tesserino.STATO_RICHIESTA))
+    stato_emissione = forms.ChoiceField(choices=Tesserino.STATO_EMISSIONE, required=False)
+    motivo_rifiutato = forms.CharField(help_text="Se hai negato le richieste, inserisci qui la motivazione. "
+                                                 "Es.: Fototessera non conforme. ", required=False)
+
+    def clean(self):
+        stato_richiesta = self.cleaned_data['stato_richiesta']
+        stato_emissione = self.cleaned_data['stato_emissione']
+        motivo_rifiutato = self.cleaned_data['motivo_rifiutato']
+
+        if stato_richiesta != Tesserino.ACCETTATO and stato_emissione:
+            raise ValidationError("Puoi emettere il tesserino solo se "
+                                  "accetti la richiesta di emissione. ")
+
+        if stato_richiesta == Tesserino.RIFIUTATO and len(motivo_rifiutato) < self.MINIMO_CARATTERI_MOTIVO_RIFIUTATO:
+            raise ValidationError("Rifiutando l'emissione, devi inserire una motivazione descrittiva, con almeno "
+                                  "%d caratteri." % self.MINIMO_CARATTERI_MOTIVO_RIFIUTATO)
+
+
+class ModuloScaricaTesserini(forms.Form):
+    conferma = forms.BooleanField(help_text="Confermo di voler procedere allo scaricamento "
+                                             "dei tesserini associativi.")

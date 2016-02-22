@@ -72,6 +72,13 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
     riconsegnato_a = models.ForeignKey('anagrafica.Persona', related_name='tesserini_riconsegnati', null=True, on_delete=models.SET_NULL)
     data_riconsegna = models.DateTimeField(null=True, db_index=True)
 
+    @classmethod
+    @concept
+    def query_senza_codice(cls):
+        return Q(
+            Q(codice='') | Q(codice__isnull=True)
+        )
+
     def assicura_presenza_codice(self):
         """
         Questa funzione si assicura che il tesserino attuale abbia un codice.
@@ -116,6 +123,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
          usa invece il metodo assicura_presenza_codice.
         """
         self.codice = Tesserino._genera_nuovo_codice()
+        self.save()
 
     def genera_pdf(self):
         codice = self.genera_codice_a_barre_png()

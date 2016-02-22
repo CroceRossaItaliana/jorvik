@@ -23,7 +23,7 @@
         </h2>
     </div>
     <div class="panel-body">
-        <form method="POST">
+        <form method="POST" action="/us/tesserini/emissione/">
             <p class="text-info piu-piccolo">
                 <i class="fa fa-fw fa-info-circle"></i>
                 Suggerimento &mdash; Tieni premuto il tasto CTRL (PC) o Command (Mac)
@@ -39,141 +39,148 @@
     </div>
 </div>
 
-<div class="panel panel-info">
-    <div class="panel-heading">
-        <h2 class="panel-title">
-            <i class="fa fa-fw fa-list"></i>
-            Richieste di Tesserino ({{ tesserini.count }})
-        </h2>
-    </div>
-    <div class="panel-body">
+<form method="POST" action="/us/tesserini/emissione/processa/">
+    {% csrf_token %}
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="panel panel-primary">
-                    <div class="panel-heading">
-                        <h2 class="panel-title">
-                            <i class="fa fa-fw fa-check-square"></i>
-                            Strumenti di selezione
-                        </h2>
-                    </div>
-                    <div class="panel-body">
-                        <div class="btn-group-vertical btn-block">
-                            <button type="button" class="btn btn-default" id="seleziona-tutti">
-                                <i class="fa fa-fw fa-check-square"></i>
-                                Seleziona tutti ({{ tesserini.count }})
-                            </button>
-                            <button type="button" class="btn btn-default" id="deseleziona-tutti">
-                                <i class="fa fa-fw fa-check-square-o"></i>
-                                Deseleziona tutti (<span class="contatore-selezionati">0</span>)
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-            <div class="col-md-6">
-                <div class="panel panel-primary">
-                    <div class="panel-heading">
-                        <h2 class="panel-title">
-                            <i class="fa fa-fw fa-cogs"></i>
-                            Processa Selezionati (<span class="contatore-selezionati">0</span>)
-                        </h2>
-                    </div>
-                    <div class="panel-body">
-                        <div class="btn-group-vertical btn-block">
-                            <button type="submit" name="azione" value="scarica"
-                                    class="btn btn-primary">
-                                <i class="fa fa-fw fa-download"></i>&nbsp;
-                                Scarica tesserini
-                            </button>
-                            <button type="submit" name="azione" value="lavora"
-                                    class="btn btn-primary">
-                               <i class="fa fa-fw fa-cogs"></i>&nbsp;
-                                Lavora pratica
-                            </button>
-                            <button type="submit" name="azione" value="scarica_e_lavora"
-                                    class="btn btn-primary">
-                               <i class="fa fa-fw fa-cogs"></i>
-                                + <i class="fa fa-fw fa-download"></i> &nbsp;&nbsp;
-                                Lavora pratica e scarica
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                <i class="fa fa-fw fa-list"></i>
+                Richieste di Tesserino ({{ tesserini.count }})
+            </h2>
         </div>
+        <div class="panel-body">
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h2 class="panel-title">
+                                <i class="fa fa-fw fa-check-square"></i>
+                                Strumenti di selezione
+                            </h2>
+                        </div>
+                        <div class="panel-body">
+                            <div class="btn-group-vertical btn-block">
+                                <button type="button" class="btn btn-default" id="seleziona-tutti">
+                                    <i class="fa fa-fw fa-check-square"></i>
+                                    Seleziona tutti ({{ tesserini.count }})
+                                </button>
+                                <button type="button" class="btn btn-default" id="deseleziona-tutti">
+                                    <i class="fa fa-fw fa-check-square-o"></i>
+                                    Deseleziona tutti (<span class="contatore-selezionati">0</span>)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-md-6">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h2 class="panel-title">
+                                <i class="fa fa-fw fa-cogs"></i>
+                                Processa Selezionati (<span class="contatore-selezionati">0</span>)
+                            </h2>
+                        </div>
+                        <div class="panel-body">
+                            <div class="btn-group-vertical btn-block">
+
+                                <button type="submit" name="azione" value="scarica"
+                                        class="btn btn-primary">
+                                    <i class="fa fa-fw fa-download"></i>&nbsp;
+                                    Scarica tesserini
+                                </button>
+                                <button type="submit" name="azione" value="lavora"
+                                        class="btn btn-primary">
+                                   <i class="fa fa-fw fa-cogs"></i>&nbsp;
+                                    Lavora pratica
+                                </button>
+                                <button type="submit" name="azione" value="scarica_e_lavora"
+                                        class="btn btn-primary">
+                                   <i class="fa fa-fw fa-cogs"></i>
+                                    + <i class="fa fa-fw fa-download"></i> &nbsp;&nbsp;
+                                    Lavora pratica e scarica
+                                </button>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
 
 
-        <table class="table table-condensed table-striped">
-            <thead>
-            <tr>
-                <th><i class="fa fa-fw fa-check-square"></i></th>
-                <th>Data richiesta</th>
-                <th>Volontario</th>
-                <th>Tesserino</th>
-                <th>Stato richiesta</th>
-                <th>Stato emissione</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for t in tesserini %}
-
-                <tr class="piu-piccolo riga-tesserino">
-                    <td><input type="checkbox" name="tesserini[]" value="{{ t.pk }}" /></td>
-                    <td>{{ t.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
-                    <td>{{ t.persona.link|safe }}</td>
-                    <td>
-                        <span class="monospace">{{ t.codice|default:"N/A" }}</span>
-                        {% if t.stato_richiesta == t.ACCETTATO %}
-                            <a download href="{{ t.url_pdf }}">
-                                <i class="fa fa-fw fa-download"></i> PDF
-                            </a>
-
-                        {% endif %}
-
-                    </td>
-                    <td>
-                        {{ t.get_stato_richiesta_display }}
-                    </td>
-                    <td class="grassetto">
-                        {{ t.get_stato_emissione_display|default:"NON EMESSO" }}
-                        {% if t.data_conferma %}
-                            il {{ t.data_conferma|date:"SHORT_DATETIME_FORMAT" }}
-                        {% endif %}
-
-                    </td>
+            <table class="table table-condensed table-striped">
+                <thead>
+                <tr>
+                    <th><i class="fa fa-fw fa-check-square"></i></th>
+                    <th>Data richiesta</th>
+                    <th>Volontario</th>
+                    <th>Tesserino</th>
+                    <th>Stato richiesta</th>
+                    <th>Stato emissione</th>
                 </tr>
+                </thead>
+                <tbody>
+                {% for t in tesserini %}
 
-            {% empty %}
+                    <tr class="piu-piccolo riga-tesserino">
+                        <td><input type="checkbox" name="tesserini" value="{{ t.pk }}" /></td>
+                        <td>{{ t.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                        <td>{{ t.persona.link|safe }}</td>
+                        <td>
+                            <span class="monospace">{{ t.codice|default:"N/A" }}</span>
+                            {% if t.stato_richiesta == t.ACCETTATO %}
+                                <a download href="{{ t.url_pdf }}">
+                                    <i class="fa fa-fw fa-download"></i> PDF
+                                </a>
 
-                {% if modulo_compilato %}
-                    <tr class="warning">
-                        <td colspan="6">
-                            <i class="fa fa-fw fa-warning"></i>
-                            <strong>Nessuna richiesta di tesserino trovata.</strong><br />
-                            Prova a modificare i parametri di ricerca.
+                            {% endif %}
+
+                        </td>
+                        <td>
+                            {{ t.get_stato_richiesta_display }}
+                        </td>
+                        <td class="grassetto">
+                            {{ t.get_stato_emissione_display|default:"NON EMESSO" }}
+                            {% if t.data_conferma %}
+                                il {{ t.data_conferma|date:"SHORT_DATETIME_FORMAT" }}
+                            {% endif %}
+
                         </td>
                     </tr>
 
-                {% else %}
-                    <tr class="success">
-                        <td colspan="6">
-                            <i class="fa fa-fw fa-info-circle"></i>
-                            <strong>Qui appariranno i risultati di ricerca.</strong><br />
-                            Utilizza il modulo sopra per impostare i parametri di ricerca.
-                        </td>
-                    </tr>
+                {% empty %}
 
-                {% endif %}
+                    {% if modulo_compilato %}
+                        <tr class="warning">
+                            <td colspan="6">
+                                <i class="fa fa-fw fa-warning"></i>
+                                <strong>Nessuna richiesta di tesserino trovata.</strong><br />
+                                Prova a modificare i parametri di ricerca.
+                            </td>
+                        </tr>
+
+                    {% else %}
+                        <tr class="success">
+                            <td colspan="6">
+                                <i class="fa fa-fw fa-info-circle"></i>
+                                <strong>Qui appariranno i risultati di ricerca.</strong><br />
+                                Utilizza il modulo sopra per impostare i parametri di ricerca.
+                            </td>
+                        </tr>
+
+                    {% endif %}
 
 
-            {% endfor %}
-            </tbody>
-        </table>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+</form>
+
 
 <style>
 .riga-tesserino {

@@ -1,4 +1,5 @@
 import datetime
+import json
 import random
 from django.core.paginator import Paginator
 from django.db.models import Sum, Q
@@ -23,7 +24,8 @@ from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVo
     ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
-    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini
+    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, \
+    ModuloLavoraTesserini, ModuloScaricaTesserini
 from ufficio_soci.models import Quota, Tesseramento, Tesserino
 
 
@@ -1141,15 +1143,14 @@ def us_tesserini_emissione_processa(request, me):
     # Ottengo tutti i tesserini
     tesserini = Tesserino.objects.filter(
         pk__in=tesserini_pk, emesso_da__in=sedi
-    )
+    ).prefetch_related('persona')
 
-    modulo_lavora = False
-    if azione in ['lavora', 'scarica_e_lavora']:
-        modulo_lavora = ModuloLavoraTesserini(request.POST if not 'tesserini' in request.POST else None)
-        if modulo_lavora.is_valid():
-            pass
+    fine = False
 
+    da_lavorare = azione in ['lavora', 'scarica_e_lavora']
+    da_scaricare = azione in ['scarica', 'scarica_e_lavora']
 
+    modulo = None
 
     if not tesserini.exists():
         return errore_generico(request, me, titolo="Nessuna richiesta selezionata",
@@ -1157,14 +1158,74 @@ def us_tesserini_emissione_processa(request, me):
                                          "processare. ",
                                torna_titolo="Indietro", torna_url="/us/tesserini/emissione/")
 
+    if da_lavorare:
+        modulo = ModuloLavoraTesserini(request.POST if 'tesserini' not in request.POST else None)
+        if modulo.is_valid():
+
+            stato_richiesta = modulo.cleaned_data['stato_richiesta']
+            stato_emissione = modulo.cleaned_data['stato_emissione']
+            motivo_rifiutato = modulo.cleaned_data['motivo_rifiutato']
+
+            tesserini.update(stato_richiesta=stato_richiesta,
+                             stato_emissione=stato_emissione,
+                             motivo_rifiutato=motivo_rifiutato,
+                             data_conferma=poco_fa())
+
+            # Attiva i tesserini o disattiva come appropriato
+            valido = (stato_emissione and stato_richiesta == Tesserino.ACCETTATO)
+
+            # Assicurati che i tesserini abbiano un codice prima di attivarli
+            if stato_richiesta == Tesserino.ACCETTATO:
+                tesserini_senza_codice = tesserini.filter(Tesserino.query_senza_codice().q)
+                for x in tesserini_senza_codice:
+                    x.assicura_presenza_codice()
+
+            tesserini.update(valido=valido)
+
+            fine = True
+
+    else:
+        modulo = ModuloScaricaTesserini(request.POST or None)
+        if modulo.is_valid():
+            fine = True
+
+    if fine:  # Quando elaborati i tesserini
+        if da_scaricare:
+            return redirect("/us/tesserini/emissione/scarica/")
+
+        else:
+            return messaggio_generico(request, me, titolo="%d tesserini processati" % tesserini.count(),
+                                      messaggio="I tesserini sono stati processati con successo.",
+                                      torna_titolo="Indietro",
+                                      torna_url="/us/tesserini/emissione/")
 
     contesto = {
         "tesserini": tesserini,
+        "modulo": modulo,
     }
     return "us_tesserini_emissione_processa.html", contesto
 
 
 @pagina_privata
 def us_tesserini_emissione_scarica(request, me):
+    sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
+    tesserini_pk = request.session.get('tesserini', default=[])
+    tesserini = Tesserino.objects.filter(
+        pk__in=tesserini_pk, emesso_da__in=sedi
+    ).prefetch_related('persona')
 
-    pass
+    if not tesserini.exists():
+        return redirect("/us/tesserini/emissione/")
+
+    tesserini_link = []
+    for tesserino in tesserini:
+        tesserini_link += [tesserino.url_pdf_token(me)]
+
+    contesto = {
+        "tesserini": tesserini,
+        "tesserini_secondi": 4,
+        "tesserini_link_json": json.dumps(tesserini_link),
+        "tesserini_link": tesserini_link,
+    }
+
+    return "us_tesserini_emissione_scarica.html", contesto

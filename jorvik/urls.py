@@ -190,6 +190,7 @@ urlpatterns = [
     url(r'^us/tesserini/richiedi/(?P<persona_pk>[0-9]+)/$', 'ufficio_soci.viste.us_tesserini_richiedi'),
     url(r'^us/tesserini/emissione/$', 'ufficio_soci.viste.us_tesserini_emissione'),
     url(r'^us/tesserini/emissione/processa/$', 'ufficio_soci.viste.us_tesserini_emissione_processa'),
+    url(r'^us/tesserini/emissione/scarica/$', 'ufficio_soci.viste.us_tesserini_emissione_scarica'),
 
     url(r'^us/elenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', 'ufficio_soci.viste.us_elenco'),
     url(r'^us/elenco/(?P<elenco_id>.*)/download/$', 'ufficio_soci.viste.us_elenco_download'),
