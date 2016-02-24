@@ -69,6 +69,7 @@ STATICFILES_FINDERS = (
 # Cronjob attivi
 CRON_CLASSES = [
     "posta.cron.CronSmaltisciCodaPosta",
+    "base.cron.CronCancellaFileScaduti",
 ]
 
 # Classi middleware (intercetta & computa)

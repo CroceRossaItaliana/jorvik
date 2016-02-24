@@ -631,7 +631,7 @@ class ConAutorizzazioni(models.Model):
         return ModuloMotivoNegazione
 
 
-class ConScadenza:
+class ConScadenzaPulizia(models.Model):
     """
     Aggiunge un attributo DateTimeField scadenza.
     """
@@ -667,7 +667,8 @@ class ConScadenza:
         :return: Il numero di elementi cancellati.
         """
         n = cls.scaduti().count()
-        cls.scaduti().delete()
+        for x in cls.scaduti():
+            x.delete()
         return n
 
 
@@ -719,7 +720,7 @@ class Token(ModelloSemplice, ConMarcaTemporale):
             return False
 
 
-class Allegato(ConMarcaTemporale, ConScadenza, ModelloSemplice):
+class Allegato(ConMarcaTemporale, ConScadenzaPulizia, ModelloSemplice):
     """
     Rappresenta un allegato generico in database, con potenziale scadenza.
     """
@@ -763,6 +764,10 @@ class Allegato(ConMarcaTemporale, ConScadenza, ModelloSemplice):
                 pass
 
         return True
+
+    def delete(self, *args, **kwargs):
+        self.file.delete()
+        super(Allegato, self).delete(*args, **kwargs)
 
 
 class ConAllegati(models.Model):
