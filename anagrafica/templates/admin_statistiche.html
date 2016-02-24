@@ -63,6 +63,20 @@
                         Unit&agrave; Territoriali distaccate.</td>
                 </tr>
 
+                {% for regione, soci, volontari in regione_soci_volontari %}
+                <tr>
+
+                    <td class="nome">Numero di Soci e Volontari per regione</td>
+                    <td class="nome">{{ regione.link|safe }}</td>
+                    <td class="metrica" colspan="2">
+                        {{ soci }} soci<br/>
+                        {{ volontari }} volontari
+                    </td>
+                </tr>
+                {% endfor %}
+
+
+
             </tbody>
         </table>
     </div>

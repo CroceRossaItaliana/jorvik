@@ -13,7 +13,7 @@ from django.contrib.auth import login
 from django.views.generic import ListView
 from django.utils import timezone
 
-from anagrafica.costanti import TERRITORIALE
+from anagrafica.costanti import TERRITORIALE, REGIONALE
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
@@ -1378,6 +1378,16 @@ def admin_statistiche(request, me):
     )
     sedi = Sede.objects.filter(attiva=True)
 
+    regione_soci_volontari = []
+    for regione in Sede.objects.filter(estensione=REGIONALE):
+        regione_soci_volontari += [
+            (
+                regione,
+                regione.membri_attuali(figli=True, membro__in=Appartenenza.MEMBRO_SOCIO).count(),
+                regione.membri_attuali(figli=True, membro=Appartenenza.VOLONTARIO).count()
+            ),
+        ]
+
     contesto = {
         "persone_numero": persone.count(),
         "soci_numero": soci.count(),
@@ -1386,5 +1396,6 @@ def admin_statistiche(request, me):
         "soci_giovani_35_percentuale": soci_giovani_35.count() / soci.count() * 100,
         "sedi_numero": sedi.count(),
         "ora": timezone.now(),
+        "regione_soci_volontari": regione_soci_volontari,
     }
     return 'admin_statistiche.html', contesto
