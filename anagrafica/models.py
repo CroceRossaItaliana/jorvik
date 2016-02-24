@@ -1370,7 +1370,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     @property
     def domanda_formativa(self):
         from formazione.models import Aspirante
-        return self.circonferenze_contenenti(Aspirante.objects.all()).count()
+        return self.circonferenze_contenenti(Aspirante.query_contattabili()).count()
 
     def espandi(self, includi_me=False, pubblici=False, ignora_disattive=True):
         """
