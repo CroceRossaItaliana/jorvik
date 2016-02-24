@@ -45,6 +45,11 @@ class PersonaAutocompletamento(AutocompletamentoBase):
                     PartecipazioneCorsoBase.ESITO_OK,
                     corso__sede__in=sedi
                 ).via("partecipazioni_corsi"))
+            # 3. Iscritto in attesa a un corso base presso una mia sede
+            | Q(PartecipazioneCorsoBase.con_esito(
+                    PartecipazioneCorsoBase.ESITO_PENDING,
+                    corso__sede__in=sedi
+                ).via("partecipazioni_corsi"))
         )\
             .order_by('nome', 'cognome', 'codice_fiscale')\
             .distinct('nome', 'cognome', 'codice_fiscale')
