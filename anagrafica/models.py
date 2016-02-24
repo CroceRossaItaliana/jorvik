@@ -23,7 +23,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Q, QuerySet
+from django.db.models import Q, QuerySet, Avg
 from django_countries.fields import CountryField
 import phonenumbers
 from model_utils.managers import PassThroughManagerMixin
@@ -1371,6 +1371,12 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     def domanda_formativa(self):
         from formazione.models import Aspirante
         return self.circonferenze_contenenti(Aspirante.query_contattabili()).count()
+
+    @property
+    def domanda_formativa_raggio_medio(self):
+        from formazione.models import Aspirante
+        aspiranti = self.circonferenze_contenenti(Aspirante.query_contattabili())
+        return int(aspiranti.aggregate(raggio=Avg('raggio'))['raggio']) or 0
 
     def espandi(self, includi_me=False, pubblici=False, ignora_disattive=True):
         """

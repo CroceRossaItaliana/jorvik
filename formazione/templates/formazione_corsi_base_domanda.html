@@ -21,45 +21,83 @@
             a un Corso Base non vengono pi&ugrave; considerati in questo numero.</p>
         <p>Attivando un nuovo Corso Base su Gaia, verranno inviate delle notifiche di attivazione
             del corso a tutti gli aspiranti nella zona considerati in questa cifra.</p>
+        <p><strong>Nota</strong>: Cerchiamo costantemente di migliorare la qualit&agrave; dello strumento,
+            utilizzando varie tecniche, come la disattivazione automatica degli aspiranti che
+            non sembrano pi&ugrave; interessati ad un corso, oppure il ricalcolo
+            del raggio d'interesse di ogni aspirante. Questo potrebbe, periodicamente,
+            variare leggermente il numero riportato.</p>
     </div>
 
-    <div class="row ">
+    <table class="table table-striped ">
 
-        <ul>
-            {% recursetree sedi %}
-                <li>
+        <thead>
+        <tr>
+            <th>Nome della Sede</th>
+            <th>Aspiranti nelle vicinanze</th>
+            <th>Raggio medio di ricerca corsi</th>
+            <th>Suggerimento</th>
+        </tr>
+        </thead>
+        <tbody>
+            {% for sede in sedi %}
+                <tr>
 
-                    <strong>{{ node.nome }}</strong>:
+                    <td class="grassetto">{{ sede.link|safe }}</td>
 
-                    {{ node.domanda_formativa }} aspiranti interessati
+                    <td>
+                        {{ sede.domanda_formativa }} aspiranti
+                    </td>
 
-                    {% if node.domanda_formativa > 300 %}
-                        <span class="label label-danger">
-                            <i class="fa fa-fw fa-warning"></i>
-                            Attivazione nuovo corso fortemente consigliata
-                        </span>
+                    <td>
+                        {{ sede.domanda_formativa_raggio_medio }} km
 
-                    {% elif node.domanda_formativa > 100 %}
-                        <span class="label label-warning">
-                            <i class="fa fa-fw fa-info-circle"></i>
-                            Considera l'attivazione di un nuovo corso
-                        </span>
+                        <a data-alert=
+"Questo rappresenta il numero massimo di km che,
+ mediamente, un aspirante è disposto a viaggiare
+ per raggiungere la Sede. Questo dipende generalmente
+ dalla località della Sede e dalla densità di altre
+ Sedi nelle vicinanze.
 
-                    {% endif %}
+Questo numero garantisce che ogni aspirante venga
+ informato dell'attivazione di corsi presso un
+ numero di almeno {{ min_sedi }} Sedi nelle sue
+ vicinanze, ma a non più di {{ max_km }} chilometri
+ di distanza.
+"
+                           >
+                            <i class="fa fa-fw fa-question-circle"></i>
+                        </a>
+                    </td>
+
+                    <td>
+                        {% if sede.domanda_formativa > 300 %}
+                            <span class="label label-danger">
+                                <i class="fa fa-fw fa-warning"></i>
+                                Alta: Attivazione nuovo corso fortemente consigliata
+                            </span>
+
+                        {% elif sede.domanda_formativa > 100 %}
+                            <span class="label label-warning">
+                                <i class="fa fa-fw fa-info-circle"></i>
+                                Media: Considera l'attivazione di un nuovo corso
+                            </span>
+
+                        {% else %}
+                            <span class="label label-success">
+                                <i class="fa fa-fw fa-info-circle"></i>
+                                Bassa: Considera attendere ancora un po'
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+            {% endfor %}
+        </tbody>
 
 
-
-                    {% if not node.is_leaf_node %}
-                        <ul class="children">
-                            {{ children }}
-                        </ul>
-                    {% endif %}
-                </li>
-            {% endrecursetree %}
-        </ul>
-
-
-    </div>
+    </table>
 
     <div class="alert alert-success">
         <h4><i class="fa fa-asterisk"></i> Vuoi pianificare un nuovo corso?</h4>

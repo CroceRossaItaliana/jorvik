@@ -8,6 +8,12 @@ $(document).ready(function() {
             return confirm($(e).data('conferma'));
         });
     });
+    $("[data-alert]").each(function(i, e) {
+        $(e).click(function() {
+            alert($(e).data('alert'));
+            return true;
+        });
+    });
     $("[data-caricamento]").each(function(i, e) {
 
         if ($(e).is('form')) {
