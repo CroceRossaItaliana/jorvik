@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import stdnum
 from django.utils import timezone
 from stdnum.it import codicefiscale
 from django.core.exceptions import ValidationError
@@ -28,6 +29,20 @@ def crea_validatore_dimensione_file(mb=10):
             raise ValidationError("Seleziona un file più piccolo di %sMB" % str(megabyte_limit))
 
     return _validatore
+
+
+def valida_partita_iva(partita_iva):
+    try:
+        return stdnum.it.iva.validate(partita_iva)
+    except:
+        raise ValidationError("Partita IVA non corretta.")
+
+
+def valida_iban(iban):
+    try:
+        return stdnum.iban.validate(iban)
+    except:
+        raise ValidationError("IBAN non valido.")
 
 
 def valida_dimensione_file_5mb(fieldfile_obj):
