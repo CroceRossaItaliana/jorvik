@@ -167,6 +167,17 @@ def autorizzazioni(request, me, content_type_pk=None):
 
     richieste = me._autorizzazioni_in_attesa().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
 
+    ORDINE_ASCENDENTE = 'creazione'
+    ORDINE_DISCENDENTE = '-creazione'
+    ORDINE_DEFAULT = ORDINE_ASCENDENTE
+
+    if 'ordine' in request.GET:
+        if request.GET['ordine'] == 'ASC':
+            request.session['autorizzazioni_ordine'] = ORDINE_ASCENDENTE
+        else:
+            request.session['autorizzazioni_ordine'] = ORDINE_DISCENDENTE
+    ordine = request.session.get('autorizzazioni_ordine', default=ORDINE_DEFAULT)
+
     sezioni = ()  # Ottiene le sezioni
     sezs = richieste.values('oggetto_tipo_id').annotate(Count('oggetto_tipo_id'))
 
@@ -176,7 +187,7 @@ def autorizzazioni(request, me, content_type_pk=None):
         modello = modello.RICHIESTA_NOME
         sezioni += ((modello, sez['oggetto_tipo_id__count'], int(sez['oggetto_tipo_id'])),)
 
-    richieste = richieste.order_by('creazione', 'id')
+    richieste = richieste.order_by(ordine, 'id')
 
     if content_type_pk is not None:
         richieste = richieste.filter(oggetto_tipo_id=int(content_type_pk))
@@ -296,14 +307,19 @@ def autorizzazioni_storico(request, me):
     """
     Mostra storico delle autorizzazioni.
     """
-    richieste = me.autorizzazioni_firmate.all().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI).order_by('-ultima_modifica')[0:50]
+
+    NUMERO_RICHIESTE = 50
+
+    richieste = me.autorizzazioni_firmate.all().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)\
+                    .order_by('-ultima_modifica')[0:NUMERO_RICHIESTE]
 
     ricarica = pulisci_autorizzazioni(richieste)
     if ricarica:
         return redirect("/autorizzazioni/storico/")
 
     contesto = {
-        "richieste": richieste
+        "richieste": richieste,
+        "numero": NUMERO_RICHIESTE,
     }
 
     return 'base_autorizzazioni_storico.html', contesto

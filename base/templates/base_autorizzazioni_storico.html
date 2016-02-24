@@ -6,6 +6,12 @@
 
 {% block app_contenuto %}
 
+    <div class="alert alert-info">
+        <i class="fa fa-fw fa-info-circle"></i>
+        Vengono qui mostrate le ultime {{ numero }} richieste
+         che hai processato, in ordine dalla più recente.
+    </div>
+
     {% for richiesta in richieste %}
 
         <div class="panel panel-default {% if richiesta.concessa %}panel-success{% else %}panel-danger{% endif %}">
