@@ -27,7 +27,7 @@
                 </p>
 
             {% else %}
-                <p>Se sei interessato a iscriverti a questo corso, clicca sul pulsante seguente.
+                <p>Se sei interessat{{ me.genere_o_a }} a iscriverti a questo corso, clicca sul pulsante seguente.
                     Notificheremo il tuo interesse al direttore del corso, che ti contatter&agrave;</p>
                 <p>
                     <a href="{{ corso.url_iscriviti }}"
@@ -47,9 +47,9 @@
         {% if puoi_partecipare == corso.SEI_ISCRITTO_PUOI_RITIRARTI %}
             <div class="alert alert-info alert-block">
                 <h4><i class="fa fa-info-circle"></i> Hai chiesto di partecipare a questo corso</h4>
-                <p>Verrai contattat{{ me.genere_o_a }} a breve dal direttore del corso non appena
-                    la tua partecipazione verr&agrave; confermata.</p>
-                <p>Puoi anche presentarti alla prima lezione del corso base direttamente &mdash;
+                <p>Verrai contattat{{ me.genere_o_a }} a breve dal direttore del corso.</p>
+                <p>Puoi presentarti alla prima lezione del corso base, dove la tua iscrizione
+                    verr&agrave; completata e confermata dal direttore &mdash;
                     nota solo che il direttore ha facolt&agrave; di limitare l'accesso
                     ai primi {{ me.aspirante.richiesta_corso.MAX_PARTECIPANTI }} iscritti.</p>
                 <p>

@@ -334,6 +334,10 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
             self.persona, self.corso
         )
 
+    def autorizzazione_concedi_modulo(self):
+        from formazione.forms import ModuloConfermaIscrizioneCorsoBase
+        return ModuloConfermaIscrizioneCorsoBase
+
 
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
 
