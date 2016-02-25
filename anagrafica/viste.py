@@ -1377,12 +1377,13 @@ def admin_statistiche(request, me):
         data_nascita__gt=nascita_minima_35,
     )
     sedi = Sede.objects.filter(attiva=True)
+    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
 
     totale_regione_soci = 0
     totale_regione_volontari = 0
 
     regione_soci_volontari = []
-    for regione in Sede.objects.filter(estensione=REGIONALE):
+    for regione in regionali:
         regione_soci = int(regione.membri_attuali(figli=True, membro__in=Appartenenza.MEMBRO_SOCIO).count())
         regione_volontari = int(regione.membri_attuali(figli=True, membro=Appartenenza.VOLONTARIO).count())
         regione_soci_volontari += [
