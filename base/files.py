@@ -1,6 +1,9 @@
 import os
 from datetime import datetime, date
 from zipfile import ZipFile
+
+from barcode import generate
+from barcode.writer import ImageWriter
 from django.core.files import File
 from django.template import Context
 from django.template.loader import get_template
@@ -58,7 +61,7 @@ class Zip(Allegato):
 
         self.file = zname
 
-    def comprimi_e_salva(self, nome='Archivio.zip', scadenza=domani(), **kwargs):
+    def comprimi_e_salva(self, nome='Archivio.zip', scadenza=None, **kwargs):
         """
         Scorciatoia per comprimi() e effettuare il salvataggio dell'allegato in database.
         :param nome: Il nome del file da allegare (opzionale, default 'Archivio.zip').
@@ -66,7 +69,37 @@ class Zip(Allegato):
         :param kwargs:
         :return:
         """
+        scadenza = scadenza or domani()
         self.comprimi(nome, **kwargs)
+        self.nome = nome
+        self.scadenza = scadenza
+        self.save()
+
+
+class EAN13(Allegato):
+    """
+    Rappresenta una immagine di un codice EAN13 in formato PNG.
+    """
+
+    class Meta:
+        proxy = True
+
+    def genera_e_salva(self, codice, nome="Immagine.png", scadenza=None):
+        generatore = GeneratoreNomeFile('allegati/')
+        zname = generatore(self, nome)
+        self.prepara_cartelle(MEDIA_ROOT + zname)
+        pngfile = open(MEDIA_ROOT + zname, 'wb')
+        writer = ImageWriter()
+        writer.dpi = 400
+        generate("EAN13", codice, writer=writer, output=pngfile, writer_options={
+            "quiet_zone": 0.5,
+            "text_distance": 0.5,
+            "module_height": 5.5,
+            "font_size": 13,
+        })
+        pngfile.close()
+        scadenza = scadenza or domani()
+        self.file = zname
         self.nome = nome
         self.scadenza = scadenza
         self.save()
@@ -84,6 +117,7 @@ class PDF(Allegato):
     ORIENTAMENTO_VERTICALE = 'portrait'
 
     FORMATO_A4 = 'a4'
+    FORMATO_CR80 = 'cr80'
 
     def genera_e_salva(self, nome='File.pdf', scadenza=None, corpo={}, modello='pdf_vuoto.html',
                        orientamento=ORIENTAMENTO_VERTICALE, formato=FORMATO_A4):

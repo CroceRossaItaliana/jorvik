@@ -2,7 +2,7 @@
 {% load utils %}
 {% load static %}
 {% block css_extra %}
-			body { padding-left: 1cm; padding-right: 1cm; padding-top: 0.5cm; padding-bottom: 0.1cm; background-image: url('{% static 'img/cartaintestata.jpg' %}'); background-position:-80px -70px; }
+			body { padding-left: 1cm; padding-right: 1cm; padding-top: 0.5cm; padding-bottom: 0.1cm; background-image: url('{% static 'img/cartaintestata.jpg' %}'); background-position:-1.27cm -0.296cm; }
 			P { margin-bottom: 0.21cm; direction: ltr; color: #000000; widows: 2; orphans: 2; }
 {% endblock %}
 {% block corpo %}
@@ -10,9 +10,13 @@
 	<div align=right STYLE="padding-top: 0.3cm; margin-right: 4cm;"><strong>Croce Rossa Italiana</strong></div>
 	<div align=right STYLE="margin-right: 4cm"><strong>{{ quota.sede.comitato }}</strong></div>
 	<P STYLE="margin-bottom: 0cm"><BR></P>
-	<P STYLE="margin-bottom: 0cm"><em>Ricevuta N.</em> {{ quota.anno }}/{{ quota.progressivo }}</P>
-	<P STYLE="margin-bottom: 0cm"><em>Volontario:</em>{{ quota.persona.nome_completo }}</P>
-	<P STYLE="margin-bottom: 0cm"><em>Codice Fiscale:</em> {{ quota.persona.codice_fiscale }}</P>
+
+            <P STYLE="margin-bottom: 0cm"><em>Ricevuta N.</em> {{ quota.anno }}/{{ quota.progressivo }}</P>
+
+    <P STYLE="margin-bottom: 0cm"><em>Volontario:</em> {{ quota.persona.nome_completo }}</P>
+    <P STYLE="margin-bottom: 0cm"><em>Codice Fiscale:</em> {{ quota.persona.codice_fiscale }}</P>
+
+
 	<P STYLE="margin-bottom: 0cm"><BR></P>
 	<TABLE WIDTH=100% CELLPADDING=4 CELLSPACING=0>
 		<TR VALIGN=TOP>
@@ -43,17 +47,24 @@
 		</TR>
 	</TABLE>
     {% if quota.stato == quota.ANNULLATA %}
-        <P STYLE="margin-bottom: 0cm"></P><br/>&nbsp;
+        <br/>
         <P STYLE="margin-bottom: 0cm; color:#FF0000;">Quota annullata da {{ quota.annullato_da }} il {{ quota.data_annullamento }}</P>&nbsp;
-        <P STYLE="margin-bottom: 0cm"></P>
     {% endif %}
 
-	<P STYLE="margin-bottom: 0cm"></P><br/>&nbsp;
+
 	<P STYLE="margin-bottom: 0cm">{{ quota.sede.nome }}, {{ quota.data_versamento }}</P>&nbsp;
 	<P STYLE="margin-bottom: 0cm"></P>
 	<P style="font-size: 17px">Contributi ed oblazioni sono esenti dall'imposta di bollo per il combinato disposto degli art. 7 e 8 tabella B del DPR 26-10-1972 n. 642 e successive modificazioni ed integrazioni.</P>
-	<P STYLE="margin-bottom: 0cm"></P>
-	<P STYLE="margin-bottom: 0cm"><br/></P>
-	<P STYLE="margin-bottom: 0cm"><br/></P>
+
+    <P STYLE="margin-bottom: 0cm"></P><br/>&nbsp;
+            <P STYLE="text-align: right; margin-bottom: 0cm"> {{ quota.sede.locazione.via }}, {{ quota.sede.locazione.civico   }}, {{ quota.sede.locazione.cap }}, {{ quota.sede.locazione.comune }}, Italia<br/>
+
+             <em>Tel.:</em> {{ quota.sede.telefono }}<br/>
+
+            <em>C.F.:</em> {{ quota.sede.codice_fiscale }}<br/>
+
+           <em>P. IVA:</em> {{ quota.sede.partita_iva }}<br/>
+        </P>
+
 
 {% endblock %}

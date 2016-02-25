@@ -1,0 +1,19 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p class="grassetto">Ciao {{ ricevuta.persona.nome_completo }},</p>
+
+    <p>La Ricevuta n. {{ ricevuta.progressivo }} del {{ ricevuta.anno }} per
+    "<strong>{{ ricevuta.causale }}</strong>", versata in data {{ ricevuta.data_versamento }},
+        &egrave; stata <strong>ANNULLATA</strong>.</p>
+
+    <p>{{ ricevuta.annullato_da.link|safe }} ha annullato la ricevuta il {{ ricevuta.data_annullamento }}.</p>
+
+    <p>Puoi scaricare la ricevuta annullata in formato PDF <a href="{{ ricevuta.url_pdf }}" download>cliccando qui</a>.</p>
+
+    <p>Se pensi che ci sia stato un errore, rispondi a questa e-mail.</p>
+
+
+{% endblock %}
+

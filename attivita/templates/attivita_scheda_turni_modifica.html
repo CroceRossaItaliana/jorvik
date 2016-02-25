@@ -237,10 +237,11 @@
                         </div>
                         <p>&nbsp;</p>
                         <p>
-                            <a href="{{ turno.attivita.url_report }}"
-                               class="btn btn-default btn-sm btn-block">
-                                <i class="fa fa-fw fa-copy"></i>
-                                Ripeti turno
+                            <a  href="{{ turno.url_cancella }}"
+                                class="btn btn-danger btn-sm btn-block"
+                                data-conferma="Sei sicur{{ me.genere_o_a }} di voler cancellare questo turno? L'operazione non è reversibile e tutte le richieste di partecipazione, approvate o meno, verranno cancellate.">
+                                <i class="fa fa-fw fa-trash"></i>
+                                Cancella turno
                             </a>
                         </p>
 

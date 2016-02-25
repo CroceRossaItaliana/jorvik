@@ -1,0 +1,210 @@
+{% extends 'pdf_vuoto.html' %}
+
+{% load static %}
+
+{% block html %}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
+	<TITLE></TITLE>
+	<STYLE TYPE="text/css">
+
+		body {
+			padding: 0cm 0cm 0cm 0cm;
+		}
+		@page { margin: 0px; }
+		body { margin: 0px; }
+
+		.fronte, .retro {
+			padding: 0cm 0cm 0cm 0cm;
+			margin: auto;
+			width: 100%;
+			position: relative;
+		}
+
+		#fronte_img, #retro_img {
+			/* Dimensioni standard ISO/IEC 7810 */
+			width: 100%;
+			height: 100%;
+			position: absolute;
+			top: 0cm;
+			left: 0cm;
+		}
+
+		.fronte {
+			text-align: left;
+		}
+
+		.retro {
+			text-align: right;
+		}
+
+		.testo-intestazione,
+		.avatar,
+		#barcode
+			{
+			display: block;
+			float: left;
+			position: absolute;
+			font-family: "Helvetica";
+        {% comment %}
+            font-family: "Arial";
+        {% endcomment %}
+			font-size: 10pt;
+		}
+
+		.testo-nome,
+		.testo-cognome,
+		.testo-cf,
+		.testo-ingresso
+			{
+			display: block;
+			float: left;
+			position: absolute;
+			font-weight: bold;
+			font-family: "Helvetica";
+        {% comment %}
+            font-family: "Arial";
+        {% endcomment %}
+			font-size: 6pt;
+		}
+
+		.testo-volontario {
+			display: block;
+			float: left;
+			position: absolute;
+			font-family: "Helvetica";
+        {% comment %}
+            font-family: "Arial";
+        {% endcomment %}
+			font-size: 10pt;
+			font-weight: bold;
+			color: rgb(123, 121, 121);
+			width: 2.10cm;
+		}
+
+		.testo-comitato,
+		.testo-scadenza
+			{
+			display: block;
+			float: left;
+			position: absolute;
+			font-family: "Helvetica Italic";
+        {% comment %}
+            font-family: "Arial Italic";
+        {% endcomment %}
+			font-style: italic;
+		}
+
+		.testo-nome {
+			top:  4.00cm;
+			right: 3.10cm;
+		}
+
+		.testo-cognome {
+			top:  4.70cm;
+			right: 3.10cm;
+		}
+
+		.testo-cf {
+			right: 3.10cm;
+			top : 2.45cm;
+		}
+
+		.testo-intestazione {
+			right: 2.40cm;
+			top : 0.80cm;
+			font-weight: bold;
+			font-size: 7.056pt;
+			text-align: right;
+		}
+
+		.testo-ingresso {
+			top: 3.25cm;
+			right: 3.10cm;
+		}
+
+		.testo-comitato {
+			top: 3.16cm;
+			left: 1.30cm;
+            font-size: 4.7pt;
+		}
+
+		.testo-scadenza {
+			top: 3.40cm;
+			left: 5.65cm;
+            font-size: 5.4pt;
+		}
+
+		.testo-volontario {
+			top: 2.00cm;
+			right: 0.80cm;
+		}
+
+		.avatar 	{
+			right: 0.55cm;
+			top : 2.60cm;
+			width: 2.30cm;
+			height: 2.30cm;
+			border: 1px solid black;
+		}
+
+		#barcode {
+			left: 0.55cm;
+			top : 3.40cm;
+			width:  4.93cm;
+			height: 1.6cm;
+			position: absolute;
+		}
+
+		#barcode img {
+			width:  4.93cm;
+			height: 1.6cm;
+		}
+
+		#footer_pdf {
+			display: none;
+		}
+
+
+	</STYLE>
+</HEAD>
+<BODY LANG="it-IT">
+
+	<!-- Fronte -->
+    <div class="fronte">
+        <img id="fronte_img" src="{% static 'img/tesserino/FronteAttivo.jpg' %}" alt="FRONTE" />
+        <span class="testo-volontario">VOLONTARI{{ persona.genere_o_a|upper }}</span>
+        <span class="testo-nome"		>{{ persona.nome }}</span>
+        <span class="testo-cognome"		>{{ persona.cognome }}</span>
+        <span class="testo-cf"		>{{ persona.codice_fiscale }}</span>
+        <img class="avatar" src="{{ persona.fototessera_attuale.file.url }}" />
+        <span class="testo-intestazione">
+            Croce Rossa Italiana<br />
+            {{ sede.nome_completo }}
+        </span>
+        <span class="testo-ingresso">
+            {{ persona.ingresso|date:"d/m/Y" }}
+        </span>
+    </div>
+
+    <!-- Interruzione di pagina -->
+    <div style="page-break-before: always;"></div>
+
+    <!-- Retro  -->
+    <div class="retro">
+        <img id="retro_img" src="{% static 'img/tesserino/RetroAttivo.jpg' %}" alt="RETRO" />
+        <span class="testo-comitato">
+            {{ sede.locazione }}
+        </span>.
+        <span class="testo-scadenza"> <i>Data di scadenza:</i> {{ tesserino.data_scadenza|date:"m/Y" }}</span>
+        <div id="barcode" alt="barcode">
+        	<img src="{{ codice.file.url }}" />
+        </div>
+
+    </div>
+
+</BODY>
+</HTML>
+{% endblock %}

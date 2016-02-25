@@ -15,6 +15,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
 from anagrafica.costanti import ESTENSIONE, ESTENSIONE_MINORE
+from base.stringhe import domani, genera_uuid_casuale
 from base.utils import concept, poco_fa
 from django.utils import timezone
 
@@ -108,8 +109,8 @@ class ConStorico(models.Model):
             inizio = datetime.combine(al_giorno, datetime.max.time())  # 23.59
             fine = datetime.combine(al_giorno, datetime.min.time())  # 0.00
 
-        fine += timedelta(seconds=1)  # Anti-bug
-        fine -= timedelta(minutes=5)  # Anti-bug
+        #fine += timedelta(seconds=1)  # Anti-bug
+        #fine -= timedelta(minutes=5)  # Anti-bug
 
         risultato = Q(
             Q(inizio__lte=inizio),
@@ -252,11 +253,27 @@ class ConDelegati(models.Model):
         d.save()
         return d
 
+
 class ConPDF():
+
+    class Meta:
+        abstract = True
+    pdf_token = models.CharField("Token Scaricamento PDF", max_length=127, blank=True, null=True, db_index=True, default=None)
+    pdf_token_scadenza = models.DateTimeField(blank=True, null=True, db_index=True, default=None)
+
+    def token_valida(self, token):
+        from base.models import Token
+        from anagrafica.permessi.costanti import LETTURA
+        token = Token.verifica(token)
+        return token and token[0].permessi_almeno(self, LETTURA)
+
+    def url_pdf_token(self, persona):
+        from base.models import Token
+        token = Token.genera(persona)
+        return "%s?token=%s" % (self.url_pdf, token)
 
     def genera_pdf(self):
         raise NotImplemented('La classe non implementa il metodo "genera_pdf"')
-
 
     @property
     def url_pdf(self):

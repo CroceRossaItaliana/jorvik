@@ -25,6 +25,17 @@
 
     {% endif %}
 
+    {% if corso.possibile_aggiungere_iscritti %}
+        <div class="alert alert-block alert-info">
+            <a href="{{ corso.url_iscritti_aggiungi }}"
+               class="pull-right btn btn-info btn-xs">
+                <i class="fa fa-fw fa-plus-circle"></i>
+                Iscrivi sostenitori
+            </a>
+            <p>Vuoi iscrivere dei Sostenitori della Sede a questo corso base?</p>
+        </div>
+    {% endif %}
+
     {% elenco elenco %}
 
 {% endblock %}

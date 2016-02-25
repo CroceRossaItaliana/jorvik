@@ -82,8 +82,10 @@ class CorsoBase(Corso, ConVecchioID):
     NON_PUOI_ISCRIVERTI = (NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO, NON_PUOI_ISCRIVERTI_TROPPO_TARDI,
                            NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO,)
 
+    NON_PUOI_ISCRIVERTI_SOLO_SE_IN_AUTONOMIA = (NON_PUOI_ISCRIVERTI_TROPPO_TARDI,)
+
     def persona(self, persona):
-        if not Aspirante.objects.filter(persona=persona).exists():
+        if (not Aspirante.objects.filter(persona=persona).exists()) and persona.volontario:
             return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
 
         if PartecipazioneCorsoBase.con_esito_ok(persona=persona, corso__stato=self.ATTIVO).exclude(corso=self).exists():
@@ -117,6 +119,10 @@ class CorsoBase(Corso, ConVecchioID):
     def troppo_tardi_per_iscriverti(self):
         return timezone.now() > (self.data_inizio + datetime.timedelta(days=7))
 
+    @property
+    def possibile_aggiungere_iscritti(self):
+        return self.stato in [Corso.ATTIVO, Corso.PREPARAZIONE]
+
     def __str__(self):
         return self.nome
 
@@ -147,6 +153,10 @@ class CorsoBase(Corso, ConVecchioID):
     @property
     def url_iscritti(self):
         return "%siscritti/" % (self.url,)
+
+    @property
+    def url_iscritti_aggiungi(self):
+        return "%siscritti/aggiungi/" % (self.url,)
 
     @property
     def url_iscriviti(self):
@@ -226,15 +236,15 @@ class CorsoBase(Corso, ConVecchioID):
     def partecipazioni_ritirate(self):
         return PartecipazioneCorsoBase.con_esito_ritirata().filter(corso=self)
 
-    def attiva(self):
+    def attiva(self, rispondi_a=None):
         if not self.attivabile():
             raise ValueError("Questo corso non è attivabile.")
 
-        self._invia_email_agli_aspiranti()
+        self._invia_email_agli_aspiranti(rispondi_a=rispondi_a)
         self.stato = self.ATTIVO
         self.save()
 
-    def _invia_email_agli_aspiranti(self):
+    def _invia_email_agli_aspiranti(self, rispondi_a=None):
         for aspirante in self.aspiranti_nelle_vicinanze():
             persona = aspirante.persona
             Messaggio.costruisci_e_accoda(
@@ -245,6 +255,7 @@ class CorsoBase(Corso, ConVecchioID):
                     "corso": self,
                 },
                 destinatari=[persona],
+                rispondi_a=rispondi_a
             )
 
 

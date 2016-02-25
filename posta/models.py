@@ -32,6 +32,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
     # Il mittente e' una persona o None (il sistema di Gaia)
     mittente = models.ForeignKey("anagrafica.Persona", default=None, null=True, blank=True, on_delete=models.CASCADE)
+    rispondi_a = models.ForeignKey("anagrafica.Persona", default=None, null=True, blank=True,
+                                   related_name="messaggi_come_rispondi_a", on_delete=models.CASCADE)
 
     @property
     def destinatari(self):
@@ -111,8 +113,15 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             if not mittente_email:
                 mittente_email = self.NOREPLY_EMAIL
 
+        if self.rispondi_a:  # Rispondi a definito?
+            if not self.mittente:  # Se si, e nessun mittente, usa nome mittente del reply-to
+                mittente_nome = self.rispondi_a.nome_completo
+            reply_to = "%s <%s>" % (self.rispondi_a.nome_completo, self.rispondi_a.email)
+
+        else:  # Altrimenti, imposta reply-to allo stesso mittente.
+            reply_to = "%s <%s>" % (mittente_nome, mittente_email)
+
         mittente = "%s <%s>" % (mittente_nome, self.NOREPLY_EMAIL)
-        reply_to = "%s <%s>" % (mittente_nome, mittente_email)
 
         plain_text = strip_tags(self.corpo)
         successo = True
@@ -244,7 +253,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         m = cls(
             oggetto=oggetto,
             mittente=mittente,
-            corpo=get_template(modello).render(Context(corpo))
+            corpo=get_template(modello).render(Context(corpo)),
+            **kwargs
         )
         m._processa_link()
         m.save()

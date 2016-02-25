@@ -17,7 +17,7 @@ from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PER
 from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, ModuloModificaTurno, \
     ModuloAggiungiPartecipanti, ModuloCreazioneTurno, ModuloCreazioneArea, ModuloOrganizzaAttivita, \
-    ModuloOrganizzaAttivitaReferente, ModuloStatisticheAttivita
+    ModuloOrganizzaAttivitaReferente, ModuloStatisticheAttivita, ModuloRipetiTurno
 from attivita.models import Partecipazione, Attivita, Turno, Area
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
@@ -302,6 +302,23 @@ def attivita_scheda_informazioni(request, me=None, pk=None):
 
     return 'attivita_scheda_informazioni.html', contesto
 
+
+@pagina_privata
+def attivita_scheda_cancella(request, me, pk):
+    attivita = get_object_or_404(Attivita, pk=pk)
+    if not me.permessi_almeno(attivita, COMPLETO):
+        return redirect(ERRORE_PERMESSI)
+
+    if not attivita.cancellabile:
+        return errore_generico(request, me, titolo="Attività non cancellabile",
+                               messaggio="Questa attività non può essere cancellata.")
+
+    attivita.delete()
+    return messaggio_generico(request, me, titolo="Attività cancellata",
+                              messaggio="L'attività è stata cancellata con successo.",
+                              torna_titolo="Gestione attività", torna_url="/attivita/gestisci/")
+
+
 @pagina_pubblica
 def attivita_scheda_mappa(request, me=None, pk=None):
     """
@@ -367,9 +384,6 @@ def attivita_scheda_turni_nuovo(request, me=None, pk=None):
     Pagina di creazione di un nuovo turno
     """
 
-    if False:
-        return ci_siamo_quasi(request, me)
-
     attivita = get_object_or_404(Attivita, pk=pk)
     if not me.permessi_almeno(attivita, MODIFICA):
         redirect(ERRORE_PERMESSI)
@@ -381,18 +395,68 @@ def attivita_scheda_turni_nuovo(request, me=None, pk=None):
       "inizio": tra_una_settimana, "fine": tra_una_settimana_e_una_ora,
     })
 
+    modulo_ripeti = ModuloRipetiTurno(request.POST or None, prefix="ripeti")
+
     if modulo.is_valid():
         turno = modulo.save(commit=False)
         turno.attivita = attivita
         turno.save()
+
+        if request.POST.get('ripeti', default="no") == 'si' \
+                and modulo_ripeti.is_valid():
+            numero_ripetizioni = modulo_ripeti.cleaned_data['numero_ripetizioni']
+            giorni = modulo_ripeti.cleaned_data['giorni']
+            print(giorni)
+
+            giorni_ripetuti = 0
+            giorni_nel_futuro = 1
+            while giorni_ripetuti < numero_ripetizioni:
+
+                ripetizione = Turno(
+                    attivita=attivita,
+                    inizio=turno.inizio + timedelta(days=giorni_nel_futuro),
+                    fine=turno.fine + timedelta(days=giorni_nel_futuro),
+                    prenotazione=turno.prenotazione + timedelta(days=giorni_nel_futuro),
+                    minimo=turno.minimo,
+                    massimo=turno.massimo,
+                    nome=turno.nome,
+                )
+
+                if str(ripetizione.inizio.weekday()) in giorni:
+                    giorni_ripetuti += 1
+                    ripetizione.save()
+
+                giorni_nel_futuro += 1
+
+            pass
+
         return redirect(turno.url)
+
 
     contesto = {
         "modulo": modulo,
+        "modulo_ripeti": modulo_ripeti,
         "attivita": attivita,
         "puo_modificare": True
     }
     return 'attivita_scheda_turni_nuovo.html', contesto
+
+
+@pagina_privata
+def attivita_scheda_turni_turno_cancella(request, me, pk=None, turno_pk=None):
+    turno = Turno.objects.get(pk=turno_pk)
+    attivita = turno.attivita
+    if not me.permessi_almeno(attivita, MODIFICA):
+        redirect(ERRORE_PERMESSI)
+
+    precedente = attivita.turni.all().filter(inizio__lt=turno.inizio).order_by('inizio').last()
+    if precedente:
+        url_torna = precedente.url_modifica
+    else:
+        url_torna = attivita.url_turni_modifica
+
+    turno.delete()
+    return redirect(url_torna)
 
 
 @pagina_privata

@@ -21,11 +21,12 @@ Questo file gestisce la espansione dei permessi in Gaia.
 
 def espandi_persona(persona, al_giorno=None):
     from anagrafica.models import Persona, Appartenenza, Trasferimento, Estensione
-    from ufficio_soci.models import Quota
+    from ufficio_soci.models import Quota, Tesserino
     return [
         (LETTURA,   Trasferimento.objects.filter(persona=persona)),
         (LETTURA,   Estensione.objects.filter(persona=persona)),
         (LETTURA,   Quota.objects.filter(persona=persona)),
+        (LETTURA,   Tesserino.objects.filter(persona=persona)),
     ]
 
 
@@ -46,7 +47,7 @@ def espandi_gestione_soci(qs_sedi, al_giorno=None):
 
 def espandi_elenchi_soci(qs_sedi, al_giorno=None):
     from anagrafica.models import Persona, Appartenenza, Sede, Riserva
-    from ufficio_soci.models import Quota
+    from ufficio_soci.models import Quota, Tesserino
     return [
         (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi).via("appartenenze"))),
         (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO).via("appartenenze"))),
@@ -56,7 +57,8 @@ def espandi_elenchi_soci(qs_sedi, al_giorno=None):
         (LETTURA,  Persona.objects.filter(Appartenenza.con_esito_ok(sede__in=qs_sedi).via("appartenenze"))),
         (LETTURA,  Persona.objects.filter(Appartenenza.con_esito_pending(sede__in=qs_sedi).via("appartenenze"))),
         (LETTURA,  Persona.objects.filter(Appartenenza.con_esito_no(sede__in=qs_sedi).via("appartenenze"))),
-        (LETTURA,  Riserva.objects.filter(Appartenenza.con_esito_ok(sede__in=qs_sedi).via("persona__appartenenze")))
+        (LETTURA,  Riserva.objects.filter(Appartenenza.con_esito_ok(sede__in=qs_sedi).via("persona__appartenenze"))),
+        (LETTURA,  Tesserino.objects.filter(Appartenenza.con_esito_ok(sede__in=qs_sedi).via("persona__appartenenze")))
     ]
 
 

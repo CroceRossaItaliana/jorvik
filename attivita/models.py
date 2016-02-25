@@ -67,8 +67,16 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
         return self.delegati_attuali(tipo=REFERENTE)
 
     @property
+    def cancellabile(self):
+        return not self.turni.all().exists()
+
+    @property
     def url(self):
         return "/attivita/scheda/%d/" % (self.pk,)
+
+    @property
+    def url_cancella(self):
+        return "/attivita/scheda/%d/cancella/" % (self.pk,)
 
     @property
     def link(self):
@@ -357,6 +365,10 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
     @property
     def url_modifica(self):
         return "%sturni/modifica/link-permanente/%d/" % (self.attivita.url, self.pk)
+
+    @property
+    def url_cancella(self):
+        return "%sturni/cancella/%d/" % (self.attivita.url, self.pk)
 
     @property
     def url_partecipa(self):

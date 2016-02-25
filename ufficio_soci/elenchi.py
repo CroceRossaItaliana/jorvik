@@ -393,7 +393,11 @@ class ElencoQuote(ElencoVistaSoci):
         # Ora filtra per Sede
         return origine.filter(
             appartenenze__sede__in=qs_sedi,
-        ).prefetch_related('quote')
+        ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related('quote').distinct('cognome', 'nome', 'codice_fiscale')
 
     def excel_colonne(self):
         anno = self.modulo_riempito.cleaned_data['anno']
@@ -427,7 +431,7 @@ class ElencoOrdinari(ElencoVistaSoci):
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
-        )
+        ).distinct('cognome', 'nome', 'codice_fiscale')
 
 
 class ElencoInRiserva(ElencoVistaSoci):

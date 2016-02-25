@@ -89,7 +89,7 @@
                                 </tr>
 
                             {% elif avviso.0 == ERRORE %}
-                                <tr class="danger error">
+                                <tr class="danger error bg-danger">
                                     <td colspan="{{ riga.0|length }}">
                                         <i class="fa fa-fw fa-times"></i>
                                         <strong>IMPOSSIBLE CARICARE</strong>:
@@ -115,8 +115,17 @@
         </div>
 
     </div>
+    <style type="text/css">
+      @media print {
+        .bg-danger {
+          background-color: #f2dede !important;
+        }
 
-
+        .table td {
+          background-color: transparent !important;
+        }
+      }
+    </style>
 
 {% endblock %}
 

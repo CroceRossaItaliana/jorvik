@@ -135,6 +135,7 @@ urlpatterns = [
     url(r'^attivita/reperibilita/$', 'centrale_operativa.viste.attivita_reperibilita'),
     url(r'^attivita/reperibilita/(?P<reperibilita_pk>[0-9]+)/cancella/$', 'centrale_operativa.viste.attivita_reperibilita_cancella'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/$', 'attivita.viste.attivita_scheda_informazioni'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/cancella/$', 'attivita.viste.attivita_scheda_cancella'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/mappa/$', 'attivita.viste.attivita_scheda_mappa'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/partecipanti/$', 'attivita.viste.attivita_scheda_partecipanti'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/$', 'attivita.viste.attivita_scheda_turni'),
@@ -143,6 +144,7 @@ urlpatterns = [
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/(?P<turno_pk>[0-9]+)/ritirati/$', 'attivita.viste.attivita_scheda_turni_ritirati'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/(?P<turno_pk>[0-9]+)/partecipanti/$', 'attivita.viste.attivita_scheda_turni_partecipanti'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/link-permanente/(?P<turno_pk>[0-9]+)/$', 'attivita.viste.attivita_scheda_turni_link_permanente'),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/cancella/(?P<turno_pk>[0-9]+)/$', 'attivita.viste.attivita_scheda_turni_turno_cancella'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/modifica/$', 'attivita.viste.attivita_scheda_turni_modifica'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/nuovo/$', 'attivita.viste.attivita_scheda_turni_nuovo'),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/partecipazione/(?P<partecipazione_pk>[0-9]+)/cancella/$', 'attivita.viste.attivita_scheda_partecipazione_cancella'),
@@ -176,6 +178,7 @@ urlpatterns = [
 
     url(r'^us/elenchi/(?P<elenco_tipo>.*)/$', 'ufficio_soci.viste.us_elenchi'),
     url(r'^us/quote/$', 'ufficio_soci.viste.us_quote'),
+    url(r'^us/quote/nuova/$', 'ufficio_soci.viste.us_quote_nuova'),
     url(r'^us/ricevute/$', 'ufficio_soci.viste.us_ricevute'),
     url(r'^us/ricevute/(?P<pk>[0-9]+)/annulla/$', 'ufficio_soci.viste.us_ricevute_annulla'),
 
@@ -213,6 +216,7 @@ urlpatterns = [
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/$', 'formazione.viste.aspirante_corso_base_informazioni'),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/mappa/$', 'formazione.viste.aspirante_corso_base_mappa'),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/$', 'formazione.viste.aspirante_corso_base_iscritti'),
+    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/aggiungi/$', 'formazione.viste.aspirante_corso_base_iscritti_aggiungi'),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscriviti/$', 'formazione.viste.aspirante_corso_base_iscriviti'),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/ritirati/$', 'formazione.viste.aspirante_corso_base_ritirati'),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/report/$', 'formazione.viste.aspirante_corso_base_report'),
