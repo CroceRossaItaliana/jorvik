@@ -1372,21 +1372,28 @@ def admin_statistiche(request, me):
     persone = Persona.objects.all()
     soci = Persona.objects.filter(
         Appartenenza.query_attuale(membro__in=Appartenenza.MEMBRO_SOCIO).via("appartenenze")
-    )
+    ).distinct('nome', 'cognome', 'codice_fiscale')
     soci_giovani_35 = soci.filter(
         data_nascita__gt=nascita_minima_35,
     )
     sedi = Sede.objects.filter(attiva=True)
 
+    totale_regione_soci = 0
+    totale_regione_volontari = 0
+
     regione_soci_volontari = []
     for regione in Sede.objects.filter(estensione=REGIONALE):
+        regione_soci = int(regione.membri_attuali(figli=True, membro__in=Appartenenza.MEMBRO_SOCIO).count())
+        regione_volontari = int(regione.membri_attuali(figli=True, membro=Appartenenza.VOLONTARIO).count())
         regione_soci_volontari += [
             (
                 regione,
-                regione.membri_attuali(figli=True, membro__in=Appartenenza.MEMBRO_SOCIO).count(),
-                regione.membri_attuali(figli=True, membro=Appartenenza.VOLONTARIO).count()
+                regione_soci,
+                regione_volontari,
             ),
         ]
+        totale_regione_soci += int(regione_soci)
+        totale_regione_volontari += int(regione_volontari)
 
     contesto = {
         "persone_numero": persone.count(),
@@ -1397,5 +1404,7 @@ def admin_statistiche(request, me):
         "sedi_numero": sedi.count(),
         "ora": timezone.now(),
         "regione_soci_volontari": regione_soci_volontari,
+        "totale_regione_soci": totale_regione_soci,
+        "totale_regione_volontari": totale_regione_volontari,
     }
     return 'admin_statistiche.html', contesto

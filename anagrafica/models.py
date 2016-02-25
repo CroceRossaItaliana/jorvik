@@ -1281,11 +1281,12 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         :return:
         """
         if figli:
-            kwargs.update({'sede__in': self.get_descendants(True)})
+            kwargs.update({'sede__in': self.get_descendants(include_self=True) })
         else:
             kwargs.update({'sede': self.pk})
 
-        return Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, **kwargs).via("appartenenze"))
+        return Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, **kwargs).via("appartenenze"))\
+                .distinct('nome', 'cognome', 'codice_fiscale')
 
     def appartenenze_persona(self, persona, membro=None, figli=False, **kwargs):
         """
