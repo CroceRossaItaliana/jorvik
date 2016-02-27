@@ -257,6 +257,7 @@ urlpatterns = [
     # Amministrazione
 
     url(r'^admin/import/volontari/$', 'anagrafica.viste.admin_import_volontari'),
+    url(r'^admin/import/presidenti/$', 'anagrafica.viste.admin_import_presidenti'),
     url(r'^admin/statistiche/$', 'anagrafica.viste.admin_statistiche'),
 
     url(r'^admin/', include(admin.site.urls)),

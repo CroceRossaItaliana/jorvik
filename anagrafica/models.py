@@ -1462,14 +1462,12 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
         """
         return delega_permessi(self)
 
-
     def espandi_incarichi(self):
         """
         Ottiene un elenco di incarichi che scaturiscono dalla delega.
         :return: Una lista di tuple (INCARICO, qs_oggetto)
         """
         return delega_incarichi(self)
-
 
     def autorizzazioni(self):  # TODO Rimuovere
         """

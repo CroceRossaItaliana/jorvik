@@ -326,3 +326,8 @@ class ModuloModificaDataInizioAppartenenza(ModelForm):
         if inizio > timezone.now():
             raise ValidationError("La data non può essere nel futuro.")
         return inizio
+
+
+class ModuloImportPresidenti(forms.Form):
+    presidente = autocomplete_light.ModelChoiceField("PresidenteAutocompletamento")
+    sede = autocomplete_light.ModelChoiceField("ComitatoAutocompletamento")

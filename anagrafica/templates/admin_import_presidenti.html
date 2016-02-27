@@ -1,0 +1,106 @@
+{% extends 'base_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Procedura di Nomina Rapida dei Presidenti
+{% endblock %}
+
+
+{% block pagina_principale %}
+
+    <p>&nbsp;</p>
+
+    <div class="container">
+
+        <div class="row">
+
+            <div class="col-md-6">
+                <h4>Importa Nuovi Presidenti</h4>
+                <div class="alert alert-info">
+                    <i class="fa fa-fw fa-info-circle"></i>
+                    Da questa pagina &egrave; possibile importare un numero di {{ numero_presidenti_per_pagina }}
+                    Presidenti CRI per volta. Le deleghe di Presidenza dei vecchi Presidenti verranno automaticamente
+                    terminate. Sia i presidenti entranti, che quelli uscenti, riceveranno una notifica per e-mail.
+                    Se il Presidente non &egrave; cambiato, la modifica non verr&agrave; effettuata (non verr&agrave;
+                    dimesso e riammesso lo stesso Presidente).
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="fa fa-fw fa-warning"></i>
+                    Tutte le nomine verranno registrate a tuo nome ({{ me.nome_completo }}) e sarai registrato
+                    come mittente alle e-mail in uscita da questa procedura.
+                </div>
+
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <p>
+                        <button type="submit" class="btn btn-danger btn-lg btn-block">
+                            <i class="fa fa-fw fa-cogs"></i>
+                            Avvia la Procedura di Nomina
+                        </button>
+                    </p>
+
+                    <table class="table table-striped table-condensed">
+                        <tbody>
+                        {% for modulo in moduli %}
+                            <tr>
+                                <td>{% bootstrap_form modulo layout="horizontal" %}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <p>
+                        <button type="submit" class="btn btn-danger btn-lg btn-block">
+                            <i class="fa fa-fw fa-cogs"></i>
+                            Avvia la Procedura di Nomina
+                        </button>
+                    </p>
+                </form>
+
+            </div>
+
+            <div class="col-md-6">
+                <h4>Esito importazione</h4>
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <td>Presidente</td>
+                        <td>Sede</td>
+                        <td>Esito</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for presidente, sede, esito in esiti %}
+                        <tr>
+                            <td>
+                                {{ presidente.link|safe }}<br />
+                                <span class="monospace">{{ presidente.codice_fiscale }}</span>
+                            </td>
+                            <td>
+                                {{ sede.link|safe }}
+                            </td>
+                            <td class="grassetto">
+                                {{ esito }}
+                            </td>
+                        </tr>
+
+                    {% empty %}
+                        <tr class="warning">
+                            <td colspan="3">
+                                Qui appariranno gli esiti di importazione.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+
+        </div>
+
+    </div>
+{% endblock %}
+

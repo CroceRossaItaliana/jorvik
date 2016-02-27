@@ -19,7 +19,7 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
-    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza
+    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -1311,10 +1311,12 @@ def handle_uploaded_file(f):
             destination.write(chunk)
     return nome
 
+
 @pagina_privata
 def admin_import_volontari(request, me):
     from anagrafica.importa import import_valida_volontari
-    if not me.utenza.is_staff:
+
+    if not me.utenza.is_superuser:
         return redirect(ERRORE_PERMESSI)
 
     risultati = []
@@ -1409,3 +1411,66 @@ def admin_statistiche(request, me):
         "totale_regione_volontari": totale_regione_volontari,
     }
     return 'admin_statistiche.html', contesto
+
+
+@pagina_privata
+def admin_import_presidenti(request, me):
+
+    if not me.utenza.is_superuser:
+        return redirect(ERRORE_PERMESSI)
+
+    # Numero di presidenti per pagina
+    numero_presidenti_per_pagina = 15
+
+    moduli = []
+    esiti = []
+    for i in range(0, numero_presidenti_per_pagina):
+        modulo = ModuloImportPresidenti(request.POST or None, prefix="presidente_%d" % i)
+
+        if modulo.is_valid():
+
+            # Ottieni i dati
+            presidente = modulo.cleaned_data['presidente']
+            sede = modulo.cleaned_data['sede']
+
+            # Se la Sede ha un Presidente, termina la sua Delega e notifica.
+            delega_presidente_precedente = sede.deleghe_attuali(tipo=PRESIDENTE).first()
+            if delega_presidente_precedente:
+
+                # Se il Presidente è già stato nominato.
+                if delega_presidente_precedente.persona == presidente:
+                    esiti += [
+                        (presidente, sede, "Saltato. Era già Presidente di questa Sede.")
+                    ]
+                    continue
+
+                delega_presidente_precedente.fine = poco_fa()
+                delega_presidente_precedente.save()
+                delega_presidente_precedente.invia_notifica_terminazione(mittente=me)
+
+            # Crea la nuova delega e notifica.
+            delega = Delega(
+                persona=presidente,
+                tipo=PRESIDENTE,
+                oggetto=sede,
+                inizio=poco_fa(),
+                firmatario=me,
+            )
+            delega.save()
+            delega.invia_notifica_creazione()
+
+            esiti += [
+                (presidente, sede, "OK. Nomina effettuata%s." % (
+                    (", vecchio Presidente %s dimesso" % delega_presidente_precedente.persona.codice_fiscale)
+                    if delega_presidente_precedente else ", non vi era alcun Presidente."
+                ))
+            ]
+
+        moduli += [modulo]
+
+    contesto = {
+        "moduli": moduli,
+        "numero_presidenti_per_pagina": numero_presidenti_per_pagina,
+        "esiti": esiti,
+    }
+    return 'admin_import_presidenti.html', contesto
