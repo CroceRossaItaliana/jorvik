@@ -59,7 +59,7 @@ class InlineTelefonoPersona(admin.StackedInline):
 
 @admin.register(Persona)
 class AdminPersona(admin.ModelAdmin):
-    search_fields = ['nome', 'cognome', 'codice_fiscale', 'utenza__email', 'email_contatto']
+    search_fields = ['nome', 'cognome', 'codice_fiscale', 'utenza__email', 'email_contatto', '=id',]
     list_display = ('nome', 'cognome', 'utenza', 'email_contatto', 'codice_fiscale', 'data_nascita', 'stato',
                     'ultima_modifica', )
     list_filter = ('stato', )
