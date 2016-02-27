@@ -130,7 +130,7 @@ class AdminEstensione(admin.ModelAdmin):
 # admin.site.register(Trasferimento)
 @admin.register(Trasferimento)
 class AdminTrasferimento(admin.ModelAdmin):
-    search_fields = ["persona__nome", "persona__cognome",  "persona__codice_fiscale", "destinazione_nome"]
+    search_fields = ["persona__nome", "persona__cognome",  "persona__codice_fiscale", "destinazione__nome"]
     list_display = ("persona", "destinazione", "creazione", )
     list_filter = ("creazione", "confermata", "ritirata",)
     raw_id_fields = RAW_ID_FIELDS_TRASFERIMENTO
