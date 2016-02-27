@@ -137,7 +137,6 @@ class AdminTrasferimento(admin.ModelAdmin):
     inlines = [InlineAutorizzazione]
 
 
-
 # admin.site.register(Riserva)
 @admin.register(Riserva)
 class AdminRiserva(admin.ModelAdmin):
@@ -148,7 +147,6 @@ class AdminRiserva(admin.ModelAdmin):
     inlines = [InlineAutorizzazione]
 
 
-
 # admin.site.register(Riserva)
 @admin.register(Dimissione)
 class AdminDimissione(admin.ModelAdmin):
@@ -157,7 +155,6 @@ class AdminDimissione(admin.ModelAdmin):
     list_filter = ("creazione",)
     raw_id_fields = RAW_ID_FIELDS_DIMISSIONE
     inlines = [InlineAutorizzazione]
-
 
 
 @admin.register(Telefono)
