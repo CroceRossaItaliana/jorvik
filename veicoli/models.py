@@ -265,7 +265,7 @@ class Manutenzione(ModelloSemplice, ConMarcaTemporale):
     veicolo = models.ForeignKey(Veicolo, related_name="manutenzioni", on_delete=models.CASCADE)
     manutentore = models.CharField(max_length=512, help_text="es. autoriparato")
     numero_fattura = models.CharField(max_length=64, help_text="es. 122/A")
-    costo = models.PositiveIntegerField()
+    costo = models.FloatField()
     creato_da = models.ForeignKey('anagrafica.Persona', related_name='manutenzioni_registrate', null=True, blank=True,
                                   on_delete=models.SET_NULL)
 
