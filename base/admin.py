@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericTabularInline
+
 from base.geo import Locazione
 from base.models import Autorizzazione, Token
 
@@ -9,6 +11,14 @@ def locazione_aggiorna(modello, request, queryset):
     for locazione in queryset:
         locazione.cerca_e_aggiorna()
 locazione_aggiorna.short_description = "Aggiorna indirizzi selezionati"
+
+
+class InlineAutorizzazione(GenericTabularInline):
+    model = Autorizzazione
+    raw_id_fields = ["richiedente", "firmatario"]
+    ct_field = 'oggetto_tipo'
+    ct_fk_field = 'oggetto_id'
+    extra = 0
 
 
 @admin.register(Locazione)

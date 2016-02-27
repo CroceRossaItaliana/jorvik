@@ -1,5 +1,6 @@
 from django.contrib import admin
 from attivita.models import Partecipazione, Turno, Area, Attivita
+from base.admin import InlineAutorizzazione
 
 __author__ = 'alfioemanuele'
 
@@ -32,3 +33,4 @@ class AdminPartecipazione(admin.ModelAdmin):
     list_display = ('turno', 'persona', 'creazione', 'esito',)
     list_filter = ('creazione', 'stato', 'confermata',)
     raw_id_fields = ('persona', 'turno', )
+    inlines = [InlineAutorizzazione]

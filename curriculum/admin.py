@@ -1,4 +1,6 @@
 from django.contrib import admin
+
+from base.admin import InlineAutorizzazione
 from curriculum.models import TitoloPersonale
 from curriculum.models import Titolo
 
@@ -16,3 +18,4 @@ class AdminTitoloPersonale(admin.ModelAdmin):
     list_display = ("titolo", "persona", "data_ottenimento", "creazione", "certificato",)
     list_filter = ("titolo__tipo", "creazione", "data_ottenimento",)
     raw_id_fields = ("persona", "certificato_da", "titolo",)
+    inlines = [InlineAutorizzazione]
