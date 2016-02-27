@@ -43,6 +43,14 @@
                     <li>
                         <p>
                             <a href="/presidente/sedi/{{ node.pk }}/"><strong>{{ node.nome }}</strong></a>, {{ node.get_estensione_display }}
+
+                            {% if node.ha_checklist %}
+                                <a href="{{ node.url_checklist }}" class="pull-right text-success">
+                                    <i class="fa fa-fw fa-check-square-o"></i>
+                                    Check-list Comitato
+                                </a>
+                            {% endif %}
+
                         </p>
                         {% if not node.estensione == massimo_lista and not node.is_leaf_node %}
                             <ul class="children">

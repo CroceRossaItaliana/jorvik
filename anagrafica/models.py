@@ -31,7 +31,9 @@ from model_utils.managers import PassThroughManagerMixin
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI_NOMI_DICT, UFFICIO_SOCI_UNITA, \
-    DELEGHE_RUBRICA
+    DELEGHE_RUBRICA, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_4, \
+    RESPONSABILE_FORMAZIONE, DELEGATO_OBIETTIVO_6, DELEGATO_OBIETTIVO_5, RESPONSABILE_AUTOPARCO, DELEGATO_CO, \
+    DIRETTORE_CORSO, RESPONSABILE_AREA, REFERENTE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
     GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE
@@ -883,6 +885,21 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         excel.genera_e_salva("Foglio di servizio.xlsx")
         return excel
 
+    @property
+    def nuovo_presidente(self):
+        """
+        Ritorna True se la persona e' un nuovo presidente (meno di un mese)
+        """
+        un_mese_fa = poco_fa() - timedelta(days=30)
+        return self.deleghe_attuali(tipo=PRESIDENTE, inizio__gte=un_mese_fa).exists()
+
+    def oggetti_deleghe(self, *args, tipo=PRESIDENTE, **kwargs):
+        deleghe = self.deleghe_attuali(*args, tipo=tipo, **kwargs)
+        oggetti = []
+        for delega in deleghe:
+            oggetti += [delega.oggetto]
+        return oggetti
+
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
     """
@@ -1206,6 +1223,14 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         return "/informazioni/sedi/" + str(self.slug) + "/"
 
     @property
+    def url_checklist(self):
+        return "/presidente/checklist/%d/" % self.pk
+
+    @property
+    def ha_checklist(self):
+        return self.tipo == self.COMITATO and self.estensione in [NAZIONALE, REGIONALE, PROVINCIALE, LOCALE]
+
+    @property
     def link(self):
         return "<a href='%s' target='_new'>%s</a>" % (
             self.url, self.nome_completo
@@ -1414,7 +1439,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             return queryset
 
 
-
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
     """
     Rappresenta una delega ad una funzione.
@@ -1480,7 +1504,8 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
                                              destinatario_oggetto_id=self.oggetto.pk)
 
     def invia_notifica_creazione(self):
-        return Messaggio.costruisci_e_invia(
+        messaggi = []
+        messaggi += [Messaggio.costruisci_e_invia(
             oggetto="%s per %s" % (self.get_tipo_display(), self.oggetto,),
             modello="email_delega_notifica_creazione.html",
             corpo={
@@ -1488,12 +1513,29 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             },
             mittente=self.firmatario,
             destinatari=[self.persona],
-        )
+        )]
+        messaggi += [
+             Messaggio.costruisci_e_invia(
+                 oggetto="IMPORTANTE: Check-list nuovo Presidente",
+                 modello="email_delega_notifica_nuovo_presidente.html",
+                 corpo={
+                     "delega": self,
+                 },
+                 mittente=self.firmatario,
+                 destinatari=[self.persona],
+             )
+        ]
+        return messaggi
 
-    def invia_notifica_terminazione(self, mittente=None):
+    def invia_notifica_terminazione(self, mittente=None, accoda=False):
         if mittente is None:
             mittente = self.firmatario
-        return Messaggio.costruisci_e_invia(
+
+        funzione = Messaggio.costruisci_e_invia
+        if accoda:
+            funzione = Messaggio.costruisci_e_accoda
+
+        return funzione(
             oggetto="TERMINATO: %s per %s" % (self.get_tipo_display(), self.oggetto,),
             modello="email_delega_notifica_terminazione.html",
             corpo={
@@ -1503,6 +1545,84 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             mittente=mittente,
             destinatari=[self.persona],
         )
+
+    def termina(self, mittente=None, accoda=False):
+        self.fine = poco_fa()
+        self.save()
+        self.invia_notifica_terminazione(mittente=mittente, accoda=accoda)
+
+    def presidente_termina_deleghe_dipendenti(self, mittente=None):
+        """
+        Nel caso di una delega come Presidente, termina anche
+         tutte le deleghe che dipendono da questa.
+        """
+        if not self.tipo == PRESIDENTE:
+            raise ValueError("La delega non è di tipo Presidente.")
+
+        if self.fine:
+            nel_periodo_presidenziale = {
+                "inizio__gte": self.inizio,
+                "inizio__lte": self.fine,
+            }
+        else:
+            nel_periodo_presidenziale = {
+                "inizio__gte": self.inizio
+            }
+
+        sede = self.oggetto
+        sede_espansa = sede.espandi(includi_me=True)
+
+        from formazione.models import CorsoBase
+        from attivita.models import Attivita, Area
+
+        deleghe = Delega.objects.none()
+        per_la_sede_espansa = {
+            "oggetto_tipo": ContentType.objects.get_for_model(sede),
+            "oggetto_id__in": sede_espansa.values_list('id', flat=True),
+        }
+
+        deleghe |= Delega.query_attuale(
+            tipo__in=[UFFICIO_SOCI, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1,
+                      DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4,
+                      DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE,
+                      RESPONSABILE_AUTOPARCO, DELEGATO_CO],
+        ).filter(**per_la_sede_espansa).filter(**nel_periodo_presidenziale)
+
+        per_i_corsi_delle_sedi = {
+            "oggetto_tipo": ContentType.objects.get_for_model(CorsoBase),
+            "oggetto_id__in": CorsoBase.objects.filter(sede__in=sede_espansa).values_list('id', flat=True),
+        }
+
+        deleghe |= Delega.query_attuale(
+            tipo=DIRETTORE_CORSO,
+        ).filter(**per_i_corsi_delle_sedi).filter(**nel_periodo_presidenziale)
+
+        per_le_aree_delle_sedi = {
+            "oggetto_tipo": ContentType.objects.get_for_model(Area),
+            "oggetto_id__in": Area.objects.filter(sede__in=sede_espansa).values_list('id', flat=True)
+        }
+
+        deleghe |= Delega.query_attuale(
+            tipo=RESPONSABILE_AREA,
+        ).filter(**per_le_aree_delle_sedi).filter(**nel_periodo_presidenziale)
+
+        per_le_attivita_delle_sedi = {
+            "oggetto_tipo": ContentType.objects.get_for_model(Attivita),
+            "oggetto_id__in": Attivita.objects.filter(sede__in=sede_espansa).values_list('id', flat=True)
+        }
+
+        deleghe |= Delega.query_attuale(
+            tipo=REFERENTE,
+        ).filter(**per_le_attivita_delle_sedi).filter(**nel_periodo_presidenziale)
+
+        # Ora, termina tutte queste deleghe.
+
+        numero_deleghe = deleghe.count()
+
+        for delega in deleghe:
+            delega.termina(mittente=mittente, accoda=True)
+
+        return numero_deleghe
 
 
 class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):

@@ -156,6 +156,7 @@ urlpatterns = [
 
     url(r'^presidente/$', 'anagrafica.viste.presidente'),
     url(r'^presidente/sedi/(?P<sede_pk>[0-9]+)/$', 'anagrafica.viste.presidente_sede'),
+    url(r'^presidente/checklist/(?P<sede_pk>[0-9]+)/$', 'anagrafica.viste.presidente_checklist'),
     url(r'^presidente/sedi/(?P<sede_pk>[0-9]+)/delegati/(?P<delega>.*)/$', 'anagrafica.viste.presidente_sede_delegati'),
 
     url(r'^centrale-operativa/$', 'centrale_operativa.viste.co'),

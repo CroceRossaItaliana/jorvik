@@ -29,9 +29,10 @@ from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, 
     ProvvedimentoDisciplinare, Sede, Riserva
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
-    RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA
+    RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
+    RESPONSABILE_AREA, DIRETTORE_CORSO
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
-    ELENCHI_SOCI
+    ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
     INCARICO_GESTIONE_FOTOTESSERE
 from attivita.models import Partecipazione
@@ -841,9 +842,7 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
     if not me.permessi_almeno(delega.oggetto, GESTIONE):
         return redirect(ERRORE_PERMESSI)
 
-    delega.fine = poco_fa()
-    delega.save()
-    delega.invia_notifica_terminazione(me)
+    delega.termina(mittente=me)
 
     return redirect("/strumenti/delegati/")
 
@@ -1268,8 +1267,6 @@ def _presidente_sede_ruoli(sede):
     return sezioni
 
 
-
-
 @pagina_privata
 def presidente_sede(request, me, sede_pk):
     sede = get_object_or_404(Sede, pk=sede_pk)
@@ -1288,6 +1285,69 @@ def presidente_sede(request, me, sede_pk):
         "sezioni": sezioni,
     }
     return 'anagrafica_presidente_sede.html', contesto
+
+
+@pagina_privata
+def presidente_checklist(request, me, sede_pk):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    from formazione.models import CorsoBase
+    from attivita.models import Attivita
+
+    deleghe_da_processare = [
+        (UFFICIO_SOCI, sede),
+        (DELEGATO_OBIETTIVO_1, sede),
+        (DELEGATO_OBIETTIVO_2, sede),
+        (DELEGATO_OBIETTIVO_3, sede),
+        (DELEGATO_OBIETTIVO_4, sede),
+        (DELEGATO_OBIETTIVO_5, sede),
+        (DELEGATO_OBIETTIVO_6, sede),
+        (RESPONSABILE_FORMAZIONE, sede),
+        (RESPONSABILE_AUTOPARCO, sede),
+        (DELEGATO_CO, sede),
+    ]
+
+    for unita in sede.espandi():
+        deleghe_da_processare += [
+            (UFFICIO_SOCI_UNITA, unita)
+        ]
+
+    for corso in me.oggetti_permesso(GESTIONE_CORSO).filter(stato__in=[CorsoBase.PREPARAZIONE, CorsoBase.ATTIVO]):
+        deleghe_da_processare += [
+            (DIRETTORE_CORSO, corso)
+        ]
+
+    for area in me.oggetti_permesso(GESTIONE_ATTIVITA_AREA):
+        deleghe_da_processare += [
+            (RESPONSABILE_AREA, area),
+        ]
+
+    for attivita in me.oggetti_permesso(GESTIONE_ATTIVITA).filter(apertura=Attivita.APERTA):
+        deleghe_da_processare += [
+            (REFERENTE, attivita),
+        ]
+
+    deleghe = []
+    progresso_si = 0
+    for tipo, oggetto in deleghe_da_processare:
+        delegati_attuali = oggetto.delegati_attuali(tipo=tipo)
+        if delegati_attuali:
+            progresso_si += 1
+        deleghe += [
+            (PERMESSI_NOMI_DICT[tipo], oggetto, delegati_attuali, "#"),
+        ]
+
+    progresso = int(progresso_si / len(deleghe) * 100)
+
+    contesto = {
+        "deleghe": deleghe,
+        "sede": sede,
+        "progresso": progresso,
+        "progresso_si": progresso_si,
+    }
+    return "anagrafica_presidente_checklist.html", contesto
 
 
 @pagina_privata
@@ -1444,9 +1504,11 @@ def admin_import_presidenti(request, me):
                     ]
                     continue
 
-                delega_presidente_precedente.fine = poco_fa()
-                delega_presidente_precedente.save()
-                delega_presidente_precedente.invia_notifica_terminazione(mittente=me)
+                # Termina la Presidenza.
+                delega_presidente_precedente.termina(mittente=me, accoda=True)
+
+                # Termina tutte le Deleghe correlate.
+                delega_presidente_precedente.presidente_termina_deleghe_dipendenti()
 
             # Crea la nuova delega e notifica.
             delega = Delega(
