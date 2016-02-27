@@ -15,7 +15,7 @@ from base.models import ConAutorizzazioni, ConVecchioID
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.models import ModelloSemplice
 from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico
-from base.utils import concept
+from base.utils import concept, poco_fa
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
 from django.db import models
@@ -102,6 +102,15 @@ class CorsoBase(Corso, ConVecchioID):
             return self.NON_PUOI_ISCRIVERTI_TROPPO_TARDI
 
         return self.PUOI_ISCRIVERTI_OK
+
+    @property
+    def prossimo(self):
+        """
+        Ritorna True il corso e' prossimo (inizia tra meno di due settimane).
+        """
+        return (
+            poco_fa() <= self.data_inizio <= (poco_fa() + datetime.timedelta(15))
+        )
 
     @classmethod
     @concept

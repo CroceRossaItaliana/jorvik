@@ -35,6 +35,19 @@
         {{ corso.get_stato_display }}
     </h4>
 
+    {% if puo_modificare and corso.stato == corso.PREPARAZIONE and corso.prossimo %}
+        <div class="alert alert-danger">
+            <h4><i class="fa fa-warning"></i> Non c'è tempo da perdere!</h4>
+            <p>Questo corso inizier&agrave; a breve, ma non hai ancora attivato il Corso su Gaia.</p>
+            <p>Questo vuol dire che il corso non pu&ograve; ancora essere raggiunto da
+                <strong>nessuno dei {{ corso.aspiranti_nelle_vicinanze.count }} aspiranti</strong>
+                che aspettano un corso nelle vicinanze su Gaia. Ti consigliamo di completare con
+                quanti pi&ugrave; dettagli possibile la scheda
+                di questo corso e procedere all'attivazione: raggiungerai cos&igrave; tutti
+                gli aspiranti nelle vicinanze.</p>
+        </div>
+    {% endif %}
+
     {% if puo_modificare and corso.stato == corso.PREPARAZIONE %}
         <div class="alert alert-warning alert-block">
             <h4><i class="fa fa-fw fa-warning"></i> Il corso non &egrave; ancora attivo</h4>
