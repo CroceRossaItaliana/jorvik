@@ -7,9 +7,9 @@ from django.forms import ModelForm
 
 from anagrafica.forms import ModuloStepAnagrafica
 from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva, Trasferimento
-from autenticazione.forms import ModuloCreazioneUtenza
-from curriculum.models import Titolo, TitoloPersonale
-from ufficio_soci.models import Tesseramento, Quota
+from base.utils import rimuovi_scelte
+from ufficio_soci.validators import valida_data_non_nel_futuro
+from ufficio_soci.models import Tesseramento, Quota, Tesserino
 
 
 class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
@@ -37,7 +37,7 @@ class ModuloElencoElettorato(forms.Form):
         (ELETTORATO_PASSIVO, "Passivo"),
     )
     al_giorno = forms.DateField(help_text="La data delle elezioni.",
-                                    required=True, initial=datetime.date.today)
+                                required=True, initial=datetime.date.today)
     elettorato = forms.ChoiceField(choices=ELETTORATO, initial=ELETTORATO_PASSIVO)
 
 
@@ -228,4 +228,80 @@ class ModuloQuotaVolontario(forms.Form):
 
     importo = forms.FloatField(help_text="Il totale versato in euro, comprensivo dell'eventuale "
                                          "donazione aggiuntiva.")
-    data_versamento = forms.DateField()
+    data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro])
+
+
+class ModuloNuovaRicevuta(forms.Form):
+
+    TIPI = (
+        (Quota.QUOTA_SOSTENITORE, "Ricevuta Sostenitore CRI"),
+        (Quota.RICEVUTA, "Ricevuta Semplice"),
+    )
+    tipo_ricevuta = forms.ChoiceField(choices=TIPI, initial=Quota.QUOTA_SOSTENITORE)
+
+    persona = autocomplete_light.ModelChoiceField("PersonaAutocompletamento",
+                                                  help_text="Seleziona la persona per la quale registrare"
+                                                            " la ricevuta.")
+
+    causale = forms.CharField(min_length=8, max_length=128)
+    importo = forms.FloatField(min_value=0.01, help_text="Il totale versato in euro.")
+
+    data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro])
+
+
+class ModuloFiltraEmissioneTesserini(forms.Form):
+
+    stato_richiesta = forms.MultipleChoiceField(choices=Tesserino.STATO_RICHIESTA)
+    tipo_richiesta = forms.MultipleChoiceField(choices=Tesserino.TIPO_RICHIESTA, initial=(Tesserino.RILASCIO,
+                                                                                          Tesserino.RINNOVO,
+                                                                                          Tesserino.DUPLICATO))
+    stato_emissione = forms.MultipleChoiceField(choices=Tesserino.STATO_EMISSIONE, initial=(("", Tesserino.STAMPATO,
+                                                                                             Tesserino.SPEDITO_CASA,
+                                                                                             Tesserino.SPEDITO_SEDE)),)
+
+    DATA_RICHIESTA_DESC = '-creazione'
+    DATA_RICHIESTA_ASC = 'creazione'
+    DATA_CONFERMA_DESC = '-data_conferma'
+    DATA_CONFERMA_ASC = 'data_conferma'
+    ORDINE = (
+        (DATA_RICHIESTA_DESC, "Data di Richiesta (Decrescente)"),
+        (DATA_RICHIESTA_ASC, "Data di Richiesta (Crescente)"),
+        (DATA_CONFERMA_DESC, "Data di Conferma (Decrescente)"),
+        (DATA_CONFERMA_ASC, "Data di Conferma (Crescente)"),
+    )
+    ordine = forms.ChoiceField(choices=ORDINE, initial=DATA_RICHIESTA_DESC)
+
+    cerca = forms.CharField(initial="", required=False, help_text="(Opzionale) Parte del Codice Fiscale o "
+                                                                  " codice tesserino.")
+
+
+class ModuloLavoraTesserini(forms.Form):
+
+    MINIMO_CARATTERI_MOTIVO_RIFIUTATO = 16
+
+    stato_richiesta = forms.ChoiceField(choices=rimuovi_scelte([Tesserino.RICHIESTO], Tesserino.STATO_RICHIESTA),
+                                        help_text="Scegli se accettare o negare la richiesta "
+                                                  "di emissione dei tesserini.")
+    stato_emissione = forms.ChoiceField(choices=Tesserino.STATO_EMISSIONE, required=False,
+                                        help_text="Scegli se registrare i tesserini come emessi. "
+                                                  "I tesserini verranno attivati una volta emessi. ")
+    motivo_rifiutato = forms.CharField(help_text="Se hai negato le richieste, inserisci qui la motivazione. "
+                                                 "Es.: Fototessera non conforme. ", required=False)
+
+    def clean(self):
+        stato_richiesta = self.cleaned_data['stato_richiesta']
+        stato_emissione = self.cleaned_data['stato_emissione']
+        motivo_rifiutato = self.cleaned_data['motivo_rifiutato']
+
+        if stato_richiesta != Tesserino.ACCETTATO and stato_emissione:
+            raise ValidationError("Puoi emettere il tesserino solo se "
+                                  "accetti la richiesta di emissione. ")
+
+        if stato_richiesta == Tesserino.RIFIUTATO and len(motivo_rifiutato) < self.MINIMO_CARATTERI_MOTIVO_RIFIUTATO:
+            raise ValidationError("Rifiutando l'emissione, devi inserire una motivazione descrittiva, con almeno "
+                                  "%d caratteri." % self.MINIMO_CARATTERI_MOTIVO_RIFIUTATO)
+
+
+class ModuloScaricaTesserini(forms.Form):
+    conferma = forms.BooleanField(help_text="Confermo di voler procedere allo scaricamento "
+                                             "dei tesserini associativi.")

@@ -1,5 +1,6 @@
 import datetime
 
+import stdnum
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
@@ -286,8 +287,12 @@ class ModuloUtenza(ModelForm):
 class ModuloPresidenteSede(ModelForm):
     class Meta:
         model = Sede
-        fields = ['telefono', 'fax', 'email', 'codice_fiscale',
-                  'partita_iva', ]
+        fields = ['telefono', 'fax', 'email', 'pec', 'iban',
+                  'codice_fiscale', 'partita_iva', ]
+
+    def clean_partita_iva(self):
+        partita_iva = self.cleaned_data['partita_iva']
+        return stdnum.it.iva.compact(partita_iva)
 
 
 class ModuloImportVolontari(forms.Form):

@@ -219,7 +219,7 @@ class CorsoBase(Corso, ConVecchioID):
 
     def aspiranti_nelle_vicinanze(self):
         from formazione.models import Aspirante
-        return self.circonferenze_contenenti(Aspirante.objects.all())
+        return self.circonferenze_contenenti(Aspirante.query_contattabili())
 
     def partecipazioni_confermate_o_in_attesa(self):
         return self.partecipazioni_confermate() | self.partecipazioni_in_attesa()
@@ -333,6 +333,10 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         return "Richiesta di part. di %s a %s" % (
             self.persona, self.corso
         )
+
+    def autorizzazione_concedi_modulo(self):
+        from formazione.forms import ModuloConfermaIscrizioneCorsoBase
+        return ModuloConfermaIscrizioneCorsoBase
 
 
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
@@ -451,3 +455,27 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
         """
         self.calcola_raggio()
         return super(Aspirante, self).post_locazione()
+
+    @classmethod
+    @concept
+    def query_contattabili(cls, *args, **kwargs):
+        """
+        Ritorna un queryset di Aspiranti che possono essere contattati
+        per l'attivazione di un corso base.
+
+        Ritorna gli aspiranti che non sono iscritti ad alcun corso base.
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        persone_da_non_contattare = Persona.objects.filter(
+            PartecipazioneCorsoBase.con_esito(
+                PartecipazioneCorsoBase.ESITO_OK
+            ).via("partecipazioni_corsi")
+        )
+
+        return Q(
+            ~Q(persona__id__in=persone_da_non_contattare.values_list('id', flat=True)),
+            *args,
+            **kwargs
+        )

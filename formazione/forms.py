@@ -61,3 +61,12 @@ class ModuloIscrittiCorsoBaseAggiungi(forms.Form):
     persone = autocomplete_light.ModelMultipleChoiceField("SostenitoreAutocompletamento",
                                                           help_text="Seleziona i Sostenitori CRI da iscrivere a questo"
                                                                     " Corso Base.")
+
+
+class ModuloConfermaIscrizioneCorsoBase(forms.Form):
+    conferma_1 = forms.BooleanField(label="Ho incontrato questo aspirante, ad esempio alla presentazione del "
+                                    "corso, e mi ha chiesto di essere iscritto al Corso.")
+    conferma_2 = forms.BooleanField(label="Confermo di voler iscrivere questo aspirante al Corso e comprendo che "
+                                    "questa azione non sarà facilmente reversibile. Sarà comunque possibile "
+                                    "non ammettere l'aspirante all'esame, qualora dovesse non presentarsi "
+                                    "al resto delle lezioni (questo sarà verbalizzato).")

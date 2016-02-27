@@ -4,6 +4,7 @@ from django.db.models import Q
 
 from anagrafica.models import Persona, Sede, Appartenenza
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE
+from formazione.models import PartecipazioneCorsoBase
 
 
 class AutocompletamentoBase(autocomplete_light.AutocompleteModelBase):
@@ -27,13 +28,28 @@ class PersonaAutocompletamento(AutocompletamentoBase):
     }
 
     def choices_for_request(self):
+
+        # Le mie sedi di competenza:
+        #  1. La mia Sede attuale
+        #  2. Il mio Comitato
+        #  3. Le mie Sedi di competenza
+        sedi = self.request.user.persona.sedi_attuali() \
+            | self.request.user.persona.sedi_attuali().ottieni_comitati().espandi() \
+            | self.request.user.persona.sedi_deleghe_attuali(espandi=True, pubblici=True)
+
         self.choices = self.choices.filter(
-            # 1. Appartenente alla stessa mia sede
-            Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_attuali()).via("appartenenze"),)
-            # 1.bis Appartenenza al mio stesso comitato
-            | Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_attuali().ottieni_comitati().espandi()).via("appartenenze"),)
-            # 2. Appartenente a una sede di mia delega presso una sede
-            | Q(Appartenenza.query_attuale(sede__in=self.request.user.persona.sedi_deleghe_attuali(espandi=True, pubblici=True)).via("appartenenze"))
+            # 1. Appartenente a una delle sedi
+            Q(Appartenenza.query_attuale(sede__in=sedi).via("appartenenze"),)
+            # 2. Iscritto confermato a un corso base presso una mia sede
+            | Q(PartecipazioneCorsoBase.con_esito(
+                    PartecipazioneCorsoBase.ESITO_OK,
+                    corso__sede__in=sedi
+                ).via("partecipazioni_corsi"))
+            # 3. Iscritto in attesa a un corso base presso una mia sede
+            | Q(PartecipazioneCorsoBase.con_esito(
+                    PartecipazioneCorsoBase.ESITO_PENDING,
+                    corso__sede__in=sedi
+                ).via("partecipazioni_corsi"))
         )\
             .order_by('nome', 'cognome', 'codice_fiscale')\
             .distinct('nome', 'cognome', 'codice_fiscale')

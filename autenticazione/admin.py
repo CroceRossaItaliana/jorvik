@@ -24,7 +24,7 @@ class AdminUtenza(UserAdmin):
     form = ModuloModificaUtenza
     add_form = ModuloCreazioneUtenza
     list_display = ('persona', 'email', 'ultimo_accesso', 'is_active', 'is_staff')
-    search_fields = ('email', 'persona__nome', 'persona__cognome', 'persona__codice_fiscale',)
+    search_fields = ('=id', 'email', 'persona__nome', 'persona__cognome', 'persona__codice_fiscale',)
     ordering = ('email',)
     raw_id_fields = ('persona', )
 

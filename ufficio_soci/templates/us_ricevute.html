@@ -86,6 +86,7 @@
             <thead>
                 <tr>
                     <th>Num.</th>
+                    <th>T.</th>
                     <th>Pagante</th>
                     <th>Importo</th>
                     <th>Data</th>
@@ -104,6 +105,11 @@
                         {% endif %}
                     </td>
 
+                    <td class="text-info">
+                        <acronym title="{{ ricevuta.get_tipo_display }}">
+                            {{ ricevuta.tipo }}
+                        </acronym>
+                    </td>
                     <td>
                         {{ ricevuta.persona.link|safe }}<br />
                         <span class="piu-piccolo monospace">
@@ -120,12 +126,12 @@
                     </td>
 
                     <td class="piu-piccolo">
-                        Registrato da {{ ricevuta.registrato_da.link|safe }}<br />
+                        Reg. da {{ ricevuta.registrato_da.link|safe }}<br />
                         il {{ ricevuta.creazione|date:"SHORT_DATETIME_FORMAT" }}
 
                         {% if ricevuta.stato == ricevuta.ANNULLATA %}<br />
                         <span class="text-danger">
-                            Annullato da {{ ricevuta.annullato_da.link|safe }}
+                            Annull. da {{ ricevuta.annullato_da.link|safe }}
                             {% if ricevuta.data_annullamento %}<br />
                                 il {{ ricevuta.data_annullamento|date:"SHORT_DATE_FORMAT" }}
                             {% endif %}

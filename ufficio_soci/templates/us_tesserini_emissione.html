@@ -1,0 +1,230 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Emissione Tesserini
+{% endblock %}
+
+{% block app_contenuto %}
+
+
+<div class="alert alert-info">
+    <i class="fa fa-fw fa-info-circle"></i>
+    Da questa pagina &egrave; possibile gestire l'emissione dei tesserini. Usa il modulo
+    per filtrare le richieste di tesserino.
+</div>
+
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h2 class="panel-title">
+            <i class="fa fa-fw fa-search"></i>
+            Filtra Richieste di Tesserino
+        </h2>
+    </div>
+    <div class="panel-body">
+        <form method="POST" action="/us/tesserini/emissione/">
+            <p class="text-info piu-piccolo">
+                <i class="fa fa-fw fa-info-circle"></i>
+                Suggerimento &mdash; Tieni premuto il tasto CTRL (PC) o Command (Mac)
+                 per selezionare pi&ugrave; opzioni.
+            </p>
+            {% csrf_token %}
+            <p>{% bootstrap_form modulo layout='horizontal' %}</p>
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fa fa-fw fa-search"></i>
+                Filtra Richieste di Tesserino
+            </button>
+        </form>
+    </div>
+</div>
+
+<form method="POST" action="/us/tesserini/emissione/processa/">
+    {% csrf_token %}
+
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                <i class="fa fa-fw fa-list"></i>
+                Richieste di Tesserino ({{ tesserini.count }})
+            </h2>
+        </div>
+        <div class="panel-body">
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h2 class="panel-title">
+                                <i class="fa fa-fw fa-check-square"></i>
+                                Strumenti di selezione
+                            </h2>
+                        </div>
+                        <div class="panel-body">
+                            <div class="btn-group-vertical btn-block">
+                                <button type="button" class="btn btn-default" id="seleziona-tutti">
+                                    <i class="fa fa-fw fa-check-square"></i>
+                                    Seleziona tutti ({{ tesserini.count }})
+                                </button>
+                                <button type="button" class="btn btn-default" id="deseleziona-tutti">
+                                    <i class="fa fa-fw fa-check-square-o"></i>
+                                    Deseleziona tutti (<span class="contatore-selezionati">0</span>)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-md-6">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h2 class="panel-title">
+                                <i class="fa fa-fw fa-cogs"></i>
+                                Processa Selezionati (<span class="contatore-selezionati">0</span>)
+                            </h2>
+                        </div>
+                        <div class="panel-body">
+                            <div class="btn-group-vertical btn-block">
+
+                                <button type="submit" name="azione" value="scarica"
+                                        class="btn btn-primary">
+                                    <i class="fa fa-fw fa-download"></i>&nbsp;
+                                    Scarica tesserini
+                                </button>
+                                <button type="submit" name="azione" value="lavora"
+                                        class="btn btn-primary">
+                                   <i class="fa fa-fw fa-cogs"></i>&nbsp;
+                                    Lavora pratica
+                                </button>
+                                <button type="submit" name="azione" value="scarica_e_lavora"
+                                        class="btn btn-primary">
+                                   <i class="fa fa-fw fa-cogs"></i>
+                                    + <i class="fa fa-fw fa-download"></i> &nbsp;&nbsp;
+                                    Lavora pratica e scarica
+                                </button>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <table class="table table-condensed table-striped">
+                <thead>
+                <tr>
+                    <th><i class="fa fa-fw fa-check-square"></i></th>
+                    <th>Data richiesta</th>
+                    <th>Volontario</th>
+                    <th>Tesserino</th>
+                    <th>Stato richiesta</th>
+                    <th>Stato emissione</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for t in tesserini %}
+
+                    <tr class="piu-piccolo riga-tesserino">
+                        <td><input type="checkbox" name="tesserini" value="{{ t.pk }}" /></td>
+                        <td>{{ t.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                        <td>{{ t.persona.link|safe }}</td>
+                        <td>
+                            <span class="monospace">{{ t.codice|default:"N/A" }}</span>
+                            {% if t.stato_richiesta == t.ACCETTATO %}
+                                <a download href="{{ t.url_pdf }}">
+                                    <i class="fa fa-fw fa-download"></i> PDF
+                                </a>
+
+                            {% endif %}
+
+                        </td>
+                        <td>
+                            {{ t.get_stato_richiesta_display }}
+                        </td>
+                        <td class="grassetto">
+                            {{ t.get_stato_emissione_display|default:"NON EMESSO" }}
+                            {% if t.data_conferma %}
+                                il {{ t.data_conferma|date:"SHORT_DATETIME_FORMAT" }}
+                            {% endif %}
+
+                        </td>
+                    </tr>
+
+                {% empty %}
+
+                    {% if modulo_compilato %}
+                        <tr class="warning">
+                            <td colspan="6">
+                                <i class="fa fa-fw fa-warning"></i>
+                                <strong>Nessuna richiesta di tesserino trovata.</strong><br />
+                                Prova a modificare i parametri di ricerca.
+                            </td>
+                        </tr>
+
+                    {% else %}
+                        <tr class="success">
+                            <td colspan="6">
+                                <i class="fa fa-fw fa-info-circle"></i>
+                                <strong>Qui appariranno i risultati di ricerca.</strong><br />
+                                Utilizza il modulo sopra per impostare i parametri di ricerca.
+                            </td>
+                        </tr>
+
+                    {% endif %}
+
+
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</form>
+
+
+<style>
+.riga-tesserino {
+    cursor: pointer;
+}
+</style>
+
+<script type="text/javascript">
+
+function aggiorna_contatore() {
+    numero = $("table input:checked").length;
+    $(".contatore-selezionati").text(numero);
+}
+
+$(document).ready(function() {
+    var classe_selezionata = "info";
+    $(".riga-tesserino").each(function(i, e) {
+      $(e).click(function() {
+          var checkbox = $(e).find("input");
+          if (!checkbox.prop('disabled')) {
+              checkbox.prop("checked", !checkbox.prop("checked"));
+              if (checkbox.prop("checked")) {
+                  $(e).addClass(classe_selezionata);
+              } else {
+                  $(e).removeClass(classe_selezionata);
+              }
+          }
+          aggiorna_contatore();
+      })
+    });
+
+    $("#seleziona-tutti").click(function(){
+        $("table input").prop("checked", true);
+        $(".riga-tesserino").addClass(classe_selezionata);
+        aggiorna_contatore();
+    });
+
+    $("#deseleziona-tutti").click(function(){
+        $("table input").prop("checked", false);
+        $(".riga-tesserino").removeClass(classe_selezionata);
+        aggiorna_contatore();
+    });
+})
+</script>
+
+
+{% endblock %}

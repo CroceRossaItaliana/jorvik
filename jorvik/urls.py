@@ -181,12 +181,16 @@ urlpatterns = [
     url(r'^us/quote/nuova/$', 'ufficio_soci.viste.us_quote_nuova'),
     url(r'^us/ricevute/$', 'ufficio_soci.viste.us_ricevute'),
     url(r'^us/ricevute/(?P<pk>[0-9]+)/annulla/$', 'ufficio_soci.viste.us_ricevute_annulla'),
+    url(r'^us/ricevute/nuova/$', 'ufficio_soci.viste.us_ricevute_nuova'),
 
     url(r'^us/tesserini/$', 'ufficio_soci.viste.us_tesserini'),
     url(r'^us/tesserini/da-richiedere/$', 'ufficio_soci.viste.us_tesserini_da_richiedere'),
     url(r'^us/tesserini/senza-fototessera/$', 'ufficio_soci.viste.us_tesserini_senza_fototessera'),
     url(r'^us/tesserini/richiesti/$', 'ufficio_soci.viste.us_tesserini_richiesti'),
     url(r'^us/tesserini/richiedi/(?P<persona_pk>[0-9]+)/$', 'ufficio_soci.viste.us_tesserini_richiedi'),
+    url(r'^us/tesserini/emissione/$', 'ufficio_soci.viste.us_tesserini_emissione'),
+    url(r'^us/tesserini/emissione/processa/$', 'ufficio_soci.viste.us_tesserini_emissione_processa'),
+    url(r'^us/tesserini/emissione/scarica/$', 'ufficio_soci.viste.us_tesserini_emissione_scarica'),
 
     url(r'^us/elenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', 'ufficio_soci.viste.us_elenco'),
     url(r'^us/elenco/(?P<elenco_id>.*)/download/$', 'ufficio_soci.viste.us_elenco_download'),
@@ -253,6 +257,7 @@ urlpatterns = [
     # Amministrazione
 
     url(r'^admin/import/volontari/$', 'anagrafica.viste.admin_import_volontari'),
+    url(r'^admin/statistiche/$', 'anagrafica.viste.admin_statistiche'),
 
     url(r'^admin/', include(admin.site.urls)),
     url(r'^admin/', include('loginas.urls')),   # Login come utente

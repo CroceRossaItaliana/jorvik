@@ -1,8 +1,10 @@
 from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericTabularInline
 from mptt.admin import MPTTModelAdmin
 from anagrafica.models import Persona, Sede, Appartenenza, Delega, Documento, Fototessera, Estensione, Trasferimento, \
     Riserva, Dimissione, Telefono
 from autenticazione.models import Utenza
+from base.admin import InlineAutorizzazione
 
 RAW_ID_FIELDS_PERSONA = []
 RAW_ID_FIELDS_SEDE = []
@@ -31,6 +33,14 @@ class InlineDelegaPersona(admin.TabularInline):
     extra = 0
 
 
+class InlineDelegaSede(GenericTabularInline):
+    model = Delega
+    raw_id_fields = RAW_ID_FIELDS_DELEGA
+    ct_field = 'oggetto_tipo'
+    ct_fk_field = 'oggetto_id'
+    extra = 0
+
+
 class InlineDocumentoPersona(admin.TabularInline):
     model = Documento
     raw_id_fields = RAW_ID_FIELDS_DOCUMENTO
@@ -49,7 +59,7 @@ class InlineTelefonoPersona(admin.StackedInline):
 
 @admin.register(Persona)
 class AdminPersona(admin.ModelAdmin):
-    search_fields = ['nome', 'cognome', 'codice_fiscale', 'utenza__email', 'email_contatto']
+    search_fields = ['nome', 'cognome', 'codice_fiscale', 'utenza__email', 'email_contatto', '=id',]
     list_display = ('nome', 'cognome', 'utenza', 'email_contatto', 'codice_fiscale', 'data_nascita', 'stato',
                     'ultima_modifica', )
     list_filter = ('stato', )
@@ -64,6 +74,7 @@ class AdminSede(MPTTModelAdmin):
     list_filter = ('tipo', 'estensione', 'creazione', )
     raw_id_fields = ('genitore', 'locazione',)
     list_display_links = ('nome', 'estensione',)
+    inlines = [InlineDelegaSede,]
 
 # admin.site.register(Appartenenza)
 
@@ -74,6 +85,7 @@ class AdminAppartenenza(admin.ModelAdmin):
     list_display = ("persona", "sede", "attuale", "inizio", "fine", "creazione")
     list_filter = ("membro", "inizio", "fine")
     raw_id_fields = RAW_ID_FIELDS_APPARTENENZA
+    inlines = [InlineAutorizzazione]
 
 
 # admin.site.register(Delega)
@@ -101,6 +113,8 @@ class AdminFototessera(admin.ModelAdmin):
     list_display = ("persona", "creazione", "esito")
     list_filter = ("creazione",)
     raw_id_fields = RAW_ID_FIELDS_FOTOTESSERA
+    inlines = [InlineAutorizzazione]
+
 
 
 # admin.site.register(Estensione)
@@ -110,6 +124,7 @@ class AdminEstensione(admin.ModelAdmin):
     list_display = ("persona", "destinazione", "richiedente", )
     list_filter = ("confermata", "ritirata", "creazione",)
     raw_id_fields = RAW_ID_FIELDS_ESTENSIONE
+    inlines = [InlineAutorizzazione]
 
 
 # admin.site.register(Trasferimento)
@@ -119,6 +134,8 @@ class AdminTrasferimento(admin.ModelAdmin):
     list_display = ("persona", "destinazione", "creazione", )
     list_filter = ("creazione", "confermata", "ritirata",)
     raw_id_fields = RAW_ID_FIELDS_TRASFERIMENTO
+    inlines = [InlineAutorizzazione]
+
 
 
 # admin.site.register(Riserva)
@@ -128,6 +145,8 @@ class AdminRiserva(admin.ModelAdmin):
     list_display = ("persona",)
     list_filter = ("confermata", "ritirata", "creazione",)
     raw_id_fields = RAW_ID_FIELDS_RISERVA
+    inlines = [InlineAutorizzazione]
+
 
 
 # admin.site.register(Riserva)
@@ -137,6 +156,8 @@ class AdminDimissione(admin.ModelAdmin):
     list_display = ("persona", "richiedente")
     list_filter = ("creazione",)
     raw_id_fields = RAW_ID_FIELDS_DIMISSIONE
+    inlines = [InlineAutorizzazione]
+
 
 
 @admin.register(Telefono)

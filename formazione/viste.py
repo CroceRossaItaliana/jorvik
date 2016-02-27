@@ -13,7 +13,7 @@ from base.models import Log
 from formazione.elenchi import ElencoPartecipantiCorsiBase
 from formazione.forms import ModuloCreazioneCorsoBase, ModuloModificaLezione, ModuloModificaCorsoBase, \
     ModuloIscrittiCorsoBaseAggiungi
-from formazione.models import CorsoBase, AssenzaCorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase
+from formazione.models import CorsoBase, AssenzaCorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase, Aspirante
 from django.utils import timezone
 
 from posta.models import Messaggio
@@ -41,6 +41,8 @@ def formazione_corsi_base_elenco(request, me):
 def formazione_corsi_base_domanda(request, me):
     contesto = {
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
+        "min_sedi": Aspirante.MINIMO_COMITATI,
+        "max_km": Aspirante.MASSIMO_RAGGIO,
     }
     return 'formazione_corsi_base_domanda.html', contesto
 

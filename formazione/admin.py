@@ -1,4 +1,6 @@
 from django.contrib import admin
+
+from base.admin import InlineAutorizzazione
 from formazione.models import CorsoBase, PartecipazioneCorsoBase, AssenzaCorsoBase, Aspirante, LezioneCorsoBase
 
 __author__ = 'alfioemanuele'
@@ -51,6 +53,7 @@ class AdminPartecipazioneCorsoBase(admin.ModelAdmin):
     search_fields = ['persona__nome', 'persona__cognome', 'persona__codice_fiscale', 'corso__progressivo', ]
     list_display = ['persona', 'corso', 'esito', 'creazione', ]
     raw_id_fields = RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE
+    inlines = [InlineAutorizzazione]
 
 
 @admin.register(LezioneCorsoBase)

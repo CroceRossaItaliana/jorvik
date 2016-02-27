@@ -1,14 +1,15 @@
 import datetime
+import json
 import random
 from django.core.paginator import Paginator
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.shortcuts import redirect, get_object_or_404
 from django.utils import timezone
 from anagrafica.costanti import REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione, Riserva
 from anagrafica.permessi.applicazioni import PRESIDENTE
-from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA
+from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA, EMISSIONE_TESSERINI
 from autenticazione.forms import ModuloCreazioneUtenza
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
@@ -23,7 +24,8 @@ from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVo
     ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
-    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario
+    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, \
+    ModuloLavoraTesserini, ModuloScaricaTesserini
 from ufficio_soci.models import Quota, Tesseramento, Tesserino
 
 
@@ -795,8 +797,7 @@ def us_quote_nuova(request, me):
                 )
                 return redirect("/us/quote/nuova/?appena_registrata=%d" % (ricevuta.pk,))
 
-
-    ultime_quote = Quota.objects.filter(registrato_da=me).order_by('-creazione')[:15]
+    ultime_quote = Quota.objects.filter(registrato_da=me, tipo=Quota.QUOTA_SOCIO).order_by('-creazione')[:15]
 
     contesto = {
         "modulo": modulo,
@@ -805,6 +806,77 @@ def us_quote_nuova(request, me):
         "appena_registrata": appena_registrata,
     }
     return 'us_quote_nuova.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us_ricevute_nuova(request, me):
+
+    sedi = me.oggetti_permesso(GESTIONE_SOCI)
+
+    questo_anno = poco_fa().year
+
+    appena_registrata = Quota.objects.get(pk=request.GET['appena_registrata']) \
+        if 'appena_registrata' in request.GET else None
+
+    modulo = ModuloNuovaRicevuta(request.POST or None)
+
+    if modulo.is_valid():
+
+        persona = modulo.cleaned_data['persona']
+        tipo_ricevuta = modulo.cleaned_data['tipo_ricevuta']
+        causale = modulo.cleaned_data['causale']
+        importo = modulo.cleaned_data['importo']
+        data_versamento = modulo.cleaned_data['data_versamento']
+
+        appartenenza = persona.appartenenze_attuali(al_giorno=data_versamento,
+                                                    sede__in=sedi).first()
+        comitato = appartenenza.sede.comitato if appartenenza else None
+
+        if not appartenenza:
+            modulo.add_error('data_versamento', 'In questa data, la persona non risulta appartenente '
+                                                'come Volontario o Sostenitore per alla Sede.')
+
+        elif tipo_ricevuta == Quota.QUOTA_SOSTENITORE and appartenenza.membro != Appartenenza.SOSTENITORE:
+            modulo.add_error('persona', 'Questa persona non è registrata come Sostenitore CRI '
+                                        'della Sede. Non è quindi possibile registrare la Ricevuta '
+                                        'come Sostenitore CRI.')
+
+        elif not comitato.locazione:
+            return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
+                                   messaggio="Per poter rilasciare ricevute, è necessario impostare un indirizzo "
+                                             "per la Sede del Comitato di %s. Il Presidente può gestire i dati "
+                                             "della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+
+        elif not comitato.codice_fiscale:
+            return errore_generico(request, me, titolo="Necessario impostare codice fiscale del Comitato",
+                                   messaggio="Per poter rilasciare ricevute, è necessario impostare un "
+                                             "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
+                                             "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+
+        else:
+            # OK, paga quota!
+            ricevuta = Quota.nuova(
+                appartenenza=appartenenza,
+                data_versamento=data_versamento,
+                registrato_da=me,
+                importo=importo,
+                causale=causale,
+                tipo=tipo_ricevuta,
+                invia_notifica=True
+            )
+            return redirect("/us/ricevute/nuova/?appena_registrata=%d" % (ricevuta.pk,))
+
+    ultime_quote = Quota.objects.filter(
+        registrato_da=me, tipo__in=[Quota.RICEVUTA, Quota.QUOTA_SOSTENITORE]
+    ).order_by('-creazione')[:15]
+
+    contesto = {
+        "modulo": modulo,
+        "ultime_quote": ultime_quote,
+        "anno": questo_anno,
+        "appena_registrata": appena_registrata,
+    }
+    return 'us_ricevute_nuova.html', contesto
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
@@ -1012,3 +1084,150 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
                                         "emissione (%s) per il Volontario %s." % (
                                   tesserino.emesso_da, persona.nome_completo,
                               ), **torna)
+
+
+@pagina_privata
+def us_tesserini_emissione(request, me):
+    sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
+
+    tesserini = Tesserino.objects.none()
+
+    modulo = ModuloFiltraEmissioneTesserini(request.POST or None)
+    modulo_compilato = True if request.POST else False
+
+    if modulo.is_valid():
+        stato_emissione = modulo.cleaned_data['stato_emissione']
+        stato_emissione_q = Q(stato_emissione__in=stato_emissione)
+        if '' in stato_emissione:
+            stato_emissione_q |= Q(stato_emissione__isnull=True)
+
+        tesserini = Tesserino.objects.filter(
+            Q(
+                Q(persona__codice_fiscale__icontains=modulo.cleaned_data['cerca']) |
+                Q(codice__icontains=modulo.cleaned_data['cerca'])
+            ),
+            stato_emissione_q,
+            emesso_da__in=sedi,
+            tipo_richiesta__in=modulo.cleaned_data['tipo_richiesta'],
+            stato_richiesta__in=modulo.cleaned_data['stato_richiesta']
+        ).order_by(modulo.cleaned_data['ordine'])
+
+    contesto = {
+        "tesserini": tesserini,
+        "modulo": modulo,
+        "modulo_compilato": modulo_compilato
+    }
+    return "us_tesserini_emissione.html", contesto
+
+
+@pagina_privata
+def us_tesserini_emissione_processa(request, me):
+
+    sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
+
+    if not request.POST:  # Qui si arriva tramite POST.
+        return redirect("/us/tesserini/emissione/")
+
+    if 'tesserini' in request.POST:
+        tesserini_pk = [int(x) for x in request.POST.getlist('tesserini')]
+        azione = request.POST.get('azione', default='')
+        request.session['tesserini'] = tesserini_pk
+        request.session['tesserini_azione'] = azione
+
+    else:
+        tesserini_pk = request.session.get('tesserini', default=[])
+        azione = request.session.get('tesserini_azione', default="scarica")
+
+    assert azione in ['scarica', 'lavora', 'scarica_e_lavora']
+
+    # Ottengo tutti i tesserini
+    tesserini = Tesserino.objects.filter(
+        pk__in=tesserini_pk, emesso_da__in=sedi
+    ).prefetch_related('persona')
+
+    fine = False
+
+    da_lavorare = azione in ['lavora', 'scarica_e_lavora']
+    da_scaricare = azione in ['scarica', 'scarica_e_lavora']
+
+    modulo = None
+
+    if not tesserini.exists():
+        return errore_generico(request, me, titolo="Nessuna richiesta selezionata",
+                               messaggio="Devi selezionare una o più richieste che intendi "
+                                         "processare. ",
+                               torna_titolo="Indietro", torna_url="/us/tesserini/emissione/")
+
+    if da_lavorare:
+        modulo = ModuloLavoraTesserini(request.POST if 'tesserini' not in request.POST else None)
+        if modulo.is_valid():
+
+            stato_richiesta = modulo.cleaned_data['stato_richiesta']
+            stato_emissione = modulo.cleaned_data['stato_emissione']
+            motivo_rifiutato = modulo.cleaned_data['motivo_rifiutato']
+
+            tesserini.update(stato_richiesta=stato_richiesta,
+                             stato_emissione=stato_emissione,
+                             motivo_rifiutato=motivo_rifiutato,
+                             data_conferma=poco_fa())
+
+            # Attiva i tesserini o disattiva come appropriato
+            valido = (stato_emissione and stato_richiesta == Tesserino.ACCETTATO)
+
+            # Assicurati che i tesserini abbiano un codice prima di attivarli
+            if stato_richiesta == Tesserino.ACCETTATO:
+                tesserini_senza_codice = tesserini.filter(Tesserino.query_senza_codice().q)
+                for x in tesserini_senza_codice:
+                    x.assicura_presenza_codice()
+
+            tesserini.update(valido=valido)
+
+            fine = True
+
+    else:
+        modulo = ModuloScaricaTesserini(request.POST if 'tesserini' not in request.POST else None)
+        if modulo.is_valid():
+            fine = True
+
+    if fine:  # Quando elaborati i tesserini
+        if da_scaricare:
+            return redirect("/us/tesserini/emissione/scarica/")
+
+        else:
+            return messaggio_generico(request, me, titolo="%d tesserini processati" % tesserini.count(),
+                                      messaggio="I tesserini sono stati processati con successo.",
+                                      torna_titolo="Indietro",
+                                      torna_url="/us/tesserini/emissione/")
+
+    contesto = {
+        "tesserini": tesserini,
+        "modulo": modulo,
+        "da_scaricare": da_scaricare,
+        "da_lavorare": da_lavorare,
+    }
+    return "us_tesserini_emissione_processa.html", contesto
+
+
+@pagina_privata
+def us_tesserini_emissione_scarica(request, me):
+    sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
+    tesserini_pk = request.session.get('tesserini', default=[])
+    tesserini = Tesserino.objects.filter(
+        pk__in=tesserini_pk, emesso_da__in=sedi
+    ).prefetch_related('persona')
+
+    if not tesserini.exists():
+        return redirect("/us/tesserini/emissione/")
+
+    tesserini_link = []
+    for tesserino in tesserini:
+        tesserini_link += [tesserino.url_pdf_token(me)]
+
+    contesto = {
+        "tesserini": tesserini,
+        "tesserini_secondi": 3,
+        "tesserini_link_json": json.dumps(tesserini_link),
+        "tesserini_link": tesserini_link,
+    }
+
+    return "us_tesserini_emissione_scarica.html", contesto

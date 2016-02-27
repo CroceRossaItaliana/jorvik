@@ -11,8 +11,9 @@ from django.contrib.auth import login
 
 # Le viste base vanno qui.
 from django.views.generic import ListView
+from django.utils import timezone
 
-from anagrafica.costanti import TERRITORIALE
+from anagrafica.costanti import TERRITORIALE, REGIONALE
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
@@ -1359,3 +1360,52 @@ def admin_import_volontari(request, me):
         "importati": importati,
     }
     return 'admin_import_volontari.html', contesto
+
+
+@pagina_privata
+def admin_statistiche(request, me):
+    if not me.utenza.is_staff:
+        return redirect(ERRORE_PERMESSI)
+
+    oggi = datetime.date.today()
+    nascita_minima_35 = datetime.date(oggi.year - 36, oggi.month, oggi.day)
+    persone = Persona.objects.all()
+    soci = Persona.objects.filter(
+        Appartenenza.query_attuale(membro__in=Appartenenza.MEMBRO_SOCIO).via("appartenenze")
+    ).distinct('nome', 'cognome', 'codice_fiscale')
+    soci_giovani_35 = soci.filter(
+        data_nascita__gt=nascita_minima_35,
+    )
+    sedi = Sede.objects.filter(attiva=True)
+    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
+
+    totale_regione_soci = 0
+    totale_regione_volontari = 0
+
+    regione_soci_volontari = []
+    for regione in regionali:
+        regione_soci = int(regione.membri_attuali(figli=True, membro__in=Appartenenza.MEMBRO_SOCIO).count())
+        regione_volontari = int(regione.membri_attuali(figli=True, membro=Appartenenza.VOLONTARIO).count())
+        regione_soci_volontari += [
+            (
+                regione,
+                regione_soci,
+                regione_volontari,
+            ),
+        ]
+        totale_regione_soci += int(regione_soci)
+        totale_regione_volontari += int(regione_volontari)
+
+    contesto = {
+        "persone_numero": persone.count(),
+        "soci_numero": soci.count(),
+        "soci_percentuale": soci.count() / persone.count() * 100,
+        "soci_giovani_35_numero": soci_giovani_35.count(),
+        "soci_giovani_35_percentuale": soci_giovani_35.count() / soci.count() * 100,
+        "sedi_numero": sedi.count(),
+        "ora": timezone.now(),
+        "regione_soci_volontari": regione_soci_volontari,
+        "totale_regione_soci": totale_regione_soci,
+        "totale_regione_volontari": totale_regione_volontari,
+    }
+    return 'admin_statistiche.html', contesto

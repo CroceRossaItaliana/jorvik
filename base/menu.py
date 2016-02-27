@@ -1,6 +1,6 @@
 from anagrafica.costanti import REGIONALE
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, \
-    GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE
+    GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI
 from base.utils import remove_none
 
 __author__ = 'alfioemanuele'
@@ -88,6 +88,10 @@ def menu(request):
                 ("In attesa", "fa-user-plus", "/autorizzazioni/"),
                 ("Storico", "fa-clock-o", "/autorizzazioni/storico/"),
             )),
+            ("Ordina", (
+                ("Dalla più vecchia", "fa-sort-numeric-asc", "?ordine=ASC"),
+                ("Dalla più recente", "fa-sort-numeric-desc", "?ordine=DESC"),
+            )),
         ),
         "presidente": (
             ("Sedi CRI", (
@@ -124,11 +128,12 @@ def menu(request):
                 ("Registra Quota Associativa", "fa-plus-square", "/us/quote/nuova/"),
                 ("Quote associative", "fa-money", "/us/quote/"),
                 # ("Ricerca quote", "fa-search", "/us/quote/ricerca/"),
+                ("Registra Ricevuta", "fa-plus-square", "/us/ricevute/nuova/"),
                 ("Elenco ricevute", "fa-list", "/us/ricevute/"),
             )),
-            #("Tesserini", (
-            #    ("Non riconsegnati", "fa-credit-card", "/us/non-riconsegnati/"),
-            #)),
+            ("Tesserini", (
+                ("Emissione", "fa-cogs", "/us/tesserini/emissione/"),
+            )) if me and me.oggetti_permesso(EMISSIONE_TESSERINI).exists() else None,
         ),
         "co": (
             ("Centrale Operativa", (

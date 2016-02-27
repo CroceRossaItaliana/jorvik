@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name_plural': 'Allegati',
             },
-            bases=(base.models.ConScadenza, models.Model),
+            bases=(models.Model,),
         ),
         migrations.CreateModel(
             name='Autorizzazione',

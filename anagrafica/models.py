@@ -12,6 +12,8 @@ Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 - Delega
 """
 from datetime import date, timedelta, datetime
+
+import stdnum
 from django.utils import timezone
 
 import codicefiscale
@@ -21,7 +23,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Q, QuerySet
+from django.db.models import Q, QuerySet, Avg
 from django_countries.fields import CountryField
 import phonenumbers
 from model_utils.managers import PassThroughManagerMixin
@@ -39,7 +41,8 @@ from anagrafica.permessi.incarichi import INCARICO_GESTIONE_APPARTENENZE, INCARI
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
 from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
-    crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb, valida_almeno_14_anni
+    crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb, valida_almeno_14_anni, \
+    valida_partita_iva, valida_iban
 from attivita.models import Turno, Partecipazione
 from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
@@ -1177,9 +1180,15 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     # Nota: indirizzo e' gia' dentro per via di ConGeolocalizzazione
     telefono = models.CharField("Telefono", max_length=64, blank=True)
     fax = models.CharField("FAX", max_length=64, blank=True)
-    email = models.CharField("Indirizzo e-mail", max_length=64, blank=True)
+    email = models.EmailField("Indirizzo e-mail", max_length=64, blank=True)
+    pec = models.EmailField("Indirizzo PEC", max_length=64, blank=True)
+    iban = models.CharField("IBAN", max_length=32, blank=True,
+                            help_text="Coordinate bancarie internazionali del "
+                                      "C/C della Sede.",
+                            validators=[valida_iban])
     codice_fiscale = models.CharField("Codice Fiscale", max_length=32, blank=True)
-    partita_iva = models.CharField("Partita IVA", max_length=32, blank=True)
+    partita_iva = models.CharField("Partita IVA", max_length=32, blank=True,
+                                   validators=[valida_partita_iva])
 
     attiva = models.BooleanField("Attiva", default=True, db_index=True)
 
@@ -1273,11 +1282,12 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         :return:
         """
         if figli:
-            kwargs.update({'sede__in': self.get_descendants(True)})
+            kwargs.update({'sede__in': self.get_descendants(include_self=True) })
         else:
             kwargs.update({'sede': self.pk})
 
-        return Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, **kwargs).via("appartenenze"))
+        return Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, **kwargs).via("appartenenze"))\
+                .distinct('nome', 'cognome', 'codice_fiscale')
 
     def appartenenze_persona(self, persona, membro=None, figli=False, **kwargs):
         """
@@ -1362,7 +1372,13 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     @property
     def domanda_formativa(self):
         from formazione.models import Aspirante
-        return self.circonferenze_contenenti(Aspirante.objects.all()).count()
+        return self.circonferenze_contenenti(Aspirante.query_contattabili()).count()
+
+    @property
+    def domanda_formativa_raggio_medio(self):
+        from formazione.models import Aspirante
+        aspiranti = self.circonferenze_contenenti(Aspirante.query_contattabili())
+        return int(aspiranti.aggregate(raggio=Avg('raggio'))['raggio']) or 0
 
     def espandi(self, includi_me=False, pubblici=False, ignora_disattive=True):
         """

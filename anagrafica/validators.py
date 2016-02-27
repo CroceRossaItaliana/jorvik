@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import stdnum
 from django.utils import timezone
 from stdnum.it import codicefiscale
 from django.core.exceptions import ValidationError
@@ -28,6 +31,20 @@ def crea_validatore_dimensione_file(mb=10):
     return _validatore
 
 
+def valida_partita_iva(partita_iva):
+    try:
+        return stdnum.it.iva.validate(partita_iva)
+    except:
+        raise ValidationError("Partita IVA non corretta.")
+
+
+def valida_iban(iban):
+    try:
+        return stdnum.iban.validate(iban)
+    except:
+        raise ValidationError("IBAN non valido.")
+
+
 def valida_dimensione_file_5mb(fieldfile_obj):
     filesize = fieldfile_obj.file.size
     megabyte_limit = 5
@@ -54,3 +71,4 @@ def valida_almeno_14_anni(data):
     al_giorno = timezone.now().date()
     if (al_giorno.year - data.year - ((al_giorno.month, al_giorno.day) < (data.month, data.day))) <  anni:
         raise ValidationError("Sono necessari almeno %d anni di età" % (anni,))
+

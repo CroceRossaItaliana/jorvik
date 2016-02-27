@@ -1,7 +1,7 @@
 """
 Questo modulo definisce i modelli del modulo di Posta di Gaia.
 """
-from smtplib import SMTPException, SMTPResponseException
+from smtplib import SMTPException, SMTPResponseException, SMTPServerDisconnected
 from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives, get_connection
 from django.db.models import QuerySet
 from django.template import Context
@@ -146,6 +146,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         # E-mail a delle persone
         for d in self.oggetti_destinatario.filter(inviato=False):
 
+            # Assicurati che la connessione sia aperta
+            connection.open()
+
             # Evita duplicati in invii lunghi (se ci sono problemi con lock)...
             d.refresh_from_db()
             if d.inviato:
@@ -175,6 +178,12 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 if isinstance(e, SMTPResponseException) and e.smtp_code == 501:
                     successo = True  # E-mail di destinazione rotta: ignora.
 
+                elif isinstance(e, SMTPServerDisconnected):
+                    # Se il server si e' disconnesso, riconnetti.
+                    successo = False    # Questo messaggio verra' inviato al prossimo tentativo.
+                    connection.close()  # Chiudi handle alla connessione
+                    connection.open()   # Riconnettiti
+
                 else:
                     successo = False  # Altro errore... riprova piu' tardi.
 
@@ -183,6 +192,10 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             except TypeError as e:
                 successo = True
                 d.errore = "Nessun indirizzo e-mail. Saltato"
+
+            except UnicodeEncodeError as e:
+                successo = True
+                d.errore = "Indirizzo e-mail non valido. Saltato."
 
             if not successo:
                 print("%s  (!) errore invio id=%d, destinatario=%d, errore=%s" % (
@@ -319,6 +332,6 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
     persona = models.ForeignKey("anagrafica.Persona", null=True, blank=True, default=None,
                                 related_name='oggetti_sono_destinatario', on_delete=models.CASCADE)
 
-    inviato = models.BooleanField(default=False)
-    tentativo = models.DateTimeField(default=None, blank=True, null=True)
-    errore = models.CharField(max_length=256, blank=True, null=True, default=None)
+    inviato = models.BooleanField(default=False, db_index=True)
+    tentativo = models.DateTimeField(default=None, blank=True, null=True, db_index=True)
+    errore = models.CharField(max_length=256, blank=True, null=True, default=None, db_index=True)

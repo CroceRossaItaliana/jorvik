@@ -12,7 +12,7 @@ backend = django.core.mail.backends.filebased.EmailBackend
 # Configurazione
 
 ## FILE
-file_path = /tmp/
+file_path = /tmp/mail/
 
 ## SMTP
 host = localhost

@@ -1,3 +1,6 @@
+import mimetypes
+import os
+
 from django.contrib.auth import load_backend, login
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count
@@ -18,7 +21,7 @@ from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLoca
 from base.geo import Locazione
 from base.models import Autorizzazione, Token
 from base.tratti import ConPDF
-from base.utils import get_drive_file
+from base.utils import get_drive_file, rimuovi_scelte
 from formazione.models import PartecipazioneCorsoBase
 from jorvik import settings
 from posta.models import Messaggio
@@ -164,6 +167,17 @@ def autorizzazioni(request, me, content_type_pk=None):
 
     richieste = me._autorizzazioni_in_attesa().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
 
+    ORDINE_ASCENDENTE = 'creazione'
+    ORDINE_DISCENDENTE = '-creazione'
+    ORDINE_DEFAULT = ORDINE_ASCENDENTE
+
+    if 'ordine' in request.GET:
+        if request.GET['ordine'] == 'ASC':
+            request.session['autorizzazioni_ordine'] = ORDINE_ASCENDENTE
+        else:
+            request.session['autorizzazioni_ordine'] = ORDINE_DISCENDENTE
+    ordine = request.session.get('autorizzazioni_ordine', default=ORDINE_DEFAULT)
+
     sezioni = ()  # Ottiene le sezioni
     sezs = richieste.values('oggetto_tipo_id').annotate(Count('oggetto_tipo_id'))
 
@@ -173,7 +187,7 @@ def autorizzazioni(request, me, content_type_pk=None):
         modello = modello.RICHIESTA_NOME
         sezioni += ((modello, sez['oggetto_tipo_id__count'], int(sez['oggetto_tipo_id'])),)
 
-    richieste = richieste.order_by('creazione', 'id')
+    richieste = richieste.order_by(ordine, 'id')
 
     if content_type_pk is not None:
         richieste = richieste.filter(oggetto_tipo_id=int(content_type_pk))
@@ -293,14 +307,19 @@ def autorizzazioni_storico(request, me):
     """
     Mostra storico delle autorizzazioni.
     """
-    richieste = me.autorizzazioni_firmate.all().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI).order_by('-ultima_modifica')[0:50]
+
+    NUMERO_RICHIESTE = 50
+
+    richieste = me.autorizzazioni_firmate.all().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)\
+                    .order_by('-ultima_modifica')[0:NUMERO_RICHIESTE]
 
     ricarica = pulisci_autorizzazioni(richieste)
     if ricarica:
         return redirect("/autorizzazioni/storico/")
 
     contesto = {
-        "richieste": richieste
+        "richieste": richieste,
+        "numero": NUMERO_RICHIESTE,
     }
 
     return 'base_autorizzazioni_storico.html', contesto
@@ -369,7 +388,33 @@ def pdf(request, me, app_label, model, pk):
         return redirect(ERRORE_PERMESSI)
 
     pdf = oggetto.genera_pdf()
+
+    # Se sto scaricando un tesserino, forza lo scaricamento.
+    if 'tesserini' in pdf.file.path:
+        return pdf_forza_scaricamento(request, pdf)
+
     return redirect(pdf.download_url)
+
+
+def pdf_forza_scaricamento(request, pdf):
+    """
+    Forza lo scaricamento di un file pdf.
+    Da usare con cautela, perche' carica il file in memoria
+    e blocca il thread fino al completamento della richiesta.
+    :param request:
+    :param pdf:
+    :return:
+    """
+
+    percorso_completo = pdf.file.path
+
+    with open(percorso_completo, 'rb') as f:
+        data = f.read()
+
+    response = HttpResponse(data, content_type=mimetypes.guess_type(percorso_completo)[0])
+    response['Content-Disposition'] = "attachment; filename={0}".format(pdf.nome)
+    response['Content-Length'] = os.path.getsize(percorso_completo)
+    return response
 
 
 @pagina_pubblica
@@ -407,6 +452,12 @@ def supporto(request, me=None):
     modulo = None
     if me:
         modulo = ModuloRichiestaSupporto(request.POST or None)
+
+        if not me.deleghe_attuali().exists():
+            scelte = modulo.fields['tipo'].choices
+            scelte = rimuovi_scelte([modulo.TERZO_LIVELLO, modulo.SECONDO_LIVELLO], scelte)
+            modulo.fields['tipo'].choices = scelte
+
 
     if modulo and modulo.is_valid():
         tipo = modulo.cleaned_data['tipo']

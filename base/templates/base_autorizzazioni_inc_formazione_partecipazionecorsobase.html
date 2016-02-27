@@ -1,4 +1,5 @@
-<p>{{ richiesta.richiedente.link|safe }} chiede di poter accedere al
-    {{ richiesta.oggetto.corso.link|safe }} che inizier&agrave; il
+<p>{{ richiesta.richiedente.link|safe }} chiede di essere
+    contattat{{ richiesta.richiedente.genere_o_a }} per
+    iscriversi al {{ richiesta.oggetto.corso.link|safe }} che inizier&agrave; il
     {{ richiesta.oggetto.corso.data_inizio|date:"DATETIME_FORMAT" }}.</p>
 

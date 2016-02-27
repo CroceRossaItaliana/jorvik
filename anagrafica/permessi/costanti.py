@@ -28,12 +28,14 @@ GESTIONE_AUTOPARCHI_SEDE = "GESTIONE_AUTOPARCHI_SEDE"
 GESTIONE_GRUPPI_SEDE = "GESTIONE_GRUPPI_SEDE"
 GESTIONE_GRUPPO = "GESTIONE_GRUPPO"
 GESTIONE_CENTRALE_OPERATIVA_SEDE = "GESTIONE_CENTRALE_OPERATIVA_SEDE"
+EMISSIONE_TESSERINI = "EMISSIONE_TESSERINI"
 
 # Tipologia degli oggetti assegnati ad ogni Permesso.
 PERMESSI_OGGETTI = (
     (GESTIONE_SEDE,             ('anagrafica', 'Sede')),
     (GESTIONE_SOCI,             ('anagrafica', 'Sede')),
     (ELENCHI_SOCI,              ('anagrafica', 'Sede')),
+    (EMISSIONE_TESSERINI,       ('anagrafica', 'Sede')),
     (GESTIONE_ATTIVITA_SEDE,    ('anagrafica', 'Sede')),
     (GESTIONE_ATTIVITA_AREA,    ('attivita',   'Area')),
     (GESTIONE_REFERENTI_ATTIVITA,('attivita',   'Attivita')),

@@ -1,0 +1,96 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Emissione Tesserini
+{% endblock %}
+
+{% block app_contenuto %}
+
+<div class="row">
+
+    <div class="col-md-7">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-list"></i>
+                    Richieste selezionate
+                </h2>
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped table-condensed piu-piccolo">
+                    <thead>
+                    <tr>
+                        <th>Volontario</th>
+                        <th>Richiesta</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for t in tesserini %}
+                        <tr>
+                            <td>{{ t.persona.link|safe }}</td>
+                            <td>{{ t.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-md-5">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-cogs"></i>
+                    Processa le richieste
+                </h2>
+            </div>
+            <div class="panel-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
+
+                    <p>&nbsp;</p>
+                    <h4><i class="fa fa-fw fa-info-circle"></i> Avvertenze</h4>
+                    {% if da_lavorare %}
+                        <p class="alert alert-info">
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Tutte le richieste approvate riceveranno
+                            un codice di tesserino univoco. Registrando
+                            inoltre l'emissione, il tesserino verr&agrave;
+                            attivato: assicurati di verificarne la consegna
+                            fino al volontario o la distruzione.
+                        </p>
+                    {% endif %}
+
+
+                    {% if da_scaricare %}
+                        <p class="alert alert-warning">
+                            <i class="fa fa-fw fa-warning"></i>
+                            Confermando, inizier&agrave; lo scaricamento
+                             dei tesserini su questo computer. Per favore
+                             assicurati che il sistema sia protetto, libero
+                             da virus e fai attenzione a cancellare i file
+                             una volta stampati i tesserini.
+                        </p>
+                    {% endif %}
+                    <p>&nbsp;</p>
+
+                    <button type="submit" class="btn btn-block btn-primary">
+                        <i class="fa fa-fw fa-check-circle"></i>
+                        Processa
+
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

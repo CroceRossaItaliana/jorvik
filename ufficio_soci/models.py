@@ -41,8 +41,8 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
     RICHIESTO = "ATT"
     ACCETTATO = "OK"
     STATO_RICHIESTA = (
-        (RIFIUTATO, "Emissione Rifiutata"),
         (RICHIESTO, "Emissione Richiesta"),
+        (RIFIUTATO, "Emissione Rifiutata"),
         (ACCETTATO, "Emissione Accettata"),
     )
     stato_richiesta = models.CharField(max_length=3, choices=STATO_RICHIESTA, default=RICHIESTO, db_index=True)
@@ -53,6 +53,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
     SPEDITO_CASA = "SP_CASA"
     SPEDITO_SEDE = "SP_SEDE"
     STATO_EMISSIONE = (
+        ("", "(Non emesso)"),
         (STAMPATO, "Stampato"),
         (SPEDITO_CASA, "Spedito a casa"),
         (SPEDITO_SEDE, "Spedito alla Sede CRI")
@@ -70,6 +71,13 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
 
     riconsegnato_a = models.ForeignKey('anagrafica.Persona', related_name='tesserini_riconsegnati', null=True, on_delete=models.SET_NULL)
     data_riconsegna = models.DateTimeField(null=True, db_index=True)
+
+    @classmethod
+    @concept
+    def query_senza_codice(cls):
+        return Q(
+            Q(codice='') | Q(codice__isnull=True)
+        )
 
     def assicura_presenza_codice(self):
         """
@@ -115,6 +123,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
          usa invece il metodo assicura_presenza_codice.
         """
         self.codice = Tesserino._genera_nuovo_codice()
+        self.save()
 
     def genera_pdf(self):
         codice = self.genera_codice_a_barre_png()
@@ -131,6 +140,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
             },
             formato=PDF.FORMATO_CR80,
             orientamento=PDF.ORIENTAMENTO_ORIZZONTALE,
+            posizione="tesserini/",
         )
         return pdf
 
@@ -302,7 +312,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
     RICEVUTA = 'R'
     TIPO = (
         (QUOTA_SOCIO, "Quota Socio"),
-        (QUOTA_SOSTENITORE, "Quota Sostenitore"),
+        (QUOTA_SOSTENITORE, "Ricevuta Sostenitore"),
         (RICEVUTA, "Ricevuta")
     )
     tipo = models.CharField(max_length=1, default=QUOTA_SOCIO, choices=TIPO)
@@ -340,8 +350,9 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
         )
 
         # Scompone l'importo in Quota e Extra (Donazione)
+        #  (solo se QUOTA VOLONTARIO)
         da_pagare = q.tesseramento().importo_da_pagare(q.persona)
-        if importo > da_pagare:
+        if tipo == cls.QUOTA_SOCIO and importo > da_pagare:
             q.importo = da_pagare
             q.importo_extra = importo - da_pagare
             q.causale_extra = "Donazione"

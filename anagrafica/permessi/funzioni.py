@@ -15,7 +15,7 @@ from anagrafica.permessi.applicazioni import REFERENTE
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
     GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, GESTIONE_AUTOPARCHI_SEDE, \
     GESTIONE_GRUPPI_SEDE, GESTIONE_GRUPPO, GESTIONE_AREE_SEDE, GESTIONE_REFERENTI_ATTIVITA, \
-    GESTIONE_CENTRALE_OPERATIVA_SEDE
+    GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI
 
 
 def permessi_presidente(sede):
@@ -59,9 +59,11 @@ def permessi_ufficio_soci(sede):
     :param sede: Sede di cui si e' ufficio soci.
     :return: Lista di permessi.
     """
+    from anagrafica.costanti import REGIONALE
     return [
-        (GESTIONE_SOCI,     sede.espandi(includi_me=True)),
-        (ELENCHI_SOCI,      sede.espandi(includi_me=True, pubblici=True)),
+        (GESTIONE_SOCI,         sede.espandi(includi_me=True)),
+        (ELENCHI_SOCI,          sede.espandi(includi_me=True, pubblici=True)),
+        (EMISSIONE_TESSERINI,   sede.queryset_modello().filter(estensione=REGIONALE)),
     ]
 
 
