@@ -223,8 +223,10 @@ class ModuloConsentiTrasferimento(forms.Form):
     protocollo_numero = forms.CharField(max_length=32, label="Numero di protocollo", help_text="Numero di protocollo con cui è stata registrata la richiesta.")
     protocollo_data = forms.DateField(label="Data del protocollo", help_text="Data di registrazione del protocollo.")
 
+
 class ModuloConsentiRiserva(ModuloConsentiTrasferimento):
     pass
+
 
 class ModuloNuovoProvvedimento(autocomplete_light.ModelForm):
     class Meta:
@@ -250,7 +252,6 @@ class ModuloCreazioneRiserva(ModelForm):
         if not fine or fine < inizio:
             raise forms.ValidationError("La fine di una riserva non può avvenire prima del suo inizio")
         return fine
-
 
 
 class ModuloCreazioneDelega(autocomplete_light.ModelForm):
@@ -293,6 +294,13 @@ class ModuloPresidenteSede(ModelForm):
     def clean_partita_iva(self):
         partita_iva = self.cleaned_data['partita_iva']
         return stdnum.it.iva.compact(partita_iva)
+
+    def clean(self):
+        # Tutti i campi obbligatori
+        tutti_campi = self.cleaned_data.copy().items()
+        for chiave, valore in tutti_campi:
+            if not valore:
+                self.add_error(chiave, "Questo campo è obbligatorio.")
 
 
 class ModuloImportVolontari(forms.Form):

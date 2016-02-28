@@ -38,9 +38,10 @@ def valida_partita_iva(partita_iva):
         raise ValidationError("Partita IVA non corretta.")
 
 
-def valida_iban(iban):
+def valida_iban(iban_no):
+    from stdnum import iban
     try:
-        return stdnum.iban.validate(iban)
+        return iban.validate(iban_no)
     except:
         raise ValidationError("IBAN non valido.")
 
