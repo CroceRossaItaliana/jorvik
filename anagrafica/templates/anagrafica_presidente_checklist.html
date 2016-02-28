@@ -17,6 +17,23 @@
     il {{ sede.nome_completo }}.
 </div>
 
+{% if sede.richiede_revisione_dati %}
+    <div class="alert alert-danger alert-block">
+        <h4><i class="fa fa-fw fa-warning"></i> Prima di iniziare, aggiorna le informazioni del Comitato.</h4>
+        <p>I dati del {{ sede.nome_completo }} non sono aggiornati. Per favore,
+            dedica qualche minuto del tuo tempo per completare le informazioni del
+            Comitato con tutti i dettagli mancanti. Questi sono pubblicati automaticamente
+            su internet e sul sito web della Croce Rossa Italiana.</p>
+        <p>Una volta effettuata la verifica dei dati, questo avviso scomparir&agrave;.</p>
+        <p>
+            <a href="/presidente/sedi/{{ sede.pk }}/" target="_blank"
+                class="btn btn-danger btn-block">
+                <i class="fa fa-fw fa-home"></i>
+                Vai alla modifica dei dettagli della Sede
+            </a>
+        </p>
+    </div>
+{% endif %}
 
 <div class="panel panel-info">
     <div class="panel-heading">

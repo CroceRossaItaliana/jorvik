@@ -1231,6 +1231,19 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         return self.tipo == self.COMITATO and self.estensione in [NAZIONALE, REGIONALE, PROVINCIALE, LOCALE]
 
     @property
+    def richiede_revisione_dati(self):
+        """
+        Ritorna True se i dati non sono stati aggiornati dall'entrata in carica del Presidente.
+        """
+        # Deve essere un Comitato
+        if not self.comitato == self:
+            return False
+        presidente_attuale = self.deleghe_attuali(tipo=PRESIDENTE).first()
+        if not presidente_attuale:
+            return False
+        return self.ultima_modifica < presidente_attuale.inizio
+
+    @property
     def link(self):
         return "<a href='%s' target='_new'>%s</a>" % (
             self.url, self.nome_completo

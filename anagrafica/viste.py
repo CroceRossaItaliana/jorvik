@@ -1229,6 +1229,7 @@ def profilo(request, me, pk, sezione=None):
         except ValueError:
             return risposta
 
+
 @pagina_privata
 def presidente(request, me):
     sedi = me.oggetti_permesso(GESTIONE_SEDE)
