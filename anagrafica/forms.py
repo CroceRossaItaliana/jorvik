@@ -297,7 +297,8 @@ class ModuloPresidenteSede(ModelForm):
 
     def clean(self):
         # Tutti i campi obbligatori
-        tutti_campi = self.cleaned_data.copy().items()
+        campi_obbligatori = ['telefono', 'email', 'pec', 'iban', 'codice_fiscale', 'partita_iva']
+        tutti_campi = {y: v for y, v in self.cleaned_data.copy().items() if y in campi_obbligatori}.items()
         for chiave, valore in tutti_campi:
             if not valore:
                 self.add_error(chiave, "Questo campo è obbligatorio.")
