@@ -1335,8 +1335,12 @@ def presidente_checklist(request, me, sede_pk):
         delegati_attuali = oggetto.delegati_attuali(tipo=tipo)
         if delegati_attuali:
             progresso_si += 1
+        ct = ContentType.objects.get_for_model(oggetto)
         deleghe += [
-            (PERMESSI_NOMI_DICT[tipo], oggetto, delegati_attuali, "#"),
+            (PERMESSI_NOMI_DICT[tipo], oggetto, delegati_attuali,
+             "/presidente/checklist/%d/%s/%d/%d/" % (
+                 sede.pk, tipo, ct.pk, oggetto.pk,
+             )),
         ]
 
     progresso = int(progresso_si / len(deleghe) * 100)
@@ -1348,6 +1352,25 @@ def presidente_checklist(request, me, sede_pk):
         "progresso_si": progresso_si,
     }
     return "anagrafica_presidente_checklist.html", contesto
+
+
+@pagina_privata
+def presidente_checklist_delegati(request, me, sede_pk, tipo, oggetto_tipo, oggetto_id):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+    oggetto = ContentType.objects.get(pk=oggetto_tipo).get_object_for_this_type(pk=oggetto_id)
+    tipo_nome = PERMESSI_NOMI_DICT[tipo]
+
+    continua_url = "/presidente/checklist/%d/" % sede.pk
+
+    contesto = {
+        "delega_oggetto": oggetto,
+        "delega_tipo": tipo,
+        "delega_tipo_nome": tipo_nome,
+        "continua_url": continua_url,
+    }
+    return "anagrafica_presidente_checklist_delegati.html", contesto
 
 
 @pagina_privata

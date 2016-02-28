@@ -1,0 +1,38 @@
+{% extends 'presidente_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load utils %}
+
+{% block pagina_titolo %}
+    Gestione {{ sede.nome_completo }}
+{% endblock %}
+
+{% block app_contenuto %}
+
+
+<div class="alert alert-info">
+    <p><i class="fa fa-fw fa-info-circle"></i>
+    Da qui puoi modificare i Delegati come {{ delega_tipo_nome }}
+    per {{ delega_oggetto }}.
+</div>
+
+
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <a href="{{ continua_url }}" class="btn btn-default btn-xs pull-right">
+            <i class="fa fa-fw fa-mail-reply"></i>
+            Torna indietro
+        </a>
+        <h2 class="panel-title">
+            <i class="fa fa-check-square-o"></i>
+            {{ delega_tipo_nome }} per {{ delega_oggetto }}
+        </h2>
+    </div>
+    <div class="panel-body">
+
+
+        {% delegati delega_tipo delega_oggetto continua_url=continua_url almeno=1 %}
+
+    </div>
+</div>
+{% endblock %}
