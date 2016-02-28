@@ -288,7 +288,8 @@ class ModuloUtenza(ModelForm):
 class ModuloPresidenteSede(ModelForm):
     class Meta:
         model = Sede
-        fields = ['telefono', 'fax', 'email', 'pec', 'iban',
+        fields = ['telefono', 'fax', 'email', 'pec',
+                  'sito_web', 'iban',
                   'codice_fiscale', 'partita_iva', ]
 
     def clean_partita_iva(self):

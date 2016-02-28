@@ -1198,6 +1198,8 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     telefono = models.CharField("Telefono", max_length=64, blank=True)
     fax = models.CharField("FAX", max_length=64, blank=True)
     email = models.EmailField("Indirizzo e-mail", max_length=64, blank=True)
+    sito_web = models.URLField("Sito Web", blank=True,
+                               help_text="URL completo del sito web, es.: http://www.cri.it/.")
     pec = models.EmailField("Indirizzo PEC", max_length=64, blank=True)
     iban = models.CharField("IBAN", max_length=32, blank=True,
                             help_text="Coordinate bancarie internazionali del "
@@ -1241,6 +1243,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         presidente_attuale = self.deleghe_attuali(tipo=PRESIDENTE).first()
         if not presidente_attuale:
             return False
+        # Deve avere una locazione geografica
+        if not self.locazione:
+            return True
         return self.ultima_modifica < presidente_attuale.inizio
 
     @property
