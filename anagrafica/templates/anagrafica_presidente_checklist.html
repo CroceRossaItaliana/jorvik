@@ -1,0 +1,142 @@
+{% extends 'presidente_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load utils %}
+
+{% block pagina_titolo %}
+    Gestione {{ sede.nome_completo }}
+{% endblock %}
+
+{% block app_contenuto %}
+
+
+<div class="alert alert-info">
+    <p><i class="fa fa-fw fa-info-circle"></i>
+    Questa &egrave; la check-list delle deleghe e delle nomine da effettuare per
+    il {{ sede.nome_completo }}.
+</div>
+
+{% if sede.richiede_revisione_dati %}
+    <div class="alert alert-danger alert-block">
+        <h4><i class="fa fa-fw fa-warning"></i> Prima di iniziare, aggiorna le informazioni del Comitato.</h4>
+        <p>I dati del {{ sede.nome_completo }} non sono aggiornati. Per favore,
+            dedica qualche minuto del tuo tempo per completare le informazioni del
+            Comitato con tutti i dettagli mancanti. Questi sono pubblicati automaticamente
+            su internet e sul sito web della Croce Rossa Italiana.</p>
+        <p>Una volta effettuata la verifica dei dati, questo avviso scomparir&agrave;.</p>
+        <p>
+            <a href="/presidente/sedi/{{ sede.pk }}/" target="_blank"
+                class="btn btn-danger btn-block">
+                <i class="fa fa-fw fa-home"></i>
+                Vai alla modifica dei dettagli della Sede
+            </a>
+        </p>
+    </div>
+{% endif %}
+
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <h2 class="panel-title">
+            <i class="fa fa-check-square-o"></i>
+            Check-list {{ sede.nome_completo }}
+        </h2>
+    </div>
+    <div class="panel-body">
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    Barra di progresso
+                    <span class="badge pull-right">
+                        {{ progresso }}%
+                    </span>
+                </h2>
+            </div>
+            <div class="panel-body">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-success" style="width: {{ progresso }}%">
+                        {{ progresso }}% &mdash; {{ progresso_si }} su {{ deleghe|length }}
+                    </div>
+                </div>
+                <p>Alcune note importanti:</p>
+                <ul>
+                    <li>NON &egrave; necessario nominare un <strong>referente</strong> per ogni attivit&agrave;:
+                        i responsabili d'area possono gestire le attivit&agrave; che sono
+                        fanno capo alla loro area;</li>
+                    <li>NON &egrave; necessario nominare un delegato all'<strong>ufficio soci</strong>
+                        per ogni unit&agrave; territoriale: il delegato del Comitato pu&ograve;
+                        gestire i Soci, Sostenitori CRI e Dipendenti per tutto il Comitato;</li>
+                    <li>NON &egrave; necessario nominare un <strong>direttore</strong> per ogni
+                        corso base: il responsabile alla formazione pu&ograve; gestire in
+                        autonomia tutti i corsi base del Comitato;</li>
+                </ul>
+            </div>
+        </div>
+
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th><i class="fa fa-fw fa-question-circle"></i></th>
+                <th>Nomina</th>
+                <th>Nomina per</th>
+                <th>Delegati individuati</th>
+            </tr>
+            </thead>
+
+            {% for tipo, oggetto, delegati, link in deleghe %}
+
+
+                <tr class="{% if delegati %}success{% else %}warning{% endif %}">
+
+                    <td>
+                        {% if delegati %}
+                            <i class="fa fa-fw fa-check-square-o fa-2x"></i>
+
+                        {% else %}
+                            <i class="fa fa-fw fa-square-o fa-2x"></i>
+
+                        {% endif %}
+                    </td>
+                    <td class="grassetto">{{ tipo }}</td>
+                    <td>
+                        {% if oggetto.link %}
+                            {{ oggetto.link|safe }}
+                        {% else %}
+                            {{ oggetto }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if delegati %}
+                            <i class="fa fa-fw fa-users"></i> {{ delegati|join:", " }}
+                            <a href="{{ link }}" class="">
+                                (modifica)
+                            </a>
+
+
+
+                        {% else %}
+                            <a href="{{ link }}" class="btn btn-warning btn-block">
+                                <i class="fa fa-fw fa-user-plus"></i>
+                                Seleziona delegati...
+                            </a>
+
+
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+
+            {% endfor %}
+
+
+        </table>
+
+
+
+    </div>
+</div>
+{% endblock %}

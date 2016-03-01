@@ -2,6 +2,7 @@ import autocomplete_light
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 
+from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE
 from anagrafica.models import Persona, Sede, Appartenenza
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE
 from formazione.models import PartecipazioneCorsoBase
@@ -68,6 +69,30 @@ class PersonaAutocompletamento(AutocompletamentoBase):
         )
 
 
+class PresidenteAutocompletamento(PersonaAutocompletamento):
+
+    def choices_for_request(self):
+        if self.request.user.is_superuser:
+            self.choices = Persona.objects.all()
+        return super(PersonaAutocompletamento, self).choices_for_request()
+
+    choice_html_format = u'''
+        <span class="block" data-value="%s"><strong>%s</strong><br />
+        Nat%s il %s<br />
+        <span class="monospace">%s</span></span>
+    '''
+
+    def choice_html(self, choice):
+        app = choice.appartenenze_attuali().first() if choice else None
+        return self.choice_html_format % (
+            self.choice_value(choice),
+            self.choice_label(choice),
+            choice.genere_o_a,
+            choice.data_nascita.strftime("%d/%m/%Y"),
+            choice.codice_fiscale,
+        )
+
+
 class SostenitoreAutocompletamento(PersonaAutocompletamento):
     def choices_for_request(self):
         self.choices = self.choices.filter(Appartenenza.query_attuale(membro=Appartenenza.SOSTENITORE).via("appartenenze"))
@@ -85,12 +110,26 @@ class SedeAutocompletamento(AutocompletamentoBase):
         return super(SedeAutocompletamento, self).choices_for_request()
 
 
+class ComitatoAutocompletamento(AutocompletamentoBase):
+    search_fields = ['nome', 'genitore__nome', ]
+    model = Sede
+
+    def choices_for_request(self):
+        self.choices = self.choices.filter(
+            tipo=Sede.COMITATO,
+            estensione__in=[NAZIONALE, REGIONALE, PROVINCIALE, LOCALE],
+        )
+        return super(ComitatoAutocompletamento, self).choices_for_request()
+
+
 class SedeNuovoCorsoAutocompletamento(SedeAutocompletamento):
     def choices_for_request(self):
         return self.persona.oggetti_permesso(GESTIONE_CORSI_SEDE)
 
 
 autocomplete_light.register(PersonaAutocompletamento)
+autocomplete_light.register(PresidenteAutocompletamento)
 autocomplete_light.register(SostenitoreAutocompletamento)
 autocomplete_light.register(SedeAutocompletamento)
+autocomplete_light.register(ComitatoAutocompletamento)
 autocomplete_light.register(SedeNuovoCorsoAutocompletamento)

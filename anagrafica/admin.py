@@ -130,12 +130,11 @@ class AdminEstensione(admin.ModelAdmin):
 # admin.site.register(Trasferimento)
 @admin.register(Trasferimento)
 class AdminTrasferimento(admin.ModelAdmin):
-    search_fields = ["persona__nome", "persona__cognome",  "persona__codice_fiscale", "destinazione_nome"]
+    search_fields = ["persona__nome", "persona__cognome",  "persona__codice_fiscale", "destinazione__nome"]
     list_display = ("persona", "destinazione", "creazione", )
     list_filter = ("creazione", "confermata", "ritirata",)
     raw_id_fields = RAW_ID_FIELDS_TRASFERIMENTO
     inlines = [InlineAutorizzazione]
-
 
 
 # admin.site.register(Riserva)
@@ -148,7 +147,6 @@ class AdminRiserva(admin.ModelAdmin):
     inlines = [InlineAutorizzazione]
 
 
-
 # admin.site.register(Riserva)
 @admin.register(Dimissione)
 class AdminDimissione(admin.ModelAdmin):
@@ -157,7 +155,6 @@ class AdminDimissione(admin.ModelAdmin):
     list_filter = ("creazione",)
     raw_id_fields = RAW_ID_FIELDS_DIMISSIONE
     inlines = [InlineAutorizzazione]
-
 
 
 @admin.register(Telefono)

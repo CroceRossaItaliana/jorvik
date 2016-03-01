@@ -24,7 +24,12 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         verbose_name = "Messaggio di posta"
         verbose_name_plural = "Messaggi di posta"
 
-    oggetto = models.CharField(max_length=128, db_index=True, blank=False, default="(Nessun oggetto)")
+    LUNGHEZZA_MASSIMA_OGGETTO = 256
+    CARATTERI_RIDUZIONE_OGGETTTO = '...'
+
+    # Limite oggetto dato da RFC 2822 e' 998 caratteri in oggetto, ma ridotto per comodita
+    oggetto = models.CharField(max_length=LUNGHEZZA_MASSIMA_OGGETTO, db_index=True,
+                               blank=False, default="(Nessun oggetto)")
     corpo = models.TextField(blank=True, null=False, default="(Nessun corpo)")
 
     ultimo_tentativo = models.DateTimeField(blank=True, null=True, default=None)
@@ -262,6 +267,11 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             "mittente": mittente,
             "allegati": allegati,
         })
+
+        # Accorcia l'oggetto se necessario.
+        if len(oggetto) > cls.LUNGHEZZA_MASSIMA_OGGETTO:
+            oggetto = oggetto[:(cls.LUNGHEZZA_MASSIMA_OGGETTO - len(cls.CARATTERI_RIDUZIONE_OGGETTTO))]
+            oggetto = "%s%s" % (oggetto, cls.CARATTERI_RIDUZIONE_OGGETTTO)
 
         m = cls(
             oggetto=oggetto,

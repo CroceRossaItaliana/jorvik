@@ -38,7 +38,18 @@
         <p>&nbsp;</p>
     </div>
 
+    {% if me.nuovo_presidente %}
+        <div class="alert alert-success">
+            <p class="grassetto">
+                <i class="fa fa-fw fa-smile-o"></i>
+                Ciao neo Presidente!
+                <a href="/presidente/">
+                    Hai gi&agrave; completato la check-list per il tuo Comitato?
+                </a>
+            </p>
+        </div>
 
+    {% endif %}
 
     {% if not me.numeri_telefono.exists %}
         <div class="alert alert-warning">

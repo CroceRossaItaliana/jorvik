@@ -19,7 +19,7 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
-    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza
+    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -29,9 +29,10 @@ from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, 
     ProvvedimentoDisciplinare, Sede, Riserva
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
-    RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA
+    RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
+    RESPONSABILE_AREA, DIRETTORE_CORSO
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
-    ELENCHI_SOCI
+    ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
     INCARICO_GESTIONE_FOTOTESSERE
 from attivita.models import Partecipazione
@@ -841,9 +842,7 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
     if not me.permessi_almeno(delega.oggetto, GESTIONE):
         return redirect(ERRORE_PERMESSI)
 
-    delega.fine = poco_fa()
-    delega.save()
-    delega.invia_notifica_terminazione(me)
+    delega.termina(mittente=me)
 
     return redirect("/strumenti/delegati/")
 
@@ -1230,6 +1229,7 @@ def profilo(request, me, pk, sezione=None):
         except ValueError:
             return risposta
 
+
 @pagina_privata
 def presidente(request, me):
     sedi = me.oggetti_permesso(GESTIONE_SEDE)
@@ -1268,8 +1268,6 @@ def _presidente_sede_ruoli(sede):
     return sezioni
 
 
-
-
 @pagina_privata
 def presidente_sede(request, me, sede_pk):
     sede = get_object_or_404(Sede, pk=sede_pk)
@@ -1288,6 +1286,92 @@ def presidente_sede(request, me, sede_pk):
         "sezioni": sezioni,
     }
     return 'anagrafica_presidente_sede.html', contesto
+
+
+@pagina_privata
+def presidente_checklist(request, me, sede_pk):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    from formazione.models import CorsoBase
+    from attivita.models import Attivita
+
+    deleghe_da_processare = [
+        (UFFICIO_SOCI, sede),
+        (DELEGATO_OBIETTIVO_1, sede),
+        (DELEGATO_OBIETTIVO_2, sede),
+        (DELEGATO_OBIETTIVO_3, sede),
+        (DELEGATO_OBIETTIVO_4, sede),
+        (DELEGATO_OBIETTIVO_5, sede),
+        (DELEGATO_OBIETTIVO_6, sede),
+        (RESPONSABILE_FORMAZIONE, sede),
+        (RESPONSABILE_AUTOPARCO, sede),
+        (DELEGATO_CO, sede),
+    ]
+
+    for unita in sede.espandi():
+        deleghe_da_processare += [
+            (UFFICIO_SOCI_UNITA, unita)
+        ]
+
+    for corso in me.oggetti_permesso(GESTIONE_CORSO).filter(stato__in=[CorsoBase.PREPARAZIONE, CorsoBase.ATTIVO]):
+        deleghe_da_processare += [
+            (DIRETTORE_CORSO, corso)
+        ]
+
+    for area in me.oggetti_permesso(GESTIONE_ATTIVITA_AREA):
+        deleghe_da_processare += [
+            (RESPONSABILE_AREA, area),
+        ]
+
+    for attivita in me.oggetti_permesso(GESTIONE_ATTIVITA).filter(apertura=Attivita.APERTA):
+        deleghe_da_processare += [
+            (REFERENTE, attivita),
+        ]
+
+    deleghe = []
+    progresso_si = 0
+    for tipo, oggetto in deleghe_da_processare:
+        delegati_attuali = oggetto.delegati_attuali(tipo=tipo)
+        if delegati_attuali:
+            progresso_si += 1
+        ct = ContentType.objects.get_for_model(oggetto)
+        deleghe += [
+            (PERMESSI_NOMI_DICT[tipo], oggetto, delegati_attuali,
+             "/presidente/checklist/%d/%s/%d/%d/" % (
+                 sede.pk, tipo, ct.pk, oggetto.pk,
+             )),
+        ]
+
+    progresso = int(progresso_si / len(deleghe) * 100)
+
+    contesto = {
+        "deleghe": deleghe,
+        "sede": sede,
+        "progresso": progresso,
+        "progresso_si": progresso_si,
+    }
+    return "anagrafica_presidente_checklist.html", contesto
+
+
+@pagina_privata
+def presidente_checklist_delegati(request, me, sede_pk, tipo, oggetto_tipo, oggetto_id):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+    oggetto = ContentType.objects.get(pk=oggetto_tipo).get_object_for_this_type(pk=oggetto_id)
+    tipo_nome = PERMESSI_NOMI_DICT[tipo]
+
+    continua_url = "/presidente/checklist/%d/" % sede.pk
+
+    contesto = {
+        "delega_oggetto": oggetto,
+        "delega_tipo": tipo,
+        "delega_tipo_nome": tipo_nome,
+        "continua_url": continua_url,
+    }
+    return "anagrafica_presidente_checklist_delegati.html", contesto
 
 
 @pagina_privata
@@ -1311,10 +1395,12 @@ def handle_uploaded_file(f):
             destination.write(chunk)
     return nome
 
+
 @pagina_privata
 def admin_import_volontari(request, me):
     from anagrafica.importa import import_valida_volontari
-    if not me.utenza.is_staff:
+
+    if not me.utenza.is_superuser:
         return redirect(ERRORE_PERMESSI)
 
     risultati = []
@@ -1377,6 +1463,7 @@ def admin_statistiche(request, me):
         data_nascita__gt=nascita_minima_35,
     )
     sedi = Sede.objects.filter(attiva=True)
+    comitati = sedi.comitati()
     regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
 
     totale_regione_soci = 0
@@ -1393,8 +1480,8 @@ def admin_statistiche(request, me):
                 regione_volontari,
             ),
         ]
-        totale_regione_soci += int(regione_soci)
-        totale_regione_volontari += int(regione_volontari)
+        totale_regione_soci += regione_soci
+        totale_regione_volontari += regione_volontari
 
     contesto = {
         "persone_numero": persone.count(),
@@ -1403,9 +1490,75 @@ def admin_statistiche(request, me):
         "soci_giovani_35_numero": soci_giovani_35.count(),
         "soci_giovani_35_percentuale": soci_giovani_35.count() / soci.count() * 100,
         "sedi_numero": sedi.count(),
+        "comitati_numero": comitati.count(),
         "ora": timezone.now(),
         "regione_soci_volontari": regione_soci_volontari,
         "totale_regione_soci": totale_regione_soci,
         "totale_regione_volontari": totale_regione_volontari,
     }
     return 'admin_statistiche.html', contesto
+
+
+@pagina_privata
+def admin_import_presidenti(request, me):
+
+    if not me.utenza.is_superuser:
+        return redirect(ERRORE_PERMESSI)
+
+    # Numero di presidenti per pagina
+    numero_presidenti_per_pagina = 15
+
+    moduli = []
+    esiti = []
+    for i in range(0, numero_presidenti_per_pagina):
+        modulo = ModuloImportPresidenti(request.POST or None, prefix="presidente_%d" % i)
+
+        if modulo.is_valid():
+
+            # Ottieni i dati
+            presidente = modulo.cleaned_data['presidente']
+            sede = modulo.cleaned_data['sede']
+
+            # Se la Sede ha un Presidente, termina la sua Delega e notifica.
+            delega_presidente_precedente = sede.deleghe_attuali(tipo=PRESIDENTE).first()
+            if delega_presidente_precedente:
+
+                # Se il Presidente è già stato nominato.
+                if delega_presidente_precedente.persona == presidente:
+                    esiti += [
+                        (presidente, sede, "Saltato. Era già Presidente di questa Sede.")
+                    ]
+                    continue
+
+                # Termina la Presidenza.
+                delega_presidente_precedente.termina(mittente=me, accoda=True)
+
+                # Termina tutte le Deleghe correlate.
+                delega_presidente_precedente.presidente_termina_deleghe_dipendenti()
+
+            # Crea la nuova delega e notifica.
+            delega = Delega(
+                persona=presidente,
+                tipo=PRESIDENTE,
+                oggetto=sede,
+                inizio=poco_fa(),
+                firmatario=me,
+            )
+            delega.save()
+            delega.invia_notifica_creazione()
+
+            esiti += [
+                (presidente, sede, "OK. Nomina effettuata%s." % (
+                    (", vecchio Presidente %s dimesso" % delega_presidente_precedente.persona.codice_fiscale)
+                    if delega_presidente_precedente else ", non vi era alcun Presidente."
+                ))
+            ]
+
+        moduli += [modulo]
+
+    contesto = {
+        "moduli": moduli,
+        "numero_presidenti_per_pagina": numero_presidenti_per_pagina,
+        "esiti": esiti,
+    }
+    return 'admin_import_presidenti.html', contesto
