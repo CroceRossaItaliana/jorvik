@@ -243,8 +243,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         verbose_name_plural = "Persone"
         app_label = 'anagrafica'
         index_together = [
-            ['nome', 'cognome',],
-            ['nome', 'cognome', 'codice_fiscale',],
+            ['nome', 'cognome'],
+            ['nome', 'cognome', 'codice_fiscale'],
+            ['id', 'nome', 'cognome', 'codice_fiscale'],
         ]
 
     # Q: Qual e' il numero di telefono di questa persona?
@@ -993,15 +994,17 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         verbose_name_plural = "Appartenenze"
         app_label = 'anagrafica'
         index_together = [
-            ['persona', 'sede',],
+            ['persona', 'sede'],
             ['persona', 'inizio', 'fine'],
             ['persona', 'inizio', 'fine', 'membro'],
             ['persona', 'inizio', 'fine', 'membro', 'confermata'],
-            ['sede', 'membro',],
-            ['inizio', 'fine',],
+            ['sede', 'membro'],
+            ['inizio', 'fine'],
             ['sede', 'inizio', 'fine'],
             ['sede', 'membro', 'inizio', 'fine'],
+            ['id', 'sede', 'membro', 'inizio', 'fine'],
             ['membro', 'confermata'],
+            ['membro', 'confermata', 'sede'],
             ['membro', 'confermata', 'inizio', 'fine'],
             ['membro', 'confermata', 'persona'],
             ['confermata', 'persona'],
@@ -1325,7 +1328,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         :return:
         """
         if figli:
-            kwargs.update({'sede__in': self.get_descendants(include_self=True) })
+            kwargs.update({'sede__in': self.get_descendants(include_self=True)})
         else:
             kwargs.update({'sede': self.pk})
 
