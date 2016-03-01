@@ -1463,6 +1463,7 @@ def admin_statistiche(request, me):
         data_nascita__gt=nascita_minima_35,
     )
     sedi = Sede.objects.filter(attiva=True)
+    comitati = sedi.comitati()
     regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
 
     totale_regione_soci = 0
@@ -1479,8 +1480,8 @@ def admin_statistiche(request, me):
                 regione_volontari,
             ),
         ]
-        totale_regione_soci += int(regione_soci)
-        totale_regione_volontari += int(regione_volontari)
+        totale_regione_soci += regione_soci
+        totale_regione_volontari += regione_volontari
 
     contesto = {
         "persone_numero": persone.count(),
@@ -1489,6 +1490,7 @@ def admin_statistiche(request, me):
         "soci_giovani_35_numero": soci_giovani_35.count(),
         "soci_giovani_35_percentuale": soci_giovani_35.count() / soci.count() * 100,
         "sedi_numero": sedi.count(),
+        "comitati_numero": comitati.count(),
         "ora": timezone.now(),
         "regione_soci_volontari": regione_soci_volontari,
         "totale_regione_soci": totale_regione_soci,
