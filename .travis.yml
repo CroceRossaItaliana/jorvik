@@ -10,6 +10,10 @@ addons:
 #before_script:
 #  - "mysql -e 'CREATE DATABASE jorvik CHARSET utf8;'"
 before_script:
+before_script:
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3 # give xvfb some time to start
   - psql -U postgres -c 'CREATE DATABASE jorvik;'
   - psql -U postgres -c "CREATE EXTENSION postgis" -d jorvik
   - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d jorvik
