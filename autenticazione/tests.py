@@ -7,12 +7,7 @@ class TestAutenticazione(TestFunzionale):
 
     def test_login(self):
 
-        email = "una_prova@email.it"
-        password = "una_password"
-
         persona = crea_persona()
-        crea_utenza(persona, email=email, password=password)
-
         sessione = self.sessione_utente(persona=persona)
 
         self.assertTrue(
