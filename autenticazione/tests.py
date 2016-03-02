@@ -1,9 +1,9 @@
-from django.test import LiveServerTestCase, override_settings
 
-from base.utils_tests import crea_sessione, crea_persona, crea_utenza
+from autenticazione.utils_test import TestFunzionale
+from base.utils_tests import crea_sessione, crea_persona, crea_utenza, sessione_utente
 
 
-class TestAutenticazione(LiveServerTestCase):
+class TestAutenticazione(TestFunzionale):
 
     def test_login(self):
 
@@ -13,14 +13,22 @@ class TestAutenticazione(LiveServerTestCase):
         persona = crea_persona()
         crea_utenza(persona, email=email, password=password)
 
-        sessione = crea_sessione()
-        sessione.visit("%s/login/" % self.live_server_url)
-        sessione.fill("username", email)
-        sessione.fill("password", password)
-        sessione.find_by_css('button')[1].click()
+        sessione = self.sessione_utente(persona=persona)
 
         self.assertTrue(
-            sessione.is_text_present(persona.nome)
+            True,
+            "Login effettuato con successo",
         )
 
-        sessione.quit()
+    def test_logout(self):
+
+        persona = crea_persona()
+        sessione = self.sessione_utente(persona=persona)
+
+        sessione.visit("%s/logout/" % self.live_server_url)
+
+        self.assertFalse(
+            sessione.is_text_present(persona.nome),
+            "Logout effettuato con successo"
+        )
+

@@ -144,11 +144,39 @@ def crea_sessione():
     return browser
 
 
-def sessione_utente(persona=None, utente=None):
+def email_fittizzia():
+    return "email_%d@test.gaia.cri.it" % random.randint(1, 9999999)
+
+
+def sessione_utente(server_url, persona=None, utente=None, password=None):
     if not (persona or utente):
         raise ValueError("sessione_utente deve ricevere almeno una persona "
                          "o un utente.")
 
-    from splinter import Browser
-    browser = Browser(DRIVER_WEB)
+    if persona:
+        try:
+            utenza = persona.utenza
+        except:
+            utenza = crea_utenza(persona=persona, email=email_fittizzia(),
+                                 password=names.get_full_name())
+
+    elif utente:
+        utenza = utente
+
+    try:
+        password_da_usare = password or utenza.password_testing
+
+    except AttributeError:
+        raise AttributeError("L'utenza è già esistente, non ne conosco la password.")
+
+    sessione = crea_sessione()
+    sessione.visit("%s/login/" % server_url)
+    sessione.fill("username", utenza.email)
+    sessione.fill("password", password_da_usare)
+    sessione.find_by_css('button')[1].click()
+
+    # Assicurati che il login sia riuscito.
+    assert sessione.is_text_present(utenza.persona.nome)
+
+    return sessione
 
