@@ -40,9 +40,10 @@ def permessi_persona(persona):
         Partecipazione.con_esito(Partecipazione.ESITO_OK,
                                  persona=persona,
                                  ).via("attivita__turni__partecipazioni"),
-        attivita__turni__inizio__lte=
+        attivita__turni__inizio__lte=tra_quindici_minuti,
+        attivita__turni__fine__gte=quindici_minuti_fa,
         attivita__centrale_operativa=True,
-    ).espandi(includi_me=True)
+    )
 
     return [
         (GESTIONE_CENTRALE_OPERATIVA_SEDE, sede_centrale_operativa)
