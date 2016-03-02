@@ -1,4 +1,4 @@
-from django.test import LiveServerTestCase
+from django.test import LiveServerTestCase, override_settings
 
 from base.utils_tests import crea_sessione, crea_persona, crea_utenza
 
@@ -22,3 +22,5 @@ class TestAutenticazione(LiveServerTestCase):
         self.assertTrue(
             sessione.is_text_present(persona.nome)
         )
+
+        sessione.quit()

@@ -1,4 +1,4 @@
-import newrelic
+import newrelic.agent
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser
 from django.shortcuts import render_to_response, redirect
