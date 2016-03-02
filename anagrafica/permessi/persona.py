@@ -38,7 +38,7 @@ def persona_oggetti_permesso(persona, permesso, al_giorno=None):
                 else:
                     qs = qs | o
 
-    return qs
+    return qs.distinct()
 
 
 def persona_permessi(persona, oggetto, al_giorno=None):
