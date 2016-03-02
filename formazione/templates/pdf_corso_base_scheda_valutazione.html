@@ -1,14 +1,16 @@
 {% extends 'pdf_standard.html' %}
 
+{% load static %}
+
 {% block corpo %}
 
 <div style="font-family: 'Arial, sans-serif', 'Tahoma'; padding: 10px 10px 10px 10px; color: #000; font-size: 12pt">
     <!-- Logo CRI -->
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
-        <img src="./img/Emblema_CRI.png" name="LogoCri" align="middle" width="300" height="300">
+        <img src="{% static 'img/Emblema_CRI.png' %}" name="LogoCri" align="middle" width="300" height="300">
         <br/>
         <font face="Arial, sans-serif" style="font-size: 9pt" color="#cc0000">
-            {{ p.corso.sede.comitato }}
+            {{ corso.sede.comitato }}
         </font><
     </p>
     <p class="western" align="center" style="margin-bottom: 0.25cm; line-height: 115%">
@@ -30,14 +32,14 @@
     </p>
     <p class="western" align="center" style="margin-bottom: 0.35cm; line-height: 115%">
         <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
-            Verbale n. <b> {{ p.corso.progressivo }}</b> del <b> {{ p.corso.data_esame|date:"DATE_FORMAT" }}</b>
+            Verbale n. <b> {{ corso.progressivo }}</b> del <b> {{ corso.data_esame|date:"DATE_FORMAT" }}</b>
         </font>
         <br/>
     </p>
     <p class="western" style="margin-bottom: 0cm; line-height: 115%">
         <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
-            Candidato/a <b> {{ p.persona.nome_completo }}</b> Codice Fiscale: <b> {{ p.persona.codice_fiscale }}
-            <br /></b>nato/a a <b> {{ p.persona.luogo_nascita }}</b> il <b> {{ p.persona.data_nascita|date:"DATE_FORMAT" }}</b>
+            Candidato/a <b> {{ persona.nome_completo }}</b> Codice Fiscale: <b> {{ persona.codice_fiscale }}
+            <br /></b>nato/a a <b> {{ persona.luogo_nascita }}</b> il <b> {{ persona.data_nascita|date:"DATE_FORMAT" }}</b>
         </font>
     </p>
     <p class="western" style="margin-bottom: 0.25cm; line-height: 115%">
@@ -48,13 +50,13 @@
     <p class="western" style="margin-bottom: 0.25cm; line-height: 115%">
         <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
             <span style="font-weight: normal">
-                <b>{{ p.get_esito_parte_1_display }}</b>
+                <b>{{ partecipazione.get_esito_parte_1_display }}</b>
             </span>
         </font>
     </p>
     <p class="western" style="margin-bottom: 0cm; line-height: 100%">
         <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
-            Argomenti: {{ p.argomento_parte_1 }}
+            Argomenti: {{ partecipazione.argomento_parte_1 }}
         </font>
     </p>
     <br/>
@@ -65,18 +67,18 @@
     </p>
     <p class="western" style="margin-bottom: 0.25cm; line-height: 115%">
         <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
-            <b>{{ p.get_esito_parte_1_display }}</b>
+            <b>{{ partecipazione.get_esito_parte_1_display }}</b>
         </font>
     </p>
     <p class="western" style="margin-bottom: 0cm; line-height: 100%">
         <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
-            Argomenti: {{ p.argomento_parte_1 }}
+            Argomenti: {{ partecipazione.argomento_parte_1 }}
         </font>
     </p>
     <table>
         <tr>
             <td valign="top">
-                {% if p.extra_1 %}X{% else %}_{% endif %}
+                {% if partecipazione.extra_1 %}X{% else %}_{% endif %}
             </td>
             <td>
                 <b>Prova pratica su gesti salvavita ed elementi di Primo Soccorso sostituita da colloquio </b>(ai sensi dell’art. 10.3 del Regolamento sul Corso di Formazione per Volontari della Croce Rossa Italiana)
@@ -84,7 +86,7 @@
         </tr>
         <tr>
             <td valign="top">
-                <br/>{% if p.extra_2 %}X{% else %}_{% endif %}
+                <br/>{% if partecipazione.extra_2 %}X{% else %}_{% endif %}
             </td>
             <td>
                 <br/><b>Verifica effettuata solo sulla Parte I del programma del corso </b>(ai sensi dell’art. 10.4 del Regolamento sul Corso di Formazione per Volontari della Croce Rossa Italiana)
@@ -98,12 +100,12 @@
     </p>
     <p class="western" style="margin-bottom: 0.25cm; line-height: 115%">
         <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
-            In base ai risultati ottenuti dalle domande teoriche e nelle prove pratiche, {{ candidato }} è risultato
+            In base ai risultati ottenuti dalle domande teoriche e nelle prove pratiche, {{ persona.nome_completo }} è risultat{{ persona.genere_o_a }}
         </font>
     </p>
     <p class="western" align="center" style="margin-bottom: 0.35cm; line-height: 115%">
         <font face="Arial, sans-serif" size="5" style="font-size: 16pt">
-            <b>{{ idoneo }}</b>
+            <b>{{ partecipazione.get_esito_esame_display }}</b>
         </font>
     </p>
     <p class="western" style="margin-bottom: 0.20cm; line-height: 115%">

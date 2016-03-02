@@ -11,10 +11,11 @@ from django.utils import timezone
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE
 from anagrafica.models import Sede, Persona
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI
+from base.files import PDF, Zip
 from base.models import ConAutorizzazioni, ConVecchioID
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.models import ModelloSemplice
-from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico
+from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico, ConPDF
 from base.utils import concept, poco_fa
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
@@ -41,7 +42,7 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazion
     sede = models.ForeignKey(Sede, related_query_name='%(class)s_corso', help_text="La Sede organizzatrice del Corso.")
 
 
-class CorsoBase(Corso, ConVecchioID):
+class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     ## Tipologia di corso
     #BASE = 'BA'
@@ -197,6 +198,10 @@ class CorsoBase(Corso, ConVecchioID):
     def url_report(self):
         return "%sreport/" % (self.url,)
 
+    @property
+    def url_report_schede(self):
+        return self.url + "report/schede/"
+
     @classmethod
     def nuovo(cls, anno=None, **kwargs):
         """
@@ -285,6 +290,10 @@ class CorsoBase(Corso, ConVecchioID):
     def terminabile(self):
         return self.stato == self.ATTIVO and self.concluso and self.partecipazioni_confermate().exists()
 
+    @property
+    def ha_verbale(self):
+        return self.stato == self.TERMINATO and self.partecipazioni_confermate().exists()
+
     def termina(self, mittente=None):
         """
         Termina il corso base, genera il verbale e volontarizza.
@@ -315,8 +324,35 @@ class CorsoBase(Corso, ConVecchioID):
             self.stato = Corso.TERMINATO
             self.save()
 
+    def non_idonei(self):
+        return self.partecipazioni_confermate().filter(esito_esame=PartecipazioneCorsoBase.NON_IDONEO)
 
-class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
+    def idonei(self):
+        return self.partecipazioni_confermate().filter(esito_esame=PartecipazioneCorsoBase.IDONEO)
+
+    def genera_pdf(self):
+        """
+        Genera il verbale del corso.
+        """
+        if not self.ha_verbale:
+            raise ValueError("Questo corso non ha un verbale.")
+
+        pdf = PDF(oggetto=self)
+        pdf.genera_e_salva(
+            nome="Verbale Esame del Corso Base %d-%d.pdf" % (self.progressivo, self.anno),
+            corpo={
+                "corso": self,
+                "partecipazioni": self.partecipazioni_confermate(),
+                "numero_idonei": self.idonei().count(),
+                "numero_non_idonei": self.non_idonei().count(),
+                "numero_aspiranti": self.partecipazioni_confermate().count(),
+            },
+            modello="pdf_corso_base_esame_verbale.html",
+        )
+        return pdf
+
+
+class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
 
     persona = models.ForeignKey(Persona, related_name='partecipazioni_corsi', on_delete=models.CASCADE)
     corso = models.ForeignKey(CorsoBase, related_name='partecipazioni', on_delete=models.PROTECT)
@@ -430,6 +466,42 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     def autorizzazione_concedi_modulo(self):
         from formazione.forms import ModuloConfermaIscrizioneCorsoBase
         return ModuloConfermaIscrizioneCorsoBase
+
+    def genera_scheda_valutazione(self):
+        pdf = PDF(oggetto=self)
+        pdf.genera_e_salva(
+            nome="Scheda Valutazione %s.pdf" % self.persona.codice_fiscale,
+            corpo={
+                "partecipazione": self,
+                "corso": self.corso,
+                "persona": self.persona,
+            },
+            modello="pdf_corso_base_scheda_valutazione.html",
+        )
+        return pdf
+
+    def genera_attestato(self):
+        if not self.idoneo:
+            return None
+        pdf = PDF(oggetto=self)
+        pdf.genera_e_salva(
+            nome="Attestato %s.pdf" % self.persona.codice_fiscale,
+            corpo={
+                "partecipazione": self,
+                "corso": self.corso,
+                "persona": self.persona,
+            },
+            modello="pdf_corso_base_attestato.html",
+        )
+        return pdf
+
+    def genera_pdf(self):
+        z = Zip(oggetto=self)
+        z.aggiungi_file(self.genera_scheda_valutazione().file.path)
+        if self.idoneo:
+            z.aggiungi_file(self.genera_attestato().file.path)
+        z.comprimi_e_salva("%s.zip" % self.persona.codice_fiscale)
+        return z
 
 
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):

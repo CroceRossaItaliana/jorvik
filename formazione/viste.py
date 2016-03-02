@@ -9,6 +9,7 @@ from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico
+from base.files import Zip
 from base.models import Log
 from base.utils import poco_fa
 from formazione.elenchi import ElencoPartecipantiCorsiBase
@@ -330,14 +331,24 @@ def aspirante_corso_base_termina(request, me, pk):
     if not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
+    torna = {"torna_url": corso.url_modifica, "torna_titolo": "Modifica corso"}
+
+    if (not corso.op_attivazione) or (not corso.data_attivazione):
+        return errore_generico(request, me, titolo="Necessari dati attivazione",
+                               messaggio="Per generare il verbale, sono necessari i dati (O.P. e data) "
+                                         "dell'attivazione del corso.",
+                               **torna)
+
     if not corso.partecipazioni_confermate().exists():
         return errore_generico(request, me, titolo="Impossibile terminare questo corso",
                                messaggio="Non ci sono partecipanti confermati per questo corso, "
-                                         "non è quindi possibile generare un verbale per il corso.")
+                                         "non è quindi possibile generare un verbale per il corso.",
+                               **torna)
 
     if corso.stato != corso.ATTIVO:
         return errore_generico(request, me, titolo="Impossibile terminare questo corso",
-                               messaggio="Il corso non è attivo e non può essere terminato.")
+                               messaggio="Il corso non è attivo e non può essere terminato.",
+                               **torna)
 
     partecipanti_moduli = []
 
@@ -369,7 +380,7 @@ def aspirante_corso_base_termina(request, me, pk):
         return messaggio_generico(request, me, titolo="Corso base terminato",
                                   messaggio="Il verbale è stato generato con successo. Tutti gli idonei "
                                             "sono stati resi volontari delle rispettive sedi.",
-                                  torna_titolo="Report del Corso Base",
+                                  torna_titolo="Vai al Report del Corso Base",
                                   torna_url=corso.url_report)
 
     contesto = {
@@ -458,7 +469,35 @@ def aspirante_corso_base_report(request, me, pk):
     if not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    return ci_siamo_quasi(request, me)
+    contesto = {
+        "corso": corso,
+        "puo_modificare": True,
+    }
+    return 'aspirante_corso_base_scheda_report.html', contesto
+
+
+@pagina_privata
+def aspirante_corso_base_report_schede(request, me, pk):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    if not me.permessi_almeno(corso, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    archivio = Zip(oggetto=corso)
+    for p in corso.partecipazioni_confermate():
+
+        # Genera la scheda di valutazione.
+        scheda = p.genera_scheda_valutazione()
+        archivio.aggiungi_file(scheda.file.path, "%s - Scheda di Valutazione.pdf" % p.persona.nome_completo)
+
+        # Se idoneo, genera l'attestato.
+        if p.idoneo:
+            attestato = p.genera_attestato()
+            archivio.aggiungi_file(attestato.file.path, "%s - Attesato.pdf" % p.persona.nome_completo)
+
+    archivio.comprimi_e_salva(nome="Corso %d-%d.zip" % (corso.progressivo, corso.anno))
+    return redirect(archivio.download_url)
+
+
 
 
 @pagina_privata
