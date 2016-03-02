@@ -142,7 +142,7 @@ def persona_ha_permesso(persona, permesso, al_giorno=None):
 
     # Permessi derivanti dalla persona
     for (p, o) in permessi_persona(persona):
-        if p == permesso:
+        if p == permesso and o.exists():
             return True
 
     # Permessi derivanti dalle deleghe
