@@ -39,8 +39,13 @@ class ModuloModificaLezione(ModelForm):
     fine = forms.DateTimeField()
 
     def clean(self):
-        inizio = self.cleaned_data['inizio']
-        fine = self.cleaned_data['fine']
+        try:
+            fine = self.cleaned_data['fine']
+            inizio = self.cleaned_data['inizio']
+
+        except KeyError:
+            raise ValidationError("Compila correttamente tutti i campi.")
+
         if inizio >= fine:
             self.add_error('fine', "La fine deve essere successiva all'inizio.")
 
