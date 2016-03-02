@@ -12,7 +12,7 @@ from django.views.decorators.cache import cache_page
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
-from anagrafica.permessi.costanti import ERRORE_PERMESSI, LETTURA
+from anagrafica.permessi.costanti import ERRORE_PERMESSI, LETTURA, GESTIONE_SEDE
 from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base import errori
@@ -453,11 +453,17 @@ def supporto(request, me=None):
     if me:
         modulo = ModuloRichiestaSupporto(request.POST or None)
 
-        if not me.deleghe_attuali().exists():
-            scelte = modulo.fields['tipo'].choices
-            scelte = rimuovi_scelte([modulo.TERZO_LIVELLO, modulo.SECONDO_LIVELLO], scelte)
-            modulo.fields['tipo'].choices = scelte
+        scelte = modulo.fields['tipo'].choices
 
+        # Solo i delegati possono contattare SECONDO_LIVELLO e TERZO_LIVELLO
+        if not me.deleghe_attuali().exists():
+            scelte = rimuovi_scelte([modulo.TERZO_LIVELLO, modulo.SECONDO_LIVELLO], scelte)
+
+        # Solo i Presidenti possono contattare AREA_SVILUPPO
+        if not me.ha_permesso(GESTIONE_SEDE):
+            scelte = rimuovi_scelte([modulo.AREA_SVILUPPO], scelte)
+
+        modulo.fields['tipo'].choices = scelte
 
     if modulo and modulo.is_valid():
         tipo = modulo.cleaned_data['tipo']

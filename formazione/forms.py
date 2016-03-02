@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
 from base.wysiwyg import WYSIWYGSemplice
-from formazione.models import CorsoBase, LezioneCorsoBase
+from formazione.models import CorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase
 
 
 class ModuloCreazioneCorsoBase(ModelForm):
@@ -70,3 +70,88 @@ class ModuloConfermaIscrizioneCorsoBase(forms.Form):
                                     "questa azione non sarà facilmente reversibile. Sarà comunque possibile "
                                     "non ammettere l'aspirante all'esame, qualora dovesse non presentarsi "
                                     "al resto delle lezioni (questo sarà verbalizzato).")
+
+
+class ModuloVerbaleAspiranteCorsoBase(ModelForm):
+
+    GENERA_VERBALE = 'genera_verbale'
+    SALVA_SOLAMENTE = 'salva'
+
+    class Meta:
+        model = PartecipazioneCorsoBase
+        fields = [
+            'ammissione', 'motivo_non_ammissione',
+            'esito_parte_1', 'argomento_parte_1',
+            'esito_parte_2', 'argomento_parte_2',
+            'extra_1', 'extra_2',
+            'destinazione',
+        ]
+
+    def __init__(self, *args, generazione_verbale=False, **kwargs):
+        self.generazione_verbale = generazione_verbale
+        super(ModuloVerbaleAspiranteCorsoBase, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        """
+        Qui va tutta la logica di validazione del modulo di generazione
+         del verbale del corso base.
+        """
+
+        ammissione = self.cleaned_data['ammissione']
+        motivo_non_ammissione = self.cleaned_data['motivo_non_ammissione']
+        esito_parte_1 = self.cleaned_data['esito_parte_1']
+        argomento_parte_1 = self.cleaned_data['argomento_parte_1']
+        esito_parte_2 = self.cleaned_data['esito_parte_2']
+        argomento_parte_2 = self.cleaned_data['argomento_parte_2']
+        extra_1 = self.cleaned_data['extra_1']
+        extra_2 = self.cleaned_data['extra_2']
+        destinazione = self.cleaned_data['destinazione']
+
+        # Controlla che non ci siano conflitti (incoerenze) nei dati.
+        if ammissione != PartecipazioneCorsoBase.NON_AMMESSO:
+            if motivo_non_ammissione:
+                self.add_error('motivo_non_ammissione', "Questo campo deve essere compilato solo "
+                                                        "nel caso di NON AMMISSIONE.")
+
+        # Se non è stato ammesso, un bel gruppo di campi NON devono essere compilati.
+        if ammissione != PartecipazioneCorsoBase.AMMESSO:
+            da_non_compilare = ['esito_parte_1', 'argomento_parte_1', 'esito_parte_2',
+                                'extra_1', 'extra_2',]
+            for campo in da_non_compilare:
+                if self.cleaned_data[campo]:
+                    self.add_error(campo, "Questo campo deve essere compilato solo nel caso di AMMISSIONE.")
+
+        # Controllo sulla parte 2 del corso
+        if esito_parte_2 and extra_2:
+            self.add_error('extra_2', "Hai specificato l'esito per la parte 2. Rimuovi l'esito "
+                                      "della parte due, oppure rimuovi questa opzione.")
+
+        if esito_parte_2 and not argomento_parte_2:
+            self.add_error('argomento_parte_2', "Devi specificare l'argomento della seconda parte.")
+
+        if ammissione == PartecipazioneCorsoBase.AMMESSO:
+            if not esito_parte_1:
+                self.add_error('esito_parte_1', "Devi specificare l'esito di questa parte.")
+
+            if not argomento_parte_1:
+                self.add_error('argomento_parte_1', "Devi specificare l'argomento della prima parte.")
+
+            if (not esito_parte_2) and (not extra_2):
+                self.add_error('esito_parte_2', "Devi specificare l'esito di questa parte oppure "
+                                                "selezionare l'opzione per specificare che l'esame "
+                                                "non includeva questa parte.")
+
+        if ammissione == PartecipazioneCorsoBase.NON_AMMESSO:
+            if not motivo_non_ammissione:
+                self.add_error('motivo_non_ammissione', "Devi specificare la motivazione di non "
+                                                        "ammissione all'esame.")
+
+        # Se sto generando il verbale, controlla che tutti i campi
+        # obbligatori siano stati riempiti.
+        if self.generazione_verbale:
+
+            if not destinazione:
+                self.add_error('destinazione',
+                               "È necessario selezionare la Sede presso la quale il Volontario "
+                               "diventerà Volontario (nel solo caso di superamento dell'esame).")
+

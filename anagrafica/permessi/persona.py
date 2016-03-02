@@ -107,6 +107,7 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=None):
 
     return False
 
+
 def persona_ha_permesso(persona, permesso, al_giorno=None):
     """
     Dato un permesso, ritorna true se il permesso e' posseduto.
@@ -123,6 +124,7 @@ def persona_ha_permesso(persona, permesso, al_giorno=None):
                 return True
 
     return False
+
 
 def persona_ha_permessi(persona, *permessi):
     """

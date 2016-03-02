@@ -141,9 +141,11 @@ def espandi_gestione_corsi_sede(qs_sedi, al_giorno=None):
 
 def espandi_gestione_corso(qs_corsi, al_giorno=None):
     from anagrafica.models import Persona
+    from formazione.models import PartecipazioneCorsoBase
     return [
         (MODIFICA,  qs_corsi),
         (MODIFICA,  Persona.objects.filter(partecipazioni_corsi__corso__in=qs_corsi).exclude(aspirante__id__isnull=True)),
+        (MODIFICA,  PartecipazioneCorsoBase.objects.filter(corso__in=qs_corsi)),
         (LETTURA,   Persona.objects.filter(partecipazioni_corsi__corso__in=qs_corsi)),
     ]
 

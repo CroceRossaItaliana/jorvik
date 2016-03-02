@@ -75,6 +75,28 @@
             </p>
 
         </div>
+    {% endif %}
+
+    {% if puo_modificare and corso.terminabile %}
+        <div class="alert alert-success alert-block">
+            <h4><i class="fa fa-fw fa-warning"></i> Genera il verbale e termina il corso</h4>
+            <p>
+                Il corso si &egrave; concluso, ma &egrave; ancora necessario generare il verbale
+                del corso.
+            </p>
+            <p>
+                Una volta generato il verbale, tutti i partecipanti verranno informati dell'esito
+                e, coloro che saranno stati promossi, verranno trasformati automaticamente in
+                volontari.
+            </p>
+            <p>
+                <a class="btn btn-success" href="{{ corso.url_termina }}">
+                    <i class="fa fa-fw fa-check-circle"></i>
+                    Completa i dati per generare il verbale e terminare il corso
+                </a>
+            </p>
+
+        </div>
 
     {% endif %}
 

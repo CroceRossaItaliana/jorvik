@@ -596,6 +596,34 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return Messaggio.objects.filter(mittente=self).order_by('-creazione')
 
+    def da_aspirante_a_volontario(self, sede, inizio=None, mittente=None):
+        """
+        Questa funzione trasforma la Persona da aspirante in volontario.
+        - Rimuove l'oggetto aspirante associato alla persona,
+        - Crea una nuova appartenenza di tipo VOLONTARIO presso la Sede.
+        """
+
+        # Cancella tutti gli oggetti aspirante.
+        from formazione.models import Aspirante
+        Aspirante.objects.filter(persona=self).delete()
+
+        if self.volontario:
+            return
+
+        inizio = inizio or poco_fa()
+
+        # Se precedentemente era ordinario, la sua appartenenza come tale finisce qui.
+        Appartenenza.query_attuale(persona=self, membro__in=Appartenenza.MEMBRO_SOCIO).update(fine=inizio)
+
+        # Crea la nuova appartenenza.
+        appartenenza = Appartenenza(
+            inizio=inizio,
+            membro=Appartenenza.VOLONTARIO,
+            persona=self,
+            sede=sede,
+        )
+        appartenenza.save()
+
     @property
     def url(self):
         return "/profilo/%d/" % (self.pk,)

@@ -1,11 +1,13 @@
 {% extends 'pdf_standard.html' %}
 
+{% load static %}
+
 {% block corpo %}
 
 <div lang="it-IT" text="#000000" dir="ltr" style=" line-height: 150%; background: transparent; padding-top: 0.3cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
     <!-- Logo CRI -->
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
-        <img src="./img/Emblema_CRI.png" name="LogoCri" align="middle" width="300" height="300">
+        <img src="{% static 'img/Emblema_CRI.png' %}" name="LogoCri" align="middle" width="300" height="300">
         <br/>
         <font face="Arial, sans-serif" style="font-size: 9pt" color="#cc0000">
             {{ corso.sede.comitato }}
@@ -28,7 +30,11 @@
         <br/>
     </p>
     <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
-        Nel giorno {{ corso.data_esame|date:"D" }} del mese di {{ corso.data_esame|date:"M" }} dell'anno {{ corso.data_esame|date:"Y" }}, nei locali dell'Unita C.R.I. di {{ luogo }}, sita in via _VIA, n. {{ civico }}, ai sensi del Regolamento sul Corso di Formazione per Volontari della C.R.I. attualmente vigente , si è riunita la Commissione Esaminatrice convocata con O.P. n° {{ corso.op_convocazione }} del {{ corso.data_convocazione }} e composta da:</p>
+        Nel giorno {{ corso.data_esame|date:"D" }} del mese di {{ corso.data_esame|date:"M" }} dell'anno {{ corso.data_esame|date:"Y" }},
+        nei locali del {{ corso.sede }}, siti in {{ corso.locazione.comune }},
+        {{ corso.locazione.via }}, n. {{ corso.locazione.civico }}, ai sensi del Regolamento sul
+        Corso di Formazione per Volontari della C.R.I. attualmente vigente , si è riunita la Commissione
+        Esaminatrice convocata con O.P. n° {{ corso.op_convocazione }} del {{ corso.data_convocazione }} e composta da:</p>
     <ul>
         <li>
             <div>
@@ -47,17 +53,17 @@
         </li>
     </ul>
     <p class="western" align="justify" style="margin-bottom: 0.35cm; line-height: 150%">
-        per sottoporre ad esame finale i candidati del Corso di Formazione per Volontari della Croce Rossa Italiana attivato con O.P n° {{ corso.op_attivazione }} del {{ corso.data_attivazione }} . L’elenco dei candidati, allegato alla presente, è parte integrante del presente verbale.
+        per sottoporre ad esame finale i candidati del Corso di Formazione per Volontari della Croce Rossa Italiana attivato con O.P n° {{ corso.op_attivazione }} del {{ corso.data_attivazione }}. L’elenco dei candidati, allegato alla presente, è parte integrante del presente verbale.
     </p>
     <p class="western" align="justify" style="margin-bottom: 0.35cm; line-height: 150%">
         Gli esaminandi vengono sottoposti ad una prova orale ed ad una prova pratica nell'applicazione delle tecniche di primo soccorso senza particolari ausili tecnici, chiamata di soccorso e verifica attitudini all'impiego nelle varie attività C.R.I.
     </p>
     <p class="western" align="justify" style="margin-bottom: 0.35cm; line-height: 150%">
-        Sono stati esaminati n. {{ numero_aspiranti }} aspiranti Volontari, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione Esaminatrice, sono stati dichiarati NON IDONEI n. {{ non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ idonei }} candidati.
+        Sono stati esaminati n. {{ numero_aspiranti }} aspiranti Volontari, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione Esaminatrice, sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati.
     </p>
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%; page-break-before: always">
         <span class="sd-abs-pos" style="position: absolute; top: 1.53cm; left: 0cm; width: 65px">
-            <img src="./img/Emblema_CRI.png" name="LogoCri" align="middle" width="300" height="300">
+            <img src="{% static 'img/Emblema_CRI.png' %}" name="LogoCri" align="middle" width="300" height="300">
         </span>
     </p>
     <p class="western" align="center" style="margin-bottom: 0.35cm; line-height: 150%">
@@ -84,7 +90,26 @@
         </font>
     </p>
     <p class="western" style="margin-bottom: 0.35cm; line-height: 150%"><br><br>
-        {{ tabella }}
+        <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Cognome e Nome</th>
+                <th>Luogo di Nascita</th>
+                <th>Data di Nascita</th>
+                <th>Esito</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in partecipazioni %}
+            <tr>
+                <td>{{ p.persona.cognome }} {{ p.persona.nome }}</td>
+                <td>{{ p.persona.comune_nascita }}</td>
+                <td>{{ p.persona.data_nascita|date:"SHORT_DATE_FORMAT" }}</td>
+                <td><strong>{{ p.get_esito_esame_display }}</strong></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        </table>
     </p>
     <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
         <br/>

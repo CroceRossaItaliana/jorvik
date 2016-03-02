@@ -30,13 +30,16 @@ class ModuloRichiestaSupporto(forms.Form):
     TERZO_LIVELLO = "INC"
     FEEDBACK = "FEE"
     SANGUE = "BLO"
+    AREA_SVILUPPO = "SVI"
     TIPO = (
         (None, "-- Seleziona una opzione --"),
         (PRIMO_LIVELLO, "Informazione: Aiuto con l'utilizzo di Gaia"),
         (SECONDO_LIVELLO, "Richiesta: Modifica informazioni o correzioni"),
         (TERZO_LIVELLO, "Incidente: Errori o segnalazioni di sicurezza"),
+        (AREA_SVILUPPO, "Area VI: Ripristino password e richieste e-mail istituzionali (@cri.it, PEC)"),
         (FEEDBACK, "Feedback GAIA (suggerimenti, critiche, idee)"),
         (SANGUE, "Feedback in merito alla donazione sangue"),
+
     )
 
     tipo = forms.ChoiceField(TIPO, required=True, initial=None,

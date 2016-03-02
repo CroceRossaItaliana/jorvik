@@ -1,5 +1,7 @@
 {% extends 'pdf_standard.html' %}
 
+{% load static %}
+
 {% block corpo %}
 
 <div lang="it-IT" text="#000000" dir="ltr" style="padding: 10px 10px 10px 10px; background: transparent; border: 3.00pt solid #cc0000; padding-top: 0.2cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
@@ -8,7 +10,7 @@
         <img src="{% static "img/Emblema_CRI.png" %}" name="LogoCri" align="middle" width="300" height="270">
         <br/>
         <font face="Arial, sans-serif" style="font-size: 9pt" color="#cc0000">
-            {{p.corso.sede.comitato}}
+            {{corso.sede.comitato}}
         </font><
     </p>
     <p class="western" align="center" style="margin-bottom: 0.25cm; line-height: 115%">
@@ -33,7 +35,7 @@
             In data
         </font>
         <font face="Arial, sans-serif">
-            <b>{{ p.corso.data_esame }}</b>
+            <b>{{ corso.data_esame|date:"DATE_FORMAT" }}</b>
         </font>
         <font face="Arial, sans-serif">
             si attesta che
@@ -44,14 +46,14 @@
     </p>
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
         <font face="Arial, sans-serif" size="5" style="font-size: 18pt">
-            <b><i> {{ p.persona.nome_completo }}</i></b>
+            <b><i> {{ persona.nome_completo }}</i></b>
         </font>
     </p>
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
         <br/>
     </p>
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        C.F. <b>{{ p.persona.codice_fiscale }}</b>
+        C.F. <b>{{ persona.codice_fiscale }}</b>
     </p>
     <p class="western" style="margin-bottom: 0cm; line-height: 100%">
         <br/>
@@ -76,7 +78,7 @@
     </p>
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
         <font face="Arial, sans-serif" size="5" style="font-size: 20pt">
-            <b>Volontari{{ p.persona.genere_o_a }} della C.R.I.</b>
+            <b>Volontari{{ persona.genere_o_a }} della C.R.I.</b>
         </font>
     </p>
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
@@ -97,11 +99,9 @@
     </table>
     <br/>
     <br/>
-    <br/>
-    <br/>
     <p class="western" style="margin-bottom: 0cm; line-height: 100%">
         <font face="Arial, sans-serif">
-            {{ p.corso.locazione.comune }}, li {{ p.corso.data_esame }}
+            {{ corso.locazione.comune }}, li {{ corso.data_esame }}
         </font>
     </p>
 </div>
