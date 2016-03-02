@@ -39,7 +39,7 @@
                             <td>{{ p.persona.link|safe }}</td>
                             <td>{{ p.creazione|date:"SHORT_DATE_FORMAT" }}</td>
                             {% if corso.ha_verbale %}
-                                <td>{{ p.get_ammissione_display }}</td>
+                                <td>{{ p.get_ammissione_display|default:"N/D" }}</td>
                                 <td class="grassetto">
                                     {{ p.get_esito_esame_display }}
                                 </td>

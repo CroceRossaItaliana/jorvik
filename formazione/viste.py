@@ -498,8 +498,6 @@ def aspirante_corso_base_report_schede(request, me, pk):
     return redirect(archivio.download_url)
 
 
-
-
 @pagina_privata
 def aspirante_home(request, me):
     if not hasattr(me, 'aspirante'):
