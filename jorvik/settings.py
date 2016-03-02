@@ -178,6 +178,9 @@ REST_FRAMEWORK = {
     )
 }
 
+# Driver per i test funzionali
+DRIVER_WEB = 'firefox'
+
 # Configurazione E-mail
 EMAIL_CONF = configparser.ConfigParser()
 EMAIL_CONF.read(EMAIL_CONF_FILE)

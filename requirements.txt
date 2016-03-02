@@ -33,3 +33,6 @@ django_compressor==2.0
 csscompressor==0.9.4
 slimit==0.8.1
 pyBarcode==0.7
+cssselect==0.9.1
+splinter==0.7.3
+

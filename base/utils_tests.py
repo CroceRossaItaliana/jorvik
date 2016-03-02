@@ -8,11 +8,14 @@ from anagrafica.costanti import LOCALE, ESTENSIONE
 from anagrafica.models import Persona, Sede, Appartenenza, Delega
 from anagrafica.permessi.applicazioni import PRESIDENTE
 from attivita.models import Area, Attivita, Turno, Partecipazione
+from autenticazione.models import Utenza
 from base.utils import poco_fa
+from jorvik.settings import DRIVER_WEB
 
 
 def codice_fiscale(length=16):
    return ''.join(random.choice(string.ascii_letters + string.digits) for i in range(length))
+
 
 def crea_persona():
     p = Persona(
@@ -23,6 +26,19 @@ def crea_persona():
     )
     p.save()
     return p
+
+
+def crea_utenza(persona, email="mario@rossi.it", password="prova"):
+    u = Utenza(
+        persona=persona,
+        email=email,
+    )
+    u.save()
+    u.set_password(password)
+    u.save()
+    u.password_testing = password  # Ai fini del testing.
+    return u
+
 
 def crea_sede(presidente=None, estensione=LOCALE, genitore=None):
     ESTENSIONE_DICT = dict(ESTENSIONE)
@@ -120,3 +136,19 @@ def crea_partecipazione(persona, turno):
     )
     p.save()
     return p
+
+
+def crea_sessione():
+    from splinter import Browser
+    browser = Browser(DRIVER_WEB)
+    return browser
+
+
+def sessione_utente(persona=None, utente=None):
+    if not (persona or utente):
+        raise ValueError("sessione_utente deve ricevere almeno una persona "
+                         "o un utente.")
+
+    from splinter import Browser
+    browser = Browser(DRIVER_WEB)
+
