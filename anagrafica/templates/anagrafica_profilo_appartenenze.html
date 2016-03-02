@@ -99,17 +99,14 @@
                             {{ app.creazione }}
                         </td>
                         <td>
+                            {% if app.attuale and app.esito == app.ESITO_OK and app.membro == es %}
 
-                            {% for e in app.estensioni.all %}
-                                {% if e.attuale and e.esito == e.ESITO_OK %}
+                                <a href="/us/estensione/{{ app.pk }}/termina/"
+                               data-conferma="Vuoi veramente terminare l'estensione?">
+                                Termina Estensione
+                                </a>
 
-                                    <a href="/us/estensione/{{ r.pk }}/termina/"
-                                   data-conferma="Vuoi veramente terminare l'estensione?">
-                                    Termina Estensione
-                                    </a>
-
-                                {% endif %}
-                            {% endfor %}
+                            {% endif %}
                         </td>
 
                     </tr>

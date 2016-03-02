@@ -319,11 +319,13 @@ def us_estensioni(request, me):
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensione_termina(request, me, pk):
-    estensione = get_object_or_404(Estensione, pk=pk)
-    if estensione not in me.oggetti_permesso(GESTIONE_SOCI):
+    appartenenza = get_object_or_404(Appartenenza, pk=pk)
+    if me.permessi_almeno(appartenenza, MODIFICA):
         return redirect(ERRORE_PERMESSI)
     else:
-        estensione.termina()
+        appartenenza.fine = poco_fa()
+        appartenenza.terminazione = Appartenenza.FINE_ESTENSIONE
+        appartenenza.save()
         return messaggio_generico(request, me, titolo="Estensione terminata",
                                       messaggio="L'estensione è stata"
                                                 "terminata con successo",
