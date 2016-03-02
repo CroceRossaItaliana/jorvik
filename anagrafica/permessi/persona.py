@@ -3,8 +3,9 @@ from anagrafica.permessi.costanti import permesso_minimo, LETTURA
 from anagrafica.permessi.espansioni import ESPANDI_PERMESSI, espandi_persona
 from django.utils import timezone
 
-__author__ = 'alfioemanuele'
+from anagrafica.permessi.funzioni import permessi_persona
 
+__author__ = 'alfioemanuele'
 
 
 def persona_oggetti_permesso(persona, permesso, al_giorno=None):
@@ -19,6 +20,16 @@ def persona_oggetti_permesso(persona, permesso, al_giorno=None):
         return True
 
     qs = None
+
+    # Permessi derivanti dalla persona
+    for (p, o) in permessi_persona(persona):
+        if p == permesso:
+            if qs is None:
+                qs = o
+            else:
+                qs = qs | o
+
+    # Permessi derivanti dalle deleghe
     for d in persona.deleghe_attuali(al_giorno=al_giorno):
         for (p, o) in d.permessi():
             if p == permesso:
@@ -28,6 +39,7 @@ def persona_oggetti_permesso(persona, permesso, al_giorno=None):
                     qs = qs | o
 
     return qs
+
 
 def persona_permessi(persona, oggetto, al_giorno=None):
     """
@@ -44,6 +56,11 @@ def persona_permessi(persona, oggetto, al_giorno=None):
     """
 
     permessi = []
+
+    # Permessi derivanti dalla persona
+    for (permesso, queryset) in permessi_persona(persona):
+        permessi += ESPANDI_PERMESSI[permesso][queryset]
+
     # Per ogni delega attuale, aggiungi i permessi
     for d in persona.deleghe_attuali(al_giorno=al_giorno):
         ## [(permesso, oggetto), ...] = PERMESSI_DELEGA[d.tipo](d.oggetto)  # ie. ((
@@ -67,6 +84,7 @@ def persona_permessi(persona, oggetto, al_giorno=None):
 
     return massimo
 
+
 def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=None):
     """
     Controlla se ho i permessi minimi richiesti specificati su un dato oggetto.
@@ -87,6 +105,10 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=None):
 
     # I permessi base di ogni persona
     permessi += espandi_persona(persona=persona, al_giorno=al_giorno)
+
+    # Permessi derivanti dalla persona
+    for (permesso, queryset) in permessi_persona(persona):
+        permessi += ESPANDI_PERMESSI[permesso](queryset)
 
     # Per ogni delega attuale, aggiungi i permessi
     for d in persona.deleghe_attuali(al_giorno=al_giorno):
@@ -118,6 +140,12 @@ def persona_ha_permesso(persona, permesso, al_giorno=None):
     if not permesso:
         return True
 
+    # Permessi derivanti dalla persona
+    for (p, o) in permessi_persona(persona):
+        if p == permesso:
+            return True
+
+    # Permessi derivanti dalle deleghe
     for d in persona.deleghe_attuali(al_giorno=al_giorno):
         for (p, o) in d.permessi():
             if p == permesso:

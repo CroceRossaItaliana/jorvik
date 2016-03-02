@@ -2,6 +2,8 @@
 Questo modulo contiene tutte le funzioni per testare i permessi
 a partire da un oggetto sul quale ho una delega ed un oggetto da testare.
 """
+from datetime import timedelta
+
 from django.db.models import QuerySet
 
 from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, \
@@ -16,6 +18,35 @@ from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_A
     GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, GESTIONE_AUTOPARCHI_SEDE, \
     GESTIONE_GRUPPI_SEDE, GESTIONE_GRUPPO, GESTIONE_AREE_SEDE, GESTIONE_REFERENTI_ATTIVITA, \
     GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI
+
+
+def permessi_persona(persona):
+    """
+    Permessi di ogni persona (nessuna delega).
+
+    :param persona: La persona.
+    :return: Lista di permessi.
+    """
+    from anagrafica.models import Sede
+    from attivita.models import Attivita, Partecipazione
+    from base.utils import poco_fa
+
+    # Limiti di tempo per la centrale operativa
+    quindici_minuti_fa = poco_fa() - timedelta(minutes=Attivita.MINUTI_CENTRALE_OPERATIVA)
+    tra_quindici_minuti = poco_fa() + timedelta(minutes=Attivita.MINUTI_CENTRALE_OPERATIVA)
+
+    # Sedi per le quali sto effettuando un servizio di centrale operativa
+    sede_centrale_operativa = Sede.objects.filter(
+        Partecipazione.con_esito(Partecipazione.ESITO_OK,
+                                 persona=persona,
+                                 ).via("attivita__turni__partecipazioni"),
+        attivita__turni__inizio__lte=
+        attivita__centrale_operativa=True,
+    ).espandi(includi_me=True)
+
+    return [
+        (GESTIONE_CENTRALE_OPERATIVA_SEDE, sede_centrale_operativa)
+    ]
 
 
 def permessi_presidente(sede):
