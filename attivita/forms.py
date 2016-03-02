@@ -19,7 +19,7 @@ class ModuloStoricoTurni(forms.Form):
 class ModuloAttivitaInformazioni(ModelForm):
     class Meta:
         model = Attivita
-        fields = [ 'stato', 'apertura', 'estensione', 'descrizione', ]
+        fields = ['stato', 'apertura', 'estensione', 'descrizione', 'centrale_operativa']
         widgets = {
             "descrizione": WYSIWYGSemplice(),
         }
