@@ -1,0 +1,44 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p class="grassetto">Ciao {{ persona.nome }}!</p>
+    <p>Il Direttore del {{ corso }} ha appena compilato il verbale di fine corso su Gaia.</p>
+
+    {% if partecipazione.esito_esame == partecipazione.IDONEO %}
+
+        <p><strong>Congratulazioni!</strong></p>
+        <p>Siamo felici di comunicarti che hai superato con esito positivo il corso e sei quindi
+        da oggi ufficialmente Volontari{{ persona.genere_o_a }} della Croce Rossa Italiana.</p>
+        <p>Da ora in avanti accedendo a Gaia potrai vedere le attivit&agrave; che si svolgono
+        in comitato e partecipare, oltre a una serie di altre importanti funzionalità
+        che da oggi puoi utilizzare!</p>
+
+    {% elif partecipazione.ammissione == partecipazione.ASSENTE %}
+
+        <p>Purtroppo sei risultat{{ persona.genere_o_a }} assente al corso.</p>
+
+    {% elif partecipazione.ammissione == partecipazione.NON_AMMESSO %}
+
+        <p>Purtroppo non sei stat{{ persona.genere_o_a }} ammess{{ persona.genere_o_a }} al
+            corso per la seguente motivazione:</p>
+        <p><i>{{ partecipazione.motivo_non_ammissione }}</i></p>
+
+    {% else %}
+
+        <p>Purtroppo non hai superato il corso.</p>
+
+    {% endif %}
+
+
+    {% if partecipazione.esito_esame != partecipazione.IDONEO %}
+
+        <p>Non ti scoraggiare, perch&eacute; potrai riprovarci non appena un nuovo corso base verrà attivato!</p>
+
+    {% endif %}
+
+    <p>&nbsp;</p>
+    <p>Il verbale &egrave; stato registrato da {{ mittente.nome_completo }} il {{ partecipazione.ultima_modifica }}.</p>
+    <p>Per avere maggiori informazioni in merito rispondi pure a questa email.</p>
+
+{% endblock %}

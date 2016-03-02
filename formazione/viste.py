@@ -13,7 +13,7 @@ from base.models import Log
 from base.utils import poco_fa
 from formazione.elenchi import ElencoPartecipantiCorsiBase
 from formazione.forms import ModuloCreazioneCorsoBase, ModuloModificaLezione, ModuloModificaCorsoBase, \
-    ModuloIscrittiCorsoBaseAggiungi
+    ModuloIscrittiCorsoBaseAggiungi, ModuloVerbaleAspiranteCorsoBase
 from formazione.models import CorsoBase, AssenzaCorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase, Aspirante
 from django.utils import timezone
 
@@ -325,6 +325,64 @@ def aspirante_corso_base_attiva(request, me, pk):
 
 
 @pagina_privata
+def aspirante_corso_base_termina(request, me, pk):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    if not me.permessi_almeno(corso, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    if not corso.partecipazioni_confermate().exists():
+        return errore_generico(request, me, titolo="Impossibile terminare questo corso",
+                               messaggio="Non ci sono partecipanti confermati per questo corso, "
+                                         "non è quindi possibile generare un verbale per il corso.")
+
+    if corso.stato != corso.ATTIVO:
+        return errore_generico(request, me, titolo="Impossibile terminare questo corso",
+                               messaggio="Il corso non è attivo e non può essere terminato.")
+
+    partecipanti_moduli = []
+
+    azione = request.POST.get('azione', default=ModuloVerbaleAspiranteCorsoBase.SALVA_SOLAMENTE)
+    generazione_verbale = azione == ModuloVerbaleAspiranteCorsoBase.GENERA_VERBALE
+
+    termina_corso = generazione_verbale
+
+    for partecipante in corso.partecipazioni_confermate():
+
+        modulo = ModuloVerbaleAspiranteCorsoBase(
+            request.POST or None, prefix="part_%d" % partecipante.pk,
+            instance=partecipante,
+            generazione_verbale=generazione_verbale
+        )
+        modulo.fields['destinazione'].queryset = corso.possibili_destinazioni()
+        modulo.fields['destinazione'].initial = corso.sede
+
+        if modulo.is_valid():
+            modulo.save()
+
+        elif generazione_verbale:
+            termina_corso = False
+
+        partecipanti_moduli += [(partecipante, modulo)]
+
+    if termina_corso:  # Se il corso può essere terminato.
+        corso.termina(mittente=me)
+        return messaggio_generico(request, me, titolo="Corso base terminato",
+                                  messaggio="Il verbale è stato generato con successo. Tutti gli idonei "
+                                            "sono stati resi volontari delle rispettive sedi.",
+                                  torna_titolo="Report del Corso Base",
+                                  torna_url=corso.url_report)
+
+    contesto = {
+        "corso": corso,
+        "puo_modificare": True,
+        "partecipanti_moduli": partecipanti_moduli,
+        "azione_genera_verbale": ModuloVerbaleAspiranteCorsoBase.GENERA_VERBALE,
+        "azione_salva_solamente": ModuloVerbaleAspiranteCorsoBase.SALVA_SOLAMENTE,
+    }
+    return 'aspirante_corso_base_scheda_termina.html', contesto
+
+
+@pagina_privata
 def aspirante_corso_base_iscritti(request, me, pk):
 
     corso = get_object_or_404(CorsoBase, pk=pk)
@@ -385,7 +443,6 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                 "ok": ok,
             }]
 
-    print(risultati)
     contesto = {
         "corso": corso,
         "puo_modificare": True,

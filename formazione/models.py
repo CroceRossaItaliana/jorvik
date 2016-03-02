@@ -103,6 +103,12 @@ class CorsoBase(Corso, ConVecchioID):
 
         return self.PUOI_ISCRIVERTI_OK
 
+    def possibili_destinazioni(self):
+        """
+        Ritorna le possibili destinazioni per l'iscrizione dei Volontari.
+        """
+        return self.sede.comitato.espandi(includi_me=True)
+
     @property
     def prossimo(self):
         """
@@ -158,6 +164,10 @@ class CorsoBase(Corso, ConVecchioID):
     @property
     def url_attiva(self):
         return "%sattiva/" % (self.url,)
+
+    @property
+    def url_termina(self):
+        return "%stermina/" % (self.url,)
 
     @property
     def url_iscritti(self):
@@ -267,6 +277,44 @@ class CorsoBase(Corso, ConVecchioID):
                 rispondi_a=rispondi_a
             )
 
+    @property
+    def concluso(self):
+        return timezone.now() >= self.data_esame
+
+    @property
+    def terminabile(self):
+        return self.stato == self.ATTIVO and self.concluso and self.partecipazioni_confermate().exists()
+
+    def termina(self, mittente=None):
+        """
+        Termina il corso base, genera il verbale e volontarizza.
+        """
+
+        from django.db import transaction
+        with transaction.atomic():
+            # Per maggiore sicurezza, questa cosa viene eseguita in una transazione.
+
+            for partecipante in self.partecipazioni_confermate():
+
+                # Calcola e salva l'esito dell'esame.
+                esito_esame = partecipante.IDONEO if partecipante.idoneo else partecipante.NON_IDONEO
+                partecipante.esito_esame = esito_esame
+                partecipante.save()
+
+                # Comunica il risultato all'aspirante/volontario.
+                partecipante.notifica_esito_esame(mittente=mittente)
+
+                if partecipante.idoneo:  # Se idoneo, volontarizza.
+                    partecipante.persona.da_aspirante_a_volontario(sede=partecipante.destinazione,
+                                                                   mittente=mittente)
+
+            # Cancella tutte le eventuali partecipazioni in attesa.
+            PartecipazioneCorsoBase.con_esito_pending(corso=self).delete()
+
+            # Salva lo stato del corso come terminato.
+            self.stato = Corso.TERMINATO
+            self.save()
+
 
 class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
@@ -303,20 +351,26 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     motivo_non_ammissione = models.CharField(max_length=1025, blank=True, null=True)
 
     esito_parte_1 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True,
-                                     help_text="La Croce Rossa")
-    argomento_parte_1 = models.TextField(max_length=1024, blank=True, null=True, help_text="es. Storia della CRI, DIU")
+                                     help_text="La Croce Rossa.")
+    argomento_parte_1 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. Storia della CRI, DIU.")
 
     esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True,null=True, db_index=True,
-                                     help_text="Gesti e manovre salvavita")
-    argomento_parte_2 = models.TextField(max_length=1024, blank=True, null=True, help_text="es. BLS, colpo di calore")
+                                     help_text="Gesti e manovre salvavita.")
+    argomento_parte_2 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. BLS, colpo di calore.")
 
-    extra_1 = models.BooleanField(help_text="Prova pratica su Parte 2 sostituita da colloquio.", default=False)
-    extra_2 = models.BooleanField(help_text="Verifica effettuata solo sulla Parte 1 del programma del corso.",
+    extra_1 = models.BooleanField(verbose_name="Prova pratica su Parte 2 sostituita da colloquio.", default=False)
+    extra_2 = models.BooleanField(verbose_name="Verifica effettuata solo sulla Parte 1 del programma del corso.",
                                   default=False)
+
+    destinazione = models.ForeignKey("anagrafica.Sede", verbose_name="Sede di destinazione",
+                                     related_name="aspiranti_destinati", default=None, null=True, blank=True,
+                                     help_text="La Sede presso la quale verrà registrato come Volontario l'aspirante "
+                                               "nel caso di superamento dell'esame.")
 
     class Meta:
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
+        ordering = ('persona__nome', 'persona__cognome', 'persona__codice_fiscale',)
 
     RICHIESTA_NOME = "Iscrizione Corso Base"
 
@@ -336,6 +390,36 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
                     (INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI, self.corso)
                 ),
             invia_notifiche=self.corso.delegati_attuali(),
+        )
+
+    @property
+    def idoneo(self):
+        """
+        Regole per l'idoneita'.
+        """
+        return (
+            self.esito_parte_1 == self.POSITIVO and (
+                self.esito_parte_2 == self.POSITIVO or (
+                        self.extra_2 and not self.esito_parte_2
+                    )
+            )
+        )
+
+    def notifica_esito_esame(self, mittente=None):
+        """
+        Invia una e-mail al partecipante con l'esito del proprio esame.
+        """
+        Messaggio.costruisci_e_accoda(
+            oggetto="Esito del Corso Base: %s" % self.corso,
+            modello="email_aspirante_corso_esito.html",
+            corpo={
+                "partecipazione": self,
+                "corso": self.corso,
+                "persona": self.persona,
+                "mittente": mittente,
+            },
+            mittente=mittente,
+            destinatari=[self.persona],
         )
 
     def __str__(self):
