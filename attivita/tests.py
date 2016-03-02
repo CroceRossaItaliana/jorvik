@@ -1,9 +1,15 @@
 import datetime
+from datetime import timedelta
+from unittest import skip
+from django.utils import timezone
 from django.test import TestCase
 from attivita.models import Attivita, Area, Turno
 from anagrafica.costanti import LOCALE
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.permessi.applicazioni import REFERENTE
+from autenticazione.utils_test import TestFunzionale
+from base.utils_tests import crea_persona, crea_persona_sede_appartenenza
+
 
 class TestAttivita(TestCase):
     def test_attivita(self):
@@ -403,4 +409,97 @@ class TestAttivita(TestCase):
             p.calendario_turni(datetime.date(2015, 11, 1), datetime.date(2015, 11, 30)).filter(pk=t.pk).exists(),
             msg="Il turno viene trovato nel calendario - attivita' creata dalla sede del volontario"
         )
+
+
+class TestFunzionaleAttivita(TestFunzionale):
+
+    @skip
+    def test_crea_area(self):
+
+        presidente = crea_persona()
+        persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        sessione_presidente = self.sessione_utente(persona=presidente)
+        #sessione_persona = self.sessione_utente(persona=persona)
+
+        # Crea area di intervento
+        sessione_presidente.click_link_by_partial_text("Attività")
+        sessione_presidente.click_link_by_partial_text("Aree di intervento")
+        sessione_presidente.click_link_by_partial_text(sede.nome)
+        sessione_presidente.fill('nome', "Area 42")
+        sessione_presidente.fill('obiettivo', '6')
+        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
+
+        # Nomina la persona come responsabile
+        self.seleziona_delegato(sessione_presidente, persona)
+
+        self.assertTrue(
+            sessione_presidente.is_text_present("Area 42"),
+            "La nuova area è stata creata con successo",
+        )
+
+        self.assertTrue(
+            sessione_presidente.is_text_present(persona.nome_completo),
+            "La nuova area ha il responsabile assegnato",
+        )
+
+        self.assertTrue(
+            sessione_presidente.is_text_present("0 attività"),
+            "La nuova area non ha alcuna attività",
+        )
+
+    def test_crea_attivita(self):
+
+        presidente = crea_persona()
+        persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        area = Area(sede=sede, nome="Area 42", obiettivo=6)
+        area.save()
+
+        sessione_presidente = self.sessione_utente(persona=presidente)
+        sessione_persona = self.sessione_utente(persona=persona)
+
+        sessione_presidente.click_link_by_partial_text("Attività")
+        sessione_presidente.click_link_by_partial_text("Organizza attività")
+
+        sessione_presidente.fill('nome', "Fine del mondo")
+        sessione_presidente.select('area', area.pk)
+        sessione_presidente.select('scelta', "IO")
+        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
+
+        sessione_presidente.click_link_by_partial_text("Gestione turni")
+        sessione_presidente.click_link_by_partial_text("Crea nuovo turno")
+
+        inizio = (timezone.now()).strftime("%d/%m/%Y %H:%m")
+        fine = (timezone.now() + timedelta(hours=30)).strftime("%d/%m/%Y %H:%m")
+
+        sessione_presidente.fill('nome', "Vedetta")
+        sessione_presidente.fill('inizio', inizio)
+        sessione_presidente.fill('fine', fine)
+        sessione_presidente.fill('minimo', 1)
+        sessione_presidente.fill('massimo', 5)
+        sessione_presidente.fill('prenotazione', inizio)
+        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
+
+        sessione_persona.click_link_by_partial_text("Attività")
+
+        self.assertFalse(sessione_persona.is_text_present("Vedetta"),
+                         msg="L'attività non è visibile.")
+
+        sessione_presidente.click_link_by_partial_text("Elenco attività")
+        sessione_presidente.click_link_by_partial_text("modifica info")
+        sessione_presidente.click_link_by_partial_text("Gestione attività")
+
+        sessione_presidente.select('stato', Attivita.VISIBILE)
+        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
+
+        sessione_persona.click_link_by_partial_text("Attività")
+
+        self.assertTrue(sessione_persona.is_text_present("Vedetta"),
+                        msg="L'attività è ora visibile.")
+
+        sessione_persona.click_link_by_partial_text("Vedetta")
+
+        self.assertTrue(sessione_persona.is_text_present("Scoperto!"),
+                        msg="Viene mostrata correttamente come scoperta.")
 

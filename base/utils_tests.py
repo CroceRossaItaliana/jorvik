@@ -173,7 +173,7 @@ def sessione_utente(server_url, persona=None, utente=None, password=None):
     sessione.visit("%s/login/" % server_url)
     sessione.fill("username", utenza.email)
     sessione.fill("password", password_da_usare)
-    sessione.find_by_css('button')[1].click()
+    sessione.find_by_xpath('//button[@type="submit"]').first.click()
 
     # Assicurati che il login sia riuscito.
     assert sessione.is_text_present(utenza.persona.nome)
