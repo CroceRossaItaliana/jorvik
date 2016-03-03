@@ -91,7 +91,7 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
 
     @property
     def link(self):
-        return "<a href='%s' target='_new'>%s</a>" % (
+        return "<a href='%s'>%s</a>" % (
             self.url, self.nome
         )
 
@@ -395,7 +395,7 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
 
     @property
     def link(self):
-        return "<a href='%s' target='_new'>%s</a>" % (
+        return "<a href='%s'>%s</a>" % (
             self.url, self.nome
         )
 

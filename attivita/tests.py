@@ -10,7 +10,7 @@ from anagrafica.costanti import LOCALE
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.permessi.applicazioni import REFERENTE
 from autenticazione.utils_test import TestFunzionale
-from base.utils_tests import crea_persona, crea_persona_sede_appartenenza
+from base.utils_tests import crea_persona, crea_persona_sede_appartenenza, crea_area_attivita, crea_turno
 
 
 class TestAttivita(TestCase):
@@ -415,7 +415,6 @@ class TestAttivita(TestCase):
 
 class TestFunzionaleAttivita(TestFunzionale):
 
-    @skip
     def test_crea_area(self):
 
         presidente = crea_persona()
@@ -476,8 +475,7 @@ class TestFunzionaleAttivita(TestFunzionale):
 
         # Presidente: Torna all'elenco attività, naviga fino a nuovo turno.
         sessione_presidente.click_link_by_partial_text("Elenco attività")
-        sessione_presidente.click_link_by_partial_text("modifica info")
-        sessione_presidente.click_link_by_partial_text("Gestione turni")
+        sessione_presidente.click_link_by_partial_text("modifica turni")
         sessione_presidente.click_link_by_partial_text("Crea nuovo turno")
 
         inizio = (timezone.now()).strftime("%d/%m/%Y %H:%m")
@@ -523,3 +521,67 @@ class TestFunzionaleAttivita(TestFunzionale):
         self.assertTrue(sessione_persona.is_text_present("Scoperto!"),
                         msg="Viene mostrata correttamente come scoperta.")
 
+    def test_richiesta_partecipazione(self):
+
+        referente = crea_persona()
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
+        area, attivita = crea_area_attivita(sede=sede)
+        inizio = timezone.now() + timedelta(hours=12)
+        fine = inizio + timedelta(hours=2)
+
+        turno = crea_turno(attivita, inizio=inizio, fine=fine)
+
+        attivita.aggiungi_delegato(REFERENTE, referente)
+
+        # Crea le sessioni
+        sessione_referente = self.sessione_utente(persona=referente)
+        sessione_volontario = self.sessione_utente(persona=volontario)
+
+        # Volontario: Apri la pagina dell'attivita'
+        sessione_volontario.visit("%s%s" % (self.live_server_url, attivita.url))
+
+        # Volontario: Apri pagina turni
+        sessione_volontario.click_link_by_partial_text("Turni")
+
+        # Volontario: Chiedi di partecipare
+        sessione_volontario.click_link_by_partial_text("Partecipa")
+
+        self.assertTrue(sessione_volontario.is_text_present("Richiesta inoltrata"),
+                        msg="La richiesta e stata inoltrata")
+
+        # Volontario: Apri la pagina dell'attivita', pagina turni
+        sessione_volontario.visit("%s%s" % (self.live_server_url, attivita.url))
+        sessione_volontario.click_link_by_partial_text("Turni")
+
+        self.assertTrue(sessione_volontario.is_text_present("Hai chiesto di partecipare"),
+                        msg="Utente ha feedback sull'aver chiesto di partecipare")
+
+        # Volontario: Vai allo storico
+        sessione_volontario.click_link_by_partial_text("Miei turni")
+
+        self.assertTrue(sessione_volontario.is_text_present("In attesa"),
+                        msg="Storico mostra stato in attesa della richiesta")
+
+        # Referente: Trova la richiesta
+        sessione_referente.click_link_by_partial_text("Richieste")
+
+        self.assertTrue(sessione_referente.is_text_present(volontario.nome_completo),
+                        msg="La richiesta mostra il nome del volontario")
+
+        self.assertTrue(sessione_referente.is_text_present(turno.nome),
+                        msg="La richiesta mostra il nome del turno")
+
+        # Referente: Trova la richiesta
+        sessione_referente.click_link_by_partial_text("Conferma")
+
+        # Volontario: Vai allo storico
+        sessione_volontario.click_link_by_partial_text("Miei turni")
+
+        self.assertTrue(sessione_volontario.is_text_present("Approvata"),
+                        msg="La richiesta risulta ora approvata")
+
+        # Volontario: Vai al turno
+        sessione_volontario.click_link_by_partial_text(turno.nome)
+
+        self.assertTrue(sessione_volontario.is_text_present("Partecipazione confermata"),
+                        msg="La partecipazione risulta nel turno")
