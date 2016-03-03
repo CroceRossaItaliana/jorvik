@@ -1906,7 +1906,7 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
           nome="Riserva %s.pdf" % (self.persona.nome_completo, ),
           corpo={
             "riserva": self,
-            "sede_attuale": self.persona.sedi_attuali(al_giorno=self.creazione)[0]
+            "sede_attuale": self.persona.sede_riferimento()
           },
           modello="pdf_riserva.html",
         )
