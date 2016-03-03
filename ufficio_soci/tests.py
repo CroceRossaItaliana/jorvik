@@ -3,6 +3,8 @@ import datetime
 from django.test import TestCase
 
 from anagrafica.models import Appartenenza, Sede, Persona
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+from autenticazione.utils_test import TestFunzionale
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza
 from ufficio_soci.elenchi import ElencoElettoratoAlGiorno
 from ufficio_soci.forms import ModuloElencoElettorato
@@ -247,3 +249,37 @@ class TestBase(TestCase):
         x.delete()
 
 
+class TestFunzionaleUfficioSoci(TestFunzionale):
+
+    def test_apertura_elenchi(self):
+
+        # Crea oggetti e nomina il delegato US
+        delegato = crea_persona()
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
+        sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
+
+        # Inizia la sessione
+        sessione = self.sessione_utente(persona=delegato)
+
+        elenchi = ['volontari', 'giovani', 'estesi', 'ivcm', 'riserva',
+                   'soci', 'sostenitori', 'dipendenti', 'dimessi',
+                   'trasferiti', 'elettorato']
+
+        # Vai al pannello soci
+        sessione.click_link_by_partial_text("Soci")
+
+        for elenco in elenchi:  # Per ogni elenco
+
+            sessione.visit("%s/us/elenchi/%s/" % (self.live_server_url, elenco))
+
+            # Genera con impostazioni di default (clicca due volte su "Genera")
+            sessione.find_by_xpath("//button[@type='submit']").first.click()
+
+            with sessione.get_iframe(0) as iframe:  # Dentro la finestra
+
+                iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+                self.assertTrue(
+                    iframe.is_text_present("Invia messaggio"),
+                    msg="Elenco %s apribile da web" % elenco,
+                )
