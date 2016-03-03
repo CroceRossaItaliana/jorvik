@@ -6,6 +6,10 @@ python:
 addons:
   postgresql: "9.4"
 
+cache:
+  directories:
+    - $HOME/.pip-cache/
+
 
 #before_script:
 #  - "mysql -e 'CREATE DATABASE jorvik CHARSET utf8;'"
@@ -19,7 +23,7 @@ before_script:
   - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d jorvik
 
 install:
-  - "pip install -r requirements.txt"
+  - "pip install -r requirements.txt --download-cache $HOME/.pip-cache"
 
 script:
 #  - "python ./manage.py migrate"
