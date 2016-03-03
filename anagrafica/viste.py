@@ -973,7 +973,8 @@ def _profilo_appartenenze(request, me, persona):
     appartenenze = zip(persona.appartenenze.all(), moduli)
 
     contesto = {
-        "appartenenze": appartenenze
+        "appartenenze": appartenenze,
+        "es": Appartenenza.ESTESO
     }
 
     return 'anagrafica_profilo_appartenenze.html', contesto
