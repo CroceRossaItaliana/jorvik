@@ -474,8 +474,7 @@ class TestFunzionaleAttivita(TestFunzionale):
         sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
 
         # Presidente: Torna all'elenco attività, naviga fino a nuovo turno.
-        sessione_presidente.click_link_by_partial_text("Elenco attività")
-        sessione_presidente.click_link_by_partial_text("modifica turni")
+        sessione_presidente.click_link_by_partial_text("Gestione turni")
         sessione_presidente.click_link_by_partial_text("Crea nuovo turno")
 
         inizio = (timezone.now()).strftime("%d/%m/%Y %H:%m")
