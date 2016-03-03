@@ -116,14 +116,11 @@ def co_turni(request, me):
     sedi = me.oggetti_permesso(GESTIONE_CENTRALE_OPERATIVA_SEDE)
     tra_qualche_ora = poco_fa() + timedelta(hours=2)
     qualche_ora_fa = poco_fa() - timedelta(hours=2)
-    ora = poco_fa()
     partecipazioni = Partecipazione.con_esito_ok().filter(
-            Q(turno__attivita__sede__in=sedi),                              # Nelle mie sedi di competenza
-            Q(turno__inizio__gte=ora, turno__inizio__lte=tra_qualche_ora)   # a) Che inizia nelle prossime ore,   oppure
-            | Q(turno__fine__lte=ora, turno__fine__gte=qualche_ora_fa)      # b) Finita di recente,               oppure
-            | Q(turno__inizio__lte=ora, turno__fine__gte=ora)               # c) In corso                         oppure
+            Q(turno__attivita__sede__in=sedi),                                       # Nelle mie sedi di competenza
+            Q(turno__inizio__lte=tra_qualche_ora, turno__fine__gte=qualche_ora_fa)   # a) In corso, oppure
             | Q(turno__coturni__montato_da__isnull=False,
-                turno__coturni__smontato_da__isnull=True)                   # d) Da smontare
+                turno__coturni__smontato_da__isnull=True)                            # d) Da smontare
         ).select_related('turno', 'turno__attivita', 'turno__attivita__sede')\
          .order_by('turno__inizio', 'turno__fine', 'turno__id', 'persona__id')\
          .distinct('turno__inizio', 'turno__fine', 'turno__id', 'persona__id')

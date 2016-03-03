@@ -36,7 +36,6 @@ class Turno(ModelloSemplice, ConMarcaTemporale):
     montato_data = models.DateTimeField(null=True)
     smontato_data = models.DateTimeField(null=True)
 
-
     @property
     def montato(self):
         return self.montato_data is not None
