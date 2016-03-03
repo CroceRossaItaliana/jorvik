@@ -8,9 +8,6 @@ addons:
 
 cache: pip
 
-
-#before_script:
-#  - "mysql -e 'CREATE DATABASE jorvik CHARSET utf8;'"
 before_script:
 before_script:
   - "export DISPLAY=:99.0"
@@ -24,5 +21,4 @@ install:
   - "pip install -r requirements.txt"
 
 script:
-#  - "python ./manage.py migrate"
-  - "python ./manage.py test -d -v 3"
+  - "python ./manage.py test -v 3"
