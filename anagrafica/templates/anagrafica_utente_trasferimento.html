@@ -6,55 +6,93 @@
 
 {% block app_contenuto %}
 
-    {% if me.trasferimento %}
-        {% include "anagrafica_utente_trasferimento_stato.html" %}
-    {% else %}
-        {% include "anagrafica_utente_trasferimento_richiedi.html" %}
-    {% endif %}
+<div class="alert bg-info">
+    <p>
+        <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai visionare lo stato della tua richiesta di trasferimento.
+    </p>
+</div>
+
 
 <div class="row" style="margin-top: 5px;">
-    <div class="col-md-12">
-        <h3>Storico trasferimenti</h3>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Richiedente</th>
-                    <th>Destinazione</th>
-                    <th>Esito</th>
-                    <th>Data richiesta</th>
-                    <th>Azioni</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for trasferimento in storico %}
-                <tr
-                    {% if trasferimento.esito == trasferimento.ESITO_PENDING %}
-                        class="warning"
-                    {% endif %}
-                >
-                    <td>{{ trasferimento.richiedente }}</td>
-                    <td>{{ trasferimento.destinazione }}</td>
-                    <td>{{ trasferimento.esito}}</td>
-                    <td>{{ trasferimento.creazione|date:"SHORT_DATE_FORMAT" }}</td>
-                    <td>
-                        <a href="{{ trasferimento.url_pdf }}" target="_blank">Scarica PDF</a>
-                        {% if trasferimento.esito == trasferimento.ESITO_PENDING %} -
-                        <a href="/utente/trasferimento/{{ trasferimento.pk }}/ritira/"
-                           data-conferma="Vuoi veramente ritirare la richiesta di trasferimento?">
-                            Ritira Richiesta
-                        </a>
-                    {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="5" class="bg-warning">
-                            <i class="fa fa-info"></i> Nessun trasferimento passato.
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="col-lg-8">
+        <div class="panel panel-info">
+
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-folder-o fa-fw"></i> Storico trasferimenti
+                </h4>
+            </div>
+
+            <div class="panel-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Richiedente</th>
+                            <th>Destinazione</th>
+                            <th>Esito</th>
+                            <th>Data richiesta</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trasferimento in storico %}
+                        <tr
+                            {% if trasferimento.esito == trasferimento.ESITO_PENDING %}
+                                class="warning"
+                            {% endif %}
+                        >
+                            <td>{{ trasferimento.richiedente }}</td>
+                            <td>{{ trasferimento.destinazione }}</td>
+                            <td>{{ trasferimento.esito}}</td>
+                            <td>{{ trasferimento.creazione|date:"SHORT_DATE_FORMAT" }}</td>
+                            <td>
+                                <a href="{{ trasferimento.url_pdf }}" target="_blank">Scarica PDF</a>
+                                {% if trasferimento.esito == trasferimento.ESITO_PENDING %} -
+                                <a href="/utente/trasferimento/{{ trasferimento.pk }}/ritira/"
+                                   data-conferma="Vuoi veramente ritirare la richiesta di trasferimento?">
+                                    Ritira Richiesta
+                                </a>
+                            {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="bg-warning">
+                                    <i class="fa fa-info"></i> Nessun trasferimento passato.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-plus"></i> Registra Trasferimento
+                </h4>
+            </div>
+            <div class="panel-body">
+                {% if not me.trasferimento %}
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
+                    <button type="submit" class="btn btn-primary">Invia</button>
+                </form>
+                {% else %}
+                    <div class="alert bg-info">
+                        <p>
+                            <i class="fa fa-info-circle fa-fw"></i>
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}
