@@ -90,7 +90,7 @@ def crea_area(sede):
 
 def crea_attivita(sede, area, nome="Attivita di test",
                   stato=Attivita.APERTA, descrizione="Descrizione",
-                  centrale_operativa=False):
+                  centrale_operativa=None):
     attivita = Attivita(
         sede=sede,
         area=area,
@@ -104,7 +104,7 @@ def crea_attivita(sede, area, nome="Attivita di test",
     return attivita
 
 
-def crea_area_attivita(sede, centrale_operativa=False):
+def crea_area_attivita(sede, centrale_operativa=None):
     area = crea_area(sede)
     attivita = crea_attivita(sede, area, centrale_operativa=centrale_operativa)
     return area, attivita

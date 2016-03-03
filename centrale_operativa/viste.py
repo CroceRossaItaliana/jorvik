@@ -86,8 +86,6 @@ def co_poteri(request, me):
         turno__attivita__sede__in=sedi,
     )
 
-    print(partecipazioni.query)
-
     contesto = {
         "partecipazioni": partecipazioni,
         "minuti": minuti,
