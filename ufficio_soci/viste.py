@@ -830,11 +830,15 @@ def us_ricevute_nuova(request, me):
 
         appartenenza = persona.appartenenze_attuali(al_giorno=data_versamento,
                                                     sede__in=sedi).first()
-        comitato = appartenenza.sede.comitato if appartenenza else None
 
-        if not appartenenza:
+        partecipazione_corso = persona.partecipazione_corso_base()
+
+        comitato = appartenenza.sede.comitato if appartenenza else partecipazione_corso.corso.sede.comitato
+
+        if not comitato:
             modulo.add_error('data_versamento', 'In questa data, la persona non risulta appartenente '
-                                                'come Volontario o Sostenitore per alla Sede.')
+                                                'come Volontario o Sostenitore per alla Sede o '
+                                                'partecipante confermato ad un corso base attivo.')
 
         elif tipo_ricevuta == Quota.QUOTA_SOSTENITORE and appartenenza.membro != Appartenenza.SOSTENITORE:
             modulo.add_error('persona', 'Questa persona non è registrata come Sostenitore CRI '
@@ -857,6 +861,8 @@ def us_ricevute_nuova(request, me):
             # OK, paga quota!
             ricevuta = Quota.nuova(
                 appartenenza=appartenenza,
+                corso_comitato=comitato,
+                corso_persona=persona,
                 data_versamento=data_versamento,
                 registrato_da=me,
                 importo=importo,

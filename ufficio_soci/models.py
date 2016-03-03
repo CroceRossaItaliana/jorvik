@@ -336,11 +336,24 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
 
     @classmethod
     def nuova(cls, appartenenza, data_versamento, registrato_da, importo,
-              causale, tipo=QUOTA_SOCIO, invia_notifica=True, **kwargs):
+              causale, tipo=QUOTA_SOCIO, invia_notifica=True,
+              corso_comitato=None, corso_persona=None, **kwargs):
+
+        persona = appartenenza.persona if appartenenza else corso_persona
+        sede = appartenenza.sede.comitato if appartenenza else corso_comitato
+
+        if not sede:
+            raise ValueError("La quota può solo essere registrata per "
+                             "appartenenze in corso o corsisti.")
+
+        if not persona:
+            raise ValueError("Non posso determinare il pagante della Quota. "
+                             "Necessario almeno uno tra appartenenza e corso_persona.")
+
         q = Quota(
             appartenenza=appartenenza,
-            sede=appartenenza.sede.comitato,
-            persona=appartenenza.persona,
+            sede=sede,
+            persona=persona,
             data_versamento=data_versamento,
             registrato_da=registrato_da,
             importo=importo,

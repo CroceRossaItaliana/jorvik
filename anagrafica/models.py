@@ -624,6 +624,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         )
         appartenenza.save()
 
+    def partecipazione_corso_base(self):
+        """
+        Ritorna la partecipazione confermata al corso base in corso, se esistente,
+         altrimenti None.
+        :return:
+        """
+        from formazione.models import PartecipazioneCorsoBase, CorsoBase
+        return PartecipazioneCorsoBase.con_esito_ok().filter(persona=self, corso__stato=CorsoBase.ATTIVO).first()
+
     @property
     def url(self):
         return "/profilo/%d/" % (self.pk,)
