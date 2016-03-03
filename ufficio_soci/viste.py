@@ -901,7 +901,7 @@ def us_ricevute(request, me):
 
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
     ricevute = Quota.objects.filter(
-        sede__in=sedi,
+        Q(Q(sede__in=sedi) | Q(appartenenza__sede__in=sedi)),
         anno=anno,
         tipo__in=tipi,
     ).order_by('progressivo')
