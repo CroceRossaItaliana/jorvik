@@ -35,6 +35,7 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
             ['sede', 'estensione', 'apertura', 'stato',],
             ['sede', 'apertura'],
             ['estensione', 'apertura'],
+            ['centrale_operativa', 'sede'],
         ]
 
     BOZZA = 'B'
@@ -64,12 +65,20 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     apertura = models.CharField(choices=APERTURA, default=APERTA, max_length=1, db_index=True)
     descrizione = models.TextField(blank=True)
 
-    centrale_operativa = models.BooleanField(verbose_name="Attività di Centrale Operativa", default=False,
-                                             help_text="Selezionando questa opzione, i partecipanti confermati verranno "
-                                                       "abilitati all'uso del pannello di Centrale Operativa della Sede "
-                                                       "da %d minuti prima dell'inizio a %d minuti dopo la fine del "
-                                                       "turno." % (MINUTI_CENTRALE_OPERATIVA, MINUTI_CENTRALE_OPERATIVA),
-                                             db_index=True)
+    CO_AUTO = "A"
+    CO_MANUALE = "M"
+    CENTRALE_OPERATIVA = (
+        (None, "(Disattiva)"),
+        (CO_AUTO, "Automatica"),
+        (CO_MANUALE, "Manuale"),
+    )
+    centrale_operativa = models.CharField(max_length=1, default=None, blank=True, null=True, choices=CENTRALE_OPERATIVA,
+                                          verbose_name="Attività di Centrale Operativa", db_index=True,
+                                          help_text="Selezionando questa opzione, i partecipanti confermati verranno "
+                                                    "abilitati, automaticamente o manualmente dal delegato CO, "
+                                                    "all'uso del pannello di Centrale Operativa della Sede "
+                                                    "da %d minuti prima dell'inizio a %d minuti dopo la fine del "
+                                                    "turno." % (MINUTI_CENTRALE_OPERATIVA, MINUTI_CENTRALE_OPERATIVA),)
 
     def __str__(self):
         return self.nome
@@ -506,6 +515,9 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     persona = models.ForeignKey("anagrafica.Persona", related_name='partecipazioni', on_delete=models.CASCADE)
     turno = models.ForeignKey(Turno, related_name='partecipazioni', on_delete=models.CASCADE)
     stato = models.CharField(choices=STATO, default=RICHIESTA, max_length=1, db_index=True)
+
+    # Utilizzato dal modulo CO - viene impostato dal delegato CO
+    centrale_operativa = models.BooleanField(default=False, db_index=True)
 
     def __str__(self):
         return "%s a %s" % (self.persona.codice_fiscale, str(self.turno))

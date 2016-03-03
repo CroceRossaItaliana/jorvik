@@ -1,6 +1,6 @@
 from anagrafica.costanti import REGIONALE
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, \
-    GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI
+    GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
 from base.utils import remove_none
 
 __author__ = 'alfioemanuele'
@@ -139,6 +139,8 @@ def menu(request):
             ("Centrale Operativa", (
                 ("Reperibilità", "fa-clock-o", "/centrale-operativa/reperibilita/"),
                 ("Turni", "fa-calendar", "/centrale-operativa/turni/"),
+                ("Poteri", "fa-magic", "/centrale-operativa/poteri/")
+                if me and me.oggetti_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE).exists() else None,
             )),
         ),
         "formazione": (

@@ -4,13 +4,15 @@ from django.db.models import Q, F
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.models import Appartenenza
-from anagrafica.permessi.costanti import ERRORE_PERMESSI, GESTIONE_CENTRALE_OPERATIVA_SEDE
-from attivita.models import Partecipazione
+from anagrafica.permessi.costanti import ERRORE_PERMESSI, GESTIONE_CENTRALE_OPERATIVA_SEDE, \
+    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
+from attivita.models import Partecipazione, Attivita
 from autenticazione.funzioni import pagina_privata
 from base.errori import errore_generico
 from base.utils import poco_fa
 from centrale_operativa.forms import ModuloNuovaReperibilita
 from centrale_operativa.models import Reperibilita, Turno
+from django.utils import timezone
 
 
 @pagina_privata
@@ -65,6 +67,50 @@ def co_reperibilita(request, me):
         "ora": ora,
     }
     return "centrale_operativa_reperibilita.html", contesto
+
+
+@pagina_privata
+def co_poteri(request, me):
+    sedi = me.oggetti_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE)
+
+    minuti = Attivita.MINUTI_CENTRALE_OPERATIVA
+
+    # Limiti di tempo per la centrale operativa
+    quindici_minuti_fa = timezone.now() - timedelta(minutes=minuti)
+    tra_quindici_minuti = timezone.now() + timedelta(minutes=minuti)
+
+    partecipazioni = Partecipazione.con_esito_ok().filter(
+        turno__inizio__lte=tra_quindici_minuti,
+        turno__fine__gte=quindici_minuti_fa,
+        turno__attivita__centrale_operativa=Attivita.CO_MANUALE,
+        turno__attivita__sede__in=sedi,
+    )
+
+    print(partecipazioni.query)
+
+    contesto = {
+        "partecipazioni": partecipazioni,
+        "minuti": minuti,
+    }
+    return "centrale_operativa_poteri.html", contesto
+
+
+@pagina_privata
+def co_poteri_switch(request, me, part_pk):
+    sedi = me.oggetti_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE)
+
+    partecipazione = Partecipazione.con_esito_ok(
+        turno__attivita__sede__in=sedi,
+        pk=part_pk
+    ).first()
+
+    if not partecipazione:
+        return errore_generico(request, me, titolo="Partecipazione non trovata")
+
+    partecipazione.centrale_operativa = not partecipazione.centrale_operativa
+    partecipazione.save()
+
+    return redirect("/centrale-operativa/poteri/")
 
 
 @pagina_privata

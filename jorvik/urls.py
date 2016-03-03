@@ -163,6 +163,8 @@ urlpatterns = [
 
     url(r'^centrale-operativa/$', 'centrale_operativa.viste.co'),
     url(r'^centrale-operativa/reperibilita/$', 'centrale_operativa.viste.co_reperibilita'),
+    url(r'^centrale-operativa/poteri/$', 'centrale_operativa.viste.co_poteri'),
+    url(r'^centrale-operativa/poteri/(?P<part_pk>[0-9]+)/$', 'centrale_operativa.viste.co_poteri_switch'),
     url(r'^centrale-operativa/turni/$', 'centrale_operativa.viste.co_turni'),
     url(r'^centrale-operativa/turni/(?P<partecipazione_pk>[0-9]+)/monta/$', 'centrale_operativa.viste.co_turni_monta'),
     url(r'^centrale-operativa/turni/(?P<partecipazione_pk>[0-9]+)/smonta/$', 'centrale_operativa.viste.co_turni_smonta'),

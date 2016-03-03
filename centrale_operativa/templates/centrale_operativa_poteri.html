@@ -1,0 +1,122 @@
+{% extends 'centrale_operativa_vuota.html' %}
+
+{% block pagina_titolo %}
+    Assegna Poteri
+{% endblock %}
+
+{% block base_head_extra %}
+    <meta http-equiv="refresh" content="45">
+{% endblock %}
+
+{% block app_contenuto %}
+
+<div class="alert alert-block alert-info">
+    <p>
+        <i class="fa fa-fw fa-info-circle"></i>
+        Da qui puoi vedere i dettagli dei Volontari che stanno partecipando a una attivit&agrave;
+        di Centrale Operativa, in modalit&agrave; "Manuale". Puoi "Conferire i poteri" di Centrale
+        operativa ai partecipanti da questa pagina con un solo click.
+    </p>
+    <p>
+        <i class="fa fa-fw fa-info-circle"></i>
+        I poteri, sia conferiti "Manualmente" che "Automaticamente", sono abilitati da
+        {{ minuti }} prima l'inizio a {{ minuti }} dopo la fine del turno di Centrale Operativa,
+        al fine di facilitare il cambio dei volontari.
+    </p>
+    <p>
+        <i class="fa fa-fw fa-warning"></i>
+        Nota che, se l'attivit&agrave; &egrave; impostata in modalit&agrave; "Automatica",
+        i Volontari con richiesta di partecipazione accettata al turno, riceveranno automaticamente
+        i permessi di gestione della CO e non compariranno in questa pagina.
+    </p>
+</div>
+
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <h2 class="panel-title">
+            <i class="fa fa-fw fa-list"></i>
+            Partecipazioni che possono ricevere i poteri
+        </h2>
+    </div>
+    <div class="panel-body">
+
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Nome e cognome</th>
+                <th>Turno</th>
+                <th>Orario</th>
+                <th>Stato</th>
+            </tr>
+            </thead>
+
+            {% for p in partecipazioni %}
+
+                <tr>
+                    <td class="grassetto">
+                        {{ p.persona.nome_completo }}
+                    </td>
+                    <td>
+                        <span class="grassetto">{{ p.turno.link|safe }}</span><br />
+                        {{ p.turno.attivita.link|safe }}
+                    </td>
+                    <td>
+                        {{ p.turno.inizio|date:"SHORT_DATETIME_FORMAT" }} (inizio)<br />
+                        {{ p.turno.fine|date:"SHORT_DATETIME_FORMAT" }} (fine)
+                    </td>
+                    <td>
+                        {% if p.centrale_operativa %}
+
+                            <span class="text-success">
+                                <i class="fa fa-fw fa-check"></i>
+                                Volontario abilitato alla gestione della CO
+                                per la durata del turno.
+                            </span>
+
+                        {% else %}
+
+                            <span class="text-danger">
+                                <i class="fa fa-fw fa-times"></i>
+                                Volontario non abilitato alla gestione della
+                                CO per la durata del turno.
+                            </span>
+
+                        {% endif %}
+                        <br />
+                        <a href="/centrale-operativa/poteri/{{ p.pk }}/">
+                            <i class="fa fa-fw fa-cogs"></i>
+                            {% if p.centrale_operativa %}
+                                Ritira poteri
+                            {% else %}
+                                Assegna poteri
+                            {% endif %}
+                        </a>
+                    </td>
+                </tr>
+
+
+            {% empty %}
+                <tr class="warning allinea-centro">
+                    <td colspan="4">
+                        <p>
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Nessuna partecipazione segnalata in questo momento
+                            che richiede il conferimento manuale dei poteri di Centrale Operativa.
+                        </p>
+
+
+                    </td>
+                </tr>
+
+            {% endfor %}
+
+
+        </table>
+
+
+    </div>
+</div>
+
+
+
+{% endblock %}

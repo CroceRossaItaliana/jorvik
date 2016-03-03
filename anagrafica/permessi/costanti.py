@@ -28,6 +28,7 @@ GESTIONE_AUTOPARCHI_SEDE = "GESTIONE_AUTOPARCHI_SEDE"
 GESTIONE_GRUPPI_SEDE = "GESTIONE_GRUPPI_SEDE"
 GESTIONE_GRUPPO = "GESTIONE_GRUPPO"
 GESTIONE_CENTRALE_OPERATIVA_SEDE = "GESTIONE_CENTRALE_OPERATIVA_SEDE"
+GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE = "GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE"
 EMISSIONE_TESSERINI = "EMISSIONE_TESSERINI"
 
 # Tipologia degli oggetti assegnati ad ogni Permesso.
@@ -46,7 +47,8 @@ PERMESSI_OGGETTI = (
     (GESTIONE_AUTOPARCHI_SEDE,  ('anagrafica', 'Sede')),
     (GESTIONE_GRUPPI_SEDE,      ('anagrafica', 'Sede')),
     (GESTIONE_GRUPPO,           ('gruppi',     'Gruppo')),
-    (GESTIONE_CENTRALE_OPERATIVA_SEDE,  ('anagrafica', 'Sede'))
+    (GESTIONE_CENTRALE_OPERATIVA_SEDE,  ('anagrafica', 'Sede')),
+    (GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE,  ('anagrafica', 'Sede')),
 )
 
 # Tipologia degli oggetti assegnati ad ogni Delega.
@@ -105,6 +107,7 @@ PERMESSI_MINIMO = {
  'Commento':  LETTURA,
 }
 
+
 def permesso_minimo(tipo):
     """
     Ritoran il permesso minimo globale per un detemrinato tipo.
@@ -116,9 +119,6 @@ def permesso_minimo(tipo):
         return PERMESSI_MINIMO[tipo]
     except KeyError:  # TOFIX
         return NESSUNO
-
-
-
 
 
 # Tieni in memoria anche come dizionari, per lookup veloci
