@@ -1846,7 +1846,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
           nome="Estensione %s.pdf" % (self.persona.nome_completo, ),
           corpo={
             "estensione": self,
-            "sede_attuale": self.persona.sedi_attuali(al_giorno=self.creazione)[0],
+            "sede_attuale": self.persona.sede_riferimento(),
             "appartenenza": appartenenza,
           },
           modello="pdf_estensione.html",
@@ -1915,7 +1915,7 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
           nome="Riserva %s.pdf" % (self.persona.nome_completo, ),
           corpo={
             "riserva": self,
-            "sede_attuale": self.persona.sedi_attuali(al_giorno=self.creazione)[0]
+            "sede_attuale": self.persona.sede_riferimento()
           },
           modello="pdf_riserva.html",
         )
