@@ -4,32 +4,71 @@
     Assegna Poteri
 {% endblock %}
 
+{% load bootstrap3 %}
+
 {% block base_head_extra %}
     <meta http-equiv="refresh" content="45">
 {% endblock %}
 
 {% block app_contenuto %}
 
-<div class="alert alert-block alert-info">
-    <p>
-        <i class="fa fa-fw fa-info-circle"></i>
-        Da qui puoi vedere i dettagli dei Volontari che stanno partecipando a una attivit&agrave;
-        di Centrale Operativa, in modalit&agrave; "Manuale". Puoi "Conferire i poteri" di Centrale
-        operativa ai partecipanti da questa pagina con un solo click.
-    </p>
-    <p>
-        <i class="fa fa-fw fa-info-circle"></i>
-        I poteri, sia conferiti "Manualmente" che "Automaticamente", sono abilitati da
-        {{ minuti }} prima l'inizio a {{ minuti }} dopo la fine del turno di Centrale Operativa,
-        al fine di facilitare il cambio dei volontari.
-    </p>
-    <p>
-        <i class="fa fa-fw fa-warning"></i>
-        Nota che, se l'attivit&agrave; &egrave; impostata in modalit&agrave; "Automatica",
-        i Volontari con richiesta di partecipazione accettata al turno, riceveranno automaticamente
-        i permessi di gestione della CO e non compariranno in questa pagina.
-    </p>
+<div class="row">
+
+    <div class="col-md-4">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-search"></i>
+                    Filtra per giorno
+                </h2>
+            </div>
+            <div class="panel-body">
+                <form method="GET">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
+                    <p class="btn-group btn-group-justified">
+                        <a class="btn btn-info" href="{{ ieri }}">
+                            <i class="fa fa-fw fa-arrow-left"></i>
+                        </a>
+                        <a class="btn btn-info" href="{{ domani }}">
+                            <i class="fa fa-fw fa-arrow-right"></i>
+                        </a>
+                    </p>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fa fa-fw fa-search"></i>
+                        Filtra
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="alert alert-block alert-info">
+            <p>
+                <i class="fa fa-fw fa-info-circle"></i>
+                Da qui puoi vedere i dettagli dei Volontari che stanno partecipando a una attivit&agrave;
+                di Centrale Operativa, in modalit&agrave; "Manuale". Puoi "Conferire i poteri" di Centrale
+                operativa ai partecipanti da questa pagina con un solo click.
+            </p>
+            <p>
+                <i class="fa fa-fw fa-info-circle"></i>
+                I poteri, sia conferiti "Manualmente" che "Automaticamente", sono abilitati da
+                {{ minuti }} prima l'inizio a {{ minuti }} dopo la fine del turno di Centrale Operativa,
+                al fine di facilitare il cambio dei volontari.
+            </p>
+            <p>
+                <i class="fa fa-fw fa-warning"></i>
+                Nota che, se l'attivit&agrave; &egrave; impostata in modalit&agrave; "Automatica",
+                i Volontari con richiesta di partecipazione accettata al turno, riceveranno automaticamente
+                i permessi di gestione della CO e non compariranno in questa pagina.
+            </p>
+        </div>
+    </div>
+
 </div>
+
+
 
 <div class="panel panel-info">
     <div class="panel-heading">
@@ -45,7 +84,6 @@
             <tr>
                 <th>Nome e cognome</th>
                 <th>Turno</th>
-                <th>Orario</th>
                 <th>Stato</th>
             </tr>
             </thead>
@@ -57,12 +95,12 @@
                         {{ p.persona.nome_completo }}
                     </td>
                     <td>
-                        <span class="grassetto">{{ p.turno.link|safe }}</span><br />
+                        <span class="grassetto">{{ p.turno.link|safe }}</span>
+                        ({{ p.turno.inizio|date:"SHORT_DATETIME_FORMAT" }}&mdash;{{ p.turno.fine|date:"SHORT_DATETIME_FORMAT" }})
+
+
+                        <br />
                         {{ p.turno.attivita.link|safe }}
-                    </td>
-                    <td>
-                        {{ p.turno.inizio|date:"SHORT_DATETIME_FORMAT" }} (inizio)<br />
-                        {{ p.turno.fine|date:"SHORT_DATETIME_FORMAT" }} (fine)
                     </td>
                     <td>
                         {% if p.centrale_operativa %}
@@ -83,7 +121,7 @@
 
                         {% endif %}
                         <br />
-                        <a href="/centrale-operativa/poteri/{{ p.pk }}/">
+                        <a href="/centrale-operativa/poteri/{{ p.pk }}/?next={{ request.get_full_path|urlencode }}">
                             <i class="fa fa-fw fa-cogs"></i>
                             {% if p.centrale_operativa %}
                                 Ritira poteri
@@ -97,7 +135,7 @@
 
             {% empty %}
                 <tr class="warning allinea-centro">
-                    <td colspan="4">
+                    <td colspan="3">
                         <p>
                             <i class="fa fa-fw fa-info-circle"></i>
                             Nessuna partecipazione segnalata in questo momento

@@ -1,4 +1,4 @@
-from datetime import timedelta, date
+from datetime import timedelta, date, time, datetime
 
 from django.db.models import Q, F
 from django.shortcuts import redirect, get_object_or_404
@@ -10,7 +10,7 @@ from attivita.models import Partecipazione, Attivita
 from autenticazione.funzioni import pagina_privata
 from base.errori import errore_generico
 from base.utils import poco_fa
-from centrale_operativa.forms import ModuloNuovaReperibilita
+from centrale_operativa.forms import ModuloNuovaReperibilita, ModuloPoteri
 from centrale_operativa.models import Reperibilita, Turno
 from django.utils import timezone
 
@@ -73,22 +73,35 @@ def co_reperibilita(request, me):
 def co_poteri(request, me):
     sedi = me.oggetti_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE)
 
+    modulo = ModuloPoteri(request.GET or None)
+    giorno = date.today()
+    if modulo.is_valid():
+        giorno = modulo.cleaned_data['giorno']
+
     minuti = Attivita.MINUTI_CENTRALE_OPERATIVA
 
     # Limiti di tempo per la centrale operativa
-    quindici_minuti_fa = timezone.now() - timedelta(minutes=minuti)
-    tra_quindici_minuti = timezone.now() + timedelta(minutes=minuti)
+    giorno_inizio = datetime.combine(giorno, time(0, 0))
+    giorno_fine = datetime.combine(giorno, time(23, 59))
+
+    url = "/centrale-operativa/poteri/"
+
+    ieri = "%s?giorno=%s" % (url, (giorno - timedelta(days=1)).strftime("%d/%m/%Y"))
+    domani = "%s?giorno=%s" % (url, (giorno + timedelta(days=1)).strftime("%d/%m/%Y"))
 
     partecipazioni = Partecipazione.con_esito_ok().filter(
-        turno__inizio__lte=tra_quindici_minuti,
-        turno__fine__gte=quindici_minuti_fa,
+        turno__inizio__lte=giorno_fine,
+        turno__fine__gte=giorno_inizio,
         turno__attivita__centrale_operativa=Attivita.CO_MANUALE,
         turno__attivita__sede__in=sedi,
-    )
+    ).order_by('turno__inizio')
 
     contesto = {
         "partecipazioni": partecipazioni,
         "minuti": minuti,
+        "modulo": modulo,
+        "ieri": ieri,
+        "domani": domani,
     }
     return "centrale_operativa_poteri.html", contesto
 
@@ -102,13 +115,15 @@ def co_poteri_switch(request, me, part_pk):
         pk=part_pk
     ).first()
 
+    next = request.GET.get('next', default='/centrale-operativa/poteri/')
+
     if not partecipazione:
         return errore_generico(request, me, titolo="Partecipazione non trovata")
 
     partecipazione.centrale_operativa = not partecipazione.centrale_operativa
     partecipazione.save()
 
-    return redirect("/centrale-operativa/poteri/")
+    return redirect(next)
 
 
 @pagina_privata
