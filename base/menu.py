@@ -30,20 +30,20 @@ def menu(request):
                 ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
             )),
             ("Volontario", (
-                ("Estensione", "fa-arrow-right", "/utente/estensione/"),
+                ("Estensione", "fa-random", "/utente/estensione/"),
                 ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
-                ("Riserva", "fa-arrow-right", "/utente/riserva/"),
+                ("Riserva", "fa-pause", "/utente/riserva/"),
             )) ,
             ("Rubrica", (
                 ("Referenti", "fa-book", "/utente/rubrica/referenti/"),
                 ("Volontari", "fa-book", "/utente/rubrica/volontari/"),
             )) ,
             ("Curriculum", (
-                ("Competenze personali", "fa-arrow-right", "/utente/curriculum/CP/"),
-                ("Patenti Civili", "fa-arrow-right", "/utente/curriculum/PP/"),
-                ("Patenti CRI", "fa-arrow-right", "/utente/curriculum/PC/"),
-                ("Titoli di Studio", "fa-arrow-right", "/utente/curriculum/TS/"),
-                ("Titoli CRI", "fa-arrow-right", "/utente/curriculum/TC/"),
+                ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
+                ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
+                ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/"),
+                ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
+                ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/"),
             )),
             ("Donatore", (
                 ("Profilo Donatore", "fa-user", "/utente/donazioni/profilo/"),
