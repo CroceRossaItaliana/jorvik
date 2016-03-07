@@ -341,3 +341,7 @@ class ModuloModificaDataInizioAppartenenza(ModelForm):
 class ModuloImportPresidenti(forms.Form):
     presidente = autocomplete_light.ModelChoiceField("PresidenteAutocompletamento")
     sede = autocomplete_light.ModelChoiceField("ComitatoAutocompletamento")
+
+
+class ModuloPulisciEmail(forms.Form):
+    indirizzi = forms.CharField(widget=forms.Textarea, help_text="Un indirizzo e-mail per riga.")

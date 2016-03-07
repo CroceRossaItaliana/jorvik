@@ -1,0 +1,38 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p class="grassetto"><strong>NOTIFICA IMPORTANTE</strong></p>
+
+    <p>Ricevi questo messaggio perch&eacute; abbiamo rilevato un errore con un indirizzo e-mail di una
+        persona appartenente ad una tua Sede:</p>
+
+    <p>
+        {{ persona.link|safe }}
+            aveva su Gaia la seguente e-mail di contatto:
+            <strong>{{ vecchia_email }}</strong>.
+    </p>
+
+    <p>
+        Il nostro sistema di posta ha avuto ripetuti problemi nello smistare le e-mail
+        a questo indirizzo. Questo vuol dire probabilmente che l'indirizzo &egrave; errato,
+        non pi&ugrave; funzionante o disattivo.
+    </p>
+    <p>
+        Al fine di tutelare la qualit&agrave; del servizio per tutti e
+        la reputazione del sistema Gaia come mittente affidabile, siamo stati costretti
+        a rimuovere questo indirizzo e-mail dal sistema.
+    </p>
+
+    <p>
+        Per favore contatta in modo alternativa (es. di persona, o telefonicamente)
+        {{ persona.link|safe }}, al fine di ottenere un nuovo indirizzo e-mail.
+    </p>
+
+    <p>
+        Questa comunicazione &egrave; stata inoltrata in seguito all'azione eseguita dal
+        nostro operatore {{ operatore.nome_completo }} il {{ operazione_data }}.
+    </p>
+
+
+{% endblock %}

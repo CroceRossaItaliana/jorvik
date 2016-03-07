@@ -19,7 +19,7 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
-    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti
+    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -47,7 +47,7 @@ from base.stringhe import genera_uuid_casuale
 from base.utils import remove_none, poco_fa
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
-from posta.models import Messaggio
+from posta.models import Messaggio, Q
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
 
@@ -1563,3 +1563,84 @@ def admin_import_presidenti(request, me):
         "esiti": esiti,
     }
     return 'admin_import_presidenti.html', contesto
+
+
+@pagina_privata
+def admin_pulisci_email(request, me):
+
+    if not me.is_superuser:
+        return redirect(ERRORE_PERMESSI)
+
+    modulo = ModuloPulisciEmail(request.POST or None)
+    risultati = []
+
+    if modulo.is_valid():
+
+        indirizzi = modulo.cleaned_data['indirizzi']
+        indirizzi = indirizzi.split("\n")
+
+        for indirizzo in indirizzi:
+
+            indirizzo = indirizzo.strip()
+
+            persone = Persona.objects.filter(Q(email_contatto__iexact=indirizzo) | Q(utenza__email__iexact=indirizzo))
+
+            # TODO trovare delegati.
+
+            # TODO come prima condizione, controllare che i delegati esistano,
+            #      altrimenti non iniziare la procedura.
+
+            if not persone.exists():
+
+                risultati += [
+                    (indirizzo, 'text-danger', "Nessuna utenza trovata per questa e-mail.")
+                ]
+
+            else:  # Una o piu' persone ha questo indirizzo e-mail
+
+                for persona in persone:  # Per ogni persona
+
+                    email_contatto_corrotta = persona.email_contatto.lower() == indirizzo.lower()
+                    try:
+                        email_utenza_corrotta = persona.utenza.email.lower() == indirizzo.lower()
+                    except:  # Se non ha utenza
+                        email_utenza_corrotta = False
+
+                    # Se l'e-mail di contatto e' problematica...
+                    if email_contatto_corrotta:
+
+                        msg =   "(GAIA-%s) L'e-mail di contatto (%s) ha avuto un alto tasso di "\
+                                "ritorno ed è stata quindi cancellata per tutelare il servizio. "% (
+                            poco_fa().strftime("%d/%m/%Y %H:%M"), indirizzo
+                        )
+                        persona.note = "%s\n\n%s" % (persona.note, msg)
+                        persona.email_contatto = ""
+                        persona.save()
+                        Log.modifica(me, persona, "email_contatto", indirizzo, "")
+
+                    # Se l'e-mail di accesso e' problematica
+                    if email_utenza_corrotta:
+
+                        msg =   "(GAIA-%s) L'e-mail di accesso (%s) ha avuto un alto tasso di "\
+                                "ritorno ed è stata quindi cancellata l'utenza per tutela re il servizio. "\
+                                "E' quindi necessario abilitare l'accesso nuovamente creando delle nuove "\
+                                "credenziali per l'utente dalla sezione 'Credenziali' della sua scheda." % (
+                            poco_fa().strftime("%d/%m/%Y %H:%M"), indirizzo
+                        )
+                        persona.note = "%s\n\n%s" % (persona.note, msg)
+                        persona.save()
+                        persona.utenza.delete()
+                        Log.modifica(me, persona, "e-mail utenza", indirizzo, "")
+
+                    # Notifica delegati...
+                    if email_utenza_corrotta:
+                        # TODO invia email_admin_pulisci_email_utenza.html
+                        pass
+
+                    elif email_contatto_corrotta:
+                        # TODO invia email_admin_pulisci_email_contatto.html
+                        pass
+
+                    # TODO aggiungi log a risultati[]
+
+    # TODO continuare

@@ -1,0 +1,43 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p class="grassetto"><strong>AZIONE RICHIESTA</strong></p>
+
+    <p>Ricevi questo messaggio perch&eacute; abbiamo rilevato un errore con un indirizzo e-mail di una
+        persona appartenente ad una tua Sede:</p>
+
+    <p>
+        {{ persona.link|safe }}
+            aveva una utenza attiva su Gaia con il seguente indirizzo e-mail:
+            <strong>{{ vecchia_email }}</strong>.
+    </p>
+
+    <p>
+        Il nostro sistema di posta ha avuto ripetuti problemi nello smistare le e-mail
+        a questo indirizzo. Questo vuol dire probabilmente che l'indirizzo &egrave; errato,
+        non pi&ugrave; funzionante o disattivo.
+    </p>
+    <p>
+        Al fine di tutelare la qualit&agrave; del servizio per tutti e
+        la reputazione del sistema Gaia come mittente affidabile, siamo stati costretti
+        a rimuovere questo indirizzo e-mail dal sistema.
+    </p>
+
+    <p style="color: darkred;">
+        <strong>IMPORTANTE: </strong> {{ persona.link|safe }} utilizzava questo indirizzo
+        e-mail come credenziale di accesso a Gaia. Per questo motivo, &egrave; ora
+        impossibilitat{{ persona.genere_o_a }} ad accedere a Gaia, ed &egrave; quindi necessario
+        che tu lo contatti in un modo alternativo (es. per telefono, o di persona) e ti
+        faccia comunicare un nuovo e corretto indirizzo e-mail. Potrai quindi riabilitare
+        l'accesso di {{ persona.link|safe }} a Gaia dal pannello "Credenziali"
+        della sua scheda personale, inserendo il nuovo indirizzo e-mail.
+    </p>
+
+    <p>
+        Questa comunicazione &egrave; stata inoltrata in seguito all'azione eseguita dal
+        nostro operatore {{ operatore.nome_completo }} il {{ operazione_data }}.
+    </p>
+
+
+{% endblock %}
