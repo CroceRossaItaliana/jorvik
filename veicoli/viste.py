@@ -5,7 +5,7 @@ from anagrafica.permessi.costanti import GESTIONE_AUTOPARCHI_SEDE, ERRORE_PERMES
 from autenticazione.funzioni import pagina_privata
 from veicoli.forms import ModuloCreazioneVeicolo, ModuloCreazioneAutoparco, ModuloCreazioneManutenzione, \
     ModuloCreazioneFermoTecnico, ModuloCreazioneRifornimento, ModuloCreazioneCollocazione
-from veicoli.models import Veicolo, Autoparco, Collocazione, Manutenzione, FermoTecnico
+from veicoli.models import Veicolo, Autoparco, Collocazione, Manutenzione, FermoTecnico, Rifornimento
 
 
 def _autoparchi_e_veicoli(persona):
@@ -155,6 +155,45 @@ def veicoli_manutenzione(request, me, veicolo):
          "veicolo": veicolo,
     }
     return "veicoli_manutenzione.html", contesto
+
+@pagina_privata
+def veicoli_modifica_manutenzione(request, me, manutenzione):
+    manutenzione = get_object_or_404(Manutenzione, pk=manutenzione)
+    veicolo = get_object_or_404(Veicolo, pk=manutenzione.veicolo.pk)
+    if not me.permessi_almeno(veicolo, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+    modulo = ModuloCreazioneManutenzione(request.POST or None, instance=manutenzione)
+    if modulo.is_valid():
+        m = modulo.save(commit=False)
+        m.creato_da = me
+        m.save()
+        manutenzione.save()
+
+    contesto = {
+        "modulo": modulo,
+         "veicolo": veicolo,
+    }
+    return "veicoli_modifica_manutenzione.html", contesto
+
+
+@pagina_privata
+def veicoli_modifica_rifornimento(request, me, rifornimento):
+    rifornimento = get_object_or_404(Rifornimento, pk=rifornimento)
+    veicolo = get_object_or_404(Veicolo, pk=rifornimento.veicolo.pk)
+    if not me.permessi_almeno(veicolo, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+    modulo = ModuloCreazioneRifornimento(request.POST or None, instance=rifornimento)
+    if modulo.is_valid():
+        r = modulo.save(commit=False)
+        r.creato_da = me
+        r.save()
+        rifornimento.save()
+
+    contesto = {
+        "modulo": modulo,
+         "veicolo": veicolo,
+    }
+    return "veicoli_modifica_rifornimento.html", contesto
 
 @pagina_privata
 def veicoli_rifornimento(request, me, veicolo):
