@@ -842,7 +842,7 @@ def us_ricevute_nuova(request, me):
                                                 'come Volontario o Sostenitore per alla Sede o '
                                                 'partecipante confermato ad un corso base attivo.')
 
-        elif tipo_ricevuta == Quota.QUOTA_SOSTENITORE and appartenenza.membro != Appartenenza.SOSTENITORE:
+        elif tipo_ricevuta == Quota.QUOTA_SOSTENITORE and (not appartenenza or appartenenza.membro != Appartenenza.SOSTENITORE):
             modulo.add_error('persona', 'Questa persona non è registrata come Sostenitore CRI '
                                         'della Sede. Non è quindi possibile registrare la Ricevuta '
                                         'come Sostenitore CRI.')
