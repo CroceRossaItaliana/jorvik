@@ -27,10 +27,10 @@
                     {% csrf_token %}
                     {% bootstrap_form modulo %}
                     <p class="btn-group btn-group-justified">
-                        <a class="btn btn-info" href="{{ ieri }}">
+                        <a class="btn btn-info" href="{{ ieri }}" data-caricamento>
                             <i class="fa fa-fw fa-arrow-left"></i>
                         </a>
-                        <a class="btn btn-info" href="{{ domani }}">
+                        <a class="btn btn-info" href="{{ domani }}" data-caricamento>
                             <i class="fa fa-fw fa-arrow-right"></i>
                         </a>
                     </p>
@@ -121,7 +121,8 @@
 
                         {% endif %}
                         <br />
-                        <a href="/centrale-operativa/poteri/{{ p.pk }}/?next={{ request.get_full_path|urlencode }}">
+                        <a href="/centrale-operativa/poteri/{{ p.pk }}/?next={{ request.get_full_path|urlencode }}"
+                            data-caricamento="Salvataggio...">
                             <i class="fa fa-fw fa-cogs"></i>
                             {% if p.centrale_operativa %}
                                 Ritira poteri
