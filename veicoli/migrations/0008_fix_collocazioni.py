@@ -13,13 +13,9 @@ def fix_collocazioni(apps, schema_editor):
     ids = Collocazione.objects.filter(Q(inizio__lte=inizio),Q(Q(fine__isnull=True) | Q(fine__gt=fine))).values_list("veicolo")
     veicoli = Veicolo.objects.all().exclude(id__in=ids)
 
-    print("veicoli senza collocazione attuale")
-    print(len(veicoli))
-
     for veicolo in veicoli:
         c = Collocazione.objects.filter(veicolo=veicolo).order_by("-fine").first()
         if not c:
-            print("yolo")
             continue
         c.fine = None
         c.save()
