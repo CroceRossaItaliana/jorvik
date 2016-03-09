@@ -391,6 +391,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return Fototessera.con_esito_pending().filter(persona=self)
 
     @property
+    def ha_aspirante(self):
+        """
+        Controlla se la persona ha un oggetto aspirante, altrimenti ritora False.
+        """
+        try:
+            return self.aspirante is not None
+        except ObjectDoesNotExist:
+            return False
+
+    @property
     def eta(self, al_giorno=None):
         """
         Ottiene l'eta' in anni del volontario.

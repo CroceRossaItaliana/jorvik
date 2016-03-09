@@ -500,8 +500,8 @@ def aspirante_corso_base_report_schede(request, me, pk):
 
 @pagina_privata
 def aspirante_home(request, me):
-    if not hasattr(me, 'aspirante'):
-        redirect(ERRORE_PERMESSI)
+    if not me.ha_aspirante:
+        return redirect(ERRORE_PERMESSI)
 
     contesto = {}
     return 'aspirante_home.html', contesto
@@ -509,8 +509,8 @@ def aspirante_home(request, me):
 
 @pagina_privata
 def aspirante_corsi_base(request, me):
-    if not hasattr(me, 'aspirante'):
-        redirect(ERRORE_PERMESSI)
+    if not me.ha_aspirante:
+        return redirect(ERRORE_PERMESSI)
 
     contesto = {
         "corsi": me.aspirante.corsi(),
@@ -520,8 +520,8 @@ def aspirante_corsi_base(request, me):
 
 @pagina_privata
 def aspirante_sedi(request, me):
-    if not hasattr(me, 'aspirante'):
-        redirect(ERRORE_PERMESSI)
+    if not me.ha_aspirante:
+        return redirect(ERRORE_PERMESSI)
 
     contesto = {
         "sedi": me.aspirante.sedi(),
@@ -531,8 +531,8 @@ def aspirante_sedi(request, me):
 
 @pagina_privata
 def aspirante_impostazioni(request, me):
-    if not hasattr(me, 'aspirante'):
-        redirect(ERRORE_PERMESSI)
+    if not me.ha_aspirante:
+        return redirect(ERRORE_PERMESSI)
 
     contesto = {}
     return 'aspirante_impostazioni.html', contesto
