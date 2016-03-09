@@ -7,6 +7,7 @@ from django.forms import ModelForm
 
 from anagrafica.forms import ModuloStepAnagrafica
 from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva, Trasferimento
+from anagrafica.validators import valida_almeno_14_anni
 from base.utils import rimuovi_scelte
 from ufficio_soci.validators import valida_data_non_nel_futuro
 from ufficio_soci.models import Tesseramento, Quota, Tesserino
@@ -98,6 +99,10 @@ class ModuloAggiungiPersona(ModuloStepAnagrafica):
                   'provincia_nascita', 'stato_nascita', 'codice_fiscale',
                   'indirizzo_residenza', 'comune_residenza', 'provincia_residenza',
                   'stato_residenza', 'cap_residenza', 'email_contatto', ]
+
+    def clean_data_nascita(self):
+        # Permette tutte le date di nascita.
+        return self.cleaned_data.get('data_nascita')
 
 
 class ModuloReclamaAppartenenza(forms.ModelForm):

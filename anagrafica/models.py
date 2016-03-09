@@ -83,14 +83,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     # Costanti
     ETA_GIOVANE = 32
+    ETA_MINIMA_SOCIO = 14
 
     # Informazioni anagrafiche
     nome = models.CharField("Nome", max_length=64, db_index=True)
     cognome = models.CharField("Cognome", max_length=64, db_index=True)
     codice_fiscale = UpperCaseCharField("Codice Fiscale", max_length=16, blank=False,
                                         unique=True, db_index=True, validators=[valida_codice_fiscale, ])
-    data_nascita = models.DateField("Data di nascita", db_index=True, null=True,
-                                    validators=[valida_almeno_14_anni])
+    data_nascita = models.DateField("Data di nascita", db_index=True, null=True)
     genere = models.CharField("Sesso", max_length=1, choices=GENERE, db_index=True)
 
     # Stato

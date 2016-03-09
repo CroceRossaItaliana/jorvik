@@ -158,6 +158,13 @@ def us_reclama_persona(request, me, persona_pk):
                                                             "cambio appartenenza.")
                     continua = False
 
+            # Controllo eta' minima socio
+            if modulo_appartenenza.cleaned_data.get('membro') in Appartenenza.MEMBRO_SOCIO \
+                    and persona.eta < Persona.ETA_MINIMA_SOCIO:
+                modulo_appartenenza.add_error('membro', "I soci di questo tipo devono avere almeno "
+                                                        "%d anni. " % Persona.ETA_MINIMA_SOCIO)
+                continua = False
+
             if continua:
 
                 app = modulo_appartenenza.save(commit=False)
