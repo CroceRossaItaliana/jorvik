@@ -254,7 +254,6 @@ class TestBase(TestCase):
 
 class TestFunzionaleUfficioSoci(TestFunzionale):
 
-    @skip
     def test_apertura_elenchi(self):
 
         # Crea oggetti e nomina il delegato US
@@ -290,8 +289,6 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
                 )
 
     def test_reclama_ordinario(self):
-
-        # TODO rimuovere skip test precedente
 
         # Crea oggetti e nomina i delegati US regionali e Locali
         us_regionale = crea_persona()
