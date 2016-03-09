@@ -29,6 +29,17 @@ class TestFunzionale(StaticLiveServerTestCase):
 
             iframe.click_link_by_partial_text('Continua')
 
+    def presente_in_elenco(self, sessione, persona):
+        # Genera con impostazioni di default (clicca due volte su "Genera")
+        sessione.find_by_xpath("//button[@type='submit']").first.click()
+        with sessione.get_iframe(0) as iframe:  # Dentro la finestra
+            if iframe.is_text_present("Genera elenco"):
+                iframe.find_by_xpath("//button[@type='submit']").first.click()
+            # Cerca la persona
+            iframe.fill('filtra', persona.codice_fiscale)
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+            return iframe.is_text_present(persona.nome)
+
     def seleziona_delegato(self, sessione, persona):
         self.seleziona_delegati(sessione, [persona])
 

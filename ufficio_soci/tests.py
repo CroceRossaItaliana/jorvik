@@ -1,13 +1,16 @@
 import datetime
+from unittest import skip
 
 from django.test import TestCase
+from django.utils import timezone
 
+from anagrafica.costanti import REGIONALE
 from anagrafica.models import Appartenenza, Sede, Persona
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from autenticazione.utils_test import TestFunzionale
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza
 from ufficio_soci.elenchi import ElencoElettoratoAlGiorno
-from ufficio_soci.forms import ModuloElencoElettorato
+from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota
 
 
 class TestBase(TestCase):
@@ -251,6 +254,7 @@ class TestBase(TestCase):
 
 class TestFunzionaleUfficioSoci(TestFunzionale):
 
+    @skip
     def test_apertura_elenchi(self):
 
         # Crea oggetti e nomina il delegato US
@@ -284,3 +288,65 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
                     iframe.is_text_present("Invia messaggio"),
                     msg="Elenco %s apribile da web" % elenco,
                 )
+
+    def test_reclama_ordinario(self):
+
+        # TODO rimuovere skip test precedente
+
+        # Crea oggetti e nomina i delegati US regionali e Locali
+        us_regionale = crea_persona()
+        us_locale = crea_persona()
+
+        ordinario, regionale, appartenenza = crea_persona_sede_appartenenza(presidente=us_regionale)
+        appartenenza.membro = Appartenenza.ORDINARIO
+        appartenenza.save()
+        regionale.estensione = REGIONALE
+        regionale.save()
+
+        locale = crea_sede(presidente=us_locale, genitore=regionale)
+
+        sessione_regionale = self.sessione_utente(persona=us_regionale)
+        sessione_locale = self.sessione_utente(persona=us_locale)
+
+        # Prima di tutto, assicurati che il socio ordinario risulti correttamente
+        # nell'elenco del regionale.
+
+        sessione_regionale.click_link_by_partial_text("Soci")
+        sessione_regionale.click_link_by_partial_text("Ordinari")
+
+        self.assertTrue(self.presente_in_elenco(sessione_regionale, persona=ordinario),
+                        msg="Il socio ordinario è in elenco al regionale")
+
+        # Poi, vai alla procedura di reclamo per il locale e completa.
+        sessione_locale.click_link_by_partial_text("Soci")
+        sessione_locale.click_link_by_partial_text("Reclama Persona")
+        sessione_locale.fill('codice_fiscale', ordinario.codice_fiscale)
+        sessione_locale.find_by_xpath("//button[@type='submit']").first.click()
+
+        # Completa dati di inizio appartenenza - data nel passato!
+        sessione_locale.fill('app-inizio', "1/1/1910")
+        sessione_locale.select('app-membro', Appartenenza.SOSTENITORE)
+        sessione_locale.select('quota-registra_quota', ModuloReclamaQuota.NO)
+        sessione_locale.find_by_xpath("//button[@type='submit']").first.click()
+
+        self.assertTrue(sessione_locale.is_text_present("1. Appartenenza al Comitato"),
+                        msg="Non e possibile reclamare ordinario nel passato")
+
+        # Compila con la data di oggi.
+        sessione_locale.fill('app-inizio', timezone.now().strftime("%d/%m/%Y"))
+        sessione_locale.find_by_xpath("//button[@type='submit']").first.click()
+
+        # Controlla elenco dei sostenitori.
+        sessione_locale.visit("%s/utente/" % self.live_server_url)
+        sessione_locale.click_link_by_partial_text("Soci")
+        sessione_locale.click_link_by_partial_text("Sostenitori")
+        self.assertTrue(
+            self.presente_in_elenco(sessione_locale, persona=ordinario),
+            msg="L'ex ordinario è stato reclamato con successo")
+
+        # Controlla la rimozione corretta dagli ordinari.
+        sessione_regionale.click_link_by_partial_text("Ordinari")
+        self.assertFalse(
+            self.presente_in_elenco(sessione_regionale, persona=ordinario),
+            msg="L'ex ordinario non è più in elenco al regionale"
+        )

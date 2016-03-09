@@ -149,11 +149,24 @@ def us_reclama_persona(request, me, persona_pk):
                                                              "seleziona 'No' su 'Registra Quota'.")
                     continua = False
 
+            vecchia_appartenenza = Appartenenza.query_attuale(persona=persona,
+                                                              membro=Appartenenza.ORDINARIO).first()
+            if vecchia_appartenenza:  # Se ordinario presso il regionale.
+                if modulo_appartenenza.cleaned_data['inizio'] < vecchia_appartenenza.inizio:
+                    modulo_appartenenza.add_error('inizio', "La persona non era socio ordinario CRI alla "
+                                                            "data selezionata. Inserisci la data corretta di "
+                                                            "cambio appartenenza.")
+                    continua = False
+
             if continua:
 
                 app = modulo_appartenenza.save(commit=False)
                 app.persona = persona
                 app.save()
+
+                if vecchia_appartenenza:  # Termina app. ordinario
+                    vecchia_appartenenza.fine = app.inizio
+                    vecchia_appartenenza.save()
 
                 q = modulo_quota.cleaned_data
 
