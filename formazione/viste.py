@@ -537,3 +537,19 @@ def aspirante_impostazioni(request, me):
     contesto = {}
     return 'aspirante_impostazioni.html', contesto
 
+
+@pagina_privata
+def aspirante_impostazioni_cancella(request, me):
+    if not me.ha_aspirante:
+        return redirect(ERRORE_PERMESSI)
+
+    if not me.cancellabile:
+        return errore_generico(request, me, titolo="Impossibile cancellare automaticamente il profilo da Gaia",
+                               messaggio="E' necessario richiedere la cancellazione manuale al personale di supporto.")
+
+    # Cancella!
+    me.delete()
+
+    return messaggio_generico(request, me, titolo="Il tuo profilo è stato cancellato da Gaia",
+                              messaggio="Abbiamo rimosso tutti i tuoi dati dal nostro sistema. "
+                                        "Se cambierai idea, non esitare a iscriverti nuovamente! ")

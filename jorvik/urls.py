@@ -222,6 +222,7 @@ urlpatterns = [
 
     url(r'^aspirante/$', 'formazione.viste.aspirante_home'),
     url(r'^aspirante/impostazioni/$', 'formazione.viste.aspirante_impostazioni'),
+    url(r'^aspirante/impostazioni/cancella/$', 'formazione.viste.aspirante_impostazioni_cancella'),
     url(r'^aspirante/corsi-base/$', 'formazione.viste.aspirante_corsi_base'),
     url(r'^aspirante/sedi/$', 'formazione.viste.aspirante_sedi'),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/$', 'formazione.viste.aspirante_corso_base_informazioni'),

@@ -808,7 +808,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def estensioni_attuali_e_in_attesa(self):
         return self.estensioni_attuali() | self.estensioni_in_attesa()
 
-
     def espelli(self):
         for appartenenza in self.appartenenze_attuali():
             appartenenza.terminazione = Appartenenza.ESPULSIONE
@@ -947,6 +946,22 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         for delega in deleghe:
             oggetti += [delega.oggetto]
         return oggetti
+
+    @property
+    def cancellabile(self):
+        """
+        Ritorna True se la persona puo essere cancellata senza implicazioni.
+        """
+        from ufficio_soci.models import Quota
+        from formazione.models import PartecipazioneCorsoBase
+        from attivita.models import Partecipazione
+        ha_appartenenza = Appartenenza.objects.filter(persona=self).exists()
+        ha_ricevuta = Quota.objects.filter(persona=self).exists()
+        ha_partecipazione_corso_base = PartecipazioneCorsoBase.objects.filter(persona=self).exists()
+        ha_partecipazione = Partecipazione.objects.filter(persona=self).exists()
+        if ha_appartenenza or ha_ricevuta or ha_partecipazione or ha_partecipazione_corso_base:
+            return False
+        return True
 
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
