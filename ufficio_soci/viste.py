@@ -778,7 +778,7 @@ def us_quote_nuova(request, me):
         else:
 
             appartenenza = volontario.appartenenze_attuali(al_giorno=data_versamento, membro=Appartenenza.VOLONTARIO).first()
-            comitato = appartenenza.sede.comitato
+            comitato = appartenenza.sede.comitato if appartenenza else None
 
             if appartenenza.sede not in sedi:
                 modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
