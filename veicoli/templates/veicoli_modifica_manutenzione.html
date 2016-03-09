@@ -1,0 +1,38 @@
+{% extends "veicoli_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load utils %}
+{% block pagina_titolo %}Modifica manutenzione{% endblock %}
+
+{% block app_contenuto %}
+
+<div class="row">
+        <div class="col-lg-8 col-lg-offset-2">
+        <div class="panel panel-primary">
+
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-plus"></i> Modifica Manutenzione
+                </h4>
+
+            </div>
+            <div class="panel-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo %}
+
+                    <button class="btn btn-block btn-primary btn-lg">
+                        <i class="fa fa-fw fa-check"></i>
+                        Salva
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</div>
+
+
+{% endblock %}
