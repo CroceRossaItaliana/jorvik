@@ -55,7 +55,7 @@ from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegat
 from base.utils import is_list, sede_slugify, UpperCaseCharField, poco_fa
 from autoslug import AutoSlugField
 
-from curriculum.models import Titolo
+from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio
 from django.apps import apps
 
@@ -1993,7 +1993,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         #TODO reperibilita'
         [
             [x.ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
-            for y in [Estensione, Trasferimento, Partecipazione, Titolo]
+            for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
         ]
 
         Messaggio.costruisci_e_invia(
