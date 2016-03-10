@@ -208,3 +208,15 @@ body, p, span, div {
 #menu-applicazione ul li a {
     padding: 8px 10px;
 }
+
+.badge-danger {
+    background-color: #CC0000;
+}
+
+.padding-15 {
+    padding: 15px;
+}
+
+.box-ombreggiato-2 {
+    box-shadow: 1px 2px 4px gray;
+}
