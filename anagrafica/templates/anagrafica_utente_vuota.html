@@ -9,7 +9,7 @@
 {% block pagina_principale %}
 <div class="container padding-verticale-20">
 
-    <div class="row allinea-centro">
+    <div class="row allinea-centro" role="navigation" id="menu-applicazione">
 
         <ul class="nav nav-tabs nav-justified">
             {% for app_slug, app_nome, app_icona, app_num in user.applicazioni_disponibili %}

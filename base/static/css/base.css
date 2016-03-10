@@ -204,3 +204,7 @@ body, p, span, div {
     margin-top: -7px;
     margin-right: 5px;
 }
+
+#menu-applicazione ul li a {
+    padding: 8px 10px;
+}
