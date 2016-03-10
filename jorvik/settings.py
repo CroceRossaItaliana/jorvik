@@ -70,6 +70,7 @@ STATICFILES_FINDERS = (
 CRON_CLASSES = [
     "posta.cron.CronSmaltisciCodaPosta",
     "base.cron.CronCancellaFileScaduti",
+    "anagrafica.cron.CronReportComitati",
 ]
 
 # Classi middleware (intercetta & computa)
