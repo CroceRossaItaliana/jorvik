@@ -1597,17 +1597,21 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             mittente=self.firmatario,
             destinatari=[self.persona],
         )]
-        messaggi += [
-             Messaggio.costruisci_e_invia(
-                 oggetto="IMPORTANTE: Check-list nuovo Presidente",
-                 modello="email_delega_notifica_nuovo_presidente.html",
-                 corpo={
-                     "delega": self,
-                 },
-                 mittente=self.firmatario,
-                 destinatari=[self.persona],
-             )
-        ]
+
+        # Se presidente, invia check-list.
+        if self.tipo == PRESIDENTE:
+            messaggi += [
+                 Messaggio.costruisci_e_invia(
+                     oggetto="IMPORTANTE: Check-list nuovo Presidente",
+                     modello="email_delega_notifica_nuovo_presidente.html",
+                     corpo={
+                         "delega": self,
+                     },
+                     mittente=self.firmatario,
+                     destinatari=[self.persona],
+                 )
+            ]
+
         return messaggi
 
     def invia_notifica_terminazione(self, mittente=None, accoda=False):
