@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404, redirect
 from anagrafica.permessi.costanti import GESTIONE_AUTOPARCHI_SEDE, ERRORE_PERMESSI, MODIFICA
 from autenticazione.funzioni import pagina_privata
 from veicoli.forms import ModuloCreazioneVeicolo, ModuloCreazioneAutoparco, ModuloCreazioneManutenzione, \
-    ModuloCreazioneFermoTecnico, ModuloCreazioneRifornimento, ModuloCreazioneCollocazione
+    ModuloCreazioneFermoTecnico, ModuloCreazioneRifornimento, ModuloCreazioneCollocazione, ModuloFiltraVeicoli
 from veicoli.models import Veicolo, Autoparco, Collocazione, Manutenzione, FermoTecnico, Rifornimento
 
 
@@ -53,9 +53,13 @@ def veicoli(request, me):
 @pagina_privata
 def veicoli_elenco(request, me):
     autoparchi, veicoli = _autoparchi_e_veicoli(me)
+    modulo = ModuloFiltraVeicoli()
+    modulo.fields['autoparchi'].queryset = autoparchi
+    modulo.fields['autoparchi'].initial = autoparchi
     contesto = {
         "veicoli": veicoli,
         "autoparchi": autoparchi,
+        "modulo": modulo,
     }
     return "veicoli_elenco.html", contesto
 

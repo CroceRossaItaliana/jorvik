@@ -44,3 +44,8 @@ class ModuloCreazioneSegnalazione(ModelForm):
     class Meta:
         model = Segnalazione
         fields = ['descrizione', 'manutenzione']
+
+class ModuloFiltraVeicoli(forms.Form):
+
+    autoparchi = forms.ModelMultipleChoiceField(queryset=Autoparco.objects.none())
+    targa = forms.CharField()
