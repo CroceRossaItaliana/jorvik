@@ -157,7 +157,7 @@ LOGIN_REDIRECT_URL = '/utente/'
 SESSION_COOKIE_PATH = '/'
 
 # Driver per i test funzionali
-DRIVER_WEB = 'firefox'
+DRIVER_WEB = 'chrome'
 
 # Configurazione E-mail
 EMAIL_CONF = configparser.ConfigParser()
