@@ -1,6 +1,6 @@
 import datetime
 
-import autocomplete_light
+from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm

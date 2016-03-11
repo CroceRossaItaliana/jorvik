@@ -26,7 +26,6 @@ from django.db import models
 from django.db.models import Q, QuerySet, Avg
 from django_countries.fields import CountryField
 import phonenumbers
-from model_utils.managers import PassThroughManagerMixin
 
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 
@@ -48,7 +47,7 @@ from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codic
 from attivita.models import Turno, Partecipazione
 from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
-from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
+from base.models import ModelloSemplice, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
     Autorizzazione, ConVecchioID
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
@@ -1182,10 +1181,6 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         self.confermata = False
 
 
-class SedeManager(PassThroughManagerMixin, mptt.managers.TreeManager):
-    pass
-
-
 class SedeQuerySet(QuerySet):
 
     def comitati(self):
@@ -1253,7 +1248,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         (AUTOPARCO, 'Autoparco')
     )
 
-    objects = SedeManager.for_queryset_class(SedeQuerySet)()
+    objects = mptt.managers.TreeManager.from_queryset(SedeQuerySet)()
 
     estensione = models.CharField("Estensione", max_length=1, choices=ESTENSIONE, db_index=True)
     tipo = models.CharField("Tipologia", max_length=1, choices=TIPO, default=COMITATO, db_index=True)

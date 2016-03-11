@@ -307,7 +307,7 @@ def aspirante_corso_base_attiva(request, me, pk):
                                torna_url=corso.url)
 
     corpo = {"corso": corso, "persona": me}
-    testo = get_template("email_aspirante_corso_inc_testo.html").render(Context(corpo))
+    testo = get_template("email_aspirante_corso_inc_testo.html").render(corpo)
 
     if request.POST:
         corso.attiva(rispondi_a=me)

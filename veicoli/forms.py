@@ -1,4 +1,4 @@
-import autocomplete_light
+from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.forms import ModelForm
 from veicoli.models import Veicolo, Autoparco, Rifornimento, Manutenzione, FermoTecnico, Collocazione, Segnalazione

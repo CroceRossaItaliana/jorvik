@@ -9,7 +9,7 @@ from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione
     Fototessera, Trasferimento, Riserva
 from anagrafica.validators import valida_almeno_14_anni
 from autenticazione.models import Utenza
-import autocomplete_light
+from autocomplete_light import shortcuts as autocomplete_light
 
 from base.forms import ModuloMotivoNegazione
 from curriculum.models import TitoloPersonale

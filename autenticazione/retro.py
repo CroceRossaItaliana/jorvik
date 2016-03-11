@@ -1,7 +1,8 @@
 import hashlib
+from collections import OrderedDict
+
 from django.contrib.auth.hashers import BasePasswordHasher, mask_hash
 from django.utils.crypto import constant_time_compare
-from django.utils.datastructures import SortedDict
 
 __author__ = 'alfioemanuele'
 
@@ -35,7 +36,7 @@ class RetroGaiaHasher(BasePasswordHasher):
 
     def safe_summary(self, encoded):
         algorithm, iterations, salt, hash = encoded.split('$', 3)
-        return SortedDict([
+        return OrderedDict([
             ('algorithm', algorithm),
             ('iterations', iterations),
             ('salt', mask_hash(salt)),

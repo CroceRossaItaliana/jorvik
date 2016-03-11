@@ -3,8 +3,8 @@ import csv
 import datetime
 from collections import OrderedDict
 
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
-from django.db.models.loading import get_model
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.contrib.auth import login
@@ -785,7 +785,7 @@ def strumenti_delegati(request, me):
     continua_url = request.session['continua_url']
     almeno = request.session['almeno']
     delega = request.session['delega']
-    oggetto = get_model(app_label, model)
+    oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
 
     modulo = ModuloCreazioneDelega(request.POST or None, initial={
@@ -835,7 +835,7 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
     continua_url = request.session['continua_url']
     almeno = request.session['almeno']
     delega = request.session['delega']
-    oggetto = get_model(app_label, model)
+    oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
 
     delega = get_object_or_404(Delega, pk=delega_pk)

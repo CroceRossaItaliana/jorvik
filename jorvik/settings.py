@@ -4,7 +4,6 @@ Queste sono le impostazioni di Django per il progetto Jorvik.
 Informazioni sul file:  https://docs.djangoproject.com/en/1.7/topics/settings/
 Documentazione config.: https://docs.djangoproject.com/en/1.7/ref/settings/
 """
-from django.template.base import add_to_builtins
 
 try:
     import configparser
@@ -30,9 +29,7 @@ INSTALLED_APPS = (
     'django.contrib.gis',
     # Librerie terze
     # 'oauth2_provider',
-    'rest_framework',
     'mptt',
-    'safedelete',
     # Moduli interni
     'base',
     'autenticazione',
@@ -82,17 +79,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-)
-
-TEMPLATE_CONTEXT_PROCESSOR = (
-    "django.contrib.auth.context_processors.auth",
-    "django.core.context_processors.debug",
-    "django.core.context_processors.i18n",
-    "django.core.context_processors.media",
-    "django.core.context_processors.static",
-    "django.core.context_processors.tz",
-    "django.core.context_processors.request",
-    "django.contrib.messages.context_processors.messages",
 )
 
 # Imposta anagrafica.Utenza come modello di autenticazione
@@ -163,21 +149,12 @@ SITE_ID = 1
 # File statici (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
-TEMPLATE_DIRS = (
-    'base/templates',
-    os.path.join(BASE_DIR,  'templates'),
-)
+
 
 LOGIN_URL = '/login/'
 LOGOUT_URL = '/logout/'
 LOGIN_REDIRECT_URL = '/utente/'
 SESSION_COOKIE_PATH = '/'
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'oauth2_provider.ext.rest_framework.OAuth2Authentication',
-    )
-}
 
 # Driver per i test funzionali
 DRIVER_WEB = 'firefox'
@@ -211,7 +188,6 @@ STATIC_URL = MEDIA_CONF.get('static', 'static_url', fallback='/assets/')
 DEBUG_CONF = configparser.ConfigParser()
 DEBUG_CONF.read(DEBUG_CONF_FILE)
 DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
-TEMPLATE_DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
 SECRET_KEY = DEBUG_CONF.get('production', 'secret_key')
 
 host = "%s" % (DEBUG_CONF.get('production', 'host'),)
@@ -224,3 +200,25 @@ APIS_CONF.read(APIS_CONF_FILE)
 GOOGLE_KEY = APIS_CONF.get('google', 'api_key')
 DOMPDF_ENDPOINT = APIS_CONF.get('dompdf', 'endpoint',
                                 fallback='http://pdf-server.alacriter.uk.92-222-162-128.alacriter.uk/render/www/render.php')
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            "context_processors": (
+                "django.contrib.auth.context_processors.auth",
+                "django.template.context_processors.debug",
+                "django.template.context_processors.i18n",
+                "django.template.context_processors.media",
+                "django.template.context_processors.static",
+                "django.template.context_processors.tz",
+                "django.template.context_processors.request",
+                "django.contrib.messages.context_processors.messages",
+            ),
+            "debug": DEBUG_CONF.getboolean('debug', 'debug')
+
+        },
+    },
+]

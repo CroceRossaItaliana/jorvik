@@ -276,7 +276,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         m = cls(
             oggetto=oggetto,
             mittente=mittente,
-            corpo=get_template(modello).render(Context(corpo)),
+            corpo=get_template(modello).render(corpo),
             **kwargs
         )
         m._processa_link()

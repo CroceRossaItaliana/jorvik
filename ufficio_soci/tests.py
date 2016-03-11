@@ -284,7 +284,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
                     iframe.find_by_xpath("//button[@type='submit']").first.click()
 
                 self.assertTrue(
-                    iframe.is_text_present("Invia messaggio"),
+                    iframe.is_text_present("Invia messaggio", wait_time=5),
                     msg="Elenco %s apribile da web" % elenco,
                 )
 
