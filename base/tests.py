@@ -83,7 +83,7 @@ class TestFunzionaleBase(TestFunzionale):
         sessione_presidente.visit("%s%s" % (self.live_server_url,
                                             attivita.url_modifica))
 
-        with sessione_presidente.get_iframe(0) as iframe:
+        with sessione_presidente.get_iframe(1) as iframe:
 
             iframe.fill('indirizzo', 'via etnea 353')
             iframe.fill('comune', 'ct')
