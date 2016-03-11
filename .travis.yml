@@ -1,6 +1,5 @@
 language: python
 python:
-  - "3.3"
   - "3.4"
   - "3.5"
 addons:
@@ -22,7 +21,4 @@ install:
 
 
 script:
-  # Inserisce la chiave API da variabile GOOGLE_KEY in config/apis.cnf
-  #  questa e' usata per i test della locazione.
-  - 'echo "[google]\n\napi_key = $GOOGLE_KEY\n" > ./config/apis.cnf'
-  - "python ./manage.py test -v 3 --parallel 2"
+  - "python ./manage.py test -v 3"

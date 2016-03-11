@@ -45,7 +45,7 @@ Puoi trovare la **[Documentazione sul Wiki del progetto](https://github.com/Croc
 
 ### Requisiti
 
-* **[Python 3.3 e superiore](https://www.python.org/downloads/)** (es. `python3`)
+* **[Python 3.4 e superiore](https://www.python.org/downloads/)** (es. `python3`)
 * **[PIP 3](https://www.python.org/downloads/)** (es. `pip3`)
 * **[PostgreSQL](http://www.postgresql.org/) 9.4+** con [PostGIS](http://postgis.net/))
 * **[GEOS](http://trac.osgeo.org/geos/)** (Geometry Engine Open Source)
