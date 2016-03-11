@@ -20,5 +20,9 @@ install:
   - "pip install -U pip wheel"
   - "pip install -r requirements.txt"
 
+  # Inserisce la chiave API da variabile GOOGLE_KEY in config/apis.cnf
+  #  questa e' usata per i test della locazione.
+  - 'echo "[google]\n\napi_key = $GOOGLE_KEY\n" > ./config/apis.cnf'
+
 script:
   - "python ./manage.py test -v 3"
