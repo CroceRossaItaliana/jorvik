@@ -22,9 +22,9 @@ before_script:
 
   - wget http://chromedriver.storage.googleapis.com/2.21/chromedriver_linux32.zip -O /tmp/chromedriver.zip
   - unzip /tmp/chromedriver.zip
-  - mkdir -p /tmp/chromedriver/
-  - mv /tmp/chromedriver /tmp/chromedriver/chromedriver
-  - export PATH=$PATH:/tmp/chromedriver/
+  - mkdir -p /tmp/cdriver/
+  - mv /tmp/chromedriver /tmp/cdriver/chromedriver
+  - export PATH=$PATH:/tmp/cdriver/
 
 install:
   - "pip install -U pip wheel"
