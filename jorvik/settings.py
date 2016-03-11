@@ -197,7 +197,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', host, www_host]
 # Configurazione dei servizi API
 APIS_CONF = configparser.ConfigParser()
 APIS_CONF.read(APIS_CONF_FILE)
-GOOGLE_KEY = APIS_CONF.get('google', 'api_key')
+GOOGLE_KEY = APIS_CONF.get('google', 'api_key', fallback=os.environ.get("GOOGLE_KEY"))
 DOMPDF_ENDPOINT = APIS_CONF.get('dompdf', 'endpoint',
                                 fallback='http://pdf-server.alacriter.uk.92-222-162-128.alacriter.uk/render/www/render.php')
 
