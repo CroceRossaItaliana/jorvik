@@ -32,6 +32,4 @@ install:
 
 
 script:
-  - "export PATH=$PATH:/tmp/cdriver/"
-  - "echo $PATH"
-  - "python ./manage.py test -v 3"
+  - "PATH=$PATH:/tmp/cdriver/ python ./manage.py test -v 3"
