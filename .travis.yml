@@ -21,7 +21,7 @@ before_script:
   - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d jorvik
 
   - wget http://chromedriver.storage.googleapis.com/2.21/chromedriver_linux32.zip -O /tmp/chromedriver.zip
-  - unzip /tmp/chromedriver.zip
+  - unzip /tmp/chromedriver.zip -d /tmp
   - mkdir -p /tmp/cdriver/
   - mv /tmp/chromedriver /tmp/cdriver/chromedriver
   - export PATH=$PATH:/tmp/cdriver/
