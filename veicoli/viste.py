@@ -52,10 +52,21 @@ def veicoli(request, me):
 
 @pagina_privata
 def veicoli_elenco(request, me):
+
+    modulo = ModuloFiltraVeicoli(request.POST or None)
+
     autoparchi, veicoli = _autoparchi_e_veicoli(me)
-    modulo = ModuloFiltraVeicoli()
     modulo.fields['autoparchi'].queryset = autoparchi
     modulo.fields['autoparchi'].initial = autoparchi
+
+    if modulo.is_valid():
+        autoparchi = modulo.cleaned_data.get('autoparchi')
+        targa = modulo.cleaned_data.get('targa')
+        stati = modulo.cleaned_data.get('stato')
+        veicoli = veicoli.filter(Collocazione.query_attuale().via("collocazioni"), collocazioni__autoparco__in=autoparchi, targa__icontains=targa, stato=stati)
+
+
+
     contesto = {
         "veicoli": veicoli,
         "autoparchi": autoparchi,

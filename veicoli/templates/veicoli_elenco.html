@@ -6,29 +6,31 @@
 
 {% block app_contenuto %}
 
-<div class="row">
-
-    <div class="panel panel-primary">
-        <div class="panel-heading">
-            <h2 class="panel-title">
-                <i class="fa fa-fw fa-search"></i>
-                Filtra i veicoli
-            </h2>
-        </div>
-        <div class="panel-body">
-            <form method="POST">
-                {% csrf_token %}
-                {% bootstrap_form modulo %}
-                <button type="submit" class="btn btn-block btn-primary">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h2 class="panel-title">
                     <i class="fa fa-fw fa-search"></i>
-                    Filtra veicoli
-                </button>
-            </form>
+                    Filtra i veicoli
+                </h2>
+            </div>
+            <div class="panel-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-lg-12">
+                            {% bootstrap_form modulo layout="horizontal" %}
+                        </div>
+                    </div>
+                    <p>&nbsp;</p>
+                    <button type="submit" class="btn btn-block btn-primary">
+                        <i class="fa fa-fw fa-search"></i>
+                        Filtra veicoli
+                    </button>
+                </form>
 
+            </div>
         </div>
-    </div>
 
-</div>
 
 <div class="row">
     <div class="col-lg-12">

@@ -47,5 +47,6 @@ class ModuloCreazioneSegnalazione(ModelForm):
 
 class ModuloFiltraVeicoli(forms.Form):
 
-    autoparchi = forms.ModelMultipleChoiceField(queryset=Autoparco.objects.none())
-    targa = forms.CharField()
+    autoparchi = forms.ModelMultipleChoiceField(queryset=Autoparco.objects.none(), help_text="È possibile selezionare più di un autoparco alla volta")
+    targa = forms.CharField(required=False, help_text="È possibile ricercare targhe parziali")
+    stato = forms.ChoiceField(choices=Veicolo.STATO, required=False, help_text="Stato del veicolo")
