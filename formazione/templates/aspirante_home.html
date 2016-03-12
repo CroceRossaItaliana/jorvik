@@ -97,7 +97,7 @@
         </div>
         <div class="alert alert-info">
             <i class="fa fa-fw fa-map-marker"></i> Nel raggio di {{ me.aspirante.raggio }} km da:<br />
-            <strong>{{ me.aspirante.locazione }}</strong>
+            <strong>{{ me.aspirante.locazione|default:"NESSUNA LOCAZIONE IMPOSTATA" }}</strong>
             (<a href="/aspirante/impostazioni/"><i class="fa fa-fw fa-pencil"></i> cambia</a>)
         </div>
 

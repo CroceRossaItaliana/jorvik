@@ -138,7 +138,7 @@ class PDF(Allegato):
 
         url = DOMPDF_ENDPOINT
         corpo.update({"timestamp": datetime.now()})
-        html = get_template(modello).render(Context(corpo))
+        html = get_template(modello).render(corpo)
         values = {
             'paper': formato,
             'orientation': orientamento,

@@ -96,6 +96,7 @@ class ElencoVistaAnagrafica(ElencoVistaSemplice):
             ("Stato di Nascita", lambda p: p.stato_nascita),
             ("Indirizzo di residenza", lambda p: p.indirizzo_residenza),
             ("Comune di residenza", lambda p: p.comune_residenza),
+            ("CAP di residenza", lambda p: p.cap_residenza),
             ("Provincia di residenza", lambda p: p.provincia_residenza),
             ("Stato di residenza", lambda p: p.stato_residenza),
             ("Email", lambda p: p.email),

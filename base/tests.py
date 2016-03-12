@@ -1,8 +1,12 @@
+from unittest import skipIf
 from zipfile import ZipFile
 from django.core.files.temp import NamedTemporaryFile
 from django.test import TestCase
 from anagrafica.models import Persona
+from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
+from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_area_attivita
+from jorvik.settings import GOOGLE_KEY
 
 
 class TestBase(TestCase):
@@ -64,3 +68,36 @@ class TestBase(TestCase):
             p.allegati.all(),
             msg="Allegato associato correttamente alla persona"
         )
+
+
+class TestFunzionaleBase(TestFunzionale):
+
+    @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
+    def test_ricerca_posizione(self):
+
+        presidente = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
+        area, attivita = crea_area_attivita(sede=sede)
+
+        sessione_presidente = self.sessione_utente(persona=presidente)
+        sessione_presidente.visit("%s%s" % (self.live_server_url,
+                                            attivita.url_modifica))
+
+        with sessione_presidente.get_iframe(0) as iframe:
+
+            iframe.fill('indirizzo', 'via etnea 353')
+            iframe.fill('comune', 'ct')
+            iframe.fill('provincia', 'ctnia')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            self.assertTrue(
+                iframe.is_text_present("Via Etnea, 353, 95125 Catania CT, Italia"),
+                msg="Indirizzo trovato correttamente"
+            )
+
+            iframe.find_by_xpath("//button[@value='Via Etnea, 353, 95125 Catania CT, Italia']").first.click()
+
+            self.assertTrue(
+                iframe.is_text_present("Via Etnea, 353, 95125 Catania CT, Italia", wait_time=5),
+                msg="Indirizzo salvato correttamente"
+            )

@@ -791,15 +791,18 @@ def attivita_statistiche(request, me):
             qs_turni = Turno.objects.filter(attivita__in=qs_attivita, inizio__lte=fine, fine__gte=inizio)
             qs_part = Partecipazione.con_esito_ok(turno__in=qs_turni)
 
-            ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore']
-            ore_uomo_di_servizio = qs_part.annotate(durata=F('turno__fine') - F('turno__inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore']
+            ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore'] or timedelta()
+            ore_uomo_di_servizio = qs_part.annotate(durata=F('turno__fine') - F('turno__inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore'] or timedelta()
 
             # Poi, associa al dizionario statistiche.
             dati['etichetta'] = "%d %s fa" % (periodo, etichetta,)
             dati['num_turni'] = qs_turni.count()
             dati['ore_di_servizio'] = ore_di_servizio
             dati['ore_uomo_di_servizio'] = ore_uomo_di_servizio
-            dati['rapporto'] = round(ore_uomo_di_servizio / ore_di_servizio, 3)
+            try:
+                dati['rapporto'] = round(ore_uomo_di_servizio / ore_di_servizio, 3)
+            except ZeroDivisionError:
+                dati['rapporto'] = 0
 
             statistiche.append(dati)
 

@@ -3,6 +3,7 @@ from django import forms
 from django.shortcuts import get_object_or_404, redirect
 from anagrafica.permessi.costanti import GESTIONE_AUTOPARCHI_SEDE, ERRORE_PERMESSI, MODIFICA
 from autenticazione.funzioni import pagina_privata
+from base.utils import poco_fa
 from veicoli.forms import ModuloCreazioneVeicolo, ModuloCreazioneAutoparco, ModuloCreazioneManutenzione, \
     ModuloCreazioneFermoTecnico, ModuloCreazioneRifornimento, ModuloCreazioneCollocazione, ModuloFiltraVeicoli
 from veicoli.models import Veicolo, Autoparco, Collocazione, Manutenzione, FermoTecnico, Rifornimento
@@ -271,6 +272,7 @@ def veicoli_collocazioni(request, me, veicolo):
     if modulo.is_valid():
         veicolo.collocazione().termina()
         c = modulo.save(commit=False)
+        c.inizio = poco_fa()
         c.veicolo = veicolo
         c.creato_da = me
         c.save()

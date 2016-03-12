@@ -1,9 +1,9 @@
-from django.db.models.loading import get_model
 from django.shortcuts import redirect
 
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, MODIFICA
 from autenticazione.funzioni import pagina_privata
 from social.models import Commento
+from django.apps import apps
 
 
 @pagina_privata
@@ -22,7 +22,7 @@ def commenti_nuovo(request, me):
     commento = request.POST['commento']
     oggetto_pk = int(request.POST['oggetto_pk'])
 
-    oggetto_m = get_model(oggetto_app_label, oggetto_model)
+    oggetto_m = apps.get_model(oggetto_app_label, oggetto_model)
     oggetto = oggetto_m.objects.get(pk=oggetto_pk)
 
     if not hasattr(oggetto, 'commenti'):

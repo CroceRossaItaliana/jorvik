@@ -4,6 +4,7 @@ from django.contrib.humanize.templatetags.humanize import intcomma
 from django.db.models import QuerySet
 from django.template import Library
 from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 
 from anagrafica.models import Persona
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
@@ -156,7 +157,7 @@ def mappa(parser, token):
 
 @register.simple_tag(takes_context=True)
 def euro(context, numero):
-    return testo_euro(numero, simbolo_html=True)
+    return mark_safe(testo_euro(numero, simbolo_html=True))
 
 
 class NodoMappa(template.Node):

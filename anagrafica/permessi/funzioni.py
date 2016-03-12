@@ -221,7 +221,7 @@ def permessi_delegato_area(area):
         qs_area = area
     else:
         qs_area = area.queryset_modello()
-    attivita = Attivita.objects.filter(area=area)
+    attivita = Attivita.objects.filter(area__in=qs_area)
     return [
         (GESTIONE_ATTIVITA_AREA,        qs_area),
         (GESTIONE_ATTIVITA,             attivita),
