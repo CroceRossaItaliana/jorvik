@@ -5,7 +5,7 @@ from anagrafica.permessi.costanti import GESTIONE_AUTOPARCHI_SEDE, ERRORE_PERMES
 from autenticazione.funzioni import pagina_privata
 from base.utils import poco_fa
 from veicoli.forms import ModuloCreazioneVeicolo, ModuloCreazioneAutoparco, ModuloCreazioneManutenzione, \
-    ModuloCreazioneFermoTecnico, ModuloCreazioneRifornimento, ModuloCreazioneCollocazione
+    ModuloCreazioneFermoTecnico, ModuloCreazioneRifornimento, ModuloCreazioneCollocazione, ModuloFiltraVeicoli
 from veicoli.models import Veicolo, Autoparco, Collocazione, Manutenzione, FermoTecnico, Rifornimento
 
 
@@ -53,10 +53,25 @@ def veicoli(request, me):
 
 @pagina_privata
 def veicoli_elenco(request, me):
+
+    modulo = ModuloFiltraVeicoli(request.POST or None)
+
     autoparchi, veicoli = _autoparchi_e_veicoli(me)
+    modulo.fields['autoparchi'].queryset = autoparchi
+    modulo.fields['autoparchi'].initial = autoparchi
+
+    if modulo.is_valid():
+        autoparchi = modulo.cleaned_data.get('autoparchi')
+        targa = modulo.cleaned_data.get('targa')
+        stati = modulo.cleaned_data.get('stato')
+        veicoli = veicoli.filter(Collocazione.query_attuale().via("collocazioni"), collocazioni__autoparco__in=autoparchi, targa__icontains=targa, stato=stati)
+
+
+
     contesto = {
         "veicoli": veicoli,
         "autoparchi": autoparchi,
+        "modulo": modulo,
     }
     return "veicoli_elenco.html", contesto
 
