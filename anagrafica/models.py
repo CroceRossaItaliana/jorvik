@@ -1857,6 +1857,13 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
             invia_notifica_presidente=True
         )
 
+        self.autorizzazione_richiedi_sede_riferimento(
+            self.persona,
+            INCARICO_GESTIONE_ESTENSIONI,
+            forza_sede_riferimento=self.destinazione,
+            invia_notifica_presidente=True
+        )
+
     def termina(self):
         self.appartenenza.fine = poco_fa()
         self.appartenenza.terminazione = Appartenenza.FINE_ESTENSIONE
