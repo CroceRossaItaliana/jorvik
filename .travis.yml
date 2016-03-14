@@ -12,6 +12,7 @@ before_script:
   - "sh -e /etc/init.d/xvfb start"
   - sleep 3 # give xvfb some time to start
   - psql -U postgres -c 'CREATE DATABASE jorvik;'
+  - psql -U postgres -c 'CREATE DATABASE test_jorvik;'
   - psql -U postgres -c "CREATE EXTENSION postgis" -d jorvik
   - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d jorvik
   - pg_restore -O -C -d test_jorvik ./base/test_jorvik.pgsql
