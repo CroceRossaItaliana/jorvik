@@ -15,7 +15,9 @@ before_script:
   - psql -U postgres -c 'CREATE DATABASE test_jorvik;'
   - psql -U postgres -c "CREATE EXTENSION postgis" -d jorvik
   - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d jorvik
-  - pg_restore -O -C -d test_jorvik ./base/test_jorvik.pgsql
+  - psql -U postgres -c "CREATE EXTENSION postgis" -d test_jorvik
+  - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d test_jorvik
+  - pg_restore -O -d test_jorvik ./base/test_jorvik.pgsql
 
 install:
   - "pip install -U pip wheel"
