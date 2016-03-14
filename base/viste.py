@@ -158,6 +158,11 @@ def pulisci_autorizzazioni(richieste):
     return pulite
 
 
+ORDINE_ASCENDENTE = 'creazione'
+ORDINE_DISCENDENTE = '-creazione'
+ORDINE_DEFAULT = ORDINE_DISCENDENTE
+
+
 @pagina_privata
 def autorizzazioni(request, me, content_type_pk=None):
     """
@@ -165,10 +170,6 @@ def autorizzazioni(request, me, content_type_pk=None):
     """
 
     richieste = me._autorizzazioni_in_attesa().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
-
-    ORDINE_ASCENDENTE = 'creazione'
-    ORDINE_DISCENDENTE = '-creazione'
-    ORDINE_DEFAULT = ORDINE_ASCENDENTE
 
     if 'ordine' in request.GET:
         if request.GET['ordine'] == 'ASC':

@@ -15,6 +15,8 @@ def menu(request):
     """
     Ottiene il menu per una data richiesta.
     """
+    from base.viste import ORDINE_ASCENDENTE, ORDINE_DISCENDENTE, ORDINE_DEFAULT
+
     me = request.me if hasattr(request, 'me') else None
 
     gestione_corsi_sede = me.ha_permesso(GESTIONE_CORSI_SEDE) if me else False
@@ -89,8 +91,10 @@ def menu(request):
                 ("Storico", "fa-clock-o", "/autorizzazioni/storico/"),
             )),
             ("Ordina", (
-                ("Dalla più vecchia", "fa-sort-numeric-asc", "?ordine=ASC"),
-                ("Dalla più recente", "fa-sort-numeric-desc", "?ordine=DESC"),
+                ("Dalla più recente", "fa-sort-numeric-desc", "?ordine=DESC",
+                 request.GET.get('ordine', default="DESC") == "DESC"),
+                ("Dalla più vecchia", "fa-sort-numeric-asc", "?ordine=ASC",
+                 request.GET.get('ordine', default="DESC") == "ASC"),
             )),
         ),
         "presidente": (
