@@ -1,16 +1,18 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django_cron import CronJobBase, Schedule
 
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
 from anagrafica.models import Sede
 from base.files import Excel, FoglioExcel
+from base.utils import poco_fa
+from jorvik.settings import DESTINATARI_REPORT
 from posta.models import Messaggio
 
 
 class CronReportComitati(CronJobBase):
 
-    RUN_AT_TIMES = ['22:00']
+    RUN_AT_TIMES = ['22:30']
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
     code = 'anagrafica.report.sedi'
@@ -85,16 +87,19 @@ class CronReportComitati(CronJobBase):
             )
 
         excel.aggiungi_foglio(foglio)
-        excel.genera_e_salva(nome="Report.xlsx")
+
+        tra_una_settimana = poco_fa() + timedelta(days=7)
+        excel.genera_e_salva(nome="Report.xlsx", scadenza=tra_una_settimana)
 
         data = datetime.today().strftime("%d/%m/%Y")
 
-        Messaggio.costruisci_e_invia(
+        Messaggio.invia_raw(
             oggetto="(SVI) Report Sedi CRI - %s" % data,
-            modello="email_testo.html",
-            corpo={
-                "testo": "In allegato è presente il report excel delle Sedi CRI, "
-                         "aggiornato al %s." % data
-            },
+            corpo_html="In allegato è presente il report excel delle Sedi CRI, "
+                       "aggiornato al %s." % data,
+            email_mittente="%s <%s>" % (Messaggio.SUPPORTO_NOME, Messaggio.NOREPLY_EMAIL),
+            lista_email_destinatari=DESTINATARI_REPORT,
             allegati=[excel]
         )
+
+        print("Inviato report sedi ai seguenti indirizzi: %s" % ", ".join(DESTINATARI_REPORT))
