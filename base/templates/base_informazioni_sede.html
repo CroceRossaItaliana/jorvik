@@ -54,17 +54,42 @@
                     <dd>{{ presidente.link|safe }}</dd>
                 {% endif %}
 
+                {% if sede.locazione %}
+                    <dt>Indirizzo <i class="fa fa-fw fa-map-marker"></i></dt>
+                    <dd>{{ sede.locazione }}</dd>
+                {% endif %}
+
                 </dl>
 
 
 
-                {% if sede.ottieni_figli.exists %}
+                {% if sede.unita_sottostanti.exists %}
 
-                    <p>&nbsp;</p>
-                    <p>Questa Sede ha {{ sede.ottieni_figli.count }} sedi direttamente subordinate, per un totale di
-                        {{ sede.ottieni_discendenti.count }} sedi subordinate (anche indirettamente).</p>
+                    <p>Questa Sede CRI ha {{ sede.unita_sottostanti.count }} unit&agrave; territoriali distaccate:</p>
                     <ul>
-                        {% for node in sede.ottieni_figli %}
+                        {% for node in sede.unita_sottostanti %}
+                            <li>
+                                <strong>{{ node.nome }}</strong>
+
+                                {% if node.email %}
+                                    &mdash; <a href="mailto:{{ node.email }}">{{ node.email }}</a>
+                                {% endif %}
+
+                                {% if node.telefono %}
+                                    &mdash; {{ node.telefono }}
+                                {% endif %}
+
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                {% endif %}
+
+                {% if sede.comitati_sottostanti.exists %}
+
+                    <p>Questa Sede CRI ha {{ sede.comitati_sottostanti.count }} Comitati nel territorio:</p>
+                    <ul>
+                        {% for node in sede.comitati_sottostanti %}
                             <li>
                                 <a href="{{ node.url }}">
                                     <strong>{{ node.nome }}</strong>
@@ -77,30 +102,10 @@
 
                 {% endif %}
 
-                {% if sede.ottieni_fratelli.exists %}
-
-                    <p>&nbsp;</p>
-                    <p>Inoltre, vi sono altre {{ sede.ottieni_fratelli.count }} sedi allo stesso livello:</p>
-
-                    <ul>
-                        {% for node in sede.ottieni_fratelli %}
-                            <li>
-                                <a href="{{ node.url }}">
-                                    {{ node.nome }}
-                                </a>
-                                ({{ node.get_estensione_display }})
-
-                            </li>
-                        {% endfor %}
-                    </ul>
-
-
-                {% endif %}
 
                 {% if vicini.exists %}
 
-                    <p>&nbsp;</p>
-                    <p>Vi sono altre {{ vicini.count }} nelle vicinanze:</p>
+                    <p>Vi sono {{ vicini.count }} Sedi nelle vicinanze ({{ vicini_km }} km):</p>
 
                     <ul>
                         {% for node in vicini %}

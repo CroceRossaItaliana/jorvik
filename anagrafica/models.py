@@ -1282,7 +1282,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     @property
     def url(self):
-        return "/informazioni/sedi/" + str(self.slug) + "/"
+        if self.estensione == TERRITORIALE:
+            return self.comitato.url
+        return "/informazioni/sedi/%s/" % self.slug
 
     @property
     def url_checklist(self):
@@ -1515,6 +1517,17 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
         else:
             return queryset
+
+    def comitati_sottostanti(self):
+        """
+        Ritorna un elenco di Comitati sottostanti.
+        Es. Regionale -> QuerySet Provinciali
+        """
+        return self.get_children().filter(estensione__in=(REGIONALE, PROVINCIALE,
+                                                          LOCALE))
+
+    def unita_sottostanti(self):
+        return self.get_children().filter(estensione=TERRITORIALE)
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):

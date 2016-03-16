@@ -132,14 +132,18 @@ def informazioni_sede(request, me, slug):
     """
     Mostra dettagli sul comitato.
     """
+    vicini_km = 15
     sede = get_object_or_404(Sede, slug=slug)
-    vicini = sede.vicini(queryset=Sede.objects.all(), km=5)
+    vicini = sede.vicini(queryset=Sede.objects.all(), km=vicini_km)\
+        .exclude(pk__in=sede.unita_sottostanti().values_list('id', flat=True))\
+        .exclude(pk=sede.pk)
 
     contesto = {
         'sede': sede,
         'vicini': vicini,
         'da_mostrare': vicini | sede.ottieni_discendenti(includimi=True),
         'presidente': sede.presidente(),
+        'vicini_km': vicini_km,
     }
     return 'base_informazioni_sede.html', contesto
 
