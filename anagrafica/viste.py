@@ -1597,8 +1597,11 @@ def admin_pulisci_email(request, me):
 
                 for persona in persone:  # Per ogni persona
 
-                    delegati = persona.sede_riferimento().delegati_attuali(tipo__in=(UFFICIO_SOCI, UFFICIO_SOCI_UNITA)) |\
-                                persona.sede_riferimento().comitato.delegati_attuali(tipo__in=(UFFICIO_SOCI, PRESIDENTE))
+                    try:
+                        delegati = persona.sede_riferimento().delegati_attuali(tipo__in=(UFFICIO_SOCI, UFFICIO_SOCI_UNITA)) |\
+                                    persona.sede_riferimento().comitato.delegati_attuali(tipo__in=(UFFICIO_SOCI, PRESIDENTE))
+                    except AttributeError:
+                        delegati = Persona.objects.none()
 
                     if not delegati.exists():
                         risultati += [
