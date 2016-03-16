@@ -1856,6 +1856,18 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
             INCARICO_GESTIONE_ESTENSIONI,
             invia_notifica_presidente=True
         )
+        if self.destinazione.presidente():
+            Messaggio.costruisci_e_invia(
+               oggetto="Notifica di Estensione in entrata",
+               modello="email_richiesta_estensione_cc.html",
+               corpo={
+                   "estensione": self,
+               },
+               mittente=None,
+               destinatari=[
+                    self.destinazione.presidente(),
+               ]
+            )
 
     def termina(self):
         self.appartenenza.fine = poco_fa()
