@@ -1,6 +1,5 @@
 language: python
 python:
-  - "3.3"
   - "3.4"
   - "3.5"
 addons:
@@ -12,13 +11,20 @@ before_script:
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start"
   - sleep 3 # give xvfb some time to start
-  - psql -U postgres -c 'CREATE DATABASE jorvik;'
-  - psql -U postgres -c "CREATE EXTENSION postgis" -d jorvik
-  - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d jorvik
+
+  # Crea il database di test e importa una versione recente, per
+  #  velocizzare.
+  - psql -U postgres -c 'CREATE DATABASE test_jorvik;'
+  - psql -U postgres -c "CREATE EXTENSION postgis" -d test_jorvik
+  - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d test_jorvik
+  - pg_restore -O -d test_jorvik ./base/test_jorvik.pgsql
 
 install:
+  # Aggiorna PIP per sfruttare il caching di travis.
   - "pip install -U pip wheel"
+
+  # Installa tutti i requisiti.
   - "pip install -r requirements.txt"
 
 script:
-  - "python ./manage.py test -v 3"
+  - "python ./manage.py test -k -v 3"

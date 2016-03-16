@@ -234,6 +234,34 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         return cls.objects.filter(terminato=None).order_by('ultima_modifica')
 
     @classmethod
+    def invia_raw(cls, oggetto, corpo_html, email_mittente,
+                  reply_to=None, lista_email_destinatari=None,
+                  allegati=None, fallisci_silenziosamente=False,
+                  **kwargs):
+        """
+        Questo metodo puo' essere usato per inviare una e-mail
+         immediatamente.
+        """
+
+        plain_text = strip_tags(corpo_html)
+        lista_reply_to = [reply_to] if reply_to else []
+        lista_email_destinatari = lista_email_destinatari or []
+        allegati = allegati or []
+
+        msg = EmailMultiAlternatives(
+            subject=oggetto,
+            body=plain_text,
+            from_email=email_mittente,
+            reply_to=lista_reply_to,
+            to=lista_email_destinatari,
+            **kwargs
+        )
+        msg.attach_alternative(corpo_html, "text/html")
+        for allegato in allegati:
+            msg.attach_file(allegato.file.path)
+        return msg.send(fail_silently=fallisci_silenziosamente)
+
+    @classmethod
     def smaltisci_coda(cls, dimensione_massima=50):
         da_smaltire = cls.in_coda()[:dimensione_massima]
         print("%s == ricerca messaggi da smaltire, coda=%d" % (
@@ -276,7 +304,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         m = cls(
             oggetto=oggetto,
             mittente=mittente,
-            corpo=get_template(modello).render(Context(corpo)),
+            corpo=get_template(modello).render(corpo),
             **kwargs
         )
         m._processa_link()

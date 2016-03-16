@@ -15,6 +15,8 @@ def menu(request):
     """
     Ottiene il menu per una data richiesta.
     """
+    from base.viste import ORDINE_ASCENDENTE, ORDINE_DISCENDENTE, ORDINE_DEFAULT
+
     me = request.me if hasattr(request, 'me') else None
 
     gestione_corsi_sede = me.ha_permesso(GESTIONE_CORSI_SEDE) if me else False
@@ -30,20 +32,20 @@ def menu(request):
                 ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
             )),
             ("Volontario", (
-                ("Estensione", "fa-arrow-right", "/utente/estensione/"),
+                ("Estensione", "fa-random", "/utente/estensione/"),
                 ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
-                ("Riserva", "fa-arrow-right", "/utente/riserva/"),
+                ("Riserva", "fa-pause", "/utente/riserva/"),
             )) ,
             ("Rubrica", (
                 ("Referenti", "fa-book", "/utente/rubrica/referenti/"),
                 ("Volontari", "fa-book", "/utente/rubrica/volontari/"),
             )) ,
             ("Curriculum", (
-                ("Competenze personali", "fa-arrow-right", "/utente/curriculum/CP/"),
-                ("Patenti Civili", "fa-arrow-right", "/utente/curriculum/PP/"),
-                ("Patenti CRI", "fa-arrow-right", "/utente/curriculum/PC/"),
-                ("Titoli di Studio", "fa-arrow-right", "/utente/curriculum/TS/"),
-                ("Titoli CRI", "fa-arrow-right", "/utente/curriculum/TC/"),
+                ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
+                ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
+                ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/"),
+                ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
+                ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/"),
             )),
             ("Donatore", (
                 ("Profilo Donatore", "fa-user", "/utente/donazioni/profilo/"),
@@ -89,8 +91,10 @@ def menu(request):
                 ("Storico", "fa-clock-o", "/autorizzazioni/storico/"),
             )),
             ("Ordina", (
-                ("Dalla più vecchia", "fa-sort-numeric-asc", "?ordine=ASC"),
-                ("Dalla più recente", "fa-sort-numeric-desc", "?ordine=DESC"),
+                ("Dalla più recente", "fa-sort-numeric-desc", "?ordine=DESC",
+                 request.GET.get('ordine', default="DESC") == "DESC"),
+                ("Dalla più vecchia", "fa-sort-numeric-asc", "?ordine=ASC",
+                 request.GET.get('ordine', default="DESC") == "ASC"),
             )),
         ),
         "presidente": (

@@ -70,7 +70,7 @@
                     <tbody>
                         {% for veicolo in revisione %}
                         <tr>
-                            <td>{{ veicolo.targa }}</td>
+                            <td><a href="/veicolo/manutenzioni/{{ veicolo.pk }}/">{{ veicolo.targa }}</a></td>
                             <td>{{ veicolo.ultima_revisione.data }}</td>
                             <td>{{ veicolo.get_intervallo_revisione_display }}</td>
                         </tr>
@@ -107,7 +107,7 @@
                     <tbody>
                         {% for veicolo in manutenzione %}
                         <tr>
-                            <td>{{ veicolo.targa }}</td>
+                            <td><a href="/veicolo/manutenzioni/{{ veicolo.pk }}/">{{ veicolo.targa }}</a></td>
                             <td>{{ veicolo.ultima_manutenzione.data }}</td>
                         </tr>
                         {% empty %}
@@ -117,6 +117,7 @@
                                 </td>
                             </tr>
                         {% endfor %}
+                    </tbody>
                 </table>
             </div>
         </div>

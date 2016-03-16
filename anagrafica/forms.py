@@ -7,8 +7,9 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega, \
     Fototessera, Trasferimento, Riserva
+from anagrafica.validators import valida_almeno_14_anni
 from autenticazione.models import Utenza
-import autocomplete_light
+from autocomplete_light import shortcuts as autocomplete_light
 
 from base.forms import ModuloMotivoNegazione
 from curriculum.models import TitoloPersonale
@@ -84,6 +85,11 @@ class ModuloStepAnagrafica(ModelForm):
         #  cosa che attualmente abbiamo deciso di non fare.
         codice_fiscale = codice_fiscale.upper()
         return codice_fiscale
+
+    def clean_data_nascita(self):
+        data_nascita = self.cleaned_data.get('data_nascita')
+        valida_almeno_14_anni(data_nascita)
+        return data_nascita
 
 
 class ModuloModificaAnagrafica(ModelForm):

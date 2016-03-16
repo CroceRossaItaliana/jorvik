@@ -20,5 +20,17 @@
     {% localizzatore me.aspirante %}
 
 
+    <p>&nbsp;</p>
+
+    {% if me.cancellabile %}
+    <div class="alert alert-danger">
+        <i class="fa fa-fw fa-times"></i>
+        Non vuoi pi&ugrave; entrare a far parte di Croce Rossa Italiana?
+        <a data-conferma="Sei davvero sicur{{ me.genere_o_a }}? Cancelleremo tutti i tuoi dati. Se ci ripenserai, dovrai registrarti nuovamente a Gaia."
+           href="/aspirante/impostazioni/cancella/">
+                Cancella il tuo profilo da Gaia.
+        </a>
+    </div>
+    {% endif %}
 
 {% endblock %}

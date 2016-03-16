@@ -1,4 +1,4 @@
-import autocomplete_light
+from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.forms import ModelForm
 from veicoli.models import Veicolo, Autoparco, Rifornimento, Manutenzione, FermoTecnico, Collocazione, Segnalazione
@@ -44,3 +44,9 @@ class ModuloCreazioneSegnalazione(ModelForm):
     class Meta:
         model = Segnalazione
         fields = ['descrizione', 'manutenzione']
+
+class ModuloFiltraVeicoli(forms.Form):
+
+    autoparchi = forms.ModelMultipleChoiceField(queryset=Autoparco.objects.none(), help_text="È possibile selezionare più di un autoparco alla volta")
+    targa = forms.CharField(required=False, help_text="È possibile ricercare targhe parziali")
+    stato = forms.ChoiceField(choices=Veicolo.STATO, required=False, help_text="Stato del veicolo", initial=Veicolo.IN_SERVIZIO)

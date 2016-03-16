@@ -149,11 +149,31 @@ def us_reclama_persona(request, me, persona_pk):
                                                              "seleziona 'No' su 'Registra Quota'.")
                     continua = False
 
+            vecchia_appartenenza = Appartenenza.query_attuale(persona=persona,
+                                                              membro=Appartenenza.ORDINARIO).first()
+            if vecchia_appartenenza:  # Se ordinario presso il regionale.
+                if modulo_appartenenza.cleaned_data['inizio'] < vecchia_appartenenza.inizio:
+                    modulo_appartenenza.add_error('inizio', "La persona non era socio ordinario CRI alla "
+                                                            "data selezionata. Inserisci la data corretta di "
+                                                            "cambio appartenenza.")
+                    continua = False
+
+            # Controllo eta' minima socio
+            if modulo_appartenenza.cleaned_data.get('membro') in Appartenenza.MEMBRO_SOCIO \
+                    and persona.eta < Persona.ETA_MINIMA_SOCIO:
+                modulo_appartenenza.add_error('membro', "I soci di questo tipo devono avere almeno "
+                                                        "%d anni. " % Persona.ETA_MINIMA_SOCIO)
+                continua = False
+
             if continua:
 
                 app = modulo_appartenenza.save(commit=False)
                 app.persona = persona
                 app.save()
+
+                if vecchia_appartenenza:  # Termina app. ordinario
+                    vecchia_appartenenza.fine = app.inizio
+                    vecchia_appartenenza.save()
 
                 q = modulo_quota.cleaned_data
 
@@ -765,7 +785,7 @@ def us_quote_nuova(request, me):
         else:
 
             appartenenza = volontario.appartenenze_attuali(al_giorno=data_versamento, membro=Appartenenza.VOLONTARIO).first()
-            comitato = appartenenza.sede.comitato
+            comitato = appartenenza.sede.comitato if appartenenza else None
 
             if appartenenza.sede not in sedi:
                 modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
@@ -842,7 +862,7 @@ def us_ricevute_nuova(request, me):
                                                 'come Volontario o Sostenitore per alla Sede o '
                                                 'partecipante confermato ad un corso base attivo.')
 
-        elif tipo_ricevuta == Quota.QUOTA_SOSTENITORE and appartenenza.membro != Appartenenza.SOSTENITORE:
+        elif tipo_ricevuta == Quota.QUOTA_SOSTENITORE and (not appartenenza or appartenenza.membro != Appartenenza.SOSTENITORE):
             modulo.add_error('persona', 'Questa persona non è registrata come Sostenitore CRI '
                                         'della Sede. Non è quindi possibile registrare la Ricevuta '
                                         'come Sostenitore CRI.')

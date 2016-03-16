@@ -8,7 +8,7 @@
 
 
 {% block menu_laterale %}
-<div class="col-lg-3">
+<div class="col-md-3">
 
     <div class="well well-sm">
 
@@ -19,9 +19,9 @@
 
                 <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
 
-                {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
+                {% for link_nome, link_icona, link_url, link_contatore, da_selezionare in sezione_pagine %}
 
-                    <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
+                    <li role="presentation" {% if link_url == request.path or link_contatore %}class="active"{% endif %}>
                         <a href="{{ link_url }}">
                             <i class="fa {{ link_icona }} fa-fw"></i>
                             {{ link_nome }}
@@ -73,4 +73,4 @@
 
 {% endblock %}
 
-{% block app_contenuto_col %}col-lg-9{% endblock %}
+{% block app_contenuto_col %}col-md-9{% endblock %}

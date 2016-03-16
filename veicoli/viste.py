@@ -3,9 +3,10 @@ from django import forms
 from django.shortcuts import get_object_or_404, redirect
 from anagrafica.permessi.costanti import GESTIONE_AUTOPARCHI_SEDE, ERRORE_PERMESSI, MODIFICA
 from autenticazione.funzioni import pagina_privata
+from base.utils import poco_fa
 from veicoli.forms import ModuloCreazioneVeicolo, ModuloCreazioneAutoparco, ModuloCreazioneManutenzione, \
-    ModuloCreazioneFermoTecnico, ModuloCreazioneRifornimento, ModuloCreazioneCollocazione
-from veicoli.models import Veicolo, Autoparco, Collocazione, Manutenzione, FermoTecnico
+    ModuloCreazioneFermoTecnico, ModuloCreazioneRifornimento, ModuloCreazioneCollocazione, ModuloFiltraVeicoli
+from veicoli.models import Veicolo, Autoparco, Collocazione, Manutenzione, FermoTecnico, Rifornimento
 
 
 def _autoparchi_e_veicoli(persona):
@@ -52,10 +53,25 @@ def veicoli(request, me):
 
 @pagina_privata
 def veicoli_elenco(request, me):
+
+    modulo = ModuloFiltraVeicoli(request.POST or None)
+
     autoparchi, veicoli = _autoparchi_e_veicoli(me)
+    modulo.fields['autoparchi'].queryset = autoparchi
+    modulo.fields['autoparchi'].initial = autoparchi
+
+    if modulo.is_valid():
+        autoparchi = modulo.cleaned_data.get('autoparchi')
+        targa = modulo.cleaned_data.get('targa')
+        stati = modulo.cleaned_data.get('stato')
+        veicoli = veicoli.filter(Collocazione.query_attuale().via("collocazioni"), collocazioni__autoparco__in=autoparchi, targa__icontains=targa, stato=stati)
+
+
+
     contesto = {
         "veicoli": veicoli,
         "autoparchi": autoparchi,
+        "modulo": modulo,
     }
     return "veicoli_elenco.html", contesto
 
@@ -157,6 +173,45 @@ def veicoli_manutenzione(request, me, veicolo):
     return "veicoli_manutenzione.html", contesto
 
 @pagina_privata
+def veicoli_modifica_manutenzione(request, me, manutenzione):
+    manutenzione = get_object_or_404(Manutenzione, pk=manutenzione)
+    veicolo = get_object_or_404(Veicolo, pk=manutenzione.veicolo.pk)
+    if not me.permessi_almeno(veicolo, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+    modulo = ModuloCreazioneManutenzione(request.POST or None, instance=manutenzione)
+    if modulo.is_valid():
+        m = modulo.save(commit=False)
+        m.creato_da = me
+        m.save()
+        manutenzione.save()
+
+    contesto = {
+        "modulo": modulo,
+         "veicolo": veicolo,
+    }
+    return "veicoli_modifica_manutenzione.html", contesto
+
+
+@pagina_privata
+def veicoli_modifica_rifornimento(request, me, rifornimento):
+    rifornimento = get_object_or_404(Rifornimento, pk=rifornimento)
+    veicolo = get_object_or_404(Veicolo, pk=rifornimento.veicolo.pk)
+    if not me.permessi_almeno(veicolo, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+    modulo = ModuloCreazioneRifornimento(request.POST or None, instance=rifornimento)
+    if modulo.is_valid():
+        r = modulo.save(commit=False)
+        r.creato_da = me
+        r.save()
+        rifornimento.save()
+
+    contesto = {
+        "modulo": modulo,
+         "veicolo": veicolo,
+    }
+    return "veicoli_modifica_rifornimento.html", contesto
+
+@pagina_privata
 def veicoli_rifornimento(request, me, veicolo):
     veicolo = get_object_or_404(Veicolo, pk=veicolo)
     rifornimenti = veicolo.rifornimenti.all().order_by("-data")
@@ -217,6 +272,7 @@ def veicoli_collocazioni(request, me, veicolo):
     if modulo.is_valid():
         veicolo.collocazione().termina()
         c = modulo.save(commit=False)
+        c.inizio = poco_fa()
         c.veicolo = veicolo
         c.creato_da = me
         c.save()

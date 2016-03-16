@@ -8,7 +8,7 @@ Qui sono contenute le varie viste relative agli errori (namespace /errore/*)
 """
 
 @pagina_pubblica
-def non_trovato(request, me):
+def non_trovato(request, me, exception=None):
     """
     Questa vista viene chiamata quando una pagina non viene trovata (404) o un oggetto in una ricerca.
     :param request:

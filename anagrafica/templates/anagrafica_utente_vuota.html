@@ -7,9 +7,9 @@
 {% endblock %}
 
 {% block pagina_principale %}
-<div class="container padding-verticale-20">
+<div class="container">
 
-    <div class="row allinea-centro">
+    <div class="row allinea-centro" role="navigation" id="menu-applicazione">
 
         <ul class="nav nav-tabs nav-justified">
             {% for app_slug, app_nome, app_icona, app_num in user.applicazioni_disponibili %}
@@ -19,7 +19,7 @@
                         {{ app_nome }}
 
                         {% if app_num %}
-                            <span class="badge">
+                            <span class="badge badge-danger">
                                 {{ app_num }}
                             </span>
                         {% endif %}
@@ -33,15 +33,18 @@
     </div>
 
     <div class="row">
-            <button type="button" class="navbar-toggle collapsed btn btn-standard" data-toggle="collapse" data-target="#sezione" aria-expanded="false" aria-controls="navbar">
-                <span>Mostra navigazione</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
+
+        <div class="navbar-toggle collapsed" aria-expanded="false" aria-controls="navbar"  style="float: none;">
+            <button type="button" class="btn btn-block btn-default" data-toggle="collapse"
+                    data-target="#sezione">
+
+                <i class="fa fa-fw fa-bars"></i>
+                Mostra navigazione
             </button>
+        </div>
 
         {% block menu_laterale %}
-        <div class="{% block menu_laterale_col %}col-lg-3{% endblock %} well well-sm">
+        <div role="navigation" class="{% block menu_laterale_col %}col-md-3{% endblock %} well well-sm">
 
 
             <ul id="sezione" class="nav nav-pills nav-stacked navbar-collapse collapse">
@@ -70,7 +73,7 @@
         </div>
         {% endblock %}
 
-        <div class="{% block app_contenuto_col %}col-lg-9{% endblock %}">
+        <div class="{% block app_contenuto_col %}col-md-9{% endblock %}">
 
             {% block app_contenuto %}
                 Pagina in costruzione!

@@ -6,7 +6,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
 from django.forms import forms
-from safedelete import safedelete_mixin_factory, SOFT_DELETE
 from mptt.models import MPTTModel, TreeForeignKey
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
 from anagrafica.permessi.costanti import MODIFICA
@@ -50,28 +49,6 @@ class ModelloSemplice(models.Model):
             cls._meta.app_label,
             cls._meta.object_name
         )
-
-
-
-# Policy di cancellazioen morbida impostata su SOFT_DELETE
-PolicyCancellazioneMorbida = safedelete_mixin_factory(SOFT_DELETE)
-
-
-class ModelloCancellabile(ModelloSemplice, PolicyCancellazioneMorbida):
-    """
-    Questa classe astratta rappresenta un Modello generico, con
-    aggiunta la caratteristica di avere cancellazione SOFT DELETE.
-
-    Un modello che estende questa classe, quando viene cancellato,
-    viene invece mascherato e nascosto dalle query di ricerca.
-
-    Tutte le entita' correlate vengono comunque mantenute. Risolvere
-    un collegamento a questa entita' risultera' nell'ottenere questo
-    oggetto, anche se cancellato.
-    """
-
-    class Meta:
-        abstract = True
 
 
 class ModelloAlbero(MPTTModel, ModelloSemplice):

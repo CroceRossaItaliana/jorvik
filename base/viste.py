@@ -4,12 +4,11 @@ import os
 from django.contrib.auth import load_backend, login
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count
-from django.db.models.loading import get_model
 from django.http import HttpResponse
 from django.shortcuts import render, render_to_response, get_object_or_404, redirect
 # Le viste base vanno qui.
 from django.views.decorators.cache import cache_page
-
+from django.apps import apps
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, LETTURA, GESTIONE_SEDE
@@ -159,6 +158,11 @@ def pulisci_autorizzazioni(richieste):
     return pulite
 
 
+ORDINE_ASCENDENTE = 'creazione'
+ORDINE_DISCENDENTE = '-creazione'
+ORDINE_DEFAULT = ORDINE_DISCENDENTE
+
+
 @pagina_privata
 def autorizzazioni(request, me, content_type_pk=None):
     """
@@ -166,10 +170,6 @@ def autorizzazioni(request, me, content_type_pk=None):
     """
 
     richieste = me._autorizzazioni_in_attesa().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
-
-    ORDINE_ASCENDENTE = 'creazione'
-    ORDINE_DISCENDENTE = '-creazione'
-    ORDINE_DEFAULT = ORDINE_ASCENDENTE
 
     if 'ordine' in request.GET:
         if request.GET['ordine'] == 'ASC':
@@ -331,7 +331,7 @@ def geo_localizzatore(request, me):
     model = request.session['model']
     pk = int(request.session['pk'])
     continua_url = request.session['continua_url']
-    oggetto = get_model(app_label, model)
+    oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
 
     risultati = None
@@ -364,7 +364,7 @@ def geo_localizzatore_imposta(request, me):
     app_label = request.session['app_label']
     model = request.session['model']
     pk = int(request.session['pk'])
-    oggetto = get_model(app_label, model)
+    oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
 
     oggetto.imposta_locazione(request.POST['indirizzo'])
@@ -373,7 +373,7 @@ def geo_localizzatore_imposta(request, me):
 
 @pagina_privata
 def pdf(request, me, app_label, model, pk):
-    oggetto = get_model(app_label, model)
+    oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
     if not isinstance(oggetto, ConPDF):
         return errore_generico(request, None,

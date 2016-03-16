@@ -26,7 +26,6 @@ from django.db import models
 from django.db.models import Q, QuerySet, Avg
 from django_countries.fields import CountryField
 import phonenumbers
-from model_utils.managers import PassThroughManagerMixin
 
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 
@@ -48,14 +47,14 @@ from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codic
 from attivita.models import Turno, Partecipazione
 from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
-from base.models import ModelloSemplice, ModelloCancellabile, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
+from base.models import ModelloSemplice, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
     Autorizzazione, ConVecchioID
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
 from base.utils import is_list, sede_slugify, UpperCaseCharField, poco_fa
 from autoslug import AutoSlugField
 
-from curriculum.models import Titolo
+from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio
 from django.apps import apps
 
@@ -83,14 +82,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     # Costanti
     ETA_GIOVANE = 32
+    ETA_MINIMA_SOCIO = 14
 
     # Informazioni anagrafiche
     nome = models.CharField("Nome", max_length=64, db_index=True)
     cognome = models.CharField("Cognome", max_length=64, db_index=True)
     codice_fiscale = UpperCaseCharField("Codice Fiscale", max_length=16, blank=False,
                                         unique=True, db_index=True, validators=[valida_codice_fiscale, ])
-    data_nascita = models.DateField("Data di nascita", db_index=True, null=True,
-                                    validators=[valida_almeno_14_anni])
+    data_nascita = models.DateField("Data di nascita", db_index=True, null=True)
     genere = models.CharField("Sesso", max_length=1, choices=GENERE, db_index=True)
 
     # Stato
@@ -389,6 +388,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         :return: QuerySet<Fototessera>
         """
         return Fototessera.con_esito_pending().filter(persona=self)
+
+    @property
+    def ha_aspirante(self):
+        """
+        Controlla se la persona ha un oggetto aspirante, altrimenti ritora False.
+        """
+        try:
+            return self.aspirante is not None
+        except ObjectDoesNotExist:
+            return False
 
     @property
     def eta(self, al_giorno=None):
@@ -798,7 +807,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def estensioni_attuali_e_in_attesa(self):
         return self.estensioni_attuali() | self.estensioni_in_attesa()
 
-
     def espelli(self):
         for appartenenza in self.appartenenze_attuali():
             appartenenza.terminazione = Appartenenza.ESPULSIONE
@@ -937,6 +945,22 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         for delega in deleghe:
             oggetti += [delega.oggetto]
         return oggetti
+
+    @property
+    def cancellabile(self):
+        """
+        Ritorna True se la persona puo essere cancellata senza implicazioni.
+        """
+        from ufficio_soci.models import Quota
+        from formazione.models import PartecipazioneCorsoBase
+        from attivita.models import Partecipazione
+        ha_appartenenza = Appartenenza.objects.filter(persona=self).exists()
+        ha_ricevuta = Quota.objects.filter(persona=self).exists()
+        ha_partecipazione_corso_base = PartecipazioneCorsoBase.objects.filter(persona=self).exists()
+        ha_partecipazione = Partecipazione.objects.filter(persona=self).exists()
+        if ha_appartenenza or ha_ricevuta or ha_partecipazione or ha_partecipazione_corso_base:
+            return False
+        return True
 
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
@@ -1157,10 +1181,6 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         self.confermata = False
 
 
-class SedeManager(PassThroughManagerMixin, mptt.managers.TreeManager):
-    pass
-
-
 class SedeQuerySet(QuerySet):
 
     def comitati(self):
@@ -1228,7 +1248,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         (AUTOPARCO, 'Autoparco')
     )
 
-    objects = SedeManager.for_queryset_class(SedeQuerySet)()
+    objects = mptt.managers.TreeManager.from_queryset(SedeQuerySet)()
 
     estensione = models.CharField("Estensione", max_length=1, choices=ESTENSIONE, db_index=True)
     tipo = models.CharField("Tipologia", max_length=1, choices=TIPO, default=COMITATO, db_index=True)
@@ -1572,17 +1592,21 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             mittente=self.firmatario,
             destinatari=[self.persona],
         )]
-        messaggi += [
-             Messaggio.costruisci_e_invia(
-                 oggetto="IMPORTANTE: Check-list nuovo Presidente",
-                 modello="email_delega_notifica_nuovo_presidente.html",
-                 corpo={
-                     "delega": self,
-                 },
-                 mittente=self.firmatario,
-                 destinatari=[self.persona],
-             )
-        ]
+
+        # Se presidente, invia check-list.
+        if self.tipo == PRESIDENTE:
+            messaggi += [
+                 Messaggio.costruisci_e_invia(
+                     oggetto="IMPORTANTE: Check-list nuovo Presidente",
+                     modello="email_delega_notifica_nuovo_presidente.html",
+                     corpo={
+                         "delega": self,
+                     },
+                     mittente=self.firmatario,
+                     destinatari=[self.persona],
+                 )
+            ]
+
         return messaggi
 
     def invia_notifica_terminazione(self, mittente=None, accoda=False):
@@ -1993,7 +2017,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         #TODO reperibilita'
         [
             [x.ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
-            for y in [Estensione, Trasferimento, Partecipazione, Titolo]
+            for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
         ]
 
         Messaggio.costruisci_e_invia(

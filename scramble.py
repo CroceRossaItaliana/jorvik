@@ -3,9 +3,13 @@
 import os, sys
 import random
 
-from anagrafica.permessi.applicazioni import PRESIDENTE
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
+
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()
+
+from anagrafica.permessi.applicazioni import PRESIDENTE
 
 import phonenumbers
 from django.db import IntegrityError
@@ -18,8 +22,6 @@ from base.utils_tests import crea_persona
 from veicoli.models import Autoparco
 
 
-from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
 import argparse
 

@@ -307,7 +307,7 @@ def aspirante_corso_base_attiva(request, me, pk):
                                torna_url=corso.url)
 
     corpo = {"corso": corso, "persona": me}
-    testo = get_template("email_aspirante_corso_inc_testo.html").render(Context(corpo))
+    testo = get_template("email_aspirante_corso_inc_testo.html").render(corpo)
 
     if request.POST:
         corso.attiva(rispondi_a=me)
@@ -500,8 +500,8 @@ def aspirante_corso_base_report_schede(request, me, pk):
 
 @pagina_privata
 def aspirante_home(request, me):
-    if not hasattr(me, 'aspirante'):
-        redirect(ERRORE_PERMESSI)
+    if not me.ha_aspirante:
+        return redirect(ERRORE_PERMESSI)
 
     contesto = {}
     return 'aspirante_home.html', contesto
@@ -509,8 +509,8 @@ def aspirante_home(request, me):
 
 @pagina_privata
 def aspirante_corsi_base(request, me):
-    if not hasattr(me, 'aspirante'):
-        redirect(ERRORE_PERMESSI)
+    if not me.ha_aspirante:
+        return redirect(ERRORE_PERMESSI)
 
     contesto = {
         "corsi": me.aspirante.corsi(),
@@ -520,8 +520,8 @@ def aspirante_corsi_base(request, me):
 
 @pagina_privata
 def aspirante_sedi(request, me):
-    if not hasattr(me, 'aspirante'):
-        redirect(ERRORE_PERMESSI)
+    if not me.ha_aspirante:
+        return redirect(ERRORE_PERMESSI)
 
     contesto = {
         "sedi": me.aspirante.sedi(),
@@ -531,9 +531,25 @@ def aspirante_sedi(request, me):
 
 @pagina_privata
 def aspirante_impostazioni(request, me):
-    if not hasattr(me, 'aspirante'):
-        redirect(ERRORE_PERMESSI)
+    if not me.ha_aspirante:
+        return redirect(ERRORE_PERMESSI)
 
     contesto = {}
     return 'aspirante_impostazioni.html', contesto
 
+
+@pagina_privata
+def aspirante_impostazioni_cancella(request, me):
+    if not me.ha_aspirante:
+        return redirect(ERRORE_PERMESSI)
+
+    if not me.cancellabile:
+        return errore_generico(request, me, titolo="Impossibile cancellare automaticamente il profilo da Gaia",
+                               messaggio="E' necessario richiedere la cancellazione manuale al personale di supporto.")
+
+    # Cancella!
+    me.delete()
+
+    return messaggio_generico(request, me, titolo="Il tuo profilo è stato cancellato da Gaia",
+                              messaggio="Abbiamo rimosso tutti i tuoi dati dal nostro sistema. "
+                                        "Se cambierai idea, non esitare a iscriverti nuovamente! ")
