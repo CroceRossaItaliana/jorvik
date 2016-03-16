@@ -1568,7 +1568,7 @@ def admin_import_presidenti(request, me):
 @pagina_privata
 def admin_pulisci_email(request, me):
 
-    if not me.is_superuser:
+    if not me.utenza.is_superuser:
         return redirect(ERRORE_PERMESSI)
 
     modulo = ModuloPulisciEmail(request.POST or None)
@@ -1598,7 +1598,7 @@ def admin_pulisci_email(request, me):
                 for persona in persone:  # Per ogni persona
 
                     delegati = persona.sede_riferimento().delegati_attuali(tipo__in=(UFFICIO_SOCI, UFFICIO_SOCI_UNITA)) |\
-                                persona.sede_riferimento().delegati_attuali(tipo__in=(UFFICIO_SOCI, PRESIDENTE))
+                                persona.sede_riferimento().comitato.delegati_attuali(tipo__in=(UFFICIO_SOCI, PRESIDENTE))
 
                     if not delegati.exists():
                         risultati += [
@@ -1641,7 +1641,7 @@ def admin_pulisci_email(request, me):
 
                     # Notifica delegati...
                     if email_utenza_corrotta:
-                        Messaggio.costruisci_e_invia(
+                        Messaggio.costruisci_e_accoda(
                             oggetto="AZIONE NECESSARIA: Credenziali di %s disattivate perché invalide" % persona.nome_completo,
                             modello="email_admin_pulisci_email_utenza.html",
                             corpo={
@@ -1659,7 +1659,7 @@ def admin_pulisci_email(request, me):
                         ]
 
                     elif email_contatto_corrotta:
-                        Messaggio.costruisci_e_invia(
+                        Messaggio.costruisci_e_accoda(
                             oggetto="E-mail di contatto di %s non valida" % persona.nome_completo,
                             modello="email_admin_pulisci_email_contatto.html",
                             corpo={
