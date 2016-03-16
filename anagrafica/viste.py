@@ -1653,7 +1653,6 @@ def admin_pulisci_email(request, me):
                                 "operatore": me,
                                 "operazione_data": oggi()
                             },
-                            mittente=me,
                             destinatari=delegati,
                         )
                         risultati += [
