@@ -1,0 +1,86 @@
+{% extends 'base_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Procedura di Pulizia degli indirizzi e-mail
+{% endblock %}
+
+
+{% block pagina_principale %}
+
+    <p>&nbsp;</p>
+
+    <div class="container">
+
+        <div class="row">
+
+            <div class="col-md-6">
+                <h4>Pulisci indirizzi e-mail</h4>
+                <div class="alert alert-info">
+                    <p><i class="fa fa-fw fa-info-circle"></i>
+                    Da questa pagina &egrave; possibile segnalare al sistema le e-mail che sono state
+                        respinte dal sistema di posta. Gli indirizzi verranno rimossi dalle schede anagrafiche
+                        delle persone e le utenze con e-mail invalide verranno disattivate. In entrambi i casi,
+                        il sistema si occuper&agrave; di contattare US e Presidente, nonch&eacute; registrare
+                        l'evento nelle note della scheda anagrafica della persona.</p>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="fa fa-fw fa-warning"></i>
+                    Tutte le azioni verranno registrate a tuo nome ({{ me.nome_completo }}) e sarai registrato
+                    come mittente alle e-mail in uscita da questa procedura.
+                </div>
+
+
+                <form method="POST">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo layout="horizontal" %}
+                    <p>
+                        <button type="submit" class="btn btn-danger btn-lg btn-block">
+                            <i class="fa fa-fw fa-cogs"></i>
+                            Avvia la Procedura di Nomina
+                        </button>
+                    </p>
+                </form>
+
+            </div>
+
+            <div class="col-md-6">
+                <h4>Esito disattivazione</h4>
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <td>Indirizzo</td>
+                        <td>Esito</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for indirizzo, classe, messaggio in risultati %}
+                        <tr>
+                            <td class="monospace">
+                                {{ indirizzo }}
+                            </td>
+                            <td class="grassetto {{ classe }}">
+                                {{ messaggio }}
+                            </td>
+                        </tr>
+
+                    {% empty %}
+                        <tr class="warning">
+                            <td colspan="3">
+                                Qui appariranno i risultati.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+
+        </div>
+
+    </div>
+{% endblock %}
+

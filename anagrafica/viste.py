@@ -44,7 +44,7 @@ from base.files import Zip
 from base.models import Log
 from base.notifiche import NOTIFICA_INVIA
 from base.stringhe import genera_uuid_casuale
-from base.utils import remove_none, poco_fa
+from base.utils import remove_none, poco_fa, oggi
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio, Q
@@ -1582,13 +1582,10 @@ def admin_pulisci_email(request, me):
         for indirizzo in indirizzi:
 
             indirizzo = indirizzo.strip()
+            if not indirizzo:  # Salta linee vuote
+                continue
 
             persone = Persona.objects.filter(Q(email_contatto__iexact=indirizzo) | Q(utenza__email__iexact=indirizzo))
-
-            # TODO trovare delegati.
-
-            # TODO come prima condizione, controllare che i delegati esistano,
-            #      altrimenti non iniziare la procedura.
 
             if not persone.exists():
 
@@ -1599,6 +1596,16 @@ def admin_pulisci_email(request, me):
             else:  # Una o piu' persone ha questo indirizzo e-mail
 
                 for persona in persone:  # Per ogni persona
+
+                    delegati = persona.sede_riferimento().delegati_attuali(tipo__in=(UFFICIO_SOCI, UFFICIO_SOCI_UNITA)) |\
+                                persona.sede_riferimento().delegati_attuali(tipo__in=(UFFICIO_SOCI, PRESIDENTE))
+
+                    if not delegati.exists():
+                        risultati += [
+                            (indirizzo, 'text-warning', "La persona trovata (%s) non ha delegati a cui notificare la "
+                                                        "disattivazione." % persona.codice_fiscale)
+                        ]
+                        continue
 
                     email_contatto_corrotta = persona.email_contatto.lower() == indirizzo.lower()
                     try:
@@ -1634,13 +1641,43 @@ def admin_pulisci_email(request, me):
 
                     # Notifica delegati...
                     if email_utenza_corrotta:
-                        # TODO invia email_admin_pulisci_email_utenza.html
-                        pass
+                        Messaggio.costruisci_e_invia(
+                            oggetto="AZIONE NECESSARIA: Credenziali di %s disattivate perché invalide" % persona.nome_completo,
+                            modello="email_admin_pulisci_email_utenza.html",
+                            corpo={
+                                "persona": persona,
+                                "vecchia_email": indirizzo,
+                                "operatore": me,
+                                "operazione_data": oggi()
+                            },
+                            mittente=me,
+                            destinatari=delegati,
+                        )
+                        risultati += [
+                            (indirizzo, 'text-success', "Disattivata utenza per persona %s. "
+                                                        "Delegati avvisati per e-mail." % persona.codice_fiscale)
+                        ]
 
                     elif email_contatto_corrotta:
-                        # TODO invia email_admin_pulisci_email_contatto.html
-                        pass
+                        Messaggio.costruisci_e_invia(
+                            oggetto="E-mail di contatto di %s non valida" % persona.nome_completo,
+                            modello="email_admin_pulisci_email_contatto.html",
+                            corpo={
+                                "persona": persona,
+                                "vecchia_email": indirizzo,
+                                "operatore": me,
+                                "operazione_data": oggi()
+                            },
+                            mittente=me,
+                            destinatari=delegati,
+                        )
+                        risultati += [
+                            (indirizzo, 'text-success', "Rimossa e-mail di contatto di %s. "
+                                                        "Delegati avvisati per e-mail." % persona.codice_fiscale)
+                        ]
 
-                    # TODO aggiungi log a risultati[]
-
-    # TODO continuare
+    contesto = {
+        "risultati": risultati,
+        "modulo": modulo
+    }
+    return "admin_pulisci_email.html", contesto
