@@ -9,6 +9,8 @@ from django.shortcuts import render, render_to_response, get_object_or_404, redi
 # Le viste base vanno qui.
 from django.views.decorators.cache import cache_page
 from django.apps import apps
+from django.views.decorators.clickjacking import xframe_options_exempt
+
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, LETTURA, GESTIONE_SEDE
@@ -116,6 +118,8 @@ def informazioni_condizioni(request, me):
     """
     return 'base_informazioni_condizioni.html'\
 
+
+@xframe_options_exempt
 @pagina_pubblica
 def informazioni_sedi(request, me):
     """
@@ -127,6 +131,8 @@ def informazioni_sedi(request, me):
     }
     return 'base_informazioni_sedi.html', contesto
 
+
+@xframe_options_exempt
 @pagina_pubblica
 def informazioni_sede(request, me, slug):
     """
