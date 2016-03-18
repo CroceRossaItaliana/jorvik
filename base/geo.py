@@ -16,7 +16,7 @@ class Locazione(ConMarcaTemporale, models.Model):
         verbose_name = "Locazione Geografica"
         verbose_name_plural = "Locazioni Geografiche"
 
-    indirizzo = models.CharField("Indirizzo", max_length=255, unique=True)
+    indirizzo = models.CharField("Indirizzo", max_length=255, db_index=True)
 
     objects = models.GeoManager()
     geo = models.PointField(blank=True, default='POINT(0.0 0.0)', db_index=True,
@@ -26,6 +26,7 @@ class Locazione(ConMarcaTemporale, models.Model):
     civico = models.CharField("Civico", max_length=16, blank=True)
     comune = models.CharField("Comune", max_length=64, blank=True, db_index=True)
     provincia = models.CharField("Provincia", max_length=64, blank=True, db_index=True)
+    provincia_breve = models.CharField("Provincia (breve)", max_length=64, blank=True, db_index=True)
     regione = models.CharField("Regione", max_length=64, blank=True, db_index=True)
     cap = models.CharField("CAP", max_length=32, blank=True, db_index=True)
     stato = CountryField("Stato", default="IT")
@@ -40,6 +41,7 @@ class Locazione(ConMarcaTemporale, models.Model):
              ('via', ('route', 'long_name')),
              ('comune', ('locality', 'long_name')),
              ('provincia', ('administrative_area_level_2', 'long_name')),
+             ('provincia_breve', ('administrative_area_level_2', 'short_name')),
              ('regione', ('administrative_area_level_1', 'long_name')),
              ('stato', ('country', 'short_name')),
              ('cap', ('postal_code', 'long_name'))
@@ -50,7 +52,8 @@ class Locazione(ConMarcaTemporale, models.Model):
             for p in oggetto['address_components']:
                 if not a in p['types']:
                     continue
-                parti[parte] = p[b].replace('Provincia di ', '').replace('Province of ', '')
+                parti[parte] = p[b].replace('Provincia di ', '').replace('Province of ', '')\
+                    .replace('Provincia della ', 'La ').replace('Provincia dell\'', 'L\'')
         return parti
 
     @classmethod
@@ -81,20 +84,18 @@ class Locazione(ConMarcaTemporale, models.Model):
         if not indirizzo:
             return None
 
-        try:
-            return Locazione.objects.get(indirizzo=indirizzo)
-        except ObjectDoesNotExist:
-            pass
+        j = Locazione.objects.filter(indirizzo=indirizzo).first()
+        if j:
+            return j
 
         risultati = Locazione.cerca(indirizzo)
         if not len(risultati):
             return None
         risultato = risultati[0]
 
-        try:
-            return Locazione.objects.get(indirizzo=risultato[0])
-        except ObjectDoesNotExist:
-            pass
+        j = Locazione.objects.filter(indirizzo=risultato[0]).first()
+        if j:
+            return j
 
         l = Locazione(
             indirizzo=risultato[0],

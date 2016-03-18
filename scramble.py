@@ -20,6 +20,7 @@ from autenticazione.models import Utenza
 from base.utils import poco_fa
 from base.utils_tests import crea_persona
 from veicoli.models import Autoparco
+from base.geo import Locazione
 
 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
@@ -35,6 +36,9 @@ parser.add_argument('--membri-sede', dest='membri_sedi', action='append',
 parser.add_argument('--dati-di-esempio', dest='esempio', action='store_const',
                     default=False, const=True,
                     help='installa dei dati di esempio')
+parser.add_argument('--aggiorna-province', dest='province', action='store_const',
+                    default=False, const=True,
+                    help='aggiorna le province')
 
 args = parser.parse_args()
 
@@ -162,6 +166,22 @@ if args.esempio:
     d.save()
 
     print("= Fatto.")
+
+if args.province:
+    print("Aggiorno le province")
+
+    province = Locazione.objects.filter(stato="IT").exclude(provincia='').values_list('provincia', flat=True).distinct()
+
+    for provincia in province:
+        prima = Locazione.objects.filter(provincia=provincia).first()
+        prima.cerca_e_aggiorna()
+        pv = prima.provincia_breve
+
+        altre = Locazione.objects.filter(provincia=provincia)
+        num = altre.update(provincia_breve=pv)
+
+        print("-- %s\t%d\t%s" % (pv, num, provincia))
+
 
 
 print("Finita esecuzione.")
