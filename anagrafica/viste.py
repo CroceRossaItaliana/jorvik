@@ -1129,7 +1129,7 @@ def _profilo_credenziali(request, me, persona):
 
         def _invia_notifica():
             Messaggio.costruisci_e_invia(
-                oggetto="IMPORTANTE: Cambio e-mail di accesso a Gaia",
+                oggetto="IMPORTANTE: Cambio e-mail di accesso a Gaia (credenziali)",
                 modello="email_credenziali_modificate.html",
                 corpo={
                     "vecchia_email": vecchia_email,

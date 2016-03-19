@@ -52,5 +52,5 @@ class TestFunzionale(StaticLiveServerTestCase):
             sessioni_aperte = list(self.sessioni_aperte)
             for sessione in sessioni_aperte:
                 self.sessioni_aperte.remove(sessione)
-                sessione.quit()
+                #sessione.quit()
         super(TestFunzionale, self).tearDown()
