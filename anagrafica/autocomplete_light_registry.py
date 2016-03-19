@@ -77,19 +77,25 @@ class PresidenteAutocompletamento(PersonaAutocompletamento):
         return super(PersonaAutocompletamento, self).choices_for_request()
 
     choice_html_format = u'''
-        <span class="block" data-value="%s"><strong>%s</strong><br />
-        Nat%s il %s<br />
-        <span class="monospace">%s</span></span>
+        <span class='piu-piccolo'>
+            <span class="" data-value="%s"><strong>%s</strong><br />
+            Nat%s il %s &mdash;
+            <span class="monospace">%s</span><br />
+            %s
+            </span>
+        </span>
     '''
 
     def choice_html(self, choice):
         app = choice.appartenenze_attuali().first() if choice else None
+        sede = choice.sede_riferimento() if choice else None
         return self.choice_html_format % (
             self.choice_value(choice),
             self.choice_label(choice),
             choice.genere_o_a,
             choice.data_nascita.strftime("%d/%m/%Y"),
             choice.codice_fiscale,
+            sede.nome_completo if sede else ""
         )
 
 
