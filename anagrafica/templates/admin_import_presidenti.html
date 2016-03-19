@@ -105,5 +105,17 @@
         </div>
 
     </div>
+
+    <script type="text/javascript">
+    /* come suggerito da @matthewmazzoleni, disabilita enter */
+    $(document).ready(function() {
+      $(window).keydown(function(event){
+        if(event.keyCode == 13) {
+          event.preventDefault();
+          return false;
+        }
+      });
+    });
+    </script>
 {% endblock %}
 
