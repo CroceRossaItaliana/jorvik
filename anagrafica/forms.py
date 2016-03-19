@@ -351,3 +351,23 @@ class ModuloImportPresidenti(forms.Form):
 
 class ModuloPulisciEmail(forms.Form):
     indirizzi = forms.CharField(widget=forms.Textarea, help_text="Un indirizzo e-mail per riga.")
+
+
+class ModuloUSModificaUtenza(ModuloUtenza):
+
+    ok_1 = forms.BooleanField(label="La richiesta di modifica è pervenuta dall'utente stesso.",
+                              required=False)
+    ok_2 = forms.BooleanField(label="Ho già avvisato l'utente di questa modifica.",
+                              required=False)
+    ok_3 = forms.BooleanField(label="Sono consapevole che l'utente non potrà più entrare in Gaia "
+                                    "con il vecchio indirizzo.")
+    ok_4 = forms.BooleanField(label="Sono consapevole che l'e-mail deve essere corretta, per "
+                                    "permettere all'utente di accedere a Gaia.")
+
+    def clean(self):
+        ok_1 = self.cleaned_data.get('ok_1')
+        ok_2 = self.cleaned_data.get('ok_2')
+        if not(ok_1 or ok_2):
+            raise ValidationError("Puoi solo cambiare l'e-mail di accesso se questa è stata "
+                                  "richiesta dall'utente, oppure hai già avvisato l'utente della "
+                                  "modifica e della nuova e-mail per accedere.")

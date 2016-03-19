@@ -19,7 +19,8 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
-    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail
+    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail, \
+    ModuloUSModificaUtenza
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -1093,8 +1094,10 @@ def _profilo_quote(request, me, persona):
 def _profilo_credenziali(request, me, persona):
     utenza = Utenza.objects.filter(persona=persona).first()
 
-    modulo_utenza = None
-    if not utenza:
+    modulo_utenza = modulo_modifica = None
+    if utenza:
+        modulo_modifica = ModuloUSModificaUtenza(request.POST or None, instance=utenza)
+    else:
         modulo_utenza = ModuloUtenza(request.POST or None, instance=utenza, initial={"email": persona.email_contatto})
 
     if modulo_utenza and modulo_utenza.is_valid():
@@ -1104,9 +1107,56 @@ def _profilo_credenziali(request, me, persona):
         utenza.genera_credenziali()
         return redirect(persona.url_profilo_credenziali)
 
+    if modulo_modifica and modulo_modifica.is_valid():
+        vecchia_email_contatto = persona.email
+        vecchia_email = Utenza.objects.get(pk=utenza.pk).email
+        nuova_email = modulo_modifica.cleaned_data.get('email')
+
+        if vecchia_email == nuova_email:
+            return errore_generico(request, me, titolo="Nessun cambiamento",
+                                   messaggio="Per cambiare indirizzo e-mail, inserisci un "
+                                             "indirizzo differente.",
+                                   torna_titolo="Credenziali",
+                                   torna_url=persona.url_profilo_credenziali)
+
+        if Utenza.objects.filter(email__icontains=nuova_email).first():
+            return errore_generico(request, me, titolo="E-mail già utilizzata",
+                                   messaggio="Esiste un altro utente in Gaia che utilizza "
+                                             "questa e-mail (%s). Impossibile associarla quindi "
+                                             "a %s." % (nuova_email, persona.nome_completo),
+                                   torna_titolo="Credenziali",
+                                   torna_url=persona.url_profilo_credenziali)
+
+        def _invia_notifica():
+            Messaggio.costruisci_e_invia(
+                oggetto="IMPORTANTE: Cambio e-mail di accesso a Gaia",
+                modello="email_credenziali_modificate.html",
+                corpo={
+                    "vecchia_email": vecchia_email,
+                    "nuova_email": nuova_email,
+                    "persona": persona,
+                    "autore": me,
+                },
+                mittente=me,
+                destinatari=[persona]
+            )
+
+        _invia_notifica()  # Invia notifica alla vecchia e-mail
+        Log.registra_modifiche(me, modulo_modifica)
+        modulo_modifica.save()  # Effettua le modifiche
+        persona.refresh_from_db()
+        if persona.email != vecchia_email_contatto:  # Se e-mail principale cambiata
+            _invia_notifica()  # Invia la notifica anche al nuovo indirizzo
+
+        return messaggio_generico(request, me, titolo="Credenziali modificate",
+                                  messaggio="Le credenziali di %s sono state correttamente aggiornate." % persona.nome,
+                                  torna_titolo="Credenziali",
+                                  torna_url=persona.url_profilo_credenziali)
+
     contesto = {
         "utenza": utenza,
-        "modulo": modulo_utenza,
+        "modulo_creazione": modulo_utenza,
+        "modulo_modifica": modulo_modifica
 
     }
     return 'anagrafica_profilo_credenziali.html', contesto

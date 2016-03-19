@@ -1,0 +1,26 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p class="grassetto">Ciao {{ persona.nome }}.</p>
+    <p>Ricevi questo messaggio perch&eacute; {{ autore.nome_completo }} ha modificato la tua
+        e-mail di accesso a Gaia.</p>
+    <p>Questo &egrave; generalmente dovuto direttamente a una tua richiesta, oppure
+        in seguito a un errore di battitura precedente.</p>
+    <hr />
+    <p><strong>IMPORTANTE:</strong> Da ora in poi, dovrai usare <u>le nuove credenziali</u> per accedere
+        a Gaia!</p>
+    <hr />
+    <p style="font-size: larger;"><strong>NUOVE CREDENZIALI</strong></p>
+    <p style="font-size: larger;">
+        E-mail: <pre>{{ nuova_email }}</pre><br />
+        Password: <i>(la stessa password di prima)</i>
+    </p>
+    <hr />
+    <p>La tua vecchia e-mail di accesso era {{ vecchia_email }} &mdash; questa non ti
+        permetter&agrave; pi&ugrave; di accedere a Gaia.</p>
+
+    <p>Per ulteriori informazioni, o se credi che ci sia un errore,
+        contatta {{ autore.nome_completo }} rispondendo a questa e-mail.</p>
+
+{% endblock %}
