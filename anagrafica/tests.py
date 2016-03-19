@@ -6,7 +6,7 @@ from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Delega
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
-from autenticazione.utils_test import TestFunzionale
+
 from base.models import Autorizzazione
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza
@@ -649,90 +649,3 @@ class TestAnagrafica(TestCase):
         )
 
 
-class TestFunzionaleEstensione(TestFunzionale):
-
-    def test_estensione_volontario(self):
-
-        import time
-
-        presidente_origine = crea_persona()
-        volontario_da_estendere, sede_origine, appartenenza_origine = crea_persona_sede_appartenenza(presidente_origine)
-
-        presidente_destinazione = crea_persona()
-        vol, sede_destinazione, appartenenza_presidente_destinazione = crea_persona_sede_appartenenza(presidente_destinazione)
-
-        sessione = self.sessione_utente(persona=volontario_da_estendere)
-        sessione.click_link_by_partial_text("Estensione")
-        sessione.type('destinazione-autocomplete', sede_destinazione.nome)
-        time.sleep(1.5)
-        sessione.find_by_xpath("//span[@data-value='%d']" % sede_destinazione.pk).first.click()
-
-        sessione.fill('motivo', "motivo importante")
-        sessione.find_by_xpath("//button[@type='submit']").first.click()
-
-        sessione_p = self.sessione_utente(persona=presidente_origine)
-
-        sessione_p.click_link_by_partial_text("Richieste")
-        sessione_p.click_link_by_partial_text("Estensione")
-        sessione_p.click_link_by_partial_text("Conferma")
-        sessione_p.fill("protocollo_numero", "1")
-        sessione_p.fill("protocollo_data","12/12/2020")
-        sessione_p.find_by_xpath("//button[@type='submit']").first.click()
-
-
-        sessione.click_link_by_partial_text("Storico")
-
-        self.assertTrue(sessione.is_text_present("Volontario in Estensione "), msg="Estensione non presente")
-
-
-    def test_estensione_US(self):
-
-        import time
-
-        presidente_origine = crea_persona()
-        volontario_da_estendere, sede_origine, appartenenza_origine = crea_persona_sede_appartenenza(presidente_origine)
-
-        presidente_destinazione = crea_persona()
-        vol, sede_destinazione, appartenenza_presidente_destinazione = crea_persona_sede_appartenenza(presidente_destinazione)
-
-        sessione = self.sessione_utente(persona=presidente_origine)
-        sessione.click_link_by_partial_text("Soci")
-        sessione.click_link_by_partial_text("Nuova estensione")
-        sessione.type('persona-autocomplete', volontario_da_estendere.nome)
-        time.sleep(1.5)
-        sessione.find_by_xpath("//span[@data-value='%d']" % volontario_da_estendere.pk).first.click()
-        sessione.type('destinazione-autocomplete', sede_destinazione.nome)
-        time.sleep(1.5)
-        sessione.find_by_xpath("//span[@data-value='%d']" % sede_destinazione.pk).first.click()
-
-        sessione.fill('motivo', "motivo importante")
-        sessione.find_by_xpath("//button[@type='submit']").first.click()
-
-        sessione.click_link_by_partial_text("Registra nuova estensione")
-
-        sessione.click_link_by_partial_text("Richieste")
-        sessione.click_link_by_partial_text("Estensione")
-        sessione.click_link_by_partial_text("Conferma")
-        sessione.fill("protocollo_numero", "1")
-        sessione.fill("protocollo_data","12/12/2020")
-        sessione.find_by_xpath("//button[@type='submit']").first.click()
-
-        sesssione_v = self.sessione_utente()
-
-        sesssione_v.click_link_by_partial_text("Storico")
-
-        self.assertTrue(sessione.is_text_present("Volontario in Estensione "), msg="Estensione non presente")
-
-class TestFunzionaleTrasferimento(TestFunzionale):
-
-    def test_trasferimento_stesso_comitato_volontario(self):
-        pass
-
-    def test_trasferimento_stesso_comitato_us(self):
-        pass
-
-    def test_trasferimento_altro_comitato_volontario(self):
-        pass
-
-    def test_trasferimento_altro_comitato_us(self):
-        pass
