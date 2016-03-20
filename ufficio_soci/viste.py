@@ -306,6 +306,19 @@ def us_trasferimento(request, me):
             trasf.save()
             if me.sede_riferimento().comitato == trasf.destinazione.comitato:
                 trasf.esegui()
+
+                Messaggio.costruisci_e_invia(
+                    oggetto="Richiesta di trasferimento",
+                    modello="email_richiesta_trasferimento_cc.html",
+                    corpo={
+                        "trasferimento": trasf,
+                    },
+                    mittente=None,
+                    destinatari=[
+                        trasf.destinazione.presidente()
+                    ]
+                )
+
                 return messaggio_generico(request, me, titolo="Trasferimento effettuato",
                                       messaggio="Il trasferimento è stato automaticamente effettuato in quanto il "
                                                 "la destinazione e' un'unita' territoriale "
