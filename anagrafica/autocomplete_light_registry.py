@@ -71,6 +71,8 @@ class PersonaAutocompletamento(AutocompletamentoBase):
 
 class PresidenteAutocompletamento(PersonaAutocompletamento):
 
+    split_words = True
+
     def choices_for_request(self):
         if self.request.user.is_superuser:
             self.choices = Persona.objects.all()
@@ -93,7 +95,7 @@ class PresidenteAutocompletamento(PersonaAutocompletamento):
             self.choice_value(choice),
             self.choice_label(choice),
             choice.genere_o_a,
-            choice.data_nascita.strftime("%d/%m/%Y"),
+            choice.data_nascita.strftime("%d/%m/%Y") if choice.data_nascita else None,
             choice.codice_fiscale,
             sede.nome_completo if sede else ""
         )
