@@ -65,7 +65,8 @@ def veicoli_elenco(request, me):
         targa = modulo.cleaned_data.get('targa')
         stati = modulo.cleaned_data.get('stato')
         veicoli = veicoli.filter(Collocazione.query_attuale().via("collocazioni"), collocazioni__autoparco__in=autoparchi, targa__icontains=targa, stato=stati)
-
+    else:
+        veicoli = veicoli.filter(stato=Veicolo.IN_SERVIZIO)
 
 
     contesto = {
