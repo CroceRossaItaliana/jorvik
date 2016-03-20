@@ -21,6 +21,7 @@ class AutocompletamentoBase(autocomplete_light.AutocompleteModelBase):
 
 class PersonaAutocompletamento(AutocompletamentoBase):
     search_fields = ['nome', 'cognome', 'codice_fiscale',]
+    split_words = True
     model = Persona
 
     autocomplete_js_attributes = {
