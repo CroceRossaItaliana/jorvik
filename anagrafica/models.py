@@ -43,7 +43,7 @@ from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_per
     persona_permessi_almeno, persona_ha_permessi
 from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
     crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb, valida_almeno_14_anni, \
-    valida_partita_iva, valida_iban
+    valida_partita_iva, valida_iban, valida_email_personale
 from attivita.models import Turno, Partecipazione
 from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
@@ -104,7 +104,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     provincia_residenza = models.CharField("Provincia di residenza", max_length=2, null=True)
     stato_residenza = CountryField("Stato di residenza", default="IT")
     cap_residenza = models.CharField("CAP di Residenza", max_length=16, null=True)
-    email_contatto = models.EmailField("Email di contatto", max_length=255, blank=True)
+    email_contatto = models.EmailField("Email di contatto", max_length=255, blank=True,
+                                       validators=[valida_email_personale])
     note = models.TextField("Note aggiuntive", max_length=10000, blank=True, null=True,)
 
     avatar = models.ImageField("Avatar", blank=True, null=True,
