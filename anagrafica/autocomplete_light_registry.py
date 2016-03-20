@@ -9,6 +9,8 @@ from formazione.models import PartecipazioneCorsoBase
 
 
 class AutocompletamentoBase(autocomplete_light.AutocompleteModelBase):
+    split_words = True
+
     @property
     def persona(self):
         return self.request.user.persona
@@ -18,16 +20,15 @@ class AutocompletamentoBase(autocomplete_light.AutocompleteModelBase):
                         "&nbsp;Prova a cambiare il termine di ricerca.&nbsp;" \
                         "<!--%s--></span>"
 
+    attrs = {
+        'placeholder': 'Inizia a scrivere...',
+        'required': False,
+    }
+
 
 class PersonaAutocompletamento(AutocompletamentoBase):
     search_fields = ['nome', 'cognome', 'codice_fiscale',]
-    split_words = True
     model = Persona
-
-    autocomplete_js_attributes = {
-        'placeholder': 'Digita nome o CF...',
-        'required': False,
-    }
 
     def choices_for_request(self):
 
@@ -71,8 +72,6 @@ class PersonaAutocompletamento(AutocompletamentoBase):
 
 
 class PresidenteAutocompletamento(PersonaAutocompletamento):
-
-    split_words = True
 
     def choices_for_request(self):
         if self.request.user.is_superuser:
