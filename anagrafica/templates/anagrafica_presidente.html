@@ -2,7 +2,7 @@
 
 {% load bootstrap3 %}
 {% load mptt_tags %}
-
+{% load utils %}
 
 {% block pagina_titolo %}
     Presidente
@@ -38,41 +38,60 @@
             </h2>
         </div>
         <div class="panel-body piu-grande">
-            <ul class="root">
-                {% recursetree sedi %}
-                    <li>
-                        <p>
-                            <a href="/presidente/sedi/{{ node.pk }}/"><strong>{{ node.nome }}</strong></a>, {{ node.get_estensione_display }}
 
-                            <span class="pull-right">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        {% livello_max sedi as max %}
+                        {% for i in max|volte %}
+                            <th>&nbsp;</th>
+                        {% endfor %}
+                        <th>Sede</th>
+                        <th>Tipo</th>
+                        <th>Stato</th>
+                        <th>Check-list</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for sede in sedi %}
+                    <tr>
+                        {% for i in sede.level|volte %}
+                            <td>&nbsp;</td>
+                        {% endfor %}
 
-                            {% if node.richiede_revisione_dati %}
+                        {% differenza max sede.level 1 as diff %}
+                        <td class="grassetto" {% if diff %}colspan="{{ diff }}"{% endif %}>
+                            <a href="/presidente/sedi/{{ sede.pk }}/">
+                                {{ sede.nome }}
+                            </a>
+                        </td>
+                        <td>{{ sede.get_estensione_display }}</td>
+                        <td>
+                            {% if sede.richiede_revisione_dati %}
                                 <span class="text-danger">
                                     <i class="fa fa-fw fa-warning"></i>
                                     Richiede verifica
                                 </span> &nbsp;
+                            {% else %}
+                                <span class="text-success">
+                                    <i class="fa fa-fw fa-check"></i>
+                                    Dati aggiornati
+                                </span>
                             {% endif %}
-
-                            {% if node.ha_checklist %}
-
-                                <a href="{{ node.url_checklist }}" class="text-success">
+                        </td>
+                        <td>
+                            {% if sede.ha_checklist %}
+                                <a href="{{ sede.url_checklist }}" class="text-success">
                                     <i class="fa fa-fw fa-check-square-o"></i>
                                     Check-list Comitato
                                 </a>
                             {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
 
-                            </span>
-
-
-                        </p>
-                        {% if not node.estensione == massimo_lista and not node.is_leaf_node %}
-                            <ul class="children">
-                                {{ children }}
-                            </ul>
-                        {% endif %}
-                    </li>
-                {% endrecursetree %}
-            </ul>
 
         </div>
     </div>
