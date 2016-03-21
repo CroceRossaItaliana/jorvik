@@ -756,3 +756,35 @@ class TestFunzionaliAnagrafica(TestFunzionale):
             True,
             msg="Login effettuato con nuove credenziali"
         )
+
+    def test_presidente_recursetree(self):
+        """
+        Questo test controlla che la pagina /presidente
+        funzioni correttamente nel caso particolare di due sottoalberi
+        completamente separati, che causa problemi e non puo essere usata
+        con {% recursetree %}.
+        """
+
+        presidente = crea_persona()
+
+        # Struttura:
+        # x
+        # - y       presidenza
+        # - - a
+        # - - - b   (unita)
+        # - c       presidenza
+        # - - d     (unita)
+        x = crea_sede()
+        y = crea_sede(genitore=x)
+        a = crea_sede(genitore=y, presidente=presidente)
+        b = crea_sede(genitore=a, estensione=TERRITORIALE)
+        c = crea_sede(genitore=x, presidente=presidente)
+        d = crea_sede(genitore=c, estensione=TERRITORIALE)
+
+        sessione = self.sessione_utente(persona=presidente)
+        sessione.click_link_by_partial_text("Sedi")
+
+        self.assertTrue(
+            sessione.is_text_present(c.nome),
+            msg="Pagina caricata correttamente"
+        )
