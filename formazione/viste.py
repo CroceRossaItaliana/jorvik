@@ -210,7 +210,6 @@ def aspirante_corso_base_lezioni(request, me, pk):
             for partecipante in partecipanti:
                 if ("%s" % (partecipante.pk,)) in request.POST.getlist('presenze-%s' % (lezione.pk,)):
                     # Se presente, rimuovi ogni assenza.
-                    print("Presente %s" % (partecipante,))
                     AssenzaCorsoBase.objects.filter(lezione=lezione, persona=partecipante).delete()
                 else:
                     # Assicurati che sia segnato come assente.
