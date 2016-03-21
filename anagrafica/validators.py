@@ -82,5 +82,5 @@ def valida_email_personale(email):
     )
     for coppia in coppie:
         if email and email.lower().startswith(coppia[0]) and email.lower().endswith(coppia[1]):
-            raise ValidationError("Non è possibile una casella istituzionale come "
+            raise ValidationError("Non è possibile utilizzare una casella istituzionale come "
                                   "indirizzo e-mail personale.")
