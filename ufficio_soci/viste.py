@@ -441,7 +441,6 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
             return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
 
         if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
-            print(request.session["elenco_modulo_%s" % (elenco_id,)])
             return redirect("/us/elenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
 
         elenco.modulo_riempito = modulo  # Imposta il modulo

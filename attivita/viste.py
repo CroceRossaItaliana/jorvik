@@ -406,7 +406,6 @@ def attivita_scheda_turni_nuovo(request, me=None, pk=None):
                 and modulo_ripeti.is_valid():
             numero_ripetizioni = modulo_ripeti.cleaned_data['numero_ripetizioni']
             giorni = modulo_ripeti.cleaned_data['giorni']
-            print(giorni)
 
             giorni_ripetuti = 0
             giorni_nel_futuro = 1
