@@ -175,9 +175,6 @@ def registrati_conferma(request, tipo):
         sessione = request.session['registrati'].copy()
     except KeyError:
         sessione = {}
-
-    print(sessione)
-
     dati = {}
 
     # Carica tutti i moduli inviati da questo tipo di registrazione
@@ -715,12 +712,9 @@ def utente_riserva(request, me):
 @pagina_privata
 def utente_riserva_ritira(request, me, pk):
     riserva = get_object_or_404(Riserva, pk=pk)
-    print(riserva)
-    print(riserva.esito)
     if not riserva.persona == me:
         return redirect(ERRORE_PERMESSI)
     riserva.autorizzazioni_ritira()
-    print(riserva.esito)
     Messaggio.costruisci_e_invia(
            oggetto="Riserva terminata",
            modello="email_richiesta_riserva_terminata.html",
@@ -1055,7 +1049,6 @@ def _profilo_sangue(request, me, persona):
         donazione = modulo_donazione.save(commit=False)
         donazione.persona = persona
         r = donazione.save()
-        print(r)
 
     contesto = {
         "modulo_donatore": modulo_donatore,
