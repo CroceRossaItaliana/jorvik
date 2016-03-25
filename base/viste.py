@@ -120,7 +120,7 @@ def informazioni_condizioni(request, me):
 
 
 @xframe_options_exempt
-@pagina_pubblica
+@pagina_pubblica(permetti_embed=True)
 def informazioni_sedi(request, me):
     """
     Mostra un elenco dei Comitato, su una mappa, ed esce.
@@ -133,7 +133,7 @@ def informazioni_sedi(request, me):
 
 
 @xframe_options_exempt
-@pagina_pubblica
+@pagina_pubblica(permetti_embed=True)
 def informazioni_sede(request, me, slug):
     """
     Mostra dettagli sul comitato.

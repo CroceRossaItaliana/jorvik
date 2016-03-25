@@ -6,61 +6,65 @@
 {% block pagina_corpo %}
 
     {% block pagina_testata %}
-    <nav class="navbar navbar-default">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Mostra navigazione</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" {% if me %}href="/utente/"{% else %}href="/"{% endif %}>
-              <img id="navbar-logo" class="pull-left" src="{% static 'img/logo-semplice.png' %}" alt="CRI" />
 
-              <span class="rosso-scuro">Croce Rossa Italiana</span>
-              |
-              <strong>Gaia</strong>
-          </a>
-        </div>
-        <div id="navbar" class="navbar-collapse collapse allinea-destra">
+        {% if not embed %}
+            <nav class="navbar navbar-default">
+              <div class="container">
+                <div class="navbar-header">
+                  <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Mostra navigazione</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                  </button>
+                  <a class="navbar-brand" {% if me %}href="/utente/"{% else %}href="/"{% endif %}>
+                      <img id="navbar-logo" class="pull-left" src="{% static 'img/logo-semplice.png' %}" alt="CRI" />
+
+                      <span class="rosso-scuro">Croce Rossa Italiana</span>
+                      |
+                      <strong>Gaia</strong>
+                  </a>
+                </div>
+                <div id="navbar" class="navbar-collapse collapse allinea-destra">
 
 
-            {% if me %}
-                <p class="navbar-btn btn-group">
-                    <a class="btn btn-sm btn-primary" href="/utente/">
-                        <i class="fa fa-user"></i>
-                        Ciao, <strong>{{ me.nome }}</strong>
-                    </a>
-                    {% if me.admin %}
-                        <a class="btn btn-default btn-sm" href="/admin/">
-                            <i class="fa fa-cogs"></i>
-                            Amministrazione
-                        </a>
+                    {% if me %}
+                        <p class="navbar-btn btn-group">
+                            <a class="btn btn-sm btn-primary" href="/utente/">
+                                <i class="fa fa-user"></i>
+                                Ciao, <strong>{{ me.nome }}</strong>
+                            </a>
+                            {% if me.admin %}
+                                <a class="btn btn-default btn-sm" href="/admin/">
+                                    <i class="fa fa-cogs"></i>
+                                    Amministrazione
+                                </a>
+                            {% endif %}
+                            <a class="btn btn-sm btn-info" href="/logout/">
+                                <i class="fa fa-sign-out"></i>
+                                Logout
+                            </a>
+                        </p>
+                    {% else %}
+                        <p class="navbar-btn btn-group">
+
+                            {% if not site_url %}
+                                <a class="btn btn-sm btn-danger" href="/login/">
+                                <i class="fa fa-key"></i> Accedi
+                            </a>
+                            {% endif %}
+
+                            {% block base_admin_navbar %}{% endblock %}
+
+                        </p>
                     {% endif %}
-                    <a class="btn btn-sm btn-info" href="/logout/">
-                        <i class="fa fa-sign-out"></i>
-                        Logout
-                    </a>
-                </p>
-            {% else %}
-                <p class="navbar-btn btn-group">
-
-                    {% if not site_url %}
-                        <a class="btn btn-sm btn-danger" href="/login/">
-                        <i class="fa fa-key"></i> Accedi
-                    </a>
-                    {% endif %}
-
-                    {% block base_admin_navbar %}{% endblock %}
-
-                </p>
-            {% endif %}
 
 
-        </div><!--/.navbar-collapse -->
-      </div>
-    </nav>
+                </div><!--/.navbar-collapse -->
+              </div>
+            </nav>
+        {% endif %}
+        
     {% endblock %}
 
     <!--<p style="padding: 0px 0px 0px 0px; margin: 0px 0px 0px 0px; padding-top: 50px; height: 0px;" id="nav-spacer">&nbsp;</p>-->
@@ -77,6 +81,7 @@
     {% block pagina_principale %}
     {% endblock %}
 
+    {% if not embed %}
     <div class="container">
 
       <hr>
@@ -110,5 +115,6 @@
       </footer>
 
     </div> <!-- /container -->
+    {% endif %}
 
 {% endblock %}
