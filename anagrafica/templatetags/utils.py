@@ -59,7 +59,7 @@ def checkbox(booleano, extra_classe='', con_testo=1):
         testo = "<span class='text-success'>FATTO</span>" if booleano else \
             "<span class='text-danger'>DA FARE</span>"
 
-    return " <i class='fa fa-fw %s %s'></i> %s" % (classe, extra_classe, testo)
+    return mark_safe(" <i class='fa fa-fw %s %s'></i> %s" % (classe, extra_classe, testo))
 
 
 @register.simple_tag(takes_context=True)

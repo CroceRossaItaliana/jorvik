@@ -1,7 +1,7 @@
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import LiveServerTestCase
 
-from base.utils_tests import sessione_utente
+from base.utils_tests import sessione_utente, sessione_anonimo
 
 
 class TestFunzionale(StaticLiveServerTestCase):
@@ -17,10 +17,15 @@ class TestFunzionale(StaticLiveServerTestCase):
         self.sessioni_aperte.append(sessione)
         return sessione
 
+    def sessione_anonimo(self):
+        sessione = sessione_anonimo(self.live_server_url)
+        self.sessioni_aperte.append(sessione)
+        return sessione
+
     def seleziona_delegati(self, sessione, persone):
         with sessione.get_iframe(0) as iframe:
+            assert iframe.is_text_present("Elenco delegati come")
             import time
-
             for persona in persone:
                 iframe.type('persona-autocomplete', persona.nome)
                 time.sleep(1.5)
@@ -47,10 +52,22 @@ class TestFunzionale(StaticLiveServerTestCase):
         with sessione.get_iframe("id_%s_ifr" % nome) as iframe:
             iframe.find_by_tag('body').type(testo)
 
+    def sessione_termina(self, da_terminare):
+        self.sessioni_aperte.remove(da_terminare)
+        da_terminare.quit()
+
+    def sessione_conferma(self, sessione, accetta=True, attendi=6):
+        import time
+        alert = sessione.get_alert()
+        if accetta:
+            alert.accept()
+        else:
+            alert.dismiss()
+        time.sleep(attendi)
+
     def tearDown(self):
         if not hasattr(self, 'mantieni_aperto'):
             sessioni_aperte = list(self.sessioni_aperte)
             for sessione in sessioni_aperte:
-                self.sessioni_aperte.remove(sessione)
-                sessione.quit()
+                self.sessione_termina(sessione)
         super(TestFunzionale, self).tearDown()
