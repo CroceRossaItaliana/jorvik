@@ -12,7 +12,7 @@ from posta.models import Messaggio
 
 class CronReportComitati(CronJobBase):
 
-    RUN_AT_TIMES = ['22:30']
+    RUN_AT_TIMES = ['06:30']
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
     code = 'anagrafica.report.sedi'
@@ -45,7 +45,7 @@ class CronReportComitati(CronJobBase):
                 LOCALE: "CL"
             }[sede.estensione]
             regione = sede.locazione.regione if sede.locazione else ""
-            provincia = sede.locazione.provincia if sede.locazione else ""
+            provincia = sede.locazione.provincia_breve if sede.locazione else ""
             via = "%s, %s" % (sede.locazione.via, sede.locazione.civico) if sede.locazione else ""
             citta = sede.locazione.comune if sede.locazione else ""
             cap = sede.locazione.cap if sede.locazione else ""

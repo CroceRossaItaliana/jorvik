@@ -152,7 +152,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def link(self):
-        return "<a href=\"%s\" target=\"_new\">%s</a>" % (self.url, self.nome)
+        return "<a href=\"%s\">%s</a>" % (self.url, self.nome)
 
     @property
     def url_direttori(self):

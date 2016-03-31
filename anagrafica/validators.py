@@ -73,3 +73,14 @@ def valida_almeno_14_anni(data):
     if (al_giorno.year - data.year - ((al_giorno.month, al_giorno.day) < (data.month, data.day))) <  anni:
         raise ValidationError("Sono necessari almeno %d anni di età" % (anni,))
 
+
+def valida_email_personale(email):
+    coppie = (
+        ('cl.', '@cri.it'),
+        ('cp.', '@cri.it'),
+        ('cr.', '@cri.it'),
+    )
+    for coppia in coppie:
+        if email and email.lower().startswith(coppia[0]) and email.lower().endswith(coppia[1]):
+            raise ValidationError("Non è possibile utilizzare una casella istituzionale come "
+                                  "indirizzo e-mail personale.")

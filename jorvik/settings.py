@@ -224,3 +224,10 @@ TEMPLATES = [
         },
     },
 ]
+
+BOOTSTRAP3 = {
+    'field_renderers': {
+        'default': 'base.datetime.DateTimeFieldRenderer',
+        'inline': 'bootstrap3.renderers.InlineFieldRenderer',
+    },
+}

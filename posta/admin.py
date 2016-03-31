@@ -1,5 +1,5 @@
 from django.contrib import admin
-from posta.models import Messaggio, Allegato
+from posta.models import Messaggio
 from posta.models import Destinatario
 
 __author__ = 'alfioemanuele'
@@ -20,7 +20,3 @@ class AdminDestinatario(admin.ModelAdmin):
     list_display = ('messaggio', 'persona', 'inviato', 'tentativo', 'errore')
     list_filter = ('inviato', 'tentativo', )
     raw_id_fields = ('persona', 'messaggio',)
-
-
-
-admin.site.register(Allegato)

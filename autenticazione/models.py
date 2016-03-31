@@ -7,6 +7,8 @@ from django.core.mail import send_mail
 from django.db import models
 from django.db.models import OneToOneField
 from django.utils.http import urlquote
+
+from anagrafica.validators import valida_email_personale
 from base.models import ModelloSemplice
 from base.stringhe import genera_uuid_casuale
 from base.tratti import ConMarcaTemporale
@@ -49,9 +51,9 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
         verbose_name_plural = "Utenze"
         app_label = 'autenticazione'
 
-    email = models.EmailField('Indirizzo email', max_length=254, unique=True)
+    email = models.EmailField('Indirizzo email', max_length=254, unique=True,
+                              validators=[valida_email_personale])
     persona = OneToOneField("anagrafica.Persona", null=True, blank=True, db_index=True)
-    ultimo_accesso = models.DateTimeField("Ultimo accesso", blank=True, null=True)
     ultimo_consenso = models.DateTimeField("Ultimo consenso", blank=True, null=True)
 
     is_staff = models.BooleanField('Amministratore', default=False,
@@ -62,6 +64,10 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
     MIN_PASSWORD_LENGTH = 6
+
+    @property
+    def ultimo_accesso(self):
+        return self.last_login
 
     def get_absolute_url(self):
         content_type = ContentType.objects.get_for_model(self.__class__)

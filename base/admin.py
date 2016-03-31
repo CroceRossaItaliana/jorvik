@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 
 from base.geo import Locazione
-from base.models import Autorizzazione, Token
+from base.models import Autorizzazione, Token, Allegato
 
 # Aggiugni al pannello di amministrazione
 admin.site.register(Token)
@@ -38,3 +38,10 @@ class AdminAutorizzazione(admin.ModelAdmin):
                     "destinatario_ruolo", "destinatario_oggetto_tipo", "destinatario_oggetto_id")
     list_filter = ("necessaria", "concessa", "destinatario_oggetto_tipo",)
     raw_id_fields = ("richiedente", "firmatario", )
+
+
+@admin.register(Allegato)
+class AdminAllegato(admin.ModelAdmin):
+    search_fields = ["nome"]
+    list_display = ["nome", "creazione", "file"]
+    list_filter = ("creazione",)

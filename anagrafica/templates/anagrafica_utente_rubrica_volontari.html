@@ -37,12 +37,7 @@
 
             <tr>
                 <td class="allinea-centro">
-                    {% if volontario.fototessera_attuale %}
-                        {% thumbnail volontario.fototessera_attuale.file "100x100" crop="center" as im %}
-                            <img src="{{ im.url }}" class="img-rounded" alt="Immagine del profilo attuale" />
-                        {% endthumbnail %}
-
-                    {% elif volontario.avatar %}
+                    {% if volontario.avatar %}
                         {% thumbnail volontario.avatar "100x100" crop="center" as im %}
                             <img src="{{ im.url }}" class="img-rounded" alt="Immagine del profilo attuale" />
                         {% endthumbnail %}

@@ -9,6 +9,8 @@ from formazione.models import PartecipazioneCorsoBase
 
 
 class AutocompletamentoBase(autocomplete_light.AutocompleteModelBase):
+    split_words = True
+
     @property
     def persona(self):
         return self.request.user.persona
@@ -18,15 +20,15 @@ class AutocompletamentoBase(autocomplete_light.AutocompleteModelBase):
                         "&nbsp;Prova a cambiare il termine di ricerca.&nbsp;" \
                         "<!--%s--></span>"
 
+    attrs = {
+        'placeholder': 'Inizia a scrivere...',
+        'required': False,
+    }
+
 
 class PersonaAutocompletamento(AutocompletamentoBase):
     search_fields = ['nome', 'cognome', 'codice_fiscale',]
     model = Persona
-
-    autocomplete_js_attributes = {
-        'placeholder': 'Digita nome o CF...',
-        'required': False,
-    }
 
     def choices_for_request(self):
 
@@ -77,19 +79,25 @@ class PresidenteAutocompletamento(PersonaAutocompletamento):
         return super(PersonaAutocompletamento, self).choices_for_request()
 
     choice_html_format = u'''
-        <span class="block" data-value="%s"><strong>%s</strong><br />
-        Nat%s il %s<br />
-        <span class="monospace">%s</span></span>
+        <span class='piu-piccolo'>
+            <span class="" data-value="%s"><strong>%s</strong><br />
+            Nat%s il %s &mdash;
+            <span class="monospace">%s</span><br />
+            %s
+            </span>
+        </span>
     '''
 
     def choice_html(self, choice):
         app = choice.appartenenze_attuali().first() if choice else None
+        sede = choice.sede_riferimento() if choice else None
         return self.choice_html_format % (
             self.choice_value(choice),
             self.choice_label(choice),
             choice.genere_o_a,
-            choice.data_nascita.strftime("%d/%m/%Y"),
+            choice.data_nascita.strftime("%d/%m/%Y") if choice.data_nascita else None,
             choice.codice_fiscale,
+            sede.nome_completo if sede else ""
         )
 
 

@@ -23,12 +23,17 @@ def _spacchetta(pacchetto):
     return template, contesto, richiesta
 
 
-def pagina_pubblica(funzione):
+def pagina_pubblica(funzione=None, permetti_embed=False):
     """
     Questa funzione attua da decoratore per le pagine accessibili sia a privati che pubblico.
     :param funzione: (decoratore)
     :return: (decoratore)
     """
+
+    # Questo codice rende i parametri opzionali, ie. rende possibile chiamare sia @pagina_pubblica
+    # che @pagina_pubblica(permetti_embed=True)
+    if funzione is None:
+        return functools.partial(pagina_pubblica, permetti_embed=permetti_embed)
 
     def _pagina_pubblica(request, *args, **kwargs):
 
@@ -40,7 +45,10 @@ def pagina_pubblica(funzione):
         if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
             return richiesta  # Passa attraverso.
 
+        embed = permetti_embed and bool(request.GET.get('embed', default=False))
+
         contesto.update({"me": request.me})
+        contesto.update({"embed": embed})
         contesto.update({"request": request})
         contesto.update({"menu": menu(request)})
         return render_to_response(template, RequestContext(request, contesto))

@@ -1,14 +1,20 @@
 import datetime
 
 from django.test import TestCase
+from lxml import html
+
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
 from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Delega
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
+from autenticazione.models import Utenza
+from autenticazione.utils_test import TestFunzionale
 from base.models import Autorizzazione
 from base.utils import poco_fa
-from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza
+from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, email_fittizzia, \
+    crea_utenza
+from posta.models import Messaggio
 
 
 class TestAnagrafica(TestCase):
@@ -647,3 +653,138 @@ class TestAnagrafica(TestCase):
             msg="Il delegato Maletto puo gestire volontario"
         )
 
+
+class TestFunzionaliAnagrafica(TestFunzionale):
+
+    def test_us_attivazione_credenziali(self):
+
+        EMAIL_UTENZA = email_fittizzia()
+
+        presidente = crea_persona()
+        persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        sessione_presidente = self.sessione_utente(persona=presidente)
+
+        sessione_presidente.visit("%s%s" % (self.live_server_url, persona.url_profilo_credenziali))
+        sessione_presidente.fill('email', EMAIL_UTENZA)
+        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
+
+        self.assertTrue(
+            Utenza.objects.filter(persona=persona).exists(),
+            msg="L'utenza e' stata creata correttamente"
+        )
+
+        self.assertTrue(
+            Utenza.objects.get(persona=persona).email == EMAIL_UTENZA,
+            msg="L'email e' stata correttamente creata"
+        )
+
+        # Ottieni e-mail inviata
+        msg = Messaggio.objects.filter(oggetto__icontains="credenziali",
+                                       oggetti_destinatario__persona=persona)
+
+        self.assertTrue(
+            msg.exists(),
+            msg="Email delle credenziali spedita"
+        )
+
+        corpo_msg = msg.first().corpo
+
+        self.assertTrue(
+            EMAIL_UTENZA in corpo_msg,
+            msg="L'email contiene il nuovo indirizzo e-mail"
+        )
+
+        doc = html.document_fromstring(corpo_msg)
+        nuova_pwd = doc.xpath("//*[@id='nuova-password']")[0].text.strip()
+
+        utenza = persona.utenza
+        utenza.password_testing = nuova_pwd  # Password per accesso
+
+        # Prova accesso con nuova utenza.
+        sessione_persona = self.sessione_utente(utente=utenza)
+
+
+    def test_us_cambio_credenziali(self):
+
+        VECCHIA_EMAIL = email_fittizzia()
+        NUOVA_EMAIL = email_fittizzia()
+
+        presidente = crea_persona()
+        persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        utenza = crea_utenza(persona=persona, email=VECCHIA_EMAIL)
+
+        sessione_presidente = self.sessione_utente(persona=presidente)
+        sessione_presidente.visit("%s%s" % (self.live_server_url, persona.url_profilo_credenziali))
+        sessione_presidente.fill('email', NUOVA_EMAIL)
+        sessione_presidente.check('ok_1')
+        sessione_presidente.check('ok_3')
+        sessione_presidente.check('ok_4')
+        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
+
+        # Ottieni e-mail inviata
+        msg = Messaggio.objects.filter(oggetto__icontains="credenziali",
+                                       oggetti_destinatario__persona=persona)
+
+        self.assertTrue(
+            msg.exists(),
+            msg="Email di avviso con nuove credenziali inviata"
+        )
+
+        msg_body = msg.first().corpo
+
+        self.assertTrue(
+            VECCHIA_EMAIL in msg_body,
+            msg="Il messaggio contiene la vecchia e-mail"
+        )
+
+        self.assertTrue(
+            NUOVA_EMAIL in msg_body,
+            msg="Il messaggio contiene la nuova e-mail"
+        )
+
+        utenza = persona.utenza
+        utenza.refresh_from_db()
+
+        self.assertTrue(
+            utenza.email == NUOVA_EMAIL,
+            msg="E-mail di accesso cambiata correttamente"
+        )
+
+        sessione_persona = self.sessione_utente(utente=utenza)
+        self.assertTrue(
+            True,
+            msg="Login effettuato con nuove credenziali"
+        )
+
+    def test_presidente_recursetree(self):
+        """
+        Questo test controlla che la pagina /presidente
+        funzioni correttamente nel caso particolare di due sottoalberi
+        completamente separati, che causa problemi e non puo essere usata
+        con {% recursetree %}.
+        """
+
+        presidente = crea_persona()
+
+        # Struttura:
+        # x
+        # - y       presidenza
+        # - - a
+        # - - - b   (unita)
+        # - c       presidenza
+        # - - d     (unita)
+        x = crea_sede()
+        y = crea_sede(genitore=x)
+        a = crea_sede(genitore=y, presidente=presidente)
+        b = crea_sede(genitore=a, estensione=TERRITORIALE)
+        c = crea_sede(genitore=x, presidente=presidente)
+        d = crea_sede(genitore=c, estensione=TERRITORIALE)
+
+        sessione = self.sessione_utente(persona=presidente)
+        sessione.click_link_by_partial_text("Sedi")
+
+        self.assertTrue(
+            sessione.is_text_present(c.nome),
+            msg="Pagina caricata correttamente"
+        )

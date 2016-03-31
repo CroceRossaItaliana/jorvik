@@ -140,12 +140,22 @@ def crea_partecipazione(persona, turno):
 
 def crea_sessione():
     from splinter import Browser
-    browser = Browser(DRIVER_WEB, wait_time=5)
+    browser = Browser(DRIVER_WEB, wait_time=7)
     return browser
 
 
 def email_fittizzia():
     return "email_%d@test.gaia.cri.it" % random.randint(1, 9999999)
+
+
+def sessione_anonimo(server_url):
+    sessione = crea_sessione()
+    sessione.visit(server_url)
+
+    # Assicurati che l'apertura sia riuscita.
+    assert sessione.is_text_present("Il Progetto Gaia")
+
+    return sessione
 
 
 def sessione_utente(server_url, persona=None, utente=None, password=None):

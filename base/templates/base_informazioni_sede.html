@@ -16,7 +16,7 @@
         <div class="row">
             <div class="col-md-6">
 
-                <a href="/informazioni/sedi/" class="btn btn-block btn-success">
+                <a href="/informazioni/sedi/?embed={{ embed }}" class="btn btn-block btn-success">
                     <i class="fa fa-fw fa-reply"></i>
                     Torna all'elenco delle Sedi
                 </a>
@@ -25,7 +25,7 @@
 
                 {% if sede.genitore %}
                     <h4 class="allinea-centro">
-                        <a href="{{ sede.genitore.url }}">{{ sede.genitore.nome }}</a>
+                        <a href="{{ sede.genitore.url }}?embed={{ embed }}">{{ sede.genitore.nome }}</a>
                     </h4>
                 {% endif %}
 
@@ -91,7 +91,7 @@
                     <ul>
                         {% for node in sede.comitati_sottostanti %}
                             <li>
-                                <a href="{{ node.url }}">
+                                <a href="{{ node.url }}?embed={{ embed }}">
                                     <strong>{{ node.nome }}</strong>
                                 </a>
                                 ({{ node.get_estensione_display }})
@@ -110,7 +110,7 @@
                     <ul>
                         {% for node in vicini %}
                             <li>
-                                <a href="{{ node.url }}">
+                                <a href="{{ node.url }}?embed={{ embed }}">
                                     {{ node.nome }}
                                 </a>
                                 ({{ node.get_estensione_display }})

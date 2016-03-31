@@ -19,7 +19,8 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
-    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail
+    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail, \
+    ModuloUSModificaUtenza
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -174,9 +175,6 @@ def registrati_conferma(request, tipo):
         sessione = request.session['registrati'].copy()
     except KeyError:
         sessione = {}
-
-    print(sessione)
-
     dati = {}
 
     # Carica tutti i moduli inviati da questo tipo di registrazione
@@ -634,8 +632,8 @@ def utente_trasferimento(request, me):
         trasf = modulo.save(commit=False)
         if trasf.destinazione in me.sedi_attuali():
             modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
-        elif trasf.destinazione.comitato != me.sede_riferimento().comitato and True:##che in realta' e' il discriminatore delle elezioni
-            return errore_generico(request, me, messaggio="Non puoi richiedere un trasferimento tra comitati durante il periodo elettorale")
+        #elif trasf.destinazione.comitato != me.sede_riferimento().comitato and True:##che in realta' e' il discriminatore delle elezioni
+        #    return errore_generico(request, me, messaggio="Non puoi richiedere un trasferimento tra comitati durante il periodo elettorale")
         elif me.trasferimento:
             return errore_generico(request, me, messaggio="Non puoi richiedere piú di un trasferimento alla volta")
         else:
@@ -714,12 +712,9 @@ def utente_riserva(request, me):
 @pagina_privata
 def utente_riserva_ritira(request, me, pk):
     riserva = get_object_or_404(Riserva, pk=pk)
-    print(riserva)
-    print(riserva.esito)
     if not riserva.persona == me:
         return redirect(ERRORE_PERMESSI)
     riserva.autorizzazioni_ritira()
-    print(riserva.esito)
     Messaggio.costruisci_e_invia(
            oggetto="Riserva terminata",
            modello="email_richiesta_riserva_terminata.html",
@@ -1054,7 +1049,6 @@ def _profilo_sangue(request, me, persona):
         donazione = modulo_donazione.save(commit=False)
         donazione.persona = persona
         r = donazione.save()
-        print(r)
 
     contesto = {
         "modulo_donatore": modulo_donatore,
@@ -1093,8 +1087,10 @@ def _profilo_quote(request, me, persona):
 def _profilo_credenziali(request, me, persona):
     utenza = Utenza.objects.filter(persona=persona).first()
 
-    modulo_utenza = None
-    if not utenza:
+    modulo_utenza = modulo_modifica = None
+    if utenza:
+        modulo_modifica = ModuloUSModificaUtenza(request.POST or None, instance=utenza)
+    else:
         modulo_utenza = ModuloUtenza(request.POST or None, instance=utenza, initial={"email": persona.email_contatto})
 
     if modulo_utenza and modulo_utenza.is_valid():
@@ -1104,9 +1100,56 @@ def _profilo_credenziali(request, me, persona):
         utenza.genera_credenziali()
         return redirect(persona.url_profilo_credenziali)
 
+    if modulo_modifica and modulo_modifica.is_valid():
+        vecchia_email_contatto = persona.email
+        vecchia_email = Utenza.objects.get(pk=utenza.pk).email
+        nuova_email = modulo_modifica.cleaned_data.get('email')
+
+        if vecchia_email == nuova_email:
+            return errore_generico(request, me, titolo="Nessun cambiamento",
+                                   messaggio="Per cambiare indirizzo e-mail, inserisci un "
+                                             "indirizzo differente.",
+                                   torna_titolo="Credenziali",
+                                   torna_url=persona.url_profilo_credenziali)
+
+        if Utenza.objects.filter(email__icontains=nuova_email).first():
+            return errore_generico(request, me, titolo="E-mail già utilizzata",
+                                   messaggio="Esiste un altro utente in Gaia che utilizza "
+                                             "questa e-mail (%s). Impossibile associarla quindi "
+                                             "a %s." % (nuova_email, persona.nome_completo),
+                                   torna_titolo="Credenziali",
+                                   torna_url=persona.url_profilo_credenziali)
+
+        def _invia_notifica():
+            Messaggio.costruisci_e_invia(
+                oggetto="IMPORTANTE: Cambio e-mail di accesso a Gaia (credenziali)",
+                modello="email_credenziali_modificate.html",
+                corpo={
+                    "vecchia_email": vecchia_email,
+                    "nuova_email": nuova_email,
+                    "persona": persona,
+                    "autore": me,
+                },
+                mittente=me,
+                destinatari=[persona]
+            )
+
+        _invia_notifica()  # Invia notifica alla vecchia e-mail
+        Log.registra_modifiche(me, modulo_modifica)
+        modulo_modifica.save()  # Effettua le modifiche
+        persona.refresh_from_db()
+        if persona.email != vecchia_email_contatto:  # Se e-mail principale cambiata
+            _invia_notifica()  # Invia la notifica anche al nuovo indirizzo
+
+        return messaggio_generico(request, me, titolo="Credenziali modificate",
+                                  messaggio="Le credenziali di %s sono state correttamente aggiornate." % persona.nome,
+                                  torna_titolo="Credenziali",
+                                  torna_url=persona.url_profilo_credenziali)
+
     contesto = {
         "utenza": utenza,
-        "modulo": modulo_utenza,
+        "modulo_creazione": modulo_utenza,
+        "modulo_modifica": modulo_modifica
 
     }
     return 'anagrafica_profilo_credenziali.html', contesto
@@ -1597,8 +1640,11 @@ def admin_pulisci_email(request, me):
 
                 for persona in persone:  # Per ogni persona
 
-                    delegati = persona.sede_riferimento().delegati_attuali(tipo__in=(UFFICIO_SOCI, UFFICIO_SOCI_UNITA)) |\
-                                persona.sede_riferimento().comitato.delegati_attuali(tipo__in=(UFFICIO_SOCI, PRESIDENTE))
+                    try:
+                        delegati = persona.sede_riferimento().delegati_attuali(tipo__in=(UFFICIO_SOCI, UFFICIO_SOCI_UNITA)) |\
+                                    persona.sede_riferimento().comitato.delegati_attuali(tipo__in=(UFFICIO_SOCI, PRESIDENTE))
+                    except AttributeError:
+                        delegati = Persona.objects.none()
 
                     if not delegati.exists():
                         risultati += [
@@ -1650,7 +1696,6 @@ def admin_pulisci_email(request, me):
                                 "operatore": me,
                                 "operazione_data": oggi()
                             },
-                            mittente=me,
                             destinatari=delegati,
                         )
                         risultati += [
@@ -1668,7 +1713,6 @@ def admin_pulisci_email(request, me):
                                 "operatore": me,
                                 "operazione_data": oggi()
                             },
-                            mittente=me,
                             destinatari=delegati,
                         )
                         risultati += [

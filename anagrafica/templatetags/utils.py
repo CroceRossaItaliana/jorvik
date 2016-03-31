@@ -1,7 +1,7 @@
 from django import template
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import intcomma
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Max
 from django.template import Library
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
@@ -59,7 +59,7 @@ def checkbox(booleano, extra_classe='', con_testo=1):
         testo = "<span class='text-success'>FATTO</span>" if booleano else \
             "<span class='text-danger'>DA FARE</span>"
 
-    return " <i class='fa fa-fw %s %s'></i> %s" % (classe, extra_classe, testo)
+    return mark_safe(" <i class='fa fa-fw %s %s'></i> %s" % (classe, extra_classe, testo))
 
 
 @register.simple_tag(takes_context=True)
@@ -158,6 +158,25 @@ def mappa(parser, token):
 @register.simple_tag(takes_context=True)
 def euro(context, numero):
     return mark_safe(testo_euro(numero, simbolo_html=True))
+
+
+@register.assignment_tag()
+def livello_max(queryset):
+    try:
+        massimo = queryset.aggregate(num=Max('level'))
+        return massimo['num']
+    except:
+        return 0
+
+
+@register.simple_tag()
+def differenza(a, b, piu=0):
+    return a - b + piu
+
+
+@register.filter(name='volte')
+def volte(number, meno=0):
+    return range(number-meno)
 
 
 class NodoMappa(template.Node):

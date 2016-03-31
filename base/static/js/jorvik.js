@@ -55,6 +55,22 @@ $(document).ready(function() {
         resize: 'both',
     });
 
+    // Datetime pickers
+    $.datetimepicker.setLocale('it');
+
+    $(".selettore-data").datetimepicker({
+        format:'d/m/Y',
+        timepicker: false,
+        dayOfWeekStart: 1
+    });
+
+    $(".selettore-data-ora").datetimepicker({
+        format:'d/m/Y H:i',
+        dayOfWeekStart: 1
+    });
+
+
+
 
 
 

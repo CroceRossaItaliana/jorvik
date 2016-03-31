@@ -297,8 +297,8 @@ def us_trasferimento(request, me):
             return redirect(ERRORE_PERMESSI)
         if trasf.destinazione in trasf.persona.sedi_attuali():
             modulo.add_error('destinazione', 'Il volontario è già appartenente a questa sede.')
-        elif trasf.destinazione.comitato != trasf.persona.sede_riferimento().comitato and True:##che in realta' e' il discriminatore delle elezioni
-            return errore_generico(request, me, messaggio="Non puoi richiedere un trasferimento tra comitati durante il periodo elettorale", torna_url="/us/trasferimento/")
+        #elif trasf.destinazione.comitato != trasf.persona.sede_riferimento().comitato and True:##che in realta' e' il discriminatore delle elezioni
+        #   return errore_generico(request, me, messaggio="Non puoi richiedere un trasferimento tra comitati durante il periodo elettorale", torna_url="/us/trasferimento/")
         elif trasf.persona.trasferimento:
             return errore_generico(request, me, messaggio="Il Volontario non può avere piú di una richiesta di trasferimento alla volta", torna_url="/us/trasferimento/")
         else:
@@ -306,6 +306,19 @@ def us_trasferimento(request, me):
             trasf.save()
             if me.sede_riferimento().comitato == trasf.destinazione.comitato:
                 trasf.esegui()
+
+                Messaggio.costruisci_e_invia(
+                    oggetto="Richiesta di trasferimento",
+                    modello="email_richiesta_trasferimento_cc.html",
+                    corpo={
+                        "trasferimento": trasf,
+                    },
+                    mittente=None,
+                    destinatari=[
+                        trasf.destinazione.presidente()
+                    ]
+                )
+
                 return messaggio_generico(request, me, titolo="Trasferimento effettuato",
                                       messaggio="Il trasferimento è stato automaticamente effettuato in quanto il "
                                                 "la destinazione e' un'unita' territoriale "
@@ -315,10 +328,23 @@ def us_trasferimento(request, me):
             else:
                 trasf.richiedi()
 
+                Messaggio.costruisci_e_invia(
+                    oggetto="Richiesta di trasferimento",
+                    modello="email_richiesta_trasferimento_cc.html",
+                    corpo={
+                        "trasferimento": trasf,
+                    },
+                    mittente=None,
+                    destinatari=[
+                        trasf.destinazione.presidente()
+                    ]
+                )
+
                 return messaggio_generico(request, me, titolo="Trasferimento richiesto",
                                       messaggio="Il trasferimento è stato richiesto, ora dovrai accettare la richiesta!",
                                       torna_titolo="Richiedi nuovo trasferimento",
                                       torna_url="/us/trasferimento/")
+
     contesto = {
         "sedi": sedi,
         "modulo": modulo,
@@ -415,7 +441,6 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
             return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
 
         if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
-            print(request.session["elenco_modulo_%s" % (elenco_id,)])
             return redirect("/us/elenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
 
         elenco.modulo_riempito = modulo  # Imposta il modulo
