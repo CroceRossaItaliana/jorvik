@@ -34,7 +34,7 @@ def forwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('anagrafica', '0037_auto_20160311_1814'),
+        ('anagrafica', '0038_auto_20160320_0254'),
     ]
 
     operations = [
