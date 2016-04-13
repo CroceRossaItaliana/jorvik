@@ -59,7 +59,7 @@ class Donatore(ModelloSemplice, ConMarcaTemporale):
         'ccddee',
         'CcddEe',
     )
-    FENOTIPO_RH_OPZIONI = ((x, x) for x in FANOTIPO_RH)
+    FENOTIPO_RH_OPZIONI = ((x, x) for x in FENOTIPO_RH)
     fenotipo_rh = models.CharField(max_length=8, choices=FENOTIPO_RH_OPZIONI, db_index=True, blank=True, null=True)
 
     KELL = (
