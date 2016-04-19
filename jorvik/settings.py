@@ -55,6 +55,7 @@ INSTALLED_APPS = (
     'django_gravatar',
     'centrale_operativa',
     'compressor',
+    'segmenti',
 )
 
 STATICFILES_FINDERS = (

@@ -963,6 +963,17 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return False
         return True
 
+    def appartiene_al_segmento(self, segmento):
+        """
+        Ritorna True se un utente appartiene ad un segmento
+        """
+        queryset = Persona.objects.filter(pk=self.pk)
+        filtro = segmento.filtro()
+        queryset = filtro(queryset)
+        if queryset:
+            return queryset.filter(pk=self.pk).exists()
+        return False
+
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
     """
