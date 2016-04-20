@@ -104,7 +104,7 @@ def delegati_formazione(queryset):
 
 
 def volontari_con_titolo(queryset):
-    return volontari(queryset).filter(titoli_personali__isnull=False))
+    return volontari(queryset).filter(titoli_personali__isnull=False)
 
 
 NOMI_SEGMENTI = (

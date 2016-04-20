@@ -9,6 +9,8 @@ class BaseSegmento(models.Model):
 
     nome = models.CharField(max_length=256)
     segmento = models.CharField(max_length=256, choices=NOMI_SEGMENTI)
+    titolo = models.ForeignKey(Titolo, blank=True, null=True)
+    sede = models.ForeignKey(Sede, blank=True, null=True, limit_choices_to={'tipo': Sede.COMITATO},)
     _metodo = None
 
     class Meta:
