@@ -969,7 +969,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         queryset = Persona.objects.filter(pk=self.pk)
         filtro = segmento.filtro()
-        queryset = filtro(queryset)
+        extra_args = segmento.get_extra_filters()
+        queryset = filtro(queryset).filter(**extra_args)
         if queryset:
             return queryset.filter(pk=self.pk).exists()
         return False

@@ -24,6 +24,14 @@ class BaseSegmento(models.Model):
             self._metodo = SEGMENTI.get(self.get_segmento_display())
         return self._metodo
 
+    def get_extra_filters(self):
+        filters = {}
+        if self.titolo:
+            filters['titoli_personali__titolo'] = self.titolo.pk
+        if self.sede:
+            filters['appartenenze__sede'] = self.sede.pk
+        return filters
+
 #class DocumentoSegmento(BaseSegmento):
     # FK a documento
 #    pass
