@@ -7,7 +7,6 @@ from .segmenti import SEGMENTI, NOMI_SEGMENTI
 
 class BaseSegmento(models.Model):
 
-    nome = models.CharField(max_length=256)
     segmento = models.CharField(max_length=256, choices=NOMI_SEGMENTI)
     titolo = models.ForeignKey(Titolo, blank=True, null=True)
     sede = models.ForeignKey(Sede, blank=True, null=True, limit_choices_to={'tipo': Sede.COMITATO},)
@@ -17,7 +16,7 @@ class BaseSegmento(models.Model):
         abstract = True
 
     def __str__(self):
-        return self.nome
+        return '{0} - {1}'.format(self.get_segmento_display(), self.pk)
 
     def filtro(self):
         if not self._metodo:
