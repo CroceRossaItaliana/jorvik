@@ -1,5 +1,6 @@
 from django.db import models
 
+from anagrafica.costanti import TERRITORIALE
 from anagrafica.models import Sede
 from curriculum.models import Titolo
 from .segmenti import SEGMENTI, NOMI_SEGMENTI
@@ -7,9 +8,14 @@ from .segmenti import SEGMENTI, NOMI_SEGMENTI
 
 class BaseSegmento(models.Model):
 
+    LIMITED_CHOICES = {
+        'tipo': Sede.COMITATO,
+        'estensione': TERRITORIALE
+    }
+
     segmento = models.CharField(max_length=256, choices=NOMI_SEGMENTI)
     titolo = models.ForeignKey(Titolo, blank=True, null=True)
-    sede = models.ForeignKey(Sede, blank=True, null=True, limit_choices_to={'tipo': Sede.COMITATO},)
+    sede = models.ForeignKey(Sede, blank=True, null=True, limit_choices_to=LIMITED_CHOICES,)
     _metodo = None
 
     class Meta:
