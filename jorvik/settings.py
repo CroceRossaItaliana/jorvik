@@ -56,6 +56,9 @@ INSTALLED_APPS = [
     'compressor',
     'segmenti',
     'easy_thumbnails',
+    'ckeditor',
+    'filer',
+    'ckeditor_filebrowser_filer'
 ]
 
 STATICFILES_FINDERS = (
@@ -237,3 +240,21 @@ THUMBNAIL_BASEDIR = 'thumbnails'
 
 if os.environ.get('ENABLE_TEST_APPS', False):
     INSTALLED_APPS.append('segmenti.segmenti_test')
+
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Bold', 'Italic', 'Underline'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink'],
+            ['RemoveFormat', 'Source'],
+            ['FilerImage']
+        ],
+        'extraPlugins': 'filerimage',
+        'removePlugins': 'image'
+    },
+}
+
+FILER_CANONICAL_URL = 'sharing/'
