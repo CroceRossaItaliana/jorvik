@@ -55,6 +55,12 @@ INSTALLED_APPS = (
     'centrale_operativa',
     'compressor',
     'easy_thumbnails',
+<<<<<<< 9d1899cf09390df78e7f8c6c3e17b6ddca6f8cd5
+=======
+    'ckeditor',
+    'filer',
+    'ckeditor_filebrowser_filer'
+>>>>>>> Add ckeditor setup
 )
 
 STATICFILES_FINDERS = (
@@ -232,4 +238,22 @@ BOOTSTRAP3 = {
     },
 }
 
+
 THUMBNAIL_BASEDIR = 'thumbnails'
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Bold', 'Italic', 'Underline'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink'],
+            ['RemoveFormat', 'Source'],
+            ['FilerImage']
+        ],
+        'extraPlugins': 'filerimage',
+        'removePlugins': 'image'
+    },
+}
+
+FILER_CANONICAL_URL = 'sharing/'
