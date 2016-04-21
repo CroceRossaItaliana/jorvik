@@ -4,7 +4,7 @@ from segmenti.models import BaseSegmento
 
 
 class NotiziaTest(models.Model):
-    test = models.CharField(max_length=256)
+    testo = models.CharField(max_length=256)
 
 
 class NotiziaTestSegmento(BaseSegmento):

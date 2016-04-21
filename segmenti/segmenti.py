@@ -1,10 +1,43 @@
+import datetime
+import operator
+
+from django.db.models import Q
+
 from anagrafica.costanti import LOCALE, REGIONALE
-from anagrafica.models import Appartenenza, Sede
+from anagrafica.models import Appartenenza, Delega, Sede
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE
 
+LIMITE_ETA = 35
+
+# Utils
+
+def _appartenenze_attive(queryset):
+    return queryset.filter(
+        appartenenze__in=Appartenenza.query_attuale().values_list('pk', flat='True')
+    )
+
+
+def _deleghe_attive(queryset):
+    return queryset.filter(
+        delega__in=Delega.query_attuale().values_list('pk', flat='True')
+    )
+
+def _calcola_eta(queryset, meno=True):
+
+    controllo = operator.lt if meno else operator.ge
+
+    persone_filtrate = []
+    for persona in queryset:
+        if controllo(persona.eta, LIMITE_ETA):
+            persone_filtrate.append(persona.pk)
+    return persone_filtrate
+
+
+# Filtri
 
 def volontari(queryset):
-    return queryset.filter(appartenenze__membro=Appartenenza.VOLONTARIO)
+    qs = queryset.filter(appartenenze__membro=Appartenenza.VOLONTARIO)
+    return _appartenenze_attive(qs)
 
 
 def volontari_meno_un_anno(queryset):
@@ -16,15 +49,20 @@ def volontari_piu_un_anno(queryset):
 
 
 def volontari_meno_35_anni(queryset):
-    return volontari(queryset).filter()
+    tutti_volontari = volontari(queryset)
+    volontari_filtrati = _calcola_eta(tutti_volontari)
+    return tutti_volontari.filter(pk__in=volontari_filtrati)
 
 
 def volontari_maggiore_o_uguale_35_anni(queryset):
-    return volontari(queryset).filter()
+    tutti_volontari = volontari(queryset)
+    volontari_filtrati = volontari_filtrati = _calcola_eta(tutti_volontari, meno=False)
+    return tutti_volontari.filter(pk__in=volontari_filtrati)
 
 
 def sostenitori_cri(queryset):
-    return queryset.filter(appartenenze__membro=Appartenenza.SOSTENITORE)
+    qs = queryset.filter(appartenenze__membro=Appartenenza.SOSTENITORE)
+    return _appartenenze_attive(qs)
 
 
 def aspiranti_volontari_iscritti_ad_un_corso(queryset):
@@ -32,7 +70,8 @@ def aspiranti_volontari_iscritti_ad_un_corso(queryset):
 
 
 def tutti_i_presidenti(queryset):
-    return queryset.filter(delega__tipo=PRESIDENTE)
+    qs = queryset.filter(delega__tipo=PRESIDENTE)
+    return _deleghe_attive(qs)
 
 
 def presidenti_comitati_locali(queryset):
@@ -44,32 +83,36 @@ def presidenti_comitati_regionali(queryset):
 
 
 def delegati_US(queryset):
-    return queryset.filter(delega__tipo=UFFICIO_SOCI)
+    qs = queryset.filter(delega__tipo=UFFICIO_SOCI)
+    return _deleghe_attive(qs)
 
 
 def delegati_Obiettivo_I(queryset):
-    return queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_1)
+    qs = queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_1)
+    return _deleghe_attive(qs)
 
 
 def delegati_Obiettivo_II(queryset):
-    return queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_2)
+    qs = queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_2)
+    return _deleghe_attive(qs)
 
 
 def delegati_Obiettivo_III(queryset):
-    return queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_3)
+    qs = queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_3)
+    return _deleghe_attive(qs)
 
 
 def delegati_Obiettivo_IV(queryset):
-    return queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_4)
-
+    qs = queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_4)
+    return _deleghe_attive(qs)
 
 def delegati_Obiettivo_V(queryset):
-    return queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_5)
-
+    qs = queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_5)
+    return _deleghe_attive(qs)
 
 def delegati_Obiettivo_VI(queryset):
-    return queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_6)
-
+    qs = queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_6)
+    return _deleghe_attive(qs)
 
 def referenti_attivita_area_I(queryset):
     pass
@@ -96,11 +139,13 @@ def referenti_attivita_area_VI(queryset):
 
 
 def delegati_autoparco(queryset):
-    return queryset.filter(delega__tipo=RESPONSABILE_AUTOPARCO)
+    qs = queryset.filter(delega__tipo=RESPONSABILE_AUTOPARCO)
+    return _deleghe_attive(qs)
 
 
 def delegati_formazione(queryset):
-    return queryset.filter(delega__tipo=RESPONSABILE_FORMAZIONE)
+    qs = queryset.filter(delega__tipo=RESPONSABILE_FORMAZIONE)
+    return _deleghe_attive(qs)
 
 
 def volontari_con_titolo(queryset):
@@ -137,6 +182,8 @@ NOMI_SEGMENTI = (
     ('AA', 'Volontari aventi un dato titolo'),
 )
 
+
+# Dizionario 'Segmento' (key) => 'Filtro' (value)
 
 SEGMENTI = {
     'Tutti gli utenti di Gaia':              lambda queryset: queryset,
