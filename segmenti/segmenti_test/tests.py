@@ -10,7 +10,7 @@ from lxml import html
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
 from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Delega
-from anagrafica.permessi.applicazioni import RESPONSABILE_AUTOPARCO, UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA
+from anagrafica.permessi.applicazioni import RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE, UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
 from autenticazione.models import Utenza
 from autenticazione.utils_test import TestFunzionale
@@ -18,6 +18,7 @@ from base.models import Autorizzazione
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, email_fittizzia, \
     crea_utenza
+from formazione.models import Aspirante, CorsoBase, PartecipazioneCorsoBase
 from posta.models import Messaggio
 from .models import NotiziaTest, NotiziaTestSegmento
 
@@ -26,6 +27,11 @@ from .models import NotiziaTest, NotiziaTestSegmento
 class TestSegmenti(TestCase):
 
     def test_appartenenza(self):
+
+        data_corrente = datetime.date.today()
+        anno_corrente = data_corrente.year
+
+        LIVELLI_DELEGATI = [(DELEGATO_OBIETTIVO_1, 'M'), (DELEGATO_OBIETTIVO_2, 'N'), (DELEGATO_OBIETTIVO_3, 'O'), (DELEGATO_OBIETTIVO_4, 'P'), (DELEGATO_OBIETTIVO_5, 'Q'), (DELEGATO_OBIETTIVO_6, 'R')]
 
         # Notizie di test
         notizia_1 = NotiziaTest.objects.create(testo="Notizia 1: Testo di prova!")
@@ -40,6 +46,16 @@ class TestSegmenti(TestCase):
         # Segmento per filtrare tutti i volontari
         segmento_volontari_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='B',
+            notizia=notizia_1
+        )
+        # Segmento per filtrare tutti i volontari con meno di un anno di attivita
+        segmento_volontari_meno_uno_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='C',
+            notizia=notizia_1
+        )
+        # Segmento per filtrare tutti i volontari con più di un anno di attivita
+        segmento_volontari_piu_uno_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='D',
             notizia=notizia_1
         )
         # Segmento per filtrare tutti i volontari con meno di 35 anni
@@ -57,9 +73,24 @@ class TestSegmenti(TestCase):
             segmento='G',
             notizia=notizia_1
         )
+        # Segmento per filtrare tutti i sostenitori
+        segmento_aspiranti_corsisti_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='H',
+            notizia=notizia_1
+        )
         # Segmento per filtrare tutti i presidenti con delega attiva
         segmento_presidenti_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='I',
+            notizia=notizia_1
+        )
+        # Segmento per filtrare tutti i presidenti di comitati locali con delega attiva
+        segmento_presidenti_comitati_locali_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='J',
+            notizia=notizia_1
+        )
+        # Segmento per filtrare tutti i presidenti di comitati regionali con delega attiva
+        segmento_presidenti_comitati_regionali_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='K',
             notizia=notizia_1
         )
         # Segmento per filtrare tutti i delegati Ufficio Soci con delega attiva
@@ -70,6 +101,11 @@ class TestSegmenti(TestCase):
         # Segmento per filtrare tutti i delegati Autoparco con delega attiva
         segmento_delegati_autoparco_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='Y',
+            notizia=notizia_1
+        )
+        # Segmento per filtrare tutti i delegati Formazione con delega attiva
+        segmento_delegati_formazione_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='Z',
             notizia=notizia_1
         )
 
@@ -87,23 +123,7 @@ class TestSegmenti(TestCase):
         self.assertFalse(esito)
 
         # Volontario
-        volontario = crea_persona()
-        volontario.save()
-
-        c = crea_sede(estensione=PROVINCIALE)
-        c.save()
-
-        c2 = crea_sede(estensione=TERRITORIALE, genitore=c)
-        c2.save()
-
-        a = Appartenenza(
-            persona=volontario,
-            sede=c,
-            membro=Appartenenza.VOLONTARIO,
-            inizio="1980-12-10",
-            confermata=True
-        )
-        a.save()
+        volontario, _, _ = crea_persona_sede_appartenenza()
 
         esito = volontario.appartiene_al_segmento(segmento_tutti_no_filtri)
         self.assertTrue(esito)
@@ -112,24 +132,40 @@ class TestSegmenti(TestCase):
         esito = volontario.appartiene_al_segmento(segmento_presidenti_no_filtri)
         self.assertFalse(esito)
 
+        # Volontario con meno di un anno di attività
+        volontario_meno_uno, _, _ = crea_persona_sede_appartenenza()
+        volontario_meno_uno.creazione = data_corrente - datetime.timedelta(days=5)
+        volontario_meno_uno.save()
+        esito = volontario_meno_uno.appartiene_al_segmento(segmento_tutti_no_filtri)
+        self.assertTrue(esito)
+        esito = volontario_meno_uno.appartiene_al_segmento(segmento_volontari_no_filtri)
+        self.assertTrue(esito)
+        esito = volontario_meno_uno.appartiene_al_segmento(segmento_presidenti_no_filtri)
+        self.assertFalse(esito)
+        # TODO: creare dati di test per verificare il segmento
+        #esito = volontario_meno_uno.appartiene_al_segmento(segmento_volontari_piu_uno_no_filtri)
+        #self.assertFalse(esito)
+        #esito = volontario_meno_uno.appartiene_al_segmento(segmento_volontari_meno_uno_no_filtri)
+        #self.assertTrue(esito)
+
+        # Volontario con più di un anno di attività
+        volontario_piu_uno, _, _ = crea_persona_sede_appartenenza()
+        volontario_piu_uno.creazione = data_corrente - datetime.timedelta(days=720)
+        volontario_piu_uno.save()
+        esito = volontario_piu_uno.appartiene_al_segmento(segmento_tutti_no_filtri)
+        self.assertTrue(esito)
+        esito = volontario_piu_uno.appartiene_al_segmento(segmento_volontari_no_filtri)
+        self.assertTrue(esito)
+        esito = volontario_piu_uno.appartiene_al_segmento(segmento_presidenti_no_filtri)
+        self.assertFalse(esito)
+        # TODO: creare dati di test per verificare il segmento
+        #esito = volontario_piu_uno.appartiene_al_segmento(segmento_volontari_meno_uno_no_filtri)
+        #self.assertFalse(esito)
+        #esito = volontario_piu_uno.appartiene_al_segmento(segmento_volontari_piu_uno_no_filtri)
+        #self.assertTrue(esito)
+
         # Volontario con meno di 35 anni
-        volontario_meno_35_anni = crea_persona()
-        volontario_meno_35_anni.save()
-
-        c = crea_sede(estensione=PROVINCIALE)
-        c.save()
-
-        c2 = crea_sede(estensione=TERRITORIALE, genitore=c)
-        c2.save()
-
-        a = Appartenenza(
-            persona=volontario_meno_35_anni,
-            sede=c,
-            membro=Appartenenza.VOLONTARIO,
-            inizio="1980-12-10",
-            confermata=True
-        )
-        a.save()
+        volontario_meno_35_anni, _, _ = crea_persona_sede_appartenenza()
 
         esito = volontario_meno_35_anni.appartiene_al_segmento(segmento_tutti_no_filtri)
         self.assertTrue(esito)
@@ -141,24 +177,9 @@ class TestSegmenti(TestCase):
         self.assertFalse(esito)
 
         # Volontario con 35 anni o più di età
-        volontario_35_anni_o_piu = crea_persona()
+        volontario_35_anni_o_piu, _, _ = crea_persona_sede_appartenenza()
         volontario_35_anni_o_piu.data_nascita = "1960-2-5"
         volontario_35_anni_o_piu.save()
-
-        c = crea_sede(estensione=PROVINCIALE)
-        c.save()
-
-        c2 = crea_sede(estensione=TERRITORIALE, genitore=c)
-        c2.save()
-
-        a = Appartenenza(
-            persona=volontario_35_anni_o_piu,
-            sede=c,
-            membro=Appartenenza.VOLONTARIO,
-            inizio="1980-12-10",
-            confermata=True
-        )
-        a.save()
 
         esito = volontario_35_anni_o_piu.appartiene_al_segmento(segmento_tutti_no_filtri)
         self.assertTrue(esito)
@@ -172,23 +193,9 @@ class TestSegmenti(TestCase):
         self.assertFalse(esito)
 
         # Sostenitore
-        sostenitore = crea_persona()
-        sostenitore.save()
-
-        c = crea_sede(estensione=PROVINCIALE)
-        c.save()
-
-        c2 = crea_sede(estensione=TERRITORIALE, genitore=c)
-        c2.save()
-
-        a = Appartenenza(
-            persona=sostenitore,
-            sede=c,
-            membro=Appartenenza.SOSTENITORE,
-            inizio="1980-12-10",
-            confermata=True
-        )
-        a.save()
+        sostenitore, _, appartenenza = crea_persona_sede_appartenenza()
+        appartenenza.membro = Appartenenza.SOSTENITORE
+        appartenenza.save()
 
         esito = sostenitore.appartiene_al_segmento(segmento_tutti_no_filtri)
         self.assertTrue(esito)
@@ -202,56 +209,81 @@ class TestSegmenti(TestCase):
         # Presidente
         presidente = crea_persona()
         presidente.save()
-
-        # Delega scaduta
-        delega_presidente_scaduta = Delega(
-            persona=presidente,
-            tipo=PRESIDENTE,
-            oggetto=c,
-            inizio="2000-12-10",
-            fine="2010-12-10"
-        )
-        delega_presidente_scaduta.save()
-
-        esito = presidente.appartiene_al_segmento(segmento_tutti_no_filtri)
-        self.assertTrue(esito)
-        esito = presidente.appartiene_al_segmento(segmento_volontari_no_filtri)
-        self.assertFalse(esito)
-        esito = presidente.appartiene_al_segmento(segmento_presidenti_no_filtri)
-        self.assertFalse(esito)
-
-        # Delega futura
-        delega_presidente_futura = Delega(
-            persona=presidente,
-            tipo=PRESIDENTE,
-            oggetto=c,
-            inizio=datetime.datetime.now() + datetime.timedelta(days=1),
-            fine="2050-12-10"
-        )
-        delega_presidente_futura.save()
-        esito = presidente.appartiene_al_segmento(segmento_presidenti_no_filtri)
-        self.assertFalse(esito)
-
-        # Delega in corso
+        presidente, sede, _ = crea_persona_sede_appartenenza(presidente)
         delega_presidente_in_corso = Delega(
             persona=presidente,
             tipo=PRESIDENTE,
-            oggetto=c,
+            oggetto=sede,
             inizio=datetime.datetime.now() - datetime.timedelta(days=5),
             fine=datetime.datetime.now() + datetime.timedelta(days=5)
         )
         delega_presidente_in_corso.save()
+        esito = presidente.appartiene_al_segmento(segmento_tutti_no_filtri)
+        self.assertTrue(esito)
+        esito = presidente.appartiene_al_segmento(segmento_volontari_no_filtri)
+        self.assertTrue(esito)
         esito = presidente.appartiene_al_segmento(segmento_presidenti_no_filtri)
+        self.assertTrue(esito)
+
+        # Presidente comitato locale
+        presidente_comitato_locale = crea_persona()
+
+        presidente_comitato_locale, sede, appartenenza = crea_persona_sede_appartenenza(presidente_comitato_locale)
+        delega_presidente_comitato_locale_in_corso = Delega(
+            persona=presidente_comitato_locale,
+            tipo=PRESIDENTE,
+            oggetto=sede,
+            inizio=datetime.datetime.now() - datetime.timedelta(days=5),
+            fine=datetime.datetime.now() + datetime.timedelta(days=5)
+        )
+        delega_presidente_comitato_locale_in_corso.save()
+
+        esito = presidente_comitato_locale.appartiene_al_segmento(segmento_tutti_no_filtri)
+        self.assertTrue(esito)
+        esito = presidente_comitato_locale.appartiene_al_segmento(segmento_volontari_no_filtri)
+        self.assertTrue(esito)
+        esito = presidente_comitato_locale.appartiene_al_segmento(segmento_presidenti_no_filtri)
+        self.assertTrue(esito)
+        esito = presidente_comitato_locale.appartiene_al_segmento(segmento_presidenti_comitati_locali_no_filtri)
+        self.assertTrue(esito)
+        esito = presidente_comitato_locale.appartiene_al_segmento(segmento_presidenti_comitati_regionali_no_filtri)
+        self.assertFalse(esito)
+
+        # Presidente comitato regionale
+        presidente_comitato_regionale = crea_persona()
+
+        presidente_comitato_regionale, sede, appartenenza = crea_persona_sede_appartenenza(presidente_comitato_regionale)
+        sede.estensione = REGIONALE
+        sede.save()
+        delega_presidente_comitato_regionale_in_corso = Delega(
+            persona=presidente_comitato_regionale,
+            tipo=PRESIDENTE,
+            oggetto=sede,
+            inizio=datetime.datetime.now() - datetime.timedelta(days=5),
+            fine=datetime.datetime.now() + datetime.timedelta(days=5)
+        )
+        delega_presidente_comitato_regionale_in_corso.save()
+
+        esito = presidente_comitato_regionale.appartiene_al_segmento(segmento_tutti_no_filtri)
+        self.assertTrue(esito)
+        esito = presidente_comitato_regionale.appartiene_al_segmento(segmento_volontari_no_filtri)
+        self.assertTrue(esito)
+        esito = presidente_comitato_regionale.appartiene_al_segmento(segmento_presidenti_no_filtri)
+        self.assertTrue(esito)
+        esito = presidente_comitato_regionale.appartiene_al_segmento(segmento_presidenti_comitati_locali_no_filtri)
+        self.assertFalse(esito)
+        esito = presidente_comitato_regionale.appartiene_al_segmento(segmento_presidenti_comitati_regionali_no_filtri)
         self.assertTrue(esito)
 
         # Delegato Ufficio Soci
         delegato_US = crea_persona()
-        delegato_US.save()
+        sede_delegato_US = crea_sede()
+        appartenenza = crea_appartenenza(delegato_US, sede_delegato_US)
 
         delega_ufficio_soci = Delega(
             persona=delegato_US,
             tipo=UFFICIO_SOCI,
-            oggetto=c,
+            oggetto=sede_delegato_US,
             inizio=datetime.datetime.now() - datetime.timedelta(days=5),
             fine=datetime.datetime.now() + datetime.timedelta(days=5)
         )
@@ -260,7 +292,7 @@ class TestSegmenti(TestCase):
         esito = delegato_US.appartiene_al_segmento(segmento_tutti_no_filtri)
         self.assertTrue(esito)
         esito = delegato_US.appartiene_al_segmento(segmento_volontari_no_filtri)
-        self.assertFalse(esito)
+        self.assertTrue(esito)
         esito = delegato_US.appartiene_al_segmento(segmento_presidenti_no_filtri)
         self.assertFalse(esito)
         esito = delegato_US.appartiene_al_segmento(segmento_delegati_US_no_filtri)
@@ -268,14 +300,45 @@ class TestSegmenti(TestCase):
         esito = delegato_US.appartiene_al_segmento(segmento_delegati_autoparco_no_filtri)
         self.assertFalse(esito)
 
+        # Delegati Obiettivo
+
+        for livello_obiettivo in LIVELLI_DELEGATI:
+            delegato = crea_persona()
+            sede_delegato = crea_sede()
+            appartenenza = crea_appartenenza(delegato, sede_delegato)
+            segmento = NotiziaTestSegmento.objects.create(
+                segmento=livello_obiettivo[1],
+                notizia=notizia_1
+            )
+            delega_obiettivo = Delega(
+                persona=delegato,
+                tipo=livello_obiettivo[0],
+                oggetto=sede_delegato,
+                inizio=datetime.datetime.now() - datetime.timedelta(days=5),
+                fine=datetime.datetime.now() + datetime.timedelta(days=5)
+            )
+            delega_obiettivo.save()
+
+            esito = delegato.appartiene_al_segmento(segmento_tutti_no_filtri)
+            self.assertTrue(esito)
+            esito = delegato.appartiene_al_segmento(segmento_volontari_no_filtri)
+            self.assertTrue(esito)
+            esito = delegato.appartiene_al_segmento(segmento_presidenti_no_filtri)
+            self.assertFalse(esito)
+            esito = delegato.appartiene_al_segmento(segmento)
+            self.assertTrue(esito)
+            esito = delegato.appartiene_al_segmento(segmento_delegati_autoparco_no_filtri)
+            self.assertFalse(esito)
+
         # Delegato Autoparco
         delegato_autoparco = crea_persona()
-        delegato_autoparco.save()
+        sede_delegato_autoparco = crea_sede()
+        appartenenza = crea_appartenenza(delegato_autoparco, sede_delegato_autoparco)
 
         delega_autoparco = Delega(
             persona=delegato_autoparco,
             tipo=RESPONSABILE_AUTOPARCO,
-            oggetto=c,
+            oggetto=sede_delegato_autoparco,
             inizio=datetime.datetime.now() - datetime.timedelta(days=5),
             fine=datetime.datetime.now() + datetime.timedelta(days=5)
         )
@@ -284,10 +347,72 @@ class TestSegmenti(TestCase):
         esito = delegato_autoparco.appartiene_al_segmento(segmento_tutti_no_filtri)
         self.assertTrue(esito)
         esito = delegato_autoparco.appartiene_al_segmento(segmento_volontari_no_filtri)
-        self.assertFalse(esito)
+        self.assertTrue(esito)
         esito = delegato_autoparco.appartiene_al_segmento(segmento_presidenti_no_filtri)
         self.assertFalse(esito)
         esito = delegato_autoparco.appartiene_al_segmento(segmento_delegati_US_no_filtri)
         self.assertFalse(esito)
         esito = delegato_autoparco.appartiene_al_segmento(segmento_delegati_autoparco_no_filtri)
+        self.assertTrue(esito)
+
+        # Delegato Formazione
+        delegato_formazione = crea_persona()
+        sede_delegato_formazione = crea_sede()
+        appartenenza = crea_appartenenza(delegato_formazione, sede_delegato_formazione)
+
+        delega_formazione = Delega(
+            persona=delegato_formazione,
+            tipo=RESPONSABILE_FORMAZIONE,
+            oggetto=sede_delegato_formazione,
+            inizio=datetime.datetime.now() - datetime.timedelta(days=5),
+            fine=datetime.datetime.now() + datetime.timedelta(days=5)
+        )
+        delega_formazione.save()
+
+        esito = delegato_formazione.appartiene_al_segmento(segmento_tutti_no_filtri)
+        self.assertTrue(esito)
+        esito = delegato_formazione.appartiene_al_segmento(segmento_volontari_no_filtri)
+        self.assertTrue(esito)
+        esito = delegato_formazione.appartiene_al_segmento(segmento_presidenti_no_filtri)
+        self.assertFalse(esito)
+        esito = delegato_formazione.appartiene_al_segmento(segmento_delegati_US_no_filtri)
+        self.assertFalse(esito)
+        esito = delegato_formazione.appartiene_al_segmento(segmento_delegati_autoparco_no_filtri)
+        self.assertFalse(esito)
+        esito = delegato_formazione.appartiene_al_segmento(segmento_delegati_formazione_no_filtri)
+        self.assertTrue(esito)
+
+        # Aspirante volontario iscritto ad un corso
+        aspirante_corsista = crea_persona()
+        sede = crea_sede()
+        aspirante = Aspirante(persona=aspirante_corsista)
+        aspirante.save()
+        corso = CorsoBase.objects.create(
+            stato='A',
+            sede=sede,
+            data_inizio=datetime.datetime.now() + datetime.timedelta(days=5),
+            data_esame=datetime.datetime.now() + datetime.timedelta(days=25),
+            progressivo=1,
+            anno=anno_corrente
+        )
+        partecipazione = PartecipazioneCorsoBase(
+            persona=aspirante_corsista,
+            corso=corso
+        )
+        partecipazione.ammissione = 'AM'
+        partecipazione.save()
+
+        esito = aspirante_corsista.appartiene_al_segmento(segmento_tutti_no_filtri)
+        self.assertTrue(esito)
+        esito = aspirante_corsista.appartiene_al_segmento(segmento_volontari_no_filtri)
+        self.assertFalse(esito)
+        esito = aspirante_corsista.appartiene_al_segmento(segmento_presidenti_no_filtri)
+        self.assertFalse(esito)
+        esito = aspirante_corsista.appartiene_al_segmento(segmento_delegati_US_no_filtri)
+        self.assertFalse(esito)
+        esito = aspirante_corsista.appartiene_al_segmento(segmento_delegati_autoparco_no_filtri)
+        self.assertFalse(esito)
+        esito = aspirante_corsista.appartiene_al_segmento(segmento_delegati_formazione_no_filtri)
+        self.assertFalse(esito)
+        esito = aspirante_corsista.appartiene_al_segmento(segmento_aspiranti_corsisti_no_filtri)
         self.assertTrue(esito)

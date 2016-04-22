@@ -5,9 +5,14 @@ from django.db.models import Q
 
 from anagrafica.costanti import LOCALE, REGIONALE
 from anagrafica.models import Appartenenza, Delega, Sede
-from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, REFERENTE, RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE
+from attivita.models import Attivita, Partecipazione
+
+
+# Costanti
 
 LIMITE_ETA = 35
+LIMITE_ANNI_ATTIVITA = 1
 
 # Utils
 
@@ -22,8 +27,8 @@ def _deleghe_attive(queryset):
         delega__in=Delega.query_attuale().values_list('pk', flat='True')
     )
 
-def _calcola_eta(queryset, meno=True):
 
+def _calcola_eta(queryset, meno=True):
     controllo = operator.lt if meno else operator.ge
 
     persone_filtrate = []
@@ -33,19 +38,53 @@ def _calcola_eta(queryset, meno=True):
     return persone_filtrate
 
 
+def _calcola_anni_attivita(queryset, meno=True):
+    controllo = operator.lt if meno else operator.gt
+
+    persone_filtrate = []
+    for persona in queryset:
+        oggi = datetime.date.today()
+        storico = Partecipazione.con_esito_ok().filter(persona=persona, stato=Partecipazione.RICHIESTA)\
+            .order_by('-turno__inizio')
+
+        anni_attivita = storico.dates('turno__inizio', 'year', order='DESC').count()
+
+        if controllo(anni_attivita, LIMITE_ANNI_ATTIVITA):
+            persone_filtrate.append(persona.pk)
+    return persone_filtrate
+
+
+def _referenti_attivita(queryset, obiettivo=0):
+    qs = queryset.filter(delega__tipo=REFERENTE)
+    if obiettivo > 0:
+        attivita_area = Attivita.objects.filter(area__obiettivo=obiettivo)
+        referenti = attivita_area.referenti_attuali()
+        referenti = referenti.value_list('pk', flat=True)
+        qs = qs.filter(pk__in=referenti)
+    return qs
+
+
+def _presidenze_comitati(queryset, estensione=LOCALE):
+    return queryset.filter(appartenenze__sede__tipo=Sede.COMITATO, appartenenze__sede__estensione=estensione)
+
+
 # Filtri
 
 def volontari(queryset):
-    qs = queryset.filter(appartenenze__membro=Appartenenza.VOLONTARIO)
-    return _appartenenze_attive(qs)
+    tutti_volontari = queryset.filter(appartenenze__membro=Appartenenza.VOLONTARIO)
+    return _appartenenze_attive(tutti_volontari)
 
 
 def volontari_meno_un_anno(queryset):
-    return volontari(queryset).filter()
+    tutti_volontari = volontari(queryset).filter()
+    volontari_filtrati = _calcola_anni_attivita(queryset)
+    return tutti_volontari.filter(pk__in=volontari_filtrati)
 
 
 def volontari_piu_un_anno(queryset):
-    return volontari(queryset).filter()
+    tutti_volontari = volontari(queryset).filter()
+    volontari_filtrati = _calcola_anni_attivita(queryset, meno=False)
+    return tutti_volontari.filter(pk__in=volontari_filtrati)
 
 
 def volontari_meno_35_anni(queryset):
@@ -66,7 +105,15 @@ def sostenitori_cri(queryset):
 
 
 def aspiranti_volontari_iscritti_ad_un_corso(queryset):
-    return queryset.filter(aspirante__isnull=False, partecipazioni_corsi__isnull=False)
+    qs = queryset.filter(
+        aspirante__isnull=False,
+    )
+    aspiranti_filtrati = []
+    for persona in qs:
+        if persona.partecipazione_corso_base():
+            aspiranti_filtrati.append(persona.pk)
+    qs = qs.filter(pk__in=aspiranti_filtrati)
+    return qs
 
 
 def tutti_i_presidenti(queryset):
@@ -75,11 +122,11 @@ def tutti_i_presidenti(queryset):
 
 
 def presidenti_comitati_locali(queryset):
-    return tutti_i_presidenti(queryset).filter(appartenenze__sede__tipo=Sede.COMITATO, appartenenze__sede__estensione=LOCALE)
+    return _presidenze_comitati(tutti_i_presidenti(queryset))
 
 
 def presidenti_comitati_regionali(queryset):
-    return tutti_i_presidenti(queryset).filter(appartenenze__sede__tipo=Sede.COMITATO, appartenenze__sede__estensione=REGIONALE)
+    return _presidenze_comitati(tutti_i_presidenti(queryset), REGIONALE)
 
 
 def delegati_US(queryset):
@@ -110,32 +157,34 @@ def delegati_Obiettivo_V(queryset):
     qs = queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_5)
     return _deleghe_attive(qs)
 
+
 def delegati_Obiettivo_VI(queryset):
     qs = queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_6)
     return _deleghe_attive(qs)
 
+
 def referenti_attivita_area_I(queryset):
-    pass
+    return _referenti_attivita(queryset, 1)
 
 
 def referenti_attivita_area_II(queryset):
-    pass
+    return _referenti_attivita(queryset, 2)
 
 
 def referenti_attivita_area_III(queryset):
-    pass
+    return _referenti_attivita(queryset, 3)
 
 
 def referenti_attivita_area_IV(queryset):
-    pass
+    return _referenti_attivita(queryset, 4)
 
 
 def referenti_attivita_area_V(queryset):
-    pass
+    return _referenti_attivita(queryset, 5)
 
 
 def referenti_attivita_area_VI(queryset):
-    pass
+    return _referenti_attivita(queryset, 6)
 
 
 def delegati_autoparco(queryset):
@@ -148,8 +197,9 @@ def delegati_formazione(queryset):
     return _deleghe_attive(qs)
 
 
+# TODO: fare dei test e specificare con precisione come filtrare sui titoli
 def volontari_con_titolo(queryset):
-    return volontari(queryset).filter(titoli_personali__isnull=False)
+    return volontari(queryset).filter(titoli_personali__confermata=True)
 
 
 NOMI_SEGMENTI = (
