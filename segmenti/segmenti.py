@@ -54,6 +54,7 @@ def _calcola_anni_attivita(queryset, meno=True):
     return persone_filtrate
 
 
+# TODO: Aggiungere test per i filtri che utilizzano questa funzione
 def _referenti_attivita(queryset, obiettivo=0):
     qs = queryset.filter(delega__tipo=REFERENTE)
     if obiettivo > 0:
