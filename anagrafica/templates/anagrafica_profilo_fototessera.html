@@ -41,10 +41,8 @@
                                 <td>
                                     <a href="{{ t.file.url }}" target="_new"
                                         title="Vedi pi&ugrave; grande">
-                                        {% thumbnail t.file "100x100" crop="center" as im %}
-                                            <img src="{{ im.url }}" width="50" height="50" />
-                                        {% endthumbnail %}
-
+                                        {% thumbnail t.file "100x100" crop as im %}
+                                        <img src="{{ im.url }}" width="50" height="50" />
                                     </a>
                                 </td>
                                 <td>{{ t.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
