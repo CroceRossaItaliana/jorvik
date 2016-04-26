@@ -4,17 +4,12 @@ import operator
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 
-from anagrafica.costanti import LOCALE, REGIONALE
+from anagrafica.costanti import LOCALE, REGIONALE, LIMITE_ETA, LIMITE_ANNI_ATTIVITA
 from anagrafica.models import Appartenenza, Delega, Sede
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, REFERENTE, RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE
 from attivita.models import Attivita, Partecipazione
 
 
-
-# Costanti
-
-LIMITE_ETA = 35
-LIMITE_ANNI_ATTIVITA = 1
 
 # Utils
 
