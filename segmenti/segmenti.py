@@ -1,12 +1,14 @@
 import datetime
 import operator
 
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 
 from anagrafica.costanti import LOCALE, REGIONALE
 from anagrafica.models import Appartenenza, Delega, Sede
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, REFERENTE, RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE
 from attivita.models import Attivita, Partecipazione
+
 
 
 # Costanti
@@ -66,7 +68,12 @@ def _referenti_attivita(queryset, obiettivo=0):
 
 
 def _presidenze_comitati(queryset, estensione=LOCALE):
-    return queryset.filter(appartenenze__sede__tipo=Sede.COMITATO, appartenenze__sede__estensione=estensione)
+    sedi = []
+    if estensione == LOCALE:
+        sedi = Sede.objects.filter(tipo=Sede.COMITATO, estensione=LOCALE)
+    elif estensione == REGIONALE:
+        sedi = Sede.objects.filter(tipo=Sede.COMITATO, estensione=REGIONALE)
+    return queryset.filter(delega__oggetto_tipo=ContentType.objects.get_for_model(Sede), delega__oggetto_id__in=sedi.values_list('id', flat=True))
 
 
 # Filtri
@@ -153,6 +160,7 @@ def delegati_Obiettivo_III(queryset):
 def delegati_Obiettivo_IV(queryset):
     qs = queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_4)
     return _deleghe_attive(qs)
+
 
 def delegati_Obiettivo_V(queryset):
     qs = queryset.filter(delega__tipo=DELEGATO_OBIETTIVO_5)
