@@ -26,7 +26,7 @@ class BaseSegmento(models.Model):
 
     def filtro(self):
         if not self._metodo:
-            self._metodo = SEGMENTI.get(self.get_segmento_display())
+            self._metodo = SEGMENTI.get(self.segmento)
         return self._metodo
 
     def get_extra_filters(self):
