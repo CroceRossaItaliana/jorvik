@@ -49,12 +49,12 @@ INSTALLED_APPS = (
     'autocomplete_light',
     'django_extensions',
     'loginas',
-    'sorl.thumbnail',
     'django_cron',
     'django.contrib.humanize',
     'django_gravatar',
     'centrale_operativa',
     'compressor',
+    'easy_thumbnails',
 )
 
 STATICFILES_FINDERS = (
