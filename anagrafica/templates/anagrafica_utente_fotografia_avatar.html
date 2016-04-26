@@ -21,9 +21,8 @@
 
                 {% if me.avatar %}
 
-                    {% thumbnail me.avatar "500x500" crop="center" as im %}
-                        <img src="{{ im.url }}" class="img-responsive" alt="Immagine del profilo attuale" />
-                    {% endthumbnail %}
+                    {% thumbnail me.avatar "500x500" crop as im %}
+                    <img src="{{ im.url }}" class="img-responsive" alt="Immagine del profilo attuale" />
 
                 {% else %}
 
