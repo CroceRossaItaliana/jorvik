@@ -290,6 +290,10 @@ urlpatterns = [
     # Autocompletamento
     url(r'^autocomplete/', include('autocomplete_light.urls')),
 
+    #Filer
+    url(r'^filer/', include('filer.urls')),
+    url(r'^filebrowser_filer/', include('ckeditor_filebrowser_filer.urls')),
+
     # OAuth 2.0
     # url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 ]
