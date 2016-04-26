@@ -963,6 +963,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         if ha_appartenenza or ha_ricevuta or ha_partecipazione or ha_partecipazione_corso_base:
             return False
         return True
+    def save(self, force_insert=False, force_update=False):
+        self.nome = normalizza_nome(self.nome)
+        self.cognome = normalizza_nome(self.cognome)
+        super(Persona,self).save(force_insert, force_update)
 
     def appartiene_al_segmento(self, segmento):
         """
