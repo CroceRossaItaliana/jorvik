@@ -52,7 +52,7 @@ from base.models import ModelloSemplice, ModelloAlbero, ConAutorizzazioni, ConAl
     Autorizzazione, ConVecchioID
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
-from base.utils import is_list, sede_slugify, UpperCaseCharField, poco_fa
+from base.utils import is_list, sede_slugify, UpperCaseCharField, TitleCharField, poco_fa
 from autoslug import AutoSlugField
 
 from curriculum.models import Titolo, TitoloPersonale
@@ -86,8 +86,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     ETA_MINIMA_SOCIO = 14
 
     # Informazioni anagrafiche
-    nome = models.CharField("Nome", max_length=64, db_index=True)
-    cognome = models.CharField("Cognome", max_length=64, db_index=True)
+    nome = TitleCharField("Nome", max_length=64, db_index=True)
+    cognome = TitleCharField("Cognome", max_length=64, db_index=True)
     codice_fiscale = UpperCaseCharField("Codice Fiscale", max_length=16, blank=False,
                                         unique=True, db_index=True, validators=[valida_codice_fiscale, ])
     data_nascita = models.DateField("Data di nascita", db_index=True, null=True)
@@ -963,6 +963,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         if ha_appartenenza or ha_ricevuta or ha_partecipazione or ha_partecipazione_corso_base:
             return False
         return True
+
     def save(self, force_insert=False, force_update=False):
         self.nome = normalizza_nome(self.nome)
         self.cognome = normalizza_nome(self.cognome)
