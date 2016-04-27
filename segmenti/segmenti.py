@@ -54,11 +54,14 @@ def _calcola_anni_attivita(queryset, meno=True):
 # TODO: Aggiungere test per i filtri che utilizzano questa funzione
 def _referenti_attivita(queryset, obiettivo=0):
     qs = queryset.filter(delega__tipo=REFERENTE)
+    referenti = []
     if obiettivo > 0:
         attivita_area = Attivita.objects.filter(area__obiettivo=obiettivo)
-        referenti = attivita_area.referenti_attuali()
-        referenti = referenti.value_list('pk', flat=True)
-        qs = qs.filter(pk__in=referenti)
+        if attivita_area.count() > 0:
+            for attivita in attivita_area:
+                referenti.extend(attivita.referenti_attuali().values_list('pk', flat=True))
+            referenti = list(set(referenti))
+    qs = qs.filter(pk__in=referenti)
     return qs
 
 

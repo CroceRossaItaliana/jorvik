@@ -10,13 +10,15 @@ from anagrafica.permessi.applicazioni import (DELEGATO_OBIETTIVO_1,
                                               DELEGATO_OBIETTIVO_4,
                                               DELEGATO_OBIETTIVO_5,
                                               DELEGATO_OBIETTIVO_6, PRESIDENTE,
+                                              REFERENTE,
                                               RESPONSABILE_AUTOPARCO,
                                               RESPONSABILE_FORMAZIONE,
                                               UFFICIO_SOCI)
+from attivita.models import Area, Attivita
 from base.utils import poco_fa
 from base.utils_tests import (crea_appartenenza, crea_persona,
                               crea_persona_sede_appartenenza, crea_sede,
-                              crea_utenza)
+                              crea_utenza, crea_area_attivita)
 from curriculum.models import Titolo, TitoloPersonale
 from formazione.models import Aspirante, CorsoBase, PartecipazioneCorsoBase
 
@@ -31,6 +33,7 @@ class TestSegmenti(TestCase):
         anno_corrente = data_corrente.year
 
         LIVELLI_DELEGATI = [(DELEGATO_OBIETTIVO_1, 'M'), (DELEGATO_OBIETTIVO_2, 'N'), (DELEGATO_OBIETTIVO_3, 'O'), (DELEGATO_OBIETTIVO_4, 'P'), (DELEGATO_OBIETTIVO_5, 'Q'), (DELEGATO_OBIETTIVO_6, 'R')]
+        LIVELLI_ATTIVITA = ['S', 'T', 'U', 'V', 'W', 'X']
 
         # Notizie di test
         notizia_1 = NotiziaTest.objects.create(testo="Notizia 1: Testo di prova!")
@@ -334,6 +337,38 @@ class TestSegmenti(TestCase):
             esito = delegato.appartiene_al_segmento(segmento)
             self.assertTrue(esito)
             esito = delegato.appartiene_al_segmento(segmento_delegati_autoparco_no_filtri)
+            self.assertFalse(esito)
+
+        # Referenti attività area
+        for idx, livello_attivita in enumerate(LIVELLI_ATTIVITA):
+            referente = crea_persona()
+            sede_referente = crea_sede()
+            appartenenza = crea_appartenenza(referente, sede_referente)
+            segmento = NotiziaTestSegmento.objects.create(
+                segmento=livello_attivita,
+                notizia=notizia_1
+            )
+            delega_referente = Delega(
+                persona=referente,
+                tipo=REFERENTE,
+                oggetto=sede_referente,
+                inizio=datetime.datetime.now() - datetime.timedelta(days=5),
+                fine=datetime.datetime.now() + datetime.timedelta(days=5)
+            )
+            delega_referente.save()
+            area, attivita = crea_area_attivita(sede=sede_referente)
+            area.obiettivo = idx + 1
+            area.save()
+            attivita.aggiungi_delegato(REFERENTE, referente)
+            esito = referente.appartiene_al_segmento(segmento_tutti_no_filtri)
+            self.assertTrue(esito)
+            esito = referente.appartiene_al_segmento(segmento_volontari_no_filtri)
+            self.assertTrue(esito)
+            esito = referente.appartiene_al_segmento(segmento_presidenti_no_filtri)
+            self.assertFalse(esito)
+            esito = referente.appartiene_al_segmento(segmento)
+            self.assertTrue(esito)
+            esito = referente.appartiene_al_segmento(segmento_delegati_autoparco_no_filtri)
             self.assertFalse(esito)
 
         # Delegato Autoparco
