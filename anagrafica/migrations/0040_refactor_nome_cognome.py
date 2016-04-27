@@ -6,8 +6,9 @@ from base.utils import normalizza_nome, TitleCharField
 
 
 def forwards_func(apps, schema_editor):
-    p = apps.get_model("anagrafica", "Persona")
-    for x in p.objects.all():
+    p = apps.get_model('anagrafica', "Persona")
+    db_alias = schema_editor.connection.alias
+    for x in p.objects.using(db_alias).all():
         x.nome = normalizza_nome(x.nome)
         x.cognome = normalizza_nome(x.cognome)
         x.save()
