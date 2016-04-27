@@ -233,5 +233,7 @@ BOOTSTRAP3 = {
     },
 }
 
+THUMBNAIL_BASEDIR = 'thumbnails'
+
 if os.environ.get('ENABLE_TEST_APPS', False):
     INSTALLED_APPS.append('segmenti.segmenti_test')
