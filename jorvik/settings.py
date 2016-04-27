@@ -55,6 +55,8 @@ INSTALLED_APPS = (
     'centrale_operativa',
     'compressor',
     'easy_thumbnails',
+    'filer',
+    'gestione_file',
 )
 
 STATICFILES_FINDERS = (
@@ -233,3 +235,17 @@ BOOTSTRAP3 = {
 }
 
 THUMBNAIL_BASEDIR = 'thumbnails'
+THUMBNAIL_PROCESSORS = (
+    'easy_thumbnails.processors.colorspace',
+    'easy_thumbnails.processors.autocrop',
+    'filer.thumbnail_processors.scale_and_crop_with_subject_location',
+    'easy_thumbnails.processors.filters',
+)
+
+FILER_IMAGE_FIELD = 'gestione_file.fields.CampoImmagineFiler'
+FILER_FILE_FIELD = 'gestione_file.fields.CampoDocumentoFiler'
+
+FILER_FILE_MODELS = (
+    'gestione_file.models.Immagine',
+    'gestione_file.models.Documento',
+)
