@@ -17,6 +17,7 @@ from base.utils import poco_fa
 from base.utils_tests import (crea_appartenenza, crea_persona,
                               crea_persona_sede_appartenenza, crea_sede,
                               crea_utenza)
+from curriculum.models import Titolo, TitoloPersonale
 from formazione.models import Aspirante, CorsoBase, PartecipazioneCorsoBase
 
 from .models import NotiziaTest, NotiziaTestSegmento
@@ -105,6 +106,13 @@ class TestSegmenti(TestCase):
         segmento_delegati_formazione_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='Z',
             notizia=notizia_1
+        )
+        # Segmento per filtrare tutti i volontari con titolo
+        titolo_patenteCRI = Titolo.objects.create(tipo='PC', nome='Titolo test')
+        segmento_volontari_con_titolo_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='AA',
+            notizia=notizia_1,
+            titolo=titolo_patenteCRI
         )
 
 
@@ -414,3 +422,28 @@ class TestSegmenti(TestCase):
         self.assertFalse(esito)
         esito = aspirante_corsista.appartiene_al_segmento(segmento_aspiranti_corsisti_no_filtri)
         self.assertTrue(esito)
+
+        # Volontario con titolo
+        volontario_con_titolo, _, _ = crea_persona_sede_appartenenza()
+        titolo_personale = TitoloPersonale.objects.create(titolo=titolo_patenteCRI, persona=volontario_con_titolo)
+        esito = volontario_con_titolo.appartiene_al_segmento(segmento_tutti_no_filtri)
+        self.assertTrue(esito)
+        esito = volontario_con_titolo.appartiene_al_segmento(segmento_volontari_no_filtri)
+        self.assertTrue(esito)
+        esito = volontario_con_titolo.appartiene_al_segmento(segmento_presidenti_no_filtri)
+        self.assertFalse(esito)
+        esito =volontario_con_titolo.appartiene_al_segmento(segmento_volontari_con_titolo_no_filtri)
+        self.assertTrue(esito)
+
+        # Volontario con titolo di tipo differente dal filtro
+        volontario_con_titolo_differente, _, _ = crea_persona_sede_appartenenza()
+        titolo_patenteCIVILE = Titolo.objects.create(tipo='PP', nome='Titolo test 2')
+        titolo_personale = TitoloPersonale.objects.create(titolo=titolo_patenteCIVILE, persona=volontario_con_titolo_differente)
+        esito = volontario_con_titolo_differente.appartiene_al_segmento(segmento_tutti_no_filtri)
+        self.assertTrue(esito)
+        esito = volontario_con_titolo_differente.appartiene_al_segmento(segmento_volontari_no_filtri)
+        self.assertTrue(esito)
+        esito = volontario_con_titolo_differente.appartiene_al_segmento(segmento_presidenti_no_filtri)
+        self.assertFalse(esito)
+        esito = volontario_con_titolo_differente.appartiene_al_segmento(segmento_volontari_con_titolo_no_filtri)
+        self.assertFalse(esito)
