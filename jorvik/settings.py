@@ -55,12 +55,9 @@ INSTALLED_APPS = (
     'centrale_operativa',
     'compressor',
     'easy_thumbnails',
-<<<<<<< 9d1899cf09390df78e7f8c6c3e17b6ddca6f8cd5
-=======
     'ckeditor',
     'filer',
     'ckeditor_filebrowser_filer'
->>>>>>> Add ckeditor setup
 )
 
 STATICFILES_FINDERS = (
@@ -257,3 +254,4 @@ CKEDITOR_CONFIGS = {
 }
 
 FILER_CANONICAL_URL = 'sharing/'
+CKEDITOR_FILEBROWSER_USE_THUMBNAILOPTIONS_ONLY = True
