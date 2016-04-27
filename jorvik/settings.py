@@ -231,3 +231,5 @@ BOOTSTRAP3 = {
         'inline': 'bootstrap3.renderers.InlineFieldRenderer',
     },
 }
+
+THUMBNAIL_BASEDIR = 'thumbnails'
