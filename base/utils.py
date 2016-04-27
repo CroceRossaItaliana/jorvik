@@ -19,7 +19,7 @@ import urllib
 from django.utils import timezone
 from lxml import html
 from django.db import models
-
+from base.stringhe import normalizza_nome
 
 def is_list(x):
     """
@@ -166,6 +166,21 @@ class UpperCaseCharField(models.CharField):
             return value
         else:
             return super(UpperCaseCharField, self).pre_save(model_instance, add)
+
+
+class TitleCharField(models.CharField):
+
+    def __init__(self, *args, **kwargs):
+        super(TitleCharField, self).__init__(*args, **kwargs)
+
+    def pre_save(self, model_instance, add):
+        value = getattr(model_instance, self.attname, None)
+        if value:
+            value = normalizza_nome(value)
+            setattr(model_instance, self.attname, value)
+            return value
+        else:
+            return super(TitleCharField, self).pre_save(model_instance, add)
 
 
 def ean13_carattere_di_controllo(first12digits):
