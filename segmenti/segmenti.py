@@ -198,7 +198,7 @@ def delegati_formazione(queryset):
     return _deleghe_attive(qs)
 
 
-# TODO: fare dei test e specificare con precisione come filtrare sui titoli
+# TODO: Decidere come implementare il form per l'admin corrispondente
 def volontari_con_titolo(queryset):
     return volontari(queryset).filter(titoli_personali__confermata=True)
 
