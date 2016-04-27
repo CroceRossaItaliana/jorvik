@@ -1,27 +1,25 @@
-from django.test import TestCase
-
-# Create your tests here.
-
 import datetime
 
 from django.test import TestCase
-from lxml import html
 
-from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
-from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione
-from anagrafica.models import Sede, Persona, Appartenenza, Documento, Delega
-from anagrafica.permessi.applicazioni import RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE, UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6
-from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
-from autenticazione.models import Utenza
-from autenticazione.utils_test import TestFunzionale
-from base.models import Autorizzazione
+from anagrafica.costanti import REGIONALE
+from anagrafica.models import Appartenenza, Delega
+from anagrafica.permessi.applicazioni import (DELEGATO_OBIETTIVO_1,
+                                              DELEGATO_OBIETTIVO_2,
+                                              DELEGATO_OBIETTIVO_3,
+                                              DELEGATO_OBIETTIVO_4,
+                                              DELEGATO_OBIETTIVO_5,
+                                              DELEGATO_OBIETTIVO_6, PRESIDENTE,
+                                              RESPONSABILE_AUTOPARCO,
+                                              RESPONSABILE_FORMAZIONE,
+                                              UFFICIO_SOCI)
 from base.utils import poco_fa
-from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, email_fittizzia, \
-    crea_utenza
+from base.utils_tests import (crea_appartenenza, crea_persona,
+                              crea_persona_sede_appartenenza, crea_sede,
+                              crea_utenza)
 from formazione.models import Aspirante, CorsoBase, PartecipazioneCorsoBase
-from posta.models import Messaggio
-from .models import NotiziaTest, NotiziaTestSegmento
 
+from .models import NotiziaTest, NotiziaTestSegmento
 
 
 class TestSegmenti(TestCase):
