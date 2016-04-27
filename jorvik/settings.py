@@ -62,7 +62,6 @@ INSTALLED_APPS = [
     'gestione_file',
 ]
 
-
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
@@ -275,3 +274,5 @@ FILER_FILE_MODELS = (
     'gestione_file.models.Immagine',
     'gestione_file.models.Documento',
 )
+
+CKEDITOR_FILEBROWSER_USE_THUMBNAILOPTIONS_ONLY = True
