@@ -24,5 +24,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterField(
+            model_name='persona',
+            name='cognome',
+            field=TitleCharField(db_index=True, max_length=64, verbose_name='Cognome'),
+        ),
+        migrations.AlterField(
+            model_name='persona',
+            name='nome',
+            field=TitleCharField(db_index=True, max_length=64, verbose_name='Nome'),
+        ),
         migrations.RunPython(forwards_func),
     ]
