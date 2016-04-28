@@ -61,14 +61,12 @@
                 <div class="panel-body">
 
                     {% if persona.fototessera_attuale %}
-                        {% thumbnail persona.fototessera_attuale.file "500x500" crop="center" as im %}
-                            <img src="{{ im.url }}" class="img-responsive" alt="Immagine fototessera attuale" />
-                        {% endthumbnail %}
+                        {% thumbnail persona.fototessera_attuale.file "500x500" crop as im %}
+                        <img src="{{ im.url }}" class="img-responsive" alt="Immagine fototessera attuale" />
 
                     {% elif persona.avatar %}
-                        {% thumbnail persona.avatar "500x500" crop="center" as im %}
-                            <img src="{{ im.url }}" class="img-responsive" alt="Immagine del profilo attuale" />
-                        {% endthumbnail %}
+                        {% thumbnail persona.avatar "500x500" crop as im %}
+                        <img src="{{ im.url }}" class="img-responsive" alt="Immagine del profilo attuale" />
 
                     {% endif %}
 
