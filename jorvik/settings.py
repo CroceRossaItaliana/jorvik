@@ -55,8 +55,8 @@ INSTALLED_APPS = (
     'centrale_operativa',
     'compressor',
     'easy_thumbnails',
-    'filer',
     'gestione_file',
+    'filer',
 )
 
 STATICFILES_FINDERS = (
