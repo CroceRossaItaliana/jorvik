@@ -56,10 +56,11 @@ INSTALLED_APPS = (
     'compressor',
     'easy_thumbnails',
     'ckeditor',
-    'filer',
     'ckeditor_filebrowser_filer',
     'gestione_file',
     'segmenti',
+    'gestione_file',
+    'filer',
 )
 
 STATICFILES_FINDERS = (
