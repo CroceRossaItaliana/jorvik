@@ -1,0 +1,6 @@
+{% for articolo in articoli %}
+    <p>Titolo: {{articolo.titolo}}</p>
+    <p>estratto: {{articolo.estratto}}</p>
+    <p>data di pubblicazione: {{articolo.data_inizio_pubblicazione}}</p>
+    <p><a href={{articolo.get_absolute_url}}>Link</a></p>
+{% endfor %}

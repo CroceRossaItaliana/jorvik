@@ -10,6 +10,7 @@ from django.contrib.auth.views import password_change, password_change_done
 from django.shortcuts import redirect
 
 import anagrafica.viste
+import articoli.viste
 import attivita.viste
 import base.viste, base.errori
 import centrale_operativa.viste
@@ -123,6 +124,8 @@ urlpatterns = [
     url(r'^posta/(?P<direzione>[\w\-]+)/', posta.viste.posta),
     url(r'^posta/', posta.viste.posta_home),
 
+    url(r'^articoli/$', articoli.viste.ListaArticoli.as_view(), name='lista_articoli'),
+    url(r'^articoli/(?P<articolo_pk>[0-9]+)/$', articoli.viste.DettaglioArticolo.as_view(), name='dettaglio_articolo'),
     url(r'^attivita/$', attivita.viste.attivita),
     url(r'^attivita/aree/$', attivita.viste.attivita_aree),
     url(r'^attivita/aree/(?P<sede_pk>[0-9\-]+)/$', attivita.viste.attivita_aree_sede),
