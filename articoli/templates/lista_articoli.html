@@ -1,3 +1,12 @@
+<div class='ricerca-articoli'>
+    <form method='GET' action=".">
+        <label for="query-articoli">Ricerca articoli per titoli</label>
+        <input type="text" name="q" id="query-articoli">
+        <button type="submit" class="btn btn-primary">
+            <i class="fa fa-fw fa-check-circle"></i>Cerca
+        </button>
+    </form>
+</div>
 {% for articolo in articoli %}
     <p>Titolo: {{articolo.titolo}}</p>
     <p>estratto: {{articolo.estratto}}</p>

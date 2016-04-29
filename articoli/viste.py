@@ -11,11 +11,14 @@ class ListaArticoli(ListView):
     template_name = 'lista_articoli.html'
 
     def get_queryset(self):
+        filtri_extra = {}
+        if 'q' in self.request.GET:
+            filtri_extra['titolo__icontains'] = self.request.GET['q']
         utente = self.request.user
         if isinstance(utente, AnonymousUser):
             return None
         persona = utente.persona
-        articoli = Articolo.objects.pubblicati()
+        articoli = Articolo.objects.pubblicati().filter(**filtri_extra)
         id_articoli = []
         if persona:
             for articolo in articoli:
