@@ -2,6 +2,7 @@ from django.core.urlresolvers import reverse
 from django.db import models, transaction
 from django.template.defaultfilters import slugify
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 from ckeditor.fields import RichTextField
 
@@ -58,6 +59,9 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.titolo)
+        corpo = strip_tags(self.corpo)
+        if not self.estratto:
+            self.estratto = corpo[:1024]
         super(Articolo, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
