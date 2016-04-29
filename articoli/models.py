@@ -1,5 +1,6 @@
 from django.core.urlresolvers import reverse
 from django.db import models, transaction
+from django.template.defaultfilters import slugify
 from django.utils import timezone
 
 from ckeditor.fields import RichTextField
@@ -41,6 +42,7 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     )
 
     titolo = models.CharField("Titolo", max_length=255, db_index=True)
+    slug = models.SlugField(unique=True, blank=True, null=True)
     corpo = RichTextField("Corpo")
     estratto = models.CharField("Estratto", max_length=1024, blank=True, null=True)
     data_inizio_pubblicazione = models.DateTimeField("Data di inizio pubblicazione", default=timezone.now, db_index=True)
@@ -54,8 +56,12 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     def __str__(self):
         return self.titolo
 
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.titolo)
+        super(Articolo, self).save(*args, **kwargs)
+
     def get_absolute_url(self):
-        return reverse('dettaglio_articolo', kwargs={'articolo_pk': self.pk})
+        return reverse('dettaglio_articolo', kwargs={'articolo_slug': self.slug})
 
     class Meta:
         verbose_name_plural = "Articoli"

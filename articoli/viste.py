@@ -12,8 +12,14 @@ class ListaArticoli(ListView):
 
     def get_queryset(self):
         filtri_extra = {}
+        anno = self.kwargs.get('anno')
+        mese = self.kwargs.get('mese')
         if 'q' in self.request.GET:
             filtri_extra['titolo__icontains'] = self.request.GET['q']
+        if anno:
+            filtri_extra['data_inizio_pubblicazione__year'] = anno
+        if mese:
+            filtri_extra['data_inizio_pubblicazione__month'] = mese
         utente = self.request.user
         if isinstance(utente, AnonymousUser):
             return None
@@ -40,8 +46,8 @@ class ListaArticoli(ListView):
 
 class DettaglioArticolo(DetailView):
     model = Articolo
-    slug_field = 'pk'
-    slug_url_kwarg = 'articolo_pk'
+    slug_field = 'slug'
+    slug_url_kwarg = 'articolo_slug'
     context_object_name = 'articolo'
     template_name = 'dettaglio_articolo.html'
 
