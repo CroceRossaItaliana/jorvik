@@ -14,7 +14,7 @@ class AdminArticolo(admin.ModelAdmin):
     readonly_fields = ('visualizzazioni',)
     fieldsets = (
         (None, {
-            'fields': ('titolo', 'corpo', 'estratto',)
+            'fields': ('titolo', 'slug', 'corpo', 'estratto',)
         }),
         ('Informazioni', {
             'fields': ('autore', 'data_inizio_pubblicazione', 'data_fine_pubblicazione','stato', 'visualizzazioni'),
