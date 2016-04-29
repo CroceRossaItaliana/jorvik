@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 from ckeditor.fields import RichTextField
@@ -69,6 +69,11 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     @property
     def termina(self):
         return self.data_fine_pubblicazione is not None
+
+    @transaction.atomic
+    def incrementa_visualizzazioni(self):
+        self.visualizzazioni += 1
+        self.save()
 
 
 class ArticoloSegmento(BaseSegmento):
