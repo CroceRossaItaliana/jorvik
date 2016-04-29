@@ -11,10 +11,10 @@ from segmenti.models import BaseSegmento
 
 class ArticoliQuerySet(models.QuerySet):
     def pubblicati(self):
-        return self.filter(stato=Articolo.PUBBLICATO)
+        return self.filter(stato=Articolo.PUBBLICATO).prefetch_related('segmenti')
 
     def bozze(self):
-        return self.filter(stato=Articolo.BOZZA)
+        return self.filter(stato=Articolo.BOZZA).prefetch_related('segmenti')
 
 
 class ArticoliManager(models.Manager):
