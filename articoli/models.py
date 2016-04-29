@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils import timezone
 
@@ -6,6 +7,25 @@ from ckeditor.fields import RichTextField
 from base.models import ModelloSemplice, ModelloAlbero, ConAutorizzazioni, ConAllegati
 from base.tratti import ConMarcaTemporale
 from segmenti.models import BaseSegmento
+
+
+class ArticoliQuerySet(models.QuerySet):
+    def pubblicati(self):
+        return self.filter(stato=Articolo.PUBBLICATO)
+
+    def bozze(self):
+        return self.filter(stato=Articolo.BOZZA)
+
+
+class ArticoliManager(models.Manager):
+    def get_queryset(self):
+        return ArticoliQuerySet(self.model, using=self._db)
+
+    def pubblicati(self):
+        return self.get_queryset().pubblicati()
+
+    def bozze(self):
+        return self.get_queryset().bozze()
 
 
 class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
@@ -29,8 +49,13 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     stato = models.CharField("Stato", max_length=1, choices=STATO, default=BOZZA, db_index=True)
     autore = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="articoli", on_delete=models.CASCADE, null=True, blank=True)
 
+    objects = ArticoliManager()
+
     def __str__(self):
         return self.titolo
+
+    def get_absolute_url(self):
+        return reverse('dettaglio_articolo', kwargs={'articolo_pk': self.pk})
 
     class Meta:
         verbose_name_plural = "Articoli"
