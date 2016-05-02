@@ -1,10 +1,16 @@
-<p>{{articolo.titolo}}</p>
-<p>{{articolo.data_inizio_pubblicazione}}</p>
-<p>{{articolo.corpo|safe}}</p>
-{% if articolo.allegati.all %}
-<p>Allegati</p>
-    {% for allegato in articolo.allegati.all %}
-    <p>{{allegato}}</p>
-    {% endfor %}
-{% endif %}
-<p>{{articolo.visualizzazioni}}</p>
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block app_contenuto %}
+    <p>{{articolo.titolo}}</p>
+    <p>{{articolo.data_inizio_pubblicazione}}</p>
+    <p>{{articolo.corpo|safe}}</p>
+    {% if articolo.allegati.all %}
+    <p>Allegati</p>
+        {% for allegato in articolo.allegati.all %}
+        <p>{{allegato}}</p>
+        {% endfor %}
+    {% endif %}
+    <p>{{articolo.visualizzazioni}}</p>
+{% endblock %}

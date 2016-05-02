@@ -1,15 +1,23 @@
-<div class='ricerca-articoli'>
-    <form method='GET' action=".">
-        <label for="query-articoli">Ricerca articoli per titoli</label>
-        <input type="text" name="q" id="query-articoli">
-        <button type="submit" class="btn btn-primary">
-            <i class="fa fa-fw fa-check-circle"></i>Cerca
-        </button>
-    </form>
-</div>
-{% for articolo in articoli %}
-    <p>Titolo: {{articolo.titolo}}</p>
-    <p>estratto: {{articolo.estratto}}</p>
-    <p>data di pubblicazione: {{articolo.data_inizio_pubblicazione}}</p>
-    <p><a href={{articolo.get_absolute_url}}>Link</a></p>
-{% endfor %}
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Articoli{% endblock %}
+
+{% block app_contenuto %}
+    <div class='ricerca-articoli'>
+        <form method='GET' action=".">
+            <label for="query-articoli">Ricerca articoli per titoli</label>
+            <input type="text" name="q" id="query-articoli">
+            <button type="submit" class="btn btn-primary">
+                <i class="fa fa-fw fa-check-circle"></i>Cerca
+            </button>
+        </form>
+    </div>
+    {% for articolo in articoli %}
+        <p>Titolo: {{articolo.titolo}}</p>
+        <p>estratto: {{articolo.estratto}}</p>
+        <p>data di pubblicazione: {{articolo.data_inizio_pubblicazione}}</p>
+        <p><a href={{articolo.get_absolute_url}}>Link</a></p>
+    {% endfor %}
+{% endblock %}
