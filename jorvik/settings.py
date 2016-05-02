@@ -28,6 +28,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.gis',
     # Librerie terze
+    'nocaptcha_recaptcha',
     # 'oauth2_provider',
     'mptt',
     # Moduli interni

@@ -2,10 +2,13 @@ import mimetypes
 import os
 
 from django.contrib.auth import load_backend, login
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count
 from django.http import HttpResponse
 from django.shortcuts import render, render_to_response, get_object_or_404, redirect
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 # Le viste base vanno qui.
 from django.views.decorators.cache import cache_page
 from django.apps import apps
@@ -85,7 +88,8 @@ def recupera_password(request):
                     oggetto="Nuova password",
                     modello="email_recupero_password.html",
                     corpo={
-                        "reset_pw_link": '',
+                        "uid": urlsafe_base64_encode(force_bytes(per.utenza.pk)),
+                        "reset_pw_link": default_token_generator.make_token(per.utenza),
                     },
                 )
 
