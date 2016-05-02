@@ -2,8 +2,27 @@
 
 {% load bootstrap3 %}
 
+{% block menu_laterale %}
+    <div class="col-md-2 well well-sm">
+        <ul id="sezione" role="navigation" class="nav nav-pills nav-stacked navbar-collapse collapse">
+            <li class="dropdown-header grassetto piu-grande">Articoli</li>
+                <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
+                    <a href="/articoli/">
+                        <i class="fa fa-newspaper-o fa-fw"></i>
+                        Elenco
+                    </a>
+                </li>
+            <hr />
+        </ul>
+    </div>
+{% endblock %}
+
 {% block app_contenuto %}
-    <p>{{articolo.titolo}}</p>
+
+    <h2 class="allinea-centro text-success">
+        {{articolo.titolo}}
+    </h2>
+
     <p>{{articolo.data_inizio_pubblicazione}}</p>
     <p>{{articolo.corpo|safe}}</p>
     {% if articolo.allegati.all %}
@@ -12,5 +31,5 @@
         <p>{{allegato}}</p>
         {% endfor %}
     {% endif %}
-    <p>{{articolo.visualizzazioni}}</p>
+    <p>Visualizzazioni: {{articolo.visualizzazioni}}</p>
 {% endblock %}
