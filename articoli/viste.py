@@ -14,6 +14,14 @@ class ListaArticoli(ListView):
         filtri_extra = {}
         anno = self.kwargs.get('anno')
         mese = self.kwargs.get('mese')
+        if 'date' in self.request.GET:
+            data = self.request.GET['date']
+            if not '-' in data:
+                anno = data
+            else:
+                data = data.split('-')
+                mese = data[0]
+                anno = data[1]
         if 'q' in self.request.GET:
             filtri_extra['titolo__icontains'] = self.request.GET['q']
         if anno:
@@ -31,7 +39,7 @@ class ListaArticoli(ListView):
                 segmenti = articolo.segmenti.all()
                 if not segmenti:
                     id_articoli.append(articolo.pk)
-                    break
+                    continue
                 appartiene = False
                 for segmento in segmenti:
                     if persona.appartiene_al_segmento(segmento):
