@@ -38,4 +38,4 @@ class AdminArticolo(admin.ModelAdmin):
         else:
             message_bit = "%s articoli sono stati" % rows_updated
         self.message_user(request, "%s passato allo stato bozza con successo." % message_bit)
-    spubblica.short_description = "Passa allo stato bozza uno o più articoli"
+    bozza.short_description = "Passa allo stato bozza uno o più articoli"
