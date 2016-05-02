@@ -59,19 +59,34 @@ def recupera_password(request):
     """
     Mostra semplicemente la pagina di recupero password.
     """
+
+    def _errore(contesto, modulo, livello=None):
+        contesto.update({
+                'modulo': ModuloRecuperaPassword(),
+            })
+        if livello:
+            contesto.update({'errore': livello})
+        return 'base_recupera_password.html', contesto
+
     contesto = {}
     if request.method == 'POST':
         modulo = ModuloRecuperaPassword(request.POST)
         if modulo.is_valid():
 
             try:
-                per = Persona.objects.get(codice_fiscale=modulo.cleaned_data['codice_fiscale'].upper(),
-                                          utenza__email=modulo.cleaned_data['email'].lower())
+                per = Persona.objects.get(codice_fiscale=modulo.cleaned_data['codice_fiscale'].upper()
+                                          )
+                if not hasattr(per, 'utenza'):
+                    return _errore(contesto, modulo, 2)
+                if per.utenza.email != modulo.cleaned_data['email'].lower():
+                   return _errore(contesto, modulo, 3)
 
                 Messaggio.costruisci_e_invia(
                     oggetto="Nuova password",
-                    modello=""
-
+                    modello="email_recupero_password.html",
+                    corpo={
+                        "reset_pw_link": '',
+                    },
                 )
 
                 return messaggio_generico(request, None,
@@ -83,12 +98,12 @@ def recupera_password(request):
                                           torna_titolo="Accedi e cambia la tua password")
 
             except Persona.DoesNotExist:
-                contesto.update({'errore': True})
-
+                return _errore(contesto, modulo, 1)
     contesto.update({
         'modulo': ModuloRecuperaPassword(),
     })
     return 'base_recupera_password.html', contesto
+
 
 @pagina_pubblica
 def informazioni(request, me):
