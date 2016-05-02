@@ -28,7 +28,7 @@
     {% if articolo.allegati.all %}
     <p>Allegati</p>
         {% for allegato in articolo.allegati.all %}
-        <p>{{allegato}}</p>
+        <p><a href="{{allegato.download_url}}">Link</a></p>
         {% endfor %}
     {% endif %}
     <p>Visualizzazioni: {{articolo.visualizzazioni}}</p>
