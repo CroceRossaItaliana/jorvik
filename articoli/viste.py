@@ -9,6 +9,7 @@ class ListaArticoli(ListView):
     model = Articolo
     context_object_name = 'articoli'
     template_name = 'lista_articoli.html'
+    paginate_by = 10
 
     def get_queryset(self):
         filtri_extra = {}
