@@ -1,12 +1,60 @@
 from django.db import models
+from django.utils import six
 
 from anagrafica.costanti import TERRITORIALE
-from anagrafica.models import Sede
+from anagrafica.models import Sede, Persona
 from curriculum.models import Titolo
 from .segmenti import SEGMENTI, NOMI_SEGMENTI
 
 
-class BaseSegmento(models.Model):
+class FiltroSegmentoQuerySet(models.QuerySet):
+    """
+    QuerySet dedicato ai segmenti
+    """
+
+    def oggetti_collegati(self):
+        vals = self.values_list('documento_id', flat=True)
+        return self.model._oggetto_collegato.objects.filter(
+            models.Q(segmenti__isnull=True) |
+            models.Q(pk__in=vals)
+        ).distinct()
+
+    def _get_filtri(self, segmenti):
+        filtri = models.Q(pk=None)
+        for filtro_attivo in segmenti:
+            filtri |= models.Q(**filtro_attivo)
+        return filtri
+
+    def filtra_per_segmenti(self, utente):
+        """
+        Filtra il QuerySet in base  in base ai segmenti di appartenenza dell'utente
+        compresi i filtri sulle sedi e sui titoli
+
+        :param utente: Utente su cui filtrare gli oggetti
+        :return: Queryset filtrato
+        """
+        filtri = self._get_filtri(utente.segmenti_collegati)
+        return self.filter(filtri)
+
+
+class BaseSegmentoBase(models.base.ModelBase):
+    """
+    Metaclasse per aggiungere automaticamente la ForeignKey al modello collegato.
+
+    Questo permette di gestire gli automatismi in FiltroSegmentoQuerySet
+    """
+    def __new__(cls, name, bases, attrs):
+        # create a new class (using the super-metaclass)
+        modello_collegato = attrs['_oggetto_collegato']
+        if modello_collegato:
+            nome_campo = modello_collegato.__name__.lower()
+            attrs[nome_campo] = models.ForeignKey(modello_collegato, related_name='segmenti')
+            attrs['objects'] = FiltroSegmentoQuerySet.as_manager()
+        new_class = super(BaseSegmentoBase, cls).__new__(cls, name, bases, attrs)
+        return new_class
+
+
+class BaseSegmento(six.with_metaclass(BaseSegmentoBase, models.Model)):
 
     LIMITED_CHOICES = {
         'tipo': Sede.COMITATO,
@@ -17,6 +65,7 @@ class BaseSegmento(models.Model):
     titolo = models.ForeignKey(Titolo, blank=True, null=True)
     sede = models.ForeignKey(Sede, blank=True, null=True, limit_choices_to=LIMITED_CHOICES,)
     _metodo = None
+    _oggetto_collegato = None
 
     class Meta:
         abstract = True
@@ -36,11 +85,3 @@ class BaseSegmento(models.Model):
         if self.sede:
             filters['appartenenze__sede'] = self.sede.pk
         return filters
-
-#class DocumentoSegmento(BaseSegmento):
-    # FK a documento
-#    pass
-
-#class NotiziaSegmento(BaseSegmento):
-    # FK a notizia
-#    pass

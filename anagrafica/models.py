@@ -24,6 +24,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q, QuerySet, Avg
+from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 import phonenumbers
 
@@ -974,6 +975,32 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         if queryset:
             return queryset.filter(pk=self.pk).exists()
         return False
+
+    @cached_property
+    def segmenti_collegati(self):
+        """
+        Restituisce un elenco di filtri da applicare su un queryset di BaseSegmento
+        per applicare i segmenti collegati all'utente, compresi i filtri sulle sedi e sui titoli
+
+        Usato da FiltroSegmentoQuerySet.filtra_per_segmenti
+
+        :return: elenco di condizioni di filtro (usabili come argomenti di un oggetto Q)
+        """
+        from segmenti.segmenti import SEGMENTI
+        utente = Persona.objects.filter(pk=self.pk)
+        attivi = []
+        for segmento, filtro in SEGMENTI.items():
+            if filtro(utente).exists():
+                if segmento == 'A':
+                    attivi.append({'segmento': segmento})
+                elif segmento == 'AA':
+                    for titolo in self.titoli_confermati():
+                        attivi.append({'segmento': segmento, 'titolo': titolo})
+                else:
+                    attivi.append({'segmento': segmento, 'sede__isnull': True})
+                    for sede in self.sedi_attuali():
+                        attivi.append({'segmento': segmento, 'sede': sede})
+        return attivi
 
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):

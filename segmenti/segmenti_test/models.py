@@ -8,4 +8,4 @@ class NotiziaTest(models.Model):
 
 
 class NotiziaTestSegmento(BaseSegmento):
-    notizia = models.ForeignKey(NotiziaTest, related_name="segmenti")
+    _oggetto_collegato = NotiziaTest
