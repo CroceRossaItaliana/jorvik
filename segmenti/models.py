@@ -13,7 +13,8 @@ class FiltroSegmentoQuerySet(models.QuerySet):
     """
 
     def oggetti_collegati(self):
-        vals = self.values_list('documento_id', flat=True)
+        campo = '{}_id'.format(self.model._oggetto_collegato.__name__.lower())
+        vals = self.values_list(campo, flat=True)
         return self.model._oggetto_collegato.objects.filter(
             models.Q(segmenti__isnull=True) |
             models.Q(pk__in=vals)
