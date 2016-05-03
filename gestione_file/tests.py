@@ -66,6 +66,10 @@ class FilerClipboardAdminUrlsTests(TestCase):
         url = reverse('admin:gestione_file_documento_add') + '?parent_id={}'.format(folder.pk)
         post_data = {
             'url_documento': 'http://www.example.com',
+            'segmenti-TOTAL_FORMS': 0,
+            'segmenti-INITIAL_FORMS': 0,
+            'segmenti-MIN_NUM_FORMS': 0,
+            'segmenti-MAX_NUM_FORMS': 0
         }
         self.client.post(url, post_data, **extra_headers)
         self.assertEqual(Documento.objects.count(), 1)
@@ -103,7 +107,7 @@ class TestSegmenti(TestCase):
     def _crea_segmento(self, documento, segmento, sede=None, titolo=None):
         return DocumentoSegmento.objects.create(
             segmento=segmento,
-            documento=documento,
+            file=documento,
             sede=sede,
             titolo=titolo
         )
