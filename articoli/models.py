@@ -50,7 +50,6 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     data_fine_pubblicazione = models.DateTimeField("Data di fine pubblicazione", db_index=True, blank=True, null=True)
     visualizzazioni = models.PositiveIntegerField("Visualizzazioni", db_index=True, default=0)
     stato = models.CharField("Stato", max_length=1, choices=STATO, default=BOZZA, db_index=True)
-    autore = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="articoli", on_delete=models.CASCADE, null=True, blank=True)
 
     objects = ArticoliManager()
 
