@@ -1,14 +1,17 @@
 import mimetypes
 import os
 
-from django.contrib.auth import load_backend, login
+from django.contrib.auth import get_user_model, load_backend, login
 from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.views import SetPasswordForm as ModuloImpostaPassword
 from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import reverse
 from django.db.models import Count
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, render_to_response, get_object_or_404, redirect
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
+from django.template.response import TemplateResponse
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 # Le viste base vanno qui.
 from django.views.decorators.cache import cache_page
 from django.apps import apps
@@ -107,6 +110,57 @@ def recupera_password(request):
         'modulo': ModuloRecuperaPassword(),
     })
     return 'base_recupera_password.html', contesto
+
+
+@pagina_anonima
+def recupera_password_conferma(request, uidb64=None, token=None,
+                           template='base_recupero_password_conferma.html',
+                           contesto_extra=None):
+    Utenza = get_user_model()
+    assert uidb64 is not None and token is not None  # checked by URLconf
+    try:
+        # urlsafe_base64_decode() decodes to bytestring on Python 3
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        utente = Utenza._default_manager.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, Utenza.DoesNotExist):
+        utente = None
+
+    if utente is not None and default_token_generator.check_token(utente, token):
+        link_valido = True
+        titolo = 'Inserisci una nuova password'
+        if request.method == 'POST':
+            modulo = ModuloImpostaPassword(utente, request.POST)
+            if modulo.is_valid():
+                modulo.save()
+                return HttpResponseRedirect(reverse('recupero_password_completo'))
+        else:
+            modulo = ModuloImpostaPassword(utente)
+    else:
+        link_valido = False
+        modulo = None
+        titolo = 'Errore nell\'impostazione della nuova password'
+    contesto = {
+        'modulo': modulo,
+        'titolo': titolo,
+        'link_valido': link_valido,
+    }
+    if contesto_extra is not None:
+        contesto.update(contesto_extra)
+
+    return TemplateResponse(request, template, contesto)
+
+
+def recupero_password_completo(request,
+                            template='base_recupero_password_completo.html',
+                            contesto_extra=None):
+    contesto = {
+        'login_url': '/login/',
+        'titolo': 'Password reimpostata correttamente',
+    }
+    if contesto_extra is not None:
+        contesto.update(extra_context)
+
+    return TemplateResponse(request, template, contesto)
 
 
 @pagina_pubblica
