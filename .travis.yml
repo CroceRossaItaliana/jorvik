@@ -5,6 +5,9 @@ python:
 addons:
   postgresql: "9.4"
 
+env:
+  - ENABLE_TEST_APPS=1
+
 cache: pip
 
 before_script:
