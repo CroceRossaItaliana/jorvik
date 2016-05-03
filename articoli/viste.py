@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AnonymousUser
+from django.db.models import Count
 from django.shortcuts import render
 from django.views.generic import DetailView, ListView
 
@@ -17,12 +18,10 @@ class ListaArticoli(ListView):
         mese = self.kwargs.get('mese')
         if 'date' in self.request.GET:
             data = self.request.GET['date']
-            if not '-' in data:
-                anno = data
-            else:
-                data = data.split('-')
-                mese = data[0]
-                anno = data[1]
+        if 'anno' in self.request.GET:
+            anno = self.request.GET['anno']
+        if 'mese' in self.request.GET:
+            mese = self.request.GET['mese']
         if 'q' in self.request.GET:
             filtri_extra['titolo__icontains'] = self.request.GET['q']
         if anno:
@@ -34,6 +33,7 @@ class ListaArticoli(ListView):
             return None
         persona = utente.persona
         articoli = Articolo.objects.pubblicati().filter(**filtri_extra)
+
         id_articoli = []
         if persona:
             for articolo in articoli:
@@ -51,6 +51,13 @@ class ListaArticoli(ListView):
         if id_articoli:
             articoli = articoli.filter(pk__in=id_articoli)
         return articoli
+
+    def get_context_data(self, **kwargs):
+        context = super(ListaArticoli, self).get_context_data(**kwargs)
+        anni = Articolo.objects.pubblicati().extra(select={'anno': 'extract( year from data_inizio_pubblicazione )'}).values_list('anno', flat=True).order_by().annotate(Count('id'))
+        anni = [int(anno) for anno in anni]
+        context['anni'] = anni
+        return context
 
 
 class DettaglioArticolo(DetailView):

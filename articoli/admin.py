@@ -18,7 +18,7 @@ class AdminArticolo(admin.ModelAdmin):
             'fields': ('titolo', 'slug', 'corpo', 'estratto',)
         }),
         ('Informazioni', {
-            'fields': ('autore', 'data_inizio_pubblicazione', 'data_fine_pubblicazione','stato', 'visualizzazioni'),
+            'fields': ('data_inizio_pubblicazione', 'data_fine_pubblicazione','stato', 'visualizzazioni'),
         }),
     )
 
