@@ -45,4 +45,4 @@ class Immagine(InterfacciaJorvik, BaseImage):
 
 
 class DocumentoSegmento(BaseSegmento):
-    _oggetto_collegato = Documento
+    _oggetto_collegato = File

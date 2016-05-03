@@ -26,8 +26,9 @@ admin.site.register(Folder, AdminCartella)
 
 class DocumentoSegmentoInline(admin.TabularInline):
     model = DocumentoSegmento
-    raw_id_fields = ('notizia',)
+    raw_id_fields = ('file',)
     extra = 1
+    min_num = 1
 
 
 class AdminDocumento(FileAdmin):
