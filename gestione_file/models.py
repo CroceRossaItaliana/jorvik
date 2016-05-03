@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from filer.models import File
 from filer.models.abstract import BaseImage
+from segmenti.models import BaseSegmento
 
 
 class InterfacciaJorvik(object):
@@ -41,3 +42,7 @@ class Immagine(InterfacciaJorvik, BaseImage):
     class Meta:
         abstract = False
         app_label = 'gestione_file'
+
+
+class DocumentoSegmento(BaseSegmento):
+    _oggetto_collegato = Documento
