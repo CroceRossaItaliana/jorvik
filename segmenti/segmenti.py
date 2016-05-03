@@ -2,7 +2,6 @@ import datetime
 import operator
 
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Q
 
 from anagrafica.costanti import LOCALE, REGIONALE, LIMITE_ETA, LIMITE_ANNI_ATTIVITA
 from anagrafica.models import Appartenenza, Delega, Sede
