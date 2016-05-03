@@ -59,7 +59,6 @@ INSTALLED_APPS = (
     'ckeditor_filebrowser_filer',
     'gestione_file',
     'segmenti',
-    'gestione_file',
     'filer',
 )
 
