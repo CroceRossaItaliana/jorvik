@@ -5,12 +5,14 @@ import tempfile
 import django.core.files
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from django.utils.encoding import force_text
 
-from filer.models import Folder, File
+from anagrafica.models import Sede
+from base.utils_tests import crea_persona_sede_appartenenza, crea_sede
+from curriculum.models import Titolo, TitoloPersonale
+from filer.models import Folder
 from filer.tests import create_image
 
-from gestione_file.models import Documento, Immagine
+from gestione_file.models import Documento, DocumentoSegmento, Immagine
 
 
 class FilerClipboardAdminUrlsTests(TestCase):
@@ -86,3 +88,90 @@ class FilerClipboardAdminUrlsTests(TestCase):
         self.assertEqual(Immagine.objects.count(), 1)
         uploaded_file = Immagine.objects.all()[0]
         self.assertEqual(uploaded_file.original_filename, self.image_name)
+
+
+class TestSegmenti(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        # Documenti di test
+        cls.file_1 = Documento.objects.create(url_documento='http://www.example.com')
+        cls.file_2 = Documento.objects.create(url_documento='http://www.examplee.com')
+        cls.titolo_patenteCRI = Titolo.objects.create(tipo='PC', nome='Titolo test')
+        cls.titolo_altro = Titolo.objects.create(tipo='PC', nome='Altro titolo')
+
+    def _crea_segmento(self, documento, segmento, sede=None, titolo=None):
+        return DocumentoSegmento.objects.create(
+            segmento=segmento,
+            documento=documento,
+            sede=sede,
+            titolo=titolo
+        )
+
+    def test_filtro_semplice(self):
+        segmento_1 = self._crea_segmento(self.file_1, 'A')
+        segmento_2 = self._crea_segmento(self.file_2, 'D')
+        volontario, _, _ = crea_persona_sede_appartenenza()
+        qs = DocumentoSegmento.objects.all()
+
+        documenti = qs.filtra_per_segmenti(volontario)
+        self.assertEqual(documenti.count(), 1)
+        self.assertEqual(set(documenti), set(DocumentoSegmento.objects.filter(pk=segmento_1.pk)))
+        oggetti = documenti.oggetti_collegati()
+        self.assertEqual(oggetti.count(), 1)
+        self.assertEqual(set(oggetti), set(Documento.objects.filter(pk=self.file_1.pk)))
+
+        segmento_3 = self._crea_segmento(self.file_2, 'B')
+
+        documenti = qs.filtra_per_segmenti(volontario)
+        self.assertEqual(documenti.count(), 2)
+        self.assertEqual(set(documenti), set(DocumentoSegmento.objects.filter(pk__in=(segmento_1.pk, segmento_3.pk))))
+        oggetti = documenti.oggetti_collegati()
+        self.assertEqual(oggetti.count(), 2)
+        self.assertEqual(set(oggetti), set(Documento.objects.filter(pk__in=(self.file_1.pk, self.file_2.pk))))
+
+    def test_filtro_con_sede(self):
+        volontario_con_sede, _, _ = crea_persona_sede_appartenenza()
+
+        sede = volontario_con_sede.sedi_attuali().first()
+
+        altra_sede = crea_sede()
+
+        segmento_0 = self._crea_segmento(self.file_1, 'D')
+        segmento_1 = self._crea_segmento(self.file_1, 'B', sede=altra_sede)
+        segmento_2 = self._crea_segmento(self.file_2, 'B', sede=sede)
+
+        qs = DocumentoSegmento.objects.all()
+
+        documenti = qs.filtra_per_segmenti(volontario_con_sede)
+        self.assertEqual(documenti.count(), 1)
+        self.assertEqual(set(documenti), set(DocumentoSegmento.objects.filter(pk=segmento_2.pk)))
+        oggetti = documenti.oggetti_collegati()
+        self.assertEqual(oggetti.count(), 1)
+        self.assertEqual(set(oggetti), set(Documento.objects.filter(pk=self.file_2.pk)))
+
+        segmento_3 = self._crea_segmento(self.file_1, 'B')
+        documenti = qs.filtra_per_segmenti(volontario_con_sede)
+        self.assertEqual(documenti.count(), 2)
+        self.assertEqual(set(documenti), set(DocumentoSegmento.objects.filter(pk__in=(segmento_2.pk, segmento_3.pk))))
+        oggetti = documenti.oggetti_collegati()
+        self.assertEqual(oggetti.count(), 2)
+        self.assertEqual(set(oggetti), set(Documento.objects.filter(pk__in=(self.file_1.pk, self.file_2.pk))))
+
+    def test_filtro_con_titolo(self):
+        volontario_con_titolo, _, _ = crea_persona_sede_appartenenza()
+        titolo_personale = TitoloPersonale.objects.create(
+            titolo=self.titolo_patenteCRI, persona=volontario_con_titolo
+        )
+
+        segmento_0 = self._crea_segmento(self.file_1, 'D')
+        segmento_1 = self._crea_segmento(self.file_1, 'AA', titolo=self.titolo_altro)
+        segmento_2 = self._crea_segmento(self.file_2, 'AA', titolo=self.titolo_patenteCRI)
+        qs = DocumentoSegmento.objects.all()
+
+        documenti = qs.filtra_per_segmenti(volontario_con_titolo)
+        self.assertEqual(documenti.count(), 1)
+        self.assertEqual(set(documenti), set(DocumentoSegmento.objects.filter(pk=segmento_2.pk)))
+        oggetti = documenti.oggetti_collegati()
+        self.assertEqual(oggetti.count(), 1)
+        self.assertEqual(set(oggetti), set(Documento.objects.filter(pk=self.file_2.pk)))
