@@ -60,7 +60,6 @@ INSTALLED_APPS = [
     'filer',
     'ckeditor_filebrowser_filer',
     'gestione_file',
-    'segmenti',
 ]
 
 STATICFILES_FINDERS = (
