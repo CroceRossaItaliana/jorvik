@@ -66,12 +66,14 @@ def recupera_password(request):
     Mostra semplicemente la pagina di recupero password.
     """
 
-    def _errore(contesto, modulo, livello=None):
+    def _errore(contesto, modulo, livello=None, delegati=None):
         contesto.update({
                 'modulo': ModuloRecuperaPassword(),
             })
         if livello:
             contesto.update({'errore': livello})
+        if delegati:
+            contesto.update({'delegati': delegati})
         return 'base_recupera_password.html', contesto
 
     contesto = {}
@@ -82,10 +84,11 @@ def recupera_password(request):
             try:
                 per = Persona.objects.get(codice_fiscale=modulo.cleaned_data['codice_fiscale'].upper()
                                           )
+                delegati = per.deleghe_anagrafica()
                 if not hasattr(per, 'utenza'):
-                    return _errore(contesto, modulo, 2)
+                    return _errore(contesto, modulo, 2, delegati)
                 if per.utenza.email != modulo.cleaned_data['email'].lower():
-                   return _errore(contesto, modulo, 3)
+                   return _errore(contesto, modulo, 3, delegati)
 
                 Messaggio.costruisci_e_invia(
                     oggetto="Nuova password",
