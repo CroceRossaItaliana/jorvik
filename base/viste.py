@@ -1,6 +1,7 @@
 import mimetypes
 import os
 
+from django.conf import settings as django_settings
 from django.contrib.auth import get_user_model, load_backend, login
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import SetPasswordForm as ModuloImpostaPassword
@@ -102,6 +103,7 @@ def recupera_password(request):
                         "persona": per,
                         "uid": urlsafe_base64_encode(force_bytes(per.utenza.pk)),
                         "reset_pw_link": default_token_generator.make_token(per.utenza),
+                        "scadenza_token": django_settings.PASSWORD_RESET_TIMEOUT_DAYS * 24
                     },
                 )
 
