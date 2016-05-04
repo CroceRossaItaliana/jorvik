@@ -18,7 +18,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Elenca le applicazioni installate da abilitare
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -60,7 +60,8 @@ INSTALLED_APPS = (
     'ckeditor',
     'filer',
     'ckeditor_filebrowser_filer',
-)
+    'segmenti',
+]
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -269,3 +270,6 @@ CKEDITOR_CONFIGS = {
 }
 
 CKEDITOR_FILEBROWSER_USE_THUMBNAILOPTIONS_ONLY = True
+
+if os.environ.get('ENABLE_TEST_APPS', False):
+    INSTALLED_APPS.append('segmenti.segmenti_test')
