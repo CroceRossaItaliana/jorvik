@@ -82,18 +82,22 @@ def recupera_password(request):
         if modulo.is_valid():
 
             try:
-                per = Persona.objects.get(codice_fiscale=modulo.cleaned_data['codice_fiscale'].upper()
-                                          )
+                codice_fiscale = modulo.cleaned_data['codice_fiscale'].upper()
+                email = modulo.cleaned_data['email'].lower()
+                per = Persona.objects.get(codice_fiscale=codice_fiscale)
                 delegati = per.deleghe_anagrafica()
                 if not hasattr(per, 'utenza'):
                     return _errore(contesto, modulo, 2, delegati)
-                if per.utenza.email != modulo.cleaned_data['email'].lower():
+                if per.utenza.email != email:
                    return _errore(contesto, modulo, 3, delegati)
 
                 Messaggio.costruisci_e_invia(
                     oggetto="Nuova password",
                     modello="email_recupero_password.html",
                     corpo={
+                        "persona": per,
+                        "codice_fiscale": codice_fiscale,
+                        "email": email,
                         "uid": urlsafe_base64_encode(force_bytes(per.utenza.pk)),
                         "reset_pw_link": default_token_generator.make_token(per.utenza),
                     },
