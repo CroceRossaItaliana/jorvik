@@ -113,6 +113,10 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
         super(ModuloProfiloModificaAnagrafica, self).__init__(*args, **kwargs)
         #self.fields['note'].widget = forms.Textarea
 
+    def clean_codice_fiscale(self):
+        codice_fiscale = self.cleaned_data['codice_fiscale']
+        return codice_fiscale.upper()
+
 
 class ModuloProfiloTitoloPersonale(autocomplete_light.ModelForm):
 
