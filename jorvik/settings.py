@@ -49,12 +49,14 @@ INSTALLED_APPS = (
     'autocomplete_light',
     'django_extensions',
     'loginas',
-    'sorl.thumbnail',
     'django_cron',
     'django.contrib.humanize',
     'django_gravatar',
     'centrale_operativa',
     'compressor',
+    'easy_thumbnails',
+    'gestione_file',
+    'filer',
 )
 
 STATICFILES_FINDERS = (
@@ -231,3 +233,19 @@ BOOTSTRAP3 = {
         'inline': 'bootstrap3.renderers.InlineFieldRenderer',
     },
 }
+
+THUMBNAIL_BASEDIR = 'thumbnails'
+THUMBNAIL_PROCESSORS = (
+    'easy_thumbnails.processors.colorspace',
+    'easy_thumbnails.processors.autocrop',
+    'filer.thumbnail_processors.scale_and_crop_with_subject_location',
+    'easy_thumbnails.processors.filters',
+)
+
+FILER_IMAGE_FIELD = 'gestione_file.fields.CampoImmagineFiler'
+FILER_FILE_FIELD = 'gestione_file.fields.CampoDocumentoFiler'
+
+FILER_FILE_MODELS = (
+    'gestione_file.models.Immagine',
+    'gestione_file.models.Documento',
+)
