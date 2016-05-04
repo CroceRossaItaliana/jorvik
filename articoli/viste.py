@@ -31,7 +31,7 @@ class ListaArticoli(ListView):
             filtri_extra['data_inizio_pubblicazione__month'] = mese
         utente = self.request.user
         if isinstance(utente, AnonymousUser):
-            return None
+            return None # TODO: redirect in a proper way
         persona = utente.persona
         articoli_segmenti = ArticoloSegmento.objects.all().filtra_per_segmenti(persona)
         articoli = articoli_segmenti.oggetti_collegati().pubblicati().filter(**filtri_extra)
@@ -52,7 +52,7 @@ class DettaglioArticolo(DetailView):
     def get_object(self):
         utente = self.request.user
         if isinstance(utente, AnonymousUser):
-            return None
+            return None # TODO: redirect in a proper way
         persona = utente.persona
         obj = super(DetailView, self).get_object()
         articoli_segmenti = ArticoloSegmento.objects.all().filtra_per_segmenti(persona)
