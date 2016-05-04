@@ -4,7 +4,7 @@ from django.test import TestCase
 from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
-from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione
+from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Delega
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
@@ -391,8 +391,8 @@ class TestAnagrafica(TestCase):
         est.save()
         est.richiedi()
 
-        
-        
+
+
         self.assertTrue(
             da_estendere.estensioni_attuali_e_in_attesa().filter(pk=est.pk).exists(),
             msg="L'estensione creata correttamente"
@@ -788,3 +788,38 @@ class TestFunzionaliAnagrafica(TestFunzionale):
             sessione.is_text_present(c.nome),
             msg="Pagina caricata correttamente"
         )
+
+    def test_modifica_codice_fiscale(self):
+        p1 = crea_persona()
+        p2 = crea_persona()
+        data = {
+            'nome': p2.nome,
+            'cognome': p2.cognome,
+            'data_nascita': p2.data_nascita,
+            'comune_nascita': 'Firenze',
+            'provincia_nascita': 'fi',
+            'stato_nascita': 'IT',
+            'indirizzo_residenza': 'Via Ghibellina 1',
+            'comune_residenza': 'Firenze',
+            'provincia_residenza': 'fi',
+            'stato_residenza': 'IT',
+            'cap_residenza': '52100',
+            'codice_fiscale': p2.codice_fiscale,
+        }
+        vecchio_codice_fiscale = p2.codice_fiscale
+        nuovo_codice_fiscale_maiuscolo = p1.codice_fiscale
+        nuovo_codice_fiscale_minuscolo = p1.codice_fiscale.lower()
+        modulo = ModuloProfiloModificaAnagrafica(data, instance=p2)
+        self.assertEqual(modulo.is_valid(), True)
+        data['codice_fiscale'] = nuovo_codice_fiscale_minuscolo
+        modulo = ModuloProfiloModificaAnagrafica(data, instance=p2)
+        self.assertEqual(modulo.is_valid(), False)
+        self.assertEqual(modulo.errors, {'codice_fiscale': ['Persona con questo Codice Fiscale esiste già.']})
+        data['codice_fiscale'] = nuovo_codice_fiscale_maiuscolo
+        modulo = ModuloProfiloModificaAnagrafica(data, instance=p2)
+        self.assertEqual(modulo.is_valid(), False)
+        self.assertEqual(modulo.errors, {'codice_fiscale': ['Persona con questo Codice Fiscale esiste già.']})
+        data['codice_fiscale'] = vecchio_codice_fiscale.lower()
+        modulo = ModuloProfiloModificaAnagrafica(data, instance=p2)
+        self.assertEqual(modulo.is_valid(), True)
+        self.assertEqual(p2.codice_fiscale, vecchio_codice_fiscale)

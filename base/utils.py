@@ -167,6 +167,9 @@ class UpperCaseCharField(models.CharField):
         else:
             return super(UpperCaseCharField, self).pre_save(model_instance, add)
 
+    def to_python(self, value):
+        return value.upper()
+
 
 def ean13_carattere_di_controllo(first12digits):
     charList = [char for char in first12digits]
