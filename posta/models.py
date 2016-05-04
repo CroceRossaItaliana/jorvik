@@ -198,6 +198,10 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 successo = True
                 d.errore = "Nessun indirizzo e-mail. Saltato"
 
+            except AttributeError as e:
+                successo = True
+                d.errore = "Destinatario non valido. Saltato"
+
             except UnicodeEncodeError as e:
                 successo = True
                 d.errore = "Indirizzo e-mail non valido. Saltato."
