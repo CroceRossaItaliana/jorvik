@@ -1,0 +1,141 @@
+//##############################################################################
+// BASE
+
+html,
+body {
+    min-width: 320px;
+    height: 100% !important;
+}
+
+.text-left {
+    text-align: left;
+}
+.text-right {
+    text-align: right;
+}
+.clearfix:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+.related-widget-wrapper {
+    float: none !important;
+}
+.related-lookup.hidden {
+    display: none !important;
+}
+
+// make sure that tiny styles like on size info has correct font size and color #666
+.tiny {
+    font-size: $font-size-small !important;
+    color: $gray-light !important;
+}
+
+.nav-pages {
+    position: relative;
+    // make sure that paginator has correct font size and color #666
+    font-size: $font-size-small;
+    color: $gray-light !important;
+    padding: 10px 15px;
+    background: #fff;
+    span {
+        // make sure that paginator has correct font size and color #666
+        font-size: $font-size-small;
+        color: $gray-light !important;
+    }
+    .actions {
+        float: right;
+    }
+}
+
+#id_upload_button:before {
+    display: none;
+}
+#content #content-main {
+    margin-top: 0;
+}
+.filebrowser {
+    &.cms-admin-sideframe {
+        #container {
+            .breadcrumbs + #content,
+            .breadcrumbs + .messagelist + #content {
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }
+            .breadcrumbs {
+                left: 0 !important;
+                padding-left: 20px !important;
+            }
+        }
+    }
+    #container {
+        min-width: auto;
+        #content {
+            padding: 0;
+            box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.2);
+        }
+        .breadcrumbs + #content,
+        .breadcrumbs + .messagelist + #content {
+            margin-left: 3% !important;
+        }
+    }
+    h1.folder_header {
+        position: relative;
+        top: 6px;
+    }
+    // required for django CMS <= 3.1 #673
+    h2 {
+        display: none;
+    }
+    #content-main {
+        background-color: white;
+    }
+}
+
+.field-file,
+.field-sha1 {
+    word-wrap: break-word;
+    word-break: break-all;
+}
+
+.well.img-preview {
+    display: none;
+    margin-top: 0;
+}
+.img-wrapper {
+    width: 180px;
+    height: 180px;
+}
+
+.file-duplicates {
+    clear: both;
+    padding: 20px 0 0;
+}
+
+.delete-confirmation form .cancel-link {
+    height: auto !important;
+    line-height: inherit !important;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.filer-info-bar {
+    min-height: 15px;
+    margin: 0 0 2px !important;
+    padding: 15px 20px;
+    box-shadow: 0 0 10px -2px rgba(black, 0.2);
+    background-color: white;
+}

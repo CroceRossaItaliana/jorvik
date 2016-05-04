@@ -1,0 +1,126 @@
+//##############################################################################
+// FILTER FILES
+
+.search-is-focused {
+    .filter-files-container {
+        position: static;
+    }
+    .filter-filers-container-inner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        @media screen and (max-width: $screen-tablet) {
+            position: static;
+        }
+    }
+    .breadcrumbs-container {
+        position: relative;
+    }
+    &.breadcrumb-min-width .filter-filers-container-inner {
+        position: static;
+    }
+}
+
+.filter-files-container {
+    @include clearfix;
+    display: table-cell;
+    vertical-align: middle;
+    position: relative;
+    width: 245px;
+    margin: 0;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+    z-index: 1000;
+    @media screen and (max-width: $screen-tablet) {
+        display: block;
+        width: auto;
+        margin-right: 0;
+        margin-top: 10px;
+        .filter-files-button {
+            float: none;
+        }
+    }
+    .filer-dropdown-container {
+        position: absolute;
+        top: 0;
+        right: 0;
+        > a {
+            &,
+            &:visited,
+            &:link:visited,
+            &:link {
+                display: inline-block;
+                line-height: 34px;
+                text-align: center;
+                width: 34px;
+                height: 34px;
+                padding: 0;
+            }
+        }
+        &.open + .filer-dropdown-menu-checkboxes {
+            display: block;
+            width: calc(100% - 30px);
+            li {
+                margin: 0;
+                padding: 0;
+                list-style-type: none;
+            }
+        }
+    }
+    .filter-search-wrapper {
+        position: relative;
+        float: left;
+        text-align: right;
+        width: calc(100% - 43px);
+        margin-right: 5px;
+        @media screen and (max-width: $screen-tablet) {
+            float: left;
+        }
+        .filer-dropdown-container span {
+            line-height: 34px !important;
+            height: 34px !important;
+        }
+    }
+    .filter-files-button {
+        float: right;
+        text-align: center;
+        white-space: nowrap;
+        height: 35px;
+        margin: 0;
+        padding: 8px !important;
+        .icon {
+            position: relative;
+            left: 2px;
+            font-size: 16px !important;
+            vertical-align: top;
+        }
+    }
+    .filter-files-field {
+        color: $gray-darkest;
+        font-size: 12px !important;
+        line-height: 35px;
+        font-weight: normal;
+        box-sizing: border-box;
+        min-width: 200px !important;
+        height: 35px;
+        // required for django CMS <= 3.1 #673
+        margin: 0 0 0 -150px;
+        padding: 0 35px 0 10px !important;
+        outline: none;
+        appearance: none;
+        transition: max-width $speed-base;
+        // disable clear X on IE #690
+        &::-ms-clear {
+            display: none;
+        }
+    }
+    .filer-dropdown-menu {
+        margin-top: 0 !important;
+        margin-right: -1px !important;
+    }
+}
+.filter-files-cancel {
+    margin: 5px 20px;
+}
