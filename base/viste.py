@@ -66,7 +66,7 @@ def recupera_password(request):
     Mostra semplicemente la pagina di recupero password.
     """
 
-    def _errore(contesto, modulo, livello=None, delegati=None):
+    def _errore(contesto, modulo, livello=None, delegati=None, email=None, codice_fiscale=None):
         contesto.update({
                 'modulo': ModuloRecuperaPassword(),
             })
@@ -74,6 +74,10 @@ def recupera_password(request):
             contesto.update({'errore': livello})
         if delegati:
             contesto.update({'delegati': delegati})
+        if email:
+            contesto.update({'email': email})
+        if codice_fiscale:
+            contesto.update({'codice_fiscale': codice_fiscale})
         return 'base_recupera_password.html', contesto
 
     contesto = {}
@@ -81,23 +85,21 @@ def recupera_password(request):
         modulo = ModuloRecuperaPassword(request.POST)
         if modulo.is_valid():
 
+            codice_fiscale = modulo.cleaned_data['codice_fiscale'].upper()
+            email = modulo.cleaned_data['email'].lower()
             try:
-                codice_fiscale = modulo.cleaned_data['codice_fiscale'].upper()
-                email = modulo.cleaned_data['email'].lower()
                 per = Persona.objects.get(codice_fiscale=codice_fiscale)
                 delegati = per.deleghe_anagrafica()
                 if not hasattr(per, 'utenza'):
-                    return _errore(contesto, modulo, 2, delegati)
+                    return _errore(contesto, modulo, 2, delegati, email=email, codice_fiscale=codice_fiscale)
                 if per.utenza.email != email:
-                   return _errore(contesto, modulo, 3, delegati)
+                   return _errore(contesto, modulo, 3, delegati, email=email, codice_fiscale=codice_fiscale)
 
                 Messaggio.costruisci_e_invia(
                     oggetto="Nuova password",
                     modello="email_recupero_password.html",
                     corpo={
                         "persona": per,
-                        "codice_fiscale": codice_fiscale,
-                        "email": email,
                         "uid": urlsafe_base64_encode(force_bytes(per.utenza.pk)),
                         "reset_pw_link": default_token_generator.make_token(per.utenza),
                     },
@@ -112,7 +114,7 @@ def recupera_password(request):
                                           torna_titolo="Accedi e cambia la tua password")
 
             except Persona.DoesNotExist:
-                return _errore(contesto, modulo, 1)
+                return _errore(contesto, modulo, 1, email=email, codice_fiscale=codice_fiscale)
     contesto.update({
         'modulo': ModuloRecuperaPassword(),
     })
