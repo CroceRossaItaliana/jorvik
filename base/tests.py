@@ -1,6 +1,9 @@
+import os
+
 from unittest import skipIf
 from zipfile import ZipFile
 from django.core.files.temp import NamedTemporaryFile
+from django.core.urlresolvers import reverse
 from django.test import TestCase
 from anagrafica.models import Persona
 from autenticazione.utils_test import TestFunzionale
@@ -101,3 +104,67 @@ class TestFunzionaleBase(TestFunzionale):
                 iframe.is_text_present("Via Etnea, 353, 95125 Catania CT, Italia", wait_time=5),
                 msg="Indirizzo salvato correttamente"
             )
+
+    def test_recupero_password_skip_captcha(self):
+        sessione = self.sessione_anonimo()
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
+
+        sessione.fill('codice_fiscale', 'via etnea 353')
+        sessione.fill('email', 'prova@spalletti.it')
+        sessione.find_by_xpath("//button[@type='submit']").first.click()
+
+        self.assertTrue(sessione.is_text_present('Questo campo è obbligatorio.'))
+
+    def test_recupero_password_cf_non_esiste(self):
+        sessione = self.sessione_anonimo()
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
+
+        # questo server a permettere di interagire con il campo nascosto del captcha
+        sessione.execute_script(
+            'document.getElementById("g-recaptcha-response").style.display = "block";'
+        )
+        sessione.fill('codice_fiscale', 'CFERRATO')
+        sessione.fill('email', 'prova@spalletti.it')
+        sessione.fill('g-recaptcha-response', 'PASSED')
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+
+        self.assertTrue(sessione.is_text_present('Account non esistente'))
+        self.assertTrue(sessione.is_text_present('Registrati'))
+
+    def test_recupero_password_persona_non_utente(self):
+
+        presidente = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
+        sessione = self.sessione_anonimo()
+
+        # test con codice fiscale non associato ad utenza per persona associata a sede
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
+        # questo server a permettere di interagire con il campo nascosto del captcha
+        sessione.execute_script(
+            'document.getElementById("g-recaptcha-response").style.display = "block";'
+        )
+        sessione.fill('codice_fiscale', persona.codice_fiscale)
+        sessione.fill('email', 'prova@spalletti.it')
+        sessione.fill('g-recaptcha-response', 'PASSED')
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+
+        self.assertTrue(sessione.is_text_present('Nessuna utenza'))
+        self.assertTrue(sessione.is_text_present('Chiedi al tuo Ufficio Soci'))
+        self.assertTrue(sessione.is_text_present('{} (Presidente)'.format(presidente.nome_completo)))
+
+        # test con codice fiscale non associato ad utenza per persona non associata a sede
+        persona_senza_sede = crea_persona()
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
+        # questo server a permettere di interagire con il campo nascosto del captcha
+        sessione.execute_script(
+            'document.getElementById("g-recaptcha-response").style.display = "block";'
+        )
+        sessione.fill('codice_fiscale', persona_senza_sede.codice_fiscale)
+        sessione.fill('email', 'prova@spalletti.it')
+        sessione.fill('g-recaptcha-response', 'PASSED')
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+
+        sessione.screenshot()
+
+        self.assertTrue(sessione.is_text_present('Nessuna utenza'))
+        self.assertTrue(sessione.is_text_present('Supporto di Gaia'))
