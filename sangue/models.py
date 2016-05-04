@@ -42,7 +42,7 @@ class Donatore(ModelloSemplice, ConMarcaTemporale):
     )
     fattore_rh = models.CharField(max_length=2, choices=FATTORE_RH, db_index=True, blank=False, null=True)
 
-    FANOTIPO_RH = (
+    FENOTIPO_RH = (
         'CCDee',
         'ccDEE',
         'CcDee',
@@ -59,8 +59,8 @@ class Donatore(ModelloSemplice, ConMarcaTemporale):
         'ccddee',
         'CcddEe',
     )
-    FANOTIPO_RH_OPZIONI = ((x, x) for x in FANOTIPO_RH)
-    fanotipo_rh = models.CharField(max_length=8, choices=FANOTIPO_RH_OPZIONI, db_index=True, blank=True, null=True)
+    FENOTIPO_RH_OPZIONI = ((x, x) for x in FENOTIPO_RH)
+    fenotipo_rh = models.CharField(max_length=8, choices=FENOTIPO_RH_OPZIONI, db_index=True, blank=True, null=True)
 
     KELL = (
         'K+k+',
