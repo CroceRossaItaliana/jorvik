@@ -3,7 +3,7 @@ from django.db.models import Count
 from django.shortcuts import render
 from django.views.generic import DetailView, ListView
 
-from articoli.models import Articolo
+from articoli.models import Articolo, ArticoloSegmento
 
 
 class ListaArticoli(ListView):
@@ -12,8 +12,9 @@ class ListaArticoli(ListView):
     template_name = 'lista_articoli.html'
     paginate_by = 10
 
-    def get_queryset(self):
+    def get_context_data(self, **kwargs):
         filtri_extra = {}
+        context = super(ListaArticoli, self).get_context_data(**kwargs)
         anno = self.kwargs.get('anno')
         mese = self.kwargs.get('mese')
         if 'date' in self.request.GET:
@@ -32,31 +33,12 @@ class ListaArticoli(ListView):
         if isinstance(utente, AnonymousUser):
             return None
         persona = utente.persona
-        articoli = Articolo.objects.pubblicati().filter(**filtri_extra)
-
-        id_articoli = []
-        if persona:
-            for articolo in articoli:
-                segmenti = articolo.segmenti.all()
-                if not segmenti:
-                    id_articoli.append(articolo.pk)
-                    continue
-                appartiene = False
-                for segmento in segmenti:
-                    if persona.appartiene_al_segmento(segmento):
-                        appartiene = True
-                        break
-                if appartiene:
-                    id_articoli.append(articolo.pk)
-        if id_articoli:
-            articoli = articoli.filter(pk__in=id_articoli)
-        return articoli
-
-    def get_context_data(self, **kwargs):
-        context = super(ListaArticoli, self).get_context_data(**kwargs)
-        anni = Articolo.objects.pubblicati().extra(select={'anno': 'extract( year from data_inizio_pubblicazione )'}).values_list('anno', flat=True).order_by().annotate(Count('id'))
+        articoli_segmenti = ArticoloSegmento.objects.all().filtra_per_segmenti(persona)
+        articoli = articoli_segmenti.oggetti_collegati().pubblicati().filter(**filtri_extra)
+        anni = articoli.extra(select={'anno': 'extract( year from data_inizio_pubblicazione )'}).values_list('anno', flat=True).order_by().annotate(Count('id'))
         anni = [int(anno) for anno in anni]
         context['anni'] = anni
+        context['articoli'] = articoli
         return context
 
 
@@ -73,15 +55,8 @@ class DettaglioArticolo(DetailView):
             return None
         persona = utente.persona
         obj = super(DetailView, self).get_object()
-        if persona:
-            segmenti = obj.segmenti.all()
-            if not segmenti:
-                obj.incrementa_visualizzazioni()
-                return obj
-            for segmento in segmenti:
-                if persona.appartiene_al_segmento(segmento):
-                    obj.incrementa_visualizzazioni()
-                    return obj
-            return None
-        obj.incrementa_visualizzazioni()
-        return obj
+        articoli_segmenti = ArticoloSegmento.objects.all().filtra_per_segmenti(persona)
+        articoli = articoli_segmenti.oggetti_collegati().pubblicati().filter(pk=obj.pk)
+        if articoli.count() == 1:
+            obj.incrementa_visualizzazioni()
+            return obj
