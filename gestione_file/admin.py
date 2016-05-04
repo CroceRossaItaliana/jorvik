@@ -12,7 +12,7 @@ from filer.models import File, Folder
 from filer.utils.loader import load_object
 from filer.admin.tools import AdminContext, popup_status
 
-from .models import Documento, Immagine
+from .models import Documento, DocumentoSegmento, Immagine
 
 admin.site.unregister(Folder)
 
@@ -24,6 +24,13 @@ class AdminCartella(FolderAdmin):
 admin.site.register(Folder, AdminCartella)
 
 
+class DocumentoSegmentoInline(admin.TabularInline):
+    model = DocumentoSegmento
+    raw_id_fields = ('file',)
+    extra = 1
+    min_num = 1
+
+
 class AdminDocumento(FileAdmin):
     add_form_template = 'admin/gestione_file/form_aggiungi.html'
     change_form_template = 'admin/filer/file/change_form.html'
@@ -31,6 +38,7 @@ class AdminDocumento(FileAdmin):
     extra_advanced_fields = ()
     extra_fieldsets = ()
     fieldsets = None
+    inlines = (DocumentoSegmentoInline,)
 
     def has_add_permission(self, request):
         return admin.ModelAdmin.has_add_permission(self, request)
@@ -121,7 +129,7 @@ admin.site.register(Documento, AdminDocumento)
 class AdminImmagine(ImageAdmin):
     add_form_template = 'admin/gestione_file/form_aggiungi.html'
     change_form_template = 'admin/filer/image/change_form.html'
-
+    inlines = (DocumentoSegmentoInline,)
 
 AdminImmagine.fieldsets = AdminImmagine.build_fieldsets(
     extra_main_fields=('default_alt_text', 'default_caption', 'url_documento'),
