@@ -21,7 +21,7 @@ class ListaArticoli(ListView):
             data = self.request.GET['date']
         if 'anno' in self.request.GET:
             anno = self.request.GET['anno']
-        if 'mese' in self.request.GET:
+        if 'mese' in self.request.GET and 'anno' in self.request.GET:
             mese = self.request.GET['mese']
         if 'q' in self.request.GET:
             filtri_extra['titolo__icontains'] = self.request.GET['q']
