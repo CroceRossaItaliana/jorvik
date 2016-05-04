@@ -57,6 +57,9 @@ INSTALLED_APPS = (
     'easy_thumbnails',
     'gestione_file',
     'filer',
+    'ckeditor',
+    'filer',
+    'ckeditor_filebrowser_filer',
 )
 
 STATICFILES_FINDERS = (
@@ -242,10 +245,27 @@ THUMBNAIL_PROCESSORS = (
     'easy_thumbnails.processors.filters',
 )
 
+FILER_CANONICAL_URL = 'sharing/'
 FILER_IMAGE_FIELD = 'gestione_file.fields.CampoImmagineFiler'
 FILER_FILE_FIELD = 'gestione_file.fields.CampoDocumentoFiler'
-
 FILER_FILE_MODELS = (
     'gestione_file.models.Immagine',
     'gestione_file.models.Documento',
 )
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Bold', 'Italic', 'Underline'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink'],
+            ['RemoveFormat', 'Source'],
+            ['FilerImage']
+        ],
+        'extraPlugins': 'filerimage',
+        'removePlugins': 'image'
+    },
+}
+
+CKEDITOR_FILEBROWSER_USE_THUMBNAILOPTIONS_ONLY = True
