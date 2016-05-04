@@ -86,7 +86,7 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
 
 
 class ArticoloSegmento(BaseSegmento):
-    articolo = models.ForeignKey(Articolo, related_name="segmenti")
+    _oggetto_collegato = Articolo
 
     class Meta:
         verbose_name_plural = "Segmenti dell'Articolo"
