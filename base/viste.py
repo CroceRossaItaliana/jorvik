@@ -117,8 +117,10 @@ def recupera_password(request):
 
             except Persona.DoesNotExist:
                 return _errore(contesto, modulo, 1, email=email, codice_fiscale=codice_fiscale)
+    else:
+        modulo = ModuloRecuperaPassword()
     contesto.update({
-        'modulo': ModuloRecuperaPassword(),
+        'modulo': modulo,
     })
     return 'base_recupera_password.html', contesto
 
@@ -170,7 +172,7 @@ def recupero_password_completo(request,
         'titolo': 'Password reimpostata correttamente',
     }
     if contesto_extra is not None:
-        contesto.update(extra_context)
+        contesto.update(contesto_extra)
 
     return TemplateResponse(request, template, contesto)
 
