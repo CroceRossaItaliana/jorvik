@@ -43,78 +43,78 @@ class TestSegmenti(TestCase):
         # Segmento per filtrare tutti gli utenti
         segmento_tutti_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='A',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i volontari
         segmento_volontari_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='B',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i volontari con meno di un anno di attivita
         segmento_volontari_meno_uno_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='C',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i volontari con più di un anno di attivita
         segmento_volontari_piu_uno_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='D',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i volontari con meno di 35 anni
         segmento_volontari_meno_35_anni_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='E',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i volontari con meno di 35 anni
         segmento_volontari_35_anni_o_piu_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='F',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i sostenitori
         segmento_sostenitori_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='G',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i sostenitori
         segmento_aspiranti_corsisti_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='H',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i presidenti con delega attiva
         segmento_presidenti_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='I',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i presidenti di comitati locali con delega attiva
         segmento_presidenti_comitati_locali_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='J',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i presidenti di comitati regionali con delega attiva
         segmento_presidenti_comitati_regionali_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='K',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i delegati Ufficio Soci con delega attiva
         segmento_delegati_US_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='L',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i delegati Autoparco con delega attiva
         segmento_delegati_autoparco_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='Y',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i delegati Formazione con delega attiva
         segmento_delegati_formazione_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='Z',
-            notizia=notizia_1
+            notiziatest=notizia_1
         )
         # Segmento per filtrare tutti i volontari con titolo
         titolo_patenteCRI = Titolo.objects.create(tipo='PC', nome='Titolo test')
         segmento_volontari_con_titolo_no_filtri = NotiziaTestSegmento.objects.create(
             segmento='AA',
-            notizia=notizia_1,
+            notiziatest=notizia_1,
             titolo=titolo_patenteCRI
         )
 
@@ -317,7 +317,7 @@ class TestSegmenti(TestCase):
             appartenenza = crea_appartenenza(delegato, sede_delegato)
             segmento = NotiziaTestSegmento.objects.create(
                 segmento=livello_obiettivo[1],
-                notizia=notizia_1
+                notiziatest=notizia_1
             )
             delega_obiettivo = Delega(
                 persona=delegato,
@@ -346,7 +346,7 @@ class TestSegmenti(TestCase):
             appartenenza = crea_appartenenza(referente, sede_referente)
             segmento = NotiziaTestSegmento.objects.create(
                 segmento=livello_attivita,
-                notizia=notizia_1
+                notiziatest=notizia_1
             )
             delega_referente = Delega(
                 persona=referente,
@@ -482,3 +482,100 @@ class TestSegmenti(TestCase):
         self.assertFalse(esito)
         esito = volontario_con_titolo_differente.appartiene_al_segmento(segmento_volontari_con_titolo_no_filtri)
         self.assertFalse(esito)
+
+
+class TestSegmentiUtente(TestCase):
+
+    def test_list_segmenti(self):
+        volontario_con_titolo, _, _ = crea_persona_sede_appartenenza()
+
+        # Notizie di test
+        notizia_1 = NotiziaTest.objects.create(testo="Notizia 1: Testo di prova!")
+        notizia_2 = NotiziaTest.objects.create(testo="Notizia 2: Altro testo di prova!")
+
+        # SEGMENTI NOTIZIA_1
+        # Segmento per filtrare tutti gli utenti
+        segmento_tutti_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='A',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i volontari
+        segmento_volontari_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='B',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i volontari con meno di un anno di attivita
+        segmento_volontari_meno_uno_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='C',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i volontari con più di un anno di attivita
+        segmento_volontari_piu_uno_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='D',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i volontari con meno di 35 anni
+        segmento_volontari_meno_35_anni_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='E',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i volontari con meno di 35 anni
+        segmento_volontari_35_anni_o_piu_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='F',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i sostenitori
+        segmento_sostenitori_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='G',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i sostenitori
+        segmento_aspiranti_corsisti_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='H',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i presidenti con delega attiva
+        segmento_presidenti_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='I',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i presidenti di comitati locali con delega attiva
+        segmento_presidenti_comitati_locali_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='J',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i presidenti di comitati regionali con delega attiva
+        segmento_presidenti_comitati_regionali_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='K',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i delegati Ufficio Soci con delega attiva
+        segmento_delegati_US_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='L',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i delegati Autoparco con delega attiva
+        segmento_delegati_autoparco_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='Y',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i delegati Formazione con delega attiva
+        segmento_delegati_formazione_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='Z',
+            notiziatest=notizia_1
+        )
+        # Segmento per filtrare tutti i volontari con titolo
+        titolo_patenteCRI = Titolo.objects.create(tipo='PC', nome='Titolo test')
+        segmento_volontari_con_titolo_no_filtri = NotiziaTestSegmento.objects.create(
+            segmento='AA',
+            notiziatest=notizia_1,
+            titolo=titolo_patenteCRI
+        )
+
+        qs = NotiziaTestSegmento.objects.all()
+        risultato = qs.filtra_per_segmenti(volontario_con_titolo)
+        attesi = [
+            segmento_tutti_no_filtri, segmento_volontari_no_filtri,
+            segmento_volontari_meno_uno_no_filtri, segmento_volontari_meno_35_anni_no_filtri
+        ]
+        self.assertEqual(set(risultato), set(attesi))
