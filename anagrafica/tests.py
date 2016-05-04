@@ -791,11 +791,14 @@ class TestFunzionaliAnagrafica(TestFunzionale):
 
     def test_modifica_codice_fiscale(self):
         p1 = crea_persona()
+        p1.codice_fiscale = 'RSSMRA45C12F2LRI'
+        p1.save()
         p2 = crea_persona()
+        vecchio_codice_fiscale = 'MRTNTN23M02D969P'
         data = {
-            'nome': p2.nome,
-            'cognome': p2.cognome,
-            'data_nascita': p2.data_nascita,
+            'nome': 'Mario',
+            'cognome': 'Rossi',
+            'data_nascita': '1970-1-1',
             'comune_nascita': 'Firenze',
             'provincia_nascita': 'fi',
             'stato_nascita': 'IT',
@@ -804,9 +807,9 @@ class TestFunzionaliAnagrafica(TestFunzionale):
             'provincia_residenza': 'fi',
             'stato_residenza': 'IT',
             'cap_residenza': '52100',
-            'codice_fiscale': p2.codice_fiscale,
+            'codice_fiscale': vecchio_codice_fiscale,
         }
-        vecchio_codice_fiscale = p2.codice_fiscale
+
         nuovo_codice_fiscale_maiuscolo = p1.codice_fiscale
         nuovo_codice_fiscale_minuscolo = p1.codice_fiscale.lower()
         modulo = ModuloProfiloModificaAnagrafica(data, instance=p2)
