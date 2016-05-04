@@ -154,6 +154,7 @@ def recupera_password_conferma(request, uidb64=None, token=None,
         'modulo': modulo,
         'titolo': titolo,
         'link_valido': link_valido,
+        "scadenza_token": django_settings.PASSWORD_RESET_TIMEOUT_DAYS * 24
     }
     if contesto_extra is not None:
         contesto.update(contesto_extra)
