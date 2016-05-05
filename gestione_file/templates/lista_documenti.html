@@ -59,7 +59,7 @@
             <div class="panel-heading">
                 <h4 class="panel-title">
                     <i class="fa fa-fw fa-newspaper-o"></i>
-                    <a href="{{documento.url}}">{{documento.name}} ({{documento.file.size}}) - scaricato {{documento.downloads}} volte</a>
+                    <a href="{{documento.url}}">{% if documento.name %}{{documento.name}}{% else %}{{documento.file.name}}{% endif %} ({{documento.file.size|filesizeformat}}) - scaricato {{documento.downloads}} volte</a>
                 </h4>
             </div>
         </div>

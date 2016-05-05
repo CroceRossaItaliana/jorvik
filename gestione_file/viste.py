@@ -10,7 +10,6 @@ from gestione_file.models import Documento, DocumentoSegmento
 
 class ListaDocumenti(ListView):
     model = Documento
-    context_object_name = 'documenti'
     template_name = 'lista_documenti.html'
     paginate_by = 10
 
