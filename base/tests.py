@@ -2,9 +2,12 @@ import os
 
 from unittest import skipIf
 from zipfile import ZipFile
+from django.contrib.auth.tokens import default_token_generator
 from django.core.files.temp import NamedTemporaryFile
 from django.core.urlresolvers import reverse
 from django.test import TestCase
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from anagrafica.models import Persona
 from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
@@ -209,3 +212,30 @@ class TestFunzionaleBase(TestFunzionale):
         sessione.fill('g-recaptcha-response', 'PASSED')
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
         self.assertTrue(sessione.is_text_present('Ti abbiamo inviato le istruzioni per cambiare la tua password tramite e-mail'))
+
+    def test_recupero_password_link_non_valido(self):
+        sessione = self.sessione_anonimo()
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password_conferma',  kwargs={ 'uidb64': 'AB', 'token': 'cde-fghilmnopqrstuvz1234'})))
+        self.assertTrue(sessione.is_text_present('Il collegamento che hai seguito non è più valido'))
+        self.assertTrue(sessione.is_text_present('Se sei assolutamente certo/a di non aver richiesto che la tua password venisse reimpostata, il tuo account di posta potrebbe essere stato compromesso: contatta immediatamente il tuo Ufficio Soci ed il supporto tecnico del tuo fornitore del servizio di posta elettronica.'))
+
+    def test_recupero_password_link_valido(self):
+        presidente = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
+        persona_in_sede = crea_persona()
+        utenza_persona_in_sede = crea_utenza(persona_in_sede)
+        appartenenza_persona_in_sede = crea_appartenenza(persona, sede)
+        uid = urlsafe_base64_encode(force_bytes(utenza_persona_in_sede.pk))
+        reset_pw_link = default_token_generator.make_token(utenza_persona_in_sede)
+        sessione = self.sessione_anonimo()
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password_conferma',  kwargs={ 'uidb64': uid, 'token': reset_pw_link})))
+        sessione.fill('new_password1', 'new_password')
+        sessione.fill('new_password2', 'new_password')
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+        self.assertTrue(sessione.is_text_present('La tua nuova password è stata impostata'))
+        sessione.visit("%s%s" % (self.live_server_url, '/login/'))
+        sessione.fill('username', utenza_persona_in_sede.email)
+        sessione.fill('password', 'new_password')
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+        testo_personalizzato = 'Ciao, {0}'.format(persona_in_sede.nome)
+        self.assertTrue(sessione.is_text_present(testo_personalizzato))
