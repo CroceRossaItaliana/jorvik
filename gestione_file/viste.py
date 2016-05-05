@@ -1,11 +1,18 @@
+
+from django.conf import settings
+from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Count
 from django.shortcuts import render
 from django.views.generic import DetailView, ListView
 
-from filer.models import Folder
+from filer.models import File, Folder
 
 from gestione_file.models import Documento, DocumentoSegmento
+from jorvik import settings
+
+server = settings.FILER_PRIVATEMEDIA_SERVER
 
 
 class ListaDocumenti(ListView):
@@ -45,3 +52,22 @@ class ListaDocumenti(ListView):
             del context['cartelle']
             context['documenti'] = documenti.filter(**filtri_extra)
         return context
+
+
+
+def serve_protected_file(request, path):
+    """
+    Restituisce il file e incrementa il numero di downloads
+    """
+    try:
+        file_obj = File.objects.get(file=path, is_public=False)
+        file_obj.incrementa_downloads()
+        file_obj.save()
+    except File.DoesNotExist:
+        raise Http404('File not found')
+    if not file_obj.has_read_permission(request):
+        if settings.DEBUG:
+            raise PermissionDenied
+        else:
+            raise Http404('File not found')
+    return server.serve(request, file_obj=file_obj.file, save_as=False)
