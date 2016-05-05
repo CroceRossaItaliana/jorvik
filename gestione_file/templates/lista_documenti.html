@@ -64,7 +64,13 @@
             </div>
         </div>
         {% endfor %}
-
+    {% endif %}
+    {% if not livello_superiore == 'root' %}
+        {% if livello_superiore %}
+            <a href='{% url 'lista_documenti_cartella' livello_superiore.pk %}'>Livello superiore</a>
+        {% else %}
+            <a href='{% url 'lista_documenti' %}'>Livello superiore</a>
+        {% endif %}
     {% endif %}
         {% if is_paginated %}
         <div class="pagination">
