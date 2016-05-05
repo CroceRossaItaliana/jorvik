@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.db import models
+from django.db import models, transaction
 
 from django.utils.translation import ugettext_lazy as _
 from filer.models import File
@@ -26,6 +26,11 @@ class InterfacciaJorvik(object):
         if self.url_documento:
             return self.url_documento
         return super(InterfacciaJorvik, self).path
+
+    @transaction.atomic
+    def incrementa_downloads(self):
+        self.downloads += 1
+        self.save()
 
 
 class Documento(InterfacciaJorvik, File):
