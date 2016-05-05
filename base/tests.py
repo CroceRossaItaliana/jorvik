@@ -1,6 +1,7 @@
 import os
 
 from unittest import skipIf
+from unittest.mock import patch
 from zipfile import ZipFile
 from django.contrib.auth.tokens import default_token_generator
 from django.core.files.temp import NamedTemporaryFile
@@ -78,7 +79,6 @@ class TestBase(TestCase):
 
 class TestFunzionaleBase(TestFunzionale):
 
-
     @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
     def test_ricerca_posizione(self):
 
@@ -119,23 +119,20 @@ class TestFunzionaleBase(TestFunzionale):
 
         self.assertTrue(sessione.is_text_present('Questo campo è obbligatorio.'))
 
-    def test_recupero_password_cf_non_esiste(self):
+    @patch('base.forms.NoReCaptchaField.clean', return_value='PASSED')
+    def test_recupero_password_cf_non_esiste(self, mocked):
         sessione = self.sessione_anonimo()
         sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
 
-        # questo server a permettere di interagire con il campo nascosto del captcha
-        sessione.execute_script(
-            'document.getElementById("g-recaptcha-response").style.display = "block";'
-        )
         sessione.fill('codice_fiscale', 'CFERRATO')
         sessione.fill('email', 'prova@spalletti.it')
-        sessione.fill('g-recaptcha-response', 'PASSED')
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
 
         self.assertTrue(sessione.is_text_present('Siamo spiacenti, non ci risulta alcuna persona con questo codice fiscale (CFERRATO)'))
         self.assertTrue(sessione.is_text_present('registrati come aspirante Volontario.'))
 
-    def test_recupero_password_persona_non_utente(self):
+    @patch('base.forms.NoReCaptchaField.clean', return_value='PASSED')
+    def test_recupero_password_persona_non_utente(self, mocked):
 
         presidente = crea_persona()
         persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
@@ -143,14 +140,9 @@ class TestFunzionaleBase(TestFunzionale):
 
         # test con codice fiscale non associato ad utenza per persona associata a sede
         sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
-        # questo server a permettere di interagire con il campo nascosto del captcha
-        sessione.execute_script(
-            'document.getElementById("g-recaptcha-response").style.display = "block";'
-        )
 
         sessione.fill('codice_fiscale', persona.codice_fiscale)
         sessione.fill('email', 'prova@spalletti.it')
-        sessione.fill('g-recaptcha-response', 'PASSED')
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
 
         self.assertTrue(sessione.is_text_present('Nessuna utenza'))
@@ -160,13 +152,9 @@ class TestFunzionaleBase(TestFunzionale):
         # test con codice fiscale non associato ad utenza per persona non associata a sede
         persona_senza_sede = crea_persona()
         sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
-        # questo server a permettere di interagire con il campo nascosto del captcha
-        sessione.execute_script(
-            'document.getElementById("g-recaptcha-response").style.display = "block";'
-        )
+
         sessione.fill('codice_fiscale', persona_senza_sede.codice_fiscale)
         sessione.fill('email', 'prova@spalletti.it')
-        sessione.fill('g-recaptcha-response', 'PASSED')
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
 
         sessione.screenshot()
@@ -174,7 +162,8 @@ class TestFunzionaleBase(TestFunzionale):
         self.assertTrue(sessione.is_text_present('Nessuna utenza'))
         self.assertTrue(sessione.is_text_present('Supporto di Gaia'))
 
-    def test_recupero_password_email_errata(self):
+    @patch('base.forms.NoReCaptchaField.clean', return_value='PASSED')
+    def test_recupero_password_email_errata(self, mocked):
         presidente = crea_persona()
         persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
         persona_in_sede = crea_persona()
@@ -183,18 +172,15 @@ class TestFunzionaleBase(TestFunzionale):
         sessione = self.sessione_anonimo()
 
         sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
-        # questo server a permettere di interagire con il campo nascosto del captcha
-        sessione.execute_script(
-            'document.getElementById("g-recaptcha-response").style.display = "block";'
-        )
+
         sessione.fill('codice_fiscale', persona_in_sede.codice_fiscale)
         sessione.fill('email', 'prova@spalletti.it')
-        sessione.fill('g-recaptcha-response', 'PASSED')
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
         self.assertTrue(sessione.is_text_present('ma NON con questo indirizzo e-mail (prova@spalletti.it)'))
         self.assertTrue(sessione.is_text_present('Supporto di Gaia'))
 
-    def test_recupero_password_corretto(self):
+    @patch('base.forms.NoReCaptchaField.clean', return_value='PASSED')
+    def test_recupero_password_corretto(self, mocked):
         presidente = crea_persona()
         persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
         persona_in_sede = crea_persona()
@@ -203,13 +189,8 @@ class TestFunzionaleBase(TestFunzionale):
         sessione = self.sessione_anonimo()
 
         sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
-        # questo server a permettere di interagire con il campo nascosto del captcha
-        sessione.execute_script(
-            'document.getElementById("g-recaptcha-response").style.display = "block";'
-        )
         sessione.fill('codice_fiscale', persona_in_sede.codice_fiscale)
         sessione.fill('email', utenza_persona_in_sede.email)
-        sessione.fill('g-recaptcha-response', 'PASSED')
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
         self.assertTrue(sessione.is_text_present('Ti abbiamo inviato le istruzioni per cambiare la tua password tramite e-mail'))
 
