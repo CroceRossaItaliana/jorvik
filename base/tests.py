@@ -8,7 +8,7 @@ from django.test import TestCase
 from anagrafica.models import Persona
 from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
-from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_area_attivita
+from base.utils_tests import crea_appartenenza, crea_persona_sede_appartenenza, crea_persona, crea_area_attivita, crea_utenza
 from jorvik.settings import GOOGLE_KEY
 
 
@@ -75,6 +75,7 @@ class TestBase(TestCase):
 
 class TestFunzionaleBase(TestFunzionale):
 
+
     @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
     def test_ricerca_posizione(self):
 
@@ -128,8 +129,8 @@ class TestFunzionaleBase(TestFunzionale):
         sessione.fill('g-recaptcha-response', 'PASSED')
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
 
-        self.assertTrue(sessione.is_text_present('Account non esistente'))
-        self.assertTrue(sessione.is_text_present('Registrati'))
+        self.assertTrue(sessione.is_text_present('Siamo spiacenti, non ci risulta alcuna persona con questo codice fiscale (CFERRATO)'))
+        self.assertTrue(sessione.is_text_present('registrati come aspirante Volontario.'))
 
     def test_recupero_password_persona_non_utente(self):
 
@@ -143,6 +144,7 @@ class TestFunzionaleBase(TestFunzionale):
         sessione.execute_script(
             'document.getElementById("g-recaptcha-response").style.display = "block";'
         )
+
         sessione.fill('codice_fiscale', persona.codice_fiscale)
         sessione.fill('email', 'prova@spalletti.it')
         sessione.fill('g-recaptcha-response', 'PASSED')
@@ -168,3 +170,42 @@ class TestFunzionaleBase(TestFunzionale):
 
         self.assertTrue(sessione.is_text_present('Nessuna utenza'))
         self.assertTrue(sessione.is_text_present('Supporto di Gaia'))
+
+    def test_recupero_password_email_errata(self):
+        presidente = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
+        persona_in_sede = crea_persona()
+        utenza_persona_in_sede = crea_utenza(persona_in_sede)
+        appartenenza_persona_in_sede = crea_appartenenza(persona, sede)
+        sessione = self.sessione_anonimo()
+
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
+        # questo server a permettere di interagire con il campo nascosto del captcha
+        sessione.execute_script(
+            'document.getElementById("g-recaptcha-response").style.display = "block";'
+        )
+        sessione.fill('codice_fiscale', persona_in_sede.codice_fiscale)
+        sessione.fill('email', 'prova@spalletti.it')
+        sessione.fill('g-recaptcha-response', 'PASSED')
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+        self.assertTrue(sessione.is_text_present('ma NON con questo indirizzo e-mail (prova@spalletti.it)'))
+        self.assertTrue(sessione.is_text_present('Supporto di Gaia'))
+
+    def test_recupero_password_corretto(self):
+        presidente = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
+        persona_in_sede = crea_persona()
+        utenza_persona_in_sede = crea_utenza(persona_in_sede)
+        appartenenza_persona_in_sede = crea_appartenenza(persona, sede)
+        sessione = self.sessione_anonimo()
+
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
+        # questo server a permettere di interagire con il campo nascosto del captcha
+        sessione.execute_script(
+            'document.getElementById("g-recaptcha-response").style.display = "block";'
+        )
+        sessione.fill('codice_fiscale', persona_in_sede.codice_fiscale)
+        sessione.fill('email', utenza_persona_in_sede.email)
+        sessione.fill('g-recaptcha-response', 'PASSED')
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+        self.assertTrue(sessione.is_text_present('Ti abbiamo inviato le istruzioni per cambiare la tua password tramite e-mail'))
