@@ -1,0 +1,71 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Documenti{% endblock %}
+
+{% block menu_laterale %}
+    <div class="col-md-2 well well-sm">
+        <ul id="sezione" role="navigation" class="nav nav-pills nav-stacked navbar-collapse collapse">
+            <li class="dropdown-header grassetto piu-grande">Documenti</li>
+                <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
+                    <a href="{{ link_url|urlencode }}">
+                        <i class="fa fa-newspaper-o fa-fw"></i>
+                        Elenco
+                    </a>
+                </li>
+            <hr />
+        </ul>
+    </div>
+{% endblock %}
+
+{% block app_contenuto %}
+    <h2 class="allinea-centro text-success">
+        Documenti
+    </h2>
+
+    <div class="alert alert-info">
+        <h4><i class="fa fa-info-circle"></i> Benvenuto nell'archivio dei documenti.</h4>
+    </div>
+
+    <div class="panel">
+        <form method='GET' action=".">
+            <label for="query-nome">Ricerca file per nome</label>
+            <input type="text" name="q" id="query-nome">
+            <button type="submit" class="btn btn-primary">
+                <i class="fa fa-fw fa-check-circle"></i>Cerca
+            </button>
+        </form>
+    </div>
+
+    {% for documento in documenti %}
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h4 class="panel-title">
+                <i class="fa fa-fw fa-newspaper-o"></i>
+                <span>{{documento.nome}}</span>
+            </h4>
+        </div>
+    </div>
+    {% empty %}
+        <div class="alert alert-info alert-block">
+            <h4><i class="fa fa-info-circle"></i> Nessun documento</h4>
+                    <p>Non &egrave; stato trovato alcun documento.</p>
+         </div>
+    {% endfor %}
+        {% if is_paginated %}
+        <div class="pagination">
+            <span class="page-links">
+                {% if page_obj.has_previous %}
+                    <a href="/documenti?page={{ page_obj.previous_page_number }}">Precedente</a>
+                {% endif %}
+                <span class="page-current">
+                    Pagina {{ page_obj.number }} di {{ page_obj.paginator.num_pages }}.
+                </span>
+                {% if page_obj.has_next %}
+                    <a href="/documenti?page={{ page_obj.next_page_number }}">Successiva</a>
+                {% endif %}
+            </span>
+        </div>
+    {% endif %}
+{% endblock %}
