@@ -21,3 +21,5 @@ script:
 env:
   global:
   - NORECAPTCHA_TESTING: 1
+  - secure: j6SGk3f+JsQGcWeyAstHZ/68/CgKjHz90bM9LQEyqcZXU/t6JrVM2wbxLAcixhrWsMpeIvoYUsrdZd8WFurDn7lOPe8B6s70WAQc2ZR9Ehhvt4fWtZghMPF2aP7BDGsjtq3eldb+aDTY1cFEf7A7sjBep5UmOuvKHWFVslnGLtQ=
+  - secure: JGn+Js9aeQE/6tTX5ZKWOgvvBhxgWrFinjobKzGJO/msPuxQ/8Q/q3LzvTA1rHET96PJ0vqAt9RTSI1r0qbftc7kvL3O6QnrMKu6X0+aG4drRmVCLEBJ9GOWuCFrfQLrZhU6WyfnlnyqEfupbE8QMTJhGOZFHg4/7W+AeR/CpmE=
