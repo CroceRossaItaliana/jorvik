@@ -26,6 +26,7 @@ class ListaDocumenti(ListView):
         cartella_pk = self.kwargs.get('cartella_pk')
         documenti_segmenti = DocumentoSegmento.objects.all().filtra_per_segmenti(persona)
         documenti = documenti_segmenti.oggetti_collegati()
+        context['livello_superiore'] = 'root'
         if cartella_pk:
             context['livello_superiore'] = Folder.objects.get(pk=cartella_pk).parent
             filtri = {
