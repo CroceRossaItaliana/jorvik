@@ -29,7 +29,7 @@
     </div>
 
     <div class="panel">
-        <form method='GET' action=".">
+        <form method='GET' action="/documenti/">
             <label for="query-nome">Ricerca file per nome</label>
             <input type="text" name="q" id="query-nome">
             <button type="submit" class="btn btn-primary">
@@ -38,21 +38,34 @@
         </form>
     </div>
 
-    {% for documento in documenti %}
+{% if cartelle %}
+    <span>Cartelle</span>
+    {% for cartella in cartelle %}
     <div class="panel panel-primary">
         <div class="panel-heading">
             <h4 class="panel-title">
-                <i class="fa fa-fw fa-newspaper-o"></i>
-                <span>{{documento.nome}}</span>
+                <i class="fa fa-fw fa-folder-o"></i>
+                <a href='{% url 'lista_documenti_cartella' cartella.pk %}'>{{cartella.name}}</a>
             </h4>
         </div>
     </div>
-    {% empty %}
-        <div class="alert alert-info alert-block">
-            <h4><i class="fa fa-info-circle"></i> Nessun documento</h4>
-                    <p>Non &egrave; stato trovato alcun documento.</p>
-         </div>
     {% endfor %}
+{% endif %}
+
+    {% if documenti %}
+        <span>Documenti</span>
+        {% for documento in documenti %}
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-fw fa-newspaper-o"></i>
+                    <a href="{{documento.url}}">{{documento.name}} ({{documento.file.size}}) - scaricato {{documento.downloads}} volte</a>
+                </h4>
+            </div>
+        </div>
+        {% endfor %}
+
+    {% endif %}
         {% if is_paginated %}
         <div class="pagination">
             <span class="page-links">

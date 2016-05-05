@@ -30,6 +30,7 @@ class InterfacciaJorvik(object):
 
 class Documento(InterfacciaJorvik, File):
     url_documento = models.URLField(_('URL Documento'), default='', blank=True)
+    downloads = models.PositiveIntegerField("Downloads", db_index=True, default=0)
 
     class Meta:
         abstract = False
@@ -38,6 +39,7 @@ class Documento(InterfacciaJorvik, File):
 
 class Immagine(InterfacciaJorvik, BaseImage):
     url_documento = models.URLField(_('URL Documento'), default='', blank=True)
+    downloads = models.PositiveIntegerField("Downloads", db_index=True, default=0)
 
     class Meta:
         abstract = False
