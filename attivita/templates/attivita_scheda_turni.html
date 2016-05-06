@@ -59,21 +59,22 @@
 
                         <p>
                             {% for p in turno.partecipazioni_confermate %}
-                                {% thumbnail p.persona.avatar "50x50" crop="center" as im %}
+                                {% if p.persona.avatar %}
+                                    {% thumbnail p.persona.avatar "50x50" crop as im %}
                                     <a href="{{ p.persona.url }}" title="{{ p.persona.nome_completo }}">
                                         <img    src="{{ im.url }}" class="img-rounded"
                                                 alt="{{ p.persona.nome_completo }}"
                                                 title="{{ p.persona.nome_completo }} "/>
                                     </a>
 
-                                {% empty %}
+                                {% else %}
                                     <a href="{{ p.persona.url }}" title="{{ p.persona.nome_completo }}">
                                         <img    src="{% gravatar_url p.persona.email 50 %}" class="img-rounded"
                                                 alt="{{ p.persona.nome_completo }}"
                                                 title="{{ p.persona.nome_completo }} "/>
                                     </a>
 
-                                {% endthumbnail %}
+                                {% endif %}
                             {% endfor %}
 
 
