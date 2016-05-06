@@ -129,12 +129,11 @@ def recupera_password(request):
 def recupera_password_conferma(request, uidb64=None, token=None,
                            template='base_recupero_password_conferma.html',
                            contesto_extra=None):
-    Utenza = get_user_model()
     assert uidb64 is not None and token is not None  # checked by URLconf
     try:
         # urlsafe_base64_decode() decodes to bytestring on Python 3
         uid = force_text(urlsafe_base64_decode(uidb64))
-        utente = Utenza._default_manager.get(pk=uid)
+        utente = Utenza.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, Utenza.DoesNotExist):
         utente = None
 
