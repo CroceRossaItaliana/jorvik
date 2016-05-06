@@ -3,10 +3,14 @@ from django.forms import Textarea
 from django_countries.fields import LazyTypedChoiceField
 from django_countries import countries
 
+from nocaptcha_recaptcha.fields import NoReCaptchaField
+
 
 class ModuloRecuperaPassword(forms.Form):
     codice_fiscale = forms.CharField(label='Codice Fiscale', max_length=16)
     email = forms.EmailField(label='Email')
+    captcha = NoReCaptchaField()
+
 
 
 class ModuloMotivoNegazione(forms.Form):

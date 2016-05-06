@@ -1,11 +1,18 @@
 import mimetypes
 import os
 
-from django.contrib.auth import load_backend, login
+from django.conf import settings as django_settings
+from django.contrib.auth import get_user_model, load_backend, login
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.views import SetPasswordForm as ModuloImpostaPassword
 from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import reverse
 from django.db.models import Count
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, render_to_response, get_object_or_404, redirect
+from django.template.response import TemplateResponse
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 # Le viste base vanno qui.
 from django.views.decorators.cache import cache_page
 from django.apps import apps
@@ -59,19 +66,45 @@ def recupera_password(request):
     """
     Mostra semplicemente la pagina di recupero password.
     """
+
+    def _errore(contesto, modulo, livello=None, delegati=None, email=None, codice_fiscale=None):
+        contesto.update({
+                'modulo': ModuloRecuperaPassword(),
+            })
+        if livello:
+            contesto.update({'errore': livello})
+        if delegati:
+            contesto.update({'delegati': delegati})
+        if email:
+            contesto.update({'email': email})
+        if codice_fiscale:
+            contesto.update({'codice_fiscale': codice_fiscale})
+        return 'base_recupera_password.html', contesto
+
     contesto = {}
     if request.method == 'POST':
         modulo = ModuloRecuperaPassword(request.POST)
         if modulo.is_valid():
 
+            codice_fiscale = modulo.cleaned_data['codice_fiscale'].upper()
+            email = modulo.cleaned_data['email'].lower()
             try:
-                per = Persona.objects.get(codice_fiscale=modulo.cleaned_data['codice_fiscale'].upper(),
-                                          utenza__email=modulo.cleaned_data['email'].lower())
+                per = Persona.objects.get(codice_fiscale=codice_fiscale)
+                delegati = per.deleghe_anagrafica()
+                if not hasattr(per, 'utenza'):
+                    return _errore(contesto, modulo, 2, delegati, email=email, codice_fiscale=codice_fiscale)
+                if per.utenza.email != email:
+                   return _errore(contesto, modulo, 3, delegati, email=email, codice_fiscale=codice_fiscale)
 
                 Messaggio.costruisci_e_invia(
                     oggetto="Nuova password",
-                    modello=""
-
+                    modello="email_recupero_password.html",
+                    corpo={
+                        "persona": per,
+                        "uid": urlsafe_base64_encode(force_bytes(per.utenza.pk)),
+                        "reset_pw_link": default_token_generator.make_token(per.utenza),
+                        "scadenza_token": django_settings.PASSWORD_RESET_TIMEOUT_DAYS * 24
+                    },
                 )
 
                 return messaggio_generico(request, None,
@@ -83,12 +116,65 @@ def recupera_password(request):
                                           torna_titolo="Accedi e cambia la tua password")
 
             except Persona.DoesNotExist:
-                contesto.update({'errore': True})
-
+                return _errore(contesto, modulo, 1, email=email, codice_fiscale=codice_fiscale)
+    else:
+        modulo = ModuloRecuperaPassword()
     contesto.update({
-        'modulo': ModuloRecuperaPassword(),
+        'modulo': modulo,
     })
     return 'base_recupera_password.html', contesto
+
+
+@pagina_anonima
+def recupera_password_conferma(request, uidb64=None, token=None,
+                           template='base_recupero_password_conferma.html',
+                           contesto_extra=None):
+    assert uidb64 is not None and token is not None  # checked by URLconf
+    try:
+        # urlsafe_base64_decode() decodes to bytestring on Python 3
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        utente = Utenza.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, Utenza.DoesNotExist):
+        utente = None
+
+    if utente is not None and default_token_generator.check_token(utente, token):
+        link_valido = True
+        titolo = 'Inserisci una nuova password'
+        if request.method == 'POST':
+            modulo = ModuloImpostaPassword(utente, request.POST)
+            if modulo.is_valid():
+                modulo.save()
+                return HttpResponseRedirect(reverse('recupero_password_completo'))
+        else:
+            modulo = ModuloImpostaPassword(utente)
+    else:
+        link_valido = False
+        modulo = None
+        titolo = 'Errore nell\'impostazione della nuova password'
+    contesto = {
+        'modulo': modulo,
+        'titolo': titolo,
+        'link_valido': link_valido,
+        "scadenza_token": django_settings.PASSWORD_RESET_TIMEOUT_DAYS * 24
+    }
+    if contesto_extra is not None:
+        contesto.update(contesto_extra)
+
+    return TemplateResponse(request, template, contesto)
+
+
+def recupero_password_completo(request,
+                            template='base_recupero_password_completo.html',
+                            contesto_extra=None):
+    contesto = {
+        'login_url': '/login/',
+        'titolo': 'Password reimpostata correttamente',
+    }
+    if contesto_extra is not None:
+        contesto.update(contesto_extra)
+
+    return TemplateResponse(request, template, contesto)
+
 
 @pagina_pubblica
 def informazioni(request, me):
