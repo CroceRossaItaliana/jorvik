@@ -2,3 +2,7 @@
 
 api_key =
 
+[nocaptcha]
+
+site_key =
+secret_key =

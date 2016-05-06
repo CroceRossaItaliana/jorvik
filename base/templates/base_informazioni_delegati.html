@@ -1,0 +1,27 @@
+{% if delegati %}
+        <p>Usa i collegamenti seguenti per contattare
+        il delegato Ufficio Soci, oppure il tuo Presidente,
+        spiegando l'errore che hai individuato e richiedendo
+        la modifica dei tuoi dati su Gaia:
+
+        <ul>
+            {% for delega in delegati %}
+                <li>
+                    <a href="mailto:{{ delega.persona.utenza.email }}">
+                        {{ delega.persona.nome_completo }}
+                    </a>
+                    ({{ delega.get_tipo_display }})
+                </li>
+            {% endfor %}
+        </ul>
+        </p>
+
+{% else %}
+
+    <li>
+        Contatta il <a href="/supporto"/>Supporto di Gaia</a>, spiegando
+        l'errore che hai individuato e richiedendo la modifica dei tuoi
+        dati.
+    </li>
+
+{% endif %}

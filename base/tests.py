@@ -1,11 +1,18 @@
+import os
+
 from unittest import skipIf
+from unittest.mock import patch
 from zipfile import ZipFile
+from django.contrib.auth.tokens import default_token_generator
 from django.core.files.temp import NamedTemporaryFile
+from django.core.urlresolvers import reverse
 from django.test import TestCase
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from anagrafica.models import Persona
 from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
-from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_area_attivita
+from base.utils_tests import crea_appartenenza, crea_persona_sede_appartenenza, crea_persona, crea_area_attivita, crea_utenza
 from jorvik.settings import GOOGLE_KEY
 
 
@@ -101,3 +108,115 @@ class TestFunzionaleBase(TestFunzionale):
                 iframe.is_text_present("Via Etnea, 353, 95125 Catania CT, Italia", wait_time=5),
                 msg="Indirizzo salvato correttamente"
             )
+
+    def test_recupero_password_skip_captcha(self):
+        sessione = self.sessione_anonimo()
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
+
+        sessione.fill('codice_fiscale', 'via etnea 353')
+        sessione.fill('email', 'prova@spalletti.it')
+        sessione.find_by_xpath("//button[@type='submit']").first.click()
+
+        self.assertTrue(sessione.is_text_present('Questo campo è obbligatorio.'))
+
+    @patch('base.forms.NoReCaptchaField.clean', return_value='PASSED')
+    def test_recupero_password_cf_non_esiste(self, mocked):
+        sessione = self.sessione_anonimo()
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
+
+        sessione.fill('codice_fiscale', 'CFERRATO')
+        sessione.fill('email', 'prova@spalletti.it')
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+
+        self.assertTrue(sessione.is_text_present('Siamo spiacenti, non ci risulta alcuna persona con questo codice fiscale (CFERRATO)'))
+        self.assertTrue(sessione.is_text_present('registrati come aspirante Volontario.'))
+
+    @patch('base.forms.NoReCaptchaField.clean', return_value='PASSED')
+    def test_recupero_password_persona_non_utente(self, mocked):
+
+        presidente = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
+        sessione = self.sessione_anonimo()
+
+        # test con codice fiscale non associato ad utenza per persona associata a sede
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
+
+        sessione.fill('codice_fiscale', persona.codice_fiscale)
+        sessione.fill('email', 'prova@spalletti.it')
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+
+        self.assertTrue(sessione.is_text_present('Nessuna utenza'))
+        self.assertTrue(sessione.is_text_present('Chiedi al tuo Ufficio Soci'))
+        self.assertTrue(sessione.is_text_present('{} (Presidente)'.format(presidente.nome_completo)))
+
+        # test con codice fiscale non associato ad utenza per persona non associata a sede
+        persona_senza_sede = crea_persona()
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
+
+        sessione.fill('codice_fiscale', persona_senza_sede.codice_fiscale)
+        sessione.fill('email', 'prova@spalletti.it')
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+
+        sessione.screenshot()
+
+        self.assertTrue(sessione.is_text_present('Nessuna utenza'))
+        self.assertTrue(sessione.is_text_present('Supporto di Gaia'))
+
+    @patch('base.forms.NoReCaptchaField.clean', return_value='PASSED')
+    def test_recupero_password_email_errata(self, mocked):
+        presidente = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
+        persona_in_sede = crea_persona()
+        utenza_persona_in_sede = crea_utenza(persona_in_sede)
+        appartenenza_persona_in_sede = crea_appartenenza(persona, sede)
+        sessione = self.sessione_anonimo()
+
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
+
+        sessione.fill('codice_fiscale', persona_in_sede.codice_fiscale)
+        sessione.fill('email', 'prova@spalletti.it')
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+        self.assertTrue(sessione.is_text_present('ma NON con questo indirizzo e-mail (prova@spalletti.it)'))
+        self.assertTrue(sessione.is_text_present('Supporto di Gaia'))
+
+    @patch('base.forms.NoReCaptchaField.clean', return_value='PASSED')
+    def test_recupero_password_corretto(self, mocked):
+        presidente = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
+        persona_in_sede = crea_persona()
+        utenza_persona_in_sede = crea_utenza(persona_in_sede)
+        appartenenza_persona_in_sede = crea_appartenenza(persona, sede)
+        sessione = self.sessione_anonimo()
+
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
+        sessione.fill('codice_fiscale', persona_in_sede.codice_fiscale)
+        sessione.fill('email', utenza_persona_in_sede.email)
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+        self.assertTrue(sessione.is_text_present('Ti abbiamo inviato le istruzioni per cambiare la tua password tramite e-mail'))
+
+    def test_recupero_password_link_non_valido(self):
+        sessione = self.sessione_anonimo()
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password_conferma',  kwargs={ 'uidb64': 'AB', 'token': 'cde-fghilmnopqrstuvz1234'})))
+        self.assertTrue(sessione.is_text_present('Il collegamento che hai seguito non è più valido'))
+        self.assertTrue(sessione.is_text_present('Se sei assolutamente certo/a di non aver richiesto che la tua password venisse reimpostata, il tuo account di posta potrebbe essere stato compromesso: contatta immediatamente il tuo Ufficio Soci ed il supporto tecnico del tuo fornitore del servizio di posta elettronica.'))
+
+    def test_recupero_password_link_valido(self):
+        presidente = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
+        persona_in_sede = crea_persona()
+        utenza_persona_in_sede = crea_utenza(persona_in_sede)
+        appartenenza_persona_in_sede = crea_appartenenza(persona, sede)
+        uid = urlsafe_base64_encode(force_bytes(utenza_persona_in_sede.pk))
+        reset_pw_link = default_token_generator.make_token(utenza_persona_in_sede)
+        sessione = self.sessione_anonimo()
+        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password_conferma',  kwargs={ 'uidb64': uid, 'token': reset_pw_link})))
+        sessione.fill('new_password1', 'new_password')
+        sessione.fill('new_password2', 'new_password')
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+        self.assertTrue(sessione.is_text_present('La tua nuova password è stata impostata'))
+        sessione.visit("%s%s" % (self.live_server_url, '/login/'))
+        sessione.fill('username', utenza_persona_in_sede.email)
+        sessione.fill('password', 'new_password')
+        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
+        testo_personalizzato = 'Ciao, {0}'.format(persona_in_sede.nome)
+        self.assertTrue(sessione.is_text_present(testo_personalizzato))
