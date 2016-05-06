@@ -4,6 +4,7 @@
 {% load mptt_tags %}
 {% load l10n %}
 {% load cache %}
+{% load base_tags %}
 
 {% block pagina_titolo %}Elenco Sedi CRI con Recapiti e Mappa{% endblock %}
 
@@ -51,7 +52,7 @@
                     {% recursetree sedi %}
                         <li>
                             <p>
-                                <a href="{{ node.url }}?embed={{ embed }}"><strong>{{ node.nome }}</strong></a>, {{ node.get_estensione_display }}
+                                <a href="{{ node.url }}?embed={{ embed|bool }}"><strong>{{ node.nome }}</strong></a>, {{ node.get_estensione_display }}
                             </p>
                             {% if not node.estensione == massimo_lista and not node.is_leaf_node %}
                                 <ul class="children">
