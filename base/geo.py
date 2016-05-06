@@ -67,7 +67,7 @@ class Locazione(ConMarcaTemporale, models.Model):
         try:
             if coordinate['lat'] and coordinate['lng']:
                 return coordinate
-        except KeyError:
+        except (KeyError, ValueError, TypeError):
             return '0'
         return '0'
 
