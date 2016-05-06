@@ -97,6 +97,7 @@ def recupera_password(request):
                    return _errore(contesto, modulo, 3, delegati, email=email, codice_fiscale=codice_fiscale)
 
                 Messaggio.costruisci_e_invia(
+                    destinatari=[per],
                     oggetto="Nuova password",
                     modello="email_recupero_password.html",
                     corpo={
