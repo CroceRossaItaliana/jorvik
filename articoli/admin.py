@@ -13,12 +13,15 @@ class AdminArticolo(admin.ModelAdmin):
     inlines = (ArticoloSegmentoInline,)
     readonly_fields = ('visualizzazioni',)
     actions = ['pubblica', 'bozza']
+    prepopulated_fields = {'slug': ('titolo',)}
     fieldsets = (
         (None, {
             'fields': ('titolo', 'slug', 'corpo', 'estratto',)
         }),
         ('Informazioni', {
-            'fields': ('data_inizio_pubblicazione', 'data_fine_pubblicazione','stato', 'visualizzazioni'),
+            'fields': (
+                'data_inizio_pubblicazione', 'data_fine_pubblicazione', 'stato', 'visualizzazioni'
+            ),
         }),
     )
 
