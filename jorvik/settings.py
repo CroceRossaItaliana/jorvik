@@ -273,7 +273,5 @@ CKEDITOR_CONFIGS = {
 
 CKEDITOR_FILEBROWSER_USE_THUMBNAILOPTIONS_ONLY = True
 
-
-
 if os.environ.get('ENABLE_TEST_APPS', False):
     INSTALLED_APPS.append('segmenti.segmenti_test')
