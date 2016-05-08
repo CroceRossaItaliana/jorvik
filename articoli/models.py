@@ -36,23 +36,22 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     """
     Rappresenta un articolo (news).
     """
-
     BOZZA = 'B'
     PUBBLICATO = 'P'
     STATO = (
-        (BOZZA, "Bozza"),
-        (PUBBLICATO, "Pubblicato")
+        (BOZZA, 'Bozza'),
+        (PUBBLICATO, 'Pubblicato')
     )
     DIMENSIONE_ESTRATTO = 1014
 
-    titolo = models.CharField("Titolo", max_length=255, db_index=True)
+    titolo = models.CharField('Titolo', max_length=255, db_index=True)
     slug = models.SlugField(unique=True, blank=True, null=True)
-    corpo = RichTextField("Corpo")
-    estratto = models.CharField("Estratto", max_length=1024, blank=True, null=True)
-    data_inizio_pubblicazione = models.DateTimeField("Data di inizio pubblicazione", default=timezone.now, db_index=True)
-    data_fine_pubblicazione = models.DateTimeField("Data di fine pubblicazione", db_index=True, blank=True, null=True)
-    visualizzazioni = models.PositiveIntegerField("Visualizzazioni", db_index=True, default=0)
-    stato = models.CharField("Stato", max_length=1, choices=STATO, default=BOZZA, db_index=True)
+    corpo = RichTextField('Corpo')
+    estratto = models.CharField('Estratto', max_length=1024, blank=True, null=True)
+    data_inizio_pubblicazione = models.DateTimeField('Data di inizio pubblicazione', default=timezone.now, db_index=True)
+    data_fine_pubblicazione = models.DateTimeField('Data di fine pubblicazione', db_index=True, blank=True, null=True)
+    visualizzazioni = models.PositiveIntegerField('Visualizzazioni', db_index=True, default=0)
+    stato = models.CharField('Stato', max_length=1, choices=STATO, default=BOZZA, db_index=True)
 
     objects = ArticoliManager()
 
@@ -70,7 +69,7 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         return reverse('dettaglio_articolo', kwargs={'articolo_slug': self.slug})
 
     class Meta:
-        verbose_name_plural = "Articoli"
+        verbose_name_plural = 'Articoli'
         app_label = 'articoli'
         ordering = ['-data_inizio_pubblicazione']
 
@@ -92,5 +91,5 @@ class ArticoloSegmento(BaseSegmento):
     _oggetto_collegato = Articolo
 
     class Meta:
-        verbose_name_plural = "Segmenti dell'Articolo"
+        verbose_name_plural = 'Segmenti dell\'Articolo'
         app_label = 'articoli'

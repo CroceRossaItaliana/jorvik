@@ -28,17 +28,17 @@ class AdminArticolo(admin.ModelAdmin):
     def pubblica(self, request, queryset):
         rows_updated = queryset.update(stato=Articolo.PUBBLICATO)
         if rows_updated == 1:
-            message_bit = "1 articolo è stato"
+            message_bit = '1 articolo è stato'
         else:
-            message_bit = "%s articoli sono stati" % rows_updated
-        self.message_user(request, "%s pubblicati con successo." % message_bit)
-    pubblica.short_description = "Pubblica uno o più articoli"
+            message_bit = '%s articoli sono stati' % rows_updated
+        self.message_user(request, '%s pubblicati con successo.' % message_bit)
+    pubblica.short_description = 'Pubblica uno o più articoli'
 
     def bozza(self, request, queryset):
         rows_updated = queryset.update(stato=Articolo.BOZZA)
         if rows_updated == 1:
-            message_bit = "1 articolo è stato"
+            message_bit = '1 articolo è stato'
         else:
-            message_bit = "%s articoli sono stati" % rows_updated
-        self.message_user(request, "%s passato allo stato bozza con successo." % message_bit)
-    bozza.short_description = "Passa allo stato bozza uno o più articoli"
+            message_bit = '%s articoli sono stati' % rows_updated
+        self.message_user(request, '%s passato allo stato bozza con successo.' % message_bit)
+    bozza.short_description = 'Passa allo stato bozza uno o più articoli'
