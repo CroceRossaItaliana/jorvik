@@ -1,3 +1,5 @@
+from html import unescape
+
 from django.core.urlresolvers import reverse
 from django.db import models, transaction
 from django.template.defaultfilters import slugify
@@ -41,6 +43,7 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         (BOZZA, "Bozza"),
         (PUBBLICATO, "Pubblicato")
     )
+    DIMENSIONE_ESTRATTO = 1014
 
     titolo = models.CharField("Titolo", max_length=255, db_index=True)
     slug = models.SlugField(unique=True, blank=True, null=True)
@@ -60,7 +63,7 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         self.slug = slugify(self.titolo)
         corpo = strip_tags(self.corpo)
         if not self.estratto:
-            self.estratto = corpo[:1024]
+            self.estratto = unescape(strip_tags(corpo[:self.DIMENSIONE_ESTRATTO]))
         super(Articolo, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
