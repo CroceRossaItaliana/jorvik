@@ -1,18 +1,19 @@
-
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.http import Http404
-from django.contrib.auth.models import AnonymousUser
-from django.db.models import Count
-from django.shortcuts import render
-from django.views.generic import DetailView, ListView
+from django.core.urlresolvers import reverse
+from django.db.models import Q
+from django.http import Http404, HttpResponsePermanentRedirect
+from django.utils.decorators import method_decorator
+from django.views.generic import ListView
 
+from autenticazione.funzioni import pagina_privata
 from filer.models import File, Folder
+from filer.server.views import filer_settings
 
 from gestione_file.models import Documento, DocumentoSegmento
 from jorvik import settings
 
-server = settings.FILER_PRIVATEMEDIA_SERVER
+server = filer_settings.FILER_PRIVATEMEDIA_SERVER
 
 
 class ListaDocumenti(ListView):
@@ -20,17 +21,18 @@ class ListaDocumenti(ListView):
     template_name = 'lista_documenti.html'
     paginate_by = 10
 
+    @method_decorator(pagina_privata)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ListaDocumenti, self).dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super(ListaDocumenti, self).get_context_data(**kwargs)
         utente = self.request.user
-        if isinstance(utente, AnonymousUser):
-            return None # TODO: redirect in a proper way
         persona = utente.persona
         filtri = {
-            'parent__isnull' : True
+            'parent__isnull': True
         }
-        filtri_extra = {}
-        cartella_pk = self.kwargs.get('cartella_pk')
+        cartella_pk = self.kwargs.get('cartella_pk', None)
         documenti_segmenti = DocumentoSegmento.objects.all().filtra_per_segmenti(persona)
         documenti = documenti_segmenti.oggetti_collegati()
         context['livello_superiore'] = 'root'
@@ -39,32 +41,35 @@ class ListaDocumenti(ListView):
             filtri = {
                 'parent__pk': cartella_pk,
             }
-            filtri_extra= {
+            filtri_extra = {
                 'folder': cartella_pk
             }
             context['documenti'] = documenti.filter(**filtri_extra)
         cartelle_root = Folder.objects.filter(**filtri)
         context['cartelle'] = cartelle_root
         if 'q' in self.request.GET:
-            filtri_extra = {
-                'name__icontains': self.request.GET['q']
-            }
+            stringa = self.request.GET['q']
+            filtri_extra = Q(name__icontains=stringa) | Q(original_filename__icontains=stringa)
             del context['cartelle']
-            context['documenti'] = documenti.filter(**filtri_extra)
+            context['documenti'] = documenti.filter(filtri_extra)
+        if cartella_pk:
+            context['url_vista'] = reverse('lista_documenti', kwargs={'cartella_pk': cartella_pk})
+        else:
+            context['url_vista'] = reverse('lista_documenti')
         return context
 
 
-
-def serve_protected_file(request, path):
+def serve_protected_file(request, pk):
     """
     Restituisce il file e incrementa il numero di downloads
     """
     try:
-        file_obj = File.objects.get(file=path, is_public=False)
+        file_obj = File.objects.get(pk=int(pk))
         file_obj.incrementa_downloads()
-        file_obj.save()
     except File.DoesNotExist:
         raise Http404('File not found')
+    if file_obj.url_documento:
+        return HttpResponsePermanentRedirect(file_obj.url_documento)
     if not file_obj.has_read_permission(request):
         if settings.DEBUG:
             raise PermissionDenied

@@ -29,12 +29,15 @@
     </div>
 
     <div class="panel">
-        <form method='GET' action="/documenti/">
+        <form method='GET' action="{{ url_vista }}">
             <label for="query-nome">Ricerca file per nome</label>
             <input type="text" name="q" id="query-nome">
             <button type="submit" class="btn btn-primary">
                 <i class="fa fa-fw fa-check-circle"></i>Cerca
             </button>
+            <a href="{{ url_vista }}" class="btn btn-primary">
+                <i class="fa fa-fw fa-times-circle-o"></i>Annulla
+            </a>
         </form>
     </div>
 
@@ -45,7 +48,7 @@
         <div class="panel-heading">
             <h4 class="panel-title">
                 <i class="fa fa-fw fa-folder-o"></i>
-                <a href='{% url 'lista_documenti_cartella' cartella.pk %}'>{{cartella.name}}</a>
+                <a href='{% url 'lista_documenti' cartella.pk %}'>{{cartella.name}}</a>
             </h4>
         </div>
     </div>
@@ -59,7 +62,7 @@
             <div class="panel-heading">
                 <h4 class="panel-title">
                     <i class="fa fa-fw fa-newspaper-o"></i>
-                    <a href="{{documento.url}}">{% if documento.name %}{{documento.name}}{% else %}{{documento.file.name}}{% endif %} ({{documento.file.size|filesizeformat}}) - scaricato {{documento.downloads}} volte</a>
+                    <a href="{{ documento.url_scarica }}">{{ documento.label }} ({{documento.size|filesizeformat}}) - scaricato {{documento.downloads}} volte</a>
                 </h4>
             </div>
         </div>
@@ -67,7 +70,7 @@
     {% endif %}
     {% if not livello_superiore == 'root' %}
         {% if livello_superiore %}
-            <a href='{% url 'lista_documenti_cartella' livello_superiore.pk %}'>Livello superiore</a>
+            <a href='{% url 'lista_documenti' livello_superiore.pk %}'>Livello superiore</a>
         {% else %}
             <a href='{% url 'lista_documenti' %}'>Livello superiore</a>
         {% endif %}

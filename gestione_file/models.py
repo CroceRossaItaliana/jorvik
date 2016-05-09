@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from django.core.urlresolvers import reverse
 from django.db import models, transaction
 
 from django.utils.translation import ugettext_lazy as _
@@ -31,6 +32,10 @@ class InterfacciaJorvik(object):
     def incrementa_downloads(self):
         self.downloads += 1
         self.save()
+
+    @property
+    def url_scarica(self):
+        return reverse('scarica_file', args=(self.pk,))
 
 
 class Documento(InterfacciaJorvik, File):
