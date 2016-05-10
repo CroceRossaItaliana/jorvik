@@ -76,22 +76,22 @@
     <td colspan="4">
         {% if not livello_superiore == 'root' %}
             {% if livello_superiore %}
-                <a class="fa fa-level-up" href='{% url 'lista_documenti' livello_superiore.pk %}'> ritorna</a>
+                <a href='{% url 'lista_documenti' livello_superiore.pk %}'><i class="fa fa-level-up" ></i>  ritorna</a>
             {% else %}
-                <a class="fa fa-level-up" href='{% url 'lista_documenti' %}'> ritorna</a>
+                <a href='{% url 'lista_documenti' %}'><i class="fa fa-level-up" ></i>  ritorna</a>
             {% endif %}
         {% endif %}
         {% if is_paginated %}
             <div class="pagination">
                 <span class="page-links">
                     {% if page_obj.has_previous %}
-                        <a class="fa fa-backward" href="/documenti?page={{ page_obj.previous_page_number }}"> PRec </a>
+                        <a href="/documenti?page={{ page_obj.previous_page_number }}"><i class="fa fa-backward" ></i> Prec.</a>
                     {% endif %}
                     <span class="page-current">
                         Pagina {{ page_obj.number }} di {{ page_obj.paginator.num_pages }}.
                     </span>
                     {% if page_obj.has_next %}
-                        <a class="fa fa-forward" href="/documenti?page={{ page_obj.next_page_number }}">Successiva</a>
+                        <a href="/documenti?page={{ page_obj.next_page_number }}"><i class="fa fa-forward" ></i> Succ.</a>
                     {% endif %}
                 </span>
             </div>
