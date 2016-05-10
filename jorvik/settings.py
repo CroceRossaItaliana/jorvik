@@ -264,9 +264,10 @@ CKEDITOR_CONFIGS = {
             ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
             ['Link', 'Unlink'],
             ['RemoveFormat', 'Source'],
-            ['FilerImage']
+            ['FilerImage'],
+            ['Embed']
         ],
-        'extraPlugins': 'filerimage',
+        'extraPlugins': 'filerimage,embed',
         'removePlugins': 'image'
     },
 }
