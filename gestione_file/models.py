@@ -46,6 +46,12 @@ class Documento(InterfacciaJorvik, File):
         abstract = False
         app_label = 'gestione_file'
 
+    def icona(self):
+        if self.url_documento:
+            return 'fa fa-external-link-square'
+        else:
+            return 'fa fa-file-code-o'
+
 
 class Immagine(InterfacciaJorvik, BaseImage):
     url_documento = models.URLField(_('URL Documento'), default='', blank=True)
@@ -54,6 +60,12 @@ class Immagine(InterfacciaJorvik, BaseImage):
     class Meta:
         abstract = False
         app_label = 'gestione_file'
+
+    def icona(self):
+        if self.url_documento:
+            return 'fa fa-external-link-square'
+        else:
+            return 'fa fa-file-image-o'
 
 
 class DocumentoSegmento(BaseSegmento):
