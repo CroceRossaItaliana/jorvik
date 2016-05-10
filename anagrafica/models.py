@@ -995,6 +995,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         from segmenti.segmenti import SEGMENTI
         utente = Persona.objects.filter(pk=self.pk)
         attivi = []
+        sedi_attuali = list(self.sedi_attuali())
         for segmento, filtro in SEGMENTI.items():
             if filtro(utente).exists():
                 if segmento == 'A':
@@ -1004,7 +1005,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                         attivi.append({'segmento': segmento, 'titolo': titolo})
                 else:
                     attivi.append({'segmento': segmento, 'sede__isnull': True})
-                    for sede in self.sedi_attuali():
+                    for sede in sedi_attuali:
                         attivi.append({'segmento': segmento, 'sede': sede})
         return attivi
 
