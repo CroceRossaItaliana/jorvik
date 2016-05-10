@@ -40,54 +40,63 @@
             </a>
         </form>
     </div>
+    <h3>{{ cartella }}</h3>
 
-{% if cartelle %}
-    <span>Cartelle</span>
-    {% for cartella in cartelle %}
-    <div class="panel panel-primary">
-        <div class="panel-heading">
-            <h4 class="panel-title">
-                <i class="fa fa-fw fa-folder-o"></i>
-                <a href='{% url 'lista_documenti' cartella.pk %}'>{{cartella.name}}</a>
-            </h4>
-        </div>
-    </div>
-    {% endfor %}
-{% endif %}
-
-    {% if documenti %}
-        <span>Documenti</span>
-        {% for documento in documenti %}
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h4 class="panel-title">
-                    <i class="fa fa-fw fa-newspaper-o"></i>
-                    <a href="{{ documento.url_scarica }}">{{ documento.label }} ({{documento.size|filesizeformat}}) - scaricato {{documento.downloads}} volte</a>
-                </h4>
-            </div>
-        </div>
+    <table class="table table-striped">
+    <thead>
+        <th>tipo</th>
+        <th>nome</th>
+        <th>dimensione</th>
+        <th>accessi</th>
+    </thead>
+    <tbody>
+    {% if cartelle %}
+        {% for cartella in cartelle %}
+            <tr>
+                <th><i class="fa fa-fw fa-folder-o"></i></th>
+                <td><a href='{% url 'lista_documenti' cartella.pk %}'>{{cartella.name}}</a></td>
+                <td></td>
+                <td></td>
+            </tr>
         {% endfor %}
     {% endif %}
-    {% if not livello_superiore == 'root' %}
-        {% if livello_superiore %}
-            <a href='{% url 'lista_documenti' livello_superiore.pk %}'>Livello superiore</a>
-        {% else %}
-            <a href='{% url 'lista_documenti' %}'>Livello superiore</a>
+
+    {% if documenti %}
+        {% for documento in documenti %}
+            <tr>
+                <th><i class="fa fa-fw {{ documento.icona }}"></i></th>
+                <td><a href="{{ documento.url_scarica }}">{{ documento.label }}</a></td>
+                <td>{{documento.size|filesizeformat}}</td>
+                <td>{{documento.downloads}}</td>
+            </tr>
+        {% endfor %}
+    {% endif %}
+    </tbody>
+    <tfoot>
+    <td colspan="4">
+        {% if not livello_superiore == 'root' %}
+            {% if livello_superiore %}
+                <a class="fa fa-level-up" href='{% url 'lista_documenti' livello_superiore.pk %}'> ritorna</a>
+            {% else %}
+                <a class="fa fa-level-up" href='{% url 'lista_documenti' %}'> ritorna</a>
+            {% endif %}
         {% endif %}
-    {% endif %}
         {% if is_paginated %}
-        <div class="pagination">
-            <span class="page-links">
-                {% if page_obj.has_previous %}
-                    <a href="/documenti?page={{ page_obj.previous_page_number }}">Precedente</a>
-                {% endif %}
-                <span class="page-current">
-                    Pagina {{ page_obj.number }} di {{ page_obj.paginator.num_pages }}.
+            <div class="pagination">
+                <span class="page-links">
+                    {% if page_obj.has_previous %}
+                        <a class="fa fa-backward" href="/documenti?page={{ page_obj.previous_page_number }}"> PRec </a>
+                    {% endif %}
+                    <span class="page-current">
+                        Pagina {{ page_obj.number }} di {{ page_obj.paginator.num_pages }}.
+                    </span>
+                    {% if page_obj.has_next %}
+                        <a class="fa fa-forward" href="/documenti?page={{ page_obj.next_page_number }}">Successiva</a>
+                    {% endif %}
                 </span>
-                {% if page_obj.has_next %}
-                    <a href="/documenti?page={{ page_obj.next_page_number }}">Successiva</a>
-                {% endif %}
-            </span>
-        </div>
-    {% endif %}
+            </div>
+        {% endif %}
+    </td>
+    </tfoot>
+    </table>
 {% endblock %}

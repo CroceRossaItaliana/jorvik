@@ -37,7 +37,8 @@ class ListaDocumenti(ListView):
         documenti = documenti_segmenti.oggetti_collegati()
         context['livello_superiore'] = 'root'
         if cartella_pk:
-            context['livello_superiore'] = Folder.objects.get(pk=cartella_pk).parent
+            context['cartella'] = Folder.objects.get(pk=cartella_pk)
+            context['livello_superiore'] = context['cartella'].parent
             filtri = {
                 'parent__pk': cartella_pk,
             }
