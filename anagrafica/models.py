@@ -516,7 +516,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 continue
             tipi.append(d.tipo)
             #lista += [(APPLICAZIONI_SLUG_DICT[d.tipo], PERMESSI_NOMI_DICT[d.tipo])]
-
+        lista += [('/articoli/', 'Articoli', 'fa-newspaper-o')]
         return lista
 
 

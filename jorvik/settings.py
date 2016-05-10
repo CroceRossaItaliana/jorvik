@@ -56,11 +56,13 @@ INSTALLED_APPS = [
     'compressor',
     'easy_thumbnails',
     'gestione_file',
+    'segmenti',
+    'articoli',
     'filer',
     'ckeditor',
     'ckeditor_filebrowser_filer',
-    'segmenti',
 ]
+
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -236,6 +238,7 @@ BOOTSTRAP3 = {
         'inline': 'bootstrap3.renderers.InlineFieldRenderer',
     },
 }
+
 
 THUMBNAIL_BASEDIR = 'thumbnails'
 THUMBNAIL_PROCESSORS = (
