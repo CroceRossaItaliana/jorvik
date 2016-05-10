@@ -19,6 +19,8 @@ def menu(request):
 
     me = request.me if hasattr(request, 'me') else None
 
+    ha_deleghe = me.deleghe_attuali().exists()
+
     gestione_corsi_sede = me.ha_permesso(GESTIONE_CORSI_SEDE) if me else False
 
     return remove_none({
@@ -39,6 +41,7 @@ def menu(request):
             ("Rubrica", (
                 ("Referenti", "fa-book", "/utente/rubrica/referenti/"),
                 ("Volontari", "fa-book", "/utente/rubrica/volontari/"),
+                ("Delegati", "fa-book", "/utente/rubrica/delegati/") if ha_deleghe else None,
             )) ,
             ("Curriculum", (
                 ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),

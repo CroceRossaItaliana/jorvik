@@ -487,6 +487,24 @@ def utente_rubrica_volontari(request, me):
 
 
 @pagina_privata
+def delegato_rubrica_delegati(request, me):
+    sedi_delegato = Sede.objects.filter(pk__in=me.sedi_attuali(membro__in=Appartenenza.MEMBRO_RUBRICA).values_list("id", flat=True))
+    # TODO: filtra i delegati correlati
+    delegati = Persona.objects.filter(
+        Delega.query_attuale(
+            oggetto_tipo=ContentType.objects.get_for_model(Sede),
+            oggetto_id__in=sedi_delegato,
+        ).via("delega")
+    ).order_by('nome', 'cognome', 'codice_fiscale')\
+        .distinct('nome', 'cognome', 'codice_fiscale')
+
+    contesto = {
+        "delegati": delegati,
+    }
+    return 'anagrafica_delegato_rubrica_delegati.html', contesto
+
+
+@pagina_privata
 def utente_contatti_cancella_numero(request, me, pk):
 
     tel = get_object_or_404(Telefono, pk=pk)
