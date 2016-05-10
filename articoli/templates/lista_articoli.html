@@ -33,29 +33,23 @@
             <label for="query-articoli">Ricerca articoli per titolo</label>
             <input type="text" name="q" id="query-articoli">
             <select name="anno" value="">Scegli un anno</option>
-                <option disabled selected value> ---- </option>
+                <option value> ---- </option>
                 {% for anno in anni %}
-                    <option value='{{anno}}'>{{anno}}</option>
+                    <option {% if anno_selezionato == anno %}selected{% endif %} value='{{anno}}'>{{anno}}</option>
                 {% endfor %}
             </select>
             <select name="mese" value="">Scegli un mese</option>
-                <option disabled selected value> ---- </option>
-                <option value='01'>Gennaio</option>
-                <option value='02'>Febbraio</option>
-                <option value='03'>Marzo</option>
-                <option value='04'>Aprile</option>
-                <option value='05'>Maggio</option>
-                <option value='06'>Giugno</option>
-                <option value='07'>Luglio</option>
-                <option value='08'>Agosto</option>
-                <option value='09'>Settembre</option>
-                <option value='10'>Ottobre</option>
-                <option value='11'>Novembre</option>
-                <option value='12'>Dicembre</option>
+                <option value> ---- </option>
+                {% for mese, data in mesi %}
+                    <option {% if mese_selezionato == mese %}selected{% endif %} value='{{ mese }}'>{{ data|date:"F" }}</option>
+                {% endfor %}
             </select>
             <button type="submit" class="btn btn-primary">
                 <i class="fa fa-fw fa-check-circle"></i>Cerca
             </button>
+            <a href="{% url 'lista_articoli' %}" class="btn btn-primary">
+                <i class="fa fa-fw fa-times-circle-o"></i>Annulla
+            </a>
         </form>
     </div>
 

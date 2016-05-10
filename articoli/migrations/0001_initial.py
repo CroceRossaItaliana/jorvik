@@ -48,7 +48,7 @@ class Migration(migrations.Migration):
                 ('titolo', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='curriculum.Titolo')),
             ],
             options={
-                'verbose_name_plural': "Segmenti dell'Articolo",
+                'verbose_name_plural': 'Segmenti dell\'Articolo',
             },
         ),
     ]
