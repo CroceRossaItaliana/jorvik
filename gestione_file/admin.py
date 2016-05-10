@@ -28,7 +28,7 @@ class DocumentoSegmentoInline(admin.TabularInline):
     model = DocumentoSegmento
     raw_id_fields = ('file',)
     extra = 1
-    min_num = 1
+    raw_id_fields = ('sede', 'titolo')
 
 
 class AdminDocumento(FileAdmin):

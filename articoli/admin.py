@@ -6,6 +6,7 @@ from articoli.models import Articolo, ArticoloSegmento
 class ArticoloSegmentoInline(admin.TabularInline):
     model = ArticoloSegmento
     extra = 1
+    raw_id_fields = ('sede', 'titolo')
 
 
 @admin.register(Articolo)
