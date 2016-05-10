@@ -63,7 +63,10 @@ class BaseSegmento(six.with_metaclass(BaseSegmentoBase, models.Model)):
     }
 
     segmento = models.CharField(max_length=256, choices=NOMI_SEGMENTI)
-    titolo = models.ForeignKey(Titolo, blank=True, null=True)
+    titolo = models.ForeignKey(
+        Titolo, blank=True, null=True,
+        help_text='Usato solo con il segmento \'Volontari aventi un dato titolo\''
+    )
     sede = models.ForeignKey(Sede, blank=True, null=True, limit_choices_to=LIMITED_CHOICES,)
     _metodo = None
     _oggetto_collegato = None
