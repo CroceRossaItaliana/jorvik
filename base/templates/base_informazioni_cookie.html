@@ -1,0 +1,53 @@
+{% extends "base_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Gaia e l'uso dei Cookie{% endblock %}
+
+{% block pagina_principale %}
+
+
+
+    <div class="container">
+        <div class="col-md-12">
+            <h2>Gaia e l'uso dei Cookie</h2>
+            <p>I <a href="http://it.wikipedia.org/wiki/Cookie" target="_new">cookie</a> sono dei piccoli file di testo che vengono memorizzati sul tuo dispositivo (PC, smartphone, tablet o altro disposizitivo munito di un browser web) da parte dei siti web che visiti. Sono largamente utilizzati al fine di far funzionare i siti web, o farli funzionare pi&ugrave; efficacemente, oltre al fornire informazioni ai gestori dei siti web.</p>
+            <p>La tabella qui sotto spiega quali cookie vengono impostati da <strong>gaia.cri.it</strong> e perch&eacute;.</p>
+
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <th>Cookie</th>
+                    <th>Tipologia</th>
+                    <th>Nome</th>
+                    <th>Scopo</th>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight: bold;">Autenticazione Gaia</td>
+                        <td>Cookie Tecnico</td>
+                        <td style="font-family: Monospace;">sessione</td>
+                        <td>Questo cookie viene utilizzato per l'identificazione e l'autenticazione degli utenti in Gaia. Ad ogni visitatore viene assegnato un codice di sessione generato casualmente, che viene memorizzato nel cookie. Quando un volontario o un aspirante effettua l'accesso a Gaia, a questo codice viene associata una utenza sul nostro database.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">Direttiva Europea Cookie</td>
+                        <td>Cookie Tecnico</td>
+                        <td style="font-family: Monospace;">normativaEU</td>
+                        <td>Questo cookie viene utilizzato per controllare se l'utente ha accettato la normativa relativa alla Direttiva Europea per i Cookie. Quando questo cookie &egrave; impostato, il messaggio della normativa viene nascosto automaticamente in ogni pagina.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">Google Analytics</td>
+                        <td>Cookie di Profilazione, dati aggregati</td>
+                        <td style="font-family: Monospace;">_utma, _utmb, _utmc, _utmz, _ga, _gat</td>
+                        <td>Questi cookie sono usati per raccogliere informazioni sul come i visitatori utilizzano il nostro sito web. Utilizziamo le informazioni per creare dei report ed aiutarci a migliorare il sito web. I cookie raccolgono informazioni in forma anonima e aggregata, incluso il numero di vistatori del sito, cosa i vistatori vengono a vedere nel sito web e le pagine che visitano. <a href="https://support.google.com/analytics/answer/6004245?hl=it" target="_new">Clicca per maggiori informazioni sulla Salvaguardia dei dati personali da Google</a>.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Feedback o domande?</h3>
+
+            <p>Se hai del feedback o delle domande relative alla gestione dei cookie e dei dati personali associativi, non esitare a contattarci all'indirizzo e-mail <a href="mailto:supporto@gaia.cri.it">supporto@gaia.cri.it</a>.</p>
+
+        </div>
+    </div>
+
+{% endblock %}

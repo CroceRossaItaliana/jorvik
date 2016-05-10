@@ -203,7 +203,24 @@ def informazioni_condizioni(request, me):
     """
     Mostra semplicemente la pagina delle condizioni ed esce.
     """
-    return 'base_informazioni_condizioni.html'\
+    return 'base_informazioni_condizioni.html'
+
+@pagina_pubblica
+def informazioni_cookie(request, me):
+    """
+    Mostra semplicemente la pagina dei cookie.
+    """
+    return 'base_informazioni_cookie.html'
+
+@pagina_pubblica
+def imposta_cookie(request, me):
+    """
+    Imposta il cookie per nascondere l'informativa cookie.
+    """
+    pagina_origine = request.META.get('HTTP_REFERER', '/')
+    redirect = HttpResponseRedirect(pagina_origine)
+    redirect.set_cookie('cookie_approvati', True)
+    return redirect
 
 
 @xframe_options_exempt
