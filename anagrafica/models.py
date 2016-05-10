@@ -995,13 +995,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         from segmenti.segmenti import SEGMENTI
         utente = Persona.objects.filter(pk=self.pk)
         attivi = []
+        titoli = list(self.titoli_confermati())
         sedi_attuali = list(self.sedi_attuali())
         for segmento, filtro in SEGMENTI.items():
             if filtro(utente).exists():
                 if segmento == 'A':
                     attivi.append({'segmento': segmento})
                 elif segmento == 'AA':
-                    for titolo in self.titoli_confermati():
+                    for titolo in titoli:
                         attivi.append({'segmento': segmento, 'titolo': titolo})
                 else:
                     attivi.append({'segmento': segmento, 'sede__isnull': True})
