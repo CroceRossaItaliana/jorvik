@@ -4,7 +4,7 @@ import operator
 from django.contrib.contenttypes.models import ContentType
 
 from anagrafica.costanti import LOCALE, REGIONALE, LIMITE_ETA, LIMITE_ANNI_ATTIVITA
-from anagrafica.models import Appartenenza, Delega, Sede
+from anagrafica.models import Appartenenza, Delega, Sede, Persona
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, REFERENTE, RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE
 from attivita.models import Attivita, Partecipazione
 
@@ -52,15 +52,16 @@ def _calcola_anni_attivita(queryset, meno=True):
 
 # TODO: Aggiungere test per i filtri che utilizzano questa funzione
 def _referenti_attivita(queryset, obiettivo=0):
-    qs = queryset.filter(delega__tipo=REFERENTE)
-    referenti = []
-    if obiettivo > 0:
-        attivita_area = Attivita.objects.filter(area__obiettivo=obiettivo)
-        if attivita_area.count() > 0:
-            for attivita in attivita_area:
-                referenti.extend(attivita.referenti_attuali().values_list('pk', flat=True))
-            referenti = list(set(referenti))
-    qs = qs.filter(pk__in=referenti)
+    # TODO: Assicurarsi che questo filtro funzioni davvero!
+    qs = queryset.filter(
+        # Subquery per mischiarsi bene con le altre deleghe.
+        pk__in=Persona.objects.filter(
+            Delega.query_attuale(tipo=REFERENTE, oggetto_tipo=ContentType.objects.get_for_model(Attivita),
+                                 oggetto_id__in=Attivita.objects.filter(
+                                     area__obiettivo=obiettivo
+                                 ).values_list('pk', flat=True)).via("delega")
+        ).values_list('pk', flat=True)
+    )
     return qs
 
 
