@@ -5,10 +5,10 @@ from django.utils.decorators import method_decorator
 from django.views.generic import DetailView, ListView
 
 from articoli.models import Articolo, ArticoloSegmento
-from autenticazione.funzioni import pagina_privata
+from autenticazione.funzioni import pagina_privata, VistaDecorata
 
 
-class ListaArticoli(ListView):
+class ListaArticoli(VistaDecorata, ListView):
     model = Articolo
     context_object_name = 'articoli'
     template_name = 'lista_articoli.html'
@@ -19,8 +19,8 @@ class ListaArticoli(ListView):
         return super(ListaArticoli, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        filtri_extra = {}
         context = super(ListaArticoli, self).get_context_data(**kwargs)
+        filtri_extra = {}
         anno = self.kwargs.get('anno', '')
         mese = self.kwargs.get('mese', '')
         if not anno:
@@ -52,7 +52,7 @@ class ListaArticoli(ListView):
         return context
 
 
-class DettaglioArticolo(DetailView):
+class DettaglioArticolo(VistaDecorata, DetailView):
     model = Articolo
     slug_field = 'slug'
     slug_url_kwarg = 'articolo_slug'
