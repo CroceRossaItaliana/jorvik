@@ -488,12 +488,20 @@ def utente_rubrica_volontari(request, me):
 
 @pagina_privata
 def delegato_rubrica_delegati(request, me):
-    sedi_delegato = Sede.objects.filter(pk__in=me.sedi_attuali(membro__in=Appartenenza.MEMBRO_RUBRICA).values_list("id", flat=True))
-    # TODO: filtra i delegati correlati
+    sedi_delegato = me.sedi_deleghe_attuali()
+    deleghe = me.deleghe_attuali().values_list('tipo', flat=True)
+    sedi_destinatari = []
+
+    for sede in sedi_delegato:
+        sedi_destinatari.extend(sede.ottieni_discendenti())
+    sedi_destinatari = [sede.pk for sede in sedi_destinatari]
+    sedi_destinatari = set(sedi_destinatari)
+
     delegati = Persona.objects.filter(
         Delega.query_attuale(
             oggetto_tipo=ContentType.objects.get_for_model(Sede),
-            oggetto_id__in=sedi_delegato,
+            oggetto_id__in=sedi_destinatari,
+            tipo__in=deleghe
         ).via("delega")
     ).order_by('nome', 'cognome', 'codice_fiscale')\
         .distinct('nome', 'cognome', 'codice_fiscale')
