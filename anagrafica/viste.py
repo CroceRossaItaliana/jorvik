@@ -489,7 +489,7 @@ def utente_rubrica_volontari(request, me):
 @pagina_privata
 def delegato_rubrica_delegati(request, me):
     sedi_delegato = me.sedi_deleghe_attuali()
-    deleghe = me.deleghe_attuali().values_list('tipo', flat=True)
+    deleghe = me.deleghe_attuali().filter(tipo__in=DELEGHE_RUBRICA).values_list('tipo', flat=True)
     sedi_destinatari = []
 
     for sede in sedi_delegato:
