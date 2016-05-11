@@ -4,13 +4,13 @@
 {% load utils %}
 {% load thumbnail %}
 
-{% block pagina_titolo %}Rubrica Delegati{% endblock %}
+{% block pagina_titolo %}Rubrica Giovani{% endblock %}
 
 {% block app_contenuto %}
 
     <div class="alert bg-info">
         <p>
-            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina puoi accedere alla rubrica dei delegati della tua area tecnica relativi alla tua area di appartenenza.
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina puoi accedere alla rubrica degli utenti giovani della tua area di appartenenza.
         </p>
 
     </div>
@@ -29,29 +29,29 @@
             </thead>
 
             <tbody>
-            {% for delegato in delegati %}
+            {% for giovane in giovani %}
 
                 <tr>
                     <td class="allinea-centro">
-                        <input type="checkbox" name="destinatario" value="{{ delegato.pk }}"/>
+                        <input type="checkbox" name="destinatario" value="{{ giovane.pk }}"/>
                     </td>
                     <td class="allinea-centro">
-                        {% if delegato.fototessera_attuale %}
-                            {% thumbnail delegato.fototessera_attuale.file "100x100" crop="center" as im %}
+                        {% if giovane.fototessera_attuale %}
+                            {% thumbnail giovane.fototessera_attuale.file "100x100" crop="center" as im %}
                                 <img src="{{ im.url }}" class="img-rounded" alt="Immagine del profilo attuale" />
                             {% endthumbnail %}
 
-                        {% elif delegato.avatar %}
-                            {% thumbnail delegato.avatar "100x100" crop="center" as im %}
+                        {% elif giovane.avatar %}
+                            {% thumbnail giovane.avatar "100x100" crop="center" as im %}
                                 <img src="{{ im.url }}" class="img-rounded" alt="Immagine del profilo attuale" />
                             {% endthumbnail %}
                         {% endif %}
 
                     </td>
                     <td>
-                        <p class="piu-grande">{{ delegato.nome_completo }}</p>
+                        <p class="piu-grande">{{ giovane.nome_completo }}</p>
                         <p class="piu-piccolo">
-                            {% for a in delegato.deleghe_attuali_rubrica %}
+                            {% for a in giovane.deleghe_attuali_rubrica %}
                                 <strong>{{ a.get_tipo_display }}</strong> presso {{ a.oggetto.link|safe }}<br />
                             {% endfor %}
                         </p>
@@ -59,10 +59,10 @@
 
                     <td>
                         <div class="btn-group-vertical btn-block">
-                            <a href="{{ delegato.url_messaggio }}" class="btn btn-xs btn-primary">
+                            <a href="{{ giovane.url_messaggio }}" class="btn btn-xs btn-primary">
                                 Scrivi messaggio
                             </a>
-                            {% card delegato extra_class='btn btn-xs btn-default' %}
+                            {% card giovane extra_class='btn btn-xs btn-default' %}
                         </div>
                     </td>
                 </tr>
@@ -74,7 +74,7 @@
                     <td colspan="3">
                         <p>
                             <i class="fa fa-fw fa-info-circle"></i>
-                            Da qui potrai accedere alla rubrica dei delegati della tua area tecnica relativi alla tua area di appartenenza.
+                            Da qui potrai accedere alla rubrica dei giovani della tua area di appartenenza.
                         </p>
 
                     </td>

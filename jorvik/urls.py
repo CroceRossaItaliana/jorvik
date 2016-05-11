@@ -81,6 +81,7 @@ urlpatterns = [
     url(r'^utente/rubrica/referenti/$', anagrafica.viste.utente_rubrica_referenti),
     url(r'^utente/rubrica/volontari/$', anagrafica.viste.utente_rubrica_volontari),
     url(r'^utente/rubrica/delegati/$', anagrafica.viste.delegato_rubrica_delegati),
+    url(r'^utente/rubrica/giovani/$', anagrafica.viste.giovane_rubrica_giovani),
     url(r'^utente/curriculum/$', anagrafica.viste.utente_curriculum),
     url(r'^utente/curriculum/(?P<pk>.*)/cancella/$', anagrafica.viste.utente_curriculum_cancella),
     url(r'^utente/curriculum/(?P<tipo>.*)/$', anagrafica.viste.utente_curriculum),

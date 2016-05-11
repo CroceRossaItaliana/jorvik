@@ -513,6 +513,35 @@ def delegato_rubrica_delegati(request, me):
 
 
 @pagina_privata
+def giovane_rubrica_giovani(request, me):
+    deleghe_giovane = me.deleghe_attuali().filter(
+        tipo=DELEGATO_OBIETTIVO_5,
+        oggetto_tipo=ContentType.objects.get_for_model(Sede),
+    ).values_list('pk', flat=True)
+    sedi_giovane = me.sedi_deleghe_attuali().filter(deleghe__pk__in=deleghe_giovane)
+
+    sedi_destinatari = []
+    for sede in sedi_giovane:
+        sedi_destinatari.extend(sede.ottieni_discendenti(includimi=True))
+    sedi_destinatari = [sede.pk for sede in sedi_destinatari]
+    sedi_destinatari = set(sedi_destinatari)
+
+    oggi = datetime.date.today()
+    nascita_minima = datetime.date(oggi.year - Persona.ETA_GIOVANE, oggi.month, oggi.day)
+
+    giovani = Persona.objects.filter(
+        Appartenenza.query_attuale(sede__in=sedi_destinatari).via("appartenenze"),
+        data_nascita__gt=nascita_minima,
+    ).exclude(pk=me.pk).order_by('nome', 'cognome', 'codice_fiscale')\
+        .distinct('nome', 'cognome', 'codice_fiscale')
+
+    contesto = {
+        "delegati": giovani,
+    }
+    return 'anagrafica_delegato_rubrica_delegati.html', contesto
+
+
+@pagina_privata
 def utente_contatti_cancella_numero(request, me, pk):
 
     tel = get_object_or_404(Telefono, pk=pk)

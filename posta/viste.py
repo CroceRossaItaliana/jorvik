@@ -172,7 +172,7 @@ def posta_scrivi(request, me):
 @pagina_privata
 def destinatari_multipli(request, me):
     pks = []
-    if 'delegato' in request.POST:
-        pks = request.POST.getlist('delegato')
+    if 'destinatario' in request.POST:
+        pks = request.POST.getlist('destinatario')
     qs = Persona.objects.filter(pk__in=pks)
     return imposta_destinatari_e_scrivi_messaggio(request, qs)
