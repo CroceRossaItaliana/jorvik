@@ -121,6 +121,7 @@ urlpatterns = [
     url(r'^autorizzazioni/(?P<pk>[0-9]+)/nega/$', base.viste.autorizzazione_nega),
 
     url(r'^posta/scrivi/', posta.viste.posta_scrivi),
+    url(r'^posta/destinatari_multipli/$', posta.viste.destinatari_multipli, name='destinatari_multipli_posta'),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/(?P<messaggio_id>\d+)/', posta.viste.posta),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/', posta.viste.posta),
     url(r'^posta/(?P<direzione>[\w\-]+)/', posta.viste.posta),
