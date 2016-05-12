@@ -583,17 +583,31 @@ class ConAutorizzazioni(models.Model):
         # Non diventa piu' necessaria alcuna autorizzazione tra quelle richieste
         self.autorizzazioni.update(necessaria=False)
 
-    def autorizzazione_concessa(self, modulo=None):
+    def autorizzazione_concessa(self, modulo=None, auto=False):
         """
         Sovrascrivimi! Ascoltatore per concessione autorizzazione.
         """
         pass
 
-    def autorizzazione_negata(self, modulo=None):
+    def controlla_concedi_automatico(self):
+        from django.utils import timezone
+        scadenza = getattr(self, '_scadenza_approvazione_automatica', None)
+        if scadenza:
+            if self.creazione + timedelta(days=scadenza) > timezone.now():
+                self.autorizzazione_concessa(auto=True)
+
+    def autorizzazione_negata(self, modulo=None, auto=False):
         """
         Sovrascrivimi! Ascoltatore per negazione autorizzazione.
         """
         pass
+
+    def controlla_nega_automatico(self):
+        from django.utils import timezone
+        scadenza = getattr(self, '_scadenza_negazione_automatica', None)
+        if scadenza:
+            if self.creazione + timedelta(days=scadenza) > timezone.now():
+                self.autorizzazione_negata(auto=True)
 
     def autorizzazione_concedi_modulo(self):
         """
