@@ -593,7 +593,7 @@ class ConAutorizzazioni(models.Model):
         from django.utils import timezone
         scadenza = getattr(self, '_scadenza_approvazione_automatica', None)
         if scadenza:
-            if self.creazione + timedelta(days=scadenza) > timezone.now():
+            if self.creazione + timedelta(days=scadenza) < timezone.now():
                 self.autorizzazione_concessa(auto=True)
 
     def autorizzazione_negata(self, modulo=None, auto=False):
@@ -606,7 +606,7 @@ class ConAutorizzazioni(models.Model):
         from django.utils import timezone
         scadenza = getattr(self, '_scadenza_negazione_automatica', None)
         if scadenza:
-            if self.creazione + timedelta(days=scadenza) > timezone.now():
+            if self.creazione + timedelta(days=scadenza) < timezone.now():
                 self.autorizzazione_negata(auto=True)
 
     def autorizzazione_concedi_modulo(self):
