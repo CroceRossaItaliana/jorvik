@@ -488,14 +488,8 @@ def utente_rubrica_volontari(request, me):
 
 @pagina_privata
 def delegato_rubrica_delegati(request, me):
-    sedi_delegato = me.sedi_deleghe_attuali()
+    sedi_destinatari = me.sedi_deleghe_attuali().espandi()
     deleghe = me.deleghe_attuali().filter(tipo__in=DELEGHE_RUBRICA).values_list('tipo', flat=True)
-    sedi_destinatari = []
-
-    for sede in sedi_delegato:
-        sedi_destinatari.extend(sede.ottieni_discendenti())
-    sedi_destinatari = [sede.pk for sede in sedi_destinatari]
-    sedi_destinatari = set(sedi_destinatari)
 
     delegati = Persona.objects.filter(
         Delega.query_attuale(
@@ -503,7 +497,7 @@ def delegato_rubrica_delegati(request, me):
             oggetto_id__in=sedi_destinatari,
             tipo__in=deleghe
         ).via("delega")
-    ).order_by('nome', 'cognome', 'codice_fiscale')\
+    ).exclude(pk=me.pk).order_by('nome', 'cognome', 'codice_fiscale')\
         .distinct('nome', 'cognome', 'codice_fiscale')
 
     contesto = {
@@ -518,13 +512,7 @@ def giovane_rubrica_giovani(request, me):
         tipo=DELEGATO_OBIETTIVO_5,
         oggetto_tipo=ContentType.objects.get_for_model(Sede),
     ).values_list('pk', flat=True)
-    sedi_giovane = me.sedi_deleghe_attuali().filter(deleghe__pk__in=deleghe_giovane)
-
-    sedi_destinatari = []
-    for sede in sedi_giovane:
-        sedi_destinatari.extend(sede.ottieni_discendenti(includimi=True))
-    sedi_destinatari = [sede.pk for sede in sedi_destinatari]
-    sedi_destinatari = set(sedi_destinatari)
+    sedi_destinatari = me.sedi_deleghe_attuali().filter(deleghe__pk__in=deleghe_giovane).espandi()
 
     oggi = datetime.date.today()
     nascita_minima = datetime.date(oggi.year - Persona.ETA_GIOVANE, oggi.month, oggi.day)
