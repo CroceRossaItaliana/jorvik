@@ -20,13 +20,16 @@ def menu(request):
 
     me = request.me if hasattr(request, 'me') else None
 
-    deleghe_attuali = me.deleghe_attuali()
+    deleghe_attuali = me.deleghe_attuali() if me else None
 
-    delegato_giovani = deleghe_attuali.filter(tipo=DELEGATO_OBIETTIVO_5).count()
+    delegato_giovani = deleghe_attuali.filter(tipo=DELEGATO_OBIETTIVO_5).count() if deleghe_attuali else 0
 
-    giovane_e_delegato_giovani = delegato_giovani > 0 and me.giovane
+    if me:
+        giovane_e_delegato_giovani = delegato_giovani > 0 and me.giovane
+    else:
+        giovane_e_delegato_giovani = False
 
-    ha_deleghe = deleghe_attuali.exists()
+    ha_deleghe = deleghe_attuali.exists() if deleghe_attuali else False
 
     gestione_corsi_sede = me.ha_permesso(GESTIONE_CORSI_SEDE) if me else False
 
