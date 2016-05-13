@@ -45,6 +45,8 @@ class Documento(InterfacciaJorvik, File):
     class Meta:
         abstract = False
         app_label = 'gestione_file'
+        verbose_name = 'documento'
+        verbose_name_plural = 'documenti'
 
     def icona(self):
         if self.url_documento:
@@ -60,6 +62,8 @@ class Immagine(InterfacciaJorvik, BaseImage):
     class Meta:
         abstract = False
         app_label = 'gestione_file'
+        verbose_name = 'immagine'
+        verbose_name_plural = 'immagini'
 
     def icona(self):
         if self.url_documento:

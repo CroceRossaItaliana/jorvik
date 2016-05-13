@@ -72,9 +72,10 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         return reverse('dettaglio_articolo', kwargs={'articolo_slug': self.slug})
 
     class Meta:
-        verbose_name_plural = 'Articoli'
         app_label = 'articoli'
         ordering = ['-data_inizio_pubblicazione']
+        verbose_name = 'articolo'
+        verbose_name_plural = 'articoli'
 
     @property
     def pubblicato(self):
@@ -92,7 +93,3 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
 
 class ArticoloSegmento(BaseSegmento):
     _oggetto_collegato = Articolo
-
-    class Meta:
-        verbose_name_plural = 'Segmenti dell\'Articolo'
-        app_label = 'articoli'
