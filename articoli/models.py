@@ -16,11 +16,14 @@ from segmenti.models import BaseSegmento
 
 class ArticoliQuerySet(models.QuerySet):
     def pubblicati(self):
+        data_fine = (
+            models.Q(data_fine_pubblicazione__gte=timezone.now()) |
+            models.Q(data_fine_pubblicazione__isnull=True)
+        )
         return self.filter(
             stato=Articolo.PUBBLICATO,
-            data_inizio_pubblicazione__lte=timezone.now(),
-            data_fine_pubblicazione__gte=timezone.now(),
-        ).prefetch_related('segmenti')
+            data_inizio_pubblicazione__lte=timezone.now()
+        ).filter(data_fine).prefetch_related('segmenti')
 
     def bozze(self):
         return self.filter(stato=Articolo.BOZZA).prefetch_related('segmenti')
