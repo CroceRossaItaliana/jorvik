@@ -119,6 +119,22 @@ class AdminDocumento(FileAdmin):
         return HttpResponseRedirect(post_url)
 
 
+    def get_inline_instances(self, request, obj=None):
+        inline_instances = []
+        if obj:
+            for inline_class in self.inlines:
+                inline = inline_class(self.model, self.admin_site)
+                if request:
+                    if not (inline.has_add_permission(request) or
+                                inline.has_change_permission(request, obj) or
+                                inline.has_delete_permission(request, obj)):
+                        continue
+                    if not inline.has_add_permission(request):
+                        inline.max_num = 0
+                inline_instances.append(inline)
+
+        return inline_instances
+
 AdminDocumento.fieldsets = AdminDocumento.build_fieldsets(
     extra_main_fields=('url_documento',),
 )
@@ -130,6 +146,22 @@ class AdminImmagine(ImageAdmin):
     add_form_template = 'admin/gestione_file/form_aggiungi.html'
     change_form_template = 'admin/filer/image/change_form.html'
     inlines = (DocumentoSegmentoInline,)
+
+    def get_inline_instances(self, request, obj=None):
+        inline_instances = []
+        if obj:
+            for inline_class in self.inlines:
+                inline = inline_class(self.model, self.admin_site)
+                if request:
+                    if not (inline.has_add_permission(request) or
+                                inline.has_change_permission(request, obj) or
+                                inline.has_delete_permission(request, obj)):
+                        continue
+                    if not inline.has_add_permission(request):
+                        inline.max_num = 0
+                inline_instances.append(inline)
+
+        return inline_instances
 
 AdminImmagine.fieldsets = AdminImmagine.build_fieldsets(
     extra_main_fields=('default_alt_text', 'default_caption', 'url_documento'),
