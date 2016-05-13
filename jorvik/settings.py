@@ -261,7 +261,11 @@ CKEDITOR_CONFIGS = {
         'toolbar': 'Custom',
         'toolbar_Custom': [
             ['Bold', 'Italic', 'Underline'],
-            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            [
+                'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft',
+                'JustifyCenter', 'JustifyRight', 'JustifyBlock'
+            ],
+            ['Format', '-', 'Table'],
             ['Link', 'Unlink'],
             ['RemoveFormat', 'Source'],
             ['FilerImage']
