@@ -6,7 +6,7 @@ from django.http import Http404, HttpResponsePermanentRedirect
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
-from autenticazione.funzioni import pagina_privata
+from autenticazione.funzioni import pagina_privata, VistaDecorata
 from filer.models import File, Folder
 from filer.server.views import filer_settings
 
@@ -16,7 +16,7 @@ from jorvik import settings
 server = filer_settings.FILER_PRIVATEMEDIA_SERVER
 
 
-class ListaDocumenti(ListView):
+class ListaDocumenti(VistaDecorata, ListView):
     model = Documento
     template_name = 'lista_documenti.html'
     paginate_by = 10
