@@ -344,6 +344,7 @@ class ConAutorizzazioni(models.Model):
 
     confermata = models.BooleanField("Confermata", default=True, db_index=True)
     ritirata = models.BooleanField("Ritirata", default=False, db_index=True)
+    automatica = models.BooleanField("Automatica", default=False, db_index=True)
 
     ESITO_OK = "Confermato"
     ESITO_NO = "Negato"
@@ -595,6 +596,8 @@ class ConAutorizzazioni(models.Model):
         if scadenza:
             if self.creazione + timedelta(days=scadenza) < timezone.now():
                 self.autorizzazione_concessa(auto=True)
+                self.automatica = True
+                self.save()
 
     def autorizzazione_negata(self, modulo=None, auto=False):
         """
@@ -608,6 +611,8 @@ class ConAutorizzazioni(models.Model):
         if scadenza:
             if self.creazione + timedelta(days=scadenza) < timezone.now():
                 self.autorizzazione_negata(auto=True)
+                self.automatica = True
+                self.save()
 
     def autorizzazione_concedi_modulo(self):
         """
