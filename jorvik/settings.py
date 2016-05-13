@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     # Librerie terze
+    'nocaptcha_recaptcha',
     # 'oauth2_provider',
     'mptt',
     # Moduli interni
@@ -239,7 +240,6 @@ BOOTSTRAP3 = {
     },
 }
 
-
 THUMBNAIL_BASEDIR = 'thumbnails'
 THUMBNAIL_PROCESSORS = (
     'easy_thumbnails.processors.colorspace',
@@ -261,7 +261,11 @@ CKEDITOR_CONFIGS = {
         'toolbar': 'Custom',
         'toolbar_Custom': [
             ['Bold', 'Italic', 'Underline'],
-            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            [
+                'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft',
+                'JustifyCenter', 'JustifyRight', 'JustifyBlock'
+            ],
+            ['Format', '-', 'Table'],
             ['Link', 'Unlink'],
             ['RemoveFormat', 'Source'],
             ['FilerImage'],
@@ -273,6 +277,9 @@ CKEDITOR_CONFIGS = {
 }
 
 CKEDITOR_FILEBROWSER_USE_THUMBNAILOPTIONS_ONLY = True
+
+NORECAPTCHA_SITE_KEY = APIS_CONF.get('nocaptcha', 'site_key', fallback=os.environ.get('NORECAPTCHA_SECRET_KEY'))
+NORECAPTCHA_SECRET_KEY = APIS_CONF.get('nocaptcha', 'secret_key', fallback=os.environ.get('NORECAPTCHA_SITE_KEY'))
 
 if os.environ.get('ENABLE_TEST_APPS', False):
     INSTALLED_APPS.append('segmenti.segmenti_test')

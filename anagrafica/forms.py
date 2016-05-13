@@ -275,7 +275,7 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
 class ModuloDonatore(autocomplete_light.ModelForm):
     class Meta:
         model = Donatore
-        fields = ['gruppo_sanguigno', 'fattore_rh', 'fanotipo_rh',
+        fields = ['gruppo_sanguigno', 'fattore_rh', 'fenotipo_rh',
                   'kell', 'codice_sit', 'sede_sit',]
 
 
