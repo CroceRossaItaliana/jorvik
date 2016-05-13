@@ -1,22 +1,13 @@
 import datetime
 
 from django.test import TestCase
-from lxml import html
 
-from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
-from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica
-from anagrafica.models import Sede, Persona, Appartenenza, Documento, Delega
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA
-from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
-from autenticazione.models import Utenza
-from autenticazione.utils_test import TestFunzionale
-from base.models import Autorizzazione
-from base.utils import poco_fa
-from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, email_fittizzia, \
-    crea_utenza
-from posta.models import Messaggio
-
-from base.autorizzazioni_test.models import ApprovaAutorizzazioneTest, NegaAutorizzazioneTest
+from anagrafica.models import Delega
+from anagrafica.permessi.applicazioni import PRESIDENTE
+from base.autorizzazioni_test.models import (ApprovaAutorizzazioneTest,
+                                             NegaAutorizzazioneTest)
+from base.utils_tests import (crea_appartenenza, crea_persona,
+                              crea_persona_sede_appartenenza)
 
 
 class TestAutorizzazioni(TestCase):
