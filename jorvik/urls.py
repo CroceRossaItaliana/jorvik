@@ -52,14 +52,18 @@ urlpatterns = [
     url('^', include('django.contrib.auth.urls')),
 
     # Modulo di recupero password
-    url(r'^recupera-password/$', base.errori.vista_ci_siamo_quasi),
-    # url(r'^recupera-password/$', base.viste.recupera_password),
+    url(r'^recupera_password/$', base.viste.recupera_password, name='recupera_password'),
+    url(r'^reimposta_password/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
+        base.viste.recupera_password_conferma, name='recupera_password_conferma'),
+    url(r'^recupera_password_completo/$', base.viste.recupero_password_completo, name='recupero_password_completo'),
 
     # Informazioni
     url(r'^informazioni/$', base.viste.informazioni),
     url(r'^informazioni/aggiornamenti/$', base.viste.informazioni_aggiornamenti),
     url(r'^informazioni/sicurezza/$', base.viste.informazioni_sicurezza),
-    url(r'^informazioni/condizioni/$', base.viste.informazioni_condizioni),
+    url(r'^informazioni/condizioni/$', base.viste.informazioni_condizioni, name='informazioni_condizioni'),
+    url(r'^informazioni/cookie/$', base.viste.informazioni_cookie, name='informazioni_cookie'),
+    url(r'^informazioni/cookie/imposta/$', base.viste.imposta_cookie, name='imposta_cookie'),
     url(r'^informazioni/verifica-tesserino/$', ufficio_soci.viste.verifica_tesserino),
     url(r'^informazioni/sedi/$', base.viste.informazioni_sedi),
     url(r'^informazioni/sedi/(?P<slug>.*)/$', base.viste.informazioni_sede),
@@ -282,7 +286,7 @@ urlpatterns = [
 
     url(r'^token-sicuro/(?P<codice>.*)/$', base.viste.verifica_token),
 
-    url(r'^password-dimenticata/$', base.viste.redirect_semplice, {"nuovo_url": "/password_reset/"}),
+    url(r'^password-dimenticata/$', base.viste.redirect_semplice, {"nuovo_url": "/recupera_password/"}),
 
     # Amministrazione
 
