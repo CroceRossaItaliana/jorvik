@@ -155,7 +155,9 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                 self.save()
             self.oggetto.autorizzazioni_set().update(necessaria=False)
             if self.oggetto.INVIA_NOTIFICA_NEGATA:
-                self.notifica_negata()
+                self.notifica_negata(auto=self.oggetto.INVIA_NOTIFICA_NEGATA_AUTOMATICA)
+                    self.oggetto.INVIA_NOTIFICA_NEGATA_AUTOMATICA = False
+                    self.oggetto.save()
             return
 
         # Questa concessa, di questo progressivo non e' piu' necessaria
@@ -168,7 +170,9 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             self.oggetto.save()
             self.oggetto.autorizzazione_concessa(modulo=modulo)
             if self.oggetto.INVIA_NOTIFICA_CONCESSA:
-                self.notifica_concessa()
+                self.notifica_concessa(auto=self.oggetto.INVIA_NOTIFICA_CONCESSA_AUTOMATICA)
+            self.oggetto.INVIA_NOTIFICA_CONCESSA_AUTOMATICA = False
+            self.oggetto.save()
 
     def concedi(self, firmatario, modulo=None):
         self.firma(firmatario, True, modulo=modulo)
@@ -203,28 +207,42 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             destinatari=[persona],
         )
 
-    def notifica_concessa(self):
+    def notifica_concessa(self, auto=False):
         from posta.models import Messaggio
+        modello = "email_autorizzazione_concessa.html"
+        destinatari = [self.richiedente]
+        if auto:
+            modello = "email_autorizzazione_concessa_automatica.html"
+            destinatari.append(self.firmatario)
         Messaggio.costruisci_e_invia(
             oggetto="Richiesta di %s APPROVATA" % (self.oggetto.RICHIESTA_NOME,),
-            modello="email_autorizzazione_concessa.html",
+            modello=modello,
             corpo={
                 "richiesta": self,
+                "firmatario": firmatario
             },
             mittente=self.firmatario,
-            destinatari=[self.richiedente]
+            destinatari=destinatari
         )
 
-    def notifica_negata(self):
+    def notifica_negata(self, auto=False):
         from posta.models import Messaggio
+        modello = "email_autorizzazione_negata.html"
+        mittente = self.firmatario
+        destinatari = [self.richiedente]
+        if auto:
+            modello = "email_autorizzazione_negata_automatica.html"
+            destinatari.append(self.firmatario)
         Messaggio.costruisci_e_invia(
             oggetto="Richiesta di %s RESPINTA" % (self.oggetto.RICHIESTA_NOME,),
-            modello="email_autorizzazione_negata.html",
+            modello=modello,
             corpo={
                 "richiesta": self,
+                "firmatario": firmatario,
+                "giorni": self.oggetto._scadenza_negazione_automatica
             },
             mittente=self.firmatario,
-            destinatari=[self.richiedente]
+            destinatari=destinatari
         )
 
 
@@ -356,6 +374,9 @@ class ConAutorizzazioni(models.Model):
 
     INVIA_NOTIFICA_CONCESSA = INVIA_NOTIFICHE
     INVIA_NOTIFICA_NEGATA = INVIA_NOTIFICHE
+
+    INVIA_NOTIFICA_CONCESSA_AUTOMATICA = not INVIA_NOTIFICHE
+    INVIA_NOTIFICA_NEGATA_AUTOMATICA = not INVIA_NOTIFICHE
 
     # Sovrascrivimi!
     RICHIESTA_NOME = "autorizzazione"
@@ -595,9 +616,10 @@ class ConAutorizzazioni(models.Model):
         scadenza = getattr(self, '_scadenza_approvazione_automatica', None)
         if scadenza:
             if self.creazione + timedelta(days=scadenza) < timezone.now():
-                self.autorizzazione_concessa(auto=True)
+                self.INVIA_NOTIFICA_CONCESSA_AUTOMATICA = True
                 self.automatica = True
                 self.save()
+                self.autorizzazione_concessa(auto=True)
 
     def autorizzazione_negata(self, modulo=None, auto=False):
         """
@@ -610,9 +632,10 @@ class ConAutorizzazioni(models.Model):
         scadenza = getattr(self, '_scadenza_negazione_automatica', None)
         if scadenza:
             if self.creazione + timedelta(days=scadenza) < timezone.now():
-                self.autorizzazione_negata(auto=True)
+                self.INVIA_NOTIFICA_NEGATA_AUTOMATICA = True
                 self.automatica = True
                 self.save()
+                self.autorizzazione_negata(auto=True)
 
     def autorizzazione_concedi_modulo(self):
         """
