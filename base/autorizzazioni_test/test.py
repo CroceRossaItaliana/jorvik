@@ -53,6 +53,7 @@ class TestAutorizzazioni(TestCase):
         da_approvare.save()
         da_approvare.richiedi()
 
+        self.assertFalse(da_approvare.automatica)
 
         self.assertTrue(
             presidente.autorizzazioni_in_attesa().exists(),
@@ -64,6 +65,8 @@ class TestAutorizzazioni(TestCase):
         self.assertTrue(aut)
 
         da_approvare.controlla_concedi_automatico()
+
+        self.assertTrue(da_approvare.automatica)
 
         aut = presidente.autorizzazioni_in_attesa().first()
         self.assertFalse(aut)
@@ -105,6 +108,7 @@ class TestAutorizzazioni(TestCase):
 
         da_approvare.richiedi()
 
+        self.assertFalse(da_approvare.automatica)
 
         self.assertTrue(
             presidente.autorizzazioni_in_attesa().exists(),
@@ -116,6 +120,8 @@ class TestAutorizzazioni(TestCase):
         self.assertTrue(aut)
 
         da_approvare.controlla_concedi_automatico()
+
+        self.assertFalse(da_approvare.automatica)
 
         aut = presidente.autorizzazioni_in_attesa().first()
         self.assertTrue(aut)
@@ -160,6 +166,7 @@ class TestAutorizzazioni(TestCase):
         da_approvare.save()
         da_approvare.richiedi()
 
+        self.assertFalse(da_approvare.automatica)
 
         self.assertTrue(
             presidente.autorizzazioni_in_attesa().exists(),
@@ -171,6 +178,8 @@ class TestAutorizzazioni(TestCase):
         self.assertTrue(aut)
 
         da_approvare.controlla_nega_automatico()
+
+        self.assertTrue(da_approvare.automatica)
 
         aut = presidente.autorizzazioni_in_attesa().first()
         self.assertFalse(aut)
@@ -207,6 +216,7 @@ class TestAutorizzazioni(TestCase):
 
         da_approvare.richiedi()
 
+        self.assertFalse(da_approvare.automatica)
 
         self.assertTrue(
             presidente.autorizzazioni_in_attesa().exists(),
@@ -218,6 +228,8 @@ class TestAutorizzazioni(TestCase):
         self.assertTrue(aut)
 
         da_approvare.controlla_nega_automatico()
+
+        self.assertFalse(da_approvare.automatica)
 
         aut = presidente.autorizzazioni_in_attesa().first()
         self.assertTrue(aut)
