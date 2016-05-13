@@ -1,9 +1,10 @@
 import datetime
 
 from django.test import TestCase
+from django.utils.timezone import now
 
 from anagrafica.costanti import REGIONALE
-from anagrafica.models import Appartenenza, Delega
+from anagrafica.models import Appartenenza, Delega, Persona
 from anagrafica.permessi.applicazioni import (DELEGATO_OBIETTIVO_1,
                                               DELEGATO_OBIETTIVO_2,
                                               DELEGATO_OBIETTIVO_3,
@@ -18,9 +19,10 @@ from attivita.models import Area, Attivita
 from base.utils import poco_fa
 from base.utils_tests import (crea_appartenenza, crea_persona,
                               crea_persona_sede_appartenenza, crea_sede,
-                              crea_utenza, crea_area_attivita)
+                              crea_utenza, crea_area_attivita, crea_partecipazione, crea_turno)
 from curriculum.models import Titolo, TitoloPersonale
 from formazione.models import Aspirante, CorsoBase, PartecipazioneCorsoBase
+from segmenti.segmenti import _calcola_eta, _calcola_anni_attivita
 
 from .models import NotiziaTest, NotiziaTestSegmento
 
@@ -482,6 +484,75 @@ class TestSegmenti(TestCase):
         self.assertFalse(esito)
         esito = volontario_con_titolo_differente.appartiene_al_segmento(segmento_volontari_con_titolo_no_filtri)
         self.assertFalse(esito)
+
+    def test_controllo_eta(self):
+        from anagrafica.costanti import LIMITE_ETA
+
+        data_limite = datetime.date.today()
+        data_sotto = data_limite.replace(year=data_limite.year - (LIMITE_ETA - 1))
+        data_sopra = data_limite.replace(year=data_limite.year - (LIMITE_ETA + 1))
+        data_limite = data_limite.replace(year=data_limite.year - LIMITE_ETA)
+
+        persona_sotto_limite = crea_persona()
+        persona_sotto_limite.data_nascita = data_sotto
+        persona_sotto_limite.save()
+        persona_sopra_limite = crea_persona()
+        persona_sopra_limite.data_nascita = data_sopra
+        persona_sopra_limite.save()
+        persona_al_limite = crea_persona()
+        persona_al_limite.data_nascita = data_limite
+        persona_al_limite.save()
+        lista = _calcola_eta(Persona.objects.all())
+        self.assertEqual(set(lista), {persona_sotto_limite})
+
+        lista = _calcola_eta(Persona.objects.all(), meno=False)
+        self.assertEqual(set(lista), {persona_al_limite, persona_sopra_limite})
+
+    def test_controllo_anni_attivita(self):
+        from anagrafica.costanti import LIMITE_ETA, LIMITE_ANNI_ATTIVITA
+
+        ora = now()
+        data_limite = ora.today()
+        data_sotto = data_limite.replace(year=data_limite.year - (LIMITE_ETA - 1))
+        data_sopra = data_limite.replace(year=data_limite.year - (LIMITE_ETA + 1))
+        data_limite = data_limite.replace(year=data_limite.year - LIMITE_ETA)
+
+        sede = crea_sede()
+        persona_sotto_limite = crea_persona()
+        persona_sotto_limite.data_nascita = data_sotto
+        persona_sotto_limite.save()
+        crea_appartenenza(persona_sotto_limite, sede)
+
+        persona_sopra_limite = crea_persona()
+        persona_sopra_limite.data_nascita = data_sopra
+        persona_sopra_limite.save()
+        crea_appartenenza(persona_sopra_limite, sede)
+
+        persona_al_limite = crea_persona()
+        persona_al_limite.data_nascita = data_limite
+        persona_al_limite.save()
+        crea_appartenenza(persona_al_limite, sede)
+
+        area, attivita = crea_area_attivita(sede)
+
+        for anni in range(0, LIMITE_ANNI_ATTIVITA + 3):
+            inizio = ora.replace(year=ora.year - (anni - 1))
+            fine = ora.replace(year=ora.year - (anni - 1)) + datetime.timedelta(hours=1)
+            t1 = crea_turno(attivita, inizio=inizio, fine=fine)
+            if anni < LIMITE_ANNI_ATTIVITA:
+                for persona in (persona_sotto_limite, persona_sopra_limite, persona_al_limite):
+                    crea_partecipazione(persona, t1)
+            elif anni == LIMITE_ANNI_ATTIVITA:
+                for persona in (persona_sopra_limite, persona_al_limite):
+                    crea_partecipazione(persona, t1)
+            else:
+                crea_partecipazione(persona_sopra_limite, t1)
+
+        lista = _calcola_anni_attivita(Persona.objects.all())
+        self.assertEqual(set(lista), {persona_sotto_limite})
+
+        lista = _calcola_anni_attivita(Persona.objects.all(), meno=False)
+        self.assertEqual(set(lista), {persona_al_limite, persona_sopra_limite})
 
 
 class TestSegmentiUtente(TestCase):
