@@ -52,13 +52,22 @@
                     <p>Conferma l'indirizzo da selezionare tra i n. {{ risultati.length }} risultati.</p>
                     <form action="/geo/localizzatore/imposta/" method="POST">
                     {% csrf_token %}
-
                         {% for risultato in risultati %}
-
-                            <button type="submit" name="indirizzo" value="{{ risultato.0 }}"
-                                    class="btn btn-block btn-success">
-                                <i class="fa fa-fw fa-map-marker"></i> {{ risultato.0 }}
-                            </button>
+                            {% if risultato.1 %}
+                                <button type="submit" name="indirizzo" value="{{ risultato.0 }}"
+                                        class="btn btn-block btn-success">
+                                    <i class="fa fa-fw fa-map-marker"></i> {{ risultato.0 }}
+                                </button>
+                            {% else %}
+                                <button type="button" disabled name="indirizzo" value="{{ risultato.0 }}"
+                                        class="btn btn-block btn-warning">
+                                    <i class="fa fa-fw fa-map-marker"></i> {{ risultato.0 }}<br>
+                                </button>
+                                <div class="alert alert-warning alert-block text-center">
+                                    <i class="fa fa-fw fa-warning"></i> Google Maps non conosce
+                                    le coordinate per questo indirizzo.
+                                </div>
+                            {% endif %}
 
                         {% empty %}
                             <div class="alert alert-warning alert-block">

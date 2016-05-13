@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.core.urlresolvers import reverse
 from django.db import models, transaction
+from django.utils.encoding import force_text
 
 from django.utils.translation import ugettext_lazy as _
 from filer.models import File
@@ -37,6 +38,9 @@ class InterfacciaJorvik(object):
     def url_scarica(self):
         return reverse('scarica_file', args=(self.pk,))
 
+    def lista_segmenti(self):
+        return ', '.join([force_text(segmento) for segmento in self.segmenti.all()])
+
 
 class Documento(InterfacciaJorvik, File):
     url_documento = models.URLField(_('URL Documento'), default='', blank=True)
@@ -45,6 +49,8 @@ class Documento(InterfacciaJorvik, File):
     class Meta:
         abstract = False
         app_label = 'gestione_file'
+        verbose_name = 'documento'
+        verbose_name_plural = 'documenti'
 
     def icona(self):
         if self.url_documento:
@@ -60,6 +66,8 @@ class Immagine(InterfacciaJorvik, BaseImage):
     class Meta:
         abstract = False
         app_label = 'gestione_file'
+        verbose_name = 'immagine'
+        verbose_name_plural = 'immagini'
 
     def icona(self):
         if self.url_documento:

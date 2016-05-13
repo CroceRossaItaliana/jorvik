@@ -16,7 +16,14 @@ from segmenti.models import BaseSegmento
 
 class ArticoliQuerySet(models.QuerySet):
     def pubblicati(self):
-        return self.filter(stato=Articolo.PUBBLICATO).prefetch_related('segmenti')
+        data_fine = (
+            models.Q(data_fine_pubblicazione__gte=timezone.now()) |
+            models.Q(data_fine_pubblicazione__isnull=True)
+        )
+        return self.filter(
+            stato=Articolo.PUBBLICATO,
+            data_inizio_pubblicazione__lte=timezone.now()
+        ).filter(data_fine).prefetch_related('segmenti')
 
     def bozze(self):
         return self.filter(stato=Articolo.BOZZA).prefetch_related('segmenti')
@@ -72,9 +79,10 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         return reverse('dettaglio_articolo', kwargs={'articolo_slug': self.slug})
 
     class Meta:
-        verbose_name_plural = 'Articoli'
         app_label = 'articoli'
         ordering = ['-data_inizio_pubblicazione']
+        verbose_name = 'articolo'
+        verbose_name_plural = 'articoli'
 
     @property
     def pubblicato(self):
@@ -92,7 +100,3 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
 
 class ArticoloSegmento(BaseSegmento):
     _oggetto_collegato = Articolo
-
-    class Meta:
-        verbose_name_plural = 'Segmenti dell\'Articolo'
-        app_label = 'articoli'

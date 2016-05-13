@@ -204,9 +204,12 @@ class NodoMappa(template.Node):
         """
 
         i = 0
+        elementi_pieni = False
         for elemento in elementi:
             if not elemento.locazione:
                 continue  # Salta elementi senza posizione.
+
+            elementi_pieni = True
 
             context.update({"elemento": elemento})
             contenuto = str(self.nodelist.render(context)).strip().replace("\n", " ")
@@ -227,6 +230,8 @@ class NodoMappa(template.Node):
             });
             """
             i += 1
+        if not elementi_pieni:
+            return ''
 
         output += """
             map.setCenter(latlngbounds.getCenter());

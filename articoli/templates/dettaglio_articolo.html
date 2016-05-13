@@ -36,13 +36,15 @@
 
     </div>
     <hr>
-    <p>{{articolo.corpo|safe}}</p>
-    {% if articolo.allegati.all %}
-    <p>Allegati</p>
-        {% for allegato in articolo.allegati.all %}
-            <p><a href="{{allegato.download_url}}">Link ({{allegato.file.size|filesizeformat}})</a></p>
-        {% endfor %}
-    {% endif %}
+    <div class="body clearfix">
+        <p>{{articolo.corpo|safe}}</p>
+        {% if articolo.allegati.all %}
+        <p>Allegati</p>
+            {% for allegato in articolo.allegati.all %}
+                <p><a href="{{allegato.download_url}}">Link ({{allegato.file.size|filesizeformat}})</a></p>
+            {% endfor %}
+        {% endif %}
+    </div>
     <hr>
     <p><a href='{% url 'lista_articoli' %}'><i class="fa fa-level-up" ></i> torna all'elenco</a></p>
 {% endblock %}
