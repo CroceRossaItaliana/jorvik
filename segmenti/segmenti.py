@@ -2,9 +2,11 @@ import datetime
 import operator
 
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Count
+from django.utils.timezone import now
 
 from anagrafica.costanti import LOCALE, REGIONALE, LIMITE_ETA, LIMITE_ANNI_ATTIVITA
-from anagrafica.models import Appartenenza, Delega, Sede
+from anagrafica.models import Appartenenza, Delega, Sede, Persona
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, REFERENTE, RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE
 from attivita.models import Attivita, Partecipazione
 
@@ -25,48 +27,45 @@ def _deleghe_attive(queryset):
 
 
 def _calcola_eta(queryset, meno=True):
-    controllo = operator.lt if meno else operator.ge
-
-    persone_filtrate = []
-    for persona in queryset:
-        if controllo(persona.eta, LIMITE_ETA):
-            persone_filtrate.append(persona.pk)
-    return persone_filtrate
+    operatore = 'gt' if meno else 'lte'
+    data_limite = now()
+    data_limite = data_limite.replace(year=data_limite.year - LIMITE_ETA).date()
+    return queryset.filter(
+        **{'data_nascita__{}'.format(operatore): data_limite}
+    )
 
 
 def _calcola_anni_attivita(queryset, meno=True):
-    controllo = operator.lt if meno else operator.gt
+    controllo = operator.le if meno else operator.gt
 
     persone_filtrate = []
     for persona in queryset:
-        oggi = datetime.date.today()
-        storico = Partecipazione.con_esito_ok().filter(persona=persona, stato=Partecipazione.RICHIESTA)\
-            .order_by('-turno__inizio')
-
-        anni_attivita = storico.dates('turno__inizio', 'year', order='DESC').count()
-
+        storico = Partecipazione.con_esito_ok().filter(persona=persona, stato=Partecipazione.RICHIESTA)
+        anni_attivita = storico.dates('turno__inizio', 'year').count()
         if controllo(anni_attivita, LIMITE_ANNI_ATTIVITA):
             persone_filtrate.append(persona.pk)
-    return persone_filtrate
+    return queryset.filter(pk__in=persone_filtrate)
 
 
 # TODO: Aggiungere test per i filtri che utilizzano questa funzione
 def _referenti_attivita(queryset, obiettivo=0):
-    qs = queryset.filter(delega__tipo=REFERENTE)
-    referenti = []
+    # TODO: Assicurarsi che questo filtro funzioni davvero!
     if obiettivo > 0:
-        attivita_area = Attivita.objects.filter(area__obiettivo=obiettivo)
-        if attivita_area.count() > 0:
-            for attivita in attivita_area:
-                referenti.extend(attivita.referenti_attuali().values_list('pk', flat=True))
-            referenti = list(set(referenti))
-    qs = qs.filter(pk__in=referenti)
-    return qs
+        qs = queryset.filter(
+            # Subquery per mischiarsi bene con le altre deleghe.
+            pk__in=Persona.objects.filter(
+                Delega.query_attuale(tipo=REFERENTE, oggetto_tipo=ContentType.objects.get_for_model(Attivita),
+                                     oggetto_id__in=Attivita.objects.filter(
+                                         area__obiettivo=obiettivo
+                                     ).values_list('pk', flat=True)).via("delega")
+            ).values_list('pk', flat=True)
+        )
+        return qs
+    return queryset.none()
 
 
 def _presidenze_comitati(queryset, estensione=LOCALE):
-    sedi = []
-    sedi = Sede.objects.filter(tipo=Sede.COMITATO, estensione=estensione).values_list('id', flat=True)
+    sedi = Sede.objects.filter(tipo=Sede.COMITATO, estensione=estensione)
     return queryset.filter(delega__oggetto_tipo=ContentType.objects.get_for_model(Sede), delega__oggetto_id__in=sedi.values_list('id', flat=True))
 
 
@@ -79,26 +78,26 @@ def volontari(queryset):
 
 def volontari_meno_un_anno(queryset):
     tutti_volontari = volontari(queryset).filter()
-    volontari_filtrati = _calcola_anni_attivita(queryset)
-    return tutti_volontari.filter(pk__in=volontari_filtrati)
+    volontari_filtrati = _calcola_anni_attivita(tutti_volontari)
+    return volontari_filtrati
 
 
 def volontari_piu_un_anno(queryset):
     tutti_volontari = volontari(queryset).filter()
-    volontari_filtrati = _calcola_anni_attivita(queryset, meno=False)
-    return tutti_volontari.filter(pk__in=volontari_filtrati)
+    volontari_filtrati = _calcola_anni_attivita(tutti_volontari, meno=False)
+    return volontari_filtrati
 
 
 def volontari_meno_35_anni(queryset):
     tutti_volontari = volontari(queryset)
     volontari_filtrati = _calcola_eta(tutti_volontari)
-    return tutti_volontari.filter(pk__in=volontari_filtrati)
+    return volontari_filtrati
 
 
 def volontari_maggiore_o_uguale_35_anni(queryset):
     tutti_volontari = volontari(queryset)
-    volontari_filtrati = volontari_filtrati = _calcola_eta(tutti_volontari, meno=False)
-    return tutti_volontari.filter(pk__in=volontari_filtrati)
+    volontari_filtrati = _calcola_eta(tutti_volontari, meno=False)
+    return volontari_filtrati
 
 
 def sostenitori_cri(queryset):
