@@ -1,0 +1,12 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p>Ricevi questo messaggio perch&eacute; una tua richiesta &egrave; rimasta in attesa per {{giorni}} giorni e come da policy &egrave; stata <strong>RIFIUTATA</strong> automaticamente dal sistema. Una conferma &egrave; stata inoltre inviata a {{firmatario}}.</p>
+
+    <p>Segue il contenuto della richiesta inoltrata il {{ richiesta.creazione }}:</p>
+    <hr />
+    {% include richiesta.template_path %}
+    <hr />
+
+{% endblock %}

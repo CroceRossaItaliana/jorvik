@@ -18,7 +18,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Elenca le applicazioni installate da abilitare
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,7 +56,7 @@ INSTALLED_APPS = (
     'django_gravatar',
     'centrale_operativa',
     'compressor',
-)
+]
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -235,3 +235,6 @@ BOOTSTRAP3 = {
 
 NORECAPTCHA_SITE_KEY = APIS_CONF.get('nocaptcha', 'site_key', fallback=os.environ.get('NORECAPTCHA_SECRET_KEY'))
 NORECAPTCHA_SECRET_KEY = APIS_CONF.get('nocaptcha', 'secret_key', fallback=os.environ.get('NORECAPTCHA_SITE_KEY'))
+
+if os.environ.get('ENABLE_TEST_APPS', False):
+    INSTALLED_APPS.append('base.autorizzazioni_test')
