@@ -219,7 +219,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             modello=modello,
             corpo={
                 "richiesta": self,
-                "firmatario": firmatario
+                "firmatario": firmatario,
+                "giorni": self.oggetto._scadenza_approvazione_automatica
             },
             mittente=self.firmatario,
             destinatari=destinatari
