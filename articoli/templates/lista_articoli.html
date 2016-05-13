@@ -31,7 +31,7 @@
     <div class="panel">
         <form method='GET' action=".">
             <label for="query-articoli">Ricerca articoli per titolo</label>
-            <input type="text" name="q" id="query-articoli">
+            <input type="text" name="q" id="query-articoli" value="{{ query }}">
             <select name="anno" value="">Scegli un anno</option>
                 <option value> ---- </option>
                 {% for anno in anni %}
