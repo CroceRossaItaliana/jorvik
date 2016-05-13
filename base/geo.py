@@ -57,6 +57,21 @@ class Locazione(ConMarcaTemporale, models.Model):
         return parti
 
     @classmethod
+    def controlla_posizione(cls, coordinate):
+        """
+        Valida le coordinate. L'unico controllo possibile è che le coordinate non devono essere
+        entrambe zero
+        :param coordinate: vettore lat / lng ritornato da google geocoding
+        :return: coordinate inalterate o '0'
+        """
+        try:
+            if coordinate['lat'] and coordinate['lng']:
+                return coordinate
+        except (KeyError, ValueError, TypeError):
+            return '0'
+        return '0'
+
+    @classmethod
     def cerca(cls, indirizzo):
         """
         Usa le API di Google (Geocode) per cercare l'indirizzo,
@@ -67,7 +82,7 @@ class Locazione(ConMarcaTemporale, models.Model):
         gmaps = googlemaps.Client(key=GOOGLE_KEY)
         risultati = gmaps.geocode(indirizzo, region="it", language="it")
         return [
-            (x['formatted_address'], x['geometry']['location'],
+            (x['formatted_address'], cls.controlla_posizione(x['geometry']['location']),
              cls.scomponi_indirizzo(x))
             for x in risultati
         ]
