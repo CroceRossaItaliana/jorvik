@@ -491,17 +491,12 @@ def delegato_rubrica_delegati(request, me):
     sedi_destinatari = me.sedi_deleghe_attuali().espandi()
     deleghe = me.deleghe_attuali().filter(tipo__in=DELEGHE_RUBRICA).values_list('tipo', flat=True)
 
-    delegati = Persona.objects.filter(
-        Delega.query_attuale(
-            oggetto_tipo=ContentType.objects.get_for_model(Sede),
-            oggetto_id__in=sedi_destinatari,
-            tipo__in=deleghe
-        ).via("delega")
-    ).exclude(pk=me.pk).order_by('nome', 'cognome', 'codice_fiscale')\
-        .distinct('nome', 'cognome', 'codice_fiscale')
+    from anagrafica.elenchi import ElencoDelegati
+
+    elenco = ElencoDelegati(sedi_destinatari, deleghe, me)
 
     contesto = {
-        "delegati": delegati,
+        "elenco": elenco,
     }
     return 'anagrafica_delegato_rubrica_delegati.html', contesto
 
