@@ -268,9 +268,10 @@ CKEDITOR_CONFIGS = {
             ['Format', '-', 'Table'],
             ['Link', 'Unlink'],
             ['RemoveFormat', 'Source'],
-            ['FilerImage']
+            ['FilerImage'],
+            ['Embed']
         ],
-        'extraPlugins': 'filerimage',
+        'extraPlugins': 'filerimage,embed',
         'removePlugins': 'image'
     },
 }
