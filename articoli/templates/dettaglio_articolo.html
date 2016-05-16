@@ -38,11 +38,20 @@
     <hr>
     <div class="body clearfix">
         <p>{{articolo.corpo|safe}}</p>
-        {% if articolo.allegati.all %}
-        <p>Allegati</p>
-            {% for allegato in articolo.allegati.all %}
-                <p><a href="{{allegato.download_url}}">Link ({{allegato.file.size|filesizeformat}})</a></p>
-            {% endfor %}
+
+        {% if articolo.allegati.exists %}
+            <hr />
+            <h4>Allegati ({{ articolo.allegati.count }})</h4>
+            <ul>
+                {% for allegato in articolo.allegati.all %}
+                    <li>
+                        <strong>{{ allegato.nome }}</strong>
+                        (<a href="{{ allegato.download_url }}" target="_new" download>Scarica</a>)
+                        <br />
+                        Peso {{ allegato.file.size|filesizeformat }}{% if allegato.scadenza %}, scadenza {{ allegato.scadenza }}{% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
         {% endif %}
     </div>
     <hr>

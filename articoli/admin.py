@@ -1,7 +1,9 @@
 from django import forms
 from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericTabularInline
 
 from articoli.models import Articolo, ArticoloSegmento
+from base.models import Allegato
 
 
 class ArticoloSegmentoInline(admin.TabularInline):
@@ -22,10 +24,17 @@ class ArticoloAdminForm(forms.ModelForm):
         fields = '__all__'
 
 
+class AllegatoInline(GenericTabularInline):
+    model = Allegato
+    extra = 2
+    ct_field = 'oggetto_tipo'
+    ct_fk_field = 'oggetto_id'
+
+
 @admin.register(Articolo)
 class AdminArticolo(admin.ModelAdmin):
     form = ArticoloAdminForm
-    inlines = (ArticoloSegmentoInline,)
+    inlines = (ArticoloSegmentoInline, AllegatoInline)
     readonly_fields = ('visualizzazioni',)
     actions = ['pubblica', 'bozza']
     fieldsets = (
