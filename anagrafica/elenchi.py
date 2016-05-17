@@ -1,6 +1,6 @@
 from django.contrib.contenttypes.models import ContentType
 
-from ufficio_soci.elenchi import ElencoVistaAnagrafica
+from ufficio_soci.elenchi import ElencoVistaAnagrafica, ElencoVolontariGiovani
 from anagrafica.models import Persona, Delega, Sede
 
 
@@ -20,3 +20,10 @@ class ElencoDelegati(ElencoVistaAnagrafica):
         ).exclude(pk=me.pk).order_by('nome', 'cognome', 'codice_fiscale')\
             .distinct('nome', 'cognome', 'codice_fiscale')
         return delegati
+
+
+class ElencoGiovani(ElencoVolontariGiovani):
+
+    def risultati(self):
+        me = self.args[1]
+        return super(ElencoGiovani, self).risultati().exclude(pk=me.pk)
