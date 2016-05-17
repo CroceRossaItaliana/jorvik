@@ -14,6 +14,7 @@ from django.views.generic import ListView
 from django.utils import timezone
 
 from anagrafica.costanti import TERRITORIALE, REGIONALE
+from anagrafica.elenchi import ElencoDelegati, ElencoGiovani
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
@@ -51,6 +52,7 @@ from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio, Q
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
+
 
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
@@ -491,8 +493,6 @@ def delegato_rubrica_delegati(request, me):
     sedi_destinatari = me.sedi_deleghe_attuali().espandi()
     deleghe = me.deleghe_attuali().filter(tipo__in=DELEGHE_RUBRICA).values_list('tipo', flat=True)
 
-    from anagrafica.elenchi import ElencoDelegati
-
     elenco = ElencoDelegati(sedi_destinatari, deleghe, me)
 
     contesto = {
@@ -509,17 +509,10 @@ def giovane_rubrica_giovani(request, me):
     ).values_list('pk', flat=True)
     sedi_destinatari = me.sedi_deleghe_attuali().filter(deleghe__pk__in=deleghe_giovane).espandi()
 
-    oggi = datetime.date.today()
-    nascita_minima = datetime.date(oggi.year - Persona.ETA_GIOVANE, oggi.month, oggi.day)
-
-    giovani = Persona.objects.filter(
-        Appartenenza.query_attuale(sede__in=sedi_destinatari).via("appartenenze"),
-        data_nascita__gt=nascita_minima,
-    ).exclude(pk=me.pk).order_by('nome', 'cognome', 'codice_fiscale')\
-        .distinct('nome', 'cognome', 'codice_fiscale')
+    elenco = ElencoGiovani(sedi_destinatari, me)
 
     contesto = {
-        "delegati": giovani,
+        "elenco": elenco,
     }
     return 'anagrafica_delegato_rubrica_delegati.html', contesto
 
