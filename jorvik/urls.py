@@ -82,6 +82,8 @@ urlpatterns = [
     url(r'^utente/contatti/$', anagrafica.viste.utente_contatti),
     url(r'^utente/rubrica/referenti/$', anagrafica.viste.utente_rubrica_referenti),
     url(r'^utente/rubrica/volontari/$', anagrafica.viste.utente_rubrica_volontari),
+    url(r'^utente/rubrica/delegati/$', anagrafica.viste.delegato_rubrica_delegati),
+    url(r'^utente/rubrica/giovani/$', anagrafica.viste.giovane_rubrica_giovani),
     url(r'^utente/curriculum/$', anagrafica.viste.utente_curriculum),
     url(r'^utente/curriculum/(?P<pk>.*)/cancella/$', anagrafica.viste.utente_curriculum_cancella),
     url(r'^utente/curriculum/(?P<tipo>.*)/$', anagrafica.viste.utente_curriculum),
@@ -122,6 +124,7 @@ urlpatterns = [
     url(r'^autorizzazioni/(?P<pk>[0-9]+)/nega/$', base.viste.autorizzazione_nega),
 
     url(r'^posta/scrivi/', posta.viste.posta_scrivi),
+    url(r'^posta/destinatari_multipli/$', posta.viste.destinatari_multipli, name='destinatari_multipli_posta'),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/(?P<messaggio_id>\d+)/', posta.viste.posta),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/', posta.viste.posta),
     url(r'^posta/(?P<direzione>[\w\-]+)/', posta.viste.posta),

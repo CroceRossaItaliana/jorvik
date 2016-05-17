@@ -1,4 +1,5 @@
 from anagrafica.costanti import REGIONALE
+from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_5
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, \
     GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
 from base.utils import remove_none
@@ -18,6 +19,17 @@ def menu(request):
     from base.viste import ORDINE_ASCENDENTE, ORDINE_DISCENDENTE, ORDINE_DEFAULT
 
     me = request.me if hasattr(request, 'me') else None
+
+    deleghe_attuali = me.deleghe_attuali() if me else None
+
+    delegato_giovani = deleghe_attuali.filter(tipo=DELEGATO_OBIETTIVO_5).count() if deleghe_attuali else 0
+
+    if me:
+        giovane_e_delegato_giovani = delegato_giovani > 0 and me.giovane
+    else:
+        giovane_e_delegato_giovani = False
+
+    ha_deleghe = deleghe_attuali.exists() if deleghe_attuali else False
 
     gestione_corsi_sede = me.ha_permesso(GESTIONE_CORSI_SEDE) if me else False
 
@@ -39,6 +51,8 @@ def menu(request):
             ("Rubrica", (
                 ("Referenti", "fa-book", "/utente/rubrica/referenti/"),
                 ("Volontari", "fa-book", "/utente/rubrica/volontari/"),
+                ("Delegati", "fa-book", "/utente/rubrica/delegati/") if ha_deleghe else None,
+                ("Giovani", "fa-book", "/utente/rubrica/giovani/") if giovane_e_delegato_giovani else None,
             )) ,
             ("Curriculum", (
                 ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),

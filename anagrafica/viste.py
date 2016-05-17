@@ -14,6 +14,7 @@ from django.views.generic import ListView
 from django.utils import timezone
 
 from anagrafica.costanti import TERRITORIALE, REGIONALE
+from anagrafica.elenchi import ElencoDelegati, ElencoGiovani
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
@@ -51,6 +52,7 @@ from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio, Q
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
+
 
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
@@ -484,6 +486,35 @@ def utente_rubrica_volontari(request, me):
         "ci_sono": ci_sono,
     }
     return 'anagrafica_utente_rubrica_volontari.html', contesto
+
+
+@pagina_privata
+def delegato_rubrica_delegati(request, me):
+    sedi_destinatari = me.sedi_deleghe_attuali().espandi()
+    deleghe = me.deleghe_attuali().filter(tipo__in=DELEGHE_RUBRICA).values_list('tipo', flat=True)
+
+    elenco = ElencoDelegati(sedi_destinatari, deleghe, me)
+
+    contesto = {
+        "elenco": elenco,
+    }
+    return 'anagrafica_delegato_rubrica_delegati.html', contesto
+
+
+@pagina_privata
+def giovane_rubrica_giovani(request, me):
+    deleghe_giovane = me.deleghe_attuali().filter(
+        tipo=DELEGATO_OBIETTIVO_5,
+        oggetto_tipo=ContentType.objects.get_for_model(Sede),
+    ).values_list('pk', flat=True)
+    sedi_destinatari = me.sedi_deleghe_attuali().filter(deleghe__pk__in=deleghe_giovane).espandi()
+
+    elenco = ElencoGiovani(sedi_destinatari, me)
+
+    contesto = {
+        "elenco": elenco,
+    }
+    return 'anagrafica_delegato_rubrica_delegati.html', contesto
 
 
 @pagina_privata
