@@ -311,27 +311,24 @@ class TestFunzionaleArticoli(TestFunzionale):
 
     def test_lista_articoli(self):
         articolo = Articolo.objects.create(
-            titolo='Titolo',
+            titolo='Titolo 1981',
             corpo='Testo random',
-            estratto='estratto qualsiasi',
-            data_inizio_pubblicazione=datetime.datetime.now() - datetime.timedelta(days=5),
-            data_fine_pubblicazione=datetime.datetime.now() + datetime.timedelta(days=5),
+            estratto='qualcosa',
+            data_inizio_pubblicazione='1981-12-10',
             stato=Articolo.PUBBLICATO
         )
         articolo2 = Articolo.objects.create(
-            titolo='Titolo 2',
+            titolo='Titolo primo 1980',
             corpo='Testo random 2',
-            estratto='estratto qualsiasi 2',
-            data_inizio_pubblicazione=datetime.datetime.now() - datetime.timedelta(days=5),
-            data_fine_pubblicazione=datetime.datetime.now() + datetime.timedelta(days=5),
+            estratto='un pezzo',
+            data_inizio_pubblicazione='1980-06-10',
             stato=Articolo.PUBBLICATO
         )
         articolo3 = Articolo.objects.create(
-            titolo='Titolo 3',
+            titolo='Titolo secondo 1980',
             corpo='Testo random 3',
-            estratto='estratto qualsiasi 3',
-            data_inizio_pubblicazione=datetime.datetime.now() - datetime.timedelta(days=5),
-            data_fine_pubblicazione=datetime.datetime.now() + datetime.timedelta(days=5),
+            estratto='una parte',
+            data_inizio_pubblicazione='1980-12-10',
             stato=Articolo.PUBBLICATO
         )
         persona = crea_persona()
@@ -340,6 +337,51 @@ class TestFunzionaleArticoli(TestFunzionale):
         sessione_persona.visit("%s%s" % (self.live_server_url,
                                             reverse('lista_articoli')))
         self.assertFalse(sessione_persona.is_text_present('Non è stato trovato alcun articolo'))
-        self.assertTrue(sessione_persona.is_text_present('Titolo'))
-        self.assertTrue(sessione_persona.is_text_present('Titolo 2'))
-        self.assertTrue(sessione_persona.is_text_present('Titolo 3'))
+        self.assertTrue(sessione_persona.is_text_present(articolo.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo3.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo3.estratto))
+        self.assertTrue(3, len(sessione_persona.find_by_css('panel panel-primary')))
+        sessione_persona.fill('q', 'primo')
+        sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
+        self.assertTrue(1, len(sessione_persona.find_by_css('panel panel-primary')))
+        self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.estratto))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.estratto))
+        sessione_persona.find_by_xpath('//select[@name="anno"]//option[@value="1980"]').first.click()
+        sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
+        self.assertTrue(1, len(sessione_persona.find_by_css('panel panel-primary')))
+        self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.estratto))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.estratto))
+        sessione_persona.fill('q', '')
+        sessione_persona.find_by_xpath('//select[@name="anno"]//option[@value="1980"]').first.click()
+        sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
+        self.assertTrue(2, len(sessione_persona.find_by_css('panel panel-primary')))
+        self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo3.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo3.estratto))
+        sessione_persona.find_by_xpath('//select[@name="anno"]//option[@value="1980"]').first.click()
+        sessione_persona.find_by_xpath('//select[@name="mese"]//option[@value=6]').first.click()
+        sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
+        self.assertTrue(2, len(sessione_persona.find_by_css('panel panel-primary')))
+        self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.estratto))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.estratto))
+        #sessione_persona.fill('q', '')
+        #sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
+        #sessione_persona.find_link_by_text('Leggi').first.click()
