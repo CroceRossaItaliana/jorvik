@@ -1,3 +1,4 @@
+import datetime
 import os
 
 from unittest import skipIf
@@ -9,6 +10,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from articoli.models import Articolo
 from anagrafica.models import Persona
 from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
@@ -295,3 +297,49 @@ class TestFunzionaleBase(TestFunzionale):
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
         testo_personalizzato = 'Ciao, {0}'.format(persona_in_sede.nome)
         self.assertTrue(sessione.is_text_present(testo_personalizzato))
+
+
+class TestFunzionaleArticoli(TestFunzionale):
+
+    def test_lista_articoli_vuota(self):
+        persona = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza()
+        sessione_persona = self.sessione_utente(persona=persona)
+        sessione_persona.visit("%s%s" % (self.live_server_url,
+                                            reverse('lista_articoli')))
+        self.assertTrue(sessione_persona.is_text_present('Non è stato trovato alcun articolo'))
+
+    def test_lista_articoli(self):
+        articolo = Articolo.objects.create(
+            titolo='Titolo',
+            corpo='Testo random',
+            estratto='estratto qualsiasi',
+            data_inizio_pubblicazione=datetime.datetime.now() - datetime.timedelta(days=5),
+            data_fine_pubblicazione=datetime.datetime.now() + datetime.timedelta(days=5),
+            stato=Articolo.PUBBLICATO
+        )
+        articolo2 = Articolo.objects.create(
+            titolo='Titolo 2',
+            corpo='Testo random 2',
+            estratto='estratto qualsiasi 2',
+            data_inizio_pubblicazione=datetime.datetime.now() - datetime.timedelta(days=5),
+            data_fine_pubblicazione=datetime.datetime.now() + datetime.timedelta(days=5),
+            stato=Articolo.PUBBLICATO
+        )
+        articolo3 = Articolo.objects.create(
+            titolo='Titolo 3',
+            corpo='Testo random 3',
+            estratto='estratto qualsiasi 3',
+            data_inizio_pubblicazione=datetime.datetime.now() - datetime.timedelta(days=5),
+            data_fine_pubblicazione=datetime.datetime.now() + datetime.timedelta(days=5),
+            stato=Articolo.PUBBLICATO
+        )
+        persona = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza()
+        sessione_persona = self.sessione_utente(persona=persona)
+        sessione_persona.visit("%s%s" % (self.live_server_url,
+                                            reverse('lista_articoli')))
+        self.assertFalse(sessione_persona.is_text_present('Non è stato trovato alcun articolo'))
+        self.assertTrue(sessione_persona.is_text_present('Titolo'))
+        self.assertTrue(sessione_persona.is_text_present('Titolo 2'))
+        self.assertTrue(sessione_persona.is_text_present('Titolo 3'))
