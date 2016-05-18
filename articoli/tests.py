@@ -2,14 +2,13 @@ import datetime
 import random
 import string
 
+from django.core.files.temp import NamedTemporaryFile
 from django.test import TestCase
 
 from anagrafica.models import Delega
 from anagrafica.permessi.applicazioni import PRESIDENTE
-from base.utils_tests import (crea_appartenenza, crea_persona,
-                              crea_persona_sede_appartenenza, crea_sede,
-                              crea_utenza, crea_area_attivita, crea_partecipazione, crea_turno)
-
+from base.files import Zip
+from base.utils_tests import crea_persona, crea_persona_sede_appartenenza
 
 from articoli.models import Articolo, ArticoloSegmento
 
@@ -21,6 +20,14 @@ def parola_casuale(lunghezza):
 class ArticoliTests(TestCase):
 
     def test_articolo(self):
+
+        CONTENUTO_1 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n"
+        NOME_1 = 'Test1.txt'
+        CONTENUTO_2 = "Donec tempus nisi eu enim consequat, non scelerisque nisi accumsan.\n"
+        NOME_2 = 'Test/Test2.txt'
+
+
+
 
         volontario, _, _ = crea_persona_sede_appartenenza()
         presidente = crea_persona()
@@ -76,6 +83,17 @@ class ArticoliTests(TestCase):
             segmento='B',
             articolo=articolo3
         )
+
+
+        z = Zip(oggetto=articolo3)
+        f1 = NamedTemporaryFile(delete=False, mode='wt')
+        f1.write(CONTENUTO_1)
+        f1.close()
+        z.aggiungi_file(f1.name, NOME_1)
+        z.comprimi_e_salva(nome='TestZip.zip')
+
+        self.assertEqual(1, articolo3.allegati.all().count())
+        self.assertIn(z, articolo3.allegati.all())
 
         articolo4 = Articolo.objects.create(
                 titolo='Titolo 4',
