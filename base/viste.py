@@ -106,6 +106,7 @@ def recupera_password(request):
                         "reset_pw_link": default_token_generator.make_token(per.utenza),
                         "scadenza_token": django_settings.PASSWORD_RESET_TIMEOUT_DAYS * 24
                     },
+                    utenza=True
                 )
 
                 return messaggio_generico(request, None,
