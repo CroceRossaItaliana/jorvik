@@ -211,17 +211,18 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         from posta.models import Messaggio
         modello = "email_autorizzazione_concessa.html"
         destinatari = [self.richiedente]
+        corpo = {
+            "richiesta": self,
+        }
         if auto:
             modello = "email_autorizzazione_concessa_automatica.html"
             destinatari.append(self.firmatario)
+            corpo['firmatario'] = self.firmatario
+            corpo['giorni'] = self.oggetto._scadenza_approvazione_automatica
         Messaggio.costruisci_e_invia(
             oggetto="Richiesta di %s APPROVATA" % (self.oggetto.RICHIESTA_NOME,),
             modello=modello,
-            corpo={
-                "richiesta": self,
-                "firmatario": firmatario,
-                "giorni": self.oggetto._scadenza_approvazione_automatica
-            },
+            corpo=corpo,
             mittente=self.firmatario,
             destinatari=destinatari
         )
@@ -231,17 +232,18 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         modello = "email_autorizzazione_negata.html"
         mittente = self.firmatario
         destinatari = [self.richiedente]
+        corpo = {
+            "richiesta": self,
+        }
         if auto:
             modello = "email_autorizzazione_negata_automatica.html"
             destinatari.append(self.firmatario)
+            corpo['firmatario'] = self.firmatario
+            corpo['giorni'] = self.oggetto._scadenza_negazione_automatica
         Messaggio.costruisci_e_invia(
             oggetto="Richiesta di %s RESPINTA" % (self.oggetto.RICHIESTA_NOME,),
             modello=modello,
-            corpo={
-                "richiesta": self,
-                "firmatario": firmatario,
-                "giorni": self.oggetto._scadenza_negazione_automatica
-            },
+            corpo=corpo,
             mittente=self.firmatario,
             destinatari=destinatari
         )
