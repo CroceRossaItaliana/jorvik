@@ -171,8 +171,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             self.oggetto.autorizzazione_concessa(modulo=modulo)
             if self.oggetto.INVIA_NOTIFICA_CONCESSA:
                 self.notifica_concessa(auto=self.oggetto.INVIA_NOTIFICA_CONCESSA_AUTOMATICA)
-            self.oggetto.INVIA_NOTIFICA_CONCESSA_AUTOMATICA = False
-            self.oggetto.save()
+                self.oggetto.INVIA_NOTIFICA_CONCESSA_AUTOMATICA = False
+                self.oggetto.save()
 
     def concedi(self, firmatario, modulo=None):
         self.firma(firmatario, True, modulo=modulo)
