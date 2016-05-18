@@ -156,8 +156,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             self.oggetto.autorizzazioni_set().update(necessaria=False)
             if self.oggetto.INVIA_NOTIFICA_NEGATA:
                 self.notifica_negata(auto=self.oggetto.INVIA_NOTIFICA_NEGATA_AUTOMATICA)
-                    self.oggetto.INVIA_NOTIFICA_NEGATA_AUTOMATICA = False
-                    self.oggetto.save()
+                self.oggetto.INVIA_NOTIFICA_NEGATA_AUTOMATICA = False
+                self.oggetto.save()
             return
 
         # Questa concessa, di questo progressivo non e' piu' necessaria
