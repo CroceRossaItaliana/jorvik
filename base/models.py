@@ -663,10 +663,6 @@ class ConAutorizzazioni(models.Model):
         """
         return ModuloMotivoNegazione
 
-    @property
-    def autorizzazione_automatica(self):
-        return self.automatica
-
 
 class ConScadenzaPulizia(models.Model):
     """
