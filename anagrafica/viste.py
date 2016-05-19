@@ -1131,7 +1131,8 @@ def _profilo_credenziali(request, me, persona):
                     "autore": me,
                 },
                 mittente=me,
-                destinatari=[persona]
+                destinatari=[persona],
+                utenza=True
             )
 
         _invia_notifica()  # Invia notifica alla vecchia e-mail
