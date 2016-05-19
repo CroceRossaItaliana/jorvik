@@ -11,7 +11,7 @@ from base.models import Allegato
 from posta.forms import ModuloScriviMessaggioConDestinatariVisibili, \
     ModuloScriviMessaggioConDestinatariNascosti
 from posta.models import Messaggio
-from posta.utils import imposta_destinatari_e_scrivi_messaggio
+
 
 __author__ = "alfioemanuele"
 
@@ -167,12 +167,3 @@ def posta_scrivi(request, me):
     }
 
     return 'posta_scrivi.html', contesto
-
-
-@pagina_privata
-def destinatari_multipli(request, me):
-    pks = []
-    if 'destinatario' in request.POST:
-        pks = request.POST.getlist('destinatario')
-    qs = Persona.objects.filter(pk__in=pks)
-    return imposta_destinatari_e_scrivi_messaggio(request, qs)
