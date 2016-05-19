@@ -343,10 +343,10 @@ class TestFunzionaleArticoli(TestFunzionale):
         self.assertTrue(sessione_persona.is_text_present(articolo2.estratto))
         self.assertTrue(sessione_persona.is_text_present(articolo3.titolo))
         self.assertTrue(sessione_persona.is_text_present(articolo3.estratto))
-        self.assertTrue(3, len(sessione_persona.find_by_css('panel panel-primary')))
+        self.assertEqual(3, len(sessione_persona.find_by_css('.panel.panel-primary')))
         sessione_persona.fill('q', 'primo')
         sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
-        self.assertTrue(1, len(sessione_persona.find_by_css('panel panel-primary')))
+        self.assertEqual(1, len(sessione_persona.find_by_css('.panel.panel-primary')))
         self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
         self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
         self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
@@ -355,7 +355,7 @@ class TestFunzionaleArticoli(TestFunzionale):
         self.assertFalse(sessione_persona.is_text_present(articolo3.estratto))
         sessione_persona.find_by_xpath('//select[@name="anno"]//option[@value="1980"]').first.click()
         sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
-        self.assertTrue(1, len(sessione_persona.find_by_css('panel panel-primary')))
+        self.assertEqual(1, len(sessione_persona.find_by_css('.panel.panel-primary')))
         self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
         self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
         self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
@@ -365,7 +365,7 @@ class TestFunzionaleArticoli(TestFunzionale):
         sessione_persona.fill('q', '')
         sessione_persona.find_by_xpath('//select[@name="anno"]//option[@value="1980"]').first.click()
         sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
-        self.assertTrue(2, len(sessione_persona.find_by_css('panel panel-primary')))
+        self.assertEqual(2, len(sessione_persona.find_by_css('.panel.panel-primary')))
         self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
         self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
         self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
@@ -375,7 +375,7 @@ class TestFunzionaleArticoli(TestFunzionale):
         sessione_persona.find_by_xpath('//select[@name="anno"]//option[@value="1980"]').first.click()
         sessione_persona.find_by_xpath('//select[@name="mese"]//option[@value=6]').first.click()
         sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
-        self.assertTrue(1, len(sessione_persona.find_by_css('panel panel-primary')))
+        self.assertEqual(1, len(sessione_persona.find_by_css('.panel.panel-primary')))
         self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
         self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
         self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
@@ -392,3 +392,18 @@ class TestFunzionaleArticoli(TestFunzionale):
         self.assertFalse(sessione_persona.is_text_present(articolo3.titolo))
         self.assertFalse(sessione_persona.is_text_present(articolo3.corpo))
         self.assertTrue(sessione_persona.is_text_present('Letture'))
+
+
+class TestFunzionaleGestioneFile(TestFunzionale):
+
+    def test_lista_documenti_vuota(self):
+        persona = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza()
+        sessione_persona = self.sessione_utente(persona=persona)
+        sessione_persona.visit("%s%s" % (self.live_server_url,
+                                            reverse('lista_documenti')))
+        self.assertTrue(sessione_persona.is_text_present('tipo'))
+        self.assertTrue(sessione_persona.is_text_present('nome'))
+        self.assertTrue(sessione_persona.is_text_present('dimensione'))
+        self.assertTrue(sessione_persona.is_text_present('accessi'))
+        self.assertEqual(0, len(sessione_persona.find_by_tag('tbody').find_by_tag('td')))
