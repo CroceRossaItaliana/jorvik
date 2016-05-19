@@ -209,16 +209,22 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
     def notifica_concessa(self, auto=False):
         from posta.models import Messaggio
-        modello = "email_autorizzazione_concessa.html"
-        destinatari = [self.richiedente]
-        corpo = {
-            "richiesta": self,
-        }
+
         if auto:
             modello = "email_autorizzazione_concessa_automatica.html"
-            destinatari.append(self.firmatario)
-            corpo['firmatario'] = self.firmatario
-            corpo['giorni'] = self.oggetto._scadenza_approvazione_automatica
+            destinatari = [self.richiedente, self.firmatario]
+            corpo = {
+                "richiesta": self,
+                "firmatario": self.firmatario,
+                "giorni": self.oggetto._scadenza_approvazione_automatica
+            }
+        else:
+            modello = "email_autorizzazione_concessa.html"
+            destinatari = [self.richiedente]
+            corpo = {
+                "richiesta": self,
+            }
+
         Messaggio.costruisci_e_invia(
             oggetto="Richiesta di %s APPROVATA" % (self.oggetto.RICHIESTA_NOME,),
             modello=modello,
@@ -229,17 +235,22 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
     def notifica_negata(self, auto=False):
         from posta.models import Messaggio
-        modello = "email_autorizzazione_negata.html"
-        mittente = self.firmatario
-        destinatari = [self.richiedente]
-        corpo = {
-            "richiesta": self,
-        }
+
         if auto:
             modello = "email_autorizzazione_negata_automatica.html"
-            destinatari.append(self.firmatario)
-            corpo['firmatario'] = self.firmatario
-            corpo['giorni'] = self.oggetto._scadenza_negazione_automatica
+            destinatari = [self.richiedente, self.firmatario]
+            corpo = {
+                "richiesta": self,
+                "firmatario": self.firmatario,
+                "giorni": self.oggetto._scadenza_negazione_automatica
+            }
+        else:
+            modello = "email_autorizzazione_negata.html"
+            destinatari = [self.richiedente]
+            corpo = {
+                "richiesta": self,
+            }
+
         Messaggio.costruisci_e_invia(
             oggetto="Richiesta di %s RESPINTA" % (self.oggetto.RICHIESTA_NOME,),
             modello=modello,
