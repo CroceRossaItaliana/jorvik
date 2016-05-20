@@ -2,7 +2,7 @@
 from django.core.urlresolvers import reverse
 from django.db import models, transaction
 from django.utils.encoding import force_text
-
+from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 from filer.models import File
 from filer.models.abstract import BaseImage
@@ -44,7 +44,8 @@ class InterfacciaJorvik(object):
 
 class Documento(InterfacciaJorvik, File):
     url_documento = models.URLField(_('URL Documento'), default='', blank=True)
-    downloads = models.PositiveIntegerField("Downloads", db_index=True, default=0)
+    downloads = models.PositiveIntegerField('Downloads', db_index=True, default=0)
+    data_pubblicazione = models.DateTimeField(_('Data pubblicazione'), default=now)
 
     class Meta:
         abstract = False
@@ -62,6 +63,7 @@ class Documento(InterfacciaJorvik, File):
 class Immagine(InterfacciaJorvik, BaseImage):
     url_documento = models.URLField(_('URL Documento'), default='', blank=True)
     downloads = models.PositiveIntegerField("Downloads", db_index=True, default=0)
+    data_pubblicazione = models.DateTimeField(_('Data pubblicazione'), default=now)
 
     class Meta:
         abstract = False
