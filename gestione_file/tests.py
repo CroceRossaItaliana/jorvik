@@ -69,7 +69,9 @@ class FilerClipboardAdminUrlsTests(TestCase):
             'segmenti-TOTAL_FORMS': 0,
             'segmenti-INITIAL_FORMS': 0,
             'segmenti-MIN_NUM_FORMS': 0,
-            'segmenti-MAX_NUM_FORMS': 0
+            'segmenti-MAX_NUM_FORMS': 0,
+            'data_pubblicazione_0': '2016-01-01',
+            'data_pubblicazione_1': '22:22:22',
         }
         self.client.post(url, post_data, **extra_headers)
         self.assertEqual(Documento.objects.count(), 1)
@@ -214,8 +216,7 @@ class TestFunzionaleGestioneFile(TestFunzionale):
         persona = crea_persona()
         persona, sede, app = crea_persona_sede_appartenenza()
         sessione_persona = self.sessione_utente(persona=persona)
-        sessione_persona.visit("%s%s" % (self.live_server_url,
-                                            reverse('lista_documenti')))
+        sessione_persona.visit("%s%s" % (self.live_server_url, reverse('lista_documenti')))
         self.assertTrue(sessione_persona.is_text_present('tipo'))
         self.assertTrue(sessione_persona.is_text_present('nome'))
         self.assertTrue(sessione_persona.is_text_present('dimensione'))
@@ -245,9 +246,11 @@ class TestFunzionaleGestioneFile(TestFunzionale):
             'segmenti-TOTAL_FORMS': 0,
             'segmenti-INITIAL_FORMS': 0,
             'segmenti-MIN_NUM_FORMS': 0,
-            'segmenti-MAX_NUM_FORMS': 0
+            'segmenti-MAX_NUM_FORMS': 0,
+            'data_pubblicazione_0': '2016-01-01',
+            'data_pubblicazione_1': '22:22:22',
         }
-        self.client.post(url, post_data, **extra_headers)
+        response = self.client.post(url, post_data, **extra_headers)
         self.assertEqual(Documento.objects.count(), 2)
         uploaded_file = Documento.objects.all()[1]
         self.assertEqual(uploaded_file.folder, folder_radice)
@@ -256,8 +259,7 @@ class TestFunzionaleGestioneFile(TestFunzionale):
         persona = crea_persona()
         persona, sede, app = crea_persona_sede_appartenenza()
         sessione_persona = self.sessione_utente(persona=persona)
-        sessione_persona.visit("%s%s" % (self.live_server_url,
-                                            reverse('lista_documenti')))
+        sessione_persona.visit("%s%s" % (self.live_server_url, reverse('lista_documenti')))
         self.assertTrue(sessione_persona.is_text_present('tipo'))
         self.assertTrue(sessione_persona.is_text_present('nome'))
         self.assertTrue(sessione_persona.is_text_present('dimensione'))
