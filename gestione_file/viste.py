@@ -2,15 +2,16 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.http import Http404, HttpResponsePermanentRedirect
+from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
-from autenticazione.funzioni import pagina_privata, VistaDecorata
+from autenticazione.funzioni import pagina_privata, VistaDecorata, pagina_pubblica
+from ckeditor_filebrowser_filer.views import _return_thumbnail
 from filer.models import File, Folder
 from filer.server.views import filer_settings
 
-from gestione_file.models import Documento, DocumentoSegmento
+from gestione_file.models import Documento, DocumentoSegmento, Immagine
 from jorvik import settings
 
 server = filer_settings.FILER_PRIVATEMEDIA_SERVER
@@ -71,8 +72,8 @@ class ListaDocumenti(VistaDecorata, ListView):
         return context
 
 
-@method_decorator(pagina_privata)
-def serve_protected_file(request, pk):
+@pagina_privata
+def serve_protected_file(request, persona, pk):
     """
     Restituisce il file e incrementa il numero di downloads
     """
@@ -89,3 +90,26 @@ def serve_protected_file(request, pk):
         else:
             raise Http404('File not found')
     return server.serve(request, file_obj=file_obj.file, save_as=False)
+
+
+@pagina_pubblica
+def serve_image(request, persona, image_id, thumb_options=None, width=None, height=None):
+    """
+    returns the content of an image sized according to the parameters
+    :param request: Request object
+    :param image_id: Filer image ID
+    :param thumb_options: ThumbnailOption ID
+    :param width: user-provided width
+    :param height: user-provided height
+    :return: JSON serialized URL components ('url', 'width', 'height')
+    """
+    image = Immagine.objects.get(pk=image_id)
+    if getattr(image, 'canonical_url', None):
+        url = image.canonical_url
+    else:
+        url = image.url
+    thumb = _return_thumbnail(image, thumb_options, width, height)
+    if thumb:
+        return server.serve(request, file_obj=thumb, save_as=False)
+    else:
+        return HttpResponseRedirect(url)

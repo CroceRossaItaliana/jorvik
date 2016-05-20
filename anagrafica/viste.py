@@ -36,6 +36,7 @@ from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LE
     ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
     INCARICO_GESTIONE_FOTOTESSERE
+from articoli.viste import get_articoli
 from attivita.models import Partecipazione
 from attivita.viste import attivita_storico_excel
 from autenticazione.funzioni import pagina_anonima, pagina_privata
@@ -245,7 +246,11 @@ def registrati_conferma(request, tipo):
 
 @pagina_privata
 def utente(request, me):
-    return 'anagrafica_utente_home.html'
+    articoli = get_articoli(me)
+    contesto = {
+        "articoli": articoli[:5],
+    }
+    return 'anagrafica_utente_home.html', contesto
 
 @pagina_privata
 def utente_anagrafica(request, me):
