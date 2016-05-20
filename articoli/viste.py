@@ -47,9 +47,6 @@ class FiltraSegmenti(object):
                 mese = int(self.request.GET.get('mese', ''))
             except ValueError:
                 pass
-        query = self.request.GET.get('q', '')
-        persona = self.persona
-        return get_articoli(persona, anno, mese, query)
 
 
 class ListaArticoli(FiltraSegmenti, VistaDecorata, ListView):
