@@ -26,7 +26,6 @@ admin.site.register(Folder, AdminCartella)
 
 class DocumentoSegmentoInline(admin.TabularInline):
     model = DocumentoSegmento
-    raw_id_fields = ('file',)
     extra = 1
     raw_id_fields = ('sede', 'titolo')
 
@@ -118,7 +117,6 @@ class AdminDocumento(FileAdmin):
             )
         return HttpResponseRedirect(post_url)
 
-
     def get_inline_instances(self, request, obj=None):
         inline_instances = []
         if obj:
@@ -136,7 +134,7 @@ class AdminDocumento(FileAdmin):
         return inline_instances
 
 AdminDocumento.fieldsets = AdminDocumento.build_fieldsets(
-    extra_main_fields=('url_documento',),
+    extra_main_fields=('url_documento', 'data_pubblicazione'),
 )
 
 admin.site.register(Documento, AdminDocumento)
@@ -164,7 +162,9 @@ class AdminImmagine(ImageAdmin):
         return inline_instances
 
 AdminImmagine.fieldsets = AdminImmagine.build_fieldsets(
-    extra_main_fields=('default_alt_text', 'default_caption', 'url_documento'),
+    extra_main_fields=(
+        'default_alt_text', 'default_caption', 'url_documento', 'data_pubblicazione'
+    ),
     extra_fieldsets=(
         ('Subject Location', {
             'fields': ('subject_location',),
