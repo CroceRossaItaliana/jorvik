@@ -9,6 +9,22 @@ from articoli.models import Articolo, ArticoloSegmento
 from autenticazione.funzioni import pagina_privata, VistaDecorata
 
 
+def get_articoli(persona, anno=None, mese=None, query=None):
+    filtri_extra = {}
+    if query:
+        filtri_extra['titolo__icontains'] = query
+    if anno:
+        filtri_extra['data_inizio_pubblicazione__year'] = anno
+    if mese:
+        filtri_extra['data_inizio_pubblicazione__month'] = mese
+    if persona:
+        articoli_segmenti = ArticoloSegmento.objects.all().filtra_per_segmenti(persona)
+        articoli = articoli_segmenti.oggetti_collegati().pubblicati()
+    else:
+        articoli = Articolo.objects.pubblicati()
+    return articoli.filter(**filtri_extra)
+
+
 class FiltraSegmenti(object):
 
     @property
@@ -19,7 +35,6 @@ class FiltraSegmenti(object):
             return None
 
     def get_queryset(self):
-        filtri_extra = {}
         anno = self.kwargs.get('anno', '')
         mese = self.kwargs.get('mese', '')
         if not anno:
@@ -32,18 +47,9 @@ class FiltraSegmenti(object):
                 mese = int(self.request.GET.get('mese', ''))
             except ValueError:
                 pass
-        filtri_extra['titolo__icontains'] = self.request.GET.get('q', '')
-        if anno:
-            filtri_extra['data_inizio_pubblicazione__year'] = anno
-        if mese:
-            filtri_extra['data_inizio_pubblicazione__month'] = mese
+        query = self.request.GET.get('q', '')
         persona = self.persona
-        if persona:
-            articoli_segmenti = ArticoloSegmento.objects.all().filtra_per_segmenti(persona)
-            articoli = articoli_segmenti.oggetti_collegati().pubblicati()
-        else:
-            articoli = Articolo.objects.pubblicati()
-        return articoli.filter(**filtri_extra)
+        return get_articoli(persona, anno, mese, query)
 
 
 class ListaArticoli(FiltraSegmenti, VistaDecorata, ListView):
