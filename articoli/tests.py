@@ -26,9 +26,6 @@ class ArticoliTests(TestCase):
         CONTENUTO_2 = "Donec tempus nisi eu enim consequat, non scelerisque nisi accumsan.\n"
         NOME_2 = 'Test/Test2.txt'
 
-
-
-
         volontario, _, _ = crea_persona_sede_appartenenza()
         presidente = crea_persona()
         presidente.save()
