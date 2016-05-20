@@ -83,7 +83,6 @@ class DettaglioArticolo(FiltraSegmenti, VistaDecorata, DetailView):
 
     def get_object(self, queryset=None):
         obj = super(DetailView, self).get_object(queryset)
-        print(obj.segmenti.exists())
         if not self.request.user.is_authenticated() and obj.segmenti.exists():
                 raise Http404()
         if obj:

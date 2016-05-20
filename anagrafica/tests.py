@@ -243,7 +243,6 @@ class TestAnagrafica(TestCase):
 
         d6.delete()
 
-
     def test_documenti(self):
 
         p = crea_persona()
