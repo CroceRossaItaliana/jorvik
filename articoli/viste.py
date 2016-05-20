@@ -1,8 +1,10 @@
 from datetime import date
 
+from django.http import Http404
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView, ListView
 
+from anagrafica.models import Persona
 from articoli.models import Articolo, ArticoloSegmento
 from autenticazione.funzioni import pagina_privata, VistaDecorata
 
@@ -11,7 +13,10 @@ class FiltraSegmenti(object):
 
     @property
     def persona(self):
-        return self.request.user.persona
+        try:
+            return self.request.user.persona
+        except (Persona.DoesNotExist, AttributeError):
+            return None
 
     def get_queryset(self):
         filtri_extra = {}
@@ -32,8 +37,12 @@ class FiltraSegmenti(object):
             filtri_extra['data_inizio_pubblicazione__year'] = anno
         if mese:
             filtri_extra['data_inizio_pubblicazione__month'] = mese
-        articoli_segmenti = ArticoloSegmento.objects.all().filtra_per_segmenti(self.persona)
-        articoli = articoli_segmenti.oggetti_collegati().pubblicati()
+        persona = self.persona
+        if persona:
+            articoli_segmenti = ArticoloSegmento.objects.all().filtra_per_segmenti(persona)
+            articoli = articoli_segmenti.oggetti_collegati().pubblicati()
+        else:
+            articoli = Articolo.objects.pubblicati()
         return articoli.filter(**filtri_extra)
 
 
@@ -65,14 +74,18 @@ class DettaglioArticolo(FiltraSegmenti, VistaDecorata, DetailView):
     slug_field = 'slug'
     slug_url_kwarg = 'articolo_slug'
     context_object_name = 'articolo'
-    template_name = 'dettaglio_articolo.html'
 
-    @method_decorator(pagina_privata)
-    def dispatch(self, request, *args, **kwargs):
-        return super(DettaglioArticolo, self).dispatch(request, *args, **kwargs)
+    def get_template_names(self):
+        if self.request.user.is_authenticated():
+            return 'dettaglio_articolo.html'
+        else:
+            return 'dettaglio_articolo_pubblico.html'
 
     def get_object(self, queryset=None):
         obj = super(DetailView, self).get_object(queryset)
+        print(obj.segmenti.exists())
+        if not self.request.user.is_authenticated() and obj.segmenti.exists():
+                raise Http404()
         if obj:
             obj.incrementa_visualizzazioni()
         return obj

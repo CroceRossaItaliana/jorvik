@@ -198,8 +198,14 @@ class VistaDecorata(object):
     def contesto(self, contesto):
         embed = self.permetti_embed and self.request.GET.get('embed', default='false') == 'true'
 
-        contesto.update({'me': self.request.me})
-        contesto.update({'menu': menu(self.request)})
+        try:
+            contesto.update({'me': self.request.me})
+        except AttributeError:
+            pass
+        try:
+            contesto.update({'menu': menu(self.request)})
+        except AttributeError:
+            pass
         contesto.update({'embed': embed})
         return contesto
 
