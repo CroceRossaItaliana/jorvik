@@ -54,24 +54,14 @@
     </div>
 
     {% for articolo in articoli %}
-    <div class="panel panel-primary">
-        <div class="panel-heading">
-            <h4 class="panel-title">
-                <i class="fa fa-fw fa-newspaper-o"></i>
-                <span>{{articolo.titolo}}</span> - <span>{{articolo.data_inizio_pubblicazione}}<span>
-            </h4>
-        </div>
-        <div class="panel-body">
-            <p>{{articolo.estratto}} <a href={{articolo.get_absolute_url}}><i class="fa fa-caret-square-o-right" ></i> Leggi</a></p>
-        </div>
-    </div>
+        {% include "includes/elemento_lista.html" %}
     {% empty %}
         <div class="alert alert-info alert-block">
             <h4><i class="fa fa-info-circle"></i> Nessun articolo</h4>
                     <p>Non &egrave; stato trovato alcun articolo.</p>
          </div>
     {% endfor %}
-        {% if is_paginated %}
+    {% if is_paginated %}
         <div class="pagination">
             <span class="page-links">
                 {% if page_obj.has_previous %}
