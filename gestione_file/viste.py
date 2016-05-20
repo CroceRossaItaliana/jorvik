@@ -35,14 +35,14 @@ class ListaDocumenti(VistaDecorata, ListView):
         documenti_segmenti = DocumentoSegmento.objects.all().filtra_per_segmenti(self.persona)
         documenti = documenti_segmenti.oggetti_collegati()
         stringa = self.request.GET.get('q', '')
-        if cartella:
+        if stringa:
+            filtri_extra = Q(name__icontains=stringa) | Q(original_filename__icontains=stringa)
+            return documenti.filter(filtri_extra)
+        elif cartella:
             filtri_extra = {
                 'folder': cartella
             }
             return documenti.filter(**filtri_extra)
-        elif stringa:
-            filtri_extra = Q(name__icontains=stringa) | Q(original_filename__icontains=stringa)
-            return documenti.filter(filtri_extra)
         return documenti.none()
 
     def get_context_data(self, **kwargs):
