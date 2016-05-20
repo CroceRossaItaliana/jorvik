@@ -1,21 +1,27 @@
+import datetime
 import os
+import tempfile
 
 from unittest import skipIf
 from unittest.mock import patch
 from zipfile import ZipFile
 from django.contrib.auth.tokens import default_token_generator
+import django.core.files
 from django.core.files.temp import NamedTemporaryFile
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from articoli.models import Articolo
 from anagrafica.models import Persona
 from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
 from base.geo import Locazione
 from base.utils_tests import crea_appartenenza, crea_persona_sede_appartenenza, crea_persona, crea_area_attivita, crea_utenza
+from gestione_file.models import Documento
 from jorvik.settings import GOOGLE_KEY
-
+from filer.models import Folder
+from filer.tests import create_image
 
 class TestBase(TestCase):
 
@@ -295,3 +301,189 @@ class TestFunzionaleBase(TestFunzionale):
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
         testo_personalizzato = 'Ciao, {0}'.format(persona_in_sede.nome)
         self.assertTrue(sessione.is_text_present(testo_personalizzato))
+
+
+class TestFunzionaleArticoli(TestFunzionale):
+
+    def test_lista_articoli_vuota(self):
+        persona = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza()
+        sessione_persona = self.sessione_utente(persona=persona)
+        sessione_persona.visit("%s%s" % (self.live_server_url,
+                                            reverse('lista_articoli')))
+        self.assertTrue(sessione_persona.is_text_present('Non è stato trovato alcun articolo'))
+
+    def test_lista_articoli(self):
+        articolo = Articolo.objects.create(
+            titolo='Titolo 1981',
+            corpo='Testo random',
+            estratto='qualcosa',
+            data_inizio_pubblicazione='1981-12-10',
+            stato=Articolo.PUBBLICATO
+        )
+        articolo2 = Articolo.objects.create(
+            titolo='Titolo primo 1980',
+            corpo='Testo random 2',
+            estratto='un pezzo',
+            data_inizio_pubblicazione='1980-06-10',
+            stato=Articolo.PUBBLICATO
+        )
+        articolo3 = Articolo.objects.create(
+            titolo='Titolo secondo 1980',
+            corpo='Testo random 3',
+            estratto='una parte',
+            data_inizio_pubblicazione='1980-12-10',
+            stato=Articolo.PUBBLICATO
+        )
+        persona = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza()
+        sessione_persona = self.sessione_utente(persona=persona)
+        sessione_persona.visit("%s%s" % (self.live_server_url,
+                                            reverse('lista_articoli')))
+        self.assertFalse(sessione_persona.is_text_present('Non è stato trovato alcun articolo'))
+        self.assertTrue(sessione_persona.is_text_present(articolo.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo3.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo3.estratto))
+        self.assertEqual(3, len(sessione_persona.find_by_css('.panel.panel-primary')))
+        sessione_persona.fill('q', 'primo')
+        sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
+        self.assertEqual(1, len(sessione_persona.find_by_css('.panel.panel-primary')))
+        self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.estratto))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.estratto))
+        sessione_persona.find_by_xpath('//select[@name="anno"]//option[@value="1980"]').first.click()
+        sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
+        self.assertEqual(1, len(sessione_persona.find_by_css('.panel.panel-primary')))
+        self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.estratto))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.estratto))
+        sessione_persona.fill('q', '')
+        sessione_persona.find_by_xpath('//select[@name="anno"]//option[@value="1980"]').first.click()
+        sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
+        self.assertEqual(2, len(sessione_persona.find_by_css('.panel.panel-primary')))
+        self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo3.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo3.estratto))
+        sessione_persona.find_by_xpath('//select[@name="anno"]//option[@value="1980"]').first.click()
+        sessione_persona.find_by_xpath('//select[@name="mese"]//option[@value=6]').first.click()
+        sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
+        self.assertEqual(1, len(sessione_persona.find_by_css('.panel.panel-primary')))
+        self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.estratto))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.estratto))
+        sessione_persona.fill('q', '')
+        sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
+        sessione_persona.find_link_by_partial_text('Leggi').first.click()
+        self.assertTrue(sessione_persona.is_text_present(articolo.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo.corpo))
+        self.assertFalse(sessione_persona.is_text_present(articolo2.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo2.corpo))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo3.corpo))
+        self.assertTrue(sessione_persona.is_text_present('Letture'))
+
+
+class TestFunzionaleGestioneFile(TestFunzionale):
+
+    def setUp(self):
+
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        try:
+            User.objects.get(email='admin@admin.it')
+        except User.DoesNotExist:
+            self.superuser = User.objects.create_superuser(
+                'admin@admin.it', 'secret'
+            )
+        self.client.login(username='admin@admin.it', password='secret')
+        self.img = create_image()
+        file_obj, self.filename = tempfile.mkstemp('.jpg')
+        self.image_name = os.path.basename(self.filename)
+        self.img.save(self.filename, 'JPEG')
+        file_obj, self.doc_filename = tempfile.mkstemp('.doc')
+        self.doc_name = os.path.basename(self.doc_filename)
+        with open(self.doc_filename, 'w') as file_obj:
+            file_obj.write('text')
+        super(TestFunzionaleGestioneFile, self).setUp()
+
+    def tearDown(self):
+        self.client.logout()
+        os.remove(self.filename)
+        os.remove(self.doc_filename)
+        super(TestFunzionaleGestioneFile, self).tearDown()
+
+    def test_lista_documenti_vuota(self):
+        persona = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza()
+        sessione_persona = self.sessione_utente(persona=persona)
+        sessione_persona.visit("%s%s" % (self.live_server_url,
+                                            reverse('lista_documenti')))
+        self.assertTrue(sessione_persona.is_text_present('tipo'))
+        self.assertTrue(sessione_persona.is_text_present('nome'))
+        self.assertTrue(sessione_persona.is_text_present('dimensione'))
+        self.assertTrue(sessione_persona.is_text_present('accessi'))
+        self.assertEqual(0, len(sessione_persona.find_by_tag('tbody').find_by_tag('tr')))
+
+    def test_lista_documenti(self):
+        extra_headers = {}
+        self.assertEqual(Documento.objects.count(), 0)
+        folder_radice = Folder.objects.create(name='radice')
+        folder_figlia = Folder.objects.create(name='sottocartella', parent=folder_radice)
+        file_obj = django.core.files.File(open(self.doc_filename, 'rb'))
+        url = reverse('admin:filer-ajax_upload', kwargs={'folder_id': folder_figlia.pk})
+        post_data = {
+            'Filename': self.doc_name,
+            'Filedata': file_obj,
+            'jsessionid': self.client.session.session_key
+        }
+        self.client.post(url, post_data, **extra_headers)
+        self.assertEqual(Documento.objects.count(), 1)
+        uploaded_file = Documento.objects.all()[0]
+        self.assertEqual(uploaded_file.original_filename, self.doc_name)
+
+        url = reverse('admin:gestione_file_documento_add') + '?parent_id={}'.format(folder_radice.pk)
+        post_data = {
+            'url_documento': 'http://www.example.com',
+            'segmenti-TOTAL_FORMS': 0,
+            'segmenti-INITIAL_FORMS': 0,
+            'segmenti-MIN_NUM_FORMS': 0,
+            'segmenti-MAX_NUM_FORMS': 0
+        }
+        self.client.post(url, post_data, **extra_headers)
+        self.assertEqual(Documento.objects.count(), 2)
+        uploaded_file = Documento.objects.all()[1]
+        self.assertEqual(uploaded_file.folder, folder_radice)
+        self.assertEqual(uploaded_file.original_filename, 'www.example.com')
+
+        persona = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza()
+        sessione_persona = self.sessione_utente(persona=persona)
+        sessione_persona.visit("%s%s" % (self.live_server_url,
+                                            reverse('lista_documenti')))
+        self.assertTrue(sessione_persona.is_text_present('tipo'))
+        self.assertTrue(sessione_persona.is_text_present('nome'))
+        self.assertTrue(sessione_persona.is_text_present('dimensione'))
+        self.assertTrue(sessione_persona.is_text_present('accessi'))
+        self.assertEqual(1, len(sessione_persona.find_by_tag('tbody').find_by_tag('tr')))
+        sessione_persona.find_link_by_text('radice').first.click()
+        self.assertTrue(sessione_persona.is_text_present('www.example.com'))
+        sessione_persona.find_link_by_text('sottocartella').first.click()
+        self.assertTrue(sessione_persona.is_text_present(self.doc_name))
+        sessione_persona.fill('q', 'example')
+        sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
+        self.assertTrue(sessione_persona.is_text_present('www.example.com'))
