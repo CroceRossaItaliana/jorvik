@@ -53,6 +53,7 @@
         <th>tipo</th>
         <th>nome</th>
         {% if query %}<th>cartella</th>{% endif %}
+        <th>data pubbl.</th>
         <th>dimensione</th>
         <th>accessi</th>
     </thead>
@@ -62,6 +63,7 @@
             <tr>
                 <th><i class="fa fa-fw fa-folder-o"></i></th>
                 <td><a href='{% url 'lista_documenti' cartella.pk %}'>{{ cartella.name }}</a></td>
+                <td></td>
                 <td></td>
                 <td></td>
             </tr>
@@ -74,6 +76,7 @@
                 <th><i class="fa fa-fw {{ documento.icona }}"></i></th>
                 <td><a target="_blank" href="{{ documento.url_scarica }}">{{ documento.label }}</a></td>
                 {% if query %}<td>{{ documento.folder }}</td>{% endif %}
+                <td>{{documento.data_pubblicazione|date}}</td>
                 <td>{{documento.size|filesizeformat}}</td>
                 <td>{{documento.downloads}}</td>
             </tr>
@@ -81,7 +84,7 @@
     {% endif %}
     </tbody>
     <tfoot>
-    <td colspan="4">
+    <td colspan="5">
         {% if is_paginated %}
             <div class="pagination">
                 <span class="page-links">

@@ -18,42 +18,6 @@
 {% endblock %}
 
 {% block app_contenuto %}
-
-    <h2 class="allinea-centro text-success">
-        {{articolo.titolo}}
-    </h2>
-
-    <hr>
-    <div class="row allinea-centro ">
-
-        <div class="col-md-6">
-            <i class="fa fa-calendar-o"></i> Pubblicazione<br> {{ articolo.data_inizio_pubblicazione|date:"SHORT_DATETIME_FORMAT" }}
-        </div>
-
-        <div class="col-md-6">
-            <i class="fa fa-fw fa fa-tachometer"></i> Letture<br> {{articolo.visualizzazioni}}
-        </div>
-
-    </div>
-    <hr>
-    <div class="body clearfix">
-        <p>{{articolo.corpo|safe}}</p>
-
-        {% if articolo.allegati.exists %}
-            <hr />
-            <h4>Allegati ({{ articolo.allegati.count }})</h4>
-            <ul>
-                {% for allegato in articolo.allegati.all %}
-                    <li>
-                        <strong>{{ allegato.nome }}</strong>
-                        (<a href="{{ allegato.download_url }}" target="_new" download>Scarica</a>)
-                        <br />
-                        Peso {{ allegato.file.size|filesizeformat }}{% if allegato.scadenza %}, scadenza {{ allegato.scadenza }}{% endif %}
-                    </li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-    </div>
-    <hr>
+    {% include "includes/articolo.html" %}
     <p><a href='{% url 'lista_articoli' %}'><i class="fa fa-level-up" ></i> torna all'elenco</a></p>
 {% endblock %}

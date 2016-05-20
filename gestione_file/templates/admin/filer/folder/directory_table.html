@@ -15,7 +15,7 @@
                 <th class="column-size">{% trans "Size" %}</th>
                 <th class="column-accessi">{% trans "Accessi" %}</th>
                 <th class="column-segmenti">{% trans "Segmenti" %}</th>
-                <th class="column-data">{% trans "Data" %}</th>
+                <th class="column-data">{% trans "Data pubbl." %}</th>
                 <th class="column-action">{% trans "Action" %}</th>
             </tr>
         </thead>
@@ -144,7 +144,7 @@
                                 {{ file.lista_segmenti }}
                             </td>
                             <td class="column-data">
-                                {{ file.uploaded_at|date }}
+                                {{ file.data_pubblicazione|date }}
                             </td>
                             <td class="column-action">
                                 <a href="{{ file.get_admin_change_url }}{% filer_admin_context_url_params %}"
