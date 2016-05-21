@@ -125,6 +125,11 @@ def us_reclama_persona(request, me, persona_pk):
                                torna_titolo="Torna indietro",
                                torna_url="/us/reclama/")
 
+
+    questo_anno = poco_fa().year
+
+    tesseramento = Tesseramento.objects.get(anno=questo_anno)
+
     sedi_qs = Sede.objects.filter(pk__in=[x.pk for x in sedi])
 
     modulo_appartenenza = ModuloReclamaAppartenenza(request.POST or None, sedi=sedi_qs, prefix="app")
@@ -132,16 +137,23 @@ def us_reclama_persona(request, me, persona_pk):
                                                     if k in Appartenenza.MEMBRO_RECLAMABILE)
     modulo_quota = ModuloReclamaQuota(request.POST or None, prefix="quota")
 
+    iv = persona.iv
     if modulo_appartenenza.is_valid():
         if modulo_quota.is_valid():
 
             continua = True
             if modulo_quota.cleaned_data['registra_quota'] == modulo_quota.SI:
                 if not Tesseramento.aperto_anno(
-                    modulo_quota.cleaned_data['data_versamento'].year
+                    modulo_quota.cleaned_data['data_versamento'], iv
                 ):
-                    modulo_quota.add_error('data_versamento', "Spiacente, non è possibile registrare quote "
-                                                              "per l'anno selezionato. ")
+                    if volontario.iv:
+                        data_fine = tesseramento.fine_soci_iv
+                    else:
+                        data_fine = tesseramento.fine_soci
+
+                    modulo_quota.add_error('data_versamento', "Spiacente, non è possibile registrare una "
+                                                              "quota con data di versamento successiva al "
+                                                              "%s" % data_fine)
                     continua = False
 
                 if modulo_quota.cleaned_data['importo_totale'] <= 1:
@@ -769,17 +781,15 @@ def us_quote_nuova(request, me):
 
     questo_anno = poco_fa().year
 
-    modulo = None
     appena_registrata = Quota.objects.get(pk=request.GET['appena_registrata']) \
         if 'appena_registrata' in request.GET else None
 
-    if Tesseramento.aperto_anno(questo_anno):
-        tesseramento = Tesseramento.objects.get(anno=questo_anno)
-        dati_iniziali = {
-            "importo": tesseramento.quota_attivo,
-            "data_versamento": poco_fa(),
-        }
-        modulo = ModuloQuotaVolontario(request.POST or None, initial=dati_iniziali)
+    tesseramento = Tesseramento.objects.get(anno=questo_anno)
+    dati_iniziali = {
+        "importo": tesseramento.quota_attivo,
+        "data_versamento": poco_fa(),
+    }
+    modulo = ModuloQuotaVolontario(request.POST or None, initial=dati_iniziali)
 
     if modulo and modulo.is_valid():
 
@@ -795,6 +805,17 @@ def us_quote_nuova(request, me):
         elif data_versamento.year != questo_anno or data_versamento > oggi():
             modulo.add_error('data_versamento', 'La data di versamento deve essere nel %d e '
                                                 'non può essere nel futuro.' % questo_anno)
+
+        elif not Tesseramento.aperto_anno(
+                data_versamento, volontario.iv
+        ):
+            if volontario.iv:
+                data_fine = tesseramento.fine_soci_iv
+            else:
+                data_fine = tesseramento.fine_soci
+            modulo.add_error('data_versamento', "Spiacente, non è possibile registrare una "
+                                                "quota con data di versamento successiva al "
+                                                "%s" % data_fine)
 
 
         elif tesseramento.pagante(volontario, attivi=True, ordinari=False):
