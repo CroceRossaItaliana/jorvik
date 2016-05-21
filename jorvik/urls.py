@@ -198,7 +198,7 @@ urlpatterns = [
 
     url(r'^us/elenchi/(?P<elenco_tipo>.*)/$', ufficio_soci.viste.us_elenchi),
     url(r'^us/quote/$', ufficio_soci.viste.us_quote),
-    url(r'^us/quote/nuova/$', ufficio_soci.viste.us_quote_nuova),
+    url(r'^us/quote/nuova/$', ufficio_soci.viste.us_quote_nuova, name='us_quote_nuova'),
     url(r'^us/ricevute/$', ufficio_soci.viste.us_ricevute),
     url(r'^us/ricevute/(?P<pk>[0-9]+)/annulla/$', ufficio_soci.viste.us_ricevute_annulla),
     url(r'^us/ricevute/nuova/$', ufficio_soci.viste.us_ricevute_nuova),
