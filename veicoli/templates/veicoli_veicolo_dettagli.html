@@ -1,0 +1,41 @@
+{% extends "veicoli_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Veicolo{% endblock %}
+
+{% block app_contenuto %}
+
+
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <h2 class="panel-title">
+                <i class="fa fa-fw fa-gears"></i>
+                Dettagli veicolo {{ veicolo.targa }}
+        </h2>
+    </div>
+    <div class="panel-body">
+        <a href="/veicolo/modifica/{{ veicolo.pk }}/" class="btn" ><i class="fa fa-fw fa-edit"></i> Modifica informazioni</a>
+        <a href="/veicolo/manutenzioni/{{ veicolo.pk }}/" class="btn" ><i class="fa fa-fw fa-wrench"></i> Manutenzioni</a>
+        <a href="/veicolo/rifornimenti/{{ veicolo.pk }}/" class="btn" ><i class="fa fa-fw fa-plus-circle"></i>Rifornimenti</a>
+        <a href="/veicolo/fermi-tecnici/{{ veicolo.pk }}/" class="btn" ><i class="fa fa-fw fa-cogs"></i> Fermi Tecnici</a>
+        <a href="/veicolo/{{ veicolo.pk }}/collocazioni/" class="btn" ><i class="fa fa-fw fa-home"></i> Collocazioni</a>
+    </div>
+</div>
+
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h2 class="panel-title">
+                <i class="fa fa-fw fa-info"></i>
+                Dettagli veicolo {{ veicolo.targa }}
+        </h2>
+    </div>
+    <div class="panel-body">
+        <form method="POST">
+            {% bootstrap_form modulo %}
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

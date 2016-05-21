@@ -29,7 +29,7 @@
                     <tbody>
                         {% for autoparco in autoparchi %}
                             <tr>
-                                <td>{{ autoparco.nome }}</td>
+                                <td><a href="/veicoli/autoparco/elenco/{{ autoparco.pk }}/">{{ autoparco.nome }}</a></td>
                                 <td>{{ autoparco.sede }}</td>
                                 <td>{{ autoparco.locazione|default:"Non impostato" }}</td>
                                 <td>
