@@ -237,6 +237,3 @@ NORECAPTCHA_SITE_KEY = APIS_CONF.get('nocaptcha', 'site_key', fallback=os.enviro
 NORECAPTCHA_SECRET_KEY = APIS_CONF.get('nocaptcha', 'secret_key', fallback=os.environ.get('NORECAPTCHA_SITE_KEY'))
 
 AUTORIZZAZIONE_AUTOMATICA_GIORNI = 30
-
-if os.environ.get('ENABLE_TEST_APPS', False):
-    INSTALLED_APPS.append('base.autorizzazioni_test')
