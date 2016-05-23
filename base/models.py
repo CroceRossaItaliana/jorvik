@@ -156,7 +156,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         if not concedi:
             self.oggetto.confermata = False
             self.oggetto.save()
-            self.oggetto.autorizzazione_negata(modulo=modulo)
+            self.oggetto.autorizzazione_negata(modulo=modulo, auto=auto)
             if 'motivo' in modulo.cleaned_data:
                 self.motivo_negazione = modulo.cleaned_data['motivo']
                 self.save()
@@ -173,7 +173,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         if self.oggetto.autorizzazioni_set().filter(necessaria=True).count() == 0:
             self.oggetto.confermata = True
             self.oggetto.save()
-            self.oggetto.autorizzazione_concessa(modulo=modulo)
+            self.oggetto.autorizzazione_concessa(modulo=modulo, auto=auto)
             if self.oggetto.INVIA_NOTIFICA_CONCESSA:
                 self.notifica_concessa(auto=auto)
 
