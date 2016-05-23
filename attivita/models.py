@@ -555,7 +555,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                 invia_notifiche=self.persona.sede_riferimento().presidente()
             )
 
-    def autorizzazione_concessa(self, modulo, auto=False):
+    def autorizzazione_concessa(self, modulo):
         """
         (Automatico)
         Invia notifica di autorizzazione concessa.
@@ -563,7 +563,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         # TODO
         pass
 
-    def autorizzazione_negata(self, modulo=None, auto=False):
+    def autorizzazione_negata(self, modulo=None):
         """
         (Automatico)
         Invia notifica di autorizzazione negata.
