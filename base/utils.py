@@ -21,6 +21,8 @@ from lxml import html
 from django.db import models
 from base.stringhe import normalizza_nome
 
+from jorvik import settings
+
 def is_list(x):
     """
     Controlla se un oggetto e' una lista o meno.
@@ -219,3 +221,9 @@ def rimuovi_scelte(scelte=[], tupla=()):
         if not chiave in scelte:
             nuova_tupla += ((chiave, valore),)
     return nuova_tupla
+
+
+def calcola_scadenza():
+    oggi = timezone.now()
+    scadenza = oggi + timedelta(days=settings.AUTORIZZAZIONE_AUTOMATICA_GIORNI)
+    return scadenza
