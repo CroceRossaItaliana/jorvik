@@ -1,16 +1,20 @@
 import datetime
 from datetime import timedelta
 from unittest import skip
+from unittest.mock import patch
+from django.core import mail
 from django.utils import timezone
 from django.test import TestCase
 
 from attivita.forms import ModuloOrganizzaAttivitaReferente
-from attivita.models import Attivita, Area, Turno
+from attivita.models import Attivita, Area, Turno, Partecipazione
 from anagrafica.costanti import LOCALE
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.permessi.applicazioni import REFERENTE
+from anagrafica.permessi.costanti import GESTIONE_CENTRALE_OPERATIVA_SEDE
 from autenticazione.utils_test import TestFunzionale
-from base.utils_tests import crea_persona, crea_persona_sede_appartenenza, crea_area_attivita, crea_turno
+from base.utils_tests import crea_persona, crea_persona_sede_appartenenza, crea_area_attivita, crea_turno, crea_partecipazione
+from base.models import Autorizzazione
 
 
 class TestAttivita(TestCase):
@@ -411,6 +415,70 @@ class TestAttivita(TestCase):
             p.calendario_turni(datetime.date(2015, 11, 1), datetime.date(2015, 11, 30)).filter(pk=t.pk).exists(),
             msg="Il turno viene trovato nel calendario - attivita' creata dalla sede del volontario"
         )
+
+    def test_autorizzazioni_automatiche_non_scadute(self):
+
+        presidente = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
+
+        ora = timezone.now()
+
+        area, attivita = crea_area_attivita(sede)
+
+
+        domani_inizio = ora + timedelta(days=24)
+        domani_fine = ora + timedelta(days=180)
+
+        t1 = crea_turno(attivita, inizio=domani_inizio, fine=domani_fine)
+        partecipazione = crea_partecipazione(persona, t1)
+
+        attivita.centrale_operativa = Attivita.CO_AUTO
+        attivita.save()
+        self.assertEqual(0, Autorizzazione.objects.count())
+        partecipazione.richiedi()
+        self.assertEqual(0, len(mail.outbox))
+        self.assertEqual(1, Autorizzazione.objects.count())
+        autorizzazione = Autorizzazione.objects.first()
+        autorizzazione.controlla_concedi_automatico()
+        self.assertEqual(0, len(mail.outbox))
+        self.assertFalse(partecipazione.automatica)
+        autorizzazione.controlla_nega_automatico()
+        self.assertEqual(0, len(mail.outbox))
+        self.assertFalse(partecipazione.automatica)
+
+    def test_autorizzazioni_automatiche_scadute(self):
+        presidente = crea_persona()
+        persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
+
+        ora = timezone.now()
+
+        area, attivita = crea_area_attivita(sede)
+
+
+        domani_inizio = ora + timedelta(days=24)
+        domani_fine = ora + timedelta(days=180)
+
+        t1 = crea_turno(attivita, inizio=domani_inizio, fine=domani_fine)
+        partecipazione = crea_partecipazione(persona, t1)
+        attivita.centrale_operativa = Attivita.CO_AUTO
+        attivita.save()
+        self.assertEqual(0, Autorizzazione.objects.count())
+        partecipazione.richiedi()
+        self.assertNotIn(partecipazione, Partecipazione.con_esito_ok())
+        self.assertEqual(0, len(mail.outbox))
+        self.assertEqual(1, Autorizzazione.objects.count())
+        autorizzazione = Autorizzazione.objects.first()
+        autorizzazione.scadenza = timezone.now() - timedelta(days=10)
+        autorizzazione.save()
+        autorizzazione.controlla_concedi_automatico()
+        self.assertEqual(1, len(mail.outbox))
+        messaggio = mail.outbox[0]
+        self.assertTrue(messaggio.subject.find('Richiesta di partecipazione attività APPROVATA') > -1)
+        self.assertTrue(messaggio.body.find('una tua richiesta &egrave; rimasta in attesa per 30 giorni e come da policy') == -1)
+        self.assertTrue(autorizzazione.oggetto.automatica)
+        autorizzazione.controlla_nega_automatico()
+        self.assertEqual(1, len(mail.outbox))
+        self.assertIn(partecipazione, Partecipazione.con_esito_ok())
 
 
 class TestFunzionaleAttivita(TestFunzionale):
