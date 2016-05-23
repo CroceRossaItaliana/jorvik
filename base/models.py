@@ -145,7 +145,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         self.concessa = concedi
         if auto:
             # TODO: decidere indirizzo email firmatario
-            self.firmatario = settings.DEFAULT_FROM_EMAIL
+            self.firmatario = firmatario #settings.DEFAULT_FROM_EMAIL
         else:
             self.firmatario = firmatario
         self.necessaria = False
@@ -157,9 +157,10 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             self.oggetto.confermata = False
             self.oggetto.save()
             self.oggetto.autorizzazione_negata(modulo=modulo, auto=auto)
-            if 'motivo' in modulo.cleaned_data:
-                self.motivo_negazione = modulo.cleaned_data['motivo']
-                self.save()
+            if modulo:
+                if 'motivo' in modulo.cleaned_data:
+                    self.motivo_negazione = modulo.cleaned_data['motivo']
+                    self.save()
             self.oggetto.autorizzazioni_set().update(necessaria=False)
             if self.oggetto.INVIA_NOTIFICA_NEGATA:
                 self.notifica_negata(auto=auto)
@@ -177,10 +178,10 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             if self.oggetto.INVIA_NOTIFICA_CONCESSA:
                 self.notifica_concessa(auto=auto)
 
-    def concedi(self, firmatario, modulo=None, auto=False):
+    def concedi(self, firmatario=None, modulo=None, auto=False):
         self.firma(firmatario, True, modulo=modulo, auto=auto)
 
-    def nega(self, firmatario, modulo=None, auto=False):
+    def nega(self, firmatario=None, modulo=None, auto=False):
         self.firma(firmatario, False, modulo=modulo, auto=auto)
 
     @property
@@ -219,7 +220,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             corpo = {
                 "richiesta": self,
                 "firmatario": self.firmatario,
-                "giorni": self._scadenza_approvazione_automatica
+                "giorni": settings.AUTORIZZAZIONE_AUTOMATICA_GIORNI
             }
             self.oggetto.automatica = True
             self.oggetto.save()
@@ -247,7 +248,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             corpo = {
                 "richiesta": self,
                 "firmatario": self.firmatario,
-                "giorni": self._scadenza_negazione_automatica
+                "giorni": settings.AUTORIZZAZIONE_AUTOMATICA_GIORNI
             }
             self.oggetto.automatica = True
             self.oggetto.save()
@@ -268,13 +269,13 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
     def controlla_concedi_automatico(self):
         from django.utils import timezone
-        if self.scadenza:
+        if self.scadenza and self.concessa is None:
             if self.scadenza < timezone.now():
                 self.concedi(auto=True)
 
     def controlla_nega_automatico(self):
         from django.utils import timezone
-        if self.scadenza:
+        if self.scadenza and self.concessa is None:
             if self.scadenza < timezone.now():
                 self.nega(auto=True)
 
