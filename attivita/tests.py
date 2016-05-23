@@ -470,6 +470,7 @@ class TestAttivita(TestCase):
         autorizzazione = Autorizzazione.objects.first()
         autorizzazione.scadenza = timezone.now() - timedelta(days=10)
         autorizzazione.save()
+        self.assertFalse(autorizzazione.concessa)
         autorizzazione.controlla_concedi_automatico()
         self.assertEqual(1, len(mail.outbox))
         messaggio = mail.outbox[0]
@@ -478,6 +479,7 @@ class TestAttivita(TestCase):
         self.assertTrue(autorizzazione.oggetto.automatica)
         autorizzazione.controlla_nega_automatico()
         self.assertEqual(1, len(mail.outbox))
+        self.assertTrue(autorizzazione.concessa)
         self.assertIn(partecipazione, Partecipazione.con_esito_ok())
 
 
