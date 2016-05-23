@@ -130,7 +130,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     destinatario_oggetto = GenericForeignKey('destinatario_oggetto_tipo', 'destinatario_oggetto_id')
     scadenza = models.DateTimeField(default=calcola_scadenza, db_index=True)
 
-    def firma(self, firmatario, concedi=True, modulo=None, motivo=None, auto=None):
+    def firma(self, firmatario, concedi=True, modulo=None, motivo=None, auto=False):
         """
         Firma l'autorizzazione.
         :param firmatario: Il firmatario.
@@ -177,10 +177,10 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             if self.oggetto.INVIA_NOTIFICA_CONCESSA:
                 self.notifica_concessa(auto=auto)
 
-    def concedi(self, firmatario, modulo=None, auto=None):
+    def concedi(self, firmatario, modulo=None, auto=False):
         self.firma(firmatario, True, modulo=modulo, auto=auto)
 
-    def nega(self, firmatario, modulo=None, auto=None):
+    def nega(self, firmatario, modulo=None, auto=False):
         self.firma(firmatario, False, modulo=modulo, auto=auto)
 
     @property
