@@ -154,11 +154,10 @@
                         </tr>
                     {% endwith %}
                 {% endif %}
-            {% empty %}
-                <tr>
-                    <td colspan="6" class="no-files"><span class="fa fa-arrow-down"></span>{% trans 'Drop files here or use the "Upload Files" button' %}</td>
-                </tr>
             {% endfor %}
+            <tr>
+                <td colspan="9" class="no-files"><span class="fa fa-arrow-down"></span>{% trans 'Drop files here or use the "Upload Files" button' %}</td>
+            </tr>
         </tbody>
     </table>
 
