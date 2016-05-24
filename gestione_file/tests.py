@@ -221,7 +221,7 @@ class TestFunzionaleGestioneFile(TestFunzionale):
         self.assertTrue(sessione_persona.is_text_present('Pubblicato il'))
         self.assertTrue(sessione_persona.is_text_present('Peso'))
         self.assertTrue(sessione_persona.is_text_present('Accessi'))
-        self.assertEqual(0, len(sessione_persona.find_by_tag('tbody').find_by_tag('tr')))
+        self.assertEqual(1, len(sessione_persona.find_by_tag('tbody').find_by_css('tr.warning')))
 
     def test_lista_documenti(self):
         extra_headers = {}

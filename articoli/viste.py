@@ -80,7 +80,6 @@ class ListaArticoli(FiltraSegmenti, VistaDecorata, ListView):
         context['mese_selezionato'] = '%0s' % mese
         context['anno_selezionato'] = anno
         context['query'] = self.request.GET.get('q', '')
-        print(context['anno_selezionato'])
         return context
 
 
