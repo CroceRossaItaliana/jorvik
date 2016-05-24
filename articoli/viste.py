@@ -33,20 +33,28 @@ class FiltraSegmenti(object):
             return self.request.user.persona
         except (Persona.DoesNotExist, AttributeError):
             return None
-
-    def get_queryset(self):
+        
+    def get_anno(self):
         anno = self.kwargs.get('anno', '')
-        mese = self.kwargs.get('mese', '')
         if not anno:
             try:
                 anno = int(self.request.GET.get('anno', ''))
             except ValueError:
-                pass
-        if anno and not mese:
+                anno = ''
+        return anno
+        
+    def get_mese(self):
+        mese = self.kwargs.get('mese', '')
+        if not mese:
             try:
                 mese = int(self.request.GET.get('mese', ''))
             except ValueError:
-                pass
+                mese = ''
+        return mese
+
+    def get_queryset(self):
+        anno = self.get_anno()
+        mese = self.get_mese()
         persona = self.persona
         query = self.request.GET.get('q', '')
         return get_articoli(persona, anno, mese, query)
@@ -64,14 +72,15 @@ class ListaArticoli(FiltraSegmenti, VistaDecorata, ListView):
 
     def get_context_data(self, **kwargs):
         context = super(ListaArticoli, self).get_context_data(**kwargs)
-        anno = self.kwargs.get('anno', '')
-        mese = self.kwargs.get('mese', '')
+        anno = self.get_anno()
+        mese = self.get_mese()
         anni = Articolo.objects.all().dates('data_inizio_pubblicazione', 'year', 'DESC')
         context['anni'] = [anno.year for anno in anni]
         context['mesi'] = [('%0d' % i, date(year=date.today().year, month=i, day=1)) for i in range(1, 12)]
         context['mese_selezionato'] = '%0s' % mese
         context['anno_selezionato'] = anno
         context['query'] = self.request.GET.get('q', '')
+        print(context['anno_selezionato'])
         return context
 
 
