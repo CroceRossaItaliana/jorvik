@@ -17,4 +17,7 @@
 
 {% block elenco_riga_azioni_extra %}
     <!-- link tesserini passati -->
+    <a href="/us/tesserini/richiedi/{{ persona.pk }}/?next={{ request.path }}" class="btn btn-default" target="_new">
+        <i class="fa fa-fw fa-file-o"></i> Richiedi duplicato
+    </a>
 {% endblock %}
