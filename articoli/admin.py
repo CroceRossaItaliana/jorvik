@@ -47,6 +47,9 @@ class AdminArticolo(admin.ModelAdmin):
             ),
         }),
     )
+    list_filter = ('stato', 'data_inizio_pubblicazione', 'data_fine_pubblicazione',)
+    search_fields = ('titolo',)
+    list_display = ('titolo', 'stato', 'data_inizio_pubblicazione', 'visualizzazioni', 'segmenti_testo')
 
     def get_inline_instances(self, request, obj=None):
         inline_instances = []
