@@ -24,7 +24,7 @@
                class="navigator-button navigator-button-upload js-upload-button"
                data-url="{% url 'admin:filer-ajax_upload' folder_id=folder.id %}"
                data-max-uploader-connections="{{ uploader_connections }}">
-                {% trans "Upload Files" %}Quis
+                {% trans "Upload Files" %}
             </a>
         {% elif folder.name == "File non archiviati" %}
             <a href="#" id="id_upload_button" title="{% trans 'Upload Files' %}"
