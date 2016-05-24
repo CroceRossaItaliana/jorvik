@@ -22,6 +22,7 @@ class ListaDocumenti(VistaDecorata, ListView):
     template_name = 'lista_documenti.html'
     context_object_name = 'documenti'
     paginate_by = 10
+    ordering = ('-data_pubblicazione',)
 
     @method_decorator(pagina_privata)
     def dispatch(self, request, *args, **kwargs):
