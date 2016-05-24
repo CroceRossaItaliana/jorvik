@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.utils.translation import ugettext as _
 
 from filer import settings as filer_settings
 from filer.admin import FileAdmin, ImageAdmin, FolderAdmin
@@ -117,6 +118,33 @@ class AdminDocumento(FileAdmin):
             )
         return HttpResponseRedirect(post_url)
 
+    @classmethod
+    def build_fieldsets(cls, extra_main_fields=(), extra_advanced_fields=(),
+                        extra_fieldsets=()):
+        fieldsets = (
+            (None, {
+                'fields': (
+                    'name',
+                    'owner',
+                ) + extra_main_fields,
+            }),
+            (_('Advanced'), {
+                'fields': (
+                    'file',
+                    'sha1',
+                    'display_canonical',
+                ) + extra_advanced_fields,
+                'classes': ('collapse',),
+            }),
+        ) + extra_fieldsets
+        if filer_settings.FILER_ENABLE_PERMISSIONS:
+            fieldsets = fieldsets + (
+                (None, {
+                    'fields': ('is_public',)
+                }),
+            )
+        return fieldsets
+
     def get_inline_instances(self, request, obj=None):
         inline_instances = []
         if obj:
@@ -144,6 +172,33 @@ class AdminImmagine(ImageAdmin):
     add_form_template = 'admin/gestione_file/form_aggiungi.html'
     change_form_template = 'admin/filer/image/change_form.html'
     inlines = (DocumentoSegmentoInline,)
+
+    @classmethod
+    def build_fieldsets(cls, extra_main_fields=(), extra_advanced_fields=(),
+                        extra_fieldsets=()):
+        fieldsets = (
+            (None, {
+                'fields': (
+                    'name',
+                    'owner',
+                ) + extra_main_fields,
+            }),
+            (_('Advanced'), {
+                'fields': (
+                    'file',
+                    'sha1',
+                    'display_canonical',
+                ) + extra_advanced_fields,
+                'classes': ('collapse',),
+            }),
+        ) + extra_fieldsets
+        if filer_settings.FILER_ENABLE_PERMISSIONS:
+            fieldsets = fieldsets + (
+                (None, {
+                    'fields': ('is_public',)
+                }),
+            )
+        return fieldsets
 
     def get_inline_instances(self, request, obj=None):
         inline_instances = []
