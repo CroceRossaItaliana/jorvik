@@ -24,6 +24,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q, QuerySet, Avg
+from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 import phonenumbers
 
@@ -515,7 +516,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 continue
             tipi.append(d.tipo)
             #lista += [(APPLICAZIONI_SLUG_DICT[d.tipo], PERMESSI_NOMI_DICT[d.tipo])]
-
+        lista += [('/articoli/', 'Articoli', 'fa-newspaper-o')]
+        lista += [('/documenti/', 'Documenti', 'fa-folder')]
         return lista
 
 
@@ -962,6 +964,52 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         if ha_appartenenza or ha_ricevuta or ha_partecipazione or ha_partecipazione_corso_base:
             return False
         return True
+
+    def save(self, force_insert=False, force_update=False):
+        self.nome = normalizza_nome(self.nome)
+        self.cognome = normalizza_nome(self.cognome)
+        super(Persona,self).save(force_insert, force_update)
+
+    def appartiene_al_segmento(self, segmento):
+        """
+        Ritorna True se un utente appartiene ad un segmento
+        """
+        queryset = Persona.objects.filter(pk=self.pk)
+        filtro = segmento.filtro()
+        extra_args = segmento.get_extra_filters()
+        queryset = filtro(queryset).filter(**extra_args)
+        if queryset:
+            return queryset.filter(pk=self.pk).exists()
+        return False
+
+    @cached_property
+    def segmenti_collegati(self):
+        """
+        Restituisce un elenco di filtri da applicare su un queryset di BaseSegmento
+        per applicare i segmenti collegati all'utente, compresi i filtri sulle sedi e sui titoli
+
+        Usato da FiltroSegmentoQuerySet.filtra_per_segmenti
+
+        :return: elenco di condizioni di filtro (usabili come argomenti di un oggetto Q)
+        """
+        from segmenti.segmenti import SEGMENTI
+        utente = Persona.objects.filter(pk=self.pk)
+        attivi = []
+        titoli = list(self.titoli_confermati())
+        sedi_attuali = list(self.sedi_attuali())
+        for segmento, filtro in SEGMENTI.items():
+            if filtro(utente).exists():
+                if segmento == 'A':
+                    attivi.append({'segmento': segmento})
+                elif segmento == 'AA':
+                    for titolo in titoli:
+                        attivi.append({'segmento': segmento, 'titolo': titolo})
+                else:
+                    attivi.append({'segmento': segmento, 'sede__isnull': True})
+                    for sede in sedi_attuali:
+                        attivi.append({'segmento': segmento, 'sede': sede})
+        return attivi
+
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
     """
