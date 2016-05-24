@@ -207,7 +207,7 @@ class TestFunzionaleArticoli(TestFunzionale):
         self.assertFalse(sessione_persona.is_text_present(articolo3.estratto))
         sessione_persona.fill('q', '')
         sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
-        sessione_persona.find_link_by_partial_text('Leggi').first.click()
+        sessione_persona.find_link_by_partial_text('Continua a leggere').first.click()
         self.assertTrue(sessione_persona.is_text_present(articolo.titolo))
         self.assertTrue(sessione_persona.is_text_present(articolo.corpo))
         self.assertFalse(sessione_persona.is_text_present(articolo2.titolo))
