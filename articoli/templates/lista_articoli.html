@@ -20,43 +20,59 @@
 {% endblock %}
 
 {% block app_contenuto %}
-    <h2 class="allinea-centro text-success">
-        Articoli
-    </h2>
 
-    <div class="alert alert-info">
-        <h4><i class="fa fa-info-circle"></i> Benvenuto nella sezione dedicata alle notizie.</h4>
-    </div>
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-search"></i>
+                    Filtra gli articoli
+                </h3>
+            </div>
+            <div class="panel-body">
+                <form method='GET'>
 
-    <div class="panel">
-        <form method='GET' action=".">
-            <label for="query-articoli">Ricerca articoli per titolo</label>
-            <input type="text" name="q" id="query-articoli" value="{{ query }}">
-            <select name="anno" value="">Scegli un anno</option>
-                <option value> ---- </option>
-                {% for anno in anni %}
-                    <option {% if anno_selezionato == anno %}selected{% endif %} value='{{anno}}'>{{anno}}</option>
-                {% endfor %}
-            </select>
-            <select name="mese" value="">Scegli un mese</option>
-                <option value> ---- </option>
-                {% for mese, data in mesi %}
-                    <option {% if mese_selezionato == mese %}selected{% endif %} value='{{ mese }}'>{{ data|date:"F" }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="btn btn-primary">
-                <i class="fa fa-fw fa-check-circle"></i>Cerca
-            </button>
-            <a href="{% url 'lista_articoli' %}" class="btn btn-primary">
-                <i class="fa fa-fw fa-times-circle-o"></i>Annulla
-            </a>
-        </form>
-    </div>
+                    <div class="row">
+                        <span class="col-md-3">
+                            <input type="text" name="q" id="query-articoli"
+                               value="{{ query }}" class="form-control"
+                               placeholder="Titolo dell'articolo" />
+                        </span>
+                        <span class="col-md-3">
+                            <select name="anno" value="" class="form-control">
+                                <option value>Tutti gli anni</option>
+                                {% for anno in anni %}
+                                    <option {% if anno_selezionato == anno %}selected{% endif %} value='{{anno}}'>{{anno}}</option>
+                                {% endfor %}
+                            </select>
+                        </span>
+                        <span class="col-md-3">
+                            <select name="mese" value="" class="form-control">
+                                <option value>Tutti i mesi</option>
+                                {% for mese, data in mesi %}
+                                    <option {% if mese_selezionato == mese %}selected{% endif %} value='{{ mese }}'>{{ data|date:"F" }}</option>
+                                {% endfor %}
+                            </select>
+                        </span>
+                        <span class="col-md-3 btn-group">
+                            <button type="submit" class="btn btn-info">
+                                <i class="fa fa-fw fa-check"></i> Filtra
+                            </button>
+                            <a href="{% url 'lista_articoli' %}" class="btn btn-default">
+                                <i class="fa fa-fw fa-times"></i> Annulla
+                            </a>
+                        </span>
+
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
 
     {% for articolo in articoli %}
         {% include "includes/elemento_lista.html" %}
     {% empty %}
-        <div class="alert alert-info alert-block">
+        <div class="alert alert-warning alert-block">
             <h4><i class="fa fa-info-circle"></i> Nessun articolo</h4>
                     <p>Non &egrave; stato trovato alcun articolo.</p>
          </div>
