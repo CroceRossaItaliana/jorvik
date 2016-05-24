@@ -76,7 +76,7 @@
                 <th><i class="fa fa-fw {{ documento.icona }}"></i></th>
                 <td><a target="_blank" href="{{ documento.url_scarica }}">{{ documento.label }}</a></td>
                 {% if query %}<td>{{ documento.folder }}</td>{% endif %}
-                <td>{{documento.data_pubblicazione|date}}</td>
+                <td>{{documento.data_pubblicazione|date:"DATE_FORMAT"}}</td>
                 <td>{{documento.size|filesizeformat}}</td>
                 <td>{{documento.downloads}}</td>
             </tr>
