@@ -151,8 +151,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         # E-mail a delle persone
         for d in self.oggetti_destinatario.filter(inviato=False):
             destinatari = [d.persona.email]
-            if utenza and d.persona.utenza.email != d.persona.email:
-                destinatari.append(d.persona.utenza.email)
+            if hasattr(d.persona, 'utenza'):
+                if utenza and d.persona.utenza.email != d.persona.email:
+                    destinatari.append(d.persona.utenza.email)
             # Assicurati che la connessione sia aperta
             connection.open()
 
