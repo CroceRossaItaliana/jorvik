@@ -6,7 +6,7 @@ from django.views.generic import DetailView, ListView
 
 from anagrafica.models import Persona
 from articoli.models import Articolo, ArticoloSegmento
-from autenticazione.funzioni import pagina_privata, VistaDecorata
+from autenticazione.funzioni import pagina_privata, pagina_pubblica, VistaDecorata
 
 
 def get_articoli(persona, anno=None, mese=None, query=None):
@@ -80,6 +80,10 @@ class DettaglioArticolo(FiltraSegmenti, VistaDecorata, DetailView):
     slug_field = 'slug'
     slug_url_kwarg = 'articolo_slug'
     context_object_name = 'articolo'
+
+    @method_decorator(pagina_pubblica)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DettaglioArticolo, self).dispatch(request, *args, **kwargs)
 
     def get_template_names(self):
         if self.request.user.is_authenticated():
