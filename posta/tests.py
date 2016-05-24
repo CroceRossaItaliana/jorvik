@@ -76,3 +76,22 @@ class TestMessaggio(TestCase):
         self.assertEqual(len(email.to), 1)
         self.assertNotIn(self.persona.email_contatto, email.to)
         self.assertIn(self.persona.utenza.email, email.to)
+
+    def test_flag_utenza_solo_email_di_contatto(self):
+        self.persona.email_contatto = self.persona.utenza.email
+        self.persona.save()
+        self.persona.utenza = None
+        self.persona.save()
+
+        Messaggio.costruisci_e_invia(
+            destinatari=[self.persona],
+            oggetto="Email contatto",
+            modello="email.html",
+            utenza=True
+        )
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertTrue(email.subject.find('Email contatto') > -1)
+        self.assertEqual(len(email.to), 1)
+        self.assertIn(self.persona.email_contatto, email.to)
+        self.assertEqual(1, len(email.to))
