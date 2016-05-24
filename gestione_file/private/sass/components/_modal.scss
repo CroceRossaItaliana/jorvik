@@ -58,17 +58,9 @@
         }
     }
     .navigator-top-nav {
-        .tools-container {
-            width: 70%;
-        }
-        .breadcrumbs-container {
-            width: 30%;
-        }
         .tools-container,
         .breadcrumbs-container {
-            @media screen and (max-width: $screen-tablet) {
-                width: 100%;
-            }
+            width: 100%;
         }
     }
 }

@@ -1972,19 +1972,9 @@ body.reset-hover td {
   }
 }
 /* line 61, ../../../private/sass/components/_modal.scss */
-.popup .navigator-top-nav .tools-container {
-  width: 70%;
-}
-/* line 64, ../../../private/sass/components/_modal.scss */
+.popup .navigator-top-nav .tools-container,
 .popup .navigator-top-nav .breadcrumbs-container {
-  width: 30%;
-}
-@media screen and (max-width: 720px) {
-  /* line 67, ../../../private/sass/components/_modal.scss */
-  .popup .navigator-top-nav .tools-container,
-  .popup .navigator-top-nav .breadcrumbs-container {
-    width: 100%;
-  }
+  width: 100%;
 }
 
 /* line 9, ../../../private/sass/components/_drag-and-drop.scss */
