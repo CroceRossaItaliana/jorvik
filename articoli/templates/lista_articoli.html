@@ -1,0 +1,79 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Articoli{% endblock %}
+
+{% block menu_laterale %}
+    <div class="col-md-2 well well-sm">
+        <ul id="sezione" role="navigation" class="nav nav-pills nav-stacked navbar-collapse collapse">
+            <li class="dropdown-header grassetto piu-grande">Articoli</li>
+                <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
+                    <a href="{{ link_url|urlencode }}">
+                        <i class="fa fa-newspaper-o fa-fw"></i>
+                        Elenco
+                    </a>
+                </li>
+            <hr />
+        </ul>
+    </div>
+{% endblock %}
+
+{% block app_contenuto %}
+    <h2 class="allinea-centro text-success">
+        Articoli
+    </h2>
+
+    <div class="alert alert-info">
+        <h4><i class="fa fa-info-circle"></i> Benvenuto nella sezione dedicata alle notizie.</h4>
+    </div>
+
+    <div class="panel">
+        <form method='GET' action=".">
+            <label for="query-articoli">Ricerca articoli per titolo</label>
+            <input type="text" name="q" id="query-articoli" value="{{ query }}">
+            <select name="anno" value="">Scegli un anno</option>
+                <option value> ---- </option>
+                {% for anno in anni %}
+                    <option {% if anno_selezionato == anno %}selected{% endif %} value='{{anno}}'>{{anno}}</option>
+                {% endfor %}
+            </select>
+            <select name="mese" value="">Scegli un mese</option>
+                <option value> ---- </option>
+                {% for mese, data in mesi %}
+                    <option {% if mese_selezionato == mese %}selected{% endif %} value='{{ mese }}'>{{ data|date:"F" }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa fa-fw fa-check-circle"></i>Cerca
+            </button>
+            <a href="{% url 'lista_articoli' %}" class="btn btn-primary">
+                <i class="fa fa-fw fa-times-circle-o"></i>Annulla
+            </a>
+        </form>
+    </div>
+
+    {% for articolo in articoli %}
+        {% include "includes/elemento_lista.html" %}
+    {% empty %}
+        <div class="alert alert-info alert-block">
+            <h4><i class="fa fa-info-circle"></i> Nessun articolo</h4>
+                    <p>Non &egrave; stato trovato alcun articolo.</p>
+         </div>
+    {% endfor %}
+    {% if is_paginated %}
+        <div class="pagination">
+            <span class="page-links">
+                {% if page_obj.has_previous %}
+                    <a href="/articoli?page={{ page_obj.previous_page_number }}">Precedente</a>
+                {% endif %}
+                <span class="page-current">
+                    Pagina {{ page_obj.number }} di {{ page_obj.paginator.num_pages }}.
+                </span>
+                {% if page_obj.has_next %}
+                    <a href="/articoli?page={{ page_obj.next_page_number }}">Successiva</a>
+                {% endif %}
+            </span>
+        </div>
+    {% endif %}
+{% endblock %}
