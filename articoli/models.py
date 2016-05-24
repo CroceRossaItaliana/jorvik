@@ -92,6 +92,16 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     def termina(self):
         return self.data_fine_pubblicazione is not None
 
+    @property
+    def segmenti_testo(self):
+        """
+        Ritorna una descrizione dei segmenti applicati in testo (inline)
+        """
+        if self.segmenti.exists():
+            segmenti = self.segmenti.all()
+            return ", ".join([str(x) for x in segmenti])
+        return "Pubblico (nessun segmento)"
+
     @transaction.atomic
     def incrementa_visualizzazioni(self):
         self.visualizzazioni += 1
