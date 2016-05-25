@@ -497,6 +497,7 @@ def delegato_rubrica_delegati(request, me):
 
     contesto = {
         "elenco": elenco,
+        "elenco_nome": "Rubrica Delegati"
     }
     return 'anagrafica_delegato_rubrica_delegati.html', contesto
 
@@ -513,6 +514,7 @@ def giovane_rubrica_giovani(request, me):
 
     contesto = {
         "elenco": elenco,
+        "elenco_nome": "Rubrica Giovani"
     }
     return 'anagrafica_delegato_rubrica_delegati.html', contesto
 
