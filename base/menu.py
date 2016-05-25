@@ -25,7 +25,7 @@ def menu(request):
     delegato_giovani = deleghe_attuali.filter(tipo=DELEGATO_OBIETTIVO_5).count() if deleghe_attuali else 0
 
     if me:
-        giovane_e_delegato_giovani = delegato_giovani > 0 and me.giovane
+        delegato_giovani = delegato_giovani > 0
     else:
         giovane_e_delegato_giovani = False
 
@@ -52,7 +52,7 @@ def menu(request):
                 ("Referenti", "fa-book", "/utente/rubrica/referenti/"),
                 ("Volontari", "fa-book", "/utente/rubrica/volontari/"),
                 ("Delegati", "fa-book", "/utente/rubrica/delegati/") if ha_deleghe else None,
-                ("Giovani", "fa-book", "/utente/rubrica/giovani/") if giovane_e_delegato_giovani else None,
+                ("Giovani", "fa-book", "/utente/rubrica/giovani/") if delegato_giovani else None,
             )) ,
             ("Curriculum", (
                 ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
