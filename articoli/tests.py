@@ -136,7 +136,7 @@ class TestFunzionaleArticoli(TestFunzionale):
     def test_lista_articoli(self):
         articolo = Articolo.objects.create(
             titolo='Titolo 1981',
-            corpo='Testo random',
+            corpo='Testo random 1',
             estratto='qualcosa',
             data_inizio_pubblicazione='1981-12-10',
             stato=Articolo.PUBBLICATO
@@ -205,13 +205,11 @@ class TestFunzionaleArticoli(TestFunzionale):
         self.assertTrue(sessione_persona.is_text_present(articolo2.estratto))
         self.assertFalse(sessione_persona.is_text_present(articolo3.titolo))
         self.assertFalse(sessione_persona.is_text_present(articolo3.estratto))
-        sessione_persona.fill('q', '')
-        sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
-        sessione_persona.find_link_by_partial_text('Leggi').first.click()
-        self.assertTrue(sessione_persona.is_text_present(articolo.titolo))
-        self.assertTrue(sessione_persona.is_text_present(articolo.corpo))
-        self.assertFalse(sessione_persona.is_text_present(articolo2.titolo))
-        self.assertFalse(sessione_persona.is_text_present(articolo2.corpo))
+        sessione_persona.find_link_by_partial_text('Continua a leggere').first.click()
+        self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
+        self.assertFalse(sessione_persona.is_text_present(articolo.corpo))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
+        self.assertTrue(sessione_persona.is_text_present(articolo2.corpo))
         self.assertFalse(sessione_persona.is_text_present(articolo3.titolo))
         self.assertFalse(sessione_persona.is_text_present(articolo3.corpo))
         self.assertTrue(sessione_persona.is_text_present('Letture'))
