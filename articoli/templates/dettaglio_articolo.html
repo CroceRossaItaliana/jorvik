@@ -18,6 +18,8 @@
 {% endblock %}
 
 {% block app_contenuto %}
-    {% include "includes/articolo.html" %}
-    <p><a href='{% url 'lista_articoli' %}'><i class="fa fa-level-up" ></i> torna all'elenco</a></p>
+    <div class="articolo">
+        {% include "includes/articolo.html" %}
+        <p><a href='{% url 'lista_articoli' %}'><i class="fa fa-level-up" ></i> torna all'elenco</a></p>
+    </div>
 {% endblock %}
