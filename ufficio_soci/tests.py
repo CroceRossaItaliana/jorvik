@@ -1,13 +1,16 @@
 import datetime
 from unittest import skip
+import tempfile
 
+import django.core.files
 from django.test import TestCase
 from django.utils import timezone
 
-from anagrafica.costanti import REGIONALE
-from anagrafica.models import Appartenenza, Sede, Persona
+from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE, TERRITORIALE
+from anagrafica.models import Appartenenza, Sede, Persona, Fototessera
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from autenticazione.utils_test import TestFunzionale
+from base.geo import Locazione
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza
 from ufficio_soci.elenchi import ElencoElettoratoAlGiorno
 from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota
@@ -17,7 +20,6 @@ class TestBase(TestCase):
 
     def setUp(self):
         self.p, self.s, self.a = crea_persona_sede_appartenenza()
-
         self.oggi = datetime.date(2015, 1, 1)
         self.quindici_anni_fa = (datetime.date(2000, 1, 1))
         self.venti_anni_fa = (datetime.date(1995, 1, 1))
@@ -347,3 +349,52 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             self.presente_in_elenco(sessione_regionale, persona=ordinario),
             msg="L'ex ordinario non è più in elenco al regionale"
         )
+
+    def test_richiedi_tesserino(self, extra_headers={}):
+        presidente_locale = crea_persona()
+        presidente_provinciale = crea_persona()
+        presidente_regionale = crea_persona()
+        presidente_nazionale = crea_persona()
+        persona = crea_persona()
+        locazione = Locazione.objects.create(indirizzo="viale italia 1")
+        sede_nazionale = crea_sede(presidente=presidente_nazionale, estensione=NAZIONALE)
+        sede_nazionale.locazione = locazione
+        sede_nazionale.save()
+        sede_regionale = crea_sede(presidente=presidente_regionale, estensione=REGIONALE, genitore=sede_nazionale)
+        sede_regionale.locazione = locazione
+        sede_regionale.save()
+        sede_provinciale = crea_sede(presidente=presidente_provinciale, estensione=PROVINCIALE, genitore=sede_regionale)
+        sede_provinciale.locazione = locazione
+        sede_provinciale.save()
+        sede_locale = crea_sede(presidente=presidente_locale, estensione=PROVINCIALE, genitore=sede_provinciale)
+        sede_locale.locazione = locazione
+        sede_locale.save()
+        appartenenza = crea_appartenenza(persona, sede_locale)
+        sessione_persona = self.sessione_utente(persona=persona)
+        sessione_persona.visit("%s/utente/fotografia/fototessera/" % self.live_server_url)
+        file_obj, filename = tempfile.mkstemp('.jpg')
+        file_obj = django.core.files.File(open(filename, 'rb'))
+
+        fototessera = Fototessera.objects.create(
+            persona=persona,
+            file=file_obj
+        )
+        self.assertTrue(persona.fototessere.all().exists())
+        self.assertEqual(fototessera, persona.fototessera_attuale())
+        sessione_persona.reload()
+        self.assertTrue(sessione_persona.is_text_present('Storico richieste fototessere'))
+        self.assertTrue(sessione_persona.is_text_present('Confermato'))
+        self.assertEqual(1, len(sessione_persona.find_by_tag('tbody').find_by_tag('tr')))
+        sessione_presidente_locale = self.sessione_utente(persona=presidente_locale)
+        sessione_presidente_locale.click_link_by_partial_text("Soci")
+        self.assertEqual(1, len(sessione_presidente_locale.find_link_by_href("/us/tesserini/")))
+        sessione_presidente_locale.visit("%s/us/tesserini/" % self.live_server_url)
+        self.assertEqual(1, len(sessione_presidente_locale.find_link_by_href("/us/tesserini/da-richiedere/")))
+        # TODO: richiedere il tesserino cliccando sul link apposito, al momento
+        # non è possibile agire sugli elementi della pagina causa probabile timeout
+        #sessione_presidente_locale.visit("%s/us/tesserini/da-richiedere/" % self.live_server_url)
+        #self.assertTrue(sessione_presidente_locale.is_text_present(persona.nome))
+        #self.assertTrue(sessione_presidente_locale.is_text_present(persona.cognome))
+        sessione_presidente_locale.visit("%s/us/tesserini/richiedi/%s/" % (self.live_server_url, persona.pk))
+        sessione_presidente_provinciale = self.sessione_utente(persona=presidente_provinciale)
+        sessione_presidente_provinciale.visit("%s/us/tesserini/emissione/%s/" % (self.live_server_url, persona))
