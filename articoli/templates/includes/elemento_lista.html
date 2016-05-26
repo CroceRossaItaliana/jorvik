@@ -1,0 +1,15 @@
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h4 class="panel-title">
+            <i class="fa fa-fw fa-newspaper-o"></i>
+            <a href="{{ articolo.get_absolute_url }}">{{articolo.titolo}}</a>
+        </h4>
+    </div>
+    <div class="panel-body">
+        <p>{{articolo.estratto}}</p>
+        <a href="{{articolo.get_absolute_url}}">Continua a leggere...</a>
+    </div>
+    <div class="panel-footer piu-piccolo text-muted">
+        <i class="fa fa-fw fa-calendar"></i> Articolo pubblicato il {{ articolo.data_inizio_pubblicazione }}
+    </div>
+</div>

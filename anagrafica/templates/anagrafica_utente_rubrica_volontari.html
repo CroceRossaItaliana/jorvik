@@ -38,9 +38,8 @@
             <tr>
                 <td class="allinea-centro">
                     {% if volontario.avatar %}
-                        {% thumbnail volontario.avatar "100x100" crop="center" as im %}
-                            <img src="{{ im.url }}" class="img-rounded" alt="Immagine del profilo attuale" />
-                        {% endthumbnail %}
+                        {% thumbnail volontario.avatar "100x100" crop as im %}
+                        <img src="{{ im.url }}" class="img-rounded" alt="Immagine del profilo attuale" />
                     {% endif %}
 
                 </td>

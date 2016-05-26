@@ -29,14 +29,12 @@
             <tr>
                 <td class="allinea-centro">
                     {% if referente.fototessera_attuale %}
-                        {% thumbnail referente.fototessera_attuale.file "100x100" crop="center" as im %}
-                            <img src="{{ im.url }}" class="img-rounded" alt="Immagine del profilo attuale" />
-                        {% endthumbnail %}
+                        {% thumbnail referente.fototessera_attuale.file "100x100" crop as im %}
+                        <img src="{{ im.url }}" class="img-rounded" alt="Immagine del profilo attuale" />
 
                     {% elif referente.avatar %}
-                        {% thumbnail referente.avatar "100x100" crop="center" as im %}
-                            <img src="{{ im.url }}" class="img-rounded" alt="Immagine del profilo attuale" />
-                        {% endthumbnail %}
+                        {% thumbnail referente.avatar "100x100" crop as im %}
+                        <img src="{{ im.url }}" class="img-rounded" alt="Immagine del profilo attuale" />
                     {% endif %}
 
                 </td>

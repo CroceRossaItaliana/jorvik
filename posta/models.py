@@ -100,7 +100,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     def allegati_pronti(self):
         return ()
 
-    def invia(self, connection=None):
+    def invia(self, connection=None, utenza=False):
         """
         Salva e invia immediatamente il messaggio.
         :return:
@@ -150,7 +150,10 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
         # E-mail a delle persone
         for d in self.oggetti_destinatario.filter(inviato=False):
-
+            destinatari = [d.persona.email]
+            if hasattr(d.persona, 'utenza'):
+                if utenza and d.persona.utenza.email != d.persona.email:
+                    destinatari.append(d.persona.utenza.email)
             # Assicurati che la connessione sia aperta
             connection.open()
 
@@ -170,7 +173,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     body=plain_text,
                     from_email=mittente,
                     reply_to=[reply_to],
-                    to=[d.persona.email],
+                    to=destinatari,
                     attachments=self.allegati_pronti(),
                     connection=connection,
                 )
@@ -328,7 +331,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         return m
 
     @classmethod
-    def costruisci_e_invia(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo={}, mittente=None, destinatari=[], allegati=[], **kwargs):
+    def costruisci_e_invia(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo={}, mittente=None, destinatari=[], allegati=[], utenza=False, **kwargs):
         """
         Scorciatoia per costruire rapidamente un messaggio di posta e inviarlo immediatamente.
          IMPORTANTE. Non adatto per messaggi con molti destinatari. In caso di fallimento immediato, il messaggio
@@ -341,7 +344,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         :return: Un oggetto Messaggio inviato.
         """
         m = cls.costruisci(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente, destinatari=destinatari, allegati=allegati, **kwargs)
-        m.invia()
+        m.invia(utenza=utenza)
         return m
 
     @classmethod

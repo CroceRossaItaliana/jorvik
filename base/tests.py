@@ -1,21 +1,27 @@
+import datetime
 import os
+import tempfile
 
 from unittest import skipIf
 from unittest.mock import patch
 from zipfile import ZipFile
 from django.contrib.auth.tokens import default_token_generator
+import django.core.files
 from django.core.files.temp import NamedTemporaryFile
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from articoli.models import Articolo
 from anagrafica.models import Persona
 from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
 from base.geo import Locazione
 from base.utils_tests import crea_appartenenza, crea_persona_sede_appartenenza, crea_persona, crea_area_attivita, crea_utenza
+from gestione_file.models import Documento
 from jorvik.settings import GOOGLE_KEY
-
+from filer.models import Folder
+from filer.tests import create_image
 
 class TestBase(TestCase):
 
