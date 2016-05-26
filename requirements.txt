@@ -1,5 +1,5 @@
---extra-index-url https://devpi.iast.it/nephila/public/+simple/
-
+#--extra-index-url https://devpi.iast.it/nephila/public/+simple/
+#
 Django==1.9.4
 Markdown==2.6
 django-bootstrap3==7.0.0
@@ -35,6 +35,7 @@ cssselect==0.9.1
 splinter==0.7.3
 tblib==1.3.0
 selenium==2.52.0
-django-filer==1.2.1a1.dev2
+#django-filer==1.2.1a1.dev2
+django-filer==1.2.0
 django-ckeditor-filebrowser-filer==0.2.0b12
 django-nocaptcha-recaptcha==0.0.19
