@@ -10,7 +10,7 @@
     <td class="monospace">
         <a href="#">
             <i class="fa fa-fw fa-search"></i>
-            {{ persona.tesserino_codice|default:"N/A" }}
+            {{ persona.tesserino_codice|default:"N/A" }}{% if persona.tesserino_tipo_richiesta == 'DUP' %} (Duplicato) {% endif %}
         </a>
     </td>
 {% endblock %}

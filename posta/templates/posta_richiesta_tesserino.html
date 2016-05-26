@@ -2,7 +2,7 @@
 
 {% block corpo %}
     <p class="grassetto">Ciao {{ persona.nome }}, buone notizie.</p>
-    <p>Il tuo Comitato ha avviato la richiesta di stampa del {% if duplicato %}duplicatio del{% endif %} tuo tesserino.</p>
+    <p>Il tuo Comitato ha avviato la richiesta di stampa del {% if duplicato %}duplicato del {% endif %}tuo tesserino.</p>
     <p>La richiesta &egrave; stata inoltrata da {{ tesserino.richiesto_da }} il
         {{ tesserino.creazione|date:"SHORT_DATETIME_FORMAT" }}.</p>
     <p>La richiesta di stampa &egrave; stata inoltrata alla Sede di emissione ({{ tesserino.emesso_da }}),

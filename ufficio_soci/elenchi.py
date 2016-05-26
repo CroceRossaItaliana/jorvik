@@ -571,6 +571,7 @@ class ElencoTesseriniRichiesti(ElencoVistaAnagrafica):
                 appartenenza_inizio=F('appartenenze__inizio'),
                 appartenenza_sede=F('appartenenze__sede'),
                 tesserino_codice=F('tesserini__codice'),
+                tesserino_tipo_richiesta=F('tesserini__tipo_richiesta'),
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
