@@ -3,6 +3,7 @@ from unittest import skip
 import tempfile
 
 import django.core.files
+from django.core import mail
 from django.test import TestCase
 from django.utils import timezone
 
@@ -14,6 +15,7 @@ from base.geo import Locazione
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza
 from ufficio_soci.elenchi import ElencoElettoratoAlGiorno
 from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota
+from ufficio_soci.models import Tesserino
 
 
 class TestBase(TestCase):
@@ -396,5 +398,66 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         #self.assertTrue(sessione_presidente_locale.is_text_present(persona.nome))
         #self.assertTrue(sessione_presidente_locale.is_text_present(persona.cognome))
         sessione_presidente_locale.visit("%s/us/tesserini/richiedi/%s/" % (self.live_server_url, persona.pk))
-        sessione_presidente_provinciale = self.sessione_utente(persona=presidente_provinciale)
-        sessione_presidente_provinciale.visit("%s/us/tesserini/emissione/%s/" % (self.live_server_url, persona))
+        self.assertTrue(sessione_presidente_locale.is_text_present('Richiesta inoltrata'))
+        self.assertTrue(sessione_presidente_locale.is_text_present('La richiesta di stampa è stata inoltrata correttamente alla Sede di emissione'))
+        self.assertTrue(sessione_presidente_locale.is_text_present(sede_regionale.nome))
+        self.assertTrue(sessione_presidente_locale.is_text_present(persona.nome))
+        self.assertTrue(sessione_presidente_locale.is_text_present(persona.cognome))
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertTrue(email.subject.find('Richiesta Tesserino inoltrata') > -1)
+        self.assertTrue(email.body.find('Il tuo Comitato ha avviato la richiesta di stampa del tuo tesserino.') > -1)
+        sessione_presidente_regionale = self.sessione_utente(persona=presidente_regionale)
+        sessione_presidente_regionale.visit("%s/us/tesserini/emissione/" % self.live_server_url)
+        sessione_presidente_regionale.find_by_xpath('//select[@name="stato_richiesta"]//option[@value="ATT"]').first.click()
+        sessione_presidente_regionale.find_by_xpath("//button[@type='submit']").first.click()
+        sessione_presidente_regionale.find_by_id("seleziona-tutti").first.click()
+        sessione_presidente_regionale.find_by_value("lavora").first.click()
+        sessione_presidente_regionale.find_by_xpath('//select[@name="stato_richiesta"]//option[@value="OK"]').first.click()
+        sessione_presidente_regionale.find_by_xpath('//select[@name="stato_emissione"]//option[@value="STAMPAT"]').first.click()
+        sessione_presidente_regionale.find_by_xpath("//button[@type='submit']").first.click()
+        tesserini = Tesserino.objects.all()
+        self.assertEqual(1, tesserini.count())
+        tesserino = tesserini.first()
+        codice_tesserino = tesserino.codice
+        self.assertTrue(tesserino.valido)
+        self.assertNotEqual(None, codice_tesserino)
+        sessione_persona.visit("%s/informazioni/verifica-tesserino/" % self.live_server_url)
+        sessione_persona.fill('numero_tessera', codice_tesserino)
+        sessione_persona.find_by_xpath("//button[@type='submit']").first.click()
+        self.assertTrue(sessione_persona.is_text_present('Tesserino valido'))
+
+        # Richiedi duplicato
+
+        sessione_presidente_locale.visit("%s/us/tesserini/richiedi/%s/" % (self.live_server_url, persona.pk))
+        self.assertTrue(sessione_presidente_locale.is_text_present('Richiesta inoltrata'))
+        self.assertTrue(sessione_presidente_locale.is_text_present('La richiesta di stampa è stata inoltrata correttamente alla Sede di emissione'))
+        self.assertTrue(sessione_presidente_locale.is_text_present(sede_regionale.nome))
+        self.assertTrue(sessione_presidente_locale.is_text_present(persona.nome))
+        self.assertTrue(sessione_presidente_locale.is_text_present(persona.cognome))
+        self.assertEqual(len(mail.outbox), 2)
+        email = mail.outbox[1]
+        self.assertTrue(email.subject.find('Richiesta Duplicato Tesserino inoltrata') > -1)
+        self.assertTrue(email.body.find('Il tuo Comitato ha avviato la richiesta di stampa del duplicato del tuo tesserino.') > -1)
+        sessione_presidente_regionale = self.sessione_utente(persona=presidente_regionale)
+        sessione_presidente_regionale.visit("%s/us/tesserini/emissione/" % self.live_server_url)
+        sessione_presidente_regionale.find_by_xpath('//select[@name="stato_richiesta"]//option[@value="ATT"]').first.click()
+        sessione_presidente_regionale.find_by_xpath("//button[@type='submit']").first.click()
+        sessione_presidente_regionale.find_by_id("seleziona-tutti").first.click()
+        sessione_presidente_regionale.find_by_value("lavora").first.click()
+        sessione_presidente_regionale.find_by_xpath('//select[@name="stato_richiesta"]//option[@value="OK"]').first.click()
+        sessione_presidente_regionale.find_by_xpath('//select[@name="stato_emissione"]//option[@value="STAMPAT"]').first.click()
+        sessione_presidente_regionale.find_by_xpath("//button[@type='submit']").first.click()
+        tesserino_duplicato = Tesserino.objects.exclude(codice=codice_tesserino).first()
+        tesserino_vecchio = Tesserino.objects.filter(codice=codice_tesserino).first()
+        self.assertEqual(Tesserino.DUPLICATO, tesserino_duplicato.tipo_richiesta)
+        self.assertNotEqual(Tesserino.DUPLICATO, tesserino.tipo_richiesta)
+        self.assertTrue(tesserino_duplicato.valido)
+        self.assertFalse(tesserino_vecchio.valido)
+        sessione_persona.visit("%s/informazioni/verifica-tesserino/" % self.live_server_url)
+        sessione_persona.fill('numero_tessera', codice_tesserino)
+        sessione_persona.find_by_xpath("//button[@type='submit']").first.click()
+        self.assertTrue(sessione_persona.is_text_present('Tesserino non valido'))
+        sessione_persona.fill('numero_tessera', tesserino_duplicato.codice)
+        sessione_persona.find_by_xpath("//button[@type='submit']").first.click()
+        self.assertTrue(sessione_persona.is_text_present('Tesserino valido'))
