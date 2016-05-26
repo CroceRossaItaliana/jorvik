@@ -10,10 +10,12 @@ from django.contrib.auth.views import password_change, password_change_done
 from django.shortcuts import redirect
 
 import anagrafica.viste
+import articoli.viste
 import attivita.viste
 import base.viste, base.errori
 import centrale_operativa.viste
 import formazione.viste
+import gestione_file.viste
 import gruppi.viste
 import posta.viste
 import social.viste
@@ -127,6 +129,16 @@ urlpatterns = [
     url(r'^posta/(?P<direzione>[\w\-]+)/', posta.viste.posta),
     url(r'^posta/', posta.viste.posta_home),
 
+    url(r'^articoli/$', articoli.viste.ListaArticoli.as_view(), name='lista_articoli'),
+    url(r'^articoli/(?P<anno>\d{4})/$', articoli.viste.ListaArticoli.as_view(), name='lista_articoli-per-anno'),
+    url(r'^articoli/(?P<anno>\d{4})/(?P<mese>\d{1,2})/$', articoli.viste.ListaArticoli.as_view(), name='lista_articoli-per-mese'),
+    url(r'^articoli/(?P<articolo_slug>[\w\-]+)/$', articoli.viste.DettaglioArticolo.as_view(), name='dettaglio_articolo'),
+    url(r'^documenti/$', gestione_file.viste.ListaDocumenti.as_view(), name='lista_documenti'),
+    url(r'^documenti/(?P<cartella>[0-9\-]+)/$', gestione_file.viste.ListaDocumenti.as_view(), name='lista_documenti'),
+    url(r'^documenti/scarica/(?P<pk>[0-9\-]+)/$', gestione_file.viste.serve_protected_file, name='scarica_file'),
+    url(r'documenti/immagine/(?P<image_id>\d+)/$', gestione_file.viste.serve_image, name='scarica_immagine'),
+    url(r'documenti/immagine/(?P<image_id>\d+)/(?P<thumb_options>\d+)/$', gestione_file.viste.serve_image, name='scarica_immagine'),
+    url(r'documenti/immagine/(?P<image_id>\d+)/(?P<width>\d+)/(?P<height>\d+)/$', gestione_file.viste.serve_image, name='scarica_immagine'),
     url(r'^attivita/$', attivita.viste.attivita),
     url(r'^attivita/aree/$', attivita.viste.attivita_aree),
     url(r'^attivita/aree/(?P<sede_pk>[0-9\-]+)/$', attivita.viste.attivita_aree_sede),
@@ -198,7 +210,7 @@ urlpatterns = [
 
     url(r'^us/elenchi/(?P<elenco_tipo>.*)/$', ufficio_soci.viste.us_elenchi),
     url(r'^us/quote/$', ufficio_soci.viste.us_quote),
-    url(r'^us/quote/nuova/$', ufficio_soci.viste.us_quote_nuova),
+    url(r'^us/quote/nuova/$', ufficio_soci.viste.us_quote_nuova, name='us_quote_nuova'),
     url(r'^us/ricevute/$', ufficio_soci.viste.us_ricevute),
     url(r'^us/ricevute/(?P<pk>[0-9]+)/annulla/$', ufficio_soci.viste.us_ricevute_annulla),
     url(r'^us/ricevute/nuova/$', ufficio_soci.viste.us_ricevute_nuova),
@@ -293,6 +305,10 @@ urlpatterns = [
 
     # Autocompletamento
     url(r'^autocomplete/', include('autocomplete_light.urls')),
+
+    #Filer
+    url(r'^filer/', include('filer.urls')),
+    url(r'^filebrowser_filer/', include('ckeditor_filebrowser_filer.urls')),
 
     # OAuth 2.0
     # url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),

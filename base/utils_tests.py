@@ -9,6 +9,7 @@ from anagrafica.models import Persona, Sede, Appartenenza, Delega
 from anagrafica.permessi.applicazioni import PRESIDENTE
 from attivita.models import Area, Attivita, Turno, Partecipazione
 from autenticazione.models import Utenza
+from base.geo import Locazione
 from base.utils import poco_fa
 from jorvik.settings import DRIVER_WEB
 
@@ -58,6 +59,26 @@ def crea_sede(presidente=None, estensione=LOCALE, genitore=None):
         )
         d.save()
     return s
+
+
+def crea_locazione(dati=None, geo=False):
+    if not dati and geo:
+        indirizzo = 'Via Toscana, 12 - 00187 Roma'
+        geo = Locazione.cerca(indirizzo)
+        locazione = Locazione.objects.create(**geo[0][2])
+    else:
+        if not dati:
+            dati = {
+                'civico': '99',
+                'via': 'via via',
+                'comune': 'Roma',
+                'provincia': 'RM',
+                'regione': 'Lazio',
+                'stato': 'IT',
+                'cap': '06066',
+            }
+        locazione = Locazione.objects.create(**dati)
+    return locazione
 
 
 def crea_appartenenza(persona, sede):
