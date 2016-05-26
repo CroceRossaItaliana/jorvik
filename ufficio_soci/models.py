@@ -160,6 +160,8 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
 
     anno = models.SmallIntegerField(db_index=True, unique=True, default=questo_anno)
     inizio = models.DateField(db_index=True, default=oggi)
+    fine_soci = models.DateField(null=True)
+    fine_soci_iv = models.DateField(null=True)
 
     quota_attivo = models.FloatField(default=8.00)
     quota_ordinario = models.FloatField(default=16.00)
@@ -167,15 +169,23 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     quota_aspirante = models.FloatField(default=20.00)
     quota_sostenitore = models.FloatField(default=20.00)
 
-    @property
-    def accetta_pagamenti(self):
-        return self.stato == self.APERTO and oggi() >= self.inizio
+    def accetta_pagamenti(self, data=None, iv=False):
+        if not data:
+            data = oggi()
+        if iv and self.fine_soci_iv:
+            termine = self.fine_soci_iv
+        else:
+            termine = self.fine_soci
+
+        return self.stato == self.APERTO and data >= self.inizio and data < termine
 
     @classmethod
-    def aperto_anno(cls, anno):
+    def aperto_anno(cls, data=None, iv=False):
         try:
-            t = Tesseramento.objects.get(anno=anno)
-            return t.accetta_pagamenti
+            if not data:
+                data = oggi()
+            t = Tesseramento.objects.get(anno=data.year)
+            return t.accetta_pagamenti(data, iv)
         except Tesseramento.DoesNotExist:
             return False
 

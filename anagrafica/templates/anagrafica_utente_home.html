@@ -142,7 +142,11 @@
         </p>
     </div>
 
-
+    <div class="articoli">
+    {% for articolo in articoli %}
+        {% include "includes/elemento_lista.html" %}
+    {% endfor %}
+    </div>
 
 
 {% endblock %}

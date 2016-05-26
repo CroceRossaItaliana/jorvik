@@ -1,0 +1,47 @@
+{% extends "admin/filer/folder/directory_listing.html" %}
+{% load i18n staticfiles filer_admin_tags %}
+
+{% block object-tools-items %}
+    <div class="navigator-button-wrapper">
+        {% if folder.can_have_subfolders and can_make_folder %}
+            <a href="{% url 'admin:filer-directory_listing-make_root_folder' %}?parent_id={{ folder.id }}{% if is_popup %}&amp;_popup=1{% endif %}"
+                title="{% trans 'Adds a new Folder' %}"
+                class="navigator-button"
+                onclick="return showAddAnotherPopup(this);">
+                {% trans "New Folder" %}
+            </a>
+        {% endif %}
+        {% if permissions.has_add_children_permission and not folder.is_root or folder.name == "File non archiviati" %}
+            <a href="{% url 'admin:gestione_file_documento_add' %}?parent_id={{ folder.id }}{% if is_popup %}&amp;_popup=1{% endif %}"
+                title="{% trans 'Adds a new File' %}"
+                class="navigator-button">
+                {% trans "New File" %}
+            </a>
+        {% endif %}
+
+        {% if permissions.has_add_children_permission and not folder.is_root %}
+            <a href="#" id="id_upload_button" title="{% trans 'Upload Files' %}"
+               class="navigator-button navigator-button-upload js-upload-button"
+               data-url="{% url 'admin:filer-ajax_upload' folder_id=folder.id %}"
+               data-max-uploader-connections="{{ uploader_connections }}">
+                {% trans "Upload Files" %}
+            </a>
+        {% elif folder.name == "File non archiviati" %}
+            <a href="#" id="id_upload_button" title="{% trans 'Upload Files' %}"
+               class="navigator-button navigator-button-upload js-upload-button"
+               data-url="{% url 'admin:filer-ajax_upload' %}"
+               data-max-uploader-connections="{{ uploader_connections }}">
+                {% trans "Upload Files" %}
+            </a>
+        {% endif %}
+        {% if folder.is_root and folder.name != "File non archiviati" %}
+            <span class="js-upload-button-disabled upload-button-disabled"
+                  data-toggle="tooltip" data-placement="bottom"
+                  title="{% trans 'You have to select a folder first' %}">
+                <a href="#" class="navigator-button navigator-button-upload" disabled>
+                    {% trans "Upload Files" %}
+                </a>
+            </span>
+        {% endif %}
+    </div>
+{% endblock %}
