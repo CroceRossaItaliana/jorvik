@@ -179,3 +179,35 @@ def pagina_privata_no_cambio_firma(funzione=None, pagina=LOGIN_URL, permessi=[])
 
     return _pagina_privata
 
+
+class VistaDecorata(object):
+    """
+    Questo mixin permette di usare i decoratori sopra nelle class based views
+
+    Per applicare i decoratori la vista deve essere costruita nel modo seguente:
+
+    class ListaArticoli(VistaDecorata, ListView):
+        ...
+
+        @method_decorator(pagina_privata)
+        def dispatch(self, request, *args, **kwargs):
+            return super(ListaArticoli, self).dispatch(request, *args, **kwargs)
+    """
+    permetti_embed = False
+
+    def contesto(self, contesto):
+        embed = self.permetti_embed and self.request.GET.get('embed', default='false') == 'true'
+
+        try:
+            contesto.update({'me': self.request.me})
+        except AttributeError:
+            pass
+        try:
+            contesto.update({'menu': menu(self.request)})
+        except AttributeError:
+            pass
+        contesto.update({'embed': embed})
+        return contesto
+
+    def get_context_data(self, **kwargs):
+        return self.contesto(super(VistaDecorata, self).get_context_data(**kwargs))
