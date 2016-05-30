@@ -364,6 +364,78 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             msg="L'ex ordinario non è più in elenco al regionale"
         )
 
+    def test_registrazione_quota_socio_senza_fine(self):
+
+        # Crea oggetti e nomina il delegato US
+        delegato = crea_persona()
+        utente = crea_utenza(delegato, email="mario@rossi.it", password="prova")
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
+        sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
+
+        oggi = poco_fa()
+        inizio_anno = oggi.replace(month=1, day=1)
+        fine_soci = oggi.replace(month=oggi.month - 1)
+
+        Tesseramento.objects.create(
+            stato=Tesseramento.APERTO, inizio=inizio_anno,
+            anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8,
+            quota_benemerito=8, quota_aspirante=8, quota_sostenitore=8
+        )
+
+        sede.telefono = '+3902020202'
+        sede.email = 'comitato@prova.it'
+        sede.codice_fiscale = '01234567891'
+        sede.partita_iva = '01234567891'
+        sede.locazione = crea_locazione()
+        sede.save()
+
+        data = {
+            'volontario': volontario.pk,
+            'importo': 8,
+            'data_versamento': oggi.replace(month=oggi.month-2).strftime('%d/%m/%Y')
+        }
+        self.client.login(email="mario@rossi.it", password="prova")
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_quote_nuova')), data=data)
+        # quota registrata con successo
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['location'].find('?appena_registrata='))
+
+    def test_registrazione_quota_socio_senza_fine_chiuso(self):
+
+        # Crea oggetti e nomina il delegato US
+        delegato = crea_persona()
+        utente = crea_utenza(delegato, email="mario@rossi.it", password="prova")
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
+        sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
+
+        oggi = poco_fa()
+        inizio_anno = oggi.replace(month=1, day=1)
+        fine_soci = oggi.replace(month=oggi.month - 1)
+
+        Tesseramento.objects.create(
+            stato=Tesseramento.CHIUSO, inizio=inizio_anno,
+            anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8,
+            quota_benemerito=8, quota_aspirante=8, quota_sostenitore=8
+        )
+
+        sede.telefono = '+3902020202'
+        sede.email = 'comitato@prova.it'
+        sede.codice_fiscale = '01234567891'
+        sede.partita_iva = '01234567891'
+        sede.locazione = crea_locazione()
+        sede.save()
+
+        data = {
+            'volontario': volontario.pk,
+            'importo': 8,
+            'data_versamento': oggi.replace(month=oggi.month-2).strftime('%d/%m/%Y')
+        }
+        self.client.login(email="mario@rossi.it", password="prova")
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_quote_nuova')), data=data)
+        # tesseramento chiuso, quota non registrata
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'tesseramento {} è chiuso'.format(oggi.year))
+
     def test_registrazione_quota_socio(self):
 
         # Crea oggetti e nomina il delegato US

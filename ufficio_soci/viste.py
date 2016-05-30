@@ -818,9 +818,15 @@ def us_quote_nuova(request, me):
                     data_fine = tesseramento.fine_soci_iv
                 else:
                     data_fine = tesseramento.fine_soci
-                modulo.add_error('data_versamento', "Spiacente, non è possibile registrare una "
-                                                    "quota con data di versamento successiva al "
-                                                    "%s" % data_fine)
+                if data_fine:
+                    modulo.add_error('data_versamento',
+                                     "Spiacente, non è possibile registrare una "
+                                     "quota con data di versamento successiva al "
+                                     "%s" % data_fine)
+                else:
+                    modulo.add_error('data_versamento',
+                                     "Spiacente, non è possibile registrare una "
+                                     "quota perché il tesseramento %s è chiuso" % questo_anno)
 
 
             elif tesseramento.pagante(volontario, attivi=True, ordinari=False):
