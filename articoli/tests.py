@@ -21,6 +21,18 @@ def parola_casuale(lunghezza):
 
 class ArticoliTests(TestCase):
 
+    def test_titolo_lungo(self):
+
+        articolo = Articolo.objects.create(
+                titolo='Corso di aggiornamento per coordinatori attività di emergenza',
+                corpo=parola_casuale(3000),
+                data_inizio_pubblicazione=datetime.datetime.now() - datetime.timedelta(days=5),
+            )
+
+        self.assertEqual(articolo.corpo[:Articolo.DIMENSIONE_ESTRATTO], articolo.estratto)
+        self.assertFalse(articolo.termina)
+        self.assertEqual(articolo.slug, 'corso-di-aggiornamento-per-coordinatori-attivita-di-emergenza')
+
     def test_articolo(self):
 
         CONTENUTO_1 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n"
