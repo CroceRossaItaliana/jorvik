@@ -53,7 +53,7 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     DIMENSIONE_ESTRATTO = 1014
 
     titolo = models.CharField('Titolo', max_length=255, db_index=True)
-    slug = models.SlugField(unique=True, blank=True, null=True)
+    slug = models.SlugField(unique=True, max_length=255, blank=True, null=True)
     corpo = RichTextField('Corpo')
     estratto = models.CharField('Estratto', max_length=1024, blank=True, null=True)
     data_inizio_pubblicazione = models.DateTimeField('Data di inizio pubblicazione', default=timezone.now, db_index=True)
