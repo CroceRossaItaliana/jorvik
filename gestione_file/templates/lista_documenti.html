@@ -106,7 +106,7 @@
             <tr>
                 <th><i class="fa fa-fw {{ documento.icona }}"></i></th>
                 <td><a target="_blank" href="{{ documento.url_scarica }}">{{ documento.label }}</a></td>
-                {% if query %}
+                {% if query and documento.folder.pk%}
                     <td><a href="{% url 'lista_documenti' documento.folder.pk %}">
                         <i class="fa fa-fw fa-folder"></i> {{ documento.folder }}</a>
                     </td>
