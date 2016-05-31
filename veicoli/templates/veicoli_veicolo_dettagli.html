@@ -11,7 +11,7 @@
     <div class="panel-heading">
         <h2 class="panel-title">
                 <i class="fa fa-fw fa-gears"></i>
-                Dettagli veicolo {{ veicolo.targa }}
+                Dettagli veicolo {{ veicolo.targa }} -- <a href="/veicoli/autoparco/elenco/{{ veicolo.collocazione.autoparco.pk }}/" >Collocato presso {{ veicolo.collocazione.autoparco }} </a>
         </h2>
     </div>
     <div class="panel-body">
@@ -20,6 +20,7 @@
         <a href="/veicolo/rifornimenti/{{ veicolo.pk }}/" class="btn" ><i class="fa fa-fw fa-plus-circle"></i>Rifornimenti</a>
         <a href="/veicolo/fermi-tecnici/{{ veicolo.pk }}/" class="btn" ><i class="fa fa-fw fa-cogs"></i> Fermi Tecnici</a>
         <a href="/veicolo/{{ veicolo.pk }}/collocazioni/" class="btn" ><i class="fa fa-fw fa-home"></i> Collocazioni</a>
+        <a href="/veicoli/autoparco/elenco/{{ veicolo.collocazione.autoparco.pk }}/" class="btn" ><i class="fa fa-fw fa-home"></i> Torna all'autoparco </a>
     </div>
 </div>
 
