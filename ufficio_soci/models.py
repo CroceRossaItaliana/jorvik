@@ -176,6 +176,11 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
             termine = self.fine_soci_iv
         else:
             termine = self.fine_soci
+        if not termine:
+            if self.stato == self.APERTO:
+                termine = oggi() + timedelta(days=1)
+            else:
+                termine = oggi()
 
         return self.stato == self.APERTO and data >= self.inizio and data < termine
 
