@@ -302,7 +302,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
 
         oggi = poco_fa()
         inizio_anno = oggi.replace(month=1, day=1)
-        fine_soci = oggi.replace(month=oggi.month + 1)
+        fine_soci = oggi + datetime.timedelta(days=30)
 
         Tesseramento.objects.create(
             stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
@@ -374,7 +374,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
 
         oggi = poco_fa()
         inizio_anno = oggi.replace(month=1, day=1)
-        fine_soci = oggi.replace(month=oggi.month - 1)
+        fine_soci = oggi - datetime.timedelta(days=30)
 
         Tesseramento.objects.create(
             stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
@@ -444,10 +444,10 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
 
         oggi = poco_fa()
         inizio_anno = oggi.replace(month=1, day=1)
-        fine_soci = oggi.replace(month=oggi.month - 2)
-        fine_soci_iv = oggi.replace(month=oggi.month - 1)
-        data_1 = oggi.replace(month=oggi.month - 1, day=1)
-        data_2 = oggi.replace(month=oggi.month - 2, day=1)
+        fine_soci = oggi - datetime.timedelta(days=60)
+        fine_soci_iv = oggi - datetime.timedelta(days=30)
+        data_1 = fine_soci_iv - datetime.timedelta(days=10)
+        data_2 = fine_soci - datetime.timedelta(days=10)
 
         Tesseramento.objects.create(
             stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
