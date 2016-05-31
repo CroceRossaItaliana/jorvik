@@ -159,7 +159,11 @@ class UpperCaseCharField(models.CharField):
         super(UpperCaseCharField, self).__init__(*args, **kwargs)
 
     def to_python(self, value):
-        return value.upper()
+        try:
+            value = value.upper()
+        except ValueError:
+            pass
+        return value
 
 
 class TitleCharField(models.CharField):
