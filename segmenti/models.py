@@ -58,8 +58,7 @@ class BaseSegmentoBase(models.base.ModelBase):
 class BaseSegmento(six.with_metaclass(BaseSegmentoBase, models.Model)):
 
     LIMITED_CHOICES = {
-        'tipo': Sede.COMITATO,
-        'estensione': TERRITORIALE
+        'tipo': Sede.COMITATO
     }
 
     segmento = models.CharField(max_length=256, choices=NOMI_SEGMENTI)
