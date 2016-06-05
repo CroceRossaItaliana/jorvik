@@ -230,13 +230,9 @@ def us_dimissioni(request, me, pk):
         dim.persona = persona
         dim.sede = dim.persona.sede_riferimento()
         dim.appartenenza = persona.appartenenze_attuali().first()
-        if modulo.cleaned_data['trasforma_in_sostenitore']:
-            app = Appartenenza(precedente=dim.appartenenza, persona=dim.persona, sede=dim.persona.sede_riferimento(),
-                               inizio=datetime.date.today(),
-                               membro=Appartenenza.SOSTENITORE)
-            app.save()
         dim.save()
-        dim.applica()
+        dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'])
+
         return messaggio_generico(request, me, titolo="Dimissioni registrate",
                                       messaggio="Le dimissioni sono"
                                                 "state registrate con successo",
