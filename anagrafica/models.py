@@ -2082,8 +2082,10 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     info = models.CharField(max_length=512, help_text="Maggiori informazioni sulla causa della dimissione")
     richiedente = models.ForeignKey(Persona, on_delete=models.SET_NULL, null=True)
 
-    def applica(self):
+    def applica(self, trasforma_in_sostenitore=False):
         from gruppi.models import Appartenenza as App
+        precedente_appartenenza = self.appartenenza
+        precedente_sede = self.persona.sede_riferimento()
         Appartenenza.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa(), terminazione=Appartenenza.DIMISSIONE)
         Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
         App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
@@ -2092,6 +2094,13 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
             [x.ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
             for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
         ]
+
+        if trasforma_in_sostenitore:
+            app = Appartenenza(precedente=precedente_appartenenza, persona=self.persona,
+                               sede=precedente_sede,
+                               inizio=date.today(),
+                               membro=Appartenenza.SOSTENITORE)
+            app.save()
 
         Messaggio.costruisci_e_invia(
             oggetto="Dimissioni",
