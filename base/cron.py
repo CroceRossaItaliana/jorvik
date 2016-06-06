@@ -24,4 +24,4 @@ class CronApprovaNegaAuto(CronJobBase):
     code = 'base.autorizzazioni.automatiche'
 
     def do(self):
-        n, m = Autorizzazione.gestisci_automatiche()
+        Autorizzazione.gestisci_automatiche()
