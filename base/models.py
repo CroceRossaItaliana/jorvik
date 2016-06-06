@@ -296,8 +296,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         Cancella gli elementi scaduti.
         :return: Il numero di autorizzazioni .
         """
-        da_negare = cls.objects.filter(tipo_gestione=NG_AUTO)
-        da_approvare = cls.objects.filter(tipo_gestione=AP_AUTO)
+        da_negare = cls.objects.filter(tipo_gestione=cls.NG_AUTO, concessa__isnull=True)
+        da_approvare = cls.objects.filter(tipo_gestione=cls.AP_AUTO, concessa__isnull=True)
         m = da_negare.count()
         n = da_approvare.count()
         for autorizzazione in da_negare:
