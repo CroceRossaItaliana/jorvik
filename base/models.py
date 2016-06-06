@@ -97,6 +97,16 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     Utilizzare tramite il tratto ConAutorizzazioni ed i suoi metodi.
     """
 
+    AP_AUTO = "A"
+    NG_AUTO = "N"
+    MANUALE = "M"
+
+    TIPO_GESTIONE = (
+        (MANUALE, "Manuale"),
+        (AP_AUTO, "Approvazione automatica"),
+        (NG_AUTO, "Negazione automatica"),
+    )
+
     class Meta:
         verbose_name_plural = "Autorizzazioni"
         app_label = "base"
@@ -128,7 +138,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     destinatario_oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="autcomedestinatari", null=True, on_delete=models.SET_NULL)
     destinatario_oggetto_id = models.PositiveIntegerField(db_index=True)
     destinatario_oggetto = GenericForeignKey('destinatario_oggetto_tipo', 'destinatario_oggetto_id')
-    scadenza = models.DateTimeField(default=calcola_scadenza, db_index=True)
+    scadenza = models.DateTimeField(blank=True, null=True, db_index=True)
+    tipo_gestione = models.CharField(default=MANUALE, max_length=1, choices=TIPO_GESTIONE)
 
     def firma(self, firmatario, concedi=True, modulo=None, motivo=None, auto=False):
         """
@@ -278,6 +289,21 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         if self.scadenza and self.concessa is None:
             if self.scadenza < timezone.now():
                 self.nega(auto=True)
+
+    @classmethod
+    def gestisci_automatiche(cls):
+        """
+        Cancella gli elementi scaduti.
+        :return: Il numero di autorizzazioni .
+        """
+        da_negare = cls.objects.filter(tipo_gestione=NG_AUTO)
+        da_approvare = cls.objects.filter(tipo_gestione=AP_AUTO)
+        m = da_negare.count()
+        n = da_approvare.count()
+        for autorizzazione in da_negare:
+            autorizzazione.controlla_nega_automatico()
+        for autorizzazione in da_approvare:
+            autorizzazione.controlla_concedi_automatico()
 
 
 class Log(ModelloSemplice, ConMarcaTemporale):
