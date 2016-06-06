@@ -540,7 +540,9 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                 (
                     (INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI, self.turno.attivita)
                 ),
-            invia_notifiche=self.turno.attivita.referenti_attuali()
+            
+            invia_notifiche=self.turno.attivita.referenti_attuali(),
+            auto=False
         )
 
         # Se fuori sede, chiede autorizzazione al Presidente del mio Comitato.
@@ -552,7 +554,8 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                     (
                         (INCARICO_PRESIDENZA, self.persona.sede_riferimento())
                     ),
-                invia_notifiche=self.persona.sede_riferimento().presidente()
+                invia_notifiche=self.persona.sede_riferimento().presidente(),
+                auto=False
             )
 
     def autorizzazione_concessa(self, modulo):
