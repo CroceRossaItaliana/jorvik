@@ -161,7 +161,7 @@ class UpperCaseCharField(models.CharField):
     def to_python(self, value):
         try:
             value = value.upper()
-        except ValueError:
+        except (ValueError, TypeError, AttributeError):
             pass
         return value
 
