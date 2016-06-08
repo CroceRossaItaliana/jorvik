@@ -443,8 +443,10 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
 
         oggi = poco_fa()
+        if oggi.month < 3:
+            oggi = oggi - datetime.timedelta(years=1)
         inizio_anno = oggi.replace(month=1, day=1)
-        fine_soci = oggi - datetime.timedelta(days=30)
+        fine_soci = inizio_anno.replace(month=3) - datetime.timedelta(days=1)
 
         Tesseramento.objects.create(
             stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
@@ -465,7 +467,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         data = {
             'volontario': volontario.pk,
             'importo': 8,
-            'data_versamento': oggi.replace(month=oggi.month-2).strftime('%d/%m/%Y')
+            'data_versamento': fine_soci.strftime('%d/%m/%Y')
         }
         self.client.login(email="mario@rossi.it", password="prova")
         response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_quote_nuova')), data=data)
@@ -482,7 +484,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         data = {
             'volontario': volontario.pk,
             'importo': 8,
-            'data_versamento': oggi.replace(month=oggi.month-2).strftime('%d/%m/%Y')
+            'data_versamento': fine_soci.strftime('%d/%m/%Y')
         }
         self.client.login(email="mario@rossi.it", password="prova")
         response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_quote_nuova')), data=data)
