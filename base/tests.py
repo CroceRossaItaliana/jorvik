@@ -17,6 +17,7 @@ from anagrafica.models import Persona
 from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
 from base.geo import Locazione
+from base.utils import UpperCaseCharField
 from base.utils_tests import crea_appartenenza, crea_persona_sede_appartenenza, crea_persona, crea_area_attivita, crea_utenza
 from gestione_file.models import Documento
 from jorvik.settings import GOOGLE_KEY
@@ -156,6 +157,17 @@ class TestGeo(TestCase):
         self.assertEqual(indirizzo[0][0], self.posto_google[0]['formatted_address'])
         self.assertEqual(indirizzo[0][1], '0')
         self.assertEqual(indirizzo[0][2]['provincia_breve'], 'RM')
+
+
+class TestUtils(TestBase):
+
+    def test_uppercasecharfield(self):
+        field_stub = UpperCaseCharField()
+        self.assertEqual(field_stub.to_python(None), None)
+        self.assertEqual(field_stub.to_python(1), 1)
+        self.assertEqual(field_stub.to_python(''), '')
+        self.assertEqual(field_stub.to_python('testo minuscolo'), 'TESTO MINUSCOLO')
+        self.assertEqual(field_stub.to_python(False), False)
 
 
 class TestFunzionaleBase(TestFunzionale):
