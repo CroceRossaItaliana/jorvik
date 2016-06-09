@@ -290,13 +290,10 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             if self.scadenza < timezone.now():
                 self.nega(auto=True)
 
-    def automatizza(self, concedi=None):
-        if concedi is not None:
-            if concedi:
-                self.tipo_gestione = self.AP_AUTO
-            else:
-                self.tipo_gestione = self.NG_AUTO
-            self.scadenza = calcola_scadenza()
+    def automatizza(self, concedi=None, scadenza_giorni=None):
+        if concedi:
+            self.tipo_gestione = concedi
+            self.scadenza = calcola_scadenza(scadenza_giorni)
             self.save()
 
     @classmethod
@@ -580,7 +577,7 @@ class ConAutorizzazioni(models.Model):
         self.autorizzazione_richiedi(richiedente, (incarico, sede_riferimento), invia_notifiche=invia_notifiche, auto=auto, **kwargs)
         return True
 
-    def autorizzazione_richiedi(self, richiedente, destinatario, invia_notifiche=None, auto=None, **kwargs):
+    def autorizzazione_richiedi(self, richiedente, destinatario, invia_notifiche=None, auto=None, scadenza_giorni=None, **kwargs):
         """
         Richiede una autorizzazione per l'oggetto attuale
 
@@ -630,8 +627,8 @@ class ConAutorizzazioni(models.Model):
             )
             r.save()
 
-            if auto is not None:
-                r.automatizza(concedi=auto)
+            if auto:
+                r.automatizza(concedi=auto, scadenza_giorni=scadenza_giorni)
 
             if invia_notifiche:
 
