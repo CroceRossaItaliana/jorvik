@@ -21,6 +21,9 @@
 
 {% block app_contenuto %}
 
+    {% if cartella %}{% url 'lista_documenti' cartella.pk as url_base %}
+    {% else %}{% url 'lista_documenti' as url_base %}
+    {% endif %}
     <div class="row">
 
 
@@ -152,13 +155,13 @@
             <div class="pagination">
                 <span class="page-links">
                     {% if page_obj.has_previous %}
-                        <a href="/documenti?page={{ page_obj.previous_page_number }}"><i class="fa fa-backward" ></i> Prec.</a>
+                        <a href="{{ url_base }}?page={{ page_obj.previous_page_number }}"><i class="fa fa-backward" ></i> Prec.</a>
                     {% endif %}
                     <span class="page-current">
                         Pagina {{ page_obj.number }} di {{ page_obj.paginator.num_pages }}.
                     </span>
                     {% if page_obj.has_next %}
-                        <a href="/documenti?page={{ page_obj.next_page_number }}"><i class="fa fa-forward" ></i> Succ.</a>
+                        <a href="{{ url_base }}?page={{ page_obj.next_page_number }}"><i class="fa fa-forward" ></i> Succ.</a>
                     {% endif %}
                 </span>
             </div>
