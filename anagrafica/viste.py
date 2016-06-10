@@ -8,10 +8,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.contrib.auth import login
+from django.template.loader import get_template
 
 # Le viste base vanno qui.
 from django.views.generic import ListView
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 
 from anagrafica.costanti import TERRITORIALE, REGIONALE
 from anagrafica.elenchi import ElencoDelegati, ElencoGiovani
@@ -79,9 +81,9 @@ STEP_NOMI = {
 
 # Definisce i vari step di registrazione, in ordine, per ogni tipo di registrazione.
 STEP = {
-    TIPO_VOLONTARIO: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_ANAGRAFICA, STEP_CREDENZIALI, STEP_FINE],
-    TIPO_ASPIRANTE: [STEP_CODICE_FISCALE, STEP_ANAGRAFICA, STEP_CREDENZIALI, STEP_FINE],
-    TIPO_DIPENDENTE: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_ANAGRAFICA, STEP_CREDENZIALI, STEP_FINE],
+    TIPO_VOLONTARIO: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
+    TIPO_ASPIRANTE: [STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
+    TIPO_DIPENDENTE: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
 }
 
 MODULI = {
@@ -162,6 +164,37 @@ def registrati(request, tipo, step=None):
         'tipo': tipo,
         'modulo': modulo,
     }
+
+    if step == STEP_ANAGRAFICA:
+
+        if 'registrazione_id' not in request.session:
+            request.session['registrazione_id'] = get_random_string(length=32)
+
+        corpo = {
+            'tipo' : tipo,
+            'step' : step,
+            'code' : request.session['registrazione_id']
+        }
+
+        Messaggio.invia_raw(
+           oggetto="Richiesta di riserva",
+           corpo_html=get_template('email_conferma.html').render(corpo),
+           email_mittente=None,
+           lista_email_destinatari=[
+                sessione.get('email')
+           ]
+        )
+
+        registration_code = request.GET.get('code', '')
+
+        if request.session['registrazione_id'] != registration_code:
+            contesto = {
+                'attuale_nome': STEP_NOMI[step],
+                'attuale_slug': step,
+                'lista_step': lista_step,
+                'tipo': tipo,
+            }
+            return 'anagrafica_registrati_attesa_mail.html', contesto
 
     return 'anagrafica_registrati_step_' + step + '.html', contesto
 
