@@ -20,7 +20,7 @@ admin.site.unregister(Folder)
 
 class AdminCartella(FolderAdmin):
     directory_listing_template = 'admin/gestione_file/lista_cartelle.html'
-
+    order_by_attribute = 'data_pubblicazione'
 
 admin.site.register(Folder, AdminCartella)
 
