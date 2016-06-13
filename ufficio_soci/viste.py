@@ -840,12 +840,12 @@ def us_quote_nuova(request, me):
                 appartenenza = volontario.appartenenze_attuali(al_giorno=data_versamento, membro=Appartenenza.VOLONTARIO).first()
                 comitato = appartenenza.sede.comitato if appartenenza else None
 
-                if appartenenza.sede not in sedi:
-                    modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
-
-                elif not appartenenza:
+                if not appartenenza:
                     modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
                                                         'alla Sede.')
+
+                elif appartenenza.sede not in sedi:
+                    modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
 
                 elif not comitato.locazione:
                     return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
