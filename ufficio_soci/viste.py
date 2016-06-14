@@ -230,13 +230,9 @@ def us_dimissioni(request, me, pk):
         dim.persona = persona
         dim.sede = dim.persona.sede_riferimento()
         dim.appartenenza = persona.appartenenze_attuali().first()
-        if modulo.cleaned_data['trasforma_in_sostenitore']:
-            app = Appartenenza(precedente=dim.appartenenza, persona=dim.persona, sede=dim.persona.sede_riferimento(),
-                               inizio=datetime.date.today(),
-                               membro=Appartenenza.SOSTENITORE)
-            app.save()
         dim.save()
-        dim.applica()
+        dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'])
+
         return messaggio_generico(request, me, titolo="Dimissioni registrate",
                                       messaggio="Le dimissioni sono"
                                                 "state registrate con successo",
@@ -818,9 +814,15 @@ def us_quote_nuova(request, me):
                     data_fine = tesseramento.fine_soci_iv
                 else:
                     data_fine = tesseramento.fine_soci
-                modulo.add_error('data_versamento', "Spiacente, non è possibile registrare una "
-                                                    "quota con data di versamento successiva al "
-                                                    "%s" % data_fine)
+                if data_fine:
+                    modulo.add_error('data_versamento',
+                                     "Spiacente, non è possibile registrare una "
+                                     "quota con data di versamento successiva al "
+                                     "%s" % data_fine)
+                else:
+                    modulo.add_error('data_versamento',
+                                     "Spiacente, non è possibile registrare una "
+                                     "quota perché il tesseramento %s è chiuso" % questo_anno)
 
 
             elif tesseramento.pagante(volontario, attivi=True, ordinari=False):
@@ -838,12 +840,12 @@ def us_quote_nuova(request, me):
                 appartenenza = volontario.appartenenze_attuali(al_giorno=data_versamento, membro=Appartenenza.VOLONTARIO).first()
                 comitato = appartenenza.sede.comitato if appartenenza else None
 
-                if appartenenza.sede not in sedi:
-                    modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
-
-                elif not appartenenza:
+                if not appartenenza:
                     modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
                                                         'alla Sede.')
+
+                elif appartenenza.sede not in sedi:
+                    modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
 
                 elif not comitato.locazione:
                     return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",

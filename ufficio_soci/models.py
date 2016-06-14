@@ -5,6 +5,7 @@ import barcode
 from barcode.writer import ImageWriter
 from django.db import models
 from django.db.models import Q, Max
+from django.utils.translation import ugettext_lazy as _
 
 from anagrafica.models import Persona, Appartenenza, Sede
 from base.files import PDF, EAN13
@@ -168,9 +169,18 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     stato = models.CharField(choices=STATO, default=APERTO, max_length=1)
 
     anno = models.SmallIntegerField(db_index=True, unique=True, default=questo_anno)
-    inizio = models.DateField(db_index=True, default=oggi)
-    fine_soci = models.DateField(null=True)
-    fine_soci_iv = models.DateField(null=True)
+    inizio = models.DateField(
+        db_index=True, default=oggi, verbose_name=_('Data di inizio'),
+        help_text=_('La data indicata è inclusa nell\'intervallo in cui è permesso il tesseramento')
+    )
+    fine_soci = models.DateField(
+        null=True, verbose_name=_('Data di fine per i soci'),
+        help_text=_('La data indicata è inclusa nell\'intervallo in cui è permesso il tesseramento')
+    )
+    fine_soci_iv = models.DateField(
+        null=True, verbose_name=_('Data di fine per infermiere volontarie'),
+        help_text=_('La data indicata è inclusa nell\'intervallo in cui è permesso il tesseramento')
+    )
 
     quota_attivo = models.FloatField(default=8.00)
     quota_ordinario = models.FloatField(default=16.00)
@@ -185,8 +195,13 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
             termine = self.fine_soci_iv
         else:
             termine = self.fine_soci
+        if not termine:
+            if self.stato == self.APERTO:
+                termine = oggi() + timedelta(days=1)
+            else:
+                termine = oggi()
 
-        return self.stato == self.APERTO and data >= self.inizio and data < termine
+        return self.stato == self.APERTO and data >= self.inizio and data <= termine
 
     @classmethod
     def aperto_anno(cls, data=None, iv=False):
