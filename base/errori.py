@@ -59,7 +59,7 @@ def errore_generico(request, me=None,
 
 def messaggio_generico(request, me=None,
              titolo="OK", messaggio="Azione effettuata.",
-             torna_titolo="Home page", torna_url="/"):
+             torna_titolo="Home page", torna_url="/", embed=False):
     """
     Ritorna un messaggio generico con un link per tornare indietro.
     :param titolo: Il titolo del messaggio .
@@ -72,6 +72,7 @@ def messaggio_generico(request, me=None,
         "messaggio_messaggio": messaggio,
         "messaggio_torna_titolo": torna_titolo,
         "messaggio_torna_url": torna_url,
+        "embed": embed
     }
     return 'base_messaggio_generico.html', contesto
 
