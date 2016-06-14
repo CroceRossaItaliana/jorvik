@@ -1123,7 +1123,7 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
                                          "i volontari in possesso di una fototessera "
                                          "confermata su Gaia.", **torna)
 
-    tesserini = persona.tesserini.filter(stato_richiesta__in=(Tesserino.RICHIESTO, Tesserino.ACCETTATO, Tesserino.DUPLICATO))
+    tesserini = persona.tesserini.filter(stato_richiesta__in=(Tesserino.RICHIESTO, Tesserino.ACCETTATO))
 
     if tesserini.exists():
         tipo_richiesta = Tesserino.DUPLICATO

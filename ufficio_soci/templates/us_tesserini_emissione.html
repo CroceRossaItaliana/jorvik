@@ -131,7 +131,7 @@
                         <td>{{ t.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
                         <td>{{ t.persona.link|safe }}</td>
                         <td>
-                            <span class="monospace">{{ t.codice|default:"N/A" }}</span>
+                            <span class="monospace">{{ t.codice|default:"N/A" }} {% if t.tipo_richiesta == t.DUPLICATO %}(originale: {{t.originale.codice}}){% endif %}</span>
                             {% if t.stato_richiesta == t.ACCETTATO %}
                                 <a download href="{{ t.url_pdf }}">
                                     <i class="fa fa-fw fa-download"></i> PDF
@@ -159,7 +159,7 @@
 
                     {% if modulo_compilato %}
                         <tr class="warning">
-                            <td colspan="6">
+                            <td colspan="8">
                                 <i class="fa fa-fw fa-warning"></i>
                                 <strong>Nessuna richiesta di tesserino trovata.</strong><br />
                                 Prova a modificare i parametri di ricerca.
@@ -168,7 +168,7 @@
 
                     {% else %}
                         <tr class="success">
-                            <td colspan="6">
+                            <td colspan="8">
                                 <i class="fa fa-fw fa-info-circle"></i>
                                 <strong>Qui appariranno i risultati di ricerca.</strong><br />
                                 Utilizza il modulo sopra per impostare i parametri di ricerca.
