@@ -119,6 +119,7 @@
                     <th>Volontario</th>
                     <th>Tesserino</th>
                     <th>Stato richiesta</th>
+                    <th>Tipo richiesta</th>
                     <th>Stato emissione</th>
                 </tr>
                 </thead>
@@ -141,6 +142,9 @@
                         </td>
                         <td>
                             {{ t.get_stato_richiesta_display }}
+                        </td>
+                        <td>
+                            {{t.get_tipo_richiesta_display}}
                         </td>
                         <td class="grassetto">
                             {{ t.get_stato_emissione_display|default:"NON EMESSO" }}
