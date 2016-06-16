@@ -50,5 +50,5 @@ class ModuloRichiestaSupporto(forms.Form):
                                    help_text="Seleziona una delle tipologie di richiesta "
                                              "per aiutarci a smistarla rapidamente.")
 
-    oggetto = forms.CharField(help_text="Una breve descrizione del problema, comprensiva del codice fiscale del volontario per cui richiedi assistenza.")
+    oggetto = forms.CharField(help_text="Una breve descrizione del problema.")
     descrizione = forms.CharField(widget=Textarea)
