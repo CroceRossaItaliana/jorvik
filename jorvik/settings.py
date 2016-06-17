@@ -255,6 +255,7 @@ FILER_FILE_MODELS = (
     'gestione_file.models.Immagine',
     'gestione_file.models.Documento',
 )
+GESTIONE_FILE_PAGINAZIONE = 50
 
 CKEDITOR_CONFIGS = {
     'default': {
