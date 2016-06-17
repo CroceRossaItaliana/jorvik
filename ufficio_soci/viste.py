@@ -1108,6 +1108,7 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
     torna = {
         "torna_url": request.GET.get("next", default="/us/tesserini/"),
         "torna_titolo": "Torna indietro",
+        "embed": True
     }
 
     sede = persona.sede_riferimento(membro=Appartenenza.MEMBRO_TESSERINO)

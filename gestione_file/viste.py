@@ -1,3 +1,5 @@
+from operator import attrgetter
+
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
@@ -21,8 +23,7 @@ class ListaDocumenti(VistaDecorata, ListView):
     model = Documento
     template_name = 'lista_documenti.html'
     context_object_name = 'documenti'
-    paginate_by = 10
-    ordering = ('-data_pubblicazione',)
+    paginate_by = settings.GESTIONE_FILE_PAGINAZIONE
 
     @method_decorator(pagina_privata)
     def dispatch(self, request, *args, **kwargs):
@@ -39,13 +40,15 @@ class ListaDocumenti(VistaDecorata, ListView):
         stringa = self.request.GET.get('q', '')
         if stringa:
             filtri_extra = Q(name__icontains=stringa) | Q(original_filename__icontains=stringa)
-            return documenti.filter(filtri_extra)
+            documenti = documenti.filter(filtri_extra)
         elif cartella:
             filtri_extra = {
                 'folder': cartella
             }
-            return documenti.filter(**filtri_extra)
-        return documenti.none()
+            documenti = documenti.filter(**filtri_extra)
+        else:
+            return documenti.none()
+        return sorted(list(documenti), key=attrgetter('data_pubblicazione'), reverse=True)
 
     def get_context_data(self, **kwargs):
         context = super(ListaDocumenti, self).get_context_data(**kwargs)
