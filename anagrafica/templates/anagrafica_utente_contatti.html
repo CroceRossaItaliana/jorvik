@@ -39,14 +39,32 @@
                             solo controllo.
                         </p>
                         {% bootstrap_form modulo_email_accesso %}
-                         <button class="btn btn-block btn-info" type="submit">
+
+                        {% if attesa_conferma_accesso %}
+                        <table class="table">
+                            <tbody>
+                                <tr class="warning">
+                                    <td colspan="3">
+                                        <p class="grassetto">
+                                            <i class="fa fa-fw fa-warning"></i> Conferma nuovo indirizzo email
+                                        </p>
+                                        <p>
+                                            Conferma il nuovo indirizzo email:<br><b>{{ request.session.modifica_mail }}</b><br>
+                                            visitando il link che ti è stato inviato via email
+                                        </p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        {% endif %}
+                        <button class="btn btn-block btn-info" type="submit">
                              <i class="fa fa-save fa-fw"></i>
                              {% if not attesa_conferma_accesso %}
                                 Salva E-mail di accesso
                              {% else %}
                                 Rimanda conferma E-mail accesso
                              {% endif %}
-                         </button>
+                        </button>
 
                     </div>
 
@@ -70,14 +88,32 @@
                             verr&agrave; usato l'indirizzo E-mail di accesso.
                         </p>
                         {% bootstrap_form modulo_email_contatto %}
-                         <button class="btn btn-block btn-info" type="submit">
-                             <i class="fa fa-save fa-fw"></i>
-                             {% if not attesa_conferma_contatto %}
-                                Salva E-mail di contatto
-                             {% else %}
-                                Rimanda conferma E-mail di contatto
-                             {% endif %}
-                         </button>
+
+                        {% if attesa_conferma_contatto %}
+                        <table class="table">
+                            <tbody>
+                                <tr class="warning">
+                                    <td colspan="3">
+                                        <p class="grassetto">
+                                            <i class="fa fa-fw fa-warning"></i> Conferma nuovo indirizzo email
+                                        </p>
+                                        <p>
+                                            Conferma il nuovo indirizzo email:<br><b>{{ request.session.modifica_contatto }}</b><br>
+                                            visitando il link che ti è stato inviato via email
+                                        </p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        {% endif %}
+                        <button class="btn btn-block btn-info" type="submit">
+                            <i class="fa fa-save fa-fw"></i>
+                            {% if not attesa_conferma_contatto %}
+                               Salva E-mail di contatto
+                            {% else %}
+                               Rimanda conferma E-mail di contatto
+                            {% endif %}
+                        </button>
                     </div>
 
                 </div>

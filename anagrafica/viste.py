@@ -470,8 +470,8 @@ def utente_contatti(request, me):
             if 'email' in data:
                 email = data['email']
                 corpo = {
-                    'code' : request.session['modifica_mail_id'],
-                    'code_type' : 'code_m'
+                    'code': request.session['modifica_mail_id'],
+                    'code_type': 'code_m'
                 }
                 if email != old_utenza_mail:
                     request.session['modifica_mail'] = email
@@ -491,8 +491,8 @@ def utente_contatti(request, me):
                 if email != old_utenza_contact:
                     request.session['modifica_contatto'] = email
                     corpo = {
-                        'code' : request.session['modifica_contatto_id'],
-                        'code_type' : 'code_c'
+                        'code': request.session['modifica_contatto_id'],
+                        'code_type': 'code_c'
                     }
                     Messaggio.invia_raw(
                        oggetto="Modifica email di contatto",
