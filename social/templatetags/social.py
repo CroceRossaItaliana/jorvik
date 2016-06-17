@@ -27,8 +27,11 @@ def commenti(context, oggetto=None, numero=20, altezza_massima=None):
     commenti = oggetto.commenti.all().order_by('-creazione')[0:numero]
     for commento in commenti:
         if hasattr(context['request'], 'me'):
-            commento.puo_modificare = context['request'].me == commento.autore \
+            if context['request'].me:
+                commento.puo_modificare = context['request'].me == commento.autore \
                                       or context['request'].me.permessi_almeno(oggetto, MODIFICA)
+            else:
+                commento.puo_modificare = False
 
     context.update({
         'social_commenti': commenti,
