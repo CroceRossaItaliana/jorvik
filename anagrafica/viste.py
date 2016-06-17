@@ -458,6 +458,10 @@ def utente_contatti(request, me):
 
     old_utenza_mail = me.utenza.email
     old_utenza_contact = me.email_contatto
+    stato_conferma_accesso = None
+    stato_conferma_contatto = None
+    errore_conferma_accesso = None
+    errore_conferma_contatto = None
 
     if request.method == "POST":
 
@@ -517,22 +521,22 @@ def utente_contatti(request, me):
         nuova_email = request.session.get('modifica_mail', '')
         if nuova_email != me.utenza.email:
             if request.session['modifica_mail_id'] != registration_code_m:
-                pass
-                #pass SHOW ERROR FOR ACCESS MAIL AND RESEND!
+                errore_conferma_accesso = True
             else:
                 me.utenza.email = request.session.get('modifica_mail', me.utenza.email)
                 me.utenza.save()
+                stato_conferma_accesso = True
                 del request.session['modifica_mail_id']
                 del request.session['modifica_mail']
 
         nuova_email = request.session.get('modifica_contatto', '')
         if nuova_email != me.email_contatto:
             if request.session['modifica_contatto_id'] != registration_code_c:
-                pass
-                #pass SHOW ERROR FOR CONTACT MAIL AND RESEND!
+                errore_conferma_contatto = True
             else:
                 me.email_contatto = request.session.get('modifica_contatto', me.email_contatto)
                 me.save()
+                stato_conferma_contatto = False
                 del request.session['modifica_contatto_id']
                 del request.session['modifica_contatto']
 
@@ -548,6 +552,10 @@ def utente_contatti(request, me):
         "numeri": numeri,
         "attesa_conferma_accesso": request.session.get('modifica_mail', False),
         "attesa_conferma_contatto": request.session.get('modifica_contatto', False),
+        "stato_conferma_accesso": stato_conferma_accesso,
+        "stato_conferma_contatto": stato_conferma_contatto,
+        "errore_conferma_accesso": True,
+        "errore_conferma_contatto": errore_conferma_contatto,
     }
 
     return 'anagrafica_utente_contatti.html', contesto

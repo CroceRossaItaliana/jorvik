@@ -40,7 +40,35 @@
                         </p>
                         {% bootstrap_form modulo_email_accesso %}
 
-                        {% if attesa_conferma_accesso %}
+                        {% if stato_conferma_accesso %}
+                        <table class="table">
+                            <tbody>
+                                <tr class="success">
+                                    <td colspan="3">
+                                        <p class="grassetto">
+                                            <i class="fa fa-fw fa-check"></i> Nuovo indirizzo email confermato!
+                                        </p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        {% elif errore_conferma_accesso %}
+                        <table class="table">
+                            <tbody>
+                                <tr class="danger">
+                                    <td colspan="3">
+                                        <p class="grassetto">
+                                            <i class="fa fa-fw fa-warning"></i> Errore nella conferma indirizzo email
+                                        </p>
+                                        <p>
+                                            Conferma il nuovo indirizzo email:<br><b>{{ request.session.modifica_mail }}</b><br>
+                                            visitando il link che ti è stato inviato via email
+                                        </p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        {% elif attesa_conferma_accesso %}
                         <table class="table">
                             <tbody>
                                 <tr class="warning">
@@ -89,7 +117,35 @@
                         </p>
                         {% bootstrap_form modulo_email_contatto %}
 
-                        {% if attesa_conferma_contatto %}
+                        {% if stato_conferma_contatto %}
+                        <table class="table">
+                            <tbody>
+                                <tr class="success">
+                                    <td colspan="3">
+                                        <p class="grassetto">
+                                            <i class="fa fa-fw fa-check"></i> Nuovo indirizzo email confermato!
+                                        </p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        {% elif errore_conferma_contatto %}
+                        <table class="table">
+                            <tbody>
+                                <tr class="danger">
+                                    <td colspan="3">
+                                        <p class="grassetto">
+                                            <i class="fa fa-fw fa-warning"></i> Errore nella conferma indirizzo email
+                                        </p>
+                                        <p>
+                                            Conferma il nuovo indirizzo email:<br><b>{{ request.session.modifica_mail }}</b><br>
+                                            visitando il link che ti è stato inviato via email
+                                        </p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        {% elif attesa_conferma_contatto %}
                         <table class="table">
                             <tbody>
                                 <tr class="warning">
