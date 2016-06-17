@@ -41,7 +41,11 @@
                         {% bootstrap_form modulo_email_accesso %}
                          <button class="btn btn-block btn-info" type="submit">
                              <i class="fa fa-save fa-fw"></i>
-                             Salva E-mail di accesso
+                             {% if not attesa_conferma_accesso %}
+                                Salva E-mail di accesso
+                             {% else %}
+                                Rimanda conferma E-mail accesso
+                             {% endif %}
                          </button>
 
                     </div>
@@ -68,7 +72,11 @@
                         {% bootstrap_form modulo_email_contatto %}
                          <button class="btn btn-block btn-info" type="submit">
                              <i class="fa fa-save fa-fw"></i>
-                             Salva E-mail di contatto
+                             {% if not attesa_conferma_contatto %}
+                                Salva E-mail di contatto
+                             {% else %}
+                                Rimanda conferma E-mail di contatto
+                             {% endif %}
                          </button>
                     </div>
 

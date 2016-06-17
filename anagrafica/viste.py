@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.contrib.auth import login
+from django.utils.crypto import get_random_string
 from django.template.loader import get_template
 
 # Le viste base vanno qui.
@@ -449,6 +450,15 @@ def utente_privacy(request, me):
 @pagina_privata
 def utente_contatti(request, me):
 
+    if 'modifica_mail_id' not in request.session:
+        request.session['modifica_mail_id'] = get_random_string(length=32)
+    if 'modifica_contatto_id' not in request.session:
+        request.session['modifica_contatto_id'] = get_random_string(length=32)
+
+
+    old_utenza_mail = me.utenza.email
+    old_utenza_contact = me.email_contatto
+
     if request.method == "POST":
 
         modulo_email_accesso = ModuloModificaEmailAccesso(request.POST, instance=me.utenza)
@@ -456,10 +466,42 @@ def utente_contatti(request, me):
         modulo_numero_telefono = ModuloCreazioneTelefono(request.POST)
 
         if modulo_email_accesso.is_valid():
-            modulo_email_accesso.save()
+            data = modulo_email_accesso.cleaned_data
+            if 'email' in data:
+                email = data['email']
+                corpo = {
+                    'code' : request.session['modifica_mail_id'],
+                    'code_type' : 'code_m'
+                }
+                if email != old_utenza_mail:
+                    request.session['modifica_mail'] = email
+                    Messaggio.invia_raw(
+                       oggetto="Modifica email di accesso",
+                       corpo_html=get_template('email_conferma_contatto.html').render(corpo),
+                       email_mittente=None,
+                       lista_email_destinatari=[
+                            email
+                       ]
+                    )
 
         if modulo_email_contatto.is_valid():
-            modulo_email_contatto.save()
+            data = modulo_email_contatto.cleaned_data
+            if 'email' in data:
+                email = data['email']
+                if email != old_utenza_contact:
+                    request.session['modifica_contatto'] = email
+                    corpo = {
+                        'code' : request.session['modifica_contatto_id'],
+                        'code_type' : 'code_c'
+                    }
+                    Messaggio.invia_raw(
+                       oggetto="Modifica email di contatto",
+                       corpo_html=get_template('email_conferma_contatto.html').render(corpo),
+                       email_mittente=None,
+                       lista_email_destinatari=[
+                            email
+                       ]
+                    )
 
         if modulo_numero_telefono.is_valid():
             me.aggiungi_numero_telefono(
@@ -468,6 +510,31 @@ def utente_contatti(request, me):
             )
 
     else:
+
+        registration_code_m = request.GET.get('code_m', None)
+        registration_code_c = request.GET.get('code_c', None)
+
+        nuova_email = request.session.get('modifica_mail', '')
+        if nuova_email != me.utenza.email:
+            if request.session['modifica_mail_id'] != registration_code_m:
+                pass
+                #pass SHOW ERROR FOR ACCESS MAIL AND RESEND!
+            else:
+                me.utenza.email = request.session.get('modifica_mail', me.utenza.email)
+                me.utenza.save()
+                del request.session['modifica_mail_id']
+                del request.session['modifica_mail']
+
+        nuova_email = request.session.get('modifica_contatto', '')
+        if nuova_email != me.email_contatto:
+            if request.session['modifica_contatto_id'] != registration_code_c:
+                pass
+                #pass SHOW ERROR FOR CONTACT MAIL AND RESEND!
+            else:
+                me.email_contatto = request.session.get('modifica_contatto', me.email_contatto)
+                me.save()
+                del request.session['modifica_contatto_id']
+                del request.session['modifica_contatto']
 
         modulo_email_accesso = ModuloModificaEmailAccesso(instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(instance=me)
@@ -478,7 +545,9 @@ def utente_contatti(request, me):
         "modulo_email_accesso": modulo_email_accesso,
         "modulo_email_contatto": modulo_email_contatto,
         "modulo_numero_telefono": modulo_numero_telefono,
-        "numeri": numeri
+        "numeri": numeri,
+        "attesa_conferma_accesso": request.session.get('modifica_mail', False),
+        "attesa_conferma_contatto": request.session.get('modifica_contatto', False),
     }
 
     return 'anagrafica_utente_contatti.html', contesto
