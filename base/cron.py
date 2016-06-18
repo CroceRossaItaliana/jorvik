@@ -15,6 +15,7 @@ class CronCancellaFileScaduti(CronJobBase):
         n = Allegato.pulisci()
         print("Sono stati rimossi %d file scaduti." % n)
 
+
 class CronApprovaNegaAuto(CronJobBase):
 
     RUN_EVERY_HOURS = 24

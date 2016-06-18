@@ -454,7 +454,6 @@ class TestAttivita(TestCase):
 
         area, attivita = crea_area_attivita(sede)
 
-
         domani_inizio = ora + timedelta(days=24)
         domani_fine = ora + timedelta(days=180)
 
