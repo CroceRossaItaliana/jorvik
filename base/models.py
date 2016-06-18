@@ -5,6 +5,7 @@ from django.core import urlresolvers
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
+from django.utils.timezone import now
 from django.forms import forms
 from mptt.models import MPTTModel, TreeForeignKey
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
@@ -268,16 +269,12 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         self._invia_notifica(modello, oggetto, auto)
 
     def controlla_concedi_automatico(self):
-        from django.utils import timezone
-        if self.scadenza and self.concessa is None:
-            if self.scadenza < timezone.now():
-                self.concedi(auto=True)
+        if self.scadenza and self.concessa is None and self.scadenza < now():
+            self.concedi(auto=True)
 
     def controlla_nega_automatico(self):
-        from django.utils import timezone
-        if self.scadenza and self.concessa is None:
-            if self.scadenza < timezone.now():
-                self.nega(auto=True)
+        if self.scadenza and self.concessa is None and self.scadenza < now():
+            self.nega(auto=True)
 
     def automatizza(self, concedi=None, scadenza_giorni=None):
         if concedi:
@@ -287,8 +284,11 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
     @classmethod
     def gestisci_automatiche(cls):
-        da_negare = cls.objects.filter(tipo_gestione=cls.NG_AUTO, concessa__isnull=True)
-        da_approvare = cls.objects.filter(tipo_gestione=cls.AP_AUTO, concessa__isnull=True)
+        base = cls.objects.filter(
+            concessa__isnull=True, scadenza__isnull=False, scadenza__lte=now()
+        )
+        da_negare = base.filter(tipo_gestione=cls.NG_AUTO)
+        da_approvare = base.filter(tipo_gestione=cls.AP_AUTO)
         for autorizzazione in da_negare:
             autorizzazione.controlla_nega_automatico()
         for autorizzazione in da_approvare:
