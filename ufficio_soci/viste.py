@@ -125,6 +125,11 @@ def us_reclama_persona(request, me, persona_pk):
                                torna_titolo="Torna indietro",
                                torna_url="/us/reclama/")
 
+
+    questo_anno = poco_fa().year
+
+    tesseramento = Tesseramento.objects.get(anno=questo_anno)
+
     sedi_qs = Sede.objects.filter(pk__in=[x.pk for x in sedi])
 
     modulo_appartenenza = ModuloReclamaAppartenenza(request.POST or None, sedi=sedi_qs, prefix="app")
@@ -132,16 +137,23 @@ def us_reclama_persona(request, me, persona_pk):
                                                     if k in Appartenenza.MEMBRO_RECLAMABILE)
     modulo_quota = ModuloReclamaQuota(request.POST or None, prefix="quota")
 
+    iv = persona.iv
     if modulo_appartenenza.is_valid():
         if modulo_quota.is_valid():
 
             continua = True
             if modulo_quota.cleaned_data['registra_quota'] == modulo_quota.SI:
                 if not Tesseramento.aperto_anno(
-                    modulo_quota.cleaned_data['data_versamento'].year
+                    modulo_quota.cleaned_data['data_versamento'], iv
                 ):
-                    modulo_quota.add_error('data_versamento', "Spiacente, non è possibile registrare quote "
-                                                              "per l'anno selezionato. ")
+                    if volontario.iv:
+                        data_fine = tesseramento.fine_soci_iv
+                    else:
+                        data_fine = tesseramento.fine_soci
+
+                    modulo_quota.add_error('data_versamento', "Spiacente, non è possibile registrare una "
+                                                              "quota con data di versamento successiva al "
+                                                              "%s" % data_fine)
                     continua = False
 
                 if modulo_quota.cleaned_data['importo_totale'] <= 1:
@@ -218,13 +230,9 @@ def us_dimissioni(request, me, pk):
         dim.persona = persona
         dim.sede = dim.persona.sede_riferimento()
         dim.appartenenza = persona.appartenenze_attuali().first()
-        if modulo.cleaned_data['trasforma_in_sostenitore']:
-            app = Appartenenza(precedente=dim.appartenenza, persona=dim.persona, sede=dim.persona.sede_riferimento(),
-                               inizio=datetime.date.today(),
-                               membro=Appartenenza.SOSTENITORE)
-            app.save()
         dim.save()
-        dim.applica()
+        dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'])
+
         return messaggio_generico(request, me, titolo="Dimissioni registrate",
                                       messaggio="Le dimissioni sono"
                                                 "state registrate con successo",
@@ -769,89 +777,113 @@ def us_quote_nuova(request, me):
 
     questo_anno = poco_fa().year
 
-    modulo = None
     appena_registrata = Quota.objects.get(pk=request.GET['appena_registrata']) \
         if 'appena_registrata' in request.GET else None
 
-    if Tesseramento.aperto_anno(questo_anno):
+    try:
         tesseramento = Tesseramento.objects.get(anno=questo_anno)
+    except Tesseramento.DoesNotExist:
+        tesseramento = None
+
+    if tesseramento:
         dati_iniziali = {
             "importo": tesseramento.quota_attivo,
             "data_versamento": poco_fa(),
         }
         modulo = ModuloQuotaVolontario(request.POST or None, initial=dati_iniziali)
 
-    if modulo and modulo.is_valid():
+        if modulo and modulo.is_valid():
 
-        volontario = modulo.cleaned_data['volontario']
-        importo = modulo.cleaned_data['importo']
-        data_versamento = modulo.cleaned_data['data_versamento']
+            volontario = modulo.cleaned_data['volontario']
+            importo = modulo.cleaned_data['importo']
+            data_versamento = modulo.cleaned_data['data_versamento']
 
-        if importo < tesseramento.quota_attivo:
-            modulo.add_error('importo', 'L\'importo minimo per il %d e\' di EUR %s.' % (
-                questo_anno, testo_euro(tesseramento.quota_attivo)
-            ))
+            if importo < tesseramento.quota_attivo:
+                modulo.add_error('importo', 'L\'importo minimo per il %d e\' di EUR %s.' % (
+                    questo_anno, testo_euro(tesseramento.quota_attivo)
+                ))
 
-        elif data_versamento.year != questo_anno or data_versamento > oggi():
-            modulo.add_error('data_versamento', 'La data di versamento deve essere nel %d e '
-                                                'non può essere nel futuro.' % questo_anno)
+            elif data_versamento.year != questo_anno or data_versamento > oggi():
+                modulo.add_error('data_versamento', 'La data di versamento deve essere nel %d e '
+                                                    'non può essere nel futuro.' % questo_anno)
+
+            elif not Tesseramento.aperto_anno(
+                    data_versamento, volontario.iv
+            ):
+                if volontario.iv:
+                    data_fine = tesseramento.fine_soci_iv
+                else:
+                    data_fine = tesseramento.fine_soci
+                if data_fine:
+                    modulo.add_error('data_versamento',
+                                     "Spiacente, non è possibile registrare una "
+                                     "quota con data di versamento successiva al "
+                                     "%s" % data_fine)
+                else:
+                    modulo.add_error('data_versamento',
+                                     "Spiacente, non è possibile registrare una "
+                                     "quota perché il tesseramento %s è chiuso" % questo_anno)
 
 
-        elif tesseramento.pagante(volontario, attivi=True, ordinari=False):
-            modulo.add_error('volontario', 'Questo volontario ha già pagato la Quota '
-                                           'associativa per l\'anno %d' % questo_anno)
+            elif tesseramento.pagante(volontario, attivi=True, ordinari=False):
+                modulo.add_error('volontario', 'Questo volontario ha già pagato la Quota '
+                                            'associativa per l\'anno %d' % questo_anno)
 
 
-        elif not tesseramento.non_pagante(volontario, attivi=True, ordinari=False):
-            modulo.add_error('volontario', 'Questo volontario non è passibile al pagamento '
-                                           'della Quota associativa come Volontario presso '
-                                           'una delle tue Sedi, per l\'anno %d.' % questo_anno)
-
-        else:
-
-            appartenenza = volontario.appartenenze_attuali(al_giorno=data_versamento, membro=Appartenenza.VOLONTARIO).first()
-            comitato = appartenenza.sede.comitato if appartenenza else None
-
-            if appartenenza.sede not in sedi:
-                modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
-
-            elif not appartenenza:
-                modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
-                                                    'alla Sede.')
-
-            elif not comitato.locazione:
-                return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
-                                       messaggio="Per poter rilasciare ricevute, è necessario impostare un indirizzo "
-                                                 "per la Sede del Comitato di %s. Il Presidente può gestire i dati "
-                                                 "della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
-
-            elif not comitato.codice_fiscale:
-                return errore_generico(request, me, titolo="Necessario impostare codice fiscale del Comitato",
-                                       messaggio="Per poter rilasciare ricevute, è necessario impostare un "
-                                                 "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
-                                                 "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+            elif not tesseramento.non_pagante(volontario, attivi=True, ordinari=False):
+                modulo.add_error('volontario', 'Questo volontario non è passibile al pagamento '
+                                            'della Quota associativa come Volontario presso '
+                                            'una delle tue Sedi, per l\'anno %d.' % questo_anno)
 
             else:
-                # OK, paga quota!
-                ricevuta = Quota.nuova(
-                    appartenenza=appartenenza,
-                    data_versamento=data_versamento,
-                    registrato_da=me,
-                    importo=importo,
-                    causale="Rinnovo Quota Associativa %d" % (questo_anno,),
-                    tipo=Quota.QUOTA_SOCIO,
-                    invia_notifica=True
-                )
-                return redirect("/us/quote/nuova/?appena_registrata=%d" % (ricevuta.pk,))
 
-    ultime_quote = Quota.objects.filter(registrato_da=me, tipo=Quota.QUOTA_SOCIO).order_by('-creazione')[:15]
+                appartenenza = volontario.appartenenze_attuali(al_giorno=data_versamento, membro=Appartenenza.VOLONTARIO).first()
+                comitato = appartenenza.sede.comitato if appartenenza else None
 
-    contesto = {
-        "modulo": modulo,
-        "ultime_quote": ultime_quote,
-        "anno": questo_anno,
-        "appena_registrata": appena_registrata,
-    }
+                if not appartenenza:
+                    modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
+                                                        'alla Sede.')
+
+                elif appartenenza.sede not in sedi:
+                    modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
+
+                elif not comitato.locazione:
+                    return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
+                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un indirizzo "
+                                                    "per la Sede del Comitato di %s. Il Presidente può gestire i dati "
+                                                    "della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+
+                elif not comitato.codice_fiscale:
+                    return errore_generico(request, me, titolo="Necessario impostare codice fiscale del Comitato",
+                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un "
+                                                    "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
+                                                    "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+
+                else:
+                    # OK, paga quota!
+                    ricevuta = Quota.nuova(
+                        appartenenza=appartenenza,
+                        data_versamento=data_versamento,
+                        registrato_da=me,
+                        importo=importo,
+                        causale="Rinnovo Quota Associativa %d" % (questo_anno,),
+                        tipo=Quota.QUOTA_SOCIO,
+                        invia_notifica=True
+                    )
+                    return redirect("/us/quote/nuova/?appena_registrata=%d" % (ricevuta.pk,))
+
+        ultime_quote = Quota.objects.filter(registrato_da=me, tipo=Quota.QUOTA_SOCIO).order_by('-creazione')[:15]
+
+        contesto = {
+            "modulo": modulo,
+            "ultime_quote": ultime_quote,
+            "anno": questo_anno,
+            "appena_registrata": appena_registrata,
+        }
+    else:
+        contesto = {
+            "anno": questo_anno,
+        }
     return 'us_quote_nuova.html', contesto
 
 
@@ -1073,6 +1105,7 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
     torna = {
         "torna_url": request.GET.get("next", default="/us/tesserini/"),
         "torna_titolo": "Torna indietro",
+        "embed": True
     }
 
     sede = persona.sede_riferimento(membro=Appartenenza.MEMBRO_TESSERINO)
