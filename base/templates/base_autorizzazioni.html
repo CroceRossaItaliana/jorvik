@@ -20,6 +20,17 @@
                     <div class="col-md-9">
                         {% include richiesta.template_path %}
 
+                        {% if richiesta.scadenza %}
+                            <div class="alert alert-warning">
+                                la richiesta sarà automaticamente
+                                {% if richiesta.tipo_gestione == richiesta.NG_AUTO %}
+                                    negata
+                                {% elif richiesta.tipo_gestione == richiesta.AP_AUTO %}
+                                    approvata
+                                {% endif %}
+                                il {{ richiesta.scadenza|date:"SHORT_DATETIME_FORMAT" }}
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="col-md-3">
                         <div class=" btn-group-vertical btn-group-sm btn-block">
@@ -36,6 +47,7 @@
                         </div>
 
                     </div>
+
                 </div>
 
             </div>
