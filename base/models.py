@@ -141,6 +141,10 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     scadenza = models.DateTimeField(blank=True, null=True, db_index=True)
     tipo_gestione = models.CharField(default=MANUALE, max_length=1, choices=TIPO_GESTIONE)
 
+    @property
+    def giorni_automatici(self):
+        return (self.scadenza - self.creazione).days
+
     def firma(self, firmatario, concedi=True, modulo=None, motivo=None, auto=False):
         """
         Firma l'autorizzazione.
@@ -222,61 +226,46 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             destinatari=[persona],
         )
 
-    def notifica_concessa(self, auto=False):
+    def _invia_notifica(self, modello, oggetto, auto):
         from posta.models import Messaggio
 
         if auto:
-            modello = "email_autorizzazione_concessa_automatica.html"
-            destinatari = [self.richiedente, self.firmatario]
-            corpo = {
-                "richiesta": self,
-                "firmatario": self.firmatario,
-                "giorni": settings.AUTORIZZAZIONE_AUTOMATICA_GIORNI
-            }
+            destinatari = [self.richiedente]
+            if self.firmatario:
+                destinatari.append(self.firmatario)
             self.oggetto.automatica = True
             self.oggetto.save()
         else:
-            modello = "email_autorizzazione_concessa.html"
             destinatari = [self.richiedente]
-            corpo = {
-                "richiesta": self,
-            }
+        corpo = {
+            "richiesta": self,
+            "firmatario": self.firmatario,
+            "giorni": self.giorni_automatici
+        }
 
         Messaggio.costruisci_e_invia(
-            oggetto="Richiesta di %s APPROVATA" % (self.oggetto.RICHIESTA_NOME,),
+            oggetto=oggetto,
             modello=modello,
             corpo=corpo,
             mittente=self.firmatario,
             destinatari=destinatari
         )
 
-    def notifica_negata(self, auto=False):
-        from posta.models import Messaggio
-
+    def notifica_concessa(self, auto=False):
         if auto:
             modello = "email_autorizzazione_negata_automatica.html"
-            destinatari = [self.richiedente, self.firmatario]
-            corpo = {
-                "richiesta": self,
-                "firmatario": self.firmatario,
-                "giorni": settings.AUTORIZZAZIONE_AUTOMATICA_GIORNI
-            }
-            self.oggetto.automatica = True
-            self.oggetto.save()
         else:
             modello = "email_autorizzazione_negata.html"
-            destinatari = [self.richiedente]
-            corpo = {
-                "richiesta": self,
-            }
+        oggetto = "Richiesta di %s APPROVATA" % (self.oggetto.RICHIESTA_NOME,)
+        self._invia_notifica(modello, oggetto, auto)
 
-        Messaggio.costruisci_e_invia(
-            oggetto="Richiesta di %s RESPINTA" % (self.oggetto.RICHIESTA_NOME,),
-            modello=modello,
-            corpo=corpo,
-            mittente=self.firmatario,
-            destinatari=destinatari
-        )
+    def notifica_negata(self, auto=False):
+        if auto:
+            modello = "email_autorizzazione_concessa_automatica.html"
+        else:
+            modello = "email_autorizzazione_concessa.html"
+        oggetto = "Richiesta di %s RESPINTA" % (self.oggetto.RICHIESTA_NOME,)
+        self._invia_notifica(modello, oggetto, auto)
 
     def controlla_concedi_automatico(self):
         from django.utils import timezone
