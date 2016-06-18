@@ -6,6 +6,7 @@ Questo modulo definisce i modelli del modulo Attivita' di Gaia.
 from datetime import timedelta, date
 from math import floor
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q, F, Sum, Avg
@@ -542,7 +543,8 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                 ),
 
             invia_notifiche=self.turno.attivita.referenti_attuali(),
-            auto=Autorizzazione.NG_AUTO
+            auto=Autorizzazione.NG_AUTO,
+            scadenza_giorni=settings.AUTORIZZAZIONE_AUTOMATICA_GIORNI,
         )
 
         # Se fuori sede, chiede autorizzazione al Presidente del mio Comitato.
@@ -555,7 +557,8 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                         (INCARICO_PRESIDENZA, self.persona.sede_riferimento())
                     ),
                 invia_notifiche=self.persona.sede_riferimento().presidente(),
-                auto=Autorizzazione.NG_AUTO
+                auto=Autorizzazione.NG_AUTO,
+                scadenza_giorni=settings.AUTORIZZAZIONE_AUTOMATICA_GIORNI,
             )
 
     def autorizzazione_concessa(self, modulo):
