@@ -49,8 +49,9 @@ class TestFunzionale(StaticLiveServerTestCase):
         self.seleziona_delegati(sessione, [persona])
 
     def scrivi_tinymce(self, sessione, nome, testo):
-        with sessione.get_iframe("id_%s_ifr" % nome) as iframe:
-            iframe.find_by_tag('body').type(testo)
+        if sessione.is_element_present_by_id("id_%s_ifr" % nome, 5):
+            with sessione.get_iframe("id_%s_ifr" % nome) as iframe:
+                iframe.find_by_tag('body').type(testo)
 
     def sessione_termina(self, da_terminare):
         self.sessioni_aperte.remove(da_terminare)

@@ -50,13 +50,20 @@ INSTALLED_APPS = [
     'autocomplete_light',
     'django_extensions',
     'loginas',
-    'sorl.thumbnail',
     'django_cron',
     'django.contrib.humanize',
     'django_gravatar',
     'centrale_operativa',
     'compressor',
+    'easy_thumbnails',
+    'gestione_file',
+    'segmenti',
+    'articoli',
+    'filer',
+    'ckeditor',
+    'ckeditor_filebrowser_filer',
 ]
+
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -233,7 +240,52 @@ BOOTSTRAP3 = {
     },
 }
 
+THUMBNAIL_BASEDIR = 'thumbnails'
+THUMBNAIL_PROCESSORS = (
+    'easy_thumbnails.processors.colorspace',
+    'easy_thumbnails.processors.autocrop',
+    'filer.thumbnail_processors.scale_and_crop_with_subject_location',
+    'easy_thumbnails.processors.filters',
+)
+
+FILER_CANONICAL_URL = 'sharing/'
+FILER_IMAGE_FIELD = 'gestione_file.fields.CampoImmagineFiler'
+FILER_FILE_FIELD = 'gestione_file.fields.CampoDocumentoFiler'
+FILER_FILE_MODELS = (
+    'gestione_file.models.Immagine',
+    'gestione_file.models.Documento',
+)
+GESTIONE_FILE_PAGINAZIONE = 50
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Bold', 'Italic', 'Underline'],
+            [
+                'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft',
+                'JustifyCenter', 'JustifyRight', 'JustifyBlock'
+            ],
+            ['Format', '-', 'Table'],
+            ['Link', 'Unlink'],
+            ['RemoveFormat', 'Source'],
+            ['FilerImage'],
+            ['Embed']
+        ],
+        'extraPlugins': 'filerimage,embed',
+        'removePlugins': 'image'
+    },
+}
+
+CKEDITOR_FILEBROWSER_USE_THUMBNAILOPTIONS_ONLY = True
+CKEDITOR_FILEBROWSER_USE_CANONICAL_FOR_THUMBNAILS = '/documenti/immagine/'
+
+FILER_ALLOW_REGULAR_USERS_TO_ADD_ROOT_FOLDERS = True
+
 NORECAPTCHA_SITE_KEY = APIS_CONF.get('nocaptcha', 'site_key', fallback=os.environ.get('NORECAPTCHA_SECRET_KEY'))
 NORECAPTCHA_SECRET_KEY = APIS_CONF.get('nocaptcha', 'secret_key', fallback=os.environ.get('NORECAPTCHA_SITE_KEY'))
 
 AUTORIZZAZIONE_AUTOMATICA_GIORNI = 30
+
+if os.environ.get('ENABLE_TEST_APPS', False):
+    INSTALLED_APPS.append('segmenti.segmenti_test')

@@ -94,55 +94,13 @@
 
 
 	
-	<div class="alert alert-danger alert-block">
-        <h4><i class="fa fa-fw fa-user-plus"></i>Vuoi lavorare nel team di GAIA?</h4>
-        <p>
-			<strong>Siamo alla ricerca di una risorsa FULL-TIME retribuita per la sede di Roma</strong>
-            <br />Clicca sul titolo della posizione per saperne di pi&ugrave;.
-        </p>
-        <p>
-            <ul>
-                <li>
-                    <i class="fa fa-fw fa-code-fork"></i>
-                   <a href="http://www.criroma.it/20160428265/lavora-con-noi/operatore-help-desk.html"
-               target="_blank">
-                        Operatore Helpdesk - Specialista nel supporto tecnico
-                    </a>
-                </li>
-             </ul>
-        </p>
+
+
+    <div class="articoli">
+    {% for articolo in articoli %}
+        {% include "includes/elemento_lista.html" %}
+    {% endfor %}
     </div>
-	
-
-    <div class="alert alert-info alert-block">
-        <h4><i class="fa fa-fw fa-user-plus"></i> Il Progetto Gaia sta cercando collaboratori volontari...</h4>
-        <p>
-            <strong>Puoi aiutarci a rendere Croce Rossa Italiana pi&ugrave; efficiente, trasparente e semplice?</strong>
-            <br />Clicca sul titolo della posizione per saperne di pi&ugrave;.
-        </p>
-        <p>
-            <ul>
-                <li>
-                    <i class="fa fa-fw fa-code-fork"></i>
-                    <a target="_new"
-                        href="https://recruit.zoho.com/recruit/ViewJob.na?digest=H9hWpYbWprfsb.ekhRmECdg6Gdq@8i6w6uk9uJ48MGQ-&embedsource=Embed"
-                    >
-                        Sviluppatori Web Python&mdash;Django
-                    </a>
-                </li>
-                <li>
-                    <i class="fa fa-fw fa-support"></i>
-                    <a target="_new"
-                        href="https://recruit.zoho.com/recruit/ViewJob.na?digest=H9hWpYbWprfsb.ekhRmECXdkCvD7ffWQxfhF9p4ER@4-&embedsource=Embed"
-                    >
-                        Personale per l'helpdesk di primo livello
-                    </a>
-                </li>
-            </ul>
-        </p>
-    </div>
-
-
 
 
 {% endblock %}

@@ -69,7 +69,11 @@ $(document).ready(function() {
         dayOfWeekStart: 1
     });
 
-
+    $("#selettore-data-mese-anno").datetimepicker({
+        format:'m-Y',
+        changeMonth: true,
+        changeYear: true,
+    });
 
 
 

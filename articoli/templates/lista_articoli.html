@@ -1,0 +1,95 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Articoli{% endblock %}
+
+{% block menu_laterale %}
+    <div class="col-md-2 well well-sm">
+        <ul id="sezione" role="navigation" class="nav nav-pills nav-stacked navbar-collapse collapse">
+            <li class="dropdown-header grassetto piu-grande">Articoli</li>
+                <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
+                    <a href="{{ link_url|urlencode }}">
+                        <i class="fa fa-newspaper-o fa-fw"></i>
+                        Elenco
+                    </a>
+                </li>
+            <hr />
+        </ul>
+    </div>
+{% endblock %}
+
+{% block app_contenuto %}
+
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-search"></i>
+                    Filtra gli articoli
+                </h3>
+            </div>
+            <div class="panel-body">
+                <form method='GET'>
+
+                    <div class="row">
+                        <span class="col-md-3">
+                            <input type="text" name="q" id="query-articoli"
+                               value="{{ query }}" class="form-control"
+                               placeholder="Titolo dell'articolo" />
+                        </span>
+                        <span class="col-md-3">
+                            <select name="anno" value="" class="form-control">
+                                <option value>Tutti gli anni</option>
+                                {% for anno in anni %}
+                                    <option {% if anno_selezionato == anno %}selected{% endif %} value='{{anno}}'>{{anno}}</option>
+                                {% endfor %}
+                            </select>
+                        </span>
+                        <span class="col-md-3">
+                            <select name="mese" value="" class="form-control">
+                                <option value>Tutti i mesi</option>
+                                {% for mese, data in mesi %}
+                                    <option {% if mese_selezionato == mese %}selected{% endif %} value='{{ mese }}'>{{ data|date:"F" }}</option>
+                                {% endfor %}
+                            </select>
+                        </span>
+                        <span class="col-md-3 btn-group">
+                            <button type="submit" class="btn btn-info">
+                                <i class="fa fa-fw fa-check"></i> Filtra
+                            </button>
+                            <a href="{% url 'lista_articoli' %}" class="btn btn-default">
+                                <i class="fa fa-fw fa-times"></i> Annulla
+                            </a>
+                        </span>
+
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+
+    {% for articolo in articoli %}
+        {% include "includes/elemento_lista.html" %}
+    {% empty %}
+        <div class="alert alert-warning alert-block">
+            <h4><i class="fa fa-info-circle"></i> Nessun articolo</h4>
+                    <p>Non &egrave; stato trovato alcun articolo.</p>
+         </div>
+    {% endfor %}
+    {% if is_paginated %}
+        <div class="pagination">
+            <span class="page-links">
+                {% if page_obj.has_previous %}
+                    <a href="/articoli?page={{ page_obj.previous_page_number }}">Precedente</a>
+                {% endif %}
+                <span class="page-current">
+                    Pagina {{ page_obj.number }} di {{ page_obj.paginator.num_pages }}.
+                </span>
+                {% if page_obj.has_next %}
+                    <a href="/articoli?page={{ page_obj.next_page_number }}">Successiva</a>
+                {% endif %}
+            </span>
+        </div>
+    {% endif %}
+{% endblock %}

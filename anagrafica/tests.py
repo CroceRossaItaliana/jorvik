@@ -5,12 +5,11 @@ from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
 from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica
-from anagrafica.models import Sede, Persona, Appartenenza, Documento, Delega
+from anagrafica.models import Appartenenza, Documento, Delega, Dimissione
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
 from autenticazione.models import Utenza
 from autenticazione.utils_test import TestFunzionale
-from base.models import Autorizzazione
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, email_fittizzia, \
     crea_utenza
@@ -244,7 +243,6 @@ class TestAnagrafica(TestCase):
 
         d6.delete()
 
-
     def test_documenti(self):
 
         p = crea_persona()
@@ -363,6 +361,90 @@ class TestAnagrafica(TestCase):
             msg="l'appartenenza e' accettata"
         )
 
+
+    def test_dimissione(self):
+        c = crea_sede(estensione=PROVINCIALE)
+        c.save()
+
+        p = crea_persona()
+        p.save()
+
+        a = Appartenenza(
+            persona=p,
+            sede=c,
+            membro=Appartenenza.VOLONTARIO,
+            inizio="1980-12-10",
+            confermata=True
+        )
+        a.save()
+
+        d = Dimissione(
+            persona=p,
+            sede=c,
+            appartenenza=a
+        )
+        d.save()
+
+        self.assertTrue(
+            a.attuale(),
+            msg="L'appartenenza risulta quella attuale."
+        )
+
+        d.applica()
+
+        self.assertFalse(
+            a.attuale(),
+            msg="L'appartenenza risulta non più attuale."
+        )
+
+        appartenenze_attuali = p.appartenenze_attuali()
+
+        self.assertTrue(
+            appartenenze_attuali.count() == 0,
+            msg="Non esiste alcuna appartenenza attuale per dimissioni normali."
+        )
+
+    def test_dimissione_passaggio_sostenitore(self):
+        c = crea_sede(estensione=PROVINCIALE)
+        c.save()
+
+        p = crea_persona()
+        p.save()
+
+        a = Appartenenza(
+            persona=p,
+            sede=c,
+            membro=Appartenenza.VOLONTARIO,
+            inizio="1980-12-10",
+            confermata=True
+        )
+        a.save()
+
+        d = Dimissione(
+            persona=p,
+            sede=c,
+            appartenenza=a
+        )
+        d.save()
+
+        self.assertTrue(
+            a.attuale(),
+            msg="L'appartenenza risulta quella attuale."
+        )
+
+        d.applica(trasforma_in_sostenitore=True)
+
+        self.assertFalse(
+            a.attuale(),
+            msg="L'appartenenza risulta non più attuale."
+        )
+
+        appartenenze_attuali = p.appartenenze_attuali()
+
+        self.assertTrue(
+            appartenenze_attuali.count() == 1,
+            msg="Esiste solo una appartenenza attuale come sostenitore."
+        )
 
     def test_estensione_negata(self):
 

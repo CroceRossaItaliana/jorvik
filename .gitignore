@@ -7,3 +7,6 @@ assets/
 *.pickle-tmp
 .vagrant
 .DS_Store
+/*.sql.gz
+/*.sql
+.sass-cache

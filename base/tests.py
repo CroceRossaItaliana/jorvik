@@ -1,20 +1,28 @@
+import datetime
 import os
+import tempfile
 
 from unittest import skipIf
 from unittest.mock import patch
 from zipfile import ZipFile
 from django.contrib.auth.tokens import default_token_generator
+import django.core.files
 from django.core.files.temp import NamedTemporaryFile
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from articoli.models import Articolo
 from anagrafica.models import Persona
 from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
+from base.geo import Locazione
+from base.utils import UpperCaseCharField
 from base.utils_tests import crea_appartenenza, crea_persona_sede_appartenenza, crea_persona, crea_area_attivita, crea_utenza
+from gestione_file.models import Documento
 from jorvik.settings import GOOGLE_KEY
-
+from filer.models import Folder
+from filer.tests import create_image
 
 class TestBase(TestCase):
 
@@ -75,6 +83,91 @@ class TestBase(TestCase):
             p.allegati.all(),
             msg="Allegato associato correttamente alla persona"
         )
+
+
+class TestGeo(TestCase):
+    posto_google = [
+        {'place_id': 'ChIJ4ZrMcgdhLxMR7F_Z1sLKCOA',
+         'formatted_address': 'Via Toscana, 12, 00187 Roma, Italia',
+         'geometry': {'location': {'lng': 0, 'lat': 0},
+                      'location_type': 'ROOFTOP', 'viewport':
+                          {'northeast': {'lng': 12.4929659802915, 'lat': 41.90993408029149},
+                           'southwest': {'lng': 12.4902680197085, 'lat': 41.90723611970849}}},
+         'types': ['street_address'], 'address_components': [
+            {'short_name': '12', 'long_name': '12', 'types': ['street_number']},
+            {'short_name': 'Via Toscana', 'long_name': 'Via Toscana', 'types': ['route']},
+            {'short_name': 'Roma', 'long_name': 'Roma', 'types': ['locality', 'political']},
+            {'short_name': 'Roma', 'long_name': 'Roma', 'types': ['administrative_area_level_3', 'political']},
+            {'short_name': 'RM', 'long_name': 'Città Metropolitana di Roma', 'types': ['administrative_area_level_2', 'political']},
+            {'short_name': 'Lazio', 'long_name': 'Lazio', 'types': ['administrative_area_level_1', 'political']},
+            {'short_name': 'IT', 'long_name': 'Italia', 'types': ['country', 'political']},
+            {'short_name': '00187', 'long_name': '00187', 'types': ['postal_code']}]}]
+
+    posto_senza_coord = [
+        {'place_id': 'ChIJ4ZrMcgdhLxMR7F_Z1sLKCOA',
+         'formatted_address': 'Via Toscana, 12, 00187 Roma, Italia',
+         'geometry': {'location': '',
+                      'location_type': 'ROOFTOP', 'viewport':
+                          {'northeast': {'lng': 12.4929659802915, 'lat': 41.90993408029149},
+                           'southwest': {'lng': 12.4902680197085, 'lat': 41.90723611970849}}},
+         'types': ['street_address'], 'address_components': [
+            {'short_name': '12', 'long_name': '12', 'types': ['street_number']},
+            {'short_name': 'Via Toscana', 'long_name': 'Via Toscana', 'types': ['route']},
+            {'short_name': 'Roma', 'long_name': 'Roma', 'types': ['locality', 'political']},
+            {'short_name': 'Roma', 'long_name': 'Roma', 'types': ['administrative_area_level_3', 'political']},
+            {'short_name': 'RM', 'long_name': 'Città Metropolitana di Roma', 'types': ['administrative_area_level_2', 'political']},
+            {'short_name': 'Lazio', 'long_name': 'Lazio', 'types': ['administrative_area_level_1', 'political']},
+            {'short_name': 'IT', 'long_name': 'Italia', 'types': ['country', 'political']},
+            {'short_name': '00187', 'long_name': '00187', 'types': ['postal_code']}]}]
+
+    @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
+    def test_ricerca_indirizzo(self):
+        """
+        Test che verifica l'effettivo funzionamento del geocoding
+        """
+        indirizzo_base = 'Via Toscana, 12 - 00187 Roma'
+        indirizzo = Locazione.cerca(indirizzo_base)
+        self.assertEqual(len(indirizzo[0]), 3)
+        self.assertEqual(indirizzo[0][0], self.posto_google[0]['formatted_address'])
+        self.assertEqual(len(indirizzo[0][1]), 2)
+        self.assertEqual(indirizzo[0][2]['provincia_breve'], 'RM')
+
+    @patch('base.geo.googlemaps.Client.geocode', return_value=posto_google)
+    @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
+    def test_ricerca_indirizzo_senza_coordinate(self, mocked):
+        """
+        Test che verifica il valore ritornato se le coordinate non sono valide
+        """
+        indirizzo_base = 'Via Toscana, 12 - 00187 Roma'
+        indirizzo = Locazione.cerca(indirizzo_base)
+        self.assertEqual(len(indirizzo[0]), 3)
+        self.assertEqual(indirizzo[0][0], self.posto_google[0]['formatted_address'])
+        self.assertEqual(indirizzo[0][1], '0')
+        self.assertEqual(indirizzo[0][2]['provincia_breve'], 'RM')
+
+    @patch('base.geo.googlemaps.Client.geocode', return_value=posto_senza_coord)
+    @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
+    def test_ricerca_indirizzo_con_attributi_errati(self, mocked):
+        """
+        Test che verifica la robustezza della logica di gestione del geocoding
+        """
+        indirizzo_base = 'Via Toscana, 12 - 00187 Roma'
+        indirizzo = Locazione.cerca(indirizzo_base)
+        self.assertEqual(len(indirizzo[0]), 3)
+        self.assertEqual(indirizzo[0][0], self.posto_google[0]['formatted_address'])
+        self.assertEqual(indirizzo[0][1], '0')
+        self.assertEqual(indirizzo[0][2]['provincia_breve'], 'RM')
+
+
+class TestUtils(TestBase):
+
+    def test_uppercasecharfield(self):
+        field_stub = UpperCaseCharField()
+        self.assertEqual(field_stub.to_python(None), None)
+        self.assertEqual(field_stub.to_python(1), 1)
+        self.assertEqual(field_stub.to_python(''), '')
+        self.assertEqual(field_stub.to_python('testo minuscolo'), 'TESTO MINUSCOLO')
+        self.assertEqual(field_stub.to_python(False), False)
 
 
 class TestFunzionaleBase(TestFunzionale):
