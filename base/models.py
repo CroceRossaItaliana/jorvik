@@ -144,7 +144,10 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
     @property
     def giorni_automatici(self):
-        return (self.scadenza - self.creazione).days
+        if self.scadenza:
+            return (self.scadenza - self.creazione).days
+        else:
+            return None
 
     def firma(self, firmatario, concedi=True, modulo=None, motivo=None, auto=False):
         """
