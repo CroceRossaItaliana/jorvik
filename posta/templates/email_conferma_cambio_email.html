@@ -1,0 +1,26 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p class="grassetto">Ciao {{ persona.nome }}.</p>
+    <p>Ricevi questo messaggio perch&eacute; hai chiesto di cambiare la tua
+        e-mail di accesso a Gaia.</p>
+    <hr />
+    <p>Per confermare la richiesta, clicca sul link sottostante:</p>
+    <p><a href='https://gaia.cri.it/utente/contatti/?{{code_type}}={{code}}'>Conferma</a></p>
+    <p><strong>IMPORTANTE:</strong> Il link è valido solo per pochi minuti, quindi conferma subito
+        la tua nuova email!</p>
+    <hr />
+    <p><strong>IMPORTANTE:</strong> Dopo la conferma del nuovo indirizzo, dovrai usare
+        <u>le nuove credenziali</u> per accedere a Gaia!</p>
+    <hr />
+    <p style="font-size: larger;"><strong>NUOVE CREDENZIALI</strong></p>
+    <p style="font-size: larger;">
+        E-mail: <pre>{{ nuova_email }}</pre><br />
+        Password: <i>(la stessa password di prima)</i>
+    </p>
+    <hr />
+    <p>La tua vecchia e-mail di accesso era {{ vecchia_email }} &mdash; questa non ti
+        permetter&agrave; pi&ugrave; di accedere a Gaia.</p>
+
+{% endblock %}

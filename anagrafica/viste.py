@@ -172,13 +172,14 @@ def registrati(request, tipo, step=None):
             request.session['registrazione_id'] = get_random_string(length=32)
 
         corpo = {
-            'tipo' : tipo,
-            'step' : step,
-            'code' : request.session['registrazione_id']
+            'tipo': tipo,
+            'step': step,
+            'code': request.session['registrazione_id'],
+            'email': sessione.get('email')
         }
 
         Messaggio.invia_raw(
-           oggetto="Richiesta di riserva",
+           oggetto="Registrazione su Gaia",
            corpo_html=get_template('email_conferma.html').render(corpo),
            email_mittente=None,
            lista_email_destinatari=[
@@ -198,6 +199,7 @@ def registrati(request, tipo, step=None):
             return 'anagrafica_registrati_attesa_mail.html', contesto
 
     return 'anagrafica_registrati_step_' + step + '.html', contesto
+
 
 @pagina_anonima
 def registrati_conferma(request, tipo):
@@ -475,11 +477,15 @@ def utente_contatti(request, me):
                 request.session['modifica_mail'] = email
                 corpo = {
                     'code': request.session['modifica_mail_id'],
-                    'code_type': 'code_m'
+                    'code_type': 'code_m',
+                    "vecchia_email": old_utenza_contact,
+                    "nuova_email": email,
+                    "persona": me.persona,
+                    "autore": me,
                 }
                 Messaggio.invia_raw(
                    oggetto="Modifica email di accesso",
-                   corpo_html=get_template('email_conferma_contatto.html').render(corpo),
+                   corpo_html=get_template('email_conferma_cambio_email.html').render(corpo),
                    email_mittente=None,
                    lista_email_destinatari=[
                         email
@@ -492,7 +498,11 @@ def utente_contatti(request, me):
                 request.session['modifica_contatto'] = email
                 corpo = {
                     'code': request.session['modifica_contatto_id'],
-                    'code_type': 'code_c'
+                    'code_type': 'code_c',
+                    "vecchia_email": old_utenza_contact,
+                    "nuova_email": email,
+                    "persona": me.persona,
+                    "autore": me,
                 }
                 Messaggio.invia_raw(
                    oggetto="Modifica email di contatto",
