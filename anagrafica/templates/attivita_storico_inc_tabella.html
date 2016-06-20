@@ -81,7 +81,7 @@
                             <tbody>
                             {% for autorizzazione in richiesta.autorizzazioni %}
                                 <tr>
-                                    <td>{{ autorizzazione.firmatario.nome_completo }}</td>
+                                    <td>{% if autorizzazione.firmatario %}{{ autorizzazione.firmatario.nome_completo }}{% endif %}</td>
                                     <td>{{ autorizzazione.ultima_modifica }}</td>
                                     <td>
                                         {% if autorizzazione.concessa == True %}
