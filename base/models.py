@@ -162,11 +162,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             raise ValueError("Il modulo richiesto per l'accettazione non e' stato completato correttamente.")
 
         self.concessa = concedi
-        if auto:
-            # TODO: decidere indirizzo email firmatario
-            self.firmatario = firmatario #settings.DEFAULT_FROM_EMAIL
-        else:
-            self.firmatario = firmatario
+        self.firmatario = firmatario
         self.necessaria = False
         self.save()
 
