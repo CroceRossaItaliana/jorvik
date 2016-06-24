@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 
 from anagrafica.models import Delega
-from anagrafica.permessi.applicazioni import PRESIDENTE
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI
 from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
 from base.utils_tests import crea_persona, crea_persona_sede_appartenenza
@@ -259,7 +259,38 @@ class TestFunzionaleArticoli(TestFunzionale):
             })
         ))
         self.assertFalse(sessione_persona.is_text_present(articolo2.titolo))
-        self.assertTrue(sessione_persona.is_text_present('404'))
+        self.assertTrue(sessione_persona.is_text_present('Accedi a Gaia'))
+
+    def test_dettaglio_articoli_protected(self):
+        articolo = Articolo.objects.create(
+            titolo='Titolo 1981',
+            corpo='Testo random',
+            estratto='qualcosa',
+            data_inizio_pubblicazione='1981-12-10',
+            stato=Articolo.PUBBLICATO
+        )
+        segmento_presidenti_no_filtri = ArticoloSegmento.objects.create(
+            segmento='I',
+            articolo=articolo,
+        )
+        normale = crea_persona()
+        normale.save()
+        normale, sede, _ = crea_persona_sede_appartenenza(normale)
+        delega_us = Delega(
+            persona=normale,
+            tipo=UFFICIO_SOCI,
+            oggetto=sede,
+            inizio=datetime.datetime.now() - datetime.timedelta(days=5),
+            fine=datetime.datetime.now() + datetime.timedelta(days=5)
+        )
+        delega_us.save()
+        sessione_persona = self.sessione_utente(persona=normale)
+        sessione_persona.visit("%s%s" % (
+            self.live_server_url, reverse('dettaglio_articolo', kwargs={
+                'articolo_slug': articolo.slug
+            })
+        ))
+        self.assertTrue(sessione_persona.is_text_present('Accesso Negato, siamo spiacenti'))
 
     def test_dettaglio_articoli_privati(self):
         articolo = Articolo.objects.create(
