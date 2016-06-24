@@ -1,10 +1,12 @@
 from datetime import date
 
 from django.http import Http404
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView, ListView
 
 from anagrafica.models import Persona
+from anagrafica.permessi.costanti import ERRORE_PERMESSI
 from articoli.models import Articolo, ArticoloSegmento
 from autenticazione.funzioni import pagina_privata, pagina_pubblica, VistaDecorata
 
@@ -83,15 +85,32 @@ class ListaArticoli(FiltraSegmenti, VistaDecorata, ListView):
         return context
 
 
+def articolo_protetto(*args, **kwargs):
+
+    def _articolo_protetto(request, *pargs, **pkwargs):
+        articolo = Articolo.objects.get(slug=pkwargs['articolo_slug'])
+        func = None
+        if not articolo.segmenti.exists():
+            func = pagina_pubblica(*args, **kwargs)
+        else:
+            func = pagina_privata(*args, **kwargs)
+        return func(request, *pargs, **pkwargs)
+
+    return _articolo_protetto
+
+
 class DettaglioArticolo(FiltraSegmenti, VistaDecorata, DetailView):
     model = Articolo
     slug_field = 'slug'
     slug_url_kwarg = 'articolo_slug'
     context_object_name = 'articolo'
 
-    @method_decorator(pagina_pubblica)
+    @method_decorator(articolo_protetto)
     def dispatch(self, request, *args, **kwargs):
-        return super(DettaglioArticolo, self).dispatch(request, *args, **kwargs)
+        try:
+            return super(DettaglioArticolo, self).dispatch(request, *args, **kwargs)
+        except Http404:
+            return redirect(ERRORE_PERMESSI)
 
     def get_template_names(self):
         if self.request.user.is_authenticated():
@@ -101,8 +120,6 @@ class DettaglioArticolo(FiltraSegmenti, VistaDecorata, DetailView):
 
     def get_object(self, queryset=None):
         obj = super(DetailView, self).get_object(queryset)
-        if not self.request.user.is_authenticated() and obj.segmenti.exists():
-                raise Http404()
         if obj:
             obj.incrementa_visualizzazioni()
         return obj
