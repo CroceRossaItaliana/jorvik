@@ -574,10 +574,6 @@ def supporto(request, me=None):
         if not me.deleghe_attuali().exists():
             scelte = rimuovi_scelte([modulo.TERZO_LIVELLO, modulo.SECONDO_LIVELLO], scelte)
 
-        # Solo i Presidenti possono contattare AREA_SVILUPPO
-        if not me.ha_permesso(GESTIONE_SEDE):
-            scelte = rimuovi_scelte([modulo.AREA_SVILUPPO], scelte)
-
         modulo.fields['tipo'].choices = scelte
 
     if modulo and modulo.is_valid():
