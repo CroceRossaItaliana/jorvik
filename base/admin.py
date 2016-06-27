@@ -23,7 +23,7 @@ class InlineAutorizzazione(GenericTabularInline):
 
 @admin.register(Locazione)
 class AdminLocazione(admin.ModelAdmin):
-    search_fields = ["indirizzo", "via", "comune", "regione", "provincia"]
+    search_fields = ["=id", "indirizzo", "via", "comune", "regione", "provincia"]
     list_display = ("indirizzo", "provincia", "regione", "stato", "creazione",)
     list_filter = ("regione", "stato", "creazione")
     actions = [locazione_aggiorna]
