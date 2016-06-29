@@ -268,7 +268,7 @@ def us_estensione(request, me):
             return redirect(ERRORE_PERMESSI)
         if est.destinazione in est.persona.sedi_attuali():
             modulo.add_error('destinazione', 'Il volontario è già appartenente a questa sede.')
-        elif est.destinazione in [x.destinazione for x in me.estensioni_attuali_e_in_attesa()]:
+        elif est.destinazione in [x.destinazione for x in est.persona.estensioni_attuali_e_in_attesa()]:
             modulo.add_error('destinazione', 'Il volontario ha già una richiesta di estensione a questa sede.')
         else:
             est.richiedente = me
