@@ -1,0 +1,199 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-05-16 17:51+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: models.py:46 models.py:63
+msgid "URL Documento"
+msgstr "URL Documento"
+
+#: templates/admin/filer/folder/directory_table.html:4
+#: templates/admin/filer/folder/directory_table.html:165
+msgid "Unsorted Uploads"
+msgstr "File non archiviati"
+
+#: templates/admin/filer/folder/directory_table.html:13
+msgid "Name"
+msgstr "Nome"
+
+#: templates/admin/filer/folder/directory_table.html:14
+msgid "Owner"
+msgstr "Proprietario"
+
+#: templates/admin/filer/folder/directory_table.html:15
+msgid "Size"
+msgstr "Dimensione"
+
+#: templates/admin/filer/folder/directory_table.html:16
+msgid "Accessi"
+msgstr ""
+
+#: templates/admin/filer/folder/directory_table.html:17
+msgid "Segmenti"
+msgstr ""
+
+#: templates/admin/filer/folder/directory_table.html:18
+msgid "Data"
+msgstr ""
+
+#: templates/admin/filer/folder/directory_table.html:19
+msgid "Action"
+msgstr "Azione"
+
+#: templates/admin/filer/folder/directory_table.html:28
+#: templates/admin/filer/folder/directory_table.html:35
+#: templates/admin/filer/folder/directory_table.html:58
+#: templates/admin/filer/folder/directory_table.html:65
+#, python-format
+msgid "Change '%(item_label)s' folder details"
+msgstr "Cambia i dettagli della cartella '%(item_label)s'"
+
+#: templates/admin/filer/folder/directory_table.html:29
+#: templates/admin/filer/folder/directory_table.html:59
+#: templates/admin/filer/folder/directory_table.html:172
+msgid "Folder Icon"
+msgstr "Icona della cartella"
+
+#: templates/admin/filer/folder/directory_table.html:76
+#, python-format
+msgid "%(counter)s folder"
+msgid_plural "%(counter)s folders"
+msgstr[0] "%(counter)s cartella"
+msgstr[1] "%(counter)s cartelle"
+
+#: templates/admin/filer/folder/directory_table.html:77
+#, python-format
+msgid "%(counter)s file"
+msgid_plural "%(counter)s files"
+msgstr[0] "%(counter)s file"
+msgstr[1] "%(counter)s file"
+
+#: templates/admin/filer/folder/directory_table.html:84
+msgid "Change folder details"
+msgstr "Cambia dettagli cartella"
+
+#: templates/admin/filer/folder/directory_table.html:85
+msgid "Remove folder"
+msgstr "Cancella cartella"
+
+#: templates/admin/filer/folder/directory_table.html:96
+#: templates/admin/filer/folder/directory_table.html:104
+#: templates/admin/filer/folder/directory_table.html:119
+msgid "Select this file"
+msgstr "Seleziona questo file"
+
+#: templates/admin/filer/folder/directory_table.html:107
+#: templates/admin/filer/folder/directory_table.html:122
+#: templates/admin/filer/folder/directory_table.html:151
+#, python-format
+msgid "Change '%(item_label)s' details"
+msgstr "Cambia i dettagli di '%(item_label)s'"
+
+#: templates/admin/filer/folder/directory_table.html:131
+msgid "Permissions"
+msgstr "Permessi"
+
+#: templates/admin/filer/folder/directory_table.html:131
+msgid "disabled"
+msgstr "disattivato"
+
+#: templates/admin/filer/folder/directory_table.html:131
+msgid "enabled"
+msgstr "attivato"
+
+#: templates/admin/filer/folder/directory_table.html:152
+msgid "Remove file"
+msgstr "Cancella file"
+
+#: templates/admin/filer/folder/directory_table.html:159
+msgid "Drop files here or use the \"Upload Files\" button"
+msgstr "Posiziona qui i file o usa il bottone \"Carica file\""
+
+#: templates/admin/filer/folder/directory_table.html:169
+msgid "Drop your file to upload into:"
+msgstr "Posiziona il file da caricare in:"
+
+#: templates/admin/filer/folder/directory_table.html:179
+msgid "Upload"
+msgstr "Carica"
+
+#: templates/admin/filer/folder/directory_table.html:191
+msgid "cancel"
+msgstr "annulla"
+
+#: templates/admin/filer/folder/directory_table.html:195
+msgid "Upload success!"
+msgstr "Caricato con successo!"
+
+#: templates/admin/filer/folder/directory_table.html:199
+msgid "Upload canceled!"
+msgstr "Caricamento annullato!"
+
+#: templates/admin/filer/folder/directory_table.html:206
+msgid "previous"
+msgstr "precedente"
+
+#: templates/admin/filer/folder/directory_table.html:211
+#, python-format
+msgid "Page %(number)s of %(num_pages)s."
+msgstr "Pagina %(number)s su %(num_pages)s."
+
+#: templates/admin/filer/folder/directory_table.html:216
+msgid "next"
+msgstr "prossima"
+
+#: templates/admin/filer/folder/directory_table.html:226
+msgid "Click here to select the objects across all pages"
+msgstr "Clicca qui per selezionare gli oggetti in tutte le pagine"
+
+#: templates/admin/filer/folder/directory_table.html:226
+#, python-format
+msgid "Select all %(total_count)s"
+msgstr "Seleziona tutti %(total_count)s"
+
+#: templates/admin/filer/folder/directory_table.html:228
+msgid "Clear selection"
+msgstr "Cancella selezione"
+
+#: templates/admin/gestione_file/lista_cartelle.html:8
+msgid "Adds a new Folder"
+msgstr "Aggiungi una nuova cartella"
+
+#: templates/admin/gestione_file/lista_cartelle.html:11
+msgid "New Folder"
+msgstr "Nuova cartella"
+
+#: templates/admin/gestione_file/lista_cartelle.html:16
+msgid "Adds a new File"
+msgstr "Aggiungi un nuovo file"
+
+#: templates/admin/gestione_file/lista_cartelle.html:18
+msgid "New File"
+msgstr "Nuovo file"
+
+#: templates/admin/gestione_file/lista_cartelle.html:23
+#: templates/admin/gestione_file/lista_cartelle.html:27
+#: templates/admin/gestione_file/lista_cartelle.html:30
+#: templates/admin/gestione_file/lista_cartelle.html:34
+#: templates/admin/gestione_file/lista_cartelle.html:42
+msgid "Upload Files"
+msgstr "Carica file"
+
+#: templates/admin/gestione_file/lista_cartelle.html:40
+msgid "You have to select a folder first"
+msgstr "E' necessario selezionare prima una cartella"
