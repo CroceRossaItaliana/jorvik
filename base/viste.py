@@ -106,6 +106,7 @@ def recupera_password(request):
                         "reset_pw_link": default_token_generator.make_token(per.utenza),
                         "scadenza_token": django_settings.PASSWORD_RESET_TIMEOUT_DAYS * 24
                     },
+                    utenza=True
                 )
 
                 return messaggio_generico(request, None,
@@ -572,10 +573,6 @@ def supporto(request, me=None):
         # Solo i delegati possono contattare SECONDO_LIVELLO e TERZO_LIVELLO
         if not me.deleghe_attuali().exists():
             scelte = rimuovi_scelte([modulo.TERZO_LIVELLO, modulo.SECONDO_LIVELLO], scelte)
-
-        # Solo i Presidenti possono contattare AREA_SVILUPPO
-        if not me.ha_permesso(GESTIONE_SEDE):
-            scelte = rimuovi_scelte([modulo.AREA_SVILUPPO], scelte)
 
         modulo.fields['tipo'].choices = scelte
 
