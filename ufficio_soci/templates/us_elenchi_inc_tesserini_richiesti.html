@@ -10,11 +10,14 @@
     <td class="monospace">
         <a href="#">
             <i class="fa fa-fw fa-search"></i>
-            {{ persona.tesserino_codice|default:"N/A" }}
+            {{ persona.tesserino_codice|default:"N/A" }}{% if persona.tesserino_tipo_richiesta == 'DUP' %} (Duplicato) {% endif %}
         </a>
     </td>
 {% endblock %}
 
 {% block elenco_riga_azioni_extra %}
     <!-- link tesserini passati -->
+    <a href="/us/tesserini/richiedi/{{ persona.pk }}/?next={{ request.path }}" class="btn btn-default">
+        <i class="fa fa-fw fa-file-o"></i> Richiedi duplicato
+    </a>
 {% endblock %}
