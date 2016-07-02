@@ -1099,6 +1099,9 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
     """
     persona = get_object_or_404(Persona, pk=persona_pk)
 
+    tipo_richiesta = Tesserino.RILASCIO
+    duplicato = False
+
     if not me.permessi_almeno(persona, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
@@ -1123,10 +1126,12 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
                                          "i volontari in possesso di una fototessera "
                                          "confermata su Gaia.", **torna)
 
-    if persona.tesserini.filter(stato_richiesta__in=(Tesserino.RICHIESTO, Tesserino.ACCETTATO)).exists():
-        return errore_generico(request, me, titolo="Tesserino già richiesto",
-                               messaggio="Una richiesta è già stata inoltrata per "
-                                         "il volontario selezionato.", **torna)
+    tesserini = persona.tesserini.filter(stato_richiesta__in=(Tesserino.RICHIESTO, Tesserino.ACCETTATO))
+
+    if tesserini.exists():
+        tipo_richiesta = Tesserino.DUPLICATO
+        tesserini.update(valido=False)
+        duplicato = True
 
     comitato = sede.comitato
     if not comitato.locazione:
@@ -1146,19 +1151,25 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
     tesserino = Tesserino(
         persona=persona,
         emesso_da=regionale,
-        tipo_richiesta=Tesserino.RILASCIO,
+        tipo_richiesta=tipo_richiesta,
         stato_richiesta=Tesserino.RICHIESTO,
-        richiesto_da=me
+        richiesto_da=me,
     )
     tesserino.save()
 
+    if duplicato:
+        oggetto = "Richiesta Duplicato Tesserino inoltrata"
+    else:
+        oggetto = "Richiesta Tesserino inoltrata"
+
     # Manda l'email al volontario
     Messaggio.costruisci_e_invia(
-        oggetto="Richiesta Tesserino inoltrata",
+        oggetto=oggetto,
         modello="posta_richiesta_tesserino.html",
         corpo={
             "persona": persona,
             "tesserino": tesserino,
+            "duplicato": duplicato
         },
         mittente=me,
         destinatari=[persona]

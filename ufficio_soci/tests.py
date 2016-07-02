@@ -1,13 +1,16 @@
 import datetime
 from unittest import skip
+import tempfile
 
+import django.core.files
+from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import timezone
 from django.utils.encoding import force_text
 
-from anagrafica.costanti import REGIONALE
-from anagrafica.models import Appartenenza, Sede, Persona
+from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE, TERRITORIALE
+from anagrafica.models import Appartenenza, Sede, Persona, Fototessera
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from autenticazione.utils_test import TestFunzionale
 from base.geo import Locazione
@@ -16,14 +19,13 @@ from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_
     crea_utenza, crea_locazione
 from ufficio_soci.elenchi import ElencoElettoratoAlGiorno
 from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota
-from ufficio_soci.models import Tesseramento
+from ufficio_soci.models import Tesseramento, Tesserino
 
 
 class TestBase(TestCase):
 
     def setUp(self):
         self.p, self.s, self.a = crea_persona_sede_appartenenza()
-
         self.oggi = datetime.date(2015, 1, 1)
         self.quindici_anni_fa = (datetime.date(2000, 1, 1))
         self.venti_anni_fa = (datetime.date(1995, 1, 1))
@@ -363,6 +365,116 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             self.presente_in_elenco(sessione_regionale, persona=ordinario),
             msg="L'ex ordinario non è più in elenco al regionale"
         )
+
+    def test_richiedi_tesserino(self, extra_headers={}):
+        presidente_locale = crea_persona()
+        presidente_provinciale = crea_persona()
+        presidente_regionale = crea_persona()
+        presidente_nazionale = crea_persona()
+        persona = crea_persona()
+        locazione = Locazione.objects.create(indirizzo="viale italia 1")
+        sede_nazionale = crea_sede(presidente=presidente_nazionale, estensione=NAZIONALE)
+        sede_nazionale.locazione = locazione
+        sede_nazionale.save()
+        sede_regionale = crea_sede(presidente=presidente_regionale, estensione=REGIONALE, genitore=sede_nazionale)
+        sede_regionale.locazione = locazione
+        sede_regionale.save()
+        sede_provinciale = crea_sede(presidente=presidente_provinciale, estensione=PROVINCIALE, genitore=sede_regionale)
+        sede_provinciale.locazione = locazione
+        sede_provinciale.save()
+        sede_locale = crea_sede(presidente=presidente_locale, estensione=PROVINCIALE, genitore=sede_provinciale)
+        sede_locale.locazione = locazione
+        sede_locale.save()
+        appartenenza = crea_appartenenza(persona, sede_locale)
+        sessione_persona = self.sessione_utente(persona=persona)
+        sessione_persona.visit("%s/utente/fotografia/fototessera/" % self.live_server_url)
+        file_obj, filename = tempfile.mkstemp('.jpg')
+        file_obj = django.core.files.File(open(filename, 'rb'))
+
+        fototessera = Fototessera.objects.create(
+            persona=persona,
+            file=file_obj
+        )
+        self.assertTrue(persona.fototessere.all().exists())
+        self.assertEqual(fototessera, persona.fototessera_attuale())
+        sessione_persona.reload()
+        self.assertTrue(sessione_persona.is_text_present('Storico richieste fototessere'))
+        self.assertTrue(sessione_persona.is_text_present('Confermato'))
+        self.assertEqual(1, len(sessione_persona.find_by_tag('tbody').find_by_tag('tr')))
+        sessione_presidente_locale = self.sessione_utente(persona=presidente_locale)
+        sessione_presidente_locale.click_link_by_partial_text("Soci")
+        self.assertEqual(1, len(sessione_presidente_locale.find_link_by_href("/us/tesserini/")))
+        sessione_presidente_locale.visit("%s/us/tesserini/" % self.live_server_url)
+        self.assertEqual(1, len(sessione_presidente_locale.find_link_by_href("/us/tesserini/da-richiedere/")))
+        # TODO: richiedere il tesserino cliccando sul link apposito, al momento
+        # non è possibile agire sugli elementi della pagina causa probabile timeout
+        #sessione_presidente_locale.visit("%s/us/tesserini/da-richiedere/" % self.live_server_url)
+        #self.assertTrue(sessione_presidente_locale.is_text_present(persona.nome))
+        #self.assertTrue(sessione_presidente_locale.is_text_present(persona.cognome))
+        sessione_presidente_locale.visit("%s/us/tesserini/richiedi/%s/" % (self.live_server_url, persona.pk))
+        self.assertTrue(sessione_presidente_locale.is_text_present('Richiesta inoltrata'))
+        self.assertTrue(sessione_presidente_locale.is_text_present('La richiesta di stampa è stata inoltrata correttamente alla Sede di emissione'))
+        self.assertTrue(sessione_presidente_locale.is_text_present(sede_regionale.nome))
+        self.assertTrue(sessione_presidente_locale.is_text_present(persona.nome))
+        self.assertTrue(sessione_presidente_locale.is_text_present(persona.cognome))
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertTrue(email.subject.find('Richiesta Tesserino inoltrata') > -1)
+        self.assertTrue(email.body.find('Il tuo Comitato ha avviato la richiesta di stampa del tuo tesserino.') > -1)
+        sessione_presidente_regionale = self.sessione_utente(persona=presidente_regionale)
+        sessione_presidente_regionale.visit("%s/us/tesserini/emissione/" % self.live_server_url)
+        sessione_presidente_regionale.find_by_xpath('//select[@name="stato_richiesta"]//option[@value="ATT"]').first.click()
+        sessione_presidente_regionale.find_by_xpath("//button[@type='submit']").first.click()
+        sessione_presidente_regionale.find_by_id("seleziona-tutti").first.click()
+        sessione_presidente_regionale.find_by_value("lavora").first.click()
+        sessione_presidente_regionale.find_by_xpath('//select[@name="stato_richiesta"]//option[@value="OK"]').first.click()
+        sessione_presidente_regionale.find_by_xpath('//select[@name="stato_emissione"]//option[@value="STAMPAT"]').first.click()
+        sessione_presidente_regionale.find_by_xpath("//button[@type='submit']").first.click()
+        tesserini = Tesserino.objects.all()
+        self.assertEqual(1, tesserini.count())
+        tesserino = tesserini.first()
+        codice_tesserino = tesserino.codice
+        self.assertTrue(tesserino.valido)
+        self.assertNotEqual(None, codice_tesserino)
+        sessione_persona.visit("%s/informazioni/verifica-tesserino/" % self.live_server_url)
+        sessione_persona.fill('numero_tessera', codice_tesserino)
+        sessione_persona.find_by_xpath("//button[@type='submit']").first.click()
+        self.assertTrue(sessione_persona.is_text_present('Tesserino valido'))
+
+        # Richiedi duplicato
+
+        sessione_presidente_locale.visit("%s/us/tesserini/richiedi/%s/" % (self.live_server_url, persona.pk))
+        self.assertTrue(sessione_presidente_locale.is_text_present('Richiesta inoltrata'))
+        self.assertTrue(sessione_presidente_locale.is_text_present('La richiesta di stampa è stata inoltrata correttamente alla Sede di emissione'))
+        self.assertTrue(sessione_presidente_locale.is_text_present(sede_regionale.nome))
+        self.assertTrue(sessione_presidente_locale.is_text_present(persona.nome))
+        self.assertTrue(sessione_presidente_locale.is_text_present(persona.cognome))
+        self.assertEqual(len(mail.outbox), 2)
+        email = mail.outbox[1]
+        self.assertTrue(email.subject.find('Richiesta Duplicato Tesserino inoltrata') > -1)
+        self.assertTrue(email.body.find('Il tuo Comitato ha avviato la richiesta di stampa del duplicato del tuo tesserino.') > -1)
+        sessione_presidente_regionale = self.sessione_utente(persona=presidente_regionale)
+        sessione_presidente_regionale.visit("%s/us/tesserini/emissione/" % self.live_server_url)
+        sessione_presidente_regionale.find_by_xpath('//select[@name="stato_richiesta"]//option[@value="ATT"]').first.click()
+        sessione_presidente_regionale.find_by_xpath("//button[@type='submit']").first.click()
+        sessione_presidente_regionale.find_by_id("seleziona-tutti").first.click()
+        sessione_presidente_regionale.find_by_value("lavora").first.click()
+        sessione_presidente_regionale.find_by_xpath('//select[@name="stato_richiesta"]//option[@value="OK"]').first.click()
+        sessione_presidente_regionale.find_by_xpath('//select[@name="stato_emissione"]//option[@value="STAMPAT"]').first.click()
+        sessione_presidente_regionale.find_by_xpath("//button[@type='submit']").first.click()
+        tesserino_duplicato = Tesserino.objects.exclude(codice=codice_tesserino).first()
+        tesserino_vecchio = Tesserino.objects.filter(codice=codice_tesserino).first()
+        self.assertEqual(Tesserino.DUPLICATO, tesserino_duplicato.tipo_richiesta)
+        self.assertNotEqual(Tesserino.DUPLICATO, tesserino.tipo_richiesta)
+        self.assertTrue(tesserino_duplicato.valido)
+        self.assertFalse(tesserino_vecchio.valido)
+        sessione_persona.visit("%s/informazioni/verifica-tesserino/" % self.live_server_url)
+        sessione_persona.fill('numero_tessera', codice_tesserino)
+        sessione_persona.find_by_xpath("//button[@type='submit']").first.click()
+        self.assertTrue(sessione_persona.is_text_present('Tesserino non valido'))
+        sessione_persona.fill('numero_tessera', tesserino_duplicato.codice)
+        sessione_persona.find_by_xpath("//button[@type='submit']").first.click()
+        self.assertTrue(sessione_persona.is_text_present('Tesserino valido'))
 
     def test_registrazione_quota_socio_senza_fine(self):
 
