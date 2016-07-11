@@ -284,4 +284,30 @@ def veicoli_collocazioni(request, me, veicolo):
     }
     return "veicoli_collocazione.html", contesto
 
+@pagina_privata
+def veicolo_dettagli(request, me, veicolo):
+    veicolo = get_object_or_404(Veicolo, pk=veicolo)
 
+    if not me.permessi_almeno(veicolo, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    modulo = ModuloCreazioneVeicolo(request.POST or None, instance=veicolo)
+    contesto = {
+        "veicolo": veicolo,
+        "modulo": modulo,
+    }
+    return "veicoli_veicolo_dettagli.html", contesto
+
+@pagina_privata
+def veicoli_elenco_autoparco(request, me, autoparco):
+
+    autoparco = get_object_or_404(Autoparco, pk=autoparco)
+    veicoli = Veicolo.objects.filter(Collocazione.query_attuale().via("collocazioni"), collocazioni__autoparco=autoparco, stato=Veicolo.IN_SERVIZIO)
+
+    if not me.permessi_almeno(autoparco, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    contesto = {
+        "veicoli": veicoli,
+    }
+    return "veicoli_elenco_autoparco.html", contesto

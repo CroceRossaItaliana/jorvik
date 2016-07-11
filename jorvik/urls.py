@@ -233,6 +233,7 @@ urlpatterns = [
     url(r'^veicoli/$', veicoli.viste.veicoli),
     url(r'^veicoli/elenco/$', veicoli.viste.veicoli_elenco),
     url(r'^veicoli/autoparchi/$', veicoli.viste.veicoli_autoparchi),
+    url(r'^veicoli/autoparco/elenco/(?P<autoparco>.*)/$', veicoli.viste.veicoli_elenco_autoparco),
     url(r'^veicolo/(P<pk>.*)/$', veicoli.viste.veicoli_veicolo),
     url(r'^autoparco/(P<pk>.*)/$', veicoli.viste.veicoli_autoparco),
     url(r'^veicolo/nuovo/$', veicoli.viste.veicoli_veicolo_modifica_o_nuovo),
@@ -246,6 +247,8 @@ urlpatterns = [
     url(r'^veicolo/fermi-tecnici/(?P<veicolo>.*)/$', veicoli.viste.veicoli_fermo_tecnico),
     url(r'^veicolo/termina/fermo-tecnico/(?P<fermo>.*)/$', veicoli.viste.veicoli_termina_fermo_tecnico),
     url(r'^veicolo/(?P<veicolo>.*)/collocazioni/$', veicoli.viste.veicoli_collocazioni),
+    url(r'^veicolo/dettagli/(?P<veicolo>.*)/$', veicoli.viste.veicolo_dettagli),
+
 
     url(r'^aspirante/$', formazione.viste.aspirante_home),
     url(r'^aspirante/impostazioni/$', formazione.viste.aspirante_impostazioni),
