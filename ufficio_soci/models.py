@@ -145,6 +145,15 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
         )
         return pdf
 
+    @property
+    def originale(self):
+        if self.tipo_richiesta == self.DUPLICATO:
+            tesserini = self.persona.tesserini.exclude(pk=self.pk).filter(stato_richiesta__in=(Tesserino.ACCETTATO,), codice__isnull=False, stato_emissione__isnull=False, data_conferma__isnull=False).order_by('-data_conferma')
+            if self.data_conferma:
+                tesserini = tesserini.filter(data_conferma__lt=self.data_conferma)
+            if tesserini.exists():
+                return tesserini.first()
+
 
 class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     class Meta:
