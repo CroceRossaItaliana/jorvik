@@ -564,12 +564,14 @@ class ElencoTesseriniRichiesti(ElencoVistaAnagrafica):
             Appartenenza.query_attuale(
                 sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
             ).via("appartenenze"),
-            tesserini__stato_richiesta__in=(Tesserino.ACCETTATO, Tesserino.RICHIESTO),
+            tesserini__stato_richiesta__in=(Tesserino.ACCETTATO, Tesserino.RICHIESTO, Tesserino.DUPLICATO),
+            tesserini__valido=True
         ).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
                 appartenenza_sede=F('appartenenze__sede'),
                 tesserino_codice=F('tesserini__codice'),
+                tesserino_tipo_richiesta=F('tesserini__tipo_richiesta'),
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
