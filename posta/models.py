@@ -184,7 +184,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             except SMTPException as e:
 
                 if isinstance(e, SMTPResponseException) and e.smtp_code == 501:
-                    successo = True  # E-mail di destinazione rotta: ignora.
+                    d.inviato = True  # E-mail di destinazione rotta: ignora.
+                    d.invalido = True
 
                 elif isinstance(e, SMTPServerDisconnected):
                     # Se il server si e' disconnesso, riconnetti.
@@ -198,18 +199,21 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 d.errore = str(e)
 
             except TypeError as e:
-                successo = True
+                d.inviato = True
+                d.invalido = True
                 d.errore = "Nessun indirizzo e-mail. Saltato"
 
             except AttributeError as e:
-                successo = True
+                d.inviato = True
+                d.invalido = True
                 d.errore = "Destinatario non valido. Saltato"
 
             except UnicodeEncodeError as e:
-                successo = True
+                d.inviato = True
+                d.invalido = True
                 d.errore = "Indirizzo e-mail non valido. Saltato."
 
-            if not successo:
+            if not d.inviato or d.invalido:
                 print("%s  (!) errore invio id=%d, destinatario=%d, errore=%s" % (
                     datetime.now().isoformat(' '),
                     self.pk,
@@ -378,5 +382,6 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
                                 related_name='oggetti_sono_destinatario', on_delete=models.CASCADE)
 
     inviato = models.BooleanField(default=False, db_index=True)
+    invalido = models.BooleanField(default=False, db_index=True)
     tentativo = models.DateTimeField(default=None, blank=True, null=True, db_index=True)
     errore = models.CharField(max_length=256, blank=True, null=True, default=None, db_index=True)
