@@ -184,7 +184,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             except SMTPException as e:
 
                 if isinstance(e, SMTPResponseException) and e.smtp_code == 501:
-                    successo = True  # E-mail di destinazione rotta: ignora.
+                    d.inviato = True  # E-mail di destinazione rotta: ignora.
 
                 elif isinstance(e, SMTPServerDisconnected):
                     # Se il server si e' disconnesso, riconnetti.
@@ -198,18 +198,18 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 d.errore = str(e)
 
             except TypeError as e:
-                successo = True
+                d.inviato = True
                 d.errore = "Nessun indirizzo e-mail. Saltato"
 
             except AttributeError as e:
-                successo = True
+                d.inviato = True
                 d.errore = "Destinatario non valido. Saltato"
 
             except UnicodeEncodeError as e:
-                successo = True
+                d.inviato = True
                 d.errore = "Indirizzo e-mail non valido. Saltato."
 
-            if not successo:
+            if not d.inviato:
                 print("%s  (!) errore invio id=%d, destinatario=%d, errore=%s" % (
                     datetime.now().isoformat(' '),
                     self.pk,
