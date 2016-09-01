@@ -1,6 +1,7 @@
 from django.contrib import admin
 from veicoli.models import Autoparco, Veicolo, FermoTecnico, Manutenzione, Segnalazione, Collocazione, \
     Rifornimento
+from gruppi.readonly_admin import ReadonlyAdminMixin
 
 __author__ = 'alfioemanuele'
 
@@ -9,7 +10,7 @@ __author__ = 'alfioemanuele'
 
 
 @admin.register(Autoparco)
-class AdminAutoparco(admin.ModelAdmin):
+class AdminAutoparco(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["nome", "sede__nome", ]
     list_display = ("nome", "sede", "telefono", "locazione",)
     list_filter = ("creazione",)
@@ -17,14 +18,14 @@ class AdminAutoparco(admin.ModelAdmin):
 
 
 @admin.register(Veicolo)
-class AdminVeicolo(admin.ModelAdmin):
+class AdminVeicolo(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["targa", "libretto", "telaio", ]
     list_display = ("targa", "libretto", "telaio", "marca", "modello",)
     list_filter = ("stato",)
 
 
 @admin.register(FermoTecnico)
-class AdminFermoTecnico(admin.ModelAdmin):
+class AdminFermoTecnico(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["veicolo__targa", ]
     list_display = ("veicolo", "inizio", "fine", "attuale", "motivo",)
     list_filter = ("creazione", "inizio", "fine",)
@@ -32,7 +33,7 @@ class AdminFermoTecnico(admin.ModelAdmin):
 
 
 @admin.register(Collocazione)
-class AdminCollocazione(admin.ModelAdmin):
+class AdminCollocazione(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["veicolo__targa", "autoparco__nome", "autoparco__sede__nome", ]
     list_display = ("veicolo", "autoparco", "inizio", "fine", "attuale",)
     list_filter = ("fine", "inizio",)
@@ -40,7 +41,7 @@ class AdminCollocazione(admin.ModelAdmin):
 
 
 @admin.register(Rifornimento)
-class AdminRifornimento(admin.ModelAdmin):
+class AdminRifornimento(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["veicolo__targa", ]
     list_display = ("veicolo", "data", "creazione",)
     list_filter = ("data",)
@@ -48,7 +49,7 @@ class AdminRifornimento(admin.ModelAdmin):
 
 
 @admin.register(Manutenzione)
-class AdminManutenzione(admin.ModelAdmin):
+class AdminManutenzione(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["veicolo__targa", ]
     list_display = ("veicolo", "tipo", "data", "creato_da",)
     list_filter = ("tipo",)
