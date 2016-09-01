@@ -1,11 +1,12 @@
 from django.contrib import admin
 from ufficio_soci.models import Tesserino, Quota, Tesseramento
+from gruppi.readonly_admin import ReadonlyAdminMixin
 
 __author__ = 'alfioemanuele'
 
 
 @admin.register(Quota)
-class AdminQuota(admin.ModelAdmin):
+class AdminQuota(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale",
                      "sede__nome", ]
     list_display = ("persona", "tipo", "stato", "sede", "progressivo", "anno", "data_versamento",)
@@ -14,7 +15,7 @@ class AdminQuota(admin.ModelAdmin):
 
 
 @admin.register(Tesserino)
-class AdminTesserino(admin.ModelAdmin):
+class AdminTesserino(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale",
                      "codice", ]
     list_display = ("codice", "persona", "valido", "tipo_richiesta", "stato_richiesta", "stato_emissione",)
@@ -23,7 +24,7 @@ class AdminTesserino(admin.ModelAdmin):
 
 
 @admin.register(Tesseramento)
-class AdminTesseramento(admin.ModelAdmin):
+class AdminTesseramento(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["anno", ]
     list_display = ("anno", "stato", "inizio", "quota_attivo", "quota_ordinario", "quota_sostenitore",
                     "quota_benemerito", "quota_aspirante",)
