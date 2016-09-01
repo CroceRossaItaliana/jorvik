@@ -4,15 +4,16 @@ from django.contrib.contenttypes.admin import GenericTabularInline
 
 from articoli.models import Articolo, ArticoloSegmento
 from base.models import Allegato
+from gruppi.readonly_admin import ReadonlyAdminMixin
 
 
-class ArticoloSegmentoInline(admin.TabularInline):
+class ArticoloSegmentoInline(ReadonlyAdminMixin, admin.TabularInline):
     model = ArticoloSegmento
     extra = 1
     raw_id_fields = ('sede', 'titolo')
 
 
-class ArticoloAdminForm(forms.ModelForm):
+class ArticoloAdminForm(ReadonlyAdminMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(ArticoloAdminForm, self).__init__(*args, **kwargs)
@@ -24,7 +25,7 @@ class ArticoloAdminForm(forms.ModelForm):
         fields = '__all__'
 
 
-class AllegatoInline(GenericTabularInline):
+class AllegatoInline(ReadonlyAdminMixin, GenericTabularInline):
     model = Allegato
     extra = 2
     ct_field = 'oggetto_tipo'
@@ -32,7 +33,7 @@ class AllegatoInline(GenericTabularInline):
 
 
 @admin.register(Articolo)
-class AdminArticolo(admin.ModelAdmin):
+class AdminArticolo(ReadonlyAdminMixin, admin.ModelAdmin):
     form = ArticoloAdminForm
     inlines = (ArticoloSegmentoInline, AllegatoInline)
     readonly_fields = ('visualizzazioni',)
