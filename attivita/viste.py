@@ -616,9 +616,11 @@ def attivita_scheda_informazioni_modifica(request, me, pk=None):
 
     modulo = ModuloAttivitaInformazioni(request.POST or None, instance=attivita)
     modulo.fields['estensione'].queryset = attivita.sede.get_ancestors(include_self=True).exclude(estensione=NAZIONALE)
+    if not me.ha_permessi('GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE'):
+        modulo.fields['centrale_operativa'].widget.attrs['disabled'] = True
+
     if modulo.is_valid():
         modulo.save()
-
 
     contesto = {
         "attivita": attivita,
