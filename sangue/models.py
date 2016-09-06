@@ -78,6 +78,9 @@ class Donatore(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Donatore di Sangue"
         verbose_name_plural = "Donatori di Sangue"
+        permissions = (
+            ("view_donatore", "Can view Donatore di Sangue"),
+        )
 
     def __str__(self):
         return "Profilo Donatore %s" % (self.persona.nome_completo, )
@@ -95,6 +98,9 @@ class Sede(ModelloSemplice):
         verbose_name = "Sede di Donazione Sangue"
         verbose_name_plural = "Sedi di Donazione Sangue"
         ordering = ['regione', 'provincia', 'citta', 'nome',]
+        permissions = (
+            ("view_sede", "Can view Sede"),
+        )
 
     def __str__(self):
         return "%s - %s - %s: %s" % (
@@ -112,6 +118,11 @@ class Merito(ModelloSemplice, ConMarcaTemporale, ConTipoDonazione):
     )
     MERITO_OPZIONI = ((str(x), str(x)) for x in MERITO)
     merito = models.CharField(choices=MERITO_OPZIONI, default=str(1), max_length=8)
+
+    class Meta:
+        permissions = (
+            ("view_merito", "Can view Merito"),
+        )
 
 
 class Donazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
@@ -145,6 +156,11 @@ class Donazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     sede = models.ForeignKey(Sede, related_name='donazioni_sangue', blank=False, null=True, on_delete=models.PROTECT)
 
     RICHIESTA_NOME = "conferma donazione sangue"
+
+    class Meta:
+        permissions = (
+            ("view_donazione", "Can view Donazione"),
+        )
 
     def autorizzazione_nega_modulo(self):
         # Nessun modulo per la negazione dell'autorizzazione.

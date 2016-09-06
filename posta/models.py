@@ -23,6 +23,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     class Meta:
         verbose_name = "Messaggio di posta"
         verbose_name_plural = "Messaggi di posta"
+        permissions = (
+            ("view_messaggio", "Can view messaggio"),
+        )
 
     LUNGHEZZA_MASSIMA_OGGETTO = 256
     CARATTERI_RIDUZIONE_OGGETTTO = '...'
@@ -375,6 +378,9 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Destinatario di posta"
         verbose_name_plural = "Destinatario di posta"
+        permissions = (
+            ("view_destinatario", "Can view destinatario"),
+        )
 
     messaggio = models.ForeignKey(Messaggio, null=False, blank=True, related_name='oggetti_destinatario',
                                   on_delete=models.CASCADE)

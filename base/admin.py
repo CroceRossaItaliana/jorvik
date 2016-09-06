@@ -6,8 +6,11 @@ from base.models import Autorizzazione, Token, Allegato
 from gruppi.readonly_admin import ReadonlyAdminMixin
 
 
+class TokenAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
+    pass
+
 # Aggiugni al pannello di amministrazione
-admin.site.register(Token)
+admin.site.register(Token, TokenAdmin)
 
 def locazione_aggiorna(modello, request, queryset):
     for locazione in queryset:
