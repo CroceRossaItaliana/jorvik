@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='appartenenza',
-            options={'permissions': (('view appartenenza', 'Can view appartenenza'),), 'verbose_name_plural': 'Appartenenze'},
+            options={'permissions': (('view_appartenenza', 'Can view appartenenza'),), 'verbose_name_plural': 'Appartenenze'},
         ),
         migrations.AlterModelOptions(
             name='delega',
