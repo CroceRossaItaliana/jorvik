@@ -1128,7 +1128,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             ['confermata', 'persona'],
         ]
         permissions = (
-            ("view appartenenza", "Can view appartenenza"),
+            ("view_appartenenza", "Can view appartenenza"),
         )
 
     # Tipo di membro
