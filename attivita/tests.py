@@ -6,9 +6,9 @@ from django.test import TestCase
 
 from attivita.forms import ModuloOrganizzaAttivitaReferente
 from attivita.models import Attivita, Area, Turno
-from anagrafica.costanti import LOCALE
+from anagrafica.costanti import LOCALE 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
-from anagrafica.permessi.applicazioni import REFERENTE
+from anagrafica.permessi.applicazioni import REFERENTE, PRESIDENTE, DELEGATO_CO
 from autenticazione.utils_test import TestFunzionale
 from base.utils_tests import crea_persona, crea_persona_sede_appartenenza, crea_area_attivita, crea_turno
 
@@ -584,3 +584,50 @@ class TestFunzionaleAttivita(TestFunzionale):
 
         self.assertTrue(sessione_volontario.is_text_present("Partecipazione confermata"),
                         msg="La partecipazione risulta nel turno")
+
+    def test_campo_centrale_operativa_disabilitata(self):
+ 
+        presidente = crea_persona()
+        referente = crea_persona()
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
+
+        delega = Delega(
+            oggetto=sede,
+            persona=presidente,
+            tipo=PRESIDENTE,
+            inizio="2005-11-15",
+        )
+        delega.save()
+
+        delega_2 = Delega(
+            oggetto=sede,
+            persona=referente,
+            tipo=DELEGATO_CO,
+            inizio="2005-11-15",
+        )
+        delega_2.save()
+
+        area, attivita = crea_area_attivita(sede=sede)
+        inizio = timezone.now() + timedelta(hours=12)
+        fine = inizio + timedelta(hours=2)
+
+        turno = crea_turno(attivita, inizio=inizio, fine=fine)
+
+        attivita.aggiungi_delegato(REFERENTE, volontario)
+        attivita.aggiungi_delegato(REFERENTE, referente)
+
+
+        # Crea le sessioni
+        sessione_referente = self.sessione_utente(persona=referente)
+        sessione_volontario = self.sessione_utente(persona=volontario)
+        sessione_presidente = self.sessione_utente(persona=presidente)
+
+        # Volontario: Apri la pagina dell'attivita'
+        sessione_volontario.visit("%s%smodifica/" % (self.live_server_url, attivita.url))
+        self.assertIn('disabled', sessione_volontario.find_by_id('id_centrale_operativa')[0].outer_html)
+
+        sessione_presidente.visit("%s%smodifica/" % (self.live_server_url, attivita.url))
+        self.assertNotIn('disabled', sessione_presidente.find_by_id('id_centrale_operativa')[0].outer_html)
+
+        sessione_referente.visit("%s%smodifica/" % (self.live_server_url, attivita.url))
+        self.assertNotIn('disabled', sessione_referente.find_by_id('id_centrale_operativa')[0].outer_html)
