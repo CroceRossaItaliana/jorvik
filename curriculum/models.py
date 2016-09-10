@@ -10,6 +10,9 @@ class Titolo(ModelloSemplice, ConVecchioID):
 
     class Meta:
         verbose_name_plural = "Titoli"
+        permissions = (
+            ("view_titolo", "Can view titolo"),
+        )
 
     COMPETENZA_PERSONALE = "CP"
     PATENTE_CIVILE = "PP"
@@ -45,6 +48,9 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     class Meta:
         verbose_name = "Titolo personale"
         verbose_name_plural = "Titoli personali"
+        permissions = (
+            ("view_titolopersonale", "Can view titolo personale"),
+        )
 
     RICHIESTA_NOME = 'titolo'
 

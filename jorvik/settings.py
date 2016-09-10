@@ -38,7 +38,6 @@ INSTALLED_APPS = [
     'attivita',
     'curriculum',
     'gruppi',
-    'patenti',
     'ufficio_soci',
     'veicoli',
     'social',
@@ -285,7 +284,8 @@ FILER_ALLOW_REGULAR_USERS_TO_ADD_ROOT_FOLDERS = True
 NORECAPTCHA_SITE_KEY = APIS_CONF.get('nocaptcha', 'site_key', fallback=os.environ.get('NORECAPTCHA_SECRET_KEY'))
 NORECAPTCHA_SECRET_KEY = APIS_CONF.get('nocaptcha', 'secret_key', fallback=os.environ.get('NORECAPTCHA_SITE_KEY'))
 
-READONLY_GROUP = 'anagrafica_readonly'
-
 if os.environ.get('ENABLE_TEST_APPS', False):
     INSTALLED_APPS.append('segmenti.segmenti_test')
+
+CAN_LOGIN_AS = lambda request, target_user: request.user.is_superuser or request.user.groups.filter(name='loginas').exists()
+
