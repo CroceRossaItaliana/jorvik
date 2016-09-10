@@ -248,6 +248,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             ['nome', 'cognome', 'codice_fiscale'],
             ['id', 'nome', 'cognome', 'codice_fiscale'],
         ]
+        permissions = (
+            ('view_persona', "Can view persona"),
+        )
 
     # Q: Qual e' il numero di telefono di questa persona?
     # A: Una persona puo' avere da zero ad illimitati numeri di telefono.
@@ -1028,6 +1031,9 @@ class Telefono(ConMarcaTemporale, ModelloSemplice):
         index_together = [
             ['persona', 'servizio'],
         ]
+        permissions = (
+            ('view_telefono', "Can view Numero di telefono"),
+        )
 
     def _phonenumber(self):
         return phonenumbers.parse(self.numero)
@@ -1092,6 +1098,9 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name_plural = "Documenti"
         app_label = 'anagrafica'
+        permissions = (
+            ("view_documento", "Can view documento"),
+        )
 
 
 class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzazioni):
@@ -1118,6 +1127,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             ['membro', 'confermata', 'persona'],
             ['confermata', 'persona'],
         ]
+        permissions = (
+            ("view_appartenenza", "Can view appartenenza"),
+        )
 
     # Tipo di membro
     VOLONTARIO = 'VO'
@@ -1283,6 +1295,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             ['lft', 'rght', 'attiva', 'estensione'],
             ['lft', 'rght', 'tree_id'],
         ]
+        permissions = (
+            ("view_sede", "Can view Sede CRI"),
+        )
 
     # Nome gia' presente in Modello Albero
 
@@ -1602,6 +1617,9 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             ['inizio', 'fine', 'tipo',],
             ['inizio', 'fine', 'tipo', 'oggetto_id', 'oggetto_tipo'],
         ]
+        permissions = (
+            ("view_delega", "Can view delega"),
+        )
 
     persona = models.ForeignKey(Persona, db_index=True, related_name='deleghe', related_query_name='delega', on_delete=models.CASCADE)
     tipo = models.CharField(max_length=2, db_index=True, choices=PERMESSI_NOMI)
@@ -1775,6 +1793,9 @@ class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
 
     class Meta:
         verbose_name_plural = "Fototessere"
+        permissions = (
+            ("view_fototessera", "Can view fototessera"),
+        )
 
     persona = models.ForeignKey(Persona, related_name="fototessere", db_index=True, on_delete=models.CASCADE)
     file = models.ImageField("Fototessera", upload_to=GeneratoreNomeFile('fototessere/'),
@@ -1791,6 +1812,9 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
     class Meta:
         verbose_name = "Richiesta di trasferimento"
         verbose_name_plural = "Richieste di trasferimento"
+        permissions = (
+            ("view_trasferimento", "Can view Richiesta di trasferimento"),
+        )
 
     richiedente = models.ForeignKey(Persona, related_name='trasferimenti_richiesti_da', on_delete=models.SET_NULL, null=True)
     persona = models.ForeignKey(Persona, related_name='trasferimenti', on_delete=models.CASCADE)
@@ -1867,6 +1891,9 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     class Meta:
         verbose_name = "Richiesta di estensione"
         verbose_name_plural = "Richieste di estensione"
+        permissions = (
+            ("view_estensions", "Can view Richiesta di estensione"),
+        )
 
     richiedente = models.ForeignKey(Persona, related_name='estensioni_richieste_da', on_delete=models.SET_NULL, null=True)
     persona = models.ForeignKey(Persona, related_name='estensioni', on_delete=models.CASCADE)
@@ -1965,6 +1992,9 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
             ['inizio', 'fine'],
             ['persona', 'inizio', 'fine'],
         ]
+        permissions = (
+            ("view_riserva", "Can view Richiesta di riserva"),
+        )
 
     RICHIESTA_NOME = "riserva"
     persona = models.ForeignKey(Persona, related_name="riserve", on_delete=models.CASCADE)
@@ -2057,6 +2087,9 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Documento di Dimissione"
         verbose_name_plural = "Documenti di Dimissione"
+        permissions = (
+            ("view_dimissione", "Can view Documento di Dimissione"),
+        )
 
     persona = models.ForeignKey(Persona, related_name="dimissioni", on_delete=models.CASCADE)
     appartenenza = models.ForeignKey(Appartenenza, related_name="dimissioni", on_delete=models.CASCADE)

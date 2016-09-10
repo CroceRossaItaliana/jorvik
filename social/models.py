@@ -16,6 +16,9 @@ class Giudizio(ModelloSemplice, ConMarcaTemporale):
 
     class Meta:
         verbose_name_plural = "Giudizi"
+        permissions = (
+            ("view_giudizio", "Can view giudizio"),
+        )
 
     autore = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="giudizi", on_delete=models.CASCADE)
     positivo = models.BooleanField("Positivo", db_index=True, default=True)
@@ -34,6 +37,9 @@ class Commento(ModelloSemplice, ConMarcaTemporale):
         verbose_name_plural = "Commenti"
         app_label = "social"
         abstract = False
+        permissions = (
+            ("view_commento", "Can view commento"),
+        )
 
     autore = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="commenti", on_delete=models.CASCADE)
     commento = models.TextField("Testo del commento")
