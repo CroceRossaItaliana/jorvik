@@ -83,6 +83,9 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         ordering = ['-data_inizio_pubblicazione']
         verbose_name = 'articolo'
         verbose_name_plural = 'articoli'
+        permissions = (
+            ("view_articolo", "Can view articolo"),
+        )
 
     @property
     def pubblicato(self):

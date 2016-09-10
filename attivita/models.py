@@ -37,6 +37,9 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
             ['estensione', 'apertura'],
             ['centrale_operativa', 'sede'],
         ]
+        permissions = (
+            ("view_attivita", "Can view attivita"),
+        )
 
     BOZZA = 'B'
     VISIBILE = 'V'
@@ -254,6 +257,9 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
             ['attivita', 'inizio',],
             ['attivita', 'inizio', 'fine'],
         ]
+        permissions = (
+            ("view_turno", "Can view turno"),
+        )
 
     attivita = models.ForeignKey(Attivita, related_name='turni', on_delete=models.CASCADE)
 
@@ -501,6 +507,9 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
             ['persona', 'turno', 'stato'],
             ['turno', 'stato'],
         ]
+        permissions = (
+            ("view_partecipazione", "Can view partecipazione"),
+        )
 
     RICHIESTA = 'K'
     NON_PRESENTATO = 'N'
@@ -597,6 +606,9 @@ class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
         index_together = [
             ['sede', 'obiettivo'],
         ]
+        permissions = (
+            ("view_area", "Can view area"),
+        )
 
     def __str__(self):
         return "%s, Ob. %d: %s" % (
