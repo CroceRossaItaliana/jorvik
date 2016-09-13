@@ -32,6 +32,12 @@ class AdminUtenza(ReadonlyAdminMixin, UserAdmin):
     # Permette login come utente
     change_form_template = 'loginas/change_form.html'
 
+    def get_readonly_fields(self, request, obj=None):
+        readonly = super(AdminUtenza, self).get_readonly_fields(request, obj)
+        if not request.user.is_superuser:
+            return list(readonly) + ['is_superuser', 'is_staff', 'is_active']
+        return readonly
+
 
 class AdminGrouppo(ReadonlyAdminMixin, GroupAdmin):
     pass
