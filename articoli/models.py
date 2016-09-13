@@ -113,3 +113,10 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
 
 class ArticoloSegmento(BaseSegmento):
     _oggetto_collegato = Articolo
+
+    class Meta:
+        verbose_name = "Articolo Segmento"
+        verbose_name_plural = "Articolo Segmenti"
+        permissions = (
+            ("view_articolosegmento", "Can view articolo segmento"),
+        )       

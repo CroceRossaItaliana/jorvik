@@ -2081,6 +2081,15 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
         if self.tipo == self.ESPULSIONE:
             self.persona.espelli()
 
+    class Meta:
+        verbose_name = "Provvedimento Disciplinare"
+        verbose_name_plural = "Provvedimenti Disciplinari"
+        permissions = (
+            ('view_provvedimentodisciplinare', "Can view Provvediemto disciplinare"),
+        )
+    
+    def __str__(self):
+        return self.persona.__str__()
 
 class Dimissione(ModelloSemplice, ConMarcaTemporale):
 
