@@ -12,6 +12,7 @@ from posta.forms import ModuloScriviMessaggioConDestinatariVisibili, \
     ModuloScriviMessaggioConDestinatariNascosti
 from posta.models import Messaggio
 
+
 __author__ = "alfioemanuele"
 
 """

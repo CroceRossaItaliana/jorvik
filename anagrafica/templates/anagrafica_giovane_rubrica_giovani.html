@@ -1,0 +1,25 @@
+{% extends 'us_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    {{ elenco_nome }}
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro">
+        <i class="fa fa-fw fa-users"></i>
+        {{ elenco_nome }}
+    </h2>
+
+    {% if elenco_template %}
+        {% include elenco_template %}
+    {% endif %}
+
+    <hr />
+
+    {% load utils %}
+    {% elenco elenco %}
+
+{% endblock %}
