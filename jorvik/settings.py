@@ -75,6 +75,7 @@ STATICFILES_FINDERS = (
 CRON_CLASSES = [
     "posta.cron.CronSmaltisciCodaPosta",
     "base.cron.CronCancellaFileScaduti",
+    "base.cron.CronApprovaNegaAuto",
     "anagrafica.cron.CronReportComitati",
 ]
 

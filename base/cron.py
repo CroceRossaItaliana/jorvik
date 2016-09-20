@@ -18,7 +18,7 @@ class CronCancellaFileScaduti(CronJobBase):
 
 class CronApprovaNegaAuto(CronJobBase):
 
-    RUN_EVERY_HOURS = 24
+    RUN_EVERY_HOURS = 2
     RUN_EVERY_MINS = RUN_EVERY_HOURS * 60
 
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
