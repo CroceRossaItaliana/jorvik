@@ -13,7 +13,8 @@ from anagrafica.costanti import NAZIONALE
 from anagrafica.models import Sede
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE
 from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO, \
-    GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE
+    GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE, \
+    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
 from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, ModuloModificaTurno, \
     ModuloAggiungiPartecipanti, ModuloCreazioneTurno, ModuloCreazioneArea, ModuloOrganizzaAttivita, \
@@ -614,11 +615,18 @@ def attivita_scheda_informazioni_modifica(request, me, pk=None):
     if not me.permessi_almeno(attivita, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
+    if not me.ha_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE):
+        request.POST = request.POST.copy()
+        request.POST['centrale_operativa'] = attivita.centrale_operativa
+
     modulo = ModuloAttivitaInformazioni(request.POST or None, instance=attivita)
     modulo.fields['estensione'].queryset = attivita.sede.get_ancestors(include_self=True).exclude(estensione=NAZIONALE)
+
+    if not me.ha_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE):
+        modulo.fields['centrale_operativa'].widget.attrs['disabled'] = True
+
     if modulo.is_valid():
         modulo.save()
-
 
     contesto = {
         "attivita": attivita,
