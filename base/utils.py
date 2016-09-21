@@ -227,12 +227,12 @@ def rimuovi_scelte(scelte=[], tupla=()):
     return nuova_tupla
 
 
-def calcola_scadenza(scadenza_giorni=None):
+def calcola_scadenza(scadenza=None):
     oggi = timezone.now()
     giorni = None
-    if scadenza_giorni:
-        giorni = scadenza_giorni
+    if scadenza:
+        giorni = scadenza
     else:
-        giorni = settings.AUTORIZZAZIONE_AUTOMATICA_GIORNI
-    scadenza = oggi + timedelta(days=giorni)
+        giorni = settings.AUTORIZZAZIONE_AUTOMATICA
+    scadenza = oggi + giorni
     return scadenza
