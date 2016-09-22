@@ -59,6 +59,7 @@ urlpatterns = [
 
     # Informazioni
     url(r'^informazioni/$', base.viste.informazioni),
+    url(r'^informazioni/statistiche/$', base.viste.informazioni_statistiche),
     url(r'^informazioni/aggiornamenti/$', base.viste.informazioni_aggiornamenti),
     url(r'^informazioni/sicurezza/$', base.viste.informazioni_sicurezza),
     url(r'^informazioni/condizioni/$', base.viste.informazioni_condizioni, name='informazioni_condizioni'),

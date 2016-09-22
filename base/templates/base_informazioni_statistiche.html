@@ -1,0 +1,41 @@
+{% extends "base_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Statistiche aggregate{% endblock %}
+
+{% block pagina_principale %}
+
+    <div class="container">
+        <h2>Statistiche</h2>
+
+        <p>Questa pagina mostra delle statistiche aggregate ottenute dai dati
+            presenti nella banca dati di Gaia. Le informazioni potrebbero non
+            essere accurate n&eacute; aggiornate.</p>
+
+        <hr />
+
+
+        <h4>Registrazioni come 'Aspirante'</h4>
+        <div class="ct-chart ct-octave"></div>
+        <script type="text/javascript" async>
+        $(document).ready(function() {
+            new Chartist.Line('.ct-chart', {
+                labels: {{ statistiche.aspiranti.labels|safe }},
+                series: [
+                    {{ statistiche.aspiranti.registrazioni }}
+                ]
+            }, {
+                fullWidth: true,
+                chartPadding: {
+                    right: 40
+                }
+            });
+        });
+        </script>
+        <hr />
+
+    </div>
+
+
+{% endblock %}
