@@ -2,6 +2,7 @@
 import json
 from datetime import date, timedelta, datetime, time
 
+from attivita.stats import statistiche_attivita_persona
 from django.db.models import Count, F, Sum
 from django.utils import timezone
 
@@ -18,7 +19,7 @@ from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PER
 from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, ModuloModificaTurno, \
     ModuloAggiungiPartecipanti, ModuloCreazioneTurno, ModuloCreazioneArea, ModuloOrganizzaAttivita, \
-    ModuloOrganizzaAttivitaReferente, ModuloStatisticheAttivita, ModuloRipetiTurno
+    ModuloOrganizzaAttivitaReferente, ModuloStatisticheAttivita, ModuloRipetiTurno, ModuloStatisticheAttivitaPersona
 from attivita.models import Partecipazione, Attivita, Turno, Area
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
@@ -271,9 +272,13 @@ def attivita_storico(request, me):
     Mostra uno storico delle attivita' a cui ho chiesto di partecipare/partecipato.
     """
     storico = Partecipazione.objects.filter(persona=me).order_by('-turno__inizio')
+    modulo = ModuloStatisticheAttivitaPersona(request.POST or None)
+    statistiche = statistiche_attivita_persona(me, modulo)
 
     contesto = {
-        "storico": storico
+        "storico": storico,
+        "statistiche": statistiche,
+        "statistiche_modulo": modulo,
     }
 
     return 'attivita_storico.html', contesto\

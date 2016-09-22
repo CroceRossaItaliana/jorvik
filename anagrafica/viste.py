@@ -38,7 +38,9 @@ from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LE
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
     INCARICO_GESTIONE_FOTOTESSERE
 from articoli.viste import get_articoli
+from attivita.forms import ModuloStatisticheAttivitaPersona
 from attivita.models import Partecipazione
+from attivita.stats import statistiche_attivita_persona
 from attivita.viste import attivita_storico_excel
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
@@ -1214,9 +1216,13 @@ def _profilo_deleghe(request, me, persona):
 
 
 def _profilo_turni(request, me, persona):
+    modulo = ModuloStatisticheAttivitaPersona(request.POST or None)
     storico = Partecipazione.objects.filter(persona=persona).order_by('-turno__inizio')
+    statistiche = statistiche_attivita_persona(persona, modulo)
     contesto = {
         "storico": storico,
+        "statistiche": statistiche,
+        "statistiche_modulo": modulo,
     }
     return 'anagrafica_profilo_turni.html', contesto
 
