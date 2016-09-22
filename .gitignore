@@ -10,3 +10,4 @@ assets/
 /*.sql.gz
 /*.sql
 .sass-cache
+.venv
