@@ -396,7 +396,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
                                      help_text="La Croce Rossa.")
     argomento_parte_1 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. Storia della CRI, DIU.")
 
-    esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True,null=True, db_index=True,
+    esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True,
                                      help_text="Gesti e manovre salvavita.")
     argomento_parte_2 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. BLS, colpo di calore.")
 
