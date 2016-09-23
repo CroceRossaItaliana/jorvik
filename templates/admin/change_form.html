@@ -69,7 +69,7 @@
 
 {% block after_related_objects %}{% endblock %}
 
-{% if has_add_permission %}
+{% if has_add_permission or request.user.is_superuser %}
     {% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
 {% else %}
     <a href="../../">Indietro</a>

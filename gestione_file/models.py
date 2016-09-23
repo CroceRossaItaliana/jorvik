@@ -77,6 +77,9 @@ class Immagine(InterfacciaJorvik, BaseImage):
         else:
             return 'fa fa-file-image-o'
 
+    @property
+    def image(self):
+        return self.immagine
 
 class DocumentoSegmento(BaseSegmento):
     _oggetto_collegato = File
