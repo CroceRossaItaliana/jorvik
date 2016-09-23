@@ -1,12 +1,12 @@
 from django import template
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.humanize.templatetags.humanize import intcomma
 from django.db.models import QuerySet, Max
 from django.template import Library
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
+from django.utils.encoding import force_text
 
-from anagrafica.models import Persona
+from anagrafica.models import Persona, Delega
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import PERMESSI_TESTO, NESSUNO
 from base.geo import ConGeolocalizzazione
@@ -158,6 +158,14 @@ def mappa(parser, token):
 @register.simple_tag(takes_context=True)
 def euro(context, numero):
     return mark_safe(testo_euro(numero, simbolo_html=True))
+
+
+@register.simple_tag(takes_context=True)
+def sede_delega(context, utente, deleghe):
+    if deleghe:
+        deleghe = utente.deleghe.filter(tipo__in=deleghe)
+        return ','.join([force_text(sede) for sede in utente.sedi_deleghe_attuali(deleghe=deleghe)])
+    return ''
 
 
 @register.assignment_tag()

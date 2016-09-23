@@ -1,4 +1,5 @@
 # coding=utf-8
+from collections import OrderedDict
 
 __author__ = 'alfioemanuele'
 
@@ -29,8 +30,7 @@ DIRETTORE_CORSO = 'DC'
 PERMESSI_NOMI = (
     (PRESIDENTE,                "Presidente"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
-    (UFFICIO_SOCI_UNITA,        "Ufficio Soci Unità Territoriale"),
-#    (UFFICIO_SOCI_TEMPORANEO,   "Ufficio Soci Temporaneo"),
+    (UFFICIO_SOCI_UNITA,        "Ufficio Soci"),
     (DELEGATO_AREA,             "Delegato d'Area"),
     (DELEGATO_OBIETTIVO_1,      "Delegato Obiettivo I (Salute)"),
     (DELEGATO_OBIETTIVO_2,      "Delegato Obiettivo II (Sociale)"),
@@ -57,3 +57,23 @@ DELEGHE_RUBRICA = (
 )
 
 PERMESSI_NOMI_DICT = dict(PERMESSI_NOMI)
+
+RUBRICHE_TITOLI = OrderedDict((
+    ('presidenti', (PRESIDENTE, 'Presidenti', True)),
+    ('delegati_us', (UFFICIO_SOCI, 'Delegati Ufficio Soci', True)),
+    ('delegati_us_unita', (UFFICIO_SOCI_UNITA, 'Delegati Ufficio Soci', True)),
+    ('delegati_obiettivo_1', (DELEGATO_OBIETTIVO_1, 'Delegati Obiettivo I (Salute)', True)),
+    ('delegati_obiettivo_2', (DELEGATO_OBIETTIVO_2, 'Delegati Obiettivo II (Sociale)', True)),
+    ('delegati_obiettivo_3', (DELEGATO_OBIETTIVO_3, 'Delegati Obiettivo III (Emergenze)', True)),
+    ('delegati_obiettivo_4', (DELEGATO_OBIETTIVO_4, 'Delegati Obiettivo IV (Principi)', True)),
+    ('delegati_obiettivo_5', (DELEGATO_OBIETTIVO_5, 'Delegati Obiettivo V (Giovani)', True)),
+    ('delegati_obiettivo_6', (DELEGATO_OBIETTIVO_6, 'Delegati Obiettivo VI (Sviluppo)', True)),
+    ('delegati_area', (DELEGATO_AREA, 'Delegati Area', False)),
+    # ('responsabili_area', (RESPONSABILE_AREA, 'Responsabili d\'Area', False)), rimosso perché non utile al momento
+    ('referenti_attivita', (REFERENTE, 'Referenti Attività', False)),
+    ('referenti_gruppi', (REFERENTE, 'Referenti Gruppi', False)),
+    ('centrali_operative', (DELEGATO_CO, 'Referenti Centrale Operativa', True)),
+    ('responsabili_formazione', (RESPONSABILE_FORMAZIONE, 'Referenti Responsabili Formazione', True)),
+    ('direttori_corsi', (DIRETTORE_CORSO, 'Direttori Corsi', True)),
+    ('responsabili_autoparco', (RESPONSABILE_AUTOPARCO, 'Responsabili Autoparco', True)),
+))
