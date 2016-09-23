@@ -18,7 +18,7 @@ from django.views.generic import ListView
 from django.utils import timezone
 
 from anagrafica.costanti import TERRITORIALE, REGIONALE
-from anagrafica.elenchi import ElencoDelegati, ElencoGiovani
+from anagrafica.elenchi import ElencoDelegati
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
@@ -36,9 +36,15 @@ from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, 
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
-    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI
+    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
-    ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO
+    ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO, \
+    RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
+    RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1, RUBRICA_DELEGATI_OBIETTIVO_2, \
+    RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
+    RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
+    RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
     INCARICO_GESTIONE_FOTOTESSERE
 from anagrafica.utils import _conferma_email
@@ -97,6 +103,7 @@ MODULI = {
     STEP_CREDENZIALI: ModuloStepCredenziali,
     STEP_FINE: None,
 }
+
 
 @pagina_anonima
 def registrati(request, tipo, step=None):
@@ -606,208 +613,41 @@ def utente_rubrica_volontari(request, me):
     return 'anagrafica_utente_rubrica_volontari.html', contesto
 
 
-def _rubrica_delegati(me, delega):
+def _rubrica_delegati(me, delega, sedi_delega):
+    return ElencoDelegati(sedi_delega.values_list('pk', flat=True), deleghe=[delega], me_id=me.pk)
+
+
+@pagina_privata
+def rubrica_delegati(request, me, rubrica):
+    if rubrica not in RUBRICHE_TITOLI:
+        return redirect('/utente/')
+
+    delega, titolo, espandi = RUBRICHE_TITOLI[rubrica]
     deleghe = me.deleghe_attuali().filter(
         tipo=delega,
         oggetto_tipo=ContentType.objects.get_for_model(Sede),
-    ).values_list('pk', flat=True)
-    sedi_destinatari = me.sedi_deleghe_attuali().filter(deleghe__pk__in=deleghe).espandi()
-    elenco = ElencoDelegati(sedi_destinatari, [delega], me)
-    return elenco
+    )
+    sedi_delega = me.sedi_deleghe_attuali(espandi=True, deleghe=deleghe).espandi(pubblici=espandi)
 
+    if request.POST:  # Ho selezionato delle sedi. Elabora elenco.
 
-@pagina_privata
-def delegato_rubrica_presidenti(request, me):
-    elenco = _rubrica_delegati(me, PRESIDENTE)
+        sedi_delega = sedi_delega.filter(pk__in=request.POST.getlist('sedi'))
+        elenco = _rubrica_delegati(me, delega, sedi_delega)
+        contesto = {
+            "elenco": elenco,
+            "delega": delega,
+            "elenco_nome": "Rubrica {}".format(titolo),
+            "sedi": sedi_delega,
+        }
+        return 'anagrafica_delegato_rubrica_delegati.html', contesto
 
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Presidenti"
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
+    else:  # Devo selezionare delle Sedi.
 
-
-@pagina_privata
-def delegato_rubrica_delegati_us(request, me):
-    elenco = _rubrica_delegati(me, UFFICIO_SOCI)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Delegati Ufficio Soci"
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_delegati_us_unita_territoriale(request, me):
-    elenco = _rubrica_delegati(me, UFFICIO_SOCI_UNITA)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Delegati Ufficio Soci Unità Territoriale"
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_delegati_area(request, me):
-    elenco = _rubrica_delegati(me, DELEGATO_AREA)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Delegati d'Area"
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_delegati_obiettivo_1(request, me):
-    elenco = _rubrica_delegati(me, DELEGATO_OBIETTIVO_1)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Delegati Obiettivo I (Salute)"
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_delegati_obiettivo_2(request, me):
-    elenco = _rubrica_delegati(me, DELEGATO_OBIETTIVO_2)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Delegati Obiettivo II (Sociale)",
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_delegati_obiettivo_3(request, me):
-    elenco = _rubrica_delegati(me, DELEGATO_OBIETTIVO_3)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Delegati Obiettivo III (Emergenze)",
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_delegati_obiettivo_4(request, me):
-    elenco = _rubrica_delegati(me, DELEGATO_OBIETTIVO_4)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Delegati Obiettivo IV (Principi)",
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_delegati_obiettivo_6(request, me):
-    elenco = _rubrica_delegati(me, DELEGATO_OBIETTIVO_6)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Delegati Obiettivo VI (Sviluppo)",
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_responsabili_area(request, me):
-    elenco = _rubrica_delegati(me, RESPONSABILE_AREA)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Responsabili d'Area",
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_referenti_attivita(request, me):
-    elenco = _rubrica_delegati(me, REFERENTE)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Referenti Attività",
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_referenti_gruppo(request, me):
-    elenco = _rubrica_delegati(me, REFERENTE_GRUPPO)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Referenti Gruppi",
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_delegati_centrale_operativa(request, me):
-    elenco = _rubrica_delegati(me, DELEGATO_CO)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Referenti Centrale Operativa",
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_responsabili_formazione(request, me):
-    elenco = _rubrica_delegati(me, RESPONSABILE_FORMAZIONE)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Responsabili Formazione",
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_direttori_corso(request, me):
-    elenco = _rubrica_delegati(me, DIRETTORE_CORSO)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Direttori Corsi",
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-@pagina_privata
-def delegato_rubrica_responsabili_autoparco(request, me):
-    elenco = _rubrica_delegati(me, RESPONSABILE_AUTOPARCO)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Responsabili Autoparco",
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
-
-
-
-@pagina_privata
-def giovane_rubrica_giovani(request, me):
-    deleghe_giovane = me.deleghe_attuali().filter(
-        tipo=DELEGATO_OBIETTIVO_5,
-        oggetto_tipo=ContentType.objects.get_for_model(Sede),
-    ).values_list('pk', flat=True)
-    sedi_destinatari = me.sedi_deleghe_attuali().filter(deleghe__pk__in=deleghe_giovane).espandi()
-
-    elenco = ElencoGiovani(sedi_destinatari, me)
-
-    contesto = {
-        "elenco": elenco,
-        "elenco_nome": "Rubrica Giovani"
-    }
-    return 'anagrafica_delegato_rubrica_delegati.html', contesto
+        return 'anagrafica_elenco_sede.html', {
+            "sedi": sedi_delega,
+            "elenco_nome": titolo,
+            "elenco_template": 'anagrafica_delegato_rubrica_delegati.html',
+        }
 
 
 @pagina_privata
