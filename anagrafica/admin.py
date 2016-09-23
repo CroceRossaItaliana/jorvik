@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from mptt.admin import MPTTModelAdmin
 from anagrafica.models import Persona, Sede, Appartenenza, Delega, Documento, Fototessera, Estensione, Trasferimento, \
-    Riserva, Dimissione, Telefono
+    Riserva, Dimissione, Telefono, ProvvedimentoDisciplinare
 from autenticazione.models import Utenza
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
@@ -164,3 +164,8 @@ class AdminTelefono(ReadonlyAdminMixin, admin.ModelAdmin):
     list_display = ("persona", "numero", "servizio", "creazione",)
     list_filter = ("servizio", "creazione",)
     raw_id_fields = RAW_ID_FIELDS_TELEFONO
+
+
+@admin.register(ProvvedimentoDisciplinare)
+class AdminProvvedimentoDisciplinare(ReadonlyAdminMixin, admin.ModelAdmin):
+    pass

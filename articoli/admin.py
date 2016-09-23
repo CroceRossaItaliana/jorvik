@@ -85,3 +85,8 @@ class AdminArticolo(ReadonlyAdminMixin, admin.ModelAdmin):
             message_bit = '%s articoli sono stati' % rows_updated
         self.message_user(request, '%s passato allo stato bozza con successo.' % message_bit)
     bozza.short_description = 'Passa allo stato bozza uno o più articoli'
+
+
+@admin.register(ArticoloSegmento)
+class AdminArticoloSegmento(ReadonlyAdminMixin, admin.ModelAdmin):
+    pass
