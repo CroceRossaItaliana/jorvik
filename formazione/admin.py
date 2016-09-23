@@ -1,6 +1,9 @@
+from anagrafica.admin import RAW_ID_FIELDS_DELEGA
+from anagrafica.models import Delega
 from django.contrib import admin
 
 from base.admin import InlineAutorizzazione
+from django.contrib.contenttypes.admin import GenericTabularInline
 from formazione.models import CorsoBase, PartecipazioneCorsoBase, AssenzaCorsoBase, Aspirante, LezioneCorsoBase
 from gruppi.readonly_admin import ReadonlyAdminMixin
 
@@ -12,6 +15,14 @@ RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE = ['persona', 'corso']
 RAW_ID_FIELDS_LEZIONECORSOBASE = ['corso',]
 RAW_ID_FIELDS_ASSENZACORSOBASE = ['lezione', 'persona', 'registrata_da',]
 RAW_ID_FIELDS_ASPIRANTE = ['persona', 'locazione',]
+
+
+class InlineDelegaCorsoBase(ReadonlyAdminMixin, GenericTabularInline):
+    model = Delega
+    raw_id_fields = RAW_ID_FIELDS_DELEGA
+    ct_field = 'oggetto_tipo'
+    ct_fk_field = 'oggetto_id'
+    extra = 0
 
 
 class InlinePartecipazioneCorsoBase(ReadonlyAdminMixin, admin.TabularInline):
@@ -46,7 +57,7 @@ class AdminCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     list_display = ['progressivo', 'anno', 'stato', 'sede', 'data_inizio', 'data_esame', ]
     list_filter = ['anno', 'creazione', 'stato', 'data_inizio', ]
     raw_id_fields = RAW_ID_FIELDS_CORSOBASE
-    inlines = [InlinePartecipazioneCorsoBase, InlineLezioneCorsoBase]
+    inlines = [InlineDelegaCorsoBase, InlinePartecipazioneCorsoBase, InlineLezioneCorsoBase]
     actions = [admin_corsi_base_attivi_invia_messaggi]
 
 
