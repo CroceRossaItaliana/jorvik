@@ -151,5 +151,5 @@ class ModuloRipetiTurno(forms.Form):
                                                  "questo turno? Tieni premuto CTRL per selezionare "
                                                  "più giorni. ")
 
-    numero_ripetizioni = forms.IntegerField(min_value=1, max_value=30, initial=3,
+    numero_ripetizioni = forms.IntegerField(min_value=1, max_value=60, initial=3,
                                             help_text="Per quanti giorni vuoi ripetere questo turno? ")
