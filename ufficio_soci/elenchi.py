@@ -556,7 +556,7 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
         return ModuloElencoPerTitoli
 
 
-class ElencoTesseriniRichiesti(ElencoVistaAnagrafica):
+class ElencoTesseriniRichiesti(ElencoVistaSoci):
 
     def risultati(self):
         qs_sedi = self.args[0]
