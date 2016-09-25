@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'attivita',
     'curriculum',
     'gruppi',
-    'patenti',
     'ufficio_soci',
     'veicoli',
     'social',
@@ -217,7 +216,7 @@ DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             "context_processors": (
@@ -292,3 +291,6 @@ AUTORIZZAZIONE_AUTOMATICA = timedelta(days=30)
 
 if os.environ.get('ENABLE_TEST_APPS', False):
     INSTALLED_APPS.append('segmenti.segmenti_test')
+
+CAN_LOGIN_AS = lambda request, target_user: request.user.is_superuser or request.user.groups.filter(name='loginas').exists()
+

@@ -18,6 +18,9 @@ class Autoparco(ModelloSemplice, ConEstensione, ConMarcaTemporale, ConGeolocaliz
 
     class Meta:
         verbose_name_plural = "Autoparchi"
+        permissions = (
+            ("view_autoparco", "Can view autoparco"),
+        )
 
     nome = models.CharField(max_length=256, db_index=True)
 
@@ -42,6 +45,9 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
 
     class Meta:
         verbose_name_plural = "Veicoli"
+        permissions = (
+            ("view_veicolo", "Can view veicolo"),
+        )
 
     IN_IMMATRICOLAZIONE = 'IM'
     IN_SERVIZIO = 'OK'
@@ -212,6 +218,9 @@ class Collocazione(ModelloSemplice, ConStorico, ConMarcaTemporale):
     class Meta:
         verbose_name = "Collocazione veicolo"
         verbose_name_plural = "Collocazioni veicolo"
+        permissions = (
+            ("view_collocazione", "Can view collocazione"),
+        )
 
     veicolo = models.ForeignKey(Veicolo, related_name='collocazioni', on_delete=models.CASCADE)
     autoparco = models.ForeignKey(Autoparco, related_name='autoparco', on_delete=models.PROTECT)
@@ -228,6 +237,9 @@ class FermoTecnico(ModelloSemplice, ConStorico, ConMarcaTemporale):
     class Meta:
         verbose_name = "Fermo tecnico"
         verbose_name_plural = "Fermi tecnici"
+        permissions = (
+            ("view_fermotecnico", "Can view fermo tecnico"),
+        )
 
     motivo = models.CharField(max_length=512)
     veicolo = models.ForeignKey(Veicolo, related_name='fermi_tecnici', on_delete=models.CASCADE)
@@ -247,6 +259,9 @@ class Manutenzione(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Intervento di Manutenzione"
         verbose_name_plural = "Interventi di Manutenzione"
+        permissions = (
+            ("view_manutenzione", "Can view manutenzione"),
+        )
 
     REVISIONE = "R"
     MANUTENZIONE_ORDINARIA = "O"
@@ -288,7 +303,9 @@ class Segnalazione(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Segnalazione di malfunzionamento o incidente"
         verbose_name_plural = "Segnalazioni di malfunzionamento o incidente"
-
+        permissions = (
+            ("view_segnalazione", "Can view segnalazione"),
+        )
 
 class Rifornimento(ModelloSemplice, ConMarcaTemporale):
     """
@@ -335,3 +352,6 @@ class Rifornimento(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Rifornimento di carburante"
         verbose_name_plural = "Rifornimenti di carburante"
+        permissions = (
+            ("view_rifornimento", "Can view rifornimento"),
+        )

@@ -50,6 +50,9 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
     class Meta:
         verbose_name_plural = "Utenze"
         app_label = 'autenticazione'
+        permissions = (
+            ("view_utenza", "Can view utenza"),
+        )
 
     email = models.EmailField('Indirizzo email', max_length=254, unique=True,
                               validators=[valida_email_personale])

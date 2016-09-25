@@ -15,6 +15,9 @@ class Locazione(ConMarcaTemporale, models.Model):
     class Meta:
         verbose_name = "Locazione Geografica"
         verbose_name_plural = "Locazioni Geografiche"
+        permissions = (
+            ("view_locazione", "Can view locazione"),
+        )
 
     indirizzo = models.CharField("Indirizzo", max_length=255, db_index=True)
 

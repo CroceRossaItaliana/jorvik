@@ -121,6 +121,9 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             ['necessaria', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
             ['necessaria', 'destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
         ]
+        permissions = (
+            ("view_autorizzazione", "Can view autorizzazione"),
+        )
 
     richiedente = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="autorizzazioni_richieste", on_delete=models.CASCADE)
     firmatario = models.ForeignKey("anagrafica.Persona", db_index=True, blank=True, null=True, default=None,
@@ -765,7 +768,11 @@ class Token(ModelloSemplice, ConMarcaTemporale):
                 return False
         except cls.DoesNotExist:
             return False
-
+    
+    class Meta:
+        permissions = (
+            ("view_token", "Can view token"),
+        )
 
 class Allegato(ConMarcaTemporale, ConScadenzaPulizia, ModelloSemplice):
     """
@@ -774,6 +781,9 @@ class Allegato(ConMarcaTemporale, ConScadenzaPulizia, ModelloSemplice):
 
     class Meta:
         verbose_name_plural = "Allegati"
+        permissions = (
+            ("view_allegato", "Can view allegato"),
+        )
 
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True, blank=True, null=True, related_name="allegato_come_oggetto", on_delete=models.SET_NULL)
     oggetto_id = models.PositiveIntegerField(db_index=True, blank=True, null=True)
