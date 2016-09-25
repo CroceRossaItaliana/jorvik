@@ -28,6 +28,9 @@ class Gruppo(ModelloSemplice, ConEstensione, ConMarcaTemporale, ConDelegati):
 
     class Meta:
         verbose_name_plural = "Gruppi"
+        permissions = (
+            ("view_gruppo", "Can view Gruppo"),
+        )
 
     def __str__(self):
         return "Gruppo %s" % (self.nome,)
@@ -37,6 +40,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale):
 
     class Meta:
         verbose_name_plural = "Appartenenze"
+        permissions = (
+            ("view_appartenenza", "Can view Appartenenza"),
+        )
 
     gruppo = models.ForeignKey(Gruppo, related_name='appartenenze', on_delete=models.CASCADE)
     persona = models.ForeignKey('anagrafica.Persona', related_name='appartenenze_gruppi', on_delete=models.CASCADE)

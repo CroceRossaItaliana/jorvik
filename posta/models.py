@@ -23,6 +23,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     class Meta:
         verbose_name = "Messaggio di posta"
         verbose_name_plural = "Messaggi di posta"
+        permissions = (
+            ("view_messaggio", "Can view messaggio"),
+        )
 
     LUNGHEZZA_MASSIMA_OGGETTO = 256
     CARATTERI_RIDUZIONE_OGGETTTO = '...'
@@ -150,75 +153,79 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
         # E-mail a delle persone
         for d in self.oggetti_destinatario.filter(inviato=False):
-            destinatari = [d.persona.email]
-            if hasattr(d.persona, 'utenza'):
+            destinatari = []
+            if hasattr(d, 'persona') and d.persona:
+                destinatari.append(d.persona.email)
+            if hasattr(d.persona, 'utenza') and d.persona.utenza:
                 if utenza and d.persona.utenza.email != d.persona.email:
                     destinatari.append(d.persona.utenza.email)
-            # Assicurati che la connessione sia aperta
-            connection.open()
+            # Non diamo per scontato che esistano destinatari
+            if destinatari:
+                # Assicurati che la connessione sia aperta
+                connection.open()
 
-            # Evita duplicati in invii lunghi (se ci sono problemi con lock)...
-            d.refresh_from_db()
-            if d.inviato:
-                print("%s  (*) msg=%d, dest=%d, protezione invio duplicato" % (
-                    datetime.now().isoformat(' '),
-                    self.pk,
-                    d.pk,
-                ))
-                continue
+                # Evita duplicati in invii lunghi (se ci sono problemi con lock)...
+                d.refresh_from_db()
+                if d.inviato:
+                    print("%s  (*) msg=%d, dest=%d, protezione invio duplicato" % (
+                        datetime.now().isoformat(' '),
+                        self.pk,
+                        d.pk,
+                    ))
+                    continue
 
-            try:
-                msg = EmailMultiAlternatives(
-                    subject=self.oggetto,
-                    body=plain_text,
-                    from_email=mittente,
-                    reply_to=[reply_to],
-                    to=destinatari,
-                    attachments=self.allegati_pronti(),
-                    connection=connection,
-                )
-                msg.attach_alternative(self.corpo, "text/html")
-                msg.send()
-                d.inviato = True
+                try:
+                    msg = EmailMultiAlternatives(
+                        subject=self.oggetto,
+                        body=plain_text,
+                        from_email=mittente,
+                        reply_to=[reply_to],
+                        to=destinatari,
+                        attachments=self.allegati_pronti(),
+                        connection=connection,
+                    )
+                    msg.attach_alternative(self.corpo, "text/html")
+                    msg.send()
+                    d.inviato = True
 
-            except SMTPException as e:
+                except SMTPException as e:
 
-                if isinstance(e, SMTPResponseException) and e.smtp_code == 501:
-                    successo = True  # E-mail di destinazione rotta: ignora.
+                    if isinstance(e, SMTPResponseException) and e.smtp_code == 501:
+                        successo = True  # E-mail di destinazione rotta: ignora.
 
-                elif isinstance(e, SMTPServerDisconnected):
-                    # Se il server si e' disconnesso, riconnetti.
-                    successo = False    # Questo messaggio verra' inviato al prossimo tentativo.
-                    connection.close()  # Chiudi handle alla connessione
-                    connection.open()   # Riconnettiti
+                    elif isinstance(e, SMTPServerDisconnected):
+                        # Se il server si e' disconnesso, riconnetti.
+                        successo = False    # Questo messaggio verra' inviato al prossimo tentativo.
+                        connection.close()  # Chiudi handle alla connessione
+                        connection.open()   # Riconnettiti
 
-                else:
-                    successo = False  # Altro errore... riprova piu' tardi.
+                    else:
+                        successo = False  # Altro errore... riprova piu' tardi.
 
-                d.errore = str(e)
+                    d.errore = str(e)
 
-            except TypeError as e:
-                successo = True
-                d.errore = "Nessun indirizzo e-mail. Saltato"
+                except TypeError as e:
+                    successo = True
+                    d.errore = "Nessun indirizzo e-mail. Saltato"
 
-            except AttributeError as e:
-                successo = True
-                d.errore = "Destinatario non valido. Saltato"
+                except AttributeError as e:
+                    successo = True
+                    d.errore = "Destinatario non valido. Saltato"
 
-            except UnicodeEncodeError as e:
-                successo = True
-                d.errore = "Indirizzo e-mail non valido. Saltato."
+                except UnicodeEncodeError as e:
+                    successo = True
+                    d.errore = "Indirizzo e-mail non valido. Saltato."
 
-            if not successo:
-                print("%s  (!) errore invio id=%d, destinatario=%d, errore=%s" % (
-                    datetime.now().isoformat(' '),
-                    self.pk,
-                    d.pk,
-                    d.errore,
-                ))
+                if not successo:
+                    print("%s  (!) errore invio id=%d, destinatario=%d, errore=%s" % (
+                        datetime.now().isoformat(' '),
+                        self.pk,
+                        d.pk,
+                        d.errore,
+                    ))
 
-            d.tentativo = datetime.now()
-            d.save()
+                d.tentativo = datetime.now()
+                d.save()
 
         if successo:
             self.terminato = datetime.now()
@@ -371,6 +378,9 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Destinatario di posta"
         verbose_name_plural = "Destinatario di posta"
+        permissions = (
+            ("view_destinatario", "Can view destinatario"),
+        )
 
     messaggio = models.ForeignKey(Messaggio, null=False, blank=True, related_name='oggetti_destinatario',
                                   on_delete=models.CASCADE)

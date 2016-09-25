@@ -22,6 +22,9 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
     class Meta:
         verbose_name = "Richiesta Tesserino Associativo"
         verbose_name_plural = "Richieste Tesserino Associativo"
+        permissions = (
+            ("view_tesserino", "Can view tesserino"),
+        )
 
     persona = models.ForeignKey('anagrafica.Persona', related_name='tesserini', on_delete=models.CASCADE)
     emesso_da = models.ForeignKey('anagrafica.Sede', related_name='tesserini_emessi', on_delete=models.PROTECT)
@@ -145,11 +148,23 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
         )
         return pdf
 
+    @property
+    def originale(self):
+        if self.tipo_richiesta == self.DUPLICATO:
+            tesserini = self.persona.tesserini.exclude(pk=self.pk).filter(stato_richiesta__in=(Tesserino.ACCETTATO,), codice__isnull=False, stato_emissione__isnull=False, data_conferma__isnull=False).order_by('-data_conferma')
+            if self.data_conferma:
+                tesserini = tesserini.filter(data_conferma__lt=self.data_conferma)
+            if tesserini.exists():
+                return tesserini.first()
+
 
 class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Tesseramento"
         verbose_name_plural = "Tesseramenti"
+        permissions = (
+            ("view_tesseramento", "Can view tesseramento"),
+        )
 
     APERTO = 'A'
     CHIUSO = 'C'
@@ -352,6 +367,9 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
         verbose_name_plural = "Quote"
         unique_together = ('progressivo', 'anno', 'sede',)
         ordering = ['anno', 'progressivo']
+        permissions = (
+            ("view_quota", "Can view quota"),
+        )
 
     def tesseramento(self):
         """
