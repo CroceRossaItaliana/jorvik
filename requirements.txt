@@ -1,5 +1,4 @@
 --extra-index-url https://devpi.iast.it/nephila/public/+simple/
---trusted-host devpi.iast.it
 Django==1.9.4
 Markdown==2.6
 django-bootstrap3==7.0.0
