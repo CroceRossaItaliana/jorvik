@@ -61,18 +61,24 @@ $(document).ready(function() {
     $(".selettore-data").datetimepicker({
         format:'d/m/Y',
         timepicker: false,
-        dayOfWeekStart: 1
+        dayOfWeekStart: 1,
+        scrollMonth : false,
+        scrollInput : false,
     });
 
     $(".selettore-data-ora").datetimepicker({
         format:'d/m/Y H:i',
-        dayOfWeekStart: 1
+        dayOfWeekStart: 1,
+        scrollMonth : false,
+        scrollInput : false
     });
 
     $("#selettore-data-mese-anno").datetimepicker({
         format:'m-Y',
         changeMonth: true,
         changeYear: true,
+        scrollMonth : false,
+        scrollInput : false,
     });
 
 
