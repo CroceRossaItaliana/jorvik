@@ -1,4 +1,5 @@
 import datetime
+from datetime import timedelta
 import json
 import random
 from django.core.paginator import Paginator
@@ -795,6 +796,7 @@ def us_quote_nuova(request, me):
         if modulo and modulo.is_valid():
 
             volontario = modulo.cleaned_data['volontario']
+
             importo = modulo.cleaned_data['importo']
             data_versamento = modulo.cleaned_data['data_versamento']
 
@@ -809,7 +811,7 @@ def us_quote_nuova(request, me):
 
             elif not Tesseramento.aperto_anno(
                     data_versamento, volontario.iv
-            ):
+            ) and not volontario.volontario_da_un_anno:
                 if volontario.iv:
                     data_fine = tesseramento.fine_soci_iv
                 else:
