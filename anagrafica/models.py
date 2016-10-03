@@ -647,6 +647,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         from formazione.models import PartecipazioneCorsoBase, CorsoBase
         return PartecipazioneCorsoBase.con_esito_ok().filter(persona=self, corso__stato=CorsoBase.ATTIVO).first()
+    
+    @property
+    def volontario_da_un_anno(self):
+        """
+        Controlla se questo utente è diventato volontario da un anno
+        """
+        if self.volontario:
+            data_volontario = self.appartenenze.all().order_by('inizio').values_list('inizio', flat=True)[0]
+            if (timezone.now() - timedelta(days=350)) < data_volontario < timezone.now():
+                return True
 
     @property
     def url(self):
