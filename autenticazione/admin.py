@@ -35,12 +35,20 @@ class AdminUtenza(ReadonlyAdminMixin, UserAdmin):
     def get_readonly_fields(self, request, obj=None):
         readonly = super(AdminUtenza, self).get_readonly_fields(request, obj)
         if not request.user.is_superuser:
-            return list(readonly) + ['is_superuser', 'is_staff', 'is_active']
+            return list(readonly) + [
+                'is_superuser', 'is_staff', 'is_active', 'groups', 'user_permissions'
+            ]
         return readonly
 
 
-class AdminGrouppo(ReadonlyAdminMixin, GroupAdmin):
-    pass
+class AdminGruppo(ReadonlyAdminMixin, GroupAdmin):
+    def get_readonly_fields(self, request, obj=None):
+        readonly = super(AdminGruppo, self).get_readonly_fields(request, obj)
+        if not request.user.is_superuser:
+            return list(readonly) + [
+                'permissions'
+            ]
+        return readonly
 
 admin.site.unregister(Group)
-admin.site.register(Group, AdminGrouppo)
+admin.site.register(Group, AdminGruppo)
