@@ -1,5 +1,6 @@
 import random
 from datetime import timezone, date, timedelta
+from django.utils import timezone as timezone_django
 
 import barcode
 from barcode.writer import ImageWriter
@@ -187,16 +188,17 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
         null=True, verbose_name=_('Data di fine per infermiere volontarie'),
         help_text=_('La data indicata è inclusa nell\'intervallo in cui è permesso il tesseramento')
     )
-    fine_soci_nv = models.DateField(
-        null=True, verbose_name=_('Data di fine per nuovo volontario'),
-        help_text=_('La data indicata è inclusa nell\'intervallo in cui è permesso il tesseramento')
-    )
 
     quota_attivo = models.FloatField(default=8.00)
     quota_ordinario = models.FloatField(default=16.00)
     quota_benemerito = models.FloatField(default=20.00)
     quota_aspirante = models.FloatField(default=20.00)
     quota_sostenitore = models.FloatField(default=20.00)
+
+
+    @property
+    def fine_soci_nv(self):
+        return timezone_django.now().date().replace(month=12, day=31)
 
     def accetta_pagamenti(self, data=None, iv=False, nv=False):
         if not data:

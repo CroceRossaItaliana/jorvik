@@ -654,7 +654,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         Controlla se questo utente è diventato volontario nell'anno corrente
         """
         if self.volontario:
-            data_volontario = self.appartenenze.filter(membro='VO').values_list('inizio', flat=True)[0]
+            data_volontario = self.appartenenze.filter(membro=Appartenenza.VOLONTARIO).values_list('inizio', flat=True)[0]
             if timezone.now().year == data_volontario.year:
                 return True
 
