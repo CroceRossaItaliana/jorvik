@@ -187,6 +187,10 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
         null=True, verbose_name=_('Data di fine per infermiere volontarie'),
         help_text=_('La data indicata è inclusa nell\'intervallo in cui è permesso il tesseramento')
     )
+    fine_soci_nv = models.DateField(
+        null=True, verbose_name=_('Data di fine per nuovo volontario'),
+        help_text=_('La data indicata è inclusa nell\'intervallo in cui è permesso il tesseramento')
+    )
 
     quota_attivo = models.FloatField(default=8.00)
     quota_ordinario = models.FloatField(default=16.00)
@@ -194,11 +198,13 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     quota_aspirante = models.FloatField(default=20.00)
     quota_sostenitore = models.FloatField(default=20.00)
 
-    def accetta_pagamenti(self, data=None, iv=False):
+    def accetta_pagamenti(self, data=None, iv=False, nv=False):
         if not data:
             data = oggi()
         if iv and self.fine_soci_iv:
             termine = self.fine_soci_iv
+        elif nv and self.fine_soci_nv:
+            termine = self.fine_soci_nv
         else:
             termine = self.fine_soci
         if not termine:
@@ -210,12 +216,12 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
         return self.stato == self.APERTO and data >= self.inizio and data <= termine
 
     @classmethod
-    def aperto_anno(cls, data=None, iv=False):
+    def aperto_anno(cls, data=None, iv=False, nv=False):
         try:
             if not data:
                 data = oggi()
             t = Tesseramento.objects.get(anno=data.year)
-            return t.accetta_pagamenti(data, iv)
+            return t.accetta_pagamenti(data, iv, nv)
         except Tesseramento.DoesNotExist:
             return False
 

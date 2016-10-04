@@ -649,13 +649,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return PartecipazioneCorsoBase.con_esito_ok().filter(persona=self, corso__stato=CorsoBase.ATTIVO).first()
     
     @property
-    def volontario_da_un_anno(self):
+    def da_un_anno(self):
         """
-        Controlla se questo utente è diventato volontario da un anno
+        Controlla se questo utente è diventato volontario nell'anno corrente
         """
         if self.volontario:
-            data_volontario = self.appartenenze.all().order_by('inizio').values_list('inizio', flat=True)[0]
-            if (timezone.now() - timedelta(days=350)) < data_volontario < timezone.now():
+            data_volontario = self.appartenenze.filter(membro='VO').values_list('inizio', flat=True)[0]
+            if timezone.now().year == data_volontario.year:
                 return True
 
     @property
