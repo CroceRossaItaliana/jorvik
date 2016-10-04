@@ -1,5 +1,4 @@
 import datetime
-from datetime import timedelta
 import json
 import random
 from django.core.paginator import Paginator

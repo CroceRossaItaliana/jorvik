@@ -723,3 +723,46 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Questo volontario ha già pagato la Quota associativa '
                                       'per l&#39;anno {}'.format(oggi.year))
+
+
+    def pagamento_quota_nuovo_volontario(self):
+        # Crea oggetti e nomina il delegato US
+        """
+        Testa che un nuovo volontario sia in grado di registarare
+        la quota nell'anno in cui è diventato volontario
+        """
+        delegato = crea_persona()
+        utente = crea_utenza(delegato, email="mario@rossi.it", password="prova")
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
+
+        sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
+        sede.telefono = '+3902020202'
+        sede.email = 'comitato@prova.it'
+        sede.codice_fiscale = '01234567891'
+        sede.partita_iva = '01234567891'
+        sede.locazione = crea_locazione()
+        sede.save()
+
+        appartenenza.inizio = poco_fa().replace(month=8)
+        appartenenza.save()
+
+        oggi = poco_fa().replace(month=9)
+        inizio_anno = oggi.replace(month=1, day=1)
+        fine_soci = inizio_anno.replace(month=3) - datetime.timedelta(days=1)
+
+        Tesseramento.objects.create(
+            stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
+            anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+            quota_aspirante=8, quota_sostenitore=8
+        )
+
+        data = {
+            'volontario': volontario.pk,
+            'importo': 8,
+            'data_versamento': oggi.strftime('%d/%m/%Y')
+        }
+        self.client.login(email="mario@rossi.it", password="prova")
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_quote_nuova')), data=data)
+        # quota registrata con successo
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['location'].find('?appena_registrata='))
