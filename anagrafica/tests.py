@@ -446,6 +446,59 @@ class TestAnagrafica(TestCase):
             msg="Esiste solo una appartenenza attuale come sostenitore."
         )
 
+    def test_storia_volontario(self):
+        presidente1 = crea_persona()
+        presidente2 = crea_persona()
+
+        persona = crea_persona()
+        persona.save()
+
+        persona, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
+        sede2 = crea_sede(presidente2)
+        sede2.save()
+
+        # Appena diventato volontario
+        a = Appartenenza(
+            persona=persona,
+            sede=sede1,
+            membro=Appartenenza.VOLONTARIO,
+            inizio=poco_fa(),
+            confermata=True
+        )
+        a.save()
+
+        self.assertTrue(persona.da_un_anno)
+
+        # data vecchia nel passato
+        a.inizio = "1980-12-10"
+        a.save()
+        self.assertFalse(persona.da_un_anno)
+        
+        # trasferiscilo ad altro comitato
+
+        modulo = ModuloCreazioneEstensione()
+        est = modulo.save(commit=False)
+        est.richiedente = persona
+        est.persona = persona
+        est.destinazione = sede2
+        est.save()
+        est.richiedi()
+        aut = presidente1.autorizzazioni_in_attesa().first()
+        modulo = est.autorizzazione_concedi_modulo()({
+            "protocollo_numero": 31,
+            "protocollo_data": datetime.date.today()
+        })
+        aut.concedi(presidente1, modulo=modulo)
+        est.refresh_from_db()
+
+        # il trasferimento non cambia l'anzianità
+        self.assertFalse(persona.da_un_anno)
+
+        # impostiamo una data recente
+        a.inizio = datetime.date.today()
+        a.save()
+        self.assertTrue(persona.da_un_anno)
+
     def test_estensione_negata(self):
 
         presidente1 = crea_persona()
