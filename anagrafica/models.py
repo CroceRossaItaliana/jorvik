@@ -654,9 +654,24 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         Controlla se questo utente è diventato volontario nell'anno corrente
         """
         if self.volontario:
-            data_volontario = self.appartenenze.filter(membro=Appartenenza.VOLONTARIO).values_list('inizio', flat=True)[0]
-            if timezone.now().year == data_volontario.year:
-                return True
+            oggi = poco_fa()
+            inizio_anno = oggi.replace(month=1, day=1)
+
+            r = Persona.objects.filter(
+                # Tutti i volontari
+                Appartenenza.query_attuale(
+                    al_giorno=oggi,
+                    membro=Appartenenza.VOLONTARIO,
+                ).via('appartenenze'),
+                Appartenenza.con_esito_ok(
+                    membro__in=Appartenenza.MEMBRO_ANZIANITA,
+                    inizio__gte=inizio_anno
+                ).via('appartenenze')
+            ).exclude(  # Escludi quelli con dimissione negli anni di anzianita'
+                appartenenze__terminazione__in=[Appartenenza.DIMISSIONE, Appartenenza.ESPULSIONE],
+                appartenenze__fine__lte=inizio_anno,
+            ).filter(pk=self.pk)
+            return r.exists()
 
     @property
     def url(self):
