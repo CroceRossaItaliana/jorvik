@@ -827,6 +827,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         for appartenenza in self.appartenenze_attuali():
             appartenenza.terminazione = Appartenenza.ESPULSIONE
             appartenenza.fine = datetime.today()
+            appartenenza.save()
 
     def ottieni_o_genera_aspirante(self):
         try:
