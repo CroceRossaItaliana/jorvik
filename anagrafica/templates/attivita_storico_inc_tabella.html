@@ -81,7 +81,7 @@
                             <tbody>
                             {% for autorizzazione in richiesta.autorizzazioni %}
                                 <tr>
-                                    <td>{{ autorizzazione.firmatario.nome_completo }}</td>
+                                    <td>{% if autorizzazione.firmatario %}{{ autorizzazione.firmatario.nome_completo }}{% endif %}</td>
                                     <td>{{ autorizzazione.ultima_modifica }}</td>
                                     <td>
                                         {% if autorizzazione.concessa == True %}
@@ -95,6 +95,13 @@
                                         {% else %}
                                             <i class='fa fa-fw fa-clock-o'></i>
                                             In attesa
+                                        {% endif %}
+
+                                    </td>
+                                    <td>
+
+                                        {% if autorizzazione.scadenza %}
+                                            {{ autorizzazione.get_tipo_gestione_display }} il {{ autorizzazione.scadenza|date:"SHORT_DATETIME_FORMAT" }}
                                         {% endif %}
 
                                     </td>
