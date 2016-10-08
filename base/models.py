@@ -256,17 +256,17 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
     def notifica_concessa(self, auto=False):
         if auto:
-            modello = "email_autorizzazione_negata_automatica.html"
+            modello = "email_autorizzazione_concessa_automatica.html"
         else:
-            modello = "email_autorizzazione_negata.html"
+            modello = "email_autorizzazione_concessa.html"
         oggetto = "Richiesta di %s APPROVATA" % (self.oggetto.RICHIESTA_NOME,)
         self._invia_notifica(modello, oggetto, auto)
 
     def notifica_negata(self, auto=False):
         if auto:
-            modello = "email_autorizzazione_concessa_automatica.html"
+            modello = "email_autorizzazione_negata_automatica.html"
         else:
-            modello = "email_autorizzazione_concessa.html"
+            modello = "email_autorizzazione_negata.html"
         oggetto = "Richiesta di %s RESPINTA" % (self.oggetto.RICHIESTA_NOME,)
         self._invia_notifica(modello, oggetto, auto)
 
