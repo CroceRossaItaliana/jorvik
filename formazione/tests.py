@@ -1,13 +1,57 @@
 import os
 import re
 
+from datetime import timedelta
+from unittest import skipIf
+
+from django.conf import settings
 from django.core import mail
+from django.test import TestCase
 
 from autenticazione.utils_test import TestFunzionale
-from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia
 from base.geo import Locazione
+from base.utils import poco_fa
+from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia
 from jorvik.settings import GOOGLE_KEY
-from unittest import skipIf
+from .models import CorsoBase
+
+
+class TestCorsi(TestCase):
+    def test_corso_pubblico(self):
+        """
+        Un corso è visibile fino a FORMAZIONE_FINESTRA_CORSI_INIZIATI giorni dal suo inizio
+        """
+        presidente = crea_persona()
+        direttore, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        oggi = poco_fa()
+
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi + timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+        self.assertTrue(CorsoBase.pubblici().exists())
+        self.assertFalse(corso.iniziato)
+        self.assertFalse(corso.troppo_tardi_per_iscriverti)
+        self.assertTrue(corso.possibile_aggiungere_iscritti)
+        corso.data_inizio = oggi - timedelta(days=(settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI - 1))
+        corso.save()
+        self.assertTrue(corso.iniziato)
+        self.assertFalse(corso.troppo_tardi_per_iscriverti)
+        self.assertTrue(corso.possibile_aggiungere_iscritti)
+        self.assertTrue(CorsoBase.pubblici().exists())
+
+        corso.data_inizio = oggi - timedelta(days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI)
+        corso.save()
+        self.assertTrue(corso.iniziato)
+        self.assertTrue(corso.troppo_tardi_per_iscriverti)
+        self.assertTrue(corso.possibile_aggiungere_iscritti)
+        self.assertFalse(CorsoBase.pubblici().exists())
 
 
 class TestFunzionaleFormazione(TestFunzionale):

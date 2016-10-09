@@ -5,6 +5,7 @@ Questo modulo definisce i modelli del modulo di Formazione di Gaia.
 """
 import datetime
 
+from django.conf import settings
 from django.db.models import Q
 from django.utils import timezone
 
@@ -131,7 +132,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         """
         Concept per Corsi Base pubblici (attivi e non ancora iniziati...)
         """
-        return Q(data_inizio__gte=timezone.now(), stato=cls.ATTIVO)
+        return Q(
+            data_inizio__gte=timezone.now() - datetime.timedelta(days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI),
+            stato=cls.ATTIVO
+        )
 
     @property
     def iniziato(self):
@@ -139,7 +143,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def troppo_tardi_per_iscriverti(self):
-        return timezone.now() > (self.data_inizio + datetime.timedelta(days=7))
+        return timezone.now() > (self.data_inizio + datetime.timedelta(days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI))
 
     @property
     def possibile_aggiungere_iscritti(self):
