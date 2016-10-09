@@ -1027,7 +1027,7 @@ def verifica_tesserino(request, me=None):
         try:
             tesserino = Tesserino.objects.get(codice=modulo.cleaned_data['numero_tessera'])
             cognome = tesserino.persona.cognome
-            lettera_numero = random.randint(0, len(cognome))
+            lettera_numero = random.randint(0, len(cognome) - 1)
             lettera = cognome[lettera_numero].upper()
             lettera_numero += 1
 
