@@ -231,7 +231,8 @@ def menu(request):
         "aspirante": (
             ("Aspirante", (
                 ("Home page", "fa-home", "/aspirante/"),
-                ("Impostazioni", "fa-gears", "/aspirante/impostazioni/")
+                ("Impostazioni", "fa-gears", "/aspirante/impostazioni/"),
+                ("Inviti Corsi Base", "fa-list", "/aspirante/corsi-base/inviti/"),
             )),
             ("Nelle vicinanze", (
                 ("Corsi Base", "fa-list", "/aspirante/corsi-base/"),

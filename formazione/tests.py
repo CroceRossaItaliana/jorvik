@@ -7,16 +7,121 @@ from unittest import skipIf
 from django.conf import settings
 from django.core import mail
 from django.test import TestCase
+from django.utils import timezone
 
+from anagrafica.models import Appartenenza
 from autenticazione.utils_test import TestFunzionale
 from base.geo import Locazione
+from base.models import Autorizzazione
 from base.utils import poco_fa
-from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia
+from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia, codice_fiscale, crea_utenza
 from jorvik.settings import GOOGLE_KEY
-from .models import CorsoBase
+from .models import CorsoBase, Aspirante, InvitoCorsoBase
 
 
 class TestCorsi(TestCase):
+    def test_invito_aspirante(self):
+        presidente = crea_persona()
+        presidente.email_contatto = email_fittizzia()
+        presidente.save()
+        crea_utenza(presidente, presidente.email_contatto)
+        direttore, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        aspirante1 = crea_persona()
+        aspirante1.email_contatto = email_fittizzia()
+        aspirante1.codice_fiscale = codice_fiscale()
+        aspirante1.save()
+        a = Aspirante(persona=aspirante1)
+        a.locazione = sede.locazione
+        a.save()
+
+        oggi = poco_fa()
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi + timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+        self.assertFalse(aspirante1.autorizzazioni_in_attesa().exists())
+
+        p = InvitoCorsoBase(persona=aspirante1, corso=corso, invitante=presidente)
+        p.save()
+        p.richiedi()
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertTrue(email.subject.find("Richiesta di invito a Corso Base da {}".format(presidente.nome_completo)) > -1)
+        self.assertEqual(len(email.to), 1)
+        self.assertIn(aspirante1.email_contatto, email.to)
+
+        self.assertEqual(aspirante1.autorizzazioni_in_attesa().count(), 1)
+        aspirante1.autorizzazioni_in_attesa()[0].concedi()
+        self.assertEqual(len(mail.outbox), 3)
+        email_aspirante = False
+        email_presidente = False
+        for email in mail.outbox[1:]:
+            if aspirante1.email_contatto in email.to:
+                email_aspirante = True
+                self.assertTrue(email.subject.find('Iscrizione a Corso Base') > -1)
+            elif presidente.email_contatto in email.to:
+                email_presidente = True
+                self.assertTrue(email.subject.find('Richiesta di invito a Corso Base APPROVATA') > -1)
+            else:
+                raise AssertionError('Email a destinatario sconosciuto {}'.format(email.to))
+        self.assertTrue(email_aspirante)
+        self.assertTrue(email_presidente)
+
+        self.assertFalse(aspirante1.autorizzazioni_in_attesa().exists())
+        self.assertFalse(corso.inviti.exists())
+        self.assertEqual(corso.partecipazioni.count(), 1)
+
+    def test_invito_aspirante_automatico(self):
+        presidente = crea_persona()
+        presidente.email_contatto = email_fittizzia()
+        presidente.save()
+        crea_utenza(presidente, presidente.email_contatto)
+        direttore, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        aspirante1 = crea_persona()
+        aspirante1.email_contatto = email_fittizzia()
+        aspirante1.codice_fiscale = codice_fiscale()
+        aspirante1.save()
+        a = Aspirante(persona=aspirante1)
+        a.locazione = sede.locazione
+        a.save()
+
+        oggi = poco_fa()
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi + timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+        self.assertFalse(aspirante1.autorizzazioni_in_attesa().exists())
+
+        partecipazione = InvitoCorsoBase(persona=aspirante1, corso=corso, invitante=presidente)
+        partecipazione.save()
+        partecipazione.richiedi()
+
+        self.assertFalse(InvitoCorsoBase.con_esito_no().exists())
+        autorizzazione = presidente.autorizzazioni_richieste.first()
+        autorizzazione.scadenza = timezone.now() - timedelta(days=10)
+        autorizzazione.save()
+        self.assertFalse(autorizzazione.concessa)
+        Autorizzazione.gestisci_automatiche()
+        self.assertEqual(len(mail.outbox), 2)
+        messaggio = mail.outbox[1]
+        self.assertTrue(messaggio.subject.find('Richiesta di invito a Corso Base RESPINTA') > -1)
+        self.assertFalse(messaggio.subject.find('Richiesta di invito a Corso Base APPROVATA') > -1)
+        self.assertTrue(messaggio.body.find('una tua richiesta &egrave; rimasta in attesa per 30 giorni e come da policy') == -1)
+        self.assertEqual(autorizzazione.concessa, None)
+        self.assertTrue(InvitoCorsoBase.con_esito_no().exists())
+
     def test_corso_pubblico(self):
         """
         Un corso è visibile fino a FORMAZIONE_FINESTRA_CORSI_INIZIATI giorni dal suo inizio
@@ -53,12 +158,295 @@ class TestCorsi(TestCase):
         self.assertTrue(corso.possibile_aggiungere_iscritti)
         self.assertFalse(CorsoBase.pubblici().exists())
 
+    def test_autocomplete_sostentitore_aspirante(self):
+        direttore, sede, appartenenza = crea_persona_sede_appartenenza()
+        aspirante1 = crea_persona()
+        aspirante1.email_contatto = email_fittizzia()
+        aspirante1.codice_fiscale = codice_fiscale()
+        a = Aspirante(persona=aspirante1)
+        a.locazione = sede.locazione
+        a.save()
+        aspirante1.save()
+
+        response = self.client.get('/autocomplete/IscrivibiliCorsiAutocompletamento/?q={}'.format(aspirante1.codice_fiscale[:3]))
+        self.assertContains(response, aspirante1.nome_completo)
+
+        response = self.client.get('/autocomplete/IscrivibiliCorsiAutocompletamento/?q={}'.format(aspirante1.nome_completo))
+        self.assertNotContains(response, aspirante1.nome_completo)
+
+    def test_aggiungi_aspirante_multiplo(self):
+        presidente = crea_persona()
+        presidente.email_contatto = email_fittizzia()
+        presidente.save()
+        crea_utenza(presidente, presidente.email_contatto)
+        direttore, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        aspirante1 = crea_persona()
+        aspirante1.email_contatto = email_fittizzia()
+        aspirante1.codice_fiscale = codice_fiscale()
+        aspirante1.save()
+        a = Aspirante(persona=aspirante1)
+        a.locazione = sede.locazione
+        a.save()
+
+        oggi = poco_fa()
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi + timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+
+        self.client.login(username=presidente.email_contatto, password='prova')
+
+        # Iscrizione aspirante
+        iscritto = {
+            'persone': [aspirante1.pk]
+        }
+        response = self.client.post('/aspirante/corso-base/{}/iscritti/aggiungi/'.format(corso.pk), data=iscritto)
+        self.assertEqual(corso.partecipazioni.count(), 0)
+        self.assertEqual(corso.inviti.count(), 1)
+        self.assertContains(response, aspirante1.nome_completo)
+        self.assertContains(response, 'In attesa')
+        # Correttezza email di invito
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertTrue(
+            email.subject.find("Richiesta di invito a Corso Base da {}".format(presidente.nome_completo)) > -1)
+        self.assertEqual(len(email.to), 1)
+        self.assertIn(aspirante1.email_contatto, email.to)
+
+        iscritto = {
+            'persone': [aspirante1.pk]
+        }
+        response = self.client.post('/aspirante/corso-base/{}/iscritti/aggiungi/'.format(corso.pk), data=iscritto)
+        self.assertContains(response, 'Già invitato')
+
+    def test_aggiungi_sostenitore_aspirante(self):
+        presidente = crea_persona()
+        presidente.email_contatto = email_fittizzia()
+        presidente.save()
+        crea_utenza(presidente, presidente.email_contatto)
+        direttore, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        sostenitore = crea_persona()
+        sostenitore.email_contatto = email_fittizzia()
+        sostenitore.codice_fiscale = codice_fiscale()
+        sostenitore.save()
+        Appartenenza.objects.create(
+            persona=sostenitore,
+            sede=sede,
+            membro=Appartenenza.SOSTENITORE,
+            inizio="1980-12-10",
+        )
+
+        aspirante1 = crea_persona()
+        aspirante1.email_contatto = email_fittizzia()
+        aspirante1.codice_fiscale = codice_fiscale()
+        aspirante1.save()
+        a = Aspirante(persona=aspirante1)
+        a.locazione = sede.locazione
+        a.save()
+
+        aspirante2 = crea_persona()
+        aspirante2.email_contatto = email_fittizzia()
+        aspirante2.codice_fiscale = codice_fiscale()
+        aspirante2.save()
+        a = Aspirante(persona=aspirante2)
+        a.locazione = sede.locazione
+        a.save()
+
+        oggi = poco_fa()
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi + timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+
+        response = self.client.get('/autocomplete/IscrivibiliCorsiAutocompletamento/?q={}'.format(aspirante1.codice_fiscale[:3]))
+        self.assertContains(response, aspirante1.nome_completo)
+
+        response = self.client.get('/autocomplete/IscrivibiliCorsiAutocompletamento/?q={}'.format(aspirante2.codice_fiscale[:3]))
+        self.assertContains(response, aspirante2.nome_completo)
+
+        response = self.client.get('/autocomplete/IscrivibiliCorsiAutocompletamento/?q={}'.format(sostenitore.codice_fiscale[:3]))
+        self.assertContains(response, sostenitore.nome_completo)
+
+        self.client.login(username=presidente.email_contatto, password='prova')
+
+        # Iscrizione aspirante
+        iscritto = {
+            'persone': [aspirante1.pk]
+        }
+        response = self.client.post('/aspirante/corso-base/{}/iscritti/aggiungi/'.format(corso.pk), data=iscritto)
+        self.assertEqual(corso.partecipazioni.count(), 0)
+        self.assertEqual(corso.inviti.count(), 1)
+        self.assertContains(response, aspirante1.nome_completo)
+        self.assertContains(response, 'In attesa')
+        # Correttezza email di invito
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertTrue(email.subject.find("Richiesta di invito a Corso Base da {}".format(presidente.nome_completo)) > -1)
+        self.assertEqual(len(email.to), 1)
+        self.assertIn(aspirante1.email_contatto, email.to)
+
+        # Iscrizione aspirante
+        iscritto = {
+            'persone': [aspirante2.pk]
+        }
+        self.client.post('/aspirante/corso-base/{}/iscritti/aggiungi/'.format(corso.pk), data=iscritto)
+        self.assertEqual(corso.inviti.count(), 2)
+        # Correttezza email di invito
+        self.assertEqual(len(mail.outbox), 2)
+        email = mail.outbox[0]
+        self.assertTrue(email.subject.find("Richiesta di invito a Corso Base da {}".format(presidente.nome_completo)) > -1)
+        self.assertEqual(len(email.to), 1)
+        self.assertIn(aspirante1.email_contatto, email.to)
+
+        # Iscrizione sostenitore
+        iscritto = {
+            'persone': [sostenitore.pk]
+        }
+        response = self.client.post('/aspirante/corso-base/{}/iscritti/aggiungi/'.format(corso.pk), data=iscritto)
+        self.assertEqual(corso.partecipazioni.count(), 1)
+        self.assertContains(response, 'Sì')
+        self.assertContains(response, sostenitore.nome_completo)
+        # Correttezza email di iscrizione
+        self.assertEqual(len(mail.outbox), 3)
+        email = mail.outbox[2]
+        self.assertTrue(email.subject.find("Iscrizione a Corso Base") > -1)
+        self.assertEqual(len(email.to), 1)
+        self.assertIn(sostenitore.email_contatto, email.to)
+
+        # Un aspirante approva
+        self.assertEqual(corso.partecipazioni.count(), 1)
+        self.assertEqual(aspirante1.autorizzazioni_in_attesa().count(), 1)
+        aspirante1.autorizzazioni_in_attesa()[0].concedi()
+        self.assertEqual(len(mail.outbox), 5)
+        email_aspirante = False
+        email_presidente = False
+        for email in mail.outbox[3:]:
+            if aspirante1.email_contatto in email.to:
+                email_aspirante = True
+                self.assertTrue(email.subject.find('Iscrizione a Corso Base') > -1)
+            elif presidente.email_contatto in email.to:
+                email_presidente = True
+                self.assertTrue(email.subject.find('Richiesta di invito a Corso Base APPROVATA') > -1)
+            else:
+                raise AssertionError('Email a destinatario sconosciuto')
+        self.assertTrue(email_aspirante)
+        self.assertTrue(email_presidente)
+        self.assertFalse(aspirante1.autorizzazioni_in_attesa().exists())
+        self.assertEqual(corso.inviti.count(), 1)
+        self.assertEqual(corso.partecipazioni.count(), 2)
+
+        # Un aspirante declina
+        self.assertEqual(aspirante2.autorizzazioni_in_attesa().count(), 1)
+        aspirante2.autorizzazioni_in_attesa()[0].nega()
+        self.assertEqual(len(mail.outbox), 6)
+        email = mail.outbox[5]
+        self.assertIn(presidente.email_contatto, email.to)
+        self.assertTrue(email.subject.find('Richiesta di invito a Corso Base RESPINTA') > -1)
+        self.assertFalse(aspirante2.autorizzazioni_in_attesa().exists())
+        self.assertFalse(corso.inviti.exists())
+        self.assertEqual(corso.partecipazioni.count(), 2)
+
 
 class TestFunzionaleFormazione(TestFunzionale):
     """
     Questa classe raccoglie i test funzionali per la formazione
     in Gaia.
     """
+
+    def test_gestione_inviti(self):
+
+        presidente = crea_persona()
+        presidente.email_contatto = email_fittizzia()
+        presidente.save()
+        crea_utenza(presidente, presidente.email_contatto)
+        direttore, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        sostenitore = crea_persona()
+        sostenitore.email_contatto = email_fittizzia()
+        sostenitore.codice_fiscale = codice_fiscale()
+        sostenitore.save()
+        Appartenenza.objects.create(
+            persona=sostenitore,
+            sede=sede,
+            membro=Appartenenza.SOSTENITORE,
+            inizio="1980-12-10",
+        )
+
+        aspirante1 = crea_persona()
+        aspirante1.email_contatto = email_fittizzia()
+        aspirante1.codice_fiscale = codice_fiscale()
+        aspirante1.save()
+        a = Aspirante(persona=aspirante1)
+        a.locazione = sede.locazione
+        a.save()
+        crea_utenza(aspirante1, aspirante1.email_contatto)
+
+        aspirante2 = crea_persona()
+        aspirante2.email_contatto = email_fittizzia()
+        aspirante2.codice_fiscale = codice_fiscale()
+        aspirante2.save()
+        a = Aspirante(persona=aspirante2)
+        a.locazione = sede.locazione
+        a.save()
+        crea_utenza(aspirante2, aspirante2.email_contatto)
+
+        # Attività degli aspiranti
+        sessione_aspirante1 = self.sessione_utente(persona=aspirante1)
+        sessione_aspirante2 = self.sessione_utente(persona=aspirante2)
+        sessione_aspirante1.click_link_by_partial_text("Richieste")
+        self.assertTrue(sessione_aspirante1.is_text_present("Non ci sono richieste in attesa."), msg="Nessun invito")
+
+        # setup dei dati
+        oggi = poco_fa()
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi + timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+        self.client.login(username=presidente.email_contatto, password='prova')
+        iscritti = {
+            'persone': [aspirante1.pk]
+        }
+        self.client.post('/aspirante/corso-base/{}/iscritti/aggiungi/'.format(corso.pk), data=iscritti)
+        iscritti = {
+            'persone': [aspirante2.pk]
+        }
+        self.client.post('/aspirante/corso-base/{}/iscritti/aggiungi/'.format(corso.pk), data=iscritti)
+        self.assertEqual(corso.inviti.count(), 2)
+
+        sessione_aspirante1.click_link_by_partial_text("Richieste")
+        self.assertTrue(sessione_aspirante1.is_text_present(corso.nome), msg="Invito disponibile")
+        sessione_aspirante1.click_link_by_partial_text("Conferma")
+        self.assertTrue(sessione_aspirante1.is_text_present("Richiesta autorizzata."), msg="Richiesta autorizzata")
+
+        self.assertEqual(corso.inviti.count(), 1)
+        self.assertEqual(corso.partecipazioni.count(), 1)
+        self.assertEqual(aspirante2.inviti_corsi.count(), 1)
+        sessione_aspirante2.click_link_by_partial_text("Richieste")
+        self.assertTrue(sessione_aspirante2.is_text_present(corso.nome), msg="Invito disponibile")
+        sessione_aspirante2.click_link_by_partial_text("Nega")
+        sessione_aspirante2.fill('motivo', 'Test')
+        sessione_aspirante2.find_by_css(".btn-danger").first.click()
+        self.assertTrue(sessione_aspirante2.is_text_present("Richiesta negata."), msg="Richiesta negata")
+        self.assertEqual(corso.inviti.count(), 0)
+        self.assertEqual(corso.partecipazioni.count(), 1)
+        self.assertEqual(aspirante2.inviti_corsi.count(), 0)
 
     @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per ricercare la posizione aspirante.")
     def test_registrazione_aspirante(self):

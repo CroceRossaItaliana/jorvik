@@ -1,5 +1,8 @@
 from datetime import datetime, timedelta
 
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.transaction import atomic
 from django.shortcuts import redirect, get_object_or_404
 from django.template import Context
 from django.template.loader import get_template
@@ -15,7 +18,8 @@ from base.utils import poco_fa
 from formazione.elenchi import ElencoPartecipantiCorsiBase
 from formazione.forms import ModuloCreazioneCorsoBase, ModuloModificaLezione, ModuloModificaCorsoBase, \
     ModuloIscrittiCorsoBaseAggiungi, ModuloVerbaleAspiranteCorsoBase
-from formazione.models import CorsoBase, AssenzaCorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase, Aspirante
+from formazione.models import CorsoBase, AssenzaCorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase, Aspirante, \
+    InvitoCorsoBase
 from django.utils import timezone
 
 from posta.models import Messaggio
@@ -428,27 +432,39 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
 
         for persona in modulo.cleaned_data['persone']:
             esito = corso.persona(persona)
-            ok = False
+            ok = PartecipazioneCorsoBase.NON_ISCRITTO
+            partecipazione = None
 
-            if esito in corso.PUOI_ISCRIVERTI or \
-                            esito in corso.NON_PUOI_ISCRIVERTI_SOLO_SE_IN_AUTONOMIA:
-                ok = True
-                p = PartecipazioneCorsoBase(persona=persona, corso=corso)
-                p.save()
-                Log.crea(me, p)
-                Messaggio.costruisci_e_invia(
-                    oggetto="Iscrizione a Corso Base",
-                    modello="email_corso_base_iscritto.html",
-                    corpo={
-                        "persona": persona,
-                        "corso": corso,
-                    },
-                    mittente=me,
-                    destinatari=[persona]
-                )
+            if esito in corso.PUOI_ISCRIVERTI or esito in corso.NON_PUOI_ISCRIVERTI_SOLO_SE_IN_AUTONOMIA:
+                if hasattr(persona, 'aspirante'):
+                    if InvitoCorsoBase.objects.filter(persona=persona, corso=corso).exists():
+                        ok = PartecipazioneCorsoBase.INVITO_INVIATO
+                        partecipazione = InvitoCorsoBase.objects.filter(persona=persona, corso=corso).first()
+                    else:
+                        partecipazione = InvitoCorsoBase(persona=persona, corso=corso, invitante=me)
+                        partecipazione.save()
+                        partecipazione.richiedi()
+                        ok = PartecipazioneCorsoBase.IN_ATTESA_ASPIRANTE
+
+                else:
+                    partecipazione = PartecipazioneCorsoBase.objects.create(persona=persona, corso=corso)
+                    ok = PartecipazioneCorsoBase.ISCRITTO
+                    Messaggio.costruisci_e_invia(
+                        oggetto="Iscrizione a Corso Base",
+                        modello="email_corso_base_iscritto.html",
+                        corpo={
+                            "persona": persona,
+                            "corso": corso,
+                        },
+                        mittente=me,
+                        destinatari=[persona]
+                    )
+
+                Log.crea(me, partecipazione)
 
             risultati += [{
                 "persona": persona,
+                "partecipazione": partecipazione,
                 "esito": esito,
                 "ok": ok,
             }]

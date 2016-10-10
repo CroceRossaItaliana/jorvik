@@ -20,6 +20,7 @@ INCARICO_GESTIONE_APPARTENENZE = "US-APP"
 INCARICO_GESTIONE_SANGUE = "SA-SAN"
 INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI = "CB-PART"
 INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI = "ATT-PART"
+INCARICO_ASPIRANTE = "ASP"
 
 
 INCARICHI = (
@@ -34,6 +35,7 @@ INCARICHI = (
     (INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,  "Gestione dei Partecipanti al Corso Base"),
     (INCARICO_GESTIONE_APPARTENENZE,            "Gestione degli Appartenenti alla Sede"),
     (INCARICO_GESTIONE_SANGUE,                  "Gestione delle Donazioni Sangue"),
+    (INCARICO_ASPIRANTE,                        "Autogestione Aspirante"),
 )
 INCARICHI_DICT = dict(INCARICHI)
 
@@ -49,6 +51,7 @@ INCARICHI_TIPO = (
     (INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,  "formazione.CorsoBase"),
     (INCARICO_GESTIONE_APPARTENENZE,            "anagrafica.Sede"),
     (INCARICO_GESTIONE_SANGUE,                  "anagrafica.Sede"),
+    (INCARICO_ASPIRANTE,                        "anagrafica.Persona"),
 )
 INCARICHI_TIPO_DICT = dict(INCARICHI_TIPO)
 

@@ -7,13 +7,15 @@ import datetime
 
 from django.conf import settings
 from django.db.models import Q
+from django.db.transaction import atomic
 from django.utils import timezone
+from django.utils.timezone import now
 
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE
 from anagrafica.models import Sede, Persona
-from anagrafica.permessi.incarichi import INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI, INCARICO_ASPIRANTE
 from base.files import PDF, Zip
-from base.models import ConAutorizzazioni, ConVecchioID
+from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.models import ModelloSemplice
 from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico, ConPDF
@@ -264,6 +266,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def partecipazioni_in_attesa(self):
         return PartecipazioneCorsoBase.con_esito_pending().filter(corso=self)
 
+    def numero_partecipazioni_in_attesa_e_inviti(self):
+        return PartecipazioneCorsoBase.con_esito_pending().filter(corso=self).count() + InvitoCorsoBase.objects.filter(corso=self).count()
+
     def partecipazioni_negate(self):
         return PartecipazioneCorsoBase.con_esito_no().filter(corso=self)
 
@@ -362,10 +367,90 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return pdf
 
 
+class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, models.Model):
+    persona = models.ForeignKey(Persona, related_name='inviti_corsi', on_delete=models.CASCADE)
+    corso = models.ForeignKey(CorsoBase, related_name='inviti', on_delete=models.PROTECT)
+    invitante = models.ForeignKey(Persona, related_name='+', on_delete=models.CASCADE)
+
+    # Stati per l'iscrizione da parte del direttore
+    NON_ISCRITTO = 0
+    ISCRITTO = 1
+    IN_ATTESA_ASPIRANTE = 2
+    INVITO_INVIATO = -1
+
+    RICHIESTA_NOME = "invito a Corso Base"
+
+    class Meta:
+        verbose_name = "Invito di partecipazione a corso base"
+        verbose_name_plural = "Inviti di partecipazione a corso base"
+        ordering = ('persona__nome', 'persona__cognome', 'persona__codice_fiscale',)
+        permissions = (
+            ("view_invitocorsobase", "Can view invito partecipazione corso base"),
+        )
+
+    def __str__(self):
+        return "Invit di part. di %s a %s" % (
+            self.persona, self.corso
+        )
+
+    @property
+    def url(self):
+        return "/aspirante/corsi-base/inviti/%d/" % (self.pk,)
+
+    @property
+    def url_declina(self):
+        return "/aspirante/corsi-base/inviti/%d/declina/" % (self.pk,)
+
+    def autorizzazione_concessa(self, modulo):
+        with atomic():
+            corso = self.corso
+            partecipazione = PartecipazioneCorsoBase.objects.create(persona=self.persona, corso=self.corso)
+            partecipazione.autorizzazione_concessa()
+            Messaggio.costruisci_e_invia(
+                oggetto="Iscrizione a Corso Base",
+                modello="email_corso_base_iscritto.html",
+                corpo={
+                    "persona": self.persona,
+                    "corso": self.corso,
+                },
+                mittente=self.invitante,
+                destinatari=[self.persona]
+            )
+            self.delete()
+            return corso
+
+    def autorizzazione_negata(self, modulo=None, auto=False):
+        corso = self.corso
+        self.delete()
+        return corso
+
+    @classmethod
+    def cancella_scaduti(cls):
+        cls.objects.filter(creazione__lt=now() - datetime.timedelta(days=settings.FORMAZIONE_VALIDITA_INVITI)).delete()
+
+    def richiedi(self):
+        self.autorizzazione_richiedi(
+            self.invitante,
+            (
+                (INCARICO_ASPIRANTE, self.persona)
+            ),
+            invia_notifiche=self.persona,
+            auto=Autorizzazione.NG_AUTO,
+            scadenza=settings.AUTORIZZAZIONE_AUTOMATICA,
+        )
+
+
 class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
 
     persona = models.ForeignKey(Persona, related_name='partecipazioni_corsi', on_delete=models.CASCADE)
     corso = models.ForeignKey(CorsoBase, related_name='partecipazioni', on_delete=models.PROTECT)
+
+    # Stati per l'iscrizione da parte del direttore
+
+    NON_ISCRITTO = 0
+    ISCRITTO = 1
+    IN_ATTESA_ASPIRANTE = 2
+    INVITO_INVIATO = -1
 
     # Dati per la generazione del verbale (esito)
 
@@ -666,3 +751,7 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
             *args,
             **kwargs
         )
+
+    @property
+    def inviti_attivi(self):
+        return self.persona.inviti_corsi.all().values_list('corso', flat=True)

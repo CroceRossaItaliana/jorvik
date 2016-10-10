@@ -39,7 +39,7 @@ from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DIC
     GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE
 from anagrafica.permessi.delega import delega_permessi, delega_incarichi
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_APPARTENENZE, INCARICO_GESTIONE_TRASFERIMENTI, \
-    INCARICO_GESTIONE_ESTENSIONI, INCARICO_GESTIONE_RISERVE
+    INCARICO_GESTIONE_ESTENSIONI, INCARICO_GESTIONE_RISERVE, INCARICO_ASPIRANTE
 from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
     persona_permessi_almeno, persona_ha_permessi
 from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
@@ -737,12 +737,17 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         Ritorna True se il pannello autorizzazioni deve essere mostrato per l'utente.
         False altrimenti.
         """
-        return self.deleghe_attuali().exists() or self.autorizzazioni_in_attesa().exists()
+        return (self.deleghe_attuali().exists() or
+                self.autorizzazioni_in_attesa().exists() or
+                INCARICO_ASPIRANTE in dict(self.incarichi()))
 
     def incarichi(self):
         # r = Autorizzazione.objects.none()
 
-        incarichi_persona = {}
+        if hasattr(self, 'aspirante'):
+            incarichi_persona = {INCARICO_ASPIRANTE: self.__class__.objects.filter(pk=self.pk)}
+        else:
+            incarichi_persona = {}
         for delega in self.deleghe_attuali():
             incarichi_delega = delega.espandi_incarichi()
             for incarico in incarichi_delega:
@@ -770,7 +775,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             pk__in=a.values_list('id', flat=True)
         )
 
-
     def _autorizzazioni_in_attesa(self):
         """
         Ritorna tutte le autorizzazioni firmabili da qesto utente e in attesa di firma.
@@ -796,7 +800,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             i |= s.deleghe_attuali().filter(tipo__in=[PRESIDENTE, UFFICIO_SOCI, UFFICIO_SOCI_UNITA])
             i |= s.comitato.deleghe_attuali().filter(tipo__in=[PRESIDENTE, UFFICIO_SOCI])
         return i
-
 
     @property
     def trasferimento(self):
