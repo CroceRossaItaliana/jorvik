@@ -30,7 +30,7 @@ class PersonaAutocompletamento(AutocompletamentoBase):
     search_fields = ['nome', 'cognome', 'codice_fiscale',]
     model = Persona
 
-    def choices_for_request(self):
+    def choices_for_request(self, filtra_per_sede=True):
 
         # Le mie sedi di competenza:
         #  1. La mia Sede attuale
@@ -107,6 +107,17 @@ class SostenitoreAutocompletamento(PersonaAutocompletamento):
         return super(SostenitoreAutocompletamento, self).choices_for_request()
 
 
+class IscrivibiliCorsiAutocompletamento(PersonaAutocompletamento):
+    search_fields = ['codice_fiscale',]
+
+    def choices_for_request(self):
+        self.choices = self.choices.filter(
+            Q(Appartenenza.query_attuale(membro=Appartenenza.SOSTENITORE).via("appartenenze")) |
+            Q(aspirante__isnull=False)
+        ).order_by('nome', 'cognome', 'codice_fiscale').distinct('nome', 'cognome', 'codice_fiscale')
+        return super(PersonaAutocompletamento, self).choices_for_request()
+
+
 class SedeAutocompletamento(AutocompletamentoBase):
     search_fields = ['nome', 'genitore__nome', ]
     model = Sede
@@ -138,6 +149,7 @@ class SedeNuovoCorsoAutocompletamento(SedeAutocompletamento):
 autocomplete_light.register(PersonaAutocompletamento)
 autocomplete_light.register(PresidenteAutocompletamento)
 autocomplete_light.register(SostenitoreAutocompletamento)
+autocomplete_light.register(IscrivibiliCorsiAutocompletamento)
 autocomplete_light.register(SedeAutocompletamento)
 autocomplete_light.register(ComitatoAutocompletamento)
 autocomplete_light.register(SedeNuovoCorsoAutocompletamento)

@@ -489,6 +489,7 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
         'download_url': download_url,
         'messaggio_url': messaggio_url,
         'filtra': filtra,
+        'elenco': elenco,
     }
     contesto.update(**elenco.kwargs)
 

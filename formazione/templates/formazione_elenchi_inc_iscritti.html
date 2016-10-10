@@ -1,0 +1,9 @@
+{% extends 'us_elenchi_inc_persone.html' %}
+
+{% block elenco_intestazione_extra %}
+    <th>Iscrizione</th>
+{% endblock %}
+
+{% block elenco_riga_extra %}
+    <td>{% if not persona.aspirante or elenco.args.0.0.pk not in persona.aspirante.inviti_attivi %}Iscritto{% else %}Invitato{% endif %}</td>
+{% endblock %}
