@@ -154,9 +154,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         # E-mail a delle persone
         for d in self.oggetti_destinatario.filter(inviato=False):
             destinatari = []
-            if hasattr(d, 'persona') and d.persona:
+            if hasattr(d, 'persona') and d.persona and d.persona.email:
                 destinatari.append(d.persona.email)
-            if hasattr(d.persona, 'utenza') and d.persona.utenza:
+            if hasattr(d.persona, 'utenza') and d.persona.utenza and d.persona.utenza.email:
                 if utenza and d.persona.utenza.email != d.persona.email:
                     destinatari.append(d.persona.utenza.email)
 
@@ -193,14 +193,17 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
                     if isinstance(e, SMTPRecipientsRefused):
                         if any([list(item.values())[0] == 250 for item in e.recipients]):
+                            # Almeno un'email è partita, il messaggio si considera inviato
                             d.inviato = True
-                            successo = True  # Almeno un'email è partita, il messaggio si considera inviato
+                            successo = True
                         else:
-                            d.inviato = True  # E-mail di destinazione rotta: ignora.
+                            # E-mail di destinazione rotta: ignora.
+                            d.inviato = True
                             d.invalido = True
 
                     elif isinstance(e, SMTPResponseException) and e.smtp_code == 501:
-                        d.inviato = True  # E-mail di destinazione rotta: ignora.
+                        # E-mail di destinazione rotta: ignora.
+                        d.inviato = True
                         d.invalido = True
 
                     elif isinstance(e, SMTPServerDisconnected):
