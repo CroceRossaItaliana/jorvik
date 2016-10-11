@@ -5,6 +5,7 @@ from django.core import urlresolvers
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
+from django.utils.timezone import now
 from django.forms import forms
 from mptt.models import MPTTModel, TreeForeignKey
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
@@ -17,7 +18,9 @@ from base.stringhe import GeneratoreNomeFile, genera_uuid_casuale
 from base.tratti import ConMarcaTemporale
 from datetime import datetime, timezone, timedelta
 
-from base.utils import concept, iterabile
+from base.utils import calcola_scadenza ,concept, iterabile
+
+from jorvik import settings
 
 
 class ModelloSemplice(models.Model):
@@ -95,6 +98,16 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     Utilizzare tramite il tratto ConAutorizzazioni ed i suoi metodi.
     """
 
+    AP_AUTO = "A"
+    NG_AUTO = "N"
+    MANUALE = "M"
+
+    TIPO_GESTIONE = (
+        (MANUALE, "Manuale"),
+        (AP_AUTO, "Approvazione automatica"),
+        (NG_AUTO, "Negazione automatica"),
+    )
+
     class Meta:
         verbose_name_plural = "Autorizzazioni"
         app_label = "base"
@@ -108,6 +121,9 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             ['necessaria', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
             ['necessaria', 'destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
         ]
+        permissions = (
+            ("view_autorizzazione", "Can view autorizzazione"),
+        )
 
     richiedente = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="autorizzazioni_richieste", on_delete=models.CASCADE)
     firmatario = models.ForeignKey("anagrafica.Persona", db_index=True, blank=True, null=True, default=None,
@@ -126,8 +142,17 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     destinatario_oggetto_tipo = models.ForeignKey(ContentType, db_index=True, related_name="autcomedestinatari", null=True, on_delete=models.SET_NULL)
     destinatario_oggetto_id = models.PositiveIntegerField(db_index=True)
     destinatario_oggetto = GenericForeignKey('destinatario_oggetto_tipo', 'destinatario_oggetto_id')
+    scadenza = models.DateTimeField(blank=True, null=True, db_index=True)
+    tipo_gestione = models.CharField(default=MANUALE, max_length=1, choices=TIPO_GESTIONE)
 
-    def firma(self, firmatario, concedi=True, modulo=None, motivo=None):
+    @property
+    def giorni_automatici(self):
+        if self.scadenza:
+            return (self.scadenza - self.creazione).days
+        else:
+            return None
+
+    def firma(self, firmatario, concedi=True, modulo=None, motivo=None, auto=False):
         """
         Firma l'autorizzazione.
         :param firmatario: Il firmatario.
@@ -150,12 +175,13 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             self.oggetto.confermata = False
             self.oggetto.save()
             self.oggetto.autorizzazione_negata(modulo=modulo)
-            if 'motivo' in modulo.cleaned_data:
-                self.motivo_negazione = modulo.cleaned_data['motivo']
-                self.save()
+            if modulo:
+                if 'motivo' in modulo.cleaned_data:
+                    self.motivo_negazione = modulo.cleaned_data['motivo']
+                    self.save()
             self.oggetto.autorizzazioni_set().update(necessaria=False)
             if self.oggetto.INVIA_NOTIFICA_NEGATA:
-                self.notifica_negata()
+                self.notifica_negata(auto=auto)
             return
 
         # Questa concessa, di questo progressivo non e' piu' necessaria
@@ -168,13 +194,13 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             self.oggetto.save()
             self.oggetto.autorizzazione_concessa(modulo=modulo)
             if self.oggetto.INVIA_NOTIFICA_CONCESSA:
-                self.notifica_concessa()
+                self.notifica_concessa(auto=auto)
 
-    def concedi(self, firmatario, modulo=None):
-        self.firma(firmatario, True, modulo=modulo)
+    def concedi(self, firmatario=None, modulo=None, auto=False):
+        self.firma(firmatario, True, modulo=modulo, auto=auto)
 
-    def nega(self, firmatario, modulo=None):
-        self.firma(firmatario, False, modulo=modulo)
+    def nega(self, firmatario=None, modulo=None, auto=False):
+        self.firma(firmatario, False, modulo=modulo, auto=auto)
 
     @property
     def template_path(self):
@@ -203,29 +229,72 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             destinatari=[persona],
         )
 
-    def notifica_concessa(self):
+    def _invia_notifica(self, modello, oggetto, auto):
         from posta.models import Messaggio
+
+        if auto:
+            destinatari = [self.richiedente]
+            if self.firmatario:
+                destinatari.append(self.firmatario)
+            self.oggetto.automatica = True
+            self.oggetto.save()
+        else:
+            destinatari = [self.richiedente]
+        corpo = {
+            "richiesta": self,
+            "firmatario": self.firmatario,
+            "giorni": self.giorni_automatici
+        }
+
         Messaggio.costruisci_e_invia(
-            oggetto="Richiesta di %s APPROVATA" % (self.oggetto.RICHIESTA_NOME,),
-            modello="email_autorizzazione_concessa.html",
-            corpo={
-                "richiesta": self,
-            },
+            oggetto=oggetto,
+            modello=modello,
+            corpo=corpo,
             mittente=self.firmatario,
-            destinatari=[self.richiedente]
+            destinatari=destinatari
         )
 
-    def notifica_negata(self):
-        from posta.models import Messaggio
-        Messaggio.costruisci_e_invia(
-            oggetto="Richiesta di %s RESPINTA" % (self.oggetto.RICHIESTA_NOME,),
-            modello="email_autorizzazione_negata.html",
-            corpo={
-                "richiesta": self,
-            },
-            mittente=self.firmatario,
-            destinatari=[self.richiedente]
+    def notifica_concessa(self, auto=False):
+        if auto:
+            modello = "email_autorizzazione_concessa_automatica.html"
+        else:
+            modello = "email_autorizzazione_concessa.html"
+        oggetto = "Richiesta di %s APPROVATA" % (self.oggetto.RICHIESTA_NOME,)
+        self._invia_notifica(modello, oggetto, auto)
+
+    def notifica_negata(self, auto=False):
+        if auto:
+            modello = "email_autorizzazione_negata_automatica.html"
+        else:
+            modello = "email_autorizzazione_negata.html"
+        oggetto = "Richiesta di %s RESPINTA" % (self.oggetto.RICHIESTA_NOME,)
+        self._invia_notifica(modello, oggetto, auto)
+
+    def controlla_concedi_automatico(self):
+        if self.scadenza and self.concessa is None and self.scadenza < now():
+            self.concedi(auto=True)
+
+    def controlla_nega_automatico(self):
+        if self.scadenza and self.concessa is None and self.scadenza < now():
+            self.nega(auto=True)
+
+    def automatizza(self, concedi=None, scadenza=None):
+        if concedi:
+            self.tipo_gestione = concedi
+            self.scadenza = calcola_scadenza(scadenza)
+            self.save()
+
+    @classmethod
+    def gestisci_automatiche(cls):
+        base = cls.objects.filter(
+            concessa__isnull=True, scadenza__isnull=False, scadenza__lte=now()
         )
+        da_negare = base.filter(tipo_gestione=cls.NG_AUTO)
+        da_approvare = base.filter(tipo_gestione=cls.AP_AUTO)
+        for autorizzazione in da_negare:
+            autorizzazione.controlla_nega_automatico()
+        for autorizzazione in da_approvare:
+            autorizzazione.controlla_concedi_automatico()
 
 
 class Log(ModelloSemplice, ConMarcaTemporale):
@@ -344,6 +413,7 @@ class ConAutorizzazioni(models.Model):
 
     confermata = models.BooleanField("Confermata", default=True, db_index=True)
     ritirata = models.BooleanField("Ritirata", default=False, db_index=True)
+    automatica = models.BooleanField("Automatica", default=False, db_index=True)
 
     ESITO_OK = "Confermato"
     ESITO_NO = "Negato"
@@ -467,7 +537,7 @@ class ConAutorizzazioni(models.Model):
 
     def autorizzazione_richiedi_sede_riferimento(self, richiedente, incarico, invia_notifiche=[],
                                                  invia_notifica_presidente=False, invia_notifica_ufficio_soci=False,
-                                                 forza_sede_riferimento=None, **kwargs):
+                                                 forza_sede_riferimento=None, auto=None, **kwargs):
         """
         Richiede una autorizzazione per l'oggetto attuale nel caso di incarico relativo
          alla sede di riferimento della Persona.
@@ -495,10 +565,10 @@ class ConAutorizzazioni(models.Model):
             ufficio_soci = list(sede_riferimento.delegati_ufficio_soci())
             invia_notifiche = list(invia_notifiche) + ufficio_soci
 
-        self.autorizzazione_richiedi(richiedente, (incarico, sede_riferimento), invia_notifiche=invia_notifiche, **kwargs)
+        self.autorizzazione_richiedi(richiedente, (incarico, sede_riferimento), invia_notifiche=invia_notifiche, auto=auto, **kwargs)
         return True
 
-    def autorizzazione_richiedi(self, richiedente, destinatario, invia_notifiche=None, **kwargs):
+    def autorizzazione_richiedi(self, richiedente, destinatario, invia_notifiche=None, auto=None, scadenza=None, **kwargs):
         """
         Richiede una autorizzazione per l'oggetto attuale
 
@@ -548,6 +618,9 @@ class ConAutorizzazioni(models.Model):
             )
             r.save()
 
+            if auto:
+                r.automatizza(concedi=auto, scadenza=scadenza)
+
             if invia_notifiche:
 
                 if not iterabile(invia_notifiche):
@@ -583,13 +656,13 @@ class ConAutorizzazioni(models.Model):
         # Non diventa piu' necessaria alcuna autorizzazione tra quelle richieste
         self.autorizzazioni.update(necessaria=False)
 
-    def autorizzazione_concessa(self, modulo=None):
+    def autorizzazione_concessa(self, modulo=None, auto=False):
         """
         Sovrascrivimi! Ascoltatore per concessione autorizzazione.
         """
         pass
 
-    def autorizzazione_negata(self, modulo=None):
+    def autorizzazione_negata(self, modulo=None, auto=False):
         """
         Sovrascrivimi! Ascoltatore per negazione autorizzazione.
         """
@@ -695,7 +768,11 @@ class Token(ModelloSemplice, ConMarcaTemporale):
                 return False
         except cls.DoesNotExist:
             return False
-
+    
+    class Meta:
+        permissions = (
+            ("view_token", "Can view token"),
+        )
 
 class Allegato(ConMarcaTemporale, ConScadenzaPulizia, ModelloSemplice):
     """
@@ -704,6 +781,9 @@ class Allegato(ConMarcaTemporale, ConScadenzaPulizia, ModelloSemplice):
 
     class Meta:
         verbose_name_plural = "Allegati"
+        permissions = (
+            ("view_allegato", "Can view allegato"),
+        )
 
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True, blank=True, null=True, related_name="allegato_come_oggetto", on_delete=models.SET_NULL)
     oggetto_id = models.PositiveIntegerField(db_index=True, blank=True, null=True)

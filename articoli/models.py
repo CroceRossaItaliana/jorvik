@@ -83,6 +83,9 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         ordering = ['-data_inizio_pubblicazione']
         verbose_name = 'articolo'
         verbose_name_plural = 'articoli'
+        permissions = (
+            ("view_articolo", "Can view articolo"),
+        )
 
     @property
     def pubblicato(self):
@@ -110,3 +113,10 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
 
 class ArticoloSegmento(BaseSegmento):
     _oggetto_collegato = Articolo
+
+    class Meta:
+        verbose_name = "Articolo Segmento"
+        verbose_name_plural = "Articolo Segmenti"
+        permissions = (
+            ("view_articolosegmento", "Can view articolo segmento"),
+        )       

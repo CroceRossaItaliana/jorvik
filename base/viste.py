@@ -1,4 +1,6 @@
 import mimetypes
+from datetime import date, timedelta, datetime, time
+
 import os
 
 from django.conf import settings as django_settings
@@ -30,9 +32,10 @@ from base.geo import Locazione
 from base.models import Autorizzazione, Token
 from base.tratti import ConPDF
 from base.utils import get_drive_file, rimuovi_scelte
-from formazione.models import PartecipazioneCorsoBase
+from formazione.models import PartecipazioneCorsoBase, Aspirante
 from jorvik import settings
 from posta.models import Messaggio
+import json
 
 
 @pagina_pubblica
@@ -606,3 +609,46 @@ def supporto(request, me=None):
 
 def redirect_semplice(request, nuovo_url='/'):
     return redirect(nuovo_url)
+
+
+@pagina_privata
+def informazioni_statistiche(request, me):
+
+    if not me.utenza.is_staff:
+        return redirect(ERRORE_PERMESSI)
+
+    oggi = date.today()
+
+    giorni, etichetta, periodi = 7, 'sett.', 52
+
+    statistiche = []
+    aspiranti = {}
+
+    for periodo in range(periodi, -1, -1):
+
+        dati = {}
+
+        fine = oggi - timedelta(days=(giorni * periodo))
+        inizio = fine - timedelta(days=giorni - 1)
+
+        fine = datetime.combine(fine, time(23, 59, 59))
+        inizio = datetime.combine(inizio, time(0, 0, 0))
+
+        dati['inizio'] = inizio
+        dati['fine'] = fine
+
+        # Prima, ottiene tutti i queryset.
+        qs_aspiranti = Aspirante.objects.filter(creazione__lte=fine, creazione__gte=inizio)
+        num_aspiranti = qs_aspiranti.aggregate(num_aspiranti=Count('id'))['num_aspiranti'] or 0
+
+        # Poi, associa al dizionario statistiche.
+        dati['etichetta'] = "%d %s fa" % (periodo, etichetta,)
+        dati['registrazioni'] = num_aspiranti
+
+        statistiche.append(dati)
+
+    aspiranti['labels'] = json.dumps([x['etichetta'] for x in statistiche])
+    aspiranti['registrazioni'] = json.dumps([x['registrazioni'] for x in statistiche])
+
+    contesto = {'statistiche': {'aspiranti': aspiranti}}
+    return 'base_informazioni_statistiche.html', contesto

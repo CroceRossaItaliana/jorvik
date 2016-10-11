@@ -2,6 +2,21 @@
 
 {% block profilo_corpo %}
 
+
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                <i class="fa fa-fw fa-bar-chart"></i>
+                Statistiche
+            </h2>
+        </div>
+        <div class="panel-body">
+            {% include 'attivita_persona_statistiche_inc.html' %}
+
+        </div>
+    </div>
+
+
     <div class="panel panel-info">
         <div class="panel-heading">
             <a href="{{ persona.url_profilo_turni_foglio }}"
