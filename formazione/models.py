@@ -26,6 +26,9 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazion
 
     class Meta:
         abstract = True
+        permissions = (
+            ("view_corso", "Can view corso"),
+        )
 
     # Stato del corso
     PREPARAZIONE = 'P'
@@ -57,6 +60,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         verbose_name = "Corso Base"
         verbose_name_plural = "Corsi Base"
         ordering = ['-anno', '-progressivo']
+        permissions = (
+            ("view_corsobase", "Can view corso base"),
+        )
 
     data_inizio = models.DateTimeField(blank=False, null=False, help_text="La data di inizio del corso. "
                                                                           "Utilizzata per la gestione delle iscrizioni.")
@@ -390,7 +396,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
                                      help_text="La Croce Rossa.")
     argomento_parte_1 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. Storia della CRI, DIU.")
 
-    esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True,null=True, db_index=True,
+    esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True,
                                      help_text="Gesti e manovre salvavita.")
     argomento_parte_2 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. BLS, colpo di calore.")
 
@@ -407,6 +413,9 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
         ordering = ('persona__nome', 'persona__cognome', 'persona__codice_fiscale',)
+        permissions = (
+            ("view_partecipazionecorsobarse", "Can view corso Richiesta di partecipazione"),
+        )
 
     RICHIESTA_NOME = "Iscrizione Corso Base"
 
@@ -513,6 +522,9 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         verbose_name = "Lezione di Corso Base"
         verbose_name_plural = "Lezioni di Corsi Base"
         ordering = ['inizio']
+        permissions = (
+            ("view_lezionecorsobase", "Can view corso Lezione di Corso Base"),
+        )
 
     def __str__(self):
         return "Lezione: %s" % (self.nome,)
@@ -533,6 +545,9 @@ class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Assenza a Corso Base"
         verbose_name_plural = "Assenze ai Corsi Base"
+        permissions = (
+            ("view_assenzacorsobase", "Can view corso Assenza a Corso Base"),
+        )
 
     def __str__(self):
         return "Assenza di %s a %s" % (
@@ -557,6 +572,9 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
 
     class Meta:
         verbose_name_plural = "Aspiranti"
+        permissions = (
+            ("view_aspirante", "Can view corso aspirante"),
+        )
 
     def __str__(self):
         return "Aspirante %s" % (self.persona.nome_completo,)

@@ -2,9 +2,11 @@ from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from mptt.admin import MPTTModelAdmin
 from anagrafica.models import Persona, Sede, Appartenenza, Delega, Documento, Fototessera, Estensione, Trasferimento, \
-    Riserva, Dimissione, Telefono
+    Riserva, Dimissione, Telefono, ProvvedimentoDisciplinare
 from autenticazione.models import Utenza
 from base.admin import InlineAutorizzazione
+from gruppi.readonly_admin import ReadonlyAdminMixin
+
 
 RAW_ID_FIELDS_PERSONA = []
 RAW_ID_FIELDS_SEDE = []
@@ -20,20 +22,20 @@ RAW_ID_FIELDS_TELEFONO = ['persona']
 
 
 # Aggiugni al pannello di amministrazione
-class InlineAppartenenzaPersona(admin.TabularInline):
+class InlineAppartenenzaPersona(ReadonlyAdminMixin, admin.TabularInline):
     model = Appartenenza
     raw_id_fields = RAW_ID_FIELDS_APPARTENENZA
     extra = 0
 
 
-class InlineDelegaPersona(admin.TabularInline):
+class InlineDelegaPersona(ReadonlyAdminMixin, admin.TabularInline):
     model = Delega
     raw_id_fields = RAW_ID_FIELDS_DELEGA
     fk_name = 'persona'
     extra = 0
 
 
-class InlineDelegaSede(GenericTabularInline):
+class InlineDelegaSede(ReadonlyAdminMixin, GenericTabularInline):
     model = Delega
     raw_id_fields = RAW_ID_FIELDS_DELEGA
     ct_field = 'oggetto_tipo'
@@ -41,24 +43,24 @@ class InlineDelegaSede(GenericTabularInline):
     extra = 0
 
 
-class InlineDocumentoPersona(admin.TabularInline):
+class InlineDocumentoPersona(ReadonlyAdminMixin, admin.TabularInline):
     model = Documento
     raw_id_fields = RAW_ID_FIELDS_DOCUMENTO
     extra = 0
 
 
-class InlineUtenzaPersona(admin.StackedInline):
+class InlineUtenzaPersona(ReadonlyAdminMixin, admin.StackedInline):
     model = Utenza
     extra = 0
 
 
-class InlineTelefonoPersona(admin.StackedInline):
+class InlineTelefonoPersona(ReadonlyAdminMixin, admin.StackedInline):
     model = Telefono
     extra = 0
 
 
 @admin.register(Persona)
-class AdminPersona(admin.ModelAdmin):
+class AdminPersona(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['nome', 'cognome', 'codice_fiscale', 'utenza__email', 'email_contatto', '=id',]
     list_display = ('nome', 'cognome', 'utenza', 'email_contatto', 'codice_fiscale', 'data_nascita', 'stato',
                     'ultima_modifica', )
@@ -68,7 +70,7 @@ class AdminPersona(admin.ModelAdmin):
 
 
 @admin.register(Sede)
-class AdminSede(MPTTModelAdmin):
+class AdminSede(ReadonlyAdminMixin, MPTTModelAdmin):
     search_fields = ['nome', 'genitore__nome']
     list_display = ('nome', 'genitore', 'tipo', 'estensione', 'creazione', 'ultima_modifica', )
     list_filter = ('tipo', 'estensione', 'creazione', )
@@ -79,7 +81,7 @@ class AdminSede(MPTTModelAdmin):
 # admin.site.register(Appartenenza)
 
 @admin.register(Appartenenza)
-class AdminAppartenenza(admin.ModelAdmin):
+class AdminAppartenenza(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["membro", "persona__nome", "persona__cognome", "persona__codice_fiscale",
                      "persona__utenza__email", "sede__nome"]
     list_display = ("persona", "sede", "attuale", "inizio", "fine", "creazione")
@@ -87,10 +89,9 @@ class AdminAppartenenza(admin.ModelAdmin):
     raw_id_fields = RAW_ID_FIELDS_APPARTENENZA
     inlines = [InlineAutorizzazione]
 
-
 # admin.site.register(Delega)
 @admin.register(Delega)
-class AdminDelega(admin.ModelAdmin):
+class AdminDelega(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["tipo", "persona__nome", "persona__cognome", "persona__codice_fiscale", "tipo", "oggetto_id"]
     list_display = ("tipo", "oggetto", "persona", "inizio", "fine", "attuale")
     list_filter = ("tipo", "inizio", "fine")
@@ -99,7 +100,7 @@ class AdminDelega(admin.ModelAdmin):
 
 # admin.site.register(Documento)
 @admin.register(Documento)
-class AdminDocumento(admin.ModelAdmin):
+class AdminDocumento(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["tipo", "persona__nome", "persona__cognome", "persona__codice_fiscale"]
     list_display = ("tipo", "persona", "creazione")
     list_filter = ("tipo", "creazione")
@@ -108,7 +109,7 @@ class AdminDocumento(admin.ModelAdmin):
 
 # admin.site.register(Fototessera)
 @admin.register(Fototessera)
-class AdminFototessera(admin.ModelAdmin):
+class AdminFototessera(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale"]
     list_display = ("persona", "creazione", "esito")
     list_filter = ("creazione",)
@@ -119,7 +120,7 @@ class AdminFototessera(admin.ModelAdmin):
 
 # admin.site.register(Estensione)
 @admin.register(Estensione)
-class AdminEstensione(admin.ModelAdmin):
+class AdminEstensione(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale", "destinazione__nome"]
     list_display = ("persona", "destinazione", "richiedente", )
     list_filter = ("confermata", "ritirata", "creazione",)
@@ -129,7 +130,7 @@ class AdminEstensione(admin.ModelAdmin):
 
 # admin.site.register(Trasferimento)
 @admin.register(Trasferimento)
-class AdminTrasferimento(admin.ModelAdmin):
+class AdminTrasferimento(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome",  "persona__codice_fiscale", "destinazione__nome"]
     list_display = ("persona", "destinazione", "creazione", )
     list_filter = ("creazione", "confermata", "ritirata",)
@@ -139,7 +140,7 @@ class AdminTrasferimento(admin.ModelAdmin):
 
 # admin.site.register(Riserva)
 @admin.register(Riserva)
-class AdminRiserva(admin.ModelAdmin):
+class AdminRiserva(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale"]
     list_display = ("persona",)
     list_filter = ("confermata", "ritirata", "creazione",)
@@ -149,7 +150,7 @@ class AdminRiserva(admin.ModelAdmin):
 
 # admin.site.register(Riserva)
 @admin.register(Dimissione)
-class AdminDimissione(admin.ModelAdmin):
+class AdminDimissione(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale"]
     list_display = ("persona", "richiedente")
     list_filter = ("creazione",)
@@ -158,8 +159,13 @@ class AdminDimissione(admin.ModelAdmin):
 
 
 @admin.register(Telefono)
-class AdminTelefono(admin.ModelAdmin):
+class AdminTelefono(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale"]
     list_display = ("persona", "numero", "servizio", "creazione",)
     list_filter = ("servizio", "creazione",)
     raw_id_fields = RAW_ID_FIELDS_TELEFONO
+
+
+@admin.register(ProvvedimentoDisciplinare)
+class AdminProvvedimentoDisciplinare(ReadonlyAdminMixin, admin.ModelAdmin):
+    pass

@@ -3,9 +3,14 @@ from django.contrib.contenttypes.admin import GenericTabularInline
 
 from base.geo import Locazione
 from base.models import Autorizzazione, Token, Allegato
+from gruppi.readonly_admin import ReadonlyAdminMixin
+
+
+class TokenAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
+    pass
 
 # Aggiugni al pannello di amministrazione
-admin.site.register(Token)
+admin.site.register(Token, TokenAdmin)
 
 def locazione_aggiorna(modello, request, queryset):
     for locazione in queryset:
@@ -13,7 +18,7 @@ def locazione_aggiorna(modello, request, queryset):
 locazione_aggiorna.short_description = "Aggiorna indirizzi selezionati"
 
 
-class InlineAutorizzazione(GenericTabularInline):
+class InlineAutorizzazione(ReadonlyAdminMixin, GenericTabularInline):
     model = Autorizzazione
     raw_id_fields = ["richiedente", "firmatario"]
     ct_field = 'oggetto_tipo'
@@ -22,7 +27,7 @@ class InlineAutorizzazione(GenericTabularInline):
 
 
 @admin.register(Locazione)
-class AdminLocazione(admin.ModelAdmin):
+class AdminLocazione(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["=id", "indirizzo", "via", "comune", "regione", "provincia"]
     list_display = ("indirizzo", "provincia", "regione", "stato", "creazione",)
     list_filter = ("regione", "stato", "creazione")
@@ -30,7 +35,7 @@ class AdminLocazione(admin.ModelAdmin):
 
 
 @admin.register(Autorizzazione)
-class AdminAutorizzazione(admin.ModelAdmin):
+class AdminAutorizzazione(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["richiedente__nome", "richiedente__cognome", "richiedente__codice_fiscale",
                      "firmatario__nome", "firmatario__cognome", "firmatario__codice_fiscale", ]
     list_display = ("richiedente", "firmatario", "concessa", "necessaria", "progressivo",
@@ -41,7 +46,7 @@ class AdminAutorizzazione(admin.ModelAdmin):
 
 
 @admin.register(Allegato)
-class AdminAllegato(admin.ModelAdmin):
+class AdminAllegato(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["nome"]
     list_display = ["nome", "creazione", "file"]
     list_filter = ("creazione",)

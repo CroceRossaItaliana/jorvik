@@ -6,6 +6,7 @@ Questo modulo definisce i modelli del modulo Attivita' di Gaia.
 from datetime import timedelta, date
 from math import floor
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q, F, Sum, Avg
@@ -37,6 +38,9 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
             ['estensione', 'apertura'],
             ['centrale_operativa', 'sede'],
         ]
+        permissions = (
+            ("view_attivita", "Can view attivita"),
+        )
 
     BOZZA = 'B'
     VISIBILE = 'V'
@@ -254,6 +258,9 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
             ['attivita', 'inizio',],
             ['attivita', 'inizio', 'fine'],
         ]
+        permissions = (
+            ("view_turno", "Can view turno"),
+        )
 
     attivita = models.ForeignKey(Attivita, related_name='turni', on_delete=models.CASCADE)
 
@@ -501,6 +508,9 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
             ['persona', 'turno', 'stato'],
             ['turno', 'stato'],
         ]
+        permissions = (
+            ("view_partecipazione", "Can view partecipazione"),
+        )
 
     RICHIESTA = 'K'
     NON_PRESENTATO = 'N'
@@ -540,7 +550,10 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                 (
                     (INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI, self.turno.attivita)
                 ),
-            invia_notifiche=self.turno.attivita.referenti_attuali()
+
+            invia_notifiche=self.turno.attivita.referenti_attuali(),
+            auto=Autorizzazione.NG_AUTO,
+            scadenza=settings.AUTORIZZAZIONE_AUTOMATICA,
         )
 
         # Se fuori sede, chiede autorizzazione al Presidente del mio Comitato.
@@ -552,7 +565,9 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                     (
                         (INCARICO_PRESIDENZA, self.persona.sede_riferimento())
                     ),
-                invia_notifiche=self.persona.sede_riferimento().presidente()
+                invia_notifiche=self.persona.sede_riferimento().presidente(),
+                auto=Autorizzazione.NG_AUTO,
+                scadenza=settings.AUTORIZZAZIONE_AUTOMATICA,
             )
 
     def autorizzazione_concessa(self, modulo):
@@ -597,6 +612,9 @@ class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
         index_together = [
             ['sede', 'obiettivo'],
         ]
+        permissions = (
+            ("view_area", "Can view area"),
+        )
 
     def __str__(self):
         return "%s, Ob. %d: %s" % (

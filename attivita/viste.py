@@ -2,6 +2,7 @@
 import json
 from datetime import date, timedelta, datetime, time
 
+from attivita.stats import statistiche_attivita_persona
 from django.db.models import Count, F, Sum
 from django.utils import timezone
 
@@ -13,11 +14,12 @@ from anagrafica.costanti import NAZIONALE
 from anagrafica.models import Sede
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE
 from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO, \
-    GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE
+    GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE, \
+    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
 from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, ModuloModificaTurno, \
     ModuloAggiungiPartecipanti, ModuloCreazioneTurno, ModuloCreazioneArea, ModuloOrganizzaAttivita, \
-    ModuloOrganizzaAttivitaReferente, ModuloStatisticheAttivita, ModuloRipetiTurno
+    ModuloOrganizzaAttivitaReferente, ModuloStatisticheAttivita, ModuloRipetiTurno, ModuloStatisticheAttivitaPersona
 from attivita.models import Partecipazione, Attivita, Turno, Area
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
@@ -270,9 +272,13 @@ def attivita_storico(request, me):
     Mostra uno storico delle attivita' a cui ho chiesto di partecipare/partecipato.
     """
     storico = Partecipazione.objects.filter(persona=me).order_by('-turno__inizio')
+    modulo = ModuloStatisticheAttivitaPersona(request.POST or None)
+    statistiche = statistiche_attivita_persona(me, modulo)
 
     contesto = {
-        "storico": storico
+        "storico": storico,
+        "statistiche": statistiche,
+        "statistiche_modulo": modulo,
     }
 
     return 'attivita_storico.html', contesto\
@@ -614,11 +620,18 @@ def attivita_scheda_informazioni_modifica(request, me, pk=None):
     if not me.permessi_almeno(attivita, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
+    if not me.ha_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE):
+        request.POST = request.POST.copy()
+        request.POST['centrale_operativa'] = attivita.centrale_operativa
+
     modulo = ModuloAttivitaInformazioni(request.POST or None, instance=attivita)
     modulo.fields['estensione'].queryset = attivita.sede.get_ancestors(include_self=True).exclude(estensione=NAZIONALE)
+
+    if not me.ha_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE):
+        modulo.fields['centrale_operativa'].widget.attrs['disabled'] = True
+
     if modulo.is_valid():
         modulo.save()
-
 
     contesto = {
         "attivita": attivita,

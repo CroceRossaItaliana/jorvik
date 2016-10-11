@@ -10,6 +10,9 @@ class Reperibilita(ModelloSemplice, ConMarcaTemporale, ConStorico):
         verbose_name = "Reperibilità"
         verbose_name_plural = "Reperibilità"
         ordering = ["-inizio", "-fine"]
+        permissions = (
+            ("view_reperibilita", "Can view Reperibilità"),
+        )
 
     attivazione = models.TimeField(verbose_name="Tempo di attivazione", help_text="Tempo necessario all'attivazione, "
                                                                                   "in formato HH:mm.", default="00:15")
@@ -24,6 +27,9 @@ class Turno(ModelloSemplice, ConMarcaTemporale):
         index_together = [
             ["persona", "turno"]
         ]
+        permissions = (
+            ("view_turno", "Can view Turno"),
+        )
 
     persona = models.ForeignKey("anagrafica.Persona", related_name="coturni", on_delete=models.CASCADE)
     turno = models.ForeignKey("attivita.Turno", related_name="coturni", on_delete=models.CASCADE)

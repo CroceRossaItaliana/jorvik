@@ -107,6 +107,22 @@ class ModuloStatisticheAttivita(forms.Form):
     periodo = forms.ChoiceField(choices=SCELTE, initial=SETTIMANA)
 
 
+class ModuloStatisticheAttivitaPersona(forms.Form):
+
+    SETTIMANA = 7
+    QUINDICI_GIORNI = 15
+    MESE = 30
+    ANNO = 365
+    SCELTE = (
+        (SETTIMANA, "Per settimana"),
+        (QUINDICI_GIORNI, "Per 15 giorni"),
+        (MESE, "Per mese"),
+        (ANNO, "Per anno"),
+    )
+
+    periodo = forms.ChoiceField(choices=SCELTE, initial=SETTIMANA)
+
+
 class ModuloRipetiTurno(forms.Form):
 
     # Giorni della settimana numerici, come
@@ -135,5 +151,5 @@ class ModuloRipetiTurno(forms.Form):
                                                  "questo turno? Tieni premuto CTRL per selezionare "
                                                  "più giorni. ")
 
-    numero_ripetizioni = forms.IntegerField(min_value=1, max_value=30, initial=3,
+    numero_ripetizioni = forms.IntegerField(min_value=1, max_value=60, initial=3,
                                             help_text="Per quanti giorni vuoi ripetere questo turno? ")

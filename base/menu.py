@@ -1,4 +1,9 @@
 from anagrafica.costanti import REGIONALE
+from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, \
+    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, PRESIDENTE, \
+    UFFICIO_SOCI, UFFICIO_SOCI_UNITA, DELEGATO_AREA, RESPONSABILE_AREA, \
+    REFERENTE, RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO, \
+    RESPONSABILE_AUTOPARCO, DELEGATO_CO, REFERENTE_GRUPPO
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, \
     GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
 from base.utils import remove_none
@@ -18,6 +23,52 @@ def menu(request):
     from base.viste import ORDINE_ASCENDENTE, ORDINE_DISCENDENTE, ORDINE_DEFAULT
 
     me = request.me if hasattr(request, 'me') else None
+
+    deleghe_attuali = me.deleghe_attuali() if me else None
+
+    delegato_giovani = deleghe_attuali.filter(tipo=DELEGATO_OBIETTIVO_5).count() if deleghe_attuali else 0
+
+    presidente = False
+    ufficio_soci = False
+    ufficio_soci_unita = False
+    delega_area = False
+    delega_obiettivo_1 = False
+    delega_obiettivo_2 = False
+    delega_obiettivo_3 = False
+    delega_obiettivo_4 = False
+    delega_obiettivo_6 = False
+    responsabile_area = False
+    referente_attivita = False
+    referente_gruppo = False
+    centrale_operativa = False
+    responsabile_formazione = False
+    direttore_corso = False
+    responsabile_autoparco = False
+
+    if me:
+        delegato_giovani = delegato_giovani > 0
+    else:
+        giovane_e_delegato_giovani = False
+
+    ha_deleghe = deleghe_attuali.exists() if deleghe_attuali else False
+
+    if ha_deleghe:
+        presidente = deleghe_attuali.filter(tipo=PRESIDENTE).exists()
+        ufficio_soci = deleghe_attuali.filter(tipo=UFFICIO_SOCI).exists()
+        ufficio_soci_unita = deleghe_attuali.filter(tipo=UFFICIO_SOCI_UNITA).exists()
+        delega_area = deleghe_attuali.filter(tipo=DELEGATO_AREA).exists()
+        delega_obiettivo_1 = deleghe_attuali.filter(tipo=DELEGATO_OBIETTIVO_1).exists()
+        delega_obiettivo_2 = deleghe_attuali.filter(tipo=DELEGATO_OBIETTIVO_2).exists()
+        delega_obiettivo_3 = deleghe_attuali.filter(tipo=DELEGATO_OBIETTIVO_3).exists()
+        delega_obiettivo_4 = deleghe_attuali.filter(tipo=DELEGATO_OBIETTIVO_4).exists()
+        delega_obiettivo_6 = deleghe_attuali.filter(tipo=DELEGATO_OBIETTIVO_6).exists()
+        responsabile_area = deleghe_attuali.filter(tipo=RESPONSABILE_AREA).exists()
+        referente_attivita = deleghe_attuali.filter(tipo=REFERENTE).exists()
+        referente_gruppo = deleghe_attuali.filter(tipo=REFERENTE_GRUPPO).exists()
+        centrale_operativa = deleghe_attuali.filter(tipo=DELEGATO_CO).exists()
+        responsabile_formazione = deleghe_attuali.filter(tipo=RESPONSABILE_FORMAZIONE).exists()
+        direttore_corso = deleghe_attuali.filter(tipo=DIRETTORE_CORSO).exists()
+        responsabile_autoparco = deleghe_attuali.filter(tipo=RESPONSABILE_AUTOPARCO).exists()
 
     gestione_corsi_sede = me.ha_permesso(GESTIONE_CORSI_SEDE) if me else False
 
@@ -39,6 +90,23 @@ def menu(request):
             ("Rubrica", (
                 ("Referenti", "fa-book", "/utente/rubrica/referenti/"),
                 ("Volontari", "fa-book", "/utente/rubrica/volontari/"),
+                ("Presidenti", "fa-book", "/utente/rubrica/presidenti/") if ha_deleghe and presidente else None,
+                ("Delegati Ufficio Soci", "fa-book", "/utente/rubrica/delegati_us/") if ha_deleghe and ufficio_soci else None,
+                ("Delegati Ufficio Soci Unità Territoriale", "fa-book", "/utente/rubrica/delegati_us_unita/") if ha_deleghe and ufficio_soci_unita else None,
+                ("Delegati d'Area", "fa-book", "/utente/rubrica/delegati_area/") if ha_deleghe and delega_area else None,
+                ("Delegati Obiettivo I (Salute)", "fa-book", "/utente/rubrica/delegati_obiettivo_1/") if ha_deleghe and delega_obiettivo_1 else None,
+                ("Delegati Obiettivo II (Sociale)", "fa-book", "/utente/rubrica/delegati_obiettivo_2/") if ha_deleghe and delega_obiettivo_2 else None,
+                ("Delegati Obiettivo III (Emergenze)", "fa-book", "/utente/rubrica/delegati_obiettivo_3/") if ha_deleghe and delega_obiettivo_3 else None,
+                ("Delegati Obiettivo IV (Emergenze)", "fa-book", "/utente/rubrica/delegati_obiettivo_4/") if ha_deleghe and delega_obiettivo_4 else None,
+                ("Delegati Obiettivo VI (Emergenze)", "fa-book", "/utente/rubrica/delegati_obiettivo_6/") if ha_deleghe and delega_obiettivo_6 else None,
+                ("Responsabili d'Area", "fa-book", "/utente/rubrica/responsabili_area/") if ha_deleghe and responsabile_area else None,
+                ("Referenti Attività", "fa-book", "/utente/rubrica/referenti_attivita/") if ha_deleghe and referente_attivita else None,
+                ("Referenti Gruppi", "fa-book", "/utente/rubrica/referenti_gruppi/") if ha_deleghe and referente_gruppo else None,
+                ("Delegati Centrale operativa", "fa-book", "/utente/rubrica/centrali_operative/") if ha_deleghe and centrale_operativa else None,
+                ("Responsabili Formazione", "fa-book", "/utente/rubrica/responsabili_formazione/") if ha_deleghe and responsabile_formazione else None,
+                ("Direttori Corsi", "fa-book", "/utente/rubrica/direttori_corsi/") if ha_deleghe and direttore_corso else None,
+                ("Responsabili autoparco", "fa-book", "/utente/rubrica/responsabili_autoparco/") if ha_deleghe and responsabile_autoparco else None,
+                ("Giovani", "fa-book", "/utente/rubrica/giovani/") if delegato_giovani else None,
             )) ,
             ("Curriculum", (
                 ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
