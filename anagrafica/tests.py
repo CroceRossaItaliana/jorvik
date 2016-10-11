@@ -1,4 +1,5 @@
 import datetime
+from unittest import skipIf
 
 from django.test import TestCase
 from lxml import html
@@ -13,6 +14,8 @@ from autenticazione.utils_test import TestFunzionale
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, email_fittizzia, \
     crea_utenza
+from formazione.models import Aspirante
+from jorvik.settings import GOOGLE_KEY
 from posta.models import Messaggio
 
 
@@ -446,6 +449,7 @@ class TestAnagrafica(TestCase):
             msg="Esiste solo una appartenenza attuale come sostenitore."
         )
 
+    #@skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
     def test_storia_volontario(self):
         presidente1 = crea_persona()
         presidente2 = crea_persona()
@@ -532,7 +536,10 @@ class TestAnagrafica(TestCase):
         self.assertFalse(persona.da_meno_di_un_anno)
 
         # reintegriamo l'utente
-        persona.ottieni_o_genera_aspirante()
+        a = Aspirante(persona=persona)
+        a.locazione = sede1.locazione
+        a.save()
+
         # l'aspirante non è volontario
         self.assertFalse(persona.da_meno_di_un_anno)
 
@@ -553,7 +560,10 @@ class TestAnagrafica(TestCase):
         self.assertFalse(persona.da_meno_di_un_anno)
 
         # reintegriamo l'utente
-        persona.ottieni_o_genera_aspirante()
+        a = Aspirante(persona=persona)
+        a.locazione = sede1.locazione
+        a.save()
+
         # l'aspirante non è volontario
         self.assertFalse(persona.da_meno_di_un_anno)
 
