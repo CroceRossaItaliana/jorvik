@@ -262,6 +262,7 @@ class TestBase(TestCase):
 
 class TestFunzionaleUfficioSoci(TestFunzionale):
 
+    @skip
     def test_apertura_elenchi(self):
 
         # Crea oggetti e nomina il delegato US
