@@ -13,7 +13,8 @@ from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.permessi.applicazioni import REFERENTE, PRESIDENTE, DELEGATO_CO
 from anagrafica.permessi.costanti import GESTIONE_CENTRALE_OPERATIVA_SEDE
 from autenticazione.utils_test import TestFunzionale
-from base.utils_tests import crea_persona, crea_persona_sede_appartenenza, crea_area_attivita, crea_turno, crea_partecipazione
+from base.utils_tests import crea_persona, crea_persona_sede_appartenenza, crea_area_attivita, crea_turno, crea_partecipazione, \
+    email_fittizzia
 from base.models import Autorizzazione
 
 
@@ -449,6 +450,8 @@ class TestAttivita(TestCase):
     def test_autorizzazioni_automatiche_scadute(self):
         presidente = crea_persona()
         persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
+        persona.email_contatto = email_fittizzia()
+        persona.save()
 
         ora = timezone.now()
 
