@@ -128,6 +128,9 @@ class TestInviiMassivi(TestCase):
 
     @patch('smtplib.SMTP')
     def test_fallimento_autenticazione(self, mock_smtp):
+        """
+        In caso di fallimento autenticazione il messaggio viene rimesso in coda
+        """
         self.assertEqual(Messaggio.in_coda().count(), 0)
         instance = mock_smtp.return_value
         instance.sendmail.side_effect = smtplib.SMTPAuthenticationError(code=530, msg='authentication error')
@@ -137,6 +140,10 @@ class TestInviiMassivi(TestCase):
 
     @patch('smtplib.SMTP')
     def test_fallimento_helo(self, mock_smtp):
+        """
+        In caso di fallimento durante helo il messaggio viene rimesso in coda, tranne che in caso
+        di errore 501 che è permanente
+        """
         self.assertEqual(Messaggio.in_coda().count(), 0)
         codici = (500, 501, 504, 521, 421)
         for codice in codici:
@@ -152,6 +159,9 @@ class TestInviiMassivi(TestCase):
 
     @patch('smtplib.SMTP')
     def test_fallimento_connect(self, mock_smtp):
+        """
+        In caso di fallimento durante il connect il messaggio viene rimesso in coda
+        """
         codici = (421,)
         for codice in codici:
             msg = 'code {}'.format(codice)
@@ -163,6 +173,10 @@ class TestInviiMassivi(TestCase):
 
     @patch('smtplib.SMTP')
     def test_fallimento_data(self, mock_smtp):
+        """
+        In caso di fallimento durante il comando data  il messaggio viene rimesso in coda,
+        tranne che in caso di errore 501 che è permanente
+        """
         codici = (451, 554, 500, 501, 503, 421, 552, 451, 452)
         for codice in codici:
             msg = 'code {}'.format(codice)
@@ -177,6 +191,10 @@ class TestInviiMassivi(TestCase):
 
     @patch('smtplib.SMTP')
     def test_fallimento_recipient(self, mock_smtp):
+        """
+        In caso di fallimento del recipient  il messaggio viene rimesso in coda se entrambi
+        i recipient sono stati rifiutati, altrimenti viene considerato inviato
+        """
         codici = (550, 551, 552, 553, 450, 451, 452, 500, 501, 503, 521, 421)
         for codice in codici:
             msg = 'code {}'.format(codice)
@@ -196,6 +214,10 @@ class TestInviiMassivi(TestCase):
 
     @patch('smtplib.SMTP')
     def test_fallimento_sender(self, mock_smtp):
+        """
+        In caso di fallimento del sender il messaggio viene rimesso in coda,
+        tranne che in caso di errore 501 che è permanente
+        """
         codici = (451, 452, 500, 501, 421)
         for codice in codici:
             msg = 'code {}'.format(codice)
@@ -210,6 +232,9 @@ class TestInviiMassivi(TestCase):
 
     @patch('smtplib.SMTP')
     def test_fallimento_disconnect(self, mock_smtp):
+        """
+        In caso di disconessione del server il messaggio viene rimesso in coda
+        """
         instance = mock_smtp.return_value
         instance.sendmail.side_effect = smtplib.SMTPServerDisconnected({})
         self._invia_msg_singolo()
