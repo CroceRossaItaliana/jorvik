@@ -5,7 +5,7 @@ from django.core import mail
 from django.test import TestCase
 from django.test import override_settings
 
-from base.utils_tests import crea_persona_sede_appartenenza, crea_sede, crea_utenza, email_fittizzia
+from base.utils_tests import crea_persona_sede_appartenenza, crea_utenza, email_fittizzia
 from posta.models import Messaggio
 
 
