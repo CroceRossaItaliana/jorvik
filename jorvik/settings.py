@@ -61,6 +61,11 @@ INSTALLED_APPS = [
     'filer',
     'ckeditor',
     'ckeditor_filebrowser_filer',
+
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
+    'two_factor',
 ]
 
 
@@ -84,9 +89,13 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'two_factor.middleware.threadlocals.ThreadLocals',
 )
+
+
 
 # Imposta anagrafica.Utenza come modello di autenticazione
 AUTH_USER_MODEL = 'autenticazione.Utenza'
@@ -142,6 +151,23 @@ DATABASES = {
     }
 }
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'two_factor': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        }
+    }
+}
+
 # Internazionalizzazione
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
 
@@ -156,11 +182,21 @@ SITE_ID = 1
 # File statici (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
+TWILIO_ACCOUNT_SID = 'ACef5369151f17fd6ed5f6722cdc053719'
+TWILIO_AUTH_TOKEN = 'bcd59ea56a6bbebe49f6533f570b4f03'
+TWILIO_CALLER_ID = '+1 205-660-4082'
 
+TWO_FACTOR_CALL_GATEWAY = 'two_factor.gateways.twilio.gateway.Twilio'
+TWO_FACTOR_SMS_GATEWAY = 'two_factor.gateways.twilio.gateway.Twilio'
 
-LOGIN_URL = '/login/'
+#LOGIN_URL = '/login/'
+from django.core.urlresolvers import reverse_lazy
+LOGIN_URL = 'two_factor:login'
 LOGOUT_URL = '/logout/'
-LOGIN_REDIRECT_URL = '/utente/'
+#LOGIN_REDIRECT_URL = '/utente/'
+PHONENUMBER_DEFAULT_REGION = 'IT'
+
+LOGIN_REDIRECT_URL = 'two_factor:profile'
 SESSION_COOKIE_PATH = '/'
 
 # Driver per i test funzionali
