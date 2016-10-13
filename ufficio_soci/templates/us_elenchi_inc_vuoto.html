@@ -108,14 +108,8 @@
                     </div>
 
                     <a class="btn btn-primary"
-                    {# queste due righe sono per disabilitare temporanemente l'invio #}
-                        style="opacity: .65;"
-                        href="javascript:alert('Siamo spiacenti, l\'invio di e-mail massive e\' temporaneamente disabilitato. Stiamo lavorando per risolvere il problema il piu\' velocemente possibile.')" target="_new"
-                    {% comment %}
-                        Invio disabilitato come da https://github.com/CroceRossaItaliana/jorvik/issues/345#issuecomment-252844706
                         data-conferma="Vuoi scrivere un nuovo messaggio da inviare a tutte le {{ totale }} persone in elenco?"
                         href="{{ messaggio_url }}" target="_new" data-caricamento
-                    {% endcomment %}
                     >
                         <i class="fa fa-fw fa-envelope-o"></i>
                         Invia messaggio
