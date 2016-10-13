@@ -25,6 +25,10 @@ from anagrafica.forms import ModuloModificaPassword
 from autenticazione.funzioni import pagina_privata, pagina_privata_no_cambio_firma
 from jorvik.settings import MEDIA_ROOT
 
+from two_factor.urls import urlpatterns as tf_urls
+from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
+
+
 handler404 = base.errori.non_trovato
 
 urlpatterns = [
@@ -330,6 +334,8 @@ urlpatterns = [
     #Filer
     url(r'^filer/', include('filer.urls')),
     url(r'^filebrowser_filer/', include('ckeditor_filebrowser_filer.urls')),
+
+    url(r'', include(tf_urls + tf_twilio_urls, 'two_factor')),
 
     # OAuth 2.0
     # url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
