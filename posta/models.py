@@ -1,7 +1,7 @@
 """
 Questo modulo definisce i modelli del modulo di Posta di Gaia.
 """
-from smtplib import SMTPException, SMTPResponseException, SMTPServerDisconnected
+from smtplib import SMTPException, SMTPResponseException, SMTPServerDisconnected, SMTPRecipientsRefused
 from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives, get_connection
 from django.db.models import QuerySet
 from django.template import Context
@@ -154,11 +154,12 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         # E-mail a delle persone
         for d in self.oggetti_destinatario.filter(inviato=False):
             destinatari = []
-            if hasattr(d, 'persona') and d.persona:
+            if hasattr(d, 'persona') and d.persona and d.persona.email:
                 destinatari.append(d.persona.email)
-            if hasattr(d.persona, 'utenza') and d.persona.utenza:
+            if hasattr(d.persona, 'utenza') and d.persona.utenza and d.persona.utenza.email:
                 if utenza and d.persona.utenza.email != d.persona.email:
                     destinatari.append(d.persona.utenza.email)
+
             # Non diamo per scontato che esistano destinatari
             if destinatari:
                 # Assicurati che la connessione sia aperta
@@ -190,14 +191,26 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
                 except SMTPException as e:
 
-                    if isinstance(e, SMTPResponseException) and e.smtp_code == 501:
-                        successo = True  # E-mail di destinazione rotta: ignora.
+                    if isinstance(e, SMTPRecipientsRefused):
+                        if any([list(item.values())[0] == 250 for item in e.recipients]):
+                            # Almeno un'email è partita, il messaggio si considera inviato
+                            d.inviato = True
+                            successo = True
+                        else:
+                            # E-mail di destinazione rotta: ignora.
+                            d.inviato = True
+                            d.invalido = True
+
+                    elif isinstance(e, SMTPResponseException) and e.smtp_code == 501:
+                        # E-mail di destinazione rotta: ignora.
+                        d.inviato = True
+                        d.invalido = True
 
                     elif isinstance(e, SMTPServerDisconnected):
                         # Se il server si e' disconnesso, riconnetti.
-                        successo = False    # Questo messaggio verra' inviato al prossimo tentativo.
+                        successo = False  # Questo messaggio verra' inviato al prossimo tentativo.
                         connection.close()  # Chiudi handle alla connessione
-                        connection.open()   # Riconnettiti
+                        connection.open()  # Riconnettiti
 
                     else:
                         successo = False  # Altro errore... riprova piu' tardi.
@@ -205,18 +218,21 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     d.errore = str(e)
 
                 except TypeError as e:
-                    successo = True
+                    d.inviato = True
+                    d.invalido = True
                     d.errore = "Nessun indirizzo e-mail. Saltato"
 
                 except AttributeError as e:
-                    successo = True
+                    d.inviato = True
+                    d.invalido = True
                     d.errore = "Destinatario non valido. Saltato"
 
                 except UnicodeEncodeError as e:
-                    successo = True
+                    d.inviato = True
+                    d.invalido = True
                     d.errore = "Indirizzo e-mail non valido. Saltato."
 
-                if not successo:
+                if not d.inviato or d.invalido:
                     print("%s  (!) errore invio id=%d, destinatario=%d, errore=%s" % (
                         datetime.now().isoformat(' '),
                         self.pk,
@@ -388,5 +404,6 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
                                 related_name='oggetti_sono_destinatario', on_delete=models.CASCADE)
 
     inviato = models.BooleanField(default=False, db_index=True)
+    invalido = models.BooleanField(default=False, db_index=True)
     tentativo = models.DateTimeField(default=None, blank=True, null=True, db_index=True)
     errore = models.CharField(max_length=256, blank=True, null=True, default=None, db_index=True)
