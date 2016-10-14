@@ -4,6 +4,7 @@ Queste sono le impostazioni di Django per il progetto Jorvik.
 Informazioni sul file:  https://docs.djangoproject.com/en/1.7/topics/settings/
 Documentazione config.: https://docs.djangoproject.com/en/1.7/ref/settings/
 """
+from django.core.urlresolvers import reverse_lazy
 
 try:
     import configparser
@@ -63,6 +64,12 @@ INSTALLED_APPS = [
     'filer',
     'ckeditor',
     'ckeditor_filebrowser_filer',
+
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
+    'otp_yubikey',
+    'two_factor',
 ]
 
 
@@ -87,8 +94,11 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'two_factor.middleware.threadlocals.ThreadLocals',
+    'autenticazione.two_factor.middleware.Require2FA',
 )
 
 # Imposta anagrafica.Utenza come modello di autenticazione
@@ -145,6 +155,23 @@ DATABASES = {
     }
 }
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'two_factor': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        }
+    }
+}
+
 # Internazionalizzazione
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
 
@@ -159,11 +186,13 @@ SITE_ID = 1
 # File statici (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
-
-
-LOGIN_URL = '/login/'
+LOGIN_URL = reverse_lazy('two_factor:login')
 LOGOUT_URL = '/logout/'
 LOGIN_REDIRECT_URL = '/utente/'
+TWO_FACTOR_PROFILE = reverse_lazy('two_factor:profile')
+TWO_FACTOR_PUBLIC = (
+    TWO_FACTOR_PROFILE, LOGOUT_URL
+)
 SESSION_COOKIE_PATH = '/'
 
 # Driver per i test funzionali

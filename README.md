@@ -32,9 +32,9 @@ Jorvik viene installato e testato sulle recenti versioni di Python 3, in modo au
 | **`chewbacca`** | [URL](http://chewbacca.staging.sviluppo-gaia.ovh) | `staging-chewbacca` | [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=staging-chewbacca)](https://travis-ci.org/CroceRossaItaliana/jorvik) | Sviluppo, pre-staging           | Sì          |
 | **`obiwan`**    | [URL](http://obiwan.staging.sviluppo-gaia.ovh)    | `staging-obiwan`    | [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=staging-obiwan)](https://travis-ci.org/CroceRossaItaliana/jorvik)    | Eventi di formazione, supporter | Sì          |
 
-* Gli ambienti di sviluppo e staging sono ospitati presso la macchina dedicata per la squadra di supporto e sviluppo (`sviluppo-gaia.ovh`), 
-* Le installazioni su questa macchina si aggiornano automaticamente col codice del relativo branch di staging, 
-* Il database viene scaricato settimanalmente dalla installazione in produzione, e tutte le modifiche effettuate nella settimana precedente vengono distrutte, 
+* Gli ambienti di sviluppo e staging sono ospitati presso la macchina dedicata per la squadra di supporto e sviluppo (`sviluppo-gaia.ovh`),
+* Le installazioni su questa macchina si aggiornano automaticamente col codice del relativo branch di staging,
+* Il database viene scaricato settimanalmente dalla installazione in produzione, e tutte le modifiche effettuate nella settimana precedente vengono distrutte,
 * Le installazioni di staging **non** sono in grado di inoltrare i messaggi di posta -nonostante si illudano di farlo correttamente-,
 * Inoltre, le procedure programmate e periodiche (cron jobs) non vengono eseguite su queste installazioni,
 * Le installazioni sono da considerarsi condivise e, nel caso di utilizzo, l'utente non deve aspettarsi alcuna forma di privacy relativamente ai dati inseriti, garanzia sul servizio, o alcuna forma di affetto da parte degli sviluppatori.
@@ -90,11 +90,11 @@ Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 
 
   * Scegliere **"Vagrant"** e **`/usr/bin/python3`** come interprete, e cliccare OK
     ![image](https://cloud.githubusercontent.com/assets/621062/10762319/7ce52214-7cbd-11e5-8cbf-26bfe0565b7e.png)
-    
+
     **Nota bene**: Su Mac OS X, se questo step fallisce ("impossibile trovare vagrant"), e' per via di un bug noto con la piattaforma. In tal caso e' necessario chiudere e riavviare PyChar da Terminale, con il comando `charm`.
-  
+
   * Assicurarsi che l'interprete "Vagrant" sia ora selezionato come predefinito per il progetto, quindi cliccare OK
-  
+
 6. **Usare il tasto "Run" su PyCharm** per controllare e avviare il server
   ![image](https://cloud.githubusercontent.com/assets/621062/10762357/abcb3050-7cbd-11e5-9fdf-c08a0b439369.png)
 
@@ -125,8 +125,26 @@ Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 
     vagrant ssh
     cd vagrant/ # Directory con jorvik
     ```
-
-
-
-
+    
 [JetBrains PyCharm](https://www.jetbrains.com/pycharm/) racchiude gli strumenti Django in un buon IDE.
+
+### 2 Factor authentication
+
+Attualmente la piattaforma supporta la 2FA con:
+
+ * Google Authenticator (e sistemi simili di OTP via QR Code)
+ * Yubikey
+ 
+Per il setup di Yubikey si veda: http://django-two-factor-auth.readthedocs.io/en/stable/installation.html#yubikey-setup
+
+Per attivare la 2FA per un utente è sufficiente:
+
+ * Installare Google Authenticator sul proprio dispositivo mobile
+ * Fare il login normalmente nell'admin
+ * Selezionare la voce "Two factor auth" nel menù admin
+ * Seguire le istruzioni dello wizard
+ * Selezionare "Token generator" fra le opzioni
+ * Scansionare con Google Authenticator il codice QR mostrato
+ * Inserire il token generato da Google Authenticator
+ * Il dispositivo è adesso autenticato
+ 

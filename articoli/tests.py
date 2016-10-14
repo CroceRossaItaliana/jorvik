@@ -2,6 +2,7 @@ import datetime
 import random
 import string
 
+from django.conf import settings
 from django.core.files.temp import NamedTemporaryFile
 from django.core.urlresolvers import reverse
 from django.test import TestCase
@@ -252,6 +253,7 @@ class TestFunzionaleArticoli(TestFunzionale):
             })
         ))
         self.assertTrue(sessione_persona.is_text_present(articolo.titolo))
+        settings.DEBUG = True
 
         sessione_persona.visit("%s%s" % (
             self.live_server_url, reverse('dettaglio_articolo', kwargs={
