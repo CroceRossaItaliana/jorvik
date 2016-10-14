@@ -7,6 +7,7 @@ from django.core.mail import send_mail
 from django.db import models
 from django.db.models import OneToOneField
 from django.utils.http import urlquote
+from django_otp import devices_for_user
 
 from anagrafica.validators import valida_email_personale
 from base.models import ModelloSemplice
@@ -63,6 +64,9 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
         help_text='Se l\'utente è un amministratore o meno.')
     is_active = models.BooleanField('Attivo', default=True,
         help_text='Utenti attivi. Impostare come disattivo invece di cancellare.')
+    richiedi_2fa = models.BooleanField('Richiedi 2FA', default=False,
+        help_text='Richiedi all\'utente l\'attivazione di 2FA.')
+
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -124,3 +128,7 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
         if not self.persona:
             return None
         return self.persona.applicazioni_disponibili
+
+    @property
+    def richiedi_attivazione_2fa(self):
+        return self.richiedi_2fa and not list(devices_for_user(self))

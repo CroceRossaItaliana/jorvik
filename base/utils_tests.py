@@ -202,8 +202,8 @@ def sessione_utente(server_url, persona=None, utente=None, password=None):
 
     sessione = crea_sessione()
     sessione.visit("%s/login/" % server_url)
-    sessione.fill("username", utenza.email)
-    sessione.fill("password", password_da_usare)
+    sessione.fill("auth-username", utenza.email)
+    sessione.fill("auth-password", password_da_usare)
     sessione.find_by_xpath('//button[@type="submit"]').first.click()
 
     # Assicurati che il login sia riuscito.

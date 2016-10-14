@@ -1,0 +1,46 @@
+{% extends 'base_vuota.html' %}
+
+{% block login_buttom %}
+{% if me or request.user.is_authenticated %}
+    <p class="navbar-btn btn-group">
+        <a class="btn btn-sm btn-primary" href="/utente/">
+            <i class="fa fa-user"></i>
+            Ciao, <strong>{{ request.user.nome }}</strong>
+        </a>
+        {% if me.admin or request.user.is_staff %}
+            <a class="btn btn-default btn-sm" href="/admin/">
+                <i class="fa fa-cogs"></i>
+                Amministrazione
+            </a>
+        {% endif %}
+        <a class="btn btn-sm btn-info" href="/logout/">
+            <i class="fa fa-sign-out"></i>
+            Logout
+        </a>
+    </p>
+{% else %}
+    <p class="navbar-btn btn-group">
+
+        {% if not site_url %}
+            <a class="btn btn-sm btn-danger" href="/login/">
+            <i class="fa fa-key"></i> Accedi
+        </a>
+        {% endif %}
+
+        {% block base_admin_navbar %}{% endblock %}
+
+    </p>
+{% endif %}
+{% endblock %}
+
+
+{% block pagina_principale %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2 sfondo-bianco bordi-arrotondati-5
+                        padding-15 box-ombreggiato-2 margine-verticale-20 allinea-centro">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

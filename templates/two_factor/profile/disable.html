@@ -1,0 +1,14 @@
+{% extends "two_factor/_base_focus.html" %}
+{% load bootstrap3 i18n %}
+
+{% block content %}
+  <h1>{% block title %}{% trans "Disabilita autenticazione a due fattori" %}{% endblock %}</h1>
+  <p>{% blocktrans %}Ti informiamo che stai per disabilitare l'autenticazione a due fattori, 
+    questo potrebbe compromettere la sicurezza del tuo account. 
+    Sei sicuro di voler procedere?{% endblocktrans %}</p>
+  <form method="post">
+    {% csrf_token %}
+    <table>{% bootstrap_form form %}</table>
+    <button class="btn btn-danger" type="submit">{% trans "Disabilita" %}</button>
+  </form>
+{% endblock %}
