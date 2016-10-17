@@ -21,7 +21,7 @@
         <li>
           {{ phone|device_action }}
           <form method="post" action="{% url 'two_factor:phone_delete' phone.id %}"
-                onsubmit="return confirm('Sei sicuro?')">
+                onsubmit="return confirm('Sei sicuro di voler procedere?')">
             {% csrf_token %}
             <button class="btn btn-xs btn-warning"
                     type="submit">{% trans "Unregister" %}</button>
