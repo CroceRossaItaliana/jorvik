@@ -51,6 +51,7 @@ urlpatterns = [
     # Login e logout
     # url(r'^login/$', base.errori.vista_ci_siamo_quasi),
     url(r'^', include(tf_urls, 'two_factor')),   # 2FA
+    url(r'^scaduta/$', base.viste.sessione_scaduta),
     url(r'^logout/$', django.contrib.auth.views.logout, {'template_name': 'base_logout.html'}),
     url(r'^', include('django.contrib.auth.urls')),
 
