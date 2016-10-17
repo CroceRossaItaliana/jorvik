@@ -28,7 +28,7 @@
                 </div>
                 <div id="navbar" class="navbar-collapse collapse allinea-destra">
 
-
+                    {% block login_buttom %}
                     {% if me %}
                         <p class="navbar-btn btn-group">
                             <a class="btn btn-sm btn-primary" href="/utente/">
@@ -59,6 +59,7 @@
 
                         </p>
                     {% endif %}
+                    {% endblock %}
 
 
                 </div><!--/.navbar-collapse -->

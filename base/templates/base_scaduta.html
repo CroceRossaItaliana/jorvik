@@ -1,0 +1,12 @@
+{% extends "base_avviso.html" %}
+
+{% block pagina_titolo %}Sessione scaduta{% endblock %}
+
+{% block avviso_titolo_classe %}text-danger{% endblock %}
+{% block avviso_titolo %}<i class="fa fa-exclamation-circle"></i> Sessione scaduta.{% endblock %}
+
+{% block avviso_corpo %}
+<p>Le sessioni di lavoro degli amministratori scadono dopo {{ tempo }} minuti dall'ultima pagina visitata.</p>
+<p>Ci scusiamo per il disagio.</p>
+<p><a class="btn btn-sm btn-danger" href="/login/"><i class="fa fa-key"></i> Accedi</a></p>
+{% endblock %}
