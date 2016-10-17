@@ -14,7 +14,6 @@ from django.template.loader import get_template
 # Le viste base vanno qui.
 from django.views.generic import ListView
 from django.utils import timezone
-from django.utils.crypto import get_random_string
 
 from anagrafica.costanti import TERRITORIALE, REGIONALE
 from anagrafica.elenchi import ElencoDelegati, ElencoGiovani
