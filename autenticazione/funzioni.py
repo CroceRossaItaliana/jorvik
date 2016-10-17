@@ -1,5 +1,4 @@
 import newrelic.agent
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
@@ -7,7 +6,7 @@ from django.utils.http import urlencode
 import functools
 from anagrafica.permessi.costanti import ERRORE_ORFANO, ERRORE_PERMESSI
 from base.menu import menu
-from jorvik.settings import LOGIN_REDIRECT_URL, LOGIN_URL
+from jorvik.settings import LOGIN_URL
 
 __author__ = 'alfioemanuele'
 

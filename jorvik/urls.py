@@ -25,6 +25,9 @@ from anagrafica.forms import ModuloModificaPassword
 from autenticazione.funzioni import pagina_privata, pagina_privata_no_cambio_firma
 from jorvik.settings import MEDIA_ROOT
 
+from autenticazione.two_factor.urls import urlpatterns as tf_urls
+
+
 handler404 = base.errori.non_trovato
 
 urlpatterns = [
@@ -47,9 +50,10 @@ urlpatterns = [
 
     # Login e logout
     # url(r'^login/$', base.errori.vista_ci_siamo_quasi),
-    url(r'^login/$', django.contrib.auth.views.login, {'template_name': 'base_login.html'}),
+    url(r'^', include(tf_urls, 'two_factor')),   # 2FA
+    url(r'^scaduta/$', base.viste.sessione_scaduta),
     url(r'^logout/$', django.contrib.auth.views.logout, {'template_name': 'base_logout.html'}),
-    url('^', include('django.contrib.auth.urls')),
+    url(r'^', include('django.contrib.auth.urls')),
 
     # Modulo di recupero password
     url(r'^recupera_password/$', base.viste.recupera_password, name='recupera_password'),
@@ -321,8 +325,6 @@ urlpatterns = [
 
     url(r'^admin/', include(admin.site.urls)),
     url(r'^admin/', include('loginas.urls')),   # Login come utente
-
-
 
     # Autocompletamento
     url(r'^autocomplete/', include('autocomplete_light.urls')),

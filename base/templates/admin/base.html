@@ -55,6 +55,7 @@
                 {% if user.has_usable_password %}
                 <a class='btn btn-default btn-sm' href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a>
                 {% endif %}
+                <a class='btn btn-default btn-sm' href="{% url 'two_factor:profile' %}">{% trans 'Two-factor auth' %}</a>
                 <a class='btn btn-default btn-sm' href="{% url 'admin:logout' %}">
                     Disconnettiti
                 </a>

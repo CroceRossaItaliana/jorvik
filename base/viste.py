@@ -64,6 +64,18 @@ def manutenzione(request, me):
     """
     return 'base_manutenzione.html'
 
+
+@pagina_pubblica
+def sessione_scaduta(request, me):
+    """
+    Mostra un messaggio sul termine forzato della sessione utente.
+    """
+    contesto = {
+        'tempo': settings.TWO_FACTOR_SESSION_DURATA
+    }
+    return 'base_scaduta.html', contesto
+
+
 @pagina_anonima
 def recupera_password(request):
     """

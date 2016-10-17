@@ -207,7 +207,7 @@ class TestFunzionaleBase(TestFunzionale):
         sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
 
         sessione.fill('codice_fiscale', 'via etnea 353')
-        sessione.fill('email', 'prova@spalletti.it')
+        sessione.fill('email', 'prova@testprova.it')
         sessione.find_by_xpath("//button[@type='submit']").first.click()
 
         self.assertTrue(sessione.is_text_present('Questo campo è obbligatorio.'))
@@ -218,7 +218,7 @@ class TestFunzionaleBase(TestFunzionale):
         sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
 
         sessione.fill('codice_fiscale', 'CFERRATO')
-        sessione.fill('email', 'prova@spalletti.it')
+        sessione.fill('email', 'prova@testprova.it')
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
 
         self.assertTrue(sessione.is_text_present('Siamo spiacenti, non ci risulta alcuna persona con questo codice fiscale (CFERRATO)'))
@@ -235,7 +235,7 @@ class TestFunzionaleBase(TestFunzionale):
         sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
 
         sessione.fill('codice_fiscale', persona.codice_fiscale)
-        sessione.fill('email', 'prova@spalletti.it')
+        sessione.fill('email', 'prova@testprova.it')
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
 
         self.assertTrue(sessione.is_text_present('Nessuna utenza'))
@@ -308,8 +308,8 @@ class TestFunzionaleBase(TestFunzionale):
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
         self.assertTrue(sessione.is_text_present('La tua nuova password è stata impostata'))
         sessione.visit("%s%s" % (self.live_server_url, '/login/'))
-        sessione.fill('username', utenza_persona_in_sede.email)
-        sessione.fill('password', 'new_password')
+        sessione.fill('auth-username', utenza_persona_in_sede.email)
+        sessione.fill('auth-password', 'new_password')
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
         testo_personalizzato = 'Ciao, {0}'.format(persona_in_sede.nome)
         self.assertTrue(sessione.is_text_present(testo_personalizzato))
