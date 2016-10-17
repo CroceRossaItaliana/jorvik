@@ -66,6 +66,7 @@ class Utenza(PermissionsMixin, AbstractBaseUser, ConMarcaTemporale):
         help_text='Utenti attivi. Impostare come disattivo invece di cancellare.')
     richiedi_2fa = models.BooleanField('Richiedi 2FA', default=False,
         help_text='Richiedi all\'utente l\'attivazione di 2FA.')
+    ultima_azione = models.DateTimeField('Ultima azione', null=True, blank=True)
 
 
     USERNAME_FIELD = 'email'

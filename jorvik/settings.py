@@ -190,9 +190,11 @@ LOGIN_URL = reverse_lazy('two_factor:login')
 LOGOUT_URL = '/logout/'
 LOGIN_REDIRECT_URL = '/utente/'
 TWO_FACTOR_PROFILE = reverse_lazy('two_factor:profile')
+TWO_FACTOR_SESSIONE_SCADUTA = '/scaduta/'
 TWO_FACTOR_PUBLIC = (
-    TWO_FACTOR_PROFILE, LOGOUT_URL
+    TWO_FACTOR_PROFILE, LOGOUT_URL, TWO_FACTOR_SESSIONE_SCADUTA, LOGIN_URL
 )
+TWO_FACTOR_SESSION_DURATA = 1
 SESSION_COOKIE_PATH = '/'
 
 # Driver per i test funzionali
