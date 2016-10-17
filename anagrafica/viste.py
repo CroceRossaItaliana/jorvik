@@ -480,7 +480,7 @@ def utente_contatti(request, me):
                     'code_type': 'code_m',
                     "vecchia_email": old_utenza_contact,
                     "nuova_email": email,
-                    "persona": me.persona,
+                    "persona": me,
                     "autore": me,
                 }
                 Messaggio.invia_raw(
@@ -501,7 +501,7 @@ def utente_contatti(request, me):
                     'code_type': 'code_c',
                     "vecchia_email": old_utenza_contact,
                     "nuova_email": email,
-                    "persona": me.persona,
+                    "persona": me,
                     "autore": me,
                 }
                 Messaggio.invia_raw(
