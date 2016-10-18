@@ -120,6 +120,77 @@ class TestGeo(TestCase):
             {'short_name': 'IT', 'long_name': 'Italia', 'types': ['country', 'political']},
             {'short_name': '00187', 'long_name': '00187', 'types': ['postal_code']}]}]
 
+    posti_africa = [
+        [
+            [{'partial_match': True, 'geometry': {'location_type': 'GEOMETRIC_CENTER',
+                                                  'viewport': {'southwest': {'lng': -1.622701, 'lat': 6.6697722},
+                                                               'northeast': {'lng': -1.6176442,
+                                                                             'lat': 6.680420799999999}},
+                                                  'location': {'lng': -1.6204888, 'lat': 6.6748961},
+                                                  'bounds': {'southwest': {'lng': -1.622701, 'lat': 6.6697722},
+                                                             'northeast': {'lng': -1.6176442,
+                                                                           'lat': 6.680420799999999}}},
+              'address_components': [{'long_name': 'Harper Road', 'short_name': 'Harper Rd', 'types': ['route']},
+                                     {'long_name': 'Adiebeba', 'short_name': 'Adiebeba',
+                                      'types': ['neighborhood', 'political']},
+                                     {'long_name': 'Atonsu', 'short_name': 'Atonsu',
+                                      'types': ['political', 'sublocality', 'sublocality_level_1']},
+                                     {'long_name': 'Kumasi', 'short_name': 'Kumasi',
+                                      'types': ['locality', 'political']},
+                                     {'long_name': 'Kumasi Metropolitan', 'short_name': 'Kumasi Metropolitan',
+                                      'types': ['administrative_area_level_2', 'political']},
+                                     {'long_name': 'Ashanti Region', 'short_name': 'Ashanti Region',
+                                      'types': ['administrative_area_level_1', 'political']},
+                                     {'long_name': 'Ghana', 'short_name': 'GH', 'types': ['country', 'political']}],
+              'formatted_address': 'Harper Rd, Kumasi, Ghana', 'types': ['route'],
+              'place_id': 'ChIJda2WAseW2w8RuCwOYKAZleY'}],
+            [('Harper Rd, Kumasi, Ghana', {'lng': -1.6204888, 'lat': 6.6748961},
+              {'via': 'Harper Road', 'cap': None, 'comune': 'Kumasi', 'provincia': 'Kumasi Metropolitan',
+               'provincia_breve': 'Kumasi Metropolitan', 'stato': 'GH', 'civico': None, 'regione': 'Ashanti Region'})]
+        ],
+        [
+            [{'address_components': [
+                {'short_name': 'Carr. del Aeropuerto', 'long_name': 'Carretera del Aeropuerto', 'types': ['route']},
+                {'short_name': 'Malabo', 'long_name': 'Malabo', 'types': ['locality', 'political']},
+                {'short_name': 'Malabo', 'long_name': 'Malabo',
+                 'types': ['administrative_area_level_2', 'political']},
+                {'short_name': 'Bioko Norte', 'long_name': 'Bioko Norte',
+                 'types': ['administrative_area_level_1', 'political']},
+                {'short_name': 'GQ', 'long_name': 'Guinea Equatoriale', 'types': ['country', 'political']}],
+              'types': ['route'], 'formatted_address': 'Carr. del Aeropuerto, Malabo, Guinea Equatoriale',
+              'partial_match': True, 'place_id': 'ChIJK3LULCecZhARspsoYSFT9CQ', 'geometry': {
+                    'bounds': {'southwest': {'lat': 3.7523714, 'lng': 8.7168735},
+                               'northeast': {'lat': 3.757947499999999, 'lng': 8.7751003}},
+                    'viewport': {'southwest': {'lat': 3.7523714, 'lng': 8.7168735},
+                                 'northeast': {'lat': 3.757947499999999, 'lng': 8.7751003}},
+                    'location_type': 'GEOMETRIC_CENTER', 'location': {'lat': 3.753685099999999, 'lng': 8.7456976}}}],
+            [('Carr. del Aeropuerto, Malabo, Guinea Equatoriale', {'lat': 3.753685099999999, 'lng': 8.7456976},
+              {'comune': 'Malabo', 'provincia': 'Malabo', 'regione': 'Bioko Norte', 'provincia_breve': 'Malabo',
+               'civico': None, 'via': 'Carretera del Aeropuerto', 'cap': None, 'stato': 'GQ'})]
+        ],
+        [
+            [{'geometry': {'bounds': {'northeast': {'lat': -0.7244695, 'lng': 8.767470699999999},
+                                      'southwest': {'lat': -0.7461185, 'lng': 8.753189299999999}},
+                           'viewport': {'northeast': {'lat': -0.7244695, 'lng': 8.767470699999999},
+                                        'southwest': {'lat': -0.7461185, 'lng': 8.753189299999999}},
+                           'location': {'lat': -0.7345885999999999, 'lng': 8.760486199999999},
+                           'location_type': 'GEOMETRIC_CENTER'},
+              'formatted_address': 'Route des Hydrocarbures, Port-Gentil, Gabon', 'address_components': [
+                    {'types': ['route'], 'short_name': 'Route des Hydrocarbures',
+                     'long_name': 'Route des Hydrocarbures'},
+                    {'types': ['locality', 'political'], 'short_name': 'Port-Gentil', 'long_name': 'Port-Gentil'},
+                    {'types': ['administrative_area_level_2', 'political'], 'short_name': 'Bendje',
+                     'long_name': 'Bendje'},
+                    {'types': ['administrative_area_level_1', 'political'], 'short_name': 'Ogooué-Maritime',
+                     'long_name': 'Ogooué-Maritime'},
+                    {'types': ['country', 'political'], 'short_name': 'GA', 'long_name': 'Gabon'}],
+              'place_id': 'ChIJFSkO1Fq3gxoRauW9p1O_G_s', 'types': ['route']}],
+            [('Route des Hydrocarbures, Port-Gentil, Gabon', {'lat': -0.7345885999999999, 'lng': 8.760486199999999},
+              {'provincia_breve': 'Bendje', 'regione': 'Ogooué-Maritime', 'provincia': 'Bendje',
+               'comune': 'Port-Gentil', 'via': 'Route des Hydrocarbures', 'stato': 'GA', 'civico': None, 'cap': None})]
+        ],
+    ]
+
     @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
     def test_ricerca_indirizzo(self):
         """
@@ -157,6 +228,35 @@ class TestGeo(TestCase):
         self.assertEqual(indirizzo[0][0], self.posto_google[0]['formatted_address'])
         self.assertEqual(indirizzo[0][1], '0')
         self.assertEqual(indirizzo[0][2]['provincia_breve'], 'RM')
+
+    @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
+    def test_ricerca_indirizzi_africa(self):
+        """
+        Test che verifica la disponibilità di sedi in africa
+        """
+        # Est di Greenwitch, Nord dell'equatore
+        indirizzo_base = 'Harper Road 40, Kumasi, Ghana'
+        indirizzo = Locazione.cerca(indirizzo_base)
+        self.assertEqual(len(indirizzo[0]), 3)
+        self.assertEqual(indirizzo[0][0], self.posti_africa[0][0][0]['formatted_address'])
+        self.assertEqual(indirizzo[0][1], self.posti_africa[0][0][0]['geometry']['location'])
+
+        # Ovest di Greenwitch, Nord dell'equatore
+        indirizzo_base = 'Carrettera del Aeropuerto, Malabo, Guinea Equatoriale'
+        indirizzo = Locazione.cerca(indirizzo_base)
+        self.assertEqual(len(indirizzo[0]), 3)
+        self.assertEqual(indirizzo[0][0], self.posti_africa[1][0][0]['formatted_address'])
+        self.assertEqual(indirizzo[0][1], self.posti_africa[1][0][0]['geometry']['location'])
+
+        # Ovest di Greenwitch, Sud dell'equatore
+        indirizzo_base = 'Route des Hydrocarbures, Port Gentil, Gabon'
+        indirizzo = Locazione.cerca(indirizzo_base)
+        self.assertEqual(len(indirizzo[0]), 3)
+        self.assertEqual(indirizzo[0][0], self.posti_africa[2][0][0]['formatted_address'])
+        self.assertEqual(indirizzo[0][1], self.posti_africa[2][0][0]['geometry']['location'])
+
+        # Est di Greenwitch, Sud dell'equatore
+        # Non c'è nulla :D
 
 
 class TestUtils(TestBase):
