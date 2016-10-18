@@ -12,7 +12,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
 from two_factor import signals
 from two_factor.forms import BackupTokenForm
-from two_factor.views import DisableView, LoginView
+from two_factor.views import DisableView, LoginView, SetupView
 from two_factor.views.utils import class_view_decorator
 
 
@@ -24,6 +24,16 @@ from .forms import JorvikAuthenticationTokenForm
 class JorvikDisableView(DisableView):
 
     redirect_url = reverse_lazy('two_factor:profile')
+
+
+@class_view_decorator(never_cache)
+@class_view_decorator(login_required)
+class JorvikSetupView(SetupView):
+    def get(self, request, *args, **kwargs):
+        """
+        Start the setup wizard. Redirect if already enabled.
+        """
+        return super(SetupView, self).get(request, *args, **kwargs)
 
 
 @class_view_decorator(sensitive_post_parameters())

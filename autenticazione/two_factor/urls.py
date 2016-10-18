@@ -5,10 +5,10 @@ from django.conf.urls import url
 
 from two_factor.views import (
     BackupTokensView, PhoneDeleteView, PhoneSetupView,
-    ProfileView, QRGeneratorView, SetupCompleteView, SetupView,
+    ProfileView, QRGeneratorView, SetupCompleteView,
 )
 
-from .viste import JorvikDisableView, JorvikLoginView
+from .viste import JorvikDisableView, JorvikLoginView, JorvikSetupView
 
 core = [
     url(
@@ -18,7 +18,7 @@ core = [
     ),
     url(
         regex=r'^account/two_factor/setup/$',
-        view=SetupView.as_view(),
+        view=JorvikSetupView.as_view(),
         name='setup',
     ),
     url(
