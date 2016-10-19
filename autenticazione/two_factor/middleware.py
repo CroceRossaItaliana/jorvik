@@ -26,7 +26,7 @@ class Require2FA(MiddlewareMixin):
 
         # Controllo sulla durata della sessione per gli amministratori
         limite = now() - timedelta(seconds=settings.TWO_FACTOR_SESSION_DURATA*60)
-        if request.path_info.startswith(resolve_url(settings.LOGIN_URL)) and request.user.is_staff and request.user.richiedi_2fa:
+        if any(urls) and request.user.is_staff and request.user.richiedi_2fa:
             request.user.ultima_azione = now()
             request.user.save()
         if not any(urls) and request.user.is_staff and request.user.richiedi_2fa:
