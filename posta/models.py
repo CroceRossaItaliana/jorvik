@@ -192,11 +192,16 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 except SMTPException as e:
 
                     if isinstance(e, SMTPRecipientsRefused):
-                        if any([list(item.values())[0] == 250 for item in e.recipients]):
-                            # Almeno un'email è partita, il messaggio si considera inviato
-                            d.inviato = True
-                            successo = True
-                        else:
+                        try:
+                            if any([code == 250 for email, code in e.recipients.items()]):
+                                # Almeno un'email è partita, il messaggio si considera inviato
+                                d.inviato = True
+                                successo = True
+                            else:
+                                # E-mail di destinazione rotta: ignora.
+                                d.inviato = True
+                                d.invalido = True
+                        except AttributeError:
                             # E-mail di destinazione rotta: ignora.
                             d.inviato = True
                             d.invalido = True
@@ -239,7 +244,6 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                         d.pk,
                         d.errore,
                     ))
-
                 d.tentativo = datetime.now()
                 d.save()
 
