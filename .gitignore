@@ -11,3 +11,4 @@ assets/
 /*.sql
 .sass-cache
 .venv
+/log/debug.log
