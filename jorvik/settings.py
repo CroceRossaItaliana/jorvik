@@ -158,13 +158,32 @@ DATABASES = {
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
     'handlers': {
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'log/debug.log'),
         },
     },
     'loggers': {
+        'posta.models': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
         'two_factor': {
             'handlers': ['console'],
             'level': 'INFO',
@@ -213,6 +232,8 @@ EMAIL_USE_SSL = EMAIL_CONF.getboolean('email', 'ssl')
 EMAIL_USE_TLS = EMAIL_CONF.getboolean('email', 'tls')
 EMAIL_SSL_KEYFILE = EMAIL_CONF.get('email', 'ssl_keyfile')
 EMAIL_SSL_CERTFILE = EMAIL_CONF.get('email', 'ssl_certfile')
+
+POSTA_LOG_DEBUG = EMAIL_CONF.getboolean('email', 'log_debug', fallback=True)
 
 DEFAULT_FROM_EMAIL = 'Gaia <noreply@gaia.cri.it>'
 GRAVATAR_DEFAULT_IMAGE = 'identicon'
