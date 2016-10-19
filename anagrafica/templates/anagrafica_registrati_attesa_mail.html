@@ -3,7 +3,18 @@
 {% load i18n %}
 
 {% block step_contenuto %}
-    <div class="alert alert-info">
-        <p>{% trans 'Controlla la tua casella di posta e segui il link' %}</p>
+    <div class="alert alert-success">
+        <p>Per procedere con la registrazione è necessario cliccare sul link contenuto nell'email che ti abbiamo mandato.</p>
+    </div>
+    <div>
+    <p>
+        Ti abbiamo mandato un'email all'indirizzo <strong>{{ email }}</strong> per verificare che sia corretto e che tu possa ricevere i messaggi che ti manderemo.
+        <br>Potrebbe volerci qualche minuto prima che ti arrivi.
+    </p>
+    <p>
+        Nel caso in cui non dovessi ricevere nulla o ti fossi accorto che l'indirizzo email che hai inserito è errato clicca sul pulsante <i>Riavvia registrazione</i>,
+        reinserisci i tuoi dati e ripeti la procedura.<br>In ogni caso, se non cliccherai sul link che ti abbiamo inviato entro 24 ore, dovrai ripetere la procedura.<br>
+        In caso di ulteriori problemi contatta il supporto
+    </p>
     </div>
 {% endblock %}
