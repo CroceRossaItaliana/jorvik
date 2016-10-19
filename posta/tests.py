@@ -200,10 +200,10 @@ class TestInviiMassivi(TestCase):
             msg = 'code {}'.format(codice)
             instance = mock_smtp.return_value
             for x in range(2):
-                recipients = [
-                    {self.persone[0].persona.email: (codice, msg) if x in (1, 2) else (250, 'ok')},
-                    {self.persone[0].email: (codice, msg) if x in (0, 2) else (250, 'ok')},
-                ]
+                recipients = {
+                    self.persone[0].persona.email: (codice, msg) if x in (1, 2) else (250, 'ok'),
+                    self.persone[0].email: (codice, msg) if x in (0, 2) else (250, 'ok'),
+                }
                 instance.sendmail.side_effect = smtplib.SMTPRecipientsRefused(recipients=recipients)
                 self._invia_msg_singolo()
                 if codice == 501 or x in (0, 1):
