@@ -16,6 +16,11 @@ except ImportError:
 
 
 class Require2FA(MiddlewareMixin):
+
+    def _aggiorna_ultima_azione(self, request):
+        request.user.ultima_azione = now()
+        request.user.save()
+
     def process_request(self, request):
         # URL non soggette a nessun controllo perché view di servizio
         urls = [request.path_info.startswith(resolve_url(url)) for url in settings.TWO_FACTOR_PUBLIC ]
@@ -27,11 +32,15 @@ class Require2FA(MiddlewareMixin):
         # Controllo sulla durata della sessione per gli amministratori
         limite = now() - timedelta(seconds=settings.TWO_FACTOR_SESSION_DURATA*60)
         if any(urls) and request.user.is_staff and request.user.richiedi_2fa:
-            request.user.ultima_azione = now()
-            request.user.save()
+            self._aggiorna_ultima_azione(request)
         if not any(urls) and request.user.is_staff and request.user.richiedi_2fa:
             if request.user.ultima_azione and request.user.ultima_azione < limite:
                 return HttpResponseRedirect(settings.TWO_FACTOR_SESSIONE_SCADUTA)
             else:
-                request.user.ultima_azione = now()
-                request.user.save()
+                self._aggiorna_ultima_azione(request)
+
+    def process_response(self, request, response):
+        if request.path_info.startswith(resolve_url(settings.LOGIN_URL)) and request.user.is_staff and request.user.richiedi_2fa:
+            self._aggiorna_ultima_azione(request)
+
+        return response
