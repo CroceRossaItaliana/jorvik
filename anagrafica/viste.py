@@ -157,6 +157,7 @@ def registrati(request, tipo, step=None):
             modulo = None
 
     contesto = {
+        'email': sessione.get('email'),
         'attuale_nome': STEP_NOMI[step],
         'attuale_slug': step,
         'lista_step': lista_step,
@@ -193,6 +194,7 @@ def registrati(request, tipo, step=None):
                 'attuale_nome': STEP_NOMI[step],
                 'attuale_slug': step,
                 'lista_step': lista_step,
+                'email': sessione.get('email'),
                 'tipo': tipo,
             }
             return 'anagrafica_registrati_attesa_mail.html', contesto
@@ -291,6 +293,7 @@ def utente(request, me):
     }
     return 'anagrafica_utente_home.html', contesto
 
+
 @pagina_privata
 def utente_anagrafica(request, me):
 
@@ -315,9 +318,11 @@ def utente_anagrafica(request, me):
 
     return 'anagrafica_utente_anagrafica.html', contesto
 
+
 @pagina_privata
 def utente_fotografia(request, me):
    return redirect("/utente/fotografia/avatar/")
+
 
 @pagina_privata
 def utente_fotografia_avatar(request, me):
@@ -333,6 +338,7 @@ def utente_fotografia_avatar(request, me):
     }
 
     return 'anagrafica_utente_fotografia_avatar.html', contesto
+
 
 @pagina_privata
 def utente_fotografia_fototessera(request, me):
@@ -373,6 +379,7 @@ def utente_fotografia_fototessera(request, me):
     }
 
     return 'anagrafica_utente_fotografia_fototessera.html', contesto
+
 
 @pagina_privata
 def utente_documenti(request, me):
