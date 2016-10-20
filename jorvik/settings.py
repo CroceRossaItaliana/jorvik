@@ -237,7 +237,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+            'format': '%(levelname)s %(asctime)s %(name)s %(message)s'
         },
         'simple': {
             'format': '%(levelname)s %(message)s'
@@ -253,10 +253,11 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': JORVIK_LOG,
+            'formatter': 'verbose',
         },
     },
     'loggers': {
-        'posta.models': {
+        'posta': {
             'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': True,
