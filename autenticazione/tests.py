@@ -1,5 +1,7 @@
+from unittest.mock import Mock, patch
+import datetime
+
 from django.utils.timezone import now
-from freezegun import freeze_time
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -43,7 +45,15 @@ class TestMiddleware2FA(TestCase):
         utente.richiedi_2fa = True
         utente.save()
 
-        with freeze_time("2016-01-20 10:34:50"):
+        data_base = datetime.datetime(2016, 1, 11, 12, 34, 56)
+        data_1 = data_base + datetime.timedelta(seconds=60)
+        data_2 = data_base + datetime.timedelta(seconds=120)
+        data_3 = data_base + datetime.timedelta(seconds=180)
+        data_4 = data_base + datetime.timedelta(seconds=240)
+
+        mock_time = Mock()
+        mock_time.return_value = data_base
+        with patch('autenticazione.two_factor.middleware.now', return_value=mock_time()):
             self.assertIsNone(utente.ultima_azione)
             response = self.client.post(settings.LOGIN_URL, data={
                 'auth-username': utente.email, 'auth-password': 'prova',
@@ -53,15 +63,17 @@ class TestMiddleware2FA(TestCase):
             self.assertRedirects(response, reverse('two_factor:profile'))
 
             utente = self._ricarica_model(utente._meta.model, utente)
-            self.assertEqual(utente.ultima_azione, now())
+            self.assertEqual(utente.ultima_azione, data_base)
 
-        with freeze_time("2016-01-20 10:56:50"):
+        mock_time.return_value = data_1
+        with patch('autenticazione.two_factor.middleware.now', return_value=mock_time()):
             response = self.client.post(settings.LOGOUT_URL)
             self.assertContains(response, 'Sei uscito da Gaia')
             utente = self._ricarica_model(utente._meta.model, utente)
-            self.assertEqual(utente.ultima_azione, now())
+            self.assertEqual(utente.ultima_azione, data_1)
 
-        with freeze_time("2016-01-20 11:16:50"):
+        mock_time.return_value = data_2
+        with patch('autenticazione.two_factor.middleware.now', return_value=mock_time()):
             StaticDevice.objects.create(user=utente, name="Device")
             response = self.client.post(settings.LOGIN_URL, data={
                 'auth-username': utente.email, 'auth-password': 'prova',
@@ -70,14 +82,16 @@ class TestMiddleware2FA(TestCase):
             self.assertEqual(response.status_code, 302)
             self.assertRedirects(response, '/utente/', fetch_redirect_response=False)
             utente = self._ricarica_model(utente._meta.model, utente)
-            self.assertEqual(utente.ultima_azione, now())
+            self.assertEqual(utente.ultima_azione, data_2)
 
-        with freeze_time("2016-01-20 11:26:50"):
+        mock_time.return_value = data_3
+        with patch('autenticazione.two_factor.middleware.now', return_value=mock_time()):
             response = self.client.get('/utente/')
             utente = self._ricarica_model(utente._meta.model, utente)
-            self.assertEqual(utente.ultima_azione, now())
+            self.assertEqual(utente.ultima_azione, data_3)
 
-        with freeze_time("2016-01-20 11:28:50"):
+        mock_time.return_value = data_4
+        with patch('autenticazione.two_factor.middleware.now', return_value=mock_time()):
             response = self.client.get(reverse('two_factor:profile'))
             utente = self._ricarica_model(utente._meta.model, utente)
-            self.assertEqual(utente.ultima_azione, now())
+            self.assertEqual(utente.ultima_azione, data_4)
