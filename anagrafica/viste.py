@@ -39,6 +39,8 @@ from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LE
     ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
     INCARICO_GESTIONE_FOTOTESSERE
+from anagrafica.utils import _conferma_email
+from anagrafica.utils import _richiesta_conferma_email
 from articoli.viste import get_articoli
 from attivita.forms import ModuloStatisticheAttivitaPersona
 from attivita.models import Partecipazione
@@ -458,66 +460,48 @@ def utente_privacy(request, me):
 @pagina_privata
 def utente_contatti(request, me):
 
-    if 'modifica_mail_id' not in request.session:
-        request.session['modifica_mail_id'] = get_random_string(length=32)
-    if 'modifica_contatto_id' not in request.session:
-        request.session['modifica_contatto_id'] = get_random_string(length=32)
+    parametri_cambio_email = {
+        'contatto': {
+            'session_key': 'modifica_contatto_id',
+            'precedente': me.email_contatto,
+            'code_type': 'code_c',
+            'field': 'email_contatto',
+            'session_code': 'modifica_contatto',
+            'oggetto': 'Modifica email di contatto',
+            'template': 'email_conferma_contatto.html',
+    },
+        'acceso': {
+            'session_key': 'modifica_mail_id',
+            'precedente': me.utenza.email,
+            'code_type': 'code_m',
+            'field': 'email',
+            'session_code': 'modifica_mail',
+            'oggetto': 'Modifica email di accesso',
+            'template': 'email_conferma_cambio_email.html',
+        },
+    }
 
+    if parametri_cambio_email['accesso']['session_key'] not in request.session:
+        request.session[parametri_cambio_email['accesso']['session_key']] = get_random_string(length=32)
+    if parametri_cambio_email['contatto']['session_key'] not in request.session:
+        request.session[parametri_cambio_email['contatto']['session_key']] = get_random_string(length=32)
 
-    old_utenza_mail = me.utenza.email
-    old_utenza_contact = me.email_contatto
     stato_conferma_accesso = None
     stato_conferma_contatto = None
     errore_conferma_accesso = None
     errore_conferma_contatto = None
 
-    if request.method == "POST":
+    if request.method == 'POST':
 
         modulo_email_accesso = ModuloModificaEmailAccesso(request.POST, instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(request.POST, instance=me)
         modulo_numero_telefono = ModuloCreazioneTelefono(request.POST)
 
         if modulo_email_accesso.is_valid():
-            email = modulo_email_accesso.cleaned_data.get('email', None)
-            if email and email != old_utenza_mail:
-                request.session['modifica_mail'] = email
-                corpo = {
-                    'code': request.session['modifica_mail_id'],
-                    'code_type': 'code_m',
-                    "vecchia_email": old_utenza_contact,
-                    "nuova_email": email,
-                    "persona": me,
-                    "autore": me,
-                }
-                Messaggio.invia_raw(
-                   oggetto="Modifica email di accesso",
-                   corpo_html=get_template('email_conferma_cambio_email.html').render(corpo),
-                   email_mittente=None,
-                   lista_email_destinatari=[
-                        email
-                   ]
-                )
+            _richiesta_conferma_email(request, me, parametri_cambio_email['accesso'], modulo_email_accesso)
 
         if modulo_email_contatto.is_valid():
-            email = modulo_email_contatto.cleaned_data.get('email_contatto', None)
-            if email and email != old_utenza_contact:
-                request.session['modifica_contatto'] = email
-                corpo = {
-                    'code': request.session['modifica_contatto_id'],
-                    'code_type': 'code_c',
-                    "vecchia_email": old_utenza_contact,
-                    "nuova_email": email,
-                    "persona": me,
-                    "autore": me,
-                }
-                Messaggio.invia_raw(
-                   oggetto="Modifica email di contatto",
-                   corpo_html=get_template('email_conferma_contatto.html').render(corpo),
-                   email_mittente=None,
-                   lista_email_destinatari=[
-                        email
-                   ]
-                )
+            _richiesta_conferma_email(request, me, parametri_cambio_email['contatto'], modulo_email_contatto)
 
         if modulo_numero_telefono.is_valid():
             me.aggiungi_numero_telefono(
@@ -527,47 +511,25 @@ def utente_contatti(request, me):
 
     else:
 
-        registration_code_m = request.GET.get('code_m', None)
-        registration_code_c = request.GET.get('code_c', None)
-
-        nuova_email = request.session.get('modifica_mail', '')
-        if nuova_email and nuova_email != me.utenza.email:
-            if request.session['modifica_mail_id'] != registration_code_m:
-                errore_conferma_accesso = True
-            else:
-                me.utenza.email = request.session.get('modifica_mail', me.utenza.email)
-                me.utenza.save()
-                stato_conferma_accesso = True
-                del request.session['modifica_mail_id']
-                del request.session['modifica_mail']
-
-        nuova_email = request.session.get('modifica_contatto', '')
-        if nuova_email and nuova_email != me.email_contatto:
-            if request.session['modifica_contatto_id'] and request.session['modifica_contatto_id'] != registration_code_c:
-                errore_conferma_contatto = True
-            else:
-                me.email_contatto = request.session.get('modifica_contatto', me.email_contatto)
-                me.save()
-                stato_conferma_contatto = False
-                del request.session['modifica_contatto_id']
-                del request.session['modifica_contatto']
-
         modulo_email_accesso = ModuloModificaEmailAccesso(instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(instance=me)
         modulo_numero_telefono = ModuloCreazioneTelefono()
 
+        stato_conferma_accesso, errore_conferma_accesso = _conferma_email(request, me, parametri_cambio_email['accesso'])
+        stato_conferma_contatto, errore_conferma_contatto = _conferma_email(request, me, parametri_cambio_email['contatto'])
+
     numeri = me.numeri_telefono.all()
     contesto = {
-        "modulo_email_accesso": modulo_email_accesso,
-        "modulo_email_contatto": modulo_email_contatto,
-        "modulo_numero_telefono": modulo_numero_telefono,
-        "numeri": numeri,
-        "attesa_conferma_accesso": request.session.get('modifica_mail', False),
-        "attesa_conferma_contatto": request.session.get('modifica_contatto', False),
-        "stato_conferma_accesso": stato_conferma_accesso,
-        "stato_conferma_contatto": stato_conferma_contatto,
-        "errore_conferma_accesso": errore_conferma_accesso,
-        "errore_conferma_contatto": errore_conferma_contatto,
+        'modulo_email_accesso': modulo_email_accesso,
+        'modulo_email_contatto': modulo_email_contatto,
+        'modulo_numero_telefono': modulo_numero_telefono,
+        'numeri': numeri,
+        'attesa_conferma_accesso': request.session.get(parametri_cambio_email['accesso']['session_code'], False),
+        'attesa_conferma_contatto': request.session.get(parametri_cambio_email['contatto']['session_code'], False),
+        'stato_conferma_accesso': stato_conferma_accesso,
+        'stato_conferma_contatto': stato_conferma_contatto,
+        'errore_conferma_accesso': errore_conferma_accesso,
+        'errore_conferma_contatto': errore_conferma_contatto,
     }
 
     return 'anagrafica_utente_contatti.html', contesto
