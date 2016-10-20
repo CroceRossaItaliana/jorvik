@@ -83,7 +83,9 @@ class AdminDocumento(FileAdmin):
         Effettua l'override del metodo nella classe genitore che altrimenti non consentirebbe
         l'uso del template corretto add_form_template
         """
+        info = self.model._meta.app_label, self.model._meta.model_name
         extra_context = {'show_delete': True,
+                         'history_url': 'admin:%s_%s_history' % info,
                          'is_popup': popup_status(request),
                          'filer_admin_context': AdminContext(request)}
         context.update(extra_context)
