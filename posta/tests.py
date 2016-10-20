@@ -126,6 +126,48 @@ class TestInviiMassivi(TestCase):
             persona.save()
             cls.persone.append(crea_utenza(persona, email=email_fittizzia()))
 
+    def test_messaggio_senza_destinatari(self):
+        messaggio = Messaggio.costruisci_e_accoda(
+            destinatari=[],
+            oggetto="Email contatto",
+            modello="email.html",
+        )
+        messaggio.smaltisci_coda()
+        self.assertEqual(Messaggio.in_coda().count(), 0)
+
+    def test_messaggio_con_destinatario_vuoto(self):
+        persona, sede, appartenenza = crea_persona_sede_appartenenza()
+        persona.save()
+        messaggio = Messaggio.costruisci_e_accoda(
+            destinatari=[persona],
+            oggetto="Email contatto",
+            modello="email.html",
+        )
+        messaggio.smaltisci_coda()
+        self.assertEqual(Messaggio.in_coda().count(), 0)
+
+    @patch('smtplib.SMTP')
+    def test_messaggio_senza_destinatari(self, mock_smtp):
+        messaggio = Messaggio.costruisci_e_accoda(
+            destinatari=[],
+            oggetto="Email contatto",
+            modello="email.html",
+        )
+        messaggio.smaltisci_coda()
+        self.assertEqual(Messaggio.in_coda().count(), 0)
+
+    @patch('smtplib.SMTP')
+    def test_messaggio_con_destinatario_vuoto(self, mock_smtp):
+        persona, sede, appartenenza = crea_persona_sede_appartenenza()
+        persona.save()
+        messaggio = Messaggio.costruisci_e_accoda(
+            destinatari=[persona],
+            oggetto="Email contatto",
+            modello="email.html",
+        )
+        messaggio.smaltisci_coda()
+        self.assertEqual(Messaggio.in_coda().count(), 0)
+
     @patch('smtplib.SMTP')
     def test_fallimento_autenticazione(self, mock_smtp):
         """

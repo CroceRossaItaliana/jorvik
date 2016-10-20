@@ -143,7 +143,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         successo = True
 
         if self.logging:
-            logger.debug('[POSTA] MSG %s: Inizio' % (self.pk,))
+            logger.debug('[POSTA] MSG %s: Inizio: Oggetto=%s' % (self.pk, self.oggetto))
         # E-mail al supporto
         if not self.oggetti_destinatario.all().exists():
             try:
@@ -166,6 +166,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         # E-mail a delle persone
         if self.logging:
             logger.debug('[POSTA] MSG %s: Destinatari=%d' % (self.pk, self.oggetti_destinatario.filter(inviato=False).count()))
+        if not self.oggetti_destinatario.filter(inviato=False).exists():
+            successo = True
         for d in self.oggetti_destinatario.filter(inviato=False):
             with atomic():
                 destinatari = []
@@ -177,6 +179,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
                 if self.logging:
                     logger.debug('[POSTA]: MSG %s: Num=%d Destinatari=%s' % (self.pk, len(destinatari), d.pk))
+                    # si usa la funzione interna hash, è più stupida ma serve solo per controllare la presenza ripetuta
+                    # di email nel log
+                    logger.debug('[POSTA]: MSG %s: Hash destinatari=%s' % (self.pk, ','.join([str(hash(email)) for email in destinatari])))
                 # Non diamo per scontato che esistano destinatari
                 if destinatari:
                     # Assicurati che la connessione sia aperta
@@ -277,13 +282,13 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     d.save()
                     if self.logging:
                         logger.debug('[POSTA]: MSG %s: salvataggio destinatario=%s' % (self.pk, d.pk))
+                        logger.debug('[POSTA]: MSG %s: termine invio successo=%s, inviato=%s invalido=%s errore=%s' % (self.pk, successo, d.inviato, d.invalido, d.errore))
 
         if successo:
             self.terminato = datetime.now()
 
         self.ultimo_tentativo = datetime.now()
         if self.logging:
-            logger.debug('[POSTA]: MSG %s: termine invio successo=%s, inviato=%s invalido=%s errore=%s' % (self.pk, successo, d.inviato, d.invalido, d.errore))
             logger.debug('[POSTA]: MSG %s: salvataggio terminato=%s ultimo_tentativo=%s' % (self.pk, self.terminato, self.ultimo_tentativo))
         self.save()
 
