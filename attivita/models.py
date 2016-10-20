@@ -570,7 +570,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                 scadenza=settings.AUTORIZZAZIONE_AUTOMATICA,
             )
 
-    def autorizzazione_concessa(self, modulo):
+    def autorizzazione_concessa(self, modulo, auto=False):
         """
         (Automatico)
         Invia notifica di autorizzazione concessa.
@@ -578,7 +578,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         # TODO
         pass
 
-    def autorizzazione_negata(self, modulo=None):
+    def autorizzazione_negata(self, modulo=None, auto=False):
         """
         (Automatico)
         Invia notifica di autorizzazione negata.
