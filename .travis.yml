@@ -18,6 +18,7 @@ before_script:
 - psql -U postgres -c "CREATE EXTENSION postgis" -d test_jorvik
 - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d test_jorvik
 - pg_restore -O -d test_jorvik ./base/test_jorvik.pgsql
+- mkdir -p ../log
 install:
 - pip install -U pip wheel
 - pip install -r requirements.txt
