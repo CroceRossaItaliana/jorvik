@@ -169,120 +169,119 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         if not self.oggetti_destinatario.filter(inviato=False).exists():
             successo = True
         for d in self.oggetti_destinatario.filter(inviato=False):
-            with atomic():
-                destinatari = []
-                if hasattr(d, 'persona') and d.persona and d.persona.email:
-                    destinatari.append(d.persona.email)
-                if hasattr(d.persona, 'utenza') and d.persona.utenza and d.persona.utenza.email:
-                    if utenza and d.persona.utenza.email != d.persona.email:
-                        destinatari.append(d.persona.utenza.email)
+            destinatari = []
+            if hasattr(d, 'persona') and d.persona and d.persona.email:
+                destinatari.append(d.persona.email)
+            if hasattr(d.persona, 'utenza') and d.persona.utenza and d.persona.utenza.email:
+                if utenza and d.persona.utenza.email != d.persona.email:
+                    destinatari.append(d.persona.utenza.email)
 
-                if self.logging:
-                    logger.debug('[POSTA]: MSG %s: Num=%d Destinatari=%s' % (self.pk, len(destinatari), d.pk))
-                    # si usa la funzione interna hash, è più stupida ma serve solo per controllare la presenza ripetuta
-                    # di email nel log
-                    logger.debug('[POSTA]: MSG %s: Hash destinatari=%s' % (self.pk, ','.join([str(hash(email)) for email in destinatari])))
-                # Non diamo per scontato che esistano destinatari
-                if destinatari:
-                    # Assicurati che la connessione sia aperta
-                    connection.open()
+            if self.logging:
+                logger.debug('[POSTA]: MSG %s: Num=%d Destinatari=%s' % (self.pk, len(destinatari), d.pk))
+                # si usa la funzione interna hash, è più stupida ma serve solo per controllare la presenza ripetuta
+                # di email nel log
+                logger.debug('[POSTA]: MSG %s: Hash destinatari=%s' % (self.pk, ','.join([str(hash(email)) for email in destinatari])))
+            # Non diamo per scontato che esistano destinatari
+            if destinatari:
+                # Assicurati che la connessione sia aperta
+                connection.open()
 
-                    # Evita duplicati in invii lunghi (se ci sono problemi con lock)...
-                    d.refresh_from_db()
-                    if d.inviato:
-                        if self.logging:
-                            logger.debug('[POSTA]: MSG %s: destinatario duplicato: msg=%s, dest=%s' % (self.pk, self.oggetto, ','.join(destinatari)))
-                        print("%s  (*) msg=%d, dest=%d, protezione invio duplicato" % (
-                            datetime.now().isoformat(' '),
-                            self.pk,
-                            d.pk,
-                        ))
-                        continue
+                # Evita duplicati in invii lunghi (se ci sono problemi con lock)...
+                d.refresh_from_db()
+                if d.inviato:
+                    if self.logging:
+                        logger.debug('[POSTA]: MSG %s: destinatario duplicato: msg=%s, dest=%s' % (self.pk, self.oggetto, ','.join(destinatari)))
+                    print("%s  (*) msg=%d, dest=%d, protezione invio duplicato" % (
+                        datetime.now().isoformat(' '),
+                        self.pk,
+                        d.pk,
+                    ))
+                    continue
 
-                    try:
-                        msg = EmailMultiAlternatives(
-                            subject=self.oggetto,
-                            body=plain_text,
-                            from_email=mittente,
-                            reply_to=[reply_to],
-                            to=destinatari,
-                            attachments=self.allegati_pronti(),
-                            connection=connection,
-                        )
-                        msg.attach_alternative(self.corpo, "text/html")
-                        msg.send()
-                        d.inviato = True
+                try:
+                    msg = EmailMultiAlternatives(
+                        subject=self.oggetto,
+                        body=plain_text,
+                        from_email=mittente,
+                        reply_to=[reply_to],
+                        to=destinatari,
+                        attachments=self.allegati_pronti(),
+                        connection=connection,
+                    )
+                    msg.attach_alternative(self.corpo, "text/html")
+                    msg.send()
+                    d.inviato = True
 
-                    except SMTPException as e:
-                        if self.logging:
-                            logger.debug('[POSTA]: MSG %s: eccezione %s' % (self.pk, e,))
+                except SMTPException as e:
+                    if self.logging:
+                        logger.debug('[POSTA]: MSG %s: eccezione %s' % (self.pk, e,))
 
-                        if isinstance(e, SMTPRecipientsRefused):
-                            try:
-                                if any([code == 250 for email, code in e.recipients.items()]):
-                                    # Almeno un'email è partita, il messaggio si considera inviato
-                                    d.inviato = True
-                                    successo = True
-                                else:
-                                    # E-mail di destinazione rotta: ignora.
-                                    d.inviato = True
-                                    d.invalido = True
-                            except AttributeError:
+                    if isinstance(e, SMTPRecipientsRefused):
+                        try:
+                            if any([code == 250 for email, code in e.recipients.items()]):
+                                # Almeno un'email è partita, il messaggio si considera inviato
+                                d.inviato = True
+                                successo = True
+                            else:
                                 # E-mail di destinazione rotta: ignora.
                                 d.inviato = True
                                 d.invalido = True
-
-                        elif isinstance(e, SMTPResponseException) and e.smtp_code == 501:
+                        except AttributeError:
                             # E-mail di destinazione rotta: ignora.
                             d.inviato = True
                             d.invalido = True
 
-                        elif isinstance(e, SMTPServerDisconnected):
-                            # Se il server si e' disconnesso, riconnetti.
-                            successo = False  # Questo messaggio verra' inviato al prossimo tentativo.
-                            connection.close()  # Chiudi handle alla connessione
-                            connection.open()  # Riconnettiti
-
-                        else:
-                            successo = False  # Altro errore... riprova piu' tardi.
-
-                        d.errore = str(e)
-
-                    except TypeError as e:
-                        if self.logging:
-                            logger.debug('[POSTA]: MSG %s: eccezione %s' % (self.pk, e,))
+                    elif isinstance(e, SMTPResponseException) and e.smtp_code == 501:
+                        # E-mail di destinazione rotta: ignora.
                         d.inviato = True
                         d.invalido = True
-                        d.errore = "Nessun indirizzo e-mail. Saltato"
 
-                    except AttributeError as e:
-                        if self.logging:
-                            logger.debug('[POSTA]: MSG %s: eccezione %s' % (self.pk, e,))
-                        d.inviato = True
-                        d.invalido = True
-                        d.errore = "Destinatario non valido. Saltato"
+                    elif isinstance(e, SMTPServerDisconnected):
+                        # Se il server si e' disconnesso, riconnetti.
+                        successo = False  # Questo messaggio verra' inviato al prossimo tentativo.
+                        connection.close()  # Chiudi handle alla connessione
+                        connection.open()  # Riconnettiti
 
-                    except UnicodeEncodeError as e:
-                        if self.logging:
-                            logger.debug('[POSTA]: MSG %s: eccezione %s' % (self.pk, e,))
-                        d.inviato = True
-                        d.invalido = True
-                        d.errore = "Indirizzo e-mail non valido. Saltato."
+                    else:
+                        successo = False  # Altro errore... riprova piu' tardi.
 
-                    if not d.inviato or d.invalido:
-                        if self.logging:
-                            logger.debug('[POSTA]: MSG %s: errore invio destinatario=%s, errore=%s' % (self.pk, d.pk, d.errore))
-                        print("%s  (!) errore invio id=%d, destinatario=%d, errore=%s" % (
-                            datetime.now().isoformat(' '),
-                            self.pk,
-                            d.pk,
-                            d.errore,
-                        ))
-                    d.tentativo = datetime.now()
-                    d.save()
+                    d.errore = str(e)
+
+                except TypeError as e:
                     if self.logging:
-                        logger.debug('[POSTA]: MSG %s: salvataggio destinatario=%s' % (self.pk, d.pk))
-                        logger.debug('[POSTA]: MSG %s: termine invio successo=%s, inviato=%s invalido=%s errore=%s' % (self.pk, successo, d.inviato, d.invalido, d.errore))
+                        logger.debug('[POSTA]: MSG %s: eccezione %s' % (self.pk, e,))
+                    d.inviato = True
+                    d.invalido = True
+                    d.errore = "Nessun indirizzo e-mail. Saltato"
+
+                except AttributeError as e:
+                    if self.logging:
+                        logger.debug('[POSTA]: MSG %s: eccezione %s' % (self.pk, e,))
+                    d.inviato = True
+                    d.invalido = True
+                    d.errore = "Destinatario non valido. Saltato"
+
+                except UnicodeEncodeError as e:
+                    if self.logging:
+                        logger.debug('[POSTA]: MSG %s: eccezione %s' % (self.pk, e,))
+                    d.inviato = True
+                    d.invalido = True
+                    d.errore = "Indirizzo e-mail non valido. Saltato."
+
+                if not d.inviato or d.invalido:
+                    if self.logging:
+                        logger.debug('[POSTA]: MSG %s: errore invio destinatario=%s, errore=%s' % (self.pk, d.pk, d.errore))
+                    print("%s  (!) errore invio id=%d, destinatario=%d, errore=%s" % (
+                        datetime.now().isoformat(' '),
+                        self.pk,
+                        d.pk,
+                        d.errore,
+                    ))
+                d.tentativo = datetime.now()
+                d.save()
+                if self.logging:
+                    logger.debug('[POSTA]: MSG %s: salvataggio destinatario=%s' % (self.pk, d.pk))
+                    logger.debug('[POSTA]: MSG %s: termine invio successo=%s, inviato=%s invalido=%s errore=%s' % (self.pk, successo, d.inviato, d.invalido, d.errore))
 
         if successo:
             self.terminato = datetime.now()
