@@ -17,7 +17,7 @@ from base.tratti import *
 from social.models import ConGiudizio
 from lxml import html
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('posta')
 
 
 class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
@@ -143,7 +143,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         successo = True
 
         if self.logging:
-            logger.debug('[POSTA] MSG %s: Inizio: Oggetto=%s' % (self.pk, self.oggetto))
+            logger.debug('MSG %s: Inizio: Oggetto=%s' % (self.pk, self.oggetto))
         # E-mail al supporto
         if not self.oggetti_destinatario.all().exists():
             try:
@@ -160,12 +160,12 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 msg.send()
             except SMTPException as e:
                 if self.logging:
-                    logger.debug('[POSTA] MSG %s: errore grave %s' % (self.pk, e))
+                    logger.debug('MSG %s: errore grave %s' % (self.pk, e))
                 successo = False
 
         # E-mail a delle persone
         if self.logging:
-            logger.debug('[POSTA] MSG %s: Destinatari=%d' % (self.pk, self.oggetti_destinatario.filter(inviato=False).count()))
+            logger.debug('MSG %s: Destinatari=%d' % (self.pk, self.oggetti_destinatario.filter(inviato=False).count()))
         if not self.oggetti_destinatario.filter(inviato=False).exists():
             successo = True
         for d in self.oggetti_destinatario.filter(inviato=False):
@@ -177,10 +177,10 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     destinatari.append(d.persona.utenza.email)
 
             if self.logging:
-                logger.debug('[POSTA]: MSG %s: Num=%d Destinatari=%s' % (self.pk, len(destinatari), d.pk))
+                logger.debug('MSG %s: Num=%d Destinatari=%s' % (self.pk, len(destinatari), d.pk))
                 # si usa la funzione interna hash, è più stupida ma serve solo per controllare la presenza ripetuta
                 # di email nel log
-                logger.debug('[POSTA]: MSG %s: Hash destinatari=%s' % (self.pk, ','.join([str(hash(email)) for email in destinatari])))
+                logger.debug('MSG %s: Hash destinatari=%s' % (self.pk, ','.join([str(hash(email)) for email in destinatari])))
             # Non diamo per scontato che esistano destinatari
             if destinatari:
                 # Assicurati che la connessione sia aperta
@@ -190,7 +190,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 d.refresh_from_db()
                 if d.inviato:
                     if self.logging:
-                        logger.debug('[POSTA]: MSG %s: destinatario duplicato: msg=%s, dest=%s' % (self.pk, self.oggetto, ','.join(destinatari)))
+                        logger.debug('MSG %s: destinatario duplicato: msg=%s, dest=%s' % (self.pk, self.oggetto, ','.join(destinatari)))
                     print("%s  (*) msg=%d, dest=%d, protezione invio duplicato" % (
                         datetime.now().isoformat(' '),
                         self.pk,
@@ -214,7 +214,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
                 except SMTPException as e:
                     if self.logging:
-                        logger.debug('[POSTA]: MSG %s: eccezione %s' % (self.pk, e,))
+                        logger.debug('MSG %s: eccezione %s' % (self.pk, e,))
 
                     if isinstance(e, SMTPRecipientsRefused):
                         try:
@@ -249,28 +249,28 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
                 except TypeError as e:
                     if self.logging:
-                        logger.debug('[POSTA]: MSG %s: eccezione %s' % (self.pk, e,))
+                        logger.debug('MSG %s: eccezione %s' % (self.pk, e,))
                     d.inviato = True
                     d.invalido = True
                     d.errore = "Nessun indirizzo e-mail. Saltato"
 
                 except AttributeError as e:
                     if self.logging:
-                        logger.debug('[POSTA]: MSG %s: eccezione %s' % (self.pk, e,))
+                        logger.debug('MSG %s: eccezione %s' % (self.pk, e,))
                     d.inviato = True
                     d.invalido = True
                     d.errore = "Destinatario non valido. Saltato"
 
                 except UnicodeEncodeError as e:
                     if self.logging:
-                        logger.debug('[POSTA]: MSG %s: eccezione %s' % (self.pk, e,))
+                        logger.debug('MSG %s: eccezione %s' % (self.pk, e,))
                     d.inviato = True
                     d.invalido = True
                     d.errore = "Indirizzo e-mail non valido. Saltato."
 
                 if not d.inviato or d.invalido:
                     if self.logging:
-                        logger.debug('[POSTA]: MSG %s: errore invio destinatario=%s, errore=%s' % (self.pk, d.pk, d.errore))
+                        logger.debug('MSG %s: errore invio destinatario=%s, errore=%s' % (self.pk, d.pk, d.errore))
                     print("%s  (!) errore invio id=%d, destinatario=%d, errore=%s" % (
                         datetime.now().isoformat(' '),
                         self.pk,
@@ -280,15 +280,15 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 d.tentativo = datetime.now()
                 d.save()
                 if self.logging:
-                    logger.debug('[POSTA]: MSG %s: salvataggio destinatario=%s' % (self.pk, d.pk))
-                    logger.debug('[POSTA]: MSG %s: termine invio successo=%s, inviato=%s invalido=%s errore=%s' % (self.pk, successo, d.inviato, d.invalido, d.errore))
+                    logger.debug('MSG %s: salvataggio destinatario=%s' % (self.pk, d.pk))
+                    logger.debug('MSG %s: termine invio successo=%s, inviato=%s invalido=%s errore=%s' % (self.pk, successo, d.inviato, d.invalido, d.errore))
 
         if successo:
             self.terminato = datetime.now()
 
         self.ultimo_tentativo = datetime.now()
         if self.logging:
-            logger.debug('[POSTA]: MSG %s: salvataggio terminato=%s ultimo_tentativo=%s' % (self.pk, self.terminato, self.ultimo_tentativo))
+            logger.debug('MSG %s: salvataggio terminato=%s ultimo_tentativo=%s' % (self.pk, self.terminato, self.ultimo_tentativo))
         self.save()
 
     def aggiungi_destinatario(self, persona):
@@ -348,7 +348,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         for messaggio in da_smaltire:
             totale += 1
             if cls.logging:
-                logger.debug('[POSTA]: MSG %s: pickup destinatari=(totale=%d, in_attesa=%d)' % (
+                logger.debug('MSG %s: pickup destinatari=(totale=%d, in_attesa=%d)' % (
                     messaggio.pk, messaggio.oggetti_destinatario.all().count(),
                     messaggio.oggetti_destinatario.filter(inviato=False).count(),
                 ))
