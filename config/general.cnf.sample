@@ -1,0 +1,4 @@
+[autorizzazioni]
+
+# giorni per concessione automatica autorizzazioni
+giorni = 30
