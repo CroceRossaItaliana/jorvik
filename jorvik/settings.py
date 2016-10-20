@@ -155,42 +155,6 @@ DATABASES = {
     }
 }
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
-        },
-        'simple': {
-            'format': '%(levelname)s %(message)s'
-        },
-    },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple'
-        },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, '..', 'log', 'debug.log'),
-        },
-    },
-    'loggers': {
-        'posta.models': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'two_factor': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        }
-    }
-}
-
 # Internazionalizzazione
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
 
@@ -251,6 +215,8 @@ DEBUG_CONF = configparser.ConfigParser()
 DEBUG_CONF.read(DEBUG_CONF_FILE)
 DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
 SECRET_KEY = DEBUG_CONF.get('production', 'secret_key')
+JORVIK_LOG_FILE = DEBUG_CONF.get('debug', 'debug_log', fallback=os.path.join('..', 'log', 'debug.log'))
+JORVIK_LOG = os.path.join(BASE_DIR, JORVIK_LOG_FILE)
 
 host = "%s" % (DEBUG_CONF.get('production', 'host'),)
 www_host = "www.%s" % (host,)
@@ -264,6 +230,44 @@ DOMPDF_ENDPOINT = APIS_CONF.get('dompdf', 'endpoint',
                                 fallback='http://pdf-server.alacriter.uk.92-222-162-128.alacriter.uk/render/www/render.php')
 
 DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': JORVIK_LOG,
+        },
+    },
+    'loggers': {
+        'posta.models': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'two_factor': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        }
+    }
+}
+
 
 TEMPLATES = [
     {

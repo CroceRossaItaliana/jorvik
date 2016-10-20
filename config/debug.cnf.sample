@@ -3,6 +3,8 @@
 # Modalita debug
 debug = 1
 
+# percorso del file di log relativo alla root del progetto es: ../log/debug.log per i log in /home/gaia/log/debug.log
+;debug_log =
 
 [production]
 
