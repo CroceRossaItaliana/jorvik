@@ -121,6 +121,7 @@ EMAIL_CONF_FILE = 'config/email.cnf' if os.path.isfile('config/email.cnf') else 
 MEDIA_CONF_FILE = 'config/media.cnf' if os.path.isfile('config/media.cnf') else 'config/media.cnf.sample'
 DEBUG_CONF_FILE = 'config/debug.cnf' if os.path.isfile('config/debug.cnf') else 'config/debug.cnf.sample'
 APIS_CONF_FILE = 'config/apis.cnf' if os.path.isfile('config/apis.cnf') else 'config/apis.cnf.sample'
+GENERAL_CONF_FILE = 'config/general.cnf' if os.path.isfile('config/general.cnf') else 'config/general.cnf.sample'
 
 # MySQL
 MYSQL_CONF = configparser.ConfigParser()
@@ -179,6 +180,12 @@ TWO_FACTOR_PUBLIC = (
 )
 TWO_FACTOR_SESSION_DURATA = 120
 SESSION_COOKIE_PATH = '/'
+
+GENERAL_CONF = configparser.ConfigParser()
+GENERAL_CONF.read(GENERAL_CONF_FILE)
+
+# Driver per i test funzionali
+DRIVER_WEB = 'firefox'
 
 # Configurazione E-mail
 EMAIL_CONF = configparser.ConfigParser()
@@ -347,7 +354,7 @@ FILER_ALLOW_REGULAR_USERS_TO_ADD_ROOT_FOLDERS = True
 NORECAPTCHA_SITE_KEY = APIS_CONF.get('nocaptcha', 'site_key', fallback=os.environ.get('NORECAPTCHA_SECRET_KEY'))
 NORECAPTCHA_SECRET_KEY = APIS_CONF.get('nocaptcha', 'secret_key', fallback=os.environ.get('NORECAPTCHA_SITE_KEY'))
 
-AUTORIZZAZIONE_AUTOMATICA = timedelta(days=30)
+AUTORIZZAZIONE_AUTOMATICA = timedelta(days=GENERAL_CONF.getint('autorizzazioni', 'giorni', fallback=30))
 
 if os.environ.get('ENABLE_TEST_APPS', False):
     INSTALLED_APPS.append('segmenti.segmenti_test')
