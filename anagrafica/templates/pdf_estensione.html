@@ -20,7 +20,8 @@ estensione presso il {{ estensione.destinazione }} per {{ estensione.motivo }}</
 <P ALIGN=RIGHT STYLE="margin-bottom: 0.35cm"><BR><BR>
 </P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0.35cm">{{ estensione.creazione }}</P>
-<div align="right" style="margin-top: 10px; padding-top: 10px align: right;">
+{% if not estensione.automatica %}
+    <div align="right" style="margin-top: 10px; padding-top: 10px align: right;">
 			<span style="text-align: right; position: relative; right;">
 				In Fede <br/>
 			</span>
@@ -28,4 +29,10 @@ estensione presso il {{ estensione.destinazione }} per {{ estensione.motivo }}</
 				F.to {{ estensione.persona.nome }} {{ estensione.persona.cognome }}
 			</span>
 		</div>
+{% else %}
+    <div style="margin-top: 10px; padding-top: 10px align: right; text-align: center">
+        {% comment %}TODO MESSAGGIO ESTENSIONE{% endcomment %}
+        L'estensione è stata automaticamente approvata essendo decorsi trenta giorni, ai sensi dell'articolo 9.5 del "Regolamento sull'organizzazione, le attività. la formazione e l'ordinamento dei volontari"
+    </div>
+{% endif %}
 {% endblock %}

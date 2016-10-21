@@ -108,6 +108,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         (NG_AUTO, "Negazione automatica"),
     )
 
+    PROTOCOLLO_AUTO = "AUTO"  # Applicato a protocollo_numero se approvazione automatica
+
     class Meta:
         verbose_name_plural = "Autorizzazioni"
         app_label = "base"
