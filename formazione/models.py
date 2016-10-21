@@ -401,7 +401,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
     def url_declina(self):
         return "/aspirante/corsi-base/inviti/%d/declina/" % (self.pk,)
 
-    def autorizzazione_concessa(self, modulo):
+    def autorizzazione_concessa(self, modulo=None, auto=False):
         with atomic():
             corso = self.corso
             partecipazione = PartecipazioneCorsoBase.objects.create(persona=self.persona, corso=self.corso)
