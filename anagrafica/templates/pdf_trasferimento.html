@@ -21,6 +21,7 @@ trasferimento presso il {{ trasferimento.destinazione }} per {{ trasferimento.mo
 <P ALIGN=RIGHT STYLE="margin-bottom: 0.35cm"><BR><BR>
 </P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0.35cm">{{ trasferimento.creazione }}</P>
+{% if not trasferimento.automatica %}
 <div align="right" style="margin-top: 10px; padding-top: 10px align: right;">
 			<span style="text-align: right; position: relative; right;">
 				In Fede <br/>
@@ -29,5 +30,9 @@ trasferimento presso il {{ trasferimento.destinazione }} per {{ trasferimento.mo
 				F.to {{ trasferimento.persona.nome }} {{ trasferimento.persona.cognome }}
 			</span>
 		</div>
-
+{% else %}
+    <div style="margin-top: 10px; padding-top: 10px align: right; text-align: center">
+        Il trasferimento è stato automaticamente approvato essendo decorsi trenta giorni, ai sensi dell'articolo 9.5 del "Regolamento sull'organizzazione, le attività. la formazione e l'ordinamento dei volontari"
+    </div>
+{% endif %}
 {% endblock %}
