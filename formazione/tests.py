@@ -1,4 +1,8 @@
 import os
+import re
+
+from django.core import mail
+
 from autenticazione.utils_test import TestFunzionale
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia
 from base.geo import Locazione
@@ -30,6 +34,21 @@ class TestFunzionaleFormazione(TestFunzionale):
         sessione_aspirante.fill('codice_fiscale', 'MRARSS42A01C351F')
         sessione_aspirante.find_by_xpath('//button[@type="submit"]').first.click()
 
+        email = email_fittizzia()
+        sessione_aspirante.fill('email', email)
+        sessione_aspirante.fill('password', 'ciao12345')
+        sessione_aspirante.fill('ripeti_password', 'ciao12345')
+        sessione_aspirante.find_by_xpath('//button[@type="submit"]').first.click()
+
+        self.assertTrue(sessione_aspirante.is_text_present('è necessario cliccare sul link'),
+                        msg="Invio email attivazione")
+
+        # Estrazione della chiave di conferma
+        self.assertTrue(len(mail.outbox), 1)
+        body = mail.outbox[0].alternatives[0][0]
+        url_conferma = re.findall('/registrati/aspirante/anagrafica/\?code=\w+', body)[0]
+        sessione_aspirante.visit("%s%s" % (self.live_server_url, url_conferma))
+
         sessione_aspirante.fill('nome', 'Mario')
         sessione_aspirante.fill('cognome', 'Rossi Accènto')
         sessione_aspirante.fill('data_nascita', '1/1/1942')
@@ -39,12 +58,6 @@ class TestFunzionaleFormazione(TestFunzionale):
         sessione_aspirante.fill('comune_residenza', 'Catania')
         sessione_aspirante.fill('provincia_residenza', 'CT')
         sessione_aspirante.fill('cap_residenza', '95128')
-        sessione_aspirante.find_by_xpath('//button[@type="submit"]').first.click()
-
-        email = email_fittizzia()
-        sessione_aspirante.fill('email', email)
-        sessione_aspirante.fill('password', 'ciao12345')
-        sessione_aspirante.fill('ripeti_password', 'ciao12345')
         sessione_aspirante.find_by_xpath('//button[@type="submit"]').first.click()
 
         self.assertTrue(sessione_aspirante.is_text_present("acconsenti al trattamento "
