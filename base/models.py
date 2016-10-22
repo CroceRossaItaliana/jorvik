@@ -214,6 +214,18 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             self.oggetto._meta.object_name.lower()
         )
 
+    @staticmethod
+    def espandi_notifiche(sede, invia_notifiche, invia_notifica_presidente=False, invia_notifica_ufficio_soci=False):
+
+        if invia_notifica_presidente:
+            presidente = sede.presidente()
+            invia_notifiche = list(invia_notifiche) + ([presidente] if presidente else [])
+
+        if invia_notifica_ufficio_soci:
+            ufficio_soci = list(sede.delegati_ufficio_soci())
+            invia_notifiche = list(invia_notifiche) + ufficio_soci
+        return list(set(invia_notifiche))
+
     def notifica_richiesta(self, persona):
         from anagrafica.models import Delega, Persona
         from posta.models import Messaggio
@@ -231,22 +243,39 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             destinatari=[persona],
         )
 
-    def _invia_notifica(self, modello, oggetto, auto):
+    def notifica_origine_autorizzazione_concessa(self, origine, testo_extra=''):
+        """
+        Notifica presidente e ufficio soci del comitato di origine dell'avvenuta approvazione della richiesta
+        """
         from posta.models import Messaggio
 
-        if auto:
-            destinatari = [self.richiedente]
-            if self.firmatario:
-                destinatari.append(self.firmatario)
-            self.oggetto.automatica = True
-            self.oggetto.save()
-        else:
-            destinatari = [self.richiedente]
+        notifiche = self.espandi_notifiche(origine, [], True, True)
+        modello = "email_autorizzazione_concessa_notifica_origine.html"
+        oggetto = "Richiesta di %s da %s APPROVATA" % (self.oggetto.RICHIESTA_NOME, self.richiedente.nome_completo,)
+        aggiunte_corpo = {
+            'testo_extra': testo_extra,
+        }
+        self._invia_notifica(modello, oggetto, False, destinatari=notifiche, aggiunte_corpo=aggiunte_corpo)
+
+    def _invia_notifica(self, modello, oggetto, auto, destinatari=None, aggiunte_corpo=None):
+        from posta.models import Messaggio
+
+        if not destinatari:
+            if auto:
+                destinatari = [self.richiedente]
+                if self.firmatario:
+                    destinatari.append(self.firmatario)
+                self.oggetto.automatica = True
+                self.oggetto.save()
+            else:
+                destinatari = [self.richiedente]
         corpo = {
             "richiesta": self,
             "firmatario": self.firmatario,
             "giorni": self.giorni_automatici
         }
+        if aggiunte_corpo:
+            corpo.update(aggiunte_corpo)
 
         Messaggio.costruisci_e_invia(
             oggetto=oggetto,
@@ -559,13 +588,7 @@ class ConAutorizzazioni(models.Model):
             if not sede_riferimento:
                 return False
 
-        if invia_notifica_presidente:
-            presidente = sede_riferimento.presidente()
-            invia_notifiche = list(invia_notifiche) + ([presidente] if presidente else [])
-
-        if invia_notifica_ufficio_soci:
-            ufficio_soci = list(sede_riferimento.delegati_ufficio_soci())
-            invia_notifiche = list(invia_notifiche) + ufficio_soci
+        invia_notifiche = Autorizzazione.espandi_notifiche(sede_riferimento, invia_notifiche, invia_notifica_presidente, invia_notifica_ufficio_soci)
 
         self.autorizzazione_richiedi(richiedente, (incarico, sede_riferimento), invia_notifiche=invia_notifiche, auto=auto, **kwargs)
         return True
@@ -681,7 +704,6 @@ class ConAutorizzazioni(models.Model):
         Sovrascrivimi! Ritorna la classe del modulo per la negazione.
         """
         return ModuloMotivoNegazione
-
 
 class ConScadenzaPulizia(models.Model):
     """

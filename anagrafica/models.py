@@ -1855,7 +1855,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
     def autorizzazione_concessa(self, modulo=None, auto=False):
         if auto:
             self.protocollo_data = timezone.now()
-            self.protocollo_numero = Appartenenza.PROTOCOLLO_AUTO
+            self.protocollo_numero = Autorizzazione.PROTOCOLLO_AUTO
         else:
             self.protocollo_data = modulo.cleaned_data['protocollo_data']
             self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
@@ -1864,7 +1864,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
 
     def esegui(self):
         appartenenzaVecchia = Appartenenza.objects.filter(Appartenenza.query_attuale().q,
-                                                   membro=Appartenenza.VOLONTARIO, persona=self.persona).first()
+                                                          membro=Appartenenza.VOLONTARIO, persona=self.persona).first()
         appartenenzaVecchia.fine = poco_fa()
         appartenenzaVecchia.terminazione = Appartenenza.TRASFERIMENTO
         appartenenzaVecchia.save()
@@ -1878,6 +1878,10 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
         app.save()
         self.appartenenza = app
         self.save()
+        testo_extra = 'Il trasferimento è stato automaticamente approvato essendo decorsi trenta giorni, ' \
+                      'ai sensi dell\'articolo 9.5 del "Regolamento sull\'organizzazione, le attività. ' \
+                      'la formazione e l\'ordinamento dei volontari"'
+        self.autorizzazioni.first().notifica_origine_autorizzazione_concessa(appartenenzaVecchia.sede, testo_extra)
 
     def richiedi(self):
 
@@ -1950,21 +1954,22 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     def autorizzazione_concessa(self, modulo=None, auto=False):
         if auto:
             self.protocollo_data = timezone.now()
-            self.protocollo_numero = Appartenenza.PROTOCOLLO_AUTO
+            self.protocollo_numero = Autorizzazione.PROTOCOLLO_AUTO
         else:
             self.protocollo_data = modulo.cleaned_data['protocollo_data']
             self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
+        origine = self.persona.sede_riferimento()
         app = Appartenenza(
             membro=Appartenenza.ESTESO,
             persona=self.persona,
             sede=self.destinazione,
             inizio=poco_fa(),
             fine=datetime.today() + timedelta(days=365)
-
         )
         app.save()
         self.appartenenza = app
         self.save()
+        self.autorizzazioni.first().notifica_origine_autorizzazione_concessa(origine)
 
     def richiedi(self):
         if not self.persona.sede_riferimento():
