@@ -1,0 +1,15 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p class="grassetto">Ciao {{ persona.nome }}.</p>
+    <p>Ricevi questo messaggio perch&eacute; hai chiesto di cambiare la tua
+        e-mail di contatto su  a Gaia.</p>
+    <hr />
+    <p>Per confermare la richiesta, clicca sul link sottostante:</p>
+    <p><a href='https://gaia.cri.it/utente/contatti/?{{code_type}}={{code}}'>Conferma</a></p>
+    <p><strong>IMPORTANTE:</strong> Il link è valido solo per pochi minuti, quindi conferma subito
+        la tua nuova email!</p>
+    <hr />
+
+{% endblock %}
