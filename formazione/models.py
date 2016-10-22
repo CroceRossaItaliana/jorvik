@@ -378,7 +378,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
     IN_ATTESA_ASPIRANTE = 2
     INVITO_INVIATO = -1
 
-    RICHIESTA_NOME = "invito a Corso Base"
+    RICHIESTA_NOME = "iscrizione a Corso Base"
 
     class Meta:
         verbose_name = "Invito di partecipazione a corso base"
