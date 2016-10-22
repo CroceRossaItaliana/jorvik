@@ -8,6 +8,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.contrib.auth import login
+from django.utils.crypto import get_random_string
+from django.template.loader import get_template
 
 # Le viste base vanno qui.
 from django.views.generic import ListView
@@ -37,6 +39,8 @@ from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LE
     ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
     INCARICO_GESTIONE_FOTOTESSERE
+from anagrafica.utils import _conferma_email
+from anagrafica.utils import _richiesta_conferma_email
 from articoli.viste import get_articoli
 from attivita.forms import ModuloStatisticheAttivitaPersona
 from attivita.models import Partecipazione
@@ -79,9 +83,9 @@ STEP_NOMI = {
 
 # Definisce i vari step di registrazione, in ordine, per ogni tipo di registrazione.
 STEP = {
-    TIPO_VOLONTARIO: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_ANAGRAFICA, STEP_CREDENZIALI, STEP_FINE],
-    TIPO_ASPIRANTE: [STEP_CODICE_FISCALE, STEP_ANAGRAFICA, STEP_CREDENZIALI, STEP_FINE],
-    TIPO_DIPENDENTE: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_ANAGRAFICA, STEP_CREDENZIALI, STEP_FINE],
+    TIPO_VOLONTARIO: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
+    TIPO_ASPIRANTE: [STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
+    TIPO_DIPENDENTE: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
 }
 
 MODULI = {
@@ -155,6 +159,7 @@ def registrati(request, tipo, step=None):
             modulo = None
 
     contesto = {
+        'email': sessione.get('email'),
         'attuale_nome': STEP_NOMI[step],
         'attuale_slug': step,
         'lista_step': lista_step,
@@ -163,7 +168,41 @@ def registrati(request, tipo, step=None):
         'modulo': modulo,
     }
 
+    if step == STEP_ANAGRAFICA:
+
+        if 'registrazione_id' not in request.session:
+            request.session['registrazione_id'] = get_random_string(length=32)
+
+        corpo = {
+            'tipo': tipo,
+            'step': step,
+            'code': request.session['registrazione_id'],
+            'email': sessione.get('email')
+        }
+
+        Messaggio.invia_raw(
+           oggetto="Registrazione su Gaia",
+           corpo_html=get_template('email_conferma.html').render(corpo),
+           email_mittente=None,
+           lista_email_destinatari=[
+                sessione.get('email')
+           ]
+        )
+
+        registration_code = request.GET.get('code', '')
+
+        if request.session['registrazione_id'] != registration_code:
+            contesto = {
+                'attuale_nome': STEP_NOMI[step],
+                'attuale_slug': step,
+                'lista_step': lista_step,
+                'email': sessione.get('email'),
+                'tipo': tipo,
+            }
+            return 'anagrafica_registrati_attesa_mail.html', contesto
+
     return 'anagrafica_registrati_step_' + step + '.html', contesto
+
 
 @pagina_anonima
 def registrati_conferma(request, tipo):
@@ -256,6 +295,7 @@ def utente(request, me):
     }
     return 'anagrafica_utente_home.html', contesto
 
+
 @pagina_privata
 def utente_anagrafica(request, me):
 
@@ -280,9 +320,11 @@ def utente_anagrafica(request, me):
 
     return 'anagrafica_utente_anagrafica.html', contesto
 
+
 @pagina_privata
 def utente_fotografia(request, me):
    return redirect("/utente/fotografia/avatar/")
+
 
 @pagina_privata
 def utente_fotografia_avatar(request, me):
@@ -298,6 +340,7 @@ def utente_fotografia_avatar(request, me):
     }
 
     return 'anagrafica_utente_fotografia_avatar.html', contesto
+
 
 @pagina_privata
 def utente_fotografia_fototessera(request, me):
@@ -338,6 +381,7 @@ def utente_fotografia_fototessera(request, me):
     }
 
     return 'anagrafica_utente_fotografia_fototessera.html', contesto
+
 
 @pagina_privata
 def utente_documenti(request, me):
@@ -416,17 +460,48 @@ def utente_privacy(request, me):
 @pagina_privata
 def utente_contatti(request, me):
 
-    if request.method == "POST":
+    parametri_cambio_email = {
+        'contatto': {
+            'session_key': 'modifica_contatto_id',
+            'precedente': me.email_contatto,
+            'code_type': 'code_c',
+            'field': 'email_contatto',
+            'session_code': 'modifica_contatto',
+            'oggetto': 'Modifica email di contatto',
+            'template': 'email_conferma_contatto.html',
+    },
+        'acceso': {
+            'session_key': 'modifica_mail_id',
+            'precedente': me.utenza.email,
+            'code_type': 'code_m',
+            'field': 'email',
+            'session_code': 'modifica_mail',
+            'oggetto': 'Modifica email di accesso',
+            'template': 'email_conferma_cambio_email.html',
+        },
+    }
+
+    if parametri_cambio_email['accesso']['session_key'] not in request.session:
+        request.session[parametri_cambio_email['accesso']['session_key']] = get_random_string(length=32)
+    if parametri_cambio_email['contatto']['session_key'] not in request.session:
+        request.session[parametri_cambio_email['contatto']['session_key']] = get_random_string(length=32)
+
+    stato_conferma_accesso = None
+    stato_conferma_contatto = None
+    errore_conferma_accesso = None
+    errore_conferma_contatto = None
+
+    if request.method == 'POST':
 
         modulo_email_accesso = ModuloModificaEmailAccesso(request.POST, instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(request.POST, instance=me)
         modulo_numero_telefono = ModuloCreazioneTelefono(request.POST)
 
         if modulo_email_accesso.is_valid():
-            modulo_email_accesso.save()
+            _richiesta_conferma_email(request, me, parametri_cambio_email['accesso'], modulo_email_accesso)
 
         if modulo_email_contatto.is_valid():
-            modulo_email_contatto.save()
+            _richiesta_conferma_email(request, me, parametri_cambio_email['contatto'], modulo_email_contatto)
 
         if modulo_numero_telefono.is_valid():
             me.aggiungi_numero_telefono(
@@ -440,12 +515,21 @@ def utente_contatti(request, me):
         modulo_email_contatto = ModuloModificaEmailContatto(instance=me)
         modulo_numero_telefono = ModuloCreazioneTelefono()
 
+        stato_conferma_accesso, errore_conferma_accesso = _conferma_email(request, me, parametri_cambio_email['accesso'])
+        stato_conferma_contatto, errore_conferma_contatto = _conferma_email(request, me, parametri_cambio_email['contatto'])
+
     numeri = me.numeri_telefono.all()
     contesto = {
-        "modulo_email_accesso": modulo_email_accesso,
-        "modulo_email_contatto": modulo_email_contatto,
-        "modulo_numero_telefono": modulo_numero_telefono,
-        "numeri": numeri
+        'modulo_email_accesso': modulo_email_accesso,
+        'modulo_email_contatto': modulo_email_contatto,
+        'modulo_numero_telefono': modulo_numero_telefono,
+        'numeri': numeri,
+        'attesa_conferma_accesso': request.session.get(parametri_cambio_email['accesso']['session_code'], False),
+        'attesa_conferma_contatto': request.session.get(parametri_cambio_email['contatto']['session_code'], False),
+        'stato_conferma_accesso': stato_conferma_accesso,
+        'stato_conferma_contatto': stato_conferma_contatto,
+        'errore_conferma_accesso': errore_conferma_accesso,
+        'errore_conferma_contatto': errore_conferma_contatto,
     }
 
     return 'anagrafica_utente_contatti.html', contesto
