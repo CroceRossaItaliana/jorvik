@@ -14,23 +14,12 @@
 
     {% for richiesta in richieste %}
 
-        <div class="panel panel-default ">
+        <div class="panel panel-default">
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-9">
                         {% include richiesta.template_path %}
 
-                        {% if richiesta.scadenza %}
-                            <div class="alert alert-warning">
-                                la richiesta sarà automaticamente
-                                {% if richiesta.tipo_gestione == richiesta.NG_AUTO %}
-                                    negata
-                                {% elif richiesta.tipo_gestione == richiesta.AP_AUTO %}
-                                    approvata
-                                {% endif %}
-                                il {{ richiesta.scadenza|date:"SHORT_DATETIME_FORMAT" }}
-                            </div>
-                        {% endif %}
                     </div>
                     <div class="col-md-3">
                         <div class=" btn-group-vertical btn-group-sm btn-block">
@@ -52,18 +41,43 @@
 
             </div>
             <div class="panel-footer piu-piccolo">
-                <i class="fa fa-fw fa-clock-o"></i>
-                Richiesta inoltrata il {{ richiesta.creazione }}
-                da {{ richiesta.richiedente.nome_completo }}.
 
-                <p class="pull-right">
-                    In dubbio?
-                    <a href="{{ richiesta.richiedente.messaggio_url }}" target="_new">
-                        Scrivi un messaggio a {{ richiesta.richiedente.nome }}
-                        <i class="fa fa-fw fa-envelope-o"></i>
+                <div class="row">
+                    <div class="col-md-7">
+                        <i class="fa fa-fw fa-clock-o"></i>
+                        Richiesta inoltrata {{ richiesta.creazione }}
+                        da {{ richiesta.richiedente.nome_completo }}.
+                    </div>
 
-                    </a>
-                </p>
+                    <div class="col-md-5 allinea-destra">
+                        In dubbio?
+                        <a href="{{ richiesta.richiedente.messaggio_url }}" target="_new">
+                            Scrivi un messaggio a {{ richiesta.richiedente.nome }}
+                            <i class="fa fa-fw fa-envelope-o"></i>
+                        </a>
+                    </div>
+                </div>
+
+                {% if richiesta.scadenza %}
+                    <span class="text-warning grassetto">
+                        <i class="fa fa-fw fa-warning"></i>
+                        La richiesta
+
+                        {% if richiesta.tipo_gestione == richiesta.NG_AUTO %}
+                            scadrà
+
+                        {% elif richiesta.tipo_gestione == richiesta.AP_AUTO %}
+                            verrà automaticamente approvata
+
+                        {% endif %}
+
+                        {{ richiesta.scadenza|date:"DATETIME_FORMAT" }}.
+                    </span>
+                {% endif %}
+
+
+
+
             </div>
 
         </div>
