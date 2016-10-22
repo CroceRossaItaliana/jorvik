@@ -114,6 +114,8 @@ class IscrivibiliCorsiAutocompletamento(PersonaAutocompletamento):
         self.choices = self.choices.filter(
             Q(Appartenenza.query_attuale(membro=Appartenenza.SOSTENITORE).via("appartenenze")) |
             Q(aspirante__isnull=False)
+        ).exclude(
+            Q(Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).via("appartenenze"))
         ).order_by('nome', 'cognome', 'codice_fiscale').distinct('nome', 'cognome', 'codice_fiscale')
         return super(PersonaAutocompletamento, self).choices_for_request()
 
