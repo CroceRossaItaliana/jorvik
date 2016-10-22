@@ -233,6 +233,6 @@ def calcola_scadenza(scadenza=None):
     if scadenza:
         giorni = scadenza
     else:
-        giorni = settings.AUTORIZZAZIONE_AUTOMATICA
+        giorni = settings.SCADENZA_AUTORIZZAZIONE_AUTOMATICA
     scadenza = oggi + giorni
     return scadenza
