@@ -1845,6 +1845,9 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
 
     RICHIESTA_NOME = "trasferimento"
 
+    # Data fissa di 30gg come da regolamento CRI
+    APPROVAZIONE_AUTOMATICA = timedelta(days=30)
+
     def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiTrasferimento
         return ModuloConsentiTrasferimento
@@ -1886,7 +1889,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
             INCARICO_GESTIONE_TRASFERIMENTI,
             invia_notifica_presidente=True,
             auto=Autorizzazione.AP_AUTO,
-            scadenza=settings.AUTORIZZAZIONE_AUTOMATICA,
+            scadenza=self.APPROVAZIONE_AUTOMATICA,
         )
 
     def url(self):
@@ -1926,6 +1929,8 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     motivo = models.CharField(max_length=4096, null=True, blank=False,)
 
     RICHIESTA_NOME = "Estensione"
+
+    APPROVAZIONE_AUTOMATICA = timedelta(days=settings.SCADENZA_AUTORIZZAZIONE_AUTOMATICA)
 
     def attuale(self, **kwargs):
         """
@@ -1970,7 +1975,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
             INCARICO_GESTIONE_ESTENSIONI,
             invia_notifica_presidente=True,
             auto=Autorizzazione.AP_AUTO,
-            scadenza=settings.AUTORIZZAZIONE_AUTOMATICA,
+            scadenza=self.APPROVAZIONE_AUTOMATICA,
         )
         if self.destinazione.presidente():
             Messaggio.costruisci_e_invia(
