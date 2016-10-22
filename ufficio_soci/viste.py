@@ -144,10 +144,12 @@ def us_reclama_persona(request, me, persona_pk):
             continua = True
             if modulo_quota.cleaned_data['registra_quota'] == modulo_quota.SI:
                 if not Tesseramento.aperto_anno(
-                    modulo_quota.cleaned_data['data_versamento'], iv
+                    modulo_quota.cleaned_data['data_versamento'], iv, persona.volontario_da_meno_di_un_anno
                 ):
                     if volontario.iv:
                         data_fine = tesseramento.fine_soci_iv
+                    elif volontario.volontario_da_meno_di_un_anno:
+                        data_fine = tesseramento.fine_soci_nv
                     else:
                         data_fine = tesseramento.fine_soci
 
@@ -795,6 +797,7 @@ def us_quote_nuova(request, me):
         if modulo and modulo.is_valid():
 
             volontario = modulo.cleaned_data['volontario']
+
             importo = modulo.cleaned_data['importo']
             data_versamento = modulo.cleaned_data['data_versamento']
 
@@ -808,10 +811,12 @@ def us_quote_nuova(request, me):
                                                     'non può essere nel futuro.' % questo_anno)
 
             elif not Tesseramento.aperto_anno(
-                    data_versamento, volontario.iv
+                    data_versamento, volontario.iv, volontario.volontario_da_meno_di_un_anno
             ):
                 if volontario.iv:
                     data_fine = tesseramento.fine_soci_iv
+                elif volontario.volontario_da_meno_di_un_anno:
+                    data_fine = tesseramento.fine_soci_nv
                 else:
                     data_fine = tesseramento.fine_soci
                 if data_fine:

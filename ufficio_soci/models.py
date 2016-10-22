@@ -1,5 +1,6 @@
 import random
 from datetime import timezone, date, timedelta
+from django.utils import timezone as timezone_django
 
 import barcode
 from barcode.writer import ImageWriter
@@ -194,11 +195,18 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     quota_aspirante = models.FloatField(default=20.00)
     quota_sostenitore = models.FloatField(default=20.00)
 
-    def accetta_pagamenti(self, data=None, iv=False):
+
+    @property
+    def fine_soci_nv(self):
+        return timezone_django.now().date().replace(month=12, day=31)
+
+    def accetta_pagamenti(self, data=None, iv=False, nv=False):
         if not data:
             data = oggi()
         if iv and self.fine_soci_iv:
             termine = self.fine_soci_iv
+        elif nv and self.fine_soci_nv:
+            termine = self.fine_soci_nv
         else:
             termine = self.fine_soci
         if not termine:
@@ -210,12 +218,12 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
         return self.stato == self.APERTO and data >= self.inizio and data <= termine
 
     @classmethod
-    def aperto_anno(cls, data=None, iv=False):
+    def aperto_anno(cls, data=None, iv=False, nv=False):
         try:
             if not data:
                 data = oggi()
             t = Tesseramento.objects.get(anno=data.year)
-            return t.accetta_pagamenti(data, iv)
+            return t.accetta_pagamenti(data, iv, nv)
         except Tesseramento.DoesNotExist:
             return False
 
