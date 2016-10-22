@@ -473,12 +473,12 @@ class TestAnagrafica(TestCase):
         )
         a.save()
 
-        self.assertTrue(persona.da_meno_di_un_anno)
+        self.assertTrue(persona.volontario_da_meno_di_un_anno)
 
         # data vecchia nel passato
         a.inizio = "1980-12-10"
         a.save()
-        self.assertFalse(persona.da_meno_di_un_anno)
+        self.assertFalse(persona.volontario_da_meno_di_un_anno)
         
         # trasferiscilo ad altro comitato
 
@@ -498,12 +498,12 @@ class TestAnagrafica(TestCase):
         est.refresh_from_db()
 
         # il trasferimento non cambia l'anzianità
-        self.assertFalse(persona.da_meno_di_un_anno)
+        self.assertFalse(persona.volontario_da_meno_di_un_anno)
 
         # impostiamo una data recente
         a.inizio = datetime.date.today()
         a.save()
-        self.assertTrue(persona.da_meno_di_un_anno)
+        self.assertTrue(persona.volontario_da_meno_di_un_anno)
 
         # trasferimento fallito ad altro comitato
         modulo = ModuloCreazioneEstensione()
@@ -522,18 +522,18 @@ class TestAnagrafica(TestCase):
         est.refresh_from_db()
 
         # lo stato non è cambiato
-        self.assertTrue(persona.da_meno_di_un_anno)
+        self.assertTrue(persona.volontario_da_meno_di_un_anno)
 
         # data vecchia nel passato
         a.inizio = "1980-12-10"
         a.save()
-        self.assertFalse(persona.da_meno_di_un_anno)
+        self.assertFalse(persona.volontario_da_meno_di_un_anno)
 
         # un espulso non è più un volontario, quindi deve fallire
         a.inizio = datetime.date.today()
         a.save()
         persona.espelli()
-        self.assertFalse(persona.da_meno_di_un_anno)
+        self.assertFalse(persona.volontario_da_meno_di_un_anno)
 
         # reintegriamo l'utente
         a = Aspirante(persona=persona)
@@ -541,12 +541,12 @@ class TestAnagrafica(TestCase):
         a.save()
 
         # l'aspirante non è volontario
-        self.assertFalse(persona.da_meno_di_un_anno)
+        self.assertFalse(persona.volontario_da_meno_di_un_anno)
 
         # promosso a volontario
         persona.da_aspirante_a_volontario(sede2)
         # è appena tornato volontario
-        self.assertTrue(persona.da_meno_di_un_anno)
+        self.assertTrue(persona.volontario_da_meno_di_un_anno)
 
         # dimettiamolo
         for app in persona.appartenenze_attuali():
@@ -557,7 +557,7 @@ class TestAnagrafica(TestCase):
             )
             d.save()
             d.applica()
-        self.assertFalse(persona.da_meno_di_un_anno)
+        self.assertFalse(persona.volontario_da_meno_di_un_anno)
 
         # reintegriamo l'utente
         a = Aspirante(persona=persona)
@@ -565,18 +565,18 @@ class TestAnagrafica(TestCase):
         a.save()
 
         # l'aspirante non è volontario
-        self.assertFalse(persona.da_meno_di_un_anno)
+        self.assertFalse(persona.volontario_da_meno_di_un_anno)
 
         # promosso a volontario
         persona.da_aspirante_a_volontario(sede2)
         # è appena tornato volontario
-        self.assertTrue(persona.da_meno_di_un_anno)
+        self.assertTrue(persona.volontario_da_meno_di_un_anno)
 
         attuale = persona.appartenenze_attuali().get(membro=Appartenenza.VOLONTARIO)
         # data vecchia nel passato
         attuale.inizio = "1980-12-10"
         attuale.save()
-        self.assertFalse(persona.da_meno_di_un_anno)
+        self.assertFalse(persona.volontario_da_meno_di_un_anno)
 
     def test_estensione_negata(self):
 

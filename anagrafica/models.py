@@ -649,7 +649,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return PartecipazioneCorsoBase.con_esito_ok().filter(persona=self, corso__stato=CorsoBase.ATTIVO).first()
     
     @property
-    def da_meno_di_un_anno(self):
+    def volontario_da_meno_di_un_anno(self):
         """
         Controlla se questo utente è diventato volontario nell'anno corrente
         """
