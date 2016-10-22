@@ -174,6 +174,45 @@ class TestCorsi(TestCase):
         response = self.client.get('/autocomplete/IscrivibiliCorsiAutocompletamento/?q={}'.format(aspirante1.nome_completo))
         self.assertNotContains(response, aspirante1.nome_completo)
 
+        # Creiamo aspirante
+        aspirante2 = crea_persona()
+        aspirante2.email_contatto = email_fittizzia()
+        aspirante2.codice_fiscale = codice_fiscale()
+        a = Aspirante(persona=aspirante2)
+        a.locazione = sede.locazione
+        a.save()
+        aspirante2.save()
+
+        # Se è solo aspirante viene selezionato
+        response = self.client.get('/autocomplete/IscrivibiliCorsiAutocompletamento/?q={}'.format(aspirante1.codice_fiscale[:3]))
+        self.assertContains(response, aspirante1.nome_completo)
+
+        Appartenenza.objects.create(
+            persona=aspirante2,
+            sede=sede,
+            membro=Appartenenza.VOLONTARIO,
+            inizio="1980-12-10",
+        )
+
+        # Con un appartenenza come volontario non è più selezionabile
+        response = self.client.get('/autocomplete/IscrivibiliCorsiAutocompletamento/?q={}'.format(aspirante2.codice_fiscale[:3]))
+        self.assertNotContains(response, aspirante2.nome_completo)
+
+        # Dimettiamolo
+        aspirante2.espelli()
+        response = self.client.get('/autocomplete/IscrivibiliCorsiAutocompletamento/?q={}'.format(aspirante2.codice_fiscale[:3]))
+        self.assertContains(response, aspirante2.nome_completo)
+
+        # Reintegriamolo
+        Appartenenza.objects.create(
+            persona=aspirante2,
+            sede=sede,
+            membro=Appartenenza.VOLONTARIO,
+            inizio=poco_fa(),
+        )
+        response = self.client.get('/autocomplete/IscrivibiliCorsiAutocompletamento/?q={}'.format(aspirante2.codice_fiscale[:3]))
+        self.assertNotContains(response, aspirante2.nome_completo)
+
     def test_aggiungi_aspirante_multiplo(self):
         presidente = crea_persona()
         presidente.email_contatto = email_fittizzia()
