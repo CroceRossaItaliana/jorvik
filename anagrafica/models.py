@@ -647,6 +647,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         from formazione.models import PartecipazioneCorsoBase, CorsoBase
         return PartecipazioneCorsoBase.con_esito_ok().filter(persona=self, corso__stato=CorsoBase.ATTIVO).first()
+    
+    @property
+    def volontario_da_meno_di_un_anno(self):
+        """
+        Controlla se questo utente è diventato volontario nell'anno corrente
+        """
+        if self.volontario:
+            inizio_anno = poco_fa().replace(month=1, day=1)
+            r = self.appartenenze_attuali().filter(membro=Appartenenza.VOLONTARIO, inizio__gte=inizio_anno)
+            return r.exists()
 
     @property
     def url(self):
@@ -817,6 +827,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         for appartenenza in self.appartenenze_attuali():
             appartenenza.terminazione = Appartenenza.ESPULSIONE
             appartenenza.fine = datetime.today()
+            appartenenza.save()
 
     def ottieni_o_genera_aspirante(self):
         try:
