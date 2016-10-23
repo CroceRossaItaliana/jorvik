@@ -1879,7 +1879,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
         self.appartenenza = app
         self.save()
         testo_extra = 'Il trasferimento è stato automaticamente approvato essendo decorsi trenta giorni, ' \
-                      'ai sensi dell\'articolo 9.5 del "Regolamento sull\'organizzazione, le attività. ' \
+                      'ai sensi dell\'articolo 9.5 del "Regolamento sull\'organizzazione, le attività, ' \
                       'la formazione e l\'ordinamento dei volontari"'
         self.autorizzazioni.first().notifica_origine_autorizzazione_concessa(appartenenzaVecchia.sede, testo_extra)
 
