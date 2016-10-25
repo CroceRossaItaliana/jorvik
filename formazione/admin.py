@@ -4,7 +4,7 @@ from django.contrib import admin
 
 from base.admin import InlineAutorizzazione
 from django.contrib.contenttypes.admin import GenericTabularInline
-from formazione.models import CorsoBase, PartecipazioneCorsoBase, AssenzaCorsoBase, Aspirante, LezioneCorsoBase
+from formazione.models import CorsoBase, PartecipazioneCorsoBase, AssenzaCorsoBase, Aspirante, LezioneCorsoBase, InvitoCorsoBase
 from gruppi.readonly_admin import ReadonlyAdminMixin
 
 
@@ -12,6 +12,7 @@ __author__ = 'alfioemanuele'
 
 RAW_ID_FIELDS_CORSOBASE = ['sede', 'locazione',]
 RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE = ['persona', 'corso', 'destinazione',]
+RAW_ID_FIELDS_INVITOCORSOBASE = ['persona', 'corso',]
 RAW_ID_FIELDS_LEZIONECORSOBASE = ['corso',]
 RAW_ID_FIELDS_ASSENZACORSOBASE = ['lezione', 'persona', 'registrata_da',]
 RAW_ID_FIELDS_ASPIRANTE = ['persona', 'locazione',]
@@ -28,6 +29,12 @@ class InlineDelegaCorsoBase(ReadonlyAdminMixin, GenericTabularInline):
 class InlinePartecipazioneCorsoBase(ReadonlyAdminMixin, admin.TabularInline):
     model = PartecipazioneCorsoBase
     raw_id_fields = RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE
+    extra = 0
+
+
+class InlineInvitoCorsoBase(ReadonlyAdminMixin, admin.TabularInline):
+    model = InvitoCorsoBase
+    raw_id_fields = RAW_ID_FIELDS_INVITOCORSOBASE
     extra = 0
 
 
@@ -57,7 +64,7 @@ class AdminCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     list_display = ['progressivo', 'anno', 'stato', 'sede', 'data_inizio', 'data_esame', ]
     list_filter = ['anno', 'creazione', 'stato', 'data_inizio', ]
     raw_id_fields = RAW_ID_FIELDS_CORSOBASE
-    inlines = [InlineDelegaCorsoBase, InlinePartecipazioneCorsoBase, InlineLezioneCorsoBase]
+    inlines = [InlineDelegaCorsoBase, InlinePartecipazioneCorsoBase, InlineInvitoCorsoBase, InlineLezioneCorsoBase]
     actions = [admin_corsi_base_attivi_invia_messaggi]
 
 

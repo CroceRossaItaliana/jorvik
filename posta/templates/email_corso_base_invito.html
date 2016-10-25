@@ -1,0 +1,17 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p class="grassetto">Ciao {{ persona.nome }}!</p>
+    <p>Ricevi questo messaggio perch&eacute; sei stato invitato ad un Corso Base per
+        diventare Volontari{{ persona.genere_o_a }}!</p>
+    <p>Il corso &egrave; organizzato dal {{ corso.sede.link|safe }} e avr&agrave; inizio
+        il {{ corso.data_inizio }}.</p>
+
+    <p><strong>
+        <a href="{{ partecipazione.url }}">
+            Clicca qui per confermare l'invito e perfezionare l'iscrizione al corso.
+        </a>
+    </strong></p>
+
+{% endblock %}
