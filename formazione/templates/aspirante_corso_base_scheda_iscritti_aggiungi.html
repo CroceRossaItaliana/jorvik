@@ -21,7 +21,7 @@
             </div>
             <div class="panel-body">
                 <p>Con questo modulo puoi selezionare uno o pi&ugrave;
-                    <strong>Sostenitori</strong> da iscrivere a questo
+                    <strong>Sostenitori</strong> o <strong>Aspiranti</strong> da iscrivere a questo
                     corso base.</p>
                 <p>Presidente e Ufficio Soci possono inserire i sostenitori
                     dal pannello "Soci" > "Aggiungi Persona".</p>
@@ -44,7 +44,8 @@
             <div class="panel-footer">
                 <i class="fa fa-fw fa-envelope-o"></i>
                 Avviseremo per e-mail le persone che verranno
-                 iscritte al corso.
+                 iscritte al corso; le persone dovranno accettare
+                l'iscrizione perché sia effettiva.
             </div>
         </div>
 
@@ -71,7 +72,7 @@
                     <tbody>
                         {% for r in risultati %}
                         <tr
-                            {% if r.ok %}
+                            {% if r.ok > 0 %}
                                 class="success"
                             {% else %}
                                 class="danger"
@@ -99,10 +100,15 @@
                                 {% endif %}
                             </td>
                             <td class="grassetto">
-                                {% if r.ok %}
+                                {% if r.ok == r.partecipazione.ISCRITTO %}
                                     <i class="fa fa-fw fa-check"></i>
                                     Sì
-
+                                {% elif  r.ok == r.partecipazione.IN_ATTESA_ASPIRANTE %}
+                                    <i class="fa fa-fw fa-times"></i>
+                                    In attesa
+                                {% elif  r.ok == r.partecipazione.INVITO_INVIATO %}
+                                    <i class="fa fa-fw fa-warning"></i>
+                                    Già invitato
                                 {% else %}
                                     <i class="fa fa-fw fa-times"></i>
                                     No

@@ -1,0 +1,5 @@
+<p>{{ richiesta.richiedente.link|safe }} ti invita ad iscriverti
+    al {{ richiesta.oggetto.corso.link|safe }} per
+    diventare Volontari{{ richiesta.oggetto.persona.genere_o_a }}!</p>
+<p>Il corso &egrave; organizzato dal {{ richiesta.oggetto.corso.sede.link|safe }} e avr&agrave; inizio
+    {{ richiesta.oggetto.corso.data_inizio|date:"DATETIME_FORMAT" }}.</p>

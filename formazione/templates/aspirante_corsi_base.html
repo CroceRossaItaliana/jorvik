@@ -40,7 +40,11 @@
 
                 <td>
                     <i class="fa fa-fw fa-calendar"></i>
-                        Inizia: {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}
+                        {% if not corso.iniziato %}
+                            Inizia: {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}
+                        {% else %}
+                            <span class="bg-danger">Iniziato: {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}</span>
+                        {% endif %}
                         <br />
                     <i class="fa fa-fw fa-calendar"></i>
                         Esami: {{ corso.data_esame|date:"SHORT_DATETIME_FORMAT" }}<br />
