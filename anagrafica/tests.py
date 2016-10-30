@@ -1,6 +1,8 @@
 import datetime
 from unittest import skipIf
 
+import re
+from django.core import mail
 from django.test import TestCase
 from lxml import html
 
@@ -918,7 +920,6 @@ class TestFunzionaliAnagrafica(TestFunzionale):
         # Prova accesso con nuova utenza.
         sessione_persona = self.sessione_utente(utente=utenza)
 
-
     def test_us_cambio_credenziali(self):
 
         VECCHIA_EMAIL = email_fittizzia()
@@ -1040,3 +1041,34 @@ class TestFunzionaliAnagrafica(TestFunzionale):
         modulo = ModuloProfiloModificaAnagrafica(data, instance=p2)
         self.assertEqual(modulo.is_valid(), True)
         self.assertEqual(p2.codice_fiscale, vecchio_codice_fiscale)
+
+    def test_modifica_email(self):
+        EMAIL_UTENZA = email_fittizzia()
+        EMAIL_NUOVA = email_fittizzia()
+
+        persona = crea_persona()
+        utenza = crea_utenza(persona, EMAIL_UTENZA)
+
+        sessione = self.sessione_utente(persona=persona)
+        sessione.click_link_by_partial_text("Contatti")
+
+        sessione.is_text_present(EMAIL_UTENZA)
+        sessione.fill('email', EMAIL_NUOVA)
+        sessione.find_by_xpath("//button[@type='submit']").first.click()
+
+        sessione.is_text_present('Conferma nuovo indirizzo email')
+        sessione.is_text_present(EMAIL_NUOVA)
+
+        email = mail.outbox[0]
+        code_re = re.compile("/utente/contatti/\?code_m=([^']+)")
+        code_text = code_re.findall(email.alternatives[0][0])[0]
+        sessione.visit("%s%s?code_m=%s" % (self.live_server_url, persona.url_contatti, code_text))
+
+        sessione.is_text_present('Nuovo indirizzo email confermato!')
+
+        utenza.refresh_from_db()
+
+        self.assertTrue(
+            utenza.email == EMAIL_NUOVA,
+            msg="E-mail di accesso cambiata correttamente"
+        )
