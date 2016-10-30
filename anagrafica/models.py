@@ -698,6 +698,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def url_profilo_quote(self):
         return "%squote/" % (self.url,)
 
+    @property
+    def url_contatti(self):
+        return "/utente/contatti/"
 
     @property
     def messaggio_url(self):
