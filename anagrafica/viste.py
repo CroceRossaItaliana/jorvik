@@ -463,19 +463,19 @@ def utente_contatti(request, me):
     parametri_cambio_email = {
         'contatto': {
             'session_key': 'modifica_contatto_id',
-            'precedente': me.email_contatto,
-            'code_type': 'code_c',
-            'field': 'email_contatto',
             'session_code': 'modifica_contatto',
+            'code_type': 'code_c',
+            'precedente': me.email_contatto,
+            'field': 'email_contatto',
             'oggetto': 'Modifica email di contatto',
             'template': 'email_conferma_contatto.html',
-    },
-        'acceso': {
+        },
+        'accesso': {
             'session_key': 'modifica_mail_id',
-            'precedente': me.utenza.email,
-            'code_type': 'code_m',
-            'field': 'email',
             'session_code': 'modifica_mail',
+            'code_type': 'code_m',
+            'precedente': me.utenza.email,
+            'field': 'email',
             'oggetto': 'Modifica email di accesso',
             'template': 'email_conferma_cambio_email.html',
         },
@@ -511,12 +511,12 @@ def utente_contatti(request, me):
 
     else:
 
+        stato_conferma_accesso, errore_conferma_accesso = _conferma_email(request, me, parametri_cambio_email['accesso'])
+        stato_conferma_contatto, errore_conferma_contatto = _conferma_email(request, me, parametri_cambio_email['contatto'])
+
         modulo_email_accesso = ModuloModificaEmailAccesso(instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(instance=me)
         modulo_numero_telefono = ModuloCreazioneTelefono()
-
-        stato_conferma_accesso, errore_conferma_accesso = _conferma_email(request, me, parametri_cambio_email['accesso'])
-        stato_conferma_contatto, errore_conferma_contatto = _conferma_email(request, me, parametri_cambio_email['contatto'])
 
     numeri = me.numeri_telefono.all()
     contesto = {

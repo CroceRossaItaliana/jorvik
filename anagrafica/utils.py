@@ -30,7 +30,7 @@ def _richiesta_conferma_email(request, me, parametri, modulo):
 
 def _conferma_email(request, me, parametri):
     stato_conferma, errore_conferma = False, False
-    nuova_email = request.session.get(parametri['session_type'], '')
+    nuova_email = request.session.get(parametri['session_code'], '')
     if nuova_email and nuova_email != parametri['precedente'] and request.session.get(parametri['session_key']):
         if request.session.get(parametri['session_key']) != request.GET.get(parametri['code_type'], None):
             errore_conferma = True
@@ -42,6 +42,6 @@ def _conferma_email(request, me, parametri):
                 me.email_contatto = nuova_email
                 me.save()
             stato_conferma = True
-            del request.session[parametri['session_type']]
+            del request.session[parametri['session_code']]
             del request.session[parametri['session_key']]
     return stato_conferma, errore_conferma
