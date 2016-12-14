@@ -37,6 +37,15 @@
 
             {% csrf_token %}
             {% bootstrap_form modulo %}
+            
+            <div class="alert alert-danger">
+            <i class="fa fa-fw fa-info-circle"></i>
+            <strong>PRIMA DI INVIARE IL MESSAGGIO</strong><br>
+            Ti chiediamo ancora una volta la tua collaborazione leggendo il messaggio sopra riportato. <br />
+            Non è consentito inviare tramite GAIA comunicazione non di carattere istituzione, come ad esempio <strong>auguri natalizi</strong> e di <strong>festività</strong>.<br/>
+            GAIA è in grado di rilevare questa tipologia di messaggi e sospendere la funzionalità di invio email massimo all'utilizzatore.<br />
+            Grazie per la collaborzione.
+         </div>
 
             <button type="submit"
                     class="btn btn-primary btn-success btn-block btn-lg">
