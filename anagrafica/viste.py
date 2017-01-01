@@ -2,8 +2,10 @@ import codecs
 import csv
 import datetime
 from collections import OrderedDict
+from importlib import import_module
 
 from django.apps import apps
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
@@ -106,6 +108,21 @@ def registrati(request, tipo, step=None):
     if tipo not in TIPO:
         return redirect('/errore/')  # Altrimenti porta ad errore generico
 
+    # Se stiamo leggendo i dati dall'URL per confermare l'email carica anche la sessione
+    registration_code = request.GET.get('code', '')
+    session_key = request.GET.get('registration', '')
+
+    SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
+    uid = None
+    if session_key and registration_code:
+        featured_session = SessionStore(session_key=session_key)
+        uid = featured_session.get('_auth_user_id')
+        # Come misura di sicurezza controlliamo di non star impersonando nessuno e cambiamo subito l'id
+        # di sessione
+        if uid is None and registration_code == featured_session.get('registrazione_id'):
+            request.session = featured_session
+        request.session.cycle_key()
+
     # Se nessuno step, assume il primo step per il tipo
     # es. /registrati/volontario/ => /registrati/volontario/comitato/
     if not step:
@@ -173,33 +190,42 @@ def registrati(request, tipo, step=None):
         if 'registrazione_id' not in request.session:
             request.session['registrazione_id'] = get_random_string(length=32)
 
-        corpo = {
-            'tipo': tipo,
-            'step': step,
-            'code': request.session['registrazione_id'],
-            'email': sessione.get('email')
-        }
-
-        Messaggio.invia_raw(
-           oggetto="Registrazione su Gaia",
-           corpo_html=get_template('email_conferma.html').render(corpo),
-           email_mittente=None,
-           lista_email_destinatari=[
-                sessione.get('email')
-           ]
-        )
-
-        registration_code = request.GET.get('code', '')
-
-        if request.session['registrazione_id'] != registration_code:
+        if not sessione.get('email'):
             contesto = {
                 'attuale_nome': STEP_NOMI[step],
                 'attuale_slug': step,
                 'lista_step': lista_step,
-                'email': sessione.get('email'),
                 'tipo': tipo,
             }
-            return 'anagrafica_registrati_attesa_mail.html', contesto
+            return 'anagrafica_registrati_errore.html', contesto
+
+        else:
+            corpo = {
+                'tipo': tipo,
+                'step': step,
+                'code': request.session['registrazione_id'],
+                'email': sessione.get('email'),
+                'sessione': request.session.session_key
+            }
+
+            Messaggio.invia_raw(
+               oggetto="Registrazione su Gaia",
+               corpo_html=get_template('email_conferma.html').render(corpo),
+               email_mittente=None,
+               lista_email_destinatari=[
+                    sessione.get('email')
+               ]
+            )
+
+            if uid is not None or request.session['registrazione_id'] != registration_code:
+                contesto = {
+                    'attuale_nome': STEP_NOMI[step],
+                    'attuale_slug': step,
+                    'lista_step': lista_step,
+                    'email': sessione.get('email'),
+                    'tipo': tipo,
+                }
+                return 'anagrafica_registrati_attesa_mail.html', contesto
 
     return 'anagrafica_registrati_step_' + step + '.html', contesto
 
