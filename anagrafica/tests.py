@@ -4,6 +4,7 @@ from unittest import skipIf
 import re
 from django.core import mail
 from django.test import TestCase
+from freezegun import freeze_time
 from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
@@ -452,6 +453,7 @@ class TestAnagrafica(TestCase):
         )
 
     #@skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
+    @freeze_time('2016-11-14')
     def test_storia_volontario(self):
         presidente1 = crea_persona()
         presidente2 = crea_persona()
