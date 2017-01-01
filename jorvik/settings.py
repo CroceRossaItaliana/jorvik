@@ -180,9 +180,6 @@ TWO_FACTOR_PUBLIC = (
 TWO_FACTOR_SESSION_DURATA = 120
 SESSION_COOKIE_PATH = '/'
 
-# Driver per i test funzionali
-DRIVER_WEB = 'firefox'
-
 # Configurazione E-mail
 EMAIL_CONF = configparser.ConfigParser()
 EMAIL_CONF.read(EMAIL_CONF_FILE)
@@ -217,6 +214,9 @@ DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
 SECRET_KEY = DEBUG_CONF.get('production', 'secret_key')
 JORVIK_LOG_FILE = DEBUG_CONF.get('debug', 'debug_log', fallback=os.path.join('..', 'log', 'debug.log'))
 JORVIK_LOG = os.path.join(BASE_DIR, JORVIK_LOG_FILE)
+
+# Driver per i test funzionali
+DRIVER_WEB = DEBUG_CONF.get('test', 'driver', fallback='firefox')
 
 host = "%s" % (DEBUG_CONF.get('production', 'host'),)
 www_host = "www.%s" % (host,)
