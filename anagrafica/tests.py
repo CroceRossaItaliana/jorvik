@@ -3,13 +3,14 @@ from unittest import skipIf
 
 import re
 from django.core import mail
+from django.core.management import call_command
 from django.test import TestCase
 from freezegun import freeze_time
 from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
 from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica
-from anagrafica.models import Appartenenza, Documento, Delega, Dimissione
+from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Sede
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
 from autenticazione.models import Utenza
@@ -1074,3 +1075,94 @@ class TestFunzionaliAnagrafica(TestFunzionale):
             utenza.email == EMAIL_NUOVA,
             msg="E-mail di accesso cambiata correttamente"
         )
+
+
+class TestCommand(TestCase):
+
+    def test_riassegnazione(self):
+        s1 = Sede.objects.create(
+            nome="Com. Regiornale 1",
+            tipo=Sede.COMITATO,
+            estensione=REGIONALE,
+        )
+        s2 = Sede.objects.create(
+            nome="Com. Regiornale 2",
+            tipo=Sede.COMITATO,
+            estensione=REGIONALE,
+        )
+        provinciali = []
+        locali = []
+        territoriali_regionali = []
+        territoriali_provinciali = []
+        territoriali_locali = []
+
+        for sede in (s1, s2):
+            for x in range(0, 4):
+                cp = Sede.objects.create(
+                    nome="Com. Prov {} {}".format(sede, x),
+                    tipo=Sede.COMITATO,
+                    estensione=PROVINCIALE,
+                    genitore=sede,
+                )
+                provinciali.append(cp)
+
+                cp = Sede.objects.create(
+                    nome="Com. Ter {} {}".format(sede, x),
+                    tipo=Sede.COMITATO,
+                    estensione=TERRITORIALE,
+                    genitore=sede,
+                )
+                territoriali_regionali.append(cp)
+
+        for sede in provinciali:
+            for x in range(0, 4):
+                cp = Sede.objects.create(
+                    nome="Com. Loc {} {}".format(sede, x),
+                    tipo=Sede.COMITATO,
+                    estensione=LOCALE,
+                    genitore=sede,
+                )
+                locali.append(cp)
+
+                cp = Sede.objects.create(
+                    nome="Com. Ter {} {}".format(sede, x),
+                    tipo=Sede.COMITATO,
+                    estensione=TERRITORIALE,
+                    genitore=sede,
+                )
+                territoriali_provinciali.append(cp)
+
+        for sede in locali:
+            for x in range(0, 4):
+                cp = Sede.objects.create(
+                    nome="Com. Teritoriale {} {}".format(sede, x),
+                    tipo=Sede.COMITATO,
+                    estensione=TERRITORIALE,
+                    genitore=sede,
+                )
+                territoriali_locali.append(cp)
+
+        self.assertEqual(len(provinciali), Sede.objects.filter(estensione=PROVINCIALE).count())
+        self.assertEqual(len(locali), Sede.objects.filter(estensione=LOCALE).count())
+        self.assertEqual(len(territoriali_regionali) + len(territoriali_provinciali) + len(territoriali_locali), Sede.objects.filter(estensione=TERRITORIALE).count())
+        call_command('riassegna_comitati')
+
+        self.assertEqual(len(provinciali), Sede.objects.filter(estensione=PROVINCIALE).count())
+        self.assertEqual(len(locali), Sede.objects.filter(estensione=LOCALE).count())
+        self.assertEqual(len(territoriali_regionali) + len(territoriali_provinciali) + len(territoriali_locali), Sede.objects.filter(estensione=TERRITORIALE).count())
+
+        for comitato in Sede.objects.filter(estensione=LOCALE):
+            self.assertTrue(comitato.genitore.estensione == REGIONALE)
+
+        for comitato in Sede.objects.filter(estensione=PROVINCIALE):
+            self.assertTrue(comitato.genitore.estensione == REGIONALE)
+
+        for comitato in Sede.objects.filter(pk__in=[item.pk for item in territoriali_regionali]):
+            self.assertTrue(comitato.genitore.estensione == REGIONALE)
+
+        for comitato in Sede.objects.filter(pk__in=[item.pk for item in territoriali_provinciali]):
+            self.assertTrue(comitato.genitore.estensione == PROVINCIALE)
+
+        for comitato in Sede.objects.filter(pk__in=[item.pk for item in territoriali_locali]):
+            self.assertTrue(comitato.genitore.estensione == LOCALE)
+            self.assertTrue(comitato.genitore.genitore.estensione == REGIONALE)
