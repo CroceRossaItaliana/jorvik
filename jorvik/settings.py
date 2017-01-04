@@ -219,8 +219,11 @@ JORVIK_LOG = os.path.join(BASE_DIR, JORVIK_LOG_FILE)
 DRIVER_WEB = DEBUG_CONF.get('test', 'driver', fallback='firefox')
 
 host = "%s" % (DEBUG_CONF.get('production', 'host'),)
-www_host = "www.%s" % (host,)
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', host, www_host]
+if host == 'localhost':
+    ALLOWED_HOSTS = ['*']
+else:
+    www_host = "www.%s" % (host,)
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', host, www_host]
 
 # Configurazione dei servizi API
 APIS_CONF = configparser.ConfigParser()
