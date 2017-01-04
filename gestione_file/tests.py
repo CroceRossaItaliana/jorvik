@@ -5,6 +5,7 @@ import tempfile
 import django.core.files
 from django.core.urlresolvers import reverse
 from django.test import TestCase
+from django.utils.timezone import now
 
 from autenticazione.utils_test import TestFunzionale
 from filer.models import Folder
@@ -117,7 +118,9 @@ class TestSegmenti(TestCase):
     def test_filtro_semplice(self):
         segmento_1 = self._crea_segmento(self.file_1, 'A')
         segmento_2 = self._crea_segmento(self.file_2, 'D')
-        volontario, _, _ = crea_persona_sede_appartenenza()
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
+        appartenenza.inizio = now()
+        appartenenza.save()
         qs = DocumentoSegmento.objects.all()
 
         documenti = qs.filtra_per_segmenti(volontario)
@@ -127,7 +130,7 @@ class TestSegmenti(TestCase):
         self.assertEqual(oggetti.count(), 1)
         self.assertEqual(set(oggetti), set(Documento.objects.filter(pk=self.file_1.pk)))
 
-        segmento_3 = self._crea_segmento(self.file_2, 'B')
+        segmento_3 = self._crea_segmento(self.file_2, 'C')
 
         documenti = qs.filtra_per_segmenti(volontario)
         self.assertEqual(documenti.count(), 2)
@@ -137,9 +140,9 @@ class TestSegmenti(TestCase):
         self.assertEqual(set(oggetti), set(Documento.objects.filter(pk__in=(self.file_1.pk, self.file_2.pk))))
 
     def test_filtro_con_sede(self):
-        volontario_con_sede, _, _ = crea_persona_sede_appartenenza()
-
-        sede = volontario_con_sede.sedi_attuali().first()
+        volontario_con_sede, sede, appartenenza = crea_persona_sede_appartenenza()
+        appartenenza.inizio = now()
+        appartenenza.save()
 
         altra_sede = crea_sede()
 
@@ -165,7 +168,9 @@ class TestSegmenti(TestCase):
         self.assertEqual(set(oggetti), set(Documento.objects.filter(pk__in=(self.file_1.pk, self.file_2.pk))))
 
     def test_filtro_con_titolo(self):
-        volontario_con_titolo, _, _ = crea_persona_sede_appartenenza()
+        volontario_con_titolo, sede, appartenenza = crea_persona_sede_appartenenza()
+        appartenenza.inizio = now()
+        appartenenza.save()
         titolo_personale = TitoloPersonale.objects.create(
             titolo=self.titolo_patenteCRI, persona=volontario_con_titolo
         )
