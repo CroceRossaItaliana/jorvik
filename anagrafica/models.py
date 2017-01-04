@@ -1177,6 +1177,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     MEMBRO_SOCIO = (VOLONTARIO, ORDINARIO,)
     MEMBRO_ANZIANITA = MEMBRO_SOCIO
     MEMBRO_ANZIANITA_ANNI = 2
+    MEMBRO_ANZIANITA_ELETTORATO_ATTIVO = 1
 
     # Membri sotto il diretto controllo di una altra Sede
     MEMBRO_ESTESO = (ESTESO,)
