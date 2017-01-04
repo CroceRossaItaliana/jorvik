@@ -12,3 +12,4 @@ assets/
 .sass-cache
 .venv
 /log/debug.log
+/ghostdriver.log
