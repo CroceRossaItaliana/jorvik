@@ -32,6 +32,8 @@ class TestBase(TestCase):
         self.due_anni_e_mezo_fa = datetime.date(2012, 6, 15)
         self.un_anno_fa = datetime.date(2014, 1, 1)
         self.un_anno_e_mezzo_fa = datetime.date(2013, 6, 15)
+        self.sei_mesi_fa = datetime.date(2015, 6, 1)
+        self.nove_mesi_fa = datetime.date(2015, 3, 1)
 
         def _elettorato(tipo="attivo"):
             if tipo not in ("attivo", "passivo",):
@@ -105,7 +107,7 @@ class TestBase(TestCase):
         self.p.data_nascita = self.venti_anni_fa
         self.p.save()
 
-        self.a.inizio = self.un_anno_fa
+        self.a.inizio = self.sei_mesi_fa
         self.a.save()
 
         self.assertFalse(
@@ -132,12 +134,12 @@ class TestBase(TestCase):
             persona=self.p,
             sede=self.s,
             inizio=self.due_anni_e_mezo_fa,
-            fine=self.un_anno_fa,
+            fine=self.sei_mesi_fa,
             terminazione=Appartenenza.TRASFERIMENTO,
         )
         x.save()
 
-        self.a.inizio = self.un_anno_fa
+        self.a.inizio = self.sei_mesi_fa
         self.a.fine = None
         self.a.precedente = x
         self.a.save()
@@ -147,7 +149,7 @@ class TestBase(TestCase):
             "Elettorato attivo contiene volontari con doppia appartenenza valida (trasf.)"
         )
 
-        x.inizio = self.un_anno_e_mezzo_fa
+        x.inizio = self.nove_mesi_fa
         x.save()
 
         self.assertFalse(
@@ -203,7 +205,7 @@ class TestBase(TestCase):
         )
         x.save()
 
-        self.a.inizio = self.un_anno_fa
+        self.a.inizio = self.sei_mesi_fa
         self.a.fine = None
         self.a.precedente = x
         self.a.save()
@@ -224,7 +226,6 @@ class TestBase(TestCase):
         self.a.precedente = None
         self.a.save()
         x.delete()
-
 
     def test_elettorato_passivo_trasferimento_anzianita_soddisfatta(self):
 
