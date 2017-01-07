@@ -3,6 +3,7 @@ from unittest import skipIf
 
 import re
 from django.core import mail
+from django.test import Client
 from django.test import TestCase
 from freezegun import freeze_time
 from lxml import html
@@ -1074,3 +1075,12 @@ class TestFunzionaliAnagrafica(TestFunzionale):
             utenza.email == EMAIL_NUOVA,
             msg="E-mail di accesso cambiata correttamente"
         )
+
+    def test_registrazione_non_valida(self):
+
+        client = Client()
+        response = client.get('/registrati/aspirante/anagrafica/?code=random_str')
+        self.assertContains(response, 'Errore nel processo di registrazione.')
+
+        response = client.get('/registrati/aspirante/anagrafica/?code=random_str&registration=random_session')
+        self.assertContains(response, 'Errore nel processo di registrazione.')
