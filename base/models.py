@@ -9,6 +9,7 @@ from django.utils.timezone import now
 from django.utils.functional import cached_property
 from django.forms import forms
 from mptt.models import MPTTModel, TreeForeignKey
+
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
 from anagrafica.permessi.costanti import MODIFICA
 from anagrafica.permessi.incarichi import INCARICHI, INCARICHI_TIPO_DICT
@@ -327,6 +328,54 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             autorizzazione.controlla_nega_automatico()
         for autorizzazione in da_approvare:
             autorizzazione.controlla_concedi_automatico()
+
+    @classmethod
+    def notifiche_trasferimenti_pending(cls, trasferimenti, oggetto, modello):
+        from posta.models import Messaggio
+
+        persone = set()
+        for trasferimento in trasferimenti:
+            persone.update(cls.espandi_notifiche(trasferimento.destinatario_oggetto, [], True, True))
+        print(persone)
+
+        for persona in persone:
+            corpo = {
+                "persona": persona,
+                "DATA_AVVIO_TRASFERIMENTI_AUTO": settings.DATA_AVVIO_TRASFERIMENTI_AUTO
+            }
+
+            Messaggio.costruisci_e_invia(
+                oggetto=oggetto,
+                modello=modello,
+                corpo=corpo,
+                destinatari=[persona]
+            )
+
+    @classmethod
+    def notifiche_trasferimenti_pending_automatici(cls):
+        from anagrafica.models import Trasferimento
+
+        oggetto = "Richieste di trasferimento in attesa di approvazione"
+        modello = "email_trasferimenti_auto_pending.html"
+
+        base = cls.objects.filter(
+            concessa__isnull=True, scadenza__isnull=False, scadenza__gt=now().exclude(tipo_gestione=Autorizzazione.MANUALE)
+        )
+        trasferimenti = base.filter(oggetto_tipo=ContentType.objects.get_for_model(Trasferimento))
+        cls.notifiche_trasferimenti_pending(trasferimenti, oggetto, modello)
+
+    @classmethod
+    def notifiche_trasferimenti_pending_manuali(cls):
+        from anagrafica.models import Trasferimento
+
+        oggetto = "Richieste di trasferimento in attesa di approvazione"
+        modello = "email_trasferimenti_manuali_pending.html"
+
+        base = cls.objects.filter(
+            concessa__isnull=True, scadenza__isnull=True, tipo_gestione=Autorizzazione.MANUALE
+        )
+        trasferimenti = base.filter(oggetto_tipo=ContentType.objects.get_for_model(Trasferimento))
+        cls.notifiche_trasferimenti_pending(trasferimenti, oggetto, modello)
 
 
 class Log(ModelloSemplice, ConMarcaTemporale):
