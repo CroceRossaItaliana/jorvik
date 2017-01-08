@@ -817,6 +817,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return self.trasferimenti_in_attesa.filter(tipo_gestione=Autorizzazione.MANUALE)
 
+    @cached_property
+    def estensioni_da_autorizzare(self):
+        return self.autorizzazioni_in_attesa().filter(oggetto_tipo=ContentType.objects.get_for_model(Estensione))
+
     def deleghe_anagrafica(self):
         """
         Ritora un queryset di tutte le deleghe attuali alle persone che sono

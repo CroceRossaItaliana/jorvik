@@ -86,6 +86,7 @@ CRON_CLASSES = [
     "base.cron.CronApprovaNegaAuto",
     "base.cron.CronTrasferimentiAutoInAttesa",
     "base.cron.CronTrasferimentiManualiInAttesa",
+    "base.cron.CronEstensioniInAttesa",
     "anagrafica.cron.CronReportComitati",
 ]
 
