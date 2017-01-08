@@ -653,7 +653,7 @@ class TestAnagrafica(TestCase):
             msg="Il volontario non ha estensioni in corso"
         )
 
-    def test_estensione_automatica(self):
+    def test_estensione_non_automatica(self):
         presidente1 = crea_persona()
         presidente1.email_contatto = email_fittizzia()
         presidente1.save()
@@ -716,25 +716,15 @@ class TestAnagrafica(TestCase):
         Autorizzazione.gestisci_automatiche()
         autorizzazione.refresh_from_db()
 
-        self.assertEqual(5, len(mail.outbox))
-        destinatari_verificati = 0
-        for email in mail.outbox[2:]:
-            if da_estendere.email_contatto in email.to:
-                # Notifica alla persona estesa
-                self.assertTrue(email.subject.find('Richiesta di Estensione APPROVATA') > -1)
-                destinatari_verificati += 1
-            elif presidente1.email_contatto in email.to or ufficio_soci.email_contatto in email.to:
-                # Notifica presidente e ufficio soci in uscita
-                self.assertTrue(email.subject.find('Richiesta di Estensione da %s APPROVATA' % da_estendere.nome_completo) > -1)
-                destinatari_verificati += 1
-        self.assertEqual(destinatari_verificati, 3)
+        # Estensioni non sono approvate in automatico
+        self.assertEqual(2, len(mail.outbox))
 
-        self.assertEqual(autorizzazione.concessa, True)
-        self.assertTrue(autorizzazione.oggetto.automatica)
+        self.assertEqual(autorizzazione.concessa, None)
+        self.assertFalse(autorizzazione.oggetto.automatica)
         Autorizzazione.gestisci_automatiche()
-        self.assertEqual(autorizzazione.concessa, True)
-        self.assertIn(est, Estensione.con_esito_ok())
-        self.assertEqual(da_estendere.appartenenze_attuali(membro=Appartenenza.ESTESO, sede=sede2).count(), 1)
+        self.assertEqual(autorizzazione.concessa, None)
+        self.assertNotIn(est, Estensione.con_esito_ok())
+        self.assertEqual(da_estendere.appartenenze_attuali(membro=Appartenenza.ESTESO, sede=sede2).count(), 0)
 
     def test_trasferimento_automatico(self):
         presidente1 = crea_persona()

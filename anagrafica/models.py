@@ -1934,8 +1934,6 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
 
     RICHIESTA_NOME = "Estensione"
 
-    APPROVAZIONE_AUTOMATICA = timedelta(days=settings.SCADENZA_AUTORIZZAZIONE_AUTOMATICA)
-
     def attuale(self, **kwargs):
         """
         Controlla che l'estensione sia stata confermata e
@@ -1952,12 +1950,8 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         return ModuloNegaEstensione
 
     def autorizzazione_concessa(self, modulo=None, auto=False):
-        if auto:
-            self.protocollo_data = timezone.now()
-            self.protocollo_numero = Autorizzazione.PROTOCOLLO_AUTO
-        else:
-            self.protocollo_data = modulo.cleaned_data['protocollo_data']
-            self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
+        self.protocollo_data = modulo.cleaned_data['protocollo_data']
+        self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
         origine = self.persona.sede_riferimento()
         app = Appartenenza(
             membro=Appartenenza.ESTESO,
@@ -1969,7 +1963,6 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         app.save()
         self.appartenenza = app
         self.save()
-        self.autorizzazioni.first().notifica_origine_autorizzazione_concessa(origine)
 
     def richiedi(self):
         if not self.persona.sede_riferimento():
@@ -1979,8 +1972,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
             self.persona,
             INCARICO_GESTIONE_ESTENSIONI,
             invia_notifica_presidente=True,
-            auto=Autorizzazione.AP_AUTO,
-            scadenza=self.APPROVAZIONE_AUTOMATICA,
+            auto=Autorizzazione.MANUALE,
         )
         if self.destinazione.presidente():
             Messaggio.costruisci_e_invia(
