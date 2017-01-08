@@ -793,6 +793,30 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return self._autorizzazioni_in_attesa().order_by('creazione')
 
+    @cached_property
+    def trasferimenti_in_attesa(self):
+        """
+        Ritorna tutti i trasferimenti firmabili da qesto utente e in attesa di firma,
+        :return: QuerySet<Autorizzazione>
+        """
+        return self.autorizzazioni_in_attesa().filter(oggetto_tipo=ContentType.objects.get_for_model(Trasferimento))
+
+    @cached_property
+    def trasferimenti_automatici(self):
+        """
+        Ritorna tutti i trasferimenti firmabili da qesto utente e in attesa di firma, con approvazione automatica
+        :return: QuerySet<Autorizzazione>
+        """
+        return self.trasferimenti_in_attesa.filter(scadenza__isnull=False).exclude(tipo_gestione=Autorizzazione.MANUALE)
+
+    @cached_property
+    def trasferimenti_manuali(self):
+        """
+        Ritorna tutti i trasferimenti firmabili da qesto utente e in attesa di firma, senza approvazione automatica
+        :return: QuerySet<Autorizzazione>
+        """
+        return self.trasferimenti_in_attesa.filter(tipo_gestione=Autorizzazione.MANUALE)
+
     def deleghe_anagrafica(self):
         """
         Ritora un queryset di tutte le deleghe attuali alle persone che sono
