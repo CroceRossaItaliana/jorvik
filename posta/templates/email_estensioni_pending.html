@@ -1,0 +1,9 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+<p class="grassetto">Salve {{ persona.nome_completo }}.</p>
+<p> Ti ricordiamo che risult{{ persona.estensioni_da_autorizzare|pluralize:"a,ano" }} {{ persona.estensioni_da_autorizzare|length }} richiest{{ persona.estensioni_da_autorizzare|pluralize:"a,e" }} di estensione in attesa di approvazione.</p>
+<p>Vai nella <a href="/autorizzazioni/">Sezione Richieste</a> per approvarl{{ persona.estensioni_da_autorizzare|pluralize:"a,e" }} o negarl{{ persona.estensioni_da_autorizzare|pluralize:"a,e" }}.</p>
+
+{% endblock %}

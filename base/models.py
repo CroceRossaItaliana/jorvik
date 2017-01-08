@@ -330,13 +330,12 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             autorizzazione.controlla_concedi_automatico()
 
     @classmethod
-    def notifiche_trasferimenti_pending(cls, trasferimenti, oggetto, modello):
+    def notifiche_autorizzazioni_pending(cls, autorizzazioni, oggetto, modello):
         from posta.models import Messaggio
 
         persone = set()
-        for trasferimento in trasferimenti:
-            persone.update(cls.espandi_notifiche(trasferimento.destinatario_oggetto, [], True, True))
-        print(persone)
+        for autorizzazione in autorizzazioni:
+            persone.update(cls.espandi_notifiche(autorizzazione.destinatario_oggetto, [], True, True))
 
         for persona in persone:
             corpo = {
@@ -362,7 +361,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             concessa__isnull=True, scadenza__isnull=False, scadenza__gt=now().exclude(tipo_gestione=Autorizzazione.MANUALE)
         )
         trasferimenti = base.filter(oggetto_tipo=ContentType.objects.get_for_model(Trasferimento))
-        cls.notifiche_trasferimenti_pending(trasferimenti, oggetto, modello)
+        cls.notifiche_autorizzazioni_pending(trasferimenti, oggetto, modello)
 
     @classmethod
     def notifiche_trasferimenti_pending_manuali(cls):
@@ -375,7 +374,20 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             concessa__isnull=True, scadenza__isnull=True, tipo_gestione=Autorizzazione.MANUALE
         )
         trasferimenti = base.filter(oggetto_tipo=ContentType.objects.get_for_model(Trasferimento))
-        cls.notifiche_trasferimenti_pending(trasferimenti, oggetto, modello)
+        cls.notifiche_autorizzazioni_pending(trasferimenti, oggetto, modello)
+
+    @classmethod
+    def notifiche_estensioni_pending(cls):
+        from anagrafica.models import Estensione
+
+        oggetto = "Richieste di estensione in attesa di approvazione"
+        modello = "email_estensione_pending.html"
+
+        base = cls.objects.filter(
+            concessa__isnull=True
+        )
+        trasferimenti = base.filter(oggetto_tipo=ContentType.objects.get_for_model(Estensione))
+        cls.notifiche_autorizzazioni_pending(trasferimenti, oggetto, modello)
 
 
 class Log(ModelloSemplice, ConMarcaTemporale):
@@ -708,7 +720,7 @@ class ConAutorizzazioni(models.Model):
             )
             r.save()
 
-            if auto:
+            if auto and auto != Autorizzazione.MANUALE:
                 r.automatizza(concedi=auto, scadenza=scadenza)
 
             if invia_notifiche:

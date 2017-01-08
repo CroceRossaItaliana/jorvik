@@ -50,3 +50,15 @@ class CronTrasferimentiManualiInAttesa(CronJobBase):
 
     def do(self):
         Autorizzazione.notifiche_trasferimenti_pending_manuali()
+
+
+class CronEstensioniInAttesa(CronJobBase):
+
+    RUN_EVERY_HOURS = 24
+    RUN_EVERY_MINS = RUN_EVERY_HOURS * 60
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'base.estensioni.notifica.manuali'
+
+    def do(self):
+        Autorizzazione.notifiche_estensioni_pending()

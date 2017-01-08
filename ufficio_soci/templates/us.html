@@ -51,18 +51,26 @@
 
     </div>
 
-    {% if me.trasferimenti_automatici|length > 0 %}
+    {% if me.trasferimenti_automatici.exists %}
     <div class="alert alert-warning">
         <i class="fa fa-fw fa-warning"></i> Hai {{ me.trasferimenti_automatici|length }} richiest{{ me.trasferimenti_automatici|pluralize:"a,e" }} di trasferimento in attesa di approvazione che sar{{ me.trasferimenti_automatici|pluralize:"à,nno" }} automaticamente approvat{{ me.trasferimenti_automatici|pluralize:"a,e" }} entro 30 giorni dalla data di ciascuna richiesta.<br>
         Vai nella <a href="/autorizzazioni/">Sezione Richieste</a> per approvarl{{ me.trasferimenti_automatici|pluralize:"a,e" }} o negarl{{ me.trasferimenti_automatici|pluralize:"a,e" }}.
     </div>
     {% endif %}
 
-    {% if me.trasferimenti_manuali|length > 0 %}
+    {% if me.trasferimenti_manuali.exists %}
     <div class="alert alert-warning">
-        <i class="fa fa-fw fa-warning"></i> Hai {{ me.trasferimenti_manuali|length }} {{ me.trasferimenti_automatici|pluralize:"a,e" }} di trasferimento.<br>
+        <i class="fa fa-fw fa-warning"></i> Hai {{ me.trasferimenti_manuali|length }} richiest{{ me.trasferimenti_automatici|pluralize:"a,e" }} di trasferimento.<br>
         Per ragioni tecniche -risolte a partire dal {{ SETTINGS.DATA_AVVIO_TRASFERIMENTI_AUTO|date:"SHORT_DATE_FORMAT" }}- non è possibile approvarl{{ me.trasferimenti_automatici|pluralize:"a,e" }} in automatico.<br>
         Vai nella <a href="/autorizzazioni/">Sezione Richieste</a> per approvarl{{ me.trasferimenti_automatici|pluralize:"a,e" }} o negarl{{ me.trasferimenti_automatici|pluralize:"a,e" }}.
+    </div>
+    {% endif %}
+
+    {% if me.estensioni_da_autorizzare.exists %}
+    <div class="alert alert-warning">
+        <i class="fa fa-fw fa-warning"></i> Hai {{ me.estensioni_da_autorizzare|length }} richiest{{ me.estensioni_da_autorizzare|pluralize:"a,e" }} di estensione.<br>
+        E' necessaria una tua azione per approvare o negare l{{ me.estensioni_da_autorizzare|pluralize:"a,e" }} richiest{{ me.estensioni_da_autorizzare|pluralize:"a,e" }}.<br>
+        Vai nella <a href="/autorizzazioni/">Sezione Richieste</a> per approvarl{{ me.estensioni_da_autorizzare|pluralize:"a,e" }} o negarl{{ me.estensioni_da_autorizzare|pluralize:"a,e" }}.
     </div>
     {% endif %}
 
