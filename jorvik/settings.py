@@ -84,6 +84,8 @@ CRON_CLASSES = [
     "posta.cron.CronSmaltisciCodaPosta",
     "base.cron.CronCancellaFileScaduti",
     "base.cron.CronApprovaNegaAuto",
+    "base.cron.CronTrasferimentiAutoInAttesa",
+    "base.cron.CronTrasferimentiManualiInAttesa",
     "anagrafica.cron.CronReportComitati",
 ]
 

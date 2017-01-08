@@ -26,3 +26,27 @@ class CronApprovaNegaAuto(CronJobBase):
 
     def do(self):
         Autorizzazione.gestisci_automatiche()
+
+
+class CronTrasferimentiAutoInAttesa(CronJobBase):
+
+    RUN_EVERY_HOURS = 24
+    RUN_EVERY_MINS = RUN_EVERY_HOURS * 60
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'base.trasferimenti.notifica.automatici'
+
+    def do(self):
+        Autorizzazione.notifiche_trasferimenti_pending_automatici()
+
+
+class CronTrasferimentiManualiInAttesa(CronJobBase):
+
+    RUN_EVERY_HOURS = 24
+    RUN_EVERY_MINS = RUN_EVERY_HOURS * 60
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'base.trasferimenti.notifica.manuali'
+
+    def do(self):
+        Autorizzazione.notifiche_trasferimenti_pending_manuali()
