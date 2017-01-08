@@ -944,6 +944,23 @@ def utente_trasferimento_termina(request, me, pk):
         trasferimento.ritira()
         return redirect('/utente/trasferimento/')
 
+def _trasferimenti_pending(me):
+
+    trasferimento = me.trasferimento
+    trasferimenti_auto_pending = None
+    trasferimenti_manuali_pending = None
+    delegati = []
+    if trasferimento:
+        for autorizzazione in trasferimento.autorizzazioni:
+            for persona in autorizzazione.espandi_notifiche(me.sede_riferimento(), [], True, True):
+                delegati.extend(persona.deleghe_attuali(
+                    oggetto_id=me.sede_riferimento().pk, oggetto_tipo=ContentType.objects.get_for_model(Sede))
+                )
+    if trasferimento.con_scadenza:
+        trasferimenti_auto_pending = trasferimento
+    else:
+        trasferimenti_manuali_pending = trasferimento
+    return trasferimenti_auto_pending, trasferimenti_manuali_pending, delegati
 
 @pagina_privata
 def utente_trasferimento(request, me):
@@ -999,9 +1016,14 @@ def utente_trasferimento(request, me):
                 ]
             )
 
+    trasferimenti_auto_pending, trasferimenti_manuali_pending, delegati = _trasferimenti_pending(me)
+
     contesto = {
         "modulo": modulo,
-        "storico": storico
+        "storico": storico,
+        "trasferimenti_auto_pending": trasferimenti_auto_pending,
+        "trasferimenti_manuali_pending": trasferimenti_manuali_pending,
+        "delegati": delegati,
     }
     return "anagrafica_utente_trasferimento.html", contesto
 

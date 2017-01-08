@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
 from django.utils.timezone import now
+from django.utils.functional import cached_property
 from django.forms import forms
 from mptt.models import MPTTModel, TreeForeignKey
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
@@ -557,6 +558,21 @@ class ConAutorizzazioni(models.Model):
     @property
     def autorizzazioni(self):
         return self.autorizzazioni_set()
+
+    @cached_property
+    def autorizzazioni_automatiche(self):
+        return self.autorizzazioni.filter(scadenza__isnull=False).exclude(tipo_gestione=Autorizzazione.MANUALE)
+
+    @property
+    def con_scadenza(self):
+        return self.autorizzazioni_automatiche.exists()
+
+    @property
+    def data_scadenza(self):
+        try:
+            return (self.autorizzazioni_automatiche.earliest('scadenza').scadenza - now()).days
+        except:
+            return None
 
     def autorizzazioni_set(self):
         """
