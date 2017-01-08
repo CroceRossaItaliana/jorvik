@@ -13,7 +13,7 @@ except ImportError:
 
 import os
 
-from datetime import timedelta
+from datetime import timedelta, date
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -295,6 +295,7 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
+                "jorvik.context_processors.settings",
             ),
             "debug": DEBUG_CONF.getboolean('debug', 'debug')
 
@@ -355,6 +356,7 @@ NORECAPTCHA_SITE_KEY = APIS_CONF.get('nocaptcha', 'site_key', fallback=os.enviro
 NORECAPTCHA_SECRET_KEY = APIS_CONF.get('nocaptcha', 'secret_key', fallback=os.environ.get('NORECAPTCHA_SITE_KEY'))
 
 SCADENZA_AUTORIZZAZIONE_AUTOMATICA = GENERAL_CONF.getint('autorizzazioni', 'giorni', fallback=30)
+DATA_AVVIO_TRASFERIMENTI_AUTO = date(2017, 1, 31)
 
 if os.environ.get('ENABLE_TEST_APPS', False):
     INSTALLED_APPS.append('segmenti.segmenti_test')
