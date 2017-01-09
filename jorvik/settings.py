@@ -130,6 +130,14 @@ MYSQL_CONF.read(MYSQL_CONF_FILE)
 PGSQL_CONF = configparser.ConfigParser()
 PGSQL_CONF.read(PGSQL_CONF_FILE)
 
+# Configurazione debug e produzione
+DEBUG_CONF = configparser.ConfigParser()
+DEBUG_CONF.read(DEBUG_CONF_FILE)
+DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
+SECRET_KEY = DEBUG_CONF.get('production', 'secret_key')
+JORVIK_LOG_FILE = DEBUG_CONF.get('debug', 'debug_log', fallback=os.path.join('..', 'log', 'debug.log'))
+JORVIK_LOG = os.path.join(BASE_DIR, JORVIK_LOG_FILE)
+
 PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
@@ -177,7 +185,7 @@ TWO_FACTOR_SESSIONE_SCADUTA = '/scaduta/'
 TWO_FACTOR_PUBLIC = (
     TWO_FACTOR_PROFILE, LOGOUT_URL, TWO_FACTOR_SESSIONE_SCADUTA, LOGIN_URL
 )
-TWO_FACTOR_SESSION_DURATA = 120
+TWO_FACTOR_SESSION_DURATA = DEBUG_CONF.getint('production', 'TWO_FACTOR_SESSION_DURATA', fallback=120)
 SESSION_COOKIE_PATH = '/'
 
 # Configurazione E-mail
@@ -206,14 +214,6 @@ MEDIA_ROOT = MEDIA_CONF.get('media', 'media_root')
 MEDIA_URL = MEDIA_CONF.get('media', 'media_url')
 STATIC_ROOT = MEDIA_CONF.get('static', 'static_root', fallback='assets/')
 STATIC_URL = MEDIA_CONF.get('static', 'static_url', fallback='/assets/')
-
-# Configurazione debug e produzione
-DEBUG_CONF = configparser.ConfigParser()
-DEBUG_CONF.read(DEBUG_CONF_FILE)
-DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
-SECRET_KEY = DEBUG_CONF.get('production', 'secret_key')
-JORVIK_LOG_FILE = DEBUG_CONF.get('debug', 'debug_log', fallback=os.path.join('..', 'log', 'debug.log'))
-JORVIK_LOG = os.path.join(BASE_DIR, JORVIK_LOG_FILE)
 
 # Driver per i test funzionali
 DRIVER_WEB = DEBUG_CONF.get('test', 'driver', fallback='firefox')
