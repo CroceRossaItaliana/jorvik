@@ -29,7 +29,7 @@
                 <div class="alert bg-info">
                     <p>
                         <i class="fa fa-info-circle fa-fw"></i> Hai attualmente un trasferimento in attesa di approvazione.<br>
-                        Come previsto da regolamento il trasferimento sarà approvato automaticamente entro {{ trasferimenti_auto_pending.data_scadenza }} giorni.<br>
+                        Come previsto da regolamento il trasferimento sarà approvato automaticamente entro {{ trasferimenti_auto_pending.scadenza_autorizzazione }} giorni.<br>
                         Per informazioni puoi rivolgerti al delegato Ufficio Soci, oppure al Presidente di competenza:
                         <ul>
                             {% for delega in delegati %}

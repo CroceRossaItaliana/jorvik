@@ -974,10 +974,10 @@ def trasferimenti_pending(me):
                 delegati.extend(persona.deleghe_attuali(
                     oggetto_id=me.sede_riferimento().pk, oggetto_tipo=ContentType.objects.get_for_model(Sede))
                 )
-    if trasferimento.con_scadenza:
-        trasferimenti_auto_pending = trasferimento
-    else:
-        trasferimenti_manuali_pending = trasferimento
+        if trasferimento.con_scadenza:
+            trasferimenti_auto_pending = trasferimento
+        else:
+            trasferimenti_manuali_pending = trasferimento
     return trasferimenti_auto_pending, trasferimenti_manuali_pending, delegati
 
 @pagina_privata

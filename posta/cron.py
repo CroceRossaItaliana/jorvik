@@ -5,7 +5,7 @@ from posta.models import Messaggio
 
 class CronSmaltisciCodaPosta(CronJobBase):
 
-    RUN_EVERY_MINS = 1
+    RUN_EVERY_MINS = 21600
 
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
     code = 'posta.smaltisci'

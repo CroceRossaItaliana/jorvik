@@ -380,6 +380,8 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
 
     RICHIESTA_NOME = "iscrizione a Corso Base"
 
+    APPROVAZIONE_AUTOMATICA = datetime.timedelta(days=settings.SCADENZA_AUTORIZZAZIONE_AUTOMATICA)
+
     class Meta:
         verbose_name = "Invito di partecipazione a corso base"
         verbose_name_plural = "Inviti di partecipazione a corso base"
@@ -428,7 +430,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
             ),
             invia_notifiche=self.persona,
             auto=Autorizzazione.NG_AUTO,
-            scadenza=settings.AUTORIZZAZIONE_AUTOMATICA,
+            scadenza=self.APPROVAZIONE_AUTOMATICA,
         )
 
 
