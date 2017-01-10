@@ -36,15 +36,14 @@ def _calcola_eta(queryset, meno=True):
 
 
 def _calcola_anni_attivita(queryset, meno=True):
-    controllo = operator.le if meno else operator.gt
 
-    persone_filtrate = []
-    for persona in queryset:
-        storico = Partecipazione.con_esito_ok().filter(persona=persona, stato=Partecipazione.RICHIESTA)
-        anni_attivita = storico.dates('turno__inizio', 'year').count()
-        if controllo(anni_attivita, LIMITE_ANNI_ATTIVITA):
-            persone_filtrate.append(persona.pk)
-    return queryset.filter(pk__in=persone_filtrate)
+    limite = now().replace(year=now().year - LIMITE_ANNI_ATTIVITA)
+    if meno:
+        appartenenze_filtrate = Appartenenza.query_attuale().filter(inizio__gte=limite)
+    else:
+        appartenenze_filtrate = Appartenenza.query_attuale().filter(inizio__lt=limite)
+
+    return queryset.filter(appartenenze__in=appartenenze_filtrate)
 
 
 # TODO: Aggiungere test per i filtri che utilizzano questa funzione
