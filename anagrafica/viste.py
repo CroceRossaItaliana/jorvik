@@ -200,24 +200,25 @@ def registrati(request, tipo, step=None):
             return 'anagrafica_registrati_errore.html', contesto
 
         else:
-            corpo = {
-                'tipo': tipo,
-                'step': step,
-                'code': request.session['registrazione_id'],
-                'email': sessione.get('email'),
-                'sessione': request.session.session_key
-            }
-
-            Messaggio.invia_raw(
-               oggetto="Registrazione su Gaia",
-               corpo_html=get_template('email_conferma.html').render(corpo),
-               email_mittente=None,
-               lista_email_destinatari=[
-                    sessione.get('email')
-               ]
-            )
-
             if uid is not None or request.session['registrazione_id'] != registration_code:
+
+                corpo = {
+                    'tipo': tipo,
+                    'step': step,
+                    'code': request.session['registrazione_id'],
+                    'email': sessione.get('email'),
+                    'sessione': request.session.session_key
+                }
+
+                Messaggio.invia_raw(
+                   oggetto="Registrazione su Gaia",
+                   corpo_html=get_template('email_conferma.html').render(corpo),
+                   email_mittente=None,
+                   lista_email_destinatari=[
+                        sessione.get('email')
+                   ]
+                )
+
                 contesto = {
                     'attuale_nome': STEP_NOMI[step],
                     'attuale_slug': step,
