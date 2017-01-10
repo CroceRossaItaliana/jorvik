@@ -1,7 +1,7 @@
 import random
 import string
 from datetime import timedelta
-
+from codicefiscale import build
 import names
 
 from anagrafica.costanti import LOCALE, ESTENSIONE
@@ -18,14 +18,23 @@ def codice_fiscale(length=16):
    return ''.join(random.choice(string.ascii_letters + string.digits) for i in range(length))
 
 
+def codice_fiscale_persona(persona):
+    from base.comuni import COMUNI
+    try:
+        codice_comune = COMUNI[persona.comune_nascita.lower()]
+    except KeyError:
+        codice_comune = 'D000'
+    return build(persona.cognome, persona.nome, persona.data_nascita, persona.genere, codice_comune)
+
+
 def crea_persona():
-    p = Persona(
+    p = Persona.objects.create(
         nome=names.get_first_name(),
         cognome=names.get_last_name(),
         codice_fiscale=codice_fiscale(),
-        data_nascita="1994-2-5"
+        data_nascita="{}-{}-{}".format(random.randint(1960, 1990), random.randint(1, 12), random.randint(1, 28))
     )
-    p.save()
+    p.refresh_from_db()
     return p
 
 
