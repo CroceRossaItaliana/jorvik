@@ -1,9 +1,0 @@
-{% extends 'email.html' %}
-
-{% block corpo %}
-
-<p class="grassetto">Salve {{ persona.nome_completo }}.</p>
-<p> Ti ricordiamo che risult{{ persona.trasferimenti_automatici|pluralize:"a,ano" }} {{ persona.trasferimenti_automatici|length }} richiest{{ persona.trasferimenti_automatici|pluralize:"a,e" }} di trasferimento in attesa di approvazione che sar{{ persona.trasferimenti_automatici|pluralize:"à,nno" }} automaticamente approvat{{ persona.trasferimenti_automatici|pluralize:"a,e" }} entro 30 giorni dalla data di ciascuna richiesta.</p>
-<p>Vai nella <a href="/autorizzazioni/">Sezione Richieste</a> per approvarl{{ persona.trasferimenti_automatici|pluralize:"a,e" }} o negarl{{ persona.trasferimenti_automatici|pluralize:"a,e" }}.</p>
-
-{% endblock %}
