@@ -37,7 +37,8 @@ Jorvik viene installato e testato sulle recenti versioni di Python 3, in modo au
 * Il database viene scaricato settimanalmente dalla installazione in produzione, e tutte le modifiche effettuate nella settimana precedente vengono distrutte,
 * Le installazioni di staging **non** sono in grado di inoltrare i messaggi di posta -nonostante si illudano di farlo correttamente-,
 * Inoltre, le procedure programmate e periodiche (cron jobs) non vengono eseguite su queste installazioni,
-* Le installazioni sono da considerarsi condivise e, nel caso di utilizzo, l'utente non deve aspettarsi alcuna forma di privacy relativamente ai dati inseriti, garanzia sul servizio, o alcuna forma di affetto da parte degli sviluppatori.
+* Le installazioni sono da considerarsi condivise e, nel caso di utilizzo, l'utente non deve aspettarsi alcuna forma di privacy relativamente ai dati inseriti, garanzia sul servizio, o alcuna forma di affetto da parte degli sviluppatori,
+* L'accesso agli ambienti di sviluppo/test è riservato al personale tecnico.
 
 ### Documentazione
 
