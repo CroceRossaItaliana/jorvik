@@ -1221,6 +1221,8 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         #(MILITARE, 'Membro Militare'),
         #(DONATORE, 'Donatore Finanziario'),
     )
+    PRECEDENZE_MODIFICABILI = (ESTESO,)
+    NON_MODIFICABILE = (ESTESO,)
     membro = models.CharField("Tipo membro", max_length=2, choices=MEMBRO, default=VOLONTARIO, db_index=True)
 
     # Tipo di terminazione
@@ -1238,6 +1240,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         (PROMOZIONE, 'Promozione'),
         (FINE_ESTENSIONE, 'Fine Estensione'),
     )
+    MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI = (FINE_ESTENSIONE, DIMISSIONE, ESPULSIONE)
     terminazione = models.CharField("Terminazione", max_length=1, choices=TERMINAZIONE, default=None, db_index=True,
                                     blank=True, null=True)
 
@@ -1286,6 +1289,40 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     def autorizzazione_negata(self, modulo=None):
         # TOOD: Fare qualcosa
         self.confermata = False
+
+    def modificabile(self, inizio=None):
+        flag = self.attuale()
+        if inizio:
+            inizio = inizio.date()
+        # Appartenenze come esteso o dipendente sono modificabili perché inizio non vincolato a termine di precedente
+        if self.membro not in self.NON_MODIFICABILE:
+            # Controllo su appartenenza precedente.
+            # Nei casi in MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI, l'appartenenza precedente non determina
+            # l'apertura di una nuova appartenenza
+            if self.precedente and self.precedente.terminazione:
+                if self.precedente.terminazione not in self.MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI:
+                    flag &= False
+                elif inizio:
+                    flag &= inizio > self.precedente.fine
+            aperte = Appartenenza.objects.filter(persona=self.persona, fine__isnull=True, membro=self.membro).exclude(pk=self.pk)
+            if aperte.exists():
+                flag &= False
+            # Controllo su appartenenze temporalmente precedenti.
+            # Nei casi in MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI, l'appartenenza precedente non determina
+            # l'apertura di una nuova appartenenza
+            modificabili_secondo_terminazione = [membro[0] for membro in self.MEMBRO if membro[0] not in self.PRECEDENZE_MODIFICABILI]
+            terminazioni_modificabili = [terminazione[0] for terminazione in self.TERMINAZIONE if terminazione[0] in self.MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI]
+            modificabili = [membro[0] for membro in self.MEMBRO if membro[0] in self.PRECEDENZE_MODIFICABILI]
+            secondo_terminazione = Appartenenza.objects.filter(persona=self.persona, fine__date__lte=self.inizio, membro__in=modificabili_secondo_terminazione).exclude(pk=self.pk)
+            qs_non_modificabili = secondo_terminazione.exclude(terminazione__in=terminazioni_modificabili)
+            qs_modificabili = Appartenenza.objects.filter(persona=self.persona, fine__date__lte=self.inizio, membro__in=modificabili).exclude(pk=self.pk) | secondo_terminazione.filter(terminazione__in=terminazioni_modificabili)
+            if qs_non_modificabili.exists():
+                flag &= False
+            if inizio and qs_modificabili.exists():
+                flag &= not qs_modificabili.filter(fine__date__gt=inizio).exists()
+            return flag
+        else:
+            return False
 
 
 class SedeQuerySet(QuerySet):

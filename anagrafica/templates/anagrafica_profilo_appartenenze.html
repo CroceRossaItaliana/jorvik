@@ -2,6 +2,12 @@
 
 {% load bootstrap3 %}
 
+{% block pagina_css_extra %}
+    <script>
+    var moduli = Array();
+    </script>
+{% endblock %}
+
 {% block profilo_corpo %}
 
 
@@ -54,7 +60,6 @@
                                 <button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#mod{{ app.pk }}">
                                   <i class="fa fa-fw fa-pencil"></i>
                                 </button>
-
                                 <!-- Modal -->
                                 <form method="POST">
                                     <div class="modal fade" id="mod{{ app.pk }}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -65,8 +70,8 @@
                                             <h4 class="modal-title" id="myModalLabel">Modifica data inizio appartenenza</h4>
                                           </div>
                                           <div class="modal-body">
-                                                  {% csrf_token %}
-                                                  {% bootstrap_form modulo %}
+                                              {% csrf_token %}
+                                              {% bootstrap_form modulo %}
                                           </div>
                                           <div class="modal-footer">
                                             <button type="button" class="btn btn-default" data-dismiss="modal">
@@ -81,6 +86,11 @@
                                     </div>
                                 </form>
 
+                                {% if modulo.errors %}
+                                    <script>
+                                    moduli.push('#mod{{ app.pk }}');
+                                    </script>
+                                {% endif %}
 
                             {% endif %}
 
@@ -127,4 +137,14 @@
         </div>
     </div>
 
+{% endblock %}
+
+{% block pagina_javascript_extra %}
+<script>
+(function() {
+    for(item of moduli) {
+        $(item).modal('show');
+    }
+})();
+</script>
 {% endblock %}
