@@ -7,18 +7,23 @@ from unittest.mock import patch
 from zipfile import ZipFile
 from django.contrib.auth.tokens import default_token_generator
 import django.core.files
+from django.core import mail
 from django.core.files.temp import NamedTemporaryFile
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from django.utils.encoding import force_bytes
+from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode
+
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI, UFFICIO_SOCI_UNITA
 from articoli.models import Articolo
-from anagrafica.models import Persona
+from anagrafica.models import Persona, Delega
 from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
+from base.forms_extra import ModuloRichiestaSupporto
 from base.geo import Locazione
 from base.utils import UpperCaseCharField
-from base.utils_tests import crea_appartenenza, crea_persona_sede_appartenenza, crea_persona, crea_area_attivita, crea_utenza
+from base.utils_tests import crea_appartenenza, crea_persona_sede_appartenenza, crea_persona, crea_area_attivita, crea_utenza, \
+    email_fittizzia
 from gestione_file.models import Documento
 from jorvik.settings import GOOGLE_KEY
 from filer.models import Folder
@@ -413,3 +418,86 @@ class TestFunzionaleBase(TestFunzionale):
         sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
         testo_personalizzato = 'Ciao, {0}'.format(persona_in_sede.nome)
         self.assertTrue(sessione.is_text_present(testo_personalizzato))
+
+    def test_richiesta_supporto(self):
+        presidente = crea_persona()
+        persona_normale, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
+        persona_us = crea_persona()
+        persona_us_territoriale = crea_persona()
+        crea_appartenenza(persona_us, sede)
+        crea_appartenenza(persona_us_territoriale, sede)
+        crea_utenza(presidente, email=email_fittizzia())
+        crea_utenza(persona_normale, email=email_fittizzia())
+        crea_utenza(persona_us, email=email_fittizzia())
+        crea_utenza(persona_us_territoriale, email=email_fittizzia())
+
+        Delega.objects.create(
+            inizio="1980-12-10",
+            persona=persona_us,
+            tipo=UFFICIO_SOCI,
+            oggetto=sede
+        )
+        Delega.objects.create(
+            inizio="1980-12-10",
+            persona=persona_us_territoriale,
+            tipo=UFFICIO_SOCI_UNITA,
+            oggetto=sede
+        )
+
+        # Utente normale senza persone
+        sessione_normale = self.sessione_utente(persona=persona_normale)
+        sessione_normale.visit("%s/supporto/" % self.live_server_url)
+        sessione_normale.is_text_not_present('Seleziona le persone per cui si richiede assistenza.')
+        sessione_normale.find_option_by_value(ModuloRichiestaSupporto.SANGUE).first.click()
+        sessione_normale.fill('oggetto', 'Oggetto')
+        sessione_normale.fill('descrizione', 'Descrizione')
+        sessione_normale.find_by_css('.btn.btn-block.btn-primary').first.click()
+        self.assertTrue(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.subject, '(%s) Oggetto' % ModuloRichiestaSupporto.SANGUE)
+        self.assertTrue('Descrizione' in email.body)
+        mail.outbox = []
+
+        # Utente US con persone
+        sessione = self.sessione_utente(persona=persona_us)
+        sessione.visit("%s/supporto/" % self.live_server_url)
+        sessione.is_text_present('Seleziona le persone per cui si richiede assistenza.')
+
+        # Utente US con persone
+        sessione = self.sessione_utente(persona=persona_us_territoriale)
+        sessione.visit("%s/supporto/" % self.live_server_url)
+        sessione.is_text_present('Seleziona le persone per cui si richiede assistenza.')
+
+        # Presidente con persone
+        sessione = self.sessione_utente(persona=presidente)
+        sessione.visit("%s/supporto/" % self.live_server_url)
+        sessione.is_text_present('Seleziona le persone per cui si richiede assistenza.')
+
+        # Invio form persona normale
+        self.client.login(username=presidente.utenza.email, password='prova')
+        dati = {
+            'oggetto': 'Oggetto',
+            'descrizione': 'Descrizione',
+            'tipo': ModuloRichiestaSupporto.TERZO_LIVELLO,
+        }
+        self.client.post('/supporto/', data=dati)
+        self.assertTrue(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.subject, '(%s) Oggetto' % ModuloRichiestaSupporto.TERZO_LIVELLO)
+        self.assertTrue('Descrizione' in email.body)
+        mail.outbox = []
+
+        # Invio form con selezione persone
+        dati = {
+            'persona': persona_normale.pk,
+            'oggetto': 'Oggetto',
+            'descrizione': 'Descrizione',
+            'tipo': ModuloRichiestaSupporto.TERZO_LIVELLO,
+        }
+        self.client.post('/supporto/', data=dati)
+        self.assertTrue(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.subject, '(%s) Oggetto' % ModuloRichiestaSupporto.TERZO_LIVELLO)
+        self.assertTrue('Descrizione' in email.body)
+        self.assertTrue(force_text(persona_normale) in email.body)
+        mail.outbox = []
