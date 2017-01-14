@@ -27,7 +27,7 @@ from veicoli.models import Autoparco
 from base.geo import Locazione
 
 
-from anagrafica.models import Sede, Persona, Appartenenza, Delega
+from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento
 import argparse
 
 
@@ -40,6 +40,8 @@ parser.add_argument('--membri-sede', dest='membri_sedi', action='append',
 parser.add_argument('--dati-di-esempio', dest='esempio', action='store_const',
                     default=False, const=True,
                     help='installa dei dati di esempio')
+parser.add_argument('--reset', dest='reset', action='store_true',
+                    help='cancella i dati prima di caricare quelli di esempio. Funziona solo con --dati-di-esempio')
 parser.add_argument('--aggiorna-province', dest='province', action='store_const',
                     default=False, const=True,
                     help='aggiorna le province')
@@ -127,12 +129,15 @@ for sede in (args.membri_sedi if args.membri_sedi else []):
 if args.esempio:
     print("Installo dei dati di esempio")
 
-    with transaction.atomic():
-        Utenza.objects.all().delete()
-        Persona.objects.all().delete()
-        Appartenenza.objects.all().delete()
-        Delega.objects.all().delete()
-        Sede.objects.all().delete()
+    if args.reset:
+        print("Cancello i dati esistenti come richiesto")
+        with transaction.atomic():
+            Trasferimento.objects.all().delete()
+            Utenza.objects.all().delete()
+            Persona.objects.all().delete()
+            Appartenenza.objects.all().delete()
+            Delega.objects.all().delete()
+            Sede.objects.all().delete()
 
     print("Creo le Sedi fittizie...")
     italia = Sede.objects.create(nome="Comitato Nazionale", estensione=NAZIONALE)
