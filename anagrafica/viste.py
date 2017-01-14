@@ -954,7 +954,7 @@ def utente_trasferimento(request, me):
     modulo = ModuloCreazioneTrasferimento(request.POST or None)
     if modulo.is_valid():
         trasf = modulo.save(commit=False)
-        if trasf.destinazione in me.sedi_attuali():
+        if trasf.destinazione in me.sedi_attuali(membro=Appartenenza.VOLONTARIO):
             modulo.add_error('destinazione', 'Sei già appartenente a questa sede.')
         #elif trasf.destinazione.comitato != me.sede_riferimento().comitato and True:##che in realta' e' il discriminatore delle elezioni
         #    return errore_generico(request, me, messaggio="Non puoi richiedere un trasferimento tra comitati durante il periodo elettorale")

@@ -20,7 +20,7 @@ from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_
     crea_utenza
 from formazione.models import Aspirante
 from jorvik.settings import GOOGLE_KEY
-from posta.models import Messaggio
+from posta.models import Messaggio, Autorizzazione
 
 
 class TestAnagrafica(TestCase):
@@ -900,6 +900,44 @@ class TestAnagrafica(TestCase):
 
 
 class TestFunzionaliAnagrafica(TestFunzionale):
+
+    def test_sede_trasferimento(self):
+        presidente = crea_persona()
+        persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        crea_utenza(persona, email=email_fittizzia())
+        sede_2 = crea_sede(presidente=presidente)
+
+        self.client.login(username=persona.utenza.email, password="prova")
+        dati = {
+            'destinazione': sede_2.pk,
+            'motivo': 'test',
+        }
+        response = self.client.post('/utente/trasferimento/', data=dati)
+        self.assertNotContains(response=response, text='Sei già appartenente a questa sede')
+        self.assertEqual(Autorizzazione.objects.filter(richiedente=persona, concessa=None).count(), 1)
+        Autorizzazione.objects.get(richiedente=persona, concessa=None).nega(presidente)
+
+        Appartenenza.objects.create(
+            persona=persona,
+            sede=sede_2,
+            membro=Appartenenza.ESTESO,
+            inizio="1980-12-10",
+        )
+        response = self.client.post('/utente/trasferimento/', data=dati)
+        self.assertNotContains(response=response, text='Sei già appartenente a questa sede')
+        self.assertEqual(Autorizzazione.objects.filter(richiedente=persona, concessa=None).count(), 1)
+        Autorizzazione.objects.get(richiedente=persona, concessa=None).nega(presidente)
+
+        Appartenenza.objects.create(
+            persona=persona,
+            sede=sede_2,
+            membro=Appartenenza.VOLONTARIO,
+            inizio="1980-12-10",
+        )
+        response = self.client.post('/utente/trasferimento/', data=dati)
+        self.assertContains(response=response, text='Sei già appartenente a questa sede')
+        self.assertEqual(Autorizzazione.objects.filter(richiedente=persona, concessa=None).count(), 0)
+
 
     def test_us_attivazione_credenziali(self):
 
