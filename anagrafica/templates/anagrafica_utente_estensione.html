@@ -33,13 +33,15 @@
                         <i class="fa fa-info-circle fa-fw"></i> Hai attualmente {{ in_attesa|length }} estension{{ in_attesa|pluralize:"e,i" }} in attesa di approvazione.<br>
                         Per informazioni puoi rivolgerti al delegato Ufficio Soci, oppure al Presidente di competenza:
                         <ul>
-                            {% for delega in delegati %}
+                            {% for delega, persone in delegati.items %}
+                                {% if persone %}<strong>{{ delega }}</strong>{% endif %}
+                                {% for persona in persone %}
                                 <li>
-                                    <a href="{{ delega.persona.url_messaggio }}">
-                                        {{ delega.persona.nome_completo }}
+                                    <a href="{{ persona.url_messaggio }}">
+                                        {{ persona.nome_completo }}
                                     </a>
-                                    ({{ delega.get_tipo_display }})
                                 </li>
+                                {% endfor %}
                             {% endfor %}
                         </ul>
                     </p>

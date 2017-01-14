@@ -32,13 +32,15 @@
                         Come previsto da regolamento il trasferimento sarà approvato automaticamente entro {{ trasferimenti_auto_pending.scadenza_autorizzazione }} giorni.<br>
                         Per informazioni puoi rivolgerti al delegato Ufficio Soci, oppure al Presidente di competenza:
                         <ul>
-                            {% for delega in delegati %}
+                            {% for delega, persone in delegati.items %}
+                                {% if persone %}<strong>{{ delega }}</strong>{% endif %}
+                                {% for persona in persone %}
                                 <li>
-                                    <a href="{{ delega.persona.url_messaggio }}">
-                                        {{ delega.persona.nome_completo }}
+                                    <a href="{{ persona.url_messaggio }}">
+                                        {{ persona.nome_completo }}
                                     </a>
-                                    ({{ delega.get_tipo_display }})
                                 </li>
+                                {% endfor %}
                             {% endfor %}
                         </ul>
                     </p>
@@ -52,13 +54,15 @@
                         Per ragioni tecniche -risolte a partire dal {{ SETTINGS.DATA_AVVIO_TRASFERIMENTI_AUTO|date:"SHORT_DATE_FORMAT" }}- non è stato possibile approvare in automatico il trasferimento.<br>
                         Per informazioni puoi rivolgerti al delegato Ufficio Soci, oppure al Presidente di competenza:
                         <ul>
-                            {% for delega in delegati %}
+                            {% for delega, persone in delegati.items %}
+                                {% if persone %}<strong>{{ delega }}</strong>{% endif %}
+                                {% for persona in persone %}
                                 <li>
-                                    <a href="{{ delega.persona.url_messaggio }}">
-                                        {{ delega.persona.nome_completo }}
+                                    <a href="{{ persona.url_messaggio }}">
+                                        {{ persona.nome_completo }}
                                     </a>
-                                    ({{ delega.get_tipo_display }})
                                 </li>
+                                {% endfor %}
                             {% endfor %}
                         </ul>
                     </p>
