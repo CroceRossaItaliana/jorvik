@@ -5,6 +5,8 @@ from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
+from django.utils.timezone import now
+
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega, \
     Fototessera, Trasferimento, Riserva
 from anagrafica.validators import valida_almeno_14_anni
@@ -254,10 +256,16 @@ class ModuloCreazioneRiserva(ModelForm):
 
     def clean_fine(self):
         fine = self.cleaned_data['fine']
-        inizio = self.cleaned_data['inizio']
-        if not fine or fine < inizio:
+        inizio = self.cleaned_data.get('inizio', None)
+        if inizio and (not fine or fine < inizio):
             raise forms.ValidationError("La fine di una riserva non può avvenire prima del suo inizio")
         return fine
+
+    def clean_inizio(self):
+        inizio = self.cleaned_data['inizio']
+        if inizio < now():
+            raise forms.ValidationError("Non può essere richiesta una riserva per una data nel passato")
+        return inizio
 
 
 class ModuloCreazioneDelega(autocomplete_light.ModelForm):

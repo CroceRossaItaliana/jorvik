@@ -10,7 +10,7 @@ from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
 from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica
-from anagrafica.models import Appartenenza, Documento, Delega, Dimissione
+from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Riserva
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
 from autenticazione.models import Utenza
@@ -871,6 +871,32 @@ class TestAnagrafica(TestCase):
             ufficio_soci_maletto.permessi_almeno(tizio_nuovo, MODIFICA),
             msg="Il delegato Maletto puo gestire volontario"
         )
+
+    def test_riserva_nel_passato(self):
+
+        presidente = crea_persona()
+        persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        crea_utenza(persona, email=email_fittizzia())
+
+        self.client.login(username=persona.utenza.email, password='prova')
+
+        dati = {
+            'inizio': poco_fa(),
+            'fine': poco_fa() + datetime.timedelta(days=30),
+            'motivo': 'test'
+        }
+        response = self.client.post('/utente/riserva/', data=dati)
+        self.assertContains(response, 'Non può essere richiesta una riserva per una data nel passato')
+        self.assertFalse(Riserva.objects.filter(persona=persona).exists())
+
+        dati = {
+            'inizio': poco_fa() + datetime.timedelta(days=10),
+            'fine': poco_fa() + datetime.timedelta(days=30),
+            'motivo': 'test'
+        }
+        response = self.client.post('/utente/riserva/', data=dati)
+        self.assertNotContains(response, 'Non può essere richiesta una riserva per una data nel passato')
+        self.assertTrue(Riserva.objects.filter(persona=persona).exists())
 
 
 class TestFunzionaliAnagrafica(TestFunzionale):
