@@ -157,7 +157,7 @@ if args.esempio:
         sede.locazione = locazione
         sede.save()
         for membro in [Appartenenza.VOLONTARIO, Appartenenza.SOSTENITORE]:
-            for i in range(0, 20):  # Creo 20 volontari
+            for i in range(0, 25):  # Creo 20 volontari
                 p = crea_persona()
                 p.comune_nascita = random.sample(COMUNI.keys(), 1)[0]
                 p.codice_fiscale = codice_fiscale_persona(p)
@@ -171,6 +171,12 @@ if args.esempio:
                         persona=p, sede=altra, inizio=data_precedente, fine=data, membro=membro,
                         terminazione=Appartenenza.DIMISSIONE
                     )
+        for i in range(0, 5):  # Creo 5 aspiranti
+            p = crea_persona()
+            p.comune_nascita = random.sample(COMUNI.keys(), 1)[0]
+            p.codice_fiscale = codice_fiscale_persona(p)
+            p.save()
+            p.ottieni_o_genera_aspirante()
 
         if sede.estensione in (LOCALE, REGIONALE):
             print(" - Assegno deleghe...")
