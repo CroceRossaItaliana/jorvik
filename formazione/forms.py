@@ -62,7 +62,6 @@ class ModuloModificaCorsoBase(ModelForm):
 
 
 class ModuloIscrittiCorsoBaseAggiungi(forms.Form):
-
     persone = autocomplete_light.ModelMultipleChoiceField("IscrivibiliCorsiAutocompletamento",
                                                           help_text="Seleziona i Sostenitori o gli Aspiranti "
                                                                     "CRI da iscrivere a questo Corso Base.")
