@@ -498,27 +498,30 @@ class TestFunzionaleFormazione(TestFunzionale):
         presidente = crea_persona()
         direttore, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
 
-        sessione_aspirante = self.sessione_anonimo()
+        sessione_iniziale = self.sessione_anonimo()
 
-        sessione_aspirante.click_link_by_partial_text("Iscriviti al prossimo corso base")
+        sessione_iniziale.click_link_by_partial_text("Iscriviti al prossimo corso base")
 
-        sessione_aspirante.fill('codice_fiscale', 'MRARSS42A01C351F')
-        sessione_aspirante.find_by_xpath('//button[@type="submit"]').first.click()
+        sessione_iniziale.fill('codice_fiscale', 'MRARSS42A01C351F')
+        sessione_iniziale.find_by_xpath('//button[@type="submit"]').first.click()
 
         email = email_fittizzia()
-        sessione_aspirante.fill('email', email)
-        sessione_aspirante.fill('password', 'ciao12345')
-        sessione_aspirante.fill('ripeti_password', 'ciao12345')
-        sessione_aspirante.find_by_xpath('//button[@type="submit"]').first.click()
+        sessione_iniziale.fill('email', email)
+        sessione_iniziale.fill('password', 'ciao12345')
+        sessione_iniziale.fill('ripeti_password', 'ciao12345')
+        sessione_iniziale.find_by_xpath('//button[@type="submit"]').first.click()
 
-        self.assertTrue(sessione_aspirante.is_text_present('è necessario cliccare sul link'),
+        self.assertTrue(sessione_iniziale.is_text_present('è necessario cliccare sul link'),
                         msg="Invio email attivazione")
+        self.sessione_termina(sessione_iniziale)
 
         # Estrazione della chiave di conferma
-        self.assertTrue(len(mail.outbox), 1)
+        self.assertEqual(len(mail.outbox), 1)
         body = mail.outbox[0].alternatives[0][0]
-        url_conferma = re.findall('/registrati/aspirante/anagrafica/\?code=\w+', body)[0]
+        url_conferma = re.findall('/registrati/aspirante/anagrafica/\?code=\w+&registration=\w+', body)[0]
+        sessione_aspirante = self.sessione_anonimo()
         sessione_aspirante.visit("%s%s" % (self.live_server_url, url_conferma))
+        self.assertEqual(len(mail.outbox), 1)
 
         sessione_aspirante.fill('nome', 'Mario')
         sessione_aspirante.fill('cognome', 'Rossi Accènto')
@@ -646,3 +649,46 @@ class TestFunzionaleFormazione(TestFunzionale):
         sessione_aspirante.click_link_by_partial_text("Vai alla pagina del Corso Base")
         self.assertTrue(sessione_aspirante.is_text_present("Presentati alle lezioni del corso"),
                         msg="Invita l'aspirante a presentarsi alle lezioni del corso")
+
+    @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per ricercare la posizione aspirante.")
+    def test_registrazione_doppio_click_email(self):
+        """
+        Effettua la registrazione come aspirante, il presidente
+        del Comitato organizza un corso, avvisa tutti, l'aspirante trova
+        un corso e vi ci si iscrive.
+        """
+
+        presidente = crea_persona()
+        direttore, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        sessione_iniziale = self.sessione_anonimo()
+
+        sessione_iniziale.click_link_by_partial_text("Iscriviti al prossimo corso base")
+
+        sessione_iniziale.fill('codice_fiscale', 'MRARSS42A01C351F')
+        sessione_iniziale.find_by_xpath('//button[@type="submit"]').first.click()
+
+        email = email_fittizzia()
+        sessione_iniziale.fill('email', email)
+        sessione_iniziale.fill('password', 'ciao12345')
+        sessione_iniziale.fill('ripeti_password', 'ciao12345')
+        sessione_iniziale.find_by_xpath('//button[@type="submit"]').first.click()
+
+        self.assertTrue(sessione_iniziale.is_text_present('è necessario cliccare sul link'),
+                        msg="Invio email attivazione")
+        self.sessione_termina(sessione_iniziale)
+
+        # Estrazione della chiave di conferma
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].alternatives[0][0]
+        url_conferma = re.findall('/registrati/aspirante/anagrafica/\?code=\w+&registration=\w+', body)[0]
+        sessione_aspirante = self.sessione_anonimo()
+        sessione_secondo = self.sessione_anonimo()
+        sessione_aspirante.visit("%s%s" % (self.live_server_url, url_conferma))
+        self.assertTrue(sessione_aspirante.is_text_present('Parlaci un po\' di te'),
+                        msg="Link accettato")
+
+        sessione_secondo.visit("%s%s" % (self.live_server_url, url_conferma))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertTrue(sessione_secondo.is_text_present('Errore nel processo di registrazione.'),
+                        msg="Errore link")

@@ -1,0 +1,16 @@
+{% extends "anagrafica_registrati.html" %}
+
+{% load i18n %}
+
+{% block step_contenuto %}
+    <div class="alert alert-warning">
+        <p>Errore nel processo di registrazione.</p>
+    </div>
+    <div>
+    <p>
+        Il link di conferma che hai usato non è più valido.<br>
+        E' necessario riavviare la registrazione: clicca sul pulsante <i>Riavvia registrazione</i>,
+        reinserisci i tuoi dati e ripeti la procedura.
+    </p>
+    </div>
+{% endblock %}

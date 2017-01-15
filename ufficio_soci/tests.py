@@ -7,9 +7,9 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import timezone
-from django.utils.encoding import force_text
+from freezegun import freeze_time
 
-from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE, TERRITORIALE
+from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Appartenenza, Sede, Persona, Fototessera
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from autenticazione.utils_test import TestFunzionale
@@ -32,6 +32,8 @@ class TestBase(TestCase):
         self.due_anni_e_mezo_fa = datetime.date(2012, 6, 15)
         self.un_anno_fa = datetime.date(2014, 1, 1)
         self.un_anno_e_mezzo_fa = datetime.date(2013, 6, 15)
+        self.sei_mesi_fa = datetime.date(2015, 6, 1)
+        self.nove_mesi_fa = datetime.date(2015, 3, 1)
 
         def _elettorato(tipo="attivo"):
             if tipo not in ("attivo", "passivo",):
@@ -105,7 +107,7 @@ class TestBase(TestCase):
         self.p.data_nascita = self.venti_anni_fa
         self.p.save()
 
-        self.a.inizio = self.un_anno_fa
+        self.a.inizio = self.sei_mesi_fa
         self.a.save()
 
         self.assertFalse(
@@ -132,12 +134,12 @@ class TestBase(TestCase):
             persona=self.p,
             sede=self.s,
             inizio=self.due_anni_e_mezo_fa,
-            fine=self.un_anno_fa,
+            fine=self.sei_mesi_fa,
             terminazione=Appartenenza.TRASFERIMENTO,
         )
         x.save()
 
-        self.a.inizio = self.un_anno_fa
+        self.a.inizio = self.sei_mesi_fa
         self.a.fine = None
         self.a.precedente = x
         self.a.save()
@@ -147,7 +149,7 @@ class TestBase(TestCase):
             "Elettorato attivo contiene volontari con doppia appartenenza valida (trasf.)"
         )
 
-        x.inizio = self.un_anno_e_mezzo_fa
+        x.inizio = self.nove_mesi_fa
         x.save()
 
         self.assertFalse(
@@ -203,7 +205,7 @@ class TestBase(TestCase):
         )
         x.save()
 
-        self.a.inizio = self.un_anno_fa
+        self.a.inizio = self.sei_mesi_fa
         self.a.fine = None
         self.a.precedente = x
         self.a.save()
@@ -224,7 +226,6 @@ class TestBase(TestCase):
         self.a.precedente = None
         self.a.save()
         x.delete()
-
 
     def test_elettorato_passivo_trasferimento_anzianita_soddisfatta(self):
 
@@ -477,6 +478,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         sessione_persona.find_by_xpath("//button[@type='submit']").first.click()
         self.assertTrue(sessione_persona.is_text_present('Tesserino valido'))
 
+    @freeze_time('2016-11-14')
     def test_registrazione_quota_socio_senza_fine(self):
 
         # Crea oggetti e nomina il delegato US
@@ -504,7 +506,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         data = {
             'volontario': volontario.pk,
             'importo': 8,
-            'data_versamento': oggi.replace(month=oggi.month-2).strftime('%d/%m/%Y')
+            'data_versamento': (oggi - datetime.timedelta(days=60)).strftime('%d/%m/%Y')
         }
         self.client.login(email="mario@rossi.it", password="prova")
         response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_quote_nuova')), data=data)
@@ -512,6 +514,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response['location'].find('?appena_registrata='))
 
+    @freeze_time('2016-11-14')
     def test_registrazione_quota_socio_senza_fine_chiuso(self):
 
         # Crea oggetti e nomina il delegato US
@@ -539,7 +542,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         data = {
             'volontario': volontario.pk,
             'importo': 8,
-            'data_versamento': oggi.replace(month=oggi.month-2).strftime('%d/%m/%Y')
+            'data_versamento': (oggi - datetime.timedelta(days=60)).strftime('%d/%m/%Y')
         }
         self.client.login(email="mario@rossi.it", password="prova")
         response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_quote_nuova')), data=data)
@@ -547,6 +550,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'tesseramento {} è chiuso'.format(oggi.year))
 
+    @freeze_time('2016-11-14')
     def test_registrazione_quota_socio(self):
 
         # Crea oggetti e nomina il delegato US
@@ -556,8 +560,6 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
 
         oggi = poco_fa()
-        if oggi.month < 3:
-            oggi = oggi - datetime.timedelta(years=1)
         inizio_anno = oggi.replace(month=1, day=1)
         fine_soci = inizio_anno.replace(month=3) - datetime.timedelta(days=1)
 
@@ -605,6 +607,65 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response['location'].find('?appena_registrata='))
 
+    @freeze_time('2017-01-14')
+    def test_registrazione_quota_socio_inizio_anno(self):
+
+        # Crea oggetti e nomina il delegato US
+        delegato = crea_persona()
+        utente = crea_utenza(delegato, email="mario@rossi.it", password="prova")
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
+        sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
+
+        oggi = poco_fa()
+        inizio_anno = oggi.replace(month=1, day=1)
+        fine_soci = inizio_anno.replace(month=3) - datetime.timedelta(days=1)
+        post_fine_soci = fine_soci + datetime.timedelta(days=2)
+
+        Tesseramento.objects.create(
+            stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
+            anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+            quota_aspirante=8, quota_sostenitore=8
+        )
+
+        data = {
+            'volontario': volontario.pk,
+            'importo': 8,
+            'data_versamento': post_fine_soci.strftime('%d/%m/%Y')
+        }
+        self.client.login(email="mario@rossi.it", password="prova")
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_quote_nuova')), data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'non può essere nel futuro')
+
+        data = {
+            'volontario': volontario.pk,
+            'importo': 8,
+            'data_versamento': oggi.strftime('%d/%m/%Y')
+        }
+        self.client.login(email="mario@rossi.it", password="prova")
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_quote_nuova')), data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Necessario impostare indirizzo del Comitato')
+
+        sede.telefono = '+3902020202'
+        sede.email = 'comitato@prova.it'
+        sede.codice_fiscale = '01234567891'
+        sede.partita_iva = '01234567891'
+        sede.locazione = crea_locazione()
+        sede.save()
+
+        data = {
+            'volontario': volontario.pk,
+            'importo': 8,
+            'data_versamento': oggi.strftime('%d/%m/%Y')
+        }
+        self.client.login(email="mario@rossi.it", password="prova")
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_quote_nuova')), data=data)
+        # quota registrata con successo
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['location'].find('?appena_registrata='))
+
+    @freeze_time('2016-11-14')
     def test_registrazione_quota_socio_iv(self):
         # Crea oggetti e nomina il delegato US
         delegato = crea_persona()
@@ -725,7 +786,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         self.assertContains(response, 'Questo volontario ha già pagato la Quota associativa '
                                       'per l&#39;anno {}'.format(oggi.year))
 
-
+    @freeze_time('2016-11-14')
     def pagamento_quota_nuovo_volontario(self):
         """
         Testa che un nuovo volontario sia in grado di registarare
@@ -768,7 +829,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response['location'].find('?appena_registrata='))
 
-
+    @freeze_time('2016-11-14')
     def pagamento_quota_vecchio_volontario(self):
         """
         Testa che un vecchio volontario non sia in grado di registarare

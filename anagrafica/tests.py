@@ -3,12 +3,14 @@ from unittest import skipIf
 
 import re
 from django.core import mail
+from django.test import Client
 from django.test import TestCase
+from freezegun import freeze_time
 from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
 from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica
-from anagrafica.models import Appartenenza, Documento, Delega, Dimissione
+from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Riserva
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
 from autenticazione.models import Utenza
@@ -18,7 +20,7 @@ from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_
     crea_utenza
 from formazione.models import Aspirante
 from jorvik.settings import GOOGLE_KEY
-from posta.models import Messaggio
+from posta.models import Messaggio, Autorizzazione
 
 
 class TestAnagrafica(TestCase):
@@ -452,6 +454,7 @@ class TestAnagrafica(TestCase):
         )
 
     #@skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
+    @freeze_time('2016-11-14')
     def test_storia_volontario(self):
         presidente1 = crea_persona()
         presidente2 = crea_persona()
@@ -869,8 +872,72 @@ class TestAnagrafica(TestCase):
             msg="Il delegato Maletto puo gestire volontario"
         )
 
+    def test_riserva_nel_passato(self):
+
+        presidente = crea_persona()
+        persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        crea_utenza(persona, email=email_fittizzia())
+
+        self.client.login(username=persona.utenza.email, password='prova')
+
+        dati = {
+            'inizio': poco_fa(),
+            'fine': poco_fa() + datetime.timedelta(days=30),
+            'motivo': 'test'
+        }
+        response = self.client.post('/utente/riserva/', data=dati)
+        self.assertContains(response, 'Non può essere richiesta una riserva per una data nel passato')
+        self.assertFalse(Riserva.objects.filter(persona=persona).exists())
+
+        dati = {
+            'inizio': poco_fa() + datetime.timedelta(days=10),
+            'fine': poco_fa() + datetime.timedelta(days=30),
+            'motivo': 'test'
+        }
+        response = self.client.post('/utente/riserva/', data=dati)
+        self.assertNotContains(response, 'Non può essere richiesta una riserva per una data nel passato')
+        self.assertTrue(Riserva.objects.filter(persona=persona).exists())
+
 
 class TestFunzionaliAnagrafica(TestFunzionale):
+
+    def test_sede_trasferimento(self):
+        presidente = crea_persona()
+        persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        crea_utenza(persona, email=email_fittizzia())
+        sede_2 = crea_sede(presidente=presidente)
+
+        self.client.login(username=persona.utenza.email, password="prova")
+        dati = {
+            'destinazione': sede_2.pk,
+            'motivo': 'test',
+        }
+        response = self.client.post('/utente/trasferimento/', data=dati)
+        self.assertNotContains(response=response, text='Sei già appartenente a questa sede')
+        self.assertEqual(Autorizzazione.objects.filter(richiedente=persona, concessa=None).count(), 1)
+        Autorizzazione.objects.get(richiedente=persona, concessa=None).nega(presidente)
+
+        Appartenenza.objects.create(
+            persona=persona,
+            sede=sede_2,
+            membro=Appartenenza.ESTESO,
+            inizio="1980-12-10",
+        )
+        response = self.client.post('/utente/trasferimento/', data=dati)
+        self.assertNotContains(response=response, text='Sei già appartenente a questa sede')
+        self.assertEqual(Autorizzazione.objects.filter(richiedente=persona, concessa=None).count(), 1)
+        Autorizzazione.objects.get(richiedente=persona, concessa=None).nega(presidente)
+
+        Appartenenza.objects.create(
+            persona=persona,
+            sede=sede_2,
+            membro=Appartenenza.VOLONTARIO,
+            inizio="1980-12-10",
+        )
+        response = self.client.post('/utente/trasferimento/', data=dati)
+        self.assertContains(response=response, text='Sei già appartenente a questa sede')
+        self.assertEqual(Autorizzazione.objects.filter(richiedente=persona, concessa=None).count(), 0)
+
 
     def test_us_attivazione_credenziali(self):
 
@@ -1072,3 +1139,12 @@ class TestFunzionaliAnagrafica(TestFunzionale):
             utenza.email == EMAIL_NUOVA,
             msg="E-mail di accesso cambiata correttamente"
         )
+
+    def test_registrazione_non_valida(self):
+
+        client = Client()
+        response = client.get('/registrati/aspirante/anagrafica/?code=random_str')
+        self.assertContains(response, 'Errore nel processo di registrazione.')
+
+        response = client.get('/registrati/aspirante/anagrafica/?code=random_str&registration=random_session')
+        self.assertContains(response, 'Errore nel processo di registrazione.')

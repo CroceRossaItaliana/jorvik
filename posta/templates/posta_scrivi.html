@@ -24,13 +24,13 @@
             Puoi utilizzare questo modulo per inviare messaggi ad altre persone su Gaia. I messaggi inviati da Gaia
             verranno recapitati su Gaia, nonch&eacute; tramite e-mail.
         </div>
-
+        
         <form method="POST" enctype="multipart/form-data">
 
             {% csrf_token %}
             {% bootstrap_form modulo %}
-
-            <button type="submit"
+            
+                    <button type="submit"
                     class="btn btn-primary btn-success btn-block btn-lg">
                 <i class="fa fa-fw fa-send-o"></i>
                 Invia il messaggio

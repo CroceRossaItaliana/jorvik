@@ -22,12 +22,14 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, UFFICIO_SOCI_TEMPORANEO, UFFICIO_SOCI_UNITA
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, LETTURA, GESTIONE_SEDE
 from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base import errori
 from base.errori import errore_generico, messaggio_generico
-from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLocalizzatore, ModuloRichiestaSupporto
+from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLocalizzatore
+from base.forms_extra import ModuloRichiestaSupportoPersone
 from base.geo import Locazione
 from base.models import Autorizzazione, Token
 from base.tratti import ConPDF
@@ -579,9 +581,15 @@ def verifica_token(request, me, token):
 
 @pagina_pubblica
 def supporto(request, me=None):
+    from base.forms_extra import ModuloRichiestaSupporto
     modulo = None
     if me:
-        modulo = ModuloRichiestaSupporto(request.POST or None)
+        deleghe = set([d.tipo for d in me.deleghe_attuali()])
+        tipi = set((UFFICIO_SOCI, UFFICIO_SOCI_TEMPORANEO, UFFICIO_SOCI_UNITA, PRESIDENTE))
+        if deleghe.intersection(tipi):
+            modulo = ModuloRichiestaSupportoPersone(request.POST or None)
+        else:
+            modulo = ModuloRichiestaSupporto(request.POST or None)
 
         scelte = modulo.fields['tipo'].choices
 
@@ -595,6 +603,7 @@ def supporto(request, me=None):
         tipo = modulo.cleaned_data['tipo']
         oggetto = modulo.cleaned_data['oggetto']
         descrizione = modulo.cleaned_data['descrizione']
+        persona = modulo.cleaned_data.get('persona', None)
 
         oggetto = "(%s) %s" % (tipo, oggetto)
         Messaggio.costruisci_e_invia(
@@ -605,6 +614,7 @@ def supporto(request, me=None):
             corpo={
                 "testo": descrizione,
                 "mittente": me,
+                "persona": persona
             },
         )
         return messaggio_generico(request, me, titolo="Richiesta inoltrata",
@@ -612,7 +622,6 @@ def supporto(request, me=None):
                                             "oggetto '%s' è stata correttamente inoltrata. Riceverai a minuti "
                                             "un messaggio di conferma del codice ticket assegnato alla "
                                             "tua richiesta." % (oggetto,))
-
     contesto = {
         "modulo": modulo
     }

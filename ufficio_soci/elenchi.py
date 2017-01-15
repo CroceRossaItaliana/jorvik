@@ -473,7 +473,14 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         oggi = self.modulo_riempito.cleaned_data['al_giorno']
         nascita_minima = date(oggi.year - 18, oggi.month, oggi.day)
-        anzianita_minima = datetime(oggi.year - Appartenenza.MEMBRO_ANZIANITA_ANNI, oggi.month, oggi.day, 23, 59, 59)
+        if self.modulo_riempito.cleaned_data['elettorato'] == ModuloElencoElettorato.ELETTORATO_ATTIVO:
+            anzianita_minima = datetime(
+                oggi.year - Appartenenza.MEMBRO_ANZIANITA_ELETTORATO_ATTIVO, oggi.month, oggi.day, 23, 59, 59
+            )
+        else:
+            anzianita_minima = datetime(
+                oggi.year - Appartenenza.MEMBRO_ANZIANITA_ANNI, oggi.month, oggi.day, 23, 59, 59
+            )
 
         aggiuntivi = {
             # Anzianita' minima

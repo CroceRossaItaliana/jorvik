@@ -985,10 +985,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return False
         return True
 
-    def save(self, force_insert=False, force_update=False):
+    def save(self, *args, **kwargs):
         self.nome = normalizza_nome(self.nome)
         self.cognome = normalizza_nome(self.cognome)
-        super(Persona,self).save(force_insert, force_update)
+        super(Persona,self).save(*args, **kwargs)
 
     def appartiene_al_segmento(self, segmento):
         """
@@ -1177,6 +1177,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     MEMBRO_SOCIO = (VOLONTARIO, ORDINARIO,)
     MEMBRO_ANZIANITA = MEMBRO_SOCIO
     MEMBRO_ANZIANITA_ANNI = 2
+    MEMBRO_ANZIANITA_ELETTORATO_ATTIVO = 1
 
     # Membri sotto il diretto controllo di una altra Sede
     MEMBRO_ESTESO = (ESTESO,)
