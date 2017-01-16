@@ -5,14 +5,16 @@ import re
 from django.core import mail
 from django.test import Client
 from django.test import TestCase
+from django.utils.timezone import now
 from freezegun import freeze_time
 from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
 from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica
 from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Riserva
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_5
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
+from anagrafica.utils import termina_deleghe_giovani
 from autenticazione.models import Utenza
 from autenticazione.utils_test import TestFunzionale
 from base.utils import poco_fa
@@ -898,6 +900,37 @@ class TestAnagrafica(TestCase):
         self.assertNotContains(response, 'Non può essere richiesta una riserva per una data nel passato')
         self.assertTrue(Riserva.objects.filter(persona=persona).exists())
 
+    def test_termina_delegati_giovani(self):
+        presidente = crea_persona()
+        sede = crea_sede(presidente)
+
+        meno_di_33 = now().replace(year=now().year - 32)
+        piu_di_33 = now().replace(year=now().year - 34)
+
+        persona_1 = crea_persona()
+        persona_1.data_nascita = piu_di_33
+        persona_1.email_contatto = email_fittizzia()
+        persona_1.save()
+        persona_2 = crea_persona()
+        persona_2.data_nascita = meno_di_33
+        persona_2.email_contatto = email_fittizzia()
+        persona_2.save()
+
+        Delega.objects.create(tipo=DELEGATO_OBIETTIVO_5, persona=persona_1, oggetto=sede, firmatario=presidente, inizio=now())
+        Delega.objects.create(tipo=DELEGATO_OBIETTIVO_5, persona=persona_2, oggetto=sede, firmatario=presidente, inizio=now())
+
+        self.assertEqual(persona_1.deleghe_attuali(tipo=DELEGATO_OBIETTIVO_5).count(), 1)
+        self.assertEqual(persona_2.deleghe_attuali(tipo=DELEGATO_OBIETTIVO_5).count(), 1)
+
+        self.assertEqual(len(mail.outbox), 0)
+
+        termina_deleghe_giovani()
+
+        self.assertEqual(persona_1.deleghe_attuali(tipo=DELEGATO_OBIETTIVO_5).count(), 0)
+        self.assertEqual(persona_2.deleghe_attuali(tipo=DELEGATO_OBIETTIVO_5).count(), 1)
+
+        self.assertEqual(len(mail.outbox), 1)
+
 
 class TestFunzionaliAnagrafica(TestFunzionale):
 
@@ -937,7 +970,6 @@ class TestFunzionaliAnagrafica(TestFunzionale):
         response = self.client.post('/utente/trasferimento/', data=dati)
         self.assertContains(response=response, text='Sei già appartenente a questa sede')
         self.assertEqual(Autorizzazione.objects.filter(richiedente=persona, concessa=None).count(), 0)
-
 
     def test_us_attivazione_credenziali(self):
 

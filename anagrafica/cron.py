@@ -4,6 +4,7 @@ from django_cron import CronJobBase, Schedule
 
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
 from anagrafica.models import Sede
+from anagrafica.utils import termina_deleghe_giovani
 from base.files import Excel, FoglioExcel
 from base.utils import poco_fa
 from jorvik.settings import DESTINATARI_REPORT
@@ -103,3 +104,14 @@ class CronReportComitati(CronJobBase):
         )
 
         print("Inviato report sedi ai seguenti indirizzi: %s" % ", ".join(DESTINATARI_REPORT))
+
+
+def CronTerminaNonGiovani(CronJobBase):
+
+    RUN_AT_TIMES = ['06:30']
+
+    schedule = Schedule(run_at_times=RUN_AT_TIMES)
+    code = 'anagrafica.termina_deleghe_giovani'
+
+    def do(self):
+        termina_deleghe_giovani()
