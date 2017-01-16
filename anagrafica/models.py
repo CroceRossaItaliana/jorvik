@@ -2109,6 +2109,7 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
     def __str__(self):
         return self.persona.__str__()
 
+
 class Dimissione(ModelloSemplice, ConMarcaTemporale):
 
     class Meta:
@@ -2146,6 +2147,15 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         from gruppi.models import Appartenenza as App
         precedente_appartenenza = self.appartenenza
         precedente_sede = self.persona.sede_riferimento()
+        destinatari = set()
+        presidente = None
+        if self.persona.sede_riferimento():
+            us = self.persona.sede_riferimento().delegati_ufficio_soci()
+            destinatari = set(us)
+        if self.persona.comitato_riferimento():
+            presidente = self.persona.comitato_riferimento().presidente()
+            destinatari.add(presidente)
+
         Appartenenza.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa(), terminazione=Appartenenza.DIMISSIONE)
         Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
         App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
@@ -2155,24 +2165,40 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
             for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
         ]
 
-        if trasforma_in_sostenitore:
-            app = Appartenenza(precedente=precedente_appartenenza, persona=self.persona,
-                               sede=precedente_sede,
-                               inizio=date.today(),
-                               membro=Appartenenza.SOSTENITORE)
-            app.save()
+        if self.motivo != self.DECEDUTO:
 
-        Messaggio.costruisci_e_invia(
-            oggetto="Dimissioni",
-            modello="email_dimissioni.html",
-            corpo={
-                "dimissione": self,
-            },
-            mittente=self.richiedente,
+            if trasforma_in_sostenitore:
+                app = Appartenenza(precedente=precedente_appartenenza, persona=self.persona,
+                                   sede=precedente_sede,
+                                   inizio=date.today(),
+                                   membro=Appartenenza.SOSTENITORE)
+                app.save()
 
-            destinatari=[
-                self.persona
-            ]
-        )
+            Messaggio.costruisci_e_invia(
+                oggetto="Dimissioni",
+                modello="email_dimissioni.html",
+                corpo={
+                    "dimissione": self,
+                },
+                mittente=self.richiedente,
+
+                destinatari=[
+                    self.persona
+                ]
+            )
+        else:
+
+            for destinatario in destinatari:
+                Messaggio.costruisci_e_invia(
+                    oggetto="Dimissioni per decesso",
+                    modello="email_dimissioni_decesso.html",
+                    corpo={
+                        "dimissione": self,
+                        "destinatario": destinatario,
+                        "carica": "Presidente" if destinatario == presidente else "Delegato Ufficio Soci"
+                    },
+                    mittente=self.richiedente,
+                    destinatari=[destinatario]
+                )
 
 
