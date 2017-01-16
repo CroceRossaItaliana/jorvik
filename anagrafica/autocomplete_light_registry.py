@@ -110,6 +110,13 @@ class SostenitoreAutocompletamento(PersonaAutocompletamento):
 class IscrivibiliCorsiAutocompletamento(PersonaAutocompletamento):
     search_fields = ['codice_fiscale',]
 
+    attrs = {
+        'placeholder': 'Inserisci il codice fiscale',
+        'required': False,
+        'data-autocomplete-minimum-characters': 8,
+    }
+
+
     def choices_for_request(self):
         self.choices = self.choices.filter(
             Q(Appartenenza.query_attuale(membro=Appartenenza.SOSTENITORE).via("appartenenze")) |
