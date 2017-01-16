@@ -2,7 +2,10 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 from django.template.loader import get_template
+from django.utils.timezone import now
 
+from anagrafica.models import Persona, Delega
+from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_5
 from posta.models import Messaggio
 
 
@@ -45,3 +48,16 @@ def _conferma_email(request, me, parametri):
             del request.session[parametri['session_code']]
             del request.session[parametri['session_key']]
     return stato_conferma, errore_conferma
+
+
+def termina_deleghe_giovani():
+    """
+    Termina tutte le deleghe come delegato giovani per quelle persone che non rientrano più nei limiti di età
+    """
+    meno_di_33 = now().replace(year=now().year - 33)
+    deleghe_giovani = Delega.objects.filter(tipo=DELEGATO_OBIETTIVO_5)
+    delegati_giovani = deleghe_giovani.values_list('persona', flat=True)
+    delegati_giovani_terminare = Persona.objects.filter(data_nascita__lte=meno_di_33, pk__in=delegati_giovani)
+    terminare = deleghe_giovani.filter(persona__in=delegati_giovani_terminare)
+    for delega in terminare:
+        delega.termina()
