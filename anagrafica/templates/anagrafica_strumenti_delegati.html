@@ -77,7 +77,7 @@
                                 {% for del in deleghe %}
                                     <tr class="{% if del.attuale %}success{% endif %}">
                                         <td class="grassetto">
-                                            {{ del.persona.link|safe }}
+                                            <a target="_new" href="{{ del.persona.url }}">{{ del.persona.nome_completo }}</a>
                                         </td>
 
                                         <td class="piu-piccolo">
