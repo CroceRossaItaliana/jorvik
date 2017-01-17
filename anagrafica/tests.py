@@ -11,7 +11,7 @@ from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
 from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica
-from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Riserva
+from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Riserva, Sede
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_5
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
 from anagrafica.utils import termina_deleghe_giovani
@@ -930,6 +930,71 @@ class TestAnagrafica(TestCase):
         self.assertEqual(persona_2.deleghe_attuali(tipo=DELEGATO_OBIETTIVO_5).count(), 1)
 
         self.assertEqual(len(mail.outbox), 1)
+
+    def test_dimission_decesso(self):
+
+        presidente = crea_persona()
+        presidente.email_contatto = email_fittizzia()
+        presidente.save()
+        crea_utenza(presidente, presidente.email_contatto, 'presidente')
+        sede = crea_sede(presidente)
+        ut = Sede.objects.create(
+            nome="Unita Terr",
+            tipo=Sede.COMITATO,
+            estensione=TERRITORIALE,
+            genitore=sede,
+        )
+        persona_1 = crea_persona()
+        persona_1.email_contatto = email_fittizzia()
+        persona_1.save()
+        Delega.objects.create(tipo=UFFICIO_SOCI, persona=persona_1, oggetto=sede, firmatario=presidente, inizio=now())
+        crea_utenza(persona_1, persona_1.email_contatto, 'persona_1')
+
+        persona_2 = crea_persona()
+        persona_2.email_contatto = email_fittizzia()
+        persona_2.save()
+        Delega.objects.create(tipo=UFFICIO_SOCI_UNITA, persona=persona_2, oggetto=ut, firmatario=presidente, inizio=now())
+        crea_utenza(persona_2, persona_2.email_contatto, 'persona_2')
+
+        persona_deceduta = crea_persona()
+        Appartenenza.objects.create(
+            persona=persona_deceduta, membro=Appartenenza.VOLONTARIO, inizio=now(), sede=ut
+        )
+        persona_deceduta.email_contatto = email_fittizzia()
+        persona_deceduta.save()
+
+        persona_deceduta_2 = crea_persona()
+        Appartenenza.objects.create(
+            persona=persona_deceduta_2, membro=Appartenenza.VOLONTARIO, inizio=now(), sede=sede
+        )
+        persona_deceduta_2.email_contatto = email_fittizzia()
+        persona_deceduta_2.save()
+
+        self.client.login(username=presidente.utenza.email, password='presidente')
+        dati = {
+            'motivo': Dimissione.DECEDUTO,
+            'info': 'test',
+        }
+        response = self.client.post('/us/dimissioni/{}/'.format(persona_deceduta.pk), data=dati)
+        self.assertContains(response, 'non sarà inviata alcuna notifica')
+
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertFalse(persona_deceduta.email_contatto in [email.to for email in mail.outbox])
+        self.assertTrue("Dimissioni per decesso" in mail.outbox[0].subject)
+        self.assertTrue("Presidente" in mail.outbox[0].body)
+        self.assertTrue("Ufficio Soci" in mail.outbox[0].body)
+        self.assertTrue("recupero di tesserino e divisa" in mail.outbox[0].body)
+        mail.outbox = []
+
+        response = self.client.post('/us/dimissioni/{}/'.format(persona_deceduta_2.pk), data=dati)
+        self.assertContains(response, 'non sarà inviata alcuna notifica')
+
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertFalse(persona_deceduta_2.email_contatto in [email.to for email in mail.outbox])
+        self.assertTrue("Dimissioni per decesso" in mail.outbox[0].subject)
+        self.assertTrue("Presidente" in mail.outbox[0].body)
+        self.assertTrue("Ufficio Soci" in mail.outbox[0].body)
+        self.assertTrue("recupero di tesserino e divisa" in mail.outbox[0].body)
 
 
 class TestFunzionaliAnagrafica(TestFunzionale):
