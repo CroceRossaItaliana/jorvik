@@ -235,11 +235,17 @@ def us_dimissioni(request, me, pk):
         dim.save()
         dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'])
 
+        if dim.motivo == dim.DECEDUTO:
+            messaggio = 'Il decesso è stato registrato.<br>Vista la motivazione non sarà inviata alcuna notifica ' \
+                        'all\'email del volontario. Sarà cura del Presidente e dell\'Ufficio Soci individuare le ' \
+                        'corrette modalità di recupero di tesserino e divisa.'
+        else:
+            messaggio = "Le dimissioni sono state registrate con successo"
+
         return messaggio_generico(request, me, titolo="Dimissioni registrate",
-                                      messaggio="Le dimissioni sono"
-                                                "state registrate con successo",
-                                      torna_titolo="Vai allo storico appartenenze",
-                                      torna_url=persona.url_profilo_appartenenze)
+                                  messaggio=messaggio,
+                                  torna_titolo="Vai allo storico appartenenze",
+                                  torna_url=persona.url_profilo_appartenenze)
 
     contesto = {
         "modulo": modulo,
