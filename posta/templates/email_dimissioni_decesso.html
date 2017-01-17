@@ -1,0 +1,10 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+
+<p class="grassetto">Gentile {{ destinatario.nome_completo }},</p>
+<p>A seguito le decesso del socio {{ dimissione.persona.nome_completo }} è stata effettuata la procedura di dimissione.</p>
+<p>Sarà tuo compito in qualità di {{ carica }} (insieme con {% if carica == 'Presidente' %}i delegati dell'Ufficio Soci{% else %}il Presidente{% endif %}) individuare la corretta modalità di recupero di tesserino e divisa.</p>
+
+{% endblock %}
