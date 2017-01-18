@@ -380,6 +380,8 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
 
     RICHIESTA_NOME = "iscrizione a Corso Base"
 
+    APPROVAZIONE_AUTOMATICA = datetime.timedelta(days=settings.SCADENZA_AUTORIZZAZIONE_AUTOMATICA)
+
     class Meta:
         verbose_name = "Invito di partecipazione a corso base"
         verbose_name_plural = "Inviti di partecipazione a corso base"
@@ -428,7 +430,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
             ),
             invia_notifiche=self.persona,
             auto=Autorizzazione.NG_AUTO,
-            scadenza=settings.AUTORIZZAZIONE_AUTOMATICA,
+            scadenza=self.APPROVAZIONE_AUTOMATICA,
         )
 
 
@@ -500,7 +502,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 
     RICHIESTA_NOME = "Iscrizione Corso Base"
 
-    def autorizzazione_concessa(self, modulo=None):
+    def autorizzazione_concessa(self, modulo=None, auto=False):
         # Quando un aspirante viene iscritto, tutte le richieste presso altri corsi devono essere cancellati.
 
         # Cancella tutte altre partecipazioni con esito pending - ce ne puo' essere solo una.

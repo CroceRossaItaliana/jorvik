@@ -39,6 +39,20 @@
         <p>&nbsp;</p>
     </div>
 
+    {% if me.trasferimento and not me.trasferimento.con_scadenza %}
+        <div class="alert alert-warning">
+            <h4>
+                <i class="fa fa-fw fa-warning"></i>
+                Hai attualmente un trasferimento in attesa di approvazione
+            </h4>
+            <p>
+                Per ragioni tecniche -risolte a partire dal {{ SETTINGS.DATA_AVVIO_TRASFERIMENTI_AUTO|date:"SHORT_DATE_FORMAT" }}- non è stato possibile approvare in automatico il trasferimento.<br>
+                Vai alla <a href="/utente/trasferimenti/">sezione Trasferimenti</a> per maggiori informazioni.
+            </p>
+        </div>
+
+    {% endif %}
+
     {% if me.nuovo_presidente %}
         <div class="alert alert-success">
             <p class="grassetto">
