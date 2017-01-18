@@ -521,6 +521,8 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     RICHIESTA_NOME = "partecipazione attività"
 
+    APPROVAZIONE_AUTOMATICA = timedelta(days=settings.SCADENZA_AUTORIZZAZIONE_AUTOMATICA)
+
     persona = models.ForeignKey("anagrafica.Persona", related_name='partecipazioni', on_delete=models.CASCADE)
     turno = models.ForeignKey(Turno, related_name='partecipazioni', on_delete=models.CASCADE)
     stato = models.CharField(choices=STATO, default=RICHIESTA, max_length=1, db_index=True)
@@ -553,7 +555,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
             invia_notifiche=self.turno.attivita.referenti_attuali(),
             auto=Autorizzazione.NG_AUTO,
-            scadenza=settings.AUTORIZZAZIONE_AUTOMATICA,
+            scadenza=self.APPROVAZIONE_AUTOMATICA,
         )
 
         # Se fuori sede, chiede autorizzazione al Presidente del mio Comitato.
@@ -567,10 +569,10 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                     ),
                 invia_notifiche=self.persona.sede_riferimento().presidente(),
                 auto=Autorizzazione.NG_AUTO,
-                scadenza=settings.AUTORIZZAZIONE_AUTOMATICA,
+                scadenza=self.APPROVAZIONE_AUTOMATICA,
             )
 
-    def autorizzazione_concessa(self, modulo):
+    def autorizzazione_concessa(self, modulo, auto=False):
         """
         (Automatico)
         Invia notifica di autorizzazione concessa.
@@ -578,7 +580,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         # TODO
         pass
 
-    def autorizzazione_negata(self, modulo=None):
+    def autorizzazione_negata(self, modulo=None, auto=False):
         """
         (Automatico)
         Invia notifica di autorizzazione negata.

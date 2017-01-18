@@ -36,7 +36,7 @@ from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, 
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
-    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO
+    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
     ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
@@ -869,6 +869,20 @@ def utente_donazioni_sangue_cancella(request, me, pk):
     donazione.delete()
     return redirect("/utente/donazioni/sangue/")
 
+def estensioni_pending(me):
+
+    delegati = []
+    persone = []
+    for estensione in me.estensioni_in_attesa():
+        for autorizzazione in estensione.autorizzazioni:
+            for persona in autorizzazione.espandi_notifiche(me.sede_riferimento(), [], True, True):
+                if persona not in persone:
+                    delegati.extend(persona.deleghe_attuali(
+                        oggetto_id=me.sede_riferimento().pk, oggetto_tipo=ContentType.objects.get_for_model(Sede))
+                    )
+                    persone.append(persona)
+    return me.estensioni_in_attesa(), delegati
+
 @pagina_privata
 def utente_estensione(request, me):
     if not me.sede_riferimento():
@@ -920,10 +934,14 @@ def utente_estensione(request, me):
             #     ]
             # )
 
+    in_attesa, delegati = estensioni_pending(me)
+
     contesto = {
         "modulo": modulo,
         "storico": storico,
-        "attuali": me.estensioni_attuali()
+        "attuali": me.estensioni_attuali(),
+        "in_attesa": in_attesa,
+        "delegati": delegati,
     }
     return "anagrafica_utente_estensione.html", contesto
 
@@ -944,6 +962,37 @@ def utente_trasferimento_termina(request, me, pk):
         trasferimento.ritira()
         return redirect('/utente/trasferimento/')
 
+def trasferimenti_pending(me):
+
+    trasferimento = me.trasferimento
+    trasferimenti_auto_pending = None
+    trasferimenti_manuali_pending = None
+    persone = OrderedDict()
+    persone[PERMESSI_NOMI_DICT[PRESIDENTE]] = set()
+    persone[PERMESSI_NOMI_DICT[UFFICIO_SOCI]] = set()
+    if trasferimento:
+        sedi = (me.sede_riferimento().pk, me.comitato_riferimento().pk)
+        if me.sede_riferimento().estensione == TERRITORIALE:
+            persone[PERMESSI_NOMI_DICT[UFFICIO_SOCI_UNITA]] = set()
+        for autorizzazione in trasferimento.autorizzazioni:
+            delegati = autorizzazione.espandi_notifiche(me.sede_riferimento(), [], True, True)
+            if me.sede_riferimento().estensione == TERRITORIALE:
+                delegati.extend(autorizzazione.espandi_notifiche(me.comitato_riferimento(), [], True, True))
+            for persona in delegati:
+                deleghe = persona.deleghe_attuali(
+                    oggetto_id__in=sedi, oggetto_tipo=ContentType.objects.get_for_model(Sede)
+                ).values_list('tipo', flat=True)
+                if PRESIDENTE in deleghe:
+                    persone[PERMESSI_NOMI_DICT[PRESIDENTE]].add(persona)
+                elif UFFICIO_SOCI in deleghe and PERMESSI_NOMI_DICT[UFFICIO_SOCI] in persone:
+                    persone[PERMESSI_NOMI_DICT[UFFICIO_SOCI]].add(persona)
+                elif UFFICIO_SOCI_UNITA in deleghe and PERMESSI_NOMI_DICT[UFFICIO_SOCI_UNITA] in persone:
+                    persone[PERMESSI_NOMI_DICT[UFFICIO_SOCI_UNITA]].add(persona)
+        if trasferimento.con_scadenza:
+            trasferimenti_auto_pending = trasferimento
+        else:
+            trasferimenti_manuali_pending = trasferimento
+    return trasferimenti_auto_pending, trasferimenti_manuali_pending, persone
 
 @pagina_privata
 def utente_trasferimento(request, me):
@@ -999,9 +1048,14 @@ def utente_trasferimento(request, me):
                 ]
             )
 
+    trasferimenti_auto_pending, trasferimenti_manuali_pending, delegati = trasferimenti_pending(me)
+
     contesto = {
         "modulo": modulo,
-        "storico": storico
+        "storico": storico,
+        "trasferimenti_auto_pending": trasferimenti_auto_pending,
+        "trasferimenti_manuali_pending": trasferimenti_manuali_pending,
+        "delegati": delegati,
     }
     return "anagrafica_utente_trasferimento.html", contesto
 

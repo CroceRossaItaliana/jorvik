@@ -1,4 +1,6 @@
 import os
+
+from collections import defaultdict
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core import urlresolvers
@@ -6,8 +8,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
 from django.utils.timezone import now
+from django.utils.functional import cached_property
 from django.forms import forms
 from mptt.models import MPTTModel, TreeForeignKey
+
 from anagrafica.permessi.applicazioni import PERMESSI_NOMI
 from anagrafica.permessi.costanti import MODIFICA
 from anagrafica.permessi.incarichi import INCARICHI, INCARICHI_TIPO_DICT
@@ -108,6 +112,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         (NG_AUTO, "Negazione automatica"),
     )
 
+    PROTOCOLLO_AUTO = "AUTO"  # Applicato a protocollo_numero se approvazione automatica
+
     class Meta:
         verbose_name_plural = "Autorizzazioni"
         app_label = "base"
@@ -192,7 +198,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         if self.oggetto.autorizzazioni_set().filter(necessaria=True).count() == 0:
             self.oggetto.confermata = True
             self.oggetto.save()
-            self.oggetto.autorizzazione_concessa(modulo=modulo)
+            self.oggetto.autorizzazione_concessa(modulo=modulo, auto=auto)
             if self.oggetto.INVIA_NOTIFICA_CONCESSA:
                 self.notifica_concessa(auto=auto)
 
@@ -212,6 +218,18 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             self.oggetto._meta.object_name.lower()
         )
 
+    @staticmethod
+    def espandi_notifiche(sede, invia_notifiche, invia_notifica_presidente=False, invia_notifica_ufficio_soci=False):
+
+        if invia_notifica_presidente:
+            presidente = sede.presidente()
+            invia_notifiche = list(invia_notifiche) + ([presidente] if presidente else [])
+
+        if invia_notifica_ufficio_soci:
+            ufficio_soci = list(sede.delegati_ufficio_soci())
+            invia_notifiche = list(invia_notifiche) + ufficio_soci
+        return list(set(invia_notifiche))
+
     def notifica_richiesta(self, persona):
         from anagrafica.models import Delega, Persona
         from posta.models import Messaggio
@@ -229,22 +247,39 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             destinatari=[persona],
         )
 
-    def _invia_notifica(self, modello, oggetto, auto):
+    def notifica_origine_autorizzazione_concessa(self, origine, testo_extra=''):
+        """
+        Notifica presidente e ufficio soci del comitato di origine dell'avvenuta approvazione della richiesta
+        """
         from posta.models import Messaggio
 
-        if auto:
-            destinatari = [self.richiedente]
-            if self.firmatario:
-                destinatari.append(self.firmatario)
-            self.oggetto.automatica = True
-            self.oggetto.save()
-        else:
-            destinatari = [self.richiedente]
+        notifiche = self.espandi_notifiche(origine, [], True, True)
+        modello = "email_autorizzazione_concessa_notifica_origine.html"
+        oggetto = "Richiesta di %s da %s APPROVATA" % (self.oggetto.RICHIESTA_NOME, self.richiedente.nome_completo,)
+        aggiunte_corpo = {
+            'testo_extra': testo_extra,
+        }
+        self._invia_notifica(modello, oggetto, False, destinatari=notifiche, aggiunte_corpo=aggiunte_corpo)
+
+    def _invia_notifica(self, modello, oggetto, auto, destinatari=None, aggiunte_corpo=None):
+        from posta.models import Messaggio
+
+        if not destinatari:
+            if auto:
+                destinatari = [self.richiedente]
+                if self.firmatario:
+                    destinatari.append(self.firmatario)
+                self.oggetto.automatica = True
+                self.oggetto.save()
+            else:
+                destinatari = [self.richiedente]
         corpo = {
             "richiesta": self,
             "firmatario": self.firmatario,
             "giorni": self.giorni_automatici
         }
+        if aggiunte_corpo:
+            corpo.update(aggiunte_corpo)
 
         Messaggio.costruisci_e_invia(
             oggetto=oggetto,
@@ -296,6 +331,51 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         for autorizzazione in da_approvare:
             autorizzazione.controlla_concedi_automatico()
 
+
+    @classmethod
+    def notifiche_richieste_in_attesa(cls):
+        from anagrafica.models import Estensione,  Trasferimento
+        from posta.models import Messaggio
+
+        oggetto = "Richieste in attesa di approvazione"
+        modello = "email_richieste_pending.html"
+
+        in_attesa = cls.objects.filter(
+            concessa__isnull=True
+        )
+        trasferimenti = in_attesa.filter(oggetto_tipo=ContentType.objects.get_for_model(Trasferimento))
+
+        estensioni = in_attesa.filter(oggetto_tipo=ContentType.objects.get_for_model(Estensione))
+        trasferimenti_manuali = trasferimenti.filter(scadenza__isnull=True, tipo_gestione=Autorizzazione.MANUALE)
+        trasferimenti_automatici = trasferimenti.filter(
+            scadenza__isnull=False, scadenza__gt=now().exclude(tipo_gestione=Autorizzazione.MANUALE)
+        )
+        autorizzazioni = estensioni + trasferimenti_manuali + trasferimenti_automatici
+
+        persone = defaultdict(defaultdict(list))
+        for autorizzazione in autorizzazioni:
+            destinatari = cls.espandi_notifiche(autorizzazione.destinatario_oggetto, [], True, True)
+            for destinatario in destinatari:
+                persone[destinatario.pk]['persona'] = destinatario
+                if autorizzazione in estensioni:
+                    persone[destinatario.pk]['estensioni'].append(autorizzazione)
+                if autorizzazione in trasferimenti_manuali:
+                    persone[destinatario.pk]['trasferimenti_manuali'].append(autorizzazione)
+                if autorizzazione in trasferimenti_automatici:
+                    persone[destinatario.pk]['trasferimenti_automatici'].append(autorizzazione)
+
+        for persona in persone.values():
+            corpo = {
+                "persona": persona,
+                "DATA_AVVIO_TRASFERIMENTI_AUTO": settings.DATA_AVVIO_TRASFERIMENTI_AUTO
+            }
+
+            Messaggio.costruisci_e_invia(
+                oggetto=oggetto,
+                modello=modello,
+                corpo=corpo,
+                destinatari=[persona]
+            )
 
 class Log(ModelloSemplice, ConMarcaTemporale):
 
@@ -527,6 +607,18 @@ class ConAutorizzazioni(models.Model):
     def autorizzazioni(self):
         return self.autorizzazioni_set()
 
+    @cached_property
+    def autorizzazioni_automatiche(self):
+        return self.autorizzazioni.filter(scadenza__isnull=False).exclude(tipo_gestione=Autorizzazione.MANUALE)
+
+    @property
+    def con_scadenza(self):
+        return self.autorizzazioni_automatiche.exists()
+
+    @property
+    def scadenza_autorizzazione(self):
+        return (self.autorizzazioni_automatiche.earliest('scadenza').scadenza - now()).days
+
     def autorizzazioni_set(self):
         """
         Ottiene il queryset delle autorizzazioni associate.
@@ -557,13 +649,7 @@ class ConAutorizzazioni(models.Model):
             if not sede_riferimento:
                 return False
 
-        if invia_notifica_presidente:
-            presidente = sede_riferimento.presidente()
-            invia_notifiche = list(invia_notifiche) + ([presidente] if presidente else [])
-
-        if invia_notifica_ufficio_soci:
-            ufficio_soci = list(sede_riferimento.delegati_ufficio_soci())
-            invia_notifiche = list(invia_notifiche) + ufficio_soci
+        invia_notifiche = Autorizzazione.espandi_notifiche(sede_riferimento, invia_notifiche, invia_notifica_presidente, invia_notifica_ufficio_soci)
 
         self.autorizzazione_richiedi(richiedente, (incarico, sede_riferimento), invia_notifiche=invia_notifiche, auto=auto, **kwargs)
         return True
@@ -618,7 +704,7 @@ class ConAutorizzazioni(models.Model):
             )
             r.save()
 
-            if auto:
+            if auto and auto != Autorizzazione.MANUALE:
                 r.automatizza(concedi=auto, scadenza=scadenza)
 
             if invia_notifiche:
@@ -679,7 +765,6 @@ class ConAutorizzazioni(models.Model):
         Sovrascrivimi! Ritorna la classe del modulo per la negazione.
         """
         return ModuloMotivoNegazione
-
 
 class ConScadenzaPulizia(models.Model):
     """
