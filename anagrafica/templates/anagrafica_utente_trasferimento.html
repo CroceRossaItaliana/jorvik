@@ -24,6 +24,51 @@
             </div>
 
             <div class="panel-body">
+
+                {% if trasferimenti_auto_pending %}
+                <div class="alert bg-info">
+                    <p>
+                        <i class="fa fa-info-circle fa-fw"></i> Hai attualmente un trasferimento in attesa di approvazione.<br>
+                        Come previsto da regolamento il trasferimento sarà approvato automaticamente entro {{ trasferimenti_auto_pending.scadenza_autorizzazione }} giorni.<br>
+                        Per informazioni puoi rivolgerti al delegato Ufficio Soci, oppure al Presidente di competenza:
+                        <ul>
+                            {% for delega, persone in delegati.items %}
+                                {% if persone %}<strong>{{ delega }}</strong>{% endif %}
+                                {% for persona in persone %}
+                                <li>
+                                    <a href="{{ persona.url_messaggio }}">
+                                        {{ persona.nome_completo }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </p>
+                </div>
+                {% endif %}
+
+                {% if trasferimenti_manuali_pending %}
+                <div class="alert bg-info">
+                    <p>
+                        <i class="fa fa-info-circle fa-fw"></i> Hai attualmente un trasferimento in attesa di approvazione.<br>
+                        Per ragioni tecniche -risolte a partire dal {{ SETTINGS.DATA_AVVIO_TRASFERIMENTI_AUTO|date:"SHORT_DATE_FORMAT" }}- non è stato possibile approvare in automatico il trasferimento.<br>
+                        Per informazioni puoi rivolgerti al delegato Ufficio Soci, oppure al Presidente di competenza:
+                        <ul>
+                            {% for delega, persone in delegati.items %}
+                                {% if persone %}<strong>{{ delega }}</strong>{% endif %}
+                                {% for persona in persone %}
+                                <li>
+                                    <a href="{{ persona.url_messaggio }}">
+                                        {{ persona.nome_completo }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </p>
+                </div>
+                {% endif %}
+
                 <table class="table table-striped">
                     <thead>
                         <tr>

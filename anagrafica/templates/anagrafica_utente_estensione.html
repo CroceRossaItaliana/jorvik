@@ -27,6 +27,27 @@
 
             <div class="panel-body">
 
+                {% if in_attesa %}
+                <div class="alert bg-info">
+                    <p>
+                        <i class="fa fa-info-circle fa-fw"></i> Hai attualmente {{ in_attesa|length }} estension{{ in_attesa|pluralize:"e,i" }} in attesa di approvazione.<br>
+                        Per informazioni puoi rivolgerti al delegato Ufficio Soci, oppure al Presidente di competenza:
+                        <ul>
+                            {% for delega, persone in delegati.items %}
+                                {% if persone %}<strong>{{ delega }}</strong>{% endif %}
+                                {% for persona in persone %}
+                                <li>
+                                    <a href="{{ persona.url_messaggio }}">
+                                        {{ persona.nome_completo }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </p>
+                </div>
+                {% endif %}
+
                 <div class="row">
                     <div class="col-md-12">
                         <table class="table table-striped">
