@@ -348,8 +348,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         estensioni = in_attesa.filter(oggetto_tipo=ContentType.objects.get_for_model(Estensione))
         trasferimenti_manuali = trasferimenti.filter(scadenza__isnull=True, tipo_gestione=Autorizzazione.MANUALE)
         trasferimenti_automatici = trasferimenti.filter(
-            scadenza__isnull=False, scadenza__gt=now().exclude(tipo_gestione=Autorizzazione.MANUALE)
-        )
+            scadenza__isnull=False, scadenza__gt=now()
+        ).exclude(tipo_gestione=Autorizzazione.MANUALE)
         autorizzazioni = estensioni + trasferimenti_manuali + trasferimenti_automatici
 
         persone = defaultdict(defaultdict(list))
