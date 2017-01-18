@@ -825,6 +825,11 @@ class TestAnagrafica(TestCase):
         trasferire_2.save()
         crea_appartenenza(trasferire_2, sede1)
 
+        trasferire_3 = crea_persona()
+        trasferire_3.email_contatto = email_fittizzia()
+        trasferire_3.save()
+        crea_appartenenza(trasferire_3, sede1)
+
         estendere = crea_persona()
         estendere.email_contatto = email_fittizzia()
         estendere.save()
@@ -866,6 +871,37 @@ class TestAnagrafica(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, 'Richiesta di trasferimento da {}'.format(trasferire_2.nome_completo))
         self.assertEqual(mail.outbox[0].to, [presidente1.email_contatto])
+
+        trasf_manuale = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=trasferire_3,
+            richiedente=trasferire_3,
+            motivo='test'
+        )
+        trasf_manuale.richiedi()
+        trasf_manuale.automatica = False
+        trasf_manuale.save()
+        for autorizzazione in trasf_manuale.autorizzazioni:
+            autorizzazione.scadenza = None
+            autorizzazione.tipo_gestione = Autorizzazione.MANUALE
+            autorizzazione.save()
+            autorizzazione.nega(presidente1, auto=False)
+
+        trasf_manuale = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=trasferire_3,
+            richiedente=trasferire_3,
+            motivo='test'
+        )
+        trasf_manuale.richiedi()
+        trasf_manuale.automatica = False
+        trasf_manuale.ritirata = True
+        trasf_manuale.save()
+        for autorizzazione in trasf_manuale.autorizzazioni:
+            autorizzazione.scadenza = None
+            autorizzazione.tipo_gestione = Autorizzazione.MANUALE
+            autorizzazione.save()
+
         mail.outbox = []
 
         estensione = Estensione.objects.create(
@@ -894,6 +930,7 @@ class TestAnagrafica(TestCase):
             self.assertTrue(estendere.nome_completo in email.body)
             self.assertTrue(trasferire_2.nome_completo in email.body)
             self.assertTrue(trasferire_1.nome_completo in email.body)
+            self.assertTrue(trasferire_3.nome_completo not in email.body)
 
     def test_comitato(self):
         """
