@@ -807,6 +807,94 @@ class TestAnagrafica(TestCase):
         self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).count(), 0)
         self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede2).count(), 1)
 
+    def test_cron_notifiche(self):
+
+        presidente1 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        presidente2 = crea_persona()
+        presidente2.email_contatto = email_fittizzia()
+        presidente2.save()
+
+        trasferire_1, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
+        trasferire_1.email_contatto = email_fittizzia()
+        trasferire_1.save()
+
+        trasferire_2 = crea_persona()
+        trasferire_2.email_contatto = email_fittizzia()
+        trasferire_2.save()
+        crea_appartenenza(trasferire_2, sede1)
+
+        estendere = crea_persona()
+        estendere.email_contatto = email_fittizzia()
+        estendere.save()
+        crea_appartenenza(estendere, sede1)
+
+        ufficio_soci = crea_persona()
+        ufficio_soci.email_contatto = email_fittizzia()
+        ufficio_soci.save()
+        crea_appartenenza(ufficio_soci, sede1)
+        Delega.objects.create(persona=ufficio_soci, tipo=UFFICIO_SOCI, oggetto=sede1, inizio=poco_fa())
+
+        sede2 = crea_sede(presidente2)
+
+        trasf_auto = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=trasferire_1,
+            richiedente=trasferire_1,
+            motivo='test'
+        )
+        trasf_auto.richiedi()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, 'Richiesta di trasferimento da {}'.format(trasferire_1.nome_completo))
+        self.assertEqual(mail.outbox[0].to, [presidente1.email_contatto])
+        mail.outbox = []
+
+        trasf_manuale = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=trasferire_2,
+            richiedente=trasferire_2,
+            motivo='test'
+        )
+        trasf_manuale.richiedi()
+        trasf_manuale.automatica = False
+        for autorizzazione in trasf_manuale.autorizzazioni:
+            autorizzazione.scadenza = None
+            autorizzazione.tipo_gestione = Autorizzazione.MANUALE
+            autorizzazione.save()
+        trasf_manuale.save()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, 'Richiesta di trasferimento da {}'.format(trasferire_2.nome_completo))
+        self.assertEqual(mail.outbox[0].to, [presidente1.email_contatto])
+        mail.outbox = []
+
+        estensione = Estensione.objects.create(
+            destinazione=sede2,
+            persona=estendere,
+            richiedente=estendere,
+            motivo='test'
+        )
+        estensione.richiedi()
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[0].subject, 'Richiesta di Estensione da {}'.format(estendere.nome_completo))
+        self.assertEqual(mail.outbox[0].to, [presidente1.email_contatto])
+        self.assertEqual(mail.outbox[1].subject, 'Notifica di Estensione in entrata')
+        self.assertEqual(mail.outbox[1].to, [presidente2.email_contatto])
+        mail.outbox = []
+
+        Autorizzazione.notifiche_richieste_in_attesa()
+        self.assertEqual(len(mail.outbox), 2)
+
+        for email in mail.outbox:
+            self.assertEqual(email.subject, 'Richieste in attesa di approvazione')
+            self.assertTrue(email.to == [presidente1.email_contatto] or email.to, [ufficio_soci.email_contatto])
+            self.assertTrue('Estensioni' in email.body)
+            self.assertTrue('Trasferimenti' in email.body)
+            self.assertTrue('Data di approvazione automatica' in email.body)
+            self.assertTrue(estendere.nome_completo in email.body)
+            self.assertTrue(trasferire_2.nome_completo in email.body)
+            self.assertTrue(trasferire_1.nome_completo in email.body)
+
     def test_comitato(self):
         """
         Controlla che il Comitato venga ottenuto correttamente.
@@ -924,7 +1012,6 @@ class TestAnagrafica(TestCase):
             ___maletto in __catania.espandi(),
             msg="Espansione Provinciale ritorna territoriale proprio"
         )
-
 
     def test_permessi_ufficio_soci(self):
 

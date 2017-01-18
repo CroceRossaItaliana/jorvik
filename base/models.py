@@ -331,7 +331,6 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         for autorizzazione in da_approvare:
             autorizzazione.controlla_concedi_automatico()
 
-
     @classmethod
     def notifiche_richieste_in_attesa(cls):
         from anagrafica.models import Estensione,  Trasferimento
@@ -344,25 +343,32 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             concessa__isnull=True
         )
         trasferimenti = in_attesa.filter(oggetto_tipo=ContentType.objects.get_for_model(Trasferimento))
-
         estensioni = in_attesa.filter(oggetto_tipo=ContentType.objects.get_for_model(Estensione))
         trasferimenti_manuali = trasferimenti.filter(scadenza__isnull=True, tipo_gestione=Autorizzazione.MANUALE)
         trasferimenti_automatici = trasferimenti.filter(
             scadenza__isnull=False, scadenza__gt=now()
         ).exclude(tipo_gestione=Autorizzazione.MANUALE)
-        autorizzazioni = estensioni + trasferimenti_manuali + trasferimenti_automatici
 
-        persone = defaultdict(defaultdict(list))
+        autorizzazioni = list(estensioni) + list(trasferimenti_manuali) + list(trasferimenti_automatici)
+
+        persone = dict()
         for autorizzazione in autorizzazioni:
             destinatari = cls.espandi_notifiche(autorizzazione.destinatario_oggetto, [], True, True)
             for destinatario in destinatari:
+                if destinatario.pk not in persone:
+                    persone[destinatario.pk] = {
+                        'persona': None,
+                        'estensioni': [],
+                        'trasferimenti_manuali': [],
+                        'trasferimenti_automatici': [],
+                    }
                 persone[destinatario.pk]['persona'] = destinatario
                 if autorizzazione in estensioni:
-                    persone[destinatario.pk]['estensioni'].append(autorizzazione)
-                if autorizzazione in trasferimenti_manuali:
-                    persone[destinatario.pk]['trasferimenti_manuali'].append(autorizzazione)
-                if autorizzazione in trasferimenti_automatici:
-                    persone[destinatario.pk]['trasferimenti_automatici'].append(autorizzazione)
+                    persone[destinatario.pk]['estensioni'].append(autorizzazione.oggetto)
+                elif autorizzazione in trasferimenti_manuali:
+                    persone[destinatario.pk]['trasferimenti_manuali'].append(autorizzazione.oggetto)
+                elif autorizzazione in trasferimenti_automatici:
+                    persone[destinatario.pk]['trasferimenti_automatici'].append(autorizzazione.oggetto)
 
         for persona in persone.values():
             corpo = {
@@ -374,8 +380,9 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                 oggetto=oggetto,
                 modello=modello,
                 corpo=corpo,
-                destinatari=[persona]
+                destinatari=[persona['persona']]
             )
+
 
 class Log(ModelloSemplice, ConMarcaTemporale):
 
@@ -466,7 +473,6 @@ class Log(ModelloSemplice, ConMarcaTemporale):
             pass
 
         return righe
-
 
 
 class ConAutorizzazioni(models.Model):
