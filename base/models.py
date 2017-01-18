@@ -170,6 +170,10 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         if modulo and not modulo.is_valid():
             raise ValueError("Il modulo richiesto per l'accettazione non e' stato completato correttamente.")
 
+        if not self.oggetto:
+            print('L\'autorizzazione {} risulta non avere oggetti collegati'.format(self.pk))
+            return
+
         self.concessa = concedi
         self.firmatario = firmatario
         self.necessaria = False
