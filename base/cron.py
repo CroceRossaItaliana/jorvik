@@ -30,7 +30,7 @@ class CronApprovaNegaAuto(CronJobBase):
 
 class CronRichiesteInAttesa(CronJobBase):
 
-    RUN_EVERY_HOURS = 24
+    RUN_EVERY_HOURS = 24 * 15
     RUN_EVERY_MINS = RUN_EVERY_HOURS * 60
 
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
