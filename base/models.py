@@ -357,22 +357,23 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
         persone = dict()
         for autorizzazione in autorizzazioni:
-            destinatari = cls.espandi_notifiche(autorizzazione.destinatario_oggetto, [], True, True)
-            for destinatario in destinatari:
-                if destinatario.pk not in persone:
-                    persone[destinatario.pk] = {
-                        'persona': None,
-                        'estensioni': [],
-                        'trasferimenti_manuali': [],
-                        'trasferimenti_automatici': [],
-                    }
-                persone[destinatario.pk]['persona'] = destinatario
-                if autorizzazione in estensioni:
-                    persone[destinatario.pk]['estensioni'].append(autorizzazione.oggetto)
-                elif autorizzazione in trasferimenti_manuali:
-                    persone[destinatario.pk]['trasferimenti_manuali'].append(autorizzazione.oggetto)
-                elif autorizzazione in trasferimenti_automatici:
-                    persone[destinatario.pk]['trasferimenti_automatici'].append(autorizzazione.oggetto)
+            if not autorizzazione.oggetto.ritirata and not autorizzazione.oggetto.confermata:
+                destinatari = cls.espandi_notifiche(autorizzazione.destinatario_oggetto, [], True, True)
+                for destinatario in destinatari:
+                    if destinatario.pk not in persone:
+                        persone[destinatario.pk] = {
+                            'persona': None,
+                            'estensioni': [],
+                            'trasferimenti_manuali': [],
+                            'trasferimenti_automatici': [],
+                        }
+                    persone[destinatario.pk]['persona'] = destinatario
+                    if autorizzazione in estensioni:
+                        persone[destinatario.pk]['estensioni'].append(autorizzazione.oggetto)
+                    elif autorizzazione in trasferimenti_manuali:
+                        persone[destinatario.pk]['trasferimenti_manuali'].append(autorizzazione.oggetto)
+                    elif autorizzazione in trasferimenti_automatici:
+                        persone[destinatario.pk]['trasferimenti_automatici'].append(autorizzazione.oggetto)
 
         for persona in persone.values():
             corpo = {
