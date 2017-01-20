@@ -1,0 +1,16 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p>La richiesta di {{ richiesta.RICHIESTA_NOME }} inoltrata il {{ richiesta.creazione }} è stata <strong>APPROVATA</strong> automaticamente.</p>
+
+    {% if testo_extra %}
+    <p>{{ testo_extra }}</p>
+    {% endif %}
+
+    <p>Segue il contenuto della richiesta:</p>
+    <hr />
+    {% include richiesta.template_path %}
+    <hr />
+
+{% endblock %}

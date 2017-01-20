@@ -13,7 +13,7 @@ except ImportError:
 
 import os
 
-from datetime import timedelta
+from datetime import timedelta, date
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -84,6 +84,7 @@ CRON_CLASSES = [
     "posta.cron.CronSmaltisciCodaPosta",
     "base.cron.CronCancellaFileScaduti",
     "base.cron.CronApprovaNegaAuto",
+    "base.cron.CronRichiesteInAttesa",
     "anagrafica.cron.CronReportComitati",
 ]
 
@@ -121,6 +122,7 @@ EMAIL_CONF_FILE = 'config/email.cnf' if os.path.isfile('config/email.cnf') else 
 MEDIA_CONF_FILE = 'config/media.cnf' if os.path.isfile('config/media.cnf') else 'config/media.cnf.sample'
 DEBUG_CONF_FILE = 'config/debug.cnf' if os.path.isfile('config/debug.cnf') else 'config/debug.cnf.sample'
 APIS_CONF_FILE = 'config/apis.cnf' if os.path.isfile('config/apis.cnf') else 'config/apis.cnf.sample'
+GENERAL_CONF_FILE = 'config/general.cnf' if os.path.isfile('config/general.cnf') else 'config/general.cnf.sample'
 
 # MySQL
 MYSQL_CONF = configparser.ConfigParser()
@@ -129,6 +131,14 @@ MYSQL_CONF.read(MYSQL_CONF_FILE)
 # PGSQL
 PGSQL_CONF = configparser.ConfigParser()
 PGSQL_CONF.read(PGSQL_CONF_FILE)
+
+# Configurazione debug e produzione
+DEBUG_CONF = configparser.ConfigParser()
+DEBUG_CONF.read(DEBUG_CONF_FILE)
+DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
+SECRET_KEY = DEBUG_CONF.get('production', 'secret_key')
+JORVIK_LOG_FILE = DEBUG_CONF.get('debug', 'debug_log', fallback=os.path.join('..', 'log', 'debug.log'))
+JORVIK_LOG = os.path.join(BASE_DIR, JORVIK_LOG_FILE)
 
 PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
@@ -177,8 +187,14 @@ TWO_FACTOR_SESSIONE_SCADUTA = '/scaduta/'
 TWO_FACTOR_PUBLIC = (
     TWO_FACTOR_PROFILE, LOGOUT_URL, TWO_FACTOR_SESSIONE_SCADUTA, LOGIN_URL
 )
-TWO_FACTOR_SESSION_DURATA = 120
+TWO_FACTOR_SESSION_DURATA = DEBUG_CONF.getint('production', 'TWO_FACTOR_SESSION_DURATA', fallback=120)
 SESSION_COOKIE_PATH = '/'
+
+GENERAL_CONF = configparser.ConfigParser()
+GENERAL_CONF.read(GENERAL_CONF_FILE)
+
+# Driver per i test funzionali
+DRIVER_WEB = 'firefox'
 
 # Configurazione E-mail
 EMAIL_CONF = configparser.ConfigParser()
@@ -206,14 +222,6 @@ MEDIA_ROOT = MEDIA_CONF.get('media', 'media_root')
 MEDIA_URL = MEDIA_CONF.get('media', 'media_url')
 STATIC_ROOT = MEDIA_CONF.get('static', 'static_root', fallback='assets/')
 STATIC_URL = MEDIA_CONF.get('static', 'static_url', fallback='/assets/')
-
-# Configurazione debug e produzione
-DEBUG_CONF = configparser.ConfigParser()
-DEBUG_CONF.read(DEBUG_CONF_FILE)
-DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
-SECRET_KEY = DEBUG_CONF.get('production', 'secret_key')
-JORVIK_LOG_FILE = DEBUG_CONF.get('debug', 'debug_log', fallback=os.path.join('..', 'log', 'debug.log'))
-JORVIK_LOG = os.path.join(BASE_DIR, JORVIK_LOG_FILE)
 
 # Driver per i test funzionali
 DRIVER_WEB = DEBUG_CONF.get('test', 'driver', fallback='firefox')
@@ -288,6 +296,7 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
+                "jorvik.context_processors.settings",
             ),
             "debug": DEBUG_CONF.getboolean('debug', 'debug')
 
@@ -347,7 +356,8 @@ FILER_ALLOW_REGULAR_USERS_TO_ADD_ROOT_FOLDERS = True
 NORECAPTCHA_SITE_KEY = APIS_CONF.get('nocaptcha', 'site_key', fallback=os.environ.get('NORECAPTCHA_SECRET_KEY'))
 NORECAPTCHA_SECRET_KEY = APIS_CONF.get('nocaptcha', 'secret_key', fallback=os.environ.get('NORECAPTCHA_SITE_KEY'))
 
-AUTORIZZAZIONE_AUTOMATICA = timedelta(days=30)
+SCADENZA_AUTORIZZAZIONE_AUTOMATICA = GENERAL_CONF.getint('autorizzazioni', 'giorni', fallback=30)
+DATA_AVVIO_TRASFERIMENTI_AUTO = date(2017, 1, 18)
 
 if os.environ.get('ENABLE_TEST_APPS', False):
     INSTALLED_APPS.append('segmenti.segmenti_test')

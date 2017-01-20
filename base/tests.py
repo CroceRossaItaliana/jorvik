@@ -29,6 +29,7 @@ from jorvik.settings import GOOGLE_KEY
 from filer.models import Folder
 from filer.tests import create_image
 
+
 class TestBase(TestCase):
 
     CONTENUTO_1 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n"

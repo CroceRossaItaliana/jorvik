@@ -5,14 +5,16 @@ import re
 from django.core import mail
 from django.test import Client
 from django.test import TestCase
+from django.utils.timezone import now
 from freezegun import freeze_time
 from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
 from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica
-from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Riserva
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA
+from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Estensione, Trasferimento, Riserva, Sede
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_5
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
+from anagrafica.utils import termina_deleghe_giovani
 from autenticazione.models import Utenza
 from autenticazione.utils_test import TestFunzionale
 from base.utils import poco_fa
@@ -610,8 +612,6 @@ class TestAnagrafica(TestCase):
         est.save()
         est.richiedi()
 
-
-
         self.assertTrue(
             da_estendere.estensioni_attuali_e_in_attesa().filter(pk=est.pk).exists(),
             msg="L'estensione creata correttamente"
@@ -636,7 +636,6 @@ class TestAnagrafica(TestCase):
 
         aut.nega(presidente1, modulo=ModuloNegaEstensione({"motivo": "Un motivo qualsiasi"}))
 
-
         est.refresh_from_db()
         self.assertFalse(
             est.appartenenza is not None,
@@ -653,6 +652,285 @@ class TestAnagrafica(TestCase):
             da_estendere.estensioni_attuali().exists(),
             msg="Il volontario non ha estensioni in corso"
         )
+
+    def test_estensione_non_automatica(self):
+        presidente1 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        presidente2 = crea_persona()
+        presidente2.email_contatto = email_fittizzia()
+        presidente2.save()
+
+        da_estendere, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
+        da_estendere.email_contatto = email_fittizzia()
+        da_estendere.save()
+
+        ufficio_soci = crea_persona()
+        ufficio_soci.email_contatto = email_fittizzia()
+        ufficio_soci.save()
+        crea_appartenenza(ufficio_soci, sede1)
+        Delega.objects.create(persona=ufficio_soci, tipo=UFFICIO_SOCI, oggetto=sede1, inizio=poco_fa())
+
+        sede2 = crea_sede(presidente2)
+
+        self.assertFalse(
+            da_estendere.estensioni_attuali_e_in_attesa().exists(),
+            msg="Non esiste estensione alcuna"
+        )
+
+        self.assertFalse(
+            presidente1.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente non ha autorizzazioni in attesa"
+        )
+        ora = now()
+
+        est = Estensione.objects.create(
+            destinazione=sede2,
+            persona=da_estendere,
+            richiedente=da_estendere,
+            motivo='test'
+        )
+        self.assertEqual(0, Autorizzazione.objects.count())
+        est.richiedi()
+        self.assertNotIn(est, Estensione.con_esito_ok())
+        self.assertEqual(1, Autorizzazione.objects.count())
+        self.assertEqual(2, len(mail.outbox))
+
+        # Notifica Presidente in uscita
+        email = mail.outbox[0]
+        self.assertTrue(email.subject.find('Richiesta di Estensione da %s' % da_estendere.nome_completo) > -1)
+        self.assertTrue(presidente1.email_contatto in email.to)
+
+        # Notifica Presidente in entrata
+        email = mail.outbox[1]
+        self.assertTrue(email.subject.find('Notifica di Estensione in entrata') > -1)
+        self.assertTrue(presidente2.email_contatto in email.to)
+
+        autorizzazione = Autorizzazione.objects.first()
+
+        autorizzazione.scadenza = ora - datetime.timedelta(days=10)
+        autorizzazione.save()
+        self.assertFalse(autorizzazione.concessa)
+        self.assertEqual(da_estendere.appartenenze_attuali(membro=Appartenenza.ESTESO, sede=sede2).count(), 0)
+
+        Autorizzazione.gestisci_automatiche()
+        autorizzazione.refresh_from_db()
+
+        # Estensioni non sono approvate in automatico
+        self.assertEqual(2, len(mail.outbox))
+
+        self.assertEqual(autorizzazione.concessa, None)
+        self.assertFalse(autorizzazione.oggetto.automatica)
+        Autorizzazione.gestisci_automatiche()
+        self.assertEqual(autorizzazione.concessa, None)
+        self.assertNotIn(est, Estensione.con_esito_ok())
+        self.assertEqual(da_estendere.appartenenze_attuali(membro=Appartenenza.ESTESO, sede=sede2).count(), 0)
+
+    def test_trasferimento_automatico(self):
+        presidente1 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        presidente2 = crea_persona()
+        presidente2.email_contatto = email_fittizzia()
+        presidente2.save()
+
+        da_trasferire, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
+        da_trasferire.email_contatto = email_fittizzia()
+        da_trasferire.save()
+
+        ufficio_soci = crea_persona()
+        ufficio_soci.email_contatto = email_fittizzia()
+        ufficio_soci.save()
+        crea_appartenenza(ufficio_soci, sede1)
+        Delega.objects.create(persona=ufficio_soci, tipo=UFFICIO_SOCI, oggetto=sede1, inizio=poco_fa())
+
+        sede2 = crea_sede(presidente2)
+
+        self.assertFalse(
+            da_trasferire.estensioni_attuali_e_in_attesa().exists(),
+            msg="Non esiste estensione alcuna"
+        )
+
+        self.assertFalse(
+            presidente1.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente non ha autorizzazioni in attesa"
+        )
+        ora = now()
+
+        trasf = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=da_trasferire,
+            richiedente=da_trasferire,
+            motivo='test'
+        )
+        self.assertEqual(0, Autorizzazione.objects.count())
+        trasf.richiedi()
+        self.assertNotIn(trasf, Trasferimento.con_esito_ok())
+        self.assertEqual(1, Autorizzazione.objects.count())
+        self.assertEqual(1, len(mail.outbox))
+
+        # Notifica Presidente in uscita
+        email = mail.outbox[0]
+        self.assertTrue(email.subject.find('Richiesta di trasferimento da %s' % da_trasferire.nome_completo) > -1)
+        self.assertTrue(presidente1.email_contatto in email.to)
+
+        autorizzazione = Autorizzazione.objects.first()
+
+        autorizzazione.scadenza = ora - datetime.timedelta(days=10)
+        autorizzazione.save()
+        self.assertFalse(autorizzazione.concessa)
+        self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).count(), 1)
+        self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede2).count(), 0)
+
+        Autorizzazione.gestisci_automatiche()
+        autorizzazione.refresh_from_db()
+
+        self.assertEqual(4, len(mail.outbox))
+        destinatari_verificati = 0
+        for email in mail.outbox[1:]:
+            if da_trasferire.email_contatto in email.to:
+                # Notifica alla persona estesa
+                self.assertTrue(email.subject.find('Richiesta di trasferimento APPROVATA') > -1)
+                destinatari_verificati += 1
+            elif presidente1.email_contatto in email.to or ufficio_soci.email_contatto in email.to:
+                # Notifica presidente e ufficio soci in uscita
+                self.assertTrue(email.subject.find('Richiesta di trasferimento da %s APPROVATA' % da_trasferire.nome_completo) > -1)
+                self.assertTrue(email.body.find('articolo 9.5 del "Regolamento') > -1)
+                destinatari_verificati += 1
+        self.assertEqual(destinatari_verificati, 3)
+
+        self.assertEqual(autorizzazione.concessa, True)
+        self.assertTrue(autorizzazione.oggetto.automatica)
+        Autorizzazione.gestisci_automatiche()
+        self.assertEqual(autorizzazione.concessa, True)
+        self.assertIn(trasf, Trasferimento.con_esito_ok())
+        self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).count(), 0)
+        self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede2).count(), 1)
+
+    def test_cron_notifiche(self):
+
+        presidente1 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        presidente2 = crea_persona()
+        presidente2.email_contatto = email_fittizzia()
+        presidente2.save()
+
+        trasferire_1, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
+        trasferire_1.email_contatto = email_fittizzia()
+        trasferire_1.save()
+
+        trasferire_2 = crea_persona()
+        trasferire_2.email_contatto = email_fittizzia()
+        trasferire_2.save()
+        crea_appartenenza(trasferire_2, sede1)
+
+        trasferire_3 = crea_persona()
+        trasferire_3.email_contatto = email_fittizzia()
+        trasferire_3.save()
+        crea_appartenenza(trasferire_3, sede1)
+
+        estendere = crea_persona()
+        estendere.email_contatto = email_fittizzia()
+        estendere.save()
+        crea_appartenenza(estendere, sede1)
+
+        ufficio_soci = crea_persona()
+        ufficio_soci.email_contatto = email_fittizzia()
+        ufficio_soci.save()
+        crea_appartenenza(ufficio_soci, sede1)
+        Delega.objects.create(persona=ufficio_soci, tipo=UFFICIO_SOCI, oggetto=sede1, inizio=poco_fa())
+
+        sede2 = crea_sede(presidente2)
+
+        trasf_auto = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=trasferire_1,
+            richiedente=trasferire_1,
+            motivo='test'
+        )
+        trasf_auto.richiedi()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, 'Richiesta di trasferimento da {}'.format(trasferire_1.nome_completo))
+        self.assertEqual(mail.outbox[0].to, [presidente1.email_contatto])
+        mail.outbox = []
+
+        trasf_manuale = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=trasferire_2,
+            richiedente=trasferire_2,
+            motivo='test'
+        )
+        trasf_manuale.richiedi()
+        trasf_manuale.automatica = False
+        for autorizzazione in trasf_manuale.autorizzazioni:
+            autorizzazione.scadenza = None
+            autorizzazione.tipo_gestione = Autorizzazione.MANUALE
+            autorizzazione.save()
+        trasf_manuale.save()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, 'Richiesta di trasferimento da {}'.format(trasferire_2.nome_completo))
+        self.assertEqual(mail.outbox[0].to, [presidente1.email_contatto])
+
+        trasf_manuale = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=trasferire_3,
+            richiedente=trasferire_3,
+            motivo='test'
+        )
+        trasf_manuale.richiedi()
+        trasf_manuale.automatica = False
+        trasf_manuale.save()
+        for autorizzazione in trasf_manuale.autorizzazioni:
+            autorizzazione.scadenza = None
+            autorizzazione.tipo_gestione = Autorizzazione.MANUALE
+            autorizzazione.save()
+            autorizzazione.nega(presidente1, auto=False)
+
+        trasf_manuale = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=trasferire_3,
+            richiedente=trasferire_3,
+            motivo='test'
+        )
+        trasf_manuale.richiedi()
+        trasf_manuale.automatica = False
+        trasf_manuale.ritirata = True
+        trasf_manuale.save()
+        for autorizzazione in trasf_manuale.autorizzazioni:
+            autorizzazione.scadenza = None
+            autorizzazione.tipo_gestione = Autorizzazione.MANUALE
+            autorizzazione.save()
+
+        mail.outbox = []
+
+        estensione = Estensione.objects.create(
+            destinazione=sede2,
+            persona=estendere,
+            richiedente=estendere,
+            motivo='test'
+        )
+        estensione.richiedi()
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[0].subject, 'Richiesta di Estensione da {}'.format(estendere.nome_completo))
+        self.assertEqual(mail.outbox[0].to, [presidente1.email_contatto])
+        self.assertEqual(mail.outbox[1].subject, 'Notifica di Estensione in entrata')
+        self.assertEqual(mail.outbox[1].to, [presidente2.email_contatto])
+        mail.outbox = []
+
+        Autorizzazione.notifiche_richieste_in_attesa()
+        self.assertEqual(len(mail.outbox), 2)
+
+        for email in mail.outbox:
+            self.assertEqual(email.subject, 'Richieste in attesa di approvazione')
+            self.assertTrue(email.to == [presidente1.email_contatto] or email.to, [ufficio_soci.email_contatto])
+            self.assertTrue('Estensioni' in email.body)
+            self.assertTrue('Trasferimenti' in email.body)
+            self.assertTrue('Data di approvazione automatica' in email.body)
+            self.assertTrue(estendere.nome_completo in email.body)
+            self.assertTrue(trasferire_2.nome_completo in email.body)
+            self.assertTrue(trasferire_1.nome_completo in email.body)
+            self.assertTrue(trasferire_3.nome_completo not in email.body)
 
     def test_comitato(self):
         """
@@ -771,7 +1049,6 @@ class TestAnagrafica(TestCase):
             ___maletto in __catania.espandi(),
             msg="Espansione Provinciale ritorna territoriale proprio"
         )
-
 
     def test_permessi_ufficio_soci(self):
 
@@ -898,6 +1175,102 @@ class TestAnagrafica(TestCase):
         self.assertNotContains(response, 'Non può essere richiesta una riserva per una data nel passato')
         self.assertTrue(Riserva.objects.filter(persona=persona).exists())
 
+    def test_termina_delegati_giovani(self):
+        presidente = crea_persona()
+        sede = crea_sede(presidente)
+
+        meno_di_33 = now().replace(year=now().year - 32)
+        piu_di_33 = now().replace(year=now().year - 34)
+
+        persona_1 = crea_persona()
+        persona_1.data_nascita = piu_di_33
+        persona_1.email_contatto = email_fittizzia()
+        persona_1.save()
+        persona_2 = crea_persona()
+        persona_2.data_nascita = meno_di_33
+        persona_2.email_contatto = email_fittizzia()
+        persona_2.save()
+
+        Delega.objects.create(tipo=DELEGATO_OBIETTIVO_5, persona=persona_1, oggetto=sede, firmatario=presidente, inizio=now())
+        Delega.objects.create(tipo=DELEGATO_OBIETTIVO_5, persona=persona_2, oggetto=sede, firmatario=presidente, inizio=now())
+
+        self.assertEqual(persona_1.deleghe_attuali(tipo=DELEGATO_OBIETTIVO_5).count(), 1)
+        self.assertEqual(persona_2.deleghe_attuali(tipo=DELEGATO_OBIETTIVO_5).count(), 1)
+
+        self.assertEqual(len(mail.outbox), 0)
+
+        termina_deleghe_giovani()
+
+        self.assertEqual(persona_1.deleghe_attuali(tipo=DELEGATO_OBIETTIVO_5).count(), 0)
+        self.assertEqual(persona_2.deleghe_attuali(tipo=DELEGATO_OBIETTIVO_5).count(), 1)
+
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_dimission_decesso(self):
+
+        presidente = crea_persona()
+        presidente.email_contatto = email_fittizzia()
+        presidente.save()
+        crea_utenza(presidente, presidente.email_contatto, 'presidente')
+        sede = crea_sede(presidente)
+        ut = Sede.objects.create(
+            nome="Unita Terr",
+            tipo=Sede.COMITATO,
+            estensione=TERRITORIALE,
+            genitore=sede,
+        )
+        persona_1 = crea_persona()
+        persona_1.email_contatto = email_fittizzia()
+        persona_1.save()
+        Delega.objects.create(tipo=UFFICIO_SOCI, persona=persona_1, oggetto=sede, firmatario=presidente, inizio=now())
+        crea_utenza(persona_1, persona_1.email_contatto, 'persona_1')
+
+        persona_2 = crea_persona()
+        persona_2.email_contatto = email_fittizzia()
+        persona_2.save()
+        Delega.objects.create(tipo=UFFICIO_SOCI_UNITA, persona=persona_2, oggetto=ut, firmatario=presidente, inizio=now())
+        crea_utenza(persona_2, persona_2.email_contatto, 'persona_2')
+
+        persona_deceduta = crea_persona()
+        Appartenenza.objects.create(
+            persona=persona_deceduta, membro=Appartenenza.VOLONTARIO, inizio=now(), sede=ut
+        )
+        persona_deceduta.email_contatto = email_fittizzia()
+        persona_deceduta.save()
+
+        persona_deceduta_2 = crea_persona()
+        Appartenenza.objects.create(
+            persona=persona_deceduta_2, membro=Appartenenza.VOLONTARIO, inizio=now(), sede=sede
+        )
+        persona_deceduta_2.email_contatto = email_fittizzia()
+        persona_deceduta_2.save()
+
+        self.client.login(username=presidente.utenza.email, password='presidente')
+        dati = {
+            'motivo': Dimissione.DECEDUTO,
+            'info': 'test',
+        }
+        response = self.client.post('/us/dimissioni/{}/'.format(persona_deceduta.pk), data=dati)
+        self.assertContains(response, 'non sarà inviata alcuna notifica')
+
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertFalse(persona_deceduta.email_contatto in [email.to for email in mail.outbox])
+        self.assertTrue("Dimissioni per decesso" in mail.outbox[0].subject)
+        self.assertTrue("Presidente" in mail.outbox[0].body)
+        self.assertTrue("Ufficio Soci" in mail.outbox[0].body)
+        self.assertTrue("recupero di tesserino e divisa" in mail.outbox[0].body)
+        mail.outbox = []
+
+        response = self.client.post('/us/dimissioni/{}/'.format(persona_deceduta_2.pk), data=dati)
+        self.assertContains(response, 'non sarà inviata alcuna notifica')
+
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertFalse(persona_deceduta_2.email_contatto in [email.to for email in mail.outbox])
+        self.assertTrue("Dimissioni per decesso" in mail.outbox[0].subject)
+        self.assertTrue("Presidente" in mail.outbox[0].body)
+        self.assertTrue("Ufficio Soci" in mail.outbox[0].body)
+        self.assertTrue("recupero di tesserino e divisa" in mail.outbox[0].body)
+
 
 class TestFunzionaliAnagrafica(TestFunzionale):
 
@@ -937,7 +1310,6 @@ class TestFunzionaliAnagrafica(TestFunzionale):
         response = self.client.post('/utente/trasferimento/', data=dati)
         self.assertContains(response=response, text='Sei già appartenente a questa sede')
         self.assertEqual(Autorizzazione.objects.filter(richiedente=persona, concessa=None).count(), 0)
-
 
     def test_us_attivazione_credenziali(self):
 

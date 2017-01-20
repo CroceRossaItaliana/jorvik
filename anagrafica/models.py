@@ -14,6 +14,7 @@ Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 from datetime import date, timedelta, datetime
 
 import stdnum
+from django.conf import settings
 from django.utils import timezone
 
 import codicefiscale
@@ -792,6 +793,34 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return self._autorizzazioni_in_attesa().order_by('creazione')
 
+    @cached_property
+    def trasferimenti_in_attesa(self):
+        """
+        Ritorna tutti i trasferimenti firmabili da qesto utente e in attesa di firma,
+        :return: QuerySet<Autorizzazione>
+        """
+        return self.autorizzazioni_in_attesa().filter(oggetto_tipo=ContentType.objects.get_for_model(Trasferimento))
+
+    @cached_property
+    def trasferimenti_automatici(self):
+        """
+        Ritorna tutti i trasferimenti firmabili da qesto utente e in attesa di firma, con approvazione automatica
+        :return: QuerySet<Autorizzazione>
+        """
+        return self.trasferimenti_in_attesa.filter(scadenza__isnull=False).exclude(tipo_gestione=Autorizzazione.MANUALE)
+
+    @cached_property
+    def trasferimenti_manuali(self):
+        """
+        Ritorna tutti i trasferimenti firmabili da qesto utente e in attesa di firma, senza approvazione automatica
+        :return: QuerySet<Autorizzazione>
+        """
+        return self.trasferimenti_in_attesa.filter(tipo_gestione=Autorizzazione.MANUALE)
+
+    @cached_property
+    def estensioni_da_autorizzare(self):
+        return self.autorizzazioni_in_attesa().filter(oggetto_tipo=ContentType.objects.get_for_model(Estensione))
+
     def deleghe_anagrafica(self):
         """
         Ritora un queryset di tutte le deleghe attuali alle persone che sono
@@ -1247,7 +1276,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             forza_sede_riferimento=self.sede,
         )
 
-    def autorizzazione_concessa(self, modulo=None):
+    def autorizzazione_concessa(self, modulo=None, auto=False):
         """
         Questo metodo viene chiamato quando la richiesta viene accettata.
         :return:
@@ -1844,22 +1873,26 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
 
     RICHIESTA_NOME = "trasferimento"
 
-    PROTOCOLLO_AUTO = "AUTO"  # Applicato a protocollo_numero se approvazione automatica
+    # Data fissa di 30gg come da regolamento CRI
+    APPROVAZIONE_AUTOMATICA = timedelta(days=30)
 
     def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiTrasferimento
         return ModuloConsentiTrasferimento
 
-    def autorizzazione_concessa(self, modulo=None):
-        self.protocollo_data = modulo.cleaned_data['protocollo_data']
-        self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
+    def autorizzazione_concessa(self, modulo=None, auto=False):
+        if auto:
+            self.protocollo_data = timezone.now()
+            self.protocollo_numero = Autorizzazione.PROTOCOLLO_AUTO
+        else:
+            self.protocollo_data = modulo.cleaned_data['protocollo_data']
+            self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
         self.save()
         self.esegui()
 
-
     def esegui(self):
         appartenenzaVecchia = Appartenenza.objects.filter(Appartenenza.query_attuale().q,
-                                                   membro=Appartenenza.VOLONTARIO, persona=self.persona).first()
+                                                          membro=Appartenenza.VOLONTARIO, persona=self.persona).first()
         appartenenzaVecchia.fine = poco_fa()
         appartenenzaVecchia.terminazione = Appartenenza.TRASFERIMENTO
         appartenenzaVecchia.save()
@@ -1873,6 +1906,10 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
         app.save()
         self.appartenenza = app
         self.save()
+        testo_extra = 'Il trasferimento è stato automaticamente approvato essendo decorsi trenta giorni, ' \
+                      'ai sensi dell\'articolo 9.5 del "Regolamento sull\'organizzazione, le attività, ' \
+                      'la formazione e l\'ordinamento dei volontari"'
+        self.autorizzazioni.first().notifica_origine_autorizzazione_concessa(appartenenzaVecchia.sede, testo_extra)
 
     def richiedi(self):
 
@@ -1882,7 +1919,9 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
             INCARICO_GESTIONE_TRASFERIMENTI,
-            invia_notifica_presidente=True
+            invia_notifica_presidente=True,
+            auto=Autorizzazione.AP_AUTO,
+            scadenza=self.APPROVAZIONE_AUTOMATICA,
         )
 
     def url(self):
@@ -1938,16 +1977,16 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         from anagrafica.forms import ModuloNegaEstensione
         return ModuloNegaEstensione
 
-    def autorizzazione_concessa(self, modulo=None):
+    def autorizzazione_concessa(self, modulo=None, auto=False):
         self.protocollo_data = modulo.cleaned_data['protocollo_data']
         self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
+        origine = self.persona.sede_riferimento()
         app = Appartenenza(
             membro=Appartenenza.ESTESO,
             persona=self.persona,
             sede=self.destinazione,
             inizio=poco_fa(),
             fine=datetime.today() + timedelta(days=365)
-
         )
         app.save()
         self.appartenenza = app
@@ -1960,7 +1999,8 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
             INCARICO_GESTIONE_ESTENSIONI,
-            invia_notifica_presidente=True
+            invia_notifica_presidente=True,
+            auto=Autorizzazione.MANUALE,
         )
         if self.destinazione.presidente():
             Messaggio.costruisci_e_invia(
@@ -2031,14 +2071,18 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
         from anagrafica.forms import ModuloConsentiRiserva
         return ModuloConsentiRiserva
 
-    def autorizzazione_concessa(self, modulo=None):
-        self.protocollo_data = modulo.cleaned_data['protocollo_data']
-        self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
+    def autorizzazione_concessa(self, modulo=None, auto=False):
+        if auto:
+            self.protocollo_data = timezone.now()
+            self.protocollo_numero = 'AUTO'
+        else:
+            self.protocollo_data = modulo.cleaned_data['protocollo_data']
+            self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
+        self.save()
 
     def termina(self):
         self.fine = poco_fa()
         self.save()
-
 
     def invia_mail(self):
 
@@ -2109,6 +2153,7 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
     def __str__(self):
         return self.persona.__str__()
 
+
 class Dimissione(ModelloSemplice, ConMarcaTemporale):
 
     class Meta:
@@ -2146,6 +2191,15 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         from gruppi.models import Appartenenza as App
         precedente_appartenenza = self.appartenenza
         precedente_sede = self.persona.sede_riferimento()
+        destinatari = set()
+        presidente = None
+        if self.persona.sede_riferimento():
+            us = self.persona.sede_riferimento().delegati_ufficio_soci()
+            destinatari = set(us)
+        if self.persona.comitato_riferimento():
+            presidente = self.persona.comitato_riferimento().presidente()
+            destinatari.add(presidente)
+
         Appartenenza.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa(), terminazione=Appartenenza.DIMISSIONE)
         Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
         App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
@@ -2155,24 +2209,40 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
             for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
         ]
 
-        if trasforma_in_sostenitore:
-            app = Appartenenza(precedente=precedente_appartenenza, persona=self.persona,
-                               sede=precedente_sede,
-                               inizio=date.today(),
-                               membro=Appartenenza.SOSTENITORE)
-            app.save()
+        if self.motivo != self.DECEDUTO:
 
-        Messaggio.costruisci_e_invia(
-            oggetto="Dimissioni",
-            modello="email_dimissioni.html",
-            corpo={
-                "dimissione": self,
-            },
-            mittente=self.richiedente,
+            if trasforma_in_sostenitore:
+                app = Appartenenza(precedente=precedente_appartenenza, persona=self.persona,
+                                   sede=precedente_sede,
+                                   inizio=date.today(),
+                                   membro=Appartenenza.SOSTENITORE)
+                app.save()
 
-            destinatari=[
-                self.persona
-            ]
-        )
+            Messaggio.costruisci_e_invia(
+                oggetto="Dimissioni",
+                modello="email_dimissioni.html",
+                corpo={
+                    "dimissione": self,
+                },
+                mittente=self.richiedente,
+
+                destinatari=[
+                    self.persona
+                ]
+            )
+        else:
+
+            for destinatario in destinatari:
+                Messaggio.costruisci_e_invia(
+                    oggetto="Dimissioni per decesso",
+                    modello="email_dimissioni_decesso.html",
+                    corpo={
+                        "dimissione": self,
+                        "destinatario": destinatario,
+                        "carica": "Presidente" if destinatario == presidente else "Delegato Ufficio Soci"
+                    },
+                    mittente=self.richiedente,
+                    destinatari=[destinatario]
+                )
 
 

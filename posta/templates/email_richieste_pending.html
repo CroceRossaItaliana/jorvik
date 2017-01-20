@@ -1,0 +1,72 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+<p class="grassetto">Ciao {{ persona.persona.nome_completo }}.</p>
+<p>Ricevi questo messaggio come promemoria di richieste in sospeso che richiedono una gestione.</p>
+{% if persona.estensioni %}
+    <h3>Estensioni</h3>
+    <p>{{ persona.estensioni|length }} richiest{{ persona.estensioni|pluralize:"a,e" }} di estensione in attesa di approvazione:</p>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Volontario Esteso</th>
+                <th>Destinazione</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for estensione in persona.estensioni %}
+            <tr>
+                <td>{{ estensione.persona }}</td>
+                <td>{{ estensione.destinazione }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+{% if persona.trasferimenti_automatici %}
+    <h3>Trasferimentii</h3>
+    <p>{{ persona.trasferimenti_automatici|length }} richiest{{ persona.trasferimenti_automatici|pluralize:"a,e" }} di trasferimento in attesa di approvazione che sar{{ persona.trasferimenti_automatici|pluralize:"à,nno" }} automaticamente approvat{{ persona.trasferimenti_automatici|pluralize:"a,e" }} entro 30 giorni dalla data di ciascuna richiesta:</p>
+    <table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Volontario Trasferito</th>
+            <th>Destinazione</th>
+            <th>Data di approvazione automatica</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for trasferimenti in persona.trasferimenti_automatici %}
+        <tr>
+            <td>{{ trasferimenti.persona }}</td>
+            <td>{{ trasferimenti.destinazione }}</td>
+            <td>{{ trasferimenti.scadenza|date:"DATE_SHORT_FORMAT" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+{% endif %}
+{% if persona.trasferimenti_manuali %}
+    <p>{{ persona.trasferimenti_manuali|length }} richiest{{ persona.trasferimenti_manuali|pluralize:"a,e" }} di trasferimento in attesa di approvazione:</p>
+    <table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Volontario Trasferito</th>
+            <th>Destinazione</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for trasferimenti in persona.trasferimenti_manuali %}
+        <tr>
+            <td>{{ trasferimenti.persona }}</td>
+            <td>{{ trasferimenti.destinazione }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+    <p>Per ragioni tecniche -risolte a partire dal {{ DATA_AVVIO_TRASFERIMENTI_AUTO|date:"SHORT_DATE_FORMAT" }}- non è possibile approvarl{{ persona.trasferimenti_automatici|pluralize:"a,e" }} in automatico.</p>
+{% endif %}
+
+<p>Vai nella <a href="/autorizzazioni/">Sezione Richieste</a> per approvarl{{ persona.trasferimenti_automatici|pluralize:"a,e" }} o negarl{{ persona.trasferimenti_automatici|pluralize:"a,e" }}.</p>
+
+{% endblock %}
