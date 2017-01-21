@@ -1,5 +1,6 @@
 from html import unescape
 
+from autoslug import AutoSlugField
 from django.core.urlresolvers import reverse
 from django.db import models, transaction
 from django.forms import Textarea
@@ -53,7 +54,7 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
     DIMENSIONE_ESTRATTO = 1014
 
     titolo = models.CharField('Titolo', max_length=255, db_index=True)
-    slug = models.SlugField(unique=True, max_length=255, blank=True, null=True)
+    slug = AutoSlugField(populate_from='titolo', unique=True, max_length=255, always_update=True, null=True)
     corpo = RichTextField('Corpo')
     estratto = models.CharField('Estratto', max_length=1024, blank=True, null=True)
     data_inizio_pubblicazione = models.DateTimeField('Data di inizio pubblicazione', default=timezone.now, db_index=True)
@@ -67,7 +68,6 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         return self.titolo
 
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.titolo)
         if not self.estratto:
             corpo = self.corpo
         else:
