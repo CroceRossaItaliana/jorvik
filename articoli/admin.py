@@ -36,7 +36,7 @@ class AllegatoInline(ReadonlyAdminMixin, GenericTabularInline):
 class AdminArticolo(ReadonlyAdminMixin, admin.ModelAdmin):
     form = ArticoloAdminForm
     inlines = (ArticoloSegmentoInline, AllegatoInline)
-    readonly_fields = ('visualizzazioni',)
+    readonly_fields = ('visualizzazioni', 'slug')
     actions = ['pubblica', 'bozza']
     fieldsets = (
         (None, {
@@ -44,7 +44,7 @@ class AdminArticolo(ReadonlyAdminMixin, admin.ModelAdmin):
         }),
         ('Informazioni', {
             'fields': (
-                'data_inizio_pubblicazione', 'data_fine_pubblicazione', 'stato', 'visualizzazioni'
+                'data_inizio_pubblicazione', 'data_fine_pubblicazione', 'stato', 'visualizzazioni', 'slug'
             ),
         }),
     )
