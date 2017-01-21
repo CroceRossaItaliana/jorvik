@@ -789,13 +789,14 @@ class TestAnagrafica(TestCase):
         destinatari_verificati = 0
         for email in mail.outbox[1:]:
             if da_trasferire.email_contatto in email.to:
-                # Notifica alla persona estesa
+                # Notifica alla persona trasferita
                 self.assertTrue(email.subject.find('Richiesta di trasferimento APPROVATA') > -1)
                 destinatari_verificati += 1
             elif presidente1.email_contatto in email.to or ufficio_soci.email_contatto in email.to:
                 # Notifica presidente e ufficio soci in uscita
                 self.assertTrue(email.subject.find('Richiesta di trasferimento da %s APPROVATA' % da_trasferire.nome_completo) > -1)
                 self.assertTrue(email.body.find('articolo 9.5 del "Regolamento') > -1)
+                self.assertTrue(email.body.find('La richiesta di trasferimento inoltrata il {}'.format(ora.strftime('%d/%m/%Y'))) > -1)
                 destinatari_verificati += 1
         self.assertEqual(destinatari_verificati, 3)
 
