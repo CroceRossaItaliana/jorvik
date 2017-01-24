@@ -28,7 +28,7 @@ from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_priv
 from autenticazione.models import Utenza
 from base import errori
 from base.errori import errore_generico, messaggio_generico
-from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLocalizzatore
+from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLocalizzatore, ModuloLocalizzatoreItalia
 from base.forms_extra import ModuloRichiestaSupportoPersone
 from base.geo import Locazione
 from base.models import Autorizzazione, Token
@@ -469,7 +469,10 @@ def geo_localizzatore(request, me):
     risultati = None
     ricerca = False
 
-    modulo = ModuloLocalizzatore(request.POST or None,)
+    if request.GET.get('italia', False):
+        modulo = ModuloLocalizzatoreItalia(request.POST or None,)
+    else:
+        modulo = ModuloLocalizzatore(request.POST or None,)
     if modulo.is_valid():
         comune = modulo.cleaned_data['comune'] if not modulo.cleaned_data['comune'] \
                     else "%s, Province of %s" % (modulo.cleaned_data['comune'], modulo.cleaned_data['provincia'])

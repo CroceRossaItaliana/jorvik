@@ -12,7 +12,7 @@
     {% bootstrap_form modulo %}
 
     {% if autoparco %}
-        {% localizzatore autoparco %}
+        {% localizzatore autoparco solo_italia=1 %}
     {% else %}
         Potrai inserire in seguito l'indirizzo
         <div><br></div>
