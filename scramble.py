@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import os, sys
+import math
+import os
 import random
 
 from datetime import timedelta
@@ -28,6 +29,7 @@ from base.geo import Locazione
 
 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento
+from attivita.models import Attivita, Area
 import argparse
 
 
@@ -134,6 +136,8 @@ if args.esempio:
         with transaction.atomic():
             Trasferimento.objects.all().delete()
             Utenza.objects.all().delete()
+            Attivita.objects.all().delete()
+            Area.objects.all().delete()
             Persona.objects.all().delete()
             Appartenenza.objects.all().delete()
             Delega.objects.all().delete()
@@ -169,13 +173,59 @@ if args.esempio:
                 p.save()
                 data = poco_fa() - timedelta(days=random.randint(10, 5000))
                 a = Appartenenza.objects.create(persona=p, sede=sede, inizio=data, membro=membro)
-                if i % 5 == 0 and membro == Appartenenza.VOLONTARIO:
-                    data_precedente = data - timedelta(days=random.randint(10, 500))
-                    altra = random.sample(sedi, 1)[0]
-                    a = Appartenenza.objects.create(
-                        persona=p, sede=altra, inizio=data_precedente, fine=data, membro=membro,
-                        terminazione=Appartenenza.DIMISSIONE
-                    )
+                if membro == Appartenenza.VOLONTARIO:
+                    if i % 5 == 0:
+                        # Dimesso e riammesso
+                        data_precedente = data - timedelta(days=random.randint(10, 500))
+                        altra = random.sample(sedi, 1)[0]
+                        a = Appartenenza.objects.create(
+                            persona=p, sede=altra, inizio=data_precedente, fine=data, membro=membro,
+                            terminazione=Appartenenza.DIMISSIONE
+                        )
+                    if i % 5 == 1:
+                        # Trasferimento nel passato
+                        data_precedente = data - timedelta(days=random.randint(10, 500))
+                        altra = random.sample(sedi, 1)[0]
+                        a = Appartenenza.objects.create(
+                            persona=p, sede=altra, inizio=data_precedente, fine=data, membro=membro,
+                            terminazione=Appartenenza.TRASFERIMENTO
+                        )
+                    if i % 5 == 3:
+                        # Catena di trasferimenti
+                        data_precedente = data - timedelta(days=random.randint(10, 500))
+                        altra = random.sample(sedi, 1)[0]
+                        a = Appartenenza.objects.create(
+                            persona=p, sede=altra, inizio=data_precedente, fine=data, membro=membro,
+                            terminazione=Appartenenza.TRASFERIMENTO
+                        )
+                        data_precedente_vecchia = data_precedente - timedelta(days=random.randint(10, 500))
+                        altra = random.sample(sedi, 1)[0]
+                        a = Appartenenza.objects.create(
+                            persona=p, sede=altra, inizio=data_precedente_vecchia, fine=data_precedente, membro=membro,
+                            terminazione=Appartenenza.TRASFERIMENTO
+                        )
+                        # Catena di estensioni su appartenenza corrente
+                        data_est_1 = data + timedelta(days=math.floor((poco_fa() - data).days/2))
+                        fine_est_1 = poco_fa()
+                        data_est_2 = data + timedelta(days=math.floor((poco_fa() - data).days/3))
+                        altra = random.sample(sedi, 1)[0]
+                        altra_2 = random.sample(sedi, 1)[0]
+                        a = Appartenenza.objects.create(
+                            persona=p, sede=altra, inizio=data_est_1, membro=Appartenenza.ESTESO, fine=fine_est_1,
+                            terminazione=Appartenenza.FINE_ESTENSIONE
+                        )
+                        a = Appartenenza.objects.create(
+                            persona=p, sede=altra_2, inizio=data_est_2, membro=Appartenenza.ESTESO,
+                        )
+                    if i % 5 == 2:
+                        # Espulso e riammesso
+                        data_precedente = data - timedelta(days=random.randint(10, 500))
+                        data_fine = data - timedelta(days=math.floor((data - data_precedente).days/2))
+                        altra = random.sample(sedi, 1)[0]
+                        a = Appartenenza.objects.create(
+                            persona=p, sede=altra, inizio=data_precedente, fine=data_fine, membro=membro,
+                            terminazione=Appartenenza.ESPULSIONE
+                        )
         for i in range(0, 5):  # Creo 5 aspiranti
             p = crea_persona()
             p.comune_nascita = random.sample(COMUNI.keys(), 1)[0]

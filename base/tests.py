@@ -13,17 +13,20 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode
+from splinter.exceptions import ElementDoesNotExist
 
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, UFFICIO_SOCI_UNITA
 from articoli.models import Articolo
 from anagrafica.models import Persona, Delega
+from attivita.models import Area, Attivita
 from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
 from base.forms_extra import ModuloRichiestaSupporto
 from base.geo import Locazione
-from base.utils import UpperCaseCharField
+from base.utils import UpperCaseCharField, poco_fa
 from base.utils_tests import crea_appartenenza, crea_persona_sede_appartenenza, crea_persona, crea_area_attivita, crea_utenza, \
-    email_fittizzia
+    email_fittizzia, crea_sede
+from formazione.models import CorsoBase
 from gestione_file.models import Documento
 from jorvik.settings import GOOGLE_KEY
 from filer.models import Folder
@@ -277,6 +280,54 @@ class TestUtils(TestBase):
 
 
 class TestFunzionaleBase(TestFunzionale):
+
+    def test_localizzatore_solo_italia(self):
+        presidente = crea_persona()
+        sede = crea_sede(presidente)
+
+
+        area = Area.objects.create(
+            nome="6",
+            obiettivo=6,
+            sede=sede,
+        )
+
+        attivita = Attivita.objects.create(
+            stato=Attivita.VISIBILE,
+            nome="Att 1",
+            apertura=Attivita.APERTA,
+            area=area,
+            descrizione="1",
+            sede=sede,
+            estensione=sede,
+        )
+
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=poco_fa() + datetime.timedelta(days=7),
+            data_esame=poco_fa()+ datetime.timedelta(days=14),
+            progressivo=1,
+            anno=poco_fa().year,
+            descrizione='Un corso',
+        )
+
+        sessione = self.sessione_utente(persona=presidente, wait_time=1)
+        sessione.visit("%s/presidente/sedi/%s/" % (self.live_server_url, sede.pk))
+        with sessione.get_iframe(0) as iframe:
+            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 0)
+            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="IT"]')), 1)
+
+        sessione.visit("%s/attivita/scheda/%s/modifica/" % (self.live_server_url, attivita.pk))
+        with sessione.get_iframe(0) as iframe:
+            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="IT"]')), 1)
+            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 1)
+
+        sessione.visit("%s/aspirante/corso-base/%s/modifica/" % (self.live_server_url, corso.pk))
+        with sessione.get_iframe(0) as iframe:
+            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 0)
+            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="IT"]')), 1)
+
 
     @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
     def test_ricerca_posizione(self):
