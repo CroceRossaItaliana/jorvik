@@ -63,7 +63,7 @@ def checkbox(booleano, extra_classe='', con_testo=1):
 
 
 @register.simple_tag(takes_context=True)
-def localizzatore(context, oggetto_localizzatore=None, continua_url=None):
+def localizzatore(context, oggetto_localizzatore=None, continua_url=None, solo_italia=False):
 
     if not isinstance(oggetto_localizzatore, ConGeolocalizzazione):
         raise ValueError("Il tag localizzatore puo' solo essere usato con un oggetto ConGeolocalizzazione, ma e' stato usato con un oggetto %s." % (oggetto_localizzatore.__class__.__name__,))
@@ -76,6 +76,8 @@ def localizzatore(context, oggetto_localizzatore=None, continua_url=None):
     context.request.session['continua_url'] = continua_url
 
     url = "/geo/localizzatore/"
+    if solo_italia:
+        url += '?italia=1'
     context.update({
         'iframe_url': url,
     })

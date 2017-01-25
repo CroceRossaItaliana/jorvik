@@ -168,9 +168,9 @@ def crea_partecipazione(persona, turno):
     return p
 
 
-def crea_sessione():
+def crea_sessione(wait_time=7):
     from splinter import Browser
-    browser = Browser(DRIVER_WEB, wait_time=7)
+    browser = Browser(DRIVER_WEB, wait_time=wait_time)
     return browser
 
 
@@ -188,7 +188,7 @@ def sessione_anonimo(server_url):
     return sessione
 
 
-def sessione_utente(server_url, persona=None, utente=None, password=None):
+def sessione_utente(server_url, persona=None, utente=None, password=None, wait_time=7):
     if not (persona or utente):
         raise ValueError("sessione_utente deve ricevere almeno una persona "
                          "o un utente.")
@@ -209,7 +209,7 @@ def sessione_utente(server_url, persona=None, utente=None, password=None):
     except AttributeError:
         raise AttributeError("L'utenza è già esistente, non ne conosco la password.")
 
-    sessione = crea_sessione()
+    sessione = crea_sessione(wait_time)
     sessione.visit("%s/login/" % server_url)
     sessione.fill("auth-username", utenza.email)
     sessione.fill("auth-password", password_da_usare)
