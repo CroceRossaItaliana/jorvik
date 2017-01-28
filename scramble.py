@@ -8,7 +8,6 @@ from datetime import timedelta
 from django.db import transaction
 
 from base.comuni import COMUNI
-
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
 from django.core.wsgi import get_wsgi_application
@@ -134,6 +133,10 @@ if args.esempio:
     if args.reset:
         print("Cancello i dati esistenti come richiesto")
         with transaction.atomic():
+            from formazione.models import CorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase
+            PartecipazioneCorsoBase.objects.all().delete()
+            LezioneCorsoBase.objects.all().delete()
+            CorsoBase.objects.all().delete()
             Trasferimento.objects.all().delete()
             Utenza.objects.all().delete()
             Attivita.objects.all().delete()
