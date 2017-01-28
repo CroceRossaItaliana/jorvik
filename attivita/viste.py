@@ -620,7 +620,7 @@ def attivita_scheda_informazioni_modifica(request, me, pk=None):
     if not me.permessi_almeno(attivita, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    if not me.ha_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE):
+    if request.POST and not me.ha_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE):
         request.POST = request.POST.copy()
         request.POST['centrale_operativa'] = attivita.centrale_operativa
 
