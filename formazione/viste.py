@@ -415,6 +415,40 @@ def aspirante_corso_base_iscritti(request, me, pk):
 
 
 @pagina_privata
+def aspirante_corso_base_iscritti_cancella(request, me, pk, iscritto):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    if not me.permessi_almeno(corso, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    if not corso.possibile_cancellare_iscritti:
+        return errore_generico(request, me, titolo="Impossibile cancellare iscritti",
+                               messaggio="Non si possono cancellare iscritti a questo "
+                                         "stadio della vita del corso base.",
+                               torna_titolo="Torna al corso base", torna_url=corso.url_iscritti)
+
+    try:
+        persona = Persona.objects.get(pk=iscritto)
+    except Persona.DoesNotExist:
+        return errore_generico(request, me, titolo="Impossibile cancellare iscritto",
+                               messaggio="La persona cercata non è iscritta.",
+                               torna_titolo="Torna al corso base", torna_url=corso.url_iscritti)
+    if request.method == 'POST':
+        for partecipazione in corso.partecipazioni_confermate_o_in_attesa().filter(persona=persona):
+            partecipazione.disiscrivi(mittente=me)
+        for partecipazione in corso.inviti_confermati_o_in_attesa().filter(persona=persona):
+            partecipazione.disiscrivi(mittente=me)
+        return messaggio_generico(request, me, titolo="Iscritto cancellato",
+                                  messaggio="{} è stato cancellato dal corso {}.".format(persona, corso),
+                                  torna_titolo="Torna al corso base", torna_url=corso.url_iscritti)
+    contesto = {
+        "corso": corso,
+        "puo_modificare": True,
+        "persona": persona,
+    }
+    return 'aspirante_corso_base_scheda_iscritti_cancella.html', contesto
+
+
+@pagina_privata
 def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
     corso = get_object_or_404(CorsoBase, pk=pk)
     if not me.permessi_almeno(corso, MODIFICA):
@@ -437,7 +471,8 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
 
             if esito in corso.PUOI_ISCRIVERTI or esito in corso.NON_PUOI_ISCRIVERTI_SOLO_SE_IN_AUTONOMIA:
                 if hasattr(persona, 'aspirante'):
-                    if InvitoCorsoBase.objects.filter(persona=persona, corso=corso).exists():
+                    inviti = InvitoCorsoBase.con_esito_ok() | InvitoCorsoBase.con_esito_pending()
+                    if inviti.filter(persona=persona, corso=corso).exists():
                         ok = PartecipazioneCorsoBase.INVITO_INVIATO
                         partecipazione = InvitoCorsoBase.objects.filter(persona=persona, corso=corso).first()
                     else:
@@ -445,7 +480,6 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                         partecipazione.save()
                         partecipazione.richiedi()
                         ok = PartecipazioneCorsoBase.IN_ATTESA_ASPIRANTE
-
                 else:
                     partecipazione = PartecipazioneCorsoBase.objects.create(persona=persona, corso=corso)
                     ok = PartecipazioneCorsoBase.ISCRITTO
