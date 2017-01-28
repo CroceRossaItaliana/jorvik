@@ -161,6 +161,7 @@ if args.esempio:
     print("Genero dei membri della Sede a caso con deleghe e cariche ...")
     print(" - Creo persone...")
     sedi = [c, s1, s2, s3, c2, c3, regionale, altra_regione]
+    nuove = []
     for sede in sedi:  # Per ogni Sede
         locazione = Locazione.oggetto(indirizzo=random.sample(COMUNI.keys(), 1)[0])
         sede.locazione = locazione
@@ -171,6 +172,7 @@ if args.esempio:
                 p.comune_nascita = random.sample(COMUNI.keys(), 1)[0]
                 p.codice_fiscale = codice_fiscale_persona(p)
                 p.save()
+                nuove.append(p)
                 data = poco_fa() - timedelta(days=random.randint(10, 5000))
                 a = Appartenenza.objects.create(persona=p, sede=sede, inizio=data, membro=membro)
                 if membro == Appartenenza.VOLONTARIO:
@@ -259,11 +261,14 @@ if args.esempio:
                     d = Delega.objects.create(persona=persona, tipo=DELEGATO_OBIETTIVO_2, oggetto=sede, inizio=poco_fa())
 
     print(" - Creo utenze di accesso...")
-    for persona in Persona.objects.all().exclude(pk=presidente.pk):
-        utenza = Utenza.objects.create_user(
-            persona=persona, email=email_fittizzia(),
-            password=email_fittizzia()
-        )
+    for persona in nuove:
+        try:
+            utenza = Utenza.objects.create_user(
+                persona=persona, email=email_fittizzia(),
+                password=email_fittizzia()
+            )
+        except IntegrityError:
+            print('  --- Errore creazione utenza per {}'.format(persona))
 
     print("= Fatto.")
 
