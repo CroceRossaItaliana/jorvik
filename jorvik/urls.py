@@ -4,7 +4,7 @@ Questo modulo contiene la configurazione per il routing degli URL.
 (c)2015 Croce Rossa Italiana
 """
 import django, django.views, django.views.static, django.contrib.auth.views
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth.views import password_change, password_change_done
 from django.shortcuts import redirect
@@ -281,6 +281,7 @@ urlpatterns = [
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/mappa/$', formazione.viste.aspirante_corso_base_mappa),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/$', formazione.viste.aspirante_corso_base_iscritti),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/aggiungi/$', formazione.viste.aspirante_corso_base_iscritti_aggiungi),
+    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/cancella/(?P<iscritto>[0-9]+)/$', formazione.viste.aspirante_corso_base_iscritti_cancella, name='formazione-iscritti-cancella'),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscriviti/$', formazione.viste.aspirante_corso_base_iscriviti),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/ritirati/$', formazione.viste.aspirante_corso_base_ritirati),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/report/$', formazione.viste.aspirante_corso_base_report),

@@ -1,0 +1,42 @@
+{% extends 'aspirante_corso_base_scheda.html' %}
+
+{% block scheda_titolo %}
+    Iscritti
+{% endblock %}
+
+{% load utils %}
+
+{% block scheda_contenuto %}
+
+    <div class="alert alert-block alert-danger">
+        <h4>
+            <i class="fa fa-fw fa-warning"></i>
+            Cancellazione iscritto {{ persona }}
+        </h4>
+        <p>
+            Questa operazione non deve essere eseguita nel caso di persone assenti alle lezioni del Corso. Le assenze possono essere annotate nella sezione dedicata e la persona potrà non essere ammessa all'esame finale, qualora non abbia frequentato un numero sufficiente di lezioni.
+        </p>
+        <p>
+            La cancellazione di un iscritto da un Corso Base è una procedura da utilizzare solamente nelle seguenti situazioni:
+            <ul>
+                <li>la persona ha comunicato di non poter seguire il corso</li>
+                <li>la persona è stata ammessa per errore</li>
+                <li>la persona è stata ammessa al corso, ma vuole seguire il Corso Base presso un'altra sede CRI</li>
+            </ul>
+        </p>
+        <p>
+            A seguito di questa operazione verrà inviata una notifica via email alla persona che si sta cancellando per informarla di questa azione e contenente informazioni su come contattare chi ha effettuato la cancellazione. Ti verrà trasmessa copia del messaggio.
+        </p>
+        <p>
+            L'operazione non è in nessun modo reversibile.
+        </p>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-block btn-danger">
+            <i class="fa fa-fw fa-times"></i> Conferma cancellazione
+        </button>
+    </form>
+
+{% endblock %}
