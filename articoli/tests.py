@@ -25,14 +25,28 @@ class ArticoliTests(TestCase):
     def test_titolo_lungo(self):
 
         articolo = Articolo.objects.create(
-                titolo='Corso di aggiornamento per coordinatori attività di emergenza',
-                corpo=parola_casuale(3000),
-                data_inizio_pubblicazione=datetime.datetime.now() - datetime.timedelta(days=5),
-            )
+            titolo='Corso di aggiornamento per coordinatori attività di emergenza',
+            corpo=parola_casuale(3000),
+            data_inizio_pubblicazione=datetime.datetime.now() - datetime.timedelta(days=5),
+        )
 
         self.assertEqual(articolo.corpo[:Articolo.DIMENSIONE_ESTRATTO], articolo.estratto)
         self.assertFalse(articolo.termina)
         self.assertEqual(articolo.slug, 'corso-di-aggiornamento-per-coordinatori-attivita-di-emergenza')
+
+    def test_slug(self):
+        articolo_1 = Articolo.objects.create(
+            titolo='corso',
+            corpo=parola_casuale(3000),
+            data_inizio_pubblicazione=datetime.datetime.now() - datetime.timedelta(days=5),
+        )
+        articolo_2 = Articolo.objects.create(
+            titolo='corso',
+            corpo=parola_casuale(3000),
+            data_inizio_pubblicazione=datetime.datetime.now() - datetime.timedelta(days=5),
+        )
+
+        self.assertNotEqual(articolo_1.slug, articolo_2.slug)
 
     def test_articolo(self):
 
