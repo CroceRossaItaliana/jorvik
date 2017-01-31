@@ -1382,12 +1382,16 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     attiva = models.BooleanField("Attiva", default=True, db_index=True)
 
     def sorgente_slug(self):
-        if self.genitore:
-            return str(self.genitore.slug) + "-" + self.nome
+        if self.estensione == PROVINCIALE:
+            suffisso = '-p'
         else:
-            return self.nome
+            suffisso = ''
+        if self.genitore:
+            return str(self.genitore.slug) + "-" + self.nome + suffisso
+        else:
+            return self.nome + suffisso
 
-    slug = AutoSlugField(populate_from=sorgente_slug, slugify=sede_slugify, always_update=True)
+    slug = AutoSlugField(populate_from=sorgente_slug, slugify=sede_slugify, always_update=True, max_length=2000, unique=True)
     membri = models.ManyToManyField(Persona, through='Appartenenza', through_fields=('sede', 'persona'))
 
     @property
