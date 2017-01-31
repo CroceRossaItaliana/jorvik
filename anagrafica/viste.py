@@ -1334,7 +1334,7 @@ def _profilo_appartenenze(request, me, persona):
     moduli = []
     for app in persona.appartenenze.all():
         modulo = None
-        if puo_modificare and app.attuale():
+        if puo_modificare and app.attuale() and app.modificabile():
             modulo = ModuloModificaDataInizioAppartenenza(request.POST or None,
                                                           instance=app,
                                                           prefix="%d" % (app.pk,))

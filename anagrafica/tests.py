@@ -27,6 +27,142 @@ from posta.models import Messaggio, Autorizzazione
 
 class TestAnagrafica(TestCase):
 
+    def test_appartenenza_modificabile_con_campo_precedente(self):
+
+        persona = crea_persona()
+        sede1 = crea_sede()
+        sede2 = crea_sede()
+
+        # appartenenza "isolata"
+        a_persona_1 = crea_appartenenza(persona, sede1)
+        self.assertTrue(a_persona_1.modificabile())
+
+        # doppia appartenenza "aperta" genera blocchi (perché non consistente)
+        a_persona_2 = crea_appartenenza(persona, sede2)
+        a_persona_2.inizio = "1980-11-10"
+        a_persona_1.precedente = a_persona_2
+        a_persona_1.save()
+        a_persona_2.save()
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se l'appartenenza è terminata, quella più recente non è modificabile
+        a_persona_2.terminazione = Appartenenza.TRASFERIMENTO
+        a_persona_2.save()
+        a_persona_1.refresh_from_db()
+        a_persona_2.refresh_from_db()
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se è un trasferimento o altro non si può modificare
+        for tipo in Appartenenza.TERMINAZIONE:
+            if tipo[0] not in Appartenenza.MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI:
+                for membro in Appartenenza.MEMBRO:
+                    if membro[0] not in Appartenenza.PRECEDENZE_MODIFICABILI:
+                        a_persona_2.terminazione = tipo[0]
+                        a_persona_2.membro = membro[0]
+                        a_persona_2.save()
+                        a_persona_1.refresh_from_db()
+                        a_persona_2.refresh_from_db()
+                        self.assertFalse(a_persona_1.modificabile())
+
+    def test_appartenenza_modificabile_con_precedente_per_data(self):
+
+        persona = crea_persona()
+        sede1 = crea_sede()
+        sede2 = crea_sede()
+
+        # appartenenza "isolata"
+        a_persona_1 = crea_appartenenza(persona, sede1)
+        self.assertTrue(a_persona_1.modificabile())
+
+        # Se è un'estensione non si può modificare
+        a_persona_1.membro = Appartenenza.ESTESO
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se è un dipendente si può modificare
+        a_persona_1.membro = Appartenenza.DIPENDENTE
+        self.assertTrue(a_persona_1.modificabile())
+
+        # Se è un ordinario si può modificare
+        a_persona_1.membro = Appartenenza.ORDINARIO
+        self.assertTrue(a_persona_1.modificabile())
+
+        # Se è un sostenitore si può modificare
+        a_persona_1.membro = Appartenenza.SOSTENITORE
+        self.assertTrue(a_persona_1.modificabile())
+
+        # doppia appartenenza "aperta" genera blocchi (perché non consistente)
+        a_persona_1.membro = Appartenenza.VOLONTARIO
+        a_persona_2 = crea_appartenenza(persona, sede2)
+        a_persona_2.inizio = "1980-11-10"
+        a_persona_1.save()
+        a_persona_2.save()
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se l'appartenenza è terminata, quella più recente non è modificabile
+        a_persona_2.terminazione = Appartenenza.TRASFERIMENTO
+        a_persona_2.fine = "1980-12-10"
+        a_persona_2.save()
+        a_persona_1.refresh_from_db()
+        a_persona_2.refresh_from_db()
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se è un trasferimento o altro non si può modificare
+        for tipo in Appartenenza.TERMINAZIONE:
+            if tipo[0] not in Appartenenza.MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI:
+                for membro in Appartenenza.MEMBRO:
+                    if membro[0] not in Appartenenza.PRECEDENZE_MODIFICABILI:
+                        a_persona_2.terminazione = tipo[0]
+                        a_persona_2.membro = membro[0]
+                        a_persona_2.save()
+                        a_persona_1.refresh_from_db()
+                        a_persona_2.refresh_from_db()
+                        self.assertFalse(a_persona_1.modificabile())
+
+    def test_appartenenza_modificabile_controllo_nuovo_inizio(self):
+
+        persona = crea_persona()
+        sede1 = crea_sede()
+        sede2 = crea_sede()
+
+        # appartenenza "isolata"
+        a_persona_1 = crea_appartenenza(persona, sede1)
+        self.assertTrue(a_persona_1.modificabile())
+
+        # doppia appartenenza "aperta" genera blocchi (perché non consistente)
+        a_persona_2 = crea_appartenenza(persona, sede2)
+        a_persona_2.inizio = "1980-11-10"
+        a_persona_1.save()
+        a_persona_2.save()
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se l'appartenenza è terminata, quella più recente non è modificabile
+        a_persona_2.terminazione = Appartenenza.TRASFERIMENTO
+        a_persona_2.fine = "1980-12-10"
+        a_persona_2.save()
+        a_persona_1.refresh_from_db()
+        a_persona_2.refresh_from_db()
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se è una dimissione si può modificare se la data di inizio è successiva alla terminazione
+        a_persona_2.terminazione = Appartenenza.DIMISSIONE
+        a_persona_2.membro = Appartenenza.VOLONTARIO
+        a_persona_2.save()
+        a_persona_1.refresh_from_db()
+        a_persona_2.refresh_from_db()
+        self.assertTrue(a_persona_1.modificabile())
+        self.assertTrue(a_persona_1.modificabile(a_persona_2.fine + datetime.timedelta(days=10)))
+        self.assertFalse(a_persona_1.modificabile(a_persona_2.fine - datetime.timedelta(days=10)))
+
+        # Se è una espulsione si può modificare se la data di inizio è successiva alla terminazione
+        a_persona_2.terminazione = Appartenenza.ESPULSIONE
+        a_persona_2.membro = Appartenenza.VOLONTARIO
+        a_persona_2.save()
+        a_persona_1.refresh_from_db()
+        a_persona_2.refresh_from_db()
+        self.assertTrue(a_persona_1.modificabile())
+        self.assertTrue(a_persona_1.modificabile(a_persona_2.fine + datetime.timedelta(days=10)))
+        self.assertFalse(a_persona_1.modificabile(a_persona_2.fine - datetime.timedelta(days=10)))
+
     def test_appartenenza(self):
 
         p = crea_persona()
