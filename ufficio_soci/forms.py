@@ -3,6 +3,7 @@ import datetime
 from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator
 from django.forms import ModelForm
 
 from anagrafica.forms import ModuloStepAnagrafica
@@ -230,10 +231,14 @@ class ModuloQuotaVolontario(forms.Form):
     volontario = autocomplete_light.ModelChoiceField("PersonaAutocompletamento",
                                                      help_text="Seleziona il Volontario per il quale registrare"
                                                                " la quota associativa.")
-
+    tipo_quota = forms.ChoiceField(label='Tipo', choices=Quota.TIPI_REGISTRAZIONE_QUOTE, widget=forms.RadioSelect, required=False)
     importo = forms.FloatField(help_text="Il totale versato in euro, comprensivo dell'eventuale "
                                          "donazione aggiuntiva.")
     data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro])
+
+    def __init__(self, *args, **kwargs):
+        super(ModuloQuotaVolontario, self).__init__(*args, **kwargs)
+        self.fields['importo'].widget.attrs['min'] = self.initial.get('importo', 0)
 
 
 class ModuloNuovaRicevuta(forms.Form):

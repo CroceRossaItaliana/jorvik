@@ -194,7 +194,7 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     quota_benemerito = models.FloatField(default=20.00)
     quota_aspirante = models.FloatField(default=20.00)
     quota_sostenitore = models.FloatField(default=20.00)
-
+    quota_agevolata = models.FloatField(default=1.00)
 
     @property
     def fine_soci_nv(self):
@@ -217,6 +217,14 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
 
         return self.stato == self.APERTO and data >= self.inizio and data <= termine
 
+    def importo_quota_volontario(self, tipo):
+        if tipo == Quota.QUOTA_SOCIO:
+            return self.quota_attivo
+        elif tipo in (Quota.RIFUGIATO, Quota.CLUB25):
+            return self.quota_agevolata
+        else:
+            return self.quota_attivo
+
     @classmethod
     def aperto_anno(cls, data=None, iv=False, nv=False):
         try:
@@ -227,10 +235,10 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
         except Tesseramento.DoesNotExist:
             return False
 
-    def importo_da_pagare(self, socio):
+    def importo_da_pagare(self, socio, tipo):
 
         if socio.volontario:  # Quota socio attivo
-            return self.quota_attivo
+            return self.importo_quota_volontario(tipo)
 
         elif socio.ordinario:  # Quota socio ordinario
             return self.quota_ordinario
@@ -361,7 +369,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
     TIPO = (
         (QUOTA_SOCIO, "Quota Socio"),
         (QUOTA_SOSTENITORE, "Ricevuta Sostenitore"),
-        (RICEVUTA, "Ricevuta")
+        (RICEVUTA, "Ricevuta"),
     )
     tipo = models.CharField(max_length=1, default=QUOTA_SOCIO, choices=TIPO)
 
@@ -370,6 +378,15 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
 
     causale = models.CharField(max_length=512)
     causale_extra = models.CharField(max_length=512, blank=True)
+
+    RIFUGIATO = 'F'
+    CLUB25 = 'C'
+    RIDUZIONI = (
+        (RIFUGIATO, 'Agevolazione richiedenti asilo o rifugiati'),
+        (CLUB25, 'Agevolazione per donatori sangue con meno di 25 anni'),
+    )
+    riduzione = models.CharField(max_length=1, choices=RIDUZIONI, null=True, blank=True)
+    TIPI_REGISTRAZIONE_QUOTE = (TIPO[0],) + RIDUZIONI
 
     class Meta:
         verbose_name_plural = "Quote"
@@ -388,7 +405,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
     @classmethod
     def nuova(cls, appartenenza, data_versamento, registrato_da, importo,
               causale, tipo=QUOTA_SOCIO, invia_notifica=True,
-              corso_comitato=None, corso_persona=None, **kwargs):
+              corso_comitato=None, corso_persona=None, tipo_quota=QUOTA_SOCIO, **kwargs):
 
         persona = appartenenza.persona if appartenenza else corso_persona
         sede = appartenenza.sede.comitato if appartenenza else corso_comitato
@@ -415,8 +432,8 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
 
         # Scompone l'importo in Quota e Extra (Donazione)
         #  (solo se QUOTA VOLONTARIO)
-        da_pagare = q.tesseramento().importo_da_pagare(q.persona)
-        if tipo == cls.QUOTA_SOCIO and importo > da_pagare:
+        da_pagare = q.tesseramento().importo_da_pagare(q.persona, tipo_quota)
+        if tipo == Quota.QUOTA_SOCIO and importo > da_pagare:
             q.importo = da_pagare
             q.importo_extra = importo - da_pagare
             q.causale_extra = "Donazione"
