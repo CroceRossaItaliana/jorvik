@@ -147,9 +147,9 @@ def us_reclama_persona(request, me, persona_pk):
                 if not Tesseramento.aperto_anno(
                     modulo_quota.cleaned_data['data_versamento'], iv, persona.volontario_da_meno_di_un_anno
                 ):
-                    if volontario.iv:
+                    if persona.iv:
                         data_fine = tesseramento.fine_soci_iv
-                    elif volontario.volontario_da_meno_di_un_anno:
+                    elif persona.volontario_da_meno_di_un_anno:
                         data_fine = tesseramento.fine_soci_nv
                     else:
                         data_fine = tesseramento.fine_soci
@@ -787,8 +787,11 @@ def us_quote_nuova(request, me):
 
     questo_anno = poco_fa().year
 
-    appena_registrata = Quota.objects.get(pk=request.GET['appena_registrata']) \
-        if 'appena_registrata' in request.GET else None
+    try:
+        appena_registrata = Quota.objects.get(pk=request.GET['appena_registrata']) \
+            if 'appena_registrata' in request.GET else None
+    except Quota.DoesNotExist:
+        appena_registrata = None
 
     try:
         tesseramento = Tesseramento.objects.get(anno=questo_anno)
@@ -797,21 +800,28 @@ def us_quote_nuova(request, me):
 
     if tesseramento:
         dati_iniziali = {
-            "importo": tesseramento.quota_attivo,
+            "importo": tesseramento.importo_quota_volontario(Quota.QUOTA_SOCIO),
             "data_versamento": poco_fa(),
+            "tipo_quota": Quota.QUOTA_SOCIO,
         }
         modulo = ModuloQuotaVolontario(request.POST or None, initial=dati_iniziali)
 
         if modulo and modulo.is_valid():
 
             volontario = modulo.cleaned_data['volontario']
+            tipo_quota = modulo.cleaned_data.get('tipo_quota', None)
+            if not tipo_quota:
+                tipo_quota = Quota.QUOTA_SOCIO
+
+            if tipo_quota not in dict(Quota.TIPO).keys():
+                modulo.add_error('tipo_quota', 'Il tipo di quota non è tra quelli validi.')
 
             importo = modulo.cleaned_data['importo']
             data_versamento = modulo.cleaned_data['data_versamento']
 
-            if importo < tesseramento.quota_attivo:
+            if importo < tesseramento.importo_quota_volontario(tipo_quota):
                 modulo.add_error('importo', 'L\'importo minimo per il %d e\' di EUR %s.' % (
-                    questo_anno, testo_euro(tesseramento.quota_attivo)
+                    questo_anno, testo_euro(tesseramento.importo_quota_volontario(tipo_quota))
                 ))
 
             elif data_versamento.year != questo_anno or data_versamento > oggi():
@@ -845,8 +855,8 @@ def us_quote_nuova(request, me):
 
             elif not tesseramento.non_pagante(volontario, attivi=True, ordinari=False):
                 modulo.add_error('volontario', 'Questo volontario non è passibile al pagamento '
-                                            'della Quota associativa come Volontario presso '
-                                            'una delle tue Sedi, per l\'anno %d.' % questo_anno)
+                                               'della Quota associativa come Volontario presso '
+                                               'una delle tue Sedi, per l\'anno %d.' % questo_anno)
 
             else:
 
@@ -873,21 +883,36 @@ def us_quote_nuova(request, me):
                                                     "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
 
                 else:
+                    if tipo_quota != Quota.QUOTA_SOCIO:
+                        suffisso = ' - %s' % dict(Quota.RIDUZIONI)[tipo_quota]
+                        riduzione = tipo_quota
+                    else:
+                        suffisso = ''
+                        riduzione = None
                     # OK, paga quota!
                     ricevuta = Quota.nuova(
                         appartenenza=appartenenza,
                         data_versamento=data_versamento,
                         registrato_da=me,
                         importo=importo,
-                        causale="Rinnovo Quota Associativa %d" % (questo_anno,),
+                        causale="Rinnovo Quota Associativa %d%s" % (questo_anno, suffisso),
                         tipo=Quota.QUOTA_SOCIO,
-                        invia_notifica=True
+                        invia_notifica=True,
+                        riduzione=riduzione,
+                        tipo_quota=tipo_quota
                     )
                     return redirect("/us/quote/nuova/?appena_registrata=%d" % (ricevuta.pk,))
 
         ultime_quote = Quota.objects.filter(registrato_da=me, tipo=Quota.QUOTA_SOCIO).order_by('-creazione')[:15]
 
+        importi_possibili = {
+            Quota.QUOTA_SOCIO: tesseramento.quota_attivo,
+            Quota.CLUB25: tesseramento.quota_agevolata,
+            Quota.RIFUGIATO: tesseramento.quota_agevolata,
+        }
+
         contesto = {
+            "importi_possibili": json.dumps(importi_possibili),
             "modulo": modulo,
             "ultime_quote": ultime_quote,
             "anno": questo_anno,
