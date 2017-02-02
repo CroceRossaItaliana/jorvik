@@ -8,7 +8,12 @@ from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_A
     GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, MODIFICA, LETTURA, COMPLETO, \
     GESTIONE_AUTOPARCHI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI_SEDE, GESTIONE, GESTIONE_AREE_SEDE, \
     GESTIONE_REFERENTI_ATTIVITA, GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI, \
-    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
+    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
+    RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1, RUBRICA_DELEGATI_OBIETTIVO_2, \
+    RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
+    RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
+    RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO
 
 """
 Questo file gestisce la espansione dei permessi in Gaia.
@@ -71,6 +76,90 @@ def espandi_elenchi_soci(qs_sedi, al_giorno=None):
         (LETTURA,  Tesserino.objects.filter(Appartenenza.con_esito_ok(sede__in=qs_sedi).via("persona__appartenenze"))),
     ]
 
+def espandi_rubrica_ufficio_soci(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi),
+    ]
+
+def espandi_rubrica_ufficio_soci_unita(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_presidenti(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi),
+    ]
+
+def espandi_rubrica_delegati_area(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_delegati_obiettivo_1(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_delegati_obiettivo_2(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_delegati_obiettivo_3(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_delegati_obiettivo_4(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_delegati_obiettivo_6(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_delegati_giovani(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_responsabili_area(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_referenti_attivita(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_referenti_gruppi(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_centrali_operative(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_responsabili_formazione(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_direttori_corsi(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
+
+def espandi_rubrica_responsabili_autoparco(qs_sedi, al_giorno=date.today()):
+    return [
+        (LETTURA, qs_sedi)
+    ]
 
 def espandi_gestione_sede(qs_sedi, al_giorno=None):
     from anagrafica.models import Sede
@@ -177,20 +266,37 @@ def espandi_gestione_gruppi_sede(qs_sedi, al_giorno=None):
 
 
 ESPANDI_PERMESSI = {
-    GESTIONE_SOCI:                  espandi_gestione_soci,
-    ELENCHI_SOCI:                   espandi_elenchi_soci,
-    EMISSIONE_TESSERINI:            espandi_emissione_tesserini,
-    GESTIONE_SEDE:                  espandi_gestione_sede,
-    GESTIONE_AREE_SEDE:             espandi_gestione_aree_sede,
-    GESTIONE_ATTIVITA_SEDE:         espandi_gestione_attivita_sede,
-    GESTIONE_ATTIVITA_AREA:         espandi_gestione_attivita_area,
-    GESTIONE_REFERENTI_ATTIVITA:    espandi_gestione_referenti_attivita,
-    GESTIONE_ATTIVITA:              espandi_gestione_attivita,
-    GESTIONE_CORSI_SEDE:            espandi_gestione_corsi_sede,
-    GESTIONE_CORSO:                 espandi_gestione_corso,
-    GESTIONE_AUTOPARCHI_SEDE:       espandi_gestione_autoparchi_sede,
-    GESTIONE_GRUPPO:                espandi_gestione_gruppo,
-    GESTIONE_GRUPPI_SEDE:           espandi_gestione_gruppi_sede,
-    GESTIONE_CENTRALE_OPERATIVA_SEDE:espandi_gestione_centrale_operativa_sede,
-    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE:espandi_gestione_poteri_centrale_operativa_sede,
+    GESTIONE_SOCI:                      espandi_gestione_soci,
+    ELENCHI_SOCI:                       espandi_elenchi_soci,
+    EMISSIONE_TESSERINI:                espandi_emissione_tesserini,
+    GESTIONE_SEDE:                      espandi_gestione_sede,
+    GESTIONE_AREE_SEDE:                 espandi_gestione_aree_sede,
+    GESTIONE_ATTIVITA_SEDE:             espandi_gestione_attivita_sede,
+    GESTIONE_ATTIVITA_AREA:             espandi_gestione_attivita_area,
+    GESTIONE_REFERENTI_ATTIVITA:        espandi_gestione_referenti_attivita,
+    GESTIONE_ATTIVITA:                  espandi_gestione_attivita,
+    GESTIONE_CORSI_SEDE:                espandi_gestione_corsi_sede,
+    GESTIONE_CORSO:                     espandi_gestione_corso,
+    GESTIONE_AUTOPARCHI_SEDE:           espandi_gestione_autoparchi_sede,
+    GESTIONE_GRUPPO:                    espandi_gestione_gruppo,
+    GESTIONE_GRUPPI_SEDE:               espandi_gestione_gruppi_sede,
+    GESTIONE_CENTRALE_OPERATIVA_SEDE:   espandi_gestione_centrale_operativa_sede,
+    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE:    espandi_gestione_poteri_centrale_operativa_sede,
+    RUBRICA_UFFICIO_SOCI:               espandi_rubrica_ufficio_soci,
+    RUBRICA_UFFICIO_SOCI_UNITA:         espandi_rubrica_ufficio_soci_unita,
+    RUBRICA_PRESIDENTI:                 espandi_rubrica_presidenti,
+    RUBRICA_DELEGATI_AREA:              espandi_rubrica_delegati_area,
+    RUBRICA_DELEGATI_OBIETTIVO_1:       espandi_rubrica_delegati_obiettivo_1,
+    RUBRICA_DELEGATI_OBIETTIVO_2:       espandi_rubrica_delegati_obiettivo_2,
+    RUBRICA_DELEGATI_OBIETTIVO_3:       espandi_rubrica_delegati_obiettivo_3,
+    RUBRICA_DELEGATI_OBIETTIVO_4:       espandi_rubrica_delegati_obiettivo_4,
+    RUBRICA_DELEGATI_OBIETTIVO_6:       espandi_rubrica_delegati_obiettivo_6,
+    RUBRICA_DELEGATI_GIOVANI:           espandi_rubrica_delegati_giovani,
+    RUBRICA_RESPONSABILI_AREA:          espandi_rubrica_responsabili_area,
+    RUBRICA_REFERENTI_ATTIVITA:         espandi_rubrica_referenti_attivita,
+    RUBRICA_REFERENTI_GRUPPI:           espandi_rubrica_referenti_gruppi,
+    RUBRICA_CENTRALI_OPERATIVE:         espandi_rubrica_centrali_operative,
+    RUBRICA_RESPONSABILI_FORMAZIONE:    espandi_rubrica_responsabili_formazione,
+    RUBRICA_DIRETTORI_CORSI:            espandi_rubrica_direttori_corsi,
+    RUBRICA_RESPONSABILI_AUTOPARCO:     espandi_rubrica_responsabili_autoparco,
 }
