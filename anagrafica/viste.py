@@ -1500,9 +1500,13 @@ def profilo(request, me, pk, sezione=None):
 @pagina_privata
 def presidente(request, me):
     sedi = me.oggetti_permesso(GESTIONE_SEDE)
-    contesto = {
-        "sedi": sedi
-    }
+    sede_presidente = sedi.first('level')
+    contesto = {}
+    if sede_presidente:
+        contesto.update({
+            "sedi": sedi,
+            "sede_presidente": sede_presidente
+        })
     return 'anagrafica_presidente.html', contesto
 
 
