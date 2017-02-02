@@ -30,7 +30,7 @@ DIRETTORE_CORSO = 'DC'
 PERMESSI_NOMI = (
     (PRESIDENTE,                "Presidente"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
-    (UFFICIO_SOCI_UNITA,        "Ufficio Soci"),
+    (UFFICIO_SOCI_UNITA,        "Ufficio Soci Unità territoriali"),
     (DELEGATO_AREA,             "Delegato d'Area"),
     (DELEGATO_OBIETTIVO_1,      "Delegato Obiettivo I (Salute)"),
     (DELEGATO_OBIETTIVO_2,      "Delegato Obiettivo II (Sociale)"),
@@ -61,7 +61,7 @@ PERMESSI_NOMI_DICT = dict(PERMESSI_NOMI)
 RUBRICHE_TITOLI = OrderedDict((
     ('presidenti', (PRESIDENTE, 'Presidenti', True)),
     ('delegati_us', (UFFICIO_SOCI, 'Delegati Ufficio Soci', True)),
-    ('delegati_us_unita', (UFFICIO_SOCI_UNITA, 'Delegati Ufficio Soci', True)),
+    ('delegati_us_unita', (UFFICIO_SOCI_UNITA, 'Delegati Ufficio Soci Unità territoriali', True)),
     ('delegati_obiettivo_1', (DELEGATO_OBIETTIVO_1, 'Delegati Obiettivo I (Salute)', True)),
     ('delegati_obiettivo_2', (DELEGATO_OBIETTIVO_2, 'Delegati Obiettivo II (Sociale)', True)),
     ('delegati_obiettivo_3', (DELEGATO_OBIETTIVO_3, 'Delegati Obiettivo III (Emergenze)', True)),
