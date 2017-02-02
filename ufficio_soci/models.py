@@ -382,8 +382,8 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
     RIFUGIATO = 'F'
     CLUB25 = 'C'
     RIDUZIONI = (
-        (RIFUGIATO, 'Agevolazione richiedenti asilo o rifugiati'),
-        (CLUB25, 'Agevolazione per donatori sangue con meno di 25 anni'),
+        (RIFUGIATO, 'Quota Socio con agevolazione richiedenti asilo o rifugiati'),
+        (CLUB25, 'Quota Socio con agevolazione per donatori sangue con meno di 25 anni'),
     )
     riduzione = models.CharField(max_length=1, choices=RIDUZIONI, null=True, blank=True)
     TIPI_REGISTRAZIONE_QUOTE = (TIPO[0],) + RIDUZIONI
