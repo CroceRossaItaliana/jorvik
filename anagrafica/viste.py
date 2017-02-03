@@ -1500,7 +1500,7 @@ def profilo(request, me, pk, sezione=None):
 @pagina_privata
 def presidente(request, me):
     sedi = me.oggetti_permesso(GESTIONE_SEDE)
-    sede_presidente = sedi.first('level')
+    sede_presidente = sedi.order_by('level').first()
     contesto = {}
     if sede_presidente:
         contesto.update({
