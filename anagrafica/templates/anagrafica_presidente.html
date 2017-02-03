@@ -96,7 +96,11 @@
         </div>
     </div>
 
-
+    {% if sede_presidente and sede_presidente.comitati_sottostanti %}
+        <div class="alert alert-info">
+            <p>Per informazioni sugli altri comitati, compresi quelli sottostanti, puoi accedere <a target="_blank" href="{{ sede_presidente.url }}">qui</a></p>
+        </div>
+    {% endif %}
 
 
 {% endblock %}

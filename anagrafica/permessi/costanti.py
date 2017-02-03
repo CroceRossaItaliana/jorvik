@@ -17,6 +17,23 @@ from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 GESTIONE_SEDE = "GESTIONE_SEDE"
 GESTIONE_SOCI = "GESTIONE_SOCI"
 ELENCHI_SOCI = "ELENCHI_SOCI"
+RUBRICA_UFFICIO_SOCI = "RUBRICA_UFFICIO_SOCI"
+RUBRICA_UFFICIO_SOCI_UNITA = "RUBRICA_UFFICIO_SOCI_UNITA"
+RUBRICA_PRESIDENTI = "RUBRICA_PRESIDENTI"
+RUBRICA_DELEGATI_AREA = "RUBRICA_DELEGATI_AREA"
+RUBRICA_DELEGATI_OBIETTIVO_1 = "RUBRICA_DELEGATI_OBIETTIVO_1"
+RUBRICA_DELEGATI_OBIETTIVO_2 = "RUBRICA_DELEGATI_OBIETTIVO_2"
+RUBRICA_DELEGATI_OBIETTIVO_3 = "RUBRICA_DELEGATI_OBIETTIVO_3"
+RUBRICA_DELEGATI_OBIETTIVO_4 = "RUBRICA_DELEGATI_OBIETTIVO_4"
+RUBRICA_DELEGATI_OBIETTIVO_6 = "RUBRICA_DELEGATI_OBIETTIVO_6"
+RUBRICA_DELEGATI_GIOVANI = "RUBRICA_DELEGATI_GIOVANI"
+RUBRICA_RESPONSABILI_AREA = "RUBRICA_RESPONSABILI_AREA"
+RUBRICA_REFERENTI_ATTIVITA = "RUBRICA_REFERENTI_ATTIVITA"
+RUBRICA_REFERENTI_GRUPPI = "RUBRICA_REFERENTI_GRUPPI"
+RUBRICA_CENTRALI_OPERATIVE = "RUBRICA_CENTRALI_OPERATIVE"
+RUBRICA_RESPONSABILI_FORMAZIONE = "RUBRICA_RESPONSABILI_FORMAZIONE"
+RUBRICA_DIRETTORI_CORSI = "RUBRICA_DIRETTORI_CORSI"
+RUBRICA_RESPONSABILI_AUTOPARCO = "RUBRICA_RESPONSABILI_AUTOPARCO"
 GESTIONE_ATTIVITA_SEDE = "GESTIONE_ATTIVITA_SEDE"
 GESTIONE_ATTIVITA_AREA = "GESTIONE_ATTIVITA_AREA"
 GESTIONE_AREE_SEDE = "GESTIONE_AREE_SEDE"
@@ -37,6 +54,23 @@ PERMESSI_OGGETTI = (
     (GESTIONE_SEDE,             ('anagrafica', 'Sede')),
     (GESTIONE_SOCI,             ('anagrafica', 'Sede')),
     (ELENCHI_SOCI,              ('anagrafica', 'Sede')),
+    (RUBRICA_UFFICIO_SOCI,      ('anagrafica', 'Sede')),
+    (RUBRICA_UFFICIO_SOCI_UNITA,('anagrafica', 'Sede')),
+    (RUBRICA_PRESIDENTI,        ('anagrafica', 'Sede')),
+    (RUBRICA_DELEGATI_AREA,     ('attivita', 'Area')),
+    (RUBRICA_DELEGATI_OBIETTIVO_1,  ('anagrafica', 'Sede')),
+    (RUBRICA_DELEGATI_OBIETTIVO_2,  ('anagrafica', 'Sede')),
+    (RUBRICA_DELEGATI_OBIETTIVO_3,  ('anagrafica', 'Sede')),
+    (RUBRICA_DELEGATI_OBIETTIVO_4,  ('anagrafica', 'Sede')),
+    (RUBRICA_DELEGATI_OBIETTIVO_6,  ('anagrafica', 'Sede')),
+    (RUBRICA_DELEGATI_GIOVANI,      ('anagrafica', 'Sede')),
+    (RUBRICA_RESPONSABILI_AREA,     ('attivita', 'Area')),
+    (RUBRICA_REFERENTI_ATTIVITA,    ('attivita', 'Attivita')),
+    (RUBRICA_REFERENTI_GRUPPI,      ('anagrafica', 'Sede')),
+    (RUBRICA_CENTRALI_OPERATIVE,    ('anagrafica', 'Sede')),
+    (RUBRICA_RESPONSABILI_FORMAZIONE,   ('anagrafica', 'Sede')),
+    (RUBRICA_DIRETTORI_CORSI,       ('formazione', 'CorsoBase')),
+    (RUBRICA_RESPONSABILI_AUTOPARCO,    ('anagrafica', 'Sede')),
     (EMISSIONE_TESSERINI,       ('anagrafica', 'Sede')),
     (GESTIONE_ATTIVITA_SEDE,    ('anagrafica', 'Sede')),
     (GESTIONE_ATTIVITA_AREA,    ('attivita',   'Area')),
@@ -55,14 +89,14 @@ PERMESSI_OGGETTI = (
 
 # Tipologia degli oggetti assegnati ad ogni Delega.
 DELEGHE_OGGETTI = (
-    (PRESIDENTE,                'Sede'),
-    (UFFICIO_SOCI,              'Sede'),
-    (DELEGATO_AREA,             'Area'),
-    (RESPONSABILE_AREA,         'Area'),
-    (REFERENTE,                 'Attivita'),
-    (DIRETTORE_CORSO,           'Corso'),
-    (RESPONSABILE_AUTOPARCO,    'Sede'),
-    (REFERENTE_GRUPPO,          'Gruppo'),
+    (PRESIDENTE,                ('anagrafica', 'Sede', None)),
+    (UFFICIO_SOCI,              ('anagrafica', 'Sede', None)),
+    (DELEGATO_AREA,             ('attivita', 'Area', 'sede__in')),
+    (RESPONSABILE_AREA,         ('attivita', 'Area', 'sede__in')),
+    (REFERENTE,                 ('attivita', 'Attivita', 'sede__in')),
+    (DIRETTORE_CORSO,           ('formazione', 'CorsoBase', 'sede__in')),
+    (RESPONSABILE_AUTOPARCO,    ('anagrafica', 'Sede', None)),
+    (REFERENTE_GRUPPO,          ('anagrafica', 'Gruppo', 'sede__in')),
 )
 
 

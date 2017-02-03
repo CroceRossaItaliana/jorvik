@@ -4,11 +4,26 @@ import stdnum
 from django.utils import timezone
 from stdnum.it import codicefiscale
 from django.core.exceptions import ValidationError
+import re
+
+
+def _valida_codice_fiscale(codice_fiscale):
+    """
+    Validatore esteso che verifica che il codice fiscale sia valido.
+    Se il codice fiscale e' temporaneo (11 cifre numeriche), e' considerato valido.
+    :param codice_fiscale: Il codice fiscale.
+    :return: None. Exception in caso di validazione.
+    """
+    try:
+        codicefiscale.validate(codice_fiscale)
+    except:
+        if re.search("^[0-9]{11}$", codice_fiscale) is None:
+            raise
 
 
 def valida_codice_fiscale(codice_fiscale):
     try:
-        codicefiscale.validate(codice_fiscale)
+        _valida_codice_fiscale(codice_fiscale)
     except:
         raise ValidationError("Il codice fiscale non è valido.")
 
