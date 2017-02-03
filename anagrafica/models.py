@@ -28,6 +28,7 @@ from django.db.models import Q, QuerySet, Avg
 from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 import phonenumbers
+from mptt.querysets import TreeQuerySet
 
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 
@@ -279,13 +280,20 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                                    tipo__in=DELEGHE_RUBRICA,
                                    **kwargs)
 
-    def sedi_deleghe_attuali(self, al_giorno=None, espandi=False, pubblici=False, **kwargs):
+    def sedi_deleghe_attuali(self, al_giorno=None, espandi=False, pubblici=False, deleghe=None, **kwargs):
         sedi = Sede.objects.none()
-        for d in self.deleghe_attuali(al_giorno=al_giorno, oggetto_tipo=ContentType.objects.get_for_model(Sede)):
-            if espandi:
-                pks = [x.pk for x in d.oggetto.espandi(includi_me=True, pubblici=pubblici)]
+        tipo_sede = ContentType.objects.get_for_model(Sede)
+        if not deleghe:
+            deleghe = self.deleghe_attuali(al_giorno=al_giorno, oggetto_tipo=tipo_sede)
+        for d in deleghe:
+            if d.oggetto_tipo != tipo_sede and hasattr(d.oggetto, 'sede'):
+                oggetto = d.oggetto.sede
             else:
-                pks = [d.oggetto.pk]
+                oggetto = d.oggetto
+            if espandi:
+                pks = [x.pk for x in oggetto.espandi(includi_me=True, pubblici=pubblici)]
+            else:
+                pks = [oggetto.pk]
 
             sedi |= Sede.objects.filter(pk__in=pks)
         return sedi
@@ -1325,7 +1333,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             return False
 
 
-class SedeQuerySet(QuerySet):
+class SedeQuerySet(TreeQuerySet):
 
     def comitati(self):
         """
