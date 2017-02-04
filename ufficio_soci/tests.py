@@ -19,7 +19,7 @@ from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_
     crea_utenza, crea_locazione
 from ufficio_soci.elenchi import ElencoElettoratoAlGiorno
 from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota
-from ufficio_soci.models import Tesseramento, Tesserino, Quota
+from ufficio_soci.models import Tesseramento, Tesserino, Quota, Riduzione
 
 
 class TestBase(TestCase):
@@ -520,22 +520,27 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         self.assertEqual(quota.causale_extra, '')
 
     @freeze_time('2016-11-14')
-    def test_registrazione_quota_socio_riduzione(self):
+    def test_registrazione_quota_soci(self):
 
         # Crea oggetti e nomina il delegato US
         delegato = crea_persona()
         utente = crea_utenza(delegato, email="mario@rossi.it", password="prova")
-        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
+        volontario1, sede, appartenenza = crea_persona_sede_appartenenza()
+        volontario2 = crea_persona()
+        crea_appartenenza(volontario2, sede)
+
         sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
 
         oggi = poco_fa()
         inizio_anno = oggi.replace(month=1, day=1)
 
-        Tesseramento.objects.create(
+        tesseramento = Tesseramento.objects.create(
             stato=Tesseramento.APERTO, inizio=inizio_anno,
             anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8,
-            quota_benemerito=8, quota_aspirante=8, quota_sostenitore=8,
-            quota_agevolata=1
+            quota_benemerito=8, quota_aspirante=8, quota_sostenitore=8
+        )
+        riduzione = Riduzione.objects.create(
+            nome='Riduzione di test', quota=2, descrizione='Descrizione riduzione', tesseramento=tesseramento
         )
 
         sede.telefono = '+3902020202'
@@ -545,22 +550,40 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         sede.locazione = crea_locazione()
         sede.save()
 
+        self.client.login(email="mario@rossi.it", password="prova")
+
         data = {
-            'volontario': volontario.pk,
-            'tipo_quota': Quota.RIFUGIATO,
+            'volontario': volontario1.pk,
+            'riduzione': riduzione.pk,
             'importo': 3,
             'data_versamento': (oggi - datetime.timedelta(days=60)).strftime('%d/%m/%Y')
         }
-        self.client.login(email="mario@rossi.it", password="prova")
         response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_quote_nuova')), data=data)
         # quota registrata con successo
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response['location'].find('?appena_registrata='))
-        quota = Quota.objects.get(persona=volontario)
-        self.assertTrue(quota.riduzione)
+        quota = Quota.objects.get(persona=volontario1)
         self.assertEqual(quota.tipo, Quota.QUOTA_SOCIO)
-        self.assertEqual(quota.importo_extra, 2)
+        self.assertEqual(quota.importo_extra, 1)
+        self.assertEqual(quota.riduzione, riduzione)
         self.assertEqual(quota.causale_extra, 'Donazione')
+        self.assertTrue(riduzione.descrizione in  quota.causale)
+
+        data = {
+            'volontario': volontario2.pk,
+            'riduzione': '',
+            'importo': 13,
+            'data_versamento': (oggi - datetime.timedelta(days=60)).strftime('%d/%m/%Y')
+        }
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_quote_nuova')), data=data)
+        # quota registrata con successo
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['location'].find('?appena_registrata='))
+        quota = Quota.objects.get(persona=volontario2)
+        self.assertEqual(quota.tipo, Quota.QUOTA_SOCIO)
+        self.assertEqual(quota.importo_extra, 5)
+        self.assertFalse(quota.riduzione)
+        self.assertTrue(riduzione.descrizione not in quota.causale)
 
     @freeze_time('2016-11-14')
     def test_registrazione_quota_socio_senza_fine_chiuso(self):

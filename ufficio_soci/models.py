@@ -159,12 +159,38 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
                 return tesserini.first()
 
 
+class Riduzione(ModelloSemplice, ConMarcaTemporale):
+    class Meta:
+        verbose_name = "Riduzione"
+        verbose_name_plural = "Riduzioni"
+        ordering = ('tesseramento__anno', 'nome')
+        permissions = (
+            ("view_riduzione", "Can view riduzione"),
+        )
+
+    nome = models.CharField(max_length=255, help_text='Compare nelle maschere di registrazione quote')
+    quota = models.FloatField(default=1.00)
+    descrizione = models.CharField(max_length=500, help_text='Dicitira riportata sulle ricevute e nella causale della quota')
+    tesseramento = models.ForeignKey('ufficio_soci.Tesseramento')
+
+    def __str__(self):
+        return '{} {} {} {}'.format(
+            self._meta.verbose_name, self.nome,
+            self.tesseramento._meta.verbose_name, self.tesseramento.anno
+        )
+
+
 class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Tesseramento"
         verbose_name_plural = "Tesseramenti"
         permissions = (
             ("view_tesseramento", "Can view tesseramento"),
+        )
+
+    def __str__(self):
+        return '{} {}'.format(
+            self._meta.verbose_name, self.anno
         )
 
     APERTO = 'A'
@@ -194,7 +220,6 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     quota_benemerito = models.FloatField(default=20.00)
     quota_aspirante = models.FloatField(default=20.00)
     quota_sostenitore = models.FloatField(default=20.00)
-    quota_agevolata = models.FloatField(default=1.00)
 
     @property
     def fine_soci_nv(self):
@@ -217,11 +242,9 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
 
         return self.stato == self.APERTO and data >= self.inizio and data <= termine
 
-    def importo_quota_volontario(self, tipo):
-        if tipo == Quota.QUOTA_SOCIO:
-            return self.quota_attivo
-        elif tipo in (Quota.RIFUGIATO, Quota.CLUB25):
-            return self.quota_agevolata
+    def importo_quota_volontario(self, riduzione=None):
+        if riduzione:
+            return riduzione.quota
         else:
             return self.quota_attivo
 
@@ -235,10 +258,10 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
         except Tesseramento.DoesNotExist:
             return False
 
-    def importo_da_pagare(self, socio, tipo):
+    def importo_da_pagare(self, socio, riduzione):
 
         if socio.volontario:  # Quota socio attivo
-            return self.importo_quota_volontario(tipo)
+            return self.importo_quota_volontario(riduzione)
 
         elif socio.ordinario:  # Quota socio ordinario
             return self.quota_ordinario
@@ -379,14 +402,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
     causale = models.CharField(max_length=512)
     causale_extra = models.CharField(max_length=512, blank=True)
 
-    RIFUGIATO = 'F'
-    CLUB25 = 'C'
-    RIDUZIONI = (
-        (RIFUGIATO, 'Quota Socio con agevolazione richiedenti asilo o rifugiati'),
-        (CLUB25, 'Quota Socio con agevolazione per donatori sangue con meno di 25 anni'),
-    )
-    riduzione = models.CharField(max_length=1, choices=RIDUZIONI, null=True, blank=True)
-    TIPI_REGISTRAZIONE_QUOTE = (TIPO[0],) + RIDUZIONI
+    riduzione = models.ForeignKey(Riduzione, null=True, blank=True, related_name='quote')
 
     class Meta:
         verbose_name_plural = "Quote"
@@ -405,7 +421,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
     @classmethod
     def nuova(cls, appartenenza, data_versamento, registrato_da, importo,
               causale, tipo=QUOTA_SOCIO, invia_notifica=True,
-              corso_comitato=None, corso_persona=None, tipo_quota=QUOTA_SOCIO, **kwargs):
+              corso_comitato=None, corso_persona=None, **kwargs):
 
         persona = appartenenza.persona if appartenenza else corso_persona
         sede = appartenenza.sede.comitato if appartenenza else corso_comitato
@@ -432,7 +448,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
 
         # Scompone l'importo in Quota e Extra (Donazione)
         #  (solo se QUOTA VOLONTARIO)
-        da_pagare = q.tesseramento().importo_da_pagare(q.persona, tipo_quota)
+        da_pagare = q.tesseramento().importo_da_pagare(q.persona, kwargs.get('riduzione', None))
         if tipo == Quota.QUOTA_SOCIO and importo > da_pagare:
             q.importo = da_pagare
             q.importo_extra = importo - da_pagare

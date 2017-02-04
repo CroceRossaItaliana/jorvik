@@ -13,10 +13,16 @@
         var importi = jQuery.parseJSON('{{ importi_possibili|escapejs }}');
         var personalizzato = false;
         $(document).ready(function(){
-            $(document).on('click', '[name=agevolazioni]', function(event) {
-                $('#id_importo').attr('min', importi[$(event.target).attr('value')]);
+            $(document).on('click', '[name=riduzione]', function(event) {
+                if($(event.target).attr('value')) {
+                    importo = importi[$(event.target).attr('value')];
+                }
+                else {
+                    importo = importi['Q'];
+                }
+                $('#id_importo').attr('min', importo);
                 if(!personalizzato) {
-                    $('#id_importo').attr('value', importi[$(event.target).attr('value')]);
+                    $('#id_importo').attr('value', importo);
                 }
             });
             $(document).on('change', '#id_importo', function(event) {
