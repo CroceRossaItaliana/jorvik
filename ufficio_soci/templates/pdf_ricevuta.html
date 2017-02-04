@@ -30,7 +30,7 @@
 		<TR VALIGN=TOP>
 			<TD WIDTH=67% height="150" STYLE="border-top: none; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: none; padding-top: 0cm; padding-bottom: 0cm; padding-left: 0.1cm; padding-right: 0cm">
 				<P>{{ quota.causale }}</P>
-                {% if quota.riduzione %}<p style="font-style: italic;">{{ quota.get_riduzione_display }}</p>{% endif %}
+				{% if quota.riduzione %}<p style="font-style: italic;">{{ quota.riduzione.descrizione }}</p>{% endif %}
 				<P>{{ quota.causale_extra }}</P>
 			</TD>
 			<TD WIDTH=33% height="150" STYLE="border-top: none; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000; padding-top: 0cm; padding-bottom: 0.1cm; padding-left: 0.1cm; padding-right: 0.1cm">
