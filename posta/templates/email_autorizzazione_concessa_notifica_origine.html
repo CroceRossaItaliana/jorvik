@@ -2,7 +2,8 @@
 
 {% block corpo %}
 
-    <p>La richiesta di {{ richiesta.oggetto.RICHIESTA_NOME }} inoltrata il {{ richiesta.creazione|date:"SHORT_DATE_FORMAT" }} è stata <strong>APPROVATA</strong> automaticamente.</p>
+    <p>La richiesta di {{ richiesta.oggetto.RICHIESTA_NOME }} inoltrata il {{ richiesta.creazione|date:"SHORT_DATE_FORMAT" }} è stata <strong>APPROVATA</strong>
+        {% if firmatario %} da {{ firmatario.nome_completo }}{% elif automatica %}automaticamente{% endif %}.</p>
 
     {% if testo_extra %}
     <p>{{ testo_extra }}</p>
