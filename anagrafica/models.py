@@ -494,14 +494,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         if self.volontario:
             lista += [('/utente/', 'Volontario', 'fa-user')]
-
-        else:
+        elif not hasattr(self, 'aspirante'):
             lista += [('/utente/', 'Utente', 'fa-user')]
 
         if hasattr(self, 'aspirante'):
             lista += [('/aspirante/', 'Aspirante', 'fa-user', self.aspirante.corsi().count())]
 
-        lista += [('/attivita/', 'Attività', 'fa-calendar')]
+        if self.volontario:
+            lista += [('/attivita/', 'Attività', 'fa-calendar')]
+
         lista += [('/posta/', 'Posta', 'fa-envelope')]
 
         if self.ha_pannello_autorizzazioni:

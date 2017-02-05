@@ -56,7 +56,7 @@ from attivita.stats import statistiche_attivita_persona
 from attivita.viste import attivita_storico_excel
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
-from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
+from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico, errore_no_volontario
 from base.files import Zip
 from base.models import Log
 from base.notifiche import NOTIFICA_INVIA
@@ -378,6 +378,8 @@ def utente_fotografia_avatar(request, me):
 
 @pagina_privata
 def utente_fotografia_fototessera(request, me):
+    if not me.volontario:
+        return errore_no_volontario(request, me)
 
     modulo_fototessera = ModuloNuovaFototessera(request.POST or None, request.FILES or None)
 
@@ -419,6 +421,8 @@ def utente_fotografia_fototessera(request, me):
 
 @pagina_privata
 def utente_documenti(request, me):
+    if not me.volontario and not me.dipendente:
+        return errore_no_volontario(request, me)
 
     contesto = {
         "documenti": me.documenti.all()
@@ -571,6 +575,8 @@ def utente_contatti(request, me):
 
 @pagina_privata
 def utente_rubrica_referenti(request, me):
+    if not me.volontario:
+        return errore_no_volontario(request, me)
     sedi_volontario = Sede.objects.filter(pk__in=me.sedi_attuali(membro__in=Appartenenza.MEMBRO_RUBRICA).values_list("id", flat=True))
     referenti = Persona.objects.filter(
         Delega.query_attuale(
@@ -589,6 +595,8 @@ def utente_rubrica_referenti(request, me):
 
 @pagina_privata
 def utente_rubrica_volontari(request, me):
+    if not me.volontario:
+        return errore_no_volontario(request, me)
     sedi_volontario = Sede.objects.filter(pk__in=me.sedi_attuali(membro__in=Appartenenza.MEMBRO_RUBRICA).values_list("id", flat=True))
     sedi_gestione = me.oggetti_permesso(ELENCHI_SOCI)
     volontari_volontario = Persona.objects.filter(
@@ -727,6 +735,8 @@ def estensioni_pending(me):
 def utente_estensione(request, me):
     if not me.sede_riferimento():
         return errore_nessuna_appartenenza(request, me)
+    if not me.volontario:
+        return errore_no_volontario(request, me)
     storico = me.estensioni.all()
     modulo = ModuloCreazioneEstensione(request.POST or None)
     if modulo.is_valid():
@@ -787,6 +797,8 @@ def utente_estensione(request, me):
 
 @pagina_privata()
 def utente_estensione_termina(request, me, pk):
+    if not me.volontario:
+        return errore_no_volontario(request, me)
     estensione = get_object_or_404(Estensione, pk=pk)
     if not estensione.persona == me:
         return redirect(ERRORE_PERMESSI)
@@ -795,6 +807,8 @@ def utente_estensione_termina(request, me, pk):
         return redirect('/utente/')
 
 def utente_trasferimento_termina(request, me, pk):
+    if not me.volontario:
+        return errore_no_volontario(request, me)
     trasferimento = get_object_or_404(Trasferimento, pk=pk)
     if not trasferimento.persona == me:
         return redirect(ERRORE_PERMESSI)
@@ -838,6 +852,9 @@ def trasferimenti_pending(me):
 def utente_trasferimento(request, me):
     if not me.sede_riferimento():
         return errore_nessuna_appartenenza(request, me)
+
+    if not me.volontario:
+        return errore_no_volontario(request, me)
     storico = me.trasferimenti.all()
 
     modulo = ModuloCreazioneTrasferimento(request.POST or None)
@@ -901,6 +918,8 @@ def utente_trasferimento(request, me):
 
 @pagina_privata
 def utente_riserva(request, me):
+    if not me.volontario:
+        return errore_no_volontario(request, me)
     if not me.appartenenze_attuali() or not me.sede_riferimento():
         return errore_generico(titolo="Errore", messaggio="Si è verificato un errore generico.", request=request)
     storico = me.riserve.all()
@@ -929,6 +948,8 @@ def utente_riserva(request, me):
 
 @pagina_privata
 def utente_riserva_ritira(request, me, pk):
+    if not me.volontario:
+        return errore_no_volontario(request, me)
     riserva = get_object_or_404(Riserva, pk=pk)
     if not riserva.persona == me:
         return redirect(ERRORE_PERMESSI)
@@ -948,6 +969,8 @@ def utente_riserva_ritira(request, me, pk):
 
 @pagina_privata
 def utente_riserva_termina(request, me, pk):
+    if not me.volontario:
+        return errore_no_volontario(request, me)
     riserva = get_object_or_404(Riserva, pk=pk)
     if not riserva.persona == me:
         return redirect(ERRORE_PERMESSI)
@@ -957,6 +980,8 @@ def utente_riserva_termina(request, me, pk):
 
 @pagina_privata
 def utente_estensione_estendi(request, me, pk):
+    if not me.volontario:
+        return errore_no_volontario(request, me)
     estensione = get_object_or_404(Estensione, pk=pk)
     if not estensione.persona == me:
         return redirect(ERRORE_PERMESSI)
@@ -967,6 +992,8 @@ def utente_estensione_estendi(request, me, pk):
 
 @pagina_privata
 def utente_trasferimento_ritira(request, me, pk):
+    if not me.volontario:
+        return errore_no_volontario(request, me)
     trasf = get_object_or_404(Trasferimento, pk=pk)
     if not trasf.persona == me:
         return redirect(ERRORE_PERMESSI)
@@ -1068,6 +1095,9 @@ def utente_curriculum(request, me, tipo=None):
 
     if tipo not in dict(Titolo.TIPO):  # Tipo permesso?
         redirect(ERRORE_PERMESSI)
+
+    if tipo in (Titolo.PATENTE_CRI, Titolo.TITOLO_CRI) and not (me.volontario or me.dipendente):
+        return errore_no_volontario(request, me)
 
     passo = 1
     tipo_display = dict(Titolo.TIPO)[tipo]

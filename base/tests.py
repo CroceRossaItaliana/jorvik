@@ -17,7 +17,7 @@ from splinter.exceptions import ElementDoesNotExist
 
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, UFFICIO_SOCI_UNITA
 from articoli.models import Articolo
-from anagrafica.models import Persona, Delega
+from anagrafica.models import Persona, Delega, Appartenenza
 from attivita.models import Area, Attivita
 from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
@@ -26,7 +26,8 @@ from base.geo import Locazione
 from base.utils import UpperCaseCharField, poco_fa
 from base.utils_tests import crea_appartenenza, crea_persona_sede_appartenenza, crea_persona, crea_area_attivita, crea_utenza, \
     email_fittizzia, crea_sede
-from formazione.models import CorsoBase
+from curriculum.models import Titolo
+from formazione.models import CorsoBase, Aspirante
 from gestione_file.models import Documento
 from jorvik.settings import GOOGLE_KEY
 from filer.models import Folder
@@ -280,6 +281,167 @@ class TestUtils(TestBase):
 
 
 class TestFunzionaleBase(TestFunzionale):
+
+    def test_menu_non_volontario(self):
+        aspirante = crea_persona()
+        aspirante.aspirante = Aspirante.objects.create(persona=aspirante)
+        aspirante.save()
+        dipendente = crea_persona()
+        ordinario = crea_persona()
+        sostenitore = crea_persona()
+        sede = crea_sede()
+        Appartenenza.objects.create(persona=dipendente, sede=sede, membro=Appartenenza.DIPENDENTE, inizio=poco_fa())
+        Appartenenza.objects.create(persona=ordinario, sede=sede, membro=Appartenenza.ORDINARIO, inizio=poco_fa())
+        Appartenenza.objects.create(persona=sostenitore, sede=sede, membro=Appartenenza.SOSTENITORE, inizio=poco_fa())
+
+        sessione_aspirante = self.sessione_utente(persona=aspirante, wait_time=1)
+        self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Estensione')), 0)
+        self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Trasferimento')), 0)
+        self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Riserva')), 0)
+        self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Fotografie')), 1)
+        self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Patenti CRI')), 0)
+        self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Titoli CRI')), 0)
+        self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Attività')), 0)
+        self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Storico')), 1)
+        self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Documenti')), 1)
+        self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Utente')), 0)
+        self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Volontario')), 0)
+        self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Aspirante')), 1)
+        self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Cambia password')), 1)
+
+        sessione_aspirante.visit("%s/utente/estensione/" % self.live_server_url)
+        self.assertTrue(sessione_aspirante.is_text_present('Necessaria appartenenza,'))
+        sessione_aspirante.visit("%s/utente/trasferimento/" % self.live_server_url)
+        self.assertTrue(sessione_aspirante.is_text_present('Necessaria appartenenza,'))
+        sessione_aspirante.visit("%s/utente/riserva/" % self.live_server_url)
+        self.assertTrue(sessione_aspirante.is_text_present('Accesso Volontari'))
+        sessione_aspirante.visit("%s/utente/fotografia/" % self.live_server_url)
+        self.assertTrue(sessione_aspirante.is_text_not_present('Fototessera (formale)'))
+        sessione_aspirante.visit("%s/utente/fotografia/fototessera/" % self.live_server_url)
+        self.assertTrue(sessione_aspirante.is_text_present('Accesso Volontari'))
+        for tipo in dict(Titolo.TIPO).keys():
+            sessione_aspirante.visit("%s/utente/curriculum/%s/" % (self.live_server_url, tipo))
+            if tipo in (Titolo.PATENTE_CRI, Titolo.TITOLO_CRI):
+                self.assertTrue(sessione_aspirante.is_text_present('Accesso Volontari'))
+            else:
+                self.assertFalse(sessione_aspirante.is_text_present('Accesso Volontari'))
+        sessione_aspirante.visit("%s/attivita/" % self.live_server_url)
+        self.assertTrue(sessione_aspirante.is_text_present('Accesso Volontari'))
+        sessione_aspirante.visit("%s/utente/storico/" % self.live_server_url)
+        self.assertTrue(sessione_aspirante.is_text_not_present('Accesso Volontari'))
+        sessione_aspirante.visit("%s/utente/documenti/" % self.live_server_url)
+        self.assertTrue(sessione_aspirante.is_text_present('Accesso Volontari'))
+
+        sessione_dipendente = self.sessione_utente(persona=dipendente, wait_time=1)
+        self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Estensione')), 0)
+        self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Trasferimento')), 0)
+        self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Riserva')), 0)
+        self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Fotografie')), 1)
+        self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Patenti CRI')), 1)
+        self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Titoli CRI')), 1)
+        self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Attività')), 0)
+        self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Storico')), 1)
+        self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Documenti')), 2)
+        self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Utente')), 1)
+        self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Volontario')), 0)
+        self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('dipendente')), 0)
+        self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Cambia password')), 1)
+
+        sessione_dipendente.visit("%s/utente/estensione/" % self.live_server_url)
+        self.assertTrue(sessione_dipendente.is_text_present('Accesso Volontari'))
+        sessione_dipendente.visit("%s/utente/trasferimento/" % self.live_server_url)
+        self.assertTrue(sessione_dipendente.is_text_present('Accesso Volontari'))
+        sessione_dipendente.visit("%s/utente/riserva/" % self.live_server_url)
+        self.assertTrue(sessione_dipendente.is_text_present('Accesso Volontari'))
+        sessione_dipendente.visit("%s/utente/fotografia/" % self.live_server_url)
+        self.assertTrue(sessione_dipendente.is_text_not_present('Fototessera (formale)'))
+        sessione_dipendente.visit("%s/utente/fotografia/fototessera/" % self.live_server_url)
+        self.assertTrue(sessione_dipendente.is_text_present('Accesso Volontari'))
+        for tipo in dict(Titolo.TIPO).keys():
+            sessione_dipendente.visit("%s/utente/curriculum/%s/" % (self.live_server_url, tipo))
+            self.assertFalse(sessione_dipendente.is_text_present('Accesso Volontari'))
+        sessione_dipendente.visit("%s/attivita/" % self.live_server_url)
+        self.assertTrue(sessione_dipendente.is_text_present('Accesso Volontari'))
+        sessione_dipendente.visit("%s/utente/storico/" % self.live_server_url)
+        self.assertTrue(sessione_dipendente.is_text_not_present('Accesso Volontari'))
+        sessione_dipendente.visit("%s/utente/documenti/" % self.live_server_url)
+        self.assertTrue(sessione_dipendente.is_text_not_present('Accesso Volontari'))
+
+        sessione_ordinario = self.sessione_utente(persona=ordinario, wait_time=1)
+        self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Estensione')), 0)
+        self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Trasferimento')), 0)
+        self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Riserva')), 0)
+        self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Fotografie')), 1)
+        self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Patenti CRI')), 0)
+        self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Titoli CRI')), 0)
+        self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Attività')), 0)
+        self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Storico')), 1)
+        self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Documenti')), 1)
+        self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Utente')), 1)
+        self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Volontario')), 0)
+        self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('ordinario')), 0)
+        self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Cambia password')), 1)
+
+        sessione_ordinario.visit("%s/utente/estensione/" % self.live_server_url)
+        self.assertTrue(sessione_ordinario.is_text_present('Accesso Volontari'))
+        sessione_ordinario.visit("%s/utente/trasferimento/" % self.live_server_url)
+        self.assertTrue(sessione_ordinario.is_text_present('Accesso Volontari'))
+        sessione_ordinario.visit("%s/utente/riserva/" % self.live_server_url)
+        self.assertTrue(sessione_ordinario.is_text_present('Accesso Volontari'))
+        sessione_ordinario.visit("%s/utente/fotografia/" % self.live_server_url)
+        self.assertTrue(sessione_ordinario.is_text_not_present('Fototessera (formale)'))
+        sessione_ordinario.visit("%s/utente/fotografia/fototessera/" % self.live_server_url)
+        self.assertTrue(sessione_ordinario.is_text_present('Accesso Volontari'))
+        for tipo in dict(Titolo.TIPO).keys():
+            sessione_ordinario.visit("%s/utente/curriculum/%s/" % (self.live_server_url, tipo))
+            if tipo in (Titolo.PATENTE_CRI, Titolo.TITOLO_CRI):
+                self.assertTrue(sessione_ordinario.is_text_present('Accesso Volontari'))
+            else:
+                self.assertFalse(sessione_ordinario.is_text_present('Accesso Volontari'))
+        sessione_ordinario.visit("%s/attivita/" % self.live_server_url)
+        self.assertTrue(sessione_ordinario.is_text_present('Accesso Volontari'))
+        sessione_ordinario.visit("%s/utente/storico/" % self.live_server_url)
+        self.assertTrue(sessione_ordinario.is_text_not_present('Accesso Volontari'))
+        sessione_ordinario.visit("%s/utente/documenti/" % self.live_server_url)
+        self.assertTrue(sessione_ordinario.is_text_present('Accesso Volontari'))
+
+        sessione_sostenitore = self.sessione_utente(persona=sostenitore, wait_time=1)
+        self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Estensione')), 0)
+        self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Trasferimento')), 0)
+        self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Riserva')), 0)
+        self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Fotografie')), 1)
+        self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Patenti CRI')), 0)
+        self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Titoli CRI')), 0)
+        self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Attività')), 0)
+        self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Storico')), 1)
+        self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Documenti')), 1)
+        self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Utente')), 1)
+        self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Volontario')), 0)
+        self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('sostenitore')), 0)
+        self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Cambia password')), 1)
+
+        sessione_sostenitore.visit("%s/utente/estensione/" % self.live_server_url)
+        self.assertTrue(sessione_sostenitore.is_text_present('Accesso Volontari'))
+        sessione_sostenitore.visit("%s/utente/trasferimento/" % self.live_server_url)
+        self.assertTrue(sessione_sostenitore.is_text_present('Accesso Volontari'))
+        sessione_sostenitore.visit("%s/utente/riserva/" % self.live_server_url)
+        self.assertTrue(sessione_sostenitore.is_text_present('Accesso Volontari'))
+        sessione_sostenitore.visit("%s/utente/fotografia/" % self.live_server_url)
+        self.assertTrue(sessione_sostenitore.is_text_not_present('Fototessera (formale)'))
+        sessione_sostenitore.visit("%s/utente/fotografia/fototessera/" % self.live_server_url)
+        self.assertTrue(sessione_sostenitore.is_text_present('Accesso Volontari'))
+        for tipo in dict(Titolo.TIPO).keys():
+            sessione_sostenitore.visit("%s/utente/curriculum/%s/" % (self.live_server_url, tipo))
+            if tipo in (Titolo.PATENTE_CRI, Titolo.TITOLO_CRI):
+                self.assertTrue(sessione_sostenitore.is_text_present('Accesso Volontari'))
+            else:
+                self.assertFalse(sessione_sostenitore.is_text_present('Accesso Volontari'))
+        sessione_sostenitore.visit("%s/attivita/" % self.live_server_url)
+        self.assertTrue(sessione_sostenitore.is_text_present('Accesso Volontari'))
+        sessione_sostenitore.visit("%s/utente/storico/" % self.live_server_url)
+        self.assertTrue(sessione_sostenitore.is_text_not_present('Accesso Volontari'))
+        sessione_sostenitore.visit("%s/utente/documenti/" % self.live_server_url)
+        self.assertTrue(sessione_sostenitore.is_text_present('Accesso Volontari'))
 
     def test_localizzatore_solo_italia(self):
         presidente = crea_persona()
