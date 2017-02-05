@@ -14,7 +14,7 @@ from anagrafica.permessi.applicazioni import REFERENTE, PRESIDENTE, DELEGATO_CO
 from anagrafica.permessi.costanti import GESTIONE_CENTRALE_OPERATIVA_SEDE
 from autenticazione.utils_test import TestFunzionale
 from base.utils_tests import crea_persona, crea_persona_sede_appartenenza, crea_area_attivita, crea_turno, crea_partecipazione, \
-    email_fittizzia
+    email_fittizzia, crea_appartenenza
 from base.models import Autorizzazione
 
 
@@ -493,12 +493,14 @@ class TestFunzionaleAttivita(TestFunzionale):
 
         presidente = crea_persona()
         persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        if not presidente.volontario:
+            crea_appartenenza(presidente, sede)
 
         sessione_presidente = self.sessione_utente(persona=presidente)
         #sessione_persona = self.sessione_utente(persona=persona)
 
         # Crea area di intervento
-        sessione_presidente.click_link_by_partial_text("Attività")
+        sessione_presidente.click_link_by_partial_href("/attivita/")
         sessione_presidente.click_link_by_partial_text("Aree di intervento")
         sessione_presidente.click_link_by_partial_text(sede.nome)
         sessione_presidente.fill('nome', "Area 42")
@@ -527,6 +529,8 @@ class TestFunzionaleAttivita(TestFunzionale):
 
         presidente = crea_persona()
         persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        if not presidente.volontario:
+            crea_appartenenza(presidente, sede)
 
         area = Area(sede=sede, nome="Area 42", obiettivo=6)
         area.save()
@@ -536,7 +540,7 @@ class TestFunzionaleAttivita(TestFunzionale):
         sessione_persona = self.sessione_utente(persona=persona)
 
         # Presidente: Vai a organizza attivita
-        sessione_presidente.click_link_by_partial_text("Attività")
+        sessione_presidente.click_link_by_partial_href("/attivita/")
         sessione_presidente.click_link_by_partial_text("Organizza attività")
 
         # Presidente: Riempi dettagli attivita
