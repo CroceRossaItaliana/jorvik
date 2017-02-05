@@ -159,12 +159,38 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
                 return tesserini.first()
 
 
+class Riduzione(ModelloSemplice, ConMarcaTemporale):
+    class Meta:
+        verbose_name = "Riduzione"
+        verbose_name_plural = "Riduzioni"
+        ordering = ('tesseramento__anno', 'nome')
+        permissions = (
+            ("view_riduzione", "Can view riduzione"),
+        )
+
+    nome = models.CharField(max_length=255, help_text='Compare nelle maschere di registrazione quote')
+    quota = models.FloatField(default=1.00)
+    descrizione = models.CharField(max_length=500, help_text='Dicitira riportata sulle ricevute e nella causale della quota')
+    tesseramento = models.ForeignKey('ufficio_soci.Tesseramento')
+
+    def __str__(self):
+        return '{} {} {} {}'.format(
+            self._meta.verbose_name, self.nome,
+            self.tesseramento._meta.verbose_name, self.tesseramento.anno
+        )
+
+
 class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     class Meta:
         verbose_name = "Tesseramento"
         verbose_name_plural = "Tesseramenti"
         permissions = (
             ("view_tesseramento", "Can view tesseramento"),
+        )
+
+    def __str__(self):
+        return '{} {}'.format(
+            self._meta.verbose_name, self.anno
         )
 
     APERTO = 'A'
@@ -195,7 +221,6 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     quota_aspirante = models.FloatField(default=20.00)
     quota_sostenitore = models.FloatField(default=20.00)
 
-
     @property
     def fine_soci_nv(self):
         return timezone_django.now().date().replace(month=12, day=31)
@@ -217,6 +242,12 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
 
         return self.stato == self.APERTO and data >= self.inizio and data <= termine
 
+    def importo_quota_volontario(self, riduzione=None):
+        if riduzione:
+            return riduzione.quota
+        else:
+            return self.quota_attivo
+
     @classmethod
     def aperto_anno(cls, data=None, iv=False, nv=False):
         try:
@@ -227,10 +258,10 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
         except Tesseramento.DoesNotExist:
             return False
 
-    def importo_da_pagare(self, socio):
+    def importo_da_pagare(self, socio, riduzione):
 
         if socio.volontario:  # Quota socio attivo
-            return self.quota_attivo
+            return self.importo_quota_volontario(riduzione)
 
         elif socio.ordinario:  # Quota socio ordinario
             return self.quota_ordinario
@@ -361,7 +392,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
     TIPO = (
         (QUOTA_SOCIO, "Quota Socio"),
         (QUOTA_SOSTENITORE, "Ricevuta Sostenitore"),
-        (RICEVUTA, "Ricevuta")
+        (RICEVUTA, "Ricevuta"),
     )
     tipo = models.CharField(max_length=1, default=QUOTA_SOCIO, choices=TIPO)
 
@@ -370,6 +401,8 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
 
     causale = models.CharField(max_length=512)
     causale_extra = models.CharField(max_length=512, blank=True)
+
+    riduzione = models.ForeignKey(Riduzione, null=True, blank=True, related_name='quote')
 
     class Meta:
         verbose_name_plural = "Quote"
@@ -415,8 +448,8 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
 
         # Scompone l'importo in Quota e Extra (Donazione)
         #  (solo se QUOTA VOLONTARIO)
-        da_pagare = q.tesseramento().importo_da_pagare(q.persona)
-        if tipo == cls.QUOTA_SOCIO and importo > da_pagare:
+        da_pagare = q.tesseramento().importo_da_pagare(q.persona, kwargs.get('riduzione', None))
+        if tipo == Quota.QUOTA_SOCIO and importo > da_pagare:
             q.importo = da_pagare
             q.importo_extra = importo - da_pagare
             q.causale_extra = "Donazione"
