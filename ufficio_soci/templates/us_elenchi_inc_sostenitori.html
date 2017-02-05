@@ -1,0 +1,17 @@
+{% extends 'us_elenchi_inc_persone.html' %}
+
+
+{% block elenco_intestazione_extra %}
+    <th>Sede</th>
+{% endblock %}
+
+{% block elenco_riga_azioni_extra %}
+
+    {% if puo_modificare %}
+        <a class="btn btn-default" href="/us/dimissioni/sostenitore/{{ persona.pk }}/" target="_new">
+            <i class="fa fa-fw fa-times"></i> Dimetti
+        </a>
+
+    {% endif %}
+
+{% endblock %}

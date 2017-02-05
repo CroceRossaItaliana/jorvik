@@ -156,6 +156,7 @@ def menu(request):
                 ("In Riserva", "fa-list", "/us/elenchi/riserva/"),
                 ("Soci", "fa-list", "/us/elenchi/soci/"),
                 ("Sostenitori", "fa-list", "/us/elenchi/sostenitori/"),
+                ("Ex Sostenitori", "fa-list", "/us/elenchi/ex-sostenitori/"),
                 ("Dipendenti", "fa-list", "/us/elenchi/dipendenti/"),
                 ("Dimessi", "fa-list", "/us/elenchi/dimessi/"),
                 ("Trasferiti", "fa-list", "/us/elenchi/trasferiti/"),
