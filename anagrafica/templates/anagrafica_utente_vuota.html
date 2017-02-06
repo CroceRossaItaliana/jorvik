@@ -1,6 +1,6 @@
 {% extends "base_vuota.html" %}
 
-{% load bootstrap3 %}
+{% load bootstrap3 base_tags %}
 
 {% block pagina_titolo %}
     Benvenuto in Gaia
@@ -13,7 +13,7 @@
 
         <ul class="nav nav-tabs nav-justified">
             {% for app_slug, app_nome, app_icona, app_num in user.applicazioni_disponibili %}
-                <li role="presentation"{% if app_slug in request.path %} class="active"{% endif %}>
+                <li role="presentation"{% if request.path|startswith:app_slug %} class="active"{% endif %}>
                     <a href="{{ app_slug }}" class="grassetto">
                         <i class="fa fa-fw {{ app_icona }}"></i>
                         {{ app_nome }}
