@@ -7,6 +7,30 @@
     Nuova Quota Volontario
 {% endblock %}
 
+{% block pagina_javascript %}
+    {{ block.super }}
+    <script type="text/javascript">
+        var importi = jQuery.parseJSON('{{ importi_possibili|escapejs }}');
+        var personalizzato = false;
+        $(document).ready(function(){
+            $(document).on('click', '[name=riduzione]', function(event) {
+                if($(event.target).attr('value')) {
+                    importo = importi[$(event.target).attr('value')];
+                }
+                else {
+                    importo = importi['Q'];
+                }
+                $('#id_importo').attr('min', importo);
+                if(!personalizzato) {
+                    $('#id_importo').attr('value', importo);
+                }
+            });
+            $(document).on('change', '#id_importo', function(event) {
+                personalizzato = true;
+            });
+        });
+    </script>
+{% endblock %}
 {% block app_contenuto %}
 
 
@@ -21,6 +45,20 @@
         Vuoi registrare invece una ricevuta generica o una ricevuta per un Sostenitore CRI?
         Vai a <a href="/us/ricevute/nuova/">Registra Ricevuta</a>.
     </p>
+</div>
+<div class="alert alert-info">
+        <p>
+            <i class="fa fa-fw fa-info-circle"></i>
+            L'importo stabilito per la quota dei Soci CRI per il 2017 è di € 10,00
+        </p>
+        <p>
+            A seguito delle decisioni Assemblea Nazionale è stata introdotta una quota con importo agevolato ad € 1,00 per le seguenti categorie di Soci:
+        </p>
+        <ul>
+            <li>Soci CRI con meno di 25 anni e che accedono all'iniziativa Club25 legata alla donazione di sangue
+            <li>Soci CRI che si trovano nella condizione di Richiedenti Asilo oppure per i quali è stata concessa la Protezione Internazionale (Asilo/Status di Rifugiato o Protezione Umanitaria) oppure per i quali è stata concessa la Protezione Sussidiaria.
+        </ul>
+        Eventuali importi eccedenti quello fissato per la quota verranno registrati come donazione al Comitato.
 </div>
 
 <div class="alert alert-success">
