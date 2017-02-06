@@ -6,8 +6,10 @@ from unittest import skipIf
 
 from django.conf import settings
 from django.core import mail
+from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import timezone
+from django.utils.encoding import force_text
 
 from anagrafica.models import Appartenenza
 from autenticazione.utils_test import TestFunzionale
@@ -16,7 +18,7 @@ from base.models import Autorizzazione
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia, codice_fiscale, crea_utenza
 from jorvik.settings import GOOGLE_KEY
-from .models import CorsoBase, Aspirante, InvitoCorsoBase
+from .models import CorsoBase, Aspirante, InvitoCorsoBase, PartecipazioneCorsoBase
 
 
 class TestCorsi(TestCase):
@@ -121,6 +123,184 @@ class TestCorsi(TestCase):
         self.assertTrue(messaggio.body.find('una tua richiesta &egrave; rimasta in attesa per 30 giorni e come da policy') == -1)
         self.assertEqual(autorizzazione.concessa, None)
         self.assertTrue(InvitoCorsoBase.con_esito_no().exists())
+
+    def test_cancellazione_partecipante(self):
+        presidente = crea_persona()
+        presidente.email_contatto = email_fittizzia()
+        presidente.save()
+        crea_utenza(presidente, presidente.email_contatto)
+        direttore, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        sostenitore = crea_persona()
+        sostenitore.email_contatto = email_fittizzia()
+        sostenitore.save()
+        Appartenenza.objects.create(persona=sostenitore, sede=sede, membro=Appartenenza.SOSTENITORE, inizio=poco_fa())
+
+        altro = crea_persona()
+
+        aspirante1 = crea_persona()
+        aspirante1.email_contatto = email_fittizzia()
+        aspirante1.codice_fiscale = codice_fiscale()
+        aspirante1.save()
+        a = Aspirante(persona=aspirante1)
+        a.locazione = sede.locazione
+        a.save()
+
+        aspirante2 = crea_persona()
+        aspirante2.email_contatto = email_fittizzia()
+        aspirante2.codice_fiscale = codice_fiscale()
+        aspirante2.save()
+        a = Aspirante(persona=aspirante2)
+        a.locazione = sede.locazione
+        a.save()
+
+        aspirante3 = crea_persona()
+        aspirante3.email_contatto = email_fittizzia()
+        aspirante3.codice_fiscale = codice_fiscale()
+        aspirante3.save()
+        a = Aspirante(persona=aspirante3)
+        a.locazione = sede.locazione
+        a.save()
+
+        oggi = poco_fa()
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi + timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+
+        partecipazione1 = InvitoCorsoBase.objects.create(persona=aspirante1, corso=corso, invitante=presidente)
+        partecipazione1.richiedi()
+        partecipazione2 = InvitoCorsoBase.objects.create(persona=aspirante2, corso=corso, invitante=presidente)
+        partecipazione2.richiedi()
+        partecipazione3 = PartecipazioneCorsoBase.objects.create(persona=aspirante3, corso=corso)
+        partecipazione3.richiedi()
+        partecipazione4 = PartecipazioneCorsoBase.objects.create(persona=sostenitore, corso=corso)
+        partecipazione4.richiedi()
+
+        for autorizzazione in partecipazione1.autorizzazioni:
+            autorizzazione.concedi(firmatario=presidente, modulo=None)
+        for autorizzazione in partecipazione4.autorizzazioni:
+            autorizzazione.concedi(firmatario=presidente, modulo=None)
+
+        mail.outbox = []
+
+        self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 3)
+        self.assertEqual(corso.inviti_confermati_o_in_attesa().count(), 1)
+        self.assertEqual(corso.numero_partecipazioni_in_attesa_e_inviti(), 2)
+
+        self.client.login(username=presidente.email_contatto, password='prova')
+
+        # Test del controllo di cancellazione nei 4 stati del corso
+        corso.stato = CorsoBase.TERMINATO
+        corso.save()
+        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        self.assertContains(response, "stadio della vita del corso base")
+
+        corso.stato = CorsoBase.ANNULLATO
+        corso.save()
+        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        self.assertContains(response, "stadio della vita del corso base")
+
+        corso.stato = CorsoBase.PREPARAZIONE
+        corso.save()
+        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        self.assertContains(response, "Conferma cancellazione")
+
+        corso.stato = CorsoBase.ATTIVO
+        corso.save()
+        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        self.assertContains(response, "Conferma cancellazione")
+
+        # GET chiede conferma
+        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        self.assertContains(response, "Conferma cancellazione")
+        self.assertContains(response, force_text(sostenitore))
+        # POST cancella
+        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        self.assertContains(response, "Iscritto cancellato")
+
+        self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 2)
+        self.assertEqual(corso.inviti_confermati_o_in_attesa().count(), 1)
+        self.assertEqual(corso.numero_partecipazioni_in_attesa_e_inviti(), 2)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[0].subject, "Disiscrizione dal Corso Base: %s" % corso)
+        self.assertTrue(force_text(corso.sede) in mail.outbox[0].body)
+        self.assertTrue(presidente.nome_completo in mail.outbox[0].body)
+        self.assertFalse(sostenitore.nome_completo in mail.outbox[0].body)
+        self.assertTrue(sostenitore.nome in mail.outbox[0].body)
+        self.assertTrue(sostenitore.email_contatto in mail.outbox[0].to)
+        self.assertTrue(presidente.email_contatto in mail.outbox[1].to)
+        self.assertFalse(presidente.nome_completo in mail.outbox[1].body)
+        self.assertTrue(presidente.nome in mail.outbox[1].body)
+        self.assertTrue(sostenitore.nome_completo in mail.outbox[1].body)
+        mail.outbox = []
+
+        # Cancellare utente non esistente ritorna errore
+        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, altro.pk + 10000)))
+        self.assertContains(response, "La persona cercata non è iscritta")
+
+        # Cancellare utente non associato al corso non ritorna errore -per evitare information leak- ma non cambia
+        # i dati
+        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, altro.pk)))
+        self.assertContains(response, "Iscritto cancellato")
+
+        self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 2)
+        self.assertEqual(corso.inviti_confermati_o_in_attesa().count(), 1)
+        self.assertEqual(corso.numero_partecipazioni_in_attesa_e_inviti(), 2)
+        self.assertEqual(len(mail.outbox), 0)
+
+        # Cancellare invitato confermato
+        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, aspirante1.pk)))
+        self.assertContains(response, "Iscritto cancellato")
+
+        self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 1)
+        self.assertEqual(corso.inviti_confermati_o_in_attesa().count(), 1)
+        self.assertEqual(corso.numero_partecipazioni_in_attesa_e_inviti(), 2)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[0].subject, "Disiscrizione dal Corso Base: %s" % corso)
+        self.assertTrue(force_text(corso.sede) in mail.outbox[0].body)
+        self.assertTrue(presidente.nome_completo in mail.outbox[0].body)
+        self.assertFalse(aspirante1.nome_completo in mail.outbox[0].body)
+        self.assertTrue(aspirante1.nome in mail.outbox[0].body)
+        self.assertTrue(aspirante1.email_contatto in mail.outbox[0].to)
+        self.assertTrue(presidente.email_contatto in mail.outbox[1].to)
+        self.assertFalse(presidente.nome_completo in mail.outbox[1].body)
+        self.assertTrue(presidente.nome in mail.outbox[1].body)
+        self.assertTrue(aspirante1.nome_completo in mail.outbox[1].body)
+        mail.outbox = []
+
+        # Cancellare invitato in attesa
+        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, aspirante2.pk)))
+        self.assertContains(response, "Iscritto cancellato")
+
+        self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 1)
+        self.assertEqual(corso.inviti_confermati_o_in_attesa().count(), 0)
+        self.assertEqual(corso.numero_partecipazioni_in_attesa_e_inviti(), 1)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[0].subject, "Annullamento invito al Corso Base: %s" % corso)
+        self.assertTrue(force_text(corso.sede) in mail.outbox[0].body)
+        self.assertTrue(aspirante2.email_contatto in mail.outbox[0].to)
+        self.assertTrue(presidente.email_contatto in mail.outbox[1].to)
+        mail.outbox = []
+
+        # Cancellare partecipante in attesa
+        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, aspirante3.pk)))
+        self.assertContains(response, "Iscritto cancellato")
+
+        self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 0)
+        self.assertEqual(corso.inviti_confermati_o_in_attesa().count(), 0)
+        self.assertEqual(corso.numero_partecipazioni_in_attesa_e_inviti(), 0)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[0].subject, "Disiscrizione dal Corso Base: %s" % corso)
+        self.assertTrue(force_text(corso.sede) in mail.outbox[0].body)
+        self.assertTrue(aspirante3.email_contatto in mail.outbox[0].to)
+        self.assertTrue(presidente.email_contatto in mail.outbox[1].to)
+        mail.outbox = []
 
     def test_corso_pubblico(self):
         """
