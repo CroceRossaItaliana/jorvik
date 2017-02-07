@@ -3,6 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from anagrafica.models import Persona, Delega, Sede
 from anagrafica.permessi.costanti import DELEGHE_OGGETTI_DICT
+from anagrafica.templatetags.utils import sede_delega
 from ufficio_soci.elenchi import ElencoVistaAnagrafica
 
 
@@ -11,6 +12,11 @@ class ElencoDelegati(ElencoVistaAnagrafica):
 
     def template(self):
         return 'anagrafica_elenchi_delegati.html'
+
+    def excel_colonne(self):
+        return super(ElencoDelegati, self).excel_colonne() + (
+            ("Sede delega", lambda p: sede_delega({}, p, self.deleghe)),
+        )
 
     def risultati(self):
         qs_sedi = self.args[0]
