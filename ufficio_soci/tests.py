@@ -338,6 +338,83 @@ class TestBase(TestCase):
         volontari = elenco.risultati()
         self.assertTrue(sostenitore_volontario in volontari)
 
+    def test_dimissione_volontario(self):
+
+        presidente = crea_persona()
+        crea_utenza(presidente, email=email_fittizzia())
+        sostenitore1, sede, a = crea_persona_sede_appartenenza(presidente)
+        a.membro = Appartenenza.SOSTENITORE
+        a.save()
+        socio1 = crea_persona()
+        Appartenenza.objects.create(persona=socio1, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+        sostenitore2 = crea_persona()
+        Appartenenza.objects.create(persona=sostenitore2, sede=sede, inizio=poco_fa(), membro=Appartenenza.SOSTENITORE)
+        socio2 = crea_persona()
+        Appartenenza.objects.create(persona=socio2, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+        sostenitore_volontario = crea_persona()
+        Appartenenza.objects.create(persona=sostenitore_volontario, sede=sede, inizio=poco_fa(), membro=Appartenenza.SOSTENITORE)
+        Appartenenza.objects.create(persona=sostenitore_volontario, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+
+        elenco = ElencoVolontari([sede])
+        elenco.modulo_riempito = elenco.modulo()({'includi_estesi': elenco.modulo().SI})
+        elenco.modulo_riempito.is_valid()
+        volontari = elenco.risultati()
+        self.assertTrue(sostenitore1 not in volontari)
+        self.assertTrue(sostenitore2 not in volontari)
+        self.assertTrue(sostenitore_volontario in volontari)
+        self.assertTrue(socio1 in volontari)
+        self.assertTrue(socio2 in volontari)
+
+        self.client.login(username=presidente.utenza.email, password='prova')
+        data = {
+            'info': 'bla bla',
+            'motivo': Dimissione.VOLONTARIE
+        }
+        self.client.post(reverse('us-dimissioni', args=(socio1.pk,)), data=data)
+
+        elenco = ElencoVolontari([sede])
+        elenco.modulo_riempito = elenco.modulo()({'includi_estesi': elenco.modulo().SI})
+        elenco.modulo_riempito.is_valid()
+        volontari = elenco.risultati()
+        self.assertTrue(sostenitore1 not in volontari)
+        self.assertTrue(sostenitore2 not in volontari)
+        self.assertTrue(socio1 not in volontari)
+        self.assertTrue(socio2 in volontari)
+
+        Appartenenza.objects.create(persona=socio1, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+
+        elenco = ElencoVolontari([sede])
+        elenco.modulo_riempito = elenco.modulo()({'includi_estesi': elenco.modulo().SI})
+        elenco.modulo_riempito.is_valid()
+        volontari = elenco.risultati()
+        self.assertTrue(sostenitore1 not in volontari)
+        self.assertTrue(sostenitore2 not in volontari)
+        self.assertTrue(socio1 in volontari)
+        self.assertTrue(socio2 in volontari)
+
+        data = {
+            'info': 'bla bla',
+            'motivo': Dimissione.VOLONTARIE
+        }
+        self.client.post(reverse('us-dimissioni', args=(sostenitore_volontario.pk,)), data=data)
+
+        elenco = ElencoSostenitori([sede])
+        sostenitori = elenco.risultati()
+        self.assertTrue(sostenitore_volontario in sostenitori)
+
+        elenco = ElencoExSostenitori([sede])
+        exsostenitori = elenco.risultati()
+        self.assertTrue(sostenitore_volontario not in exsostenitori)
+
+        sostenitore_volontario.refresh_from_db()
+        self.assertFalse(sostenitore_volontario.volontario)
+
+        elenco = ElencoVolontari([sede])
+        elenco.modulo_riempito = elenco.modulo()({'includi_estesi': elenco.modulo().SI})
+        elenco.modulo_riempito.is_valid()
+        volontari = elenco.risultati()
+        self.assertFalse(sostenitore_volontario in volontari)
+
 
 class TestFunzionaleUfficioSoci(TestFunzionale):
 
