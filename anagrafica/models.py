@@ -2273,14 +2273,17 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         else:
             template = "email_dimissioni.html"
 
-        Appartenenza.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa(), terminazione=Appartenenza.DIMISSIONE)
-        Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
-        App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
-        #TODO reperibilita'
-        [
-            [x.ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
-            for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
-        ]
+        if precedente_appartenenza.membro == Appartenenza.VOLONTARIO:
+            Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
+            App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
+            #TODO reperibilita'
+            [
+                [x.ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
+                for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
+            ]
+        Appartenenza.query_attuale(
+            al_giorno=self.creazione, persona=self.persona, membro=precedente_appartenenza.membro
+        ).update(fine=poco_fa(), terminazione=Appartenenza.DIMISSIONE)
 
         if trasforma_in_sostenitore:
             app = Appartenenza(precedente=precedente_appartenenza, persona=self.persona,
