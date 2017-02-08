@@ -10,6 +10,11 @@ class ElencoPartecipantiCorsiBase(ElencoVistaAnagrafica):
     def template(self):
         return 'formazione_elenchi_inc_iscritti.html'
 
+    def excel_colonne(self):
+        return super(ElencoPartecipantiCorsiBase, self).excel_colonne() + (
+            ("Stato", lambda p: 'Iscritto' if not p.aspirante or self.args[0][0].pk not in p.aspirante.inviti_attivi else 'Invitato'),
+        )
+
     def risultati(self):
         qs_corsi = self.args[0]
         return Persona.objects.filter(
