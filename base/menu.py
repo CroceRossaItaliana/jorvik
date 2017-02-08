@@ -69,13 +69,13 @@ def menu(request):
         RUBRICA_BASE
     ))
 
-    return remove_none({
+    elementi = {
         "utente": (
             (("Persona", (
                 ("Benvenuto", "fa-bolt", "/utente/"),
                 ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
                 ("Storico", "fa-clock-o", "/utente/storico/"),
-                ("Documenti", "fa-folder", "/utente/documenti/"),
+                ("Documenti", "fa-folder", "/utente/documenti/") if me and (me.volontario or me.dipendente) else None,
                 ("Contatti", "fa-envelope", "/utente/contatti/"),
                 ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
             )),
@@ -83,14 +83,14 @@ def menu(request):
                 ("Estensione", "fa-random", "/utente/estensione/"),
                 ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
                 ("Riserva", "fa-pause", "/utente/riserva/"),
-            )) ,
+            )) if me and me.volontario else None,
             VOCE_RUBRICA,
             ("Curriculum", (
                 ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
                 ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
-                ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/"),
+                ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if me and (me.volontario or me.dipendente) else None,
                 ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
-                ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/"),
+                ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente) else None,
             )),
             ("Donatore", (
                 ("Profilo Donatore", "fa-user", "/utente/donazioni/profilo/"),
@@ -101,7 +101,7 @@ def menu(request):
                 ("Cambia password", "fa-key", "/utente/cambia-password/"),
                 ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
             )),
-        )),
+        )) if me and not hasattr(me, 'aspirante') else None,
         "posta": (
             ("Posta", (
                 ("Scrivi", "fa-pencil", "/posta/scrivi/"),
@@ -129,7 +129,7 @@ def menu(request):
                 ("Aree di intervento", "fa-list", "/attivita/aree/") if me and me.oggetti_permesso(GESTIONE_AREE_SEDE).exists() else None,
                 ("Statistiche", "fa-bar-chart", "/attivita/statistiche/") if me and me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE).exists() else None,
             ))
-        ),
+        ) if me and me.volontario else None,
         "autorizzazioni": (
             ("Richieste", (
                 ("In attesa", "fa-user-plus", "/autorizzazioni/"),
@@ -208,16 +208,32 @@ def menu(request):
         "aspirante": (
             ("Aspirante", (
                 ("Home page", "fa-home", "/aspirante/"),
-                ("Impostazioni", "fa-gears", "/aspirante/impostazioni/"),
-                ("Inviti Corsi Base", "fa-list", "/aspirante/corsi-base/inviti/"),
+                ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
+                ("Storico", "fa-clock-o", "/utente/storico/"),
+                ("Contatti", "fa-envelope", "/utente/contatti/"),
+                ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
+                ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
+                ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
+                ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
             )),
             ("Nelle vicinanze", (
+                ("Impostazioni", "fa-gears", "/aspirante/impostazioni/"),
                 ("Corsi Base", "fa-list", "/aspirante/corsi-base/"),
                 ("Sedi CRI", "fa-list", "/aspirante/sedi/"),
             )),
+            ("Sicurezza", (
+                ("Cambia password", "fa-key", "/utente/cambia-password/"),
+                ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
+            ),
+            ),
         ) if me and hasattr(me, 'aspirante') else (
             ("Gestione Corsi", (
                 ("Elenco Corsi Base", "fa-list", "/formazione/corsi-base/elenco/"),
             )),
         ),
-    })
+    }
+    if me and hasattr(me, 'aspirante'):
+        elementi['elementi_anagrafica'] = elementi['aspirante']
+    else:
+        elementi['elementi_anagrafica'] = elementi['utente']
+    return remove_none(elementi)

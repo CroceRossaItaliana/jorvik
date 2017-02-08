@@ -87,6 +87,14 @@ def errore_nessuna_appartenenza(request, me=None, torna_url="/utente/"):
                             torna_url=torna_url,
                            )
 
+def errore_no_volontario(request, me=None, torna_url="/utente/"):
+    return errore_generico(request, me,
+                            titolo="Accesso Volontari",
+                            messaggio="Questa azione è disponibile ai soli volontari CRI.",
+                            torna_titolo="Torna indietro",
+                            torna_url=torna_url,
+                           )
+
 
 def ci_siamo_quasi(request, me):
     return messaggio_generico(request, me, titolo="Questa funzionalità sarà disponibile a breve",
