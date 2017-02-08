@@ -13,7 +13,7 @@
 
         <ul class="nav nav-tabs nav-justified">
             {% for app_slug, app_nome, app_icona, app_num in user.applicazioni_disponibili %}
-                <li role="presentation"{% if request.path|startswith:app_slug %} class="active"{% endif %}>
+                <li role="presentation" class="{% if request.path|startswith:app_slug %}active{% endif %}{% if app_slug == '/aspirante/' and '/utente/' in request.path %}active{% endif %}">
                     <a href="{{ app_slug }}" class="grassetto">
                         <i class="fa fa-fw {{ app_icona }}"></i>
                         {{ app_nome }}
@@ -49,13 +49,13 @@
 
             <ul id="sezione" class="nav nav-pills nav-stacked navbar-collapse collapse">
 
-                {% for sezione_nome, sezione_pagine in menu.utente %}
+                {% for sezione_nome, sezione_pagine in menu.elementi_anagrafica %}
 
                     <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
 
                     {% for link_nome, link_icona, link_url in sezione_pagine %}
 
-                        <li role="presentation" {% if request.path == link_url %}class="active"{% endif %}>
+                        <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
                             <a href="{{ link_url|urlencode }}">
                                 <i class="fa {{ link_icona }} fa-fw"></i>
                                 {{ link_nome }}

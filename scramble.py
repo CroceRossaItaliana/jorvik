@@ -173,6 +173,11 @@ if args.esempio:
             for i in range(0, 25):  # Creo 20 volontari
                 p = crea_persona()
                 p.comune_nascita = random.sample(COMUNI.keys(), 1)[0]
+                p.genere = random.choice((p.MASCHIO, p.FEMMINA))
+                p.indirizzo_residenza = 'Via prova 34'
+                p.comune_residenza = random.sample(COMUNI.keys(), 1)[0]
+                p.provincia_residenza = 'ZZ'
+                p.cap_residenza = '00100'
                 p.codice_fiscale = codice_fiscale_persona(p)
                 p.save()
                 nuove.append(p)
