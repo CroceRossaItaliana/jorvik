@@ -17,7 +17,8 @@ from base.geo import Locazione
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, \
     crea_utenza, crea_locazione, email_fittizzia
-from ufficio_soci.elenchi import ElencoElettoratoAlGiorno, ElencoSociAlGiorno, ElencoSostenitori, ElencoExSostenitori
+from ufficio_soci.elenchi import ElencoElettoratoAlGiorno, ElencoSociAlGiorno, ElencoSostenitori, ElencoExSostenitori, \
+    ElencoVolontari
 from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota
 from ufficio_soci.models import Tesseramento, Tesserino, Quota, Riduzione
 
@@ -273,11 +274,15 @@ class TestBase(TestCase):
         Appartenenza.objects.create(persona=sostenitore2, sede=sede, inizio=poco_fa(), membro=Appartenenza.SOSTENITORE)
         socio2 = crea_persona()
         Appartenenza.objects.create(persona=socio2, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+        sostenitore_volontario = crea_persona()
+        Appartenenza.objects.create(persona=sostenitore_volontario, sede=sede, inizio=poco_fa(), membro=Appartenenza.SOSTENITORE)
+        Appartenenza.objects.create(persona=sostenitore_volontario, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
 
         elenco = ElencoSostenitori([sede])
         sostenitori = elenco.risultati()
         self.assertTrue(sostenitore1 in sostenitori)
         self.assertTrue(sostenitore2 in sostenitori)
+        self.assertTrue(sostenitore_volontario in sostenitori)
         self.assertTrue(socio1 not in sostenitori)
         self.assertTrue(socio2 not in sostenitori)
 
@@ -296,20 +301,42 @@ class TestBase(TestCase):
         self.assertTrue(socio2 not in sostenitori)
 
         elenco = ElencoExSostenitori([sede])
-        sostenitori = elenco.risultati()
-        self.assertTrue(sostenitore1 in sostenitori)
-        self.assertTrue(sostenitore2 not in sostenitori)
-        self.assertTrue(socio1 not in sostenitori)
-        self.assertTrue(socio2 not in sostenitori)
+        exsostenitori = elenco.risultati()
+        self.assertTrue(sostenitore1 in exsostenitori)
+        self.assertTrue(sostenitore2 not in exsostenitori)
+        self.assertTrue(socio1 not in exsostenitori)
+        self.assertTrue(socio2 not in exsostenitori)
 
         Appartenenza.objects.create(persona=sostenitore1, sede=sede, inizio=poco_fa(), membro=Appartenenza.SOSTENITORE)
 
         elenco = ElencoExSostenitori([sede])
+        exsostenitori = elenco.risultati()
+        self.assertTrue(sostenitore1 not in exsostenitori)
+        self.assertTrue(sostenitore2 not in exsostenitori)
+        self.assertTrue(socio1 not in exsostenitori)
+        self.assertTrue(socio2 not in exsostenitori)
+
+        data = {
+            'info': 'bla bla',
+            'motivo': Dimissione.ALTRO
+        }
+        self.client.post(reverse('us-chiudi-sostenitore', args=(sostenitore_volontario.pk,)), data=data)
+
+        elenco = ElencoSostenitori([sede])
         sostenitori = elenco.risultati()
-        self.assertTrue(sostenitore1 not in sostenitori)
-        self.assertTrue(sostenitore2 not in sostenitori)
-        self.assertTrue(socio1 not in sostenitori)
-        self.assertTrue(socio2 not in sostenitori)
+        self.assertFalse(sostenitore_volontario in sostenitori)
+
+        elenco = ElencoExSostenitori([sede])
+        exsostenitori = elenco.risultati()
+        self.assertTrue(sostenitore_volontario in exsostenitori)
+        sostenitore_volontario.refresh_from_db()
+        self.assertTrue(sostenitore_volontario.volontario)
+
+        elenco = ElencoVolontari([sede])
+        elenco.modulo_riempito = elenco.modulo()({'includi_estesi': elenco.modulo().SI})
+        elenco.modulo_riempito.is_valid()
+        volontari = elenco.risultati()
+        self.assertTrue(sostenitore_volontario in volontari)
 
 
 class TestFunzionaleUfficioSoci(TestFunzionale):

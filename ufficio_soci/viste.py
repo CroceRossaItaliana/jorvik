@@ -252,7 +252,7 @@ def us_dimissioni(request, me, pk):
         dim.richiedente = me
         dim.persona = persona
         dim.sede = dim.persona.sede_riferimento()
-        dim.appartenenza = persona.appartenenze_attuali().first()
+        dim.appartenenza = persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
         dim.save()
         dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'])
 
@@ -290,7 +290,7 @@ def us_chiudi_sostenitore(request, me, pk):
         dim.richiedente = me
         dim.persona = persona
         dim.sede = dim.persona.sede_riferimento()
-        dim.appartenenza = persona.appartenenze_attuali().first()
+        dim.appartenenza = persona.appartenenze_attuali(membro=Appartenenza.SOSTENITORE).first()
         dim.save()
         dim.applica()
 
