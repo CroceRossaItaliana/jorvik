@@ -172,6 +172,10 @@ class ModuloCreazioneDimissioni(ModelForm):
     trasforma_in_sostenitore = forms.BooleanField(help_text="In caso di Dimissioni Volontarie seleziona quest'opzione "
                                                             "per trasformare il volontario in sostenitore. ", required=False)
 
+    def __init__(self, *args, **kwargs):
+        super(ModuloCreazioneDimissioni, self).__init__(*args, **kwargs)
+        self.fields['motivo'].choices = (("", "---------"),) + Dimissione.MOTIVI_VOLONTARI
+
     def clean_trasforma_in_sostenitore(self):
         trasforma_in_sostenitore = self.cleaned_data['trasforma_in_sostenitore']
         motivo = self.cleaned_data['motivo']
@@ -179,6 +183,16 @@ class ModuloCreazioneDimissioni(ModelForm):
             raise ValidationError("Puoi richiedere la trasformazione in sostenitore solo in "
                                   "caso di dimissioni volontarie.")
         return trasforma_in_sostenitore
+
+
+class ModuloDimissioniSostenitore(ModelForm):
+    class Meta:
+        model = Dimissione
+        fields = ['motivo', 'info', ]
+
+    def __init__(self, *args, **kwargs):
+        super(ModuloDimissioniSostenitore, self).__init__(*args, **kwargs)
+        self.fields['motivo'].choices = (("", "---------"),) + Dimissione.MOTIVI_ALTRI
 
 
 class ModuloElencoRicevute(forms.Form):

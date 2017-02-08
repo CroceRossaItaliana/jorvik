@@ -1,4 +1,3 @@
-import datetime
 import json
 import random
 from collections import OrderedDict
@@ -6,7 +5,8 @@ from collections import OrderedDict
 from django.core.paginator import Paginator
 from django.db.models import Sum, Q
 from django.shortcuts import redirect, get_object_or_404
-from django.utils import timezone
+from django.utils.safestring import mark_safe
+
 from anagrafica.costanti import REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione, Riserva, \
@@ -24,11 +24,11 @@ from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti, ElencoDimessi, ElencoTrasferiti, \
     ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva, ElencoIVCM, ElencoTesseriniSenzaFototessera, \
-    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere
+    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoExSostenitori
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
     ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, \
-    ModuloLavoraTesserini, ModuloScaricaTesserini
+    ModuloLavoraTesserini, ModuloScaricaTesserini, ModuloDimissioniSostenitore
 from ufficio_soci.models import Quota, Tesseramento, Tesserino, Riduzione
 
 
@@ -90,14 +90,18 @@ def us_reclama(request, me):
                 if p.reclamabile_in_sede(s):  # Posso reclamare?
                     sedi += [s]  # Aggiungi a elenco sedi
 
+            if p.appartenenze_attuali().filter(membro=Appartenenza.SOSTENITORE).exists():
+                messaggio = "Questa persona è già registrata come sostenitore. " \
+                            r"Prima di poterla reclamare deve essere dimessa dal ruolo di sostenitore"
+            else:
+                messaggio = "Non puoi reclamare questa persona in nessuna delle tue Sedi. Potrebbe " \
+                            "essere già appartenente a qualche Comitato. "
+
             if sedi:
                 return redirect("/us/reclama/%d/" % (p.pk,))
 
             else:
-                modulo.add_error('codice_fiscale', "Non puoi reclamare questa persona "
-                                                   "in nessuna delle tue Sedi. Potrebbe "
-                                                   "essere già appartenente a qualche "
-                                                   "Comitato. ")
+                modulo.add_error('codice_fiscale', mark_safe(messaggio))
 
         except Persona.DoesNotExist:
             modulo.add_error('codice_fiscale', "Nessuna Persona registrata in Gaia "
@@ -121,10 +125,15 @@ def us_reclama_persona(request, me, persona_pk):
         if persona.reclamabile_in_sede(s):  # Posso reclamare?
             sedi += [s]  # Aggiungi a elenco sedi
 
+    if persona.appartenenze_attuali().filter(membro=Appartenenza.SOSTENITORE).exists():
+        messaggio_extra = "<br>Questa persona è già registrata come sostenitore. Prima di poterla reclamare deve essere dimessa dal ruolo di sostenitore"
+    else:
+        messaggio_extra = ""
+
     if not sedi:  # Se non posso reclamarlo in nessuna sede
         return errore_generico(request, me, titolo="Impossibile reclamare appartenenza",
                                messaggio="Questa persona non può essere reclamata in "
-                                         "nessuna delle sedi di tua competenza. ",
+                                         "nessuna delle sedi di tua competenza. " + messaggio_extra,
                                torna_titolo="Torna indietro",
                                torna_url="/us/reclama/")
 
@@ -149,16 +158,30 @@ def us_reclama_persona(request, me, persona_pk):
 
         continua = True
         if not modulo_quota.is_valid() and modulo_quota.get('registra_quota') == modulo_quota.SI:
-                continua = False
+            continua = False
 
-        vecchia_appartenenza = Appartenenza.query_attuale(persona=persona,
-                                                          membro=Appartenenza.ORDINARIO).first()
-        if vecchia_appartenenza:  # Se ordinario presso il regionale.
-            if modulo_appartenenza.cleaned_data['inizio'] < vecchia_appartenenza.inizio:
+        appartenenza_ordinario = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.ORDINARIO).first()
+        if appartenenza_ordinario:  # Se ordinario presso il regionale.
+            if modulo_appartenenza.cleaned_data['inizio'] < appartenenza_ordinario.inizio:
                 modulo_appartenenza.add_error('inizio', "La persona non era socio ordinario CRI alla "
                                                         "data selezionata. Inserisci la data corretta di "
                                                         "cambio appartenenza.")
                 continua = False
+
+        appartenenza_dipendente = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.DIPENDENTE).first()
+        if appartenenza_dipendente:  # Se dipendente.
+            if modulo_appartenenza.cleaned_data['inizio'] < appartenenza_dipendente.inizio:
+                modulo_appartenenza.add_error('inizio', "La persona non era dipendente alla "
+                                                        "data selezionata. Inserisci la data corretta di "
+                                                        "cambio appartenenza.")
+                continua = False
+
+        # Controllo eta' minima socio
+        if modulo_appartenenza.cleaned_data.get('membro') in Appartenenza.MEMBRO_SOCIO \
+                and persona.eta < Persona.ETA_MINIMA_SOCIO:
+            modulo_appartenenza.add_error('membro', "I soci di questo tipo devono avere almeno "
+                                                    "%d anni. " % Persona.ETA_MINIMA_SOCIO)
+            continua = False
 
         # Controllo eta' minima socio
         if modulo_appartenenza.cleaned_data.get('membro') in Appartenenza.MEMBRO_SOCIO \
@@ -173,9 +196,10 @@ def us_reclama_persona(request, me, persona_pk):
             app.persona = persona
             app.save()
 
-            if vecchia_appartenenza:  # Termina app. ordinario
-                vecchia_appartenenza.fine = app.inizio
-                vecchia_appartenenza.save()
+            # Termina app. ordinario - I dipendenti rimangono tali
+            if appartenenza_ordinario:
+                appartenenza_ordinario.fine = app.inizio
+                appartenenza_ordinario.save()
 
             q = modulo_quota.cleaned_data
             riduzione = q.get('riduzione', None)
@@ -214,7 +238,6 @@ def us_reclama_persona(request, me, persona_pk):
     return 'us_reclama_persona.html', contesto
 
 
-
 @pagina_privata
 def us_dimissioni(request, me, pk):
 
@@ -229,7 +252,7 @@ def us_dimissioni(request, me, pk):
         dim.richiedente = me
         dim.persona = persona
         dim.sede = dim.persona.sede_riferimento()
-        dim.appartenenza = persona.appartenenze_attuali().first()
+        dim.appartenenza = persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
         dim.save()
         dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'])
 
@@ -253,6 +276,37 @@ def us_dimissioni(request, me, pk):
     return 'us_dimissioni.html', contesto
 
 
+@pagina_privata
+def us_chiudi_sostenitore(request, me, pk):
+
+    modulo = ModuloDimissioniSostenitore(request.POST or None)
+    persona = get_object_or_404(Persona, pk=pk)
+
+    if not me.permessi_almeno(persona, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    if modulo.is_valid():
+        dim = modulo.save(commit=False)
+        dim.richiedente = me
+        dim.persona = persona
+        dim.sede = dim.persona.sede_riferimento()
+        dim.appartenenza = persona.appartenenze_attuali(membro=Appartenenza.SOSTENITORE).first()
+        dim.save()
+        dim.applica()
+
+        messaggio = "Le dimissioni sono state registrate con successo"
+
+        return messaggio_generico(request, me, titolo="Dimissioni registrate",
+                                  messaggio=messaggio,
+                                  torna_titolo="Vai allo storico appartenenze",
+                                  torna_url=persona.url_profilo_appartenenze)
+
+    contesto = {
+        "modulo": modulo,
+        "persona": persona,
+    }
+
+    return 'us_dimissioni.html', contesto
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
@@ -643,6 +697,7 @@ def us_elenchi(request, me, elenco_tipo):
         "estesi": (ElencoEstesi, "Elenco dei Volontari Estesi/In Estensione"),
         "soci": (ElencoSociAlGiorno, "Elenco dei Soci"),
         "sostenitori": (ElencoSostenitori, "Elenco dei Sostenitori"),
+        "ex-sostenitori": (ElencoExSostenitori, "Elenco degli Ex Sostenitori"),
         "elettorato": (ElencoElettoratoAlGiorno, "Elenco Elettorato", "us_elenco_inc_elettorato.html"),
         "titoli": (ElencoPerTitoli, "Ricerca dei soci per titoli"),
     }

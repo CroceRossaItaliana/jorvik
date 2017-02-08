@@ -63,7 +63,10 @@ class PersonaAutocompletamento(AutocompletamentoBase):
     '''
 
     def choice_html(self, choice):
-        app = choice.appartenenze_attuali().first() if choice else None
+        if choice.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).exists():
+            app = choice.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
+        else:
+            app = choice.appartenenze_attuali().first() if choice else None
         return self.choice_html_format % (
             self.choice_value(choice),
             self.choice_label(choice),
