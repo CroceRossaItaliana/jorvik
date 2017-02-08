@@ -10,14 +10,15 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE
-from anagrafica.models import Appartenenza, Sede, Persona, Fototessera
+from anagrafica.models import Appartenenza, Sede, Persona, Fototessera, Dimissione
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from autenticazione.utils_test import TestFunzionale
 from base.geo import Locazione
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, \
-    crea_utenza, crea_locazione
-from ufficio_soci.elenchi import ElencoElettoratoAlGiorno
+    crea_utenza, crea_locazione, email_fittizzia
+from ufficio_soci.elenchi import ElencoElettoratoAlGiorno, ElencoSociAlGiorno, ElencoSostenitori, ElencoExSostenitori, \
+    ElencoVolontari
 from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota
 from ufficio_soci.models import Tesseramento, Tesserino, Quota, Riduzione
 
@@ -260,6 +261,83 @@ class TestBase(TestCase):
         self.a.save()
         x.delete()
 
+    def test_dimissione_sostenitore(self):
+
+        presidente = crea_persona()
+        crea_utenza(presidente, email=email_fittizzia())
+        sostenitore1, sede, a = crea_persona_sede_appartenenza(presidente)
+        a.membro = Appartenenza.SOSTENITORE
+        a.save()
+        socio1 = crea_persona()
+        Appartenenza.objects.create(persona=socio1, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+        sostenitore2 = crea_persona()
+        Appartenenza.objects.create(persona=sostenitore2, sede=sede, inizio=poco_fa(), membro=Appartenenza.SOSTENITORE)
+        socio2 = crea_persona()
+        Appartenenza.objects.create(persona=socio2, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+        sostenitore_volontario = crea_persona()
+        Appartenenza.objects.create(persona=sostenitore_volontario, sede=sede, inizio=poco_fa(), membro=Appartenenza.SOSTENITORE)
+        Appartenenza.objects.create(persona=sostenitore_volontario, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+
+        elenco = ElencoSostenitori([sede])
+        sostenitori = elenco.risultati()
+        self.assertTrue(sostenitore1 in sostenitori)
+        self.assertTrue(sostenitore2 in sostenitori)
+        self.assertTrue(sostenitore_volontario in sostenitori)
+        self.assertTrue(socio1 not in sostenitori)
+        self.assertTrue(socio2 not in sostenitori)
+
+        self.client.login(username=presidente.utenza.email, password='prova')
+        data = {
+            'info': 'bla bla',
+            'motivo': Dimissione.ALTRO
+        }
+        self.client.post(reverse('us-chiudi-sostenitore', args=(sostenitore1.pk,)), data=data)
+
+        elenco = ElencoSostenitori([sede])
+        sostenitori = elenco.risultati()
+        self.assertTrue(sostenitore1 not in sostenitori)
+        self.assertTrue(sostenitore2 in sostenitori)
+        self.assertTrue(socio1 not in sostenitori)
+        self.assertTrue(socio2 not in sostenitori)
+
+        elenco = ElencoExSostenitori([sede])
+        exsostenitori = elenco.risultati()
+        self.assertTrue(sostenitore1 in exsostenitori)
+        self.assertTrue(sostenitore2 not in exsostenitori)
+        self.assertTrue(socio1 not in exsostenitori)
+        self.assertTrue(socio2 not in exsostenitori)
+
+        Appartenenza.objects.create(persona=sostenitore1, sede=sede, inizio=poco_fa(), membro=Appartenenza.SOSTENITORE)
+
+        elenco = ElencoExSostenitori([sede])
+        exsostenitori = elenco.risultati()
+        self.assertTrue(sostenitore1 not in exsostenitori)
+        self.assertTrue(sostenitore2 not in exsostenitori)
+        self.assertTrue(socio1 not in exsostenitori)
+        self.assertTrue(socio2 not in exsostenitori)
+
+        data = {
+            'info': 'bla bla',
+            'motivo': Dimissione.ALTRO
+        }
+        self.client.post(reverse('us-chiudi-sostenitore', args=(sostenitore_volontario.pk,)), data=data)
+
+        elenco = ElencoSostenitori([sede])
+        sostenitori = elenco.risultati()
+        self.assertFalse(sostenitore_volontario in sostenitori)
+
+        elenco = ElencoExSostenitori([sede])
+        exsostenitori = elenco.risultati()
+        self.assertTrue(sostenitore_volontario in exsostenitori)
+        sostenitore_volontario.refresh_from_db()
+        self.assertTrue(sostenitore_volontario.volontario)
+
+        elenco = ElencoVolontari([sede])
+        elenco.modulo_riempito = elenco.modulo()({'includi_estesi': elenco.modulo().SI})
+        elenco.modulo_riempito.is_valid()
+        volontari = elenco.risultati()
+        self.assertTrue(sostenitore_volontario in volontari)
+
 
 class TestFunzionaleUfficioSoci(TestFunzionale):
 
@@ -322,8 +400,8 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
 
         locale = crea_sede(presidente=us_locale, genitore=regionale)
 
-        sessione_regionale = self.sessione_utente(persona=us_regionale)
-        sessione_locale = self.sessione_utente(persona=us_locale)
+        sessione_regionale = self.sessione_utente(persona=us_regionale, wait_time=1)
+        sessione_locale = self.sessione_utente(persona=us_locale, wait_time=1)
 
         # Prima di tutto, assicurati che il socio ordinario risulti correttamente
         # nell'elenco del regionale.
@@ -367,6 +445,135 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             self.presente_in_elenco(sessione_regionale, persona=ordinario),
             msg="L'ex ordinario non è più in elenco al regionale"
         )
+
+    def test_reclama_dipendente(self):
+
+        # Crea oggetti e nomina i delegati US regionali e Locali
+        us_locale = crea_persona()
+
+        oggi = poco_fa()
+        inizio_anno = oggi.replace(month=1, day=1)
+        fine_soci = oggi + datetime.timedelta(days=30)
+
+        Tesseramento.objects.create(
+            stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
+            anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+            quota_aspirante=8, quota_sostenitore=8
+        )
+
+        dipendente, sede, appartenenza = crea_persona_sede_appartenenza(presidente=us_locale)
+        appartenenza.membro = Appartenenza.DIPENDENTE
+        appartenenza.save()
+
+        sessione_locale = self.sessione_utente(persona=us_locale, wait_time=1)
+
+        # Prima di tutto, assicurati che il socio ordinario risulti correttamente
+        # nell'elenco del regionale.
+
+        # Poi, vai alla procedura di reclamo per il locale e completa.
+        sessione_locale.click_link_by_partial_text("Soci")
+        sessione_locale.click_link_by_partial_text("Reclama Persona")
+        sessione_locale.fill('codice_fiscale', dipendente.codice_fiscale)
+        sessione_locale.find_by_xpath("//button[@type='submit']").first.click()
+
+        # Completa dati di inizio appartenenza - data nel passato!
+        sessione_locale.fill('app-inizio', "1/1/1910")
+        sessione_locale.select('app-membro', Appartenenza.VOLONTARIO)
+        sessione_locale.select('quota-registra_quota', ModuloReclamaQuota.NO)
+        sessione_locale.find_by_xpath("//button[@type='submit']").first.click()
+
+        self.assertTrue(sessione_locale.is_text_present("1. Appartenenza al Comitato"),
+                        msg="Non e possibile reclamare dipendente nel passato")
+
+        # Compila con la data di oggi.
+        sessione_locale.fill('app-inizio', timezone.now().strftime("%d/%m/%Y"))
+        sessione_locale.find_by_xpath("//button[@type='submit']").first.click()
+
+        # Controlla elenco dei volontari.
+        sessione_locale.visit("%s/utente/" % self.live_server_url)
+        sessione_locale.click_link_by_partial_text("Soci")
+        sessione_locale.click_link_by_partial_text("Volontari")
+        self.assertTrue(
+            self.presente_in_elenco(sessione_locale, persona=dipendente),
+            msg="Il dipendente è stato reclamato con successo")
+        sessione_locale.click_link_by_partial_text("Dipendenti")
+        self.assertTrue(
+            self.presente_in_elenco(sessione_locale, persona=dipendente),
+            msg="Il dipendente lo è ancora")
+
+    def test_reclama_sostenitore(self):
+
+        # Crea oggetti e nomina i delegati US regionali e Locali
+        us_locale = crea_persona()
+
+        oggi = poco_fa()
+        inizio_anno = oggi.replace(month=1, day=1)
+        fine_soci = oggi + datetime.timedelta(days=30)
+
+        Tesseramento.objects.create(
+            stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
+            anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+            quota_aspirante=8, quota_sostenitore=8
+        )
+
+        sostenitore, sede, appartenenza = crea_persona_sede_appartenenza(presidente=us_locale)
+        sostenitore.email_contatto = email_fittizzia()
+        sostenitore.save()
+        appartenenza.membro = Appartenenza.SOSTENITORE
+        appartenenza.save()
+
+        sessione_locale = self.sessione_utente(persona=us_locale, wait_time=1)
+
+        # Prima di tutto, assicurati che il socio ordinario risulti correttamente
+        # nell'elenco del regionale.
+
+        # Poi, vai alla procedura di reclamo per il locale e completa.
+        sessione_locale.click_link_by_partial_text("Soci")
+        sessione_locale.click_link_by_partial_text("Reclama Persona")
+        sessione_locale.fill('codice_fiscale', sostenitore.codice_fiscale)
+        sessione_locale.find_by_xpath("//button[@type='submit']").first.click()
+
+        sessione_locale.is_text_present('Questa persona è già registrata come sostenitore')
+
+        sessione_locale.visit('%s/us/dimissioni/sostenitore/%s' % (self.live_server_url, sostenitore.pk))
+        sessione_locale.select('motivo', Dimissione.ALTRO)
+        sessione_locale.fill('info', "trasforma")
+        sessione_locale.find_by_xpath("//button[@type='submit']").first.click()
+        sessione_locale.is_text_present('Dimissioni registrate')
+
+        self.assertTrue(len(mail.outbox), 1)
+        self.assertTrue(sostenitore.email_contatto in mail.outbox[0].to)
+        self.assertTrue('Non sei pi&#249; sostenitore di Croce Rossa Italiana' in mail.outbox[0].body)
+        self.assertTrue("Altro" in mail.outbox[0].body)
+        self.assertTrue("trasforma" in mail.outbox[0].body)
+        mail.outbox = []
+
+        sessione_locale.visit('%s/us/reclama/' % (self.live_server_url))
+        sessione_locale.fill('codice_fiscale', sostenitore.codice_fiscale)
+        sessione_locale.find_by_xpath("//button[@type='submit']").first.click()
+        sessione_locale.is_text_not_present('Questa persona è già registrata come sostenitore')
+
+        # Compila con la data di oggi.
+        sessione_locale.fill('app-inizio', timezone.now().strftime("%d/%m/%Y"))
+        sessione_locale.select('app-membro', Appartenenza.VOLONTARIO)
+        sessione_locale.select('quota-registra_quota', ModuloReclamaQuota.NO)
+        sessione_locale.find_by_xpath("//button[@type='submit']").first.click()
+
+        # Controlla elenchi.
+        sessione_locale.visit("%s/utente/" % self.live_server_url)
+        sessione_locale.click_link_by_partial_text("Soci")
+        sessione_locale.click_link_by_partial_text("Volontari")
+        self.assertTrue(
+            self.presente_in_elenco(sessione_locale, persona=sostenitore),
+            msg="Il sostenitore è stato reclamato con successo")
+        sessione_locale.click_link_by_partial_text("Sostenitori")
+        self.assertFalse(
+            self.presente_in_elenco(sessione_locale, persona=sostenitore),
+            msg="Il sostenitore non lo è più")
+        sessione_locale.click_link_by_partial_text("Ex Sostenitori")
+        self.assertTrue(
+            self.presente_in_elenco(sessione_locale, persona=sostenitore),
+            msg="Il sostenitore è tra gli ex")
 
     def test_richiedi_tesserino(self, extra_headers={}):
         presidente_locale = crea_persona()

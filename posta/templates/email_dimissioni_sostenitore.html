@@ -1,0 +1,11 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+
+<p class="grassetto">Ciao {{ dimissione.persona.nome_completo }},</p>
+<p>Non sei più sostenitore di Croce Rossa Italiana per <strong>{{ dimissione.get_motivo_display }} {{ dimissione.info }}</strong>.</p>
+<p>Potrai comunque accedere a GAIA e visualizzare i tuoi dati personali.</p>
+<p>Se pensi che ci sia stato un errore, ti invitiamo a rispondere a questa email indicandoci cosa c'è da correggere.</p>
+
+{% endblock %}
