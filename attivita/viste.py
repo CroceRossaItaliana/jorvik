@@ -23,7 +23,7 @@ from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, Modul
 from attivita.models import Partecipazione, Attivita, Turno, Area
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
-from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico
+from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, errore_no_volontario
 from base.files import Excel, FoglioExcel
 from base.utils import poco_fa, timedelta_ore
 from gruppi.models import Gruppo
@@ -198,6 +198,8 @@ def attivita_calendario(request, me=None, inizio=None, fine=None, vista="calenda
     """
     Mostra il calendario delle attivita' personalizzato.
     """
+    if not me.volontario:
+        return errore_no_volontario(request, me)
 
     # Range default e massimo
     DEFAULT_GIORNI = 6
