@@ -127,7 +127,7 @@
                 {% for t in tesserini %}
 
                     <tr class="piu-piccolo riga-tesserino">
-                        <td><input type="checkbox" name="tesserini" value="{{ t.pk }}" /></td>
+                        <td><input type="checkbox" name="tesserini" data-downloadable="{% if t.stato_richiesta == t.ACCETTATO %}1{% else %}0{% endif %}" value="{{ t.pk }}" /></td>
                         <td>{{ t.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
                         <td>{{ t.persona.link|safe }}</td>
                         <td>
@@ -193,10 +193,21 @@
 </style>
 
 <script type="text/javascript">
+var tesserini_scaricabili = true;
 
 function aggiorna_contatore() {
     numero = $("table input:checked").length;
     $(".contatore-selezionati").text(numero);
+    tesserini_scaricabili = true;
+    $("table input:checked").each(function(){
+        tesserini_scaricabili = tesserini_scaricabili && $(this).data('downloadable') == 1;
+    });
+    if(!tesserini_scaricabili) {
+        $('button[value=scarica]').attr('disabled', 1).attr('style', 'pointer-events: auto').attr('title', "Non puoi scaricare questi tesserini perche' la selezione include delle richieste che non sono state ancora processate. Processa tutte le richieste per i tesserini che intendi stampare e prova di nuovo.");
+    }
+    else {
+        $('button[value=scarica]').removeAttr('disabled').removeAttr('title');
+    }
 }
 
 $(document).ready(function() {
