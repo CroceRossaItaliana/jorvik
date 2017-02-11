@@ -48,6 +48,7 @@ def espandi_gestione_soci(qs_sedi, al_giorno=None):
         ##(LETTURA, Trasferimento.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO).via("persona__appartenenze__precedente")))
         (MODIFICA,  Estensione.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO).via("persona__appartenenze"))),
         (LETTURA,   Estensione.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ESTESO).via("persona__appartenenze"))),
+        (LETTURA,   Estensione.objects.filter(destinazione__in=qs_sedi)),
         (MODIFICA,  Quota.objects.filter(sede__in=qs_sedi)),
         (LETTURA,   Riserva.objects.filter(appartenenza__sede__in=qs_sedi)),
     ]
