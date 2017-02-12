@@ -602,7 +602,6 @@ class ElencoTesseriniRichiesti(ElencoVistaSoci):
                 sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
             ).via("appartenenze"),
             tesserini__stato_richiesta__in=(Tesserino.ACCETTATO, Tesserino.RICHIESTO, Tesserino.DUPLICATO),
-            tesserini__valido=True
         ).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
