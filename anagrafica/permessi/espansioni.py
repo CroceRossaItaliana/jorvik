@@ -63,17 +63,23 @@ def espandi_emissione_tesserini(qs_sedi, al_giorno=None):
 def espandi_elenchi_soci(qs_sedi, al_giorno=None):
     from anagrafica.models import Persona, Appartenenza, Sede, Riserva
     from ufficio_soci.models import Quota, Tesserino
+    appartenenze_attuali = Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi)
+    appartenenze_dirette = appartenenze_attuali.via('appartenenze') & Q(appartenenze__membro__in=Appartenenza.MEMBRO_DIRETTO)
+    appartenenze_estese = appartenenze_attuali.via('appartenenze') & Q(appartenenze__membro__in=Appartenenza.MEMBRO_ESTESO)
+    appartenenze_estese_persona = appartenenze_attuali.via('persona__appartenenze') & Q(persona__appartenenze__membro__in=Appartenenza.MEMBRO_ESTESO)
+    appartenenze_approvate = appartenenze_attuali.via("appartenenze") & Appartenenza.con_esito_ok().via("appartenenze")
+    appartenenze_approvate_persona = appartenenze_attuali.via("persona__appartenenze") & Appartenenza.con_esito_ok().via("persona__appartenenze")
     return [
-        (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi).via("appartenenze"))),
-        (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO).via("appartenenze"))),
-        (LETTURA,  Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ESTESO).via("appartenenze"))),
-        (LETTURA,  Quota.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ESTESO).via("persona__appartenenze"))),
+        (LETTURA,  Persona.objects.filter(appartenenze_attuali.via('appartenenze'))),
+        (LETTURA,  Persona.objects.filter(appartenenze_dirette)),
+        (LETTURA,  Persona.objects.filter(appartenenze_estese)),
+        (LETTURA,  Quota.objects.filter(appartenenze_estese_persona)),
         (LETTURA,  Quota.objects.filter(Q(Q(sede__in=qs_sedi) | Q(appartenenza__sede__in=qs_sedi)))),
-        (LETTURA,  Persona.objects.filter(Appartenenza.con_esito_ok(sede__in=qs_sedi).via("appartenenze"))),
+        (LETTURA,  Persona.objects.filter(appartenenze_approvate)),
         (LETTURA,  Persona.objects.filter(Appartenenza.con_esito_pending(sede__in=qs_sedi).via("appartenenze"))),
         (LETTURA,  Persona.objects.filter(Appartenenza.con_esito_no(sede__in=qs_sedi).via("appartenenze"))),
-        (LETTURA,  Riserva.objects.filter(Appartenenza.con_esito_ok(sede__in=qs_sedi).via("persona__appartenenze"))),
-        (LETTURA,  Tesserino.objects.filter(Appartenenza.con_esito_ok(sede__in=qs_sedi).via("persona__appartenenze"))),
+        (LETTURA,  Riserva.objects.filter(appartenenze_approvate_persona)),
+        (LETTURA,  Tesserino.objects.filter(appartenenze_approvate_persona)),
     ]
 
 def espandi_rubrica_ufficio_soci(qs_sedi, al_giorno=date.today()):
