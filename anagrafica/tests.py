@@ -17,7 +17,6 @@ from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_S
     DELEGATO_AREA, UFFICIO_SOCI, UFFICIO_SOCI_UNITA, RESPONSABILE_AREA, REFERENTE, REFERENTE_GRUPPO, DELEGATO_CO, \
     RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
-from anagrafica.permessi.espansioni import espandi_elenchi_soci
 from anagrafica.utils import termina_deleghe_giovani
 from anagrafica.viste import _rubrica_delegati
 from autenticazione.models import Utenza
@@ -392,21 +391,6 @@ class TestAnagrafica(TestCase):
         )
 
         d6.delete()
-
-    def test_permessi_profilo(self):
-        presidente = crea_persona()
-        persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente)
-        sede2 = crea_sede()
-
-        appartenenza.fine = poco_fa()
-        appartenenza.terminazione = Appartenenza.TRASFERIMENTO
-        appartenenza.save()
-
-        Appartenenza.objects.create(sede=sede2, persona=persona, inizio=poco_fa())
-
-        risultati = espandi_elenchi_soci(Sede.objects.filter(pk=sede.pk))
-        for permesso, qs in risultati:
-            self.assertFalse(persona in qs)
 
     def test_documenti(self):
 
