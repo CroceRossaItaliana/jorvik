@@ -10,7 +10,7 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE
-from anagrafica.models import Appartenenza, Sede, Persona, Fototessera, Dimissione
+from anagrafica.models import Appartenenza, Sede, Persona, Fototessera, Dimissione, ProvvedimentoDisciplinare
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from autenticazione.utils_test import TestFunzionale
 from base.geo import Locazione
@@ -227,6 +227,73 @@ class TestBase(TestCase):
         self.a.precedente = None
         self.a.save()
         x.delete()
+
+    def test_elettorato_sospensione(self):
+
+        presidente = crea_persona()
+        sede = crea_sede(presidente)
+        persone = []
+        for x in range(1, 10):
+            persone.append(crea_persona())
+            Appartenenza.objects.create(
+                persona=persone[-1], sede=sede, inizio=self.due_anni_e_mezo_fa,
+            )
+
+        elenco = ElencoElettoratoAlGiorno([sede])
+        elenco.modulo_riempito = elenco.modulo()({'al_giorno': poco_fa(), 'elettorato': ModuloElencoElettorato.ELETTORATO_PASSIVO})
+        elenco.modulo_riempito.is_valid()
+        eleggibili = elenco.risultati()
+        self.assertEqual(len(eleggibili), len(persone))
+        for persona in persone:
+            self.assertTrue(persona in eleggibili)
+
+        def test_elettorato(elenco, persone, indice_persona=None):
+            eleggibili = elenco.risultati()
+            if indice_persona is not None:
+                self.assertEqual(len(eleggibili), len(persone) - 1)
+            else:
+                self.assertEqual(len(eleggibili), len(persone))
+            for index, persona in enumerate(persone):
+                if indice_persona is not None and index == indice_persona:
+                    self.assertFalse(persona in eleggibili)
+                else:
+                    self.assertTrue(persona in eleggibili)
+
+        provvedimento = ProvvedimentoDisciplinare.objects.create(
+            persona=persone[0], sede=sede,
+            inizio=poco_fa() - datetime.timedelta(days=1), fine=poco_fa() + datetime.timedelta(days=1),
+            motivazione='bla', tipo=ProvvedimentoDisciplinare.SOSPENSIONE
+        )
+        test_elettorato(elenco, persone, 0)
+
+        # ammonizione non conta
+        provvedimento.tipo = provvedimento.AMMONIZIONE
+        provvedimento.save()
+        test_elettorato(elenco, persone)
+
+        # espulsione non conta
+        provvedimento.tipo = provvedimento.ESPULSIONE
+        provvedimento.save()
+        test_elettorato(elenco, persone)
+
+        # sospensione non ancora attiva non conta
+        provvedimento.tipo = provvedimento.SOSPENSIONE
+        provvedimento.inizio = poco_fa() + datetime.timedelta(seconds=60)
+        provvedimento.save()
+        test_elettorato(elenco, persone)
+
+        # sospensione terminata non conta
+        provvedimento.inizio = poco_fa() - datetime.timedelta(days=1)
+        provvedimento.fine = poco_fa() - datetime.timedelta(days=1)
+        provvedimento.save()
+        test_elettorato(elenco, persone)
+
+        # sospensione senza data di fine conta
+        provvedimento.inizio = poco_fa() - datetime.timedelta(days=1)
+        provvedimento.fine = None
+        provvedimento.save()
+        test_elettorato(elenco, persone, 0)
+
 
     def test_elettorato_passivo_trasferimento_anzianita_soddisfatta(self):
 
