@@ -24,7 +24,7 @@ from autenticazione.utils_test import TestFunzionale
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, email_fittizzia, \
     crea_utenza
-from formazione.models import Aspirante
+from formazione.models import Aspirante, CorsoBase, PartecipazioneCorsoBase
 from posta.models import Messaggio, Autorizzazione
 from ufficio_soci.forms import ModuloElencoVolontari
 
@@ -76,6 +76,22 @@ class TestAnagrafica(TestCase):
 
         # appartenenza "isolata"
         a_persona_1 = crea_appartenenza(persona, sede1)
+        self.assertTrue(a_persona_1.modificabile())
+
+        corso = CorsoBase.objects.create(
+            sede=sede1, data_inizio=poco_fa(), data_esame=poco_fa(), progressivo=1, anno=poco_fa().year
+        )
+        # Corso non completato non genera blocchi
+        partecipazione = PartecipazioneCorsoBase.objects.create(persona=persona, corso=corso)
+        self.assertTrue(a_persona_1.modificabile())
+
+        # se deriva da un corso base non è modificabile
+        partecipazione.esito_esame = PartecipazioneCorsoBase.IDONEO
+        partecipazione.save()
+        self.assertFalse(a_persona_1.modificabile())
+
+        partecipazione.esito_esame = None
+        partecipazione.save()
         self.assertTrue(a_persona_1.modificabile())
 
         # Se è un'estensione non si può modificare
@@ -166,6 +182,32 @@ class TestAnagrafica(TestCase):
         self.assertTrue(a_persona_1.modificabile())
         self.assertTrue(a_persona_1.modificabile(a_persona_2.fine + datetime.timedelta(days=10)))
         self.assertFalse(a_persona_1.modificabile(a_persona_2.fine - datetime.timedelta(days=10)))
+
+        data_corso = a_persona_2.fine - datetime.timedelta(days=10)
+        corso = CorsoBase.objects.create(
+            sede=sede1, data_inizio=data_corso, data_esame=data_corso, progressivo=1, anno=data_corso.year
+        )
+        # Corso non completato non genera blocchi
+        partecipazione = PartecipazioneCorsoBase.objects.create(persona=persona, corso=corso)
+        self.assertTrue(a_persona_1.modificabile())
+
+        # se il corso base è prima delle dimissioni viene ignorato
+        partecipazione.esito_esame = PartecipazioneCorsoBase.IDONEO
+        partecipazione.save()
+        self.assertTrue(a_persona_1.modificabile())
+
+        partecipazione.esito_esame = None
+        partecipazione.save()
+
+        data_corso = a_persona_2.fine + datetime.timedelta(days=10)
+        corso.data_inizio = data_corso
+        corso.save()
+        self.assertTrue(a_persona_1.modificabile())
+
+        # se il corso base è dopo le dimissioni blocca il cambio data
+        partecipazione.esito_esame = PartecipazioneCorsoBase.IDONEO
+        partecipazione.save()
+        self.assertFalse(a_persona_1.modificabile())
 
     def test_appartenenza(self):
 

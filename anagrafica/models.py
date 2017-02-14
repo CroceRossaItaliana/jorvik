@@ -1310,6 +1310,8 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         self.confermata = False
 
     def modificabile(self, inizio=None):
+        from formazione.models import PartecipazioneCorsoBase
+
         flag = self.attuale()
         if inizio:
             inizio = inizio.date()
@@ -1339,6 +1341,16 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
                 flag &= False
             if inizio and qs_modificabili.exists():
                 flag &= not qs_modificabili.filter(fine__date__gt=inizio).exists()
+            qs_corsi = PartecipazioneCorsoBase.objects.filter(persona=self.persona, esito_esame=PartecipazioneCorsoBase.IDONEO)
+            if inizio:
+                qs_corsi = qs_corsi.filter(corso__data_esame__lte=inizio)
+            try:
+                data_post = secondo_terminazione.filter(terminazione__in=terminazioni_modificabili).latest('fine')
+                qs_corsi = qs_corsi.filter(corso__data_inizio__gt=data_post.fine)
+            except Appartenenza.DoesNotExist:
+                pass
+            if qs_corsi.exists():
+                flag = False
             return flag
         else:
             return False
