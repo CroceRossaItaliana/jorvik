@@ -2,7 +2,7 @@ from django.contrib.admin import ModelAdmin
 from django.db.models import Q, F
 from django.utils.encoding import force_text
 
-from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera
+from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera, ProvvedimentoDisciplinare
 from base.utils import filtra_queryset, testo_euro
 from curriculum.models import TitoloPersonale
 from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote, ModuloElencoPerTitoli
@@ -534,10 +534,15 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
             appartenenze__terminazione__in=[Appartenenza.DIMISSIONE, Appartenenza.ESPULSIONE],
             appartenenze__fine__gte=anzianita_minima,
 
+        ).exclude(  # Escludi quelli con provvedimento di sospensione non terminato
+            pk__in=ProvvedimentoDisciplinare.objects.filter(
+                Q(fine__gte=oggi) | Q(fine__isnull=True), inizio__lte=oggi, tipo=ProvvedimentoDisciplinare.SOSPENSIONE
+            ).values_list('persona_id', flat=True)
+
         ).annotate(
-                appartenenza_tipo=F('appartenenze__membro'),
-                appartenenza_inizio=F('appartenenze__inizio'),
-                appartenenza_sede=F('appartenenze__sede'),
+            appartenenza_tipo=F('appartenenze__membro'),
+            appartenenza_inizio=F('appartenenze__inizio'),
+            appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
