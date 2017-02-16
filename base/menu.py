@@ -154,6 +154,7 @@ def menu(request):
                 ("Estesi", "fa-list", "/us/elenchi/estesi/"),
                 ("IV e CM", "fa-list", "/us/elenchi/ivcm/"),
                 ("In Riserva", "fa-list", "/us/elenchi/riserva/"),
+                ("Senza turni", "fa-list", "/us/elenchi/senza-turni/"),
                 ("Soci", "fa-list", "/us/elenchi/soci/"),
                 ("Sostenitori", "fa-list", "/us/elenchi/sostenitori/"),
                 ("Ex Sostenitori", "fa-list", "/us/elenchi/ex-sostenitori/"),

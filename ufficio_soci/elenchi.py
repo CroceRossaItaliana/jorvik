@@ -3,6 +3,7 @@ from django.db.models import Q, F
 from django.utils.encoding import force_text
 
 from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera, ProvvedimentoDisciplinare
+from attivita.models import Partecipazione
 from base.utils import filtra_queryset, testo_euro
 from curriculum.models import TitoloPersonale
 from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote, ModuloElencoPerTitoli
@@ -258,6 +259,38 @@ class ElencoIVCM(ElencoVistaSoci):
                 sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_DIRETTO,
             ).via("appartenenze")
         ).annotate(
+                appartenenza_tipo=F('appartenenze__membro'),
+                appartenenza_inizio=F('appartenenze__inizio'),
+                appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+
+class ElencoSenzaTurni(ElencoVistaSoci):
+    """
+    args: QuerySet<Sede>, Sedi per le quali compilare l'elenco
+    """
+
+    def modulo(self):
+        from .forms import ModuloSenzaTurni
+        return ModuloSenzaTurni
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+
+        modulo = self.modulo_riempito
+        attivi = Partecipazione.objects.filter(
+            turno__fine__gte=modulo.cleaned_data['inizio'], turno__inizio__lte=modulo.cleaned_data['fine'],
+            turno__attivita__sede__in=qs_sedi,
+            confermata=True,
+        ).values_list('persona_id', flat=True)
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_ATTIVITA,
+            ).via("appartenenze")
+        ).exclude(pk__in=attivi).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
                 appartenenza_sede=F('appartenenze__sede'),

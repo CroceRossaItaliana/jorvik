@@ -164,6 +164,25 @@ class ModuloVerificaTesserino(forms.Form):
         return numero_tessera
 
 
+class ModuloSenzaTurni(forms.Form):
+    inizio = forms.DateField(label='Data di inizio intervallo', required=True)
+    fine = forms.DateField(label='Data di fine intervallo', required=True)
+
+    def __init__(self, *args, **kwargs):
+        if 'initial' not in kwargs:
+            kwargs['initial'] = {}
+        if 'inizio' not in kwargs['initial']:
+            kwargs['initial']['inizio'] = now() - datetime.timedelta(days=365)
+        if 'fine' not in kwargs['initial']:
+            kwargs['initial']['fine'] = now()
+        super(ModuloSenzaTurni, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        if self.cleaned_data['fine'] <= self.cleaned_data['inizio']:
+            self.add_error('fine', 'La data di fine deve essere successiva alla data di inizio')
+        return self.cleaned_data
+
+
 class ModuloCreazioneDimissioni(ModelForm):
     class Meta:
         model = Dimissione
