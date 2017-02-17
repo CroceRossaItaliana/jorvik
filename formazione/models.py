@@ -299,16 +299,17 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def _invia_email_agli_aspiranti(self, rispondi_a=None):
         for aspirante in self.aspiranti_nelle_vicinanze():
             persona = aspirante.persona
-            Messaggio.costruisci_e_accoda(
-                oggetto="Nuovo Corso per Volontari CRI",
-                modello="email_aspirante_corso.html",
-                corpo={
-                    "persona": persona,
-                    "corso": self,
-                },
-                destinatari=[persona],
-                rispondi_a=rispondi_a
-            )
+            if not aspirante.persona.volontario:
+                Messaggio.costruisci_e_accoda(
+                    oggetto="Nuovo Corso per Volontari CRI",
+                    modello="email_aspirante_corso.html",
+                    corpo={
+                        "persona": persona,
+                        "corso": self,
+                    },
+                    destinatari=[persona],
+                    rispondi_a=rispondi_a
+                )
 
     @property
     def concluso(self):
