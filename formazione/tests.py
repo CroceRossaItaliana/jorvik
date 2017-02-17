@@ -6,17 +6,20 @@ from unittest import skipIf
 
 from django.conf import settings
 from django.core import mail
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import timezone
 from django.utils.encoding import force_text
 
-from anagrafica.models import Appartenenza
+from anagrafica.models import Appartenenza, Persona
 from autenticazione.utils_test import TestFunzionale
 from base.geo import Locazione
 from base.models import Autorizzazione
 from base.utils import poco_fa
-from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia, codice_fiscale, crea_utenza
+from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia, codice_fiscale, crea_utenza, \
+    crea_sede
+from formazione.forms import ModuloVerbaleAspiranteCorsoBase
 from jorvik.settings import GOOGLE_KEY
 from .models import CorsoBase, Aspirante, InvitoCorsoBase, PartecipazioneCorsoBase
 
@@ -576,6 +579,62 @@ class TestCorsi(TestCase):
         self.assertFalse(aspirante2.autorizzazioni_in_attesa().exists())
         self.assertFalse(corso.inviti.exists())
         self.assertEqual(corso.partecipazioni.count(), 2)
+
+    def test_aspirante_confermato(self):
+        presidente = crea_persona()
+        presidente.email_contatto = email_fittizzia()
+        presidente.save()
+        crea_utenza(presidente, presidente.email_contatto)
+        sede = crea_sede(presidente)
+
+        aspirante1 = crea_persona()
+        aspirante1.email_contatto = email_fittizzia()
+        aspirante1.codice_fiscale = codice_fiscale()
+        aspirante1.save()
+        a = Aspirante(persona=aspirante1)
+        a.locazione = sede.locazione
+        a.save()
+
+        oggi = poco_fa()
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi + timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+        partecipazione1 = PartecipazioneCorsoBase.objects.create(persona=aspirante1, corso=corso)
+        partecipazione1.richiedi()
+
+        for autorizzazione in partecipazione1.autorizzazioni:
+            autorizzazione.concedi(firmatario=presidente, modulo=None)
+        partecipazione1.refresh_from_db()
+
+        dati = {
+            'ammissione': PartecipazioneCorsoBase.AMMESSO,
+            'motivo_non_ammissione': None,
+            'esito_parte_1': PartecipazioneCorsoBase.POSITIVO,
+            'argomento_parte_1': 'blah',
+            'esito_parte_2': PartecipazioneCorsoBase.POSITIVO,
+            'argomento_parte_2': 'bla',
+            'extra_1': False,
+            'extra_2': False,
+            'destinazione': sede.pk,
+        }
+        modulo = ModuloVerbaleAspiranteCorsoBase(
+            data=dati, generazione_verbale=True, instance=partecipazione1,
+        )
+        modulo.fields['destinazione'].queryset = corso.possibili_destinazioni()
+        modulo.fields['destinazione'].initial = corso.sede
+        self.assertTrue(modulo.is_valid())
+        modulo.save()
+        corso.termina(presidente)
+        self.assertFalse(Aspirante.objects.all().exists())
+        aspirante1 = Persona.objects.get(pk=aspirante1.pk)
+        with self.assertRaises(ObjectDoesNotExist):
+            self.assertFalse(aspirante1.aspirante)
 
 
 class TestFunzionaleFormazione(TestFunzionale):
