@@ -19,7 +19,7 @@ XlsxWriter==0.7.7
 django-extensions==1.5.9
 django-multiupload==0.5
 ftfy==4.0
-django-loginas==0.1.8
+django-loginas==0.3.1
 easy-thumbnails==2.3
 python-stdnum==1.2
 codicefiscale==0.9

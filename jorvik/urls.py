@@ -7,11 +7,11 @@ import django, django.views, django.views.static, django.contrib.auth.views
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth.views import password_change, password_change_done
-from django.shortcuts import redirect
 
 import anagrafica.viste
 import articoli.viste
 import attivita.viste
+import autenticazione.viste
 import base.viste, base.errori
 import centrale_operativa.viste
 import formazione.viste
@@ -52,7 +52,7 @@ urlpatterns = [
     # url(r'^login/$', base.errori.vista_ci_siamo_quasi),
     url(r'^', include(tf_urls, 'two_factor')),   # 2FA
     url(r'^scaduta/$', base.viste.sessione_scaduta),
-    url(r'^logout/$', django.contrib.auth.views.logout, {'template_name': 'base_logout.html'}),
+    url(r'^logout/$', autenticazione.viste.logout, {'template_name': 'base_logout.html'}, name='logout'),
     url(r'^', include('django.contrib.auth.urls')),
 
     # Modulo di recupero password
@@ -310,7 +310,7 @@ urlpatterns = [
     url(r'^admin/statistiche/$', anagrafica.viste.admin_statistiche),
 
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^admin/', include('loginas.urls')),   # Login come utente
+    url(r'^login/', include('loginas.urls')),   # Login come utente
 
     # Autocompletamento
     url(r'^autocomplete/', include('autocomplete_light.urls')),
