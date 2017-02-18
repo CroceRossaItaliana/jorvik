@@ -123,11 +123,11 @@ urlpatterns = [
     url(r'^profilo/(?P<pk>[0-9]+)/(?P<sezione>.*)/$', anagrafica.viste.profilo),
     url(r'^profilo/(?P<pk>[0-9]+)/$', anagrafica.viste.profilo),
 
-    url(r'^autorizzazioni/$', base.viste.autorizzazioni, name='autorizzazioni-aperte'),
-    url(r'^autorizzazioni/storico/$', base.viste.autorizzazioni_storico, name='autorizzazioni-storico'),
-    url(r'^autorizzazioni/(?P<content_type_pk>[0-9]+)/$', base.viste.autorizzazioni, name='autorizzazioni-dettaglio'),
-    url(r'^autorizzazioni/(?P<pk>[0-9]+)/concedi/$', base.viste.autorizzazione_concedi, name='autorizzazioni-concedi'),
-    url(r'^autorizzazioni/(?P<pk>[0-9]+)/nega/$', base.viste.autorizzazione_nega, name='autorizzazioni-nega'),
+    url(r'^autorizzazioni/$', base.viste.autorizzazioni),
+    url(r'^autorizzazioni/storico/$', base.viste.autorizzazioni_storico),
+    url(r'^autorizzazioni/(?P<content_type_pk>[0-9]+)/$', base.viste.autorizzazioni),
+    url(r'^autorizzazioni/(?P<pk>[0-9]+)/concedi/$', base.viste.autorizzazione_concedi),
+    url(r'^autorizzazioni/(?P<pk>[0-9]+)/nega/$', base.viste.autorizzazione_nega),
 
     url(r'^posta/scrivi/', posta.viste.posta_scrivi),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/(?P<messaggio_id>\d+)/', posta.viste.posta),
