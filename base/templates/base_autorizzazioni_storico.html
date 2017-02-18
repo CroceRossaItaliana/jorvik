@@ -9,9 +9,7 @@
     <div class="alert alert-info">
         <i class="fa fa-fw fa-info-circle"></i>
         Vengono qui mostrate le ultime {{ numero }} richieste
-        lavorabili da te, in ordine dalla più recente.<br>
-        Le richieste in questa sezione sono state lavorate da te o da altri membri con
-        i poteri necessari per lavorarle.
+         che hai processato, in ordine dalla più recente.
     </div>
 
     {% for richiesta in richieste %}
@@ -52,9 +50,7 @@
                         {% endif %}
                         <p class="text-muted piu-piccolo">
                             <i class="fa fa-fw fa-clock-o"></i>
-                            {{ richiesta.ultima_modifica }}<br>
-                            <i class="fa fa-fw {% if richiesta.concessa %}fa-check{% else %}fa-close{% endif %}"></i>
-                            {{ richiesta.firmatario }}
+                            {{ richiesta.ultima_modifica }}
                         </p>
 
                     </div>
