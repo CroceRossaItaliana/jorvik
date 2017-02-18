@@ -154,10 +154,10 @@ def menu(request):
                 ("Estesi", "fa-list", "/us/elenchi/estesi/"),
                 ("IV e CM", "fa-list", "/us/elenchi/ivcm/"),
                 ("In Riserva", "fa-list", "/us/elenchi/riserva/"),
-                ("Senza turni", "fa-list", "/us/elenchi/senza-turni/"),
+                ("Zero turni", "fa-list", "/us/elenchi/senza-turni/", '', True),
                 ("Soci", "fa-list", "/us/elenchi/soci/"),
                 ("Sostenitori", "fa-list", "/us/elenchi/sostenitori/"),
-                ("Ex Sostenitori", "fa-list", "/us/elenchi/ex-sostenitori/"),
+                ("Ex Sostenitori", "fa-list", "/us/elenchi/ex-sostenitori/", '', True),
                 ("Dipendenti", "fa-list", "/us/elenchi/dipendenti/"),
                 ("Dimessi", "fa-list", "/us/elenchi/dimessi/"),
                 ("Trasferiti", "fa-list", "/us/elenchi/trasferiti/"),
@@ -168,7 +168,8 @@ def menu(request):
             )),
             ("Aggiungi", (
                 ("Persona", "fa-plus-square", "/us/aggiungi/"),
-                ("Reclama Persona", "fa-plus-square", "/us/reclama/"),            )),
+                ("Reclama Persona", "fa-plus-square", "/us/reclama/"),
+            )),
             ("Pratiche", (
                 ("Nuovo trasferimento", "fa-file-o", "/us/trasferimento/"),
                 ("Nuova estensione", "fa-file-o", "/us/estensione/"),

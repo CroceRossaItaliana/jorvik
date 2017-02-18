@@ -66,6 +66,7 @@ class ModuloElencoPerTitoli(forms.Form):
     titoli = autocomplete_light.ModelMultipleChoiceField("TitoloAutocompletamento", help_text="Seleziona uno o più titoli per"
                                                                                               " la tua ricerca.")
 
+
 class ModuloElencoQuote(forms.Form):
     MEMBRI_VOLONTARI = Appartenenza.VOLONTARIO
     MEMBRI_ORDINARI = Appartenenza.ORDINARIO
@@ -165,8 +166,14 @@ class ModuloVerificaTesserino(forms.Form):
 
 
 class ModuloSenzaTurni(forms.Form):
-    inizio = forms.DateField(label='Data di inizio intervallo', required=True)
-    fine = forms.DateField(label='Data di fine intervallo', required=True)
+    inizio = forms.DateField(
+        label='Inizio intervallo', required=True,
+        help_text='Saranno ricercati volontari che non hanno effettuato turni a partire da questa data.'
+    )
+    fine = forms.DateField(
+        label='Fine intervallo', required=True,
+        help_text='Saranno ricercati volontari che non hanno effettuato turni fino a questa data.'
+    )
 
     def __init__(self, *args, **kwargs):
         if 'initial' not in kwargs:
@@ -179,7 +186,9 @@ class ModuloSenzaTurni(forms.Form):
 
     def clean(self):
         if self.cleaned_data['fine'] <= self.cleaned_data['inizio']:
-            self.add_error('fine', 'La data di fine deve essere successiva alla data di inizio')
+            self.add_error('fine', 'La data di fine deve essere successiva alla data di inizio.')
+        if self.cleaned_data['fine'] > now().date():
+            self.add_error('fine', 'La data di fine deve essere precedente alla data odierna.')
         return self.cleaned_data
 
 
