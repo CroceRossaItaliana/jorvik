@@ -11,7 +11,7 @@
 
     <p>Segue il contenuto della richiesta:</p>
     <hr />
-    {% include richiesta.template_path %}
+    {% include richiesta.template_path with notifica_approvazione=True %}
     <hr />
 
 {% endblock %}
