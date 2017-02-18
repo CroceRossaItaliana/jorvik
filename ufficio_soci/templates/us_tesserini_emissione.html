@@ -213,10 +213,12 @@ function aggiorna_contatore() {
 $(document).ready(function() {
     var classe_selezionata = "info";
     $(".riga-tesserino").each(function(i, e) {
-      $(e).click(function() {
+      $(e).click(function(event) {
           var checkbox = $(e).find("input");
           if (!checkbox.prop('disabled')) {
-              checkbox.prop("checked", !checkbox.prop("checked"));
+              if (event.target != checkbox) {
+                  checkbox.prop("checked", !checkbox.prop("checked"));
+              }
               if (checkbox.prop("checked")) {
                   $(e).addClass(classe_selezionata);
               } else {
