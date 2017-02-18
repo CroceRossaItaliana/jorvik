@@ -3,6 +3,7 @@ from unittest import skipIf
 
 import re
 from django.core import mail
+from django.core.urlresolvers import reverse
 from django.test import Client
 from django.test import TestCase
 from django.utils.timezone import now
@@ -10,7 +11,8 @@ from freezegun import freeze_time
 from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
-from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica
+from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica, \
+    ModuloConsentiTrasferimento
 from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Estensione, Trasferimento, Riserva, Sede
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
@@ -1630,6 +1632,41 @@ class TestAnagrafica(TestCase):
         self.assertNotIn(delegato_firenze_no_5, elenco)
         self.assertNotIn(delegato_nazionale_no_6, elenco)
         self.assertNotIn(delegato_abruzzo, elenco)
+
+    def test_storico_richieste(self):
+
+        presidente = crea_persona()
+        crea_utenza(presidente, email=email_fittizzia())
+
+        uff_soci, sede, __ = crea_persona_sede_appartenenza(presidente)
+        Delega.objects.create(tipo=UFFICIO_SOCI, persona=uff_soci, oggetto=sede, firmatario=presidente, inizio=now())
+
+        sede2 = crea_sede(presidente)
+
+        socio = crea_persona()
+        Appartenenza.objects.create(
+            persona=socio, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO
+        )
+
+        trasf = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=socio,
+            richiedente=socio,
+            motivo='test'
+        )
+        trasf.richiedi()
+        autorizzazione = Autorizzazione.objects.first()
+        autorizzazione.concedi(
+            firmatario=uff_soci,
+            modulo=ModuloConsentiTrasferimento({'protocollo_numero': 1, 'protocollo_data': poco_fa()})
+        )
+
+        self.client.login(username=presidente.utenza.email, password='prova')
+        response = self.client.get(reverse('autorizzazioni-storico'))
+        self.assertContains(response, 'chiede il trasferimento verso')
+        self.assertContains(response, sede2)
+        self.assertContains(response, uff_soci.nome_completo)
+        self.assertContains(response, socio.nome_completo)
 
 
 class TestFunzionaliAnagrafica(TestFunzionale):
