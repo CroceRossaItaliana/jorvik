@@ -10,7 +10,8 @@ from freezegun import freeze_time
 from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
-from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica
+from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica, \
+    ModuloConsentiTrasferimento
 from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Estensione, Trasferimento, Riserva, Sede
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
@@ -978,15 +979,118 @@ class TestAnagrafica(TestCase):
                 # Notifica presidente e ufficio soci in uscita
                 self.assertTrue(email.subject.find('Richiesta di trasferimento da %s APPROVATA' % da_trasferire.nome_completo) > -1)
                 self.assertTrue(email.body.find('articolo 9.5 del "Regolamento') > -1)
+                self.assertTrue(email.body.find('automaticamente.') > -1)
+                self.assertFalse(email.body.find(presidente1.nome_completo) > -1)
                 self.assertTrue(email.body.find('La richiesta di trasferimento inoltrata il {}'.format(ora.strftime('%d/%m/%Y'))) > -1)
                 destinatari_verificati += 1
         self.assertEqual(destinatari_verificati, 3)
 
-        self.assertEqual(autorizzazione.concessa, True)
+        trasf.refresh_from_db()
+        autorizzazione.refresh_from_db()
+        self.assertTrue(autorizzazione.concessa)
+        self.assertTrue(autorizzazione.automatica)
+        self.assertTrue(trasf.automatica)
         self.assertTrue(autorizzazione.oggetto.automatica)
         Autorizzazione.gestisci_automatiche()
-        self.assertEqual(autorizzazione.concessa, True)
+        trasf.refresh_from_db()
+        autorizzazione.refresh_from_db()
+        self.assertTrue(autorizzazione.concessa)
         self.assertIn(trasf, Trasferimento.con_esito_ok())
+        self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).count(), 0)
+        self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede2).count(), 1)
+
+    def test_trasferimento_manuale(self):
+        presidente1 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        presidente2 = crea_persona()
+        presidente2.email_contatto = email_fittizzia()
+        presidente2.save()
+
+        da_trasferire, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
+        da_trasferire.email_contatto = email_fittizzia()
+        da_trasferire.save()
+
+        ufficio_soci = crea_persona()
+        ufficio_soci.email_contatto = email_fittizzia()
+        ufficio_soci.save()
+        crea_appartenenza(ufficio_soci, sede1)
+        Delega.objects.create(persona=ufficio_soci, tipo=UFFICIO_SOCI, oggetto=sede1, inizio=poco_fa())
+
+        sede2 = crea_sede(presidente2)
+
+        self.assertFalse(
+            da_trasferire.estensioni_attuali_e_in_attesa().exists(),
+            msg="Non esiste estensione alcuna"
+        )
+
+        self.assertFalse(
+            presidente1.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente non ha autorizzazioni in attesa"
+        )
+        ora = now()
+
+        trasf = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=da_trasferire,
+            richiedente=da_trasferire,
+            motivo='test'
+        )
+        self.assertEqual(0, Autorizzazione.objects.count())
+        trasf.richiedi()
+        self.assertNotIn(trasf, Trasferimento.con_esito_ok())
+        self.assertEqual(1, Autorizzazione.objects.count())
+        self.assertEqual(1, len(mail.outbox))
+
+        # Notifica Presidente in uscita
+        email = mail.outbox[0]
+        self.assertTrue(email.subject.find('Richiesta di trasferimento da %s' % da_trasferire.nome_completo) > -1)
+        self.assertTrue(email.body.find('Nota bene: Questa richiesta di trasferimento') > -1)
+        self.assertTrue(presidente1.email_contatto in email.to)
+
+        autorizzazione = Autorizzazione.objects.first()
+
+        self.assertFalse(autorizzazione.concessa)
+        self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).count(), 1)
+        self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede2).count(), 0)
+
+        form = ModuloConsentiTrasferimento(
+            {'protocollo_data': now().date().strftime('%Y-%m-%d'), 'protocollo_numero': 1}
+        )
+        form.is_valid()
+        autorizzazione.concedi(firmatario=presidente1, modulo=form)
+        autorizzazione.refresh_from_db()
+        trasf.refresh_from_db()
+
+        self.assertEqual(4, len(mail.outbox))
+        destinatari_verificati = 0
+        for email in mail.outbox[1:]:
+            if da_trasferire.email_contatto in email.to:
+                # Notifica alla persona trasferita
+                self.assertTrue(email.subject.find('Richiesta di trasferimento APPROVATA') > -1)
+                destinatari_verificati += 1
+            elif presidente1.email_contatto in email.to or ufficio_soci.email_contatto in email.to:
+                # Notifica presidente e ufficio soci in uscita
+                self.assertTrue(email.subject.find('Richiesta di trasferimento da %s APPROVATA' % da_trasferire.nome_completo) > -1)
+                self.assertFalse(email.body.find('articolo 9.5 del "Regolamento') > -1)
+                self.assertTrue(email.body.find(presidente1.nome_completo) > -1)
+                self.assertTrue(email.body.find('Nota bene: Questa richiesta di trasferimento') == -1)
+                self.assertTrue(email.body.find('La richiesta di trasferimento inoltrata il {}'.format(ora.strftime('%d/%m/%Y'))) > -1)
+                destinatari_verificati += 1
+        self.assertEqual(destinatari_verificati, 3)
+
+        trasf.refresh_from_db()
+        autorizzazione.refresh_from_db()
+        self.assertTrue(autorizzazione.concessa)
+        self.assertFalse(autorizzazione.automatica)
+        self.assertFalse(trasf.automatica)
+        self.assertFalse(autorizzazione.oggetto.automatica)
+        Autorizzazione.gestisci_automatiche()
+        trasf.refresh_from_db()
+        autorizzazione.refresh_from_db()
+        self.assertTrue(autorizzazione.concessa)
+        self.assertIn(trasf, Trasferimento.con_esito_ok())
+        self.assertFalse(trasf.automatica)
         self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).count(), 0)
         self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede2).count(), 1)
 
