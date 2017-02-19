@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.timezone import now
 
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE
-from anagrafica.models import Sede, Persona
+from anagrafica.models import Sede, Persona, Appartenenza
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI, INCARICO_ASPIRANTE
 from base.files import PDF, Zip
 from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione
@@ -824,3 +824,26 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
     @property
     def inviti_attivi(self):
         return self.persona.inviti_corsi.all().values_list('corso', flat=True)
+
+    @classmethod
+    def _anche_volontari(cls):
+        volontari = Aspirante.objects.filter(
+            persona__appartenenze__fine__isnull=True, persona__appartenenze__membro=Appartenenza.VOLONTARIO
+        )
+        return volontari
+
+    @classmethod
+    def _chiudi_partecipazioni(cls, qs):
+        for partecipazione in PartecipazioneCorsoBase.objects.filter(persona__in=qs.values_list('persona', flat=True)):
+            partecipazione.esito_esame = PartecipazioneCorsoBase.IDONEO
+            partecipazione.ammissione = PartecipazioneCorsoBase.AMMESSO
+            partecipazione.esito_parte_1 = PartecipazioneCorsoBase.POSITIVO
+            partecipazione.esito_parte_2 = PartecipazioneCorsoBase.POSITIVO
+            partecipazione.destinazione = partecipazione.persona.comitato_riferimento()
+            partecipazione.save()
+
+    @classmethod
+    def pulisci_volontari(cls):
+        volontari = cls._anche_volontari()
+        cls._chiudi_partecipazioni(volontari)
+        volontari.delete()
