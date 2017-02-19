@@ -1,12 +1,24 @@
 import smtplib
+from datetime import timedelta
+from importlib import import_module
 from unittest.mock import patch
 
+import freezegun
+from django.conf import settings
 from django.core import mail
+from django.core.urlresolvers import reverse
+from django.test import RequestFactory
 from django.test import TestCase
 from django.test import override_settings
+from django.utils.timezone import now
+from freezegun import freeze_time
 
-from base.utils_tests import crea_persona_sede_appartenenza, crea_utenza, email_fittizzia
+from anagrafica.models import Persona
+from base.utils_tests import crea_persona_sede_appartenenza, crea_utenza, email_fittizzia, crea_persona, crea_sede, \
+    crea_appartenenza
 from posta.models import Messaggio
+from posta.utils import imposta_destinatari_e_scrivi_messaggio
+from posta.viste import posta_scrivi
 
 
 class TestMessaggio(TestCase):
@@ -106,6 +118,8 @@ class TestInviiMassivi(TestCase):
 
     num_persone = 100
     persone = []
+    presidente = None
+    sede = None
 
     def _invia_msg_singolo(self):
         Messaggio.costruisci_e_invia(
@@ -120,11 +134,48 @@ class TestInviiMassivi(TestCase):
 
     @classmethod
     def setUpTestData(cls):
+        cls.factory = RequestFactory()
+        cls.presidente = crea_persona()
+        cls.presidente.email_contatto = email_fittizzia()
+        crea_utenza(cls.presidente, email=cls.presidente.email_contatto)
+        cls.sede = crea_sede(cls.presidente)
         for i in range(cls.num_persone):
-            persona, sede, appartenenza = crea_persona_sede_appartenenza()
+            persona = crea_persona()
+            crea_appartenenza(persona, cls.sede)
             persona.email_contatto = email_fittizzia()
             persona.save()
             cls.persone.append(crea_utenza(persona, email=email_fittizzia()))
+
+    def _setup_request(self, path, utente, old_request=None):
+        request = self.factory.get(path=path)
+        if old_request:
+            request.session = old_request.session
+        else:
+            engine = import_module(settings.SESSION_ENGINE)
+            request.session = engine.SessionStore()
+            request.session.save()
+        request.user = utente
+        return request
+
+    def test_messaggio_elenco(self):
+        request = self._setup_request('/', self.presidente.utenza)
+        redirect = imposta_destinatari_e_scrivi_messaggio(request, Persona.objects.all())
+        self.assertEqual(len(request.session["messaggio_destinatari"]), Persona.objects.all().count())
+        request = self._setup_request(redirect['Location'], self.presidente.utenza, old_request=request)
+        self.assertEqual(len(request.session["messaggio_destinatari"]), Persona.objects.all().count())
+        response = posta_scrivi(request)
+        # le persone generate dall'elenco sono presenti nel messaggio
+        for persona in Persona.objects.all():
+            self.assertContains(response, 'name="destinatari" type="hidden" value="{}"'.format(persona.pk))
+
+        imposta_destinatari_e_scrivi_messaggio(request, Persona.objects.all())
+        self.assertEqual(len(request.session["messaggio_destinatari"]), Persona.objects.all().count())
+        request = self._setup_request(redirect['Location'], self.presidente.utenza, old_request=request)
+        with freeze_time(now() + timedelta(seconds=settings.POSTA_MASSIVA_TIMEOUT + 1)):
+            response = posta_scrivi(request)
+            # le persone generate dall'elenco non sono presenti nel messaggio perché è scaduto il timeout
+            for persona in Persona.objects.all():
+                self.assertNotContains(response, 'name="destinatari" type="hidden" value="{}"'.format(persona.pk))
 
     def test_messaggio_senza_destinatari(self):
         messaggio = Messaggio.costruisci_e_accoda(

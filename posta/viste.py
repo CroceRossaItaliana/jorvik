@@ -1,8 +1,10 @@
 import math
 from datetime import datetime, timedelta
 
+from django.conf import settings
 from django.core.paginator import Paginator
 from django.shortcuts import redirect
+from django.utils.timezone import now
 
 from anagrafica.models import Persona
 from anagrafica.permessi.costanti import ERRORE_PERMESSI
@@ -84,7 +86,6 @@ def posta(request, me, direzione="in-arrivo", pagina=1, messaggio_id=None):
     return 'posta.html', contesto
 
 
-
 @pagina_privata
 def posta_scrivi(request, me):
 
@@ -93,8 +94,10 @@ def posta_scrivi(request, me):
     # Prova a recuperare destinatari dalla sessione.
     try:
         timestamp = request.session["messaggio_destinatari_timestamp"]
-        if timestamp and timestamp > (datetime.now() - timedelta(seconds=10)):
-            # max 10 secondi fa
+        if (
+            timestamp and timestamp > (now() - timedelta(seconds=settings.POSTA_MASSIVA_TIMEOUT))
+        ):
+            # max POSTA_MASSIVA_TIMEOUT secondi fa
             destinatari = request.session["messaggio_destinatari"]
 
     except KeyError:

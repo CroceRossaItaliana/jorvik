@@ -368,3 +368,5 @@ CAN_LOGIN_AS = lambda request, target_user: request.user.is_superuser or request
 FORMAZIONE_FINESTRA_CORSI_INIZIATI = 7
 # Durata delli inviti ai corsi base
 FORMAZIONE_VALIDITA_INVITI = 7
+
+POSTA_MASSIVA_TIMEOUT = 30
