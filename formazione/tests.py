@@ -18,7 +18,7 @@ from base.geo import Locazione
 from base.models import Autorizzazione
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia, codice_fiscale, crea_utenza, \
-    crea_sede
+    crea_sede, crea_appartenenza
 from formazione.forms import ModuloVerbaleAspiranteCorsoBase
 from jorvik.settings import GOOGLE_KEY
 from .models import CorsoBase, Aspirante, InvitoCorsoBase, PartecipazioneCorsoBase
@@ -81,6 +81,44 @@ class TestCorsi(TestCase):
         self.assertFalse(aspirante1.autorizzazioni_in_attesa().exists())
         self.assertFalse(corso.inviti.exists())
         self.assertEqual(corso.partecipazioni.count(), 1)
+
+    def test_pulizia_aspiranti(self):
+        presidente = crea_persona()
+        sede = crea_sede(presidente)
+
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=poco_fa() + timedelta(days=7),
+            data_esame=poco_fa() + timedelta(days=14),
+            progressivo=1,
+            anno=poco_fa().year,
+            descrizione='Un corso',
+        )
+
+        for x in range(30):
+            persona = crea_persona()
+            Aspirante.objects.create(persona=persona, locazione = sede.locazione)
+            PartecipazioneCorsoBase.objects.create(persona=persona, corso=corso, confermata=True)
+            if x % 4 == 1:
+                crea_appartenenza(persona, sede)
+            elif x % 4 == 2:
+                app = crea_appartenenza(persona, sede)
+                app.fine = poco_fa()
+                app.save()
+            elif x % 4 == 3:
+                app = crea_appartenenza(persona, sede)
+                app.membro = Appartenenza.SOSTENITORE
+                app.save()
+
+        vol = Aspirante._anche_volontari()
+        persone = Persona.objects.filter(pk__in=vol.values_list('persona', flat=True))
+        self.assertEqual(len(vol), 8)
+        Aspirante.pulisci_volontari()
+
+        for persona in persone:
+            self.assertFalse(hasattr(persona, 'aspirante'))
+            self.assertTrue(persona.partecipazioni_corsi.esito_esame, PartecipazioneCorsoBase.IDONEO)
 
     def test_invito_aspirante_automatico(self):
         presidente = crea_persona()
