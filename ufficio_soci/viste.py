@@ -1167,7 +1167,6 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
                                          "confermata su Gaia.", **torna)
 
     tesserini = persona.tesserini.filter(stato_richiesta__in=(Tesserino.RICHIESTO, Tesserino.ACCETTATO))
-
     if tesserini.exists():
         tipo_richiesta = Tesserino.DUPLICATO
         tesserini.update(valido=False)
@@ -1188,14 +1187,13 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
         raise ValueError("%s non ha un comitato regionale." % (comitato,))
 
     # Crea la richiesta di tesserino
-    tesserino = Tesserino(
+    tesserino = Tesserino.objects.create(
         persona=persona,
         emesso_da=regionale,
         tipo_richiesta=tipo_richiesta,
         stato_richiesta=Tesserino.RICHIESTO,
         richiesto_da=me,
     )
-    tesserino.save()
 
     if duplicato:
         oggetto = "Richiesta Duplicato Tesserino inoltrata"

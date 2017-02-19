@@ -226,7 +226,7 @@ urlpatterns = [
     url(r'^us/tesserini/da-richiedere/$', ufficio_soci.viste.us_tesserini_da_richiedere),
     url(r'^us/tesserini/senza-fototessera/$', ufficio_soci.viste.us_tesserini_senza_fototessera),
     url(r'^us/tesserini/richiesti/$', ufficio_soci.viste.us_tesserini_richiesti),
-    url(r'^us/tesserini/richiedi/(?P<persona_pk>[0-9]+)/$', ufficio_soci.viste.us_tesserini_richiedi),
+    url(r'^us/tesserini/richiedi/(?P<persona_pk>[0-9]+)/$', ufficio_soci.viste.us_tesserini_richiedi, name='us-tesserini-richiedi'),
     url(r'^us/tesserini/emissione/$', ufficio_soci.viste.us_tesserini_emissione),
     url(r'^us/tesserini/emissione/processa/$', ufficio_soci.viste.us_tesserini_emissione_processa),
     url(r'^us/tesserini/emissione/scarica/$', ufficio_soci.viste.us_tesserini_emissione_scarica),
