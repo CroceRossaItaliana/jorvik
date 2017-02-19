@@ -15,6 +15,7 @@ from datetime import date, timedelta, datetime
 
 import stdnum
 from django.conf import settings
+from django.db.transaction import atomic
 from django.utils import timezone
 
 import codicefiscale
@@ -35,7 +36,7 @@ from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, R
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI_NOMI_DICT, UFFICIO_SOCI_UNITA, \
     DELEGHE_RUBRICA, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_4, \
     RESPONSABILE_FORMAZIONE, DELEGATO_OBIETTIVO_6, DELEGATO_OBIETTIVO_5, RESPONSABILE_AUTOPARCO, DELEGATO_CO, \
-    DIRETTORE_CORSO, RESPONSABILE_AREA, REFERENTE
+    DIRETTORE_CORSO, RESPONSABILE_AREA, REFERENTE, OBIETTIVI
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
     GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE
@@ -54,7 +55,8 @@ from base.models import ModelloSemplice, ModelloAlbero, ConAutorizzazioni, ConAl
     Autorizzazione, ConVecchioID
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
-from base.utils import is_list, sede_slugify, UpperCaseCharField, TitleCharField, poco_fa
+from base.utils import is_list, sede_slugify, UpperCaseCharField, TitleCharField, poco_fa, mezzanotte_24_ieri, \
+    mezzanotte_00, mezzanotte_24
 from autoslug import AutoSlugField
 
 from curriculum.models import Titolo, TitoloPersonale
@@ -252,6 +254,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         ]
         permissions = (
             ('view_persona', "Can view persona"),
+            ('transfer_persona', "Can transfer persona"),
         )
 
     # Q: Qual e' il numero di telefono di questa persona?
@@ -894,11 +897,94 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def estensioni_attuali_e_in_attesa(self):
         return self.estensioni_attuali() | self.estensioni_in_attesa()
 
+    def trasferimento_massivo(self, sede, firmatario, motivazione, data):
+        if not sede:
+            return 'Non è stata specificata la sede'
+        if not firmatario:
+            return 'Non è presente alcun firmatario'
+        if not motivazione:
+            return 'Non è stata indicata la motivazione'
+        if not motivazione:
+            return 'Non è stata indicata data di trasferimento'
+        try:
+            if not isinstance(sede, Sede):
+                sede = Sede.objects.get(pk=int(sede))
+        except (ValueError, Sede.DoesNotExist):
+            return False
+        data_inizio = datetime(data.year, data.month, data.day)
+        if self.volontario and self.sede_riferimento() != sede:
+            trasferimento = Trasferimento.objects.create(
+                destinazione=sede,
+                persona=self,
+                richiedente=firmatario,
+                motivo=motivazione,
+            )
+            trasferimento.richiedi(notifiche_attive=False)
+            for autorizzazione in trasferimento.autorizzazioni:
+                autorizzazione.concedi(firmatario, auto=True, notifiche_attive=False, data=data_inizio)
+            trasferimento.refresh_from_db()
+            return trasferimento.appartenenza
+        else:
+            return 'La persone non è un volontario o è già nella sede indicata'
+
     def espelli(self):
+        data = poco_fa()
         for appartenenza in self.appartenenze_attuali():
             appartenenza.terminazione = Appartenenza.ESPULSIONE
-            appartenenza.fine = datetime.today()
+            appartenenza.fine = mezzanotte_24_ieri(data)
             appartenenza.save()
+        self.chiudi_tutto(mezzanotte_24_ieri(data))
+
+    def chiudi_tutto(self, data):
+        """
+        Chiude tutti i ruoli collegati a fronte di dimissioni / espulsioni / trasferimenti
+
+        Termina:
+          * Riserve aperte
+          * Estensioni in corso
+          * Deleghe (obiettivo, area, attivita, US, autoparco)
+
+        Cancella: (cancellando completamente il record):
+          * Partecipazioni a turni non ancora terminati
+
+        Ritira:
+          * Autorizzazioni non ancora concesse / negate
+        """
+        for riserva in self.riserve.filter(Q(fine__isnull=True) | Q(fine__gte=poco_fa())):
+            riserva.termina(data=data)
+
+        for estensione in self.estensioni_attuali():
+            estensione.termina(data=data)
+
+        # Per le attività bisogna attivare dei fallback quindi le gestiamo separatamente
+        for delega in self.deleghe_attuali(tipo__in=OBIETTIVI.values()):
+            delega.termina(data=data)
+
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            delega.termina(data=data)
+            if not delega.oggetto.delegati_attuali().exists():
+                for delegato_obiettivo in Delega.objects.filter(
+                        tipo=delega.oggetto.codice_obiettivo,
+                        oggetto_tipo=ContentType.objects.get_for_model(Sede),
+                        oggetto_id=delega.oggetto.sede_id
+                ):
+                    delega.oggetto.aggiungi_delegato(RESPONSABILE_AREA, delegato_obiettivo.persona)
+
+        for delega in self.deleghe_attuali(tipo=REFERENTE):
+            delega.termina(data=data)
+            if not delega.oggetto.referenti_attuali().exists():
+                for responsabile_area in delega.oggetto.area.delegati_attuali():
+                    delega.oggetto.aggiungi_delegato(REFERENTE, responsabile_area)
+
+        # Tutte le altre deleghe le terminiamo e basta
+        for delega in self.deleghe_attuali():
+            delega.termina(data=data)
+
+        for partecipazione in self.partecipazioni.filter(turno__fine__gte=poco_fa()):
+            partecipazione.delete()
+
+        for richieste in self.autorizzazioni_in_attesa():
+            richieste.oggetto.autorizzazioni_ritira()
 
     def ottieni_o_genera_aspirante(self):
         try:
@@ -1312,7 +1398,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             return False
         return True
 
-    def richiedi(self):
+    def richiedi(self, notifiche_attive=True):
         """
         Richiede di confermare l'appartenenza.
         """
@@ -1321,18 +1407,18 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
             INCARICO_GESTIONE_APPARTENENZE,
-            invia_notifica_presidente=True,
+            invia_notifica_presidente=notifiche_attive,
             forza_sede_riferimento=self.sede,
         )
 
-    def autorizzazione_concessa(self, modulo=None, auto=False):
+    def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
         """
         Questo metodo viene chiamato quando la richiesta viene accettata.
         :return:
         """
         # TODO: Inviare e-mail di autorizzazione concessa!
 
-    def autorizzazione_negata(self, modulo=None):
+    def autorizzazione_negata(self, modulo=None, notifiche_attive=True, data=None):
         # TOOD: Fare qualcosa
         self.confermata = False
 
@@ -1864,10 +1950,11 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             destinatari=[self.persona],
         )
 
-    def termina(self, mittente=None, accoda=False):
-        self.fine = poco_fa()
+    def termina(self, mittente=None, accoda=False, notifica=True, data=None):
+        self.fine = mezzanotte_24(data)
         self.save()
-        self.invia_notifica_terminazione(mittente=mittente, accoda=accoda)
+        if notifica:
+            self.invia_notifica_terminazione(mittente=mittente, accoda=accoda)
 
     def presidente_termina_deleghe_dipendenti(self, mittente=None):
         """
@@ -1993,7 +2080,10 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
         from anagrafica.forms import ModuloConsentiTrasferimento
         return ModuloConsentiTrasferimento
 
-    def autorizzazione_concessa(self, modulo=None, auto=False):
+    def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
+        if data is None or not isinstance(data, date):
+            data = poco_fa()
+        data = datetime(data.year, data.month, data.day)
         if auto:
             self.protocollo_data = timezone.now()
             self.protocollo_numero = Autorizzazione.PROTOCOLLO_AUTO
@@ -2001,36 +2091,42 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
             self.protocollo_data = modulo.cleaned_data['protocollo_data']
             self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
         self.save()
-        self.esegui(auto)
+        self.esegui(auto=auto, notifiche_attive=notifiche_attive, data=data)
 
-    def esegui(self, auto=False):
-        appartenenzaVecchia = Appartenenza.objects.filter(Appartenenza.query_attuale().q,
-                                                          membro=Appartenenza.VOLONTARIO, persona=self.persona).first()
-        appartenenzaVecchia.fine = poco_fa()
-        appartenenzaVecchia.terminazione = Appartenenza.TRASFERIMENTO
-        appartenenzaVecchia.save()
-        # Invia notifica tramite e-mail
-        app = Appartenenza(
-            membro=Appartenenza.VOLONTARIO,
-            persona=self.persona,
-            sede=self.destinazione,
-            inizio=poco_fa(),
-        )
-        app.save()
-        self.appartenenza = app
-        testo_extra = ''
-        if auto:
-            self.automatica = True
-            testo_extra = 'Il trasferimento è stato automaticamente approvato essendo decorsi trenta giorni, ' \
-                          'ai sensi dell\'articolo 9.5 del "Regolamento sull\'organizzazione, le attività, ' \
-                          'la formazione e l\'ordinamento dei volontari"'
-        else:
-            self.automatica = False
-        self.save()
-        self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(appartenenzaVecchia.sede, testo_extra)
-        self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(app.sede, testo_extra)
+    def esegui(self, auto=False, notifiche_attive=True, data=None):
+        with atomic():
+            appartenenzaVecchia = Appartenenza.objects.filter(
+                Appartenenza.query_attuale().q, membro=Appartenenza.VOLONTARIO, persona=self.persona
+            ).first()
+            appartenenzaVecchia.fine = mezzanotte_24_ieri(data)
+            appartenenzaVecchia.terminazione = Appartenenza.TRASFERIMENTO
+            appartenenzaVecchia.save()
 
-    def richiedi(self):
+            self.persona.chiudi_tutto(mezzanotte_24_ieri(data))
+
+            # Invia notifica tramite e-mail
+            app = Appartenenza.objects.create(
+                membro=Appartenenza.VOLONTARIO,
+                persona=self.persona,
+                sede=self.destinazione,
+                inizio=mezzanotte_00(data),
+                precedente=appartenenzaVecchia
+            )
+            self.appartenenza = app
+            testo_extra = ''
+            if auto:
+                self.automatica = True
+                testo_extra = 'Il trasferimento è stato automaticamente approvato essendo decorsi trenta giorni, ' \
+                              'ai sensi dell\'articolo 9.5 del "Regolamento sull\'organizzazione, le attività, ' \
+                              'la formazione e l\'ordinamento dei volontari"'
+            else:
+                self.automatica = False
+            self.save()
+            if notifiche_attive:
+                self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(appartenenzaVecchia.sede, testo_extra)
+                self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(app.sede, testo_extra)
+
+    def richiedi(self, notifiche_attive=True):
 
         if not self.persona.sede_riferimento():
             raise ValueError("Impossibile richiedere trasferimento: Nessuna appartenenza attuale.")
@@ -2038,7 +2134,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
             INCARICO_GESTIONE_TRASFERIMENTI,
-            invia_notifica_presidente=True,
+            invia_notifica_presidente=notifiche_attive,
             auto=Autorizzazione.AP_AUTO,
             scadenza=self.APPROVAZIONE_AUTOMATICA,
         )
@@ -2099,7 +2195,10 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         from anagrafica.forms import ModuloNegaEstensione
         return ModuloNegaEstensione
 
-    def autorizzazione_concessa(self, modulo=None, auto=False):
+    def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
+        if data is None or not isinstance(data, date):
+            data = poco_fa()
+        data = datetime(data.year, data.month, data.day)
         self.protocollo_data = modulo.cleaned_data['protocollo_data']
         self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
         origine = self.persona.sede_riferimento()
@@ -2107,8 +2206,8 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
             membro=Appartenenza.ESTESO,
             persona=self.persona,
             sede=self.destinazione,
-            inizio=poco_fa(),
-            fine=datetime.today() + timedelta(days=365)
+            inizio=data,
+            fine=data + timedelta(days=365)
         )
         app.save()
         self.appartenenza = app
@@ -2117,14 +2216,14 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(origine, testo_extra)
         self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(app.sede, testo_extra)
 
-    def richiedi(self):
+    def richiedi(self, notifiche_attive=True):
         if not self.persona.sede_riferimento():
             raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
 
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
             INCARICO_GESTIONE_ESTENSIONI,
-            invia_notifica_presidente=True,
+            invia_notifica_presidente=notifiche_attive,
             auto=Autorizzazione.MANUALE,
         )
         if self.destinazione.presidente():
@@ -2140,8 +2239,8 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
                ]
             )
 
-    def termina(self):
-        self.appartenenza.fine = poco_fa()
+    def termina(self, data=None):
+        self.appartenenza.fine = mezzanotte_24(data)
         self.appartenenza.terminazione = Appartenenza.FINE_ESTENSIONE
         self.appartenenza.save()
 
@@ -2184,19 +2283,20 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
     motivo = models.CharField(max_length=4096)
     appartenenza = models.ForeignKey(Appartenenza, related_name="riserve", on_delete=models.PROTECT)
 
-    def richiedi(self):
+    def richiedi(self, notifiche_attive=True):
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
             INCARICO_GESTIONE_RISERVE,
-            invia_notifica_presidente=True
+            invia_notifica_presidente=notifiche_attive
         )
-        self.invia_mail()
+        if notifiche_attive:
+            self.invia_mail()
 
     def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiRiserva
         return ModuloConsentiRiserva
 
-    def autorizzazione_concessa(self, modulo=None, auto=False):
+    def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
         if auto:
             self.protocollo_data = timezone.now()
             self.protocollo_numero = 'AUTO'
@@ -2207,8 +2307,8 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
         testo_extra = ''
         self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(self.persona.sede_riferimento(), testo_extra)
 
-    def termina(self):
-        self.fine = poco_fa()
+    def termina(self, data=None):
+        self.fine = mezzanotte_24(data)
         self.save()
 
     def invia_mail(self):
@@ -2341,9 +2441,11 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         else:
             template = "email_dimissioni.html"
 
+        # impostiamo l'orario di chiusura alle 0.0 del giorno corrente
+        data = poco_fa()
         if precedente_appartenenza.membro == Appartenenza.VOLONTARIO:
-            Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
-            App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
+            Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=mezzanotte_24_ieri(data))
+            App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=mezzanotte_24_ieri(data))
             #TODO reperibilita'
             [
                 [x.ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
@@ -2351,12 +2453,13 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
             ]
         Appartenenza.query_attuale(
             al_giorno=self.creazione, persona=self.persona, membro=precedente_appartenenza.membro
-        ).update(fine=poco_fa(), terminazione=Appartenenza.DIMISSIONE)
+        ).update(fine=mezzanotte_24_ieri(data), terminazione=Appartenenza.DIMISSIONE)
+        self.persona.chiudi_tutto(mezzanotte_24_ieri(data))
 
         if trasforma_in_sostenitore:
             app = Appartenenza(precedente=precedente_appartenenza, persona=self.persona,
                                sede=precedente_sede,
-                               inizio=date.today(),
+                               inizio=mezzanotte_00(data),
                                membro=Appartenenza.SOSTENITORE)
             app.save()
 

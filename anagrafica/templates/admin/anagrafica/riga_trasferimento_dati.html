@@ -1,0 +1,17 @@
+{% spaceless %}
+    <li><span style="font-weight:bold; {% if not persona.volontario or not persona.sede_riferimento or not nuova_sede or persona.sede_riferimento == nuova_sede %}color: red{% endif %}">{{ persona.nome_completo }}</span> (CF: {{ persona.codice_fiscale }}, volontario: {{ persona.volontario|yesno:"Sì,No" }})
+    <ul>
+        {% if persona.sede_riferimento %}<li>{{ etichetta_sede }}: {{ persona.sede_riferimento }}</li>
+            {% if nuova_sede %}
+                <li>Nuova sede: {{ nuova_sede }}</li>
+                {% if data_trasferimento %}<li>Data: {{ data_trasferimento }}</li>{% endif %}
+                {% if motivazione %}<li>Motivazione: {{ motivazione }}</li>{% endif %}
+            {% else %}
+                <li>Nessuna sede indicata</li>
+            {% endif %}
+        {% else %}
+            <li>La persona non è assegnata ad alcuna sede</li>
+        {% endif %}
+    </ul>
+</li>
+{% endspaceless %}
