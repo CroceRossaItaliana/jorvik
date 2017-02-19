@@ -4,12 +4,12 @@
 Questo modulo definisce i modelli del modulo Attivita' di Gaia.
 """
 from datetime import timedelta, date
-from math import floor
+from math import floor, ceil
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q, F, Sum, Avg
+from django.db.models import Q, F, Sum
 from django.utils import timezone
 
 from anagrafica.permessi.applicazioni import REFERENTE
@@ -121,8 +121,9 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
         posizione = Turno.objects.filter(
             attivita=self,
             fine__lte=timezone.now(),
-        ).count() + 1
-        return max(floor((posizione-1) / Turno.PER_PAGINA), 1)
+        ).count()
+        print(posizione)
+        return max(ceil(posizione / Turno.PER_PAGINA), 1)
 
     @property
     def url_modifica(self):

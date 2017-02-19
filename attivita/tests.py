@@ -183,6 +183,64 @@ class TestAttivita(TestCase):
             msg="Il turno non viene trovato nel calendario - attivita' creata dalla sede del volontario"
         )
 
+    def test_pagina_turni(self):
+
+        sicilia = Sede.objects.create(
+            nome="Comitato Regionale di Sicilia",
+            tipo=Sede.COMITATO,
+            estensione=LOCALE,
+        )
+
+        area = Area.objects.create(
+            nome="6",
+            obiettivo=6,
+            sede=sicilia,
+        )
+
+        attivita = Attivita.objects.create(
+            stato=Attivita.VISIBILE,
+            nome="Att 1",
+            apertura=Attivita.APERTA,
+            area=area,
+            descrizione="1",
+            sede=sicilia,
+            estensione=sicilia,
+        )
+
+        oggi = timezone.now()
+        for day in range(1, 11):
+            giorno_1 = oggi - timedelta(days=day)
+            Turno.objects.create(
+                attivita=attivita,
+                prenotazione=giorno_1 - timedelta(days=1),
+                inizio=giorno_1,
+                fine=giorno_1 + timedelta(days=1),
+                minimo=1,
+                massimo=6,
+            )
+            giorno_1 = oggi + timedelta(days=20 + day)
+            Turno.objects.create(
+                attivita=attivita,
+                prenotazione=giorno_1 - timedelta(days=1),
+                inizio=giorno_1,
+                fine=giorno_1 + timedelta(days=1),
+                minimo=1,
+                massimo=6,
+            )
+        # Esistono 10 turni che finiscono prima di oggi, quindi ci posizioniamo sulla prima pagina
+        self.assertEqual(attivita.pagina_turni_oggi(), 1)
+        for day in range(1, 2):
+            giorno_1 = oggi - timedelta(days=day)
+            Turno.objects.create(
+                attivita=attivita,
+                prenotazione=giorno_1 - timedelta(days=1),
+                inizio=giorno_1,
+                fine=giorno_1 + timedelta(days=1),
+                minimo=1,
+                massimo=6,
+            )
+        # Esistono 11 turni che finiscono prima di oggi, quindi ci posizioniamo sulla seconda pagina
+        self.assertEqual(attivita.pagina_turni_oggi(), 2)
 
     def test_attivita_estesa(self):
 
