@@ -42,10 +42,10 @@ def us(request, me):
 
     persone = Persona.objects.filter(
         Appartenenza.query_attuale(sede__in=sedi).via("appartenenze")
-    )
+    ).distinct('cognome', 'nome', 'codice_fiscale')
     attivi = Persona.objects.filter(
         Appartenenza.query_attuale(sede__in=sedi, membro=Appartenenza.VOLONTARIO).via("appartenenze")
-    )
+    ).distinct('cognome', 'nome', 'codice_fiscale')
 
     contesto = {
         "sedi": sedi,
