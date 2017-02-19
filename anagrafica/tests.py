@@ -3,6 +3,7 @@ from unittest import skipIf
 
 import re
 from django.core import mail
+from django.core.urlresolvers import reverse
 from django.test import Client
 from django.test import TestCase
 from django.utils.timezone import now
@@ -1734,6 +1735,80 @@ class TestAnagrafica(TestCase):
         self.assertNotIn(delegato_firenze_no_5, elenco)
         self.assertNotIn(delegato_nazionale_no_6, elenco)
         self.assertNotIn(delegato_abruzzo, elenco)
+
+    def test_storico_richieste(self):
+
+        presidente = crea_persona()
+        crea_utenza(presidente, email=email_fittizzia())
+
+        uff_soci, sede, __ = crea_persona_sede_appartenenza(presidente)
+        Delega.objects.create(tipo=UFFICIO_SOCI, persona=uff_soci, oggetto=sede, firmatario=presidente, inizio=now())
+
+        sede2 = crea_sede(presidente)
+        self.assertEqual(presidente.deleghe.count(), 2)
+        # Tutte le deleghe presidente partono da adesso per verificare il rispetto delle date
+        # nello storico
+        for delega in presidente.deleghe.all():
+            delega.inizio = now()
+            delega.save()
+
+        socio = crea_persona()
+        Appartenenza.objects.create(
+            persona=socio, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO
+        )
+
+        trasf = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=socio,
+            richiedente=socio,
+            motivo='test'
+        )
+        trasf.richiedi()
+        autorizzazione = Autorizzazione.objects.first()
+        autorizzazione.concedi(
+            firmatario=uff_soci,
+            modulo=ModuloConsentiTrasferimento({'protocollo_numero': 1, 'protocollo_data': poco_fa()})
+        )
+
+        # L'autorizzazione chiesta dopo l'inizio della delega è visibile
+        self.client.login(username=presidente.utenza.email, password='prova')
+        response = self.client.get(reverse('autorizzazioni-storico'))
+        self.assertContains(response, 'chiede il trasferimento verso')
+        self.assertContains(response, sede2)
+        self.assertContains(response, uff_soci.nome_completo)
+        self.assertContains(response, socio.nome_completo)
+
+        # L'autorizzazione chiesta prima dell'inizio della delega non è visibile
+        autorizzazione.creazione = now() - datetime.timedelta(days=10)
+        autorizzazione.save()
+        response = self.client.get(reverse('autorizzazioni-storico'))
+        self.assertNotContains(response, 'chiede il trasferimento verso')
+        self.assertNotContains(response, sede2)
+        self.assertNotContains(response, uff_soci.nome_completo)
+        self.assertNotContains(response, socio.nome_completo)
+
+        # Anticipando l'inizio della delega nell'altra sede la richiesta non è comunque visibile
+        delega = presidente.deleghe.last()
+        delega.inizio = now() - datetime.timedelta(days=20)
+        delega.save()
+        response = self.client.get(reverse('autorizzazioni-storico'))
+        self.assertNotContains(response, 'chiede il trasferimento verso')
+        self.assertNotContains(response, sede2)
+        self.assertNotContains(response, uff_soci.nome_completo)
+        self.assertNotContains(response, socio.nome_completo)
+
+        # Anticipando l'inizio della delega nella sede corretta la richiesta è visibile
+        delega = presidente.deleghe.first()
+        delega.inizio = now() - datetime.timedelta(days=20)
+        delega.save()
+        delega = presidente.deleghe.last()
+        delega.inizio = now() - datetime.timedelta(days=5)
+        delega.save()
+        response = self.client.get(reverse('autorizzazioni-storico'))
+        self.assertContains(response, 'chiede il trasferimento verso')
+        self.assertContains(response, sede2)
+        self.assertContains(response, uff_soci.nome_completo)
+        self.assertContains(response, socio.nome_completo)
 
 
 class TestFunzionaliAnagrafica(TestFunzionale):
