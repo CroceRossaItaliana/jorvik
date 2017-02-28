@@ -12,13 +12,15 @@ from freezegun import freeze_time
 from anagrafica.models import Appartenenza, Sede, Persona, Fototessera, Dimissione, ProvvedimentoDisciplinare
 from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE, LOCALE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+from attivita.models import Area, Partecipazione, Turno
+from attivita.models import Attivita
 from autenticazione.utils_test import TestFunzionale
 from base.geo import Locazione
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, \
     crea_utenza, crea_locazione, email_fittizzia
 from ufficio_soci.elenchi import ElencoElettoratoAlGiorno, ElencoSociAlGiorno, ElencoSostenitori, ElencoExSostenitori, \
-    ElencoVolontari, ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere
+    ElencoVolontari, ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoSenzaTurni
 from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota
 from ufficio_soci.models import Tesseramento, Tesserino, Quota, Riduzione
 
@@ -227,6 +229,76 @@ class TestBase(TestCase):
         self.a.precedente = None
         self.a.save()
         x.delete()
+
+    def test_zero_turni(self):
+
+        presidente = crea_persona()
+        sede = crea_sede(presidente)
+        persone = []
+        for x in range(1, 10):
+            persone.append(crea_persona())
+            Appartenenza.objects.create(
+                persona=persone[-1], sede=sede, inizio=self.due_anni_e_mezo_fa,
+            )
+
+        area = Area.objects.create(
+            nome="6",
+            obiettivo=6,
+            sede=sede,
+        )
+
+        attivita = Attivita.objects.create(
+            stato=Attivita.VISIBILE,
+            nome="Att 1",
+            apertura=Attivita.APERTA,
+            area=area,
+            descrizione="1",
+            sede=sede,
+            estensione=sede,
+        )
+
+        turno = Turno.objects.create(
+            attivita=attivita,
+            prenotazione=poco_fa(),
+            inizio=poco_fa() - datetime.timedelta(days=10),
+            fine=poco_fa(),
+            minimo=1,
+            massimo=16,
+        )
+
+        partecipazioni = []
+        for persona in persone:
+            partecipazioni.append(Partecipazione.objects.create(
+                persona=persona,
+                turno=turno,
+                confermata=False
+            ))
+
+        elenco = ElencoSenzaTurni([sede])
+        elenco.modulo_riempito = elenco.modulo()(
+            {'inizio': poco_fa() - datetime.timedelta(days=100), 'fine': poco_fa() - datetime.timedelta(days=5)}
+        )
+        self.assertTrue(elenco.modulo_riempito.is_valid())
+        zero_turni = elenco.risultati()
+        self.assertEqual(len(zero_turni), len(persone))
+
+        partecipazioni[0].confermata = True
+        partecipazioni[0].save()
+        zero_turni = elenco.risultati()
+        self.assertEqual(len(zero_turni), len(persone) - 1)
+        self.assertTrue(persone[0] not in zero_turni)
+
+        turno.inizio = poco_fa() - datetime.timedelta(days=200)
+        turno.fine = poco_fa() - datetime.timedelta(days=150)
+        turno.save()
+        zero_turni = elenco.risultati()
+        self.assertEqual(len(zero_turni), len(persone))
+
+        turno.fine = poco_fa() - datetime.timedelta(days=50)
+        turno.save()
+        zero_turni = elenco.risultati()
+        self.assertEqual(len(zero_turni), len(persone) - 1)
+        self.assertTrue(persone[0] not in zero_turni)
 
     def test_elettorato_sospensione(self):
 
