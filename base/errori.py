@@ -40,7 +40,7 @@ def permessi(request, me):
 
 def errore_generico(request, me=None,
              titolo="Errore", messaggio="Si è verificato un errore generico.",
-             torna_titolo="Home page", torna_url="/"):
+             torna_titolo="Home page", torna_url="/", embed=False):
     """
     Ritorna un errore generico con un link per tornare indietro.
     :param titolo: Il titolo del messaggio di errore.
@@ -53,6 +53,7 @@ def errore_generico(request, me=None,
         "errore_messaggio": messaggio,
         "errore_torna_titolo": torna_titolo,
         "errore_torna_url": torna_url,
+        "embed": embed,
     }
     return 'base_errore_generico.html', contesto
 

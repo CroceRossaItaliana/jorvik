@@ -10,5 +10,7 @@
 <p>Puoi scaricare la richiesta di trasferimento in formato PDF
     <a href="{{ richiesta.oggetto.url_pdf }}" target="_new" download>cliccando qui</a>.</p>
 
+{% if not notifica_approvazione %}
 <p>Nota bene: Questa richiesta di trasferimento verr&agrave; processata automaticamente se non gestita in 30gg,
    come previsto dal Regolamento dei Volontari.</p>
+{% endif %}
