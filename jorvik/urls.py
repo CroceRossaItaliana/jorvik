@@ -7,11 +7,11 @@ import django, django.views, django.views.static, django.contrib.auth.views
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth.views import password_change, password_change_done
-from django.shortcuts import redirect
 
 import anagrafica.viste
 import articoli.viste
 import attivita.viste
+import autenticazione.viste
 import base.viste, base.errori
 import centrale_operativa.viste
 import formazione.viste
@@ -52,7 +52,7 @@ urlpatterns = [
     # url(r'^login/$', base.errori.vista_ci_siamo_quasi),
     url(r'^', include(tf_urls, 'two_factor')),   # 2FA
     url(r'^scaduta/$', base.viste.sessione_scaduta),
-    url(r'^logout/$', django.contrib.auth.views.logout, {'template_name': 'base_logout.html'}),
+    url(r'^logout/$', autenticazione.viste.logout, {'template_name': 'base_logout.html'}, name='logout'),
     url(r'^', include('django.contrib.auth.urls')),
 
     # Modulo di recupero password
@@ -123,13 +123,13 @@ urlpatterns = [
     url(r'^profilo/(?P<pk>[0-9]+)/(?P<sezione>.*)/$', anagrafica.viste.profilo),
     url(r'^profilo/(?P<pk>[0-9]+)/$', anagrafica.viste.profilo),
 
-    url(r'^autorizzazioni/$', base.viste.autorizzazioni),
-    url(r'^autorizzazioni/storico/$', base.viste.autorizzazioni_storico),
-    url(r'^autorizzazioni/(?P<content_type_pk>[0-9]+)/$', base.viste.autorizzazioni),
-    url(r'^autorizzazioni/(?P<pk>[0-9]+)/concedi/$', base.viste.autorizzazione_concedi),
-    url(r'^autorizzazioni/(?P<pk>[0-9]+)/nega/$', base.viste.autorizzazione_nega),
+    url(r'^autorizzazioni/$', base.viste.autorizzazioni, name='autorizzazioni-aperte'),
+    url(r'^autorizzazioni/storico/$', base.viste.autorizzazioni_storico, name='autorizzazioni-storico'),
+    url(r'^autorizzazioni/(?P<content_type_pk>[0-9]+)/$', base.viste.autorizzazioni, name='autorizzazioni-dettaglio'),
+    url(r'^autorizzazioni/(?P<pk>[0-9]+)/concedi/$', base.viste.autorizzazione_concedi, name='autorizzazioni-concedi'),
+    url(r'^autorizzazioni/(?P<pk>[0-9]+)/nega/$', base.viste.autorizzazione_nega, name='autorizzazioni-nega'),
 
-    url(r'^posta/scrivi/', posta.viste.posta_scrivi),
+    url(r'^posta/scrivi/', posta.viste.posta_scrivi, name='posta-scrivi'),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/(?P<messaggio_id>\d+)/', posta.viste.posta),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/', posta.viste.posta),
     url(r'^posta/(?P<direzione>[\w\-]+)/', posta.viste.posta),
@@ -226,14 +226,14 @@ urlpatterns = [
     url(r'^us/tesserini/da-richiedere/$', ufficio_soci.viste.us_tesserini_da_richiedere),
     url(r'^us/tesserini/senza-fototessera/$', ufficio_soci.viste.us_tesserini_senza_fototessera),
     url(r'^us/tesserini/richiesti/$', ufficio_soci.viste.us_tesserini_richiesti),
-    url(r'^us/tesserini/richiedi/(?P<persona_pk>[0-9]+)/$', ufficio_soci.viste.us_tesserini_richiedi),
+    url(r'^us/tesserini/richiedi/(?P<persona_pk>[0-9]+)/$', ufficio_soci.viste.us_tesserini_richiedi, name='us-tesserini-richiedi'),
     url(r'^us/tesserini/emissione/$', ufficio_soci.viste.us_tesserini_emissione),
     url(r'^us/tesserini/emissione/processa/$', ufficio_soci.viste.us_tesserini_emissione_processa),
     url(r'^us/tesserini/emissione/scarica/$', ufficio_soci.viste.us_tesserini_emissione_scarica),
 
     url(r'^us/elenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', ufficio_soci.viste.us_elenco),
     url(r'^us/elenco/(?P<elenco_id>.*)/download/$', ufficio_soci.viste.us_elenco_download),
-    url(r'^us/elenco/(?P<elenco_id>.*)/messaggio/$', ufficio_soci.viste.us_elenco_messaggio),
+    url(r'^us/elenco/(?P<elenco_id>.*)/messaggio/$', ufficio_soci.viste.us_elenco_messaggio, name='us-elenco-messaggio'),
     url(r'^us/elenco/(?P<elenco_id>.*)/modulo/$', ufficio_soci.viste.us_elenco_modulo),
     url(r'^us/elenco/(?P<elenco_id>.*)/$', ufficio_soci.viste.us_elenco),
 
@@ -310,7 +310,7 @@ urlpatterns = [
     url(r'^admin/statistiche/$', anagrafica.viste.admin_statistiche),
 
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^admin/', include('loginas.urls')),   # Login come utente
+    url(r'^login/', include('loginas.urls')),   # Login come utente
 
     # Autocompletamento
     url(r'^autocomplete/', include('autocomplete_light.urls')),

@@ -442,7 +442,7 @@ def autorizzazioni_storico(request, me):
 
     NUMERO_RICHIESTE = 50
 
-    richieste = me.autorizzazioni_firmate.all().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)\
+    richieste = me.autorizzazioni().filter(necessaria=False).exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)\
                     .order_by('-ultima_modifica')[0:NUMERO_RICHIESTE]
 
     ricarica = pulisci_autorizzazioni(richieste)
