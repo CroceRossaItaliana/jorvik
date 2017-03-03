@@ -73,6 +73,7 @@ urlpatterns = [
     url(r'^informazioni/sedi/$', base.viste.informazioni_sedi),
     url(r'^informazioni/sedi/(?P<slug>.*)/$', base.viste.informazioni_sede),
     url(r'^informazioni/formazione/$', base.viste.formazione),
+    url(r'^informazioni/browser-supportati/$', base.viste.browser_supportati, name='browser_supportati'),
 
     # Applicazioni
     url(r'^utente/$', anagrafica.viste.utente),
