@@ -10,7 +10,7 @@ from anagrafica.models import Dimissione
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('anagrafica', '0044_auto_20170127_1938'),
+        ('anagrafica', '0045_auto_20170208_2234'),
     ]
 
     operations = [
