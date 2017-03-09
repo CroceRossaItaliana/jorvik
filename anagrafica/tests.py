@@ -466,9 +466,14 @@ class TestAnagrafica(TestCase):
     def test_estensione_accettata(self):
         presidente1 = crea_persona()
         presidente2 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        presidente2.email_contatto = email_fittizzia()
+        presidente2.save()
 
         da_estendere, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
-
+        da_estendere.email_contatto = email_fittizzia()
+        da_estendere.save()
         sede2 = crea_sede(presidente2)
 
         self.assertFalse(
@@ -487,6 +492,7 @@ class TestAnagrafica(TestCase):
         est.persona = da_estendere
         est.destinazione = sede2
         est.save()
+        ora = now()
         est.richiedi()
 
         self.assertTrue(
@@ -521,7 +527,20 @@ class TestAnagrafica(TestCase):
             "protocollo_data": datetime.date.today()
         })
 
+        self.assertEqual(2, len(mail.outbox))
         aut.concedi(presidente1, modulo=modulo)
+        self.assertEqual(5, len(mail.outbox))
+        destinatari_verificati = 0
+        for email in mail.outbox[2:]:
+            if da_estendere.email_contatto in email.to:
+                self.assertTrue(email.subject.find('Richiesta di Estensione APPROVATA') > -1)
+                destinatari_verificati += 1
+            elif presidente1.email_contatto in email.to or presidente2.email_contatto in email.to:
+                self.assertTrue(email.subject.find('Richiesta di Estensione da %s APPROVATA' % da_estendere.nome_completo) > -1)
+                self.assertTrue(email.body.find(presidente1.nome_completo) > -1)
+                self.assertTrue(email.body.find('La richiesta di Estensione inoltrata il {}'.format(ora.strftime('%d/%m/%Y'))) > -1)
+                destinatari_verificati += 1
+        self.assertEqual(destinatari_verificati, 3)
 
         self.assertFalse(
             presidente2.autorizzazioni_in_attesa().exists(),
@@ -773,6 +792,10 @@ class TestAnagrafica(TestCase):
 
         presidente1 = crea_persona()
         presidente2 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        presidente2.email_contatto = email_fittizzia()
+        presidente2.save()
 
         da_estendere, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
 
