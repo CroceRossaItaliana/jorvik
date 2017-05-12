@@ -150,3 +150,4 @@ Per attivare la 2FA per un utente è sufficiente:
  * Inserire il token generato da Google Authenticator
  * Il dispositivo è adesso autenticato
  
+TEST
