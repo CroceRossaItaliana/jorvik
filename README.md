@@ -3,6 +3,7 @@
 Jorvik è il nome in codice del progetto di ridisegno del software del **Progetto Gaia** Croce Rossa Italiana
 ([GitHub](https://github.com/CroceRossaCatania/gaia), [Web](https://gaia.cri.it)).
 
+
 I punti chiave nella riprogettazione sono i seguenti:
 * Raccogliere il feedback ottenuto tramite <feedback@gaia.cri.it>,
 * Raccogliere le necessità espresse dagli utenti tramite il Supporto,
