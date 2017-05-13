@@ -80,6 +80,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         Prova ad estrarre il corpo della pagina (body).
         :return:
         """
+        if not self.corpo:
+            return ""
         doc = html.document_fromstring(self.corpo)
         body = doc.xpath('//body')[0]
         body.tag = 'div'
