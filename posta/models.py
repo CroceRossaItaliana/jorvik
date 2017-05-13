@@ -51,6 +51,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     rispondi_a = models.ForeignKey("anagrafica.Persona", default=None, null=True, blank=True,
                                    related_name="messaggi_come_rispondi_a", on_delete=models.CASCADE)
 
+    # Flag per i messaggi cancellati (perche' obsoleti)
+    eliminato = models.BooleanField(default=False, null=False)
+
     @property
     def destinatari(self):
         """
