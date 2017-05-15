@@ -257,11 +257,12 @@
 
                         <div class="alert alert-info">
                             <i class="fa fa-fw fa-info-circle"></i>
-                            Il contenuto di questo messaggio &egrave; stato eliminato perch&eacute; pi&ugrave;
+                            Il contenuto di questo messaggio &egrave; stato eliminato da Gaia perch&eacute; pi&ugrave;
                             vecchio di 6 mesi.
 
                             {% if direzione == "in-arrivo" %}
-                                Controlla la tua casella di posta elettronica.
+                                Questo messaggio &egrave; stato inviato alla tua casella di posta elettronica
+                                il {{ messaggio.creazione|date:"SHORT_DATE_FORMAT" }}.
                             {% endif %}
                         </div>
 
