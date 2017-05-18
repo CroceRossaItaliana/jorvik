@@ -23,7 +23,7 @@
 
 		        <hr />
 
-                <p class="alert alert-info">
+                <!-- <p class="alert alert-info">
                     <i class="icon-info-sign"></i>
                     Questa prima tabella elenca gli aggiornamenti pi&ugrave; importanti dell'ultimo mese con la relativa data di pubblicazione.
                 </p>
@@ -33,10 +33,10 @@
                         <th>Oggetto e revisore</th>
                         <th>Dettagli</th>
                     </thead>
-                    <tbody>
+                    <tbody id="lista-pull-requests">
                         # TODO RECUPERO PULL
                     </tbody>
-                </table>
+                </table> -->
 
                 <p class="alert alert-info">
                     <i class="fa fa-info"></i>
@@ -44,8 +44,8 @@
                     (non sono visualizzate le contribuzioni che non sono sono state ancora rilasciate).
                 </p>
                 <table class="table table-striped">
-                    <tbody>
-                        # TODO RECUPERO PULL
+                    <tbody id="lista-commits">
+                        <tr><td colspan="3"><i class="fa fa-fw fa-spinner fa-spin"></i> Attendi...</td></tr>
                     </tbody>
                 </table>
 
@@ -68,7 +68,7 @@
                     <p></p>
                     <p><strong>Se hai bisogno di aiuto, scrivi invece a </strong></p>
                     <a class="btn btn-large btn-success btn-block" href="mailto:supporto@gaia.cri.it?subject=Richiesta+di+Supporto">
-                        <i class="fa fa-envelope-o""></i>
+                        <i class="fa fa-envelope-o"></i>
                         supporto@gaia.cri.it
                     </a>
                 </div>
@@ -83,5 +83,38 @@
             </div>
         </div>
     </div>
+
+    <script type="text/javascript">
+    $("document").ready(function() {
+        var repo = "CroceRossaItaliana/jorvik";
+        // var pull_requests_url = "https://api.github.com/repos/" + repo + "/pulls";
+        var commits_url = "https://api.github.com/repos/" + repo + "/commits";
+
+        // Get pull requests
+        $.getJSON(commits_url, function(data) {
+            var rows = "";
+            for (var i in data) {
+                var author_name = data[i].commit.author.name;
+                var author_login = data[i].author.login;
+                var author_url = data[i].author.html_url;
+                var author_avatar = data[i].author.avatar_url;
+                var commit_msg = data[i].commit.message;
+                var commit_url = data[i].commit.html_url;
+
+                var commit_date = new Date(data[i].commit.author.date);
+                rows += "<tr>";
+                rows += "  <td>" + commit_date.toLocaleDateString() + "</td>";
+                rows += "  <td><strong>" + commit_msg + "</strong><br />";
+                rows += "      <img height='30' width='30' class='img-circle' src='" + author_avatar + "'> " + author_name;
+                rows += "      (<a href='" + author_url + "'>" + author_login + "</a>)";
+                rows += "  </td>";
+                rows += "  <td><a href='" + commit_url + "'>Vedi commit</a></td>";
+                rows += "</tr>";
+            }
+            $("#lista-commits").html(rows);
+        });
+
+    });
+    </script>
 
 {% endblock %}

@@ -14,7 +14,7 @@ from anagrafica.permessi.applicazioni import REFERENTE, PRESIDENTE, DELEGATO_CO
 from anagrafica.permessi.costanti import GESTIONE_CENTRALE_OPERATIVA_SEDE
 from autenticazione.utils_test import TestFunzionale
 from base.utils_tests import crea_persona, crea_persona_sede_appartenenza, crea_area_attivita, crea_turno, crea_partecipazione, \
-    email_fittizzia
+    email_fittizzia, crea_appartenenza
 from base.models import Autorizzazione
 
 
@@ -183,6 +183,64 @@ class TestAttivita(TestCase):
             msg="Il turno non viene trovato nel calendario - attivita' creata dalla sede del volontario"
         )
 
+    def test_pagina_turni(self):
+
+        sicilia = Sede.objects.create(
+            nome="Comitato Regionale di Sicilia",
+            tipo=Sede.COMITATO,
+            estensione=LOCALE,
+        )
+
+        area = Area.objects.create(
+            nome="6",
+            obiettivo=6,
+            sede=sicilia,
+        )
+
+        attivita = Attivita.objects.create(
+            stato=Attivita.VISIBILE,
+            nome="Att 1",
+            apertura=Attivita.APERTA,
+            area=area,
+            descrizione="1",
+            sede=sicilia,
+            estensione=sicilia,
+        )
+
+        oggi = timezone.now()
+        for day in range(1, 11):
+            giorno_1 = oggi - timedelta(days=day)
+            Turno.objects.create(
+                attivita=attivita,
+                prenotazione=giorno_1 - timedelta(days=1),
+                inizio=giorno_1,
+                fine=giorno_1 + timedelta(days=1),
+                minimo=1,
+                massimo=6,
+            )
+            giorno_1 = oggi + timedelta(days=20 + day)
+            Turno.objects.create(
+                attivita=attivita,
+                prenotazione=giorno_1 - timedelta(days=1),
+                inizio=giorno_1,
+                fine=giorno_1 + timedelta(days=1),
+                minimo=1,
+                massimo=6,
+            )
+        # Esistono 10 turni che finiscono prima di oggi, quindi ci posizioniamo sulla prima pagina
+        self.assertEqual(attivita.pagina_turni_oggi(), 1)
+        for day in range(1, 2):
+            giorno_1 = oggi - timedelta(days=day)
+            Turno.objects.create(
+                attivita=attivita,
+                prenotazione=giorno_1 - timedelta(days=1),
+                inizio=giorno_1,
+                fine=giorno_1 + timedelta(days=1),
+                minimo=1,
+                massimo=6,
+            )
+        # Esistono 11 turni che finiscono prima di oggi, quindi ci posizioniamo sulla seconda pagina
+        self.assertEqual(attivita.pagina_turni_oggi(), 2)
 
     def test_attivita_estesa(self):
 
@@ -493,12 +551,14 @@ class TestFunzionaleAttivita(TestFunzionale):
 
         presidente = crea_persona()
         persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        if not presidente.volontario:
+            crea_appartenenza(presidente, sede)
 
         sessione_presidente = self.sessione_utente(persona=presidente)
         #sessione_persona = self.sessione_utente(persona=persona)
 
         # Crea area di intervento
-        sessione_presidente.click_link_by_partial_text("Attività")
+        sessione_presidente.click_link_by_partial_href("/attivita/")
         sessione_presidente.click_link_by_partial_text("Aree di intervento")
         sessione_presidente.click_link_by_partial_text(sede.nome)
         sessione_presidente.fill('nome', "Area 42")
@@ -527,6 +587,8 @@ class TestFunzionaleAttivita(TestFunzionale):
 
         presidente = crea_persona()
         persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        if not presidente.volontario:
+            crea_appartenenza(presidente, sede)
 
         area = Area(sede=sede, nome="Area 42", obiettivo=6)
         area.save()
@@ -536,7 +598,7 @@ class TestFunzionaleAttivita(TestFunzionale):
         sessione_persona = self.sessione_utente(persona=persona)
 
         # Presidente: Vai a organizza attivita
-        sessione_presidente.click_link_by_partial_text("Attività")
+        sessione_presidente.click_link_by_partial_href("/attivita/")
         sessione_presidente.click_link_by_partial_text("Organizza attività")
 
         # Presidente: Riempi dettagli attivita

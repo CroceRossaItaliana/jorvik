@@ -28,6 +28,7 @@ from django.db.models import Q, QuerySet, Avg
 from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 import phonenumbers
+from mptt.querysets import TreeQuerySet
 
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
 
@@ -279,13 +280,20 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                                    tipo__in=DELEGHE_RUBRICA,
                                    **kwargs)
 
-    def sedi_deleghe_attuali(self, al_giorno=None, espandi=False, pubblici=False, **kwargs):
+    def sedi_deleghe_attuali(self, al_giorno=None, espandi=False, pubblici=False, deleghe=None, **kwargs):
         sedi = Sede.objects.none()
-        for d in self.deleghe_attuali(al_giorno=al_giorno, oggetto_tipo=ContentType.objects.get_for_model(Sede)):
-            if espandi:
-                pks = [x.pk for x in d.oggetto.espandi(includi_me=True, pubblici=pubblici)]
+        tipo_sede = ContentType.objects.get_for_model(Sede)
+        if not deleghe:
+            deleghe = self.deleghe_attuali(al_giorno=al_giorno, oggetto_tipo=tipo_sede)
+        for d in deleghe:
+            if d.oggetto_tipo != tipo_sede and hasattr(d.oggetto, 'sede'):
+                oggetto = d.oggetto.sede
             else:
-                pks = [d.oggetto.pk]
+                oggetto = d.oggetto
+            if espandi:
+                pks = [x.pk for x in oggetto.espandi(includi_me=True, pubblici=pubblici)]
+            else:
+                pks = [oggetto.pk]
 
             sedi |= Sede.objects.filter(pk__in=pks)
         return sedi
@@ -486,14 +494,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         if self.volontario:
             lista += [('/utente/', 'Volontario', 'fa-user')]
-
-        else:
+        elif not hasattr(self, 'aspirante'):
             lista += [('/utente/', 'Utente', 'fa-user')]
 
         if hasattr(self, 'aspirante'):
             lista += [('/aspirante/', 'Aspirante', 'fa-user', self.aspirante.corsi().count())]
 
-        lista += [('/attivita/', 'Attività', 'fa-calendar')]
+        if self.volontario:
+            lista += [('/attivita/', 'Attività', 'fa-calendar')]
+
         lista += [('/posta/', 'Posta', 'fa-envelope')]
 
         if self.ha_pannello_autorizzazioni:
@@ -746,21 +755,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 INCARICO_ASPIRANTE in dict(self.incarichi()))
 
     def incarichi(self):
-        # r = Autorizzazione.objects.none()
-
         if hasattr(self, 'aspirante'):
-            incarichi_persona = {INCARICO_ASPIRANTE: self.__class__.objects.filter(pk=self.pk)}
+            incarichi_persona = {INCARICO_ASPIRANTE: [(self.__class__.objects.filter(pk=self.pk), self.creazione)]}
         else:
             incarichi_persona = {}
         for delega in self.deleghe_attuali():
             incarichi_delega = delega.espandi_incarichi()
             for incarico in incarichi_delega:
                 if not incarico[0] in incarichi_persona:
-                    incarichi_persona.update({incarico[0]: incarico[1]})
+                    incarichi_persona.update({incarico[0]: [(incarico[1], delega.inizio)]})
                 else:
-                    incarichi_persona[incarico[0]] |= incarico[1]
-        incarichi_persona = incarichi_persona.items()
-        return incarichi_persona
+                    incarichi_persona[incarico[0]].append((incarico[1], delega.inizio))
+        return incarichi_persona.items()
 
     def autorizzazioni(self):
         """
@@ -769,11 +775,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         a = Autorizzazione.objects.none()
         for incarico in self.incarichi():
-            a |= Autorizzazione.objects.filter(
-                destinatario_ruolo=incarico[0],
-                destinatario_oggetto_tipo=ContentType.objects.get_for_model(incarico[1].model),
-                destinatario_oggetto_id__in=incarico[1].values_list('id', flat=True),
-            )
+            for potere in incarico[1]:
+                a |= Autorizzazione.objects.filter(
+                    destinatario_ruolo=incarico[0], creazione__gte=potere[1],
+                    destinatario_oggetto_tipo=ContentType.objects.get_for_model(potere[0].model),
+                    destinatario_oggetto_id__in=potere[0].values_list('id', flat=True),
+                )
         a = a.distinct('progressivo', 'oggetto_tipo_id', 'oggetto_id',)
         return Autorizzazione.objects.filter(
             pk__in=a.values_list('id', flat=True)
@@ -924,8 +931,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     def reclamabile_in_sede(self, sede):
         """
-        Controlla se la persona e' reclamabile come socio presso una
-            determinata sede.
+        Controlla se la persona e' reclamabile come socio presso una determinata sede.
+
         :param sede: Sede presso la quale reclamare il socio
         :return: True o False
         """
@@ -934,6 +941,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         regionale = sede.superiore(REGIONALE)
 
+        # I soci ordinari sul proprio regionale possono essere reclamati (ma solo se sono **solo** ordinari)
         if self.appartenenze_attuali().filter(
             sede=regionale,
             membro=Appartenenza.ORDINARIO
@@ -943,7 +951,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         ).exists():
             return True
 
+        # I dipendenti possono essere reclamati (ma solo se sono **solo** dipendenti)
+        if self.appartenenze_attuali().filter(
+            membro=Appartenenza.DIPENDENTE
+        ).exists() and not self.appartenenze_attuali().exclude(
+            membro=Appartenenza.DIPENDENTE
+        ).exists():
+            return True
+
         return False
+
 
     def genera_foglio_di_servizio(self):
         storico = Partecipazione.con_esito_ok().filter(persona=self, stato=Partecipazione.RICHIESTA)\
@@ -1221,6 +1238,8 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         #(MILITARE, 'Membro Militare'),
         #(DONATORE, 'Donatore Finanziario'),
     )
+    PRECEDENZE_MODIFICABILI = (ESTESO,)
+    NON_MODIFICABILE = (ESTESO,)
     membro = models.CharField("Tipo membro", max_length=2, choices=MEMBRO, default=VOLONTARIO, db_index=True)
 
     # Tipo di terminazione
@@ -1238,6 +1257,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         (PROMOZIONE, 'Promozione'),
         (FINE_ESTENSIONE, 'Fine Estensione'),
     )
+    MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI = (FINE_ESTENSIONE, DIMISSIONE, ESPULSIONE)
     terminazione = models.CharField("Terminazione", max_length=1, choices=TERMINAZIONE, default=None, db_index=True,
                                     blank=True, null=True)
 
@@ -1287,8 +1307,54 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         # TOOD: Fare qualcosa
         self.confermata = False
 
+    def modificabile(self, inizio=None):
+        from formazione.models import PartecipazioneCorsoBase
 
-class SedeQuerySet(QuerySet):
+        flag = self.attuale()
+        if inizio:
+            inizio = inizio.date()
+        # Appartenenze come esteso o dipendente sono modificabili perché inizio non vincolato a termine di precedente
+        if self.membro not in self.NON_MODIFICABILE:
+            # Controllo su appartenenza precedente.
+            # Nei casi in MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI, l'appartenenza precedente non determina
+            # l'apertura di una nuova appartenenza
+            if self.precedente and self.precedente.terminazione:
+                if self.precedente.terminazione not in self.MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI:
+                    flag &= False
+                elif inizio:
+                    flag &= inizio > self.precedente.fine
+            aperte = Appartenenza.objects.filter(persona=self.persona, fine__isnull=True, membro=self.membro).exclude(pk=self.pk)
+            if aperte.exists():
+                flag &= False
+            # Controllo su appartenenze temporalmente precedenti.
+            # Nei casi in MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI, l'appartenenza precedente non determina
+            # l'apertura di una nuova appartenenza
+            modificabili_secondo_terminazione = [membro[0] for membro in self.MEMBRO if membro[0] not in self.PRECEDENZE_MODIFICABILI]
+            terminazioni_modificabili = [terminazione[0] for terminazione in self.TERMINAZIONE if terminazione[0] in self.MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI]
+            modificabili = [membro[0] for membro in self.MEMBRO if membro[0] in self.PRECEDENZE_MODIFICABILI]
+            secondo_terminazione = Appartenenza.objects.filter(persona=self.persona, fine__date__lte=self.inizio, membro__in=modificabili_secondo_terminazione).exclude(pk=self.pk)
+            qs_non_modificabili = secondo_terminazione.exclude(terminazione__in=terminazioni_modificabili)
+            qs_modificabili = Appartenenza.objects.filter(persona=self.persona, fine__date__lte=self.inizio, membro__in=modificabili).exclude(pk=self.pk) | secondo_terminazione.filter(terminazione__in=terminazioni_modificabili)
+            if qs_non_modificabili.exists():
+                flag &= False
+            if inizio and qs_modificabili.exists():
+                flag &= not qs_modificabili.filter(fine__date__gt=inizio).exists()
+            qs_corsi = PartecipazioneCorsoBase.objects.filter(persona=self.persona, esito_esame=PartecipazioneCorsoBase.IDONEO)
+            if inizio:
+                qs_corsi = qs_corsi.filter(corso__data_esame__lte=inizio)
+            try:
+                data_post = secondo_terminazione.filter(terminazione__in=terminazioni_modificabili).latest('fine')
+                qs_corsi = qs_corsi.filter(corso__data_inizio__gt=data_post.fine)
+            except Appartenenza.DoesNotExist:
+                pass
+            if qs_corsi.exists():
+                flag = False
+            return flag
+        else:
+            return False
+
+
+class SedeQuerySet(TreeQuerySet):
 
     def comitati(self):
         """
@@ -1382,12 +1448,16 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     attiva = models.BooleanField("Attiva", default=True, db_index=True)
 
     def sorgente_slug(self):
-        if self.genitore:
-            return str(self.genitore.slug) + "-" + self.nome
+        if self.estensione == PROVINCIALE:
+            suffisso = '-p'
         else:
-            return self.nome
+            suffisso = ''
+        if self.genitore:
+            return str(self.genitore.slug) + "-" + self.nome + suffisso
+        else:
+            return self.nome + suffisso
 
-    slug = AutoSlugField(populate_from=sorgente_slug, slugify=sede_slugify, always_update=True)
+    slug = AutoSlugField(populate_from=sorgente_slug, slugify=sede_slugify, always_update=True, max_length=2000, unique=True)
     membri = models.ManyToManyField(Persona, through='Appartenenza', through_fields=('sede', 'persona'))
 
     @property
@@ -1888,15 +1958,15 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
             self.protocollo_data = modulo.cleaned_data['protocollo_data']
             self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
         self.save()
-        self.esegui()
+        self.esegui(auto)
 
-    def esegui(self):
+    def esegui(self, auto=False):
         appartenenzaVecchia = Appartenenza.objects.filter(Appartenenza.query_attuale().q,
                                                           membro=Appartenenza.VOLONTARIO, persona=self.persona).first()
         appartenenzaVecchia.fine = poco_fa()
         appartenenzaVecchia.terminazione = Appartenenza.TRASFERIMENTO
         appartenenzaVecchia.save()
-         # Invia notifica tramite e-mail
+        # Invia notifica tramite e-mail
         app = Appartenenza(
             membro=Appartenenza.VOLONTARIO,
             persona=self.persona,
@@ -1905,10 +1975,15 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
         )
         app.save()
         self.appartenenza = app
+        testo_extra = ''
+        if auto:
+            self.automatica = True
+            testo_extra = 'Il trasferimento è stato automaticamente approvato essendo decorsi trenta giorni, ' \
+                          'ai sensi dell\'articolo 9.5 del "Regolamento sull\'organizzazione, le attività, ' \
+                          'la formazione e l\'ordinamento dei volontari"'
+        else:
+            self.automatica = False
         self.save()
-        testo_extra = 'Il trasferimento è stato automaticamente approvato essendo decorsi trenta giorni, ' \
-                      'ai sensi dell\'articolo 9.5 del "Regolamento sull\'organizzazione, le attività, ' \
-                      'la formazione e l\'ordinamento dei volontari"'
         self.autorizzazioni.first().notifica_origine_autorizzazione_concessa(appartenenzaVecchia.sede, testo_extra)
 
     def richiedi(self):
@@ -2173,21 +2248,30 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     QUOTA = 'QUO'
     RADIAZIONE = 'RAD'
     DECEDUTO = 'DEC'
+    TRASFORMAZIONE = 'TRA'
+    ALTRO = 'ALT'
 
-    MOTIVI = (
+    MOTIVI_VOLONTARI = (
         (VOLONTARIE, 'Dimissioni Volontarie'),
         (TURNO, 'Mancato svolgimento turno'),
         (RISERVA, 'Mancato rientro da riserva'),
         (QUOTA, 'Mancato versamento quota annuale'),
         (RADIAZIONE, 'Radiazione da Croce Rossa Italiana'),
-        (DECEDUTO,  'Decesso'),
+        (DECEDUTO, 'Decesso'),
     )
+
+    MOTIVI_ALTRI = (
+        (TRASFORMAZIONE, 'Trasformazione in volontario'),
+        (ALTRO, 'Altro'),
+    )
+
+    MOTIVI = MOTIVI_VOLONTARI + MOTIVI_ALTRI
 
     motivo = models.CharField(choices=MOTIVI, max_length=3)
     info = models.CharField(max_length=512, help_text="Maggiori informazioni sulla causa della dimissione")
     richiedente = models.ForeignKey(Persona, on_delete=models.SET_NULL, null=True)
 
-    def applica(self, trasforma_in_sostenitore=False):
+    def applica(self, trasforma_in_sostenitore=False, invia_notifica=True):
         from gruppi.models import Appartenenza as App
         precedente_appartenenza = self.appartenenza
         precedente_sede = self.persona.sede_riferimento()
@@ -2200,49 +2284,59 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
             presidente = self.persona.comitato_riferimento().presidente()
             destinatari.add(presidente)
 
-        Appartenenza.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa(), terminazione=Appartenenza.DIMISSIONE)
-        Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
-        App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
-        #TODO reperibilita'
-        [
-            [x.ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
-            for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
-        ]
-
-        if self.motivo != self.DECEDUTO:
-
-            if trasforma_in_sostenitore:
-                app = Appartenenza(precedente=precedente_appartenenza, persona=self.persona,
-                                   sede=precedente_sede,
-                                   inizio=date.today(),
-                                   membro=Appartenenza.SOSTENITORE)
-                app.save()
-
-            Messaggio.costruisci_e_invia(
-                oggetto="Dimissioni",
-                modello="email_dimissioni.html",
-                corpo={
-                    "dimissione": self,
-                },
-                mittente=self.richiedente,
-
-                destinatari=[
-                    self.persona
-                ]
-            )
+        if precedente_appartenenza.membro == Appartenenza.SOSTENITORE:
+            template = "email_dimissioni_sostenitore.html"
         else:
+            template = "email_dimissioni.html"
 
-            for destinatario in destinatari:
+        if precedente_appartenenza.membro == Appartenenza.VOLONTARIO:
+            Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
+            App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
+            #TODO reperibilita'
+            [
+                [x.ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
+                for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
+            ]
+        Appartenenza.query_attuale(
+            al_giorno=self.creazione, persona=self.persona, membro=precedente_appartenenza.membro
+        ).update(fine=poco_fa(), terminazione=Appartenenza.DIMISSIONE)
+
+        if trasforma_in_sostenitore:
+            app = Appartenenza(precedente=precedente_appartenenza, persona=self.persona,
+                               sede=precedente_sede,
+                               inizio=date.today(),
+                               membro=Appartenenza.SOSTENITORE)
+            app.save()
+
+        if invia_notifica:
+
+            if self.motivo == self.DECEDUTO:
+
+                for destinatario in destinatari:
+                    Messaggio.costruisci_e_invia(
+                        oggetto="Dimissioni per decesso",
+                        modello="email_dimissioni_decesso.html",
+                        corpo={
+                            "dimissione": self,
+                            "destinatario": destinatario,
+                            "carica": "Presidente" if destinatario == presidente else "Delegato Ufficio Soci"
+                        },
+                        mittente=self.richiedente,
+                        destinatari=[destinatario]
+                    )
+
+            else:
+
                 Messaggio.costruisci_e_invia(
-                    oggetto="Dimissioni per decesso",
-                    modello="email_dimissioni_decesso.html",
+                    oggetto="Dimissioni",
+                    modello=template,
                     corpo={
                         "dimissione": self,
-                        "destinatario": destinatario,
-                        "carica": "Presidente" if destinatario == presidente else "Delegato Ufficio Soci"
                     },
                     mittente=self.richiedente,
-                    destinatari=[destinatario]
-                )
 
+                    destinatari=[
+                        self.persona
+                    ]
+                )
 

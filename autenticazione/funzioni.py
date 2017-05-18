@@ -44,8 +44,8 @@ def pagina_pubblica(funzione=None, permetti_embed=False):
         if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
             return richiesta  # Passa attraverso.
 
-        request_embed = request.GET.get('embed', default='false')
-        embed = permetti_embed and request_embed in ('true', '1')
+        request_embed = request.GET.get('embed', default='False')
+        embed = permetti_embed and request_embed.lower() in ('true', '1')
 
         contesto.update({"me": request.me})
         contesto.update({"embed": embed})

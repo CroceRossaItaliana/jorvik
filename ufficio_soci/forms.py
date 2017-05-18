@@ -3,14 +3,16 @@ import datetime
 from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator
 from django.forms import ModelForm
+from django.utils.timezone import now
 
 from anagrafica.forms import ModuloStepAnagrafica
 from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva, Trasferimento
 from anagrafica.validators import valida_almeno_14_anni
-from base.utils import rimuovi_scelte
+from base.utils import rimuovi_scelte, testo_euro
 from ufficio_soci.validators import valida_data_non_nel_futuro
-from ufficio_soci.models import Tesseramento, Quota, Tesserino
+from ufficio_soci.models import Tesseramento, Quota, Tesserino, Riduzione
 
 
 class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
@@ -63,6 +65,7 @@ class ModuloElencoPerTitoli(forms.Form):
 
     titoli = autocomplete_light.ModelMultipleChoiceField("TitoloAutocompletamento", help_text="Seleziona uno o più titoli per"
                                                                                               " la tua ricerca.")
+
 
 class ModuloElencoQuote(forms.Form):
     MEMBRI_VOLONTARI = Appartenenza.VOLONTARIO
@@ -140,20 +143,6 @@ class ModuloCreazioneRiserva(autocomplete_light.ModelForm):
         return fine
 
 
-class ModuloReclamaQuota(forms.Form):
-
-    SI = "S"
-    NO = "N"
-    SCELTE = (
-    #    (SI, "Sì, registra la quota per il socio"),
-        (NO, "No, inserirò manualmente la quota più tardi"),
-    )
-    registra_quota = forms.ChoiceField(choices=SCELTE, initial=SI)
-
-    importo_totale = forms.FloatField(initial=0)
-    data_versamento = forms.DateField(initial=datetime.date.today)
-
-
 class ModuloReclama(forms.Form):
 
     codice_fiscale = forms.CharField(min_length=9)
@@ -176,6 +165,33 @@ class ModuloVerificaTesserino(forms.Form):
         return numero_tessera
 
 
+class ModuloSenzaTurni(forms.Form):
+    inizio = forms.DateField(
+        label='Inizio intervallo', required=True,
+        help_text='Saranno ricercati volontari che non hanno effettuato turni a partire da questa data.'
+    )
+    fine = forms.DateField(
+        label='Fine intervallo', required=True,
+        help_text='Saranno ricercati volontari che non hanno effettuato turni fino a questa data.'
+    )
+
+    def __init__(self, *args, **kwargs):
+        if 'initial' not in kwargs:
+            kwargs['initial'] = {}
+        if 'inizio' not in kwargs['initial']:
+            kwargs['initial']['inizio'] = now() - datetime.timedelta(days=365)
+        if 'fine' not in kwargs['initial']:
+            kwargs['initial']['fine'] = now()
+        super(ModuloSenzaTurni, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        if self.cleaned_data['fine'] <= self.cleaned_data['inizio']:
+            self.add_error('fine', 'La data di fine deve essere successiva alla data di inizio.')
+        if self.cleaned_data['fine'] > now().date():
+            self.add_error('fine', 'La data di fine deve essere precedente alla data odierna.')
+        return self.cleaned_data
+
+
 class ModuloCreazioneDimissioni(ModelForm):
     class Meta:
         model = Dimissione
@@ -184,6 +200,10 @@ class ModuloCreazioneDimissioni(ModelForm):
     trasforma_in_sostenitore = forms.BooleanField(help_text="In caso di Dimissioni Volontarie seleziona quest'opzione "
                                                             "per trasformare il volontario in sostenitore. ", required=False)
 
+    def __init__(self, *args, **kwargs):
+        super(ModuloCreazioneDimissioni, self).__init__(*args, **kwargs)
+        self.fields['motivo'].choices = (("", "---------"),) + Dimissione.MOTIVI_VOLONTARI
+
     def clean_trasforma_in_sostenitore(self):
         trasforma_in_sostenitore = self.cleaned_data['trasforma_in_sostenitore']
         motivo = self.cleaned_data['motivo']
@@ -191,6 +211,16 @@ class ModuloCreazioneDimissioni(ModelForm):
             raise ValidationError("Puoi richiedere la trasformazione in sostenitore solo in "
                                   "caso di dimissioni volontarie.")
         return trasforma_in_sostenitore
+
+
+class ModuloDimissioniSostenitore(ModelForm):
+    class Meta:
+        model = Dimissione
+        fields = ['motivo', 'info', ]
+
+    def __init__(self, *args, **kwargs):
+        super(ModuloDimissioniSostenitore, self).__init__(*args, **kwargs)
+        self.fields['motivo'].choices = (("", "---------"),) + Dimissione.MOTIVI_ALTRI
 
 
 class ModuloElencoRicevute(forms.Form):
@@ -225,15 +255,101 @@ class ModuloElencoIVCM(forms.Form):
     )
     includi = forms.ChoiceField(choices=SCELTE)
 
+class ModuloQuotaGenerico(forms.Form):
+    riduzione = forms.ModelChoiceField(label='Riduzione', queryset=Riduzione.objects.all(), widget=forms.RadioSelect, required=False, empty_label='Nessuna')
+    importo = forms.FloatField(help_text="Il totale versato in euro, comprensivo dell'eventuale "
+                                         "donazione aggiuntiva.")
+    data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro], initial=datetime.date.today)
 
-class ModuloQuotaVolontario(forms.Form):
+    sedi = None
+
+    def __init__(self, *args, **kwargs):
+        self.sedi = kwargs.pop('sedi')
+        super(ModuloQuotaGenerico, self).__init__(*args, **kwargs)
+        self.fields['importo'].widget.attrs['min'] = self.initial.get('importo', 0)
+
+    def clean_quota(self, data):
+
+        volontario = data.get('volontario', None)
+        riduzione = data.get('riduzione', None)
+        importo = data.get('importo', None)
+        data_versamento = data.get('data_versamento', None)
+        if not volontario or not data_versamento or not importo:
+            return data
+
+        anno_corrente = data_versamento.year
+
+        try:
+            tesseramento = Tesseramento.objects.get(anno=anno_corrente)
+        except Tesseramento.DoesNotExist:
+            tesseramento = None
+
+        if tesseramento:
+            if importo < tesseramento.importo_quota_volontario(riduzione):
+                self.add_error('importo', 'L\'importo minimo per il %d e\' di EUR %s.' % (
+                    anno_corrente, testo_euro(tesseramento.importo_quota_volontario(riduzione))
+                ))
+
+            elif data_versamento.year != anno_corrente or data_versamento > now().date():
+                self.add_error('data_versamento', 'La data di versamento deve essere nel %d e '
+                                                  'non può essere nel futuro.' % anno_corrente)
+
+            elif not Tesseramento.aperto_anno(
+                    data_versamento, volontario.iv, volontario.volontario_da_meno_di_un_anno
+            ):
+                if volontario.iv:
+                    data_fine = tesseramento.fine_soci_iv
+                elif volontario.volontario_da_meno_di_un_anno:
+                    data_fine = tesseramento.fine_soci_nv
+                else:
+                    data_fine = tesseramento.fine_soci
+                if data_fine:
+                    self.add_error('data_versamento',
+                                   "Spiacente, non è possibile registrare una "
+                                   "quota con data di versamento successiva al "
+                                   "%s" % data_fine)
+                else:
+                    self.add_error('data_versamento',
+                                   "Spiacente, non è possibile registrare una "
+                                   "quota perché il tesseramento %s è chiuso" % anno_corrente)
+
+            elif tesseramento.pagante(volontario, attivi=True, ordinari=False):
+                self.add_error('volontario', 'Questo volontario ha già pagato la Quota '
+                                             'associativa per l\'anno %d' % anno_corrente)
+
+            elif not tesseramento.non_pagante(volontario, attivi=True, ordinari=False):
+                self.add_error('volontario', 'Questo volontario non è passibile al pagamento '
+                                             'della Quota associativa come Volontario presso '
+                                             'una delle tue Sedi, per l\'anno %d.' % anno_corrente)
+
+        return data
+
+
+class ModuloQuotaVolontario(ModuloQuotaGenerico):
     volontario = autocomplete_light.ModelChoiceField("PersonaAutocompletamento",
                                                      help_text="Seleziona il Volontario per il quale registrare"
                                                                " la quota associativa.")
 
-    importo = forms.FloatField(help_text="Il totale versato in euro, comprensivo dell'eventuale "
-                                         "donazione aggiuntiva.")
-    data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro])
+    def clean(self):
+        data = super(ModuloQuotaVolontario, self).clean()
+        data = self.clean_quota(data)
+        return data
+
+
+class ModuloReclamaQuota(ModuloQuotaGenerico):
+
+    SI = "S"
+    NO = "N"
+    SCELTE = (
+    #    (SI, "Sì, registra la quota per il socio"),
+        (NO, "No, inserirò manualmente la quota più tardi"),
+    )
+    registra_quota = forms.ChoiceField(choices=SCELTE, initial=SI)
+
+    def clean(self):
+        data = super(ModuloReclamaQuota, self).clean()
+        data = self.clean_quota(data)
+        return data
 
 
 class ModuloNuovaRicevuta(forms.Form):

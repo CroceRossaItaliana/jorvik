@@ -32,7 +32,8 @@ class CronReportComitati(CronJobBase):
             "Via", "Città", "CAP", "Telefono", "FAX",
             "Email", "Sito web", "Denominazione",
             "Referente", "Codice Fiscale", "Partita IVA",
-            "IBAN", "Extra: Titolo", "Extra: Testo"
+            "IBAN", "PEC", "Ultima modifica",
+            "Extra: Titolo", "Extra: Testo"
         ])
 
         for sede in sedi:
@@ -83,6 +84,8 @@ class CronReportComitati(CronJobBase):
                 sede.codice_fiscale,
                 sede.partita_iva,
                 sede.iban,
+                sede.pec,
+                sede.ultima_modifica,
                 extra_titolo,
                 extra_testo,
             )

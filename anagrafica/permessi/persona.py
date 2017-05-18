@@ -98,6 +98,7 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=None):
     :return: True se permessi >= minimo, False altrimenti
     """
 
+
     if permesso_minimo(oggetto.__class__) >= minimo:
         return True
 
@@ -120,11 +121,9 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=None):
             permessi += ESPANDI_PERMESSI[permesso](queryset)
 
     for (permesso, queryset) in permessi:  # p: (PERMESSO, queryset)
-
         # Non cerco tra oggetti di tipo diverso!
         if queryset.model != oggetto.__class__:
             continue
-
         # Okay, quindi ora controllo se l'oggetto e' in questo queryset
         if queryset.filter(pk=oggetto.pk).exists():
             if permesso >= minimo:

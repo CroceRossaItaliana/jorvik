@@ -4,14 +4,14 @@ Questo modulo contiene la configurazione per il routing degli URL.
 (c)2015 Croce Rossa Italiana
 """
 import django, django.views, django.views.static, django.contrib.auth.views
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth.views import password_change, password_change_done
-from django.shortcuts import redirect
 
 import anagrafica.viste
 import articoli.viste
 import attivita.viste
+import autenticazione.viste
 import base.viste, base.errori
 import centrale_operativa.viste
 import formazione.viste
@@ -52,7 +52,7 @@ urlpatterns = [
     # url(r'^login/$', base.errori.vista_ci_siamo_quasi),
     url(r'^', include(tf_urls, 'two_factor')),   # 2FA
     url(r'^scaduta/$', base.viste.sessione_scaduta),
-    url(r'^logout/$', django.contrib.auth.views.logout, {'template_name': 'base_logout.html'}),
+    url(r'^logout/$', autenticazione.viste.logout, {'template_name': 'base_logout.html'}, name='logout'),
     url(r'^', include('django.contrib.auth.urls')),
 
     # Modulo di recupero password
@@ -89,23 +89,7 @@ urlpatterns = [
     url(r'^utente/contatti/$', anagrafica.viste.utente_contatti),
     url(r'^utente/rubrica/referenti/$', anagrafica.viste.utente_rubrica_referenti),
     url(r'^utente/rubrica/volontari/$', anagrafica.viste.utente_rubrica_volontari),
-    url(r'^utente/rubrica/presidenti/$', anagrafica.viste.delegato_rubrica_presidenti),
-    url(r'^utente/rubrica/delegati_us/$', anagrafica.viste.delegato_rubrica_delegati_us),
-    url(r'^utente/rubrica/delegati_us_unita/$', anagrafica.viste.delegato_rubrica_delegati_us_unita_territoriale),
-    url(r'^utente/rubrica/delegati_area/$', anagrafica.viste.delegato_rubrica_delegati_area),
-    url(r'^utente/rubrica/delegati_obiettivo_1/$', anagrafica.viste.delegato_rubrica_delegati_obiettivo_1),
-    url(r'^utente/rubrica/delegati_obiettivo_2/$', anagrafica.viste.delegato_rubrica_delegati_obiettivo_2),
-    url(r'^utente/rubrica/delegati_obiettivo_3/$', anagrafica.viste.delegato_rubrica_delegati_obiettivo_3),
-    url(r'^utente/rubrica/delegati_obiettivo_4/$', anagrafica.viste.delegato_rubrica_delegati_obiettivo_4),
-    url(r'^utente/rubrica/delegati_obiettivo_6/$', anagrafica.viste.delegato_rubrica_delegati_obiettivo_6),
-    url(r'^utente/rubrica/responsabili_area/$', anagrafica.viste.delegato_rubrica_responsabili_area),
-    url(r'^utente/rubrica/referenti_attivita/$', anagrafica.viste.delegato_rubrica_referenti_attivita),
-    url(r'^utente/rubrica/referenti_gruppi/$', anagrafica.viste.delegato_rubrica_referenti_gruppo),
-    url(r'^utente/rubrica/centrali_operative/$', anagrafica.viste.delegato_rubrica_delegati_centrale_operativa),
-    url(r'^utente/rubrica/responsabili_formazione/$', anagrafica.viste.delegato_rubrica_responsabili_formazione),
-    url(r'^utente/rubrica/direttori_corsi/$', anagrafica.viste.delegato_rubrica_direttori_corso),
-    url(r'^utente/rubrica/responsabili_autoparco/$', anagrafica.viste.delegato_rubrica_responsabili_autoparco),
-    url(r'^utente/rubrica/giovani/$', anagrafica.viste.giovane_rubrica_giovani),
+    url(r'^utente/rubrica/(?P<rubrica>.*)/$', anagrafica.viste.rubrica_delegati),
     url(r'^utente/curriculum/$', anagrafica.viste.utente_curriculum),
     url(r'^utente/curriculum/(?P<pk>.*)/cancella/$', anagrafica.viste.utente_curriculum_cancella),
     url(r'^utente/curriculum/(?P<tipo>.*)/$', anagrafica.viste.utente_curriculum),
@@ -139,13 +123,13 @@ urlpatterns = [
     url(r'^profilo/(?P<pk>[0-9]+)/(?P<sezione>.*)/$', anagrafica.viste.profilo),
     url(r'^profilo/(?P<pk>[0-9]+)/$', anagrafica.viste.profilo),
 
-    url(r'^autorizzazioni/$', base.viste.autorizzazioni),
-    url(r'^autorizzazioni/storico/$', base.viste.autorizzazioni_storico),
-    url(r'^autorizzazioni/(?P<content_type_pk>[0-9]+)/$', base.viste.autorizzazioni),
-    url(r'^autorizzazioni/(?P<pk>[0-9]+)/concedi/$', base.viste.autorizzazione_concedi),
-    url(r'^autorizzazioni/(?P<pk>[0-9]+)/nega/$', base.viste.autorizzazione_nega),
+    url(r'^autorizzazioni/$', base.viste.autorizzazioni, name='autorizzazioni-aperte'),
+    url(r'^autorizzazioni/storico/$', base.viste.autorizzazioni_storico, name='autorizzazioni-storico'),
+    url(r'^autorizzazioni/(?P<content_type_pk>[0-9]+)/$', base.viste.autorizzazioni, name='autorizzazioni-dettaglio'),
+    url(r'^autorizzazioni/(?P<pk>[0-9]+)/concedi/$', base.viste.autorizzazione_concedi, name='autorizzazioni-concedi'),
+    url(r'^autorizzazioni/(?P<pk>[0-9]+)/nega/$', base.viste.autorizzazione_nega, name='autorizzazioni-nega'),
 
-    url(r'^posta/scrivi/', posta.viste.posta_scrivi),
+    url(r'^posta/scrivi/', posta.viste.posta_scrivi, name='posta-scrivi'),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/(?P<messaggio_id>\d+)/', posta.viste.posta),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/', posta.viste.posta),
     url(r'^posta/(?P<direzione>[\w\-]+)/', posta.viste.posta),
@@ -228,7 +212,8 @@ urlpatterns = [
     url(r'^us/trasferimento/$', ufficio_soci.viste.us_trasferimento),
     url(r'^us/riserva/$', ufficio_soci.viste.us_riserva),
     url(r'^us/riserva/(?P<pk>.*)/termina/$', ufficio_soci.viste.us_riserva_termina),
-    url(r'^us/dimissioni/(?P<pk>[0-9]+)/$', ufficio_soci.viste.us_dimissioni),
+    url(r'^us/dimissioni/(?P<pk>[0-9]+)/$', ufficio_soci.viste.us_dimissioni, name='us-dimissioni'),
+    url(r'^us/dimissioni/sostenitore/(?P<pk>[0-9]+)/$', ufficio_soci.viste.us_chiudi_sostenitore, name='us-chiudi-sostenitore'),
 
     url(r'^us/elenchi/(?P<elenco_tipo>.*)/$', ufficio_soci.viste.us_elenchi),
     url(r'^us/quote/$', ufficio_soci.viste.us_quote),
@@ -241,14 +226,14 @@ urlpatterns = [
     url(r'^us/tesserini/da-richiedere/$', ufficio_soci.viste.us_tesserini_da_richiedere),
     url(r'^us/tesserini/senza-fototessera/$', ufficio_soci.viste.us_tesserini_senza_fototessera),
     url(r'^us/tesserini/richiesti/$', ufficio_soci.viste.us_tesserini_richiesti),
-    url(r'^us/tesserini/richiedi/(?P<persona_pk>[0-9]+)/$', ufficio_soci.viste.us_tesserini_richiedi),
+    url(r'^us/tesserini/richiedi/(?P<persona_pk>[0-9]+)/$', ufficio_soci.viste.us_tesserini_richiedi, name='us-tesserini-richiedi'),
     url(r'^us/tesserini/emissione/$', ufficio_soci.viste.us_tesserini_emissione),
     url(r'^us/tesserini/emissione/processa/$', ufficio_soci.viste.us_tesserini_emissione_processa),
     url(r'^us/tesserini/emissione/scarica/$', ufficio_soci.viste.us_tesserini_emissione_scarica),
 
     url(r'^us/elenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', ufficio_soci.viste.us_elenco),
     url(r'^us/elenco/(?P<elenco_id>.*)/download/$', ufficio_soci.viste.us_elenco_download),
-    url(r'^us/elenco/(?P<elenco_id>.*)/messaggio/$', ufficio_soci.viste.us_elenco_messaggio),
+    url(r'^us/elenco/(?P<elenco_id>.*)/messaggio/$', ufficio_soci.viste.us_elenco_messaggio, name='us-elenco-messaggio'),
     url(r'^us/elenco/(?P<elenco_id>.*)/modulo/$', ufficio_soci.viste.us_elenco_modulo),
     url(r'^us/elenco/(?P<elenco_id>.*)/$', ufficio_soci.viste.us_elenco),
 
@@ -281,6 +266,7 @@ urlpatterns = [
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/mappa/$', formazione.viste.aspirante_corso_base_mappa),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/$', formazione.viste.aspirante_corso_base_iscritti),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/aggiungi/$', formazione.viste.aspirante_corso_base_iscritti_aggiungi),
+    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/cancella/(?P<iscritto>[0-9]+)/$', formazione.viste.aspirante_corso_base_iscritti_cancella, name='formazione-iscritti-cancella'),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscriviti/$', formazione.viste.aspirante_corso_base_iscriviti),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/ritirati/$', formazione.viste.aspirante_corso_base_ritirati),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/report/$', formazione.viste.aspirante_corso_base_report),
@@ -324,7 +310,7 @@ urlpatterns = [
     url(r'^admin/statistiche/$', anagrafica.viste.admin_statistiche),
 
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^admin/', include('loginas.urls')),   # Login come utente
+    url(r'^login/', include('loginas.urls')),   # Login come utente
 
     # Autocompletamento
     url(r'^autocomplete/', include('autocomplete_light.urls')),

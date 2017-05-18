@@ -2,6 +2,7 @@
 
 {% block pagina_titolo %}Senza titolo{% endblock %}
 {% load static %}
+{% load base_tags %}
 
 {% block pagina_corpo %}
     {% include "includes/live_chat.html" %}
@@ -41,7 +42,7 @@
                                     Amministrazione
                                 </a>
                             {% endif %}
-                            <a class="btn btn-sm btn-info" href="/logout/">
+                            <a class="btn btn-sm btn-info" href="{% url 'logout' %}">
                                 <i class="fa fa-sign-out"></i>
                                 Logout
                             </a>
@@ -65,6 +66,10 @@
                 </div><!--/.navbar-collapse -->
               </div>
             </nav>
+            {% for message in messages %}
+                <div class="text-center alert {{ message|level_to_bootstrap }}" role="alert">{{ message }}</div>
+            {% endfor %}
+
         {% endif %}
         
     {% endblock %}

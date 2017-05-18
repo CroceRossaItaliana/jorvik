@@ -12,6 +12,15 @@
         <i class="fa fa-fw fa-users"></i>
         {{ elenco_nome }}
     </h2>
+    <p class="allinea-centro">
+        <b>Sed{{ sedi|pluralize:"e,i" }}: </b>
+        {% for sede in sedi|slice:":3" %}
+            <span>{{ sede }}{% if not forloop.last or sedi|length > 3 %} - {% endif %}</span>
+        {% endfor %}
+        {% if sedi|length > 3 %}
+            <span title="{% for sede in sedi %}{{ sede }}{% if not forloop.last %} - {% endif %}{% endfor %}">&hellip;</span>
+        {% endif %}
+    </p>
 
     {% if elenco_template %}
         {% include elenco_template %}

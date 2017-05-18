@@ -151,6 +151,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def possibile_aggiungere_iscritti(self):
         return self.stato in [Corso.ATTIVO, Corso.PREPARAZIONE]
 
+    @property
+    def possibile_cancellare_iscritti(self):
+        return self.stato in [Corso.ATTIVO, Corso.PREPARAZIONE]
+
     def __str__(self):
         return self.nome
 
@@ -261,19 +265,28 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return self.partecipazioni_confermate() | self.partecipazioni_in_attesa()
 
     def partecipazioni_confermate(self):
-        return PartecipazioneCorsoBase.con_esito_ok().filter(corso=self)
+        return PartecipazioneCorsoBase.con_esito_ok(corso=self)
 
     def partecipazioni_in_attesa(self):
-        return PartecipazioneCorsoBase.con_esito_pending().filter(corso=self)
+        return PartecipazioneCorsoBase.con_esito_pending(corso=self)
+
+    def inviti_confermati_o_in_attesa(self):
+        return self.inviti_confermati() | self.inviti_in_attesa()
+
+    def inviti_confermati(self):
+        return InvitoCorsoBase.con_esito_ok(corso=self)
+
+    def inviti_in_attesa(self):
+        return InvitoCorsoBase.con_esito_pending(corso=self)
 
     def numero_partecipazioni_in_attesa_e_inviti(self):
-        return PartecipazioneCorsoBase.con_esito_pending().filter(corso=self).count() + InvitoCorsoBase.objects.filter(corso=self).count()
+        return self.partecipazioni_in_attesa().count() + self.inviti_in_attesa().count()
 
     def partecipazioni_negate(self):
-        return PartecipazioneCorsoBase.con_esito_no().filter(corso=self)
+        return PartecipazioneCorsoBase.con_esito_no(corso=self)
 
     def partecipazioni_ritirate(self):
-        return PartecipazioneCorsoBase.con_esito_ritirata().filter(corso=self)
+        return PartecipazioneCorsoBase.con_esito_ritirata(corso=self)
 
     def attiva(self, rispondi_a=None):
         if not self.attivabile():
@@ -433,6 +446,36 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
             scadenza=self.APPROVAZIONE_AUTOMATICA,
         )
 
+    def disiscrivi(self, mittente=None):
+        """
+        Disiscrive partecipante dal corso base.
+        """
+        self.autorizzazioni_ritira()
+        Messaggio.costruisci_e_invia(
+            oggetto="Annullamento invito al Corso Base: %s" % self.corso,
+            modello="email_aspirante_corso_deiscrizione_invito.html",
+            corpo={
+                "invito": self,
+                "corso": self.corso,
+                "persona": self.persona,
+                "mittente": mittente,
+            },
+            mittente=mittente,
+            destinatari=[self.persona],
+        )
+        Messaggio.costruisci_e_invia(
+            oggetto="Annullamento invito al Corso Base: %s" % self.corso,
+            modello="email_aspirante_corso_deiscrizione_invito_mittente.html",
+            corpo={
+                "invito": self,
+                "corso": self.corso,
+                "persona": self.persona,
+                "richiedente": mittente,
+            },
+            mittente=None,
+            destinatari=[mittente],
+        )
+
 
 class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
 
@@ -444,6 +487,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     NON_ISCRITTO = 0
     ISCRITTO = 1
     IN_ATTESA_ASPIRANTE = 2
+    CANCELLATO = 3
     INVITO_INVIATO = -1
 
     # Dati per la generazione del verbale (esito)
@@ -548,6 +592,36 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
             },
             mittente=mittente,
             destinatari=[self.persona],
+        )
+
+    def disiscrivi(self, mittente=None):
+        """
+        Disiscrive partecipante dal corso base.
+        """
+        self.autorizzazioni_ritira()
+        Messaggio.costruisci_e_invia(
+            oggetto="Disiscrizione dal Corso Base: %s" % self.corso,
+            modello="email_aspirante_corso_deiscrizione.html",
+            corpo={
+                "partecipazione": self,
+                "corso": self.corso,
+                "persona": self.persona,
+                "mittente": mittente,
+            },
+            mittente=mittente,
+            destinatari=[self.persona],
+        )
+        Messaggio.costruisci_e_invia(
+            oggetto="Disiscrizione dal Corso Base: %s" % self.corso,
+            modello="email_aspirante_corso_deiscrizione_mittente.html",
+            corpo={
+                "partecipazione": self,
+                "corso": self.corso,
+                "persona": self.persona,
+                "richiedente": mittente,
+            },
+            mittente=None,
+            destinatari=[mittente],
         )
 
     def __str__(self):

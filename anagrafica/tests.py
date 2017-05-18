@@ -3,6 +3,7 @@ from unittest import skipIf
 
 import re
 from django.core import mail
+from django.core.urlresolvers import reverse
 from django.test import Client
 from django.test import TestCase
 from django.utils.timezone import now
@@ -10,22 +11,205 @@ from freezegun import freeze_time
 from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
-from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica
+from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica, \
+    ModuloConsentiTrasferimento
 from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Estensione, Trasferimento, Riserva, Sede
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_5
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, \
+    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
+    DELEGATO_AREA, UFFICIO_SOCI, UFFICIO_SOCI_UNITA, RESPONSABILE_AREA, REFERENTE, REFERENTE_GRUPPO, DELEGATO_CO, \
+    RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
 from anagrafica.utils import termina_deleghe_giovani
+from anagrafica.viste import _rubrica_delegati
 from autenticazione.models import Utenza
 from autenticazione.utils_test import TestFunzionale
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, email_fittizzia, \
     crea_utenza
-from formazione.models import Aspirante
-from jorvik.settings import GOOGLE_KEY
+from formazione.models import Aspirante, CorsoBase, PartecipazioneCorsoBase
 from posta.models import Messaggio, Autorizzazione
+from ufficio_soci.forms import ModuloElencoVolontari
 
 
 class TestAnagrafica(TestCase):
+
+    def test_appartenenza_modificabile_con_campo_precedente(self):
+
+        persona = crea_persona()
+        sede1 = crea_sede()
+        sede2 = crea_sede()
+
+        # appartenenza "isolata"
+        a_persona_1 = crea_appartenenza(persona, sede1)
+        self.assertTrue(a_persona_1.modificabile())
+
+        # doppia appartenenza "aperta" genera blocchi (perché non consistente)
+        a_persona_2 = crea_appartenenza(persona, sede2)
+        a_persona_2.inizio = "1980-11-10"
+        a_persona_1.precedente = a_persona_2
+        a_persona_1.save()
+        a_persona_2.save()
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se l'appartenenza è terminata, quella più recente non è modificabile
+        a_persona_2.terminazione = Appartenenza.TRASFERIMENTO
+        a_persona_2.save()
+        a_persona_1.refresh_from_db()
+        a_persona_2.refresh_from_db()
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se è un trasferimento o altro non si può modificare
+        for tipo in Appartenenza.TERMINAZIONE:
+            if tipo[0] not in Appartenenza.MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI:
+                for membro in Appartenenza.MEMBRO:
+                    if membro[0] not in Appartenenza.PRECEDENZE_MODIFICABILI:
+                        a_persona_2.terminazione = tipo[0]
+                        a_persona_2.membro = membro[0]
+                        a_persona_2.save()
+                        a_persona_1.refresh_from_db()
+                        a_persona_2.refresh_from_db()
+                        self.assertFalse(a_persona_1.modificabile())
+
+    def test_appartenenza_modificabile_con_precedente_per_data(self):
+
+        persona = crea_persona()
+        sede1 = crea_sede()
+        sede2 = crea_sede()
+
+        # appartenenza "isolata"
+        a_persona_1 = crea_appartenenza(persona, sede1)
+        self.assertTrue(a_persona_1.modificabile())
+
+        corso = CorsoBase.objects.create(
+            sede=sede1, data_inizio=poco_fa(), data_esame=poco_fa(), progressivo=1, anno=poco_fa().year
+        )
+        # Corso non completato non genera blocchi
+        partecipazione = PartecipazioneCorsoBase.objects.create(persona=persona, corso=corso)
+        self.assertTrue(a_persona_1.modificabile())
+
+        # se deriva da un corso base non è modificabile
+        partecipazione.esito_esame = PartecipazioneCorsoBase.IDONEO
+        partecipazione.save()
+        self.assertFalse(a_persona_1.modificabile())
+
+        partecipazione.esito_esame = None
+        partecipazione.save()
+        self.assertTrue(a_persona_1.modificabile())
+
+        # Se è un'estensione non si può modificare
+        a_persona_1.membro = Appartenenza.ESTESO
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se è un dipendente si può modificare
+        a_persona_1.membro = Appartenenza.DIPENDENTE
+        self.assertTrue(a_persona_1.modificabile())
+
+        # Se è un ordinario si può modificare
+        a_persona_1.membro = Appartenenza.ORDINARIO
+        self.assertTrue(a_persona_1.modificabile())
+
+        # Se è un sostenitore si può modificare
+        a_persona_1.membro = Appartenenza.SOSTENITORE
+        self.assertTrue(a_persona_1.modificabile())
+
+        # doppia appartenenza "aperta" genera blocchi (perché non consistente)
+        a_persona_1.membro = Appartenenza.VOLONTARIO
+        a_persona_2 = crea_appartenenza(persona, sede2)
+        a_persona_2.inizio = "1980-11-10"
+        a_persona_1.save()
+        a_persona_2.save()
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se l'appartenenza è terminata, quella più recente non è modificabile
+        a_persona_2.terminazione = Appartenenza.TRASFERIMENTO
+        a_persona_2.fine = "1980-12-10"
+        a_persona_2.save()
+        a_persona_1.refresh_from_db()
+        a_persona_2.refresh_from_db()
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se è un trasferimento o altro non si può modificare
+        for tipo in Appartenenza.TERMINAZIONE:
+            if tipo[0] not in Appartenenza.MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI:
+                for membro in Appartenenza.MEMBRO:
+                    if membro[0] not in Appartenenza.PRECEDENZE_MODIFICABILI:
+                        a_persona_2.terminazione = tipo[0]
+                        a_persona_2.membro = membro[0]
+                        a_persona_2.save()
+                        a_persona_1.refresh_from_db()
+                        a_persona_2.refresh_from_db()
+                        self.assertFalse(a_persona_1.modificabile())
+
+    def test_appartenenza_modificabile_controllo_nuovo_inizio(self):
+
+        persona = crea_persona()
+        sede1 = crea_sede()
+        sede2 = crea_sede()
+
+        # appartenenza "isolata"
+        a_persona_1 = crea_appartenenza(persona, sede1)
+        self.assertTrue(a_persona_1.modificabile())
+
+        # doppia appartenenza "aperta" genera blocchi (perché non consistente)
+        a_persona_2 = crea_appartenenza(persona, sede2)
+        a_persona_2.inizio = "1980-11-10"
+        a_persona_1.save()
+        a_persona_2.save()
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se l'appartenenza è terminata, quella più recente non è modificabile
+        a_persona_2.terminazione = Appartenenza.TRASFERIMENTO
+        a_persona_2.fine = "1980-12-10"
+        a_persona_2.save()
+        a_persona_1.refresh_from_db()
+        a_persona_2.refresh_from_db()
+        self.assertFalse(a_persona_1.modificabile())
+
+        # Se è una dimissione si può modificare se la data di inizio è successiva alla terminazione
+        a_persona_2.terminazione = Appartenenza.DIMISSIONE
+        a_persona_2.membro = Appartenenza.VOLONTARIO
+        a_persona_2.save()
+        a_persona_1.refresh_from_db()
+        a_persona_2.refresh_from_db()
+        self.assertTrue(a_persona_1.modificabile())
+        self.assertTrue(a_persona_1.modificabile(a_persona_2.fine + datetime.timedelta(days=10)))
+        self.assertFalse(a_persona_1.modificabile(a_persona_2.fine - datetime.timedelta(days=10)))
+
+        # Se è una espulsione si può modificare se la data di inizio è successiva alla terminazione
+        a_persona_2.terminazione = Appartenenza.ESPULSIONE
+        a_persona_2.membro = Appartenenza.VOLONTARIO
+        a_persona_2.save()
+        a_persona_1.refresh_from_db()
+        a_persona_2.refresh_from_db()
+        self.assertTrue(a_persona_1.modificabile())
+        self.assertTrue(a_persona_1.modificabile(a_persona_2.fine + datetime.timedelta(days=10)))
+        self.assertFalse(a_persona_1.modificabile(a_persona_2.fine - datetime.timedelta(days=10)))
+
+        data_corso = a_persona_2.fine - datetime.timedelta(days=10)
+        corso = CorsoBase.objects.create(
+            sede=sede1, data_inizio=data_corso, data_esame=data_corso, progressivo=1, anno=data_corso.year
+        )
+        # Corso non completato non genera blocchi
+        partecipazione = PartecipazioneCorsoBase.objects.create(persona=persona, corso=corso)
+        self.assertTrue(a_persona_1.modificabile())
+
+        # se il corso base è prima delle dimissioni viene ignorato
+        partecipazione.esito_esame = PartecipazioneCorsoBase.IDONEO
+        partecipazione.save()
+        self.assertTrue(a_persona_1.modificabile())
+
+        partecipazione.esito_esame = None
+        partecipazione.save()
+
+        data_corso = a_persona_2.fine + datetime.timedelta(days=10)
+        corso.data_inizio = data_corso
+        corso.save()
+        self.assertTrue(a_persona_1.modificabile())
+
+        # se il corso base è dopo le dimissioni blocca il cambio data
+        partecipazione.esito_esame = PartecipazioneCorsoBase.IDONEO
+        partecipazione.save()
+        self.assertFalse(a_persona_1.modificabile())
 
     def test_appartenenza(self):
 
@@ -789,21 +973,125 @@ class TestAnagrafica(TestCase):
         destinatari_verificati = 0
         for email in mail.outbox[1:]:
             if da_trasferire.email_contatto in email.to:
-                # Notifica alla persona estesa
+                # Notifica alla persona trasferita
                 self.assertTrue(email.subject.find('Richiesta di trasferimento APPROVATA') > -1)
                 destinatari_verificati += 1
             elif presidente1.email_contatto in email.to or ufficio_soci.email_contatto in email.to:
                 # Notifica presidente e ufficio soci in uscita
                 self.assertTrue(email.subject.find('Richiesta di trasferimento da %s APPROVATA' % da_trasferire.nome_completo) > -1)
                 self.assertTrue(email.body.find('articolo 9.5 del "Regolamento') > -1)
+                self.assertTrue(email.body.find('automaticamente.') > -1)
+                self.assertFalse(email.body.find(presidente1.nome_completo) > -1)
+                self.assertTrue(email.body.find('La richiesta di trasferimento inoltrata il {}'.format(ora.strftime('%d/%m/%Y'))) > -1)
                 destinatari_verificati += 1
         self.assertEqual(destinatari_verificati, 3)
 
-        self.assertEqual(autorizzazione.concessa, True)
+        trasf.refresh_from_db()
+        autorizzazione.refresh_from_db()
+        self.assertTrue(autorizzazione.concessa)
+        self.assertTrue(autorizzazione.automatica)
+        self.assertTrue(trasf.automatica)
         self.assertTrue(autorizzazione.oggetto.automatica)
         Autorizzazione.gestisci_automatiche()
-        self.assertEqual(autorizzazione.concessa, True)
+        trasf.refresh_from_db()
+        autorizzazione.refresh_from_db()
+        self.assertTrue(autorizzazione.concessa)
         self.assertIn(trasf, Trasferimento.con_esito_ok())
+        self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).count(), 0)
+        self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede2).count(), 1)
+
+    def test_trasferimento_manuale(self):
+        presidente1 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        presidente2 = crea_persona()
+        presidente2.email_contatto = email_fittizzia()
+        presidente2.save()
+
+        da_trasferire, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
+        da_trasferire.email_contatto = email_fittizzia()
+        da_trasferire.save()
+
+        ufficio_soci = crea_persona()
+        ufficio_soci.email_contatto = email_fittizzia()
+        ufficio_soci.save()
+        crea_appartenenza(ufficio_soci, sede1)
+        Delega.objects.create(persona=ufficio_soci, tipo=UFFICIO_SOCI, oggetto=sede1, inizio=poco_fa())
+
+        sede2 = crea_sede(presidente2)
+
+        self.assertFalse(
+            da_trasferire.estensioni_attuali_e_in_attesa().exists(),
+            msg="Non esiste estensione alcuna"
+        )
+
+        self.assertFalse(
+            presidente1.autorizzazioni_in_attesa().exists(),
+            msg="Il presidente non ha autorizzazioni in attesa"
+        )
+        ora = now()
+
+        trasf = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=da_trasferire,
+            richiedente=da_trasferire,
+            motivo='test'
+        )
+        self.assertEqual(0, Autorizzazione.objects.count())
+        trasf.richiedi()
+        self.assertNotIn(trasf, Trasferimento.con_esito_ok())
+        self.assertEqual(1, Autorizzazione.objects.count())
+        self.assertEqual(1, len(mail.outbox))
+
+        # Notifica Presidente in uscita
+        email = mail.outbox[0]
+        self.assertTrue(email.subject.find('Richiesta di trasferimento da %s' % da_trasferire.nome_completo) > -1)
+        self.assertTrue(email.body.find('Nota bene: Questa richiesta di trasferimento') > -1)
+        self.assertTrue(presidente1.email_contatto in email.to)
+
+        autorizzazione = Autorizzazione.objects.first()
+
+        self.assertFalse(autorizzazione.concessa)
+        self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).count(), 1)
+        self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede2).count(), 0)
+
+        form = ModuloConsentiTrasferimento(
+            {'protocollo_data': now().date().strftime('%Y-%m-%d'), 'protocollo_numero': 1}
+        )
+        form.is_valid()
+        autorizzazione.concedi(firmatario=presidente1, modulo=form)
+        autorizzazione.refresh_from_db()
+        trasf.refresh_from_db()
+
+        self.assertEqual(4, len(mail.outbox))
+        destinatari_verificati = 0
+        for email in mail.outbox[1:]:
+            if da_trasferire.email_contatto in email.to:
+                # Notifica alla persona trasferita
+                self.assertTrue(email.subject.find('Richiesta di trasferimento APPROVATA') > -1)
+                destinatari_verificati += 1
+            elif presidente1.email_contatto in email.to or ufficio_soci.email_contatto in email.to:
+                # Notifica presidente e ufficio soci in uscita
+                self.assertTrue(email.subject.find('Richiesta di trasferimento da %s APPROVATA' % da_trasferire.nome_completo) > -1)
+                self.assertFalse(email.body.find('articolo 9.5 del "Regolamento') > -1)
+                self.assertTrue(email.body.find(presidente1.nome_completo) > -1)
+                self.assertTrue(email.body.find('Nota bene: Questa richiesta di trasferimento') == -1)
+                self.assertTrue(email.body.find('La richiesta di trasferimento inoltrata il {}'.format(ora.strftime('%d/%m/%Y'))) > -1)
+                destinatari_verificati += 1
+        self.assertEqual(destinatari_verificati, 3)
+
+        trasf.refresh_from_db()
+        autorizzazione.refresh_from_db()
+        self.assertTrue(autorizzazione.concessa)
+        self.assertFalse(autorizzazione.automatica)
+        self.assertFalse(trasf.automatica)
+        self.assertFalse(autorizzazione.oggetto.automatica)
+        Autorizzazione.gestisci_automatiche()
+        trasf.refresh_from_db()
+        autorizzazione.refresh_from_db()
+        self.assertTrue(autorizzazione.concessa)
+        self.assertIn(trasf, Trasferimento.con_esito_ok())
+        self.assertFalse(trasf.automatica)
         self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).count(), 0)
         self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede2).count(), 1)
 
@@ -1271,6 +1559,257 @@ class TestAnagrafica(TestCase):
         self.assertTrue("Ufficio Soci" in mail.outbox[0].body)
         self.assertTrue("recupero di tesserino e divisa" in mail.outbox[0].body)
 
+    def test_rubriche_delegati(self):
+        italia = crea_sede(estensione=NAZIONALE)
+        toscana = crea_sede(estensione=REGIONALE, genitore=italia)
+        veneto = crea_sede(estensione=REGIONALE, genitore=italia)
+        emilia_romagna = crea_sede(estensione=REGIONALE, genitore=italia)
+        abruzzo = crea_sede(estensione=REGIONALE, genitore=italia)
+        firenze = crea_sede(estensione=PROVINCIALE, genitore=toscana)
+        dicomano = crea_sede(estensione=TERRITORIALE, genitore=firenze)
+        empoli = crea_sede(estensione=LOCALE, genitore=toscana)
+        vinci = crea_sede(estensione=TERRITORIALE, genitore=empoli)
+
+        sedi_tutte = Sede.objects.filter(pk__in=(
+            italia.pk, toscana.pk, veneto.pk, emilia_romagna.pk, abruzzo.pk, firenze.pk, dicomano.pk, empoli.pk,
+            vinci.pk)
+        )
+        sedi_toscana = Sede.objects.filter(pk__in=(
+            toscana.pk, firenze.pk, dicomano.pk, empoli.pk, vinci.pk)
+        )
+        sedi_firenze = Sede.objects.filter(pk__in=(firenze.pk, dicomano.pk))
+        sede_firenze = Sede.objects.filter(pk__in=(firenze.pk,))
+        sede_dicomano = Sede.objects.filter(pk__in=(dicomano.pk,))
+        sedi_empoli = Sede.objects.filter(pk__in=(empoli.pk, vinci.pk))
+        sede_vinci = Sede.objects.filter(pk__in=(vinci.pk,))
+        sedi_abruzzo = Sede.objects.filter(pk__in=(abruzzo.pk,))
+
+        delegato_nazionale = crea_persona()
+        delegato_nazionale_no_6 = crea_persona()
+        delegato_toscana = crea_persona()
+        delegato_firenze = crea_persona()
+        delegato_firenze_no_5 = crea_persona()
+        delegato_dicomano = crea_persona()
+        delegato_empoli = crea_persona()
+        delegato_vinci = crea_persona()
+        delegato_veneto = crea_persona()
+        delegato_emilia_romagna = crea_persona()
+        delegato_abruzzo = crea_persona()
+        Delega.objects.create(persona=delegato_nazionale, tipo=DELEGATO_OBIETTIVO_6, oggetto=italia, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_nazionale_no_6, tipo=RESPONSABILE_AREA, oggetto=italia, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_toscana, tipo=DELEGATO_OBIETTIVO_6, oggetto=toscana, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_firenze, tipo=DELEGATO_OBIETTIVO_6, oggetto=firenze, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_firenze_no_5, tipo=DELEGATO_OBIETTIVO_5, oggetto=firenze, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_dicomano, tipo=DELEGATO_OBIETTIVO_6, oggetto=dicomano, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_empoli, tipo=DELEGATO_OBIETTIVO_6, oggetto=empoli, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_vinci, tipo=DELEGATO_OBIETTIVO_6, oggetto=vinci, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_abruzzo, tipo=DELEGATO_OBIETTIVO_3, oggetto=abruzzo, inizio=poco_fa())
+        # Rubrica delegati obiettivo 6 per il delegato nazionale
+        elenco = _rubrica_delegati(delegato_nazionale, DELEGATO_OBIETTIVO_6, sedi_tutte).risultati()
+        self.assertEqual(5, len(elenco))
+        self.assertNotIn(delegato_nazionale, elenco)
+        self.assertIn(delegato_toscana, elenco)
+        self.assertIn(delegato_firenze, elenco)
+        self.assertIn(delegato_dicomano, elenco)
+        self.assertIn(delegato_empoli, elenco)
+        self.assertIn(delegato_vinci, elenco)
+        self.assertNotIn(delegato_abruzzo, elenco)
+        self.assertNotIn(delegato_veneto, elenco)
+        self.assertNotIn(delegato_emilia_romagna, elenco)
+        self.assertNotIn(delegato_firenze_no_5, elenco)
+        self.assertNotIn(delegato_nazionale_no_6, elenco)
+        # Rubrica delegati obiettivo 5 per il delegato nazionale
+        elenco = _rubrica_delegati(delegato_nazionale, DELEGATO_OBIETTIVO_5, sedi_tutte)
+        modulo_riempito = ModuloElencoVolontari({
+            'includi_estesi': ModuloElencoVolontari.SI
+        })
+        elenco.modulo_riempito = modulo_riempito
+        elenco = elenco.risultati()
+        self.assertEqual(1, len(elenco))
+        self.assertNotIn(delegato_nazionale, elenco)
+        self.assertNotIn(delegato_toscana, elenco)
+        self.assertNotIn(delegato_firenze, elenco)
+        self.assertNotIn(delegato_dicomano, elenco)
+        self.assertNotIn(delegato_empoli, elenco)
+        self.assertNotIn(delegato_vinci, elenco)
+        self.assertNotIn(delegato_veneto, elenco)
+        self.assertNotIn(delegato_emilia_romagna, elenco)
+        self.assertIn(delegato_firenze_no_5, elenco)
+        self.assertNotIn(delegato_nazionale_no_6, elenco)
+        self.assertNotIn(delegato_abruzzo, elenco)
+        # Rubrica delegati obiettivo 6 per il delegato regionale toscana
+        elenco = _rubrica_delegati(delegato_toscana, DELEGATO_OBIETTIVO_6, sedi_toscana).risultati()
+        self.assertEqual(4, len(elenco))
+        self.assertNotIn(delegato_nazionale, elenco)
+        self.assertNotIn(delegato_toscana, elenco)
+        self.assertIn(delegato_firenze, elenco)
+        self.assertIn(delegato_dicomano, elenco)
+        self.assertIn(delegato_empoli, elenco)
+        self.assertIn(delegato_vinci, elenco)
+        self.assertNotIn(delegato_veneto, elenco)
+        self.assertNotIn(delegato_emilia_romagna, elenco)
+        self.assertNotIn(delegato_firenze_no_5, elenco)
+        self.assertNotIn(delegato_nazionale_no_6, elenco)
+        self.assertNotIn(delegato_abruzzo, elenco)
+        # Rubrica delegati obiettivo 6 per il delegato provinciale firenze
+        elenco = _rubrica_delegati(delegato_firenze, DELEGATO_OBIETTIVO_6, sedi_firenze).risultati()
+        self.assertEqual(1, len(elenco))
+        self.assertNotIn(delegato_nazionale, elenco)
+        self.assertNotIn(delegato_toscana, elenco)
+        self.assertNotIn(delegato_firenze, elenco)
+        self.assertIn(delegato_dicomano, elenco)
+        self.assertNotIn(delegato_empoli, elenco)
+        self.assertNotIn(delegato_vinci, elenco)
+        self.assertNotIn(delegato_veneto, elenco)
+        self.assertNotIn(delegato_emilia_romagna, elenco)
+        self.assertNotIn(delegato_firenze_no_5, elenco)
+        self.assertNotIn(delegato_nazionale_no_6, elenco)
+        self.assertNotIn(delegato_abruzzo, elenco)
+        # Rubrica delegati obiettivo 6 per il delegato provinciale firenze, con sede filtrata
+        elenco = _rubrica_delegati(delegato_firenze, DELEGATO_OBIETTIVO_6, sede_firenze).risultati()
+        self.assertEqual(0, len(elenco))
+        self.assertNotIn(delegato_nazionale, elenco)
+        self.assertNotIn(delegato_toscana, elenco)
+        self.assertNotIn(delegato_firenze, elenco)
+        self.assertNotIn(delegato_dicomano, elenco)
+        self.assertNotIn(delegato_empoli, elenco)
+        self.assertNotIn(delegato_vinci, elenco)
+        self.assertNotIn(delegato_veneto, elenco)
+        self.assertNotIn(delegato_emilia_romagna, elenco)
+        self.assertNotIn(delegato_firenze_no_5, elenco)
+        self.assertNotIn(delegato_nazionale_no_6, elenco)
+        self.assertNotIn(delegato_abruzzo, elenco)
+        # Rubrica delegati obiettivo 6 per il delegato locale
+        elenco = _rubrica_delegati(delegato_empoli, DELEGATO_OBIETTIVO_6, sedi_empoli).risultati()
+        self.assertEqual(1, len(elenco))
+        self.assertNotIn(delegato_nazionale, elenco)
+        self.assertNotIn(delegato_toscana, elenco)
+        self.assertNotIn(delegato_firenze, elenco)
+        self.assertNotIn(delegato_dicomano, elenco)
+        self.assertNotIn(delegato_empoli, elenco)
+        self.assertIn(delegato_vinci, elenco)
+        self.assertNotIn(delegato_veneto, elenco)
+        self.assertNotIn(delegato_emilia_romagna, elenco)
+        self.assertNotIn(delegato_firenze_no_5, elenco)
+        self.assertNotIn(delegato_nazionale_no_6, elenco)
+        self.assertNotIn(delegato_abruzzo, elenco)
+        # Rubrica delegati obiettivo 6 per il delegato territoriale
+        elenco = _rubrica_delegati(delegato_dicomano, DELEGATO_OBIETTIVO_6, sede_dicomano).risultati()
+        self.assertEqual(0, len(elenco))
+        self.assertNotIn(delegato_nazionale, elenco)
+        self.assertNotIn(delegato_toscana, elenco)
+        self.assertNotIn(delegato_firenze, elenco)
+        self.assertNotIn(delegato_dicomano, elenco)
+        self.assertNotIn(delegato_empoli, elenco)
+        self.assertNotIn(delegato_vinci, elenco)
+        self.assertNotIn(delegato_veneto, elenco)
+        self.assertNotIn(delegato_emilia_romagna, elenco)
+        self.assertNotIn(delegato_firenze_no_5, elenco)
+        self.assertNotIn(delegato_nazionale_no_6, elenco)
+        self.assertNotIn(delegato_abruzzo, elenco)
+        # Rubrica delegati obiettivo 6 per il delegato territoriale
+        elenco = _rubrica_delegati(delegato_vinci, DELEGATO_OBIETTIVO_6, sede_vinci).risultati()
+        self.assertEqual(0, len(elenco))
+        self.assertNotIn(delegato_nazionale, elenco)
+        self.assertNotIn(delegato_toscana, elenco)
+        self.assertNotIn(delegato_firenze, elenco)
+        self.assertNotIn(delegato_dicomano, elenco)
+        self.assertNotIn(delegato_empoli, elenco)
+        self.assertNotIn(delegato_vinci, elenco)
+        self.assertNotIn(delegato_veneto, elenco)
+        self.assertNotIn(delegato_emilia_romagna, elenco)
+        self.assertNotIn(delegato_firenze_no_5, elenco)
+        self.assertNotIn(delegato_nazionale_no_6, elenco)
+        self.assertNotIn(delegato_abruzzo, elenco)
+        # Rubrica delegati obiettivo 3 per il delegato regionale abruzzo
+        elenco = _rubrica_delegati(delegato_abruzzo, DELEGATO_OBIETTIVO_3, sedi_abruzzo).risultati()
+        self.assertEqual(0, len(elenco))
+        self.assertNotIn(delegato_nazionale, elenco)
+        self.assertNotIn(delegato_toscana, elenco)
+        self.assertNotIn(delegato_firenze, elenco)
+        self.assertNotIn(delegato_dicomano, elenco)
+        self.assertNotIn(delegato_empoli, elenco)
+        self.assertNotIn(delegato_vinci, elenco)
+        self.assertNotIn(delegato_veneto, elenco)
+        self.assertNotIn(delegato_emilia_romagna, elenco)
+        self.assertNotIn(delegato_firenze_no_5, elenco)
+        self.assertNotIn(delegato_nazionale_no_6, elenco)
+        self.assertNotIn(delegato_abruzzo, elenco)
+
+    def test_storico_richieste(self):
+
+        presidente = crea_persona()
+        crea_utenza(presidente, email=email_fittizzia())
+
+        uff_soci, sede, __ = crea_persona_sede_appartenenza(presidente)
+        Delega.objects.create(tipo=UFFICIO_SOCI, persona=uff_soci, oggetto=sede, firmatario=presidente, inizio=now())
+
+        sede2 = crea_sede(presidente)
+        self.assertEqual(presidente.deleghe.count(), 2)
+        # Tutte le deleghe presidente partono da adesso per verificare il rispetto delle date
+        # nello storico
+        for delega in presidente.deleghe.all():
+            delega.inizio = now()
+            delega.save()
+
+        socio = crea_persona()
+        Appartenenza.objects.create(
+            persona=socio, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO
+        )
+
+        trasf = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=socio,
+            richiedente=socio,
+            motivo='test'
+        )
+        trasf.richiedi()
+        autorizzazione = Autorizzazione.objects.first()
+        autorizzazione.concedi(
+            firmatario=uff_soci,
+            modulo=ModuloConsentiTrasferimento({'protocollo_numero': 1, 'protocollo_data': poco_fa()})
+        )
+
+        # L'autorizzazione chiesta dopo l'inizio della delega è visibile
+        self.client.login(username=presidente.utenza.email, password='prova')
+        response = self.client.get(reverse('autorizzazioni-storico'))
+        self.assertContains(response, 'chiede il trasferimento verso')
+        self.assertContains(response, sede2)
+        self.assertContains(response, uff_soci.nome_completo)
+        self.assertContains(response, socio.nome_completo)
+
+        # L'autorizzazione chiesta prima dell'inizio della delega non è visibile
+        autorizzazione.creazione = now() - datetime.timedelta(days=10)
+        autorizzazione.save()
+        response = self.client.get(reverse('autorizzazioni-storico'))
+        self.assertNotContains(response, 'chiede il trasferimento verso')
+        self.assertNotContains(response, sede2)
+        self.assertNotContains(response, uff_soci.nome_completo)
+        self.assertNotContains(response, socio.nome_completo)
+
+        # Anticipando l'inizio della delega nell'altra sede la richiesta non è comunque visibile
+        delega = presidente.deleghe.last()
+        delega.inizio = now() - datetime.timedelta(days=20)
+        delega.save()
+        response = self.client.get(reverse('autorizzazioni-storico'))
+        self.assertNotContains(response, 'chiede il trasferimento verso')
+        self.assertNotContains(response, sede2)
+        self.assertNotContains(response, uff_soci.nome_completo)
+        self.assertNotContains(response, socio.nome_completo)
+
+        # Anticipando l'inizio della delega nella sede corretta la richiesta è visibile
+        delega = presidente.deleghe.first()
+        delega.inizio = now() - datetime.timedelta(days=20)
+        delega.save()
+        delega = presidente.deleghe.last()
+        delega.inizio = now() - datetime.timedelta(days=5)
+        delega.save()
+        response = self.client.get(reverse('autorizzazioni-storico'))
+        self.assertContains(response, 'chiede il trasferimento verso')
+        self.assertContains(response, sede2)
+        self.assertContains(response, uff_soci.nome_completo)
+        self.assertContains(response, socio.nome_completo)
+
 
 class TestFunzionaliAnagrafica(TestFunzionale):
 
@@ -1520,3 +2059,133 @@ class TestFunzionaliAnagrafica(TestFunzionale):
 
         response = client.get('/registrati/aspirante/anagrafica/?code=random_str&registration=random_session')
         self.assertContains(response, 'Errore nel processo di registrazione.')
+
+    def test_rubriche_delegati(self):
+        EMAIL = email_fittizzia()
+        italia = crea_sede(estensione=NAZIONALE)
+        toscana = crea_sede(estensione=REGIONALE, genitore=italia)
+        veneto = crea_sede(estensione=REGIONALE, genitore=italia)
+        abruzzo = crea_sede(estensione=REGIONALE, genitore=italia)
+        emilia_romagna = crea_sede(estensione=REGIONALE, genitore=italia)
+        firenze = crea_sede(estensione=LOCALE, genitore=toscana)
+        dicomano = crea_sede(estensione=TERRITORIALE, genitore=firenze)
+        empoli = crea_sede(estensione=LOCALE, genitore=toscana)
+        territorio_empoli = crea_sede(estensione=TERRITORIALE, genitore=empoli)
+        delegato_nazionale = crea_persona()
+        delegato_nazionale_no_6 = crea_persona()
+        delegato_toscana = crea_persona()
+        delegato_firenze = crea_persona()
+        delegato_firenze_no_6 = crea_persona()
+        delegato_dicomano = crea_persona()
+        delegato_empoli = crea_persona()
+        delegato_territorio_empoli = crea_persona()
+        delegato_veneto = crea_persona()
+        delegato_emilia_romagna = crea_persona()
+        delegato_abruzzo = crea_persona()
+        Delega.objects.create(persona=delegato_nazionale, tipo=DELEGATO_OBIETTIVO_6, oggetto=italia, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_nazionale_no_6, tipo=RESPONSABILE_AREA, oggetto=italia, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_toscana, tipo=DELEGATO_OBIETTIVO_6, oggetto=toscana, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_firenze, tipo=DELEGATO_OBIETTIVO_6, oggetto=firenze, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_firenze_no_6, tipo=DELEGATO_OBIETTIVO_5, oggetto=firenze, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_dicomano, tipo=DELEGATO_OBIETTIVO_6, oggetto=dicomano, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_empoli, tipo=DELEGATO_OBIETTIVO_6, oggetto=empoli, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_territorio_empoli, tipo=DELEGATO_OBIETTIVO_6, oggetto=territorio_empoli, inizio=poco_fa())
+        Delega.objects.create(persona=delegato_abruzzo, tipo=DELEGATO_OBIETTIVO_3, oggetto=abruzzo, inizio=poco_fa())
+        # Testa la rubrica per il delegato nazionale
+        utenza = crea_utenza(persona=delegato_nazionale, email=EMAIL)
+        sessione_delegato_nazionale = self.sessione_utente(utente=utenza, wait_time=1)
+        sessione_delegato_nazionale.visit("%s%s" % (self.live_server_url, '/utente/'))
+        self.assertTrue(sessione_delegato_nazionale.is_text_present("Rubrica"))
+        self.assertTrue(sessione_delegato_nazionale.is_text_present("Referenti"))
+        self.assertTrue(sessione_delegato_nazionale.is_text_present("Volontari"))
+        self.assertTrue(sessione_delegato_nazionale.is_text_present("Delegati Obiettivo VI (Sviluppo)"))
+        sessione_delegato_nazionale.click_link_by_partial_href('delegati_obiettivo_6')
+        sessione_delegato_nazionale.find_by_css('.col-md-3 .btn-primary').first.click()
+        with sessione_delegato_nazionale.get_iframe(0) as iframe:
+            self.assertTrue(iframe.is_text_present(delegato_toscana.nome))
+            self.assertTrue(iframe.is_text_present(delegato_firenze.nome))
+            self.assertTrue(iframe.is_text_present(delegato_empoli.nome))
+            self.assertTrue(iframe.is_text_present(delegato_dicomano.nome))
+            self.assertTrue(iframe.is_text_present(delegato_territorio_empoli.nome))
+            self.assertFalse(iframe.is_text_present(delegato_nazionale.nome))
+            self.assertTrue(iframe.is_text_present(delegato_toscana.cognome))
+            self.assertTrue(iframe.is_text_present(delegato_firenze.cognome))
+            self.assertTrue(iframe.is_text_present(firenze.nome_completo))
+            self.assertTrue(iframe.is_text_present(delegato_empoli.cognome))
+            self.assertTrue(iframe.is_text_present(delegato_dicomano.cognome))
+            self.assertTrue(iframe.is_text_present(delegato_territorio_empoli.cognome))
+            self.assertFalse(iframe.is_text_present(delegato_firenze_no_6.nome))
+            self.assertFalse(iframe.is_text_present(delegato_firenze_no_6.cognome))
+            self.assertFalse(iframe.is_text_present(delegato_veneto.nome))
+            self.assertFalse(iframe.is_text_present(delegato_veneto.cognome))
+        sessione_delegato_nazionale.click_link_by_partial_href('delegati_obiettivo_6')
+        for sede in  sessione_delegato_nazionale.find_by_name('sedi'):
+            if int(sede.value) == firenze.pk:
+                sede.check()
+            else:
+                sede.uncheck()
+        sessione_delegato_nazionale.find_by_css('.col-md-3 .btn-primary').first.click()
+        with sessione_delegato_nazionale.get_iframe(0) as iframe:
+            self.assertFalse(iframe.is_text_present(delegato_nazionale.nome))
+            self.assertFalse(iframe.is_text_present(delegato_toscana.nome))
+            self.assertTrue(iframe.is_text_present(delegato_firenze.nome))
+            self.assertFalse(iframe.is_text_present(delegato_empoli.nome))
+            self.assertFalse(iframe.is_text_present(delegato_dicomano.nome))
+            self.assertFalse(iframe.is_text_present(delegato_territorio_empoli.nome))
+            self.assertFalse(iframe.is_text_present(delegato_nazionale.nome))
+            self.assertFalse(iframe.is_text_present(delegato_toscana.cognome))
+            self.assertTrue(iframe.is_text_present(delegato_firenze.cognome))
+            self.assertFalse(iframe.is_text_present(delegato_empoli.cognome))
+            self.assertFalse(iframe.is_text_present(delegato_dicomano.cognome))
+            self.assertFalse(iframe.is_text_present(delegato_territorio_empoli.cognome))
+            self.assertFalse(iframe.is_text_present(delegato_firenze_no_6.nome))
+            self.assertFalse(iframe.is_text_present(delegato_firenze_no_6.cognome))
+            self.assertFalse(iframe.is_text_present(delegato_veneto.nome))
+            self.assertFalse(iframe.is_text_present(delegato_veneto.cognome))
+
+        # Testa la rubrica per il delegato di firenze
+        EMAIL = email_fittizzia()
+        utenza = crea_utenza(persona=delegato_firenze, email=EMAIL)
+        sessione_delegato_firenze = self.sessione_utente(utente=utenza, wait_time=1)
+        sessione_delegato_firenze.visit("%s%s" % (self.live_server_url, '/utente/'))
+        self.assertTrue(sessione_delegato_firenze.is_text_present("Rubrica"))
+        self.assertTrue(sessione_delegato_firenze.is_text_present("Referenti"))
+        self.assertTrue(sessione_delegato_firenze.is_text_present("Volontari"))
+        self.assertTrue(sessione_delegato_firenze.is_text_present("Delegati Obiettivo VI (Sviluppo)"))
+        sessione_delegato_firenze.click_link_by_partial_href('delegati_obiettivo_6')
+        sessione_delegato_firenze.find_by_css('.col-md-3 .btn-primary').first.click()
+        with sessione_delegato_firenze.get_iframe(0) as iframe:
+            self.assertFalse(iframe.is_text_present(delegato_nazionale.nome))
+            self.assertFalse(iframe.is_text_present(delegato_toscana.nome))
+            self.assertFalse(iframe.is_text_present(delegato_firenze.nome))
+            self.assertFalse(iframe.is_text_present(delegato_empoli.nome))
+            self.assertTrue(iframe.is_text_present(delegato_dicomano.nome))
+            self.assertFalse(iframe.is_text_present(delegato_territorio_empoli.nome))
+            self.assertFalse(iframe.is_text_present(delegato_nazionale.nome))
+            self.assertFalse(iframe.is_text_present(delegato_toscana.cognome))
+            self.assertFalse(iframe.is_text_present(delegato_firenze.cognome))
+            self.assertFalse(iframe.is_text_present(delegato_empoli.cognome))
+            self.assertTrue(iframe.is_text_present(delegato_dicomano.cognome))
+            self.assertFalse(iframe.is_text_present(delegato_territorio_empoli.cognome))
+            self.assertFalse(iframe.is_text_present(delegato_firenze_no_6.nome))
+            self.assertFalse(iframe.is_text_present(delegato_firenze_no_6.cognome))
+            self.assertFalse(iframe.is_text_present(delegato_veneto.nome))
+            self.assertFalse(iframe.is_text_present(delegato_veneto.cognome))
+        # Testa la rubrica per il delegato territoriale dicomano
+        EMAIL = email_fittizzia()
+        utenza = crea_utenza(persona=delegato_dicomano, email=EMAIL)
+        sessione_delegato_dicomano = self.sessione_utente(utente=utenza, wait_time=1)
+        sessione_delegato_dicomano.visit("%s%s" % (self.live_server_url, '/utente/'))
+        self.assertTrue(sessione_delegato_dicomano.is_text_present("Rubrica"))
+        self.assertTrue(sessione_delegato_dicomano.is_text_present("Referenti"))
+        self.assertTrue(sessione_delegato_dicomano.is_text_present("Volontari"))
+        self.assertFalse(sessione_delegato_dicomano.is_text_present("Delegati Obiettivo VI (Sviluppo)"))
+        # Testa la rubrica per il delegato regionale abruzzo (non vede la rubrica)
+        EMAIL = email_fittizzia()
+        utenza = crea_utenza(persona=delegato_abruzzo, email=EMAIL)
+        sessione_delegato_abruzzo = self.sessione_utente(utente=utenza, wait_time=1)
+        sessione_delegato_abruzzo.visit("%s%s" % (self.live_server_url, '/utente/'))
+        self.assertTrue(sessione_delegato_dicomano.is_text_present("Rubrica"))
+        self.assertTrue(sessione_delegato_dicomano.is_text_present("Referenti"))
+        self.assertTrue(sessione_delegato_dicomano.is_text_present("Volontari"))
+        self.assertFalse(sessione_delegato_dicomano.is_text_present("Delegati Obiettivo III (Emergenze)"))
