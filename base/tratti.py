@@ -208,7 +208,10 @@ class ConDelegati(models.Model):
         :return: QuerySet di oggetti Delega.
         """
         Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
-        return self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno, solo_attive=solo_attive, **kwargs).q)
+        deleghe = self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno, **kwargs).q)
+        if solo_attive:
+            deleghe = deleghe.filter(stato=Delega.ATTIVA)
+        return deleghe
 
     def delegati_attuali(self, al_giorno=None, solo_deleghe_attive=False, **kwargs):
         """
@@ -256,6 +259,14 @@ class ConDelegati(models.Model):
         d = Delega(oggetto=self, persona=persona, inizio=inizio, fine=fine, tipo=tipo, firmatario=firmatario)
         d.save()
         return d
+
+    def sospendi_deleghe(self):
+        Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
+        self.deleghe_attuali(solo_attive=True).update(stato=Delega.SOSPESA)
+
+    def attiva_deleghe(self):
+        Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
+        self.deleghe_attuali(solo_attive=False).update(stato=Delega.ATTIVA)
 
 
 class ConPDF():

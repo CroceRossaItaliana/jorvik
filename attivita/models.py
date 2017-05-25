@@ -16,7 +16,8 @@ from anagrafica.permessi.applicazioni import REFERENTE
 from anagrafica.permessi.costanti import MODIFICA
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI, INCARICO_PRESIDENZA
 from base.files import PDF
-from base.utils import concept
+from base.utils import concept, poco_fa
+from posta.models import Messaggio
 from social.models import ConGiudizio, ConCommenti
 from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati, ConVecchioID, Autorizzazione
 from base.tratti import ConMarcaTemporale, ConDelegati
@@ -61,6 +62,10 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     # attività di Centrale Operativa
     MINUTI_CENTRALE_OPERATIVA = 15
 
+    # Numero di giorni che devono passare per chiudere
+    #  automaticamente questa attivita' in mancanza di nuovi turni
+    CHIUDI_AUTOMATICAMENTE_DOPO_GG = 90
+
     nome = models.CharField(max_length=255, default="Nuova attività", db_index=True,
                             help_text="es. Aggiungi un posto a tavola")
     sede = models.ForeignKey('anagrafica.Sede', related_name='attivita', on_delete=models.PROTECT)
@@ -84,6 +89,13 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
                                                     "all'uso del pannello di Centrale Operativa della Sede "
                                                     "da %d minuti prima dell'inizio a %d minuti dopo la fine del "
                                                     "turno." % (MINUTI_CENTRALE_OPERATIVA, MINUTI_CENTRALE_OPERATIVA),)
+
+    # Questo campo viene usato per salvare un timestamp quando l'attivita e' stata chiusa automaticamente
+    #  dal sistema. Dovrebbe essere controllato dal cron, in modo tale che le attivita' aperte che sono state
+    #  chiuse automaticamente nel passato, non vengano chiuse automaticamente di nuovo.
+    # Nota bene: Il campo non nullo non vuol dire che l'attivita' e' attualmente chiusa, semplicemente che lo e'
+    #  stato in qualche momento nel passato.
+    chiusa_automaticamente = models.DateTimeField(default=None, null=True, blank=True)
 
     def __str__(self):
         return self.nome
@@ -128,6 +140,10 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     @property
     def url_modifica(self):
         return self.url + "modifica/"
+
+    @property
+    def url_riapri(self):
+        return self.url + "riapri/"
 
     @property
     def url_partecipanti(self):
@@ -248,6 +264,46 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
             orientamento=PDF.ORIENTAMENTO_ORIZZONTALE,
         )
         return pdf
+
+    def chiudi(self, autore=None, invia_notifiche=True, azione_automatica=False):
+        """
+        Chiude questa attivita. Imposta il nuovo stato, sospende
+        le deleghe e, se specificato, invia la notifica ai referenti.
+        :param invia_notifiche: True per inviare le notifiche ai refernti di attivita, le cui
+                                deleghe verranno sospese.
+        :param azione_automatica: Se l'azione e' stata svolta in modo automatico (i.e. via cron) o meno.
+                                  Viene usato per modificare la notifica.
+        :return: 
+        """
+        self.apertura = self.CHIUSA
+        self.save()
+
+        if invia_notifiche:
+            self._invia_notifica_chiusura(autore=autore, azione_automatica=azione_automatica)
+
+        if azione_automatica:
+            self.chiusa_automaticamente = poco_fa()
+
+        self.sospendi_deleghe()
+
+    def riapri(self, invia_notifiche=True):
+        self.apertura = self.APERTA
+        self.save()
+        self.attiva_deleghe()
+
+    def _invia_notifica_chiusura(self, autore, azione_automatica):
+        """
+        Invia una e-mail di notifica ai delegati della chiusura automatica di questa attivita'.
+        :param azione_automatica: Se l'azione e' stata svolta in modo automatico (i.e. via cron) o meno.
+                                  Viene usato per modificare la notifica.
+        """
+        Messaggio.costruisci_e_accoda(oggetto="Chiusura automatica: %s" % self.nome,
+                                      mittente=(None if azione_automatica else autore),
+                                      destinatari=self.delegati_attuali(solo_deleghe_attive=True),
+                                      modello="email_attivita_chiusa.html",
+                                      corpo={"azione_automatica": azione_automatica,
+                                             "autore": autore,
+                                             "attivita": self})
 
 
 class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
