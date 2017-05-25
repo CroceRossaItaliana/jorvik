@@ -8,12 +8,13 @@ from anagrafica.permessi.funzioni import permessi_persona
 __author__ = 'alfioemanuele'
 
 
-def persona_oggetti_permesso(persona, permesso, al_giorno=None):
+def persona_oggetti_permesso(persona, permesso, al_giorno=None, solo_deleghe_attive=True):
     """
     Dato un permesso, ritorna un queryset agli oggetti che sono coperti direttamente
     dal permesso. Es.: GESTINE_SOCI -> Elenco dei Comitati in cui si ha gestione dei soci.
     :param permesso: Permesso singolo.
     :param al_giorno: Data di verifica.
+    :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
     :return: QuerySet. Se permesso non valido, QuerySet vuoto o None (EmptyQuerySet).
     """
     if not permesso:
@@ -30,10 +31,12 @@ def persona_oggetti_permesso(persona, permesso, al_giorno=None):
                 qs = qs | o
 
     # Permessi derivanti dalle deleghe
-    deleghe_attuali = persona.deleghe_attuali(al_giorno=al_giorno, solo_attive=True)
+    deleghe_attuali = persona.deleghe_attuali(al_giorno=al_giorno,
+                                              solo_attive=solo_deleghe_attive)
 
     for d in deleghe_attuali:
-        for (p, o) in d.permessi():
+        for (p, o) in d.permessi(solo_deleghe_attive=solo_deleghe_attive):
+            print(p, o)
             if p == permesso:
                 if qs is None:
                     qs = o

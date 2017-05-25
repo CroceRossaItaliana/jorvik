@@ -538,19 +538,24 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return lista
 
 
-    def oggetti_permesso(self, permesso, al_giorno=None):
+    def oggetti_permesso(self, permesso, al_giorno=None,
+                         solo_deleghe_attive=True):
         """
         Dato un permesso, ritorna un queryset agli oggetti che sono coperti direttamente
         dal permesso. Es.: GESTIONE_SOCI -> Elenco dei Comitati in cui si ha gestione dei soci.
         :param permesso: Permesso singolo.
         :param al_giorno: Data di verifica.
+        :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
         :return: QuerySet. Se permesso non valido, QuerySet vuoto o None (EmptyQuerySet).
         """
-        permessi = persona_oggetti_permesso(self, permesso, al_giorno=al_giorno)
+        permessi = persona_oggetti_permesso(self, permesso, al_giorno=al_giorno,
+                                            solo_deleghe_attive=solo_deleghe_attive)
         if isinstance(permessi, QuerySet):
             return permessi
+
         else:
-            return apps.get_model(PERMESSI_OGGETTI_DICT[permesso][0], PERMESSI_OGGETTI_DICT[permesso][1]).objects.none()
+            return apps.get_model(PERMESSI_OGGETTI_DICT[permesso][0],
+                                  PERMESSI_OGGETTI_DICT[permesso][1]).objects.none()
 
     def permessi(self, oggetto, al_giorno=None):
         """
