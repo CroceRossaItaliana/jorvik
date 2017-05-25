@@ -1738,8 +1738,14 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             ("view_delega", "Can view delega"),
         )
 
+    ATTIVA = "a"
+    SOSPESA = "s"
+    STATO = ((ATTIVA, "Attiva"),
+             (SOSPESA, "Sospesa"))
+
     persona = models.ForeignKey(Persona, db_index=True, related_name='deleghe', related_query_name='delega', on_delete=models.CASCADE)
     tipo = models.CharField(max_length=2, db_index=True, choices=PERMESSI_NOMI)
+    stato = models.CharField(max_length=2, db_index=True, choices=STATO, default=ATTIVA)
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True, on_delete=models.SET_NULL, null=True)
     oggetto_id = models.PositiveIntegerField(db_index=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
