@@ -22,10 +22,10 @@ def delega_incarichi(delega):
     """
     Ottiene un elenco di incarichi che scaturiscono dalla delega
     :param delega:
-    :return: Una lista di tuple (incarico, qs_oggetto)
+    :return: Una lista di tuple (incarico, oggetto)
     """
     if delega.tipo in ESPANSIONE_DELEGHE \
             and delega.oggetto is not None \
             and delega.stato == delega.ATTIVA:
-        return ESPANSIONE_DELEGHE[delega.tipo](delega.oggetto.queryset_modello())
+        return ESPANSIONE_DELEGHE[delega.tipo](delega.oggetto)
     return []

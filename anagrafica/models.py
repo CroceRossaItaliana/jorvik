@@ -769,17 +769,24 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 INCARICO_ASPIRANTE in dict(self.incarichi()))
 
     def incarichi(self):
+
         if hasattr(self, 'aspirante'):
-            incarichi_persona = {INCARICO_ASPIRANTE: [(self.__class__.objects.filter(pk=self.pk), self.creazione)]}
+            incarichi_persona = {INCARICO_ASPIRANTE: [(self.__class__.objects.filter(pk=self.pk),
+                                                       self.creazione)]}
+
         else:
             incarichi_persona = {}
+
         for delega in self.deleghe_attuali():
             incarichi_delega = delega.espandi_incarichi()
+
             for incarico in incarichi_delega:
                 if not incarico[0] in incarichi_persona:
                     incarichi_persona.update({incarico[0]: [(incarico[1], delega.inizio)]})
+
                 else:
                     incarichi_persona[incarico[0]].append((incarico[1], delega.inizio))
+
         return incarichi_persona.items()
 
     def autorizzazioni(self):
@@ -790,11 +797,20 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         a = Autorizzazione.objects.none()
         for incarico in self.incarichi():
             for potere in incarico[1]:
+
+                if isinstance(potere[0], QuerySet):
+                    q_id = Q(destinatario_oggetto_id__in=potere[0].values_list('id', flat=True),
+                             destinatario_oggetto_tipo=ContentType.objects.get_for_model(potere[0].model))
+
+                else:  # Se modello instanziato
+                    q_id = Q(destinatario_oggetto_id=potere[0].pk,
+                             destinatario_oggetto_tipo=ContentType.objects.get_for_model(potere[0]))
+
                 a |= Autorizzazione.objects.filter(
+                    q_id,
                     destinatario_ruolo=incarico[0], creazione__gte=potere[1],
-                    destinatario_oggetto_tipo=ContentType.objects.get_for_model(potere[0].model),
-                    destinatario_oggetto_id__in=potere[0].values_list('id', flat=True),
                 )
+
         a = a.distinct('progressivo', 'oggetto_tipo_id', 'oggetto_id',)
         return Autorizzazione.objects.filter(
             pk__in=a.values_list('id', flat=True)
