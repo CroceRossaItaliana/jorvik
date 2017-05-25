@@ -36,7 +36,6 @@ def persona_oggetti_permesso(persona, permesso, al_giorno=None, solo_deleghe_att
 
     for d in deleghe_attuali:
         for (p, o) in d.permessi(solo_deleghe_attive=solo_deleghe_attive):
-            print(p, o)
             if p == permesso:
                 if qs is None:
                     qs = o

@@ -132,7 +132,6 @@ def permessi_almeno(context, oggetto, minimo="lettura", deleghe="solo_attive"):
         return False
 
     solo_deleghe_attive = deleghe == "solo_attive"
-    print("asd")
     almeno = context.request.me.permessi_almeno(oggetto, minimo_int,
                                                 solo_deleghe_attive=solo_deleghe_attive)
 
