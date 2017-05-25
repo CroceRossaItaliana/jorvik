@@ -7,7 +7,7 @@ from django.db.models import Count, F, Sum
 from django.utils import timezone
 
 
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.costanti import NAZIONALE
@@ -112,6 +112,19 @@ def attivita_gestisci(request, me, stato="aperte"):
     attivita_referenti_modificabili = me.oggetti_permesso(GESTIONE_REFERENTI_ATTIVITA)
 
     attivita = attivita.annotate(num_turni=Count('turni'))
+
+    attivita = Paginator(attivita, 30)
+    pagina = request.GET.get('pagina')
+
+    try:
+        attivita = attivita.page(pagina)
+
+    except PageNotAnInteger:
+        attivita = attivita.page(1)
+
+    except EmptyPage:
+        attivita = attivita.page(attivita.num_pages)
+
     contesto = {
         "stato": stato,
         "attivita": attivita,
