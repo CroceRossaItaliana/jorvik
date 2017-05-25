@@ -200,23 +200,27 @@ class ConDelegati(models.Model):
         object_id_field='oggetto_id'
     )
 
-    def deleghe_attuali(self, al_giorno=None, **kwargs):
+    def deleghe_attuali(self, al_giorno=None, solo_attive=False, **kwargs):
         """
         Ottiene QuerySet per gli oggetti Delega validi ad un determinato giorno.
         :param al_giorno: Giorno da verificare. Se assente, oggi.
+        :param solo_attive: True se deve ritornare solo le deleghe attive. False per includere deleghe sospese.
         :return: QuerySet di oggetti Delega.
         """
         Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
-        return self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno, **kwargs).q)
+        return self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno, solo_attive=solo_attive, **kwargs).q)
 
-    def delegati_attuali(self, al_giorno=None, **kwargs):
+    def delegati_attuali(self, al_giorno=None, solo_deleghe_attive=False, **kwargs):
         """
         Ottiene QuerySet per gli oggetti Persona delegati ad un determinato giorno.
         :param al_giorno: Giorno da verificare. Se assente, oggi.
+        :param solo_deleghe_attive: True se deve ritornare delegati con deleghe esclusivamente attive. False per
+                                    includere anche i delegati con deleghe sospese.
         :return: QuerySet di oggetti Persona.
         """
         Persona = apps.get_model(app_label='anagrafica', model_name='Persona')
-        return Persona.objects.filter(delega__in=self.deleghe_attuali(al_giorno, **kwargs))
+        return Persona.objects.filter(delega__in=self.deleghe_attuali(al_giorno, solo_attive=solo_deleghe_attive,
+                                                                      **kwargs))
 
     def aggiungi_delegato(self, tipo, persona, firmatario=None, inizio=None, fine=None):
         """
