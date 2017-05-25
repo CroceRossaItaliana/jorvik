@@ -64,7 +64,7 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
 
     # Numero di giorni che devono passare per chiudere
     #  automaticamente questa attivita' in mancanza di nuovi turni
-    CHIUDI_AUTOMATICAMENTE_DOPO_GG = 90
+    CHIUDI_AUTOMATICAMENTE_DOPO_GG = 60
 
     nome = models.CharField(max_length=255, default="Nuova attività", db_index=True,
                             help_text="es. Aggiungi un posto a tavola")
