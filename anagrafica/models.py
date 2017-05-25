@@ -266,11 +266,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return numeri_servizio
         return self.numeri_telefono.all()
 
-    def deleghe_attuali(self, al_giorno=None, **kwargs):
+    def deleghe_attuali(self, al_giorno=None, solo_attive=True, **kwargs):
         """
         Ritorna una ricerca per le deleghe che son attuali.
         """
-        return self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno).q, **kwargs)
+        deleghe = self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno).q, **kwargs)
+        if solo_attive:
+            deleghe = deleghe.filter(stato=Delega.ATTIVA)
+        return deleghe
+
 
     def deleghe_attuali_rubrica(self, al_giorno=None, **kwargs):
         """
@@ -574,22 +578,25 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return persona_permessi_almeno(self, oggetto, minimo=minimo, al_giorno=al_giorno)
 
-    def ha_permesso(self, permesso, al_giorno=None):
+    def ha_permesso(self, permesso, al_giorno=None, solo_deleghe_attive=True):
         """
         Dato un permesso, ritorna true se il permesso e' posseduto.
         :param permesso: Permesso singolo.
         :param al_giorno: Data di verifica.
+        :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
         :return: True se il permesso e' posseduto. False altrimenti.
         """
-        return persona_ha_permesso(self, permesso, al_giorno=al_giorno)
+        return persona_ha_permesso(self, permesso, al_giorno=al_giorno,
+                                   solo_deleghe_attive=solo_deleghe_attive)
 
-    def ha_permessi(self, *permessi):
+    def ha_permessi(self, *permessi, solo_deleghe_attive=True):
         """
         Dato un elenco di permessi, ritorna True se tutti i permessi sono posseduti.
         :param permessi: Elenco di permessi.
+        :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
         :return: True se tutti i permessi sono posseduti. False altrimenti.
         """
-        return persona_ha_permessi(self, *permessi)
+        return persona_ha_permessi(self, *permessi, solo_deleghe_attive=solo_deleghe_attive)
 
     def invia_email_benvenuto_registrazione(self, tipo='aspirante'):
         """
