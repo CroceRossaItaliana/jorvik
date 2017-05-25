@@ -3,7 +3,7 @@
       <ul class="pagination">
         <li>
             {% if attivita.has_previous %}
-                <a href="?page={{ attivita.previous_page_number }}" class="btn btn-default">
+                <a href="?pagina={{ attivita.previous_page_number }}">
                     Precedente
                 </a>
             {% endif %}
@@ -13,7 +13,7 @@
         </a></li>
         <li>
             {% if attivita.has_next %}
-                <a href="?page={{ attivita.next_page_number }}" class="btn btn-default">Successiva</a>
+                <a href="?pagina={{ attivita.next_page_number }}">Successiva</a>
             {% endif %}
         </li>
       </ul>
