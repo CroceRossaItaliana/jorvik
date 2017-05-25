@@ -184,6 +184,7 @@ urlpatterns = [
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/modifica/(?P<pagina>[0-9]+)/$', attivita.viste.attivita_scheda_turni_modifica),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/modifica/link-permanente/(?P<turno_pk>[0-9]+)/$', attivita.viste.attivita_scheda_turni_modifica_link_permanente),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/modifica/$', attivita.viste.attivita_scheda_informazioni_modifica),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/riapri/$', attivita.viste.attivita_riapri),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/referenti/$', attivita.viste.attivita_referenti),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/report/$', attivita.viste.attivita_scheda_report),
 

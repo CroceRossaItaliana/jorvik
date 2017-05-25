@@ -111,11 +111,14 @@ def giorni_ore_minuti(context, tdelta):
 
 
 @register.assignment_tag(takes_context=True)
-def permessi_almeno(context, oggetto, minimo="lettura"):
+def permessi_almeno(context, oggetto, minimo="lettura", deleghe="solo_attive"):
     """
     Controlla che l'utente attuale -estrapolato dal contesto- abbia i permessi
      minimi su un determinato oggetto. Ritorna True o False.
     """
+
+    if deleghe not in ("solo_attive", "tutte"):
+        raise ValueError("Valore per 'deleghe' non riconosciuto.")
 
     if minimo not in PERMESSI_TESTO:
         raise ValueError("Permesso '%s' non riconosciuto. Deve essere in 'PERMESSI_TESTO'." % (minimo,))
@@ -128,7 +131,11 @@ def permessi_almeno(context, oggetto, minimo="lettura"):
     if not hasattr(context.request, 'me'):
         return False
 
-    almeno = context.request.me.permessi_almeno(oggetto, minimo_int)
+    solo_deleghe_attive = deleghe == "solo_attive"
+    print("asd")
+    almeno = context.request.me.permessi_almeno(oggetto, minimo_int,
+                                                solo_deleghe_attive=solo_deleghe_attive)
+
     return almeno
 
 

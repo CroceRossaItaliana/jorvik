@@ -4,12 +4,12 @@ from anagrafica.permessi.incarichi import ESPANSIONE_DELEGHE
 __author__ = 'alfioemanuele'
 
 
-def delega_permessi(delega):
+def delega_permessi(delega, solo_deleghe_attive=True):
     """
     Ottiene un elenco di permessi che scaturiscono dalla delega.
     :return: Una lista di permessi.
     """
-    if delega.stato != delega.ATTIVA:
+    if solo_deleghe_attive and delega.stato != delega.ATTIVA:
         return []  # Nessun permesso dalle deleghe sospese.
 
     try:

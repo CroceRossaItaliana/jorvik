@@ -567,16 +567,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return persona_permessi(self, oggetto, al_giorno=al_giorno)
 
-    def permessi_almeno(self, oggetto, minimo, al_giorno=None):
+    def permessi_almeno(self, oggetto, minimo, al_giorno=None, solo_deleghe_attive=True):
         """
         Controlla se ho i permessi minimi richiesti specificati su un dato oggetto.
 
         :param oggetto: Oggetto qualunque.
         :param minimo: Oggetto qualunque.
         :param al_giorno:  Data di verifica.
+        :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
         :return: True se permessi >= minimo, False altrimenti
         """
-        return persona_permessi_almeno(self, oggetto, minimo=minimo, al_giorno=al_giorno)
+        return persona_permessi_almeno(self, oggetto, minimo=minimo, al_giorno=al_giorno,
+                                       solo_deleghe_attive=solo_deleghe_attive)
 
     def ha_permesso(self, permesso, al_giorno=None, solo_deleghe_attive=True):
         """
@@ -1766,12 +1768,13 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             self.get_tipo_display(), self.oggetto,
         )
 
-    def permessi(self):
+    def permessi(self, solo_deleghe_attive=True):
         """
         Ottiene un elenco di permessi che scaturiscono dalla delega.
+        :param solo_deleghe_attive: Espandi permessi solo dalle deleghe attive.
         :return: Una lista di permessi.
         """
-        return delega_permessi(self)
+        return delega_permessi(self, solo_deleghe_attive=solo_deleghe_attive)
 
     def espandi_incarichi(self):
         """

@@ -619,6 +619,8 @@ def attivita_scheda_informazioni_modifica(request, me, pk=None):
     Mostra la pagina di modifica di una attivita'.
     """
     attivita = get_object_or_404(Attivita, pk=pk)
+    apertura_precedente = attivita.apertura
+
     if not me.permessi_almeno(attivita, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
@@ -635,6 +637,16 @@ def attivita_scheda_informazioni_modifica(request, me, pk=None):
     if modulo.is_valid():
         modulo.save()
 
+        # Se e' stato cambiato lo stato dell'attivita'
+        attivita.refresh_from_db()
+        if attivita.apertura != apertura_precedente:
+
+            if attivita.apertura == attivita.APERTA:
+                attivita.riapri()
+
+            else:
+                attivita.chiudi(autore=me)
+
     contesto = {
         "attivita": attivita,
         "puo_modificare": True,
@@ -642,6 +654,21 @@ def attivita_scheda_informazioni_modifica(request, me, pk=None):
     }
 
     return 'attivita_scheda_informazioni_modifica.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+def attivita_riapri(request, me, pk=None):
+    """
+    Riapre l'attivita'.
+    """
+    attivita = get_object_or_404(Attivita, pk=pk)
+
+    if not me.permessi_almeno(attivita, MODIFICA, solo_deleghe_attive=False):
+        return redirect(ERRORE_PERMESSI)
+
+    attivita.riapri(invia_notifiche=True)
+    return redirect(attivita.url)
+
 
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def attivita_scheda_turni_modifica(request, me, pk=None, pagina=None):
