@@ -66,9 +66,15 @@
                 </div><!--/.navbar-collapse -->
               </div>
             </nav>
+
+            {% if debug %}
+                {% include "includes/debug.html" %}
+            {% endif %}
+
             {% for message in messages %}
                 <div class="text-center alert {{ message|level_to_bootstrap }}" role="alert">{{ message }}</div>
             {% endfor %}
+
 
         {% endif %}
         
