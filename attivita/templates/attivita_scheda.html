@@ -27,6 +27,29 @@
         {% endif %}
     </h4>
 
+    {% if attivita.apertura == attivita.CHIUSA %}
+        {% load utils %}
+        {% permessi_almeno attivita "modifica" deleghe="tutte" as puo_riabilitare %}
+        {% if puo_riabilitare %}
+
+            <div class="alert alert-info">
+                <h4>
+                    <i class="fa fa-fw fa-warning"></i>
+                    Attivita chiusa
+                </h4>
+                <p>L'attivit&agrave; &egrave; stata chiusa. Questo vuol dire che non puoi gestire i partecipanti,
+                    e i volontari non possono chiedere di parteciparvi. Puoi riaprire l'attivit&agrave; in qualunque
+                    momento usando il pulsante seguente.</p>
+                <p>
+                    <a href="{{ attivita.url_riapri }}" class="btn btn-info">
+                        Riapri attivit&agrave;
+                    </a>
+                </p>
+            </div>
+
+        {% endif %}
+    {% endif %}
+
     <p>&nbsp;</p>
 
     <ul class="nav nav-tabs">
