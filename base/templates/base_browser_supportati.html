@@ -1,0 +1,32 @@
+{% extends "base_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}Browser supportati su Gaia{% endblock %}
+
+{% block pagina_principale %}
+
+    <div class="container">
+        <div class="col-md-12">
+            <h2><i class="fa fa-shield"></i> Elenco browser</h2>
+            <hr />
+            <p>
+                Gli sviluppatori di Gaia si impegnano per garantire la massima compatibilità con tutti i browser e
+                dispositivi, tuttavia possono effettuare i test solo su un numero limitato di piattaforme.<br>
+                Pertanto ti consigliamo, per usufruire al meglio di Gaia, di usare uno dei browser sotto elencati.<br>
+            </p>
+            <p>
+                <ul>
+                  <li>Internet Explorer 11</li>
+                  <li>Edge</li>
+                  <li>Chrome 50+</li>
+                  <li>Firefox 45+</li>
+                  <li>Safari 6+</li>
+                  <li>Android 4.0</li>
+                  <li>iOS 8.0</li>
+                </ul>
+            </p>
+        </div>
+    </div>
+
+{% endblock %}
