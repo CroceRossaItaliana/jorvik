@@ -755,21 +755,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 INCARICO_ASPIRANTE in dict(self.incarichi()))
 
     def incarichi(self):
-        # r = Autorizzazione.objects.none()
-
         if hasattr(self, 'aspirante'):
-            incarichi_persona = {INCARICO_ASPIRANTE: self.__class__.objects.filter(pk=self.pk)}
+            incarichi_persona = {INCARICO_ASPIRANTE: [(self.__class__.objects.filter(pk=self.pk), self.creazione)]}
         else:
             incarichi_persona = {}
         for delega in self.deleghe_attuali():
             incarichi_delega = delega.espandi_incarichi()
             for incarico in incarichi_delega:
                 if not incarico[0] in incarichi_persona:
-                    incarichi_persona.update({incarico[0]: incarico[1]})
+                    incarichi_persona.update({incarico[0]: [(incarico[1], delega.inizio)]})
                 else:
-                    incarichi_persona[incarico[0]] |= incarico[1]
-        incarichi_persona = incarichi_persona.items()
-        return incarichi_persona
+                    incarichi_persona[incarico[0]].append((incarico[1], delega.inizio))
+        return incarichi_persona.items()
 
     def autorizzazioni(self):
         """
@@ -778,11 +775,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         a = Autorizzazione.objects.none()
         for incarico in self.incarichi():
-            a |= Autorizzazione.objects.filter(
-                destinatario_ruolo=incarico[0],
-                destinatario_oggetto_tipo=ContentType.objects.get_for_model(incarico[1].model),
-                destinatario_oggetto_id__in=incarico[1].values_list('id', flat=True),
-            )
+            for potere in incarico[1]:
+                a |= Autorizzazione.objects.filter(
+                    destinatario_ruolo=incarico[0], creazione__gte=potere[1],
+                    destinatario_oggetto_tipo=ContentType.objects.get_for_model(potere[0].model),
+                    destinatario_oggetto_id__in=potere[0].values_list('id', flat=True),
+                )
         a = a.distinct('progressivo', 'oggetto_tipo_id', 'oggetto_id',)
         return Autorizzazione.objects.filter(
             pk__in=a.values_list('id', flat=True)
@@ -1960,15 +1958,15 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
             self.protocollo_data = modulo.cleaned_data['protocollo_data']
             self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
         self.save()
-        self.esegui()
+        self.esegui(auto)
 
-    def esegui(self):
+    def esegui(self, auto=False):
         appartenenzaVecchia = Appartenenza.objects.filter(Appartenenza.query_attuale().q,
                                                           membro=Appartenenza.VOLONTARIO, persona=self.persona).first()
         appartenenzaVecchia.fine = poco_fa()
         appartenenzaVecchia.terminazione = Appartenenza.TRASFERIMENTO
         appartenenzaVecchia.save()
-         # Invia notifica tramite e-mail
+        # Invia notifica tramite e-mail
         app = Appartenenza(
             membro=Appartenenza.VOLONTARIO,
             persona=self.persona,
@@ -1977,10 +1975,15 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
         )
         app.save()
         self.appartenenza = app
+        testo_extra = ''
+        if auto:
+            self.automatica = True
+            testo_extra = 'Il trasferimento è stato automaticamente approvato essendo decorsi trenta giorni, ' \
+                          'ai sensi dell\'articolo 9.5 del "Regolamento sull\'organizzazione, le attività, ' \
+                          'la formazione e l\'ordinamento dei volontari"'
+        else:
+            self.automatica = False
         self.save()
-        testo_extra = 'Il trasferimento è stato automaticamente approvato essendo decorsi trenta giorni, ' \
-                      'ai sensi dell\'articolo 9.5 del "Regolamento sull\'organizzazione, le attività, ' \
-                      'la formazione e l\'ordinamento dei volontari"'
         self.autorizzazioni.first().notifica_origine_autorizzazione_concessa(appartenenzaVecchia.sede, testo_extra)
 
     def richiedi(self):

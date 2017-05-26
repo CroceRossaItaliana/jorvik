@@ -105,6 +105,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     AP_AUTO = "A"
     NG_AUTO = "N"
     MANUALE = "M"
+    AUTOMATICA = "T"
 
     TIPO_GESTIONE = (
         (MANUALE, "Manuale"),
@@ -150,6 +151,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     destinatario_oggetto = GenericForeignKey('destinatario_oggetto_tipo', 'destinatario_oggetto_id')
     scadenza = models.DateTimeField(blank=True, null=True, db_index=True)
     tipo_gestione = models.CharField(default=MANUALE, max_length=1, choices=TIPO_GESTIONE)
+    automatica = models.BooleanField("Approvata automaticamente", default=False, db_index=True)
 
     @property
     def giorni_automatici(self):
@@ -177,6 +179,10 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         self.concessa = concedi
         self.firmatario = firmatario
         self.necessaria = False
+        if firmatario and not auto:
+            self.automatica = False
+        elif auto:
+            self.automatica = True
         self.save()
 
         # Se ha negato, allora avvisa subito della negazione.
@@ -262,6 +268,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         oggetto = "Richiesta di %s da %s APPROVATA" % (self.oggetto.RICHIESTA_NOME, self.richiedente.nome_completo,)
         aggiunte_corpo = {
             'testo_extra': testo_extra,
+            'firmatario': self.firmatario,
+            'automatica': self.automatica,
         }
         self._invia_notifica(modello, oggetto, False, destinatari=notifiche, aggiunte_corpo=aggiunte_corpo)
 

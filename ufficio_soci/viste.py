@@ -24,7 +24,7 @@ from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti, ElencoDimessi, ElencoTrasferiti, \
     ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva, ElencoIVCM, ElencoTesseriniSenzaFototessera, \
-    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoExSostenitori
+    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoExSostenitori, ElencoSenzaTurni
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
     ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, \
@@ -42,10 +42,10 @@ def us(request, me):
 
     persone = Persona.objects.filter(
         Appartenenza.query_attuale(sede__in=sedi).via("appartenenze")
-    )
+    ).distinct('cognome', 'nome', 'codice_fiscale')
     attivi = Persona.objects.filter(
         Appartenenza.query_attuale(sede__in=sedi, membro=Appartenenza.VOLONTARIO).via("appartenenze")
-    )
+    ).distinct('cognome', 'nome', 'codice_fiscale')
 
     contesto = {
         "sedi": sedi,
@@ -698,6 +698,7 @@ def us_elenchi(request, me, elenco_tipo):
         "soci": (ElencoSociAlGiorno, "Elenco dei Soci"),
         "sostenitori": (ElencoSostenitori, "Elenco dei Sostenitori"),
         "ex-sostenitori": (ElencoExSostenitori, "Elenco degli Ex Sostenitori"),
+        "senza-turni": (ElencoSenzaTurni, "Elenco dei volontari con zero turni"),
         "elettorato": (ElencoElettoratoAlGiorno, "Elenco Elettorato", "us_elenco_inc_elettorato.html"),
         "titoli": (ElencoPerTitoli, "Ricerca dei soci per titoli"),
     }
@@ -1167,7 +1168,6 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
                                          "confermata su Gaia.", **torna)
 
     tesserini = persona.tesserini.filter(stato_richiesta__in=(Tesserino.RICHIESTO, Tesserino.ACCETTATO))
-
     if tesserini.exists():
         tipo_richiesta = Tesserino.DUPLICATO
         tesserini.update(valido=False)
@@ -1188,14 +1188,13 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
         raise ValueError("%s non ha un comitato regionale." % (comitato,))
 
     # Crea la richiesta di tesserino
-    tesserino = Tesserino(
+    tesserino = Tesserino.objects.create(
         persona=persona,
         emesso_da=regionale,
         tipo_richiesta=tipo_richiesta,
         stato_richiesta=Tesserino.RICHIESTO,
         richiesto_da=me,
     )
-    tesserino.save()
 
     if duplicato:
         oggetto = "Richiesta Duplicato Tesserino inoltrata"
