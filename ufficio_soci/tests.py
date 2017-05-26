@@ -9,16 +9,18 @@ from django.test import TestCase
 from django.utils import timezone
 from freezegun import freeze_time
 
-from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Appartenenza, Sede, Persona, Fototessera, Dimissione, ProvvedimentoDisciplinare
+from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE, LOCALE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+from attivita.models import Area, Partecipazione, Turno
+from attivita.models import Attivita
 from autenticazione.utils_test import TestFunzionale
 from base.geo import Locazione
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, \
     crea_utenza, crea_locazione, email_fittizzia
 from ufficio_soci.elenchi import ElencoElettoratoAlGiorno, ElencoSociAlGiorno, ElencoSostenitori, ElencoExSostenitori, \
-    ElencoVolontari
+    ElencoVolontari, ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoSenzaTurni
 from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota
 from ufficio_soci.models import Tesseramento, Tesserino, Quota, Riduzione
 
@@ -227,6 +229,76 @@ class TestBase(TestCase):
         self.a.precedente = None
         self.a.save()
         x.delete()
+
+    def test_zero_turni(self):
+
+        presidente = crea_persona()
+        sede = crea_sede(presidente)
+        persone = []
+        for x in range(1, 10):
+            persone.append(crea_persona())
+            Appartenenza.objects.create(
+                persona=persone[-1], sede=sede, inizio=self.due_anni_e_mezo_fa,
+            )
+
+        area = Area.objects.create(
+            nome="6",
+            obiettivo=6,
+            sede=sede,
+        )
+
+        attivita = Attivita.objects.create(
+            stato=Attivita.VISIBILE,
+            nome="Att 1",
+            apertura=Attivita.APERTA,
+            area=area,
+            descrizione="1",
+            sede=sede,
+            estensione=sede,
+        )
+
+        turno = Turno.objects.create(
+            attivita=attivita,
+            prenotazione=poco_fa(),
+            inizio=poco_fa() - datetime.timedelta(days=10),
+            fine=poco_fa(),
+            minimo=1,
+            massimo=16,
+        )
+
+        partecipazioni = []
+        for persona in persone:
+            partecipazioni.append(Partecipazione.objects.create(
+                persona=persona,
+                turno=turno,
+                confermata=False
+            ))
+
+        elenco = ElencoSenzaTurni([sede])
+        elenco.modulo_riempito = elenco.modulo()(
+            {'inizio': poco_fa() - datetime.timedelta(days=100), 'fine': poco_fa() - datetime.timedelta(days=5)}
+        )
+        self.assertTrue(elenco.modulo_riempito.is_valid())
+        zero_turni = elenco.risultati()
+        self.assertEqual(len(zero_turni), len(persone))
+
+        partecipazioni[0].confermata = True
+        partecipazioni[0].save()
+        zero_turni = elenco.risultati()
+        self.assertEqual(len(zero_turni), len(persone) - 1)
+        self.assertTrue(persone[0] not in zero_turni)
+
+        turno.inizio = poco_fa() - datetime.timedelta(days=200)
+        turno.fine = poco_fa() - datetime.timedelta(days=150)
+        turno.save()
+        zero_turni = elenco.risultati()
+        self.assertEqual(len(zero_turni), len(persone))
+
+        turno.fine = poco_fa() - datetime.timedelta(days=50)
+        turno.save()
+        zero_turni = elenco.risultati()
+        self.assertEqual(len(zero_turni), len(persone) - 1)
+        self.assertTrue(persone[0] not in zero_turni)
 
     def test_elettorato_sospensione(self):
 
@@ -481,6 +553,77 @@ class TestBase(TestCase):
         elenco.modulo_riempito.is_valid()
         volontari = elenco.risultati()
         self.assertFalse(sostenitore_volontario in volontari)
+
+    def test_elenco_tesserini(self):
+        presidente = crea_persona()
+        crea_utenza(presidente, email=email_fittizzia())
+
+        regionale = crea_sede(presidente, REGIONALE)
+        sede = crea_sede(presidente, LOCALE, regionale)
+        sede.locazione = crea_locazione()
+        sede.genitore = regionale
+        sede.save()
+
+        vol_1 = crea_persona()
+        Fototessera.objects.create(persona=vol_1, confermata=True)
+        Appartenenza.objects.create(persona=vol_1, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+
+        vol_2 = crea_persona()
+        Fototessera.objects.create(persona=vol_2, confermata=True)
+        Appartenenza.objects.create(persona=vol_2, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+
+        vol_3 = crea_persona()
+        Fototessera.objects.create(persona=vol_3, confermata=True)
+        Appartenenza.objects.create(persona=vol_3, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+
+        vol_4 = crea_persona()
+        Fototessera.objects.create(persona=vol_4, confermata=True)
+        Appartenenza.objects.create(persona=vol_4, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+
+        vol_5 = crea_persona()
+        Fototessera.objects.create(persona=vol_5, confermata=True)
+        Appartenenza.objects.create(persona=vol_5, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+
+        el_richiesti = ElencoTesseriniRichiesti([sede])
+        richiesti = el_richiesti.risultati()
+        self.assertEqual(richiesti.count(), 0)
+
+        el_da_richiedere = ElencoTesseriniDaRichiedere([sede])
+        da_richiedere = el_da_richiedere.risultati()
+        self.assertEqual(da_richiedere .count(), 5)
+
+        self.client.login(username=presidente.utenza.email, password='prova')
+        response = self.client.get(reverse('us-tesserini-richiedi', args=(vol_1.pk,)))
+        self.assertNotContains(response, "Il Comitato non ha un indirizzo")
+
+        richiesti = el_richiesti.risultati()
+        self.assertEqual(richiesti.count(), 1)
+
+        da_richiedere = el_da_richiedere.risultati()
+        self.assertEqual(da_richiedere .count(), 4)
+
+        self.assertEqual(Tesserino.objects.all().count(), 1)
+        self.assertEqual(Tesserino.objects.filter(
+            valido=False, tipo_richiesta=Tesserino.RILASCIO, stato_richiesta=Tesserino.RICHIESTO
+        ).count(), 1)
+
+        self.client.login(username=presidente.utenza.email, password='prova')
+        response = self.client.get(reverse('us-tesserini-richiedi', args=(vol_1.pk,)))
+        self.assertNotContains(response, "Il Comitato non ha un indirizzo")
+
+        self.assertEqual(Tesserino.objects.all().count(), 2)
+        self.assertEqual(Tesserino.objects.filter(
+            valido=False, tipo_richiesta=Tesserino.RILASCIO, stato_richiesta=Tesserino.RICHIESTO
+        ).count(), 1)
+        self.assertEqual(Tesserino.objects.filter(
+            valido=False, tipo_richiesta=Tesserino.DUPLICATO, stato_richiesta=Tesserino.RICHIESTO
+        ).count(), 1)
+
+        richiesti = el_richiesti.risultati()
+        self.assertEqual(richiesti.count(), 1)
+
+        da_richiedere = el_da_richiedere.risultati()
+        self.assertEqual(da_richiedere .count(), 4)
 
 
 class TestFunzionaleUfficioSoci(TestFunzionale):

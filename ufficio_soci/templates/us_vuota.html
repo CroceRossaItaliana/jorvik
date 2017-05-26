@@ -16,13 +16,17 @@
         {% for sezione_nome, sezione_pagine in menu.us %}
 
             <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
-
-            {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
-
+            {% for link_nome, link_icona, link_url, link_contatore, nuovo in sezione_pagine %}
+                {{ link_contatore }}
                 <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
                     <a href="{{ link_url|urlencode }}">
                         <i class="fa {{ link_icona }} fa-fw"></i>
                         {{ link_nome }}
+                        {% if nuovo %}
+                            <span class="label label-primary pull-right">
+                              Nuovo!
+                            </span>
+                        {% endif %}
                     </a>
                 </li>
 

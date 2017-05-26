@@ -363,8 +363,13 @@ if os.environ.get('ENABLE_TEST_APPS', False):
     INSTALLED_APPS.append('segmenti.segmenti_test')
 
 CAN_LOGIN_AS = lambda request, target_user: request.user.is_superuser or request.user.groups.filter(name='loginas').exists()
+LOGOUT_URL = reverse_lazy('logout')
+LOGINAS_LOGOUT_REDIRECT_URL = reverse_lazy('admin:autenticazione_utenza_changelist')
+LOGOUT_REDIRECT_URL = '/'
 
 # Entro questa finestra temporale i corsi sono visibili agli aspiranti e si possono iscrivere autonomamente
 FORMAZIONE_FINESTRA_CORSI_INIZIATI = 7
 # Durata delli inviti ai corsi base
 FORMAZIONE_VALIDITA_INVITI = 7
+
+POSTA_MASSIVA_TIMEOUT = 30

@@ -66,6 +66,7 @@ class ModuloElencoPerTitoli(forms.Form):
     titoli = autocomplete_light.ModelMultipleChoiceField("TitoloAutocompletamento", help_text="Seleziona uno o più titoli per"
                                                                                               " la tua ricerca.")
 
+
 class ModuloElencoQuote(forms.Form):
     MEMBRI_VOLONTARI = Appartenenza.VOLONTARIO
     MEMBRI_ORDINARI = Appartenenza.ORDINARIO
@@ -162,6 +163,33 @@ class ModuloVerificaTesserino(forms.Form):
             raise ValidationError("I numeri di tessera iniziano con 8016.")
 
         return numero_tessera
+
+
+class ModuloSenzaTurni(forms.Form):
+    inizio = forms.DateField(
+        label='Inizio intervallo', required=True,
+        help_text='Saranno ricercati volontari che non hanno effettuato turni a partire da questa data.'
+    )
+    fine = forms.DateField(
+        label='Fine intervallo', required=True,
+        help_text='Saranno ricercati volontari che non hanno effettuato turni fino a questa data.'
+    )
+
+    def __init__(self, *args, **kwargs):
+        if 'initial' not in kwargs:
+            kwargs['initial'] = {}
+        if 'inizio' not in kwargs['initial']:
+            kwargs['initial']['inizio'] = now() - datetime.timedelta(days=365)
+        if 'fine' not in kwargs['initial']:
+            kwargs['initial']['fine'] = now()
+        super(ModuloSenzaTurni, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        if self.cleaned_data['fine'] <= self.cleaned_data['inizio']:
+            self.add_error('fine', 'La data di fine deve essere successiva alla data di inizio.')
+        if self.cleaned_data['fine'] > now().date():
+            self.add_error('fine', 'La data di fine deve essere precedente alla data odierna.')
+        return self.cleaned_data
 
 
 class ModuloCreazioneDimissioni(ModelForm):
