@@ -434,7 +434,7 @@ def us_estensioni(request, me):
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensione_termina(request, me, pk):
     appartenenza = get_object_or_404(Appartenenza, pk=pk)
-    if me.permessi_almeno(appartenenza, MODIFICA):
+    if not me.permessi_almeno(appartenenza.estensione.first(), MODIFICA):
         return redirect(ERRORE_PERMESSI)
     else:
         appartenenza.fine = poco_fa()

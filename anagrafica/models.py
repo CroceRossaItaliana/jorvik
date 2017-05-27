@@ -1343,7 +1343,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         flag = self.attuale()
         if inizio:
             inizio = inizio.date()
-        # Appartenenze come esteso o dipendente sono modificabili perché inizio non vincolato a termine di precedente
+        # Appartenenze come dipendente sono modificabili perché inizio non vincolato a termine di precedente
         if self.membro not in self.NON_MODIFICABILE:
             # Controllo su appartenenza precedente.
             # Nei casi in MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI, l'appartenenza precedente non determina
@@ -2112,8 +2112,8 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(origine, testo_extra)
         self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(app.sede, testo_extra)
 
-
     def richiedi(self):
+        import ipdb
         if not self.persona.sede_riferimento():
             raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
 

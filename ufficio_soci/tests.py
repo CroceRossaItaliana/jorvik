@@ -10,9 +10,11 @@ from django.test import TestCase
 from django.utils import timezone
 from freezegun import freeze_time
 
-from anagrafica.models import Appartenenza, Sede, Persona, Fototessera, Dimissione, ProvvedimentoDisciplinare
+from anagrafica.models import Appartenenza, Sede, Persona, Fototessera, Dimissione, ProvvedimentoDisciplinare, \
+    Estensione
 from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE, LOCALE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+from anagrafica.permessi.costanti import MODIFICA
 from attivita.models import Area, Partecipazione, Turno
 from attivita.models import Attivita
 from autenticazione.utils_test import TestFunzionale
@@ -644,6 +646,110 @@ class TestBase(TestCase):
 
         da_richiedere = el_da_richiedere.risultati()
         self.assertEqual(da_richiedere .count(), 4)
+
+    def test_termine_estensioni(self):
+        presidente_com1 = crea_persona()
+        crea_utenza(presidente_com1, email=email_fittizzia())
+        comitato1 = crea_sede(presidente_com1, LOCALE)
+        Appartenenza.objects.create(
+            persona=presidente_com1, sede=comitato1, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO
+        )
+
+        presidente_com2 = crea_persona()
+        crea_utenza(presidente_com2, email=email_fittizzia())
+        comitato2 = crea_sede(presidente_com2, LOCALE)
+        Appartenenza.objects.create(
+            persona=presidente_com2, sede=comitato2, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO
+        )
+
+        comitato3 = crea_sede(presidente_com2, LOCALE)
+
+        volontario = crea_persona()
+
+        appartenenza_vol1_c1_vol = Appartenenza.objects.create(
+            persona=volontario, sede=comitato1, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO
+        )
+        volontario.refresh_from_db()
+
+        # Estensione Vol 1 - Comitato 2
+        estensione = Estensione.objects.create(
+            persona=volontario, richiedente=volontario, destinazione=comitato2, motivo='test'
+        )
+        estensione.richiedi()
+        modulo = estensione.autorizzazione_concedi_modulo()(data={
+            'protocollo_data': poco_fa(), 'protocollo_numero': '1'
+        })
+        self.assertTrue(modulo.is_valid())
+        estensione.autorizzazione_concessa(modulo)
+        estensione.confermata = True
+        estensione.save()
+        appartenenza_vol1_c2_est = estensione.appartenenza
+
+        # Estensione Vol 1 - Comitato 3
+        estensione = Estensione.objects.create(
+            persona=volontario, richiedente=volontario, destinazione=comitato3, motivo='test'
+        )
+        estensione.richiedi()
+        modulo = estensione.autorizzazione_concedi_modulo()(data={
+            'protocollo_data': poco_fa(), 'protocollo_numero': '1'
+        })
+        self.assertTrue(modulo.is_valid())
+        estensione.autorizzazione_concessa(modulo)
+        estensione.confermata = True
+        estensione.save()
+        appartenenza_vol1_c3_est = estensione.appartenenza
+
+        # Estensione presidente 2
+        estensione = Estensione.objects.create(
+            persona=presidente_com2, richiedente=presidente_com2, destinazione=comitato1, motivo='test'
+        )
+        estensione.richiedi()
+        modulo = estensione.autorizzazione_concedi_modulo()(data={
+            'protocollo_data': poco_fa(), 'protocollo_numero': '1'
+        })
+        self.assertTrue(modulo.is_valid())
+        estensione.autorizzazione_concessa(modulo)
+        estensione.confermata = True
+        estensione.save()
+        appartenenza_pres2_c1_est = estensione.appartenenza
+
+        self.assertFalse(presidente_com2.permessi_almeno(appartenenza_vol1_c2_est.estensione.first(), MODIFICA))
+        self.assertFalse(presidente_com2.permessi_almeno(appartenenza_vol1_c3_est.estensione.first(), MODIFICA))
+        self.assertFalse(presidente_com2.permessi_almeno(appartenenza_vol1_c1_vol.persona, MODIFICA))
+        self.assertTrue(presidente_com1.permessi_almeno(appartenenza_vol1_c2_est.estensione.first(), MODIFICA))
+        self.assertTrue(presidente_com1.permessi_almeno(appartenenza_vol1_c3_est.estensione.first(), MODIFICA))
+        self.assertTrue(presidente_com1.permessi_almeno(appartenenza_vol1_c1_vol.persona, MODIFICA))
+
+        termina_vol1_c2_est_url = reverse('us-termina-estensione', args=(appartenenza_vol1_c2_est.pk,))
+        termina_vol1_c3_est_url = reverse('us-termina-estensione', args=(appartenenza_vol1_c3_est.pk,))
+        profilo_url = reverse('profilo', kwargs={'pk': volontario.pk, 'sezione': 'appartenenze'})
+        errore_url = reverse('errore-permessi')
+
+        self.assertEqual(volontario.estensioni_attuali().count(), 2)
+
+        # Test con Presidente 2 - Nessun permesso su nessuna estensione
+        self.client.login(email=presidente_com2.email_utenza, password="prova")
+        response = self.client.get(profilo_url)
+        self.assertNotContains(response, termina_vol1_c2_est_url)
+        self.assertNotContains(response, termina_vol1_c3_est_url)
+        response = self.client.get(termina_vol1_c2_est_url)
+        self.assertRedirects(response, errore_url)
+        response = self.client.get(termina_vol1_c3_est_url)
+        self.assertRedirects(response, errore_url)
+
+        self.assertEqual(volontario.estensioni_attuali().count(), 2)
+
+        # Test con Presidente 1 - Tutti i permessi su tutte le estensioni
+        self.client.login(email=presidente_com1.email_utenza, password="prova")
+        response = self.client.get(profilo_url)
+        self.assertContains(response, termina_vol1_c2_est_url)
+        self.assertContains(response, termina_vol1_c3_est_url)
+        response = self.client.get(termina_vol1_c2_est_url)
+        self.assertContains(response, 'Estensione terminata')
+        response = self.client.get(termina_vol1_c3_est_url)
+        self.assertContains(response, 'Estensione terminata')
+
+        self.assertEqual(volontario.estensioni_attuali().count(), 0)
 
 
 class TestFunzionaleUfficioSoci(TestFunzionale):
