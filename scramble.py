@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import math
 import os
 import random
-
 from datetime import timedelta
+
+import math
 from django.db import transaction
 
 from base.comuni import COMUNI
+
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 
 from django.core.wsgi import get_wsgi_application
@@ -15,19 +16,17 @@ application = get_wsgi_application()
 
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2
 
-import phonenumbers
 from django.db import IntegrityError
 from django.db.models import Count
 
-from anagrafica.costanti import NAZIONALE, PROVINCIALE, TERRITORIALE, REGIONALE, LOCALE
+from anagrafica.costanti import NAZIONALE, TERRITORIALE, REGIONALE, LOCALE
 from autenticazione.models import Utenza
 from base.utils import poco_fa
 from base.utils_tests import crea_persona, email_fittizzia, codice_fiscale_persona
 from veicoli.models import Autoparco
 from base.geo import Locazione
 
-
-from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento
+from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Estensione
 from attivita.models import Attivita, Area
 import argparse
 
@@ -200,6 +199,10 @@ if args.esempio:
                             persona=p, sede=altra, inizio=data_precedente, fine=data, membro=membro,
                             terminazione=Appartenenza.TRASFERIMENTO
                         )
+                        Trasferimento.objects.create(
+                            richiedente=p, persona=p, destinazione=altra, appartenenza=a,
+                            protocollo_numero=1, protocollo_data=data_precedente, motivo='motivo'
+                        )
                     if i % 5 == 3:
                         # Catena di trasferimenti
                         data_precedente = data - timedelta(days=random.randint(10, 500))
@@ -208,11 +211,19 @@ if args.esempio:
                             persona=p, sede=altra, inizio=data_precedente, fine=data, membro=membro,
                             terminazione=Appartenenza.TRASFERIMENTO
                         )
+                        Trasferimento.objects.create(
+                            richiedente=p, persona=p, destinazione=altra, appartenenza=a,
+                            protocollo_numero=1, protocollo_data=data_precedente, motivo='motivo'
+                        )
                         data_precedente_vecchia = data_precedente - timedelta(days=random.randint(10, 500))
                         altra = random.sample(sedi, 1)[0]
                         a = Appartenenza.objects.create(
                             persona=p, sede=altra, inizio=data_precedente_vecchia, fine=data_precedente, membro=membro,
                             terminazione=Appartenenza.TRASFERIMENTO
+                        )
+                        Trasferimento.objects.create(
+                            richiedente=p, persona=p, destinazione=altra, appartenenza=a,
+                            protocollo_numero=1, protocollo_data=data_precedente_vecchia, motivo='motivo'
                         )
                         # Catena di estensioni su appartenenza corrente
                         data_est_1 = data + timedelta(days=math.floor((poco_fa() - data).days/2))
@@ -221,11 +232,27 @@ if args.esempio:
                         altra = random.sample(sedi, 1)[0]
                         altra_2 = random.sample(sedi, 1)[0]
                         a = Appartenenza.objects.create(
+                            persona=p, sede=c, inizio=data_est_1, membro=Appartenenza.ESTESO, fine=fine_est_1,
+                            terminazione=Appartenenza.FINE_ESTENSIONE
+                        )
+                        Estensione.objects.create(
+                            richiedente=p, persona=p, destinazione=altra, appartenenza=a,
+                            protocollo_numero=1, protocollo_data=data_est_1, motivo='motivo'
+                        )
+                        a = Appartenenza.objects.create(
                             persona=p, sede=altra, inizio=data_est_1, membro=Appartenenza.ESTESO, fine=fine_est_1,
                             terminazione=Appartenenza.FINE_ESTENSIONE
                         )
+                        Estensione.objects.create(
+                            richiedente=p, persona=p, destinazione=altra, appartenenza=a,
+                            protocollo_numero=1, protocollo_data=data_est_1, motivo='motivo'
+                        )
                         a = Appartenenza.objects.create(
                             persona=p, sede=altra_2, inizio=data_est_2, membro=Appartenenza.ESTESO,
+                        )
+                        Estensione.objects.create(
+                            richiedente=p, persona=p, destinazione=altra_2, appartenenza=a,
+                            protocollo_numero=1, protocollo_data=data_est_2, motivo='motivo'
                         )
                     if i % 5 == 2:
                         # Espulso e riammesso
