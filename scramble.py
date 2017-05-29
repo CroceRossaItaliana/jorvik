@@ -236,13 +236,16 @@ if args.esempio:
                             persona=p, sede=altra, inizio=data_precedente, fine=data_fine, membro=membro,
                             terminazione=Appartenenza.ESPULSIONE
                         )
-        for i in range(0, 5):  # Creo 5 aspiranti
+        for i in range(0, 15):  # Creo 15 aspiranti
             p = crea_persona()
             p.comune_nascita = random.sample(COMUNI.keys(), 1)[0]
             p.codice_fiscale = codice_fiscale_persona(p)
             p.save()
             p.ottieni_o_genera_aspirante()
-
+            utenza = Utenza.objects.create_user(
+                persona=p, email=email_fittizzia(),
+                password=email_fittizzia()
+            )
         if sede.estensione in (LOCALE, REGIONALE):
             print(" - Assegno deleghe...")
             persone = [a.persona for a in Appartenenza.objects.filter(sede=sede, membro=Appartenenza.VOLONTARIO).order_by('?')[:4]]
