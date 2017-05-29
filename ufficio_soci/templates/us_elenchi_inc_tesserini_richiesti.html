@@ -16,8 +16,10 @@
 {% endblock %}
 
 {% block elenco_riga_azioni_extra %}
+    {% if persona.tesserino and persona.tesserino.codice %}
     <!-- link tesserini passati -->
     <a href="/us/tesserini/richiedi/{{ persona.pk }}/?next={{ request.path }}" class="btn btn-default">
         <i class="fa fa-fw fa-file-o"></i> Richiedi duplicato
     </a>
+    {% endif %}
 {% endblock %}
