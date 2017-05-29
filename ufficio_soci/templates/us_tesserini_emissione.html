@@ -136,9 +136,7 @@
                                 <a download href="{{ t.url_pdf }}">
                                     <i class="fa fa-fw fa-download"></i> PDF
                                 </a>
-
                             {% endif %}
-
                         </td>
                         <td>
                             {{ t.get_stato_richiesta_display }}
@@ -216,7 +214,7 @@ $(document).ready(function() {
       $(e).click(function(event) {
           var checkbox = $(e).find("input");
           if (!checkbox.prop('disabled')) {
-              if (event.target != checkbox) {
+              if ($(event.target).get(0) !== checkbox.get(0)) {
                   checkbox.prop("checked", !checkbox.prop("checked"));
               }
               if (checkbox.prop("checked")) {

@@ -610,10 +610,29 @@ class TestBase(TestCase):
         self.client.login(username=presidente.utenza.email, password='prova')
         response = self.client.get(reverse('us-tesserini-richiedi', args=(vol_1.pk,)))
         self.assertNotContains(response, "Il Comitato non ha un indirizzo")
+        self.assertContains(response, "Esiste già una richiesta di un tesserino per la persona")
+
+        self.assertEqual(Tesserino.objects.all().count(), 1)
+
+        Tesserino.objects.filter(
+            valido=False, tipo_richiesta=Tesserino.RILASCIO, stato_richiesta=Tesserino.RICHIESTO
+        ).update(stato_richiesta=Tesserino.ACCETTATO, stato_emissione=Tesserino.STAMPATO,
+                 motivo_rifiutato='', data_conferma=poco_fa(), valido=True)
+        for tesserino in Tesserino.objects.filter(valido=True):
+            tesserino.assicura_presenza_codice()
+
+        self.client.login(username=presidente.utenza.email, password='prova')
+        response = self.client.get(reverse('us-tesserini-richiedi', args=(vol_1.pk,)))
+        self.assertNotContains(response, "Il Comitato non ha un indirizzo")
+        self.assertNotContains(response, "Esiste già una richiesta di un tesserino per la persona")
+        self.assertContains(response, 'Richiesta inoltrata')
 
         self.assertEqual(Tesserino.objects.all().count(), 2)
         self.assertEqual(Tesserino.objects.filter(
             valido=False, tipo_richiesta=Tesserino.RILASCIO, stato_richiesta=Tesserino.RICHIESTO
+        ).count(), 0)
+        self.assertEqual(Tesserino.objects.filter(
+            valido=False, tipo_richiesta=Tesserino.RILASCIO, stato_richiesta=Tesserino.ACCETTATO
         ).count(), 1)
         self.assertEqual(Tesserino.objects.filter(
             valido=False, tipo_richiesta=Tesserino.DUPLICATO, stato_richiesta=Tesserino.RICHIESTO
@@ -918,6 +937,15 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         self.assertTrue(email.subject.find('Richiesta Tesserino inoltrata') > -1)
         self.assertTrue(email.body.find('Il tuo Comitato ha avviato la richiesta di stampa del tuo tesserino.') > -1)
         sessione_presidente_regionale = self.sessione_utente(persona=presidente_regionale)
+
+        # Non c'è il bottone per chiedere il duplicato
+        self.assertEqual(1, len(sessione_presidente_locale.find_link_by_href("/us/tesserini/da-richiedere/")))
+        self.assertTrue(sessione_presidente_locale.is_text_not_present('Richiedi duplicato'))
+
+        # Richiedi duplicato fallisce perché non esiste già accettato
+        sessione_presidente_locale.visit("%s/us/tesserini/richiedi/%s/" % (self.live_server_url, persona.pk))
+        self.assertTrue(sessione_presidente_locale.is_text_present('Tesserino non accettato'))
+
         sessione_presidente_regionale.visit("%s/us/tesserini/emissione/" % self.live_server_url)
         sessione_presidente_regionale.find_by_xpath('//select[@name="stato_richiesta"]//option[@value="ATT"]').first.click()
         sessione_presidente_regionale.find_by_xpath("//button[@type='submit']").first.click()
@@ -937,7 +965,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         sessione_persona.find_by_xpath("//button[@type='submit']").first.click()
         self.assertTrue(sessione_persona.is_text_present('Tesserino valido'))
 
-        # Richiedi duplicato
+        # Richiedi duplicato, ora ha successo perché esiste tesserino emesso
 
         sessione_presidente_locale.visit("%s/us/tesserini/richiedi/%s/" % (self.live_server_url, persona.pk))
         self.assertTrue(sessione_presidente_locale.is_text_present('Richiesta inoltrata'))
