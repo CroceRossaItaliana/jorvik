@@ -38,7 +38,7 @@ from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI
     DIRETTORE_CORSO, RESPONSABILE_AREA, REFERENTE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
-    GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE
+    GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE, GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA
 from anagrafica.permessi.delega import delega_permessi, delega_incarichi
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_APPARTENENZE, INCARICO_GESTIONE_TRASFERIMENTI, \
     INCARICO_GESTIONE_ESTENSIONI, INCARICO_GESTIONE_RISERVE, INCARICO_ASPIRANTE
@@ -522,6 +522,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         if self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE):
             lista += [('/formazione/', 'Formazione', 'fa-graduation-cap')]
+
+        if self.ha_permesso(GESTIONE_CAMPAGNE) or self.ha_permesso(GESTIONE_CAMPAGNA):
+            lista += [('/donazioni/', 'Campagne', 'fa-money')]
 
         tipi = []
         for d in self.deleghe_attuali():

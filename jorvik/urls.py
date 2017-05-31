@@ -14,6 +14,7 @@ import attivita.viste
 import autenticazione.viste
 import base.viste, base.errori
 import centrale_operativa.viste
+import donazioni.viste
 import formazione.viste
 import gestione_file.viste
 import gruppi.viste
@@ -301,6 +302,10 @@ urlpatterns = [
     url(r'^token-sicuro/(?P<codice>.*)/$', base.viste.verifica_token),
 
     url(r'^password-dimenticata/$', base.viste.redirect_semplice, {"nuovo_url": "/recupera_password/"}),
+
+    # Campagne Donazioni economiche
+
+    url(r'^donazioni/$', donazioni.viste.DonazioniWelcomePage.as_view()),
 
     # Amministrazione
 

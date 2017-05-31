@@ -25,6 +25,8 @@ RESPONSABILE_AUTOPARCO = 'AP'
 RESPONSABILE_PATENTI = 'PA'
 RESPONSABILE_DONAZIONI = 'DO'
 DIRETTORE_CORSO = 'DC'
+DELEGATO_CAMPAGNE = 'CD'
+RESPONSABILE_CAMPAGNA = 'RC'
 
 # Nomi assegnati
 PERMESSI_NOMI = (
@@ -45,8 +47,11 @@ PERMESSI_NOMI = (
     (RESPONSABILE_FORMAZIONE,   "Responsabile Formazione"),
     (DIRETTORE_CORSO,           "Direttore Corso"),
     (RESPONSABILE_AUTOPARCO,    "Responsabile Autoparco"),
-    #(RESPONSABILE_PATENTI,      "Responsabile Patenti"),
-    #(RESPONSABILE_DONAZIONI,    "Responsabile Donazioni Sangue"),
+    (DELEGATO_CAMPAGNE,         "Responsabile Campagne Comitato"),
+    (RESPONSABILE_CAMPAGNA,     "Responsabile Campagna"),
+
+    # (RESPONSABILE_PATENTI,      "Responsabile Patenti"),
+    # (RESPONSABILE_DONAZIONI,    "Responsabile Donazioni Sangue"),
 )
 
 DELEGHE_RUBRICA = (

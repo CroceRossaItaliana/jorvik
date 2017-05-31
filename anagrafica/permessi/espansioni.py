@@ -77,10 +77,13 @@ def espandi_elenchi_soci(qs_sedi, al_giorno=None):
         (LETTURA,  Tesserino.objects.filter(Appartenenza.con_esito_ok(sede__in=qs_sedi).via("persona__appartenenze"))),
     ]
 
+
+# FIXME check if al_giorno=date.today() is a potential bug (btw is not used)
 def espandi_rubrica_ufficio_soci(qs_sedi, al_giorno=date.today()):
     return [
         (LETTURA, qs_sedi),
     ]
+
 
 def espandi_rubrica_ufficio_soci_unita(qs_sedi, al_giorno=date.today()):
     return [
@@ -264,6 +267,19 @@ def espandi_gestione_gruppi_sede(qs_sedi, al_giorno=None):
     return [
 
     ] + espandi_gestione_gruppo(Gruppo.objects.filter(sede__in=qs_sedi), al_giorno=al_giorno)
+
+
+def espandi_gestione_campagne(qs_sedi, al_giorno=None):
+    from donazioni.models import Campagna
+    return [
+        (COMPLETO, Campagna.objects.filter(organizzatore__in=qs_sedi)),
+    ]
+
+
+def espandi_gestione_campagna(qs_campagne, al_giorno=None):
+    return [
+        (MODIFICA, qs_campagne),
+    ]
 
 
 ESPANDI_PERMESSI = {

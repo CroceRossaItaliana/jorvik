@@ -11,7 +11,7 @@ Questo file gestisce i permessi in Gaia.
  ============================================================================================
 """
 from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA, REFERENTE, DIRETTORE_CORSO, \
-    RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO
+    RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, DELEGATO_CAMPAGNE, RESPONSABILE_CAMPAGNA
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 
 GESTIONE_SEDE = "GESTIONE_SEDE"
@@ -48,6 +48,9 @@ GESTIONE_CENTRALE_OPERATIVA_SEDE = "GESTIONE_CENTRALE_OPERATIVA_SEDE"
 GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE = "GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE"
 EMISSIONE_TESSERINI = "EMISSIONE_TESSERINI"
 ASPIRANTE = "ASPIRANTE"
+# modulo donazioni
+GESTIONE_CAMPAGNE = "GESTIONE_CAMPAGNE"  # permesso per la delega di gestione campagne di un comitato
+GESTIONE_CAMPAGNA = "GESTIONE_CAMPAGNA"  # permesso per il responsabile di una singola campagna
 
 # Tipologia degli oggetti assegnati ad ogni Permesso.
 PERMESSI_OGGETTI = (
@@ -85,6 +88,8 @@ PERMESSI_OGGETTI = (
     (GESTIONE_CENTRALE_OPERATIVA_SEDE,  ('anagrafica', 'Sede')),
     (GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE,  ('anagrafica', 'Sede')),
     (ASPIRANTE,                 ('formazione', 'InvitoCorsoBase')),
+    (GESTIONE_CAMPAGNE,         ('anagrafica', 'Sede')),
+    (GESTIONE_CAMPAGNA,         ('donazioni', 'Campagna')),
 )
 
 # Tipologia degli oggetti assegnati ad ogni Delega.
@@ -97,6 +102,8 @@ DELEGHE_OGGETTI = (
     (DIRETTORE_CORSO,           ('formazione', 'CorsoBase', 'sede__in')),
     (RESPONSABILE_AUTOPARCO,    ('anagrafica', 'Sede', None)),
     (REFERENTE_GRUPPO,          ('anagrafica', 'Gruppo', 'sede__in')),
+    (DELEGATO_CAMPAGNE,         ('anagrafica', 'Sede', None)),
+    (RESPONSABILE_CAMPAGNA,     ('donazioni', 'Campagna', 'sede__in')),
 )
 
 
