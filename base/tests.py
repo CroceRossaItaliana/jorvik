@@ -23,7 +23,8 @@ from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
 from base.forms_extra import ModuloRichiestaSupporto
 from base.geo import Locazione
-from base.utils import UpperCaseCharField, poco_fa
+from base.stringhe import normalizza_nome
+from base.utils import UpperCaseCharField, poco_fa, TitleCharField
 from base.utils_tests import crea_appartenenza, crea_persona_sede_appartenenza, crea_persona, crea_area_attivita, crea_utenza, \
     email_fittizzia, crea_sede
 from curriculum.models import Titolo
@@ -278,6 +279,34 @@ class TestUtils(TestBase):
         self.assertEqual(field_stub.to_python(''), '')
         self.assertEqual(field_stub.to_python('testo minuscolo'), 'TESTO MINUSCOLO')
         self.assertEqual(field_stub.to_python(False), False)
+
+
+    def test_normalizza_nome(self):
+        nomi = {
+            'gIoVanni': 'Giovanni',
+            "D'AMATO": "D'Amato",
+            "'apostrofo": "'Apostrofo",
+            "franÇoise": "Françoise",
+            "günther": "Günther",
+        }
+        field_stub = TitleCharField()
+        field_stub.attname = 'nome'
+        persona = Persona()
+        persona.nome = None
+        self.assertEqual(field_stub.pre_save(persona, False), None)
+        persona.nome = 1
+        self.assertEqual(field_stub.pre_save(persona, False), 1)
+        persona.nome = ''
+        self.assertEqual(field_stub.pre_save(persona, False), '')
+        persona.nome = 'testo minuscolo'
+        self.assertEqual(field_stub.pre_save(persona, False), 'Testo Minuscolo')
+        persona.nome = False
+        self.assertEqual(field_stub.pre_save(persona, False), False)
+
+        for nome, atteso in nomi.items():
+            self.assertEqual(normalizza_nome(nome), atteso)
+            persona.nome = nome
+            self.assertEqual(field_stub.pre_save(persona, False), atteso)
 
 
 class TestFunzionaleBase(TestFunzionale):
