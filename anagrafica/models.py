@@ -2049,7 +2049,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
           nome="Trasferimento %s.pdf" % (self.persona.nome_completo, ),
           corpo={
             "trasferimento": self,
-            "sede_attuale": self.persona.sedi_attuali(al_giorno=self.creazione)[0]
+            "sede_attuale": self.persona.sede_riferimento(),
           },
           modello="pdf_trasferimento.html",
         )
