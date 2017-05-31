@@ -1167,6 +1167,11 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
                                          "i volontari in possesso di una fototessera "
                                          "confermata su Gaia.", **torna)
 
+    if persona.tesserini.filter(Q(stato_richiesta__in=(Tesserino.RICHIESTO,)) | Q(codice='')).exists():
+        return errore_generico(request, me, titolo="Tesserino non accettato",
+                               messaggio="Esiste già una richiesta di un tesserino per la persona "
+                                         "e non è pertanto possibile richiedere un duplicato ", **torna)
+
     tesserini = persona.tesserini.filter(stato_richiesta__in=(Tesserino.RICHIESTO, Tesserino.ACCETTATO))
     if tesserini.exists():
         tipo_richiesta = Tesserino.DUPLICATO
