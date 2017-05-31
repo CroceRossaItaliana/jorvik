@@ -18,7 +18,7 @@ def normalizza_nome(stringa):
     :param stringa: La stringa da normalizzare.
     :return: La stringa pronta come titolo.
     """
-    return string.capwords(stringa.lower())
+    return string.capwords(stringa.lower().replace("'", "' ")).replace("' ", "'")
 
 
 def genera_uuid_casuale():

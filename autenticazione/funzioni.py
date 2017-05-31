@@ -6,7 +6,7 @@ from django.utils.http import urlencode
 import functools
 from anagrafica.permessi.costanti import ERRORE_ORFANO, ERRORE_PERMESSI
 from base.menu import menu
-from jorvik.settings import LOGIN_URL
+from jorvik.settings import LOGIN_URL, DEBUG
 
 __author__ = 'alfioemanuele'
 
@@ -49,6 +49,7 @@ def pagina_pubblica(funzione=None, permetti_embed=False):
 
         contesto.update({"me": request.me})
         contesto.update({"embed": embed})
+        contesto.update({"debug": DEBUG and request.META['SERVER_NAME'] != "testserver"})
         contesto.update({"request": request})
         contesto.update({"menu": menu(request)})
         return render_to_response(template, RequestContext(request, contesto))
@@ -76,6 +77,7 @@ def pagina_anonima(funzione, pagina='/utente/'):
             return richiesta  # Passa attraverso.
 
         contesto.update({"me": None})
+        contesto.update({"debug": DEBUG and request.META['SERVER_NAME'] != "testserver"})
         contesto.update({"request": request})
         contesto.update({"menu": menu(request)})
         return render_to_response(template, RequestContext(request, contesto))
@@ -120,6 +122,7 @@ def pagina_privata(funzione=None, pagina=LOGIN_URL, permessi=[]):
             return richiesta  # Passa attraverso.
 
         contesto.update({"me": request.me})
+        contesto.update({"debug": DEBUG and request.META['SERVER_NAME'] != "testserver"})
         contesto.update({"request": request})
         contesto.update({"menu": menu(request)})
         return render_to_response(template, RequestContext(request, contesto))
@@ -163,6 +166,7 @@ def pagina_privata_no_cambio_firma(funzione=None, pagina=LOGIN_URL, permessi=[])
 
         extra = {}
         extra.update({"me": request.me})
+        extra.update({"debug": DEBUG and request.META['SERVER_NAME'] != "testserver"})
         extra.update({"request": request})
         extra.update({"menu": menu(request)})
 
@@ -172,6 +176,7 @@ def pagina_privata_no_cambio_firma(funzione=None, pagina=LOGIN_URL, permessi=[])
             return richiesta  # Passa attraverso.
 
         contesto.update({"me": request.me})
+        contesto.update({"debug": DEBUG and request.META['SERVER_NAME'] != "testserver"})
         contesto.update({"request": request})
         contesto.update({"menu": menu(request)})
         return render_to_response(template, RequestContext(request, contesto))
@@ -209,6 +214,7 @@ class VistaDecorata(object):
         except AttributeError:
             pass
         contesto.update({'embed': embed})
+        contesto.update({"debug": DEBUG and self.request.META['SERVER_NAME'] != "testserver"})
         return contesto
 
     def get_context_data(self, **kwargs):

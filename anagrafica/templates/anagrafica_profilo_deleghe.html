@@ -29,6 +29,11 @@
                         {% if d.attuale %}
                             Attiva
 
+                            {% if d.stato == d.SOSPESA %}
+                                (Sospesa)
+
+                            {% endif %}
+
                         {% else %}
                             Passata
 

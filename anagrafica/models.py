@@ -266,11 +266,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return numeri_servizio
         return self.numeri_telefono.all()
 
-    def deleghe_attuali(self, al_giorno=None, **kwargs):
+    def deleghe_attuali(self, al_giorno=None, solo_attive=True, **kwargs):
         """
         Ritorna una ricerca per le deleghe che son attuali.
         """
-        return self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno).q, **kwargs)
+        deleghe = self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno).q, **kwargs)
+        if solo_attive:
+            deleghe = deleghe.filter(stato=Delega.ATTIVA)
+        return deleghe
+
 
     def deleghe_attuali_rubrica(self, al_giorno=None, **kwargs):
         """
@@ -537,19 +541,24 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return lista
 
 
-    def oggetti_permesso(self, permesso, al_giorno=None):
+    def oggetti_permesso(self, permesso, al_giorno=None,
+                         solo_deleghe_attive=True):
         """
         Dato un permesso, ritorna un queryset agli oggetti che sono coperti direttamente
         dal permesso. Es.: GESTIONE_SOCI -> Elenco dei Comitati in cui si ha gestione dei soci.
         :param permesso: Permesso singolo.
         :param al_giorno: Data di verifica.
+        :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
         :return: QuerySet. Se permesso non valido, QuerySet vuoto o None (EmptyQuerySet).
         """
-        permessi = persona_oggetti_permesso(self, permesso, al_giorno=al_giorno)
+        permessi = persona_oggetti_permesso(self, permesso, al_giorno=al_giorno,
+                                            solo_deleghe_attive=solo_deleghe_attive)
         if isinstance(permessi, QuerySet):
             return permessi
+
         else:
-            return apps.get_model(PERMESSI_OGGETTI_DICT[permesso][0], PERMESSI_OGGETTI_DICT[permesso][1]).objects.none()
+            return apps.get_model(PERMESSI_OGGETTI_DICT[permesso][0],
+                                  PERMESSI_OGGETTI_DICT[permesso][1]).objects.none()
 
     def permessi(self, oggetto, al_giorno=None):
         """
@@ -566,33 +575,38 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return persona_permessi(self, oggetto, al_giorno=al_giorno)
 
-    def permessi_almeno(self, oggetto, minimo, al_giorno=None):
+    def permessi_almeno(self, oggetto, minimo, al_giorno=None, solo_deleghe_attive=True):
         """
         Controlla se ho i permessi minimi richiesti specificati su un dato oggetto.
 
         :param oggetto: Oggetto qualunque.
         :param minimo: Oggetto qualunque.
         :param al_giorno:  Data di verifica.
+        :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
         :return: True se permessi >= minimo, False altrimenti
         """
-        return persona_permessi_almeno(self, oggetto, minimo=minimo, al_giorno=al_giorno)
+        return persona_permessi_almeno(self, oggetto, minimo=minimo, al_giorno=al_giorno,
+                                       solo_deleghe_attive=solo_deleghe_attive)
 
-    def ha_permesso(self, permesso, al_giorno=None):
+    def ha_permesso(self, permesso, al_giorno=None, solo_deleghe_attive=True):
         """
         Dato un permesso, ritorna true se il permesso e' posseduto.
         :param permesso: Permesso singolo.
         :param al_giorno: Data di verifica.
+        :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
         :return: True se il permesso e' posseduto. False altrimenti.
         """
-        return persona_ha_permesso(self, permesso, al_giorno=al_giorno)
+        return persona_ha_permesso(self, permesso, al_giorno=al_giorno,
+                                   solo_deleghe_attive=solo_deleghe_attive)
 
-    def ha_permessi(self, *permessi):
+    def ha_permessi(self, *permessi, solo_deleghe_attive=True):
         """
         Dato un elenco di permessi, ritorna True se tutti i permessi sono posseduti.
         :param permessi: Elenco di permessi.
+        :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
         :return: True se tutti i permessi sono posseduti. False altrimenti.
         """
-        return persona_ha_permessi(self, *permessi)
+        return persona_ha_permessi(self, *permessi, solo_deleghe_attive=solo_deleghe_attive)
 
     def invia_email_benvenuto_registrazione(self, tipo='aspirante'):
         """
@@ -758,17 +772,24 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 INCARICO_ASPIRANTE in dict(self.incarichi()))
 
     def incarichi(self):
+
         if hasattr(self, 'aspirante'):
-            incarichi_persona = {INCARICO_ASPIRANTE: [(self.__class__.objects.filter(pk=self.pk), self.creazione)]}
+            incarichi_persona = {INCARICO_ASPIRANTE: [(self.__class__.objects.filter(pk=self.pk),
+                                                       self.creazione)]}
+
         else:
             incarichi_persona = {}
+
         for delega in self.deleghe_attuali():
             incarichi_delega = delega.espandi_incarichi()
+
             for incarico in incarichi_delega:
                 if not incarico[0] in incarichi_persona:
                     incarichi_persona.update({incarico[0]: [(incarico[1], delega.inizio)]})
+
                 else:
                     incarichi_persona[incarico[0]].append((incarico[1], delega.inizio))
+
         return incarichi_persona.items()
 
     def autorizzazioni(self):
@@ -779,11 +800,20 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         a = Autorizzazione.objects.none()
         for incarico in self.incarichi():
             for potere in incarico[1]:
+
+                if isinstance(potere[0], QuerySet):
+                    q_id = Q(destinatario_oggetto_id__in=potere[0].values_list('id', flat=True),
+                             destinatario_oggetto_tipo=ContentType.objects.get_for_model(potere[0].model))
+
+                else:  # Se modello instanziato
+                    q_id = Q(destinatario_oggetto_id=potere[0].pk,
+                             destinatario_oggetto_tipo=ContentType.objects.get_for_model(potere[0]))
+
                 a |= Autorizzazione.objects.filter(
+                    q_id,
                     destinatario_ruolo=incarico[0], creazione__gte=potere[1],
-                    destinatario_oggetto_tipo=ContentType.objects.get_for_model(potere[0].model),
-                    destinatario_oggetto_id__in=potere[0].values_list('id', flat=True),
                 )
+
         a = a.distinct('progressivo', 'oggetto_tipo_id', 'oggetto_id',)
         return Autorizzazione.objects.filter(
             pk__in=a.values_list('id', flat=True)
@@ -1730,8 +1760,12 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             ['oggetto_tipo', 'oggetto_id'],
             ['tipo', 'oggetto_tipo', 'oggetto_id'],
             ['persona', 'tipo'],
+            ['persona', 'tipo', 'stato'],
+            ['persona', 'stato'],
             ['inizio', 'fine'],
+            ['inizio', 'fine', 'stato'],
             ['persona', 'inizio', 'fine', 'tipo',],
+            ['persona', 'inizio', 'fine', 'tipo', 'stato'],
             ['persona', 'inizio', 'fine',],
             ['persona', 'inizio', 'fine', 'tipo', 'oggetto_id', 'oggetto_tipo',],
             ['inizio', 'fine', 'tipo',],
@@ -1741,8 +1775,14 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             ("view_delega", "Can view delega"),
         )
 
+    ATTIVA = "a"
+    SOSPESA = "s"
+    STATO = ((ATTIVA, "Attiva"),
+             (SOSPESA, "Sospesa"))
+
     persona = models.ForeignKey(Persona, db_index=True, related_name='deleghe', related_query_name='delega', on_delete=models.CASCADE)
     tipo = models.CharField(max_length=2, db_index=True, choices=PERMESSI_NOMI)
+    stato = models.CharField(max_length=2, db_index=True, choices=STATO, default=ATTIVA)
     oggetto_tipo = models.ForeignKey(ContentType, db_index=True, on_delete=models.SET_NULL, null=True)
     oggetto_id = models.PositiveIntegerField(db_index=True)
     oggetto = GenericForeignKey('oggetto_tipo', 'oggetto_id')
@@ -1756,12 +1796,13 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             self.get_tipo_display(), self.oggetto,
         )
 
-    def permessi(self):
+    def permessi(self, solo_deleghe_attive=True):
         """
         Ottiene un elenco di permessi che scaturiscono dalla delega.
+        :param solo_deleghe_attive: Espandi permessi solo dalle deleghe attive.
         :return: Una lista di permessi.
         """
-        return delega_permessi(self)
+        return delega_permessi(self, solo_deleghe_attive=solo_deleghe_attive)
 
     def espandi_incarichi(self):
         """
@@ -2011,7 +2052,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
           nome="Trasferimento %s.pdf" % (self.persona.nome_completo, ),
           corpo={
             "trasferimento": self,
-            "sede_attuale": self.persona.sedi_attuali(al_giorno=self.creazione)[0]
+            "sede_attuale": self.persona.sede_riferimento(),
           },
           modello="pdf_trasferimento.html",
         )
