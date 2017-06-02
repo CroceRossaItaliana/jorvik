@@ -257,13 +257,13 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             destinatari=[persona],
         )
 
-    def notifica_origine_autorizzazione_concessa(self, origine, testo_extra=''):
+    def notifica_sede_autorizzazione_concessa(self, sede, testo_extra=''):
         """
         Notifica presidente e ufficio soci del comitato di origine dell'avvenuta approvazione della richiesta
         """
         from posta.models import Messaggio
 
-        notifiche = self.espandi_notifiche(origine, [], True, True)
+        notifiche = self.espandi_notifiche(sede, [], True, True)
         modello = "email_autorizzazione_concessa_notifica_origine.html"
         oggetto = "Richiesta di %s da %s APPROVATA" % (self.oggetto.RICHIESTA_NOME, self.richiedente.nome_completo,)
         aggiunte_corpo = {
