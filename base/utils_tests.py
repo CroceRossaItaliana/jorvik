@@ -171,6 +171,7 @@ def crea_partecipazione(persona, turno):
 def crea_sessione(wait_time=7):
     from splinter import Browser
     browser = Browser(DRIVER_WEB, wait_time=wait_time)
+    browser.driver.set_window_size(1600, 1400)
     return browser
 
 

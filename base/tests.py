@@ -137,7 +137,7 @@ class TestGeo(TestCase):
                                                   'viewport': {'southwest': {'lng': -1.622701, 'lat': 6.6697722},
                                                                'northeast': {'lng': -1.6176442,
                                                                              'lat': 6.680420799999999}},
-                                                  'location': {'lng': -1.6204888, 'lat': 6.6748961},
+                                                  'location': {'lng': -1.620479, 'lat': 6.6748954},
                                                   'bounds': {'southwest': {'lng': -1.622701, 'lat': 6.6697722},
                                                              'northeast': {'lng': -1.6176442,
                                                                            'lat': 6.680420799999999}}},
@@ -155,7 +155,7 @@ class TestGeo(TestCase):
                                      {'long_name': 'Ghana', 'short_name': 'GH', 'types': ['country', 'political']}],
               'formatted_address': 'Harper Rd, Kumasi, Ghana', 'types': ['route'],
               'place_id': 'ChIJda2WAseW2w8RuCwOYKAZleY'}],
-            [('Harper Rd, Kumasi, Ghana', {'lng': -1.6204888, 'lat': 6.6748961},
+            [('Harper Rd, Kumasi, Ghana', {'lng': -1.620479, 'lat': 6.6748954},
               {'via': 'Harper Road', 'cap': None, 'comune': 'Kumasi', 'provincia': 'Kumasi Metropolitan',
                'provincia_breve': 'Kumasi Metropolitan', 'stato': 'GH', 'civico': None, 'regione': 'Ashanti Region'})]
         ],
