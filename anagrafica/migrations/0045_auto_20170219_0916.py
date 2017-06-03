@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('anagrafica', '0045_auto_20170211_1826'),
+        ('anagrafica', '0045_refactor_nome_cognome'),
     ]
 
     operations = [

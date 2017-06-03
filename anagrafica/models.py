@@ -1978,7 +1978,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
     persona = models.ForeignKey(Persona, related_name='trasferimenti', on_delete=models.CASCADE)
     destinazione = models.ForeignKey(
         Sede, related_name='trasferimenti_destinazione', on_delete=models.PROTECT,
-        limit_choices_to={'estensione__in': (LOCALE, TERRITORIALE)}
+        limit_choices_to={'estensione__in': (PROVINCIALE, LOCALE, TERRITORIALE)}
     )
     appartenenza = models.ForeignKey(Appartenenza, related_name='trasferimento', null=True, blank=True, on_delete=models.PROTECT)
     protocollo_numero = models.CharField('Numero di protocollo', max_length=16, null=True, blank=True)
@@ -2076,7 +2076,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     persona = models.ForeignKey(Persona, related_name='estensioni', on_delete=models.CASCADE)
     destinazione = models.ForeignKey(
         Sede, related_name='estensioni_destinazione', on_delete=models.PROTECT,
-        limit_choices_to = {'estensione__in': (LOCALE, TERRITORIALE)}
+        limit_choices_to={'estensione__in': (PROVINCIALE, LOCALE, TERRITORIALE)}
     )
     appartenenza = models.ForeignKey(Appartenenza, related_name='estensione', null=True, blank=True, on_delete=models.CASCADE)
     protocollo_numero = models.CharField('Numero di protocollo', max_length=512, null=True, blank=True)

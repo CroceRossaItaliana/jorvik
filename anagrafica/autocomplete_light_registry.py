@@ -2,7 +2,7 @@ from autocomplete_light import shortcuts as autocomplete_light
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 
-from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE
+from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
 from anagrafica.models import Persona, Sede, Appartenenza
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE
 from formazione.models import PartecipazioneCorsoBase
@@ -153,6 +153,18 @@ class ComitatoAutocompletamento(AutocompletamentoBase):
         return super(ComitatoAutocompletamento, self).choices_for_request()
 
 
+class SedeTrasferimentoAutocompletamento(AutocompletamentoBase):
+    search_fields = ['nome', 'genitore__nome', ]
+    model = Sede
+
+    def choices_for_request(self):
+        self.choices = self.choices.filter(
+            tipo=Sede.COMITATO,
+            estensione__in=[PROVINCIALE, LOCALE, TERRITORIALE],
+        )
+        return super(SedeTrasferimentoAutocompletamento, self).choices_for_request()
+
+
 class SedeNuovoCorsoAutocompletamento(SedeAutocompletamento):
     def choices_for_request(self):
         return self.persona.oggetti_permesso(GESTIONE_CORSI_SEDE)
@@ -164,4 +176,5 @@ autocomplete_light.register(SostenitoreAutocompletamento)
 autocomplete_light.register(IscrivibiliCorsiAutocompletamento)
 autocomplete_light.register(SedeAutocompletamento)
 autocomplete_light.register(ComitatoAutocompletamento)
+autocomplete_light.register(SedeTrasferimentoAutocompletamento)
 autocomplete_light.register(SedeNuovoCorsoAutocompletamento)

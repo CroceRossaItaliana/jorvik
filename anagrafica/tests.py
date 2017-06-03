@@ -479,7 +479,7 @@ class TestAnagrafica(TestCase):
         modulo = ModuloCreazioneEstensione({'destinazione': sede3.pk, 'motivo': 'blag'})
         self.assertFalse(modulo.is_valid())
         self.assertTrue('destinazione'in modulo.errors)
-        self.assertTrue('La scelta effettuata non compare tra quelle disponibili' in modulo.errors['destinazione'].as_text())
+        self.assertTrue('Non è possibile effettuare un trasferimento verso il Comitato Nazionale,' in modulo.errors['destinazione'].as_text())
 
     def test_blocco_trasferimento_regionale(self):
         presidente1 = crea_persona()
@@ -497,7 +497,7 @@ class TestAnagrafica(TestCase):
         modulo = ModuloCreazioneTrasferimento({'destinazione': sede3.pk, 'motivo': 'blag'})
         self.assertFalse(modulo.is_valid())
         self.assertTrue('destinazione'in modulo.errors)
-        self.assertTrue('La scelta effettuata non compare tra quelle disponibili' in modulo.errors['destinazione'].as_text())
+        self.assertTrue('Non è possibile effettuare un trasferimento verso il Comitato Nazionale,' in modulo.errors['destinazione'].as_text())
 
     def test_estensione_accettata(self):
         presidente1 = crea_persona()
