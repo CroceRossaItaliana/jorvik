@@ -181,6 +181,7 @@ def crea_partecipazione(persona, turno):
 def crea_sessione(wait_time=7):
     from splinter import Browser
     browser = Browser(DRIVER_WEB, wait_time=wait_time)
+    browser.driver.set_window_size(1600, 1400)
     return browser
 
 
@@ -198,7 +199,7 @@ def sessione_anonimo(server_url):
     return sessione
 
 
-def sessione_utente(server_url, persona=None, utente=None, password=None, wait_time=7):
+def sessione_utente(server_url, persona=None, utente=None, password=None, wait_time=4):
     if not (persona or utente):
         raise ValueError("sessione_utente deve ricevere almeno una persona "
                          "o un utente.")

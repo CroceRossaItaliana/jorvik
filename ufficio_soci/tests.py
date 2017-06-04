@@ -1,4 +1,5 @@
 import datetime
+from time import sleep
 from unittest import skip
 import tempfile
 
@@ -706,8 +707,8 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
 
         locale = crea_sede(presidente=us_locale, genitore=regionale)
 
-        sessione_regionale = self.sessione_utente(persona=us_regionale, wait_time=1)
-        sessione_locale = self.sessione_utente(persona=us_locale, wait_time=1)
+        sessione_regionale = self.sessione_utente(persona=us_regionale, wait_time=2)
+        sessione_locale = self.sessione_utente(persona=us_locale, wait_time=2)
 
         # Prima di tutto, assicurati che il socio ordinario risulti correttamente
         # nell'elenco del regionale.
@@ -771,7 +772,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         appartenenza.membro = Appartenenza.DIPENDENTE
         appartenenza.save()
 
-        sessione_locale = self.sessione_utente(persona=us_locale, wait_time=1)
+        sessione_locale = self.sessione_utente(persona=us_locale, wait_time=2)
 
         # Prima di tutto, assicurati che il socio ordinario risulti correttamente
         # nell'elenco del regionale.
@@ -828,7 +829,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         appartenenza.membro = Appartenenza.SOSTENITORE
         appartenenza.save()
 
-        sessione_locale = self.sessione_utente(persona=us_locale, wait_time=1)
+        sessione_locale = self.sessione_utente(persona=us_locale, wait_time=2)
 
         # Prima di tutto, assicurati che il socio ordinario risulti correttamente
         # nell'elenco del regionale.
@@ -939,7 +940,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         sessione_presidente_regionale = self.sessione_utente(persona=presidente_regionale)
 
         # Non c'è il bottone per chiedere il duplicato
-        self.assertEqual(1, len(sessione_presidente_locale.find_link_by_href("/us/tesserini/da-richiedere/")))
+        self.assertEqual(0, len(sessione_presidente_locale.find_link_by_href("/us/tesserini/da-richiedere/")))
         self.assertTrue(sessione_presidente_locale.is_text_not_present('Richiedi duplicato'))
 
         # Richiedi duplicato fallisce perché non esiste già accettato

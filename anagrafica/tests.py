@@ -2116,7 +2116,7 @@ class TestFunzionaliAnagrafica(TestFunzionale):
         Delega.objects.create(persona=delegato_abruzzo, tipo=DELEGATO_OBIETTIVO_3, oggetto=abruzzo, inizio=poco_fa())
         # Testa la rubrica per il delegato nazionale
         utenza = crea_utenza(persona=delegato_nazionale, email=EMAIL)
-        sessione_delegato_nazionale = self.sessione_utente(utente=utenza, wait_time=1)
+        sessione_delegato_nazionale = self.sessione_utente(utente=utenza, wait_time=2)
         sessione_delegato_nazionale.visit("%s%s" % (self.live_server_url, '/utente/'))
         self.assertTrue(sessione_delegato_nazionale.is_text_present("Rubrica"))
         self.assertTrue(sessione_delegato_nazionale.is_text_present("Referenti"))
@@ -2169,7 +2169,7 @@ class TestFunzionaliAnagrafica(TestFunzionale):
         # Testa la rubrica per il delegato di firenze
         EMAIL = email_fittizzia()
         utenza = crea_utenza(persona=delegato_firenze, email=EMAIL)
-        sessione_delegato_firenze = self.sessione_utente(utente=utenza, wait_time=1)
+        sessione_delegato_firenze = self.sessione_utente(utente=utenza, wait_time=2)
         sessione_delegato_firenze.visit("%s%s" % (self.live_server_url, '/utente/'))
         self.assertTrue(sessione_delegato_firenze.is_text_present("Rubrica"))
         self.assertTrue(sessione_delegato_firenze.is_text_present("Referenti"))
@@ -2197,7 +2197,7 @@ class TestFunzionaliAnagrafica(TestFunzionale):
         # Testa la rubrica per il delegato territoriale dicomano
         EMAIL = email_fittizzia()
         utenza = crea_utenza(persona=delegato_dicomano, email=EMAIL)
-        sessione_delegato_dicomano = self.sessione_utente(utente=utenza, wait_time=1)
+        sessione_delegato_dicomano = self.sessione_utente(utente=utenza, wait_time=2)
         sessione_delegato_dicomano.visit("%s%s" % (self.live_server_url, '/utente/'))
         self.assertTrue(sessione_delegato_dicomano.is_text_present("Rubrica"))
         self.assertTrue(sessione_delegato_dicomano.is_text_present("Referenti"))
@@ -2206,7 +2206,7 @@ class TestFunzionaliAnagrafica(TestFunzionale):
         # Testa la rubrica per il delegato regionale abruzzo (non vede la rubrica)
         EMAIL = email_fittizzia()
         utenza = crea_utenza(persona=delegato_abruzzo, email=EMAIL)
-        sessione_delegato_abruzzo = self.sessione_utente(utente=utenza, wait_time=1)
+        sessione_delegato_abruzzo = self.sessione_utente(utente=utenza, wait_time=2)
         sessione_delegato_abruzzo.visit("%s%s" % (self.live_server_url, '/utente/'))
         self.assertTrue(sessione_delegato_dicomano.is_text_present("Rubrica"))
         self.assertTrue(sessione_delegato_dicomano.is_text_present("Referenti"))
