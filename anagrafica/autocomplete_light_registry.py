@@ -4,6 +4,7 @@ from django.db.models import Q
 
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE
 from anagrafica.models import Persona, Sede, Appartenenza
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI_UNITA, UFFICIO_SOCI
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE
 from formazione.models import PartecipazioneCorsoBase
 
@@ -110,6 +111,13 @@ class SostenitoreAutocompletamento(PersonaAutocompletamento):
         return super(SostenitoreAutocompletamento, self).choices_for_request()
 
 
+class VolontarioSedeAutocompletamento(PersonaAutocompletamento):
+    def choices_for_request(self):
+        sedi = [d.oggetto for d in self.request.user.persona.deleghe_attuali(tipo__in=(UFFICIO_SOCI, UFFICIO_SOCI_UNITA))]
+        self.choices = self.choices.filter(Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO, sede__in=sedi).via("appartenenze"))
+        return super(VolontarioSedeAutocompletamento, self).choices_for_request()
+
+
 class IscrivibiliCorsiAutocompletamento(PersonaAutocompletamento):
     search_fields = ['codice_fiscale',]
 
@@ -118,7 +126,6 @@ class IscrivibiliCorsiAutocompletamento(PersonaAutocompletamento):
         'required': False,
         'data-autocomplete-minimum-characters': 8,
     }
-
 
     def choices_for_request(self):
         self.choices = self.choices.filter(
@@ -161,6 +168,7 @@ class SedeNuovoCorsoAutocompletamento(SedeAutocompletamento):
 autocomplete_light.register(PersonaAutocompletamento)
 autocomplete_light.register(PresidenteAutocompletamento)
 autocomplete_light.register(SostenitoreAutocompletamento)
+autocomplete_light.register(VolontarioSedeAutocompletamento)
 autocomplete_light.register(IscrivibiliCorsiAutocompletamento)
 autocomplete_light.register(SedeAutocompletamento)
 autocomplete_light.register(ComitatoAutocompletamento)
