@@ -323,7 +323,7 @@ class TestFunzionaleBase(TestFunzionale):
         Appartenenza.objects.create(persona=ordinario, sede=sede, membro=Appartenenza.ORDINARIO, inizio=poco_fa())
         Appartenenza.objects.create(persona=sostenitore, sede=sede, membro=Appartenenza.SOSTENITORE, inizio=poco_fa())
 
-        sessione_aspirante = self.sessione_utente(persona=aspirante, wait_time=1)
+        sessione_aspirante = self.sessione_utente(persona=aspirante, wait_time=2)
         self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Estensione')), 0)
         self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Trasferimento')), 0)
         self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Riserva')), 0)
@@ -361,7 +361,7 @@ class TestFunzionaleBase(TestFunzionale):
         sessione_aspirante.visit("%s/utente/documenti/" % self.live_server_url)
         self.assertTrue(sessione_aspirante.is_text_present('Accesso Volontari'))
 
-        sessione_dipendente = self.sessione_utente(persona=dipendente, wait_time=1)
+        sessione_dipendente = self.sessione_utente(persona=dipendente, wait_time=2)
         self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Estensione')), 0)
         self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Trasferimento')), 0)
         self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Riserva')), 0)
@@ -396,7 +396,7 @@ class TestFunzionaleBase(TestFunzionale):
         sessione_dipendente.visit("%s/utente/documenti/" % self.live_server_url)
         self.assertTrue(sessione_dipendente.is_text_not_present('Accesso Volontari'))
 
-        sessione_ordinario = self.sessione_utente(persona=ordinario, wait_time=1)
+        sessione_ordinario = self.sessione_utente(persona=ordinario, wait_time=2)
         self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Estensione')), 0)
         self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Trasferimento')), 0)
         self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Riserva')), 0)
@@ -434,7 +434,7 @@ class TestFunzionaleBase(TestFunzionale):
         sessione_ordinario.visit("%s/utente/documenti/" % self.live_server_url)
         self.assertTrue(sessione_ordinario.is_text_present('Accesso Volontari'))
 
-        sessione_sostenitore = self.sessione_utente(persona=sostenitore, wait_time=1)
+        sessione_sostenitore = self.sessione_utente(persona=sostenitore, wait_time=2)
         self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Estensione')), 0)
         self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Trasferimento')), 0)
         self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Riserva')), 0)
@@ -503,7 +503,7 @@ class TestFunzionaleBase(TestFunzionale):
             descrizione='Un corso',
         )
 
-        sessione = self.sessione_utente(persona=presidente, wait_time=1)
+        sessione = self.sessione_utente(persona=presidente, wait_time=2)
         sessione.visit("%s/presidente/sedi/%s/" % (self.live_server_url, sede.pk))
         with sessione.get_iframe(0) as iframe:
             self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 0)
