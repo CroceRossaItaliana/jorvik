@@ -275,7 +275,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             deleghe = deleghe.filter(stato=Delega.ATTIVA)
         return deleghe
 
-
     def deleghe_attuali_rubrica(self, al_giorno=None, **kwargs):
         """
         Ritorna una ricerca per le deleghe che son attuali.
@@ -2113,7 +2112,6 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(app.sede, testo_extra)
 
     def richiedi(self):
-        import ipdb
         if not self.persona.sede_riferimento():
             raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
 

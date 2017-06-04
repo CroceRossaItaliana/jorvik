@@ -867,15 +867,16 @@ def us_quote_nuova(request, me):
             data_versamento = modulo.cleaned_data['data_versamento']
 
 
-            appartenenza = volontario.appartenenze_attuali(al_giorno=data_versamento,
-                                                           membro=Appartenenza.VOLONTARIO).first()
+            appartenenza = volontario.appartenenze_attuali(
+                al_giorno=data_versamento, membro=Appartenenza.VOLONTARIO
+            ).first()
             comitato = appartenenza.sede.comitato if appartenenza else None
 
             if not appartenenza:
                 modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
                                                   'alla Sede.')
 
-            elif appartenenza.sede not in sedi:
+            elif appartenenza.sede not in sedi or comitato not in sedi:
                 modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
 
             if not comitato.locazione:
