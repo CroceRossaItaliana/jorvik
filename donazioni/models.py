@@ -19,7 +19,7 @@ class Campagna(ModelloSemplice, ConStorico, ConDelegati):
             ('view_campagna', 'Can view campagna'),
         )
 
-    nome = models.CharField(max_length=255, default="Nuova attività",
+    nome = models.CharField(max_length=255, default="Nuova campagna",
                             db_index=True, help_text="es. Terremoto Centro Italia")
     organizzatore = models.ForeignKey('anagrafica.Sede', related_name='campagne', on_delete=models.PROTECT)
     descrizione = models.TextField(blank=True)
@@ -39,6 +39,11 @@ class Campagna(ModelloSemplice, ConStorico, ConDelegati):
 
     @staticmethod
     def post_save(sender, instance, **kwargs):
+        """
+        Signal post_save che aggiunge un'etichetta alla campagna con lo stesso nome della campagna
+        :param sender: classe Campagna
+        :param instance: oggetto Campagna
+        """
         etichetta = Etichetta(nome=instance.nome, comitato=instance.organizzatore)
         etichetta.save()
         instance.etichette.add(etichetta)

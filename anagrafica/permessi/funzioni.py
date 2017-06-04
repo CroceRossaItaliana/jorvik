@@ -313,12 +313,9 @@ def permessi_responsabile_autoparco(sede):
 
 def permessi_delegato_campagne(sede):
     from donazioni.models import Campagna
-    filtro_sedi = Q(estensione__in=[NAZIONALE, TERRITORIALE])
-    filtro_sedi |= (Q(estensione=REGIONALE) & (~Q(codice_fiscale__isnull=True) & ~Q(partita_iva__isnull=True) &
-                                               ~Q(codice_fiscale__exact='') & ~Q(codice_fiscale__exact='')))
     return [
 
-        (GESTIONE_CAMPAGNE, sede.espandi(includi_me=True, pubblici=True).filter(filtro_sedi)),
+        (GESTIONE_CAMPAGNE, sede.espandi(includi_me=True, pubblici=True).filter(sede.query_puo_avere_campagne().q)),
         (GESTIONE_CAMPAGNA, Campagna.objects.filter(organizzatore__in=sede.espandi(includi_me=True, pubblici=True))),
     ]
 
