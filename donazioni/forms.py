@@ -13,7 +13,7 @@ class ModuloCampagna(ModelForm):
             "descrizione": WYSIWYGSemplice(),
         }
 
-    etichette = autocomplete_light.forms.ModelMultipleChoiceField('EtichettaAutocompletamento',
+    etichette = autocomplete_light.forms.ModelMultipleChoiceField('EtichettaAutocompletamento', required=False,
                                                                   help_text='Ricerca per nome fra le etichette del comitato'
                                                                             ' e quelle del Comitato Nazionale.')
 
