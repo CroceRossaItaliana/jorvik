@@ -707,8 +707,8 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
 
         locale = crea_sede(presidente=us_locale, genitore=regionale)
 
-        sessione_regionale = self.sessione_utente(persona=us_regionale, wait_time=1)
-        sessione_locale = self.sessione_utente(persona=us_locale, wait_time=1)
+        sessione_regionale = self.sessione_utente(persona=us_regionale, wait_time=2)
+        sessione_locale = self.sessione_utente(persona=us_locale, wait_time=2)
 
         # Prima di tutto, assicurati che il socio ordinario risulti correttamente
         # nell'elenco del regionale.
