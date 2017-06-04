@@ -307,7 +307,19 @@ urlpatterns = [
 
     # Campagne Donazioni economiche
 
-    url(r'^donazioni/$', donazioni.viste.DonazioniWelcomePage.as_view()),
+    url(r'^donazioni/$', donazioni.viste.donazioni_home, name='donazioni_home'),
+    url(r'^donazioni/campagne/$', donazioni.viste.campagne_elenco, name='donazioni_campagne'),
+    url(r'^donazioni/campagne/nuova/$', donazioni.viste.campagna_nuova, name='donazioni_campagne_nuova'),
+    url(r'^donazioni/campagne/(?P<pk>[0-9]+)/$', donazioni.viste.campagna, name='donazioni_campagna'),
+    url(r'^donazioni/campagne/(?P<pk>[0-9]+)/fine/$', donazioni.viste.campagna_fine, name='donazioni_campagna_fine'),
+    url(r'^donazioni/campagne/(?P<pk>[0-9]+)/modifica/$', donazioni.viste.campagna_modifica, name='donazioni_campagna_modifica'),
+    url(r'^donazioni/campagne/(?P<pk>[0-9]+)/elimina/$', donazioni.viste.campagna_elimina, name='donazioni_campagna_elimina'),
+    url(r'^donazioni/campagne/(?P<pk>[0-9]+)/responsabili/$', donazioni.viste.campagna_responsabili, name='donazioni_campagna_responsabili'),
+    url(r'^donazioni/etichette/$', donazioni.viste.etichette_elenco, name='donazioni_etichette'),
+    url(r'^donazioni/etichette/nuova/$', donazioni.viste.etichetta_nuova, name='donazioni_etichette_nuova'),
+    url(r'^donazioni/etichette/(?P<pk>[0-9]+)/$', donazioni.viste.etichetta, name='donazioni_etichetta'),
+    url(r'^donazioni/etichette/(?P<pk>[0-9]+)/elimina$', donazioni.viste.etichetta_elimina, name='donazioni_etichetta_elimina'),
+    url(r'^donazioni/etichette/(?P<pk>[0-9]+)/modifica', donazioni.viste.etichetta_modifica, name='donazioni_etichetta_modifica'),
 
     # Amministrazione
 

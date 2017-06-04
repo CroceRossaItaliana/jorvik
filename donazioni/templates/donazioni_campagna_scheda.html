@@ -1,0 +1,179 @@
+{% extends "donazioni_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+{% load humanize %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}{% endblock %}
+    {{ campagna.nome }} ({{ campagna.organizzatore.nome_completo }})
+    &mdash; Campagna
+{% endblock %}
+
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro grassetto text-success">
+        {{ campagna.nome }}
+    </h2>
+
+    {% if puo_modificare %}
+        <div class="alert alert-warning alert-block">
+             <p>
+                {% checkbox campagna.responsabili_attuali %}:
+                Aggiungi responsabili alla campagna;
+            </p>
+
+
+        </div>
+
+    {% endif %}
+
+    <p>&nbsp;</p>
+    <div class="row">
+
+    <div class="col-md-6">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-user"></i>
+                    Responsabili
+                    <span class="pull-right">
+                        {{ corso.responsabili_attuali.count }}
+                    </span>
+                </h3>
+            </div>
+
+            <div class="panel-body">
+                <div class="btn-group btn-group-vertical">
+                {% for responsabile in campagna.responsabili_attuali %}
+                    {% card responsabile extra_class='' %}
+
+                {% empty %}
+                    <i class="fa fa-fw fa-warning"></i>
+                    Nessun responsabile.
+
+                {% endfor %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-home"></i>
+                    Organizzatore
+                </h3>
+            </div>
+
+            <div class="panel-body">
+                <strong>
+                    <a href="{{ campagna.organizzatore.url }}" target="_new">
+                        {{ campagna.organizzatore.nome }}
+                    </a>
+                </strong><br />
+                {{ campagna.organizzatore.get_tipo_display }} &mdash;
+                {{ campagna.organizzatore.get_estensione_display }}
+            </div>
+
+        </div>
+    </div>
+    </div>
+    <div class="row">
+
+    <div class="col-md-4">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-calendar"></i>
+                    Data di inizio
+                </h3>
+            </div>
+
+            <div class="panel-body">
+                {{ campagna.inizio }}
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-calendar"></i>
+                    Data di fine
+                </h3>
+            </div>
+
+            <div class="panel-body">
+                {{ campagna.fine }}
+            </div>
+
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-list"></i>
+                    Etichette associate
+                </h3>
+            </div>
+
+            <div class="panel-body">
+            <ul>
+                {% for e in campagna.etichette.all %}
+                    <li>{{ e.nome }}</li>
+                {% endfor %}
+            </ul>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
+        {{ campagna.descrizione|safe }}
+    </div>
+</div>
+    {% if puo_modificare %}
+    <div class="row">
+        <div class="col-md-4">
+            <p>
+            <a href="{{ campagna.url_modifica }}" class="btn btn-large btn-success">Modifica campagna</a>
+            </p>
+        </div>
+        <div class="col-md-4">
+            <p>
+                 <a href="{{ campagna.url }}responsabili" class="btn btn-large btn-warning">Aggiungi responsabili</a>
+            </p>
+        </div>
+    <div class="col-md-4">
+            <p>
+                {% if campagna.cancellabile %}
+                    <a href="{{ campagna.url_cancella }}" class="btn btn-large btn-danger">Elimina campagna</a>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+<p></p>
+    <hr />
+    <div class="row">
+    <div class="piu-piccolo allinea-centro">
+        <i class="fa fa-fw fa-clock-o"></i>
+        Ultimo aggiornamento {{ campagna.ultima_modifica }}
+    </div>
+    </div>
+
+
+{% endblock %}

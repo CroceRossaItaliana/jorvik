@@ -1,0 +1,27 @@
+{% extends 'donazioni_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load utils %}
+
+{% block pagina_titolo %}
+    Seleziona Responsabili/i Campagna
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro text-success">
+        Seleziona Responsabile/i Campagna
+    </h2>
+
+    <div class="alert alert-block alert-info">
+        <h4><i class="fa fa-fw fa-question-circle"></i> Chi è il responsabile di una campagna?</h4>
+        <ul>
+          <li>Punto di riferimento la gestione della Campagna donazioni;</li>
+        </ul>
+    </div>
+
+    {% delegati delega campagna continua_url=continua_url almeno=1 %}
+
+
+{% endblock %}

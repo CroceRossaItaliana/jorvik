@@ -1,0 +1,70 @@
+{% extends 'donazioni_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Etichette
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro text-success">
+        Etichette
+    </h2>
+
+    <table class="table table-striped table-bordered">
+        <thead>
+            <th>Nome</th>
+            <th>Comitato</th>
+            <th>Slug</th>
+            <th>Campagne Associate</th>
+            <th>Elimina</th>
+        </thead>
+
+        {% for etichetta in etichette %}
+
+            <tr>
+
+                <td>
+                    {% if puo_modificare %}
+                        <i class="fa fa-fw fa-pencil"></i>
+                            <strong><a href="{{ etichetta.url_modifica }}">{{ etichetta.nome }}</a></strong><br />
+                    {% else %}
+                        {{ etichetta.nome }}
+                    {% endif %}
+                </td>
+                <td>{{ etichetta.comitato }}</td>
+                <td>{{ etichetta.slug }}</td>
+
+                <td>
+                    {% for c in etichetta.campagne.all %}
+                        <i class="fa fa-fw"></i>
+                            <strong>{{ c.link|safe }}</strong><br />
+                        <i class="fa fa-fw fa-home"></i>
+                            {{ c.organizzatore.link|safe }}<br />
+                    {% endfor %}
+                </td>
+                <td><i class="fa fa-fw"></i>{{ etichetta.link_cancella|safe }}</td>
+
+            </tr>
+
+        {% empty %}
+            <tr class="info">
+                <td colspan="5">
+                    <h4><i class="fa fa-fw fa-info-circle"></i> Non è presente nessuna etichetta.</h4>
+                </td>
+            </tr>
+
+        {% endfor %}
+
+    </table>
+
+    {% if puo_modificare %}
+        <div class="alert alert-success">
+            <h4><i class="fa fa-asterisk"></i> Vuoi creare una nuova etichetta per un comitato?</h4>
+            <p><a href="/donazioni/etichette/nuova/" class="btn btn-xs btn-success">Crea una nuova etichetta</a>.</p>
+        </div>
+    {% endif %}
+
+
+{% endblock %}

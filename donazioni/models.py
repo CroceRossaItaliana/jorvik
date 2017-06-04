@@ -1,15 +1,17 @@
 from autoslug import AutoSlugField
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import post_save
 
+from anagrafica.costanti import NAZIONALE
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
 from anagrafica.validators import valida_codice_fiscale
 from base.models import ModelloSemplice
 from base.tratti import ConStorico, ConDelegati, ConMarcaTemporale
-from base.utils import TitleCharField, UpperCaseCharField
+from base.utils import TitleCharField, UpperCaseCharField, concept
 
 
-class Campagna(ModelloSemplice, ConStorico, ConDelegati):
+class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
 
     class Meta:
         verbose_name = 'Campagna'
@@ -37,6 +39,22 @@ class Campagna(ModelloSemplice, ConStorico, ConDelegati):
     def cancellabile(self):
         return not self.donazioni.all().exists()
 
+    @property
+    def url(self):
+        return "/donazioni/campagne/%d/" % (self.pk,)
+
+    @property
+    def url_modifica(self):
+        return "/donazioni/campagne/%d/modifica" % (self.pk,)
+
+    @property
+    def url_cancella(self):
+        return "/donazioni/campagne/%d/elimina" % (self.pk,)
+
+    @property
+    def link(self):
+        return "<a href=\"%s\">%s</a>" % (self.url, self.nome)
+
     @staticmethod
     def post_save(sender, instance, **kwargs):
         """
@@ -44,9 +62,26 @@ class Campagna(ModelloSemplice, ConStorico, ConDelegati):
         :param sender: classe Campagna
         :param instance: oggetto Campagna
         """
-        etichetta = Etichetta(nome=instance.nome, comitato=instance.organizzatore)
-        etichetta.save()
-        instance.etichette.add(etichetta)
+        etichette_correnti = instance.etichette.values_list('nome', flat=True)
+        if instance.nome not in etichette_correnti:
+            etichetta = Etichetta(nome=instance.nome, comitato=instance.organizzatore)
+            etichetta.save()
+            instance.etichette.add(etichetta)
+
+    @classmethod
+    def nuova(cls, **kwargs):
+        """
+        Factory method per creare una nuova campagna
+        :param kwargs: inizio, fine, nome, descrizione, organizzatore
+        :return: Oggetto Campagna appena creato
+        """
+        c = cls(**kwargs)
+        c.save()
+        return c
+
+    @property
+    def url_responsabili(self):
+        return "/donazioni/campagne/%d/responsabili/" % (self.pk,)
 
 
 class Etichetta(ModelloSemplice):
@@ -64,6 +99,54 @@ class Etichetta(ModelloSemplice):
 
     def __str__(self):
         return self.nome
+
+    @classmethod
+    def nuova(cls, **kwargs):
+        """
+        Factory method per creare una nuova etichetta
+        :param kwargs: nome, comitato
+        :return: Oggetto Etichetta
+        """
+        c = cls(**kwargs)
+        c.save()
+        return c
+
+    @classmethod
+    @concept
+    def query_etichette_comitato(cls, sedi_qs=None):
+        """
+        Requisiti B-2, B-5.
+        Le etichette sono specifiche di un comitato.
+        In più, il comitato nazionale può creare delle etichette globali
+        visibili a tutti i comitati territoriali
+        :param sedi_qs: le sedi a cui devono "appartenere" le Etichette.
+                        Solitamente, quelle su cui si ha il permesso GESTIONE_CAMPAGNE
+        :return: Q object
+        """
+        filtro = Q(comitato__estensione=NAZIONALE)
+        if sedi_qs:
+            filtro |= Q(comitato__in=sedi_qs)
+        return filtro
+
+    @property
+    def url_cancella(self):
+        return "/donazioni/etichette/%d/elimina" % (self.pk,)
+
+    @property
+    def url_modifica(self):
+        return "/donazioni/etichette/%d/modifica" % (self.pk,)
+
+    @property
+    def url(self):
+        return "/donazioni/etichette/%d/" % (self.pk,)
+
+    @property
+    def link(self):
+        return "<a href=\"%s\">%s</a>" % (self.url, self.nome)
+
+    @property
+    def link_cancella(self):
+        return "<a href=\"%s\">%s</a>" % (self.url_cancella, 'X')
 
 
 class Donatore(ModelloSemplice):
