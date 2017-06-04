@@ -36,7 +36,7 @@ from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, 
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
-    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI
+    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI, DELEGATO_CAMPAGNE
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
     ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO, \
     RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
@@ -1563,6 +1563,7 @@ def _presidente_sede_ruoli(sede):
             (RESPONSABILE_FORMAZIONE, "Formazione", sede.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE).count()),
             (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count()),
             (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count()),
+            (DELEGATO_CAMPAGNE, "Campagne Donazioni", sede.delegati_attuali(tipo=DELEGATO_CAMPAGNE).count()),
         ]
     })
 
@@ -1609,6 +1610,7 @@ def presidente_checklist(request, me, sede_pk):
         (RESPONSABILE_FORMAZIONE, sede),
         (RESPONSABILE_AUTOPARCO, sede),
         (DELEGATO_CO, sede),
+        (DELEGATO_CAMPAGNE, sede),
     ]
 
     for unita in sede.espandi():

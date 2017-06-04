@@ -1,7 +1,5 @@
-from datetime import date
 from anagrafica.permessi.costanti import permesso_minimo, LETTURA
 from anagrafica.permessi.espansioni import ESPANDI_PERMESSI, espandi_persona
-from django.utils import timezone
 
 from anagrafica.permessi.funzioni import permessi_persona
 
@@ -98,12 +96,8 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=None):
     :return: True se permessi >= minimo, False altrimenti
     """
 
-
     if permesso_minimo(oggetto.__class__) >= minimo:
         return True
-
-    #if persona.admin:
-    #    return True
 
     permessi = []
 

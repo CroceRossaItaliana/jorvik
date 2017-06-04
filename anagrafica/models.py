@@ -54,7 +54,7 @@ from base.models import ModelloSemplice, ModelloAlbero, ConAutorizzazioni, ConAl
     Autorizzazione, ConVecchioID
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
-from base.utils import is_list, sede_slugify, UpperCaseCharField, TitleCharField, poco_fa
+from base.utils import is_list, sede_slugify, UpperCaseCharField, TitleCharField, poco_fa, concept
 from autoslug import AutoSlugField
 
 from curriculum.models import Titolo, TitoloPersonale
@@ -1693,7 +1693,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         else:
             queryset = self.__class__.objects.none()
 
-
         # Cosa fare con le sedi disattive?
         if ignora_disattive:
             return queryset.filter(attiva=True)
@@ -1711,6 +1710,23 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     def unita_sottostanti(self):
         return self.get_children().filter(estensione=TERRITORIALE)
+
+    @classmethod
+    @concept
+    def query_puo_avere_campagne(cls):
+        """
+        Requisito A-18 del modulo Donazioni Economiche.
+        Le entità autorizzate alla creazione di campagne saranno:
+        •Comitato nazionale
+        •Comitato territoriale
+        •Comitato regionale, solo quando abbiano impostato CF e PIVA
+            e questi sono diversi dal Comitato nazionale
+        :return: Oggetto Query. Per via del decoratore @concept, il metodo ritorna un queryset
+        """
+        filtro = Q(estensione__in=[NAZIONALE, TERRITORIALE])
+        filtro |= (Q(estensione=REGIONALE) & (~Q(codice_fiscale__isnull=True) & ~Q(partita_iva__isnull=True) &
+                                              ~Q(codice_fiscale__exact='') & ~Q(codice_fiscale__exact='')))
+        return filtro
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
