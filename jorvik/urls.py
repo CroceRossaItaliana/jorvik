@@ -223,7 +223,7 @@ urlpatterns = [
     url(r'^us/quote/nuova/$', ufficio_soci.viste.us_quote_nuova, name='us_quote_nuova'),
     url(r'^us/ricevute/$', ufficio_soci.viste.us_ricevute),
     url(r'^us/ricevute/(?P<pk>[0-9]+)/annulla/$', ufficio_soci.viste.us_ricevute_annulla),
-    url(r'^us/ricevute/nuova/$', ufficio_soci.viste.us_ricevute_nuova),
+    url(r'^us/ricevute/nuova/$', ufficio_soci.viste.us_ricevute_nuova, name='us_ricevute_nuova'),
 
     url(r'^us/tesserini/$', ufficio_soci.viste.us_tesserini),
     url(r'^us/tesserini/da-richiedere/$', ufficio_soci.viste.us_tesserini_da_richiedere),

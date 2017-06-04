@@ -948,12 +948,16 @@ def us_ricevute_nuova(request, me):
         importo = modulo.cleaned_data['importo']
         data_versamento = modulo.cleaned_data['data_versamento']
 
-        appartenenza = persona.appartenenze_attuali(al_giorno=data_versamento,
-                                                    sede__in=sedi).first()
+        appartenenza = persona.appartenenze_attuali(al_giorno=data_versamento, sede__in=sedi).first()
+
+        comitato = None
 
         partecipazione_corso = persona.partecipazione_corso_base()
 
-        comitato = appartenenza.sede.comitato if appartenenza else partecipazione_corso.corso.sede.comitato
+        if partecipazione_corso and partecipazione_corso.corso and partecipazione_corso.corso.sede:
+            comitato = partecipazione_corso.corso.sede.comitato
+
+        comitato = appartenenza.sede.comitato if appartenenza else comitato
 
         if not comitato:
             modulo.add_error('data_versamento', 'In questa data, la persona non risulta appartenente '
