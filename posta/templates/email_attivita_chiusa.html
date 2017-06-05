@@ -1,0 +1,30 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+
+    <p>
+        L'attivit&agrave; "{{ attivita.link|safe }}" &egrave; stata chiusa
+
+        {% if azione_automatica %}
+             automaticamente dal sistema perch&eacute; l'ultimo turno per la stessa &egrave; stato
+             organizzato pi&ugrave; di {{ attivita.CHIUDI_AUTOMATICAMENTE_DOPO_GG }} giorni.
+
+        {% else %}
+            da {{ autore.link|safe }}.
+            I volontari non potranno richiedere di partecipare a questa attivit&agrave;.
+        {% endif %}
+    </p>
+
+    <p>
+        I permessi che scaturivano dalla delega di referente attivit&agrave; saranno sospesi fino a che
+        l'attivit&agrave; rimarr&agrave; chiusa. La delega relativa apparir&agrave; come "Sospesa" nel tuo
+        profilo anagrafico, alla sezione relativa alle Deleghe.
+    </p>
+
+    <p>
+        I referenti dell'attivit&agrave;, nonch&eacute; i delegati di obiettivo relativi
+        e il Presidente di Comitato, possono tutti riaprire l'attivit&agrave; in qualunque momento
+        visitando la pagina della stessa in calendario.
+    </p>
+
+{% endblock %}

@@ -60,6 +60,14 @@ def index(request, me):
     return 'base_home.html', contesto
 
 @pagina_pubblica
+def browser_supportati(request, me):
+    """
+    Mostra semplicemente l'elenco dei browser supportati
+    """
+    return 'base_browser_supportati.html'
+
+
+@pagina_pubblica
 def manutenzione(request, me):
     """
     Mostra semplicemente la pagina di manutenzione ed esce.

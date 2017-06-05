@@ -3,6 +3,7 @@
 Jorvik è il nome in codice del progetto di ridisegno del software del **Progetto Gaia** Croce Rossa Italiana
 ([GitHub](https://github.com/CroceRossaCatania/gaia), [Web](https://gaia.cri.it)).
 
+
 I punti chiave nella riprogettazione sono i seguenti:
 * Raccogliere il feedback ottenuto tramite <feedback@gaia.cri.it>,
 * Raccogliere le necessità espresse dagli utenti tramite il Supporto,
@@ -32,6 +33,7 @@ Jorvik viene installato e testato sulle recenti versioni di Python 3, in modo au
 | **`chewbacca`** | [URL](http://chewbacca.staging.sviluppo-gaia.ovh) | `staging-chewbacca` | [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=staging-chewbacca)](https://travis-ci.org/CroceRossaItaliana/jorvik) | Sviluppo, pre-staging           | Sì          |
 | **`obiwan`**    | [URL](http://obiwan.staging.sviluppo-gaia.ovh)    | `staging-obiwan`    | [![Build Status](https://travis-ci.org/CroceRossaItaliana/jorvik.svg?branch=staging-obiwan)](https://travis-ci.org/CroceRossaItaliana/jorvik)    | Eventi di formazione, supporter | Sì          |
 
+
 * Gli ambienti di sviluppo e staging sono ospitati presso la macchina dedicata per la squadra di supporto e sviluppo (`sviluppo-gaia.ovh`),
 * Le installazioni su questa macchina si aggiornano automaticamente col codice del relativo branch di staging,
 * Il database viene scaricato settimanalmente dalla installazione in produzione, e tutte le modifiche effettuate nella settimana precedente vengono distrutte,
@@ -41,6 +43,8 @@ Jorvik viene installato e testato sulle recenti versioni di Python 3, in modo au
 * L'accesso agli ambienti di sviluppo/test è riservato al personale tecnico.
 
 ### Documentazione
+
+	
 
 Puoi trovare la **[Documentazione sul Wiki del progetto](https://github.com/CroceRossaItaliana/jorvik/wiki)**.
 

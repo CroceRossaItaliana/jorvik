@@ -7,7 +7,7 @@ from django.db.models import Count, F, Sum
 from django.utils import timezone
 
 
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.costanti import NAZIONALE
@@ -99,18 +99,32 @@ def attivita_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
 def attivita_gestisci(request, me, stato="aperte"):
     # stato = "aperte" | "chiuse"
 
-    attivita_tutte = me.oggetti_permesso(GESTIONE_ATTIVITA)
+    attivita_tutte = me.oggetti_permesso(GESTIONE_ATTIVITA, solo_deleghe_attive=False)
     attivita_aperte = attivita_tutte.filter(apertura=Attivita.APERTA)
     attivita_chiuse = attivita_tutte.filter(apertura=Attivita.CHIUSA)
 
     if stato == "aperte":
         attivita = attivita_aperte
+
     else:  # stato == "chiuse"
         attivita = attivita_chiuse
 
     attivita_referenti_modificabili = me.oggetti_permesso(GESTIONE_REFERENTI_ATTIVITA)
 
     attivita = attivita.annotate(num_turni=Count('turni'))
+
+    attivita = Paginator(attivita, 30)
+    pagina = request.GET.get('pagina')
+
+    try:
+        attivita = attivita.page(pagina)
+
+    except PageNotAnInteger:
+        attivita = attivita.page(1)
+
+    except EmptyPage:
+        attivita = attivita.page(attivita.num_pages)
+
     contesto = {
         "stato": stato,
         "attivita": attivita,
@@ -619,7 +633,15 @@ def attivita_scheda_informazioni_modifica(request, me, pk=None):
     Mostra la pagina di modifica di una attivita'.
     """
     attivita = get_object_or_404(Attivita, pk=pk)
+    apertura_precedente = attivita.apertura
+
     if not me.permessi_almeno(attivita, MODIFICA):
+
+        if me.permessi_almeno(attivita, MODIFICA, solo_deleghe_attive=False):
+            # Se la mia delega e' sospesa per l'attivita', vai in prima pagina
+            #  per riattivarla.
+            return redirect(attivita.url)
+
         return redirect(ERRORE_PERMESSI)
 
     if request.POST and not me.ha_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE):
@@ -635,6 +657,16 @@ def attivita_scheda_informazioni_modifica(request, me, pk=None):
     if modulo.is_valid():
         modulo.save()
 
+        # Se e' stato cambiato lo stato dell'attivita'
+        attivita.refresh_from_db()
+        if attivita.apertura != apertura_precedente:
+
+            if attivita.apertura == attivita.APERTA:
+                attivita.riapri()
+
+            else:
+                attivita.chiudi(autore=me)
+
     contesto = {
         "attivita": attivita,
         "puo_modificare": True,
@@ -643,17 +675,35 @@ def attivita_scheda_informazioni_modifica(request, me, pk=None):
 
     return 'attivita_scheda_informazioni_modifica.html', contesto
 
+
+@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+def attivita_riapri(request, me, pk=None):
+    """
+    Riapre l'attivita'.
+    """
+    attivita = get_object_or_404(Attivita, pk=pk)
+
+    if not me.permessi_almeno(attivita, MODIFICA, solo_deleghe_attive=False):
+        return redirect(ERRORE_PERMESSI)
+
+    attivita.riapri(invia_notifiche=True)
+    return redirect(attivita.url)
+
+
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def attivita_scheda_turni_modifica(request, me, pk=None, pagina=None):
     """
     Mostra la pagina di modifica di una attivita'.
     """
 
-    if False:
-        return ci_siamo_quasi(request, me)
-
     attivita = get_object_or_404(Attivita, pk=pk)
     if not me.permessi_almeno(attivita, MODIFICA):
+
+        if me.permessi_almeno(attivita, MODIFICA, solo_deleghe_attive=False):
+            # Se la mia delega e' sospesa per l'attivita', vai in prima pagina
+            #  per riattivarla.
+            return redirect(attivita.url)
+
         return redirect(ERRORE_PERMESSI)
 
     if pagina is None:
