@@ -175,11 +175,11 @@ class TitleCharField(models.CharField):
 
     def pre_save(self, model_instance, add):
         value = getattr(model_instance, self.attname, None)
-        if value:
+        try:
             value = normalizza_nome(value)
             setattr(model_instance, self.attname, value)
             return value
-        else:
+        except (ValueError, TypeError, AttributeError):
             return super(TitleCharField, self).pre_save(model_instance, add)
 
 

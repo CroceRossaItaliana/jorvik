@@ -73,6 +73,7 @@ urlpatterns = [
     url(r'^informazioni/sedi/$', base.viste.informazioni_sedi),
     url(r'^informazioni/sedi/(?P<slug>.*)/$', base.viste.informazioni_sede),
     url(r'^informazioni/formazione/$', base.viste.formazione),
+    url(r'^informazioni/browser-supportati/$', base.viste.browser_supportati, name='browser_supportati'),
 
     # Applicazioni
     url(r'^utente/$', anagrafica.viste.utente),
@@ -184,6 +185,7 @@ urlpatterns = [
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/modifica/(?P<pagina>[0-9]+)/$', attivita.viste.attivita_scheda_turni_modifica),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/turni/modifica/link-permanente/(?P<turno_pk>[0-9]+)/$', attivita.viste.attivita_scheda_turni_modifica_link_permanente),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/modifica/$', attivita.viste.attivita_scheda_informazioni_modifica),
+    url(r'^attivita/scheda/(?P<pk>[0-9]+)/riapri/$', attivita.viste.attivita_riapri),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/referenti/$', attivita.viste.attivita_referenti),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/report/$', attivita.viste.attivita_scheda_report),
 
@@ -220,7 +222,7 @@ urlpatterns = [
     url(r'^us/quote/nuova/$', ufficio_soci.viste.us_quote_nuova, name='us_quote_nuova'),
     url(r'^us/ricevute/$', ufficio_soci.viste.us_ricevute),
     url(r'^us/ricevute/(?P<pk>[0-9]+)/annulla/$', ufficio_soci.viste.us_ricevute_annulla),
-    url(r'^us/ricevute/nuova/$', ufficio_soci.viste.us_ricevute_nuova),
+    url(r'^us/ricevute/nuova/$', ufficio_soci.viste.us_ricevute_nuova, name='us_ricevute_nuova'),
 
     url(r'^us/tesserini/$', ufficio_soci.viste.us_tesserini),
     url(r'^us/tesserini/da-richiedere/$', ufficio_soci.viste.us_tesserini_da_richiedere),

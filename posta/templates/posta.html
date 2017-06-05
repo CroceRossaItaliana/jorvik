@@ -252,7 +252,24 @@
                 <hr />
 
                 <div class="row" style="padding: 0% 10%;">
-                    {{ messaggio.corpo_body|safe }}
+
+                    {% if messaggio.eliminato %}
+
+                        <div class="alert alert-info">
+                            <i class="fa fa-fw fa-info-circle"></i>
+                            Il contenuto di questo messaggio &egrave; stato eliminato da Gaia perch&eacute; pi&ugrave;
+                            vecchio di 6 mesi.
+
+                            {% if direzione == "in-arrivo" %}
+                                Questo messaggio &egrave; stato inviato alla tua casella di posta elettronica
+                                il {{ messaggio.creazione|date:"SHORT_DATE_FORMAT" }}.
+                            {% endif %}
+                        </div>
+
+                    {% else %}
+                       {{ messaggio.corpo_body|safe }}
+
+                    {% endif %}
 
                 </div>
             </div>

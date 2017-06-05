@@ -610,10 +610,29 @@ class TestBase(TestCase):
         self.client.login(username=presidente.utenza.email, password='prova')
         response = self.client.get(reverse('us-tesserini-richiedi', args=(vol_1.pk,)))
         self.assertNotContains(response, "Il Comitato non ha un indirizzo")
+        self.assertContains(response, "Esiste già una richiesta di un tesserino per la persona")
+
+        self.assertEqual(Tesserino.objects.all().count(), 1)
+
+        Tesserino.objects.filter(
+            valido=False, tipo_richiesta=Tesserino.RILASCIO, stato_richiesta=Tesserino.RICHIESTO
+        ).update(stato_richiesta=Tesserino.ACCETTATO, stato_emissione=Tesserino.STAMPATO,
+                 motivo_rifiutato='', data_conferma=poco_fa(), valido=True)
+        for tesserino in Tesserino.objects.filter(valido=True):
+            tesserino.assicura_presenza_codice()
+
+        self.client.login(username=presidente.utenza.email, password='prova')
+        response = self.client.get(reverse('us-tesserini-richiedi', args=(vol_1.pk,)))
+        self.assertNotContains(response, "Il Comitato non ha un indirizzo")
+        self.assertNotContains(response, "Esiste già una richiesta di un tesserino per la persona")
+        self.assertContains(response, 'Richiesta inoltrata')
 
         self.assertEqual(Tesserino.objects.all().count(), 2)
         self.assertEqual(Tesserino.objects.filter(
             valido=False, tipo_richiesta=Tesserino.RILASCIO, stato_richiesta=Tesserino.RICHIESTO
+        ).count(), 0)
+        self.assertEqual(Tesserino.objects.filter(
+            valido=False, tipo_richiesta=Tesserino.RILASCIO, stato_richiesta=Tesserino.ACCETTATO
         ).count(), 1)
         self.assertEqual(Tesserino.objects.filter(
             valido=False, tipo_richiesta=Tesserino.DUPLICATO, stato_richiesta=Tesserino.RICHIESTO
@@ -918,6 +937,15 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         self.assertTrue(email.subject.find('Richiesta Tesserino inoltrata') > -1)
         self.assertTrue(email.body.find('Il tuo Comitato ha avviato la richiesta di stampa del tuo tesserino.') > -1)
         sessione_presidente_regionale = self.sessione_utente(persona=presidente_regionale)
+
+        # Non c'è il bottone per chiedere il duplicato
+        self.assertEqual(1, len(sessione_presidente_locale.find_link_by_href("/us/tesserini/da-richiedere/")))
+        self.assertTrue(sessione_presidente_locale.is_text_not_present('Richiedi duplicato'))
+
+        # Richiedi duplicato fallisce perché non esiste già accettato
+        sessione_presidente_locale.visit("%s/us/tesserini/richiedi/%s/" % (self.live_server_url, persona.pk))
+        self.assertTrue(sessione_presidente_locale.is_text_present('Tesserino non accettato'))
+
         sessione_presidente_regionale.visit("%s/us/tesserini/emissione/" % self.live_server_url)
         sessione_presidente_regionale.find_by_xpath('//select[@name="stato_richiesta"]//option[@value="ATT"]').first.click()
         sessione_presidente_regionale.find_by_xpath("//button[@type='submit']").first.click()
@@ -937,7 +965,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         sessione_persona.find_by_xpath("//button[@type='submit']").first.click()
         self.assertTrue(sessione_persona.is_text_present('Tesserino valido'))
 
-        # Richiedi duplicato
+        # Richiedi duplicato, ora ha successo perché esiste tesserino emesso
 
         sessione_presidente_locale.visit("%s/us/tesserini/richiedi/%s/" % (self.live_server_url, persona.pk))
         self.assertTrue(sessione_presidente_locale.is_text_present('Richiesta inoltrata'))
@@ -1435,3 +1463,87 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_quote_nuova')), data=data)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'successiva al {}'.format(fine_soci.strftime('%Y-%m-%d')))
+
+    @freeze_time('2016-02-14')
+    def pagamento_ricevuta_volontario_senza_comitato(self):
+        """
+        Testa che un volontario senza appartenenza sia gestito l'errore
+        """
+        delegato = crea_persona()
+        utente = crea_utenza(delegato, email="mario@rossi.it", password="prova")
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
+
+        sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
+        sede.telefono = '+3902020202'
+        sede.email = 'comitato@prova.it'
+        sede.codice_fiscale = '01234567891'
+        sede.partita_iva = '01234567891'
+        sede.locazione = crea_locazione()
+        sede.save()
+
+        appartenenza.delete()
+
+        oggi = poco_fa().replace(month=2)
+        inizio_anno = oggi.replace(month=1, day=1)
+        fine_soci = inizio_anno.replace(month=3) - datetime.timedelta(days=1)
+        fine_anno = inizio_anno.replace(month=12) - datetime.timedelta(days=31)
+
+        Tesseramento.objects.create(
+            stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
+            anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+            quota_aspirante=8, quota_sostenitore=8, fine_soci_nv=fine_anno
+        )
+
+        data = {
+            'persona': volontario.pk,
+            'importo': 8,
+            'causale': 'test ricevute',
+            'tipo_ricevuta': Quota.RICEVUTA,
+            'data_versamento': oggi.strftime('%d/%m/%Y')
+        }
+        self.client.login(email="mario@rossi.it", password="prova")
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_nuova')), data=data)
+        # ritornato errore di assenza comitato
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'la persona non risulta appartenente')
+
+    @freeze_time('2016-02-14')
+    def pagamento_ricevuta_volontario_con_comitato(self):
+        """
+        Testa che un volontario senza appartenenza sia gestito l'errore
+        """
+        delegato = crea_persona()
+        utente = crea_utenza(delegato, email="mario@rossi.it", password="prova")
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
+
+        sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
+        sede.telefono = '+3902020202'
+        sede.email = 'comitato@prova.it'
+        sede.codice_fiscale = '01234567891'
+        sede.partita_iva = '01234567891'
+        sede.locazione = crea_locazione()
+        sede.save()
+
+        oggi = poco_fa().replace(month=2)
+        inizio_anno = oggi.replace(month=1, day=1)
+        fine_soci = inizio_anno.replace(month=3) - datetime.timedelta(days=1)
+        fine_anno = inizio_anno.replace(month=12) - datetime.timedelta(days=31)
+
+        Tesseramento.objects.create(
+            stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
+            anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+            quota_aspirante=8, quota_sostenitore=8, fine_soci_nv=fine_anno
+        )
+
+        data = {
+            'persona': volontario.pk,
+            'importo': 8,
+            'causale': 'test ricevute',
+            'tipo_ricevuta': Quota.RICEVUTA,
+            'data_versamento': oggi.strftime('%d/%m/%Y')
+        }
+        self.client.login(email="mario@rossi.it", password="prova")
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_nuova')), data=data)
+        # ricevuta registrata
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['location'].find('?appena_registrata='))

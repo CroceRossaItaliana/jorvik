@@ -948,12 +948,16 @@ def us_ricevute_nuova(request, me):
         importo = modulo.cleaned_data['importo']
         data_versamento = modulo.cleaned_data['data_versamento']
 
-        appartenenza = persona.appartenenze_attuali(al_giorno=data_versamento,
-                                                    sede__in=sedi).first()
+        appartenenza = persona.appartenenze_attuali(al_giorno=data_versamento, sede__in=sedi).first()
+
+        comitato = None
 
         partecipazione_corso = persona.partecipazione_corso_base()
 
-        comitato = appartenenza.sede.comitato if appartenenza else partecipazione_corso.corso.sede.comitato
+        if partecipazione_corso and partecipazione_corso.corso and partecipazione_corso.corso.sede:
+            comitato = partecipazione_corso.corso.sede.comitato
+
+        comitato = appartenenza.sede.comitato if appartenenza else comitato
 
         if not comitato:
             modulo.add_error('data_versamento', 'In questa data, la persona non risulta appartenente '
@@ -1166,6 +1170,11 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
                                messaggio="È solo possibile richiedere un tesserino per "
                                          "i volontari in possesso di una fototessera "
                                          "confermata su Gaia.", **torna)
+
+    if persona.tesserini.filter(Q(stato_richiesta__in=(Tesserino.RICHIESTO,)) | Q(codice='')).exists():
+        return errore_generico(request, me, titolo="Tesserino non accettato",
+                               messaggio="Esiste già una richiesta di un tesserino per la persona "
+                                         "e non è pertanto possibile richiedere un duplicato ", **torna)
 
     tesserini = persona.tesserini.filter(stato_richiesta__in=(Tesserino.RICHIESTO, Tesserino.ACCETTATO))
     if tesserini.exists():
