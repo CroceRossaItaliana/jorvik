@@ -19,7 +19,7 @@ from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, DELEGATO_
 from django.db import IntegrityError
 from django.db.models import Count
 
-from anagrafica.costanti import NAZIONALE, TERRITORIALE, REGIONALE, LOCALE
+from anagrafica.costanti import NAZIONALE, TERRITORIALE, REGIONALE, LOCALE, PROVINCIALE
 from autenticazione.models import Utenza
 from base.utils import poco_fa
 from base.utils_tests import crea_persona, email_fittizzia, codice_fiscale_persona
@@ -148,6 +148,7 @@ if args.esempio:
     print("Creo le Sedi fittizie...")
     italia = Sede.objects.create(nome="Comitato Nazionale", estensione=NAZIONALE)
     regionale = Sede.objects.create(nome="Comitato Regione 1", estensione=REGIONALE, genitore=italia)
+    metropolitano = Sede.objects.create(nome="Comitato Metropolitano 1", estensione=PROVINCIALE, genitore=regionale)
     altra_regione = Sede.objects.create(nome="Comitato Regione 2", estensione=REGIONALE, genitore=italia)
     c = Sede.objects.create(nome="Comitato di Gaia", genitore=regionale, estensione=LOCALE)
     s1 = Sede.objects.create(nome="York", genitore=c, estensione=TERRITORIALE)
@@ -155,6 +156,8 @@ if args.esempio:
     s3 = Sede.objects.create(nome="Catania", genitore=c, estensione=TERRITORIALE)
     c2 = Sede.objects.create(nome="Altro Comitato di Gaia", genitore=altra_regione, estensione=LOCALE)
     c3 = Sede.objects.create(nome="Comitato Fittizio", genitore=regionale, estensione=LOCALE)
+    cm1 = Sede.objects.create(nome="Comitato 1 sotto Metropolitano", genitore=metropolitano, estensione=LOCALE)
+    cm2 = Sede.objects.create(nome="Comitato 2 sotto Metropolitano", genitore=metropolitano, estensione=LOCALE)
     a1 = Autoparco(nome="Autorimessa Principato", sede=s3)
     a1.save()
 
@@ -162,7 +165,7 @@ if args.esempio:
 
     print("Genero dei membri della Sede a caso con deleghe e cariche ...")
     print(" - Creo persone...")
-    sedi = [c, s1, s2, s3, c2, c3, regionale, altra_regione]
+    sedi = [c, s1, s2, s3, c2, c3, regionale, metropolitano, altra_regione, cm1, cm2]
     nuove = []
     for sede in sedi:  # Per ogni Sede
         locazione = Locazione.oggetto(indirizzo=random.sample(COMUNI.keys(), 1)[0])
@@ -269,11 +272,12 @@ if args.esempio:
             p.codice_fiscale = codice_fiscale_persona(p)
             p.save()
             p.ottieni_o_genera_aspirante()
+            email = email_fittizzia()
             utenza = Utenza.objects.create_user(
-                persona=p, email=email_fittizzia(),
-                password=email_fittizzia()
+                persona=p, email=email,
+                password=email
             )
-        if sede.estensione in (LOCALE, REGIONALE):
+        if sede.estensione in (LOCALE, REGIONALE, PROVINCIALE):
             print(" - Assegno deleghe...")
             persone = [a.persona for a in Appartenenza.objects.filter(sede=sede, membro=Appartenenza.VOLONTARIO).order_by('?')[:4]]
             for indice, persona in enumerate(persone):
@@ -288,9 +292,10 @@ if args.esempio:
                         presidente = persona
                         # Assegno una utenza
                         if not Utenza.objects.filter(email="supporto@gaia.cri.it").exists():
-                            utenza = Utenza(persona=persona, email="supporto@gaia.cri.it",
-                                            password='pbkdf2_sha256$20000$ldk8aPLgcMXK$Cwni1ubmmKpzxO8xM75ZuwNR+k6ZHA5JTVxJFbgIzgo=')
-                            utenza.save()
+                            utenza = Utenza.objects.create(
+                                persona=persona, email="supporto@gaia.cri.it",
+                                password='pbkdf2_sha256$20000$ldk8aPLgcMXK$Cwni1ubmmKpzxO8xM75ZuwNR+k6ZHA5JTVxJFbgIzgo='
+                            )
                 elif indice == 1:
                     d = Delega.objects.create(persona=persona, tipo=UFFICIO_SOCI, oggetto=sede, inizio=poco_fa())
                 elif indice == 2:
@@ -301,9 +306,10 @@ if args.esempio:
     print(" - Creo utenze di accesso...")
     for persona in nuove:
         try:
+            email = email_fittizzia()
             utenza = Utenza.objects.create_user(
-                persona=persona, email=email_fittizzia(),
-                password=email_fittizzia()
+                persona=persona, email=email,
+                password=email
             )
         except IntegrityError:
             print('  --- Errore creazione utenza per {}'.format(persona))
