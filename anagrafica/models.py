@@ -275,7 +275,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             deleghe = deleghe.filter(stato=Delega.ATTIVA)
         return deleghe
 
-
     def deleghe_attuali_rubrica(self, al_giorno=None, **kwargs):
         """
         Ritorna una ricerca per le deleghe che son attuali.
@@ -1343,7 +1342,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         flag = self.attuale()
         if inizio:
             inizio = inizio.date()
-        # Appartenenze come esteso o dipendente sono modificabili perché inizio non vincolato a termine di precedente
+        # Appartenenze come dipendente sono modificabili perché inizio non vincolato a termine di precedente
         if self.membro not in self.NON_MODIFICABILE:
             # Controllo su appartenenza precedente.
             # Nei casi in MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI, l'appartenenza precedente non determina
@@ -2117,7 +2116,6 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         testo_extra = ''
         self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(origine, testo_extra)
         self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(app.sede, testo_extra)
-
 
     def richiedi(self):
         if not self.persona.sede_riferimento():
