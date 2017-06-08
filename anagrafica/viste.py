@@ -44,7 +44,7 @@ from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LE
     RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
     RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
     RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, GESTIONE_SOCI
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
     INCARICO_GESTIONE_FOTOTESSERE
 from anagrafica.utils import _conferma_email
@@ -1202,9 +1202,11 @@ def _profilo_appartenenze(request, me, persona):
     puo_modificare = me.permessi_almeno(persona, MODIFICA)
 
     moduli = []
+    terminabili = []
     for app in persona.appartenenze.all():
         modulo = None
-        if puo_modificare and app.attuale() and app.modificabile():
+        terminabile = me.permessi_almeno(app.estensione.first(), MODIFICA)
+        if app.attuale() and app.modificabile() and puo_modificare:
             modulo = ModuloModificaDataInizioAppartenenza(request.POST or None,
                                                           instance=app,
                                                           prefix="%d" % (app.pk,))
@@ -1212,8 +1214,9 @@ def _profilo_appartenenze(request, me, persona):
                 modulo.save()
 
         moduli += [modulo]
+        terminabili += [terminabile]
 
-    appartenenze = zip(persona.appartenenze.all(), moduli)
+    appartenenze = zip(persona.appartenenze.all(), moduli, terminabili)
 
     contesto = {
         "appartenenze": appartenenze,
