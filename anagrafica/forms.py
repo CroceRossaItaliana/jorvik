@@ -207,6 +207,11 @@ class ModuloCreazioneTelefono(forms.Form):
 
 
 class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
+    destinazione = autocomplete_light.ModelChoiceField("SedeTrasferimentoAutocompletamento", error_messages={
+        'invalid': "Non è possibile effettuare un trasferimento verso il Comitato Nazionale, verso i Comitati Regionali"
+                   "e verso i comitati delle Province Autonome di Trento e Bolzano"
+    })
+
     class Meta:
         model = Estensione
         fields = ['destinazione', 'motivo']
@@ -222,6 +227,11 @@ class ModuloNegaEstensione(ModuloMotivoNegazione):
 
 
 class ModuloCreazioneTrasferimento(autocomplete_light.ModelForm):
+    destinazione = autocomplete_light.ModelChoiceField("SedeTrasferimentoAutocompletamento", error_messages={
+        'invalid': "Non è possibile effettuare un trasferimento verso il Comitato Nazionale, verso i Comitati Regionali"
+                   "e verso i comitati delle Province Autonome di Trento e Bolzano"
+    })
+
     class Meta:
         model = Trasferimento
         fields = ['destinazione', 'motivo']
