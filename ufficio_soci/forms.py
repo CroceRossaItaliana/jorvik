@@ -3,16 +3,14 @@ import datetime
 from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator
 from django.forms import ModelForm
 from django.utils.timezone import now
 
 from anagrafica.forms import ModuloStepAnagrafica
 from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva, Trasferimento
-from anagrafica.validators import valida_almeno_14_anni
 from base.utils import rimuovi_scelte, testo_euro
-from ufficio_soci.validators import valida_data_non_nel_futuro
 from ufficio_soci.models import Tesseramento, Quota, Tesserino, Riduzione
+from ufficio_soci.validators import valida_data_non_nel_futuro
 
 
 class ModuloCreazioneEstensione(autocomplete_light.ModelForm):

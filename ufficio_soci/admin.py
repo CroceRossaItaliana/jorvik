@@ -1,6 +1,13 @@
-from django.contrib import admin
-from ufficio_soci.models import Tesserino, Quota, Tesseramento, Riduzione
+from django.conf.urls import url
+from django.contrib import admin, messages
+from django.contrib.admin import helpers
+from django.contrib.auth import get_permission_codename
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
+
 from gruppi.readonly_admin import ReadonlyAdminMixin
+from ufficio_soci.models import Tesserino, Quota, Tesseramento, Riduzione
 
 __author__ = 'alfioemanuele'
 

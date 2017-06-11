@@ -172,6 +172,18 @@ class SedeTrasferimentoAutocompletamento(SedeAutocompletamento):
         return super(SedeTrasferimentoAutocompletamento, self).choices_for_request()
 
 
+class SedeRegionaleAutocompletamento(SedeAutocompletamento):
+    search_fields = ['nome']
+    model = Sede
+
+    def choices_for_request(self):
+        self.choices = self.choices.filter(
+            tipo=Sede.COMITATO,
+            estensione__in=[REGIONALE],
+        )
+        return super(SedeRegionaleAutocompletamento, self).choices_for_request()
+
+
 class SedeNuovoCorsoAutocompletamento(SedeAutocompletamento):
     def choices_for_request(self):
         return self.persona.oggetti_permesso(GESTIONE_CORSI_SEDE)
@@ -183,6 +195,7 @@ autocomplete_light.register(SostenitoreAutocompletamento)
 autocomplete_light.register(VolontarioSedeAutocompletamento)
 autocomplete_light.register(IscrivibiliCorsiAutocompletamento)
 autocomplete_light.register(SedeAutocompletamento)
+autocomplete_light.register(SedeRegionaleAutocompletamento)
 autocomplete_light.register(ComitatoAutocompletamento)
 autocomplete_light.register(SedeTrasferimentoAutocompletamento)
 autocomplete_light.register(SedeNuovoCorsoAutocompletamento)
