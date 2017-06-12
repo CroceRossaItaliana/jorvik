@@ -2,6 +2,7 @@ from autoslug import AutoSlugField
 from django.db import models
 from django.db.models import Q
 from django.db.models.signals import post_save
+from django_countries.fields import CountryField
 
 from anagrafica.costanti import NAZIONALE
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
@@ -21,8 +22,8 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
             ('view_campagna', 'Can view campagna'),
         )
 
-    nome = models.CharField(max_length=255, default="Nuova campagna",
-                            db_index=True, help_text="es. Terremoto Centro Italia")
+    nome = models.CharField(max_length=255, default='Nuova campagna',
+                            db_index=True, help_text='es. Terremoto Centro Italia')
     organizzatore = models.ForeignKey('anagrafica.Sede', related_name='campagne', on_delete=models.PROTECT)
     descrizione = models.TextField(blank=True)
 
@@ -38,19 +39,19 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
 
     @property
     def url(self):
-        return "/donazioni/campagne/%d/" % (self.pk,)
+        return '/donazioni/campagne/%d/' % (self.pk,)
 
     @property
     def url_modifica(self):
-        return "/donazioni/campagne/%d/modifica" % (self.pk,)
+        return '/donazioni/campagne/%d/modifica' % (self.pk,)
 
     @property
     def url_cancella(self):
-        return "/donazioni/campagne/%d/elimina" % (self.pk,)
+        return '/donazioni/campagne/%d/elimina' % (self.pk,)
 
     @property
     def link(self):
-        return "<a href=\"%s\">%s</a>" % (self.url, self.nome)
+        return '<a href="%s">%s</a>' % (self.url, self.nome)
 
     @staticmethod
     def post_save(sender, instance, **kwargs):
@@ -61,15 +62,15 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
         """
         etichette_correnti = instance.etichette.values_list('nome', flat=True)
         if instance.nome not in etichette_correnti:
-            # crea e aggiunge etichetta di default
+            # crea e/o aggiunge etichetta di default
             etichetta, _ = Etichetta.objects.get_or_create(nome=instance.nome,
-                                                        comitato=instance.organizzatore,
-                                                        default=True)
+                                                           comitato=instance.organizzatore,
+                                                           default=True)
             instance.etichette.add(etichetta)
 
     @property
     def url_responsabili(self):
-        return "/donazioni/campagne/%d/responsabili/" % (self.pk,)
+        return '/donazioni/campagne/%d/responsabili/' % (self.pk,)
 
 
 class Etichetta(ModelloSemplice):
@@ -80,11 +81,11 @@ class Etichetta(ModelloSemplice):
         permissions = (
             ('view_etichetta', 'Can view etichetta'),
         )
-    nome = models.CharField(max_length=100, help_text="es. WEB")
+    nome = models.CharField(max_length=100, help_text='es. WEB')
     comitato = models.ForeignKey('anagrafica.Sede', related_name='etichette_campagne', on_delete=models.CASCADE)
     slug = AutoSlugField(populate_from='nome', always_update=True, max_length=100, unique_with='comitato')
     campagne = models.ManyToManyField(Campagna, related_name='etichette')
-    default = models.BooleanField("Etichetta di default", default=False)
+    default = models.BooleanField('Etichetta di default', default=False)
 
     def __str__(self):
         return self.nome
@@ -108,23 +109,23 @@ class Etichetta(ModelloSemplice):
 
     @property
     def url_cancella(self):
-        return "/donazioni/etichette/%d/elimina" % (self.pk,)
+        return '/donazioni/etichette/%d/elimina' % (self.pk,)
 
     @property
     def url_modifica(self):
-        return "/donazioni/etichette/%d/modifica" % (self.pk,)
+        return '/donazioni/etichette/%d/modifica' % (self.pk,)
 
     @property
     def url(self):
-        return "/donazioni/etichette/%d/" % (self.pk,)
+        return '/donazioni/etichette/%d/' % (self.pk,)
 
     @property
     def link(self):
-        return "<a href=\"%s\">%s</a>" % (self.url, self.nome)
+        return '<a href="%s">%s</a>' % (self.url, self.nome)
 
     @property
     def link_cancella(self):
-        return "<a href=\"%s\">%s</a>" % (self.url_cancella, 'X')
+        return '<a href="%s">%s</a>' % (self.url_cancella, 'X')
 
 
 class Donatore(ModelloSemplice):
@@ -134,16 +135,23 @@ class Donatore(ModelloSemplice):
         permissions = (
             ('view_campagna', 'Can view campagna'),
         )
-    nome = TitleCharField("Nome", max_length=64, db_index=True)
-    cognome = TitleCharField("Cognome", max_length=64, db_index=True)
-    codice_fiscale = UpperCaseCharField("Codice Fiscale", max_length=16, blank=False,
-                                        unique=True, db_index=True, validators=[valida_codice_fiscale, ])
+    nome = TitleCharField('Nome', max_length=64)
+    cognome = TitleCharField('Cognome', max_length=64)
+    codice_fiscale = UpperCaseCharField('Codice Fiscale', max_length=16, blank=True,
+                                        unique=True, validators=[valida_codice_fiscale, ])
+    email = models.EmailField("Indirizzo e-mail", max_length=64, blank=True)
+    data_nascita = models.DateField("Data di nascita", null=True)
+    comune_nascita = models.CharField("Comune di Nascita", max_length=64, blank=True)
+    provincia_nascita = models.CharField("Provincia di Nascita", max_length=2, blank=True)
+    stato_nascita = CountryField("Stato di nascita", default="IT")
 
 
 class Donazione(ModelloSemplice, ConMarcaTemporale):
     campagna = models.ForeignKey(Campagna, related_name='donazioni', on_delete=models.PROTECT)
     donatore = models.ForeignKey(Donatore, related_name='donazioni', on_delete=models.CASCADE)
+    importo = models.FloatField(default=0.00, help_text='Importo in EUR della donazione')
+    data = models.DateTimeField(help_text='Data donazione', db_index=True)
 
 
 # signals
-post_save.connect(Campagna.post_save, Campagna, dispatch_uid="jorvik.donazioni.models.Campagna")
+post_save.connect(Campagna.post_save, Campagna, dispatch_uid='jorvik.donazioni.models.Campagna')
