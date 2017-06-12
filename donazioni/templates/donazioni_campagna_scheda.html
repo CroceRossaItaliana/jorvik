@@ -120,17 +120,17 @@
         <div class="panel panel-info">
             <div class="panel-heading">
                 <h3 class="panel-title">
-                    <i class="fa fa-fw fa-list"></i>
+                    <i class="fa fa-fw fa-tags"></i>
                     Etichette associate
                 </h3>
             </div>
 
             <div class="panel-body">
-            <ul>
+{#            <ul>#}
                 {% for e in campagna.etichette.all %}
-                    <li>{{ e.nome }}</li>
+                    <span class="badge">{{ e.nome }}</span>
                 {% endfor %}
-            </ul>
+{#            </ul>#}
             </div>
 
         </div>

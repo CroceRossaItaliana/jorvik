@@ -526,7 +526,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         if self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE):
             lista += [('/formazione/', 'Formazione', 'fa-graduation-cap')]
-
+#(me.ha_permesso(GESTIONE_CAMPAGNE) or me.oggetti_permesso(GESTIONE_CAMPAGNA).exists())
         if self.ha_permesso(GESTIONE_CAMPAGNE) or self.ha_permesso(GESTIONE_CAMPAGNA):
             lista += [('/donazioni/', 'Campagne', 'fa-money')]
 

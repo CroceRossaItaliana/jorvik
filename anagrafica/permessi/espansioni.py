@@ -2,6 +2,8 @@ from datetime import date
 
 from django.db.models import Q
 
+from donazioni.models import Etichetta
+
 __author__ = 'alfioemanuele'
 
 from anagrafica.permessi.costanti import (
@@ -295,6 +297,7 @@ def espandi_gestione_campagne(qs_sedi, al_giorno=None):
     from donazioni.models import Campagna
     return [
         (COMPLETO, Campagna.objects.filter(organizzatore__in=qs_sedi)),
+        (COMPLETO, Etichetta.objects.filter(comitato__in=qs_sedi)),
     ]
 
 

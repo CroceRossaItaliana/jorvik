@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
 from base.utils import poco_fa
 from donazioni.models import Campagna
 
@@ -13,3 +14,7 @@ def crea_campagna(sede, nome='Test Campagna', inizio=None):
                  inizio=inizio, fine=fine)
     c.save()
     return c
+
+
+def aggiungi_responsabile_campagna(campagna, persona):
+    campagna.aggiungi_delegato(RESPONSABILE_CAMPAGNA, persona)

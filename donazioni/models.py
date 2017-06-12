@@ -32,9 +32,6 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
     def responsabili_attuali(self):
         return self.delegati_attuali(tipo=RESPONSABILE_CAMPAGNA)
 
-    def aggiungi_responsabile(self, persona):
-        self.aggiungi_delegato(RESPONSABILE_CAMPAGNA, persona)
-
     @property
     def cancellabile(self):
         return not self.donazioni.all().exists()
@@ -58,26 +55,17 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
     @staticmethod
     def post_save(sender, instance, **kwargs):
         """
-        Signal post_save che aggiunge un'etichetta alla campagna con lo stesso nome della campagna
+        Signal post_save che aggiunge un'etichetta di default alla campagna con lo stesso nome della campagna
         :param sender: classe Campagna
         :param instance: oggetto Campagna
         """
         etichette_correnti = instance.etichette.values_list('nome', flat=True)
         if instance.nome not in etichette_correnti:
-            etichetta = Etichetta(nome=instance.nome, comitato=instance.organizzatore)
-            etichetta.save()
+            # crea e aggiunge etichetta di default
+            etichetta, _ = Etichetta.objects.get_or_create(nome=instance.nome,
+                                                        comitato=instance.organizzatore,
+                                                        default=True)
             instance.etichette.add(etichetta)
-
-    @classmethod
-    def nuova(cls, **kwargs):
-        """
-        Factory method per creare una nuova campagna
-        :param kwargs: inizio, fine, nome, descrizione, organizzatore
-        :return: Oggetto Campagna appena creato
-        """
-        c = cls(**kwargs)
-        c.save()
-        return c
 
     @property
     def url_responsabili(self):
@@ -96,20 +84,10 @@ class Etichetta(ModelloSemplice):
     comitato = models.ForeignKey('anagrafica.Sede', related_name='etichette_campagne', on_delete=models.CASCADE)
     slug = AutoSlugField(populate_from='nome', always_update=True, max_length=100, unique_with='comitato')
     campagne = models.ManyToManyField(Campagna, related_name='etichette')
+    default = models.BooleanField("Etichetta di default", default=False)
 
     def __str__(self):
         return self.nome
-
-    @classmethod
-    def nuova(cls, **kwargs):
-        """
-        Factory method per creare una nuova etichetta
-        :param kwargs: nome, comitato
-        :return: Oggetto Etichetta
-        """
-        c = cls(**kwargs)
-        c.save()
-        return c
 
     @classmethod
     @concept

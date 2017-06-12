@@ -2,10 +2,10 @@ from django.test import TestCase
 
 from anagrafica.costanti import LOCALE, REGIONALE, TERRITORIALE
 from anagrafica.permessi.applicazioni import DELEGATO_CAMPAGNE, RESPONSABILE_CAMPAGNA
-from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA
+from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO
 from base.utils_tests import crea_persona, crea_sede, crea_delega, crea_appartenenza, codice_fiscale
-from donazioni.models import Etichetta
-from donazioni.tests.utils import crea_campagna
+from donazioni.models import Etichetta, Campagna
+from donazioni.tests.utils import crea_campagna, aggiungi_responsabile_campagna
 
 
 class TestModelliCampagne(TestCase):
@@ -23,7 +23,7 @@ class TestModelliCampagne(TestCase):
         self.assertEqual(campagna.nome, nome_campagna)
         self.assertEqual(campagna.organizzatore, self.sede)
         persona = crea_persona()
-        campagna.aggiungi_responsabile(persona)
+        aggiungi_responsabile_campagna(campagna, persona)
         self.assertIn(persona, campagna.responsabili_attuali())
 
     def test_associa_etichette(self):
@@ -38,6 +38,24 @@ class TestModelliCampagne(TestCase):
         self.assertIn(campagna.nome, [s.nome for s in campagna.etichette.all()])
         self.assertIn(etichetta, campagna.etichette.all())
 
+    def test_elimina_etichetta_con_campagne_associate_unica_etichetta(self):
+        nome_campagna = 'Test Campagna'
+        campagna = crea_campagna(self.sede, nome=nome_campagna)
+        campagna_id = campagna.id
+        etichetta = Etichetta(nome='Etichetta', comitato=self.sede)
+        etichetta.save()
+        campagna.etichette.add(etichetta)
+        self.assertEqual(campagna.etichette.count(), 2)
+        etichetta.delete()
+        self.assertEqual(campagna.etichette.count(), 1)
+        etichetta_default = campagna.etichette.all()[0]
+        # elimino anche l'etichetta di default
+        etichetta_default.delete()
+        campagna = Campagna.objects.get(pk=campagna_id)
+        # campagna resta senza etichette
+        self.assertEqual(campagna.nome, nome_campagna)
+        self.assertEqual(campagna.etichette.count(), 0)
+
     def test_permessi_campagne(self):
         presidente = crea_persona()
         sicilia = crea_sede(presidente=presidente, estensione=REGIONALE)
@@ -47,8 +65,8 @@ class TestModelliCampagne(TestCase):
         catania = crea_sede(estensione=LOCALE, genitore=sicilia)
         maletto = crea_sede(estensione=TERRITORIALE, genitore=catania)
 
-        delegato_campagne_catania = crea_persona()
-        crea_delega(delegato_campagne_catania, sicilia, DELEGATO_CAMPAGNE)
+        delegato_campagne_sicilia = crea_persona()
+        crea_delega(delegato_campagne_sicilia, sicilia, DELEGATO_CAMPAGNE)
         responsabile_campagna_terremoto_catania = crea_persona()
         campagna = crea_campagna(sicilia)
         campagna.aggiungi_delegato(RESPONSABILE_CAMPAGNA, responsabile_campagna_terremoto_catania)
@@ -59,12 +77,12 @@ class TestModelliCampagne(TestCase):
         self.assertTrue(presidente.ha_permesso(GESTIONE_CAMPAGNA))
 
         self.assertTrue(
-            delegato_campagne_catania.oggetti_permesso(GESTIONE_CAMPAGNE).filter(pk=sicilia.pk),
+            delegato_campagne_sicilia.oggetti_permesso(GESTIONE_CAMPAGNE).filter(pk=sicilia.pk),
             msg="Delegato non può gestire campagne per la sede"
         )
 
         self.assertTrue(
-            delegato_campagne_catania.oggetti_permesso(GESTIONE_CAMPAGNA).filter(pk=campagna.pk),
+            delegato_campagne_sicilia.oggetti_permesso(GESTIONE_CAMPAGNA).filter(pk=campagna.pk),
             msg="Responsabile non può gestire la campagna in oggetto"
         )
 
@@ -80,7 +98,7 @@ class TestModelliCampagne(TestCase):
 
         # il delegato campagne di una sede può gestire tutte le campagne delle sedi sottostanti
         self.assertTrue(
-            delegato_campagne_catania.oggetti_permesso(GESTIONE_CAMPAGNE).filter(pk=maletto.pk),
+            delegato_campagne_sicilia.oggetti_permesso(GESTIONE_CAMPAGNE).filter(pk=maletto.pk),
             msg="Delegato non può gestire campagne per la sede"
         )
 
@@ -89,3 +107,7 @@ class TestModelliCampagne(TestCase):
             msg="Responsabile non può gestire la campagna in oggetto"
         )
 
+        # check permessi etichette
+        etichetta_sicilia = Etichetta.objects.create(nome='test', comitato=sicilia)
+        self.assertTrue(delegato_campagne_sicilia.permessi_almeno(etichetta_sicilia, COMPLETO))
+        self.assertFalse(responsabile_campagna_terremoto_catania.permessi_almeno(etichetta_sicilia, COMPLETO))

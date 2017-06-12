@@ -25,14 +25,13 @@ class ModuloCampagna(ModelForm):
         super().__init__(*args, **kwargs)
 
     def save(self, commit=True):
-        campagna = super().save()
-        campagna.etichette.clear()
-        for etichetta in self.cleaned_data['etichette']:
+        campagna = super().save()  # salva campagna (e aggiunge etichetta di default)
+        # rimuovi tutte le etichette (tranne quella di default)
+        campagna.etichette.remove(*list(campagna.etichette.filter(default=False)))
+        # aggiunge tutte le etichette proveniente dal form (tranne quella di default, se presente)
+        etichette_form = [e for e in self.cleaned_data['etichette'] if not e.default]
+        for etichetta in etichette_form:
             campagna.etichette.add(etichetta)
-        etichette_correnti = campagna.etichette.all().values_list('nome', flat=True)
-        if campagna.nome not in etichette_correnti:
-            campagna.etichette.add(Etichetta.objects.get(nome=campagna.nome, comitato=campagna.organizzatore))
-
         return campagna
 
 

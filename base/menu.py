@@ -8,7 +8,8 @@ from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_1, DELEGATO_OBIE
     REFERENTE, RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO, \
     RESPONSABILE_AUTOPARCO, DELEGATO_CO, REFERENTE_GRUPPO, RUBRICHE_TITOLI
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, \
-    GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, GESTIONE_CAMPAGNE
+    GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, GESTIONE_CAMPAGNE, \
+    GESTIONE_CAMPAGNA
 from base.utils import remove_none
 
 __author__ = 'alfioemanuele'
@@ -134,7 +135,7 @@ def menu(request):
             ("Gestione Campagne", (
                 ("Campagne", "fa-list", "/donazioni/campagne/"),
                 ("Etichette", "fa-list", "/donazioni/etichette/"),
-            )) if me and me.ha_permesso(GESTIONE_CAMPAGNE) else None,
+            )) if me and (me.ha_permesso(GESTIONE_CAMPAGNE) or me.oggetti_permesso(GESTIONE_CAMPAGNA).exists()) else None,
             # ("Le Tue Campagne", (
             #     ("Organizza attività", "fa-asterisk", "/attivita/organizza/") if me and me.oggetti_permesso(
             #         GESTIONE_ATTIVITA_AREA).exists() else None,

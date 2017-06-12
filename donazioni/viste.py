@@ -18,8 +18,7 @@ def donazioni_home(request, me):
         'sedi': me.oggetti_permesso(GESTIONE_CAMPAGNE),
         'campagne': me.oggetti_permesso(GESTIONE_CAMPAGNA),
     }
-    template = 'donazioni.html'
-    return template, contesto
+    return 'donazioni.html', contesto
 
 
 @pagina_privata
@@ -28,8 +27,7 @@ def campagne_elenco(request, me):
         "campagne": me.oggetti_permesso(GESTIONE_CAMPAGNA),
         "puo_creare": me.ha_permesso(GESTIONE_CAMPAGNE),
     }
-    template = 'donazioni_campagne_elenco.html'
-    return template, contesto
+    return 'donazioni_campagne_elenco.html', contesto
 
 
 @pagina_privata(permessi=(GESTIONE_CAMPAGNE,))
@@ -72,20 +70,20 @@ def campagna_modifica(request, me, pk):
 
 @pagina_privata
 def campagna_elimina(request, me, pk):
-    campagna_obj = get_object_or_404(Campagna, pk=pk)
-    if not me.permessi_almeno(campagna_obj, COMPLETO):
+    campagna = get_object_or_404(Campagna, pk=pk)
+    if not me.permessi_almeno(campagna, COMPLETO):
         return redirect(ERRORE_PERMESSI)
-    campagna_obj.delete()
+    campagna.delete()
     return redirect(reverse('donazioni_campagne'))
 
 
 @pagina_privata
 def campagna(request, me, pk):
-    campagna_obj = get_object_or_404(Campagna, pk=pk)
-    puo_modificare = me.permessi_almeno(campagna_obj, MODIFICA)
+    campagna = get_object_or_404(Campagna, pk=pk)
+    puo_modificare = me.permessi_almeno(campagna, MODIFICA)
 
     contesto = {
-        "campagna": campagna_obj,
+        "campagna": campagna,
         "puo_modificare": puo_modificare,
     }
     return 'donazioni_campagna_scheda.html', contesto
@@ -93,26 +91,26 @@ def campagna(request, me, pk):
 
 @pagina_privata
 def campagna_fine(request, me, pk):
-    campagna_obj = get_object_or_404(Campagna, pk=pk)
-    if not me.permessi_almeno(campagna_obj, COMPLETO):
+    campagna = get_object_or_404(Campagna, pk=pk)
+    if not me.permessi_almeno(campagna, COMPLETO):
         return redirect(ERRORE_PERMESSI)
 
-    if me in campagna_obj.responsabili_attuali():  # Se sono responsabile
-        redirect(campagna_obj.url)
+    if me in campagna.responsabili_attuali():  # Se sono responsabile
+        redirect(campagna.url)
 
     contesto = {
-        "campagna": campagna_obj,
+        "campagna": campagna,
     }
     return 'donazioni_campagna_fine.html', contesto
 
 
 @pagina_privata
 def campagna_responsabili(request, me, pk):
-    campagna_obj = get_object_or_404(Campagna, pk=pk)
-    if not me.permessi_almeno(campagna_obj, COMPLETO):
+    campagna = get_object_or_404(Campagna, pk=pk)
+    if not me.permessi_almeno(campagna, COMPLETO):
         return redirect(ERRORE_PERMESSI)
 
-    continua_url = campagna_obj.url
+    continua_url = campagna.url
 
     if 'campagna_creata' in request.session and int(request.session['campagna_creata']) == int(pk):
         continua_url = "/donazioni/campagne/%d/fine/" % (int(pk),)
@@ -120,7 +118,7 @@ def campagna_responsabili(request, me, pk):
 
     contesto = {
         "delega": RESPONSABILE_CAMPAGNA,
-        "campagna": campagna_obj,
+        "campagna": campagna,
         "continua_url": continua_url
     }
 
@@ -131,10 +129,10 @@ def campagna_responsabili(request, me, pk):
 
 @pagina_privata
 def etichetta(request, me, pk):
-    etichetta_obj = get_object_or_404(Etichetta, pk=pk)
+    etichetta = get_object_or_404(Etichetta, pk=pk)
 
     contesto = {
-        "etichetta": etichetta_obj,
+        "etichetta": etichetta,
         "puo_modificare": me.ha_permesso(GESTIONE_CAMPAGNE),
     }
     return 'donazioni_etichetta_scheda.html', contesto
@@ -173,10 +171,10 @@ def etichetta_modifica(request, me, pk):
 
 @pagina_privata
 def etichetta_elimina(request, me, pk):
-    if not me.ha_permessi(GESTIONE_CAMPAGNE):
+    etichetta = get_object_or_404(Etichetta, pk=pk)
+    if not me.permessi_almeno(etichetta, COMPLETO):
         return redirect(ERRORE_PERMESSI)
-    etichetta_obj = get_object_or_404(Etichetta, pk=pk)
-    etichetta_obj.delete()
+    etichetta.delete()
     return redirect(reverse('donazioni_etichette'))
 
 
@@ -190,5 +188,4 @@ def etichette_elenco(request, me):
         "etichette": Etichetta.objects.filter(filtro_etichette).distinct(),
         'puo_modificare': me.ha_permessi(GESTIONE_CAMPAGNE)
     }
-    template = 'donazioni_etichette_elenco.html'
-    return template, contesto
+    return 'donazioni_etichette_elenco.html', contesto
