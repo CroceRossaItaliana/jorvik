@@ -16,12 +16,22 @@ from ufficio_soci.models import Tesseramento, Quota, Tesserino, Riduzione
 
 
 class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
+    destinazione = autocomplete_light.ModelChoiceField("SedeTrasferimentoAutocompletamento", error_messages={
+        'invalid': "Non è possibile effettuare un trasferimento verso il Comitato Nazionale, verso i Comitati Regionali"
+                   "e verso i comitati delle Province Autonome di Trento e Bolzano"
+    })
+
     class Meta:
         model = Estensione
         fields = ['persona', 'destinazione', 'motivo']
 
 
 class ModuloCreazioneTrasferimento(autocomplete_light.ModelForm):
+    destinazione = autocomplete_light.ModelChoiceField("SedeTrasferimentoAutocompletamento", error_messages={
+        'invalid': "Non è possibile effettuare un trasferimento verso il Comitato Nazionale, verso i Comitati Regionali"
+                   "e verso i comitati delle Province Autonome di Trento e Bolzano"
+    })
+
     class Meta:
         model = Trasferimento
         fields = ['persona', 'destinazione', 'motivo']
@@ -255,8 +265,12 @@ class ModuloElencoIVCM(forms.Form):
     )
     includi = forms.ChoiceField(choices=SCELTE)
 
+
 class ModuloQuotaGenerico(forms.Form):
-    riduzione = forms.ModelChoiceField(label='Riduzione', queryset=Riduzione.objects.all(), widget=forms.RadioSelect, required=False, empty_label='Nessuna')
+    riduzione = forms.ModelChoiceField(
+        label='Riduzione', queryset=Riduzione.objects.all(), widget=forms.RadioSelect,
+        required=False, empty_label='Nessuna'
+    )
     importo = forms.FloatField(help_text="Il totale versato in euro, comprensivo dell'eventuale "
                                          "donazione aggiuntiva.")
     data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro], initial=datetime.date.today)
@@ -326,7 +340,7 @@ class ModuloQuotaGenerico(forms.Form):
 
 
 class ModuloQuotaVolontario(ModuloQuotaGenerico):
-    volontario = autocomplete_light.ModelChoiceField("PersonaAutocompletamento",
+    volontario = autocomplete_light.ModelChoiceField("VolontarioSedeAutocompletamento",
                                                      help_text="Seleziona il Volontario per il quale registrare"
                                                                " la quota associativa.")
 

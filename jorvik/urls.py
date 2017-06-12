@@ -47,7 +47,7 @@ urlpatterns = [
     # Pagina di errore
     url(r'^errore/404/$', base.errori.non_trovato),
     url(r'^errore/orfano/$', base.errori.orfano),
-    url(r'^errore/permessi/$', base.errori.permessi),
+    url(r'^errore/permessi/$', base.errori.permessi, name='errore-permessi'),
 
     # Login e logout
     # url(r'^login/$', base.errori.vista_ci_siamo_quasi),
@@ -122,7 +122,7 @@ urlpatterns = [
     url(r'^profilo/(?P<pk>[0-9]+)/documenti/(?P<documento_pk>[0-9]+)/cancella/$', anagrafica.viste.profilo_documenti_cancella),
     url(r'^profilo/(?P<pk>[0-9]+)/curriculum/(?P<tp_pk>[0-9]+)/cancella/$', anagrafica.viste.profilo_curriculum_cancella),
     url(r'^profilo/(?P<pk>[0-9]+)/sangue/(?P<donazione_pk>[0-9]+)/cancella/$', anagrafica.viste.profilo_sangue_cancella),
-    url(r'^profilo/(?P<pk>[0-9]+)/(?P<sezione>.*)/$', anagrafica.viste.profilo),
+    url(r'^profilo/(?P<pk>[0-9]+)/(?P<sezione>.*)/$', anagrafica.viste.profilo, name='profilo'),
     url(r'^profilo/(?P<pk>[0-9]+)/$', anagrafica.viste.profilo),
 
     url(r'^autorizzazioni/$', base.viste.autorizzazioni, name='autorizzazioni-aperte'),
@@ -211,7 +211,7 @@ urlpatterns = [
     url(r'^us/reclama/$', ufficio_soci.viste.us_reclama),
     url(r'^us/reclama/(?P<persona_pk>.*)/$', ufficio_soci.viste.us_reclama_persona),
     url(r'^us/estensione/$', ufficio_soci.viste.us_estensione),
-    url(r'^us/estensione/(?P<pk>.*)/termina/$', ufficio_soci.viste.us_estensione_termina),
+    url(r'^us/estensione/(?P<pk>.*)/termina/$', ufficio_soci.viste.us_estensione_termina, name='us-termina-estensione'),
     url(r'^us/trasferimento/$', ufficio_soci.viste.us_trasferimento),
     url(r'^us/riserva/$', ufficio_soci.viste.us_riserva),
     url(r'^us/riserva/(?P<pk>.*)/termina/$', ufficio_soci.viste.us_riserva_termina),
