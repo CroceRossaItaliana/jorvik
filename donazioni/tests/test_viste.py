@@ -2,11 +2,9 @@ from datetime import timedelta
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
-from anagrafica.costanti import LOCALE, REGIONALE, TERRITORIALE
-from anagrafica.permessi.applicazioni import DELEGATO_CAMPAGNE, RESPONSABILE_CAMPAGNA
-from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO
+from anagrafica.costanti import TERRITORIALE
 from base.utils import poco_fa
-from base.utils_tests import crea_persona, crea_sede, crea_delega, crea_appartenenza, codice_fiscale, email_fittizzia, crea_utenza
+from base.utils_tests import crea_persona, crea_sede, crea_appartenenza, email_fittizzia, crea_utenza
 from donazioni.models import Etichetta, Campagna
 from donazioni.tests.utils import crea_campagna, aggiungi_responsabile_campagna
 
