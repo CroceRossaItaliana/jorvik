@@ -6,6 +6,12 @@
     <div class="alert alert-success">
         <p>Per procedere con la registrazione è necessario cliccare sul link contenuto nell'email che ti abbiamo mandato.</p>
     </div>
+    {% if link_debug %}
+    <div class="alert alert-info">
+        <h4>MODALITA' DEBUG ATTIVA</h4>
+        <h3><a href="{{ link_debug }}">Link completo per l'attivazione</a></h3>
+    </div>
+    {% endif %}
     <div>
     <p>
         Ti abbiamo mandato un'email all'indirizzo <strong>{{ email }}</strong> per verificare che sia corretto e che tu possa ricevere i messaggi che ti manderemo.
