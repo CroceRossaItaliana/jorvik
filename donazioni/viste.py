@@ -80,7 +80,7 @@ def campagna_elimina(request, me, pk):
 @pagina_privata
 def campagna(request, me, pk):
     campagna = get_object_or_404(Campagna, pk=pk)
-    puo_modificare = me.permessi_almeno(campagna, MODIFICA)
+    puo_modificare = me.permessi_almeno(campagna, COMPLETO)
 
     contesto = {
         "campagna": campagna,

@@ -525,9 +525,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         if self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE):
             lista += [('/formazione/', 'Formazione', 'fa-graduation-cap')]
-            
+
         if self.ha_permesso(GESTIONE_CAMPAGNE) or self.ha_permesso(GESTIONE_CAMPAGNA):
-            lista += [('/donazioni/', 'Campagne', 'fa-money')]
+            lista += [('/donazioni/', 'Donatori', 'fa-money')]
 
         tipi = []
         for d in self.deleghe_attuali():
