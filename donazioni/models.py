@@ -63,8 +63,8 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
         if instance.nome not in etichette_correnti:
             # crea e aggiunge etichetta di default
             etichetta, _ = Etichetta.objects.get_or_create(nome=instance.nome,
-                                                        comitato=instance.organizzatore,
-                                                        default=True)
+                                                           comitato=instance.organizzatore,
+                                                           default=True)
             instance.etichette.add(etichetta)
 
     @property
