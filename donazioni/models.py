@@ -13,7 +13,6 @@ from base.utils import TitleCharField, UpperCaseCharField, concept
 
 
 class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
-
     class Meta:
         verbose_name = 'Campagna'
         verbose_name_plural = 'Campagne'
@@ -81,6 +80,7 @@ class Etichetta(ModelloSemplice):
         permissions = (
             ('view_etichetta', 'Can view etichetta'),
         )
+
     nome = models.CharField(max_length=100, help_text='es. WEB')
     comitato = models.ForeignKey('anagrafica.Sede', related_name='etichette_campagne', on_delete=models.CASCADE)
     slug = AutoSlugField(populate_from='nome', always_update=True, max_length=100, unique_with='comitato')
@@ -98,7 +98,7 @@ class Etichetta(ModelloSemplice):
         Le etichette sono specifiche di un comitato.
         In più, il comitato nazionale può creare delle etichette globali
         visibili a tutti i comitati territoriali
-        :param sedi_qs: le sedi a cui devono "appartenere" le Etichette.
+        :param sedi_qs: le sedi a cui devono 'appartenere' le Etichette.
                         Solitamente, quelle su cui si ha il permesso GESTIONE_CAMPAGNE
         :return: Q object
         """
@@ -135,28 +135,43 @@ class Donatore(ModelloSemplice):
         permissions = (
             ('view_donatore', 'Can view donatore'),
         )
+
     nome = TitleCharField('Nome', max_length=64)
     cognome = TitleCharField('Cognome', max_length=64)
     codice_fiscale = UpperCaseCharField('Codice Fiscale', max_length=16, blank=True,
                                         unique=True, validators=[valida_codice_fiscale, ])
-    email = models.EmailField("Indirizzo e-mail", max_length=64, blank=True)
-    data_nascita = models.DateField("Data di nascita", null=True)
-    comune_nascita = models.CharField("Comune di Nascita", max_length=64, blank=True)
-    provincia_nascita = models.CharField("Provincia di Nascita", max_length=2, blank=True)
-    stato_nascita = CountryField("Stato di nascita", default="IT")
+    email = models.EmailField('Indirizzo e-mail', max_length=64, blank=True)
+    data_nascita = models.DateField('Data di nascita', null=True, blank=True)
+    comune_nascita = models.CharField('Comune di Nascita', max_length=64, blank=True)
+    provincia_nascita = models.CharField('Provincia di Nascita', max_length=2, blank=True)
+    stato_nascita = CountryField('Stato di nascita', default='IT')
 
 
 class Donazione(ModelloSemplice, ConMarcaTemporale):
+    CONTANTI = 'C'
+    BANCARIA = 'B'
+    ONLINE = 'O'
+    MODALITA = (
+        (CONTANTI, 'Contanti'),
+        (BANCARIA, 'Bancaria'),
+        (ONLINE, 'Online'),
+    )
+
     class Meta:
         verbose_name = 'Donazione'
         verbose_name_plural = 'Donazioni'
         permissions = (
             ('view_donazione', 'Can view donazione'),
         )
+
     campagna = models.ForeignKey(Campagna, related_name='donazioni', on_delete=models.PROTECT)
     donatore = models.ForeignKey(Donatore, related_name='donazioni', on_delete=models.CASCADE)
-    importo = models.FloatField(default=0.00, help_text='Importo in EUR della donazione')
-    data = models.DateTimeField(help_text='Data donazione', db_index=True)
+    importo = models.FloatField('Importo in EUR', default=0.00, help_text='Importo in EUR della donazione')
+    modalita = models.CharField('Modalità', blank=True, choices=MODALITA, max_length=1, db_index=True)
+    data = models.DateTimeField('Data donazione', help_text='Data donazione', null=True)
+    ricorrente = models.BooleanField('Donazione ricorrente', default=False)
+    codice_transazione = models.CharField('Codice Transazione', max_length=250, blank=True,
+                                          help_text='Codice univoco che identifica la donazione')
 
 
 # signals
