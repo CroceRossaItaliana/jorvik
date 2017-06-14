@@ -525,9 +525,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         if self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE):
             lista += [('/formazione/', 'Formazione', 'fa-graduation-cap')]
-            
+
         if self.ha_permesso(GESTIONE_CAMPAGNE) or self.ha_permesso(GESTIONE_CAMPAGNA):
-            lista += [('/donazioni/', 'Campagne', 'fa-money')]
+            lista += [('/donazioni/', 'Donatori', 'fa-money')]
 
         tipi = []
         for d in self.deleghe_attuali():
@@ -1752,9 +1752,13 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             e questi sono diversi dal Comitato nazionale
         :return: Oggetto Query. Per via del decoratore @concept, il metodo ritorna un queryset
         """
-        filtro = Q(estensione__in=[NAZIONALE, TERRITORIALE])
+        nazionali_dati = cls.objects.filter(estensione=NAZIONALE).values_list('codice_fiscale', 'partita_iva')
+        cf_nazionali = (p[0] for p in nazionali_dati if p[0])
+        piva_nazionali = (p[1] for p in nazionali_dati if p[1])
+        filtro = Q(estensione__in=[NAZIONALE, LOCALE])
         filtro |= (Q(estensione=REGIONALE) & (~Q(codice_fiscale__isnull=True) & ~Q(partita_iva__isnull=True) &
-                                              ~Q(codice_fiscale__exact='') & ~Q(codice_fiscale__exact='')))
+                                              ~Q(codice_fiscale__exact='') & ~Q(partita_iva__exact='') &
+                                              ~Q(codice_fiscale__in=cf_nazionali) & ~Q(partita_iva=piva_nazionali)))
         return filtro
 
 

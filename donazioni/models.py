@@ -130,10 +130,10 @@ class Etichetta(ModelloSemplice):
 
 class Donatore(ModelloSemplice):
     class Meta:
-        verbose_name = 'Campagna'
-        verbose_name_plural = 'Campagne'
+        verbose_name = 'Donatore'
+        verbose_name_plural = 'Donatori'
         permissions = (
-            ('view_campagna', 'Can view campagna'),
+            ('view_donatore', 'Can view donatore'),
         )
     nome = TitleCharField('Nome', max_length=64)
     cognome = TitleCharField('Cognome', max_length=64)
@@ -147,6 +147,12 @@ class Donatore(ModelloSemplice):
 
 
 class Donazione(ModelloSemplice, ConMarcaTemporale):
+    class Meta:
+        verbose_name = 'Donazione'
+        verbose_name_plural = 'Donazioni'
+        permissions = (
+            ('view_donazione', 'Can view donazione'),
+        )
     campagna = models.ForeignKey(Campagna, related_name='donazioni', on_delete=models.PROTECT)
     donatore = models.ForeignKey(Donatore, related_name='donazioni', on_delete=models.CASCADE)
     importo = models.FloatField(default=0.00, help_text='Importo in EUR della donazione')
