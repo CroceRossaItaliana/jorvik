@@ -33,12 +33,7 @@ def campagne_elenco(request, me):
 @pagina_privata(permessi=(GESTIONE_CAMPAGNE,))
 def campagna_nuova(request, me):
 
-    sedi_campagne_qs = me.oggetti_permesso(GESTIONE_CAMPAGNE)
-    etichette_qs = Etichetta.query_etichette_comitato(sedi_campagne_qs)
-
     modulo = ModuloCampagna(request.POST or None, initial={"inizio": datetime.now()})
-    modulo.fields['organizzatore'].queryset = sedi_campagne_qs
-    modulo.fields['etichette'].queryset = etichette_qs
 
     if modulo.is_valid():
         campagna = modulo.save()
@@ -58,10 +53,10 @@ def campagna_modifica(request, me, pk):
     if modulo.is_valid():
         campagna = modulo.save()
         return redirect(campagna.url)
-    sedi_campagne_qs = me.oggetti_permesso(GESTIONE_CAMPAGNE)
-    etichette_qs = Etichetta.query_etichette_comitato(sedi_campagne_qs)
-    modulo.fields['organizzatore'].queryset = sedi_campagne_qs
-    modulo.fields['etichette'].queryset = etichette_qs
+    # sedi_campagne_qs = me.oggetti_permesso(GESTIONE_CAMPAGNE)
+    # etichette_qs = Etichetta.query_etichette_comitato(sedi_campagne_qs)
+    # modulo.fields['organizzatore'].queryset = sedi_campagne_qs
+    # modulo.fields['etichette'].queryset = etichette_qs
     contesto = {
         "modulo": modulo
     }
@@ -140,9 +135,7 @@ def etichetta(request, me, pk):
 
 @pagina_privata(permessi=(GESTIONE_CAMPAGNE,))
 def etichetta_nuova(request, me):
-    sedi_campagne_qs = me.oggetti_permesso(GESTIONE_CAMPAGNE)
     modulo = ModuloEtichetta(request.POST or None)
-    modulo.fields['comitato'].queryset = sedi_campagne_qs
 
     if modulo.is_valid():
         etichetta = modulo.save()
@@ -158,8 +151,6 @@ def etichetta_nuova(request, me):
 def etichetta_modifica(request, me, pk):
     etichetta_obj = get_object_or_404(Etichetta, pk=pk)
     modulo = ModuloEtichetta(request.POST or None, instance=etichetta_obj)
-    sedi_campagne_qs = me.oggetti_permesso(GESTIONE_CAMPAGNE)
-    modulo.fields['comitato'].queryset = sedi_campagne_qs
     if modulo.is_valid():
         etichetta = modulo.save()
         return redirect('donazioni_etichette')

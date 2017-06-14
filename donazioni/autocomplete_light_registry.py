@@ -12,12 +12,13 @@ class EtichettaAutocompletamento(AutocompletamentoBase):
     def choices_for_request(self):
         me = self.request.user.persona
         sedi_qs = me.oggetti_permesso(GESTIONE_CAMPAGNE)
+        q = self.request.GET.get('q', '')
         self.choices = self.choices.filter(Etichetta.query_etichette_comitato(sedi_qs).q).order_by('nome')
-        return super(EtichettaAutocompletamento, self).choices_for_request()
+        if q:
+            self.choices = self.choices.filter(nome__icontains=q)
+        return super().choices_for_request()
 
-    choice_html_format = u'''
-        <span class="block" data-value="%s"><strong>%s</strong></span>
-    '''
+    choice_html_format = '''<span class="block" data-value="%s"><strong>%s</strong></span>'''
 
     def choice_html(self, choice):
         return self.choice_html_format % (
