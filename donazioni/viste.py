@@ -8,7 +8,7 @@ from django.shortcuts import redirect, get_object_or_404
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
 from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO, ERRORE_PERMESSI, MODIFICA
 from autenticazione.funzioni import pagina_privata
-from donazioni.forms import ModuloCampagna, ModuloEtichetta
+from donazioni.forms import ModuloCampagna, ModuloEtichetta, ModuloFiltraCampagnePerEtichetta
 from donazioni.models import Campagna, Etichetta
 
 
@@ -23,9 +23,14 @@ def donazioni_home(request, me):
 
 @pagina_privata
 def campagne_elenco(request, me):
+    campagne = me.oggetti_permesso(GESTIONE_CAMPAGNA)
+    modulo = ModuloFiltraCampagnePerEtichetta(request.POST or None)
+    if modulo.is_valid() and modulo.cleaned_data['etichette']:
+        campagne = campagne.filter(etichette__in=modulo.cleaned_data['etichette'])
     contesto = {
-        "campagne": me.oggetti_permesso(GESTIONE_CAMPAGNA),
+        "campagne": campagne,
         "puo_creare": me.ha_permesso(GESTIONE_CAMPAGNE),
+        "modulo_filtro": modulo,
     }
     return 'donazioni_campagne_elenco.html', contesto
 

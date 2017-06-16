@@ -132,18 +132,10 @@ def menu(request):
             ))
         ) if me and me.volontario else None,
         "donazioni": (
-            ("Gestione Campagne", (
+            ("Campagne Raccolta Fondi", (
                 ("Campagne", "fa-list", "/donazioni/campagne/"),
                 ("Etichette", "fa-list", "/donazioni/etichette/"),
             )) if me and (me.ha_permesso(GESTIONE_CAMPAGNE) or me.oggetti_permesso(GESTIONE_CAMPAGNA).exists()) else None,
-            # ("Le Tue Campagne", (
-            #     ("Organizza attività", "fa-asterisk", "/attivita/organizza/") if me and me.oggetti_permesso(
-            #         GESTIONE_ATTIVITA_AREA).exists() else None,
-            #     ("Elenco attività", "fa-list", "/attivita/gestisci/") if me and me.oggetti_permesso(GESTIONE_ATTIVITA).exists() else None,
-            #     ("Aree di intervento", "fa-list", "/attivita/aree/") if me and me.oggetti_permesso(GESTIONE_AREE_SEDE).exists() else None,
-            #     ("Statistiche", "fa-bar-chart", "/attivita/statistiche/") if me and me.oggetti_permesso(
-            #         GESTIONE_ATTIVITA_SEDE).exists() else None,
-            # ))
         ),
         "autorizzazioni": (
             ("Richieste", (
