@@ -111,3 +111,13 @@ class TestModelliCampagne(TestCase):
         etichetta_sicilia = Etichetta.objects.create(nome='test', comitato=sicilia)
         self.assertTrue(delegato_campagne_sicilia.permessi_almeno(etichetta_sicilia, COMPLETO))
         self.assertFalse(responsabile_campagna_terremoto_catania.permessi_almeno(etichetta_sicilia, COMPLETO))
+
+
+class TestModelliDonazioniDonatori(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        presidente = crea_persona()
+        persona = crea_persona()
+        cls.sede = crea_sede(presidente)
+        crea_appartenenza(persona, cls.sede)
