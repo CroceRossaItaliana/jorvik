@@ -24,10 +24,7 @@
                 {% checkbox campagna.responsabili_attuali %}:
                 Aggiungi responsabili alla campagna;
             </p>
-
-
         </div>
-
     {% endif %}
 
     <p>&nbsp;</p>
@@ -126,11 +123,9 @@
             </div>
 
             <div class="panel-body">
-{#            <ul>#}
                 {% for e in campagna.etichette.all %}
                     <span class="badge">{{ e.nome }}</span>
                 {% endfor %}
-{#            </ul>#}
             </div>
 
         </div>

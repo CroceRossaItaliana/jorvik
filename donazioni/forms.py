@@ -1,5 +1,5 @@
 import autocomplete_light
-from django.forms import ModelForm
+from django.forms import ModelForm, Form
 
 from base.wysiwyg import WYSIWYGSemplice
 from donazioni.models import Campagna, Etichetta
@@ -50,3 +50,7 @@ class ModuloEtichetta(ModelForm):
     comitato = autocomplete_light.forms.ModelChoiceField('SedeDonazioniAutocompletamento',
                                                          help_text="Ricerca per nome fra le sedi di cui si ha la delega "
                                                                    "per l'organizzazione di una campagna")
+
+
+class ModuloFiltraCampagnePerEtichetta(Form):
+    etichette = autocomplete_light.forms.ModelMultipleChoiceField('EtichettaAutocompletamento', required=False)
