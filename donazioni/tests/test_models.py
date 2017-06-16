@@ -96,8 +96,8 @@ class TestModelliCampagne(TestCase):
             msg="Responsabile non può gestire la campagna in oggetto"
         )
 
-        # il delegato campagne di una sede può gestire tutte le campagne delle sedi sottostanti
-        self.assertTrue(
+        # il delegato campagne di una sede può gestire tutte le campagne delle sedi sottostanti (ma non le territoriali)
+        self.assertFalse(
             delegato_campagne_sicilia.oggetti_permesso(GESTIONE_CAMPAGNE).filter(pk=maletto.pk),
             msg="Delegato non può gestire campagne per la sede"
         )
