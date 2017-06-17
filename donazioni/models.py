@@ -1,4 +1,5 @@
 from autoslug import AutoSlugField
+from django.core.exceptions import MultipleObjectsReturned
 from django.db import models
 from django.db.models import Q
 from django.db.models.signals import post_save, pre_save
@@ -52,6 +53,10 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
     @property
     def url_elenco_donazioni(self):
         return '/donazioni/campagne/%d/donazioni/elenco/' % (self.pk,)
+
+    @property
+    def url_elenco_donatori(self):
+        return '/donazioni/campagne/%d/donatori/elenco/' % (self.pk,)
 
     @property
     def url_cancella(self):
@@ -166,15 +171,39 @@ class Donatore(ModelloSemplice):
 
     @classmethod
     def _donatore_esistente(cls, **kwargs):
+        """
+        Ritorna il primo donatore esistente che risponde ai parametri di ricerca
+        None se non esiste alcun record corrispondente
+        :param kwargs:
+        :return: oggetto Donatore o None
+        Stesso comportamento del seguente codice:
         try:
             istanza = Donatore.objects.get(**kwargs)
         except Donatore.DoesNotExist:
             return
+        except MultipleObjectsReturned:
+            return Donatore.objects.filter(**kwargs).first()
         else:
             return istanza
+        """
+        return Donatore.objects.filter(**kwargs).first()
 
     @classmethod
     def nuovo_o_esistente(cls, donatore):
+        """
+        Questo metodo contribuisce ad implementare la logica del requisito C-9:
+        'Se sono forniti dati ulteriori dal donatore devono comprendere almeno uno
+        tra i seguenti blocchi di informazioni:
+            Indirizzo e-mail
+            Codice Fiscale (per persone fisiche)
+            Nome, Cognome, Data e Luogo di nascita (per persone fisiche)
+            Ragione sociale e codice fiscale (per persone giuridiche)
+            Nome, Cognome (per persone fisiche)'
+
+        Vedere anche i metodi privati _donatore_esistente e _riconcilia_istanze
+        :param donatore: oggetto Donatore
+        :return: Record esistente o appena creato
+        """
         istanza = None
         if donatore.codice_fiscale:
             if not donatore.ragione_sociale:

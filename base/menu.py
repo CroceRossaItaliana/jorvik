@@ -135,6 +135,7 @@ def menu(request):
             ("Campagne Raccolta Fondi", (
                 ("Campagne", "fa-list", "/donazioni/campagne/"),
                 ("Etichette", "fa-list", "/donazioni/etichette/"),
+                ("Donatori", "fa-list", "/donazioni/donatori/elenco/"),
             )) if me and (me.ha_permesso(GESTIONE_CAMPAGNE) or me.oggetti_permesso(GESTIONE_CAMPAGNA).exists()) else None,
         ),
         "autorizzazioni": (

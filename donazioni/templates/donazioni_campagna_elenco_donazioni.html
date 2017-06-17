@@ -8,10 +8,14 @@
 
 {% block app_contenuto %}
 
-    <h2 class="allinea-centro text-success">
+    <h4 class="allinea-centro text-success">
         Elenco donazioni per la campagna raccolta fondi {{ campagna.nome }}
-    </h2>
-
+    </h4>
+    <div class="alert alert-success">
+    Euro raccolti finora: {{ totale_donazioni }}<br />Totale Donazioni: {{ campagna.donazioni.count }}<br />
+    Donatori censiti per questa campagna: {{ numero_donatori_censiti }}<br />
+    <a href="{{ campagna.url_elenco_donatori }}" class="btn btn-sm btn-default">Elenco donatori per questa campagna</a>.</p>
+    </div>
     <table class="table table-striped table-bordered">
         <thead>
             <th>Data</th>

@@ -220,8 +220,35 @@ def donazioni_elenco(request, me, campagna_id):
     campagna = get_object_or_404(Campagna.objects.prefetch_related('donazioni', 'donazioni__donatore'), pk=campagna_id)
     if campagna not in me.oggetti_permesso(GESTIONE_CAMPAGNA):
         return redirect(ERRORE_PERMESSI)
+    totale_donazioni = campagna.donazioni.all().aggregate(importo=Sum('importo'))
+    numero_donatori_censiti = campagna.donazioni.filter(donatore__isnull=False).distinct('donatore').count()
 
     contesto = {
         'campagna': campagna,
+        'totale_donazioni': totale_donazioni['importo'],
+        'numero_donatori_censiti': numero_donatori_censiti,
     }
     return 'donazioni_campagna_elenco_donazioni.html', contesto
+
+
+@pagina_privata
+def donatori_campagna_elenco(request, me, campagna_id):
+    campagna = get_object_or_404(Campagna, pk=campagna_id)
+    if campagna not in me.oggetti_permesso(GESTIONE_CAMPAGNA):
+        return redirect(ERRORE_PERMESSI)
+    donatori = Donatore.objects.filter(donazioni__campagna=campagna).annotate(totale_donazioni=Sum('donazioni__importo'))
+    contesto = {
+        'campagna': campagna,
+        'donatori': donatori,
+    }
+    return 'donatori_elenco.html', contesto
+
+
+@pagina_privata
+def donatori_elenco(request, me):
+    campagne = me.oggetti_permesso(GESTIONE_CAMPAGNA)
+    donatori = Donatore.objects.filter(donazioni__campagna__in=campagne).annotate(totale_donazioni=Sum('donazioni__importo'))
+    contesto = {
+        'donatori': donatori,
+    }
+    return 'donatori_elenco.html', contesto
