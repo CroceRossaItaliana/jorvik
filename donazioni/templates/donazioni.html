@@ -19,7 +19,8 @@
 
     <div class="alert alert-info">
         <h4><i class="fa fa-info-circle"></i> Benvenuto nella sezione dedicata alle campagne di raccolta fondi CRI.</h4>
-        <p>Usa il men&ugrave; sulla sinistra che ti permetter&agrave; di accedere alle funzioni relative alla gestione delle campagne.</p>
+        <p>Usa il men&ugrave; sulla sinistra che ti permetter&agrave; di accedere alle funzioni relative alla gestione delle campagne,
+            delle etichette da associare alle singole campagne, all'anagrafica dei donatori e alle donazioni.</p>
     </div>
 
     <div class="row ">
@@ -33,8 +34,18 @@
             <h3>{{ sedi.count }}</h3>
             <p class="grassetto">Sedi Gestite</p>
         </div>
+        <div class="col-md-3 allinea-centro">
+            <h3>{{ fondi_raccolti }}</h3>
+            <p class="grassetto">Fondi Raccolti €</p>
+        </div>
 
-        <div class="col-md-6">
+        <div class="col-md-3 allinea-centro">
+            <h3>{{ donatori.count }}</h3>
+            <p class="grassetto">Donatori Censiti</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
             <p>Sei abilitato alla gestione delle campagne per le seguenti sedi:</p>
             <ul>
                 {% for sede in sedi %}
@@ -42,6 +53,7 @@
                 {% endfor %}
             </ul>
         </div>
+    </div>
 
     </div>
 

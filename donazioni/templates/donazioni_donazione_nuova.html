@@ -16,7 +16,7 @@
                 <div class="panel-heading">
                     <h2 class="panel-title">
                         <i class="fa fa-fw fa-calendar"></i>
-                        Aggiungi una donazione per la Campagna <b>{{ campagna.nome }}</b>
+                        Aggiungi una donazione per la Campagna <b>{{ campagna }}</b>
                     </h2>
                 </div>
 
@@ -36,18 +36,37 @@
                             Aggiungi donazione
                         </button>
                     </form>
-
-
                 </div>
-
-
             </div>
-
         </div>
 
         <div class="col-md-6">
             <div class="alert alert-info">
-                Testo di help in linea. TODO.
+                <i class="fa fa-fw fa-info-circle"></i>
+                <strong>Inserisci i dati della donazione per la campagna {{ campagna }}</strong>:
+                <ul>
+                    <li><strong>Modalità</strong>: a scelta fra Online, Bancaria (i.e. Bonifico), Contanti</li>
+                    <li><strong>Importo</strong>: importo in EUR della donazione economica</li>
+                    <li><strong>Data</strong>: Data della donazione. Può essere lasciata
+                    in bianco. In tal caso, la donazione avrà la data odierna.</li>
+                    <li><strong>Donazione Ricorrente</strong>: Spuntare la casella se si tratta di una donazione ricorrente</li>
+                </ul>
+                <hr />
+                <i class="fa fa-fw fa-info-circle"></i>
+                <strong>Inserisci i dati del donatore</strong>: I dati del donatore
+                <b><u>non</u></b> sono obbligatori
+                e possono essere lasciati in bianco.
+                Nel caso di inserimento, si tenga presente che i dati devono comprendere almeno uno
+                tra i seguenti blocchi di informazioni:
+                <ul>
+                    <li>Indirizzo e-mail</li>
+                    <li>Codice Fiscale (per persone fisiche)</li>
+                    <li>Nome, Cognome, Data e Luogo di nascita (per persone fisiche)</li>
+                    <li>Ragione sociale e codice fiscale (per persone giuridiche)</li>
+                    <li>Nome, Cognome (per persone fisiche)</li>
+                </ul><br/>
+                Nei primi quattro casi, il sistema provvederà a riconciliare i dati se già presenti in anagrafica.
+
             </div>
         </div>
 

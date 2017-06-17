@@ -9,7 +9,7 @@
 {% block app_contenuto %}
 
     <h4 class="allinea-centro text-success">
-        Lista donatori
+        Lista donatori {% if campagna %} per la campagna {{ campagna.nome }}{% endif %}
     </h4>
 
     <table class="table table-striped table-bordered">
@@ -24,30 +24,16 @@
         {% for donatore in donatori %}
 
             <tr>
-                <td>
-                    <i class="fa"></i>
-                    {{ donatore.nome}}<br />
-                </td>
-                <td>
-                    <i class="fa"></i>
-                    {{ donatore.cognome}}
-                </td>
-
-                <td>
-                       {{ donatore.email }}
-                </td>
-                <td>
-                       {{ donatore.codice_fiscale }}
-                </td>
-
-                <td>
-                    {{ donatore.totale_donazioni }} €
-                </td>
+                <td>{{ donatore.nome}}</td>
+                <td>{{ donatore.cognome}}</td>
+                <td>{{ donatore.email }}</td>
+                <td>{{ donatore.codice_fiscale }}</td>
+                <td>{{ donatore.totale_donazioni }} €</td>
             </tr>
 
         {% empty %}
             <tr class="info">
-                <td colspan="6">
+                <td colspan="5">
                     <h4><i class="fa fa-fw fa-info-circle"></i> Non è presente ancora alcun donatore.</h4>
                 </td>
             </tr>

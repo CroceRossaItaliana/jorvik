@@ -14,9 +14,14 @@ from donazioni.models import Campagna, Etichetta, Donatore, Donazione
 
 @pagina_privata
 def donazioni_home(request, me):
+    campagne = me.oggetti_permesso(GESTIONE_CAMPAGNA)
+    donatori = Donatore.objects.filter(donazioni__campagna__in=campagne)
+    fondi_raccolti = Donazione.objects.filter(campagna__in=campagne).aggregate(totale=Sum('importo'))
     contesto = {
         'sedi': me.oggetti_permesso(GESTIONE_CAMPAGNE),
-        'campagne': me.oggetti_permesso(GESTIONE_CAMPAGNA),
+        'campagne': campagne,
+        'donatori': donatori,
+        'fondi_raccolti': fondi_raccolti['totale']
     }
     return 'donazioni.html', contesto
 
