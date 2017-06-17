@@ -18,3 +18,7 @@ def crea_campagna(sede, nome='Test Campagna', inizio=None):
 
 def aggiungi_responsabile_campagna(campagna, persona):
     campagna.aggiungi_delegato(RESPONSABILE_CAMPAGNA, persona)
+
+
+def mock_autonow():
+    return datetime(2016, 1, 1)

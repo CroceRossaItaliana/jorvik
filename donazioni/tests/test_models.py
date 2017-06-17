@@ -1,11 +1,15 @@
+from datetime import datetime
+from unittest import mock
+
 from django.test import TestCase
 
 from anagrafica.costanti import LOCALE, REGIONALE, TERRITORIALE
 from anagrafica.permessi.applicazioni import DELEGATO_CAMPAGNE, RESPONSABILE_CAMPAGNA
 from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO
+from base.utils import poco_fa
 from base.utils_tests import crea_persona, crea_sede, crea_delega, crea_appartenenza, codice_fiscale
-from donazioni.models import Etichetta, Campagna
-from donazioni.tests.utils import crea_campagna, aggiungi_responsabile_campagna
+from donazioni.models import Etichetta, Campagna, Donazione, Donatore
+from donazioni.tests.utils import crea_campagna, aggiungi_responsabile_campagna, mock_autonow
 
 
 class TestModelliCampagne(TestCase):
@@ -117,7 +121,66 @@ class TestModelliDonazioniDonatori(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        presidente = crea_persona()
-        persona = crea_persona()
-        cls.sede = crea_sede(presidente)
-        crea_appartenenza(persona, cls.sede)
+        cls.sede = crea_sede(crea_persona())
+        cls.campagna = crea_campagna(cls.sede)
+
+    def test_crea_donazione(self):
+        donazione = Donazione.objects.create(campagna=self.campagna, importo=100, data=poco_fa())
+        self.assertEqual(donazione.campagna, self.campagna)
+
+    def test_crea_donazioni_senza_data(self):
+        """
+        Test per il requisito C-4
+        Per ogni donazione sarà possibile inserire la data della donazione. Ove non
+        specificata, questa sarà impostata alla data corrente se la donazione prece-
+        dente in ordine temporale è stata fatta in giorni precedenti. Se la donazione
+        precedente è stata inserita in data odierna, viene usata la “data donazione” di
+        quest’ultima.
+        """
+        # mock di timezone.now per il default del campo 'creazione' per simulare una donazione
+        # inserita in giorni precedenti
+        field = Donazione._meta.get_field('creazione')
+        with mock.patch.object(field, 'default', new=mock_autonow):
+            donazione_1 = Donazione.objects.create(campagna=self.campagna, importo=100)
+        donazione_2 = Donazione.objects.create(campagna=self.campagna, importo=100)
+        # donazione_2 inserita un giorno successivo alla donazione_1 ==> le date saranno poco_fa() per entrambi
+        self.assertNotEqual(donazione_1.data, donazione_2.data)
+
+        donazione_3 = Donazione.objects.create(campagna=self.campagna, importo=100)
+        # donazione_3 inserita lo stesso giorno di donazione_2 ==> avranno stessa data
+        self.assertEqual(donazione_2.data, donazione_3.data)
+
+    def test_riconcilia_donatori(self):
+        Donatore.objects.create(email='test@test.com')
+        donatore_2 = Donatore(nome='Fabio', cognome='Nappo', email='test@test.com')
+        istanza = Donatore.nuovo_o_esistente(donatore_2)
+        self.assertEqual(istanza.email, donatore_2.email)
+        self.assertEqual(istanza.nome, donatore_2.nome)
+        self.assertEqual(istanza.cognome, donatore_2.cognome)
+
+        Donatore.objects.create(codice_fiscale='nppdnc78b03e791v')
+        donatore_2 = Donatore(nome='Domenico', cognome='Nappo', codice_fiscale='nppdnc78b03e791v')
+        istanza = Donatore.nuovo_o_esistente(donatore_2)
+        self.assertEqual(istanza.email, '')
+        self.assertEqual(istanza.nome, donatore_2.nome)
+        self.assertEqual(istanza.cognome, donatore_2.cognome)
+        self.assertEqual(istanza.codice_fiscale, donatore_2.codice_fiscale)
+        id_donatore_con_cf = istanza.id
+
+        data_nascita = poco_fa()
+        Donatore.objects.create(nome='Domenico', cognome='Nappo', data_nascita=data_nascita, comune_nascita='Test')
+        donatore_2 = Donatore(nome='Domenico', cognome='Nappo', data_nascita=data_nascita, comune_nascita='Test',
+                              email='test2@test.com')
+        istanza = Donatore.nuovo_o_esistente(donatore_2)
+        self.assertEqual(istanza.email, donatore_2.email)
+        self.assertEqual(istanza.data_nascita, donatore_2.data_nascita)
+        self.assertEqual(istanza.comune_nascita, donatore_2.comune_nascita)
+        self.assertEqual(istanza.codice_fiscale, '')
+
+        donatore_2 = Donatore(email='test3@test.it', codice_fiscale='nppdnc78b03e791v')
+        istanza = Donatore.nuovo_o_esistente(donatore_2)
+        self.assertEqual(istanza.id, id_donatore_con_cf)
+        self.assertEqual(istanza.email, 'test3@test.it')
+        self.assertEqual(istanza.codice_fiscale, 'nppdnc78b03e791v')
+        # self.assertEqual(istanza.nome, 'Domenico')
+        # self.assertEqual(istanza.cognome, 'Nappo')

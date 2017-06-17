@@ -57,7 +57,9 @@
 
                 <td>
                     {# Euro raccolti #}
-                   0 €
+                   {% if campagna.totale_donazioni %}{{ campagna.totale_donazioni }}
+                    {% else %} 0
+                    {% endif %} €
                 </td>
                 <td>
                     {{ campagna.responsabili_attuali.count }}

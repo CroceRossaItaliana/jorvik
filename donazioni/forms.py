@@ -1,8 +1,8 @@
 import autocomplete_light
-from django.forms import ModelForm, Form
+from django.forms import ModelForm, Form, HiddenInput, DateTimeField
 
 from base.wysiwyg import WYSIWYGSemplice
-from donazioni.models import Campagna, Etichetta
+from donazioni.models import Campagna, Etichetta, Donazione, Donatore
 
 
 class ModuloCampagna(ModelForm):
@@ -54,3 +54,28 @@ class ModuloEtichetta(ModelForm):
 
 class ModuloFiltraCampagnePerEtichetta(Form):
     etichette = autocomplete_light.forms.ModelMultipleChoiceField('EtichettaAutocompletamento', required=False)
+
+
+class ModuloDonazione(ModelForm):
+    data = DateTimeField(required=False)
+
+    class Meta:
+        model = Donazione
+        fields = ('campagna', 'modalita', 'importo', 'data', 'ricorrente')
+
+    def __init__(self, *args, **kwargs):
+        campagna_id = kwargs.pop('campagna')
+        super().__init__(*args, **kwargs)
+        self.fields['importo'].min_value = 0.0
+        if campagna_id:
+            self.fields['campagna'].widget = HiddenInput()
+            self.fields['campagna'].widget.attrs['readonly'] = True
+            self.fields['campagna'].initial = campagna_id
+            self.fields['campagna'].queryset = Campagna.objects.filter(id=campagna_id)
+
+
+class ModuloDonatore(ModelForm):
+    class Meta:
+        model = Donatore
+        fields = ('nome', 'cognome', 'email', 'codice_fiscale', 'ragione_sociale',
+                  'data_nascita', 'comune_nascita', 'provincia_nascita', 'stato_nascita')

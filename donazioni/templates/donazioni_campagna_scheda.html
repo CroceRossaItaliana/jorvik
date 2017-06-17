@@ -130,9 +130,26 @@
 
         </div>
     </div>
-
 </div>
+<div class="row">
+<div class="col-md-12">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                <i class="fa fa-fw fa-money"></i>
+                Dettagli raccolta fondi
+            </h3>
+        </div>
 
+    <div class="panel-body">
+        <span>Donazioni: {{ campagna.donazioni.count }}</span><br/>
+        <span>Donatori censiti: {{ totale_donatori }}</span><br/>
+        <span><b>Euro: {{ totale_donazioni }} €</b></span><br/>
+        <span>Vai a <a href="{{ campagna.url_elenco_donazioni }}" class="btn btn-sm btn-default">elenco donazioni</a></span>
+    </div>
+        </div>
+</div>
+</div>
 <div class="row">
     <div class="col-md-12">
         <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
@@ -141,17 +158,22 @@
 </div>
     {% if puo_modificare %}
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-3">
+            <p>
+            <a href="{{ campagna.url_aggiungi_donazione }}" class="btn btn-large btn-success">Aggiungi una donazione</a>
+            </p>
+        </div>
+        <div class="col-md-3">
             <p>
             <a href="{{ campagna.url_modifica }}" class="btn btn-large btn-success">Modifica campagna</a>
             </p>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <p>
                  <a href="{{ campagna.url }}responsabili" class="btn btn-large btn-warning">Aggiungi responsabili</a>
             </p>
         </div>
-    <div class="col-md-4">
+        <div class="col-md-3">
             <p>
                 {% if campagna.cancellabile %}
                     <a href="{{ campagna.url_cancella }}" class="btn btn-large btn-danger">Elimina campagna</a>

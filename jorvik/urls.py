@@ -315,6 +315,9 @@ urlpatterns = [
     url(r'^donazioni/campagne/(?P<pk>[0-9]+)/modifica/$', donazioni.viste.campagna_modifica, name='donazioni_campagna_modifica'),
     url(r'^donazioni/campagne/(?P<pk>[0-9]+)/elimina/$', donazioni.viste.campagna_elimina, name='donazioni_campagna_elimina'),
     url(r'^donazioni/campagne/(?P<pk>[0-9]+)/responsabili/$', donazioni.viste.campagna_responsabili, name='donazioni_campagna_responsabili'),
+    url(r'^donazioni/campagne/(?P<campagna_id>[0-9]+)/donazioni/nuova/$', donazioni.viste.donazione_nuova, name='donazioni_campagne_nuova_donazione'),
+    url(r'^donazioni/campagne/(?P<campagna_id>[0-9]+)/donazioni/elenco/$', donazioni.viste.donazioni_elenco, name='donazioni_campagne_donazioni'),
+
     url(r'^donazioni/etichette/$', donazioni.viste.etichette_elenco, name='donazioni_etichette'),
     url(r'^donazioni/etichette/nuova/$', donazioni.viste.etichetta_nuova, name='donazioni_etichette_nuova'),
     url(r'^donazioni/etichette/(?P<pk>[0-9]+)/$', donazioni.viste.etichetta, name='donazioni_etichetta'),

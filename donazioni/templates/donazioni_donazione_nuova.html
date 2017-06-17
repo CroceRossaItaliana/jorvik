@@ -1,0 +1,56 @@
+{% extends 'donazioni_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Aggiungi una donazione economica
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="row">
+
+        <div class="col-md-6">
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-calendar"></i>
+                        Aggiungi una donazione per la Campagna <b>{{ campagna.nome }}</b>
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <fieldset>
+                            <legend>Donazione:</legend>
+                            {% bootstrap_form modulo_donazione %}
+                        </fieldset>
+                         <fieldset>
+                            <legend>Dati Donatore:</legend>
+                            {% bootstrap_form modulo_donatore %}
+                         </fieldset>
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-asterisk"></i>
+                            Aggiungi donazione
+                        </button>
+                    </form>
+
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+            <div class="alert alert-info">
+                Testo di help in linea. TODO.
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}

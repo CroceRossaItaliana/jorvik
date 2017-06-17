@@ -2,14 +2,14 @@ from datetime import datetime
 from itertools import chain
 
 from django.core.urlresolvers import reverse
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
 from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO, ERRORE_PERMESSI, MODIFICA
 from autenticazione.funzioni import pagina_privata
-from donazioni.forms import ModuloCampagna, ModuloEtichetta, ModuloFiltraCampagnePerEtichetta
-from donazioni.models import Campagna, Etichetta
+from donazioni.forms import ModuloCampagna, ModuloEtichetta, ModuloFiltraCampagnePerEtichetta, ModuloDonazione, ModuloDonatore
+from donazioni.models import Campagna, Etichetta, Donatore, Donazione
 
 
 @pagina_privata
@@ -23,8 +23,8 @@ def donazioni_home(request, me):
 
 @pagina_privata
 def campagne_elenco(request, me):
-    campagne = me.oggetti_permesso(GESTIONE_CAMPAGNA)
-    modulo = ModuloFiltraCampagnePerEtichetta(request.POST or None)
+    campagne = me.oggetti_permesso(GESTIONE_CAMPAGNA).annotate(totale_donazioni=Sum('donazioni__importo'))
+    modulo = ModuloFiltraCampagnePerEtichetta(request.POST or None, empty_permitted=True)
     if modulo.is_valid() and modulo.cleaned_data['etichette']:
         campagne = campagne.filter(etichette__in=modulo.cleaned_data['etichette'])
     contesto = {
@@ -53,17 +53,15 @@ def campagna_nuova(request, me):
 
 @pagina_privata(permessi=(GESTIONE_CAMPAGNE,))
 def campagna_modifica(request, me, pk):
-    campagna_obj = get_object_or_404(Campagna, pk=pk)
-    modulo = ModuloCampagna(request.POST or None, instance=campagna_obj)
+    campagna = get_object_or_404(Campagna, pk=pk)
+    modulo = ModuloCampagna(request.POST or None, instance=campagna)
+
     if modulo.is_valid():
         campagna = modulo.save()
         return redirect(campagna.url)
-    # sedi_campagne_qs = me.oggetti_permesso(GESTIONE_CAMPAGNE)
-    # etichette_qs = Etichetta.query_etichette_comitato(sedi_campagne_qs)
-    # modulo.fields['organizzatore'].queryset = sedi_campagne_qs
-    # modulo.fields['etichette'].queryset = etichette_qs
+
     contesto = {
-        "modulo": modulo
+        'modulo': modulo
     }
     return 'donazioni_campagna_modifica.html', contesto
 
@@ -81,10 +79,13 @@ def campagna_elimina(request, me, pk):
 def campagna(request, me, pk):
     campagna = get_object_or_404(Campagna, pk=pk)
     puo_modificare = me.permessi_almeno(campagna, COMPLETO)
-
+    totale_donazioni = campagna.donazioni.all().aggregate(importo=Sum('importo'))
+    donatori = campagna.donazioni.filter(donatore__isnull=False).count()
     contesto = {
-        "campagna": campagna,
-        "puo_modificare": puo_modificare,
+        'campagna': campagna,
+        'puo_modificare': puo_modificare,
+        'totale_donazioni': totale_donazioni['importo'] or 0,
+        'totale_donatori': donatori,
     }
     return 'donazioni_campagna_scheda.html', contesto
 
@@ -99,7 +100,7 @@ def campagna_fine(request, me, pk):
         redirect(campagna.url)
 
     contesto = {
-        "campagna": campagna,
+        'campagna': campagna,
     }
     return 'donazioni_campagna_fine.html', contesto
 
@@ -117,9 +118,9 @@ def campagna_responsabili(request, me, pk):
         del request.session['campagna_creata']
 
     contesto = {
-        "delega": RESPONSABILE_CAMPAGNA,
-        "campagna": campagna,
-        "continua_url": continua_url
+        'delega': RESPONSABILE_CAMPAGNA,
+        'campagna': campagna,
+        'continua_url': continua_url
     }
 
     return 'donazioni_campagna_responsabili.html', contesto
@@ -132,8 +133,8 @@ def etichetta(request, me, pk):
     etichetta = get_object_or_404(Etichetta, pk=pk)
 
     contesto = {
-        "etichetta": etichetta,
-        "puo_modificare": me.ha_permesso(GESTIONE_CAMPAGNE),
+        'etichetta': etichetta,
+        'puo_modificare': me.ha_permesso(GESTIONE_CAMPAGNE),
     }
     return 'donazioni_etichetta_scheda.html', contesto
 
@@ -147,20 +148,20 @@ def etichetta_nuova(request, me):
         return redirect('donazioni_etichette')
 
     contesto = {
-        "modulo": modulo
+        'modulo': modulo
     }
     return 'donazioni_etichetta_nuova.html', contesto
 
 
 @pagina_privata(permessi=(GESTIONE_CAMPAGNE,))
 def etichetta_modifica(request, me, pk):
-    etichetta_obj = get_object_or_404(Etichetta, pk=pk)
-    modulo = ModuloEtichetta(request.POST or None, instance=etichetta_obj)
+    etichetta = get_object_or_404(Etichetta, pk=pk)
+    modulo = ModuloEtichetta(request.POST or None, instance=etichetta)
     if modulo.is_valid():
         etichetta = modulo.save()
         return redirect('donazioni_etichette')
     contesto = {
-        "modulo": modulo
+        'modulo': modulo
     }
     return 'donazioni_etichetta_nuova.html', contesto
 
@@ -181,7 +182,46 @@ def etichette_elenco(request, me):
     campagne_qs = me.oggetti_permesso(GESTIONE_CAMPAGNA)
     filtro_etichette = Q(comitato__in=chain(comitati, sedi_deleghe_campagne)) | Q(campagne__in=campagne_qs)
     contesto = {
-        "etichette": Etichetta.objects.filter(filtro_etichette).distinct(),
+        'etichette': Etichetta.objects.filter(filtro_etichette).distinct(),
         'puo_modificare': me.ha_permessi(GESTIONE_CAMPAGNE)
     }
     return 'donazioni_etichette_elenco.html', contesto
+
+
+# ############# DONAZIONI e DONATORI ###################
+
+@pagina_privata
+def donazione_nuova(request, me, campagna_id):
+    campagna = get_object_or_404(Campagna, pk=campagna_id)
+    if campagna not in me.oggetti_permesso(GESTIONE_CAMPAGNA):
+        return redirect(ERRORE_PERMESSI)
+
+    modulo_donazione = ModuloDonazione(request.POST or None, campagna=campagna_id)
+    modulo_donatore = ModuloDonatore(request.POST or None)
+    if modulo_donazione.is_valid():
+        donazione = modulo_donazione.save(commit=False)
+
+        if modulo_donatore.is_valid():
+            donatore = Donatore.nuovo_o_esistente(modulo_donatore.instance)
+            donazione.donatore = donatore
+
+        donazione.save()
+        return redirect(reverse('donazioni_campagna', args=(campagna_id,)))
+    contesto = {
+        'modulo_donazione': modulo_donazione,
+        'modulo_donatore': modulo_donatore,
+        'campagna': campagna,
+    }
+    return 'donazioni_donazione_nuova.html', contesto
+
+
+@pagina_privata
+def donazioni_elenco(request, me, campagna_id):
+    campagna = get_object_or_404(Campagna.objects.prefetch_related('donazioni', 'donazioni__donatore'), pk=campagna_id)
+    if campagna not in me.oggetti_permesso(GESTIONE_CAMPAGNA):
+        return redirect(ERRORE_PERMESSI)
+
+    contesto = {
+        'campagna': campagna,
+    }
+    return 'donazioni_campagna_elenco_donazioni.html', contesto
