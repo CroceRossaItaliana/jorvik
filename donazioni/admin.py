@@ -1,6 +1,6 @@
-from django import forms
 from django.contrib.admin import TabularInline
 from django.contrib.contenttypes.admin import GenericTabularInline
+from django.db import models
 
 from anagrafica.admin import RAW_ID_FIELDS_DELEGA
 from anagrafica.models import Delega
@@ -31,6 +31,9 @@ class InlineDonazione(ReadonlyAdminMixin, TabularInline):
     extra = 0
     fields = ('modalita', 'donatore', 'importo', 'data',)
     raw_id_fields = ('donatore',)
+    formfield_overrides = {
+        models.ForeignKey: {'required': False},
+    }
 
 
 @admin.register(Campagna)
