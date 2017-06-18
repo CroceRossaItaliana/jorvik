@@ -471,7 +471,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.membro(Appartenenza.DIPENDENTE, **kwargs)
 
     @property
-    def donatore(self, **kwargs):
+    def est_donatore(self, **kwargs): # Nome differente perché confligge con il descrittore della relazione inversa con Donatore
         """
         Controlla se membro donatore
         """
@@ -490,6 +490,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         Controlla se membro infermiera
         """
         return self.membro(Appartenenza.INFERMIERA, **kwargs)
+
+    @property
+    def sostenitore(self, **kwargs):
+        """
+        Controlla se membro sostenitore
+        """
+        return self.membro(Appartenenza.SOSTENITORE, **kwargs)
 
     @property
     def applicazioni_disponibili(self):
@@ -2346,7 +2353,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
             App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
             #TODO reperibilita'
             [
-                [x.ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
+                [x.autorizzazioni_ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
                 for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
             ]
         Appartenenza.query_attuale(
