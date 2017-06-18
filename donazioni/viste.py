@@ -85,7 +85,7 @@ def campagna(request, me, pk):
     campagna = get_object_or_404(Campagna, pk=pk)
     puo_modificare = me.permessi_almeno(campagna, COMPLETO)
     totale_donazioni = campagna.donazioni.all().aggregate(importo=Sum('importo'))
-    donatori = campagna.donazioni.filter(donatore__isnull=False).count()
+    donatori = campagna.donazioni.filter(donatore__isnull=False).distinct('donatore').count()
     contesto = {
         'campagna': campagna,
         'puo_modificare': puo_modificare,
