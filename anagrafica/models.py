@@ -275,7 +275,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             deleghe = deleghe.filter(stato=Delega.ATTIVA)
         return deleghe
 
-
     def deleghe_attuali_rubrica(self, al_giorno=None, **kwargs):
         """
         Ritorna una ricerca per le deleghe che son attuali.
@@ -1343,7 +1342,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         flag = self.attuale()
         if inizio:
             inizio = inizio.date()
-        # Appartenenze come esteso o dipendente sono modificabili perché inizio non vincolato a termine di precedente
+        # Appartenenze come dipendente sono modificabili perché inizio non vincolato a termine di precedente
         if self.membro not in self.NON_MODIFICABILE:
             # Controllo su appartenenza precedente.
             # Nei casi in MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI, l'appartenenza precedente non determina
@@ -1976,7 +1975,10 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
 
     richiedente = models.ForeignKey(Persona, related_name='trasferimenti_richiesti_da', on_delete=models.SET_NULL, null=True)
     persona = models.ForeignKey(Persona, related_name='trasferimenti', on_delete=models.CASCADE)
-    destinazione = models.ForeignKey(Sede, related_name='trasferimenti_destinazione', on_delete=models.PROTECT)
+    destinazione = models.ForeignKey(
+        Sede, related_name='trasferimenti_destinazione', on_delete=models.PROTECT,
+        limit_choices_to={'estensione__in': (PROVINCIALE, LOCALE, TERRITORIALE)}
+    )
     appartenenza = models.ForeignKey(Appartenenza, related_name='trasferimento', null=True, blank=True, on_delete=models.PROTECT)
     protocollo_numero = models.CharField('Numero di protocollo', max_length=16, null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
@@ -2071,7 +2073,10 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
 
     richiedente = models.ForeignKey(Persona, related_name='estensioni_richieste_da', on_delete=models.SET_NULL, null=True)
     persona = models.ForeignKey(Persona, related_name='estensioni', on_delete=models.CASCADE)
-    destinazione = models.ForeignKey(Sede, related_name='estensioni_destinazione', on_delete=models.PROTECT)
+    destinazione = models.ForeignKey(
+        Sede, related_name='estensioni_destinazione', on_delete=models.PROTECT,
+        limit_choices_to={'estensione__in': (PROVINCIALE, LOCALE, TERRITORIALE)}
+    )
     appartenenza = models.ForeignKey(Appartenenza, related_name='estensione', null=True, blank=True, on_delete=models.CASCADE)
     protocollo_numero = models.CharField('Numero di protocollo', max_length=512, null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
@@ -2111,7 +2116,6 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         testo_extra = ''
         self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(origine, testo_extra)
         self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(app.sede, testo_extra)
-
 
     def richiedi(self):
         if not self.persona.sede_riferimento():
