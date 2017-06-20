@@ -1475,6 +1475,19 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                                    validators=[valida_partita_iva])
 
     attiva = models.BooleanField("Attiva", default=True, db_index=True)
+    __attiva_default = None
+
+    def __init__(self, *args, **kwargs):
+        super(Sede, self).__init__(*args, **kwargs)
+        # Questo attributo a runtime ci serve per verificare durante il save se il flag "attiva" è stato modficato
+        self.__attiva_default = self.attiva
+
+    def save(self, *args, **kwargs):
+        super(Sede, self).save(*args, **kwargs)
+        if self.__attiva_default is not None and not self.attiva and self.__attiva_default != self.attiva:
+            for sottosede in self.get_children():
+                sottosede.attiva = False
+                sottosede.save()
 
     def sorgente_slug(self):
         if self.estensione == PROVINCIALE:
@@ -1640,7 +1653,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         if not delegati.exists():
             delegati = self.comitato.delegati_attuali(tipo=PRESIDENTE)
         return delegati
-
 
     @property
     def nome_completo(self):
