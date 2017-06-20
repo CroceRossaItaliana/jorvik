@@ -12,13 +12,14 @@ from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
 from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica, \
-    ModuloConsentiTrasferimento
+    ModuloConsentiTrasferimento, ModuloCreazioneTrasferimento
 from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Estensione, Trasferimento, Riserva, Sede
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     DELEGATO_AREA, UFFICIO_SOCI, UFFICIO_SOCI_UNITA, RESPONSABILE_AREA, REFERENTE, REFERENTE_GRUPPO, DELEGATO_CO, \
     RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
+from anagrafica.permessi.espansioni import espandi_elenchi_soci
 from anagrafica.utils import termina_deleghe_giovani
 from anagrafica.viste import _rubrica_delegati
 from autenticazione.models import Utenza
@@ -436,6 +437,21 @@ class TestAnagrafica(TestCase):
 
         d6.delete()
 
+    def test_permessi_profilo(self):
+        presidente = crea_persona()
+        persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente)
+        sede2 = crea_sede()
+
+        appartenenza.fine = poco_fa()
+        appartenenza.terminazione = Appartenenza.TRASFERIMENTO
+        appartenenza.save()
+
+        Appartenenza.objects.create(sede=sede2, persona=persona, inizio=poco_fa())
+
+        risultati = espandi_elenchi_soci(Sede.objects.filter(pk=sede.pk))
+        for permesso, qs in risultati:
+            self.assertFalse(persona in qs)
+
     def test_documenti(self):
 
         p = crea_persona()
@@ -462,6 +478,42 @@ class TestAnagrafica(TestCase):
             p.documenti.filter(tipo=Documento.CARTA_IDENTITA),
             msg="Il membro non ha davvero alcuna carta di identita"
         )
+
+    def test_blocco_estensione_regionale(self):
+        presidente1 = crea_persona()
+        presidente2 = crea_persona()
+        sede1 = crea_sede(presidente1, estensione=TERRITORIALE)
+        sede2 = crea_sede(presidente2, estensione=LOCALE)
+        sede3 = crea_sede(presidente2, estensione=REGIONALE)
+
+        modulo = ModuloCreazioneEstensione({'destinazione': sede1.pk, 'motivo': 'blag'})
+        self.assertTrue(modulo.is_valid())
+
+        modulo = ModuloCreazioneEstensione({'destinazione': sede2.pk, 'motivo': 'blag'})
+        self.assertTrue(modulo.is_valid())
+
+        modulo = ModuloCreazioneEstensione({'destinazione': sede3.pk, 'motivo': 'blag'})
+        self.assertFalse(modulo.is_valid())
+        self.assertTrue('destinazione'in modulo.errors)
+        self.assertTrue('Non è possibile effettuare un trasferimento verso il Comitato Nazionale,' in modulo.errors['destinazione'].as_text())
+
+    def test_blocco_trasferimento_regionale(self):
+        presidente1 = crea_persona()
+        presidente2 = crea_persona()
+        sede1 = crea_sede(presidente1, estensione=TERRITORIALE)
+        sede2 = crea_sede(presidente2, estensione=LOCALE)
+        sede3 = crea_sede(presidente2, estensione=REGIONALE)
+
+        modulo = ModuloCreazioneTrasferimento({'destinazione': sede1.pk, 'motivo': 'blag'})
+        self.assertTrue(modulo.is_valid())
+
+        modulo = ModuloCreazioneTrasferimento({'destinazione': sede2.pk, 'motivo': 'blag'})
+        self.assertTrue(modulo.is_valid())
+
+        modulo = ModuloCreazioneTrasferimento({'destinazione': sede3.pk, 'motivo': 'blag'})
+        self.assertFalse(modulo.is_valid())
+        self.assertTrue('destinazione'in modulo.errors)
+        self.assertTrue('Non è possibile effettuare un trasferimento verso il Comitato Nazionale,' in modulo.errors['destinazione'].as_text())
 
     def test_estensione_accettata(self):
         presidente1 = crea_persona()

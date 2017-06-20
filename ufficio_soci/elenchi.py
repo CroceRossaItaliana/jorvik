@@ -455,9 +455,9 @@ class ElencoQuote(ElencoVistaSoci):
             origine = tesseramento.non_paganti(attivi=attivi, ordinari=ordinari)  # Persone con quote NON pagate
 
         # Ora filtra per Sede
-        return origine.filter(
-            appartenenze__sede__in=qs_sedi,
-        ).annotate(
+        q = Appartenenza.query_attuale_in_anno(modulo.cleaned_data.get('anno'))
+        app = Appartenenza.objects.filter(pk__in=q).filter(sede__in=qs_sedi, membro=Appartenenza.VOLONTARIO)
+        return origine.filter(appartenenze__in=app).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
                 appartenenza_sede=F('appartenenze__sede'),
