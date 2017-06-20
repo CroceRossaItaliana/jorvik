@@ -741,7 +741,7 @@ class TestAnagrafica(TestCase):
         a.inizio = "1980-12-10"
         a.save()
         self.assertFalse(persona.volontario_da_meno_di_un_anno)
-        
+
         # trasferiscilo ad altro comitato
 
         modulo = ModuloCreazioneEstensione()
@@ -1884,6 +1884,195 @@ class TestAnagrafica(TestCase):
         self.assertContains(response, sede2)
         self.assertContains(response, uff_soci.nome_completo)
         self.assertContains(response, socio.nome_completo)
+
+    def test_attiva_cascata(self):
+        sede1 = crea_sede()
+        sede1.nome = '1sede'
+        sede1.save()
+        sede2 = crea_sede(genitore=sede1)
+        sede2.nome = '2sede'
+        sede2.save()
+        sede2b = crea_sede(genitore=sede2, estensione=TERRITORIALE)
+        sede2b.nome = '2bsede'
+        sede2b.save()
+        sede3 = crea_sede(genitore=sede1, estensione=TERRITORIALE)
+        sede3.nome = '3sede'
+        sede3.save()
+        sede4 = crea_sede(estensione=REGIONALE)
+        sede4.nome = '4sede'
+        sede4.save()
+
+        admin = crea_persona()
+        utente = crea_utenza(admin, email=email_fittizzia())
+        utente.is_staff = True
+        utente.is_superuser = True
+        utente.save()
+
+        self.client.login(username=utente.email, password='prova')
+        data = {
+            'nome': sede1.nome,
+            'estensione': sede1.estensione,
+            'tipo': sede1.tipo,
+            'creazione_0': sede1.creazione.strftime('%Y-%m-%d'),
+            'creazione_1': sede1.creazione.strftime('%H:%M:00'),
+            'attiva': False,
+            'anagrafica-delega-oggetto_tipo-oggetto_id-TOTAL_FORMS': 0,
+            'anagrafica-delega-oggetto_tipo-oggetto_id-INITIAL_FORMS': 0,
+            'anagrafica-delega-oggetto_tipo-oggetto_id-MIN_NUM_FORMS': 0,
+            'anagrafica-delega-oggetto_tipo-oggetto_id-MAX_NUM_FORMS': 1000,
+        }
+        self.client.post(reverse('admin:anagrafica_sede_change', args=(sede1.pk,)), data=data)
+
+        self.assertEqual(Sede.objects.filter(attiva=True).count(), 1)
+        self.assertEqual(Sede.objects.filter(attiva=False).count(), 4)
+        self.assertFalse(sede1 in Sede.objects.filter(attiva=True).all())
+        self.assertFalse(sede2 in Sede.objects.filter(attiva=True).all())
+        self.assertFalse(sede2b in Sede.objects.filter(attiva=True).all())
+        self.assertFalse(sede3 in Sede.objects.filter(attiva=True).all())
+
+    def test_autocomplete_sedi(self):
+        sede1 = crea_sede()
+        sede1.nome = '1sede'
+        sede1.save()
+        sede2 = crea_sede(genitore=sede1)
+        sede2.nome = '2sede'
+        sede2.save()
+        sede2b = crea_sede(genitore=sede2, estensione=TERRITORIALE)
+        sede2b.nome = '2bsede'
+        sede2b.save()
+        sede3 = crea_sede(genitore=sede1, estensione=TERRITORIALE)
+        sede3.nome = '3sede'
+        sede3.save()
+        sede4 = crea_sede(estensione=REGIONALE)
+        sede4.nome = '4sede'
+        sede4.save()
+
+        response = self.client.get('/autocomplete/SedeAutocompletamento/?q=sede')
+        self.assertContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertContains(response, '{}<'.format(sede2b.nome))
+        self.assertContains(response, '{}<'.format(sede3.nome))
+        self.assertContains(response, '{}<'.format(sede4.nome))
+
+        response = self.client.get('/autocomplete/SedeAutocompletamento/?q=1s')
+        self.assertContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        response = self.client.get('/autocomplete/SedeAutocompletamento/?q=2s')
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        sede1.attiva = False
+        sede1.save()
+
+        response = self.client.get('/autocomplete/SedeAutocompletamento/?q=sede')
+        self.assertNotContains(response, '{}<'.format(sede1.nome))
+        self.assertNotContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertContains(response, '{}<'.format(sede4.nome))
+
+    def test_autocomplete_comitati(self):
+        sede1 = crea_sede()
+        sede1.nome = '1sede'
+        sede1.save()
+        sede2 = crea_sede(genitore=sede1)
+        sede2.nome = '2sede'
+        sede2.save()
+        sede2b = crea_sede(genitore=sede2, estensione=TERRITORIALE)
+        sede2b.nome = '2bsede'
+        sede2b.save()
+        sede3 = crea_sede(genitore=sede1, estensione=TERRITORIALE)
+        sede3.nome = '3sede'
+        sede3.save()
+        sede4 = crea_sede(estensione=REGIONALE)
+        sede4.nome = '4sede'
+        sede4.save()
+
+        response = self.client.get('/autocomplete/ComitatoAutocompletamento/?q=sede')
+        self.assertContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertContains(response, '{}<'.format(sede4.nome))
+
+        response = self.client.get('/autocomplete/ComitatoAutocompletamento/?q=1s')
+        self.assertContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        response = self.client.get('/autocomplete/ComitatoAutocompletamento/?q=2s')
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede1.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        sede1.attiva = False
+        sede1.save()
+
+        response = self.client.get('/autocomplete/ComitatoAutocompletamento/?q=sede')
+        self.assertNotContains(response, '{}<'.format(sede1.nome))
+        self.assertNotContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertContains(response, '{}<'.format(sede4.nome))
+
+    def test_autocomplete_sedi_trasferimenti(self):
+        sede1 = crea_sede()
+        sede1.nome = '1sede'
+        sede1.save()
+        sede2 = crea_sede(genitore=sede1)
+        sede2.nome = '2sede'
+        sede2.save()
+        sede2b = crea_sede(genitore=sede2, estensione=TERRITORIALE)
+        sede2b.nome = '2bsede'
+        sede2b.save()
+        sede3 = crea_sede(genitore=sede1, estensione=TERRITORIALE)
+        sede3.nome = '3sede'
+        sede3.save()
+        sede4 = crea_sede(estensione=REGIONALE)
+        sede4.nome = '4sede'
+        sede4.save()
+
+        response = self.client.get('/autocomplete/SedeTrasferimentoAutocompletamento/?q=sede')
+        self.assertContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertContains(response, '{}<'.format(sede2b.nome))
+        self.assertContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        response = self.client.get('/autocomplete/SedeTrasferimentoAutocompletamento/?q=1s')
+        self.assertContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        response = self.client.get('/autocomplete/SedeTrasferimentoAutocompletamento/?q=2s')
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        sede1.attiva = False
+        sede1.save()
+
+        response = self.client.get('/autocomplete/SedeTrasferimentoAutocompletamento/?q=sede')
+        self.assertNotContains(response, '{}<'.format(sede1.nome))
+        self.assertNotContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
 
 
 class TestFunzionaliAnagrafica(TestFunzionale):
