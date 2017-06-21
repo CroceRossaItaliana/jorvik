@@ -225,6 +225,9 @@ def registrati(request, tipo, step=None):
                         sessione.get('email')
                    ]
                 )
+                link_debug = '/registrati/{tipo}/{step}/?code={code}&registration={sessione}'.format(
+                    tipo=tipo, step=step, code=request.session['registrazione_id'], sessione=request.session.session_key
+                )
 
                 contesto = {
                     'attuale_nome': STEP_NOMI[step],
@@ -232,6 +235,7 @@ def registrati(request, tipo, step=None):
                     'lista_step': lista_step,
                     'email': sessione.get('email'),
                     'tipo': tipo,
+                    'link_debug': link_debug if settings.DEBUG else ''
                 }
                 return 'anagrafica_registrati_attesa_mail.html', contesto
 
