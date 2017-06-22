@@ -1,6 +1,7 @@
 from datetime import datetime
 from unittest import mock
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from anagrafica.costanti import LOCALE, REGIONALE, TERRITORIALE
@@ -127,6 +128,11 @@ class TestModelliDonazioniDonatori(TestCase):
     def test_crea_donazione(self):
         donazione = Donazione.objects.create(campagna=self.campagna, importo=100, data=poco_fa())
         self.assertEqual(donazione.campagna, self.campagna)
+
+    def test_donazione_negativa(self):
+        with self.assertRaises(ValidationError):
+            donazione = Donazione.objects.create(campagna=self.campagna, importo=-100, data=poco_fa())
+            donazione.full_clean()
 
     def test_crea_donazioni_senza_data(self):
         """

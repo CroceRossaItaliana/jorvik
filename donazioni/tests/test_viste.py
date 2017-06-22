@@ -78,3 +78,13 @@ class TestVisteDonazioni(TestCase):
         donazione = Donazione.objects.filter(campagna=self.campagna).first()
         self.assertEqual(donazione.campagna, self.campagna)
         self.assertEqual(donazione.importo, 150.0)
+
+    def test_aggiungi_donazione_negativa(self):
+        self.client.login(username=self.responsabile_campagna.utenza.email, password='prova')
+        data = {'modalita': 'C', 'importo': -150.0,
+                'campagna': self.campagna.id,
+                }
+        response = self.client.post(reverse('donazioni_campagne_nuova_donazione', args=(self.campagna.id,)), data=data)
+        self.assertContains(response, "al di sotto del minimo consentito")
+        donazione = Donazione.objects.filter(campagna=self.campagna).first()
+        self.assertIsNone(donazione)

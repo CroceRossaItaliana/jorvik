@@ -47,8 +47,8 @@ PERMESSI_NOMI = (
     (RESPONSABILE_FORMAZIONE,   "Responsabile Formazione"),
     (DIRETTORE_CORSO,           "Direttore Corso"),
     (RESPONSABILE_AUTOPARCO,    "Responsabile Autoparco"),
-    (DELEGATO_CAMPAGNE,         "Responsabile Campagne Comitato"),
-    (RESPONSABILE_CAMPAGNA,     "Responsabile Campagna"),
+    (DELEGATO_CAMPAGNE,         "Responsabile Campagne di raccolta fondi"),
+    (RESPONSABILE_CAMPAGNA,     "Responsabile Campagna di raccolta fondi"),
 
     # (RESPONSABILE_PATENTI,      "Responsabile Patenti"),
     # (RESPONSABILE_DONAZIONI,    "Responsabile Donazioni Sangue"),

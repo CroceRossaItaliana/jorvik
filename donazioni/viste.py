@@ -56,9 +56,11 @@ def campagna_nuova(request, me):
     return 'donazioni_campagna_nuova.html', contesto
 
 
-@pagina_privata(permessi=(GESTIONE_CAMPAGNE,))
+@pagina_privata(permessi=(GESTIONE_CAMPAGNA,))
 def campagna_modifica(request, me, pk):
     campagna = get_object_or_404(Campagna, pk=pk)
+    if not me.permessi_almeno(campagna, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
     modulo = ModuloCampagna(request.POST or None, instance=campagna)
 
     if modulo.is_valid():
@@ -161,6 +163,8 @@ def etichetta_nuova(request, me):
 @pagina_privata(permessi=(GESTIONE_CAMPAGNE,))
 def etichetta_modifica(request, me, pk):
     etichetta = get_object_or_404(Etichetta, pk=pk)
+    if not me.permessi_almeno(etichetta, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
     modulo = ModuloEtichetta(request.POST or None, instance=etichetta)
     if modulo.is_valid():
         etichetta = modulo.save()
@@ -198,14 +202,13 @@ def etichette_elenco(request, me):
 @pagina_privata
 def donazione_nuova(request, me, campagna_id):
     campagna = get_object_or_404(Campagna, pk=campagna_id)
-    if campagna not in me.oggetti_permesso(GESTIONE_CAMPAGNA):
+    if not me.permessi_almeno(campagna, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
     modulo_donazione = ModuloDonazione(request.POST or None, campagna=campagna_id)
     modulo_donatore = ModuloDonatore(request.POST or None)
     if modulo_donazione.is_valid():
         donazione = modulo_donazione.save(commit=False)
-
         if modulo_donatore.is_valid():
             donatore = Donatore.nuovo_o_esistente(modulo_donatore.instance)
             donazione.donatore = donatore
@@ -223,7 +226,7 @@ def donazione_nuova(request, me, campagna_id):
 @pagina_privata
 def donazioni_elenco(request, me, campagna_id):
     campagna = get_object_or_404(Campagna.objects.prefetch_related('donazioni', 'donazioni__donatore'), pk=campagna_id)
-    if campagna not in me.oggetti_permesso(GESTIONE_CAMPAGNA):
+    if not me.permessi_almeno(campagna, MODIFICA):
         return redirect(ERRORE_PERMESSI)
     totale_donazioni = campagna.donazioni.all().aggregate(importo=Sum('importo'))
     numero_donatori_censiti = campagna.donazioni.filter(donatore__isnull=False).distinct('donatore').count()
@@ -239,7 +242,7 @@ def donazioni_elenco(request, me, campagna_id):
 @pagina_privata
 def donatori_campagna_elenco(request, me, campagna_id):
     campagna = get_object_or_404(Campagna, pk=campagna_id)
-    if campagna not in me.oggetti_permesso(GESTIONE_CAMPAGNA):
+    if not me.permessi_almeno(campagna, MODIFICA):
         return redirect(ERRORE_PERMESSI)
     donatori = Donatore.objects.filter(donazioni__campagna=campagna).annotate(totale_donazioni=Sum('donazioni__importo'))
     contesto = {

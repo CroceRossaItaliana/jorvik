@@ -1,5 +1,6 @@
 from autoslug import AutoSlugField
 from django.core.exceptions import MultipleObjectsReturned
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.db.models.signals import post_save, pre_save
@@ -90,7 +91,7 @@ class Etichetta(ModelloSemplice):
     class Meta:
         verbose_name = 'Etichetta'
         verbose_name_plural = 'Etichette'
-        ordering = ['nome', ]
+        ordering = ['slug', ]
         permissions = (
             ('view_etichetta', 'Can view etichetta'),
         )
@@ -165,28 +166,9 @@ class Donatore(ModelloSemplice):
 
     def __str__(self):
         stringa_output = []
-        for f in ('ragione_sociale', 'nome', 'cognome', 'email', 'codice_fiscale'):
+        for f in ('ragione_sociale', 'nome', 'cognome', 'codice_fiscale'):
             stringa_output.append('{}'.format(getattr(self, f, '')))
         return ' '.join(s for s in stringa_output if s)
-
-    @classmethod
-    def _donatore_esistente(cls, **kwargs):
-        """
-        Ritorna il primo donatore esistente che risponde ai parametri di ricerca
-        None se non esiste alcun record corrispondente
-        :param kwargs:
-        :return: oggetto Donatore o None
-        Stesso comportamento del seguente codice:
-        try:
-            istanza = Donatore.objects.get(**kwargs)
-        except Donatore.DoesNotExist:
-            return
-        except MultipleObjectsReturned:
-            return Donatore.objects.filter(**kwargs).first()
-        else:
-            return istanza
-        """
-        return Donatore.objects.filter(**kwargs).first()
 
     @classmethod
     def nuovo_o_esistente(cls, donatore):
@@ -204,31 +186,34 @@ class Donatore(ModelloSemplice):
         :param donatore: oggetto Donatore
         :return: Record esistente o appena creato
         """
-        istanza = None
+        requisiti = None
         if donatore.codice_fiscale:
-            if not donatore.ragione_sociale:
-                istanza = cls._donatore_esistente(codice_fiscale=donatore.codice_fiscale)
-            else:
-                istanza = cls._donatore_esistente(codice_fiscale=donatore.codice_fiscale,
-                                                  ragione_sociale=donatore.ragione_sociale)
-            if not istanza and donatore.email:
-                istanza = cls._donatore_esistente(email=donatore.email)
+            requisiti = Q(codice_fiscale=donatore.codice_fiscale)
+            if donatore.ragione_sociale:
+                requisiti &= Q(ragione_sociale=donatore.ragione_sociale)
+            if donatore.email:
+                # se sono presenti entrambi codice_fiscale ed email, utilizzare anche quest'ultima
+                # come filtro (in OR) per
+                requisiti |= Q(email=donatore.email)
 
         elif donatore.email:
-            istanza = cls._donatore_esistente(email=donatore.email)
+            requisiti = Q(email=donatore.email)
+
         elif donatore.nome and donatore.cognome and donatore.data_nascita and donatore.comune_nascita:
-            istanza = cls._donatore_esistente(nome=donatore.nome,
-                                              cognome=donatore.cognome,
-                                              data_nascita=donatore.data_nascita,
-                                              comune_nascita=donatore.comune_nascita)
-        if not istanza:
+            requisiti = Q(nome=donatore.nome,
+                          cognome=donatore.cognome,
+                          data_nascita=donatore.data_nascita,
+                          comune_nascita=donatore.comune_nascita)
+
+        istanza_esistente = Donatore.objects.filter(requisiti).first() if requisiti else None
+        if not istanza_esistente:
             # crea nuovo donatore dai dati derivanti dal modulo ModuloDonatore
             donatore.save()
             return donatore
-        # nel caso di donatore esistente, vengono aggiunti nuovi campi se presenti nell'oggetto 'donatore'
+        # nel caso di donatore già esistente, vengono aggiunti nuovi campi se presenti nell'oggetto 'donatore'
         # e non presenti nell'istanza esistente
-        istanza = cls._riconcilia_istanze(istanza, donatore)
-        return istanza
+        istanza_esistente = cls._riconcilia_istanze(istanza_esistente, donatore)
+        return istanza_esistente
 
     @classmethod
     def _riconcilia_istanze(cls, donatore_esistente, donatore_nuovo):
@@ -262,7 +247,11 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
 
     campagna = models.ForeignKey(Campagna, related_name='donazioni', on_delete=models.PROTECT)
     donatore = models.ForeignKey(Donatore, related_name='donazioni', on_delete=models.CASCADE, null=True)
-    importo = models.FloatField('Importo in EUR', default=0.00, help_text='Importo in EUR della donazione')
+    importo = models.FloatField('Importo in EUR', default=0.00,
+                                help_text='Importo in EUR della donazione',
+                                validators=[
+                                    MinValueValidator(0.01,
+                                                      "L'importo della donazione è al di sotto del minimo consentito")])
     modalita = models.CharField('Modalità', blank=True, choices=MODALITA, max_length=1, db_index=True)
     data = models.DateTimeField('Data donazione', help_text='Data donazione', null=True)
     ricorrente = models.BooleanField('Donazione ricorrente', default=False)

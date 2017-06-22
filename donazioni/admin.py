@@ -56,8 +56,9 @@ class AdminEtichetta(ReadonlyAdminMixin, admin.ModelAdmin):
 @admin.register(Donazione)
 class AdminDonazione(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['campagna__nome', 'modalita', 'ricorrente', 'donatore']
-    list_display = ['id', 'campagna', 'importo', 'data', 'donatore', 'ricorrente', 'modalita']
+    list_display = ['id', 'campagna', 'importo', 'data', 'donatore', 'modalita', 'ricorrente', ]
     list_filter = ['modalita', 'ricorrente', 'donatore']
+    readonly_fields = ('creazione', 'ultima_modifica',)
 
 
 @admin.register(Donatore)
