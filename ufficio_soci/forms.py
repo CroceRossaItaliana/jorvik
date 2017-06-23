@@ -383,6 +383,19 @@ class ModuloNuovaRicevuta(forms.Form):
 
     data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro])
 
+    def clean(self):
+        data = self.cleaned_data
+        tesseramento = Tesseramento.ultimo_tesseramento()
+        if (self.cleaned_data['tipo_ricevuta'] == Quota.QUOTA_SOSTENITORE and
+                self.cleaned_data['importo'] < tesseramento.quota_sostenitore):
+            self.add_error(
+                'importo', 'L\'importo minimo per la quota sostenitore per l\'anno {} è di {} €'.format(
+                    tesseramento.anno, tesseramento.quota_sostenitore
+                )
+            )
+
+        return data
+
 
 class ModuloFiltraEmissioneTesserini(forms.Form):
 

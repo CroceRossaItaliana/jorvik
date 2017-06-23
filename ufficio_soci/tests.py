@@ -1654,3 +1654,60 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         # ricevuta registrata
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response['location'].find('?appena_registrata='))
+
+    @freeze_time('2016-10-14')
+    def pagamento_quota_sostenitore(self):
+        """
+        Test che la quota sostenitore sia pagabile con controllo sulla quota minima
+        """
+        delegato = crea_persona()
+        sostenitore, sede, appartenenza = crea_persona_sede_appartenenza()
+        appartenenza.membro = Appartenenza.SOSTENITORE
+        appartenenza.save()
+        crea_utenza(delegato, email="mario@rossi.it", password="prova")
+
+        sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
+        sede.telefono = '+3902020202'
+        sede.email = 'comitato@prova.it'
+        sede.codice_fiscale = '01234567891'
+        sede.partita_iva = '01234567891'
+        sede.locazione = crea_locazione()
+        sede.save()
+
+        oggi = poco_fa().replace(month=2)
+        inizio_anno = oggi.replace(month=1, day=1)
+        fine_soci = inizio_anno.replace(month=3) - datetime.timedelta(days=1)
+        fine_anno = inizio_anno.replace(month=12) - datetime.timedelta(days=31)
+
+        Tesseramento.objects.create(
+            stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
+            anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+            quota_aspirante=8, quota_sostenitore=20, fine_soci_nv=fine_anno
+        )
+
+        data = {
+            'persona': sostenitore.pk,
+            'importo': 8,
+            'causale': 'test ricevute',
+            'tipo_ricevuta': Quota.QUOTA_SOSTENITORE,
+            'data_versamento': oggi.strftime('%d/%m/%Y')
+        }
+        self.client.login(email="mario@rossi.it", password="prova")
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_nuova')), data=data)
+        # ricevuta non registrata
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'importo minimo per la quota sostenitore per l')
+
+        data = {
+            'persona': sostenitore.pk,
+            'importo': 20,
+            'causale': 'test ricevute',
+            'tipo_ricevuta': Quota.QUOTA_SOSTENITORE,
+            'data_versamento': oggi.strftime('%d/%m/%Y')
+        }
+        self.client.login(email="mario@rossi.it", password="prova")
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_nuova')), data=data)
+        # ricevuta registrata
+        #print(response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['location'].find('?appena_registrata='))

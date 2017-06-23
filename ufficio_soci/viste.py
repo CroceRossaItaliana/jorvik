@@ -940,6 +940,7 @@ def us_ricevute_nuova(request, me):
         if 'appena_registrata' in request.GET else None
 
     modulo = ModuloNuovaRicevuta(request.POST or None)
+    tesseramento = Tesseramento.ultimo_tesseramento()
 
     if modulo.is_valid():
 
@@ -1006,6 +1007,7 @@ def us_ricevute_nuova(request, me):
         "ultime_quote": ultime_quote,
         "anno": questo_anno,
         "appena_registrata": appena_registrata,
+        "tesseramento": tesseramento,
     }
     return 'us_ricevute_nuova.html', contesto
 
