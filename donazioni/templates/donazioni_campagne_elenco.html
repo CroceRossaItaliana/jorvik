@@ -1,6 +1,7 @@
 {% extends 'donazioni_vuota.html' %}
 
 {% load bootstrap3 %}
+{% load utils %}
 
 {% block pagina_titolo %}
     Campagne raccolta fondi
@@ -11,71 +12,6 @@
     <h2 class="allinea-centro text-success">
         Campagne raccolta fondi
     </h2>
-    <div class="col-md-9">
-        <form method="POST" class="form-inline">
-            {% csrf_token %}
-
-            {% bootstrap_form modulo_filtro layout='inline'%}
-                <button class="btn btn-info" type="submit">
-                    <i class="fa fa-fw fa-tags"></i>Filtra per etichette
-                </button>
-            <p></p>
-        </form>
-    </div>
-
-    <table class="table table-striped table-bordered">
-        <thead>
-            <th>Nome</th>
-            <th>Sede Organizzatrice</th>
-            <th>Data Inizio</th>
-            <th>Data Fine</th>
-            <th>Euro raccolti</th>
-            <th>Responsabili</th>
-        </thead>
-
-        {% for campagna in campagne %}
-
-            <tr>
-                <td>
-                    <i class="fa"></i>
-                    <strong>{{ campagna.link|safe }}</strong><br /></td>
-                <td>
-                    <i class="fa fa-fw fa-home"></i>
-                    {{ campagna.organizzatore.link|safe }}
-                </td>
-
-                <td class="piu-piccolo">
-                    <i class="fa fa-fw fa-calendar"></i>
-                        Inizia: {{ campagna.inizio }}
-                    <br />
-                </td>
-                <td class="piu-piccolo">
-                    <i class="fa fa-fw fa-calendar"></i>
-                        Inizia: {{ campagna.fine }}
-                        <br />
-                </td>
-
-                <td>
-                    {# Euro raccolti #}
-                   {% if campagna.totale_donazioni %}{{ campagna.totale_donazioni }}
-                    {% else %} 0
-                    {% endif %} €
-                </td>
-                <td>
-                    {{ campagna.responsabili_attuali.count }}
-                </td>
-            </tr>
-
-        {% empty %}
-            <tr class="info">
-                <td colspan="6">
-                    <h4><i class="fa fa-fw fa-info-circle"></i> Non è presente nessuna campagna.</h4>
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
-
-
     {% if puo_creare %}
         <div class="alert alert-success">
             <h4><i class="fa fa-asterisk"></i> Vuoi creare una nuova campagna di raccolta fondi?</h4>
@@ -85,5 +21,6 @@
         </div>
     {% endif %}
 
+    {% elenco elenco %}
 
 {% endblock %}

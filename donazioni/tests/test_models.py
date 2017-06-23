@@ -29,7 +29,7 @@ class TestModelliCampagne(TestCase):
         self.assertEqual(campagna.organizzatore, self.sede)
         persona = crea_persona()
         aggiungi_responsabile_campagna(campagna, persona)
-        self.assertIn(persona, campagna.responsabili_attuali())
+        self.assertIn(persona, campagna.responsabili_attuali)
 
     def test_associa_etichette(self):
         nome_campagna = 'Test Campagna'

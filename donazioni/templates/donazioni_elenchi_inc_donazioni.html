@@ -1,0 +1,60 @@
+{% extends 'donazioni_elenchi_inc_vuoto.html' %}
+{% block placeholderfiltro %}"Filtra per modalità..."{% endblock %}
+{% block elenco_intestazione %}
+
+    <th>Data</th>
+    <th>Donatore</th>
+    <th>Importo</th>
+    <th>Data Inserimento</th>
+    <th>Modalità</th>
+
+{% endblock %}
+
+
+{% block elenco_riga %}
+
+    <td class="piu-piccolo">
+        <i class="fa fa-calendar"></i>
+        {{ obj.data }}
+    </td>
+
+    <td class="piu-piccolo allinea-sinistra">
+        {{ obj.donatore|default_if_none:""}}
+    </td>
+
+    <td class="piu-piccolo allinea-sinistra">
+        <i class="fa"></i>
+        {{ obj.importo }} €
+    </td>
+    <td class="piu-piccolo">
+        <i class="fa fa-fw fa-calendar"></i>
+            {{ obj.creazione }}
+    </td>
+
+    <td>
+        {{ obj.get_modalita_display }}
+        {% if obj.ricorrente %}
+            <br/><i>Donazione Ricorrente</i>
+        {% endif %}
+    </td>
+
+{% endblock %}
+
+{% block elenco_riga_azioni %}
+
+    {% load utils %}
+    {% permessi_almeno obj "modifica" as puo_modificare %}
+    {% permessi_almeno obj "lettura" as puo_leggere %}
+
+    {% if puo_leggere %}
+         <a href="{{ obj.url }}" class="btn btn-default btn-xs" target="_parent">
+            <i class="fa fa-fw fa-file"></i>Scheda
+        </a>
+    {% endif %}
+    {% if puo_modificare %}
+        <a href="{{ obj.url_modifica }}" class="btn btn-default btn-xs" target="_parent">
+            <i class="fa fa-fw fa-edit"></i>Modifica
+        </a>
+    {% endif %}
+
+{% endblock %}

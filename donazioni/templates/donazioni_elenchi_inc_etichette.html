@@ -1,0 +1,51 @@
+{% extends 'donazioni_elenchi_inc_vuoto.html' %}
+{% block placeholderfiltro %}"Filtra elenco per slug..."{% endblock %}
+{% block elenco_intestazione %}
+
+    <th>Slug</th>
+    <th>Comitato</th>
+    <th>Campagne associate</th>
+{% endblock %}
+
+
+{% block elenco_riga %}
+
+    <td><strong>{{ obj.slug }}</strong><br /></td>
+    <td class="piu-piccolo">
+        {{ obj.comitato.link|safe }}
+    </td>
+
+    <td class="piu-piccolo">
+        <ul>
+           {% for c in obj.campagne.all %}
+               <li>{{ c.link|safe }}</li>
+           {% endfor %}
+        </ul>
+    </td>
+
+{% endblock %}
+
+{% block elenco_riga_azioni %}
+
+    {% load utils %}
+    {% permessi_almeno obj "completo" as puo_eliminare %}
+    {% permessi_almeno obj "modifica" as puo_modificare %}
+    {% permessi_almeno obj "lettura" as puo_leggere %}
+
+    {% if puo_leggere %}
+         <a href="{{ obj.url }}" class="btn btn-default btn-xs" target="_parent">
+            <i class="fa fa-fw fa-file"></i>Scheda
+        </a>
+    {% endif %}
+    {% if puo_modificare %}
+        <a href="{{ obj.url_modifica }}" class="btn btn-default btn-xs" target="_parent">
+            <i class="fa fa-fw fa-edit"></i>Modifica
+        </a>
+    {% endif %}
+    {% if puo_eliminare %}
+        <a href="{{ obj.url_cancella }}" class="btn btn-default btn-xs" target="_parent">
+            <i class="fa fa-fw fa-remove"></i>Elimina
+        </a>
+    {% endif %}
+
+{% endblock %}

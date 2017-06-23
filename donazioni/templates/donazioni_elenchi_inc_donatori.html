@@ -1,0 +1,26 @@
+{% extends 'donazioni_elenchi_inc_vuoto.html' %}
+{% block placeholderfiltro %}"Filtra..."{% endblock %}
+{% block elenco_intestazione %}
+
+     <th>Nome</th>
+    <th>Cognome</th>
+    <th>Email</th>
+    <th>Codice Fiscale</th>
+    <th>Totale donazioni</th>
+
+{% endblock %}
+
+
+{% block elenco_riga %}
+
+    <td>{{ obj.nome}}</td>
+    <td>{{ obj.cognome}}</td>
+    <td>{{ obj.email }}</td>
+    <td>{{ obj.codice_fiscale }}</td>
+    <td>{{ obj.totale_donazioni }} €</td>
+
+{% endblock %}
+
+{% block elenco_riga_azioni %}
+
+{% endblock %}

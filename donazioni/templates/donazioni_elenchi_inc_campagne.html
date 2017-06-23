@@ -1,0 +1,52 @@
+{% extends 'donazioni_elenchi_inc_vuoto.html' %}
+
+{% block elenco_intestazione %}
+
+    <th>Nome</th>
+    <th>Sede Organizzatrice</th>
+    <th>Date</th>
+    <th>Etichette</th>
+
+{% endblock %}
+
+
+{% block elenco_riga %}
+
+    <td><strong>{{ obj.nome }}</strong><br /></td>
+    <td class="piu-piccolo">
+        {{ obj.organizzatore.link|safe }}
+    </td>
+
+    <td class="piu-piccolo">
+    Da: {{ obj.inizio }}<br/>
+    A: {{ obj.fine }}
+    </td>
+
+    <td class="piu-piccolo">
+        <ul>
+           {% for etichetta in obj.etichette.all %}
+               <li>{{ etichetta.slug }}</li>
+           {% endfor %}
+        </ul>
+    </td>
+
+{% endblock %}
+
+{% block elenco_riga_azioni %}
+
+    {% load utils %}
+    {% permessi_almeno obj "modifica" as puo_modificare %}
+    {% permessi_almeno obj "lettura" as puo_leggere %}
+
+    {% if puo_leggere %}
+         <a href="{{ obj.url }}" class="btn btn-default btn-xs" target="_parent">
+            <i class="fa fa-fw fa-file"></i>Scheda
+        </a>
+    {% endif %}
+    {% if puo_modificare %}
+        <a href="{{ obj.url_modifica }}" class="btn btn-default btn-xs" target="_parent">
+            <i class="fa fa-fw fa-edit"></i>Modifica
+        </a>
+    {% endif %}
+
+{% endblock %}

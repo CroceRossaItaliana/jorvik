@@ -1,0 +1,131 @@
+{% extends "donazioni_campagna_scheda.html" %}
+{% load utils %}
+{% block scheda_contenuto %}
+    <div class="row">
+
+        <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-user"></i>
+                        Responsabili
+                        <span class="pull-right">
+                            {{ corso.responsabili_attuali.count }}
+                        </span>
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    <div class="btn-group btn-group-vertical">
+                    {% for responsabile in campagna.responsabili_attuali %}
+                        {% card responsabile extra_class='' %}
+
+                    {% empty %}
+                        <i class="fa fa-fw fa-warning"></i>
+                        Nessun responsabile.
+
+                    {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-home"></i>
+                        Organizzatore
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    <strong>
+                        <a href="{{ campagna.organizzatore.url }}" target="_new">
+                            {{ campagna.organizzatore.nome }}
+                        </a>
+                    </strong><br />
+                    {{ campagna.organizzatore.get_tipo_display }} &mdash;
+                    {{ campagna.organizzatore.get_estensione_display }}
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="row">
+
+        <div class="col-md-4">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-calendar"></i>
+                        Data di inizio
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    {{ campagna.inizio }}
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-calendar"></i>
+                        Data di fine
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    {{ campagna.fine }}
+                </div>
+
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-tags"></i>
+                        Etichette associate
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    {% for e in campagna.etichette.all %}
+                        <span class="badge">{{ e.nome }}</span>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-money"></i>
+                        Dettagli raccolta fondi
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    <span>Donazioni: {{ campagna.donazioni.count }}</span><br/>
+                    <span>Donatori censiti: {{ campagna.donatori_censiti.count }}</span><br/>
+                    <span><b>Euro: {{ campagna.totale_donazioni }} €</b></span><br/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
+            {{ campagna.descrizione|safe }}
+        </div>
+    </div>
+    {% endblock %}

@@ -28,160 +28,72 @@
     {% endif %}
 
     <p>&nbsp;</p>
-    <div class="row">
-
-    <div class="col-md-6">
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-user"></i>
-                    Responsabili
-                    <span class="pull-right">
-                        {{ corso.responsabili_attuali.count }}
-                    </span>
-                </h3>
-            </div>
-
-            <div class="panel-body">
-                <div class="btn-group btn-group-vertical">
-                {% for responsabile in campagna.responsabili_attuali %}
-                    {% card responsabile extra_class='' %}
-
-                {% empty %}
-                    <i class="fa fa-fw fa-warning"></i>
-                    Nessun responsabile.
-
-                {% endfor %}
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-home"></i>
-                    Organizzatore
-                </h3>
-            </div>
-
-            <div class="panel-body">
-                <strong>
-                    <a href="{{ campagna.organizzatore.url }}" target="_new">
-                        {{ campagna.organizzatore.nome }}
-                    </a>
-                </strong><br />
-                {{ campagna.organizzatore.get_tipo_display }} &mdash;
-                {{ campagna.organizzatore.get_estensione_display }}
-            </div>
-
-        </div>
-    </div>
-    </div>
-    <div class="row">
-
-    <div class="col-md-4">
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-calendar"></i>
-                    Data di inizio
-                </h3>
-            </div>
-
-            <div class="panel-body">
-                {{ campagna.inizio }}
-            </div>
-
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-calendar"></i>
-                    Data di fine
-                </h3>
-            </div>
-
-            <div class="panel-body">
-                {{ campagna.fine }}
-            </div>
-
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-tags"></i>
-                    Etichette associate
-                </h3>
-            </div>
-
-            <div class="panel-body">
-                {% for e in campagna.etichette.all %}
-                    <span class="badge">{{ e.nome }}</span>
-                {% endfor %}
-            </div>
-
-        </div>
-    </div>
-</div>
-<div class="row">
-<div class="col-md-12">
-    <div class="panel panel-info">
-        <div class="panel-heading">
-            <h3 class="panel-title">
+    <ul class="nav nav-tabs">
+        <li role="presentation" {% if request.path == campagna.url %}class="active"{% endif %}>
+            <a href="{{ campagna.url }}">
+                <i class="fa fa-fw fa-info"></i>
+                Informazioni
+            </a>
+        </li>
+        <li role="presentation" {% if request.path == campagna.url_elenco_donazioni %}class="active"{% endif %}>
+            <a href="{{ campagna.url_elenco_donazioni }}">
                 <i class="fa fa-fw fa-money"></i>
-                Dettagli raccolta fondi
-            </h3>
-        </div>
+                Donazioni
+                <span class="badge">
+                        <i class="fa fa-fw fa-eur"></i>
+                        {{ campagna.totale_donazioni }}
+                </span>
 
-    <div class="panel-body">
-        <span>Donazioni: {{ campagna.donazioni.count }}</span><br/>
-        <span>Donatori censiti: {{ totale_donatori }}</span><br/>
-        <span><b>Euro: {{ totale_donazioni }} €</b></span><br/>
-        <span>Vai a <a href="{{ campagna.url_elenco_donazioni }}" class="btn btn-sm btn-default">elenco donazioni</a></span>
-    </div>
+            </a>
+        </li>
+        <li role="presentation" {% if request.path == campagna.url_elenco_donatori %}class="active"{% endif %}>
+            <a href="{{ campagna.url_elenco_donatori }}">
+                <i class="fa fa-fw fa-male"></i>
+                Donatori censiti
+                <span class="badge">
+                    {{ campagna.donatori_censiti.count }}
+                </span>
+            </a>
+        </li>
+        <li role="presentation" {% if request.path == campagna.url_responsabili %}class="active"{% endif %}>
+            <a href="{{ campagna.url_responsabili }}">
+                <i class="fa fa-fw fa-male"></i>
+                Responsabili campagna
+                <span class="badge">
+                    {{ campagna.responsabili_attuali.count }}
+                </span>
+            </a>
+        </li>
+    </ul>
+
+    <p>&nbsp;</p>
+    {% block scheda_contenuto %}
+    {% endblock %}
+
+    {% block scheda_pulsantiera %}
+        <hr />
+        {% if puo_modificare %}
+        <div class="row">
+            <div class="col-md-4">
+                <p>
+                <a href="{{ campagna.url_aggiungi_donazione }}" class="btn btn-large btn-info">Aggiungi una donazione</a>
+                </p>
+            </div>
+            <div class="col-md-4">
+                <p>
+                <a href="{{ campagna.url_modifica }}" class="btn btn-large btn-info">Modifica campagna</a>
+                </p>
+            </div>
+            <div class="col-md-4">
+                <p>
+                    {% if campagna.cancellabile %}
+                        <a href="{{ campagna.url_cancella }}" class="btn btn-large btn-danger">Elimina campagna</a>
+                    {% endif %}
+                </p>
+            </div>
         </div>
-</div>
-</div>
-<div class="row">
-    <div class="col-md-12">
-        <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
-        {{ campagna.descrizione|safe }}
-    </div>
-</div>
-    {% if puo_modificare %}
-    <div class="row">
-        <div class="col-md-3">
-            <p>
-            <a href="{{ campagna.url_aggiungi_donazione }}" class="btn btn-large btn-success">Aggiungi una donazione</a>
-            </p>
-        </div>
-        <div class="col-md-3">
-            <p>
-            <a href="{{ campagna.url_modifica }}" class="btn btn-large btn-success">Modifica campagna</a>
-            </p>
-        </div>
-        <div class="col-md-3">
-            <p>
-                 <a href="{{ campagna.url }}responsabili" class="btn btn-large btn-warning">Aggiungi responsabili</a>
-            </p>
-        </div>
-        <div class="col-md-3">
-            <p>
-                {% if campagna.cancellabile %}
-                    <a href="{{ campagna.url_cancella }}" class="btn btn-large btn-danger">Elimina campagna</a>
-                {% endif %}
-            </p>
-        </div>
-    </div>
-    {% endif %}
+        {% endif %}
+    {% endblock %}
 
 <p></p>
     <hr />

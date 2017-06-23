@@ -1,8 +1,8 @@
 from autoslug import AutoSlugField
-from django.core.exceptions import MultipleObjectsReturned
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Sum
+from django.utils.functional import cached_property
 from django.db.models.signals import post_save, pre_save
 from django.utils import timezone
 from django_countries.fields import CountryField
@@ -32,6 +32,7 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
     def __str__(self):
         return self.nome
 
+    @cached_property
     def responsabili_attuali(self):
         return self.delegati_attuali(tipo=RESPONSABILE_CAMPAGNA)
 
@@ -66,6 +67,14 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
     @property
     def link(self):
         return '<a href="%s">%s</a>' % (self.url, self.nome)
+
+    @cached_property
+    def totale_donazioni(self):
+        return self.donazioni.all().aggregate(importo=Sum('importo'))['importo']
+
+    @cached_property
+    def donatori_censiti(self):
+        return self.donazioni.filter(donatore__isnull=False).distinct('donatore')
 
     @staticmethod
     def post_save(sender, instance, **kwargs):
@@ -159,7 +168,7 @@ class Donatore(ModelloSemplice):
     data_nascita = models.DateField('Data di nascita', null=True, blank=True)
     comune_nascita = models.CharField('Comune di Nascita', max_length=64, blank=True)
     provincia_nascita = models.CharField('Provincia di Nascita', max_length=2, blank=True)
-    stato_nascita = CountryField('Stato di nascita', default='IT')
+    stato_nascita = CountryField('Stato di nascita', blank=True)
 
     ragione_sociale = TitleCharField('Ragione Sociale', max_length=64, blank=True,
                                      help_text='Inserire la ragione sociale nel caso di persona giuridica')
@@ -193,7 +202,7 @@ class Donatore(ModelloSemplice):
                 requisiti &= Q(ragione_sociale=donatore.ragione_sociale)
             if donatore.email:
                 # se sono presenti entrambi codice_fiscale ed email, utilizzare anche quest'ultima
-                # come filtro (in OR) per
+                # come filtro (in OR)
                 requisiti |= Q(email=donatore.email)
 
         elif donatore.email:

@@ -1,4 +1,4 @@
-{% extends 'donazioni_vuota.html' %}
+{% extends 'donazioni_campagna_scheda.html' %}
 
 {% load bootstrap3 %}
 
@@ -6,12 +6,11 @@
     Lista donatori
 {% endblock %}
 
-{% block app_contenuto %}
+{% block scheda_contenuto %}
 
     <h4 class="allinea-centro text-success">
-        Lista donatori
+        Lista donatori per la campagna {{ campagna.nome }}
     </h4>
     {% load utils %}
     {% elenco elenco %}
-
 {% endblock %}

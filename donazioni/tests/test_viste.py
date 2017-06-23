@@ -72,12 +72,16 @@ class TestVisteDonazioni(TestCase):
         data = {'modalita': 'C', 'importo': 150.0,
                 'campagna': self.campagna.id,
                 'codice_transazione': 'AXYYGGGTTSADDXXX10003231010113',
+                'stato_nascita': '',
+                'nome': '',
+                'cognome': '',
                 }
         response = self.client.post(reverse('donazioni_campagne_nuova_donazione', args=(self.campagna.id,)), data=data)
         self.assertEqual(response.url, reverse('donazioni_campagna', args=(self.campagna.id,)))
         donazione = Donazione.objects.filter(campagna=self.campagna).first()
         self.assertEqual(donazione.campagna, self.campagna)
         self.assertEqual(donazione.importo, 150.0)
+        self.assertIsNone(donazione.donatore)
 
     def test_aggiungi_donazione_negativa(self):
         self.client.login(username=self.responsabile_campagna.utenza.email, password='prova')

@@ -5,15 +5,14 @@
 {% block pagina_corpo %}
 
     <div class="container-fluid">
-
         <div class="row allinea-centro">
 
             <div class="col-sm-4">
-                <form method="POST" data-caricamento>
+                <form method="POST">
                     {% csrf_token %}
                     <div class="input-group">
                         <input  type="text" class="form-control" name="filtra"
-                                placeholder="Filtra elenco..." value="{{ filtra }}"
+                                placeholder={% block placeholderfiltro %}"Filtra elenco per etichetta..."{% endblock %} value="{{ filtra }}"
                                 {% if filtra %}autofocus{% endif %}
                         >
                         <span class="input-group-btn">
@@ -30,7 +29,6 @@
                                     <i class="fa fa-fw fa-times"></i>
                                 </button>
                             {% endif %}
-
                         </span>
                     </div>
                 </form>
@@ -56,7 +54,7 @@
                     {% endif %}
 
                     <li class="active">
-                        <a href="#">Pag. {{ pagina }} di {{ pagine }} ({{ totale }} pp.)</a>
+                        <a href="#">Pag. {{ pagina }} di {{ pagine }} ({{ totale }})</a>
                     </li>
 
                     {% if ha_successivo %}
@@ -71,54 +69,12 @@
                                 <i class="fa fa-arrow-right"></i>
                             </a>
                         </li>
-
                     {% endif %}
-
                 </ul>
-
             </div>
-
-
 
             <div class="col-sm-4">
-                <div class="btn-group">
-
-                    <div class="btn-group">
-                      <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fa fa-fw fa-download"></i>
-                        Scarica
-                          <!--<span class="caret"></span>-->
-                      </button>
-                      <ul class="dropdown-menu">
-                        <li>
-                            <a href="{{ download_url }}" data-caricamento target="_blank">
-                                <i class="fa fa-fw fa-file-excel-o"></i>
-                                <i class="fa fa-fw fa-files-o"></i>
-                                Excel: Un foglio per sede
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ download_url }}?foglio_singolo=1" data-caricamento target="_blank">
-                                <i class="fa fa-fw fa-file-excel-o"></i>
-                                <i class="fa fa-fw fa-file-o"></i>
-                                Excel: Foglio unico
-                            </a>
-                        </li>
-                      </ul>
-                    </div>
-
-                    <a class="btn btn-primary"
-                        data-conferma="Vuoi scrivere un nuovo messaggio da inviare a tutte le {{ totale }} persone in elenco?"
-                        href="{{ messaggio_url }}" target="_new" data-caricamento
-                    >
-                        <i class="fa fa-fw fa-envelope-o"></i>
-                        Invia messaggio
-                    </a>
-
-                </div>
-
             </div>
-
 
         </div>
 
@@ -135,7 +91,7 @@
                     {% endblock %}
                 </thead>
 
-                {% for persona in risultati %}
+                {% for obj in risultati %}
 
                     <tr class="{% block elenco_riga_classe %}{% endblock %}">
 
@@ -144,7 +100,7 @@
                         {% endblock %}
 
                         <td>
-                            <div class="btn-group btn-group-xs">
+                            <div class="btn-group">
                                 {% block elenco_riga_azioni %}
 
                                 {% endblock %}
@@ -168,24 +124,14 @@
                         {% else %}
                             <div class="alert alert-warning">
                                 <h4><i class="fa fa-fw fa-info-circle"></i> Questo elenco &egrave; vuoto.</h4>
-                                <p>Nessuna persona trovata da mostrare in questo elenco.</p>
                             </div>
 
                         {% endif %}
-
                     {% endblock %}
-
                 {% endfor %}
-
             </table>
-
-
 
         </div>
 
-
-
-
     </div>
-
 {% endblock %}
