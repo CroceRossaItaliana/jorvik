@@ -252,7 +252,27 @@ def us_dimissioni(request, me, pk):
         dim.richiedente = me
         dim.persona = persona
         dim.sede = dim.persona.sede_riferimento()
-        dim.appartenenza = persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
+        if persona.volontario:
+            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
+        elif persona.ordinario:
+            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.ORDINARIO).first()
+        elif persona.dipendente:
+            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.DIPENDENTE).first()
+        elif persona.est_donatore:
+            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.DONATORE).first()
+        elif persona.militare:
+            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.MILITARE).first()
+        elif persona.infermiera:
+            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.INFERMIERA).first()
+        elif persona.sostenitore:
+            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.SOSTENITORE).first()
+        else:
+            return errore_generico(
+                request, me, torna_url=request.path_info, torna_titolo='Modulo dimissioni',
+                titolo='Errore appartenenza',
+                messaggio='L\'utente selezionato non appartenenze dalle quali possa essere dimesso'
+            )
+        dim.appartenenza = appartenenza
         dim.save()
         dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'])
 
