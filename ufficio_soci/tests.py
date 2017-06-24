@@ -11,7 +11,7 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from anagrafica.models import Appartenenza, Sede, Persona, Fototessera, Dimissione, ProvvedimentoDisciplinare, \
-    Estensione
+    Estensione, Trasferimento
 from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE, LOCALE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import MODIFICA
@@ -369,7 +369,6 @@ class TestBase(TestCase):
         provvedimento.save()
         test_elettorato(elenco, persone, 0)
 
-
     def test_elettorato_passivo_trasferimento_anzianita_soddisfatta(self):
 
         x = Appartenenza(
@@ -480,8 +479,50 @@ class TestBase(TestCase):
         volontari = elenco.risultati()
         self.assertTrue(sostenitore_volontario in volontari)
 
-    def test_dimissione_volontario(self):
+    def test_dimissione_controllo_appartenenza(self):
+        presidente = crea_persona()
+        crea_utenza(presidente, email=email_fittizzia())
+        sede = crea_sede(presidente, estensione=REGIONALE)
 
+        ordinario = crea_persona()
+        dipendente = crea_persona()
+        militare = crea_persona()
+        infermiera = crea_persona()
+        sostenitore = crea_persona()
+        donatore = crea_persona()
+
+        crea_appartenenza(ordinario, sede, tipo=Appartenenza.ORDINARIO)
+        crea_appartenenza(dipendente, sede, tipo=Appartenenza.DIPENDENTE)
+        crea_appartenenza(militare, sede, tipo=Appartenenza.MILITARE)
+        crea_appartenenza(infermiera, sede, tipo=Appartenenza.INFERMIERA)
+        crea_appartenenza(sostenitore, sede, tipo=Appartenenza.SOSTENITORE)
+        crea_appartenenza(donatore, sede, tipo=Appartenenza.DONATORE)
+
+        self.assertTrue(ordinario.ordinario)
+        self.assertTrue(dipendente.dipendente)
+        self.assertTrue(militare.militare)
+        self.assertTrue(infermiera.infermiera)
+        self.assertTrue(sostenitore.sostenitore)
+        self.assertTrue(donatore.est_donatore)
+
+        self.client.login(username=presidente.utenza.email, password='prova')
+        data = {
+            'info': 'bla bla',
+            'motivo': Dimissione.VOLONTARIE
+        }
+        for persona in (ordinario, dipendente, militare, infermiera, sostenitore, donatore):
+            response = self.client.post(reverse('us-dimissioni', args=(persona.pk,)), data=data)
+            self.assertContains(response, 'Dimissioni registrate')
+            persona.refresh_from_db()
+        self.assertFalse(ordinario.ordinario)
+        self.assertFalse(dipendente.dipendente)
+        self.assertFalse(militare.militare)
+        self.assertFalse(infermiera.infermiera)
+        self.assertFalse(sostenitore.sostenitore)
+        self.assertFalse(donatore.est_donatore)
+
+    def test_dimissione_volontario(self):
+        sede2 = crea_sede()
         presidente = crea_persona()
         crea_utenza(presidente, email=email_fittizzia())
         sostenitore1, sede, a = crea_persona_sede_appartenenza(presidente)
@@ -489,6 +530,13 @@ class TestBase(TestCase):
         a.save()
         socio1 = crea_persona()
         Appartenenza.objects.create(persona=socio1, sede=sede, inizio=poco_fa(), membro=Appartenenza.VOLONTARIO)
+        trasf = Trasferimento.objects.create(
+            destinazione=sede2,
+            persona=socio1,
+            richiedente=socio1,
+            motivo='test'
+        )
+        trasf.richiedi()
         sostenitore2 = crea_persona()
         Appartenenza.objects.create(persona=sostenitore2, sede=sede, inizio=poco_fa(), membro=Appartenenza.SOSTENITORE)
         socio2 = crea_persona()
