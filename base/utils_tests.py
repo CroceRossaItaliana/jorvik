@@ -91,14 +91,12 @@ def crea_locazione(dati=None, geo=False):
 
 
 def crea_appartenenza(persona, sede, tipo=Appartenenza.VOLONTARIO):
-    app = Appartenenza(
+    return Appartenenza.objects.create(
         persona=persona,
         sede=sede,
         membro=tipo,
         inizio="1980-12-10",
     )
-    app.save()
-    return app
 
 
 def crea_persona_sede_appartenenza(presidente=None):

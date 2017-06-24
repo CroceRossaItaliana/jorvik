@@ -23,7 +23,7 @@ from anagrafica.costanti import NAZIONALE, TERRITORIALE, REGIONALE, LOCALE, PROV
 from autenticazione.models import Utenza
 from base.utils import poco_fa
 from base.utils_tests import crea_persona, email_fittizzia, codice_fiscale_persona
-from veicoli.models import Autoparco
+from veicoli.models import Autoparco, Collocazione
 from base.geo import Locazione
 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Estensione
@@ -133,6 +133,7 @@ if args.esempio:
         print("Cancello i dati esistenti come richiesto")
         with transaction.atomic():
             from formazione.models import CorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase
+            Collocazione.objects.all().delete()
             PartecipazioneCorsoBase.objects.all().delete()
             LezioneCorsoBase.objects.all().delete()
             CorsoBase.objects.all().delete()
@@ -171,7 +172,11 @@ if args.esempio:
         locazione = Locazione.oggetto(indirizzo=random.sample(COMUNI.keys(), 1)[0])
         sede.locazione = locazione
         sede.save()
-        for membro in [Appartenenza.VOLONTARIO, Appartenenza.SOSTENITORE]:
+        if sede.estensione == REGIONALE:
+            tipi = [Appartenenza.VOLONTARIO, Appartenenza.SOSTENITORE, Appartenenza.ORDINARIO]
+        else:
+            tipi = [Appartenenza.VOLONTARIO, Appartenenza.SOSTENITORE]
+        for membro in tipi:
             for i in range(0, 25):  # Creo 20 volontari
                 p = crea_persona()
                 p.comune_nascita = random.sample(COMUNI.keys(), 1)[0]
