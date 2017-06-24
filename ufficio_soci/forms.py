@@ -396,6 +396,15 @@ class ModuloNuovaRicevuta(forms.Form):
 
         return data
 
+    def clean_data_versamento(self):
+        data = self.cleaned_data['data_versamento']
+        if data.year != now().year:
+            self.add_error(
+                'data_versamento',
+                'Non è possibile registrare quote sostenitore per un anno diverso da quello corrente.'
+            )
+        return data
+
 
 class ModuloFiltraEmissioneTesserini(forms.Form):
 
