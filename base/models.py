@@ -210,7 +210,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         if self.oggetto.autorizzazioni_set().filter(necessaria=True).count() == 0:
             self.oggetto.confermata = True
             self.oggetto.save()
-            self.oggetto.autorizzazione_concessa(modulo=modulo, auto=auto, notifiche_attive=notifiche_attive, data=None)
+            self.oggetto.autorizzazione_concessa(modulo=modulo, auto=auto, notifiche_attive=notifiche_attive, data=data)
             if self.oggetto.INVIA_NOTIFICA_CONCESSA and notifiche_attive:
                 self.notifica_concessa(auto=auto)
 

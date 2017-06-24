@@ -969,22 +969,29 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
             delega.termina(data=data)
-            if not delega.oggetto.delegati_attuali().exists():
+            if not delega.oggetto.delegati_attuali(al_giorno=data).exists():
                 for delegato_obiettivo in Delega.objects.filter(
-                        tipo=delega.oggetto.codice_obiettivo,
-                        oggetto_tipo=ContentType.objects.get_for_model(Sede),
-                        oggetto_id=delega.oggetto.sede_id
-                ):
-                    delega.oggetto.aggiungi_delegato(RESPONSABILE_AREA, delegato_obiettivo.persona)
+                    tipo=delega.oggetto.codice_obiettivo,
+                    oggetto_tipo=ContentType.objects.get_for_model(Sede),
+                    oggetto_id=delega.oggetto.sede_id,
+                    inizio__lte=data
+                ).filter(Q(fine__isnull=True) | Q(fine__gt=data)):
+                    delega.oggetto.aggiungi_delegato(
+                        RESPONSABILE_AREA, delegato_obiettivo.persona,
+                        inizio=mezzanotte_00(data + timedelta(days=1))
+                    )
 
         for delega in self.deleghe_attuali(tipo=REFERENTE):
             delega.termina(data=data)
-            if not delega.oggetto.referenti_attuali().exists():
-                for responsabile_area in delega.oggetto.area.delegati_attuali():
-                    delega.oggetto.aggiungi_delegato(REFERENTE, responsabile_area)
+            if not delega.oggetto.referenti_attuali(al_giorno=data).exists():
+                for responsabile_area in delega.oggetto.area.delegati_attuali(al_giorno=data):
+                    delega.oggetto.aggiungi_delegato(
+                        REFERENTE, responsabile_area,
+                        inizio=mezzanotte_00(data + timedelta(days=1))
+                    )
 
         # Tutte le altre deleghe le terminiamo e basta
-        for delega in self.deleghe_attuali():
+        for delega in self.deleghe_attuali(solo_attive=False):
             delega.termina(data=data)
 
         for partecipazione in self.partecipazioni.filter(turno__fine__gte=poco_fa()):
@@ -2088,9 +2095,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
         return ModuloConsentiTrasferimento
 
     def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
-        if data is None or not isinstance(data, date):
-            data = poco_fa()
-        data = datetime(data.year, data.month, data.day)
+        data = mezzanotte_00(data)
         if auto:
             self.protocollo_data = timezone.now()
             self.protocollo_numero = Autorizzazione.PROTOCOLLO_AUTO

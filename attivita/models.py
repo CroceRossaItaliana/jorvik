@@ -100,8 +100,8 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     def __str__(self):
         return self.nome
 
-    def referenti_attuali(self):
-        return self.delegati_attuali(tipo=REFERENTE)
+    def referenti_attuali(self, al_giorno=None):
+        return self.delegati_attuali(tipo=REFERENTE, al_giorno=al_giorno)
 
     @property
     def cancellabile(self):
