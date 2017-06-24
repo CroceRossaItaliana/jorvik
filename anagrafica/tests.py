@@ -180,33 +180,56 @@ class TestAnagrafica(TestCase):
             persona=trasferire, destinazione=sede2, richiedente=trasferire, motivo='test'
         )
         trasferimento.richiedi()
+        data_trasferimento = poco_fa() + datetime.timedelta(days=4)
         modulo = ModuloConsentiTrasferimento({'protocollo_numero': 1, 'protocollo_data': now()})
         self.assertTrue(modulo.is_valid())
         for autorizzazione in trasferimento.autorizzazioni:
-            autorizzazione.concedi(presidente1, modulo=modulo)
+            autorizzazione.concedi(presidente1, modulo=modulo, data=data_trasferimento)
 
         trasferire.refresh_from_db()
-
+        trasferimento.refresh_from_db()
+        # Eseguiamo verifica alla data attuale, nulla dovrebbe essere cambiato
         # Tutti i dati della persona trasferita sono aggiornati
-        self.assertTrue(trasferire.comitato_riferimento(), sede2)
-        self.assertFalse(trasferire.in_riserva)
-        self.assertFalse(trasferire.trasferimenti_in_attesa.exists())
-        self.assertFalse(trasferire.autorizzazioni_in_attesa().exists())
-        self.assertFalse(trasferire.riserve.filter(fine__isnull=True).exists())
-        self.assertFalse(trasferire.appartenenze_attuali(membro=Appartenenza.ESTESO).exists())
-        self.assertFalse(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).exists())
-        self.assertFalse(trasferire.deleghe_attuali().exists())
-        self.assertIsNotNone(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first().precedente)
+        self.assertEqual(trasferire.comitato_riferimento(), sede1)
+        self.assertTrue(trasferire.in_riserva)
+        self.assertFalse(trasferire.trasferimenti_in_attesa.exists())  # Non in attesa perché già approvato
+        self.assertFalse(trasferire.autorizzazioni_in_attesa().exists())  # Non in attesa perché già approvato
+        self.assertFalse(trasferire.riserve.filter(fine__isnull=True).exists())  # Non in attesa perché già approvato
+        self.assertTrue(trasferire.appartenenze_attuali(membro=Appartenenza.ESTESO).exists())
+        self.assertTrue(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).exists())
+        self.assertTrue(trasferire.deleghe_attuali(solo_attive=False).exists())
+        self.assertIsNone(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first().precedente)
 
         # Aree e attività sono passati di competenza a chi di dovere
-        self.assertEqual(area.deleghe_attuali().count(), 1)
-        self.assertEqual(area.deleghe_attuali().get().persona, persona_1)
-        self.assertEqual(area_2.deleghe_attuali().count(), 1)
-        self.assertEqual(area_2.deleghe_attuali().get().persona, persona_2)
-        self.assertEqual(a1.deleghe_attuali().count(), 1)
-        self.assertEqual(a1.deleghe_attuali().get().persona, persona_1)
-        self.assertEqual(a2.deleghe_attuali().count(), 1)
-        self.assertEqual(a2.deleghe_attuali().get().persona, persona_2)
+        self.assertEqual(area.deleghe_attuali(solo_attive=False).count(), 2)
+        self.assertEqual(area_2.deleghe_attuali(solo_attive=False).count(), 1)
+        self.assertEqual(area_2.deleghe_attuali(solo_attive=False).get().persona, trasferire)
+        self.assertEqual(a1.deleghe_attuali(solo_attive=False).count(), 1)
+        self.assertEqual(a1.deleghe_attuali(solo_attive=False).get().persona, trasferire)
+        self.assertEqual(a2.deleghe_attuali(solo_attive=False).count(), 2)
+
+        # Eseguiamo verifica alla data del trasferimento, i dati dovrebbero essere aggiornati
+        with freeze_time(data_trasferimento):
+            # Tutti i dati della persona trasferita sono aggiornati
+            self.assertEqual(trasferire.comitato_riferimento(), sede2)
+            self.assertFalse(trasferire.in_riserva)
+            self.assertFalse(trasferire.trasferimenti_in_attesa.exists())
+            self.assertFalse(trasferire.autorizzazioni_in_attesa().exists())
+            self.assertFalse(trasferire.riserve.filter(fine__isnull=True).exists())
+            self.assertFalse(trasferire.appartenenze_attuali(membro=Appartenenza.ESTESO).exists())
+            self.assertFalse(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).exists())
+            self.assertFalse(trasferire.deleghe_attuali(solo_attive=False).exists())
+            self.assertIsNotNone(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first().precedente)
+
+            # Aree e attività sono passati di competenza a chi di dovere
+            self.assertEqual(area.deleghe_attuali(solo_attive=False).count(), 1)
+            self.assertEqual(area.deleghe_attuali(solo_attive=False).get().persona, persona_1)
+            self.assertEqual(area_2.deleghe_attuali(solo_attive=False).count(), 1)
+            self.assertEqual(area_2.deleghe_attuali(solo_attive=False).get().persona, persona_2)
+            self.assertEqual(a1.deleghe_attuali(solo_attive=False).count(), 1)
+            self.assertEqual(a1.deleghe_attuali(solo_attive=False).get().persona, persona_1)
+            self.assertEqual(a2.deleghe_attuali(solo_attive=False).count(), 1)
+            self.assertEqual(a2.deleghe_attuali(solo_attive=False).get().persona, persona_2)
 
     def test_appartenenza_modificabile_con_campo_precedente(self):
 
