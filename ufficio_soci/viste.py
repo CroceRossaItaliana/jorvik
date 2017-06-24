@@ -951,6 +951,9 @@ def us_ricevute_nuova(request, me):
         data_versamento = modulo.cleaned_data['data_versamento']
 
         appartenenza = persona.appartenenze_attuali(al_giorno=data_versamento, sede__in=sedi).first()
+        appartenenza_sostenitore = persona.appartenenze_attuali(
+            al_giorno=data_versamento, sede__in=sedi, membro=Appartenenza.SOSTENITORE
+        ).first()
 
         comitato = None
 
@@ -966,7 +969,7 @@ def us_ricevute_nuova(request, me):
                                                 'come Volontario o Sostenitore per alla Sede o '
                                                 'partecipante confermato ad un corso base attivo.')
 
-        elif tipo_ricevuta == Quota.QUOTA_SOSTENITORE and (not appartenenza or appartenenza.membro != Appartenenza.SOSTENITORE):
+        elif tipo_ricevuta == Quota.QUOTA_SOSTENITORE and not appartenenza_sostenitore:
             modulo.add_error('persona', 'Questa persona non è registrata come Sostenitore CRI '
                                         'della Sede. Non è quindi possibile registrare la Ricevuta '
                                         'come Sostenitore CRI.')
@@ -982,6 +985,19 @@ def us_ricevute_nuova(request, me):
                                    messaggio="Per poter rilasciare ricevute, è necessario impostare un "
                                              "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
                                              "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+
+        elif (
+                tipo_ricevuta == Quota.QUOTA_SOSTENITORE and
+                Quota.objects.filter(
+                    persona=persona, sede=comitato, anno=data_versamento.year, tipo=Quota.QUOTA_SOSTENITORE,
+                    stato=Quota.REGISTRATA
+                ).exists()
+        ):
+            return errore_generico(
+                request, me, titolo="Quota già registrata",
+                messaggio="La quota per l'anno %s è già stata registrata per la Sede del Comitato di %s." % (
+                    data_versamento.year, comitato.nome_completo
+                ))
 
         else:
             # OK, paga quota!
