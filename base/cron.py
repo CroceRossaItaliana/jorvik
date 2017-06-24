@@ -1,6 +1,7 @@
 from django_cron import CronJobBase, Schedule
 
 from base.models import Allegato, Autorizzazione
+from formazione.models import Aspirante
 
 
 class CronCancellaFileScaduti(CronJobBase):
@@ -38,3 +39,17 @@ class CronRichiesteInAttesa(CronJobBase):
 
     def do(self):
         Autorizzazione.notifiche_richieste_in_attesa()
+
+
+class PulisciAspirantiVolontari(CronJobBase):
+
+    RUN_EVERY_HOURS = 24
+    RUN_EVERY_MINS = RUN_EVERY_HOURS * 60
+
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
+    code = 'base.formazione.cancella_aspiranti_reclamati'
+
+    def do(self):
+        print('Inizio cancellazione aspiranti con appartenenze come volontari')
+        Aspirante.pulisci_volontari()
+        print('Fine cancellazione')
