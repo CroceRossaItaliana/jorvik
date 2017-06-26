@@ -5,6 +5,7 @@ from datetime import timedelta
 from unittest import skipIf
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
@@ -12,13 +13,15 @@ from django.test import TestCase
 from django.utils import timezone
 from django.utils.encoding import force_text
 
-from anagrafica.models import Appartenenza, Persona
+from anagrafica.models import Appartenenza, Persona, Delega, Estensione
+from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
 from autenticazione.utils_test import TestFunzionale
 from base.geo import Locazione
 from base.models import Autorizzazione
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia, codice_fiscale, crea_utenza, \
     crea_sede, crea_appartenenza
+from base.viste import autorizzazione_nega, autorizzazione_concedi
 from formazione.forms import ModuloVerbaleAspiranteCorsoBase
 from jorvik.settings import GOOGLE_KEY
 from .models import CorsoBase, Aspirante, InvitoCorsoBase, PartecipazioneCorsoBase
@@ -673,6 +676,130 @@ class TestCorsi(TestCase):
         aspirante1 = Persona.objects.get(pk=aspirante1.pk)
         with self.assertRaises(ObjectDoesNotExist):
             self.assertFalse(aspirante1.aspirante)
+
+    def test_richieste_processabili(self):
+        presidente = crea_persona()
+        presidente.email_contatto = email_fittizzia()
+        presidente.save()
+        crea_utenza(presidente, presidente.email_contatto)
+        sede = crea_sede(presidente)
+        crea_appartenenza(sede=sede, persona=presidente)
+        sede2 = crea_sede(presidente)
+
+        aspirante1 = crea_persona()
+        aspirante1.email_contatto = email_fittizzia()
+        aspirante1.codice_fiscale = codice_fiscale()
+        aspirante1.save()
+        a = Aspirante(persona=aspirante1)
+        a.locazione = sede.locazione
+        a.save()
+
+        est = Estensione.objects.create(
+            destinazione=sede2,
+            persona=presidente,
+            richiedente=presidente,
+            motivo='test'
+        )
+        est.richiedi()
+
+        oggi = poco_fa()
+        corso1 = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi + timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+        partecipazione1 = PartecipazioneCorsoBase.objects.create(persona=aspirante1, corso=corso1)
+        partecipazione1.richiedi()
+
+        corso2 = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi - timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+        partecipazione2 = PartecipazioneCorsoBase.objects.create(persona=aspirante1, corso=corso2)
+        partecipazione2.richiedi()
+
+        corso3 = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi - timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+        partecipazione3 = PartecipazioneCorsoBase.objects.create(persona=aspirante1, corso=corso3)
+        partecipazione3.richiedi()
+
+        ctype = ContentType.objects.get_for_model(CorsoBase)
+        Delega.objects.create(
+            persona=presidente, tipo=DIRETTORE_CORSO, stato=Delega.ATTIVA, firmatario=presidente, inizio=poco_fa(),
+            oggetto_id=corso1.pk, oggetto_tipo=ctype
+        )
+        Delega.objects.create(
+            persona=presidente, tipo=DIRETTORE_CORSO, stato=Delega.ATTIVA, firmatario=presidente, inizio=poco_fa(),
+            oggetto_id=corso2.pk, oggetto_tipo=ctype
+        )
+        Delega.objects.create(
+            persona=presidente, tipo=DIRETTORE_CORSO, stato=Delega.ATTIVA, firmatario=presidente, inizio=poco_fa(),
+            oggetto_id=corso3.pk, oggetto_tipo=ctype
+        )
+
+        url_presenti = []
+        url_assenti = []
+        richieste_non_processabili = partecipazione1.autorizzazioni.all()
+        for richiesta in richieste_non_processabili:
+            self.assertFalse(PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta))
+            url_assenti.append(reverse('autorizzazioni-concedi', args=(richiesta.pk,)))
+            url_assenti.append(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+
+        non_processabili = PartecipazioneCorsoBase.richieste_non_processabili(Autorizzazione.objects.all())
+        self.assertEqual(list(non_processabili), [richiesta.pk for richiesta in richieste_non_processabili])
+
+        richieste_processabili = partecipazione2.autorizzazioni.all() | partecipazione3.autorizzazioni.all()
+        for richiesta in richieste_processabili:
+            self.assertTrue(PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta))
+            url_presenti.append(reverse('autorizzazioni-concedi', args=(richiesta.pk,)))
+            url_presenti.append(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+
+        # Mettendo nel mezzo anche autorizzazioni diverse si verifica che il meccanismo non interferisca
+        richieste_estensioni = est.autorizzazioni.all()
+        for richiesta in richieste_estensioni:
+            pass
+            url_presenti.append(reverse('autorizzazioni-concedi', args=(richiesta.pk,)))
+            url_presenti.append(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+
+        self.client.login(email=presidente.email_contatto, password='prova')
+        response = self.client.get(reverse('autorizzazioni-aperte'))
+        for url in url_presenti:
+            self.assertContains(response, url)
+        for url in url_assenti:
+            self.assertNotContains(response, url)
+        self.assertContains(response, 'Corso non ancora iniziato, impossibile processare la richiesta.')
+
+        for url in url_assenti:
+            response = self.client.get(url)
+            self.assertContains(response, 'Richiesta non processabile')
+
+        for richiesta in partecipazione2.autorizzazioni.all():
+            response = self.client.get(reverse('autorizzazioni-concedi', args=(richiesta.pk,)))
+            self.assertContains(response, 'Per dare consenso a questa richiesta')
+
+        for richiesta in partecipazione3.autorizzazioni.all():
+            response = self.client.get(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+            self.assertContains(response, 'Per negare questa richiesta')
+
+        for richiesta in est.autorizzazioni.all():
+            response = self.client.get(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+            self.assertContains(response, 'Per negare questa richiesta')
 
 
 class TestFunzionaleFormazione(TestFunzionale):

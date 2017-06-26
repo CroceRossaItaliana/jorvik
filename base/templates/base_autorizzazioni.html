@@ -11,17 +11,19 @@
         Suggerimento &mdash; Cliccando su 'Conferma' o 'Nega' con il tasto centrale del mouse,
             aprira la pagina in una nuova finestra.
     </div>
-
     {% for richiesta in richieste %}
-
         <div class="panel panel-default">
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-9">
                         {% include richiesta.template_path %}
-
                     </div>
                     <div class="col-md-3">
+                        {% if richiesta.pk in richieste_bloccate.corsi %}
+                            <span class="text-warning grassetto">
+                            <i class="fa fa-fw fa-warning"></i>
+                            Corso non ancora iniziato, impossibile processare la richiesta.
+                        {% else %}
                         <div class=" btn-group-vertical btn-group-sm btn-block">
                             <a class="btn btn-success" href="/autorizzazioni/{{ richiesta.pk }}/concedi/">
                                 <i class="fa fa-fw fa-check"></i>
@@ -34,9 +36,8 @@
                             </a>
 
                         </div>
-
+                        {% endif %}
                     </div>
-
                 </div>
 
             </div>
