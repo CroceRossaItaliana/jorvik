@@ -8,6 +8,7 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client
 from django.test import TestCase
+from django.utils.encoding import force_text
 from django.utils.six import text_type
 from django.utils.timezone import now
 from freezegun import freeze_time
@@ -1740,9 +1741,8 @@ class TestAnagrafica(TestCase):
         for x in [italia, _sicilia, __catania, ___maletto, ___giarre, ____riposto, ____salfio, lombardia, _milano]:
             x.refresh_from_db()
 
-
         self.assertTrue(
-            italia.espandi(includi_me=True, pubblici=True).count() == (italia.get_descendants().count() + 1),
+            italia.espandi(includi_me=True, pubblici=True).count() == (italia.get_descendants().count()),
             msg="Espansione dal Nazionale ritorna tutti i Comitati - inclusa Italia",
         )
 
@@ -2291,7 +2291,7 @@ class TestAnagrafica(TestCase):
         utente.is_superuser = True
         utente.save()
 
-        self.client.login(username=utente.email, password='prova')
+        self.assertTrue(self.client.login(username=utente.email, password='prova'))
         data = {
             'nome': sede1.nome,
             'estensione': sede1.estensione,
