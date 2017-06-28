@@ -74,23 +74,34 @@ class ModelloAlbero(MPTTModel, ModelloSemplice):
     nome = models.CharField(max_length=64, unique=False, db_index=True)
     genitore = TreeForeignKey('self', null=True, blank=True, related_name='figli')
 
-    def ottieni_superiori(self, includimi=False):
-        return self.get_ancestors(include_self=includimi)
+    def ottieni_superiori(self, includimi=False, solo_attivi=True):
+        sedi = self.get_ancestors(include_self=includimi).filter(attiva=solo_attivi)
+        if solo_attivi:
+            sedi = sedi.filter(attiva=True, genitore__attiva=True)
+        return sedi
 
-    def ottieni_figli(self):
-        return self.get_children()
+    def ottieni_figli(self, solo_attivi=True):
+        sedi = self.get_children().filter(attiva=solo_attivi)
+        if solo_attivi:
+            sedi = sedi.filter(attiva=True, genitore__attiva=True)
+        return sedi
 
-    def ottieni_discendenti(self, includimi=False):
-        return self.get_descendants(include_self=includimi)
+    def ottieni_discendenti(self, includimi=False, solo_attivi=True):
+        sedi = self.get_descendants(include_self=includimi)
+        if solo_attivi:
+            sedi = sedi.filter(attiva=True, genitore__attiva=True)
+        return sedi
 
-    def ottieni_fratelli(self, includimi=False):
-        return self.get_siblings(include_self=includimi)
+    def ottieni_fratelli(self, includimi=False, solo_attivi=True):
+        sedi = self.get_siblings(include_self=includimi).filter(attiva=solo_attivi)
+        if solo_attivi:
+            sedi = sedi.filter(attiva=True, genitore__attiva=True)
+        return sedi
 
-    def ottieni_numero_figli(self, includimi=False):
-        n = self.get_descendant_count()
-        if includimi:
-            n += 1
-        return n
+    def ottieni_numero_figli(self, includimi=False, solo_attivi=True):
+        # Si potrebbe usare ``get_descendants_count`` ma non potremmo filtrare sugli attivi
+        sedi = self.ottieni_discendenti(includimi, solo_attivi)
+        return sedi.count()
 
     def figlio_di(self, altro, includimi=True):
         return self.is_descendant_of(altro, include_self=includimi)

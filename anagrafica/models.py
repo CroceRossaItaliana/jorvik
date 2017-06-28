@@ -1585,7 +1585,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     def save(self, *args, **kwargs):
         super(Sede, self).save(*args, **kwargs)
         if self.__attiva_default is not None and not self.attiva and self.__attiva_default != self.attiva:
-            for sottosede in self.get_children():
+            for sottosede in self.ottieni_figli():
                 sottosede.attiva = False
                 sottosede.save()
 
@@ -1681,7 +1681,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
         # Inizia la ricerca dalla mia discendenza o da me solamente?
         if figli:
-            f = Appartenenza.objects.filter(sede__in=self.get_descendants(True))
+            f = Appartenenza.objects.filter(sede__in=self.ottieni_discendenti(True))
         else:
             f = self.appartenenze
 
@@ -1709,7 +1709,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         :return:
         """
         if figli:
-            kwargs.update({'sede__in': self.get_descendants(include_self=True)})
+            kwargs.update({'sede__in': self.ottieni_discendenti(includimi=True)})
         else:
             kwargs.update({'sede': self.pk})
 
@@ -1764,7 +1764,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         :param includi_me: Se True, include me stesso.
         :return: QuerySet.
         """
-        return self.get_descendants(include_self=includi_me)
+        return self.ottieni_discendenti(includimi=includi_me)
 
     @property
     def comitato(self):
@@ -1818,11 +1818,11 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
         # Sede pubblica... ritorna tutto sotto di se.
         if pubblici and self.estensione in [NAZIONALE, REGIONALE]:
-            queryset = self.get_descendants(include_self=includi_me)
+            queryset = self.ottieni_discendenti(includimi=includi_me)
 
         # Sede privata... espandi con unita' territoriali.
         elif self.estensione in [PROVINCIALE, LOCALE]:
-            queryset = self.get_children().filter(estensione=TERRITORIALE) | self.queryset_modello()
+            queryset = self.ottieni_figli().filter(estensione=TERRITORIALE) | self.queryset_modello()
 
         # Sede territoriale. Solo me, se richiesto.
         elif includi_me:
@@ -1844,11 +1844,10 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         Ritorna un elenco di Comitati sottostanti.
         Es. Regionale -> QuerySet Provinciali
         """
-        return self.get_children().filter(estensione__in=(REGIONALE, PROVINCIALE,
-                                                          LOCALE))
+        return self.ottieni_figli().filter(estensione__in=(REGIONALE, PROVINCIALE, LOCALE))
 
     def unita_sottostanti(self):
-        return self.get_children().filter(estensione=TERRITORIALE)
+        return self.ottieni_figli().filter(estensione=TERRITORIALE)
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):

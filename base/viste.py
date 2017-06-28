@@ -257,7 +257,7 @@ def informazioni_sedi(request, me):
     Mostra un elenco dei Comitato, su una mappa, ed esce.
     """
     contesto = {
-        'sedi': Sede.objects.all(),
+        'sedi': Sede.objects.filter(attiva=True),
         'massimo_lista': REGIONALE,
     }
     return 'base_informazioni_sedi.html', contesto
@@ -271,7 +271,7 @@ def informazioni_sede(request, me, slug):
     """
     vicini_km = 15
     sede = get_object_or_404(Sede, slug=slug)
-    vicini = sede.vicini(queryset=Sede.objects.all(), km=vicini_km)\
+    vicini = sede.vicini(queryset=Sede.objects.filter(attiva=True), km=vicini_km)\
         .exclude(pk__in=sede.unita_sottostanti().values_list('id', flat=True))\
         .exclude(pk=sede.pk)
 
