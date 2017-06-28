@@ -1585,7 +1585,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     def save(self, *args, **kwargs):
         super(Sede, self).save(*args, **kwargs)
         if self.__attiva_default is not None and not self.attiva and self.__attiva_default != self.attiva:
-            for sottosede in self.ottieni_figli():
+            for sottosede in self.ottieni_figli(solo_attivi=False):
                 sottosede.attiva = False
                 sottosede.save()
 
