@@ -103,7 +103,7 @@ class ModuloStatisticheAttivita(forms.Form):
         (MESE, "Per mese"),
     )
 
-    sedi = forms.ModelMultipleChoiceField(queryset=Sede.objects.all())
+    sedi = forms.ModelMultipleChoiceField(queryset=Sede.objects.filter(attiva=True))
     periodo = forms.ChoiceField(choices=SCELTE, initial=SETTIMANA)
 
 
