@@ -6,8 +6,10 @@ Questo modulo definisce i modelli del modulo di Formazione di Gaia.
 import datetime
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.db.transaction import atomic
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.timezone import now
 
@@ -669,6 +671,26 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
             z.aggiungi_file(self.genera_attestato().file.path)
         z.comprimi_e_salva("%s.zip" % self.persona.codice_fiscale)
         return z
+
+    @classmethod
+    def controlla_richiesta_processabile(cls, richiesta):
+        tipo = ContentType.objects.get_for_model(cls)
+        if richiesta.oggetto_tipo != tipo:
+            return True
+        richiesta_partecipazione = get_object_or_404(cls, pk=richiesta.oggetto_id)
+        if richiesta_partecipazione.corso.data_inizio > timezone.now():
+            return False
+        return True
+
+    @classmethod
+    def richieste_non_processabili(cls, richieste):
+        tipo = ContentType.objects.get_for_model(cls)
+        partecipazioni_da_bloccare = PartecipazioneCorsoBase.objects.filter(
+            corso__data_inizio__gt=timezone.now()).values_list('pk', flat=True
+                                                               )
+        return richieste.filter(
+            oggetto_tipo=tipo, oggetto_id__in=partecipazioni_da_bloccare
+        ).values_list('pk', flat=True)
 
 
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):

@@ -148,7 +148,7 @@ class SedeAutocompletamento(AutocompletamentoBase):
         return super(SedeAutocompletamento, self).choices_for_request()
 
 
-class ComitatoAutocompletamento(AutocompletamentoBase):
+class ComitatoAutocompletamento(SedeAutocompletamento):
     search_fields = ['nome', 'genitore__nome', ]
     model = Sede
 
@@ -160,7 +160,7 @@ class ComitatoAutocompletamento(AutocompletamentoBase):
         return super(ComitatoAutocompletamento, self).choices_for_request()
 
 
-class SedeTrasferimentoAutocompletamento(AutocompletamentoBase):
+class SedeTrasferimentoAutocompletamento(SedeAutocompletamento):
     search_fields = ['nome', 'genitore__nome', ]
     model = Sede
 

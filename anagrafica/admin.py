@@ -78,8 +78,8 @@ class AdminSede(ReadonlyAdminMixin, MPTTModelAdmin):
     list_display_links = ('nome', 'estensione',)
     inlines = [InlineDelegaSede,]
 
-# admin.site.register(Appartenenza)
 
+# admin.site.register(Appartenenza)
 @admin.register(Appartenenza)
 class AdminAppartenenza(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["membro", "persona__nome", "persona__cognome", "persona__codice_fiscale",

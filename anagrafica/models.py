@@ -471,7 +471,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.membro(Appartenenza.DIPENDENTE, **kwargs)
 
     @property
-    def donatore(self, **kwargs):
+    def est_donatore(self, **kwargs): # Nome differente perché confligge con il descrittore della relazione inversa con Donatore
         """
         Controlla se membro donatore
         """
@@ -490,6 +490,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         Controlla se membro infermiera
         """
         return self.membro(Appartenenza.INFERMIERA, **kwargs)
+
+    @property
+    def sostenitore(self, **kwargs):
+        """
+        Controlla se membro sostenitore
+        """
+        return self.membro(Appartenenza.SOSTENITORE, **kwargs)
 
     @property
     def applicazioni_disponibili(self):
@@ -1478,6 +1485,19 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                                    validators=[valida_partita_iva])
 
     attiva = models.BooleanField("Attiva", default=True, db_index=True)
+    __attiva_default = None
+
+    def __init__(self, *args, **kwargs):
+        super(Sede, self).__init__(*args, **kwargs)
+        # Questo attributo a runtime ci serve per verificare durante il save se il flag "attiva" è stato modficato
+        self.__attiva_default = self.attiva
+
+    def save(self, *args, **kwargs):
+        super(Sede, self).save(*args, **kwargs)
+        if self.__attiva_default is not None and not self.attiva and self.__attiva_default != self.attiva:
+            for sottosede in self.get_children():
+                sottosede.attiva = False
+                sottosede.save()
 
     def sorgente_slug(self):
         if self.estensione == PROVINCIALE:
@@ -1643,7 +1663,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         if not delegati.exists():
             delegati = self.comitato.delegati_attuali(tipo=PRESIDENTE)
         return delegati
-
 
     @property
     def nome_completo(self):
@@ -2369,7 +2388,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
             App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=poco_fa())
             #TODO reperibilita'
             [
-                [x.ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
+                [x.autorizzazioni_ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
                 for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
             ]
         Appartenenza.query_attuale(
