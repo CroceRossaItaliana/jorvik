@@ -75,13 +75,13 @@ class ModelloAlbero(MPTTModel, ModelloSemplice):
     genitore = TreeForeignKey('self', null=True, blank=True, related_name='figli')
 
     def ottieni_superiori(self, includimi=False, solo_attivi=True):
-        sedi = self.get_ancestors(include_self=includimi).filter(attiva=solo_attivi)
+        sedi = self.get_ancestors(include_self=includimi)
         if solo_attivi:
             sedi = sedi.filter(attiva=True, genitore__attiva=True)
         return sedi
 
     def ottieni_figli(self, solo_attivi=True):
-        sedi = self.get_children().filter(attiva=solo_attivi)
+        sedi = self.get_children()
         if solo_attivi:
             sedi = sedi.filter(attiva=True, genitore__attiva=True)
         return sedi
@@ -93,7 +93,7 @@ class ModelloAlbero(MPTTModel, ModelloSemplice):
         return sedi
 
     def ottieni_fratelli(self, includimi=False, solo_attivi=True):
-        sedi = self.get_siblings(include_self=includimi).filter(attiva=solo_attivi)
+        sedi = self.get_siblings(include_self=includimi)
         if solo_attivi:
             sedi = sedi.filter(attiva=True, genitore__attiva=True)
         return sedi
