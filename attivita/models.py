@@ -12,7 +12,7 @@ from django.db import models
 from django.db.models import Q, F, Sum
 from django.utils import timezone
 
-from anagrafica.permessi.applicazioni import REFERENTE
+from anagrafica.permessi.applicazioni import REFERENTE, OBIETTIVI
 from anagrafica.permessi.costanti import MODIFICA
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI, INCARICO_PRESIDENZA
 from base.files import PDF
@@ -100,8 +100,8 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
     def __str__(self):
         return self.nome
 
-    def referenti_attuali(self):
-        return self.delegati_attuali(tipo=REFERENTE)
+    def referenti_attuali(self, al_giorno=None):
+        return self.delegati_attuali(tipo=REFERENTE, al_giorno=al_giorno)
 
     @property
     def cancellabile(self):
@@ -597,7 +597,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
             self.turno.attivita.pk, self.pk,
         )
 
-    def richiedi(self):
+    def richiedi(self, notifiche_attive=True):
         """
         Richiede autorizzazione di partecipazione all'attività.
         :return:
@@ -614,6 +614,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
             invia_notifiche=self.turno.attivita.referenti_attuali(),
             auto=Autorizzazione.NG_AUTO,
             scadenza=self.APPROVAZIONE_AUTOMATICA,
+            notifiche_attive=notifiche_attive
         )
 
         # Se fuori sede, chiede autorizzazione al Presidente del mio Comitato.
@@ -628,9 +629,10 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                 invia_notifiche=self.persona.sede_riferimento().presidente(),
                 auto=Autorizzazione.NG_AUTO,
                 scadenza=self.APPROVAZIONE_AUTOMATICA,
+                notifiche_attive=notifiche_attive
             )
 
-    def autorizzazione_concessa(self, modulo, auto=False):
+    def autorizzazione_concessa(self, modulo, auto=False, notifiche_attive=True, data=None):
         """
         (Automatico)
         Invia notifica di autorizzazione concessa.
@@ -638,7 +640,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         # TODO
         pass
 
-    def autorizzazione_negata(self, modulo=None, auto=False):
+    def autorizzazione_negata(self, modulo=None, auto=False, notifiche_attive=True, data=None):
         """
         (Automatico)
         Invia notifica di autorizzazione negata.
@@ -681,3 +683,7 @@ class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
             self.sede.nome_completo, self.obiettivo,
             self.nome,
         )
+
+    @property
+    def codice_obiettivo(self):
+        return OBIETTIVI[self.obiettivo]

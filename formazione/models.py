@@ -6,8 +6,10 @@ Questo modulo definisce i modelli del modulo di Formazione di Gaia.
 import datetime
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.db.transaction import atomic
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.timezone import now
 
@@ -409,25 +411,26 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
             self.persona, self.corso
         )
 
-    def autorizzazione_concessa(self, modulo=None, auto=False):
+    def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
         with atomic():
             corso = self.corso
             partecipazione = PartecipazioneCorsoBase.objects.create(persona=self.persona, corso=self.corso)
             partecipazione.autorizzazione_concessa()
-            Messaggio.costruisci_e_invia(
-                oggetto="Iscrizione a Corso Base",
-                modello="email_corso_base_iscritto.html",
-                corpo={
-                    "persona": self.persona,
-                    "corso": self.corso,
-                },
-                mittente=self.invitante,
-                destinatari=[self.persona]
-            )
+            if notifiche_attive:
+                Messaggio.costruisci_e_invia(
+                    oggetto="Iscrizione a Corso Base",
+                    modello="email_corso_base_iscritto.html",
+                    corpo={
+                        "persona": self.persona,
+                        "corso": self.corso,
+                    },
+                    mittente=self.invitante,
+                    destinatari=[self.persona]
+                )
             self.delete()
             return corso
 
-    def autorizzazione_negata(self, modulo=None, auto=False):
+    def autorizzazione_negata(self, modulo=None, auto=False, notifiche_attive=True, data=None):
         corso = self.corso
         self.delete()
         return corso
@@ -436,7 +439,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
     def cancella_scaduti(cls):
         cls.objects.filter(creazione__lt=now() - datetime.timedelta(days=settings.FORMAZIONE_VALIDITA_INVITI)).delete()
 
-    def richiedi(self):
+    def richiedi(self, notifiche_attive=True):
         self.autorizzazione_richiedi(
             self.invitante,
             (
@@ -445,6 +448,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
             invia_notifiche=self.persona,
             auto=Autorizzazione.NG_AUTO,
             scadenza=self.APPROVAZIONE_AUTOMATICA,
+            notifiche_attive=notifiche_attive,
         )
 
     def disiscrivi(self, mittente=None):
@@ -547,7 +551,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 
     RICHIESTA_NOME = "Iscrizione Corso Base"
 
-    def autorizzazione_concessa(self, modulo=None, auto=False):
+    def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
         # Quando un aspirante viene iscritto, tutte le richieste presso altri corsi devono essere cancellati.
 
         # Cancella tutte altre partecipazioni con esito pending - ce ne puo' essere solo una.
@@ -556,13 +560,14 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     def ritira(self):
         self.autorizzazioni_ritira()
 
-    def richiedi(self):
+    def richiedi(self, notifiche_attive=True):
         self.autorizzazione_richiedi(
             self.persona,
                 (
                     (INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI, self.corso)
                 ),
             invia_notifiche=self.corso.delegati_attuali(),
+            notifiche_attive=notifiche_attive
         )
 
     @property
@@ -669,6 +674,26 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
             z.aggiungi_file(self.genera_attestato().file.path)
         z.comprimi_e_salva("%s.zip" % self.persona.codice_fiscale)
         return z
+
+    @classmethod
+    def controlla_richiesta_processabile(cls, richiesta):
+        tipo = ContentType.objects.get_for_model(cls)
+        if richiesta.oggetto_tipo != tipo:
+            return True
+        richiesta_partecipazione = get_object_or_404(cls, pk=richiesta.oggetto_id)
+        if richiesta_partecipazione.corso.data_inizio > timezone.now():
+            return False
+        return True
+
+    @classmethod
+    def richieste_non_processabili(cls, richieste):
+        tipo = ContentType.objects.get_for_model(cls)
+        partecipazioni_da_bloccare = PartecipazioneCorsoBase.objects.filter(
+            corso__data_inizio__gt=timezone.now()).values_list('pk', flat=True
+                                                               )
+        return richieste.filter(
+            oggetto_tipo=tipo, oggetto_id__in=partecipazioni_da_bloccare
+        ).values_list('pk', flat=True)
 
 
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):

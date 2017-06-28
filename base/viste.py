@@ -13,6 +13,7 @@ from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, render_to_response, get_object_or_404, redirect
 from django.template.response import TemplateResponse
+from django.utils import timezone
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 # Le viste base vanno qui.
@@ -256,7 +257,7 @@ def informazioni_sedi(request, me):
     Mostra un elenco dei Comitato, su una mappa, ed esce.
     """
     contesto = {
-        'sedi': Sede.objects.all(),
+        'sedi': Sede.objects.filter(attiva=True),
         'massimo_lista': REGIONALE,
     }
     return 'base_informazioni_sedi.html', contesto
@@ -270,7 +271,7 @@ def informazioni_sede(request, me, slug):
     """
     vicini_km = 15
     sede = get_object_or_404(Sede, slug=slug)
-    vicini = sede.vicini(queryset=Sede.objects.all(), km=vicini_km)\
+    vicini = sede.vicini(queryset=Sede.objects.filter(attiva=True), km=vicini_km)\
         .exclude(pk__in=sede.unita_sottostanti().values_list('id', flat=True))\
         .exclude(pk=sede.pk)
 
@@ -308,9 +309,9 @@ def autorizzazioni(request, me, content_type_pk=None):
     """
     Mostra elenco delle autorizzazioni in attesa.
     """
-
+    richieste_bloccate = dict()
     richieste = me._autorizzazioni_in_attesa().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
-
+    richieste_bloccate['corsi'] = PartecipazioneCorsoBase.richieste_non_processabili(richieste)
     if 'ordine' in request.GET:
         if request.GET['ordine'] == 'ASC':
             request.session['autorizzazioni_ordine'] = ORDINE_ASCENDENTE
@@ -348,6 +349,7 @@ def autorizzazioni(request, me, content_type_pk=None):
 
     contesto = {
         "richieste": richieste,
+        "richieste_bloccate": richieste_bloccate,
         "sezioni": sezioni,
         "content_type_pk": int(content_type_pk) if content_type_pk else None,
     }
@@ -369,6 +371,13 @@ def autorizzazione_concedi(request, me, pk=None):
         return errore_generico(request, me,
             titolo="Richiesta non trovata",
             messaggio="E' possibile che la richiesta sia stata già approvata o respinta da qualcun altro.",
+            torna_titolo="Richieste in attesa",
+            torna_url=torna_url,
+        )
+    if not PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta):
+        return errore_generico(request, me,
+            titolo="Richiesta non processabile",
+            messaggio="Questa richiesta non può essere processata.",
             torna_titolo="Richieste in attesa",
             torna_url=torna_url,
         )
@@ -407,13 +416,23 @@ def autorizzazione_nega(request, me, pk=None):
     """
     richiesta = get_object_or_404(Autorizzazione, pk=pk)
 
+    torna_url = request.session['autorizzazioni_torna_url']
+
     # Controlla che io possa firmare questa autorizzazione
     if not me.autorizzazioni_in_attesa().filter(pk=richiesta.pk).exists():
         return errore_generico(request, me,
             titolo="Richiesta non trovata",
             messaggio="E' possibile che la richiesta sia stata già approvata o respinta da qualcun altro.",
             torna_titolo="Richieste in attesa",
-            torna_url=request.session['autorizzazioni_torna_url'],
+            torna_url=torna_url,
+        )
+
+    if not PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta):
+        return errore_generico(request, me,
+            titolo="Richiesta non processabile",
+            messaggio="Questa richiesta non può essere processata.",
+            torna_titolo="Richieste in attesa",
+            torna_url=torna_url,
         )
 
     modulo = None

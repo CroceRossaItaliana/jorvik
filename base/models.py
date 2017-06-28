@@ -74,23 +74,34 @@ class ModelloAlbero(MPTTModel, ModelloSemplice):
     nome = models.CharField(max_length=64, unique=False, db_index=True)
     genitore = TreeForeignKey('self', null=True, blank=True, related_name='figli')
 
-    def ottieni_superiori(self, includimi=False):
-        return self.get_ancestors(include_self=includimi)
+    def ottieni_superiori(self, includimi=False, solo_attivi=True):
+        sedi = self.get_ancestors(include_self=includimi).filter(attiva=solo_attivi)
+        if solo_attivi:
+            sedi = sedi.filter(attiva=True, genitore__attiva=True)
+        return sedi
 
-    def ottieni_figli(self):
-        return self.get_children()
+    def ottieni_figli(self, solo_attivi=True):
+        sedi = self.get_children().filter(attiva=solo_attivi)
+        if solo_attivi:
+            sedi = sedi.filter(attiva=True, genitore__attiva=True)
+        return sedi
 
-    def ottieni_discendenti(self, includimi=False):
-        return self.get_descendants(include_self=includimi)
+    def ottieni_discendenti(self, includimi=False, solo_attivi=True):
+        sedi = self.get_descendants(include_self=includimi)
+        if solo_attivi:
+            sedi = sedi.filter(attiva=True, genitore__attiva=True)
+        return sedi
 
-    def ottieni_fratelli(self, includimi=False):
-        return self.get_siblings(include_self=includimi)
+    def ottieni_fratelli(self, includimi=False, solo_attivi=True):
+        sedi = self.get_siblings(include_self=includimi).filter(attiva=solo_attivi)
+        if solo_attivi:
+            sedi = sedi.filter(attiva=True, genitore__attiva=True)
+        return sedi
 
-    def ottieni_numero_figli(self, includimi=False):
-        n = self.get_descendant_count()
-        if includimi:
-            n += 1
-        return n
+    def ottieni_numero_figli(self, includimi=False, solo_attivi=True):
+        # Si potrebbe usare ``get_descendants_count`` ma non potremmo filtrare sugli attivi
+        sedi = self.ottieni_discendenti(includimi, solo_attivi)
+        return sedi.count()
 
     def figlio_di(self, altro, includimi=True):
         return self.is_descendant_of(altro, include_self=includimi)
@@ -160,12 +171,14 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         else:
             return None
 
-    def firma(self, firmatario, concedi=True, modulo=None, motivo=None, auto=False):
+    def firma(self, firmatario, concedi=True, modulo=None, motivo=None, auto=False, notifiche_attive=True, data=None):
         """
         Firma l'autorizzazione.
         :param firmatario: Il firmatario.
         :param concedi: L'esito, vero per concedere, falso per negare.
         :param modulo: Se modulo necessario, un modulo valido.
+        :param auto: Se la firma avviene con procedura automatica / massiva
+        :param notifiche_attive: Se inviare notifiche
         :return:
         """
         # Controlla che il modulo fornito, se presente, sia valido
@@ -190,13 +203,13 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         if not concedi:
             self.oggetto.confermata = False
             self.oggetto.save()
-            self.oggetto.autorizzazione_negata(modulo=modulo)
+            self.oggetto.autorizzazione_negata(modulo=modulo, data=None)
             if modulo:
                 if 'motivo' in modulo.cleaned_data:
                     self.motivo_negazione = modulo.cleaned_data['motivo']
                     self.save()
             self.oggetto.autorizzazioni_set().update(necessaria=False)
-            if self.oggetto.INVIA_NOTIFICA_NEGATA:
+            if self.oggetto.INVIA_NOTIFICA_NEGATA and notifiche_attive:
                 self.notifica_negata(auto=auto)
             return
 
@@ -208,15 +221,15 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         if self.oggetto.autorizzazioni_set().filter(necessaria=True).count() == 0:
             self.oggetto.confermata = True
             self.oggetto.save()
-            self.oggetto.autorizzazione_concessa(modulo=modulo, auto=auto)
-            if self.oggetto.INVIA_NOTIFICA_CONCESSA:
+            self.oggetto.autorizzazione_concessa(modulo=modulo, auto=auto, notifiche_attive=notifiche_attive, data=data)
+            if self.oggetto.INVIA_NOTIFICA_CONCESSA and notifiche_attive:
                 self.notifica_concessa(auto=auto)
 
-    def concedi(self, firmatario=None, modulo=None, auto=False):
-        self.firma(firmatario, True, modulo=modulo, auto=auto)
+    def concedi(self, firmatario=None, modulo=None, auto=False, notifiche_attive=True, data=None):
+        self.firma(firmatario, True, modulo=modulo, auto=auto, notifiche_attive=notifiche_attive, data=data)
 
-    def nega(self, firmatario=None, modulo=None, auto=False):
-        self.firma(firmatario, False, modulo=modulo, auto=auto)
+    def nega(self, firmatario=None, modulo=None, auto=False, notifiche_attive=True, data=None):
+        self.firma(firmatario, False, modulo=modulo, auto=auto, notifiche_attive=notifiche_attive, data=data)
 
     @property
     def template_path(self):
@@ -689,6 +702,7 @@ class ConAutorizzazioni(models.Model):
         :return:
         """
 
+        notifiche_attive = kwargs.pop('notifiche_attive', True)
         try:  # Cerca l'autorizzazione per questo oggetto con progressivo maggiore
             ultima = self.autorizzazioni_set().latest('progressivo')
             # Se esiste, calcola il prossimo progressivo per l'oggetto
@@ -729,7 +743,7 @@ class ConAutorizzazioni(models.Model):
             if auto and auto != Autorizzazione.MANUALE:
                 r.automatizza(concedi=auto, scadenza=scadenza)
 
-            if invia_notifiche:
+            if invia_notifiche and notifiche_attive:
 
                 if not iterabile(invia_notifiche):
                     invia_notifiche = [invia_notifiche]
@@ -764,13 +778,13 @@ class ConAutorizzazioni(models.Model):
         # Non diventa piu' necessaria alcuna autorizzazione tra quelle richieste
         self.autorizzazioni.update(necessaria=False)
 
-    def autorizzazione_concessa(self, modulo=None, auto=False):
+    def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
         """
         Sovrascrivimi! Ascoltatore per concessione autorizzazione.
         """
         pass
 
-    def autorizzazione_negata(self, modulo=None, auto=False):
+    def autorizzazione_negata(self, modulo=None, auto=False, notifiche_attive=True, data=None):
         """
         Sovrascrivimi! Ascoltatore per negazione autorizzazione.
         """
