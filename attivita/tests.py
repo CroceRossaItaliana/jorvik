@@ -624,6 +624,8 @@ class TestFunzionaleAttivita(TestFunzionale):
         sessione_presidente.fill('massimo', 5)
         sessione_presidente.fill('prenotazione', inizio)
 
+        sessione_presidente.execute_script('window.scrollTo(0, document.body.scrollHeight)')
+
         # Presidente: Invia il modulo
         sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
 

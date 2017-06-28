@@ -187,7 +187,7 @@ def sessione_anonimo(server_url):
     return sessione
 
 
-def sessione_utente(server_url, persona=None, utente=None, password=None, wait_time=4):
+def sessione_utente(server_url, persona=None, utente=None, password=None, wait_time=7):
     if not (persona or utente):
         raise ValueError("sessione_utente deve ricevere almeno una persona "
                          "o un utente.")

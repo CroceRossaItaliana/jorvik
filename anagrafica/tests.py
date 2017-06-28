@@ -1,38 +1,235 @@
 import datetime
-from unittest import skipIf
-
 import re
+from io import BytesIO
+from random import randint, choice
+
+import unicodecsv
 from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client
 from django.test import TestCase
+from django.utils.six import text_type
 from django.utils.timezone import now
 from freezegun import freeze_time
 from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
 from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica, \
-    ModuloConsentiTrasferimento, ModuloCreazioneTrasferimento
+    ModuloConsentiTrasferimento, ModuloConsentiEstensione, ModuloCreazioneTrasferimento, ModuloSpostaPersoneManuale,\
+    ModuloSpostaPersoneDaCSV
 from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Estensione, Trasferimento, Riserva, Sede
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, \
-    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
-    DELEGATO_AREA, UFFICIO_SOCI, UFFICIO_SOCI_UNITA, RESPONSABILE_AREA, REFERENTE, REFERENTE_GRUPPO, DELEGATO_CO, \
-    RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO
+from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_5, \
+    DELEGATO_OBIETTIVO_6, UFFICIO_SOCI, UFFICIO_SOCI_UNITA, RESPONSABILE_AREA, REFERENTE, DIRETTORE_CORSO, \
+    RESPONSABILE_AUTOPARCO
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
 from anagrafica.permessi.espansioni import espandi_elenchi_soci
 from anagrafica.utils import termina_deleghe_giovani
 from anagrafica.viste import _rubrica_delegati
+from attivita.models import Area, Turno, Partecipazione
+from attivita.models import Attivita
 from autenticazione.models import Utenza
 from autenticazione.utils_test import TestFunzionale
 from base.utils import poco_fa
-from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, email_fittizzia, \
+from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, \
+    email_fittizzia, \
     crea_utenza
 from formazione.models import Aspirante, CorsoBase, PartecipazioneCorsoBase
 from posta.models import Messaggio, Autorizzazione
 from ufficio_soci.forms import ModuloElencoVolontari
+from veicoli.models import Autoparco
 
 
 class TestAnagrafica(TestCase):
+
+    def test_chiusure_trasferimento(self):
+        presidente1 = crea_persona()
+        presidente2 = crea_persona()
+
+        sede1 = crea_sede(presidente1)
+        sede2 = crea_sede(presidente2)
+
+        trasferire = crea_persona()
+        originale = crea_appartenenza(trasferire, sede1)
+
+        persona_1 = crea_persona()
+        crea_appartenenza(persona_1, sede1)
+
+        persona_2 = crea_persona()
+        crea_appartenenza(persona_2, sede1)
+
+
+        # creazione oggetti collegati
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede1,
+            data_inizio=poco_fa()+ datetime.timedelta(days=7),
+            data_esame=poco_fa() + datetime.timedelta(days=14),
+            progressivo=1,
+            anno=poco_fa().year,
+            descrizione='Un corso',
+        )
+        area = Area.objects.create(
+            nome="6",
+            obiettivo=6,
+            sede=sede1
+        )
+        area_2 = Area.objects.create(
+            nome="6",
+            obiettivo=6,
+            sede=sede1
+        )
+        a1 = Attivita.objects.create(
+            stato=Attivita.VISIBILE,
+            nome="Att 1",
+            apertura=Attivita.APERTA,
+            area=area,
+            descrizione="1",
+            sede=sede1,
+            estensione=sede1,
+        )
+        a2 = Attivita.objects.create(
+            stato=Attivita.VISIBILE,
+            nome="Att 2",
+            apertura=Attivita.APERTA,
+            area=area,
+            descrizione="2",
+            sede=sede1,
+            estensione=sede1,
+        )
+
+        t1 = Turno.objects.create(
+            attivita=a1,
+            prenotazione=poco_fa() - datetime.timedelta(days=1),
+            inizio=poco_fa() - datetime.timedelta(days=1),
+            fine=poco_fa() + datetime.timedelta(days=1),
+            minimo=1,
+            massimo=6,
+        )
+        t2 = Turno.objects.create(
+            attivita=a1,
+            prenotazione=poco_fa() - datetime.timedelta(days=10),
+            inizio=poco_fa() - datetime.timedelta(days=10),
+            fine=poco_fa() - datetime.timedelta(days=5),
+            minimo=1,
+            massimo=6,
+        )
+        t3 = Turno.objects.create(
+            attivita=a2,
+            prenotazione=poco_fa() + datetime.timedelta(days=10),
+            inizio=poco_fa() + datetime.timedelta(days=10),
+            fine=poco_fa() + datetime.timedelta(days=20),
+            minimo=1,
+            massimo=6,
+        )
+        parco = Autoparco.objects.create(nome='autoparco1', sede=sede1)
+
+        # Deleghe a tutti i possibili oggetti
+        Delega.objects.create(persona=trasferire, tipo=UFFICIO_SOCI, oggetto=sede1, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=UFFICIO_SOCI_UNITA, oggetto=sede1, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=DELEGATO_OBIETTIVO_6, oggetto=sede1, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=RESPONSABILE_AREA, oggetto=area, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=RESPONSABILE_AREA, oggetto=area_2, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=REFERENTE, oggetto=a1, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=REFERENTE, oggetto=a2, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=DIRETTORE_CORSO, oggetto=corso, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=RESPONSABILE_AUTOPARCO, oggetto=parco, inizio=poco_fa())
+
+        Delega.objects.create(persona=persona_1, tipo=RESPONSABILE_AREA, oggetto=area, inizio=poco_fa())
+        Delega.objects.create(persona=persona_2, tipo=REFERENTE, oggetto=a2, inizio=poco_fa())
+        Delega.objects.create(persona=persona_2, tipo=DELEGATO_OBIETTIVO_6, oggetto=sede1, inizio=poco_fa())
+
+        # Turni
+        p1 = Partecipazione.objects.create(persona=trasferire, turno=t1)
+        p1.richiedi()
+        p2 = Partecipazione.objects.create(persona=trasferire, turno=t2)
+        p2.richiedi()
+        p3 = Partecipazione.objects.create(persona=trasferire, turno=t3)
+        p3.richiedi()
+        for p in (p1, p2, p3):
+            for autorizzazione in p.autorizzazioni:
+                autorizzazione.concedi(presidente1)
+
+        # Trasferimenti / Riserve / Estensioni
+        estensione = Estensione.objects.create(
+            persona=trasferire, destinazione=sede2, richiedente=trasferire, motivo='test'
+        )
+        estensione.richiedi()
+        estensione = Estensione.objects.create(
+            persona=trasferire, destinazione=sede2, richiedente=trasferire, motivo='test'
+        )
+        estensione.richiedi()
+        modulo = ModuloConsentiEstensione({'protocollo_numero': 1, 'protocollo_data': now()})
+        self.assertTrue(modulo.is_valid())
+        for autorizzazione in estensione.autorizzazioni:
+            autorizzazione.concedi(presidente1, modulo=modulo)
+        trasferimento_vecchio = Trasferimento.objects.create(
+            persona=trasferire, destinazione=sede2, richiedente=trasferire, motivo='test'
+        )
+        trasferimento_vecchio.richiedi()
+        riserva = Riserva.objects.create(
+            persona=trasferire, motivo='test', appartenenza=originale, inizio=poco_fa(),
+        )
+        riserva.richiedi()
+        modulo = ModuloConsentiTrasferimento({'protocollo_numero': 1, 'protocollo_data': now()})
+        self.assertTrue(modulo.is_valid())
+        for autorizzazione in riserva.autorizzazioni:
+            autorizzazione.concedi(presidente1, modulo=modulo)
+
+        # Comincia il processo di trasferimento
+        trasferimento = Trasferimento.objects.create(
+            persona=trasferire, destinazione=sede2, richiedente=trasferire, motivo='test'
+        )
+        trasferimento.richiedi()
+        data_trasferimento = poco_fa() + datetime.timedelta(days=4)
+        modulo = ModuloConsentiTrasferimento({'protocollo_numero': 1, 'protocollo_data': now()})
+        self.assertTrue(modulo.is_valid())
+        for autorizzazione in trasferimento.autorizzazioni:
+            autorizzazione.concedi(presidente1, modulo=modulo, data=data_trasferimento)
+
+        trasferire.refresh_from_db()
+        trasferimento.refresh_from_db()
+        # Eseguiamo verifica alla data attuale, nulla dovrebbe essere cambiato
+        # Tutti i dati della persona trasferita sono aggiornati
+        self.assertEqual(trasferire.comitato_riferimento(), sede1)
+        self.assertTrue(trasferire.in_riserva)
+        self.assertFalse(trasferire.trasferimenti_in_attesa.exists())  # Non in attesa perché già approvato
+        self.assertFalse(trasferire.autorizzazioni_in_attesa().exists())  # Non in attesa perché già approvato
+        self.assertFalse(trasferire.riserve.filter(fine__isnull=True).exists())  # Non in attesa perché già approvato
+        self.assertTrue(trasferire.appartenenze_attuali(membro=Appartenenza.ESTESO).exists())
+        self.assertTrue(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).exists())
+        self.assertTrue(trasferire.deleghe_attuali(solo_attive=False).exists())
+        self.assertIsNone(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first().precedente)
+
+        # Aree e attività sono passati di competenza a chi di dovere
+        self.assertEqual(area.deleghe_attuali(solo_attive=False).count(), 2)
+        self.assertEqual(area_2.deleghe_attuali(solo_attive=False).count(), 1)
+        self.assertEqual(area_2.deleghe_attuali(solo_attive=False).get().persona, trasferire)
+        self.assertEqual(a1.deleghe_attuali(solo_attive=False).count(), 1)
+        self.assertEqual(a1.deleghe_attuali(solo_attive=False).get().persona, trasferire)
+        self.assertEqual(a2.deleghe_attuali(solo_attive=False).count(), 2)
+
+        # Eseguiamo verifica alla data del trasferimento, i dati dovrebbero essere aggiornati
+        with freeze_time(data_trasferimento):
+            # Tutti i dati della persona trasferita sono aggiornati
+            self.assertEqual(trasferire.comitato_riferimento(), sede2)
+            self.assertFalse(trasferire.in_riserva)
+            self.assertFalse(trasferire.trasferimenti_in_attesa.exists())
+            self.assertFalse(trasferire.autorizzazioni_in_attesa().exists())
+            self.assertFalse(trasferire.riserve.filter(fine__isnull=True).exists())
+            self.assertFalse(trasferire.appartenenze_attuali(membro=Appartenenza.ESTESO).exists())
+            self.assertFalse(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).exists())
+            self.assertFalse(trasferire.deleghe_attuali(solo_attive=False).exists())
+            self.assertIsNotNone(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first().precedente)
+
+            # Aree e attività sono passati di competenza a chi di dovere
+            self.assertEqual(area.deleghe_attuali(solo_attive=False).count(), 1)
+            self.assertEqual(area.deleghe_attuali(solo_attive=False).get().persona, persona_1)
+            self.assertEqual(area_2.deleghe_attuali(solo_attive=False).count(), 1)
+            self.assertEqual(area_2.deleghe_attuali(solo_attive=False).get().persona, persona_2)
+            self.assertEqual(a1.deleghe_attuali(solo_attive=False).count(), 1)
+            self.assertEqual(a1.deleghe_attuali(solo_attive=False).get().persona, persona_1)
+            self.assertEqual(a2.deleghe_attuali(solo_attive=False).count(), 1)
+            self.assertEqual(a2.deleghe_attuali(solo_attive=False).get().persona, persona_2)
 
     def test_appartenenza_modificabile_con_campo_precedente(self):
 
@@ -984,6 +1181,192 @@ class TestAnagrafica(TestCase):
         self.assertEqual(autorizzazione.concessa, None)
         self.assertNotIn(est, Estensione.con_esito_ok())
         self.assertEqual(da_estendere.appartenenze_attuali(membro=Appartenenza.ESTESO, sede=sede2).count(), 0)
+
+    def test_spostamento_massivo_persona(self):
+        presidente1 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        admin = crea_persona()
+        admin.email_contatto = email_fittizzia()
+        admin.save()
+        sede = crea_sede(presidente1)
+        sede2 = crea_sede(presidente1)
+        data_trasferimento = poco_fa() - datetime.timedelta(days=360)
+
+        persona = crea_persona()
+        persona.email_contatto = email_fittizzia()
+        persona.save()
+        crea_appartenenza(persona, sede)
+
+        sostenitore = crea_persona()
+        sostenitore.email_contatto = email_fittizzia()
+        sostenitore.save()
+        crea_appartenenza(sostenitore, sede, tipo=Appartenenza.SOSTENITORE)
+
+        solo_chiuse = crea_persona()
+        solo_chiuse.email_contatto = email_fittizzia()
+        solo_chiuse.save()
+        app = crea_appartenenza(solo_chiuse, sede)
+        app.terminazione = Appartenenza.DIMISSIONE
+        app.fine = data_trasferimento
+        app.save()
+
+        chiuse_dopo = crea_persona()
+        chiuse_dopo.email_contatto = email_fittizzia()
+        chiuse_dopo.save()
+        app = crea_appartenenza(solo_chiuse, sede)
+        app.terminazione = Appartenenza.DIMISSIONE
+        app.fine = data_trasferimento + datetime.timedelta(days=10)
+        app.save()
+
+        stessa_sede = crea_persona()
+        stessa_sede.email_contatto = email_fittizzia()
+        stessa_sede.save()
+        crea_appartenenza(stessa_sede, sede2)
+
+        self.assertEqual(list(stessa_sede.sedi_attuali()), [sede2])
+        self.assertEqual(list(persona.sedi_attuali()), [sede])
+        self.assertEqual(list(sostenitore.sedi_attuali()), [sede])
+        self.assertEqual(list(solo_chiuse.sedi_attuali()), [])
+        self.assertEqual(list(chiuse_dopo.sedi_attuali()), [])
+
+        mail.outbox = []
+
+        self.assertTrue('non è un volontario' in chiuse_dopo.trasferimento_massivo(sede2, admin, 'prova', data_trasferimento))
+        self.assertTrue(isinstance(persona.trasferimento_massivo(sede2, admin, 'prova', data_trasferimento), Appartenenza))
+        self.assertTrue('non è un volontario' in sostenitore.trasferimento_massivo(sede2, admin, 'prova', data_trasferimento))
+        self.assertTrue('non è un volontario' in solo_chiuse.trasferimento_massivo(sede2, admin, 'prova', data_trasferimento))
+        self.assertTrue('sede indicata' in stessa_sede.trasferimento_massivo(sede2, admin, 'prova', data_trasferimento))
+
+        self.assertFalse(mail.outbox)
+
+    def _dati_test_trasferimenti(self):
+        presidente1 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        sede = crea_sede(presidente1)
+        sede2 = crea_sede(presidente1)
+
+        persone = []
+        sostentori = []
+        for x in range(0, 10):
+            persona = crea_persona()
+            persona.email_contatto = email_fittizzia()
+            persona.save()
+            persone.append(persona)
+            crea_appartenenza(persona, sede)
+
+        for x in range(0, 10):
+            persona = crea_persona()
+            persona.email_contatto = email_fittizzia()
+            persona.save()
+            sostentori.append(persona)
+            crea_appartenenza(persona, sede, tipo=Appartenenza.SOSTENITORE)
+        return sede, sede2, persone, sostentori
+
+    def test_spostamento_massivo_csv(self):
+        admin = crea_persona()
+        admin.email_contatto = email_fittizzia()
+        admin.save()
+
+        sede, sede2, persone, sostentori = self._dati_test_trasferimenti()
+        sede3 = crea_sede(admin)
+        sede4 = crea_sede(admin)
+        dati = {}
+
+        mail.outbox = []
+
+        input_file = BytesIO()
+        csv_data = unicodecsv.writer(input_file)
+        for index, persona in enumerate(persone):
+            if index == 0:
+                data_trasferimento = 'non valida'
+            else:
+                data_trasferimento = (poco_fa() + datetime.timedelta(days=randint(-90, -30))).strftime('%Y-%m-%d')
+            data = (
+                persona.codice_fiscale,
+                data_trasferimento,
+                choice((str(sede2.pk), str(sede3.pk), str(sede2.pk + 1000))),
+                'esempio'
+            )
+            csv_data.writerow(data)
+        input_file.seek(0)
+
+        form = ModuloSpostaPersoneDaCSV(data={})
+
+        elenco, errori = form.elenco_persone(input_file)
+        self.assertTrue(len(errori), 1)
+        in_sede2 = []
+        in_sede3 = []
+        in_sede_nessuna = []
+        for item in elenco:
+            if item['sede'] == sede2:
+                in_sede2.append(item['persona'])
+            elif item['sede'] == sede3:
+                in_sede3.append(item['persona'])
+            elif item['sede'] is None:
+                in_sede_nessuna.append(item['persona'])
+
+        input_file.seek(0)
+        trasferimenti = form.sposta_persone(admin, persone=elenco)
+        # Niente sede nel file di trasferimento significa niente trasferimento
+        # il +1 rappresenta la persona scartata e non trasferita
+        self.assertEqual(sede.membri_attuali(membro=Appartenenza.VOLONTARIO).count(), len(in_sede_nessuna) + 1)
+        self.assertEqual(sede.membri_attuali(membro=Appartenenza.SOSTENITORE).count(), 10)
+        self.assertEqual(sede2.membri_attuali(membro=Appartenenza.VOLONTARIO).count(), len(in_sede2))
+        self.assertEqual(sede2.membri_attuali(membro=Appartenenza.SOSTENITORE).count(), 0)
+        self.assertEqual(sede3.membri_attuali(membro=Appartenenza.VOLONTARIO).count(), len(in_sede3))
+        self.assertEqual(sede3.membri_attuali(membro=Appartenenza.SOSTENITORE).count(), 0)
+
+        for trasferimento in trasferimenti:
+            if trasferimento[0] in persone:
+                if trasferimento[0] not in in_sede_nessuna:
+                    self.assertTrue(trasferimento[1] is True or isinstance(trasferimento[1], Appartenenza))
+                else:
+                    self.assertTrue(isinstance(trasferimento[1], text_type))
+            elif trasferimento[0] in persone:
+                self.assertTrue(isinstance(trasferimento[1], text_type))
+
+        for persona, esito in trasferimenti:
+            if isinstance(esito, Appartenenza):
+                self.assertEqual(esito.inizio.time(), datetime.time(0, 0, 0))
+                precedente = persona.appartenenze.exclude(pk=esito.pk).latest('fine')
+                self.assertEqual(precedente, esito.precedente)
+                self.assertEqual(precedente.fine + datetime.timedelta(seconds=1), esito.inizio)
+
+        self.assertFalse(mail.outbox)
+
+    def test_spostamento_massivo_form(self):
+        admin = crea_persona()
+        admin.email_contatto = email_fittizzia()
+        admin.save()
+
+        sede, sede2, persone, sostentori = self._dati_test_trasferimenti()
+        dati = {
+            'sede': sede2.pk,
+            'motivazione': 'prova',
+            'inizio_appartenenza': datetime.date(2016, 1, 1)
+        }
+
+        mail.outbox = []
+
+        form = ModuloSpostaPersoneManuale(dati)
+        self.assertTrue(form.is_valid())
+        persone, scarti = form.mappa_persone(sede.membri_attuali())
+        trasferimenti = form.sposta_persone(admin, persone=persone)
+
+        self.assertEqual(sede.membri_attuali(membro=Appartenenza.VOLONTARIO).count(), 0)
+        self.assertEqual(sede.membri_attuali(membro=Appartenenza.SOSTENITORE).count(), 10)
+        self.assertEqual(sede2.membri_attuali(membro=Appartenenza.VOLONTARIO).count(), 10)
+        self.assertEqual(sede2.membri_attuali(membro=Appartenenza.SOSTENITORE).count(), 0)
+
+        for trasferimento in trasferimenti:
+            if trasferimento[0] in persone:
+                self.assertTrue(trasferimento[1] is True or isinstance(trasferimento[1], Appartenenza))
+            elif trasferimento[0] in sostentori:
+                self.assertTrue(isinstance(trasferimento[1], text_type))
+
+        self.assertFalse(mail.outbox)
 
     def test_trasferimento_automatico(self):
         presidente1 = crea_persona()
