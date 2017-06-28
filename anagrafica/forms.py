@@ -1,10 +1,17 @@
 import datetime
-
+import unicodecsv
 import stdnum
+from dateutil.parser import parse
+
 from django import forms
+from django.conf import settings
+from django.contrib.admin.templatetags.admin_static import static
+from django.contrib.admin.widgets import AdminDateWidget
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
+from django.db.models import QuerySet
 from django.forms import ModelForm
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega, \
@@ -16,6 +23,102 @@ from autocomplete_light import shortcuts as autocomplete_light
 from base.forms import ModuloMotivoNegazione
 from curriculum.models import TitoloPersonale
 from sangue.models import Donatore, Donazione
+
+
+class ModuloSpostaPersone(object):
+
+    def elenco_persone(self, source):
+        return source, []
+
+    def mappa_persone(self, source):
+        return source, []
+
+    def sposta_persone(self, firmatario, source=None, persone=None):
+        trasferimenti = []
+        if source and not persone:
+            persone, errori = self.elenco_persone(source)
+        if not persone:
+            persone = []
+        for persona in persone:
+            if persona['sede']:
+                trasferita = persona['persona'].trasferimento_massivo(
+                    persona['sede'],
+                    firmatario,
+                    persona['motivazione'],
+                    persona['inizio_appartenenza']
+                )
+                trasferimenti.append((persona['persona'], trasferita))
+            else:
+                trasferimenti.append((persona['persona'], 'Non è stata specificata la sede'))
+
+        return trasferimenti
+
+
+class ModuloSpostaPersoneManuale(ModuloSpostaPersone, forms.Form):
+    sede = autocomplete_light.ModelChoiceField("SedeAutocompletamento")
+    inizio_appartenenza = forms.DateField(label='Data di inizio appartenenza', widget=AdminDateWidget(format='%Y-%m-%d'))
+    motivazione = forms.CharField()
+
+    @property
+    def media(self):
+        extra = '' if settings.DEBUG else '.min'
+        js = [
+            'core.js',
+            'vendor/jquery/jquery%s.js' % extra,
+            'jquery.init.js',
+            'admin/RelatedObjectLookups.js',
+        ]
+        return forms.Media(js=[static('admin/js/%s' % url) for url in js]) + super(ModuloSpostaPersone, self).media
+
+    def mappa_persone(self, source):
+        trasferimenti = []
+        for persona in source.order_by('cognome', 'nome'):
+            trasferimenti.append({
+                'persona': persona,
+                'sede': self.cleaned_data['sede'],
+                'motivazione': self.cleaned_data['motivazione'],
+                'inizio_appartenenza': self.cleaned_data['inizio_appartenenza']
+            })
+        return trasferimenti, []
+
+
+class ModuloSpostaPersoneDaCSV(ModuloSpostaPersone, forms.Form):
+    dati = forms.FileField(
+        required=False, help_text=mark_safe(
+            'Il file deve essere in formato CSV, con i seguenti campi: '
+            '<pre>CF,DATA INIZIO APPARTENENZA (AAAA-MM-GG),ID NUOVA SEDE,MOTIVAZIONE,</pre>'
+        )
+    )
+    procedi = forms.BooleanField(widget=forms.HiddenInput(), required=False)
+
+    def elenco_persone(self, source):
+        dati = {}
+        sedi = set()
+        trasferimenti = []
+        scarti = []
+        if self.is_valid():
+            data = unicodecsv.reader(source)
+            for persona in data:
+                dati[persona[0]] = persona
+                try:
+                    sedi.add(int(persona[2]))
+                except ValueError:
+                    scarti.append(persona[0])
+            sedi = {str(sede.pk): sede for sede in Sede.objects.filter(pk__in=sedi)}
+            for persona in Persona.objects.filter(codice_fiscale__in=dati.keys()).order_by('cognome', 'nome'):
+                dati_persona = dati[persona.codice_fiscale]
+                sede = sedi.get(dati_persona[2], None)
+                try:
+                    data = parse(dati_persona[1])
+                    trasferimenti.append({
+                        'persona': persona,
+                        'sede': sede,
+                        'motivazione': dati_persona[3],
+                        'inizio_appartenenza': data,
+                    })
+                except (ValueError, OverflowError, KeyError):
+                    scarti.append(persona.codice_fiscale)
+        return trasferimenti, scarti
 
 
 class ModuloStepComitato(autocomplete_light.ModelForm):
