@@ -40,3 +40,4 @@ django-nocaptcha-recaptcha==0.0.19
 django-two-factor-auth==1.4.0
 django-otp-yubikey==0.3.4
 freezegun
+unicodecsv==0.14.1

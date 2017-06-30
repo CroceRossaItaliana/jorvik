@@ -1,0 +1,26 @@
+{% extends "admin/change_list.html" %}
+{% load admin_urls i18n %}
+
+{% block object-tools %}
+    <ul class="object-tools">
+      {% block object-tools-items %}
+        {% if has_add_permission %}
+        <li>
+          {% url cl.opts|admin_urlname:'add' as add_url %}
+          <a href="{% add_preserved_filters add_url is_popup to_field %}" class="addlink">
+            {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
+          </a>
+        </li>
+        {% endif %}
+      {% endblock %}
+      {% if perms.anagrafica.transfer_persona %}
+        <li>
+          {% url cl.opts|admin_urlname:'trasferisci' as custom_url %}
+          <a href="{% add_preserved_filters custom_url is_popup to_field %}" class="customlink">
+            {% blocktrans with cl.opts.verbose_name_plural as name %}Trasferisci {{ name }}{% endblocktrans %}
+          </a>
+        </li>
+      {% endif %}
+    </ul>
+
+{% endblock %}

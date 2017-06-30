@@ -56,7 +56,7 @@ class CronReportComitati(CronJobBase):
             extra_titolo = ""
             extra_testo = ""
 
-            unita = sede.get_children().filter(estensione=TERRITORIALE)
+            unita = sede.ottieni_figli().filter(estensione=TERRITORIALE)
             if unita.exists():
                 extra_titolo = "<h2>Le nostre unità territoriali</h2>"
                 extra_testo += "<ul>"
