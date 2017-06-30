@@ -3,11 +3,20 @@ from django.db.models import Q
 from ufficio_soci.elenchi import Elenco
 
 
-class ElencoCampagne(Elenco):
+class ElencoBase(Elenco):
+    """
+
+    """
+
+    def filtra(self, queryset, termine):
+        raise NotImplementedError()
 
     def risultati(self):
-        qs_campagne = self.args[0]
-        return qs_campagne
+        qs = self.args[0]
+        return qs
+
+
+class ElencoCampagne(ElencoBase):
 
     def filtra(self, queryset, termine):
         return queryset.filter(etichette__slug__in=[termine])
@@ -16,38 +25,26 @@ class ElencoCampagne(Elenco):
         return 'donazioni_elenchi_inc_campagne.html'
 
 
-class ElencoEtichette(Elenco):
+class ElencoEtichette(ElencoBase):
 
     def template(self):
         return 'donazioni_elenchi_inc_etichette.html'
-
-    def risultati(self):
-        qs_etichette = self.args[0]
-        return qs_etichette
 
     def filtra(self, queryset, termine):
         return queryset.filter(slug__icontains=termine)
 
 
-class ElencoDonazioni(Elenco):
+class ElencoDonazioni(ElencoBase):
     def template(self):
         return 'donazioni_elenchi_inc_donazioni.html'
-
-    def risultati(self):
-        qs_donazioni = self.args[0]
-        return qs_donazioni
 
     def filtra(self, queryset, termine):
         return queryset.filter(modalita__icontains=termine)
 
 
-class ElencoDonatori(Elenco):
+class ElencoDonatori(ElencoBase):
     def template(self):
         return 'donazioni_elenchi_inc_donatori.html'
-
-    def risultati(self):
-        qs_donatori = self.args[0]
-        return qs_donatori
 
     def filtra(self, queryset, termine):
         filtri = Q(Q(nome__icontains=termine) | Q(cognome__icontains=termine) |

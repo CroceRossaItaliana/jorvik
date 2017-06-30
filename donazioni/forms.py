@@ -54,8 +54,8 @@ class ModuloEtichetta(ModelForm):
         fields = ('nome', 'comitato')
 
     comitato = autocomplete_light.forms.ModelChoiceField('SedeDonazioniAutocompletamento',
-                                                         help_text="Ricerca per nome fra le sedi di cui si ha la delega "
-                                                                   "per l'organizzazione di una campagna")
+                                                         help_text="Seleziona il comitato ricercando per nome fra le sedi "
+                                                                   "di cui si ha la delega per l'organizzazione di una campagna")
 
 
 class ModuloFiltraCampagnePerEtichetta(Form):

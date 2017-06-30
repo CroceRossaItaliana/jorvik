@@ -153,6 +153,43 @@ class Etichetta(ModelloSemplice):
 
 
 class Donatore(ModelloSemplice):
+    # Scelte tipo donatore
+    PRIVATO = 'P'
+    AZIENDA = 'A'
+    CRI = 'C'
+    # Scelte lingua
+    ITALIANO = 'IT'
+    INGLESE = 'EN'
+    FRANCESE = 'FR'
+    SPAGNOLO = 'ES'
+    TEDESCO = 'DE'
+    ARABO = 'AR'
+    PORTOGHESE = 'PR'
+    CINESE = 'CH'
+    ALTRO = '-'
+
+    TIPO_DONATORE = (
+        (PRIVATO, 'Privato'),
+        (AZIENDA, 'Azienda'),
+        (CRI, 'CRI'),
+    )
+    LINGUE = (
+        (ITALIANO, 'Italiano'),
+        (INGLESE, 'Inglese'),
+        (FRANCESE, 'Francese'),
+        (SPAGNOLO, 'Spagnolo'),
+        (TEDESCO, 'Tedesco'),
+        (PORTOGHESE, 'Portoghese'),
+        (CINESE, 'Cinese Mandarino'),
+        (ARABO, 'Arabo'),
+
+    )
+
+    SESSO_DONATORE = (
+        ('M', 'Maschile'),
+        ('F', 'Femminile'),
+    )
+
     class Meta:
         verbose_name = 'Donatore'
         verbose_name_plural = 'Donatori'
@@ -169,9 +206,20 @@ class Donatore(ModelloSemplice):
     comune_nascita = models.CharField('Comune di Nascita', max_length=64, blank=True)
     provincia_nascita = models.CharField('Provincia di Nascita', max_length=2, blank=True)
     stato_nascita = CountryField('Stato di nascita', blank=True)
-
     ragione_sociale = TitleCharField('Ragione Sociale', max_length=64, blank=True,
                                      help_text='Inserire la ragione sociale nel caso di persona giuridica')
+    tipo_donatore = models.CharField('Tipo Donatore', blank=True, choices=TIPO_DONATORE, max_length=1)
+    sesso = models.CharField('Sesso', blank=True, choices=SESSO_DONATORE, max_length=1)
+    indirizzo = models.CharField("Indirizzo di residenza", max_length=512, blank=True)
+    comune_residenza = models.CharField('Comune di residenza', max_length=64, blank=True)
+    provincia_residenza = models.CharField('Provincia di residenza', max_length=2, blank=True)
+    stato_residenza = CountryField('Stato di residenza', blank=True)
+    cap_residenza = models.CharField('CAP di Residenza', max_length=16, blank=True)
+    telefono = models.CharField('Telefono', max_length=64, blank=True)
+    cellulare = models.CharField('Cellulare', max_length=64, blank=True)
+    fax = models.CharField('FAX', max_length=64, blank=True)
+    professione = None
+    lingua = models.CharField('Lingua', blank=True, choices=LINGUE, max_length=2)
 
     def __str__(self):
         stringa_output = []
@@ -195,32 +243,36 @@ class Donatore(ModelloSemplice):
         :param donatore: oggetto Donatore
         :return: Record esistente o appena creato
         """
-        requisiti = None
+        filtro = None
         if donatore.codice_fiscale:
-            requisiti = Q(codice_fiscale=donatore.codice_fiscale)
+            filtro = Q(codice_fiscale=donatore.codice_fiscale)
             if donatore.ragione_sociale:
-                requisiti &= Q(ragione_sociale=donatore.ragione_sociale)
+                filtro &= Q(ragione_sociale=donatore.ragione_sociale)
             if donatore.email:
                 # se sono presenti entrambi codice_fiscale ed email, utilizzare anche quest'ultima
                 # come filtro (in OR)
-                requisiti |= Q(email=donatore.email)
+                filtro |= Q(email=donatore.email)
 
         elif donatore.email:
-            requisiti = Q(email=donatore.email)
+            filtro = Q(email=donatore.email)
 
         elif donatore.nome and donatore.cognome and donatore.data_nascita and donatore.comune_nascita:
-            requisiti = Q(nome=donatore.nome,
-                          cognome=donatore.cognome,
-                          data_nascita=donatore.data_nascita,
-                          comune_nascita=donatore.comune_nascita)
+            filtro = Q(nome=donatore.nome,
+                       cognome=donatore.cognome,
+                       data_nascita=donatore.data_nascita,
+                       comune_nascita=donatore.comune_nascita)
 
-        istanza_esistente = Donatore.objects.filter(requisiti).first() if requisiti else None
+        istanza_esistente = Donatore.objects.filter(filtro).first() if filtro else None
         if not istanza_esistente:
-            # crea nuovo donatore dai dati derivanti dal modulo ModuloDonatore
+            # Non esiste alcun donatore nell'anagrafica donatori centralizzata
+            # Crea quindi un nuovo donatore dai dati derivanti dal modulo ModuloDonatore
             donatore.save()
             return donatore
         # nel caso di donatore già esistente, vengono aggiunti nuovi campi se presenti nell'oggetto 'donatore'
         # e non presenti nell'istanza esistente
+        # TODO: bisogna inserire un nuovo donatore nel caso alcuni dati non corrispondano
+        # (quali indirizzo, telefono etc.)
+        # Questo per evitare che dati inseriti per una campagna di un comitato siano visibili ad altri comitati
         istanza_esistente = cls._riconcilia_istanze(istanza_esistente, donatore)
         return istanza_esistente
 
@@ -258,9 +310,8 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
     donatore = models.ForeignKey(Donatore, related_name='donazioni', on_delete=models.CASCADE, null=True)
     importo = models.FloatField('Importo in EUR', default=0.00,
                                 help_text='Importo in EUR della donazione',
-                                validators=[
-                                    MinValueValidator(0.01,
-                                                      "L'importo della donazione è al di sotto del minimo consentito")])
+                                validators=[MinValueValidator(0.01,
+                                            "L'importo della donazione è al di sotto del minimo consentito")])
     modalita = models.CharField('Modalità', blank=True, choices=MODALITA, max_length=1, db_index=True)
     data = models.DateTimeField('Data donazione', help_text='Data donazione', null=True)
     ricorrente = models.BooleanField('Donazione ricorrente', default=False)
