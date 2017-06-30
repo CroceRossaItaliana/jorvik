@@ -379,7 +379,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         persone = dict()
         for autorizzazione in autorizzazioni:
             if not autorizzazione.oggetto:
-                print('autorizzazione {} non ha oggetto collegato'.format(autorizzazione.ok))
+                print('autorizzazione {} non ha oggetto collegato'.format(autorizzazione.pk))
                 continue
             if autorizzazione.oggetto and not autorizzazione.oggetto.ritirata and not autorizzazione.oggetto.confermata:
                 destinatari = cls.espandi_notifiche(autorizzazione.destinatario_oggetto, [], True, True)
