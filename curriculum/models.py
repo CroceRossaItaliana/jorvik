@@ -75,7 +75,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     def attuale(self):
         return self.data_scadenza is None or timezone.now() >= self.data_scadenza
 
-    def autorizzazione_negata(self, modulo=None):
+    def autorizzazione_negata(self, modulo=None, notifiche_attive=True, data=None):
         # Alla negazione, cancella titolo personale.
         self.delete()
 

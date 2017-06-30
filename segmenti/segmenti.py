@@ -64,7 +64,7 @@ def _referenti_attivita(queryset, obiettivo=0):
 
 
 def _presidenze_comitati(queryset, estensione=LOCALE):
-    sedi = Sede.objects.filter(tipo=Sede.COMITATO, estensione=estensione)
+    sedi = Sede.objects.filter(attiva=True, tipo=Sede.COMITATO, estensione=estensione)
     return queryset.filter(delega__oggetto_tipo=ContentType.objects.get_for_model(Sede), delega__oggetto_id__in=sedi.values_list('id', flat=True))
 
 
