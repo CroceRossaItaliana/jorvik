@@ -12,6 +12,7 @@ from django.core.files.temp import NamedTemporaryFile
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils.encoding import force_bytes, force_text
+from django.utils.timezone import now
 from django.utils.http import urlsafe_base64_encode
 from splinter.exceptions import ElementDoesNotExist
 
@@ -24,7 +25,7 @@ from base.files import Zip
 from base.forms_extra import ModuloRichiestaSupporto
 from base.geo import Locazione
 from base.stringhe import normalizza_nome
-from base.utils import UpperCaseCharField, poco_fa, TitleCharField
+from base.utils import UpperCaseCharField, poco_fa, TitleCharField, mezzanotte_24, mezzanotte_24_ieri, mezzanotte_00
 from base.utils_tests import crea_appartenenza, crea_persona_sede_appartenenza, crea_persona, crea_area_attivita, crea_utenza, \
     email_fittizzia, crea_sede
 from curriculum.models import Titolo
@@ -94,6 +95,40 @@ class TestBase(TestCase):
             p.allegati.all(),
             msg="Allegato associato correttamente alla persona"
         )
+
+    def test_mezzanotte24(self):
+        """
+        Test per verificare il comportamento di mezzanotte24, in particolare la sua idempotenza
+        """
+        data = datetime.datetime(2017, 3, 22, 3, 5, 24)
+        mezzanotte = mezzanotte_24(data)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 22, 23, 59, 59))
+        mezzanotte = mezzanotte_24(mezzanotte)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 22, 23, 59, 59))
+        mezzanotte = mezzanotte_00(mezzanotte)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 22, 0, 0, 0))
+
+    def test_mezzanotte24_ieri(self):
+        """
+        Test per verificare il comportamento di mezzanotte24
+        """
+        data = datetime.datetime(2017, 3, 22, 3, 5, 24)
+        mezzanotte = mezzanotte_24_ieri(data)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 21, 23, 59, 59))
+        mezzanotte = mezzanotte_24_ieri(mezzanotte)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 20, 23, 59, 59))
+
+    def test_mezzanotte00(self):
+        """
+        Test per verificare il comportamento di mezzanotte00, in particolare la sua idempotenza
+        """
+        data = datetime.datetime(2017, 3, 22, 3, 5, 24)
+        mezzanotte = mezzanotte_00(data)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 22, 0, 0, 0))
+        mezzanotte = mezzanotte_00(mezzanotte)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 22, 0, 0, 0))
+        mezzanotte = mezzanotte_24(mezzanotte)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 22, 23, 59, 59))
 
 
 class TestGeo(TestCase):

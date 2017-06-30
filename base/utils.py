@@ -10,7 +10,7 @@ import copy
 import operator
 from functools import reduce
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.db import models
 from django.db.models import Q, F
@@ -204,6 +204,38 @@ def poco_fa():
 
 def oggi():
     return poco_fa().date()
+
+
+def mezzanotte_00(data=None):
+    """
+    Imposta l'orario alla mezzanotte (00:00) del giorno corrente o della data passata come parametro
+
+    :param data: data di cui ricavare la mezzanotte
+    :return: datetime impostato alle 00:00
+    """
+    if not data:
+        data = timezone.now()
+    return datetime(data.year, data.month, data.day)
+
+
+def mezzanotte_24(data=None):
+    """
+    Imposta l'orario alla mezzanotte (23:59:59) del giorno corrente o della data passata come parametro
+
+    :param data: data di cui ricavare la mezzanotte
+    :return: datetime impostato alle 23:59:59
+    """
+    return mezzanotte_24_ieri(data) + timedelta(days=1)
+
+
+def mezzanotte_24_ieri(data=None):
+    """
+    Imposta l'orario alla mezzanotte (23:59:59) del giorno precedente a oggi o della data passata come parametro
+
+    :param data: data di cui ricavare la mezzanotte del giorno precedente
+    :return: datetime impostato alle 23:59:59
+    """
+    return mezzanotte_00(data) - timedelta(seconds=1)
 
 
 def questo_anno():

@@ -166,7 +166,7 @@ class Donazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         # Nessun modulo per la negazione dell'autorizzazione.
         return None
 
-    def richiedi(self):
+    def richiedi(self, notifiche_attive=True):
         from anagrafica.models import Appartenenza
 
         if not self.persona.sedi_attuali(membro=Appartenenza.VOLONTARIO).exists():
