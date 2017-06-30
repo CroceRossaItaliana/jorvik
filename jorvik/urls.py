@@ -7,6 +7,8 @@ import django, django.views, django.views.static, django.contrib.auth.views
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth.views import password_change, password_change_done
+from django.shortcuts import redirect
+from django.views.i18n import javascript_catalog
 
 import anagrafica.viste
 import articoli.viste
@@ -29,6 +31,10 @@ from autenticazione.two_factor.urls import urlpatterns as tf_urls
 
 
 handler404 = base.errori.non_trovato
+
+js_info_dict = {
+    'packages': ('jorvik',),
+}
 
 urlpatterns = [
 
@@ -320,7 +326,7 @@ urlpatterns = [
     #Filer
     url(r'^filer/', include('filer.urls')),
     url(r'^filebrowser_filer/', include('ckeditor_filebrowser_filer.urls')),
-
+    url(r'^jsi18n/$', javascript_catalog, js_info_dict, name='javascript-catalog'),
     # OAuth 2.0
     # url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 ]

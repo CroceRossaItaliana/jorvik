@@ -6,6 +6,7 @@ from django.utils.timezone import now
 
 from anagrafica.models import Persona, Delega
 from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_5
+from base.utils import mezzanotte_24_ieri
 from posta.models import Messaggio
 
 
@@ -60,4 +61,4 @@ def termina_deleghe_giovani():
     delegati_giovani_terminare = Persona.objects.filter(data_nascita__lte=meno_di_33, pk__in=delegati_giovani)
     terminare = deleghe_giovani.filter(persona__in=delegati_giovani_terminare)
     for delega in terminare:
-        delega.termina()
+        delega.termina(data=mezzanotte_24_ieri(now()))
