@@ -36,7 +36,7 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
     def responsabili_attuali(self):
         return self.delegati_attuali(tipo=RESPONSABILE_CAMPAGNA)
 
-    @property
+    @cached_property
     def cancellabile(self):
         return not self.donazioni.all().exists()
 
@@ -51,6 +51,18 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
     @property
     def url_aggiungi_donazione(self):
         return '/donazioni/campagne/%d/donazioni/nuova/' % (self.pk,)
+
+    @property
+    def url_importa_xls(self):
+        return '/donazioni/campagne/%d/importa_donazioni/' % (self.pk,)
+
+    @property
+    def url_importa_xls_step_1(self):
+        return '/donazioni/campagne/%d/importa_donazioni/step_1/' % (self.pk,)
+
+    @property
+    def url_importa_xls_step_2(self):
+        return '/donazioni/campagne/%d/importa_donazioni/step_2/' % (self.pk,)
 
     @property
     def url_elenco_donazioni(self):
@@ -70,7 +82,7 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
 
     @cached_property
     def totale_donazioni(self):
-        return self.donazioni.all().aggregate(importo=Sum('importo'))['importo']
+        return self.donazioni.all().aggregate(importo=Sum('importo'))['importo'] or 0
 
     @cached_property
     def donatori_censiti(self):
@@ -147,12 +159,61 @@ class Etichetta(ModelloSemplice):
     def link(self):
         return '<a href="%s">%s</a>' % (self.url, self.nome)
 
-    @property
-    def link_cancella(self):
-        return '<a href="%s">%s</a>' % (self.url_cancella, 'X')
-
 
 class Donatore(ModelloSemplice):
+    # Scelte tipo donatore
+    PRIVATO = 'P'
+    AZIENDA = 'A'
+    CRI = 'C'
+    # Scelte lingua
+    ITALIANO = 'IT'
+    INGLESE = 'EN'
+    FRANCESE = 'FR'
+    SPAGNOLO = 'ES'
+    TEDESCO = 'DE'
+    ARABO = 'AR'
+    PORTOGHESE = 'PR'
+    CINESE = 'CH'
+    ALTRO = '-'
+    # Scelte professione
+    IMPIEGATO = 'IMP'
+    PENSIONATO = 'PENS'
+    STUDENTE = 'STUD'
+    LIBERO = 'LIBPROF'
+    IMPRENDITORE = 'IMPR'
+    ALTRA_PROFESSIONE = '-'
+
+    PROFESSIONI = (
+        (STUDENTE, 'Studente'),
+        (PENSIONATO, 'Pensionato'),
+        (IMPIEGATO, 'Impiegato'),
+        (IMPRENDITORE, 'Imprenditore'),
+        (LIBERO, 'Libero Professionista'),
+        (ALTRA_PROFESSIONE, 'Altra Professione'),
+    )
+
+    TIPO_DONATORE = (
+        (PRIVATO, 'Privato'),
+        (AZIENDA, 'Azienda'),
+        (CRI, 'CRI'),
+    )
+    LINGUE = (
+        (ITALIANO, 'Italiano'),
+        (INGLESE, 'Inglese'),
+        (FRANCESE, 'Francese'),
+        (SPAGNOLO, 'Spagnolo'),
+        (TEDESCO, 'Tedesco'),
+        (PORTOGHESE, 'Portoghese'),
+        (CINESE, 'Cinese Mandarino'),
+        (ARABO, 'Arabo'),
+        (ALTRO, 'Altra lingua non presente'),
+    )
+
+    SESSO_DONATORE = (
+        ('M', 'Maschile'),
+        ('F', 'Femminile'),
+    )
+
     class Meta:
         verbose_name = 'Donatore'
         verbose_name_plural = 'Donatori'
@@ -172,12 +233,26 @@ class Donatore(ModelloSemplice):
 
     ragione_sociale = TitleCharField('Ragione Sociale', max_length=64, blank=True,
                                      help_text='Inserire la ragione sociale nel caso di persona giuridica')
+    tipo_donatore = models.CharField('Tipo Donatore', blank=True, choices=TIPO_DONATORE, max_length=1)
+    sesso = models.CharField('Sesso', blank=True, choices=SESSO_DONATORE, max_length=1)
+    indirizzo = models.CharField("Indirizzo di residenza", max_length=512, blank=True)
+    comune_residenza = models.CharField('Comune di residenza', max_length=64, blank=True)
+    provincia_residenza = models.CharField('Provincia di residenza', max_length=2, blank=True)
+    stato_residenza = CountryField('Stato di residenza', blank=True)
+    cap_residenza = models.CharField('CAP di Residenza', max_length=16, blank=True)
+    telefono = models.CharField('Telefono', max_length=64, blank=True)
+    cellulare = models.CharField('Cellulare', max_length=64, blank=True)
+    fax = models.CharField('FAX', max_length=64, blank=True)
+    professione = models.CharField('Professione', blank=True, choices=PROFESSIONI, max_length=10)
+    lingua = models.CharField('Lingua', blank=True, choices=LINGUE, max_length=2)
 
     def __str__(self):
         stringa_output = []
-        for f in ('ragione_sociale', 'nome', 'cognome', 'codice_fiscale'):
+        for f in ('ragione_sociale', 'nome', 'cognome'):
             stringa_output.append('{}'.format(getattr(self, f, '')))
-        return ' '.join(s for s in stringa_output if s)
+        stringa = ' '.join(s for s in stringa_output if s)
+        identificativo = self.email or self.codice_fiscale or ''
+        return '{} {}'.format(stringa, identificativo)
 
     @classmethod
     def nuovo_o_esistente(cls, donatore):
@@ -195,32 +270,37 @@ class Donatore(ModelloSemplice):
         :param donatore: oggetto Donatore
         :return: Record esistente o appena creato
         """
-        requisiti = None
+        filtro = None
         if donatore.codice_fiscale:
-            requisiti = Q(codice_fiscale=donatore.codice_fiscale)
+            filtro = Q(codice_fiscale=donatore.codice_fiscale)
             if donatore.ragione_sociale:
-                requisiti &= Q(ragione_sociale=donatore.ragione_sociale)
+                filtro &= Q(ragione_sociale=donatore.ragione_sociale)
             if donatore.email:
                 # se sono presenti entrambi codice_fiscale ed email, utilizzare anche quest'ultima
                 # come filtro (in OR)
-                requisiti |= Q(email=donatore.email)
+                filtro |= Q(email=donatore.email)
 
         elif donatore.email:
-            requisiti = Q(email=donatore.email)
+            filtro = Q(email=donatore.email)
 
         elif donatore.nome and donatore.cognome and donatore.data_nascita and donatore.comune_nascita:
-            requisiti = Q(nome=donatore.nome,
-                          cognome=donatore.cognome,
-                          data_nascita=donatore.data_nascita,
-                          comune_nascita=donatore.comune_nascita)
+            filtro = Q(nome=donatore.nome,
+                       cognome=donatore.cognome,
+                       data_nascita=donatore.data_nascita,
+                       comune_nascita=donatore.comune_nascita)
 
-        istanza_esistente = Donatore.objects.filter(requisiti).first() if requisiti else None
+        istanza_esistente = Donatore.objects.filter(filtro).first() if filtro else None
         if not istanza_esistente:
-            # crea nuovo donatore dai dati derivanti dal modulo ModuloDonatore
+            # Non esiste alcun donatore nell'anagrafica donatori centralizzata
+            # Crea quindi un nuovo donatore dai dati derivanti dal modulo ModuloDonatore
             donatore.save()
             return donatore
         # nel caso di donatore già esistente, vengono aggiunti nuovi campi se presenti nell'oggetto 'donatore'
         # e non presenti nell'istanza esistente
+        # TODO: bisogna inserire un nuovo donatore nel caso alcuni dati non corrispondano
+        # (quali indirizzo, telefono etc.)
+        # Questo per evitare che dati inseriti per una campagna di un comitato
+        # siano visibili ad altri comitati
         istanza_esistente = cls._riconcilia_istanze(istanza_esistente, donatore)
         return istanza_esistente
 
@@ -258,9 +338,8 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
     donatore = models.ForeignKey(Donatore, related_name='donazioni', on_delete=models.CASCADE, null=True)
     importo = models.FloatField('Importo in EUR', default=0.00,
                                 help_text='Importo in EUR della donazione',
-                                validators=[
-                                    MinValueValidator(0.01,
-                                                      "L'importo della donazione è al di sotto del minimo consentito")])
+                                validators=[MinValueValidator(0.01,
+                                            "L'importo della donazione è al di sotto del minimo consentito")])
     modalita = models.CharField('Modalità', blank=True, choices=MODALITA, max_length=1, db_index=True)
     data = models.DateTimeField('Data donazione', help_text='Data donazione', null=True)
     ricorrente = models.BooleanField('Donazione ricorrente', default=False)

@@ -18,7 +18,7 @@
     <td class="piu-piccolo">
         <ul>
            {% for c in obj.campagne.all %}
-               <li>{{ c.link|safe }}</li>
+               <li><a target="_parent" href="{{ c.url }}">{{ c.nome }}</a></li>
            {% endfor %}
         </ul>
     </td>
@@ -42,7 +42,7 @@
             <i class="fa fa-fw fa-edit"></i>Modifica
         </a>
     {% endif %}
-    {% if puo_eliminare %}
+    {% if puo_eliminare and not obj.default %}
         <a href="{{ obj.url_cancella }}" class="btn btn-default btn-xs" target="_parent">
             <i class="fa fa-fw fa-remove"></i>Elimina
         </a>

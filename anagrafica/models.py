@@ -1869,7 +1869,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         filtro = Q(estensione__in=[NAZIONALE, LOCALE])
         filtro |= (Q(estensione=REGIONALE) & (~Q(codice_fiscale__isnull=True) & ~Q(partita_iva__isnull=True) &
                                               ~Q(codice_fiscale__exact='') & ~Q(partita_iva__exact='') &
-                                              ~Q(codice_fiscale__in=cf_nazionali) & ~Q(partita_iva=piva_nazionali)))
+                                              ~Q(codice_fiscale__in=cf_nazionali) & ~Q(partita_iva__in=piva_nazionali)))
         return filtro
 
 

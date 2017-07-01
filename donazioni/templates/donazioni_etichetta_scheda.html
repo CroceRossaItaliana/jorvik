@@ -64,12 +64,18 @@
     <div class="row">
         <div class="col-md-3">
             <p>
-            <a href="{{ etichetta.url_modifica }}" class="btn btn-large btn-success">Modifica etichetta</a>
+            <a href="{{ etichetta.url_modifica }}" role="button" class="btn btn-large btn-primary">
+                <i class="fa fa-edit"></i>
+                Modifica etichetta
+            </a>
             </p>
         </div>
         <div class="col-md-3">
             <p>
-                <a href="{{ etichetta.url_cancella }}" class="btn btn-large btn-danger">Elimina etichetta</a>
+            <a href="{{ etichetta.url_cancella }}" role="button" class="btn btn-large btn-primary">
+                <i class="fa fa-remove"></i>
+                Elimina etichetta
+            </a>
             </p>
         </div>
     </div>
