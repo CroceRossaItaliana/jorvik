@@ -1,5 +1,74 @@
 {% extends 'donazioni_elenchi_inc_vuoto.html' %}
+{% block base_head_extra %}
+    <style type="text/css">
+.ui-tooltip {
+    background: #eeeeee;
+    color: black;
+    border: 2px solid #454545;
+    border-radius: 5px;
+    box-shadow: 0 0
+}
+.ui-autocomplete {
+    background: #eeeeee;
+    border-radius: 3px;
+}
+.ui-autocomplete.source:hover {
+    background: blue;
+}
 
+.ui-menu .ui-menu-item a{
+    background:lightskyblue;
+    height:10px;
+font-size:12px;}
+</style>
+{% endblock base_head_extra %}
+
+{% block pagina_javascript_extra %}
+    <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.min.js" ></script>
+
+<script>
+  $( function() {
+    $( "#filtra" ).autocomplete({
+      source: "/donazioni/campagne/autocompletamento/etichette",
+      minLength: 2,
+      delay: 250,
+      autoFocus: true,
+      messages: {
+          noResults: '',
+          results: function() {}
+      }
+    })
+  } );
+  </script>
+
+{% endblock %}
+{% block filtering_form %}
+    <form method="POST">
+    {% csrf_token %}
+    <div class="input-group">
+
+    <input  type="text" class="form-control" name="filtra" id="filtra"
+            placeholder={% block placeholderfiltro %}"Filtra per etichetta..."{% endblock placeholderfiltro%} value="{{ filtra }}"
+            {% if filtra %}autofocus{% endif %}
+    >
+    <span class="input-group-btn">
+
+        <button class="btn btn-primary" type="submit"
+            title="Filtra risultati">
+            <i class="fa fa-fw fa-search"></i>
+        </button>
+
+        {% if filtra %}
+            <button class="btn btn-danger" type="submit"
+                    title="Rimuovi filtro - Mostra tutti"
+                    name="filtra" value="">
+                <i class="fa fa-fw fa-times"></i>
+            </button>
+        {% endif %}
+    </span>
+</div>
+    </form>
+{% endblock filtering_form %}
 {% block elenco_intestazione %}
 
     <th>Nome</th>
@@ -23,11 +92,9 @@
     </td>
 
     <td class="piu-piccolo">
-        <ul>
-           {% for etichetta in obj.etichette.all %}
-               <li>{{ etichetta.slug }}</li>
-           {% endfor %}
-        </ul>
+       {% for etichetta in obj.etichette.all %}
+           <span class="badge small">{{ etichetta.slug }}</span><br />
+       {% endfor %}
     </td>
 
 {% endblock %}
@@ -37,15 +104,21 @@
     {% load utils %}
     {% permessi_almeno obj "modifica" as puo_modificare %}
     {% permessi_almeno obj "lettura" as puo_leggere %}
+    {% permessi_almeno obj "completo" as puo_eliminare %}
 
     {% if puo_leggere %}
          <a href="{{ obj.url }}" class="btn btn-default btn-xs" target="_parent">
             <i class="fa fa-fw fa-file"></i>Scheda
         </a>
     {% endif %}
-    {% if puo_modificare %}
-        <a href="{{ obj.url_modifica }}" class="btn btn-default btn-xs" target="_parent">
-            <i class="fa fa-fw fa-edit"></i>Modifica
+{#    {% if puo_modificare %}#}
+{#        <a href="{{ obj.url_modifica }}" class="btn btn-default btn-xs" target="_parent">#}
+{#            <i class="fa fa-fw fa-edit"></i>Modifica#}
+{#        </a>#}
+{#    {% endif %}#}
+    {% if puo_eliminare and obj.cancellabile %}
+        <a href="{{ obj.url_cancella }}" class="btn btn-primary btn-xs" target="_parent">
+            <i class="fa fa-fw fa-remove"></i>Elimina
         </a>
     {% endif %}
 

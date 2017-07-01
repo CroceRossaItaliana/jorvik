@@ -4,7 +4,7 @@ from unittest import mock
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from anagrafica.costanti import LOCALE, REGIONALE, TERRITORIALE
+from anagrafica.costanti import LOCALE, REGIONALE, TERRITORIALE, NAZIONALE
 from anagrafica.permessi.applicazioni import DELEGATO_CAMPAGNE, RESPONSABILE_CAMPAGNA
 from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO
 from base.utils import poco_fa
@@ -19,7 +19,7 @@ class TestModelliCampagne(TestCase):
     def setUpTestData(cls):
         presidente = crea_persona()
         persona = crea_persona()
-        cls.sede = crea_sede(presidente)
+        cls.sede = crea_sede(presidente, estensione=NAZIONALE)
         crea_appartenenza(persona, cls.sede)
 
     def test_responsabili_campagne(self):
@@ -63,7 +63,7 @@ class TestModelliCampagne(TestCase):
 
     def test_permessi_campagne(self):
         presidente = crea_persona()
-        sicilia = crea_sede(presidente=presidente, estensione=REGIONALE)
+        sicilia = crea_sede(presidente=presidente, estensione=REGIONALE, genitore=self.sede)
         sicilia.codice_fiscale = codice_fiscale()
         sicilia.partita_iva = sicilia.codice_fiscale
         sicilia.save()

@@ -8,11 +8,13 @@
         <div class="row allinea-centro">
 
             <div class="col-sm-4">
+                {% block filtering_form %}
                 <form method="POST">
                     {% csrf_token %}
+
                     <div class="input-group">
                         <input  type="text" class="form-control" name="filtra"
-                                placeholder={% block placeholderfiltro %}"Filtra elenco per etichetta..."{% endblock %} value="{{ filtra }}"
+                                placeholder={% block placeholderfiltro %}Filtra...{% endblock placeholderfiltro%} value="{{ filtra }}"
                                 {% if filtra %}autofocus{% endif %}
                         >
                         <span class="input-group-btn">
@@ -31,6 +33,7 @@
                             {% endif %}
                         </span>
                     </div>
+                    {% endblock filtering_form %}
                 </form>
             </div>
 
@@ -40,7 +43,7 @@
 
                     {% if ha_precedente %}
                         <li class="prev">
-                            <a href="{{ pagina_precedente }}" data-caricamento>
+                            <a href="{{ pagina_precedente }}">
                                 <i class="fa fa-arrow-left"></i>
                             </a>
                         </li>
@@ -54,12 +57,12 @@
                     {% endif %}
 
                     <li class="active">
-                        <a href="#">Pag. {{ pagina }} di {{ pagine }} ({{ totale }})</a>
+                        <a href="#">Pag. {{ pagina }} di {{ pagine }} (Tot: {{ totale }})</a>
                     </li>
 
                     {% if ha_successivo %}
                         <li class="prev">
-                            <a href="{{ pagina_successiva }}" data-caricamento>
+                            <a href="{{ pagina_successiva }}">
                                 <i class="fa fa-arrow-right"></i>
                             </a>
                         </li>
@@ -130,7 +133,6 @@
                     {% endblock %}
                 {% endfor %}
             </table>
-
         </div>
 
     </div>

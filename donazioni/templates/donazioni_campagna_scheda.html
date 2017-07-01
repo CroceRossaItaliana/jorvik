@@ -18,16 +18,6 @@
         {{ campagna.nome }}
     </h2>
 
-    {% if puo_modificare %}
-        <div class="alert alert-warning alert-block">
-             <p>
-                {% checkbox campagna.responsabili_attuali %}:
-                Aggiungi responsabili alla campagna;
-            </p>
-        </div>
-    {% endif %}
-
-    <p>&nbsp;</p>
     <ul class="nav nav-tabs">
         <li role="presentation" {% if request.path == campagna.url %}class="active"{% endif %}>
             <a href="{{ campagna.url }}">
@@ -35,13 +25,33 @@
                 Informazioni
             </a>
         </li>
+        {% if puo_modificare %}
+        <li role="presentation" {% if request.path == campagna.url_modifica %}class="active"{% endif %}>
+            <a href="{{ campagna.url_modifica }}" class="text-danger">
+                <i class="fa fa-fw fa-edit"></i>
+                Modifica
+            </a>
+        </li>
+        <li role="presentation" {% if request.path == campagna.url_aggiungi_donazione %}class="active"{% endif %}>
+            <a href="{{ campagna.url_aggiungi_donazione }}" class="text-danger">
+                <i class="fa fa-fw fa-plus-circle"></i>
+                Nuova Donazione
+            </a>
+        </li>
+        <li role="presentation" {% if request.path == campagna.url_importa_xls %}class="active"{% endif %}>
+            <a href="{{ campagna.url_importa_xls }}" class="text-danger">
+                <i class="fa fa-fw fa-file-excel-o"></i>
+                Importa Donazioni
+            </a>
+        </li>
+        {% endif %}
         <li role="presentation" {% if request.path == campagna.url_elenco_donazioni %}class="active"{% endif %}>
             <a href="{{ campagna.url_elenco_donazioni }}">
                 <i class="fa fa-fw fa-money"></i>
                 Donazioni
                 <span class="badge">
                         <i class="fa fa-fw fa-eur"></i>
-                        {{ campagna.totale_donazioni }}
+                        {{ campagna.totale_donazioni|default_if_none:"0" }}
                 </span>
 
             </a>
@@ -70,39 +80,4 @@
     {% block scheda_contenuto %}
     {% endblock %}
 
-    {% block scheda_pulsantiera %}
-        <hr />
-        {% if puo_modificare %}
-        <div class="row">
-            <div class="col-md-4">
-                <p>
-                <a href="{{ campagna.url_aggiungi_donazione }}" class="btn btn-large btn-info">Aggiungi una donazione</a>
-                </p>
-            </div>
-            <div class="col-md-4">
-                <p>
-                <a href="{{ campagna.url_modifica }}" class="btn btn-large btn-info">Modifica campagna</a>
-                </p>
-            </div>
-            <div class="col-md-4">
-                <p>
-                    {% if campagna.cancellabile %}
-                        <a href="{{ campagna.url_cancella }}" class="btn btn-large btn-danger">Elimina campagna</a>
-                    {% endif %}
-                </p>
-            </div>
-        </div>
-        {% endif %}
-    {% endblock %}
-
-<p></p>
-    <hr />
-    <div class="row">
-    <div class="piu-piccolo allinea-centro">
-        <i class="fa fa-fw fa-clock-o"></i>
-        Ultimo aggiornamento {{ campagna.ultima_modifica }}
-    </div>
-    </div>
-
-
-{% endblock %}
+{% endblock app_contenuto %}

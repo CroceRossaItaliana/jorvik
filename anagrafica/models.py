@@ -56,7 +56,7 @@ from base.models import ModelloSemplice, ModelloAlbero, ConAutorizzazioni, ConAl
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
 from base.utils import is_list, sede_slugify, UpperCaseCharField, TitleCharField, poco_fa, mezzanotte_24_ieri, \
-    mezzanotte_00, mezzanotte_24
+    mezzanotte_00, mezzanotte_24, concept
 from autoslug import AutoSlugField
 
 from curriculum.models import Titolo, TitoloPersonale
@@ -1869,7 +1869,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         filtro = Q(estensione__in=[NAZIONALE, LOCALE])
         filtro |= (Q(estensione=REGIONALE) & (~Q(codice_fiscale__isnull=True) & ~Q(partita_iva__isnull=True) &
                                               ~Q(codice_fiscale__exact='') & ~Q(partita_iva__exact='') &
-                                              ~Q(codice_fiscale__in=cf_nazionali) & ~Q(partita_iva=piva_nazionali)))
+                                              ~Q(codice_fiscale__in=cf_nazionali) & ~Q(partita_iva__in=piva_nazionali)))
         return filtro
 
 

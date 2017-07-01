@@ -12,9 +12,18 @@
         Elenco donazioni per la campagna raccolta fondi {{ campagna.nome }}
     </h4>
     <div class="alert alert-info">
-        Raccolti finora: € {{ campagna.totale_donazioni }}
-        <br />
-        Totale Donazioni: {{ campagna.donazioni.count }}<br />
+        <strong>Totale Donazioni: {{ campagna.donazioni.count }}</strong>
+    <br />
+    {% if puo_modificare %}
+         <a href="{{ campagna.url_aggiungi_donazione }}" role="button" class="btn btn-large btn-primary">
+            <i class="fa fa-fw fa-plus-circle"></i>
+            Aggiungi una donazione
+        </a>
+        <a href="{{ campagna.url_importa_xls }}" role="button" class="btn btn-large btn-primary">
+            <i class="fa fa-fw fa-file-excel-o"></i>
+            Importa Donazioni
+        </a>
+        {% endif %}
 
     </div>
 

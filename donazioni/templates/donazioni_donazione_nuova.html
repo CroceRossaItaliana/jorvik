@@ -1,4 +1,4 @@
-{% extends 'donazioni_vuota.html' %}
+{% extends 'donazioni_campagna_scheda.html' %}
 
 {% load bootstrap3 %}
 
@@ -6,7 +6,7 @@
     Aggiungi una donazione economica
 {% endblock %}
 
-{% block app_contenuto %}
+{% block scheda_contenuto %}
 
     <div class="row">
 
@@ -47,6 +47,7 @@
                 <ul>
                     <li><strong>Modalità</strong>: a scelta fra Online, Bancaria (i.e. Bonifico), Contanti</li>
                     <li><strong>Importo</strong>: importo in EUR della donazione economica</li>
+                    <li><strong>Codice Transazione</strong>: inserire se presente un codice che identifichi univocamente la donazione (e.g. CRO bonifico)</li>
                     <li><strong>Data</strong>: Data della donazione. Può essere lasciata
                     in bianco. In tal caso, la donazione avrà la data odierna.</li>
                     <li><strong>Donazione Ricorrente</strong>: Spuntare la casella se si tratta di una donazione ricorrente</li>

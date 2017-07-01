@@ -77,7 +77,7 @@ class TestVisteDonazioni(TestCase):
                 'cognome': '',
                 }
         response = self.client.post(reverse('donazioni_campagne_nuova_donazione', args=(self.campagna.id,)), data=data)
-        self.assertEqual(response.url, reverse('donazioni_campagna', args=(self.campagna.id,)))
+        self.assertEqual(response.url, reverse('donazioni_campagne_donazioni', args=(self.campagna.id,)))
         donazione = Donazione.objects.filter(campagna=self.campagna).first()
         self.assertEqual(donazione.campagna, self.campagna)
         self.assertEqual(donazione.importo, 150.0)
