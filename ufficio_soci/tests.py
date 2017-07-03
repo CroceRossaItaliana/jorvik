@@ -1702,3 +1702,168 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         # ricevuta registrata
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response['location'].find('?appena_registrata='))
+
+    @freeze_time('2016-10-14')
+    def pagamento_quota_sostenitore(self):
+        """
+        Test che la quota sostenitore sia pagabile con controllo sulla quota minima
+        """
+
+        oggi = poco_fa().replace(month=2)
+        inizio_anno = oggi.replace(month=1, day=1)
+        fine_soci = inizio_anno.replace(month=3) - datetime.timedelta(days=1)
+        fine_anno = inizio_anno.replace(month=12) - datetime.timedelta(days=31)
+
+        anno_successivo = poco_fa().replace(month=2, year=oggi.year+1)
+        inizio_anno_successivo = anno_successivo.replace(month=1, day=1)
+
+        passato = poco_fa().replace(month=2, year=oggi.year-1)
+
+        delegato = crea_persona()
+        sostenitore, sede, appartenenza = crea_persona_sede_appartenenza()
+        appartenenza.membro = Appartenenza.SOSTENITORE
+        appartenenza.save()
+        utente1 = crea_utenza(delegato, email="mario@rossi.it", password="prova")
+
+        sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
+        sede.telefono = '+3902020202'
+        sede.email = 'comitato@prova.it'
+        sede.codice_fiscale = '01234567891'
+        sede.partita_iva = '01234567891'
+        sede.locazione = crea_locazione()
+        sede.save()
+
+        delegato2 = crea_persona()
+        sede2 = crea_sede(delegato2)
+        utente2 = crea_utenza(delegato2, email="mario2@rossi.it", password="prova")
+
+        sede2.aggiungi_delegato(UFFICIO_SOCI, delegato2)
+        sede2.telefono = '+3902020202'
+        sede2.email = 'comitato@prova.it'
+        sede2.codice_fiscale = '01234567891'
+        sede2.partita_iva = '01234567891'
+        sede2.locazione = crea_locazione()
+        sede2.save()
+
+        seconda_appartenenza = crea_appartenenza(sostenitore, sede2)
+        seconda_appartenenza.membro = Appartenenza.SOSTENITORE
+        seconda_appartenenza.save()
+
+        volontario_ex_sostenitore = crea_persona()
+        appartenenza_ex_sostenitore = crea_appartenenza(volontario_ex_sostenitore, sede2)
+        appartenenza_ex_sostenitore.inizio = oggi
+        appartenenza_ex_sostenitore.save()
+
+        appartenenza_ex_sostenitore = crea_appartenenza(volontario_ex_sostenitore, sede2)
+        appartenenza_ex_sostenitore.inizio = passato
+        appartenenza_ex_sostenitore.fine = oggi - datetime.timedelta(days=1)
+        appartenenza_ex_sostenitore.terminazione = Appartenenza.PROMOZIONE
+        appartenenza_ex_sostenitore.membro = Appartenenza.SOSTENITORE
+        appartenenza_ex_sostenitore.save()
+
+        Tesseramento.objects.create(
+            stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
+            anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+            quota_aspirante=8, quota_sostenitore=20, fine_soci_nv=fine_anno
+        )
+
+        Tesseramento.objects.create(
+            stato=Tesseramento.APERTO, inizio=inizio_anno_successivo, fine_soci=anno_successivo,
+            anno=anno_successivo.year, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+            quota_aspirante=8, quota_sostenitore=20, fine_soci_nv=anno_successivo
+        )
+
+        # Non registrata per mancato rispetto importo minimo
+        data = {
+            'persona': sostenitore.pk,
+            'importo': 8,
+            'causale': 'test ricevute',
+            'tipo_ricevuta': Quota.QUOTA_SOSTENITORE,
+            'data_versamento': oggi.strftime('%d/%m/%Y')
+        }
+        self.client.login(email=utente1.email, password=utente1.password_testing)
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_nuova')), data=data)
+        # ricevuta non registrata
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'importo minimo per la quota sostenitore per l')
+
+        # Non registrata per anno diverso da quello corrente
+        data = {
+            'persona': sostenitore.pk,
+            'importo': 8,
+            'causale': 'test ricevute',
+            'tipo_ricevuta': Quota.QUOTA_SOSTENITORE,
+            'data_versamento': (oggi - datetime.timedelta(days=400)).strftime('%d/%m/%Y')
+        }
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_nuova')), data=data)
+        # ricevuta non registrata
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Non è possibile registrare quote sostenitore per un anno diverso da quello corrente')
+
+        # Registrata
+        data = {
+            'persona': sostenitore.pk,
+            'importo': 20,
+            'causale': 'test ricevute',
+            'tipo_ricevuta': Quota.QUOTA_SOSTENITORE,
+            'data_versamento': oggi.strftime('%d/%m/%Y')
+        }
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_nuova')), data=data)
+        # ricevuta registrata
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['location'].find('?appena_registrata='))
+
+        # Non registrata perché già registrata nell'anno corrente
+        data = {
+            'persona': sostenitore.pk,
+            'importo': 20,
+            'causale': 'test ricevute',
+            'tipo_ricevuta': Quota.QUOTA_SOSTENITORE,
+            'data_versamento': oggi.strftime('%d/%m/%Y')
+        }
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_nuova')), data=data)
+        # ricevuta non registrata
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'è già stata registrata per la Sede del Comitato di')
+
+        # Registrata perché su comitato diverso
+        data = {
+            'persona': sostenitore.pk,
+            'importo': 20,
+            'causale': 'test ricevute',
+            'tipo_ricevuta': Quota.QUOTA_SOSTENITORE,
+            'data_versamento': oggi.strftime('%d/%m/%Y')
+        }
+        self.client.login(email=utente2.email, password=utente2.password_testing)
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_nuova')), data=data)
+        # ricevuta non registrata
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['location'].find('?appena_registrata='))
+
+        # Non registrata perché è solo volontario, non sostenitore
+        data = {
+            'persona': volontario_ex_sostenitore.pk,
+            'importo': 20,
+            'causale': 'test ricevute',
+            'tipo_ricevuta': Quota.QUOTA_SOSTENITORE,
+            'data_versamento': oggi.strftime('%d/%m/%Y')
+        }
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_nuova')), data=data)
+        # ricevuta non registrata
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Questa persona non è registrata come Sostenitore CRI')
+
+        with freeze_time('2017-10-14'):
+            # Registrata perché in anno successivo
+            data = {
+                'persona': sostenitore.pk,
+                'importo': 20,
+                'causale': 'test ricevute',
+                'tipo_ricevuta': Quota.QUOTA_SOSTENITORE,
+                'data_versamento': poco_fa().strftime('%d/%m/%Y')
+            }
+            self.client.login(email=utente2.email, password=utente2.password_testing)
+            response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_nuova')), data=data)
+            # ricevuta non registrata
+            self.assertEqual(response.status_code, 302)
+            self.assertTrue(response['location'].find('?appena_registrata='))

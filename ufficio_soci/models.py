@@ -242,6 +242,11 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
 
         return self.stato == self.APERTO and data >= self.inizio and data <= termine
 
+    def quota_sostenitore_value(self):
+        if self.quota_sostenitore:
+            return self.quota_sostenitore
+        return 0
+
     def importo_quota_volontario(self, riduzione=None):
         if riduzione:
             return riduzione.quota
@@ -355,6 +360,13 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     @classmethod
     def anni_scelta(cls):
         return ((y, y) for y in [x['anno'] for x in cls.objects.all().values("anno")])
+
+    @classmethod
+    def ultimo_tesseramento(cls):
+        try:
+            return cls.objects.latest('anno')
+        except Tesseramento.DoesNotExist:
+            return None
 
     @classmethod
     def ultimo_anno(cls):
