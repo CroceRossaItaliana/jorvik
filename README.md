@@ -77,7 +77,7 @@ Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 
 3. **Configura la macchina virtuale** (potrebbe volerci un po')
 
     ```bash
-    vagrant up
+    vagrant up --provision
     ```
 
 4. **Crea il primo utente** (amministratore)
