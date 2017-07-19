@@ -132,9 +132,18 @@ class TestBase(TestCase):
 
 
 class TestGeo(TestCase):
+    """
+    Effettua test sulla localizzazione confrontando i risultati memorizzati qui sotto con quelli
+    riportati in tempo reale dal metodo di Gaia
+
+    Usando dati storicizzati, e soggetti a piccoli cambiamenti da parte di google, potrebbero essere
+    necessari cambiamenti. Per minimizzare la manutenzione sono effettuati test esclusivamente
+    sugli indirizzi, anziché sulle coordinate. I dump sotto sono riportati completi ma potrebbero
+    differire da quelli attuali per le voci non testate
+    """
     posto_google = [
         {'place_id': 'ChIJ4ZrMcgdhLxMR7F_Z1sLKCOA',
-         'formatted_address': 'Via Toscana, 12, 00187 Roma, Italia',
+         'formatted_address': 'Via Toscana, 12, 00187 Roma RM, Italia',
          'geometry': {'location': {'lng': 0, 'lat': 0},
                       'location_type': 'ROOFTOP', 'viewport':
                           {'northeast': {'lng': 12.4929659802915, 'lat': 41.90993408029149},
@@ -151,7 +160,7 @@ class TestGeo(TestCase):
 
     posto_senza_coord = [
         {'place_id': 'ChIJ4ZrMcgdhLxMR7F_Z1sLKCOA',
-         'formatted_address': 'Via Toscana, 12, 00187 Roma, Italia',
+         'formatted_address': 'Via Toscana, 12, 00187 Roma RM, Italia',
          'geometry': {'location': '',
                       'location_type': 'ROOFTOP', 'viewport':
                           {'northeast': {'lng': 12.4929659802915, 'lat': 41.90993408029149},
@@ -219,7 +228,7 @@ class TestGeo(TestCase):
                                       'southwest': {'lat': -0.7461185, 'lng': 8.753189299999999}},
                            'viewport': {'northeast': {'lat': -0.7244695, 'lng': 8.767470699999999},
                                         'southwest': {'lat': -0.7461185, 'lng': 8.753189299999999}},
-                           'location': {'lat': -0.7345885999999999, 'lng': 8.760486199999999},
+                           'location': {'lat': -0.7351183, 'lng': 8.760859},
                            'location_type': 'GEOMETRIC_CENTER'},
               'formatted_address': 'Route des Hydrocarbures, Port-Gentil, Gabon', 'address_components': [
                     {'types': ['route'], 'short_name': 'Route des Hydrocarbures',
@@ -231,7 +240,7 @@ class TestGeo(TestCase):
                      'long_name': 'Ogooué-Maritime'},
                     {'types': ['country', 'political'], 'short_name': 'GA', 'long_name': 'Gabon'}],
               'place_id': 'ChIJFSkO1Fq3gxoRauW9p1O_G_s', 'types': ['route']}],
-            [('Route des Hydrocarbures, Port-Gentil, Gabon', {'lat': -0.7345885999999999, 'lng': 8.760486199999999},
+            [('Route des Hydrocarbures, Port-Gentil, Gabon', {'lat': -0.7351183, 'lng': 8.760859},
               {'provincia_breve': 'Bendje', 'regione': 'Ogooué-Maritime', 'provincia': 'Bendje',
                'comune': 'Port-Gentil', 'via': 'Route des Hydrocarbures', 'stato': 'GA', 'civico': None, 'cap': None})]
         ],
@@ -285,21 +294,42 @@ class TestGeo(TestCase):
         indirizzo = Locazione.cerca(indirizzo_base)
         self.assertEqual(len(indirizzo[0]), 3)
         self.assertEqual(indirizzo[0][0], self.posti_africa[0][0][0]['formatted_address'])
-        self.assertEqual(indirizzo[0][1], self.posti_africa[0][0][0]['geometry']['location'])
+        self.assertEqual(
+            str(indirizzo[0][1]['lat'])[:4],
+            str(self.posti_africa[0][0][0]['geometry']['location']['lat'])[:4]
+        )
+        self.assertEqual(
+            str(indirizzo[0][1]['lng'])[:4],
+            str(self.posti_africa[0][0][0]['geometry']['location']['lng'])[:4]
+        )
 
         # Ovest di Greenwitch, Nord dell'equatore
         indirizzo_base = 'Carrettera del Aeropuerto, Malabo, Guinea Equatoriale'
         indirizzo = Locazione.cerca(indirizzo_base)
         self.assertEqual(len(indirizzo[0]), 3)
         self.assertEqual(indirizzo[0][0], self.posti_africa[1][0][0]['formatted_address'])
-        self.assertEqual(indirizzo[0][1], self.posti_africa[1][0][0]['geometry']['location'])
+        self.assertEqual(
+            str(indirizzo[0][1]['lat'])[:4],
+            str(self.posti_africa[1][0][0]['geometry']['location']['lat'])[:4]
+        )
+        self.assertEqual(
+            str(indirizzo[0][1]['lng'])[:4],
+            str(self.posti_africa[1][0][0]['geometry']['location']['lng'])[:4]
+        )
 
         # Ovest di Greenwitch, Sud dell'equatore
         indirizzo_base = 'Route des Hydrocarbures, Port Gentil, Gabon'
         indirizzo = Locazione.cerca(indirizzo_base)
         self.assertEqual(len(indirizzo[0]), 3)
         self.assertEqual(indirizzo[0][0], self.posti_africa[2][0][0]['formatted_address'])
-        self.assertEqual(indirizzo[0][1], self.posti_africa[2][0][0]['geometry']['location'])
+        self.assertEqual(
+            str(indirizzo[0][1]['lat'])[:4],
+            str(self.posti_africa[2][0][0]['geometry']['location']['lat'])[:4]
+        )
+        self.assertEqual(
+            str(indirizzo[0][1]['lng'])[:4],
+            str(self.posti_africa[2][0][0]['geometry']['location']['lng'])[:4]
+        )
 
         # Est di Greenwitch, Sud dell'equatore
         # Non c'è nulla :D
