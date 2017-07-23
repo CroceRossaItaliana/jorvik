@@ -56,7 +56,7 @@ from base.models import ModelloSemplice, ModelloAlbero, ConAutorizzazioni, ConAl
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
 from base.utils import is_list, sede_slugify, UpperCaseCharField, TitleCharField, poco_fa, mezzanotte_24_ieri, \
-    mezzanotte_00, mezzanotte_24
+    mezzanotte_00, mezzanotte_24, concept
 from autoslug import AutoSlugField
 
 from curriculum.models import Titolo, TitoloPersonale
@@ -428,6 +428,20 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return 0
         al_giorno = al_giorno or date.today()
         return al_giorno.year - self.data_nascita.year - ((al_giorno.month, al_giorno.day) < (self.data_nascita.month, self.data_nascita.day))
+
+    @classmethod
+    @concept
+    def query_eta_minima(cls, eta, al_giorno=None):
+        al_giorno = al_giorno or date.today()
+        data_nascita_massima = al_giorno.replace(year=al_giorno.year - eta)
+        return Q(data_nascita__lte=data_nascita_massima)
+
+    @classmethod
+    @concept
+    def query_eta_massima(cls, eta, al_giorno=None):
+        al_giorno = al_giorno or date.today()
+        data_nascita_minima = al_giorno.replace(year=al_giorno.year - eta)
+        return Q(data_nascita__gte=data_nascita_minima)
 
     @property
     def giovane(self, **kwargs):

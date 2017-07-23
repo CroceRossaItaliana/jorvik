@@ -1,0 +1,69 @@
+{% extends 'base_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Statistiche Gaia CRI {{ ora }}
+{% endblock %}
+
+
+{% block pagina_principale %}
+
+    <p>&nbsp;</p>
+
+    <div class="container">
+
+        <div class="row">
+            <div class="col-md-4">
+                <h3>
+                    Report per la Federazione Internazionale
+                </h3>
+            </div>
+
+            <div class="col-md-8">
+
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            Parametri
+                        </h4>
+                    </div>
+                    <div class="panel-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            {% bootstrap_form modulo %}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-fw fa-cogs"></i>
+                                Genera report
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <code id="report">
+
+            {% if volontari %}
+                Numero totale di soci: {{ volontari }}<br /><br />
+            {% endif %}
+
+            {% if volontari_per_fasce_di_eta %}
+                Soci per fasce di et&agrave;<br />
+                {% for fascia, r in volontari_per_fasce_di_eta %}
+                  - {{ fascia.0 }} <= et&agrave; < {{ fascia.1 }}: {{ r }}<br />
+                {% endfor %}
+                <br />
+            {% endif %}
+
+            {% if decessi %}
+                Dimissioni per decesso registrate nei 365 giorni antecedenti la data:
+                {{ decessi }}
+            {% endif %}
+
+        </code>
+
+    </div>
+{% endblock %}
