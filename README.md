@@ -9,6 +9,11 @@ I punti chiave nella riprogettazione sono i seguenti:
 * Raccogliere le necessità espresse dagli utenti tramite il Supporto,
 * Raccogliere le nuove necessità dell'Associazione,
 
+## Segnalazioni tecniche / Issues
+
+Le segnalazioni sono state spostate da GitHub al [**nuovo sistema di tracciamento issues**](https://jira.sviluppo-gaia.ovh/issues) utilizzato dal Progetto Gaia (JIRA). Vedi l'articolo "[Segnalazioni tecniche](https://github.com/CroceRossaItaliana/jorvik/wiki/Segnalazioni-tecniche)" sul wiki per maggiori informazioni sul come utilizzarlo.
+
+
 ## Sviluppo
 
 Sei interessato a partecipare allo sviluppo di Gaia/Jorvik? Contattaci all'indirizzo e-mail <sviluppo@gaia.cri.it>!
@@ -77,7 +82,7 @@ Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 
 3. **Configura la macchina virtuale** (potrebbe volerci un po')
 
     ```bash
-    vagrant up
+    vagrant up --provision
     ```
 
 4. **Crea il primo utente** (amministratore)
