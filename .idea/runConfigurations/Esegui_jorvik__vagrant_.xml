@@ -5,6 +5,7 @@
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
       <env name="DJANGO_SETTINGS_MODULE" value="jorvik.settings" />
+      <env name="GOOGLE_KEY" value="AIzaSyCD9hTIfcRQNBLwQqv5eXYBKpQDHkmF3Uk" />
     </envs>
     <option name="SDK_HOME" value="vagrant://$PROJECT_DIR$/usr/bin/python3" />
     <option name="WORKING_DIRECTORY" value="" />
