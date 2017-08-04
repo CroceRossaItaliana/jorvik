@@ -28,17 +28,17 @@
     <div class="row ">
 
         <div class="col-md-3 allinea-centro">
-            <h3>{{ campagne.count }}</h3>
+            <h3>{{ campagne_gestite.count }}</h3>
             <p class="grassetto">Campagne Gestite</p>
         </div>
 
         <div class="col-md-3 allinea-centro">
-            <h3>{{ sedi.count }}</h3>
+            <h3>{{ sedi_gestite.count }}</h3>
             <p class="grassetto">Sedi Gestite</p>
         </div>
         <div class="col-md-3 allinea-centro">
             <h3>{{ fondi_raccolti }}</h3>
-            <p class="grassetto">Fondi Raccolti €</p>
+            <p class="grassetto">Fondi Raccolti</p>
         </div>
 
         <div class="col-md-3 allinea-centro">
@@ -48,12 +48,21 @@
     </div>
     <div class="row">
         <div class="col-md-12">
+            {% if sedi_gestite %}
             <p>Sei abilitato alla gestione delle campagne per le seguenti sedi:</p>
             <ul>
-                {% for sede in sedi %}
+                {% for sede in sedi_gestite %}
                     <li>{{ sede.link|safe }}</li>
                 {% endfor %}
             </ul>
+            {% elif campagne_gestite %}
+                <p>Sei abilitato alla gestione delle seguenti campagne:</p>
+                <ul>
+                {% for c in campagne_gestite %}
+                    <li>{{ c.link|safe }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
         </div>
     </div>
 

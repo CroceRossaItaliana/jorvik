@@ -5,23 +5,28 @@
 {% load utils %}
 
 {% block pagina_titolo %}
-    Seleziona Responsabili/i Campagna
+    Seleziona almeno un Responsabile per la campagna
 {% endblock %}
 
 {% block scheda_contenuto %}
 
     <h2 class="allinea-centro text-success">
-        Seleziona Responsabile/i Campagna
+        Seleziona almeno un Responsabile per la campagna
     </h2>
 
     <div class="alert alert-block alert-info">
-        <h4><i class="fa fa-fw fa-question-circle"></i> Chi è il responsabile di una Campagna Raccolta Fondi?</h4>
+        <h4><i class="fa fa-fw fa-question-circle"></i>
+            Chi è il responsabile di una Campagna Raccolta Fondi?
+        </h4>
         <ul>
-          <li>Punto di riferimento per la gestione della Campagna;</li>
+            <li>Punto di riferimento per la gestione della Campagna</li>
+            <li>Può inserire (e modificare) donazioni e dati anagrafici dei donatori</li>
+            <li>Non può creare nuove campagne né eliminare quelle esistenti,
+                ma può modificare i dettagli della campagna di cui è responsabile.</li>
+            <li>Può aggiungere altri responsabili alla campagna.</li>
         </ul>
     </div>
 
     {% delegati delega campagna continua_url=continua_url almeno=1 %}
-
 
 {% endblock %}

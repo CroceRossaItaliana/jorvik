@@ -341,6 +341,10 @@ urlpatterns = [
     url(r'^donazioni/etichette/(?P<pk>[0-9]+)/elimina$', donazioni.viste.etichetta_elimina, name='donazioni_etichetta_elimina'),
     url(r'^donazioni/etichette/(?P<pk>[0-9]+)/modifica', donazioni.viste.etichetta_modifica, name='donazioni_etichetta_modifica'),
 
+    url(r'^donazioni/donazione/(?P<pk>[0-9]+)/', donazioni.viste.donazione, name='donazioni_donazione'),
+    url(r'^donazioni/donazione/(?P<pk>[0-9]+)/modifica', donazioni.viste.donazione_modifica, name='donazioni_donazione_modifica'),
+    url(r'^donazioni/donazione/(?P<pk>[0-9]+)/elimina', donazioni.viste.donazione_elimina, name='donazioni_donazione_elimina'),
+
     # Amministrazione
 
     url(r'^admin/import/volontari/$', anagrafica.viste.admin_import_volontari),

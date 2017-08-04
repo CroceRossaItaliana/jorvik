@@ -102,7 +102,6 @@ font-size:12px;}
 {% block elenco_riga_azioni %}
 
     {% load utils %}
-    {% permessi_almeno obj "modifica" as puo_modificare %}
     {% permessi_almeno obj "lettura" as puo_leggere %}
     {% permessi_almeno obj "completo" as puo_eliminare %}
 
@@ -111,11 +110,6 @@ font-size:12px;}
             <i class="fa fa-fw fa-file"></i>Scheda
         </a>
     {% endif %}
-{#    {% if puo_modificare %}#}
-{#        <a href="{{ obj.url_modifica }}" class="btn btn-default btn-xs" target="_parent">#}
-{#            <i class="fa fa-fw fa-edit"></i>Modifica#}
-{#        </a>#}
-{#    {% endif %}#}
     {% if puo_eliminare and obj.cancellabile %}
         <a href="{{ obj.url_cancella }}" class="btn btn-primary btn-xs" target="_parent">
             <i class="fa fa-fw fa-remove"></i>Elimina

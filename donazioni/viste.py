@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.utils.safestring import mark_safe
 from django.http import JsonResponse
 
+from anagrafica.models import Sede
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
 from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO, ERRORE_PERMESSI, MODIFICA, LETTURA
 from autenticazione.funzioni import pagina_privata
@@ -21,13 +22,17 @@ from donazioni.utils import analizza_file_import
 @pagina_privata
 def donazioni_home(request, me):
     campagne = me.oggetti_permesso(GESTIONE_CAMPAGNA)
-    donatori = Donatore.objects.filter(donazioni__campagna__in=campagne)
+    donatori = Donatore.objects.filter(donazioni__campagna__in=campagne).distinct('id')
     fondi_raccolti = Donazione.objects.filter(campagna__in=campagne).aggregate(totale=Sum('importo'))
+    sedi_gestite = Sede.objects.none()
+    if me.ha_permesso(GESTIONE_CAMPAGNE):
+        # delegato campagne
+        sedi_gestite = me.oggetti_permesso(GESTIONE_CAMPAGNE)
     contesto = {
-        'sedi': me.oggetti_permesso(GESTIONE_CAMPAGNE),
-        'campagne': campagne,
+        'sedi_gestite': sedi_gestite,
+        'campagne_gestite': campagne,
         'donatori': donatori,
-        'fondi_raccolti': fondi_raccolti['totale'] or 0
+        'fondi_raccolti': '{0:.2f} €'.format(fondi_raccolti['totale'] or 0)
     }
     return 'donazioni.html', contesto
 
@@ -41,7 +46,6 @@ def campagne_elenco(request, me):
         'campagne': campagne,
         'elenco': elenco,
         'puo_creare': me.ha_permesso(GESTIONE_CAMPAGNE),
-        # 'modulo_filtro': modulo_filtro
     }
     return 'donazioni_campagne_elenco.html', contesto
 
@@ -96,8 +100,6 @@ def campagna(request, me, pk):
     if not me.permessi_almeno(campagna, LETTURA):
         return redirect(ERRORE_PERMESSI)
     puo_modificare = me.permessi_almeno(campagna, MODIFICA)
-    totale_donazioni = campagna.donazioni.all().aggregate(importo=Sum('importo'))
-    donatori = campagna.donazioni.filter(donatore__isnull=False).distinct('donatore').count()
     contesto = {
         'campagna': campagna,
         'puo_modificare': puo_modificare,
@@ -211,6 +213,43 @@ def etichette_elenco(request, me):
 
 # ############# DONAZIONI e DONATORI ###################
 
+
+@pagina_privata
+def donazione(request, me, pk):
+    donazione = get_object_or_404(Donazione, pk=pk)
+    if not me.permessi_almeno(donazione, LETTURA):
+        return redirect(ERRORE_PERMESSI)
+
+    contesto = {
+        'donazione': donazione,
+        'puo_modificare': me.permessi_almeno(donazione, COMPLETO),
+    }
+    return 'donazioni_donazione_scheda.html', contesto
+
+
+@pagina_privata
+def donazione_modifica(request, me, pk):
+    donazione = get_object_or_404(Donazione, pk=pk)
+    if not me.permessi_almeno(donazione, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    contesto = {
+        'donazione': donazione,
+        'puo_modificare': me.permessi_almeno(donazione, COMPLETO),
+    }
+    return 'donazioni_donazione_scheda.html', contesto
+
+
+@pagina_privata
+def donazione_elimina(request, me, pk):
+    donazione = get_object_or_404(Donazione, pk=pk)
+    campagna = donazione.campagna
+    if not me.permessi_almeno(etichetta, COMPLETO):
+        return redirect(ERRORE_PERMESSI)
+    donazione.delete()
+    return redirect(reverse('donazioni_campagne_donazioni', args=campagna.id))
+
+
 @pagina_privata
 def donazione_nuova(request, me, campagna_id):
     campagna = get_object_or_404(Campagna, pk=campagna_id)
@@ -227,7 +266,7 @@ def donazione_nuova(request, me, campagna_id):
             donazione.donatore = donatore
 
         donazione.save()
-        messaggio = 'Donazione aggiunta con successo: {} da {}'.format(donazione.importo, donazione.donatore or 'Anonimo')
+        messaggio = 'Donazione aggiunta con successo: {} donati da {}'.format(donazione.importo_stringa, donazione.donatore or 'Anonimo')
         messages.add_message(request, messages.SUCCESS, messaggio)
         return redirect(reverse('donazioni_campagne_donazioni', args=(campagna_id,)))
 

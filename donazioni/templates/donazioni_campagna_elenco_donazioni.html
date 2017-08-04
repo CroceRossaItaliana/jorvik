@@ -11,10 +11,8 @@
     <h4 class="allinea-centro">
         Elenco donazioni per la campagna raccolta fondi {{ campagna.nome }}
     </h4>
-    <div class="alert alert-info">
-        <strong>Totale Donazioni: {{ campagna.donazioni.count }}</strong>
-    <br />
     {% if puo_modificare %}
+    <div class="alert alert-info">
          <a href="{{ campagna.url_aggiungi_donazione }}" role="button" class="btn btn-large btn-primary">
             <i class="fa fa-fw fa-plus-circle"></i>
             Aggiungi una donazione
@@ -23,9 +21,8 @@
             <i class="fa fa-fw fa-file-excel-o"></i>
             Importa Donazioni
         </a>
-        {% endif %}
-
     </div>
+    {% endif %}
 
     {% load utils %}
     {% elenco elenco %}

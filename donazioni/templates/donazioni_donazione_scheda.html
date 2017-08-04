@@ -1,0 +1,91 @@
+{% extends "donazioni_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+{% load humanize %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}Scheda Donazione{% endblock %}
+{% endblock %}
+
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro grassetto text-success">
+        Scheda Donazione
+    </h2>
+
+    <div class="row">
+
+        <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-money"></i>
+                        Dati Donazione
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    <table class="table table-responsive table-striped">
+                        <tr>
+                            <td>Nome</td>
+                            <td class="grassetto">{{ me.nome }}</td>
+                        </tr>
+                        <tr>
+                            <td>Cognome</td>
+                            <td class="grassetto">{{ me.cognome }}</td>
+                        </tr>
+                        <tr>
+                            <td>Codice Fiscale</td>
+                            <td class="monospace">{{ me.codice_fiscale }}</td>
+                        </tr>
+                        <tr>
+                            <td>Data di nascita</td>
+                            <td>{{ me.data_nascita }}</td>
+                        </tr>
+
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-md-6">
+    {#        <div class="panel panel-info">#}
+    {#            <div class="panel-heading">#}
+    {#                <h3 class="panel-title">#}
+    {#                    <i class="fa fa-fw fa-money"></i>#}
+    {#                    Campagna#}
+    {#                </h3>#}
+    {#            </div>#}
+    {##}
+    {#            <div class="panel-body">#}
+    {#            {{ donazione.campagna.link|safe }}#}
+    {#            </div>#}
+    {##}
+    {#        </div>#}
+        </div>
+    </div>
+    {% if puo_modificare %}
+    <div class="row">
+        <div class="col-md-3">
+            <p>
+            <a href="{{ donazione.url_modifica }}" role="button" class="btn btn-large btn-primary">
+                <i class="fa fa-edit"></i>
+                Modifica dati donazione
+            </a>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p>
+            <a href="{{ donazione.url_cancella }}" role="button" class="btn btn-large btn-primary">
+                <i class="fa fa-remove"></i>
+                Elimina donazione
+            </a>
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+{% endblock %}

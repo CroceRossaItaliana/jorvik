@@ -25,33 +25,12 @@
                 Informazioni
             </a>
         </li>
-        {% if puo_modificare %}
-        <li role="presentation" {% if request.path == campagna.url_modifica %}class="active"{% endif %}>
-            <a href="{{ campagna.url_modifica }}" class="text-danger">
-                <i class="fa fa-fw fa-edit"></i>
-                Modifica
-            </a>
-        </li>
-        <li role="presentation" {% if request.path == campagna.url_aggiungi_donazione %}class="active"{% endif %}>
-            <a href="{{ campagna.url_aggiungi_donazione }}" class="text-danger">
-                <i class="fa fa-fw fa-plus-circle"></i>
-                Nuova Donazione
-            </a>
-        </li>
-        <li role="presentation" {% if request.path == campagna.url_importa_xls %}class="active"{% endif %}>
-            <a href="{{ campagna.url_importa_xls }}" class="text-danger">
-                <i class="fa fa-fw fa-file-excel-o"></i>
-                Importa Donazioni
-            </a>
-        </li>
-        {% endif %}
         <li role="presentation" {% if request.path == campagna.url_elenco_donazioni %}class="active"{% endif %}>
             <a href="{{ campagna.url_elenco_donazioni }}">
                 <i class="fa fa-fw fa-money"></i>
                 Donazioni
                 <span class="badge">
-                        <i class="fa fa-fw fa-eur"></i>
-                        {{ campagna.totale_donazioni|default_if_none:"0" }}
+                    {{ campagna.totale_donazioni_stringa }}
                 </span>
 
             </a>
@@ -59,21 +38,30 @@
         <li role="presentation" {% if request.path == campagna.url_elenco_donatori %}class="active"{% endif %}>
             <a href="{{ campagna.url_elenco_donatori }}">
                 <i class="fa fa-fw fa-male"></i>
-                Donatori censiti
+                Donatori
                 <span class="badge">
                     {{ campagna.donatori_censiti.count }}
                 </span>
             </a>
         </li>
+        {% if puo_modificare %}
+        <li role="presentation" {% if request.path == campagna.url_modifica %}class="active"{% endif %}>
+            <a href="{{ campagna.url_modifica }}" class="text-danger">
+                <i class="fa fa-fw fa-edit"></i>
+                Gestione Campagna
+            </a>
+        </li>
+
         <li role="presentation" {% if request.path == campagna.url_responsabili %}class="active"{% endif %}>
-            <a href="{{ campagna.url_responsabili }}">
+            <a href="{{ campagna.url_responsabili }}" class="text-danger">
                 <i class="fa fa-fw fa-male"></i>
-                Responsabili campagna
+                Responsabili
                 <span class="badge">
                     {{ campagna.responsabili_attuali.count }}
                 </span>
             </a>
         </li>
+        {% endif %}
     </ul>
 
     <p>&nbsp;</p>

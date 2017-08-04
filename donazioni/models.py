@@ -9,7 +9,7 @@ from django_countries.fields import CountryField
 
 from anagrafica.costanti import NAZIONALE
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
-from anagrafica.validators import valida_codice_fiscale
+from anagrafica.validators import valida_codice_fiscale, valida_partita_iva
 from base.models import ModelloSemplice
 from base.tratti import ConStorico, ConDelegati, ConMarcaTemporale
 from base.utils import TitleCharField, UpperCaseCharField, concept, poco_fa
@@ -83,6 +83,10 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
     @cached_property
     def totale_donazioni(self):
         return self.donazioni.all().aggregate(importo=Sum('importo'))['importo'] or 0
+
+    @property
+    def totale_donazioni_stringa(self):
+        return '{0:.2f} €'.format(self.totale_donazioni)
 
     @cached_property
     def donatori_censiti(self):
@@ -181,6 +185,7 @@ class Donatore(ModelloSemplice):
     STUDENTE = 'STUD'
     LIBERO = 'LIBPROF'
     IMPRENDITORE = 'IMPR'
+    DIPENDENTE_PUBBLICO = 'PUB'
     ALTRA_PROFESSIONE = '-'
 
     PROFESSIONI = (
@@ -189,6 +194,7 @@ class Donatore(ModelloSemplice):
         (IMPIEGATO, 'Impiegato'),
         (IMPRENDITORE, 'Imprenditore'),
         (LIBERO, 'Libero Professionista'),
+        (DIPENDENTE_PUBBLICO, 'Dipendente Pubblica Amministrazione'),
         (ALTRA_PROFESSIONE, 'Altra Professione'),
     )
 
@@ -225,6 +231,8 @@ class Donatore(ModelloSemplice):
     cognome = TitleCharField('Cognome', max_length=64, blank=True)
     codice_fiscale = UpperCaseCharField('Codice Fiscale', max_length=16, blank=True,
                                         validators=[valida_codice_fiscale, ])
+    partita_iva = models.CharField("Partita IVA", max_length=32, blank=True,
+                                   validators=[valida_partita_iva])
     email = models.EmailField('Indirizzo e-mail', max_length=64, blank=True)
     data_nascita = models.DateField('Data di nascita', null=True, blank=True)
     comune_nascita = models.CharField('Comune di Nascita', max_length=64, blank=True)
@@ -251,7 +259,7 @@ class Donatore(ModelloSemplice):
         for f in ('ragione_sociale', 'nome', 'cognome'):
             stringa_output.append('{}'.format(getattr(self, f, '')))
         stringa = ' '.join(s for s in stringa_output if s)
-        identificativo = self.email or self.codice_fiscale or ''
+        identificativo = self.email or self.codice_fiscale or self.partita_iva or ''
         return '{} {}'.format(stringa, identificativo)
 
     @classmethod
@@ -348,6 +356,22 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
 
     def __str__(self):
         return '{} {} {}'.format(self.get_modalita_display(), self.importo, self.codice_transazione or '')
+
+    @property
+    def importo_stringa(self):
+        return '{0:.2f} €'.format(self.importo)
+
+    @property
+    def url_modifica(self):
+        return '/donazioni/donazione/%d/modifica' % (self.pk,)
+
+    @property
+    def url_cancella(self):
+        return '/donazioni/donazione/%d/elimina' % (self.pk,)
+
+    @property
+    def url(self):
+        return '/donazioni/donazione/%d/' % (self.pk,)
 
     @staticmethod
     def pre_save(sender, instance, **kwargs):
