@@ -13,6 +13,7 @@ from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.permessi.applicazioni import REFERENTE, PRESIDENTE, DELEGATO_CO
 from anagrafica.permessi.costanti import GESTIONE_CENTRALE_OPERATIVA_SEDE
 from autenticazione.utils_test import TestFunzionale
+from base.utils import poco_fa
 from base.utils_tests import crea_persona, crea_persona_sede_appartenenza, crea_area_attivita, crea_turno, crea_partecipazione, \
     email_fittizzia, crea_appartenenza
 from base.models import Autorizzazione
@@ -627,7 +628,7 @@ class TestFunzionaleAttivita(TestFunzionale):
         sessione_presidente.execute_script('window.scrollTo(0, document.body.scrollHeight)')
 
         # Presidente: Invia il modulo
-        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
+        sessione_presidente.find_by_css("button.btn-primary").first.click()
 
         # Volontario: Vai in attività
         sessione_persona.click_link_by_partial_text("Attività")

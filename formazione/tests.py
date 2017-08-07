@@ -1040,6 +1040,14 @@ class TestFunzionaleFormazione(TestFunzionale):
         self.assertTrue(sessione_direttore.is_text_present("chiede di essere contattato"),
                         msg="Esplicitare che l'aspirante vuole essere contattato")
 
+        self.assertTrue(sessione_direttore.is_text_present("Corso non ancora iniziato, impossibile processare la richiesta."),
+                        msg="Corso non ancora iniziato, impossibile processare la richiesta.")
+
+        for corso in sede.corsobase_set.all():
+            corso.data_inizio = poco_fa()
+            corso.save()
+
+        sessione_direttore.click_link_by_partial_text("Richieste")
         sessione_direttore.click_link_by_partial_text("Conferma")
         sessione_direttore.check('conferma_1')
         sessione_direttore.check('conferma_2')
