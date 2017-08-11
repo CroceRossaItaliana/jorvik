@@ -37,13 +37,13 @@
             <i class="fa fa-fw fa-file"></i>Scheda
         </a>
     {% endif %}
-    {% if puo_modificare %}
-        <a href="{{ obj.url_modifica }}" class="btn btn-default btn-xs" target="_parent">
+    {% if puo_modificare and not obj.default %}
+        <a href="{{ obj.url_modifica }}" class="btn btn-primary btn-xs" target="_parent">
             <i class="fa fa-fw fa-edit"></i>Modifica
         </a>
     {% endif %}
     {% if puo_eliminare and not obj.default %}
-        <a href="{{ obj.url_cancella }}" class="btn btn-default btn-xs" target="_parent">
+        <a href="{{ obj.url_cancella }}" class="btn btn-primary btn-xs" target="_parent">
             <i class="fa fa-fw fa-remove"></i>Elimina
         </a>
     {% endif %}

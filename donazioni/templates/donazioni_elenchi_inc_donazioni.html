@@ -1,12 +1,13 @@
 {% extends 'donazioni_elenchi_inc_vuoto.html' %}
-{% block placeholderfiltro %}"Filtra per modalità..."{% endblock %}
+{% load donazioni %}
+
+{% block placeholderfiltro %}"Filtra..."{% endblock %}
 {% block elenco_intestazione %}
 
     <th>Data</th>
     <th>Donatore</th>
     <th>Importo</th>
-    <th>Data Inserimento</th>
-    <th>Modalità</th>
+    <th>Metodo Pagamento</th>
 
 {% endblock %}
 
@@ -24,16 +25,12 @@
 
     <td class="piu-piccolo allinea-sinistra">
         <i class="fa"></i>
-        {{ obj.importo_stringa }}
-    </td>
-    <td class="piu-piccolo">
-        <i class="fa fa-fw fa-calendar"></i>
-            {{ obj.creazione }}
+        {{ obj.importo|importo }}
     </td>
 
     <td>
-        {{ obj.get_modalita_display }}
-        {% if obj.ricorrente %}
+        {{ obj.get_metodo_pagamento_display }}
+        {% if obj.modalita_singola_ricorrente == 'R' %}
             <br/><i>Donazione Ricorrente</i>
         {% endif %}
     </td>
@@ -49,17 +46,17 @@
 
     {% if puo_leggere %}
          <a href="{{ obj.url }}" class="btn btn-default btn-xs" target="_parent">
-            <i class="fa fa-fw fa-file"></i>Scheda
+             <i class="fa fa-fw fa-file"></i><span>Scheda</span>
         </a>
     {% endif %}
     {% if puo_modificare %}
         <a href="{{ obj.url_modifica }}" class="btn btn-primary btn-xs" target="_parent">
-            <i class="fa fa-fw fa-edit"></i>Modifica
+            <i class="fa fa-fw fa-edit"></i><span>Modifica</span>
         </a>
     {% endif %}
     {% if puo_eliminare %}
         <a href="{{ obj.url_cancella }}" class="btn btn-primary btn-xs" target="_parent">
-            <i class="fa fa-fw fa-remove"></i>Elimina
+            <i class="fa fa-fw fa-remove"></i><span>Elimina</span>
         </a>
     {% endif %}
 

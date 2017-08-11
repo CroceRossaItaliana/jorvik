@@ -1,8 +1,10 @@
 from datetime import datetime
 from itertools import chain
 
+from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
 from django.db.models import Q, Sum
+from django.conf import settings
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from django.utils.safestring import mark_safe
@@ -12,9 +14,10 @@ from anagrafica.models import Sede
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
 from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO, ERRORE_PERMESSI, MODIFICA, LETTURA
 from autenticazione.funzioni import pagina_privata
+from base.errori import errore_generico
 from donazioni.elenchi import ElencoCampagne, ElencoEtichette, ElencoDonazioni, ElencoDonatori
-from donazioni.forms import ModuloCampagna, ModuloEtichetta, ModuloFiltraCampagnePerEtichetta, ModuloDonazione, ModuloDonatore, \
-    ModuloImportDonazioni, ModuloImportDonazioniMapping
+from donazioni.forms import (ModuloCampagna, ModuloEtichetta, ModuloDonazione, ModuloDonatore,
+                             ModuloImportDonazioni, ModuloImportDonazioniMapping)
 from donazioni.models import Campagna, Etichetta, Donatore, Donazione
 from donazioni.utils import analizza_file_import
 
@@ -32,7 +35,7 @@ def donazioni_home(request, me):
         'sedi_gestite': sedi_gestite,
         'campagne_gestite': campagne,
         'donatori': donatori,
-        'fondi_raccolti': '{0:.2f} €'.format(fondi_raccolti['totale'] or 0)
+        'fondi_raccolti': fondi_raccolti['totale'] or 0
     }
     return 'donazioni.html', contesto
 
@@ -222,7 +225,8 @@ def donazione(request, me, pk):
 
     contesto = {
         'donazione': donazione,
-        'puo_modificare': me.permessi_almeno(donazione, COMPLETO),
+        'puo_modificare': me.permessi_almeno(donazione, MODIFICA),
+        'puo_eliminare': me.permessi_almeno(donazione, COMPLETO),
     }
     return 'donazioni_donazione_scheda.html', contesto
 
@@ -232,19 +236,26 @@ def donazione_modifica(request, me, pk):
     donazione = get_object_or_404(Donazione, pk=pk)
     if not me.permessi_almeno(donazione, MODIFICA):
         return redirect(ERRORE_PERMESSI)
+    modulo_donazione = ModuloDonazione(request.POST or None, instance=donazione, campagna=donazione.campagna_id)
+    if modulo_donazione.is_valid():
+        donazione = modulo_donazione.save()
+        return redirect(reverse('donazioni_donazione', args=(pk, )))
 
+    donatore = donazione.donatore
     contesto = {
-        'donazione': donazione,
-        'puo_modificare': me.permessi_almeno(donazione, COMPLETO),
+        'modulo': modulo_donazione,
+        'donatore': donatore,
+        'puo_modificare': me.permessi_almeno(donazione, MODIFICA),
+        'puo_modificare_donatore': me.permessi_almeno(donatore, MODIFICA),
     }
-    return 'donazioni_donazione_scheda.html', contesto
+    return 'donazioni_donazione_modifica.html', contesto
 
 
 @pagina_privata
 def donazione_elimina(request, me, pk):
     donazione = get_object_or_404(Donazione, pk=pk)
     campagna = donazione.campagna
-    if not me.permessi_almeno(etichetta, COMPLETO):
+    if not me.permessi_almeno(donazione, COMPLETO):
         return redirect(ERRORE_PERMESSI)
     donazione.delete()
     return redirect(reverse('donazioni_campagne_donazioni', args=campagna.id))
@@ -266,7 +277,7 @@ def donazione_nuova(request, me, campagna_id):
             donazione.donatore = donatore
 
         donazione.save()
-        messaggio = 'Donazione aggiunta con successo: {} donati da {}'.format(donazione.importo_stringa, donazione.donatore or 'Anonimo')
+        messaggio = 'Donazione aggiunta con successo: {:.2f} € donati da {}'.format(donazione.importo, donazione.donatore or 'Anonimo')
         messages.add_message(request, messages.SUCCESS, messaggio)
         return redirect(reverse('donazioni_campagne_donazioni', args=(campagna_id,)))
 
@@ -294,16 +305,125 @@ def donazioni_elenco(request, me, campagna_id):
 
 
 @pagina_privata
+def donatore(request, me, pk):
+    donatore = get_object_or_404(Donatore.objects.prefetch_related(
+        'donazioni', 'donazioni__campagna'),
+        pk=pk)
+    if not me.permessi_almeno(donatore, LETTURA):
+        return redirect(ERRORE_PERMESSI)
+
+    contesto = {
+        'donatore': donatore,
+        'puo_modificare': me.permessi_almeno(donatore, MODIFICA),
+        'puo_eliminare': me.permessi_almeno(donatore, COMPLETO),
+    }
+    return 'donazioni_donatore_scheda.html', contesto
+
+
+@pagina_privata
+def donatore_modifica(request, me, pk):
+    donatore = get_object_or_404(Donatore, pk=pk)
+    if not me.permessi_almeno(donatore, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+    modulo_donatore = ModuloDonatore(request.POST or None, instance=donatore)
+    if modulo_donatore.is_valid():
+        donatore = modulo_donatore.save()
+        return redirect(reverse('donazioni_donatore', args=(pk, )))
+
+    contesto = {
+        'donatore': donatore,
+        'modulo': modulo_donatore,
+    }
+    return 'donazioni_donatore_modifica.html', contesto
+
+
+@pagina_privata
+def donatore_elimina(request, me, pk):
+    donatore = get_object_or_404(Donatore, pk=pk)
+    if not me.permessi_almeno(donatore, COMPLETO):
+        return redirect(ERRORE_PERMESSI)
+    donatore.delete()
+    return redirect(reverse('donazioni_campagne_donazioni', args=campagna.id))
+
+
+@pagina_privata
+def iframe_donatori_elenco(request, me, elenco_id=None, pagina=1):
+
+    pagina = int(pagina)
+    if pagina < 0:
+        pagina = 1
+
+    try:  # Prova a ottenere l'elenco dalla sessione.
+        elenco = request.session["donatori_elenco_%s" % (elenco_id,)]
+
+    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
+        return errore_generico(request, me, titolo="Sessione scaduta",
+                               messaggio="Ricarica la pagina.",
+                               torna_url=request.path, torna_titolo="Riprova")
+
+    if elenco.modulo():  # Se l'elenco richiede un modulo
+
+        try:  # Prova a recuperare il modulo riempito
+            modulo = elenco.modulo()(request.session["donatori_elenco_modulo_%s" % (elenco_id,)])
+
+        except KeyError:  # Se fallisce, il modulo non e' stato ancora compilato
+            return redirect("/donazioni/donatori/ifrelenco/%s/modulo/" % (elenco_id,))
+
+        if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
+            return redirect("/donazioni/donatori/ifrelenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
+
+        elenco.modulo_riempito = modulo  # Imposta il modulo
+
+    if request.POST:  # Cambiato il termine di ricerca?
+        # Memorizza il nuovo termine
+        request.session["donatori_elenco_filtra_%s" % (elenco_id,)] = request.POST['filtra']
+        request.session["donatori_elenco_filtra_scaglione_%s" % (elenco_id,)] = request.POST['media']
+        # Torna alla prima pagina
+        return redirect("/donazioni/donatori/ifrelenco/%s/%d/" % (elenco_id, 1))
+
+    # Eventuale termine di ricerca
+    filtra = request.session.get("donatori_elenco_filtra_%s" % (elenco_id,), default="")
+    scaglione_media = request.session.get("donatori_elenco_filtra_scaglione_%s" % (elenco_id,), default="")
+    pagina_precedente = "/donazioni/donatori/ifrelenco/%s/%d/" % (elenco_id, pagina-1)
+    pagina_successiva = "/donazioni/donatori/ifrelenco/%s/%d/" % (elenco_id, pagina+1)
+    risultati = elenco.risultati()
+
+    if filtra or scaglione_media:  # Se keyword specificata, filtra i risultati
+        risultati = elenco.filtra(risultati, filtra, scaglione_media=scaglione_media)
+    p = Paginator(risultati, 15)  # Pagina (num risultati per pagina)
+    pg = p.page(pagina)
+    scaglioni_media_filtro = settings.SCAGLIONI_MEDIA_DONAZIONE
+    contesto = {
+        'pagina': pagina,
+        'pagine': p.num_pages,
+        'totale': p.count,
+        'risultati': pg.object_list,
+        'ha_precedente': pg.has_previous(),
+        'ha_successivo': pg.has_next(),
+        'pagina_precedente': pagina_precedente,
+        'pagina_successiva': pagina_successiva,
+        'elenco_id': elenco_id,
+        'filtra': filtra,
+        'scaglione_media': scaglione_media,
+        'elenco': elenco,
+        'scaglioni_media_filtro': scaglioni_media_filtro,
+    }
+    contesto.update(**elenco.kwargs)
+
+    return elenco.template(), contesto
+
+
+@pagina_privata
 def donatori_campagna_elenco(request, me, campagna_id):
     campagna = get_object_or_404(Campagna, pk=campagna_id)
     if not me.permessi_almeno(campagna, MODIFICA):
         return redirect(ERRORE_PERMESSI)
-    donatori = Donatore.objects.filter(donazioni__campagna=campagna).annotate(totale_donazioni=Sum('donazioni__importo'))
+    donatori = Donatore.objects.filter(donazioni__campagna=campagna).prefetch_related('donazioni').distinct('id')
     elenco = ElencoDonatori(donatori)
     contesto = {
         'campagna': campagna,
         'elenco': elenco,
-        'puo_modificare': True
+        'puo_modificare': True,
     }
     return 'donazioni_campagna_elenco_donatori.html', contesto
 
@@ -311,9 +431,10 @@ def donatori_campagna_elenco(request, me, campagna_id):
 @pagina_privata
 def donatori_elenco(request, me):
     campagne = me.oggetti_permesso(GESTIONE_CAMPAGNA)
-    donatori = Donatore.objects.filter(donazioni__campagna__in=campagne).annotate(totale_donazioni=Sum('donazioni__importo'))
+    donatori = Donatore.objects.filter(donazioni__campagna__in=campagne).prefetch_related('donazioni').distinct('id')
     elenco = ElencoDonatori(donatori)
     contesto = {
+        'elenco_donatori': True,
         'elenco': elenco,
     }
     return 'donatori_elenco.html', contesto
@@ -326,7 +447,7 @@ def donazioni_import(request, me, campagna_id):
         return redirect(ERRORE_PERMESSI)
     if 'contenuto_file' in request.session:
         del request.session['contenuto_file']
-    modulo = ModuloImportDonazioni(prefix='step-1')
+    modulo = ModuloImportDonazioni()
     contesto = {
         'campagna': campagna,
         'modulo': modulo,
@@ -340,8 +461,7 @@ def donazioni_import_step_1(request, me, campagna_id):
     campagna = get_object_or_404(Campagna, pk=campagna_id)
     if not me.permessi_almeno(campagna, MODIFICA):
         return redirect(ERRORE_PERMESSI)
-    modulo = ModuloImportDonazioni(data=request.POST or None, files=request.FILES or None,
-                                   prefix='step-1')
+    modulo = ModuloImportDonazioni(data=request.POST or None, files=request.FILES or None)
     contesto = {
         'campagna': campagna,
         'modulo': modulo,
@@ -351,12 +471,15 @@ def donazioni_import_step_1(request, me, campagna_id):
         file_xls = modulo.cleaned_data['file_da_importare']
         formato = modulo.cleaned_data['formato']
         intestazione = modulo.cleaned_data['righe_intestazione']
-        colonne_preview, contenuto_file = analizza_file_import(file_xls, intestazione=intestazione, formato=formato)
-        request.session['contenuto_file'] = (colonne_preview, contenuto_file)
+        delimitatore = modulo.cleaned_data['delimitatore_csv']
+        sorgente = modulo.cleaned_data['sorgente']
+        colonne_preview, contenuto_file = analizza_file_import(file_xls, intestazione=intestazione,
+                                                               formato=formato, separatore_csv=delimitatore)
+        request.session['contenuto_file'] = (colonne_preview, contenuto_file, intestazione, sorgente)
         modulo_mapping_campi = ModuloImportDonazioniMapping(prefix='step-2',
                                                             colonne=colonne_preview)
         contesto['modulo_mapping'] = modulo_mapping_campi
-
+        contesto.pop('modulo')
     return 'donazioni_import.html', contesto
 
 
@@ -365,12 +488,14 @@ def donazioni_import_step_2(request, me, campagna_id):
     campagna = get_object_or_404(Campagna, pk=campagna_id)
     if not me.permessi_almeno(campagna, MODIFICA):
         return redirect(ERRORE_PERMESSI)
-    colonne_preview, contenuto_file = request.session.get('contenuto_file')
+    colonne_preview, contenuto_file, intestazione, sorgente = request.session.get('contenuto_file')
     if not contenuto_file:
         return redirect(reverse('donazioni_campagna_importa', args=(campagna_id,)))
     modulo = ModuloImportDonazioniMapping(data=request.POST or None,
                                           colonne=colonne_preview,
-                                          prefix='step-2')
+                                          prefix='step-2',
+                                          intestazione=intestazione,
+                                          sorgente=sorgente)
     contesto = {
         'campagna': campagna,
         'modulo_mapping': modulo,
@@ -380,7 +505,7 @@ def donazioni_import_step_2(request, me, campagna_id):
     if modulo.is_valid():
         test_importazione = 'test_import' in request.POST
         riepilogo = modulo.processa(campagna, contenuto_file, test_import=test_importazione)
-
+        contesto['riepilogo_errori'] = riepilogo['errori']
         riepilogo_messaggio = '{}<br />' \
                               '<br /><strong>Donazioni Inserite: {} ' \
                               '<br />Righe con errori: {}</strong>'\
@@ -389,7 +514,7 @@ def donazioni_import_step_2(request, me, campagna_id):
                     len(riepilogo['non_inserite']))
         if riepilogo['inserite_incomplete']:
             riepilogo_messaggio += '<br/ >Donazioni inserite ma con valori non conformi: {}'.format(len(riepilogo['inserite_incomplete']))
-
+        contesto['riepilogo_messaggio'] = riepilogo_messaggio
         messages.add_message(request, messages.WARNING, mark_safe(riepilogo_messaggio), extra_tags='email')
         if not test_importazione:
             del request.session['contenuto_file']

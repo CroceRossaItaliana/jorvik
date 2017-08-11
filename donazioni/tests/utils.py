@@ -7,7 +7,7 @@ from donazioni.models import Campagna
 
 def crea_campagna(sede, nome='Test Campagna', inizio=None):
     if not inizio:
-        inizio = poco_fa()
+        inizio = poco_fa() - timedelta(days=60)
     fine = inizio + timedelta(days=365)
     c = Campagna(nome=nome, organizzatore=sede,
                  descrizione='Campagna di Test',

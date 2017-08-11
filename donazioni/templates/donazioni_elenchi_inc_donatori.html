@@ -1,26 +1,100 @@
 {% extends 'donazioni_elenchi_inc_vuoto.html' %}
-{% block placeholderfiltro %}"Filtra..."{% endblock %}
+{% load donazioni %}
+{% load utils %}
+{% block filtering_form %}
+    <form method="POST">
+        {% csrf_token %}
+
+            <div class="input-group">
+                <input  type="text" class="form-control" name="filtra"
+                        placeholder={% block placeholderfiltro %}Filtra...{% endblock placeholderfiltro%} value="{{ filtra }}"
+                        {% if filtra %}autofocus{% endif %}
+                >
+                <span class="input-group-btn">
+
+                    <button class="btn btn-primary" type="submit"
+                        title="Filtra risultati">
+                        <i class="fa fa-fw fa-search"></i>
+                    </button>
+
+                    {% if filtra %}
+                        <button class="btn btn-danger" type="submit"
+                                title="Rimuovi filtro - Mostra tutti"
+                                name="filtra" value="">
+                            <i class="fa fa-fw fa-times"></i>
+                        </button>
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="input-group">
+                <select class="form-control" name="media">
+                    <option value="" {% if not scaglione %}selected{% endif %}>Media donazioni</option>
+                    {% for scaglione in scaglioni_media_filtro %}
+                        <option value="{{ scaglione.0 }}"
+                                {% if scaglione.0 == scaglione_media %}selected{% endif %}>
+                            {{ scaglione.1 }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <span class="input-group-btn">
+                    <button class="btn btn-primary" type="submit"
+                        title="Filtra risultati">
+                        <i class="fa fa-fw fa-filter"></i>
+                    </button>
+
+                    {% if scaglione_media %}
+                        <button class="btn btn-danger" type="submit"
+                                title="Rimuovi filtro - Mostra tutti"
+                                name="media" value="">
+                            <i class="fa fa-fw fa-times"></i>
+                        </button>
+                    {% endif %}
+                </span>
+            </div>
+
+    </form>
+{% endblock filtering_form %}
 {% block elenco_intestazione %}
 
-     <th>Nome</th>
-    <th>Cognome</th>
+    <th>Nominativo</th>
     <th>Email</th>
     <th>Codice Fiscale</th>
     <th>Totale donazioni</th>
+    <th>Media donazione</th>
 
 {% endblock %}
 
 
 {% block elenco_riga %}
 
-    <td>{{ obj.nome}}</td>
-    <td>{{ obj.cognome}}</td>
-    <td>{{ obj.email }}</td>
-    <td>{{ obj.codice_fiscale }}</td>
-    <td>{{ obj.totale_donazioni }} €</td>
+    <td class="piu-piccolo">{{ obj.nome}} {{ obj.cognome }}</td>
+    <td class="piu-piccolo">{{ obj.email }}</td>
+    <td class="monospace piu-piccolo">{{ obj.codice_fiscale }}</td>
+    <td class="piu-piccolo">{{ obj.statistiche_donazioni.totale|importo }}</td>
+    <td class="piu-piccolo {{ obj.statistiche_donazioni.media_class }}">{{ obj.statistiche_donazioni.media|importo }}</td>
 
 {% endblock %}
 
 {% block elenco_riga_azioni %}
 
+    {% permessi_almeno obj "modifica" as puo_modificare %}
+    {% permessi_almeno obj "lettura" as puo_leggere %}
+    {% permessi_almeno obj "completo" as puo_eliminare %}
+
+    {% if puo_leggere %}
+         <a href="{{ obj.url }}" class="btn btn-default btn-xs" target="_parent">
+            <i class="fa fa-fw fa-file"></i>Scheda
+        </a>
+    {% endif %}
+    {% if puo_modificare %}
+        <a href="{{ obj.url_modifica }}" class="btn btn-primary btn-xs" target="_parent">
+            <i class="fa fa-fw fa-edit"></i>Modifica
+        </a>
+    {% endif %}
+    {% if puo_eliminare %}
+        <a href="{{ obj.url_cancella }}" class="btn btn-primary btn-xs" target="_parent">
+            <i class="fa fa-fw fa-remove"></i>Elimina
+        </a>
+    {% endif %}
 {% endblock %}

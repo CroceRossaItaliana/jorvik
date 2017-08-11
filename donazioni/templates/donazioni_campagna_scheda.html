@@ -4,6 +4,7 @@
 {% load static %}
 {% load utils %}
 {% load humanize %}
+{% load donazioni %}
 
 {% block pagina_titolo %}
     {% block scheda_titolo %}{% endblock %}
@@ -30,7 +31,7 @@
                 <i class="fa fa-fw fa-money"></i>
                 Donazioni
                 <span class="badge">
-                    {{ campagna.totale_donazioni_stringa }}
+                    {{ campagna.totale_donazioni|importo }}
                 </span>
 
             </a>

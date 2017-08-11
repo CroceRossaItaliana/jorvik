@@ -12,9 +12,14 @@
         Etichette
     </h2>
     {% if puo_creare %}
-        <div class="alert alert-success">
+        <div class="alert alert-info">
             <h4><i class="fa fa-asterisk"></i> Vuoi creare una nuova etichetta per un comitato?</h4>
             <p><a href="/donazioni/etichette/nuova/" class="btn btn-xs btn-primary">Crea una nuova etichetta</a>.</p>
+            <p>
+        <i class="fa fa-info-circle"></i> In questo elenco, per comodità, sono visualizzate anche le etichette "globali"
+            create dal Comitato Nazionale.
+            Le etichette di default (i.e. quelle create ed assegnate automaticamente
+            durante la creazione di una nuova campagna) non sono né modificabili né eliminabili.</p>
         </div>
     {% endif %}
     {% load utils %}

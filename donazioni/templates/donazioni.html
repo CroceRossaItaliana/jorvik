@@ -1,7 +1,7 @@
 {% extends 'donazioni_vuota.html' %}
 
 {% load bootstrap3 %}
-
+{% load donazioni %}
 {% block pagina_titolo %}
     Donazioni Economiche
 {% endblock %}
@@ -37,7 +37,7 @@
             <p class="grassetto">Sedi Gestite</p>
         </div>
         <div class="col-md-3 allinea-centro">
-            <h3>{{ fondi_raccolti }}</h3>
+            <h3>{{ fondi_raccolti|importo }}</h3>
             <p class="grassetto">Fondi Raccolti</p>
         </div>
 

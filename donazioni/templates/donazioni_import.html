@@ -53,7 +53,7 @@
                         {% csrf_token %}
                         {% bootstrap_form modulo %}
                         <button type="submit" class="btn btn-primary">
-                            <i class="fa fa-fw fa-check-circle"></i> OK
+                            <i class="fa fa-fw fa-arrow-circle-o-right"></i> Passa al mapping dei campi
                         </button>
                     </form>
                 </div>
@@ -61,6 +61,14 @@
         {% endif %}
         </div>
         <div class="col-md-6">
+            {% if riepilogo_errori or riepilogo_messaggio %}
+                <div class="alert alert-danger">
+                {{ riepilogo_messaggio|safe }}
+                <ul class="piu-piccolo">
+                {{ riepilogo_errori|safe }}
+                </ul>
+                </div>
+            {% endif %}
             <div class="alert alert-info">
                 <i class="fa fa-fw fa-info-circle"></i>
                 <strong>Step 1: Sceli il file XLS/CSV da importare</strong>

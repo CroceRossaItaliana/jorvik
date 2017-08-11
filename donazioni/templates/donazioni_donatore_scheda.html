@@ -1,0 +1,191 @@
+{% extends "donazioni_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+{% load humanize %}
+{% load donazioni %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}Scheda Donatore{% endblock %}
+{% endblock %}
+
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro grassetto text-success">
+        Scheda Donatore
+    </h2>
+
+    <div class="row">
+
+        <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-user"></i>
+                        Dati Donatore
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    <table class="table table-responsive table-striped">
+                        <tr>
+                            <td>Totale donazioni</td>
+                            <td class="grassetto">{{ donatore.statistiche_donazioni.totale|importo }}</td>
+                        </tr>
+                        <tr>
+                            <td>Donazione media</td>
+                            <td class="grassetto">{{ donatore.statistiche_donazioni.media|importo }}</td>
+                        </tr>
+                        <tr>
+                            <td>Donazioni inserite</td>
+                            <td class="grassetto">{{ donatore.statistiche_donazioni.totale_donazioni }}</td>
+                        </tr>
+                        <tr>
+                            <td>Nome</td>
+                            <td class="grassetto">{{ donatore.nome }}</td>
+                        </tr>
+                        <tr>
+                            <td>Cognome</td>
+                            <td class="grassetto">{{ donatore.cognome }}</td>
+                        </tr>
+                        <tr>
+                            <td>Codice Fiscale</td>
+                            <td class="monospace">{{ donatore.codice_fiscale }}</td>
+                        </tr>
+                        <tr>
+                            <td>Partita IVA</td>
+                            <td>{{ donatore.partita_iva }}</td>
+                        </tr>
+                        <tr>
+                            <td>Ragione Sociale</td>
+                            <td>{{ donatore.ragione_sociale }}</td>
+                        </tr>
+                        <tr>
+                            <td>Email</td>
+                            <td>{{ donatore.email }}</td>
+                        </tr>
+
+                        <tr>
+                            <td>Data di nascita</td>
+                            <td>{{ donatore.data_nascita|default_if_none:""}}</td>
+                        </tr>
+                        <tr>
+                            <td>Comune di nascita</td>
+                            <td>{{ donatore.comune_nascita }}</td>
+                        </tr>
+                        <tr>
+                            <td>Provincia di nascita</td>
+                            <td>{{ donatore.provincia_nascita }}</td>
+                        </tr>
+                        <tr>
+                            <td>Stato di nascita</td>
+                            <td>{{ donatore.stato_nascita }}</td>
+                        </tr>
+                        <tr>
+                            <td>Tipo Donatore</td>
+                            <td>{{ donatore.get_tipo_donatore_display }}</td>
+                        </tr>
+                        <tr>
+                            <td>Sesso</td>
+                            <td>{{ donatore.sesso }}</td>
+                        </tr>
+                        <tr>
+                            <td>Indirizzo di residenza</td>
+                            <td>{{ donatore.indirizzo }}</td>
+                        </tr>
+                        <tr>
+                            <td>Comune di residenza</td>
+                            <td>{{ donatore.comune_residenza }}</td>
+                        </tr>
+                        <tr>
+                            <td>Provincia di residenza</td>
+                            <td>{{ donatore.provincia_residenza }}</td>
+                        </tr>
+                        <tr>
+                            <td>Stato di residenza</td>
+                            <td>{{ donatore.stato_residenza }}</td>
+                        </tr>
+                        <tr>
+                            <td>CAP di residenza</td>
+                            <td>{{ donatore.cap_residenza }}</td>
+                        </tr>
+                        <tr>
+                            <td>Telefono</td>
+                            <td>{{ donatore.telefono }}</td>
+                        </tr>
+                        <tr>
+                            <td>Cellulare</td>
+                            <td>{{ donatore.cellulare }}</td>
+                        </tr>
+                        <tr>
+                            <td>FAX</td>
+                            <td>{{ donatore.fax }}</td>
+                        </tr>
+                        <tr>
+                            <td>Professione</td>
+                            <td>{{ donatore.get_professione_display }}</td>
+                        </tr>
+                        <tr>
+                            <td>Lingua</td>
+                            <td>{{ donatore.get_lingua_display }}</td>
+                        </tr>
+
+
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-money"></i>
+                        Storico Donazioni
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                <table class="table table-responsive table-striped">
+                    <thead>
+                        <th>Campagna</th>
+                        <th>Importo</th>
+                        <th>Metodo Pagamento</th>
+                    </thead>
+                    {% for donazione in donatore.donazioni.all %}
+                    <tr>
+                        <td><a href="{{ donazione.campagna.url }}">{{ donazione.campagna }}</a></td>
+                        <td><a href="{{ donazione.url }}">{{ donazione.importo|importo }}</a></td>
+                        <td><a href="{{ donazione.url }}">{{ donazione.get_metodo_pagamento_display }}</a></td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    {% if puo_modificare %}
+    <div class="row">
+        <div class="col-md-3">
+            <p>
+            <a href="{{ donatore.url_modifica }}" role="button" class="btn btn-large btn-primary">
+                <i class="fa fa-edit"></i>
+                Modifica dati donatore
+            </a>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p>
+            <a href="{{ donatore.url_cancella }}" role="button" class="btn btn-large btn-primary">
+                <i class="fa fa-remove"></i>
+                Elimina donatore
+            </a>
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+{% endblock %}

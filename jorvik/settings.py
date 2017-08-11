@@ -379,3 +379,11 @@ FORMAZIONE_VALIDITA_INVITI = 7
 
 POSTA_MASSIVA_TIMEOUT = 30
 DATE_FORMAT = '%d/%m/%Y'
+
+# ### Donazioni economiche
+# Nella lista dei donatori la media delle donazioni per ciascun
+# utente sarà evidenziata graficamente se al di sopra di una certa soglia
+SOGLIA_MEDIA_DONAZIONE = 100
+# Scaglioni media donazione per filtraggio lista donatori
+SCAGLIONI_MEDIA_DONAZIONE = (("0-50", "Fra 0 e 50"), ("50-100", "Fra 50 e 100"),
+                             ("100-500", "Fra 100 e 500"), ("500-inf", "Oltre 500"),)

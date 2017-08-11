@@ -11,7 +11,16 @@
     <h4 class="allinea-centro text-success">
         Lista donatori
     </h4>
-    {% load utils %}
-    {% elenco elenco %}
+    <div class="alert alert-info">
+        <i class="fa fa-info-circle"></i>
+        In questo elenco, sono riportati i donatori censiti per le campagne
+        per le quali hai la delega; le colonne <i>Totale donazioni</i> e <i>Media donazione</i>,
+        invece, si riferiscono alle donazioni effettuate per tutte le campagne donazioni economiche presenti in Gaia,
+        comprese quelle per cui non hai la delega.<br />
+        <i class="fa fa-info-circle"></i>
+        Se un donatore ha una media donazione superiore ad una certa soglia, quest'ultima sarà evidenziata.
+    </div>
+    {% load donazioni %}
+    {% elenco_donatori elenco %}
 
 {% endblock %}

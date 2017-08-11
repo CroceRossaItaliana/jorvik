@@ -1,11 +1,15 @@
-from autoslug import AutoSlugField
+import itertools
+
+from django.core.urlresolvers import reverse
 from django.core.validators import MinValueValidator
-from django.db import models
-from django.db.models import Q, Sum
+from django.db import models, transaction
+from django.db.models import Q, Sum, Avg, Count
+from django.template.defaultfilters import slugify
 from django.utils.functional import cached_property
 from django.db.models.signals import post_save, pre_save
 from django.utils import timezone
 from django_countries.fields import CountryField
+from django.conf import settings
 
 from anagrafica.costanti import NAZIONALE
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
@@ -54,15 +58,15 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
 
     @property
     def url_importa_xls(self):
-        return '/donazioni/campagne/%d/importa_donazioni/' % (self.pk,)
+        return reverse('donazioni_campagna_importa', args=(self.pk,))
 
     @property
     def url_importa_xls_step_1(self):
-        return '/donazioni/campagne/%d/importa_donazioni/step_1/' % (self.pk,)
+        return reverse('donazioni_campagna_importa_step_1', args=(self.pk,))
 
     @property
     def url_importa_xls_step_2(self):
-        return '/donazioni/campagne/%d/importa_donazioni/step_2/' % (self.pk,)
+        return reverse('donazioni_campagna_importa_step_2', args=(self.pk,))
 
     @property
     def url_elenco_donazioni(self):
@@ -84,10 +88,6 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
     def totale_donazioni(self):
         return self.donazioni.all().aggregate(importo=Sum('importo'))['importo'] or 0
 
-    @property
-    def totale_donazioni_stringa(self):
-        return '{0:.2f} €'.format(self.totale_donazioni)
-
     @cached_property
     def donatori_censiti(self):
         return self.donazioni.filter(donatore__isnull=False).distinct('donatore')
@@ -99,12 +99,16 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
         :param sender: classe Campagna
         :param instance: oggetto Campagna
         """
-        etichette_correnti = instance.etichette.values_list('nome', flat=True)
-        if instance.nome not in etichette_correnti:
+        slug_etichetta_default = slugify(instance.nome)
+        etichette_correnti = instance.etichette.values_list('slug', flat=True)
+        if slug_etichetta_default not in etichette_correnti:
             # crea e/o aggiunge etichetta di default
-            etichetta, _ = Etichetta.objects.get_or_create(nome=instance.nome,
-                                                           comitato=instance.organizzatore,
-                                                           default=True)
+            # etichetta, _ = Etichetta.objects.get_or_create(slug=slug_etichetta_default,
+            #                                                comitato=instance.organizzatore,
+            #                                                default=True)
+            etichetta = Etichetta(slug=slug_etichetta_default, comitato=instance.organizzatore,
+                                  default=True)
+            etichetta.save()
             instance.etichette.add(etichetta)
 
     @property
@@ -120,15 +124,28 @@ class Etichetta(ModelloSemplice):
         permissions = (
             ('view_etichetta', 'Can view etichetta'),
         )
+        unique_together = ('slug', 'comitato')
 
-    nome = models.CharField(max_length=100, help_text='es. WEB')
     comitato = models.ForeignKey('anagrafica.Sede', related_name='etichette_campagne', on_delete=models.CASCADE)
-    slug = AutoSlugField(populate_from='nome', always_update=True, max_length=100, unique_with='comitato')
+    slug = models.SlugField(allow_unicode=True, max_length=100, help_text='Questo campo può contenere lettere, numeri e trattini')
     campagne = models.ManyToManyField(Campagna, related_name='etichette')
     default = models.BooleanField('Etichetta di default', default=False)
 
     def __str__(self):
-        return self.nome
+        return self.slug
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if Etichetta.objects.filter(slug=self.slug).exists():
+            anno_corrente = poco_fa().year
+            self.slug = '{}-{}'.format(self.slug, anno_corrente)
+            if Etichetta.objects.filter(slug=self.slug).exists():
+                orig = self.slug
+                for x in itertools.count(1):
+                    if not Etichetta.objects.filter(slug=self.slug).exists():
+                        break
+                    self.slug = '{}-{}'.format(orig, x)
+        super().save()
 
     @classmethod
     @concept
@@ -161,7 +178,7 @@ class Etichetta(ModelloSemplice):
 
     @property
     def link(self):
-        return '<a href="%s">%s</a>' % (self.url, self.nome)
+        return '<a href="%s">%s</a>' % (self.url, self.slug)
 
 
 class Donatore(ModelloSemplice):
@@ -178,7 +195,8 @@ class Donatore(ModelloSemplice):
     ARABO = 'AR'
     PORTOGHESE = 'PR'
     CINESE = 'CH'
-    ALTRO = '-'
+    GIAPPONESE = 'JA'
+    ALTRO = 'OO'
     # Scelte professione
     IMPIEGATO = 'IMP'
     PENSIONATO = 'PENS'
@@ -186,14 +204,14 @@ class Donatore(ModelloSemplice):
     LIBERO = 'LIBPROF'
     IMPRENDITORE = 'IMPR'
     DIPENDENTE_PUBBLICO = 'PUB'
-    ALTRA_PROFESSIONE = '-'
+    ALTRA_PROFESSIONE = 'NN'
 
     PROFESSIONI = (
         (STUDENTE, 'Studente'),
-        (PENSIONATO, 'Pensionato'),
-        (IMPIEGATO, 'Impiegato'),
+        (PENSIONATO, 'Pensionato/a'),
+        (IMPIEGATO, 'Impiegato/a'),
         (IMPRENDITORE, 'Imprenditore'),
-        (LIBERO, 'Libero Professionista'),
+        (LIBERO, 'Libero/a Professionista'),
         (DIPENDENTE_PUBBLICO, 'Dipendente Pubblica Amministrazione'),
         (ALTRA_PROFESSIONE, 'Altra Professione'),
     )
@@ -210,6 +228,7 @@ class Donatore(ModelloSemplice):
         (SPAGNOLO, 'Spagnolo'),
         (TEDESCO, 'Tedesco'),
         (PORTOGHESE, 'Portoghese'),
+        (GIAPPONESE, 'Giapponese'),
         (CINESE, 'Cinese Mandarino'),
         (ARABO, 'Arabo'),
         (ALTRO, 'Altra lingua non presente'),
@@ -262,6 +281,18 @@ class Donatore(ModelloSemplice):
         identificativo = self.email or self.codice_fiscale or self.partita_iva or ''
         return '{} {}'.format(stringa, identificativo)
 
+    @property
+    def url_modifica(self):
+        return '/donazioni/donatore/%d/modifica' % (self.pk,)
+
+    @property
+    def url_cancella(self):
+        return '/donazioni/donatore/%d/elimina' % (self.pk,)
+
+    @property
+    def url(self):
+        return '/donazioni/donatore/%d/' % (self.pk,)
+
     @classmethod
     def nuovo_o_esistente(cls, donatore):
         """
@@ -303,6 +334,7 @@ class Donatore(ModelloSemplice):
             # Crea quindi un nuovo donatore dai dati derivanti dal modulo ModuloDonatore
             donatore.save()
             return donatore
+
         # nel caso di donatore già esistente, vengono aggiunti nuovi campi se presenti nell'oggetto 'donatore'
         # e non presenti nell'istanza esistente
         # TODO: bisogna inserire un nuovo donatore nel caso alcuni dati non corrispondano
@@ -324,15 +356,39 @@ class Donatore(ModelloSemplice):
         donatore_esistente.save()
         return donatore_esistente
 
+    @cached_property
+    def statistiche_donazioni(self):
+        res = self.donazioni.all().aggregate(totale=Sum('importo'),
+                                             media=Avg('importo'),
+                                             totale_donazioni=Count('id'))
+        res['media_class'] = 'rosso-scuro' if res['media'] >= settings.SOGLIA_MEDIA_DONAZIONE else ''
+        return res
+
 
 class Donazione(ModelloSemplice, ConMarcaTemporale):
     CONTANTI = 'C'
     BANCARIA = 'B'
-    ONLINE = 'O'
-    MODALITA = (
+    PAYPAL = 'P'
+    AMMADO = 'A'
+    AMAZON = 'Z'
+    CRI = 'R'
+    POSTE = 'O'
+    METODO_PAGAMENTO = (
         (CONTANTI, 'Contanti'),
+        (CRI, 'CRI.it'),
         (BANCARIA, 'Bancaria'),
-        (ONLINE, 'Online'),
+        (POSTE, 'Poste'),
+        (PAYPAL, 'PayPal'),
+        (AMMADO, 'Ammado'),
+        (AMAZON, 'Amazon'),
+    )
+    METODO_PAGAMENTO_REVERSE = {v.lower(): k for k, v in METODO_PAGAMENTO}
+
+    SINGOLA = 'S'
+    RICORRENTE = 'R'
+    MODALITA = (
+        (SINGOLA, 'Singola'),
+        (RICORRENTE, 'Ricorrente')
     )
 
     class Meta:
@@ -346,20 +402,20 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
     donatore = models.ForeignKey(Donatore, related_name='donazioni', on_delete=models.CASCADE, null=True)
     importo = models.FloatField('Importo in EUR', default=0.00,
                                 help_text='Importo in EUR della donazione',
-                                validators=[MinValueValidator(0.01,
+                                validators=[MinValueValidator(0.00,
                                             "L'importo della donazione è al di sotto del minimo consentito")])
-    modalita = models.CharField('Modalità', blank=True, choices=MODALITA, max_length=1, db_index=True)
+    metodo_pagamento = models.CharField('Metodo Pagamento', blank=True, choices=METODO_PAGAMENTO,
+                                        max_length=1, db_index=True)
     data = models.DateTimeField('Data donazione', help_text='Data donazione', null=True)
-    ricorrente = models.BooleanField('Donazione ricorrente', default=False)
     codice_transazione = models.CharField('Codice Transazione', max_length=250, blank=True, null=True,
                                           help_text='Codice univoco che identifica la donazione')
+    modalita_singola_ricorrente = models.CharField('Modalità', blank=True, choices=MODALITA,
+                                                   default=SINGOLA,
+                                                   help_text='Definisce se una donazione è Singola/Unica o Ricorrente',
+                                                   max_length=1, db_index=True)
 
     def __str__(self):
-        return '{} {} {}'.format(self.get_modalita_display(), self.importo, self.codice_transazione or '')
-
-    @property
-    def importo_stringa(self):
-        return '{0:.2f} €'.format(self.importo)
+        return '{} {} {}'.format(self.get_metodo_pagamento_display(), self.importo, self.codice_transazione or '')
 
     @property
     def url_modifica(self):

@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest import mock
 
 from django.core.exceptions import ValidationError
+from django.template.defaultfilters import slugify
 from django.test import TestCase
 
 from anagrafica.costanti import LOCALE, REGIONALE, TERRITORIALE, NAZIONALE
@@ -34,20 +35,20 @@ class TestModelliCampagne(TestCase):
     def test_associa_etichette(self):
         nome_campagna = 'Test Campagna'
         campagna = crea_campagna(self.sede, nome=nome_campagna)
-        etichetta = Etichetta(nome='Etichetta', comitato=self.sede)
+        etichetta = Etichetta(slug='Etichetta', comitato=self.sede)
         etichetta.save()
         campagna.etichette.add(etichetta)
         self.assertIn(campagna, etichetta.campagne.all())
         # Quando una campagna viene creata, viene creata e associata
         # un'etichetta con lo stesso nome della campagna (requisito B3)
-        self.assertIn(campagna.nome, [s.nome for s in campagna.etichette.all()])
+        self.assertIn(slugify(campagna.nome), [s.slug for s in campagna.etichette.all()])
         self.assertIn(etichetta, campagna.etichette.all())
 
     def test_elimina_etichetta_con_campagne_associate_unica_etichetta(self):
         nome_campagna = 'Test Campagna'
         campagna = crea_campagna(self.sede, nome=nome_campagna)
         campagna_id = campagna.id
-        etichetta = Etichetta(nome='Etichetta', comitato=self.sede)
+        etichetta = Etichetta(slug='Etichetta', comitato=self.sede)
         etichetta.save()
         campagna.etichette.add(etichetta)
         self.assertEqual(campagna.etichette.count(), 2)
@@ -113,9 +114,33 @@ class TestModelliCampagne(TestCase):
         )
 
         # check permessi etichette
-        etichetta_sicilia = Etichetta.objects.create(nome='test', comitato=sicilia)
+        etichetta_sicilia = Etichetta.objects.create(slug='test', comitato=sicilia)
         self.assertTrue(delegato_campagne_sicilia.permessi_almeno(etichetta_sicilia, COMPLETO))
         self.assertFalse(responsabile_campagna_terremoto_catania.permessi_almeno(etichetta_sicilia, COMPLETO))
+
+
+class TestEtichette(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.sede = crea_sede(crea_persona())
+
+    def test_etichette_no_duplicati(self):
+        nome_campagna = 'Maratona Milano'
+        campagna = crea_campagna(self.sede, nome=nome_campagna)
+        etichetta_default_1 = campagna.etichette.all()[0]
+        self.assertEqual(etichetta_default_1.slug, 'maratona-milano')
+        campagna_2 = crea_campagna(self.sede, nome=nome_campagna)
+        etichetta_default_2 = campagna_2.etichette.all()[0]
+        anno_corrente = poco_fa().year
+        self.assertEqual(etichetta_default_2.slug, 'maratona-milano-{}'.format(anno_corrente))
+        campagna_3 = crea_campagna(self.sede, nome=nome_campagna)
+        etichetta_default_3 = campagna_3.etichette.all()[0]
+        anno_corrente = poco_fa().year
+        self.assertEqual(etichetta_default_3.slug, 'maratona-milano-{}-1'.format(anno_corrente))
+        campagna_4 = crea_campagna(self.sede, nome=nome_campagna)
+        etichetta_default_4 = campagna_4.etichette.all()[0]
+        anno_corrente = poco_fa().year
+        self.assertEqual(etichetta_default_4.slug, 'maratona-milano-{}-2'.format(anno_corrente))
 
 
 class TestModelliDonazioniDonatori(TestCase):

@@ -29,7 +29,7 @@ class InlineEtichettaCampagna(ReadonlyAdminMixin, TabularInline):
 class InlineDonazione(ReadonlyAdminMixin, TabularInline):
     model = Donazione
     extra = 0
-    fields = ('modalita', 'donatore', 'importo', 'data',)
+    fields = ('metodo_pagamento', 'donatore', 'importo', 'data',)
     raw_id_fields = ('donatore',)
     formfield_overrides = {
         models.ForeignKey: {'required': False},
@@ -47,17 +47,17 @@ class AdminCampagna(ReadonlyAdminMixin, admin.ModelAdmin):
 
 @admin.register(Etichetta)
 class AdminEtichetta(ReadonlyAdminMixin, admin.ModelAdmin):
-    search_fields = ['comitato__nome', 'comitato__genitore__nome', 'nome', ]
-    list_display = ['nome', 'comitato', 'slug', ]
-    list_filter = ['nome', 'comitato', ]
+    search_fields = ['comitato__nome', 'comitato__genitore__nome', 'slug', ]
+    list_display = ['id', 'comitato', 'slug', ]
+    list_filter = ['comitato', ]
     raw_id_fields = RAW_ID_FIELDS_ETICHETTA
 
 
 @admin.register(Donazione)
 class AdminDonazione(ReadonlyAdminMixin, admin.ModelAdmin):
-    search_fields = ['campagna__nome', 'modalita', 'ricorrente', 'donatore']
-    list_display = ['id', 'campagna', 'importo', 'data', 'donatore', 'modalita', 'ricorrente', ]
-    list_filter = ['modalita', 'ricorrente', 'donatore']
+    search_fields = ['campagna__nome', 'metodo_pagamento', 'modalita_singola_ricorrente', 'donatore']
+    list_display = ['id', 'campagna', 'importo', 'data', 'donatore', 'metodo_pagamento', 'modalita_singola_ricorrente', ]
+    list_filter = ['metodo_pagamento', 'modalita_singola_ricorrente', 'donatore']
     readonly_fields = ('creazione', 'ultima_modifica',)
 
 

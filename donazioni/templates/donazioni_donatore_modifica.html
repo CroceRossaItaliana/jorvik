@@ -1,0 +1,73 @@
+{% extends 'donazioni_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load donazioni %}
+
+{% block pagina_titolo %}
+    Modifica dati donatore
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="row">
+
+        <div class="col-md-6">
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-money"></i>
+                        Modifica dati donatore
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <fieldset>
+                            <legend>Donatore:</legend>
+                            {% bootstrap_form modulo %}
+                        </fieldset>
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-asterisk"></i>
+                            Modifica
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+
+            <div class="panel panel-info">
+
+                <div class="panel-heading">
+                    <i class="fa fa-fw fa-user"></i>
+                    Informazioni statistiche
+                </div>
+
+                <div class="panel-body">
+
+                    <table class="table table-responsive table-striped">
+                        <tr>
+                            <td>Totale donazioni</td>
+                            <td class="grassetto">{{ donatore.statistiche_donazioni.totale|importo }}</td>
+                        </tr>
+                        <tr>
+                            <td>Donazione media</td>
+                            <td class="grassetto">{{ donatore.statistiche_donazioni.media|importo }}</td>
+                        </tr>
+                        <tr>
+                            <td>Donazioni inserite</td>
+                            <td class="grassetto">{{ donatore.statistiche_donazioni.totale_donazioni }}</td>
+                        </tr>
+
+                    </table>
+
+            </div>
+        </div>
+
+    </div>
+    </div>
+
+{% endblock %}

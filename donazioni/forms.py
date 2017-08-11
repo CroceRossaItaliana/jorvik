@@ -1,11 +1,20 @@
-import autocomplete_light
+from io import StringIO
+from dateutil.parser import parse
+from datetime import date, datetime
+
 from django.core.exceptions import ValidationError
 from django import forms
 from django.db import transaction
+from django.db.utils import DataError
+from django.utils.translation import ugettext_lazy as _
+
+from django_countries.data import COUNTRIES
+import autocomplete_light
 
 from base.utils import poco_fa
 from base.wysiwyg import WYSIWYGSemplice
 from donazioni.models import Campagna, Etichetta, Donazione, Donatore
+from donazioni.utils import colnum_string
 
 
 class ModuloCampagna(forms.ModelForm):
@@ -53,7 +62,7 @@ class ModuloCampagna(forms.ModelForm):
 class ModuloEtichetta(forms.ModelForm):
     class Meta:
         model = Etichetta
-        fields = ('nome', 'comitato')
+        fields = ('slug', 'comitato')
 
     comitato = autocomplete_light.forms.ModelChoiceField('SedeDonazioniAutocompletamento',
                                                          help_text="Seleziona il comitato ricercando per nome fra le sedi "
@@ -69,7 +78,7 @@ class ModuloDonazione(forms.ModelForm):
 
     class Meta:
         model = Donazione
-        fields = ('campagna', 'modalita', 'importo', 'codice_transazione', 'data', 'ricorrente')
+        fields = ('campagna', "metodo_pagamento", 'importo', 'codice_transazione', 'data', 'modalita_singola_ricorrente')
 
     def __init__(self, *args, **kwargs):
         campagna_id = kwargs.pop('campagna')
@@ -88,6 +97,8 @@ class ModuloDonazione(forms.ModelForm):
         campagna = self.cleaned_data['campagna']
         if not campagna.inizio <= data_donazione <= campagna.fine:
             raise ValidationError("La data della donazione deve essere compresa fra l'inizio e la fine della campagna")
+        if data_donazione > poco_fa():
+            raise ValidationError("La data della donazione non può essere una data nel futuro")
 
 
 class ModuloDonatore(forms.ModelForm):
@@ -107,28 +118,70 @@ class ModuloImportDonazioni(forms.Form):
         (XLS, 'Excel XLS'),
         (CSV, 'CSV')
     )
-    file_da_importare = forms.FileField()
-    righe_intestazione = forms.IntegerField(min_value=0, initial=1)
-    formato = forms.ChoiceField(choices=FORMATI, initial=XLS)
+    VIRGOLA = ','
+    PUNTO_VIRGOLA = ';'
+    TAB = '\t'
+    DELIMITATORI = (
+        ('', '-----'),
+        (VIRGOLA, 'Virgola ","'),
+        (PUNTO_VIRGOLA, 'Punto e virgola ";"'),
+        (TAB, 'Tabulatore'),
+    )
+    PAYPAL = 'P'
+    AMMADO = 'A'
+    AMAZON = 'Z'
+    CRI = 'R'
+    POSTE = 'O'
+    SORGENTI = (
+        ('', '-----'),
+        (PAYPAL, 'PayPal'),
+        (AMMADO, 'Ammado'),
+        (AMAZON, 'Amazon'),
+        (CRI, 'CRI.it'),
+        (POSTE, 'Poste'),
+    )
+    file_da_importare = forms.FileField(help_text='Scegli il file da importare')
+    righe_intestazione = forms.IntegerField(min_value=0, initial=1, help_text='Numero di righe prima dei dati veri e propri')
+    formato = forms.ChoiceField(choices=FORMATI, initial=XLS, help_text='Formato del file (CSV per formato testo con separatore '
+                                                                        'o XLS per file Excel di Microsoft')
+    delimitatore_csv = forms.ChoiceField(choices=DELIMITATORI, required=False, help_text='Scegli il separatore (soltanto '
+                                                                                         'nel caso di file CSV)')
+    sorgente = forms.ChoiceField(choices=SORGENTI, required=False,
+                                 help_text='Se il file è un esportazione di dati proveniente da una particolare'
+                                           ' piattaforma online di donazioni (e.g. PayPal), puoi definire qui '
+                                           'la sorgente. Tale valore andrà a definire il Metodo di Pagamento '
+                                           'della donazione. Puoi lasciare il campo in bianco se nel file da importare'
+                                           ' è presente una colonna con il metodo di pagamento.')
 
 
 class ModuloImportDonazioniMapping(forms.Form):
-    escludi_campi = ('id', 'creazione', 'ultima_modifica',
-                     'campagna', 'donatore', 'ricorrente', 'modalita')
+    campi_da_convertire = ('sesso', 'tipo_donatore', 'data', 'data_nascita',
+                           'stato_nascita', 'stato_residenza', 'importo',
+                           'metodo_pagamento', 'modalita_singola_ricorrente')
+    valori_nulli = ('-', ' ', '')
+    valori_sesso_maschile = ('maschio', 'm', 'maschile', 'uomo')
+    valori_sesso_femminile = ('femmina', 'f', 'femminile', 'donna')
+    escludi_campi = ('id', 'creazione', 'ultima_modifica', 'campagna', 'donatore',)
+    nazioni_codici_dict = {v.lower(): k for k, v in COUNTRIES.items()}
+
     _campo_modello_dict = {Donatore: [f.name for f in Donatore._meta.fields],
                            Donazione: [f.name for f in Donazione._meta.fields]}
 
     def __init__(self, *args, **kwargs):
         self.colonne_dict = kwargs.pop('colonne')
+        self.intestazione = kwargs.pop('intestazione', 0)
+        self.sorgente = kwargs.pop('sorgente', '')
         super().__init__(*args, **kwargs)
-        campi_donazione = [("Campi Donazione", [(f.name, f.verbose_name) for f in Donazione._meta.fields if f.name not in self.escludi_campi])]
-        campi_donatore = [("Campi Donatore", [(f.name, f.verbose_name) for f in Donatore._meta.fields if f.name not in self.escludi_campi])]
+        campi_donazione = [
+            ('Campi Donazione', [(f.name, f.verbose_name) for f in Donazione._meta.fields if f.name not in self.escludi_campi])]
+        campi_donatore = [('Campi Donatore', [(f.name, f.verbose_name) for f in Donatore._meta.fields if f.name not in self.escludi_campi])]
         campi_donazione_donatore = [('', '-----')] + campi_donazione + campi_donatore
-        for col_idx, preview in self.colonne_dict.items():
-            field_name = 'colonna_{index}'.format(index=col_idx)
+        for nome_colonna, preview in self.colonne_dict.items():
+            field_name = 'colonna_{nome_colonna}'.format(nome_colonna=nome_colonna)
             self.fields[field_name] = forms.ChoiceField(choices=campi_donazione_donatore, required=False)
             self.fields[field_name].help_text = 'Campo per valori: {}'.format(preview)
             self.fields[field_name].empty_label = None
+            self.fields[field_name].label = 'Colonna {}'.format(nome_colonna)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -139,58 +192,137 @@ class ModuloImportDonazioniMapping(forms.Form):
         if len(set(associazioni_definite.values())) != len(associazioni_definite):
             raise ValidationError('Hai associato uno stesso campo a più di una colonna')
 
-
     @staticmethod
     def _converti(nome_campo, valore):
         """ Metodo per validare/convertire valori da stringa"""
-        if nome_campo.startswith('data'):
-            from dateutil.parser import parse
-            valore = parse(valore, fuzzy=True)
-        elif nome_campo == 'importo':
-            try:
-                valore = float(valore)
-            except ValueError:
-                # riprova per cifre del tipo 30,50 €
-                valore = float(valore.replace(',', '.'))
+        print(valore, type(valore))
+        print(nome_campo, '\n')
+        if isinstance(valore, str):
+            valore.replace('"', '').strip()
+        if nome_campo not in ModuloImportDonazioniMapping.campi_da_convertire:
+            return valore
+        elif not valore or valore in ModuloImportDonazioniMapping.valori_nulli:
+            return ''
+        elif nome_campo.startswith('data'):
+            if isinstance(valore, (date, datetime)):
+                return valore
+            return parse(valore, fuzzy=True)
+        elif nome_campo.startswith('stato'):
+            return ModuloImportDonazioniMapping._converti_stato(valore)
+        else:
+            return getattr(ModuloImportDonazioniMapping, '_converti_{}'.format(nome_campo))(valore)
+
+    @staticmethod
+    def _converti_importo(valore):
+        if isinstance(valore, (int, float)):
+            return valore
+
+        if not valore or valore in ModuloImportDonazioniMapping.valori_nulli:
+            return 0
+        valore = valore.replace(',', '.')
+        valore = float(valore)
+        return valore
+
+    @staticmethod
+    def _converti_sesso(valore):
+        if valore.lower() in ModuloImportDonazioniMapping.valori_sesso_maschile:
+            valore = 'M'
+        elif valore.lower() in ModuloImportDonazioniMapping.valori_sesso_femminile:
+            valore = 'F'
+        else:
+            valore = ''
+        return valore
+
+    @staticmethod
+    def _converti_tipo_donatore(valore):
+        valore = valore.lower()
+        if 'persona' in valore or 'privato' in valore:
+            valore = 'P'
+        elif 'azienda' in valore:
+            valore = 'A'
+        elif 'croce rossa' in valore or 'cri' in valore:
+            valore = 'C'
+        else:
+            valore = 'P'
+        return valore
+
+    @staticmethod
+    def _converti_stato(valore):
+        if valore in COUNTRIES:
+            return valore
+        valore = valore.lower()
+        codice_stato = ModuloImportDonazioniMapping.nazioni_codici_dict.get(_(valore))
+        return codice_stato or ''
+
+    @staticmethod
+    def _converti_metodo_pagamento(valore):
+        valore = valore.lower()
+        if 'paypal' in valore:
+            valore = 'P'
+        elif 'ammado' in valore:
+            valore = 'A'
+        elif 'amazon' in valore:
+            valore = 'Z'
+        elif 'credit' in valore or 'debit' in valore:
+            valore = 'B'
+        else:
+            valore = ''
+        return valore
+
+    @staticmethod
+    def _converti_modalita_singola_ricorrente(valore):
+        valore = valore.lower()
+        if 'unic' in valore or 'singola' in valore:
+            valore = 'S'
+        elif 'ricorrente' in valore:
+            valore = 'R'
+        else:
+            valore = ''
         return valore
 
     def processa(self, campagna, dati_importati, test_import=True):
-        # TODO metodo troppo lungo e con troppi livelli di identazione. Valutare se e come dividerlo e/o spostarlo
+        # TODO metodo troppo lungo e con troppi livelli di identazione!
+        # ### Valutare se e come dividerlo e/o spostarlo
         """
         Questo metodo processa e inserisce in DB le righe provenienti dal file
         rappresentanti oggetti Donazione e Donatore.
         Se test_import=True, i risultati sono una simulazione dell'import.
         :param campagna: Campagna per cui si stanno importando donazioni
         :param dati_importati: righe del foglio csv/xls importato
-               Il mapping numero_colonna: nome_campo è fornito dai valori dei campi del modulo
+               Il mapping nome_colonna: nome_campo è fornito dai valori dei campi del modulo
         :param test_import: True se è una prova (dal modulo Importa Donazioni)
         :return: riepilogo: dict con lista di oggetti inseriti, righe non inserite
                 e righe inserite con singoli errori sui campi
         """
         data_processamento = poco_fa()
-        mapping_colonne_campi = {int(f.split('_')[1]): v for f, v in self.cleaned_data.items()}
+        # f = 'colonna_O NomeNazione'
+        # v = 'stato_residenza'
+        mapping_colonne_campi = {f.split()[0].split('_')[1]: v for f, v in self.cleaned_data.items()}
         oggetti_donazioni = []
         righe_con_campi_errati = set()
         righe_non_inserite = []
         riepilogo = {}
         try:
             with transaction.atomic():
-                for riga in dati_importati:
+                riepilogo_errori = StringIO()
+                for numero_riga, riga in enumerate(dati_importati, start=1 + self.intestazione):
                     argomenti = {Donatore: {}, Donazione: {}}
-                    for i, valore in enumerate(riga, start=1):
+                    for i, valore in enumerate(riga):
                         try:
-                            nome_campo = mapping_colonne_campi.get(i)
+                            nome_campo = mapping_colonne_campi.get(colnum_string(i))
                             if nome_campo and valore:
                                 modello = Donatore if nome_campo in self._campo_modello_dict[Donatore] else Donazione
                                 valore = self._converti(nome_campo, valore)
                                 argomenti[modello][nome_campo] = valore
-                        except (ValueError, TypeError):
+                        except (ValueError, TypeError) as exc:
+                            riga = str(riga)
+                            riepilogo_errori.write('<li>Riga {} {}: {}</li>'.format(numero_riga, riga, exc))
                             righe_con_campi_errati.add(str(riga))
 
                     try:
+                        if self.sorgente:
+                            argomenti[Donazione]['metodo_pagamento'] = self.sorgente
                         donazione = Donazione(**argomenti[Donazione])
-                        if not donazione.importo:
-                            raise ValueError('Importo donazione mancante')
                         if not donazione.data:
                             donazione.data = data_processamento
                         donazione.campagna = campagna
@@ -199,22 +331,23 @@ class ModuloImportDonazioniMapping(forms.Form):
                             donatore = Donatore.nuovo_o_esistente(donatore)
                             donazione.donatore = donatore
                         oggetti_donazioni.append(donazione)
-
                         donazione.save()
-                    except (ValueError, TypeError, ValidationError):
+                    except (ValueError, TypeError, ValidationError, DataError) as exc:
                         riga = str(riga)
                         righe_non_inserite.append(riga)
-                        print(riga)
                         if riga in righe_con_campi_errati:
                             righe_con_campi_errati.remove(riga)
+                        riepilogo_errori.write('<li><b>Riga {}</b> {}: {}</li>'.format(numero_riga, riga, exc))
 
                 riepilogo = {'inserite': oggetti_donazioni,
                              'non_inserite': righe_non_inserite,
-                             'inserite_incomplete': righe_con_campi_errati}
+                             'inserite_incomplete': righe_con_campi_errati,
+                             'errori': riepilogo_errori.getvalue()}
                 if test_import:
                     # esce dal context con un'eccezione quindi non fa il commit dei dati sul DB
                     # equivale ad un rollback
                     raise ValueError()
         except ValueError:
+            # rollback
             pass
         return riepilogo

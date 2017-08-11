@@ -7,11 +7,9 @@
     <div class="container-fluid">
         <div class="row allinea-centro">
 
-            <div class="col-sm-4">
+            <div class="col-sm-6">
                 {% block filtering_form %}
                 <form method="POST">
-                    {% csrf_token %}
-
                     <div class="input-group">
                         <input  type="text" class="form-control" name="filtra"
                                 placeholder={% block placeholderfiltro %}Filtra...{% endblock placeholderfiltro%} value="{{ filtra }}"
@@ -33,11 +31,11 @@
                             {% endif %}
                         </span>
                     </div>
+                    </form>
                     {% endblock filtering_form %}
-                </form>
             </div>
 
-            <div class="col-sm-4">
+            <div class="col-sm-6">
 
                 <ul class="pagination piu-piccolo" style="margin-top: 0px;">
 
@@ -75,9 +73,9 @@
                     {% endif %}
                 </ul>
             </div>
-
-            <div class="col-sm-4">
-            </div>
+{##}
+{#            <div class="col-sm-4">#}
+{#            </div>#}
 
         </div>
 

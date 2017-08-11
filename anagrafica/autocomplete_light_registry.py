@@ -1,11 +1,10 @@
 from autocomplete_light import shortcuts as autocomplete_light
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
 from anagrafica.models import Persona, Sede, Appartenenza
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI_UNITA, UFFICIO_SOCI
-from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_CAMPAGNE
+from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE
 from formazione.models import PartecipazioneCorsoBase
 
 
@@ -177,15 +176,6 @@ class SedeNuovoCorsoAutocompletamento(SedeAutocompletamento):
         return self.persona.oggetti_permesso(GESTIONE_CORSI_SEDE)
 
 
-class SedeDonazioniAutocompletamento(SedeAutocompletamento):
-    def choices_for_request(self):
-        q = self.request.GET.get('q', '')
-        self.choices = self.persona.oggetti_permesso(GESTIONE_CAMPAGNE)
-        if q:
-            self.choices = self.choices.filter(nome__icontains=q)
-        return super().choices_for_request()
-
-
 autocomplete_light.register(PersonaAutocompletamento)
 autocomplete_light.register(PresidenteAutocompletamento)
 autocomplete_light.register(SostenitoreAutocompletamento)
@@ -195,4 +185,3 @@ autocomplete_light.register(SedeAutocompletamento)
 autocomplete_light.register(ComitatoAutocompletamento)
 autocomplete_light.register(SedeTrasferimentoAutocompletamento)
 autocomplete_light.register(SedeNuovoCorsoAutocompletamento)
-autocomplete_light.register(SedeDonazioniAutocompletamento)
