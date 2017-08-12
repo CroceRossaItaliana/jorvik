@@ -1742,7 +1742,7 @@ class TestAnagrafica(TestCase):
             x.refresh_from_db()
 
         self.assertTrue(
-            italia.espandi(includi_me=True, pubblici=True).count() == (italia.get_descendants().count()),
+            italia.espandi(includi_me=True, pubblici=True).count() == (italia.get_descendants(include_self=True).count()),
             msg="Espansione dal Nazionale ritorna tutti i Comitati - inclusa Italia",
         )
 
@@ -1757,7 +1757,7 @@ class TestAnagrafica(TestCase):
         )
 
         self.assertTrue(
-            _sicilia.espandi(includi_me=True, pubblici=True).count() == (_sicilia.get_descendants().count() + 1),
+            _sicilia.espandi(includi_me=True, pubblici=True).count() == (_sicilia.get_descendants(include_self=True).count()),
             msg="Espansione dal Regionale ritrna tutti i Comitati - Inclusa Regione"
         )
 
