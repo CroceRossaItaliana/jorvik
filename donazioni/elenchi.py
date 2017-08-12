@@ -39,6 +39,9 @@ class ElencoDonazioni(ElencoBase):
     def template(self):
         return 'donazioni_elenchi_inc_donazioni.html'
 
+    def ordina(self, qs):
+        return qs.order_by('-data')
+
     def filtra(self, queryset, termine):
         termine = termine.lower()
         filtri = Q(Q(modalita__icontains=Donazione.METODO_PAGAMENTO_REVERSE.get(termine))
@@ -51,7 +54,7 @@ class ElencoDonatori(ElencoBase):
     def template(self):
         return 'donazioni_elenchi_inc_donatori.html'
 
-    def filtra(self, queryset, termine, scaglione_media=None):
+    def filtra(self, queryset, termine='', scaglione_media=None):
         if scaglione_media:
             tokens = scaglione_media.split('-')
             media_inf = tokens[0]
@@ -63,9 +66,11 @@ class ElencoDonatori(ElencoBase):
             donatori_ids = queryset.values_list('id')
             queryset = Donatore.objects.filter(pk__in=donatori_ids).annotate(media=Avg('donazioni__importo')).filter(filtri)
 
-        termine = termine.lower()
-        filtri = Q(Q(nome__icontains=termine) | Q(cognome__icontains=termine) |
-                   Q(codice_fiscale__icontains=termine) | Q(email__icontains=termine)
-                   )
-        results = queryset.filter(filtri).prefetch_related('donazioni')
+        if termine:
+            termine = termine.lower()
+            donazioni_campagne_ids = Donazione.objects.filter(campagna__nome__icontains=termine).values_list('id')
+            filtri = Q(Q(nome__icontains=termine) | Q(cognome__icontains=termine) |
+                       Q(codice_fiscale__icontains=termine) | Q(email__icontains=termine) |
+                       Q(donazioni__id__in=donazioni_campagne_ids))
+            results = queryset.filter(filtri).prefetch_related('donazioni')
         return results

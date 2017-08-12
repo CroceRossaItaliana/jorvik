@@ -20,7 +20,9 @@
     </td>
 
     <td class="piu-piccolo allinea-sinistra">
-        {{ obj.donatore|default_if_none:""}}
+    {% if obj.donatore %}
+        <a href="{{obj.donatore.url}}" target="_parent"><i class="fa fa-user"></i> {{ obj.donatore}}</a>
+    {% endif %}
     </td>
 
     <td class="piu-piccolo allinea-sinistra">

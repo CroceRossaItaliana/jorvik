@@ -14,7 +14,7 @@ import autocomplete_light
 from base.utils import poco_fa
 from base.wysiwyg import WYSIWYGSemplice
 from donazioni.models import Campagna, Etichetta, Donazione, Donatore
-from donazioni.utils import colnum_string
+from donazioni.utils import colnum_string, FormatoImportPredefinito, FormatoImport
 
 
 class ModuloCampagna(forms.ModelForm):
@@ -136,9 +136,9 @@ class ModuloImportDonazioni(forms.Form):
         ('', '-----'),
         (PAYPAL, 'PayPal'),
         (AMMADO, 'Ammado'),
-        (AMAZON, 'Amazon'),
+        # (AMAZON, 'Amazon'),
         (CRI, 'CRI.it'),
-        (POSTE, 'Poste'),
+        # (POSTE, 'Poste'),
     )
     file_da_importare = forms.FileField(help_text='Scegli il file da importare')
     righe_intestazione = forms.IntegerField(min_value=0, initial=1, help_text='Numero di righe prima dei dati veri e propri')
@@ -149,9 +149,8 @@ class ModuloImportDonazioni(forms.Form):
     sorgente = forms.ChoiceField(choices=SORGENTI, required=False,
                                  help_text='Se il file è un esportazione di dati proveniente da una particolare'
                                            ' piattaforma online di donazioni (e.g. PayPal), puoi definire qui '
-                                           'la sorgente. Tale valore andrà a definire il Metodo di Pagamento '
-                                           'della donazione. Puoi lasciare il campo in bianco se nel file da importare'
-                                           ' è presente una colonna con il metodo di pagamento.')
+                                           'la sorgente. In tal modo, il mapping fra colonne e campi della prossima schermata sarà'
+                                           ' predefinito e non occorrerà farlo a mano')
 
 
 class ModuloImportDonazioniMapping(forms.Form):
@@ -171,17 +170,34 @@ class ModuloImportDonazioniMapping(forms.Form):
         self.colonne_dict = kwargs.pop('colonne')
         self.intestazione = kwargs.pop('intestazione', 0)
         self.sorgente = kwargs.pop('sorgente', '')
+        self.metodo_pagamento_da_colonna = False
         super().__init__(*args, **kwargs)
         campi_donazione = [
-            ('Campi Donazione', [(f.name, f.verbose_name) for f in Donazione._meta.fields if f.name not in self.escludi_campi])]
+            ('Campi Donazione', [(f.name, f.verbose_name) for f in Donazione._meta.fields if f.name not in self.escludi_campi])
+        ]
         campi_donatore = [('Campi Donatore', [(f.name, f.verbose_name) for f in Donatore._meta.fields if f.name not in self.escludi_campi])]
         campi_donazione_donatore = [('', '-----')] + campi_donazione + campi_donatore
+        campi_definiti_con_sorgente = FormatoImportPredefinito.formati.get(self.sorgente, FormatoImport)().campi_definiti
         for nome_colonna, preview in self.colonne_dict.items():
-            field_name = 'colonna_{nome_colonna}'.format(nome_colonna=nome_colonna)
-            self.fields[field_name] = forms.ChoiceField(choices=campi_donazione_donatore, required=False)
-            self.fields[field_name].help_text = 'Campo per valori: {}'.format(preview)
-            self.fields[field_name].empty_label = None
-            self.fields[field_name].label = 'Colonna {}'.format(nome_colonna)
+            nome_campo = 'colonna_{nome_colonna}'.format(nome_colonna=nome_colonna)
+            # nome_campo ha formato 'colonna_X TitoloColonnaExcel'
+            self.fields[nome_campo] = forms.ChoiceField(choices=campi_donazione_donatore, required=False)
+            self.fields[nome_campo].help_text = 'Campo per valori: {}'.format(preview)
+            self.fields[nome_campo].empty_label = None
+            self.fields[nome_campo].label = 'Colonna {}'.format(nome_colonna)
+            if self.sorgente and nome_campo in campi_definiti_con_sorgente:
+                self.fields[nome_campo].widget.attrs['readonly'] = 'readonly'
+            elif self.sorgente and nome_campo not in campi_definiti_con_sorgente:
+                self.fields[nome_campo].widget.attrs['disabled'] = 'disabled'
+                self.fields[nome_campo].disabled = True
+
+        if self.sorgente:
+            # formato predefinito
+            associazioni_predefinite = FormatoImportPredefinito.formati.get(self.sorgente, {}).associazioni
+            for nome_campo, campo_modello in associazioni_predefinite.items():
+                self.fields[nome_campo].initial = campo_modello
+                if campo_modello == 'metodo_pagamento':
+                    self.metodo_pagamento_da_colonna = True
 
     def clean(self):
         cleaned_data = super().clean()
@@ -298,10 +314,12 @@ class ModuloImportDonazioniMapping(forms.Form):
         # f = 'colonna_O NomeNazione'
         # v = 'stato_residenza'
         mapping_colonne_campi = {f.split()[0].split('_')[1]: v for f, v in self.cleaned_data.items()}
+
         oggetti_donazioni = []
         righe_con_campi_errati = set()
         righe_non_inserite = []
         riepilogo = {}
+
         try:
             with transaction.atomic():
                 riepilogo_errori = StringIO()
@@ -320,18 +338,26 @@ class ModuloImportDonazioniMapping(forms.Form):
                             righe_con_campi_errati.add(str(riga))
 
                     try:
-                        if self.sorgente:
-                            argomenti[Donazione]['metodo_pagamento'] = self.sorgente
-                        donazione = Donazione(**argomenti[Donazione])
-                        if not donazione.data:
-                            donazione.data = data_processamento
-                        donazione.campagna = campagna
+                        if argomenti[Donazione]:
+                            if self.sorgente and not self.metodo_pagamento_da_colonna:
+                                # sorgente predefinita che non contiene una colonna Metodo Pagamento
+                                # in tal caso, il metodo pagamento viene sovrascritto con la sorgente
+                                # (e.g. PayPal)
+                                argomenti[Donazione]['metodo_pagamento'] = self.sorgente
+                            donazione = Donazione(**argomenti[Donazione])
+                            if not donazione.data:
+                                donazione.data = data_processamento
+                            donazione.campagna = campagna
                         if argomenti[Donatore]:
                             donatore = Donatore(**argomenti[Donatore])
                             donatore = Donatore.nuovo_o_esistente(donatore)
-                            donazione.donatore = donatore
-                        oggetti_donazioni.append(donazione)
-                        donazione.save()
+
+                        if donazione:
+                            oggetti_donazioni.append(donazione)
+                            donazione.save()
+                            if donatore:
+                                donazione.donatore = donatore
+
                     except (ValueError, TypeError, ValidationError, DataError) as exc:
                         riga = str(riga)
                         righe_non_inserite.append(riga)

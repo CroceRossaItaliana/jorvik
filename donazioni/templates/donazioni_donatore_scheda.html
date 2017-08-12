@@ -5,6 +5,7 @@
 {% load utils %}
 {% load humanize %}
 {% load donazioni %}
+{% load social %}
 
 {% block pagina_titolo %}
     {% block scheda_titolo %}Scheda Donatore{% endblock %}
@@ -19,7 +20,7 @@
 
     <div class="row">
 
-        <div class="col-md-6">
+        <div class="col-md-12">
             <div class="panel panel-info">
                 <div class="panel-heading">
                     <h3 class="panel-title">
@@ -29,45 +30,47 @@
                 </div>
 
                 <div class="panel-body">
-                    <table class="table table-responsive table-striped">
-                        <tr>
-                            <td>Totale donazioni</td>
-                            <td class="grassetto">{{ donatore.statistiche_donazioni.totale|importo }}</td>
-                        </tr>
-                        <tr>
-                            <td>Donazione media</td>
-                            <td class="grassetto">{{ donatore.statistiche_donazioni.media|importo }}</td>
-                        </tr>
-                        <tr>
-                            <td>Donazioni inserite</td>
-                            <td class="grassetto">{{ donatore.statistiche_donazioni.totale_donazioni }}</td>
-                        </tr>
-                        <tr>
-                            <td>Nome</td>
-                            <td class="grassetto">{{ donatore.nome }}</td>
-                        </tr>
-                        <tr>
-                            <td>Cognome</td>
-                            <td class="grassetto">{{ donatore.cognome }}</td>
-                        </tr>
-                        <tr>
-                            <td>Codice Fiscale</td>
-                            <td class="monospace">{{ donatore.codice_fiscale }}</td>
-                        </tr>
-                        <tr>
-                            <td>Partita IVA</td>
-                            <td>{{ donatore.partita_iva }}</td>
-                        </tr>
-                        <tr>
-                            <td>Ragione Sociale</td>
-                            <td>{{ donatore.ragione_sociale }}</td>
-                        </tr>
-                        <tr>
-                            <td>Email</td>
-                            <td>{{ donatore.email }}</td>
-                        </tr>
-
-                        <tr>
+                    <div class="row">
+                    <div class="col-xs-6">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                            <tr>
+                                <td>Totale donazioni</td>
+                                <td class="grassetto">{{ donatore.statistiche_donazioni.totale|importo }}</td>
+                            </tr>
+                            <tr>
+                                <td>Donazione media</td>
+                                <td class="grassetto">{{ donatore.statistiche_donazioni.media|importo }}</td>
+                            </tr>
+                            <tr>
+                                <td>Donazioni inserite</td>
+                                <td class="grassetto">{{ donatore.statistiche_donazioni.totale_donazioni }}</td>
+                            </tr>
+                            <tr>
+                                <td>Nome</td>
+                                <td class="grassetto">{{ donatore.nome }}</td>
+                            </tr>
+                            <tr>
+                                <td>Cognome</td>
+                                <td class="grassetto">{{ donatore.cognome }}</td>
+                            </tr>
+                            <tr>
+                                <td>Codice Fiscale</td>
+                                <td class="monospace">{{ donatore.codice_fiscale }}</td>
+                            </tr>
+                            <tr>
+                                <td>Partita IVA</td>
+                                <td>{{ donatore.partita_iva }}</td>
+                            </tr>
+                            <tr>
+                                <td>Ragione Sociale</td>
+                                <td>{{ donatore.ragione_sociale }}</td>
+                            </tr>
+                            <tr>
+                                <td>Email</td>
+                                <td>{{ donatore.email }}</td>
+                            </tr>
+                                <tr>
                             <td>Data di nascita</td>
                             <td>{{ donatore.data_nascita|default_if_none:""}}</td>
                         </tr>
@@ -91,6 +94,13 @@
                             <td>Sesso</td>
                             <td>{{ donatore.sesso }}</td>
                         </tr>
+                        </table>
+                    </div>
+                    </div>
+                        <div class="col-xs-6">
+                            <div class="table-responsive">
+                    <table class="table table-striped">
+
                         <tr>
                             <td>Indirizzo di residenza</td>
                             <td>{{ donatore.indirizzo }}</td>
@@ -134,10 +144,35 @@
 
 
                     </table>
+                            </div>
                 </div>
+                    </div>
 
             </div>
         </div>
+        </div>
+    </div>
+    {% if puo_modificare %}
+    <div class="row">
+        <div class="col-md-3">
+            <p>
+            <a href="{{ donatore.url_modifica }}" role="button" class="btn btn-large btn-primary">
+                <i class="fa fa-edit"></i>
+                Modifica dati donatore
+            </a>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p>
+            <a href="{{ donatore.url_cancella }}" role="button" class="btn btn-large btn-primary">
+                <i class="fa fa-remove"></i>
+                Elimina donatore
+            </a>
+            </p>
+        </div>
+    </div>
+    {% endif %}
+    <div class="row">
         <div class="col-md-6">
             <div class="panel panel-info">
                 <div class="panel-heading">
@@ -166,26 +201,44 @@
 
             </div>
         </div>
+    <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-tags"></i>
+                        Etichette associate
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                <table class="table table-responsive table-striped">
+
+                    <tr>
+                        <td>{% for etichetta in donatore.etichette.all %}
+                            <a class="badge" href="{{ etichetta.url }}">{{ etichetta }}</a>
+                            {% empty %} Nessuna etichetta associata per questo donatore.
+                        {% endfor %}</td>
+                    </tr>
+                </table>
+                </div>
+
+            </div>
+        </div>
+
     </div>
-    {% if puo_modificare %}
+
     <div class="row">
-        <div class="col-md-3">
-            <p>
-            <a href="{{ donatore.url_modifica }}" role="button" class="btn btn-large btn-primary">
-                <i class="fa fa-edit"></i>
-                Modifica dati donatore
-            </a>
-            </p>
-        </div>
-        <div class="col-md-3">
-            <p>
-            <a href="{{ donatore.url_cancella }}" role="button" class="btn btn-large btn-primary">
-                <i class="fa fa-remove"></i>
-                Elimina donatore
-            </a>
-            </p>
+        <div class="col-md-12">
+        <h3>
+            <i class="fa fa-fw fa-comments-o"></i>
+            Commenti
+            <span class="text-muted">
+                {{ donatore.commenti.count }}
+            </span>
+        </h3>
+        {% commenti donatore %}
+
         </div>
     </div>
-    {% endif %}
 
 {% endblock %}

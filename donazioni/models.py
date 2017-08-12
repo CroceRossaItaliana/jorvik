@@ -17,6 +17,7 @@ from anagrafica.validators import valida_codice_fiscale, valida_partita_iva
 from base.models import ModelloSemplice
 from base.tratti import ConStorico, ConDelegati, ConMarcaTemporale
 from base.utils import TitleCharField, UpperCaseCharField, concept, poco_fa
+from social.models import ConCommenti
 
 
 class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
@@ -130,6 +131,7 @@ class Etichetta(ModelloSemplice):
     slug = models.SlugField(allow_unicode=True, max_length=100, help_text='Questo campo può contenere lettere, numeri e trattini')
     campagne = models.ManyToManyField(Campagna, related_name='etichette')
     default = models.BooleanField('Etichetta di default', default=False)
+    donatori = models.ManyToManyField('donazioni.Donatore', related_name='etichette')
 
     def __str__(self):
         return self.slug
@@ -181,7 +183,7 @@ class Etichetta(ModelloSemplice):
         return '<a href="%s">%s</a>' % (self.url, self.slug)
 
 
-class Donatore(ModelloSemplice):
+class Donatore(ModelloSemplice, ConCommenti):
     # Scelte tipo donatore
     PRIVATO = 'P'
     AZIENDA = 'A'
@@ -272,6 +274,7 @@ class Donatore(ModelloSemplice):
     fax = models.CharField('FAX', max_length=64, blank=True)
     professione = models.CharField('Professione', blank=True, choices=PROFESSIONI, max_length=10)
     lingua = models.CharField('Lingua', blank=True, choices=LINGUE, max_length=2)
+    periodico = models.BooleanField('Donatore periodico', default=False)
 
     def __str__(self):
         stringa_output = []
@@ -364,6 +367,17 @@ class Donatore(ModelloSemplice):
         res['media_class'] = 'rosso-scuro' if res['media'] >= settings.SOGLIA_MEDIA_DONAZIONE else ''
         return res
 
+    def commento_notifica_destinatari(self, mittente):
+        from anagrafica.models import Persona
+
+        # Come destinatari, sempre i delegati dell'attivita'... tranne me.
+        campagne = Campagna.objects.filter(donazioni__in=self.donazioni.all()).distinct()
+        destinatari = Persona.objects.none()
+        for c in campagne:
+            destinatari |= c.responsabili_attuali
+        destinatari = destinatari.distinct()
+        return destinatari
+
 
 class Donazione(ModelloSemplice, ConMarcaTemporale):
     CONTANTI = 'C'
@@ -406,7 +420,7 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
                                             "L'importo della donazione è al di sotto del minimo consentito")])
     metodo_pagamento = models.CharField('Metodo Pagamento', blank=True, choices=METODO_PAGAMENTO,
                                         max_length=1, db_index=True)
-    data = models.DateTimeField('Data donazione', help_text='Data donazione', null=True)
+    data = models.DateTimeField('Data donazione', help_text='Data donazione', null=True, db_index=True)
     codice_transazione = models.CharField('Codice Transazione', max_length=250, blank=True, null=True,
                                           help_text='Codice univoco che identifica la donazione')
     modalita_singola_ricorrente = models.CharField('Modalità', blank=True, choices=MODALITA,
@@ -432,12 +446,17 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
     @staticmethod
     def pre_save(sender, instance, **kwargs):
         """
-        Signal pre_save che implementa il requisito C-4 per una donazione senza data specificata
-        'Per ogni donazione sarà possibile inserire la data della donazione. Ove non
-        specificata, questa sarà impostata alla data corrente se la donazione prece-
-        dente in ordine temporale è stata fatta in giorni precedenti. Se la donazione
-        precedente è stata inserita in data odierna, viene usata la “data donazione” di
-        quest’ultima.'
+        Signal pre_save che implementa i requisiti
+            # C-4 per una donazione senza data specificata
+                'Per ogni donazione sarà possibile inserire la data della donazione. Ove non
+                specificata, questa sarà impostata alla data corrente se la donazione prece-
+                dente in ordine temporale è stata fatta in giorni precedenti. Se la donazione
+                precedente è stata inserita in data odierna, viene usata la “data donazione” di
+                quest’ultima.'
+            # E-10 'Ciascun soggetto donatore sarà associato a tutte le etichette associate alle
+                campagne di fundraising a cui ha partecipato come donatore.
+            # E-13 'Se un donatore ha almeno una donazione periodica attiva, è marcato come
+                "donatore periodico”
         :param sender: classe Donazione
         :param instance: oggetto Donazione
         """
@@ -454,6 +473,12 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
                     instance.data = poco_fa()
                 else:
                     instance.data = ultima_donazione.data
+        if instance.donatore:
+            if instance.modalita_singola_ricorrente == sender.RICORRENTE:
+                instance.donatore.periodico = True
+                instance.donatore.save()
+            for etichetta in instance.campagna.etichette.all():
+                instance.donatore.etichette.add(etichetta)
 
 
 # signals

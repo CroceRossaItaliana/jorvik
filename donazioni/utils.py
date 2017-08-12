@@ -68,3 +68,76 @@ class _OrderedDefaultListDict(OrderedDict):
     def __missing__(self, key):
         self[key] = value = []
         return value
+
+
+class FormatoImport:
+    associazioni = {}
+
+    @property
+    def campi_definiti(self):
+        return [v for v in self.associazioni.values()]
+
+
+class FormatoPayPal(FormatoImport):
+    associazioni = {'colonna_A Data': 'data',
+                    'colonna_C Nome': 'nome',
+                    'colonna_I Netto': 'importo',
+                    'colonna_J Codice transazione': 'codice_transazione',
+                    }
+
+
+class FormatoAmmado(FormatoImport):
+    associazioni = {'colonna_A Data': 'data',
+                    'colonna_D Nome': 'nome',
+                    'colonna_E Cognome': 'cognome',
+                    'colonna_F Indirizzo email': 'email',
+                    'colonna_H Donation Source': 'metodo_pagamento',
+                    'colonna_L Frequency': 'modalita_singola_ricorrente',
+                    'colonna_W Payable Amount': 'importo',
+                    'colonna_AE Address 1': 'indirizzo',
+                    'colonna_AG City/Town': 'comune_residenza',
+                    'colonna_AI ZIP/Postal Code': 'cap_residenza',
+                    'colonna_AJ Country': 'stato_residenza',
+                    'colonna_AK Language': 'lingua',
+                    'colonna_AL Telephone': 'telefono',
+                    }
+
+
+class FormatoAmazon(FormatoImport):
+    associazioni = {'colonna_A BuyerName': 'nome',
+                    'colonna_B BuyerEmailAddress': 'email',
+                    'colonna_C BillingAddressLine1': 'indirizzo',
+                    'colonna_F BillingAddressCity': 'comune_residenza',
+                    'colonna_I BillingAddressPostalCode': 'cap_residenza',
+                    'colonna_J BillingAddressCountryCode': 'stato_residenza',
+                    }
+
+
+class FormatoCroceRossaIt(FormatoImport):
+    associazioni = {'colonna_C TipoDonatore': 'tipo_donatore',
+                    'colonna_D Nome': 'nome',
+                    'colonna_E Cognome': 'cognome',
+                    'colonna_F Genere': 'sesso',
+                    'colonna_G CF': 'codice_fiscale',
+                    'colonna_H RagioneSociale': 'ragione_sociale',
+                    'colonna_I PIVA': 'partita_iva',
+                    'colonna_J DTNascita': 'data_nascita',
+                    'colonna_K Indirizzo': 'indirizzo',
+                    'colonna_L CAP': 'cap_residenza',
+                    'colonna_M Citta': 'comune_residenza',
+                    'colonna_N NomeProvincia': 'provincia_residenza',
+                    'colonna_O NomeNazione': 'stato_residenza',
+                    'colonna_P Email': 'email',
+                    'colonna_Q Telefono': 'telefono',
+                    'colonna_S Lang': 'lingua',
+                    'colonna_X CodiceDonazione': 'codice_transazione',
+                    'colonna_Y Importo': 'importo',
+                    'colonna_Z ModalitaDonazione': 'modalita_singola_ricorrente',
+                    'colonna_AA TSDonazione': 'data',
+                    'colonna_AC MetodoPagamento': 'metodo_pagamento',
+                    }
+
+
+class FormatoImportPredefinito:
+    formati = {'P': FormatoPayPal, 'A': FormatoAmmado, 'Z': FormatoAmazon,
+               'R': FormatoCroceRossaIt}
