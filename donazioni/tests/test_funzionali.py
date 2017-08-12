@@ -54,7 +54,7 @@ class TestFunzionaliCampagneEtichette(TestFunzionale):
         url_crea_etichetta = '{}{}'.format(self.live_server_url,
                                            reverse('donazioni_etichette_nuova'))
 
-        sessione_delegato = self.sessione_utente(persona=self.delegato, wait_time=2)
+        sessione_delegato = self.sessione_utente(persona=self.delegato)
         sessione_delegato.visit(url_crea_etichetta)
         sessione_delegato.fill('slug', 'test-etichetta')
         for k in sessione_delegato.type('comitato-autocomplete', self.sede.nome, slowly=True):
@@ -92,7 +92,7 @@ class TestFunzionaliDonatori(TestFunzionale):
                           'nome': 'Mario',
                           'cognome': 'Rossi',
                           'email': 'mario.rossi@test.it'}
-        sessione_delegato.select('modalita', 'C')
+        sessione_delegato.select('metodo_pagamento', 'C')
         sessione_delegato.fill_form(dati_donazione)
         sessione_delegato.find_by_xpath("//button[@type='submit']").first.click()
         self.assertEqual(sessione_delegato.url, '{}{}'.format(self.live_server_url,
@@ -117,7 +117,7 @@ class TestFunzionaliDonatori(TestFunzionale):
                           'nome': 'Mario',
                           'cognome': 'Rossi',
                           'email': 'mario.rossi@test.it'}
-        sessione_responsabile.select('modalita', 'C')
+        sessione_responsabile.select('metodo_pagamento', 'C')
         sessione_responsabile.fill_form(dati_donazione)
 
         sessione_responsabile.find_by_xpath("//button[@type='submit']").first.click()

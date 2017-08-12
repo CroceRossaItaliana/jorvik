@@ -65,14 +65,14 @@
 
 {% endblock %}
 
-
+{% block elenco_riga_classe %}piu-piccolo {{ obj.statistiche_donazioni.media_class }}{% endblock elenco_riga_classe %}
 {% block elenco_riga %}
 
-    <td class="piu-piccolo">{{ obj.nome}} {{ obj.cognome }}</td>
-    <td class="piu-piccolo">{{ obj.email }}</td>
-    <td class="monospace piu-piccolo">{{ obj.codice_fiscale }}</td>
-    <td class="piu-piccolo">{{ obj.statistiche_donazioni.totale|importo }}</td>
-    <td class="piu-piccolo {{ obj.statistiche_donazioni.media_class }}">{{ obj.statistiche_donazioni.media|importo }}</td>
+    <td>{{ obj.nome}} {{ obj.cognome }}</td>
+    <td>{{ obj.email }}</td>
+    <td class="monospace">{{ obj.codice_fiscale }}</td>
+    <td>{{ obj.statistiche_donazioni.totale|importo }}</td>
+    <td>{{ obj.statistiche_donazioni.media|importo }}</td>
 
 {% endblock %}
 
