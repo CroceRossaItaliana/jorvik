@@ -111,14 +111,16 @@ def permessi_ufficio_soci(sede):
     """
     Permessi della delega di UFFICIO SOCI.
 
+    Questo ritorna **anche** le sedi non più attive
+
     :param sede: Sede di cui si e' ufficio soci.
     :return: Lista di permessi.
     """
     from anagrafica.costanti import REGIONALE
     return [
-        (RUBRICA_UFFICIO_SOCI,  sede.espandi(includi_me=True, pubblici=True)),
-        (GESTIONE_SOCI,         sede.espandi(includi_me=True)),
-        (ELENCHI_SOCI,          sede.espandi(includi_me=True, pubblici=True)),
+        (RUBRICA_UFFICIO_SOCI,  sede.espandi(includi_me=True, pubblici=True, ignora_disattive=False)),
+        (GESTIONE_SOCI,         sede.espandi(includi_me=True, ignora_disattive=False)),
+        (ELENCHI_SOCI,          sede.espandi(includi_me=True, pubblici=True, ignora_disattive=False)),
         (EMISSIONE_TESSERINI,   sede.queryset_modello().filter(estensione=REGIONALE)),
     ]
 

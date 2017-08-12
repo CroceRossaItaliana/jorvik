@@ -1730,10 +1730,10 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     def __str__(self):
         if self.estensione == TERRITORIALE and self.genitore is not None:
-            return "%s: %s" % (self.genitore.nome, self.nome,)
+            return "%s: %s%s" % (self.genitore.nome, self.nome, ' [non attiva]' if not self.attiva else '')
 
         else:
-            return "%s" % (self.nome,)
+            return "%s%s" % (self.nome, ' [non attiva]' if not self.attiva else '')
 
     def presidente(self):
         return self.comitato.delegati_attuali(tipo=PRESIDENTE).first()
