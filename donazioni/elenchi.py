@@ -72,5 +72,7 @@ class ElencoDonatori(ElencoBase):
             filtri = Q(Q(nome__icontains=termine) | Q(cognome__icontains=termine) |
                        Q(codice_fiscale__icontains=termine) | Q(email__icontains=termine) |
                        Q(donazioni__id__in=donazioni_campagne_ids))
-            results = queryset.filter(filtri).prefetch_related('donazioni')
+            queryset = queryset.filter(filtri)
+
+        results = queryset.prefetch_related('donazioni')
         return results
