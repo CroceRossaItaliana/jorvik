@@ -310,17 +310,14 @@ def donazioni_elenco(request, me, campagna_id):
 @pagina_privata
 def donatore(request, me, pk):
     donatore = get_object_or_404(Donatore.objects.prefetch_related(
-        'donazioni', 'donazioni__campagna'),
+        'donazioni', 'etichette'),
         pk=pk)
     if not me.permessi_almeno(donatore, LETTURA):
         return redirect(ERRORE_PERMESSI)
-
     contesto = {
         'donatore': donatore,
-        'puo_modificare': me.permessi_almeno(donatore, MODIFICA),
-        'puo_eliminare': me.permessi_almeno(donatore, COMPLETO),
     }
-    return 'donazioni_donatore_scheda.html', contesto
+    return 'donazioni_donatore_scheda_informazioni.html', contesto
 
 
 @pagina_privata
@@ -346,7 +343,7 @@ def donatore_elimina(request, me, pk):
     if not me.permessi_almeno(donatore, COMPLETO):
         return redirect(ERRORE_PERMESSI)
     donatore.delete()
-    return redirect(reverse('donazioni_campagne_donazioni', args=campagna.id))
+    return redirect(reverse('donazioni_campagne_donatori'))
 
 
 @pagina_privata
@@ -414,6 +411,19 @@ def donatori_campagna_elenco(request, me, campagna_id):
         'puo_modificare': True,
     }
     return 'donazioni_campagna_elenco_donatori.html', contesto
+
+
+@pagina_privata
+def donatore_donazioni_elenco(request, me, pk):
+    donatore = get_object_or_404(Donatore.objects.prefetch_related('donazioni'), pk=pk)
+    if not me.permessi_almeno(donatore, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+    elenco = ElencoDonazioni(donatore.donazioni.all())
+    contesto = {
+        'donatore': donatore,
+        'elenco': elenco,
+    }
+    return 'donazioni_donatore_elenco_donazioni.html', contesto
 
 
 @pagina_privata

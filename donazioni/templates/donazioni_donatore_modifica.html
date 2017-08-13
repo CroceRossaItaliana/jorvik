@@ -1,13 +1,14 @@
-{% extends 'donazioni_vuota.html' %}
+{% extends 'donazioni_donatore_scheda.html' %}
 
 {% load bootstrap3 %}
+{% load utils %}
 {% load donazioni %}
 
 {% block pagina_titolo %}
     Modifica dati donatore
 {% endblock %}
 
-{% block app_contenuto %}
+{% block scheda_contenuto %}
 
     <div class="row">
 
@@ -67,7 +68,18 @@
             </div>
         </div>
 
-    </div>
+        </div>
+        <div class="col-md-6">
+            {% permessi_almeno donatore "completo" as puo_eliminare %}
+            {% if puo_eliminare %}
+                <p>
+                    <a href="{{ donatore.url_cancella }}" role="button" class="btn btn-large btn-primary">
+                        <i class="fa fa-remove"></i>
+                        Elimina donatore
+                    </a>
+                </p>
+            {% endif %}
+        </div>
     </div>
 
 {% endblock %}

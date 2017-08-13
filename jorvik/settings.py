@@ -198,9 +198,6 @@ SESSION_COOKIE_PATH = '/'
 GENERAL_CONF = configparser.ConfigParser()
 GENERAL_CONF.read(GENERAL_CONF_FILE)
 
-# Driver per i test funzionali
-DRIVER_WEB = 'firefox'
-
 # Configurazione E-mail
 EMAIL_CONF = configparser.ConfigParser()
 EMAIL_CONF.read(EMAIL_CONF_FILE)
@@ -244,6 +241,11 @@ APIS_CONF.read(APIS_CONF_FILE)
 GOOGLE_KEY = APIS_CONF.get('google', 'api_key', fallback=os.environ.get("GOOGLE_KEY"))
 DOMPDF_ENDPOINT = APIS_CONF.get('dompdf', 'endpoint',
                                 fallback='http://pdf-server.alacriter.uk.92-222-162-128.alacriter.uk/render/www/render.php')
+
+MAILUP_CLIENT_ID = APIS_CONF.get('mailup', 'client_id', fallback=os.environ.get("MAILUP_CLIENT_ID"))
+MAILUP_CLIENT_SECRET = APIS_CONF.get('mailup', 'client_secret', fallback=os.environ.get("MAILUP_CLIENT_SECRET"))
+MAILUP_USERNAME = APIS_CONF.get('mailup', 'username', fallback=os.environ.get("MAILUP_USERNAME"))
+MAILUP_PASSWORD = APIS_CONF.get('mailup', 'password', fallback=os.environ.get("MAILUP_PASSWORD"))
 
 DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']
 

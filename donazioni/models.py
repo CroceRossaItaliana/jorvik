@@ -296,6 +296,10 @@ class Donatore(ModelloSemplice, ConCommenti):
     def url(self):
         return '/donazioni/donatore/%d/' % (self.pk,)
 
+    @property
+    def url_elenco_donazioni(self):
+        return '/donazioni/donatore/%d/donazioni/elenco/' % (self.pk,)
+
     @classmethod
     def nuovo_o_esistente(cls, donatore):
         """

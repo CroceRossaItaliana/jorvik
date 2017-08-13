@@ -353,6 +353,7 @@ urlpatterns = [
     url(r'^donazioni/donatore/(?P<pk>[0-9]+)/$', donazioni.viste.donatore, name='donazioni_donatore'),
     url(r'^donazioni/donatore/(?P<pk>[0-9]+)/modifica$', donazioni.viste.donatore_modifica, name='donazioni_donatore_modifica'),
     url(r'^donazioni/donatore/(?P<pk>[0-9]+)/elimina$', donazioni.viste.donatore_elimina, name='donazioni_donatore_elimina'),
+    url(r'^donazioni/donatore/(?P<pk>[0-9]+)/donazioni/elenco/$', donazioni.viste.donatore_donazioni_elenco, name='donazioni_donatore_donazioni'),
 
     # Amministrazione
 

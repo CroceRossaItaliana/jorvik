@@ -1,0 +1,18 @@
+{% extends 'donazioni_donatore_scheda.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Elenco donazioni
+{% endblock %}
+
+{% block scheda_contenuto %}
+
+    <h4 class="allinea-centro">
+        Elenco donazioni per il donatore {{ donatore }}
+    </h4>
+
+    {% load utils %}
+    {% elenco elenco %}
+
+{% endblock %}

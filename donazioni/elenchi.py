@@ -56,6 +56,7 @@ class ElencoDonatori(ElencoBase):
 
     def filtra(self, queryset, termine='', scaglione_media=None):
         if scaglione_media:
+            # scaglione_media ha formato '0-50'
             tokens = scaglione_media.split('-')
             media_inf = tokens[0]
             media_sup = tokens[1]
