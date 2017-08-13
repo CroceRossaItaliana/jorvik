@@ -311,10 +311,11 @@ urlpatterns = [
 
     url(r'^password-dimenticata/$', base.viste.redirect_semplice, {"nuovo_url": "/recupera_password/"}),
 
-    # Campagne Raccolta Fondi
+    # Campagne Raccolta Fondi (Donazioni)
 
     url(r'^donazioni/$', donazioni.viste.donazioni_home, name='donazioni_home'),
     url(r'^donazioni/campagne/$', donazioni.viste.campagne_elenco, name='donazioni_campagne'),
+    url(r'^donazioni/donazioni/elenco/$', donazioni.viste.donazioni, name='donazioni_campagne'),
     url(r'^donazioni/campagne/nuova/$', donazioni.viste.campagna_nuova, name='donazioni_campagne_nuova'),
     url(r'^donazioni/campagne/autocompletamento/etichette$', donazioni.viste.autocompletamento_etichette,
         name='donazioni_etichette_autocompletamento'),

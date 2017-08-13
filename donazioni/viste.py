@@ -41,6 +41,17 @@ def donazioni_home(request, me):
 
 
 @pagina_privata
+def donazioni(request, me):
+    campagne = me.oggetti_permesso(GESTIONE_CAMPAGNA).values_list('id')
+    donazioni = Donazione.objects.filter(campagna__in=campagne).prefetch_related('campagna', 'donatore')
+    elenco = ElencoDonazioni(donazioni)
+    contesto = {
+        'elenco': elenco,
+    }
+    return 'donazioni_elenco.html', contesto
+
+
+@pagina_privata
 def campagne_elenco(request, me):
 
     campagne = me.oggetti_permesso(GESTIONE_CAMPAGNA)
@@ -298,7 +309,7 @@ def donazioni_elenco(request, me, campagna_id):
     campagna = get_object_or_404(Campagna.objects.prefetch_related('donazioni', 'donazioni__donatore'), pk=campagna_id)
     if not me.permessi_almeno(campagna, MODIFICA):
         return redirect(ERRORE_PERMESSI)
-    elenco = ElencoDonazioni(campagna.donazioni.all().select_related('donatore'))
+    elenco = ElencoDonazioni(campagna.donazioni.all().select_related('donatore', 'campagna'))
     contesto = {
         'campagna': campagna,
         'elenco': elenco,
@@ -415,7 +426,7 @@ def donatori_campagna_elenco(request, me, campagna_id):
 
 @pagina_privata
 def donatore_donazioni_elenco(request, me, pk):
-    donatore = get_object_or_404(Donatore.objects.prefetch_related('donazioni'), pk=pk)
+    donatore = get_object_or_404(Donatore.objects.prefetch_related('donazioni', 'donazioni__campagna'), pk=pk)
     if not me.permessi_almeno(donatore, MODIFICA):
         return redirect(ERRORE_PERMESSI)
     elenco = ElencoDonazioni(donatore.donazioni.all())

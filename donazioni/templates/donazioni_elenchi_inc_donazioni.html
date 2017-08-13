@@ -7,7 +7,7 @@
     <th>Data</th>
     <th>Donatore</th>
     <th>Importo</th>
-    <th>Metodo Pagamento</th>
+    <th>Campagna</th>
 
 {% endblock %}
 
@@ -30,8 +30,8 @@
         {{ obj.importo|importo }}
     </td>
 
-    <td>
-        {{ obj.get_metodo_pagamento_display }}
+    <td class="piu-piccolo allinea-sinistra">
+        <a href="{{obj.campagna.url}}" target="_parent">{{ obj.campagna }}</a>
         {% if obj.modalita_singola_ricorrente == 'R' %}
             <br/><i>Donazione Ricorrente</i>
         {% endif %}
