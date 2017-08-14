@@ -44,10 +44,13 @@ class ElencoDonazioni(ElencoBase):
 
     def filtra(self, queryset, termine):
         termine = termine.lower()
-        filtri = Q(Q(modalita__icontains=Donazione.METODO_PAGAMENTO_REVERSE.get(termine))
-                   | Q(donatore__nome__icontains=termine)
-                   | Q(donatore__cognome__icontains=termine))
-        return queryset.filter(filtri).select_related('donatore')
+        metodo_pagamento = Donazione.METODO_PAGAMENTO_REVERSE.get(termine)
+        filtri = Q()
+        if metodo_pagamento:
+            filtri |= Q(metodo_pagamento=metodo_pagamento)
+        filtri |= Q(Q(donatore__nome__icontains=termine) | Q(donatore__cognome__icontains=termine))
+        filtri |= Q(campagna__nome__icontains=termine)
+        return queryset.filter(filtri)
 
 
 class ElencoDonatori(ElencoBase):
