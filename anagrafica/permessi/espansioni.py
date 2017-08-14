@@ -341,9 +341,10 @@ def espandi_gestione_campagne(qs_sedi, al_giorno=None):
 
 
 def espandi_gestione_campagna(qs_campagne, al_giorno=None):
-    from donazioni.models import Donazione, Donatore
+    from donazioni.models import Donazione, Donatore, Etichetta
     return [
         (MODIFICA, qs_campagne),
+        (COMPLETO, Etichetta.objects),
         (COMPLETO, Donazione.objects.filter(campagna__in=qs_campagne)),
         (COMPLETO, Donatore.objects.filter(donazioni__campagna__in=qs_campagne)),
     ]

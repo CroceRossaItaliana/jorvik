@@ -128,7 +128,7 @@ def campagna_fine(request, me, pk):
 @pagina_privata
 def campagna_responsabili(request, me, pk):
     campagna = get_object_or_404(Campagna, pk=pk)
-    if not me.permessi_almeno(campagna, COMPLETO):
+    if not me.permessi_almeno(campagna, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
     continua_url = campagna.url
