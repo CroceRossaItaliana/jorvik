@@ -46,7 +46,6 @@
             </a>
         </li>
         {% permessi_almeno campagna "modifica" as puo_modificare %}
-        {% permessi_almeno campagna "completo" as puo_aggiungere_responsabili %}
         {% if puo_modificare %}
         <li role="presentation" {% if request.path == campagna.url_modifica %}class="active"{% endif %}>
             <a href="{{ campagna.url_modifica }}" class="text-danger">
@@ -54,8 +53,6 @@
                 Gestione Campagna
             </a>
         </li>
-    {% endif %}
-    {% if puo_aggiungere_responsabili %}
         <li role="presentation" {% if request.path == campagna.url_responsabili %}class="active"{% endif %}>
             <a href="{{ campagna.url_responsabili }}" class="text-danger">
                 <i class="fa fa-fw fa-male"></i>

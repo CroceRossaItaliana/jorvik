@@ -1,72 +1,64 @@
 {% extends 'donazioni_elenchi_inc_vuoto.html' %}
-{% block base_head_extra %}
-    <style type="text/css">
-.ui-tooltip {
-    background: #eeeeee;
-    color: black;
-    border: 2px solid #454545;
-    border-radius: 5px;
-    box-shadow: 0 0
-}
-.ui-autocomplete {
-    background: #eeeeee;
-    border-radius: 3px;
-}
-.ui-autocomplete.source:hover {
-    background: blue;
-}
+{% load staticfiles %}
+{% load compress %}
 
-.ui-menu .ui-menu-item a{
-    background:lightskyblue;
-    height:10px;
-font-size:12px;}
-</style>
+{% block base_head_extra %}
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'css/tag-editor.css'%}">
+    {% endcompress %}
 {% endblock base_head_extra %}
 
 {% block pagina_javascript_extra %}
-    <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.min.js" ></script>
+    <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.min.js"></script>
+    <script src="{% static 'js/jquery.caret.min.js' %}"></script>
+    <script src="{% static 'js/tag-editor.min.js' %}"></script>
+    <script>
+    $( function() {
+        $( "#filtra" ).tagEditor(
+            {
+                autocomplete: {
+                    source: '/donazioni/campagne/autocompletamento/etichette',
+                    position: { collision: 'flip' },
+                    minLength: 2,
+                    delay: 200,
+                    autoFocus: true,
+                    messages: {
+                        noResult: '',
+                        results: function() {}
+                    }
+                },
+                placeholder: 'Filtra per etichette ...'
 
-<script>
-  $( function() {
-    $( "#filtra" ).autocomplete({
-      source: "/donazioni/campagne/autocompletamento/etichette",
-      minLength: 2,
-      delay: 250,
-      autoFocus: true,
-      messages: {
-          noResults: '',
-          results: function() {}
-      }
-    })
-  } );
-  </script>
+            })
+      });
+      </script>
 
 {% endblock %}
 {% block filtering_form %}
     <form method="POST">
     {% csrf_token %}
-    <div class="input-group">
+        <div class="input-group">
 
-    <input  type="text" class="form-control" name="filtra" id="filtra"
-            placeholder={% block placeholderfiltro %}"Filtra per etichetta..."{% endblock placeholderfiltro%} value="{{ filtra }}"
-            {% if filtra %}autofocus{% endif %}
-    >
-    <span class="input-group-btn">
+            <textarea title="Filtra campagne per una o più etichette"
+                    class="form-control"
+                    name="filtra" id="filtra">
+            {{ filtra }}</textarea>
+            <span class="input-group-addon">
 
-        <button class="btn btn-primary" type="submit"
-            title="Filtra risultati">
-            <i class="fa fa-fw fa-search"></i>
-        </button>
+                <button class="btn btn-primary" type="submit"
+                    title="Filtra risultati">
+                    <i class="fa fa-fw fa-search"></i>
+                </button>
 
-        {% if filtra %}
-            <button class="btn btn-danger" type="submit"
-                    title="Rimuovi filtro - Mostra tutti"
-                    name="filtra" value="">
-                <i class="fa fa-fw fa-times"></i>
-            </button>
-        {% endif %}
-    </span>
-</div>
+                {% if filtra %}
+                    <button class="btn btn-danger" type="submit"
+                            title="Rimuovi filtro - Mostra tutti"
+                            name="filtra" value="">
+                        <i class="fa fa-fw fa-times"></i>
+                    </button>
+                {% endif %}
+            </span>
+        </div>
     </form>
 {% endblock filtering_form %}
 {% block elenco_intestazione %}

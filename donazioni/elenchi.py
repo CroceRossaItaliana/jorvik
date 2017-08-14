@@ -20,7 +20,8 @@ class ElencoBase(Elenco):
 class ElencoCampagne(ElencoBase):
 
     def filtra(self, queryset, termine):
-        return queryset.filter(etichette__slug__in=[termine])
+        termini = termine.split(',')
+        return queryset.filter(etichette__slug__in=termini)
 
     def template(self):
         return 'donazioni_elenchi_inc_campagne.html'

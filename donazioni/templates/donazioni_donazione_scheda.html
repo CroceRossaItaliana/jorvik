@@ -31,6 +31,12 @@
                 <div class="panel-body">
                     <table class="table table-responsive table-striped">
                         <tr>
+                            <td>Campagna</td>
+                            <td class="grassetto">
+                                <a href="{{ donazione.campagna.url }}">{{ donazione.campagna }}</a>
+                            </td>
+                        </tr>
+                        <tr>
                             <td>Metodo Pagamento</td>
                             <td class="grassetto">{{ donazione.get_metodo_pagamento_display }}</td>
                         </tr>
