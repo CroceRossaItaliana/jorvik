@@ -34,7 +34,7 @@ cssselect==0.9.1
 splinter==0.7.5
 tblib==1.3.0
 selenium==2.53.6
-django-filer==1.2.5.post1
+https://github.com/nephila/django-filer/archive/296fa6170a3749532b85ceb033eeae0fb839e9a6.zip
 django-ckeditor-filebrowser-filer==0.2.0
 django-nocaptcha-recaptcha==0.0.19
 django-two-factor-auth==1.4.0

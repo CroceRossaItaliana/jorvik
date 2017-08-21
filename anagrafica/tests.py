@@ -1425,8 +1425,28 @@ class TestAnagrafica(TestCase):
         self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).count(), 1)
         self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede2).count(), 0)
 
+        self.assertEqual(Trasferimento.con_esito_ok().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_pending().count(), 1)
+        self.assertEqual(Trasferimento.con_esito_ritirata().count(), 0)
+
+        trasf.ritirata = True
+        trasf.save()
+        Autorizzazione.gestisci_automatiche()
+        self.assertEqual(Trasferimento.con_esito_ok().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_pending().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_ritirata().count(), 1)
+
+        trasf.ritirata = False
+        trasf.save()
+        self.assertEqual(Trasferimento.con_esito_ok().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_pending().count(), 1)
+        self.assertEqual(Trasferimento.con_esito_ritirata().count(), 0)
+
         Autorizzazione.gestisci_automatiche()
         autorizzazione.refresh_from_db()
+        self.assertEqual(Trasferimento.con_esito_ok().count(), 1)
+        self.assertEqual(Trasferimento.con_esito_pending().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_ritirata().count(), 0)
 
         self.assertEqual(5, len(mail.outbox))
         destinatari_verificati = 0
@@ -1742,7 +1762,7 @@ class TestAnagrafica(TestCase):
             x.refresh_from_db()
 
         self.assertTrue(
-            italia.espandi(includi_me=True, pubblici=True).count() == (italia.get_descendants().count()),
+            italia.espandi(includi_me=True, pubblici=True).count() == (italia.get_descendants(include_self=True).count()),
             msg="Espansione dal Nazionale ritorna tutti i Comitati - inclusa Italia",
         )
 
@@ -1757,7 +1777,7 @@ class TestAnagrafica(TestCase):
         )
 
         self.assertTrue(
-            _sicilia.espandi(includi_me=True, pubblici=True).count() == (_sicilia.get_descendants().count() + 1),
+            _sicilia.espandi(includi_me=True, pubblici=True).count() == (_sicilia.get_descendants(include_self=True).count()),
             msg="Espansione dal Regionale ritrna tutti i Comitati - Inclusa Regione"
         )
 
@@ -2456,6 +2476,38 @@ class TestAnagrafica(TestCase):
         self.assertNotContains(response, '{}<'.format(sede2b.nome))
         self.assertNotContains(response, '{}<'.format(sede3.nome))
         self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+    def test_autocomplete_volontari_sedi(self):
+        presidente = crea_persona()
+        persona, sede1, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        sede2 = crea_sede(genitore=sede1)
+        sede2.nome = '2sede'
+        sede2.save()
+        sede2b = crea_sede(genitore=sede2, estensione=TERRITORIALE)
+        sede2b.nome = '2bsede'
+        sede2b.save()
+
+        crea_utenza(persona, email=email_fittizzia())
+        Delega.objects.create(persona=persona, tipo=UFFICIO_SOCI, oggetto=sede2, inizio=poco_fa())
+
+        persona_sede1 = crea_persona()
+        persona_sede1.nome = 'PersonaSede 1'
+        persona_sede1.save()
+        Appartenenza.objects.create(persona=persona_sede1, sede=sede1, inizio=poco_fa())
+        persona_sede2 = crea_persona()
+        persona_sede2.nome = 'PersonaSede 2'
+        persona_sede2.save()
+        Appartenenza.objects.create(persona=persona_sede2, sede=sede2, inizio=poco_fa())
+        persona_sede2b = crea_persona()
+        persona_sede2b.nome = 'PersonaSede 2b'
+        persona_sede2b.save()
+        Appartenenza.objects.create(persona=persona_sede2b, sede=sede2b, inizio=poco_fa())
+
+        self.client.login(email=persona.utenza.email, password='prova')
+        response = self.client.get('/autocomplete/VolontarioSedeAutocompletamento/?q=PersonaSede')
+        self.assertNotContains(response, persona_sede1)
+        self.assertContains(response, persona_sede2)
+        self.assertContains(response, persona_sede2b)
 
 
 class TestFunzionaliAnagrafica(TestFunzionale):
