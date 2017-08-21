@@ -1425,8 +1425,28 @@ class TestAnagrafica(TestCase):
         self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).count(), 1)
         self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede2).count(), 0)
 
+        self.assertEqual(Trasferimento.con_esito_ok().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_pending().count(), 1)
+        self.assertEqual(Trasferimento.con_esito_ritirata().count(), 0)
+
+        trasf.ritirata = True
+        trasf.save()
+        Autorizzazione.gestisci_automatiche()
+        self.assertEqual(Trasferimento.con_esito_ok().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_pending().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_ritirata().count(), 1)
+
+        trasf.ritirata = False
+        trasf.save()
+        self.assertEqual(Trasferimento.con_esito_ok().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_pending().count(), 1)
+        self.assertEqual(Trasferimento.con_esito_ritirata().count(), 0)
+
         Autorizzazione.gestisci_automatiche()
         autorizzazione.refresh_from_db()
+        self.assertEqual(Trasferimento.con_esito_ok().count(), 1)
+        self.assertEqual(Trasferimento.con_esito_pending().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_ritirata().count(), 0)
 
         self.assertEqual(5, len(mail.outbox))
         destinatari_verificati = 0
