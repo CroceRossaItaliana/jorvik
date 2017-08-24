@@ -225,7 +225,7 @@ def etichette_elenco(request, me):
     return 'donazioni_etichette_elenco.html', contesto
 
 
-# ############# DONAZIONI e DONATORI ###################
+# ######## DONAZIONI #########
 
 
 @pagina_privata
@@ -316,6 +316,9 @@ def donazioni_elenco(request, me, campagna_id):
         'puo_modificare': True,
     }
     return 'donazioni_campagna_elenco_donazioni.html', contesto
+
+
+# ######## DONATORI #########
 
 
 @pagina_privata
@@ -410,6 +413,9 @@ def iframe_donatori_elenco(request, me, elenco_id=None, pagina=1):
 
 @pagina_privata
 def donatori_campagna_elenco(request, me, campagna_id):
+    """
+    Elenco Donatori per la Campagna specificata da campagna_id
+    """
     campagna = get_object_or_404(Campagna, pk=campagna_id)
     if not me.permessi_almeno(campagna, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -426,6 +432,9 @@ def donatori_campagna_elenco(request, me, campagna_id):
 
 @pagina_privata
 def donatore_donazioni_elenco(request, me, pk):
+    """
+        Elenco Donazioni del Donatore specificato da pk
+    """
     donatore = get_object_or_404(Donatore.objects.prefetch_related('donazioni', 'donazioni__campagna'), pk=pk)
     if not me.permessi_almeno(donatore, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -439,6 +448,9 @@ def donatore_donazioni_elenco(request, me, pk):
 
 @pagina_privata
 def donatori_elenco(request, me):
+    """
+    Elenco di tutti i Donatori associati alle campagne in delega
+    """
     campagne = me.oggetti_permesso(GESTIONE_CAMPAGNA)
     donatori_ids = Donazione.objects.filter(campagna__in=campagne).distinct('donatore__id').values_list('donatore__id')
     donatori = Donatore.objects.filter(id__in=donatori_ids).prefetch_related('donazioni').distinct('id')
@@ -497,9 +509,11 @@ def donazioni_import_step_2(request, me, campagna_id):
     campagna = get_object_or_404(Campagna, pk=campagna_id)
     if not me.permessi_almeno(campagna, MODIFICA):
         return redirect(ERRORE_PERMESSI)
+
     colonne_preview, contenuto_file, intestazione, sorgente = request.session.get('contenuto_file')
     if not contenuto_file:
         return redirect(reverse('donazioni_campagna_importa', args=(campagna_id,)))
+
     modulo = ModuloImportDonazioniMapping(data=request.POST or None,
                                           colonne=colonne_preview,
                                           intestazione=intestazione,
@@ -514,25 +528,34 @@ def donazioni_import_step_2(request, me, campagna_id):
         test_importazione = 'test_import' in request.POST
         riepilogo = modulo.processa(campagna, contenuto_file, test_import=test_importazione)
         contesto['riepilogo_errori'] = riepilogo['errori']
+
         riepilogo_messaggio = '{}<br />' \
                               '<br /><strong>Donazioni Inserite: {} ' \
+                              '<br /><strong>Donatori Inseriti: {} ' \
                               '<br />Righe con errori: {}</strong>'\
             .format('<span class="badge">TEST di Importazione</span>' if test_importazione else '',
-                    len(riepilogo['inserite']),
+                    len(riepilogo['donazioni_inserite']),
+                    len(riepilogo['donatori_inseriti']),
                     len(riepilogo['non_inserite']))
+
         if riepilogo['inserite_incomplete']:
             riepilogo_messaggio += '<br/ >Donazioni inserite ma con valori non conformi: {}'.format(len(riepilogo['inserite_incomplete']))
-        contesto['riepilogo_messaggio'] = riepilogo_messaggio
-        messages.add_message(request, messages.WARNING, mark_safe(riepilogo_messaggio), extra_tags='email')
+
         if not test_importazione:
             del request.session['contenuto_file']
+            messages.add_message(request, messages.WARNING, mark_safe(riepilogo_messaggio), extra_tags='email')
             return redirect(reverse('donazioni_campagne_donazioni', args=(campagna_id,)))
+
+        contesto['riepilogo_messaggio'] = riepilogo_messaggio
 
     return 'donazioni_import.html', contesto
 
 
 @pagina_privata
 def autocompletamento_etichette(request, me):
+    """
+    Vista AJAX per autocompletamento etichette nel filtro di Elenco Campagne
+    """
     term = request.GET.get('term')
     comitati = me.sedi_attuali().values_list('id', flat=True)
     sedi_deleghe_campagne = me.oggetti_permesso(GESTIONE_CAMPAGNE).values_list('id', flat=True)
