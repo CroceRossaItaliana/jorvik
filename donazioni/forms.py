@@ -104,7 +104,7 @@ class ModuloDonazione(forms.ModelForm):
 class ModuloDonatore(forms.ModelForm):
     class Meta:
         model = Donatore
-        exclude = ()
+        exclude = ('periodico',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -136,7 +136,7 @@ class ModuloImportDonazioni(forms.Form):
         ('', '-----'),
         (PAYPAL, 'PayPal'),
         (AMMADO, 'Ammado'),
-        # (AMAZON, 'Amazon'),
+        (AMAZON, 'Amazon'),
         (CRI, 'CRI.it'),
         # (POSTE, 'Poste'),
     )
@@ -202,7 +202,9 @@ class ModuloImportDonazioniMapping(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         associazioni_definite = {campo: valore for campo, valore in cleaned_data.items() if valore}
-        if not associazioni_definite or 'importo' not in associazioni_definite.values():
+        if not associazioni_definite:
+            raise ValidationError('Non hai associato nessuna colonna ad un campo Donazione/Donatore')
+        if self.sorgente not in (ModuloImportDonazioni.AMAZON,) and 'importo' not in associazioni_definite.values():
             raise ValidationError('Devi associare almeno il campo "Importo in EUR" ad una colonna')
 
         if len(set(associazioni_definite.values())) != len(associazioni_definite):
@@ -316,6 +318,7 @@ class ModuloImportDonazioniMapping(forms.Form):
         mapping_colonne_campi = {f.split()[0].split('_')[1]: v for f, v in self.cleaned_data.items()}
 
         oggetti_donazioni = []
+        oggetti_donatori = []
         righe_con_campi_errati = set()
         righe_non_inserite = []
         riepilogo = {}
@@ -338,6 +341,8 @@ class ModuloImportDonazioniMapping(forms.Form):
                             righe_con_campi_errati.add(str(riga))
 
                     try:
+                        donazione = None
+                        donatore = None
                         if argomenti[Donazione]:
                             if self.sorgente and not self.metodo_pagamento_da_colonna:
                                 # sorgente predefinita che non contiene una colonna Metodo Pagamento
@@ -351,6 +356,7 @@ class ModuloImportDonazioniMapping(forms.Form):
                         if argomenti[Donatore]:
                             donatore = Donatore(**argomenti[Donatore])
                             donatore = Donatore.nuovo_o_esistente(donatore)
+                            oggetti_donatori.append(donatore)
 
                         if donazione:
                             oggetti_donazioni.append(donazione)
@@ -365,7 +371,8 @@ class ModuloImportDonazioniMapping(forms.Form):
                             righe_con_campi_errati.remove(riga)
                         riepilogo_errori.write('<li><b>Riga {}</b> {}: {}</li>'.format(numero_riga, riga, exc))
 
-                riepilogo = {'inserite': oggetti_donazioni,
+                riepilogo = {'donazioni_inserite': oggetti_donazioni,
+                             'donatori_inseriti': oggetti_donatori,
                              'non_inserite': righe_non_inserite,
                              'inserite_incomplete': righe_con_campi_errati,
                              'errori': riepilogo_errori.getvalue()}

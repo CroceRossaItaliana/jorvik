@@ -17,7 +17,7 @@ def importo(value=None):
 def elenco_donatori(context, oggetto_elenco=None,):
 
     if not isinstance(oggetto_elenco, ElencoDonatori):
-        raise ValueError("Il tag elenco_donatori puo' solo essere usato con un oggetto Elenco, ma e' stato usato con un oggetto %s." % (oggetto_elenco.__class__.__name__,))
+        raise ValueError("Il tag elenco_donatori puo' solo essere usato con un oggetto ElencoDonatori, ma e' stato usato con un oggetto %s." % (oggetto_elenco.__class__.__name__,))
 
     elenco_id = genera_uuid_casuale()
     context.request.session["donatori_elenco_%s" % (elenco_id,)] = oggetto_elenco  # Passa elenco in sessione.
