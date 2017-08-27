@@ -11,6 +11,11 @@ debug_log = log/debug.log
 # Host permesso (quando debug spento)
 host = localhost
 
+# Opzionalmente, aggiungi l'IP del gateway/load balancer.
+# Questo e' necessario se il load balancer fa richieste dirette
+# per controllare la salute del server applicativo.
+#gateway = 127.0.0.1
+
 # Chiave segreta (qui di esempio)
 secret_key = nxtg7fptenicbiqqwaqtnxtg7fptenicbiqqwaqt
 
