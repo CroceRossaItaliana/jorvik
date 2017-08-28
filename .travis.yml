@@ -1,10 +1,12 @@
 language: python
 sudo: false
 dist: trusty
+
 python:
 - '3.4'
 - '3.5'
 - '3.6'
+
 addons:
   postgresql: "9.6"
 
@@ -24,8 +26,10 @@ before_script:
 - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d test_jorvik
 - pg_restore -O -d test_jorvik ./base/test_jorvik.pgsql
 - mkdir -p ../log
+
 install:
 - pip install -U pip wheel
 - pip install -r requirements.txt
+
 script:
-- travis_retry python ./manage.py test -k -v 3 --parallel 4
+- python ./manage.py test -k -v 3 --parallel 4
