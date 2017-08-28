@@ -2,11 +2,13 @@ language: python
 python:
 - '3.4'
 - '3.5'
+- '3.6'
 addons:
   postgresql: "9.4"
 
 env:
   global:
+    - PYTHONWARNINGS=ignore
     - ENABLE_TEST_APPS=1
 
 cache: pip
@@ -24,4 +26,4 @@ install:
 - pip install -U pip wheel
 - pip install -r requirements.txt
 script:
-- travis_retry python ./manage.py test -k -v 3 --parallel 2
+- travis_retry python ./manage.py test -k -v 3 --parallel 4

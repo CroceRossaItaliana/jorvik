@@ -20,4 +20,4 @@ host = localhost
 secret_key = nxtg7fptenicbiqqwaqtnxtg7fptenicbiqqwaqt
 
 [test]
-driver = firefox
+driver = phantomjs

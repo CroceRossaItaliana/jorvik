@@ -197,7 +197,7 @@ GENERAL_CONF = configparser.ConfigParser()
 GENERAL_CONF.read(GENERAL_CONF_FILE)
 
 # Driver per i test funzionali
-DRIVER_WEB = 'firefox'
+DRIVER_WEB = 'phantomjs'
 
 # Configurazione E-mail
 EMAIL_CONF = configparser.ConfigParser()
@@ -227,7 +227,7 @@ STATIC_ROOT = MEDIA_CONF.get('static', 'static_root', fallback='assets/')
 STATIC_URL = MEDIA_CONF.get('static', 'static_url', fallback='/assets/')
 
 # Driver per i test funzionali
-DRIVER_WEB = DEBUG_CONF.get('test', 'driver', fallback='firefox')
+DRIVER_WEB = DEBUG_CONF.get('test', 'driver', fallback=DRIVER_WEB)
 
 host = "%s" % (DEBUG_CONF.get('production', 'host'),)
 if host == 'localhost':
