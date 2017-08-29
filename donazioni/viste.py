@@ -173,13 +173,15 @@ def etichetta(request, me, pk):
     return 'donazioni_etichetta_scheda.html', contesto
 
 
-@pagina_privata(permessi=(GESTIONE_CAMPAGNE,))
+@pagina_privata
 def etichetta_nuova(request, me):
+    if not me.ha_permesso(GESTIONE_CAMPAGNA):
+        return redirect(ERRORE_PERMESSI)
     modulo = ModuloEtichetta(request.POST or None)
 
     if modulo.is_valid():
         etichetta = modulo.save()
-        return redirect('donazioni_etichette')
+        return redirect(reverse('donazioni_etichetta', args=(etichetta.pk,)))
 
     contesto = {
         'modulo': modulo
@@ -187,15 +189,15 @@ def etichetta_nuova(request, me):
     return 'donazioni_etichetta_nuova.html', contesto
 
 
-@pagina_privata(permessi=(GESTIONE_CAMPAGNE,))
+@pagina_privata
 def etichetta_modifica(request, me, pk):
     etichetta = get_object_or_404(Etichetta, pk=pk)
-    if not me.permessi_almeno(etichetta, MODIFICA):
+    if not me.permessi_almeno(etichetta, MODIFICA) or etichetta.default:
         return redirect(ERRORE_PERMESSI)
     modulo = ModuloEtichetta(request.POST or None, instance=etichetta)
     if modulo.is_valid():
         etichetta = modulo.save()
-        return redirect('donazioni_etichette')
+        return redirect(reverse('donazioni_etichetta', args=(etichetta.pk,)))
     contesto = {
         'modulo': modulo
     }
@@ -205,7 +207,7 @@ def etichetta_modifica(request, me, pk):
 @pagina_privata
 def etichetta_elimina(request, me, pk):
     etichetta = get_object_or_404(Etichetta, pk=pk)
-    if not me.permessi_almeno(etichetta, COMPLETO):
+    if not me.permessi_almeno(etichetta, COMPLETO) or etichetta.default:
         return redirect(ERRORE_PERMESSI)
     etichetta.delete()
     return redirect(reverse('donazioni_etichette'))
@@ -219,7 +221,7 @@ def etichette_elenco(request, me):
     filtro_etichette = Q(comitato__in=chain(comitati, sedi_deleghe_campagne)) | Q(campagne__in=campagne_qs)
     elenco = ElencoEtichette(Etichetta.objects.filter(filtro_etichette).distinct())
     contesto = {
-        'puo_creare': me.ha_permessi(GESTIONE_CAMPAGNE),
+        'puo_creare': me.ha_permesso(GESTIONE_CAMPAGNA),
         'elenco': elenco,
     }
     return 'donazioni_etichette_elenco.html', contesto
