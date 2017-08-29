@@ -53,8 +53,10 @@ class ModuloCampagna(forms.ModelForm):
         return campagna
 
     def clean(self):
-        inizio = self.cleaned_data['inizio']
-        fine = self.cleaned_data['fine']
+        inizio = self.cleaned_data.get('inizio')
+        fine = self.cleaned_data.get('fine')
+        if not inizio or not fine:
+            raise ValidationError('Le date di inizio e fine campagna sono dati obbligatori')
         if inizio >= fine:
             raise ValidationError('La data di fine campagna deve essere posteriore a quella di inizio')
 

@@ -1,3 +1,5 @@
+from itertools import chain
+
 from autocomplete_light import shortcuts as autocomplete_light
 from django.db.models import Q
 
@@ -36,11 +38,12 @@ class EtichettaAutocompletamento(AutocompletamentoBase):
 class SedeDonazioniAutocompletamento(SedeAutocompletamento):
     def choices_for_request(self):
         q = self.request.GET.get('q', '')
-        self.choices = self.persona.oggetti_permesso(GESTIONE_CAMPAGNE)
+        self.choices = self.persona.oggetti_permesso(GESTIONE_CAMPAGNE).distinct()
         campagne_responsabile = self.persona.oggetti_permesso(GESTIONE_CAMPAGNA).select_related('organizzatore')
-        sedi_responsabile = campagne_responsabile.order_by('organizzatore').distinct('organizzatore')
-        sedi_responsabile = Sede.objects.filter(pk__in=sedi_responsabile.values_list('organizzatore', flat=True))
-        self.choices |= sedi_responsabile
+        sedi_responsabile_qs = campagne_responsabile.order_by('organizzatore').distinct('organizzatore')
+        sedi_responsabile_ids = sedi_responsabile_qs.values_list('organizzatore', flat=True)
+        sedi_responsabile_qs = Sede.objects.filter(pk__in=sedi_responsabile_ids)
+        self.choices = sedi_responsabile_qs | Sede.objects.filter(pk__in=self.choices)
         if q:
             self.choices = self.choices.filter(nome__icontains=q)
         return super().choices_for_request()
