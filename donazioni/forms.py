@@ -320,7 +320,7 @@ class ModuloImportDonazioniMapping(forms.Form):
         mapping_colonne_campi = {f.split()[0].split('_')[1]: v for f, v in self.cleaned_data.items()}
 
         oggetti_donazioni = []
-        oggetti_donatori = []
+        oggetti_donatori = set()
         righe_con_campi_errati = set()
         righe_non_inserite = []
         riepilogo = {}
@@ -345,7 +345,7 @@ class ModuloImportDonazioniMapping(forms.Form):
                     try:
                         donazione = None
                         donatore = None
-                        if argomenti[Donazione]:
+                        if argomenti[Donazione] and argomenti[Donazione].get('importo', 0) >= 0:
                             if self.sorgente and not self.metodo_pagamento_da_colonna:
                                 # sorgente predefinita che non contiene una colonna Metodo Pagamento
                                 # in tal caso, il metodo pagamento viene sovrascritto con la sorgente
@@ -358,13 +358,13 @@ class ModuloImportDonazioniMapping(forms.Form):
                         if argomenti[Donatore]:
                             donatore = Donatore(**argomenti[Donatore])
                             donatore = Donatore.nuovo_o_esistente(donatore)
-                            oggetti_donatori.append(donatore)
+                            oggetti_donatori.add(donatore)
 
                         if donazione:
                             oggetti_donazioni.append(donazione)
-                            donazione.save()
                             if donatore:
                                 donazione.donatore = donatore
+                            donazione.save()
 
                     except (ValueError, TypeError, ValidationError, DataError) as exc:
                         riga = str(riga)
