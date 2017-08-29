@@ -116,7 +116,7 @@ class TestModelliCampagne(TestCase):
         # check permessi etichette
         etichetta_sicilia = Etichetta.objects.create(slug='test', comitato=sicilia)
         self.assertTrue(delegato_campagne_sicilia.permessi_almeno(etichetta_sicilia, COMPLETO))
-        self.assertFalse(responsabile_campagna_terremoto_catania.permessi_almeno(etichetta_sicilia, COMPLETO))
+        self.assertTrue(responsabile_campagna_terremoto_catania.permessi_almeno(etichetta_sicilia, COMPLETO))
 
 
 class TestEtichette(TestCase):
