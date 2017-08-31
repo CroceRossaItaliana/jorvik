@@ -74,28 +74,30 @@ class ModelloAlbero(MPTTModel, ModelloSemplice):
     nome = models.CharField(max_length=64, unique=False, db_index=True)
     genitore = TreeForeignKey('self', null=True, blank=True, related_name='figli')
 
+    filtro_attivi = Q(attiva=True) & (Q(genitore__isnull=True) | Q(genitore__attiva=True))
+
     def ottieni_superiori(self, includimi=False, solo_attivi=True):
         sedi = self.get_ancestors(include_self=includimi)
         if solo_attivi:
-            sedi = sedi.filter(attiva=True, genitore__attiva=True)
+            sedi = sedi.filter(self.filtro_attivi)
         return sedi
 
     def ottieni_figli(self, solo_attivi=True):
         sedi = self.get_children()
         if solo_attivi:
-            sedi = sedi.filter(attiva=True, genitore__attiva=True)
+            sedi = sedi.filter(self.filtro_attivi)
         return sedi
 
     def ottieni_discendenti(self, includimi=False, solo_attivi=True):
         sedi = self.get_descendants(include_self=includimi)
         if solo_attivi:
-            sedi = sedi.filter(attiva=True, genitore__attiva=True)
+            sedi = sedi.filter(self.filtro_attivi)
         return sedi
 
     def ottieni_fratelli(self, includimi=False, solo_attivi=True):
         sedi = self.get_siblings(include_self=includimi)
         if solo_attivi:
-            sedi = sedi.filter(attiva=True, genitore__attiva=True)
+            sedi = sedi.filter(self.filtro_attivi)
         return sedi
 
     def ottieni_numero_figli(self, includimi=False, solo_attivi=True):
@@ -331,15 +333,15 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         self._invia_notifica(modello, oggetto, auto)
 
     def controlla_concedi_automatico(self):
-        if self.scadenza and self.concessa is None and self.scadenza < now():
+        if self.scadenza and self.concessa is None and self.scadenza < now() and not self.oggetto.ritirata:
             self.concedi(auto=True)
 
     def controlla_nega_automatico(self):
-        if self.scadenza and self.concessa is None and self.scadenza < now():
+        if self.scadenza and self.concessa is None and self.scadenza < now() and not self.oggetto.ritirata:
             self.nega(auto=True)
 
     def automatizza(self, concedi=None, scadenza=None):
-        if concedi:
+        if concedi and not self.oggetto.ritirata:
             self.tipo_gestione = concedi
             self.scadenza = calcola_scadenza(scadenza)
             self.save()
@@ -889,7 +891,7 @@ class Token(ModelloSemplice, ConMarcaTemporale):
                 return False
         except cls.DoesNotExist:
             return False
-    
+
     class Meta:
         permissions = (
             ("view_token", "Can view token"),
