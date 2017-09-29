@@ -8,7 +8,10 @@ python:
 - '3.6'
 
 addons:
-  postgresql: "9.4"
+  postgresql: "9.5"
+  apt:
+    packages:
+      - postgresql-9.5-postgis-2.3
 
 env:
   global:
@@ -18,9 +21,6 @@ env:
 cache: pip
 
 before_script:
-- export DISPLAY=:99.0
-- sh -e /etc/init.d/xvfb start
-- sleep 3
 - psql -U postgres -c 'CREATE DATABASE test_jorvik;'
 - psql -U postgres -c "CREATE EXTENSION postgis" -d test_jorvik
 - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d test_jorvik
