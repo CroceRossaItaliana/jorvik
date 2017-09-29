@@ -284,56 +284,6 @@ class TestGeo(TestCase):
         self.assertEqual(indirizzo[0][1], '0')
         self.assertEqual(indirizzo[0][2]['provincia_breve'], 'RM')
 
-    @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
-    def test_ricerca_indirizzi_africa(self):
-        """
-        Test che verifica la disponibilità di sedi in africa
-        """
-        # Est di Greenwitch, Nord dell'equatore
-        indirizzo_base = 'Harper Road 40, Kumasi, Ghana'
-        indirizzo = Locazione.cerca(indirizzo_base)
-        self.assertEqual(len(indirizzo[0]), 3)
-        self.assertEqual(indirizzo[0][0], self.posti_africa[0][0][0]['formatted_address'])
-        self.assertEqual(
-            str(indirizzo[0][1]['lat'])[:4],
-            str(self.posti_africa[0][0][0]['geometry']['location']['lat'])[:4]
-        )
-        self.assertEqual(
-            str(indirizzo[0][1]['lng'])[:4],
-            str(self.posti_africa[0][0][0]['geometry']['location']['lng'])[:4]
-        )
-
-        # Ovest di Greenwitch, Nord dell'equatore
-        indirizzo_base = 'Carrettera del Aeropuerto, Malabo, Guinea Equatoriale'
-        indirizzo = Locazione.cerca(indirizzo_base)
-        self.assertEqual(len(indirizzo[0]), 3)
-        self.assertEqual(indirizzo[0][0], self.posti_africa[1][0][0]['formatted_address'])
-        self.assertEqual(
-            str(indirizzo[0][1]['lat'])[:4],
-            str(self.posti_africa[1][0][0]['geometry']['location']['lat'])[:4]
-        )
-        self.assertEqual(
-            str(indirizzo[0][1]['lng'])[:4],
-            str(self.posti_africa[1][0][0]['geometry']['location']['lng'])[:4]
-        )
-
-        # Ovest di Greenwitch, Sud dell'equatore
-        indirizzo_base = 'Route des Hydrocarbures, Port Gentil, Gabon'
-        indirizzo = Locazione.cerca(indirizzo_base)
-        self.assertEqual(len(indirizzo[0]), 3)
-        self.assertEqual(indirizzo[0][0], self.posti_africa[2][0][0]['formatted_address'])
-        self.assertEqual(
-            str(indirizzo[0][1]['lat'])[:4],
-            str(self.posti_africa[2][0][0]['geometry']['location']['lat'])[:4]
-        )
-        self.assertEqual(
-            str(indirizzo[0][1]['lng'])[:4],
-            str(self.posti_africa[2][0][0]['geometry']['location']['lng'])[:4]
-        )
-
-        # Est di Greenwitch, Sud dell'equatore
-        # Non c'è nulla :D
-
 
 class TestUtils(TestBase):
 
