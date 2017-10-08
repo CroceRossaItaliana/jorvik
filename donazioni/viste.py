@@ -421,6 +421,7 @@ def donatori_campagna_elenco(request, me, campagna_id):
     campagna = get_object_or_404(Campagna, pk=campagna_id)
     if not me.permessi_almeno(campagna, MODIFICA):
         return redirect(ERRORE_PERMESSI)
+
     donatori_ids = Donazione.objects.filter(campagna=campagna).distinct('donatore__id').values_list('donatore__id')
     donatori = Donatore.objects.filter(id__in=donatori_ids).prefetch_related('donazioni')
     elenco = ElencoDonatori(donatori)
@@ -454,8 +455,7 @@ def donatori_elenco(request, me):
     Elenco di tutti i Donatori associati alle campagne in delega
     """
     campagne = me.oggetti_permesso(GESTIONE_CAMPAGNA)
-    donatori_ids = Donazione.objects.filter(campagna__in=campagne).distinct('donatore__id').values_list('donatore__id')
-    donatori = Donatore.objects.filter(id__in=donatori_ids).prefetch_related('donazioni').distinct('id')
+    donatori = Donatore.objects.filter(donazioni__campagna__in=campagne)
     elenco = ElencoDonatori(donatori)
     contesto = {
         'elenco_donatori': True,
