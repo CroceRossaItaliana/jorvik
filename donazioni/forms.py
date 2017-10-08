@@ -34,11 +34,16 @@ class ModuloCampagna(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         # instance: Campagna
-        if kwargs.get('instance'):
+        campagna = kwargs.get('instance')
+        if campagna:
             # aggiunge kwargs['initial'] per inizializzare le etichette in modifica
             initial = kwargs.setdefault('initial', {})
             initial['etichette'] = kwargs['instance'].etichette.all()
+
         super().__init__(*args, **kwargs)
+        if campagna and not campagna.date_modificabili:
+            self.fields['inizio'].widget.attrs['readonly'] = True
+            self.fields['fine'].widget.attrs['readonly'] = True
         self.fields['inizio'].required = True
         self.fields['fine'].required = True
 
@@ -53,12 +58,19 @@ class ModuloCampagna(forms.ModelForm):
         return campagna
 
     def clean(self):
+        if self.instane and not self.instance.date_modificabili and any(('inizio', 'fine') in self.changed_data):
+            raise ValidationError('Le date di inizio e fine campagna non sono più modificabili')
         inizio = self.cleaned_data.get('inizio')
         fine = self.cleaned_data.get('fine')
         if not inizio or not fine:
+            self._errors['inizio'] = self.error_class(['Le date di inizio e fine campagna sono dati obbligatori'])
+            self._errors['fine'] = self.error_class(['Le date di inizio e fine campagna sono dati obbligatori'])
             raise ValidationError('Le date di inizio e fine campagna sono dati obbligatori')
         if inizio >= fine:
+            self._errors['inizio'] = self.error_class(['La data di fine campagna deve essere posteriore a quella di inizio'])
+            self._errors['fine'] = self.error_class(['La data di fine campagna deve essere posteriore a quella di inizio'])
             raise ValidationError('La data di fine campagna deve essere posteriore a quella di inizio')
+        return self.cleaned_data
 
 
 class ModuloEtichetta(forms.ModelForm):
@@ -85,7 +97,7 @@ class ModuloDonazione(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         campagna_id = kwargs.pop('campagna')
         super().__init__(*args, **kwargs)
-        self.fields['importo'].min_value = 0.0
+        self.fields['importo'].min_value = 0.1
         if campagna_id:
             self.fields['campagna'].widget = forms.HiddenInput()
             self.fields['campagna'].widget.attrs['readonly'] = True
@@ -98,9 +110,12 @@ class ModuloDonazione(forms.ModelForm):
             return
         campagna = self.cleaned_data['campagna']
         if not campagna.inizio <= data_donazione <= campagna.fine:
+            self._errors['data'] = self.error_class(["La data della donazione deve essere compresa fra l'inizio e la fine della campagna"])
             raise ValidationError("La data della donazione deve essere compresa fra l'inizio e la fine della campagna")
         if data_donazione > poco_fa():
+            self._errors['data'] = self.error_class(["La data della donazione non può essere una data nel futuro"])
             raise ValidationError("La data della donazione non può essere una data nel futuro")
+        return self.cleaned_data
 
 
 class ModuloDonatore(forms.ModelForm):
@@ -111,6 +126,14 @@ class ModuloDonatore(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['stato_nascita'].empty_label = None
+
+    def clean(self):
+        super().clean()
+        data_nascita = self.cleaned_data.get('data_nascita')
+        if data_nascita and data_nascita > poco_fa().date():
+            self._errors['data_nascita'] = self.error_class(["Data di nascita del donatore non valida"])
+            raise ValidationError("Data di nascita del donatore non valida")
+        return self.cleaned_data
 
 
 class ModuloImportDonazioni(forms.Form):
@@ -211,6 +234,7 @@ class ModuloImportDonazioniMapping(forms.Form):
 
         if len(set(associazioni_definite.values())) != len(associazioni_definite):
             raise ValidationError('Hai associato uno stesso campo a più di una colonna')
+        return self.cleaned_data
 
     @staticmethod
     def _converti(nome_campo, valore):
@@ -379,10 +403,10 @@ class ModuloImportDonazioniMapping(forms.Form):
                              'inserite_incomplete': righe_con_campi_errati,
                              'errori': riepilogo_errori.getvalue()}
                 if test_import:
-                    # esce dal context con un'eccezione quindi non fa il commit dei dati sul DB
+                    # In caso di Test Importazione esce dal context con un'eccezione quindi non fa il commit dei dati sul DB
                     # equivale ad un rollback
                     raise ValueError()
         except ValueError:
-            # rollback
+            # Rollback in caso di errori
             pass
         return riepilogo

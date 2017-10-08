@@ -42,7 +42,15 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
         return self.delegati_attuali(tipo=RESPONSABILE_CAMPAGNA)
 
     @cached_property
+    def iniziata(self):
+        return self.inizio <= poco_fa()
+
+    @cached_property
     def cancellabile(self):
+        return not self.donazioni.all().exists()
+
+    @cached_property
+    def date_modificabili(self):
         return not self.donazioni.all().exists()
 
     @property
@@ -420,7 +428,7 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
     donatore = models.ForeignKey(Donatore, related_name='donazioni', on_delete=models.CASCADE, null=True)
     importo = models.FloatField('Importo in EUR', default=0.00,
                                 help_text='Importo in EUR della donazione',
-                                validators=[MinValueValidator(0.00,
+                                validators=[MinValueValidator(0.01,
                                             "L'importo della donazione è al di sotto del minimo consentito")])
     metodo_pagamento = models.CharField('Metodo Pagamento', blank=True, choices=METODO_PAGAMENTO,
                                         max_length=1, db_index=True)

@@ -11,7 +11,7 @@
     <h4 class="allinea-centro">
         Elenco donazioni per la campagna raccolta fondi {{ campagna.nome }}
     </h4>
-    {% if puo_modificare %}
+    {% if puo_modificare and campagna.iniziata %}
     <div class="alert alert-info">
          <a href="{{ campagna.url_aggiungi_donazione }}" role="button" class="btn btn-large btn-primary">
             <i class="fa fa-fw fa-plus-circle"></i>

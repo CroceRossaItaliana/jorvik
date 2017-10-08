@@ -271,17 +271,28 @@ def donazione_elimina(request, me, pk):
     if not me.permessi_almeno(donazione, COMPLETO):
         return redirect(ERRORE_PERMESSI)
     donazione.delete()
-    return redirect(reverse('donazioni_campagne_donazioni', args=campagna.id))
+    return redirect(reverse('donazioni_campagne_donazioni', args=(campagna.id,)))
 
 
 @pagina_privata
 def donazione_nuova(request, me, campagna_id):
     campagna = get_object_or_404(Campagna, pk=campagna_id)
+    if not campagna.iniziata:
+        messages.add_message(request, messages.WARNING, 'Non è possibile aggiungere donazioni prima della data di inizio della campagna.')
+        return redirect(campagna.url)
     if not me.permessi_almeno(campagna, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
     modulo_donazione = ModuloDonazione(request.POST or None, campagna=campagna_id)
     modulo_donatore = ModuloDonatore(request.POST or None)
+    if not modulo_donazione.is_valid() or (modulo_donatore.has_changed() and not modulo_donatore.is_valid()):
+        contesto = {
+            'modulo_donazione': modulo_donazione,
+            'modulo_donatore': modulo_donatore,
+            'puo_modificare': True,
+            'campagna': campagna,
+        }
+        return 'donazioni_donazione_nuova.html', contesto
 
     if modulo_donazione.is_valid():
         donazione = modulo_donazione.save(commit=False)
@@ -296,14 +307,6 @@ def donazione_nuova(request, me, campagna_id):
         messaggio = 'Donazione aggiunta con successo: {:.2f} € donati da {}'.format(donazione.importo, donazione.donatore or 'Anonimo')
         messages.add_message(request, messages.SUCCESS, messaggio)
         return redirect(reverse('donazioni_campagne_donazioni', args=(campagna_id,)))
-
-    contesto = {
-        'modulo_donazione': modulo_donazione,
-        'modulo_donatore': modulo_donatore,
-        'puo_modificare': True,
-        'campagna': campagna,
-    }
-    return 'donazioni_donazione_nuova.html', contesto
 
 
 @pagina_privata
