@@ -85,18 +85,22 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-6">
-            <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
+        <div class="col-md-4">
+            <h4><i class="fa fa-fw fa-info-circle"></i> Informazioni</h4>
             {{ campagna.descrizione|safe }}
         </div>
-        <div class="col-md-6">
-            <h3>
+        <div class="col-md-4">
+            <h4><i class="fa fa-fw fa-file-text"></i> Testo Email di ringraziamento</h4>
+            {{ campagna.testo_email_ringraziamento|safe }}
+        </div>
+        <div class="col-md-4">
+            <h4>
             <i class="fa fa-fw fa-tags"></i> Etichette associate
             <span class="badge">
                 {{ campagna.etichette.count }}
             </span>
 
-        </h3>
+        </h4>
 
         <table class="table table-striped">
             <thead>

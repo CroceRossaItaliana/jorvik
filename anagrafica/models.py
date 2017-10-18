@@ -460,6 +460,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.membro(Appartenenza.VOLONTARIO, **kwargs)
 
     @property
+    def soggetto_donatore(self):
+        """
+        Controlla se membro volontario
+        """
+        return self.membro(Appartenenza.SOGGETTO_DONATORE)
+
+    @property
     def ordinario(self, **kwargs):
         """
         Controlla se membro ordinario
@@ -507,6 +514,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         if self.volontario:
             lista += [('/utente/', 'Volontario', 'fa-user')]
+
         elif not hasattr(self, 'aspirante'):
             lista += [('/utente/', 'Utente', 'fa-user')]
 
@@ -1335,6 +1343,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     MILITARE = 'MI'
     DONATORE = 'DO'
     SOSTENITORE = 'SO'
+    SOGGETTO_DONATORE = 'SD'  # Donatore economico (vedi modulo 'donazioni')
 
     # Quale tipo di membro puo' partecipare alle attivita'?
     MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO,)
@@ -1366,9 +1375,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         (ORDINARIO, 'Socio Ordinario'),
         (SOSTENITORE, 'Sostenitore'),
         (DIPENDENTE, 'Dipendente'),
-        #(INFERMIERA, 'Infermiera Volontaria'),
-        #(MILITARE, 'Membro Militare'),
-        #(DONATORE, 'Donatore Finanziario'),
+        (SOGGETTO_DONATORE, 'Soggetto Donatore'),
     )
     PRECEDENZE_MODIFICABILI = (ESTESO,)
     NON_MODIFICABILE = (ESTESO,)

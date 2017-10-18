@@ -20,7 +20,7 @@ from donazioni.utils import colnum_string, FormatoImportPredefinito, FormatoImpo
 class ModuloCampagna(forms.ModelForm):
     class Meta:
         model = Campagna
-        fields = ('inizio', 'fine', 'nome', 'descrizione', 'organizzatore')
+        fields = ('inizio', 'fine', 'nome', 'descrizione', 'organizzatore', 'testo_email_ringraziamento')
         widgets = {
             "descrizione": WYSIWYGSemplice(),
         }
@@ -58,7 +58,7 @@ class ModuloCampagna(forms.ModelForm):
         return campagna
 
     def clean(self):
-        if self.instane and not self.instance.date_modificabili and any(('inizio', 'fine') in self.changed_data):
+        if self.instance and not self.instance.date_modificabili and any(x in self.changed_data for x in ('inizio', 'fine')):
             raise ValidationError('Le date di inizio e fine campagna non sono più modificabili')
         inizio = self.cleaned_data.get('inizio')
         fine = self.cleaned_data.get('fine')
@@ -92,12 +92,14 @@ class ModuloDonazione(forms.ModelForm):
 
     class Meta:
         model = Donazione
-        fields = ('campagna', "metodo_pagamento", 'importo', 'codice_transazione', 'data', 'modalita_singola_ricorrente')
+        fields = ('campagna', 'metodo_pagamento', 'importo', 'codice_transazione',
+                  'data', 'modalita_singola_ricorrente')
 
     def __init__(self, *args, **kwargs):
         campagna_id = kwargs.pop('campagna')
         super().__init__(*args, **kwargs)
         self.fields['importo'].min_value = 0.1
+
         if campagna_id:
             self.fields['campagna'].widget = forms.HiddenInput()
             self.fields['campagna'].widget.attrs['readonly'] = True
@@ -119,13 +121,19 @@ class ModuloDonazione(forms.ModelForm):
 
 
 class ModuloDonatore(forms.ModelForm):
+
     class Meta:
         model = Donatore
         exclude = ('periodico',)
 
     def __init__(self, *args, **kwargs):
+        nuova_donazione = kwargs.pop('nuova_donazione', False)
         super().__init__(*args, **kwargs)
         self.fields['stato_nascita'].empty_label = None
+        if nuova_donazione:
+            self.fields['invia_email'] = forms.BooleanField(help_text='Invia una mail di ringraziamento nel caso '
+                                                                      'il donatore fornisca un indirizzo email')
+            self.fields['invia_email'].initial = True
 
     def clean(self):
         super().clean()

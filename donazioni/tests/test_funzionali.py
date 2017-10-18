@@ -71,6 +71,11 @@ class TestFunzionaliCampagneEtichette(TestFunzionale):
             self.assertTrue(iframe.is_text_present(etichetta.slug))
 
 
+class TestFunzionaliDonazioni(TestFunzionale):
+    # Todo test date inizio e fine campagna non modificabili se sono presenti donazioni
+    pass
+
+
 class TestFunzionaliDonatori(TestFunzionale):
 
     def setUp(self):

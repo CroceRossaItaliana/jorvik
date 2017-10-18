@@ -64,6 +64,7 @@ from base.stringhe import genera_uuid_casuale
 from base.utils import remove_none, poco_fa, oggi
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
+from donazioni.models import TokenRegistrazioneDonatore
 from posta.models import Messaggio, Q
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
@@ -72,7 +73,8 @@ from sangue.models import Donatore, Donazione
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
 TIPO_DIPENDENTE = 'dipendente'
-TIPO = (TIPO_VOLONTARIO, TIPO_ASPIRANTE, TIPO_DIPENDENTE )
+TIPO_SOGGETTO_DONATORE = 'soggetto_donatore'
+TIPO = (TIPO_VOLONTARIO, TIPO_ASPIRANTE, TIPO_DIPENDENTE, TIPO_SOGGETTO_DONATORE)
 
 # I vari step delle registrazioni
 STEP_COMITATO = 'comitato'
@@ -94,6 +96,7 @@ STEP = {
     TIPO_VOLONTARIO: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
     TIPO_ASPIRANTE: [STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
     TIPO_DIPENDENTE: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
+    TIPO_SOGGETTO_DONATORE: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
 }
 
 MODULI = {
@@ -141,6 +144,20 @@ def registrati(request, tipo, step=None):
         sessione = request.session['registrati'].copy()
     except KeyError:
         sessione = {}
+
+    # token temporaneo per soggetto economico
+    token = request.GET.get('t', '')
+    if token:
+        # precarica dati in sessione per il soggetto donatore
+        token_donatore = TokenRegistrazioneDonatore.objects.get(codice=token)
+        donatore = token_donatore.donatore
+        sede_appartenenza_donatore = token_donatore.sede
+        # TODO Precaricare i campi di anagrafica donatore eventualmente immessi in sessione
+        sessione['email'] = donatore.email
+        sessione['codice_fiscale'] = donatore.codice_fiscale
+        sessione['sede'] = sede_appartenenza_donatore.id
+        sessione['inizio'] = poco_fa().date()
+        request.session['registrati'] = sessione
 
     lista_step = [
         # Per ogni step:
@@ -318,6 +335,17 @@ def registrati_conferma(request, tipo):
         )
         a.save()
         a.richiedi()
+
+    elif tipo == TIPO_SOGGETTO_DONATORE:
+        #  Appartenenza Donatore a sede
+        a = Appartenenza(
+            confermata=True,
+            persona=p,
+            inizio=dati['inizio'],
+            sede=dati['sede'],
+            membro=Appartenenza.SOGGETTO_DONATORE,
+        )
+        a.save()
 
     else:
         raise ValueError("Non so come gestire questa iscrizione.")

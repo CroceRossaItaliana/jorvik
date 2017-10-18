@@ -1,5 +1,6 @@
 import itertools
 
+from datetime import timedelta
 from django.core.urlresolvers import reverse
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
@@ -15,6 +16,7 @@ from anagrafica.costanti import NAZIONALE
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
 from anagrafica.validators import valida_codice_fiscale, valida_partita_iva
 from base.models import ModelloSemplice
+from base.stringhe import genera_uuid_casuale
 from base.tratti import ConStorico, ConDelegati, ConMarcaTemporale
 from base.utils import TitleCharField, UpperCaseCharField, concept, poco_fa
 from social.models import ConCommenti
@@ -33,6 +35,9 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
                             db_index=True, help_text='es. Terremoto Centro Italia')
     organizzatore = models.ForeignKey('anagrafica.Sede', related_name='campagne', on_delete=models.PROTECT)
     descrizione = models.TextField(blank=True)
+    testo_email_ringraziamento = models.TextField(blank=True,
+                                                  help_text="Inserire il testo che sarà incluso nella mail da "
+                                                            "inviare ai donatori che hanno fornito l'indirizzo email")
 
     def __str__(self):
         return self.nome
@@ -292,6 +297,16 @@ class Donatore(ModelloSemplice, ConCommenti):
         identificativo = self.email or self.codice_fiscale or self.partita_iva or ''
         return '{} {}'.format(stringa, identificativo)
 
+    @cached_property
+    def nome_completo(self):
+        if self.ragione_sociale:
+            return self.ragione_sociale
+        if self.nome or self.cognome:
+            nome = '{} {}'.format(self.nome, self.cognome).strip()
+        else:
+            nome = self.email
+        return nome
+
     @property
     def url_modifica(self):
         return '/donazioni/donatore/%d/modifica' % (self.pk,)
@@ -491,6 +506,62 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
                 instance.donatore.save()
             for etichetta in instance.campagna.etichette.all():
                 instance.donatore.etichette.add(etichetta)
+
+
+class TokenRegistrazioneDonatore(ModelloSemplice, ConMarcaTemporale):
+    class Meta:
+        permissions = (
+            ("view_token_registrazione_donatore", "Can view token"),
+        )
+    donatore = models.ForeignKey('donazioni.Donatore', related_name='tokens', on_delete=models.CASCADE)
+    sede = models.ForeignKey('anagrafica.Sede', on_delete=models.CASCADE)
+    codice = models.CharField(max_length=128, unique=True, db_index=True, null=False)
+    redirect = models.CharField(max_length=128, db_index=True, null=True)
+    valido_ore = models.IntegerField(default=48)
+
+    def valido(self):
+        from django.utils import timezone
+        return timezone.now() <= (self.creazione + timedelta(hours=self.valido_ore))
+
+    @classmethod
+    def genera(cls, donatore, sede, redirect="/", valido_ore=24):
+        """
+        Genera un token ai fini della registrazione su GAIA per un donatore economico
+        :param sede: la sede organizzatrice della campagna a cui il donatore ha partecipato
+        :param redirect:
+        :param donatore: Oggetto Donatore
+        :param valido_ore:
+        :return:
+        """
+        codice = genera_uuid_casuale()
+        t = cls(
+            donatore=donatore,
+            sede=sede,
+            codice=codice,
+            valido_ore=valido_ore,
+            redirect=redirect,
+        )
+        t.save()
+        return codice
+
+    @property
+    def url(self):
+        return "/token-donatore/%s/" % (self.codice,)
+
+    @classmethod
+    def verifica(cls, token):
+        """
+        Verifica se un token e' valido per una data persona.
+
+        """
+        try:
+            token = cls.objects.get(codice=token)
+            if token.valido():
+                return token.donatore, token.redirect
+            else:
+                return False
+        except cls.DoesNotExist:
+            return False
 
 
 # signals

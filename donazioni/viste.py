@@ -19,7 +19,7 @@ from donazioni.elenchi import ElencoCampagne, ElencoEtichette, ElencoDonazioni, 
 from donazioni.forms import (ModuloCampagna, ModuloEtichetta, ModuloDonazione, ModuloDonatore,
                              ModuloImportDonazioni, ModuloImportDonazioniMapping)
 from donazioni.models import Campagna, Etichetta, Donatore, Donazione
-from donazioni.utils import analizza_file_import
+from donazioni.utils import analizza_file_import, invia_mail_ringraziamento
 
 
 @pagina_privata
@@ -284,7 +284,7 @@ def donazione_nuova(request, me, campagna_id):
         return redirect(ERRORE_PERMESSI)
 
     modulo_donazione = ModuloDonazione(request.POST or None, campagna=campagna_id)
-    modulo_donatore = ModuloDonatore(request.POST or None)
+    modulo_donatore = ModuloDonatore(request.POST or None, nuova_donazione=True)
     if not modulo_donazione.is_valid() or (modulo_donatore.has_changed() and not modulo_donatore.is_valid()):
         contesto = {
             'modulo_donazione': modulo_donazione,
@@ -296,16 +296,22 @@ def donazione_nuova(request, me, campagna_id):
 
     if modulo_donazione.is_valid():
         donazione = modulo_donazione.save(commit=False)
+        messaggio_debug = ''
         if modulo_donatore.has_changed() and modulo_donatore.is_valid():
             donatore = Donatore.nuovo_o_esistente(modulo_donatore.instance)
             if donazione.modalita_singola_ricorrente == Donazione.RICORRENTE:
                 donatore.periodico = True
                 donatore.save()
             donazione.donatore = donatore
+            if donatore.email and modulo_donatore.cleaned_data['invia_email']:
+                link_registrazione_debug = invia_mail_ringraziamento(donatore, campagna)
+                messaggio_debug = ' <br/> DEBUG: link registrazione donatore <a href="{}">{}</a>'.format(link_registrazione_debug, link_registrazione_debug)
 
         donazione.save()
         messaggio = 'Donazione aggiunta con successo: {:.2f} € donati da {}'.format(donazione.importo, donazione.donatore or 'Anonimo')
-        messages.add_message(request, messages.SUCCESS, messaggio)
+        if settings.DEBUG:
+            messaggio += messaggio_debug
+        messages.add_message(request, messages.SUCCESS, mark_safe(messaggio))
         return redirect(reverse('donazioni_campagne_donazioni', args=(campagna_id,)))
 
 

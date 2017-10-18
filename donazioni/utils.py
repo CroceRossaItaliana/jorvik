@@ -2,6 +2,11 @@ from collections import OrderedDict
 
 import xlsxwriter.utility
 import pyexcel
+from django.conf import settings
+from django.template.loader import get_template
+
+from donazioni.models import TokenRegistrazioneDonatore
+from posta.models import Messaggio
 
 
 def _importa(formato, file_import, intestazione, separatore_csv=','):
@@ -141,3 +146,28 @@ class FormatoCroceRossaIt(FormatoImport):
 class FormatoImportPredefinito:
     formati = {'P': FormatoPayPal, 'A': FormatoAmmado, 'Z': FormatoAmazon,
                'R': FormatoCroceRossaIt}
+
+
+def invia_mail_ringraziamento(donatore, campagna):
+    testo_email = campagna.testo_email_ringraziamento
+    destinatario = donatore.email
+    token = TokenRegistrazioneDonatore.genera(donatore, campagna.organizzatore)
+    host_registrazione = 'https://gaia.cri.it/' if not settings.DEBUG else 'http://127.0.0.1:8000/'
+    vista_registrazione = 'registrati/soggetto_donatore/credenziali/' if donatore.codice_fiscale else 'registrati/soggetto_donatore/codice_fiscale/'
+    link_registrazione = '{}{}?t={}'.format(host_registrazione, vista_registrazione, token)
+
+    oggetto = 'Ciao {}'.format(donatore.nome_completo)
+    corpo = {'testo': testo_email,
+             'donatore': donatore,
+             'link_registrazione': link_registrazione,
+             'campagna': campagna}
+    # Messaggio.costruisci_e_accoda(oggetto, 'email_ringraziamento_donazione_economica.html',
+    #                               corpo=corpo, destinatari=[destinatario])
+
+    Messaggio.invia_raw(
+        oggetto=oggetto,
+        corpo_html=get_template('email_ringraziamento_donazione_economica.html').render(corpo),
+        email_mittente=None,
+        lista_email_destinatari=[[destinatario]]
+    )
+    return link_registrazione

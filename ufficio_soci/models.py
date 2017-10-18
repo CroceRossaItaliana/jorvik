@@ -401,10 +401,12 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
     QUOTA_SOCIO = 'Q'
     QUOTA_SOSTENITORE = 'S'
     RICEVUTA = 'R'
+    RICEVUTA_DONAZIONE = 'D'
     TIPO = (
         (QUOTA_SOCIO, "Quota Socio"),
         (QUOTA_SOSTENITORE, "Ricevuta Sostenitore"),
         (RICEVUTA, "Ricevuta"),
+        (RICEVUTA_DONAZIONE, "Ricevuta Donazione"),
     )
     tipo = models.CharField(max_length=1, default=QUOTA_SOCIO, choices=TIPO)
 

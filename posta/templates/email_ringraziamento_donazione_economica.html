@@ -1,0 +1,8 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p class="grassetto">Ciao {{ donatore.nome_completo }}.</p>
+    <p>{{ testo }}</p>
+    <p class="grassetto"><a href="{{ link_registrazione }}">Registrati per scaricare la ricevuta</a></p>
+
+{% endblock %}
