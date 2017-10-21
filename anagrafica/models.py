@@ -462,9 +462,19 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     @property
     def soggetto_donatore(self):
         """
-        Controlla se membro volontario
+        Controlla se membro soggetto donatore
+        (cioè registrato dopo aver effettuato una donazione economica)
         """
         return self.membro(Appartenenza.SOGGETTO_DONATORE)
+
+    @property
+    def donazioni_economiche(self):
+        if not self.soggetto_donatore:
+            return []
+        from donazioni.models import AssociazioneDonatorePersona
+        associazione_donatore = AssociazioneDonatorePersona.objects.get(persona=self)
+        donatore = associazione_donatore.donatore
+        return donatore.donazioni
 
     @property
     def ordinario(self, **kwargs):

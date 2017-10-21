@@ -462,7 +462,8 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
 
         # Scompone l'importo in Quota e Extra (Donazione)
         #  (solo se QUOTA VOLONTARIO)
-        da_pagare = q.tesseramento().importo_da_pagare(q.persona, kwargs.get('riduzione', None))
+        if tipo != Quota.RICEVUTA_DONAZIONE:
+            da_pagare = q.tesseramento().importo_da_pagare(q.persona, kwargs.get('riduzione', None))
         if tipo == Quota.QUOTA_SOCIO and importo > da_pagare:
             q.importo = da_pagare
             q.importo_extra = importo - da_pagare

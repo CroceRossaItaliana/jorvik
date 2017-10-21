@@ -109,33 +109,26 @@
 
             <table class="table table-condensed table-responsive">
                 <thead>
-                    <th>Numero</th>
+                    <th>Campagna</th>
                     <th>Importo</th>
-                    <th>Registrazione</th>
+                    <th>Data</th>
                     <th>Ricevuta</th>
                 </thead>
                 <tbody>
 
-                    {% for q in me.quote.all %}
+                    {% for d in me.donazioni_economiche.all %}
                         <tr>
-                            <td>{{ q.progressivo }}/<span class="piu-grande">{{ q.anno }}</span></td>
-                            <td>{% euro q.importo_totale %}</td>
+                            <td>{{ d.campagna }}</td>
+                            <td>{% euro d.importo %}</td>
+                            <td>{{ d.data }}</td>
                             <td>
-
-                                <i class="fa fa-fw fa-check-circle"></i> Registrata da {{ q.registrato_da.link|safe }}
-                                    versata il {{ q.data_versamento }}<br />
-
-                                {% if q.stato == q.ANNULLATA %}
-                                    <i class="fa fa-fw fa-times"></i> Annullata da {{ q.annullato_da }}
-                                    in data {{ q.annullato_da }}
-
+                                {% if d.con_ricevuta %}
+                                    <a href="{{ d.url_ricevuta }}" target="_blank">
+                                        Scarica Ricevuta pdf
+                                    </a>
+                                {% else %}
+                                    Non è possibile scaricare una ricevuta per questa donazione
                                 {% endif %}
-
-                            </td>
-                            <td>
-                                <a href="{{ q.url_pdf }}" target="_blank">
-                                    Scarica PDF
-                                </a>
                             </td>
                         </tr>
 

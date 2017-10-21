@@ -350,6 +350,7 @@ urlpatterns = [
 
     url(r'^donazioni/donazione/(?P<pk>[0-9]+)/$', donazioni.viste.donazione, name='donazioni_donazione'),
     url(r'^donazioni/donazione/(?P<pk>[0-9]+)/modifica$', donazioni.viste.donazione_modifica, name='donazioni_donazione_modifica'),
+    url(r'^donazioni/donazione/(?P<pk>[0-9]+)/ricevuta', donazioni.viste.donazione_ricevuta, name='donazioni_donazione_modifica'),
     url(r'^donazioni/donazione/(?P<pk>[0-9]+)/elimina$', donazioni.viste.donazione_elimina, name='donazioni_donazione_elimina'),
     url(r'^donazioni/donatore/(?P<pk>[0-9]+)/$', donazioni.viste.donatore, name='donazioni_donatore'),
     url(r'^donazioni/donatore/(?P<pk>[0-9]+)/modifica$', donazioni.viste.donatore_modifica, name='donazioni_donatore_modifica'),

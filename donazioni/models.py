@@ -35,6 +35,7 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
                             db_index=True, help_text='es. Terremoto Centro Italia')
     organizzatore = models.ForeignKey('anagrafica.Sede', related_name='campagne', on_delete=models.PROTECT)
     descrizione = models.TextField(blank=True)
+    permetti_scaricamento_ricevute = models.BooleanField(default=True, help_text='Permetti lo scaricamento delle ricevute')
     testo_email_ringraziamento = models.TextField(blank=True,
                                                   help_text="Inserire il testo che sarà incluso nella mail da "
                                                             "inviare ai donatori che hanno fornito l'indirizzo email")
@@ -450,6 +451,7 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
     data = models.DateTimeField('Data donazione', help_text='Data donazione', null=True, db_index=True)
     codice_transazione = models.CharField('Codice Transazione', max_length=250, blank=True, null=True,
                                           help_text='Codice univoco che identifica la donazione')
+    permetti_scaricamento_ricevute = models.BooleanField(default=True, help_text='Permetti lo scaricamento della ricevuta')
     modalita_singola_ricorrente = models.CharField('Modalità', blank=True, choices=MODALITA,
                                                    default=SINGOLA,
                                                    help_text='Definisce se una donazione è Singola/Unica o Ricorrente',
@@ -461,6 +463,18 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
     @property
     def url_modifica(self):
         return '/donazioni/donazione/%d/modifica' % (self.pk,)
+
+    @property
+    def url_ricevuta(self):
+        return '/donazioni/donazione/%d/ricevuta' % (self.pk,)
+
+    @property
+    def con_ricevuta(self):
+        """
+        La ricevuta è scaricabile soltanto per le donazioni e le campagne che lo permettono
+        :return: bool
+        """
+        return self.permetti_scaricamento_ricevute and self.campagna.permetti_scaricamento_ricevute
 
     @property
     def url_cancella(self):
@@ -562,6 +576,11 @@ class TokenRegistrazioneDonatore(ModelloSemplice, ConMarcaTemporale):
                 return False
         except cls.DoesNotExist:
             return False
+
+
+class AssociazioneDonatorePersona(ModelloSemplice):
+    donatore = models.ForeignKey('donazioni.Donatore', on_delete=models.CASCADE)
+    persona = models.ForeignKey('anagrafica.Persona', on_delete=models.CASCADE)
 
 
 # signals

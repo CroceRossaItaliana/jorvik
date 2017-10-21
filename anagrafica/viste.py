@@ -64,7 +64,7 @@ from base.stringhe import genera_uuid_casuale
 from base.utils import remove_none, poco_fa, oggi
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
-from donazioni.models import TokenRegistrazioneDonatore
+from donazioni.models import TokenRegistrazioneDonatore, AssociazioneDonatorePersona
 from posta.models import Messaggio, Q
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
@@ -157,6 +157,7 @@ def registrati(request, tipo, step=None):
         sessione['codice_fiscale'] = donatore.codice_fiscale
         sessione['sede'] = sede_appartenenza_donatore.id
         sessione['inizio'] = poco_fa().date()
+        sessione['donatore'] = donatore
         request.session['registrati'] = sessione
 
     lista_step = [
@@ -346,6 +347,11 @@ def registrati_conferma(request, tipo):
             membro=Appartenenza.SOGGETTO_DONATORE,
         )
         a.save()
+        d = sessione.get('donatore')
+        if not d:
+            d = Donatore.objects.filter(codice_fiscale=p.codice_fiscale, email=p.email_contatto).first()
+        donatore_persona = AssociazioneDonatorePersona(persona=p, donatore=d)
+        donatore_persona.save()
 
     else:
         raise ValueError("Non so come gestire questa iscrizione.")
@@ -501,6 +507,7 @@ def utente_documenti_zip(request, me):
     z.comprimi_e_salva(nome='Documenti.zip')
 
     return redirect(z.download_url)
+
 
 @pagina_privata
 def utente_storico(request, me):

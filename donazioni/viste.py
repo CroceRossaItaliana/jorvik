@@ -10,16 +10,19 @@ from django.contrib import messages
 from django.utils.safestring import mark_safe
 from django.http import JsonResponse
 
-from anagrafica.models import Sede
+from anagrafica.models import Sede, Appartenenza
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
 from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO, ERRORE_PERMESSI, MODIFICA, LETTURA
 from autenticazione.funzioni import pagina_privata
 from base.errori import errore_generico
+from base.utils import poco_fa
 from donazioni.elenchi import ElencoCampagne, ElencoEtichette, ElencoDonazioni, ElencoDonatori
 from donazioni.forms import (ModuloCampagna, ModuloEtichetta, ModuloDonazione, ModuloDonatore,
                              ModuloImportDonazioni, ModuloImportDonazioniMapping)
-from donazioni.models import Campagna, Etichetta, Donatore, Donazione
-from donazioni.utils import analizza_file_import, invia_mail_ringraziamento
+from donazioni.models import Campagna, Etichetta, Donatore, Donazione, AssociazioneDonatorePersona
+from donazioni.utils import invia_mail_ringraziamento
+from donazioni.utils_importazione import analizza_file_import
+from ufficio_soci.models import Quota
 
 
 @pagina_privata
@@ -285,6 +288,7 @@ def donazione_nuova(request, me, campagna_id):
 
     modulo_donazione = ModuloDonazione(request.POST or None, campagna=campagna_id)
     modulo_donatore = ModuloDonatore(request.POST or None, nuova_donazione=True)
+
     if not modulo_donazione.is_valid() or (modulo_donatore.has_changed() and not modulo_donatore.is_valid()):
         contesto = {
             'modulo_donazione': modulo_donazione,
@@ -304,8 +308,23 @@ def donazione_nuova(request, me, campagna_id):
                 donatore.save()
             donazione.donatore = donatore
             if donatore.email and modulo_donatore.cleaned_data['invia_email']:
-                link_registrazione_debug = invia_mail_ringraziamento(donatore, campagna)
-                messaggio_debug = ' <br/> DEBUG: link registrazione donatore <a href="{}">{}</a>'.format(link_registrazione_debug, link_registrazione_debug)
+                registrazione_donatore_persona = AssociazioneDonatorePersona.objects.filter(donatore=donatore).first() or None
+                if registrazione_donatore_persona:
+                    # registrazione per il donatore già effettuata. Aggiungi appartenenza a Sede se non esistente
+                    p = registrazione_donatore_persona.persona
+                    sede = campagna.organizzatore
+                    tipo_appartenenza = Appartenenza.SOGGETTO_DONATORE
+                    if not Appartenenza.objects.filter(persona=p, sede=sede, membro=tipo_appartenenza).exists():
+                        a = Appartenenza(
+                            confermata=True,
+                            persona=p,
+                            inizio=poco_fa(),
+                            sede=sede,
+                            membro=tipo_appartenenza,
+                        )
+                        a.save()
+                link_debug = invia_mail_ringraziamento(donatore, campagna, registrazione_donatore_persona)
+                messaggio_debug = ' <br/> DEBUG: link registrazione donatore <a href="{}">{}</a>'.format(link_debug, link_debug)
 
         donazione.save()
         messaggio = 'Donazione aggiunta con successo: {:.2f} € donati da {}'.format(donazione.importo, donazione.donatore or 'Anonimo')
@@ -313,6 +332,41 @@ def donazione_nuova(request, me, campagna_id):
             messaggio += messaggio_debug
         messages.add_message(request, messages.SUCCESS, mark_safe(messaggio))
         return redirect(reverse('donazioni_campagne_donazioni', args=(campagna_id,)))
+
+
+@pagina_privata
+def donazione_ricevuta(request, me, pk):
+    donazione = get_object_or_404(Donazione, pk=pk)
+    donatore = donazione.donatore
+
+    try:
+        persona = AssociazioneDonatorePersona.objects.get(persona=me, donatore=donatore)
+    except AssociazioneDonatorePersona.DoesNotExist:
+        # l'utente sta cercando di scaricare una ricevuta di un altro utente
+        # oppure quella di un donatore non registrato
+        return redirect(ERRORE_PERMESSI)
+
+    campagna = donazione.campagna
+    appartenenza = me.appartenenze_attuali(
+        sede=campagna.organizzatore, membro=Appartenenza.SOGGETTO_DONATORE
+    ).first()
+    ricevuta = Quota.objects.filter(appartenenza=appartenenza, data_versamento=donazione.data,
+                                    importo=donazione.importo, tipo=Quota.RICEVUTA_DONAZIONE,
+                                    registrato_da=campagna.organizzatore.presidente()).first()
+    if ricevuta:
+        return redirect(ricevuta.url_pdf)
+
+    ricevuta = Quota.nuova(
+        appartenenza=appartenenza,
+        data_versamento=donazione.data,
+        registrato_da=campagna.organizzatore.presidente(),
+        importo=donazione.importo,
+        causale='Ricevuta donazione per campagna %s' % campagna,
+        tipo=Quota.RICEVUTA_DONAZIONE,
+        invia_notifica=True,
+    )
+    pdf = ricevuta.genera_pdf()
+    return redirect(pdf.download_url)
 
 
 @pagina_privata

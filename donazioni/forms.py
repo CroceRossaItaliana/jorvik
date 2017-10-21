@@ -14,7 +14,7 @@ import autocomplete_light
 from base.utils import poco_fa
 from base.wysiwyg import WYSIWYGSemplice
 from donazioni.models import Campagna, Etichetta, Donazione, Donatore
-from donazioni.utils import colnum_string, FormatoImportPredefinito, FormatoImport
+from donazioni.utils_importazione import colnum_string, FormatoImport, FormatoImportPredefinito
 
 
 class ModuloCampagna(forms.ModelForm):
