@@ -20,7 +20,8 @@ from donazioni.utils_importazione import colnum_string, FormatoImport, FormatoIm
 class ModuloCampagna(forms.ModelForm):
     class Meta:
         model = Campagna
-        fields = ('inizio', 'fine', 'nome', 'descrizione', 'organizzatore', 'testo_email_ringraziamento')
+        fields = ('inizio', 'fine', 'nome', 'descrizione', 'organizzatore',
+                  'testo_email_ringraziamento', 'permetti_scaricamento_ricevute')
         widgets = {
             "descrizione": WYSIWYGSemplice(),
         }
@@ -93,7 +94,7 @@ class ModuloDonazione(forms.ModelForm):
     class Meta:
         model = Donazione
         fields = ('campagna', 'metodo_pagamento', 'importo', 'codice_transazione',
-                  'data', 'modalita_singola_ricorrente')
+                  'data', 'modalita_singola_ricorrente', 'permetti_scaricamento_ricevute')
 
     def __init__(self, *args, **kwargs):
         campagna_id = kwargs.pop('campagna')
