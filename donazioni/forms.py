@@ -1,20 +1,19 @@
-from io import StringIO
-from dateutil.parser import parse
 from datetime import date, datetime
+from io import StringIO
 
-from django.core.exceptions import ValidationError
+import autocomplete_light
+from dateutil.parser import parse
 from django import forms
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.utils import DataError
-from django.utils.translation import ugettext_lazy as _
-
 from django_countries.data import COUNTRIES
-import autocomplete_light
 
 from base.utils import poco_fa
 from base.wysiwyg import WYSIWYGSemplice
-from donazioni.models import Campagna, Etichetta, Donazione, Donatore
-from donazioni.utils_importazione import colnum_string, FormatoImport, FormatoImportPredefinito
+from donazioni import utils_importazione
+from donazioni.models import Campagna, Etichetta, Donazione, Donatore, SedeCampagnaFittizia
+from donazioni.utils_importazione import colnum_string, FormatoImport, FormatoImportPredefinito, _converti_stato
 
 
 class ModuloCampagna(forms.ModelForm):
@@ -254,8 +253,6 @@ class ModuloImportDonazioniMapping(forms.Form):
     @staticmethod
     def _converti(nome_campo, valore):
         """ Metodo per validare/convertire valori da stringa"""
-        print(valore, type(valore))
-        print(nome_campo, '\n')
         if isinstance(valore, str):
             valore.replace('"', '').strip()
         if nome_campo not in ModuloImportDonazioniMapping.campi_da_convertire:
@@ -267,77 +264,9 @@ class ModuloImportDonazioniMapping(forms.Form):
                 return valore
             return parse(valore, fuzzy=True)
         elif nome_campo.startswith('stato'):
-            return ModuloImportDonazioniMapping._converti_stato(valore)
+            return _converti_stato(valore)
         else:
-            return getattr(ModuloImportDonazioniMapping, '_converti_{}'.format(nome_campo))(valore)
-
-    @staticmethod
-    def _converti_importo(valore):
-        if isinstance(valore, (int, float)):
-            return valore
-
-        if not valore or valore in ModuloImportDonazioniMapping.valori_nulli:
-            return 0
-        valore = valore.replace(',', '.')
-        valore = float(valore)
-        return valore
-
-    @staticmethod
-    def _converti_sesso(valore):
-        if valore.lower() in ModuloImportDonazioniMapping.valori_sesso_maschile:
-            valore = 'M'
-        elif valore.lower() in ModuloImportDonazioniMapping.valori_sesso_femminile:
-            valore = 'F'
-        else:
-            valore = ''
-        return valore
-
-    @staticmethod
-    def _converti_tipo_donatore(valore):
-        valore = valore.lower()
-        if 'persona' in valore or 'privato' in valore:
-            valore = 'P'
-        elif 'azienda' in valore:
-            valore = 'A'
-        elif 'croce rossa' in valore or 'cri' in valore:
-            valore = 'C'
-        else:
-            valore = 'P'
-        return valore
-
-    @staticmethod
-    def _converti_stato(valore):
-        if valore in COUNTRIES:
-            return valore
-        valore = valore.lower()
-        codice_stato = ModuloImportDonazioniMapping.nazioni_codici_dict.get(_(valore))
-        return codice_stato or ''
-
-    @staticmethod
-    def _converti_metodo_pagamento(valore):
-        valore = valore.lower()
-        if 'paypal' in valore:
-            valore = 'P'
-        elif 'ammado' in valore:
-            valore = 'A'
-        elif 'amazon' in valore:
-            valore = 'Z'
-        elif 'credit' in valore or 'debit' in valore:
-            valore = 'B'
-        else:
-            valore = ''
-        return valore
-
-    @staticmethod
-    def _converti_modalita_singola_ricorrente(valore):
-        valore = valore.lower()
-        if 'unic' in valore or 'singola' in valore:
-            valore = 'S'
-        elif 'ricorrente' in valore:
-            valore = 'R'
-        else:
-            valore = ''
-        return valore
+            return getattr(utils_importazione, 'converti_{}'.format(nome_campo))(valore)
 
     def processa(self, campagna, dati_importati, test_import=True):
         # TODO metodo troppo lungo e con troppi livelli di identazione!
@@ -367,6 +296,7 @@ class ModuloImportDonazioniMapping(forms.Form):
         try:
             with transaction.atomic():
                 riepilogo_errori = StringIO()
+                campagna_fittizia = SedeCampagnaFittizia.ottieni_campagna_fittizia(sede=campagna.organizzatore, campagna=campagna)
                 for numero_riga, riga in enumerate(dati_importati, start=1 + self.intestazione):
                     argomenti = {Donatore: {}, Donazione: {}}
                     for i, valore in enumerate(riga):
@@ -384,6 +314,7 @@ class ModuloImportDonazioniMapping(forms.Form):
                     try:
                         donazione = None
                         donatore = None
+
                         if argomenti[Donazione] and argomenti[Donazione].get('importo', 0) >= 0:
                             if self.sorgente and not self.metodo_pagamento_da_colonna:
                                 # sorgente predefinita che non contiene una colonna Metodo Pagamento
@@ -394,16 +325,24 @@ class ModuloImportDonazioniMapping(forms.Form):
                             if not donazione.data:
                                 donazione.data = data_processamento
                             donazione.campagna = campagna
+
                         if argomenti[Donatore]:
                             donatore = Donatore(**argomenti[Donatore])
                             donatore = Donatore.nuovo_o_esistente(donatore)
                             oggetti_donatori.add(donatore)
+                            if not argomenti[Donazione]:
+                                # import di profilo donatore senza donazioni: associazione a campagna fittizia
+                                donazione_fittizia = Donazione(importo=0, campagna=campagna_fittizia, donatore=donatore,
+                                                               data=data_processamento, permetti_scaricamento_ricevute=False,
+                                                               )
+                                donazione_fittizia.save()
+                            oggetti_donatori.add(donatore)
 
                         if donazione:
-                            oggetti_donazioni.append(donazione)
                             if donatore:
                                 donazione.donatore = donatore
                             donazione.save()
+                            oggetti_donazioni.append(donazione)
 
                     except (ValueError, TypeError, ValidationError, DataError) as exc:
                         riga = str(riga)
@@ -422,6 +361,6 @@ class ModuloImportDonazioniMapping(forms.Form):
                     # equivale ad un rollback
                     raise ValueError()
         except ValueError:
-            # Rollback in caso di errori
+            # Rollback in caso di errori o di Test Importazione
             pass
         return riepilogo

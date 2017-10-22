@@ -2,6 +2,8 @@ from collections import OrderedDict
 
 import pyexcel
 import xlsxwriter.utility
+from django.utils.translation import ugettext_lazy as _
+from django_countries.data import COUNTRIES
 
 
 def _importa(formato, file_import, intestazione, separatore_csv=','):
@@ -144,3 +146,73 @@ class FormatoCroceRossaIt(FormatoImport):
 class FormatoImportPredefinito:
     formati = {'P': FormatoPayPal, 'A': FormatoAmmado, 'Z': FormatoAmazon,
                'R': FormatoCroceRossaIt}
+
+
+def _converti_modalita_singola_ricorrente(valore):
+    valore = valore.lower()
+    if 'unic' in valore or 'singola' in valore:
+        valore = 'S'
+    elif 'ricorrente' in valore:
+        valore = 'R'
+    else:
+        valore = ''
+    return valore
+
+
+def _converti_metodo_pagamento(valore):
+    valore = valore.lower()
+    if 'paypal' in valore:
+        valore = 'P'
+    elif 'ammado' in valore:
+        valore = 'A'
+    elif 'amazon' in valore:
+        valore = 'Z'
+    elif 'credit' in valore or 'debit' in valore:
+        valore = 'B'
+    else:
+        valore = ''
+    return valore
+
+
+def _converti_stato(valore):
+    if valore in COUNTRIES:
+        return valore
+    valore = valore.lower()
+    from donazioni.forms import ModuloImportDonazioniMapping
+    codice_stato = ModuloImportDonazioniMapping.nazioni_codici_dict.get(_(valore))
+    return codice_stato or ''
+
+
+def _converti_tipo_donatore(valore):
+    valore = valore.lower()
+    if 'persona' in valore or 'privato' in valore:
+        valore = 'P'
+    elif 'azienda' in valore:
+        valore = 'A'
+    elif 'croce rossa' in valore or 'cri' in valore:
+        valore = 'C'
+    else:
+        valore = 'P'
+    return valore
+
+
+def _converti_sesso(valore):
+    from donazioni.forms import ModuloImportDonazioniMapping
+    if valore.lower() in ModuloImportDonazioniMapping.valori_sesso_maschile:
+        valore = 'M'
+    elif valore.lower() in ModuloImportDonazioniMapping.valori_sesso_femminile:
+        valore = 'F'
+    else:
+        valore = ''
+    return valore
+
+
+def _converti_importo(valore):
+    if isinstance(valore, (int, float)):
+        return valore
+    from donazioni.forms import ModuloImportDonazioniMapping
+    if not valore or valore in ModuloImportDonazioniMapping.valori_nulli:
+        return 0
+    valore = valore.replace(',', '.')
+    valore = float(valore)
+    return valore

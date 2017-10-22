@@ -19,7 +19,7 @@ from anagrafica.validators import valida_codice_fiscale, valida_partita_iva
 from base.models import ModelloSemplice
 from base.stringhe import genera_uuid_casuale
 from base.tratti import ConStorico, ConDelegati, ConMarcaTemporale
-from base.utils import TitleCharField, UpperCaseCharField, concept, poco_fa
+from base.utils import TitleCharField, UpperCaseCharField, concept, poco_fa, mai
 from social.models import ConCommenti
 from ufficio_soci.models import Quota
 
@@ -33,6 +33,7 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
             ('view_campagna', 'Can view campagna'),
         )
 
+    fittizia = models.BooleanField(default=False, help_text='Se True, campagna fittizia per gestire profili di potenziali donatori')
     nome = models.CharField(max_length=255, default='Nuova campagna',
                             db_index=True, help_text='es. Terremoto Centro Italia')
     organizzatore = models.ForeignKey('anagrafica.Sede', related_name='campagne', on_delete=models.PROTECT)
@@ -116,13 +117,13 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
         :param sender: classe Campagna
         :param instance: oggetto Campagna
         """
+        if instance.fittizia:
+            # non creare le etichette per le campagne fittizie
+            return
         slug_etichetta_default = slugify(instance.nome)
         etichette_correnti = instance.etichette.values_list('slug', flat=True)
         if slug_etichetta_default not in etichette_correnti:
             # crea e/o aggiunge etichetta di default
-            # etichetta, _ = Etichetta.objects.get_or_create(slug=slug_etichetta_default,
-            #                                                comitato=instance.organizzatore,
-            #                                                default=True)
             etichetta = Etichetta(slug=slug_etichetta_default, comitato=instance.organizzatore,
                                   default=True)
             etichetta.save()
@@ -131,6 +132,34 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
     @property
     def url_responsabili(self):
         return '/donazioni/campagne/%d/responsabili/' % (self.pk,)
+
+
+class SedeCampagnaFittizia(ModelloSemplice):
+    sede = models.ForeignKey('anagrafica.Sede', on_delete=models.PROTECT)
+    campagna_fittizia = models.ForeignKey('donazioni.Campagna', on_delete=models.PROTECT)
+
+    @classmethod
+    def ottieni_campagna_fittizia(cls, sede=None, campagna=None):
+        if not sede and not campagna:
+            return None
+        if not sede:
+            sede = campagna.organizzatore
+        associazione_campagna_fittizia = SedeCampagnaFittizia.objects.filter(sede=sede).first()
+        if not associazione_campagna_fittizia:
+            # ancora non è stata creata una campagna fittizia per la sede organizzatrice
+            campagna_fittizia = Campagna(fittizia=True, nome='Campagna fittizia',
+                                         descrizione='Campagna fittizia per sede {}'.format(sede),
+                                         organizzatore=sede, permetti_scaricamento_ricevute=False,
+                                         inizio=poco_fa(), fine=mai())
+            campagna_fittizia.save()
+            if campagna:
+                # aggiungi gli stessi responsabili della campagna passata come argomento
+                for responsabile in campagna.responsabili_attuali:
+                    campagna_fittizia.aggiungi_delegato(tipo=RESPONSABILE_CAMPAGNA, persona=responsabile)
+
+            associazione_campagna_fittizia = SedeCampagnaFittizia(sede=sede, campagna_fittizia=campagna_fittizia)
+            associazione_campagna_fittizia.save()
+        return associazione_campagna_fittizia.campagna_fittizia
 
 
 class Etichetta(ModelloSemplice):

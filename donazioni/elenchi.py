@@ -14,10 +14,14 @@ class ElencoBase(Elenco):
 
     def risultati(self):
         qs = self.args[0]
-        return qs.distinct()
+        return qs
 
 
 class ElencoCampagne(ElencoBase):
+
+    def risultati(self):
+        qs = self.args[0]
+        return qs.filter(fittizia=False)
 
     def filtra(self, queryset, termine):
         termini = termine.split(',')
@@ -37,6 +41,12 @@ class ElencoEtichette(ElencoBase):
 
 
 class ElencoDonazioni(ElencoBase):
+
+    def risultati(self):
+        qs = self.args[0]
+        # esclude le donazioni alle campagne fittizie (importo 0.00)
+        return qs.exclude(campagna__fittizia=True)
+
     def template(self):
         return 'donazioni_elenchi_inc_donazioni.html'
 
@@ -55,10 +65,20 @@ class ElencoDonazioni(ElencoBase):
 
 
 class ElencoDonatori(ElencoBase):
+
     def template(self):
         return 'donazioni_elenchi_inc_donatori.html'
 
+    def risultati(self):
+        qs = self.args[0]
+        return qs.distinct('cognome', 'nome', 'email', 'codice_fiscale', 'partita_iva', 'ragione_sociale')
+
+    def ordina(self, qs):
+        return qs.order_by('cognome', 'nome', 'email', 'codice_fiscale', 'partita_iva', 'ragione_sociale')
+
     def filtra(self, queryset, termine='', scaglione_media=None):
+        queryset = queryset.prefetch_related('donazioni')
+        results = queryset
         if scaglione_media:
             # scaglione_media ha formato '0-50'
             tokens = scaglione_media.split('-')
@@ -70,6 +90,7 @@ class ElencoDonatori(ElencoBase):
 
             donatori_ids = queryset.values_list('id')
             queryset = Donatore.objects.filter(pk__in=donatori_ids).annotate(media=Avg('donazioni__importo')).filter(filtri)
+            results = queryset.distinct()
 
         if termine:
             termine = termine.lower()
@@ -78,6 +99,5 @@ class ElencoDonatori(ElencoBase):
                        Q(codice_fiscale__icontains=termine) | Q(email__icontains=termine) |
                        Q(donazioni__id__in=donazioni_campagne_ids))
             queryset = queryset.filter(filtri)
-
-        results = queryset.prefetch_related('donazioni').distinct()
+            results = queryset.distinct('cognome', 'nome', 'email', 'codice_fiscale', 'partita_iva', 'ragione_sociale')
         return results
