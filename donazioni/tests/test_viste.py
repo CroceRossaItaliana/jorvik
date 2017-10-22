@@ -71,10 +71,7 @@ class TestVisteDonazioni(TestCase):
         self.client.login(username=self.responsabile_campagna.utenza.email, password='prova')
         data = {'modalita': 'C', 'importo': 150.0,
                 'campagna': self.campagna.id,
-                'codice_transazione': 'AXYYGGGTTSADDXXX10003231010113',
-                'stato_nascita': '',
-                'nome': '',
-                'cognome': '',
+                'codice_transazione': 'AXYYGGGTTSADDXXX10003231010113', 'invia_email': True,
                 }
         response = self.client.post(reverse('donazioni_campagne_nuova_donazione', args=(self.campagna.id,)), data=data)
         self.assertEqual(response.url, reverse('donazioni_campagne_donazioni', args=(self.campagna.id,)))

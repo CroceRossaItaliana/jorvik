@@ -121,7 +121,6 @@ class ModuloDonazione(forms.ModelForm):
 
 
 class ModuloDonatore(forms.ModelForm):
-
     class Meta:
         model = Donatore
         exclude = ('periodico',)
@@ -131,7 +130,8 @@ class ModuloDonatore(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['stato_nascita'].empty_label = None
         if nuova_donazione:
-            self.fields['invia_email'] = forms.BooleanField(help_text='Invia una mail di ringraziamento nel caso '
+            self.fields['invia_email'] = forms.BooleanField(required=False,
+                                                            help_text='Invia una mail di ringraziamento nel caso '
                                                                       'il donatore fornisca un indirizzo email')
             self.fields['invia_email'].initial = True
 

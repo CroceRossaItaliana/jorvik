@@ -66,9 +66,8 @@ class TestFunzionaliCampagneEtichette(TestFunzionale):
                 break
         sessione_delegato.find_by_xpath("//button[@type='submit']").first.click()
         etichetta = Etichetta.objects.first()
-        self.assertEqual(sessione_delegato.url, '{}{}'.format(self.live_server_url, reverse('donazioni_etichette')))
-        with sessione_delegato.get_iframe(0) as iframe:
-            self.assertTrue(iframe.is_text_present(etichetta.slug))
+        self.assertTrue(sessione_delegato.is_text_present(etichetta.slug))
+        self.assertEqual(sessione_delegato.url, '{}{}'.format(self.live_server_url, reverse('donazioni_etichetta', args=(etichetta.id,))))
 
 
 class TestFunzionaliDonazioni(TestFunzionale):
