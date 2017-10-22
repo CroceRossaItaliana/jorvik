@@ -7,12 +7,6 @@ from donazioni.elenchi import ElencoDonatori
 register = template.Library()
 
 
-@register.filter(name='importo')
-def importo(value=None):
-    value = 0 if not value else value
-    return '{0:.2f} €'.format(value)
-
-
 @register.simple_tag(takes_context=True)
 def elenco_donatori(context, oggetto_elenco=None,):
 

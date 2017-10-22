@@ -145,6 +145,12 @@ class ModuloDonatore(forms.ModelForm):
         return self.cleaned_data
 
 
+class ModuloInviaNotifica(forms.Form):
+    invia = forms.BooleanField(widget=forms.HiddenInput(),
+                               required=False,
+                               initial=True)
+
+
 class ModuloImportDonazioni(forms.Form):
     XLS = 'xls'
     CSV = 'csv'

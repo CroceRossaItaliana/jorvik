@@ -27,7 +27,7 @@
                 <i class="fa fa-fw fa-money"></i>
                 Storico Donazioni
                 <span class="badge">
-                    {{ donatore.statistiche_donazioni.totale|importo }}
+                    {% euro donatore.statistiche_donazioni.totale %}
                 </span>
 
             </a>

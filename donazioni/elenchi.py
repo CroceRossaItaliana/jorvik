@@ -14,7 +14,7 @@ class ElencoBase(Elenco):
 
     def risultati(self):
         qs = self.args[0]
-        return qs
+        return qs.distinct()
 
 
 class ElencoCampagne(ElencoBase):
@@ -79,5 +79,5 @@ class ElencoDonatori(ElencoBase):
                        Q(donazioni__id__in=donazioni_campagne_ids))
             queryset = queryset.filter(filtri)
 
-        results = queryset.prefetch_related('donazioni')
+        results = queryset.prefetch_related('donazioni').distinct()
         return results

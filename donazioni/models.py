@@ -13,6 +13,7 @@ from django_countries.fields import CountryField
 from django.conf import settings
 
 from anagrafica.costanti import NAZIONALE
+from anagrafica.models import Appartenenza
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
 from anagrafica.validators import valida_codice_fiscale, valida_partita_iva
 from base.models import ModelloSemplice
@@ -20,6 +21,7 @@ from base.stringhe import genera_uuid_casuale
 from base.tratti import ConStorico, ConDelegati, ConMarcaTemporale
 from base.utils import TitleCharField, UpperCaseCharField, concept, poco_fa
 from social.models import ConCommenti
+from ufficio_soci.models import Quota
 
 
 class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
@@ -408,6 +410,8 @@ class Donatore(ModelloSemplice, ConCommenti):
 
 
 class Donazione(ModelloSemplice, ConMarcaTemporale):
+
+    # METODI/CANALI DI PAGAMENTO
     CONTANTI = 'C'
     BANCARIA = 'B'
     PAYPAL = 'P'
@@ -426,6 +430,7 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
     )
     METODO_PAGAMENTO_REVERSE = {v.lower(): k for k, v in METODO_PAGAMENTO}
 
+    # MODALITA'
     SINGOLA = 'S'
     RICORRENTE = 'R'
     MODALITA = (
@@ -456,6 +461,7 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
                                                    default=SINGOLA,
                                                    help_text='Definisce se una donazione è Singola/Unica o Ricorrente',
                                                    max_length=1, db_index=True)
+    email_inviata = models.BooleanField(default=False, help_text='Email di ringraziamento e notifica ricevuta inviata al donatore')
 
     def __str__(self):
         return '{} {} {}'.format(self.get_metodo_pagamento_display(), self.importo, self.codice_transazione or '')
@@ -469,6 +475,10 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
         return '/donazioni/donazione/%d/ricevuta' % (self.pk,)
 
     @property
+    def url_invia_notifica(self):
+        return '/donazioni/donazione/%d/notifica' % (self.pk,)
+
+    @cached_property
     def con_ricevuta(self):
         """
         La ricevuta è scaricabile soltanto per le donazioni e le campagne che lo permettono
@@ -520,6 +530,24 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
                 instance.donatore.save()
             for etichetta in instance.campagna.etichette.all():
                 instance.donatore.etichette.add(etichetta)
+
+    def ricevuta(self, appartenenza=None):
+        """
+        """
+        filtro = Q(data_versamento=self.data, importo=self.importo,
+                   tipo=Quota.RICEVUTA_DONAZIONE, registrato_da=self.campagna.organizzatore.presidente(),
+                   )
+        if not appartenenza:
+            try:
+                persona = AssociazioneDonatorePersona.objects.get(donatore=self.donatore).persona
+            except AssociazioneDonatorePersona.DoesNotExist:
+                return None
+            else:
+                appartenenza = persona.appartenenze_attuali(
+                    sede=self.campagna.organizzatore, membro=Appartenenza.SOGGETTO_DONATORE
+                ).first()
+        filtro &= Q(appartenenza=appartenenza)
+        return Quota.objects.filter(filtro).first() or None
 
 
 class TokenRegistrazioneDonatore(ModelloSemplice, ConMarcaTemporale):
@@ -579,6 +607,12 @@ class TokenRegistrazioneDonatore(ModelloSemplice, ConMarcaTemporale):
 
 
 class AssociazioneDonatorePersona(ModelloSemplice):
+    class Meta:
+        verbose_name = 'Associazione Donatore Persona'
+        verbose_name_plural = 'Associazioni Donatore Persona'
+        permissions = (
+            ('view_associazione_donatore_persona', 'Can view associazione donatore persona'),
+        )
     donatore = models.ForeignKey('donazioni.Donatore', on_delete=models.CASCADE)
     persona = models.ForeignKey('anagrafica.Persona', on_delete=models.CASCADE)
 

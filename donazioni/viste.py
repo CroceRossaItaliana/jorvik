@@ -18,9 +18,9 @@ from base.errori import errore_generico
 from base.utils import poco_fa
 from donazioni.elenchi import ElencoCampagne, ElencoEtichette, ElencoDonazioni, ElencoDonatori
 from donazioni.forms import (ModuloCampagna, ModuloEtichetta, ModuloDonazione, ModuloDonatore,
-                             ModuloImportDonazioni, ModuloImportDonazioniMapping)
+                             ModuloImportDonazioni, ModuloImportDonazioniMapping, ModuloInviaNotifica)
 from donazioni.models import Campagna, Etichetta, Donatore, Donazione, AssociazioneDonatorePersona
-from donazioni.utils import invia_mail_ringraziamento
+from donazioni.utils import invia_mail_ringraziamento, invia_notifica_donatore
 from donazioni.utils_importazione import analizza_file_import
 from ufficio_soci.models import Quota
 
@@ -324,6 +324,7 @@ def donazione_nuova(request, me, campagna_id):
                         )
                         a.save()
                 link_debug = invia_mail_ringraziamento(donatore, campagna, registrazione_donatore_persona)
+                donazione.email_inviata = True
                 messaggio_debug = ' <br/> DEBUG: link registrazione donatore <a href="{}">{}</a>'.format(link_debug, link_debug)
 
         donazione.save()
@@ -339,34 +340,64 @@ def donazione_ricevuta(request, me, pk):
     donazione = get_object_or_404(Donazione, pk=pk)
     donatore = donazione.donatore
 
+    filtro_persona = Q(donatore=donatore)
+    if not me.permessi_almeno(donazione, COMPLETO):
+        # L'utente che sta cercando di scaricare la ricevuta non è un responsabile di campagna
+        # quindi è un utente registrato. Verificare se è il donatore stesso
+        filtro_persona = Q(persona=me, donatore=donatore)
+
     try:
-        persona = AssociazioneDonatorePersona.objects.get(persona=me, donatore=donatore)
+        persona = AssociazioneDonatorePersona.objects.get(filtro_persona).persona
     except AssociazioneDonatorePersona.DoesNotExist:
         # l'utente sta cercando di scaricare una ricevuta di un altro utente
         # oppure quella di un donatore non registrato
         return redirect(ERRORE_PERMESSI)
 
     campagna = donazione.campagna
-    appartenenza = me.appartenenze_attuali(
+    appartenenza = persona.appartenenze_attuali(
         sede=campagna.organizzatore, membro=Appartenenza.SOGGETTO_DONATORE
     ).first()
-    ricevuta = Quota.objects.filter(appartenenza=appartenenza, data_versamento=donazione.data,
-                                    importo=donazione.importo, tipo=Quota.RICEVUTA_DONAZIONE,
-                                    registrato_da=campagna.organizzatore.presidente()).first()
-    if ricevuta:
-        return redirect(ricevuta.url_pdf)
-
-    ricevuta = Quota.nuova(
-        appartenenza=appartenenza,
-        data_versamento=donazione.data,
-        registrato_da=campagna.organizzatore.presidente(),
-        importo=donazione.importo,
-        causale='Ricevuta donazione per campagna %s' % campagna,
-        tipo=Quota.RICEVUTA_DONAZIONE,
-        invia_notifica=True,
-    )
+    ricevuta = donazione.ricevuta(appartenenza)
+    if not ricevuta:
+        ricevuta = Quota.nuova(
+            appartenenza=appartenenza,
+            data_versamento=donazione.data,
+            registrato_da=campagna.organizzatore.presidente(),
+            importo=donazione.importo,
+            causale='Ricevuta donazione per campagna %s' % campagna,
+            tipo=Quota.RICEVUTA_DONAZIONE,
+            invia_notifica=True,
+        )
     pdf = ricevuta.genera_pdf()
     return redirect(pdf.download_url)
+
+
+@pagina_privata
+def donazione_invia_notifica(request, me, pk):
+    donazione = get_object_or_404(Donazione, pk=pk)
+    if not me.permessi_almeno(donazione, COMPLETO):
+        return redirect(ERRORE_PERMESSI)
+    if not donazione.donatore or not donazione.donatore.email:
+        messages.add_message(request, messages.WARNING, 'La donazione non ha un donatore o il donatore non ha inserito un indirizzo email')
+        return redirect(reverse('donazioni_campagne_donazioni', args=(donazione.campagna_id,)))
+
+    modulo_invia_notifica = ModuloInviaNotifica(request.POST or None)
+    if modulo_invia_notifica.is_valid():
+        if not modulo_invia_notifica.cleaned_data['invia']:
+            messages.add_message(request, messages.WARNING, 'Notifica non inviata')
+            return redirect(reverse('donazioni_campagne_donazioni', args=(donazione.campagna_id,)))
+        message, ok = invia_notifica_donatore(donazione)
+        if ok:
+            donazione.email_inviata = True
+            donazione.save()
+        messages.add_message(request, messages.SUCCESS if ok else messages.WARNING, message)
+        return redirect(reverse('donazioni_campagne_donazioni', args=(donazione.campagna_id,)))
+    contesto = {
+        'modulo': modulo_invia_notifica,
+        'donazione': donazione,
+        'donatore': donazione.donatore,
+    }
+    return 'donazioni_donatore_invia_notifica.html', contesto
 
 
 @pagina_privata

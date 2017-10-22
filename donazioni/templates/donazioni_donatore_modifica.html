@@ -52,11 +52,11 @@
                     <table class="table table-responsive table-striped">
                         <tr>
                             <td>Totale donazioni</td>
-                            <td class="grassetto">{{ donatore.statistiche_donazioni.totale|importo }}</td>
+                            <td class="grassetto">{% euro donatore.statistiche_donazioni.totale %}</td>
                         </tr>
                         <tr>
                             <td>Donazione media</td>
-                            <td class="grassetto">{{ donatore.statistiche_donazioni.media|importo }}</td>
+                            <td class="grassetto">{% euro donatore.statistiche_donazioni.media %}</td>
                         </tr>
                         <tr>
                             <td>Donazioni inserite</td>

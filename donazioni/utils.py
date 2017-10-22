@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.template.loader import get_template
 
-from donazioni.models import TokenRegistrazioneDonatore
+from donazioni.models import TokenRegistrazioneDonatore, AssociazioneDonatorePersona
 from posta.models import Messaggio
 
 
@@ -44,3 +44,13 @@ def invia_mail_ringraziamento(donatore, campagna, gia_registrato=None):
         lista_email_destinatari=[destinatario]
     )
     return link
+
+
+def invia_notifica_donatore(donazione):
+    donatore = donazione.donatore
+    if not donatore.email:
+        return 'Il Donatore non ha lasciato una mail in fase di registrazione della donazione', False
+    campagna = donazione.campagna
+    registrazione_donatore_persona = AssociazioneDonatorePersona.objects.filter(donatore=donatore).first() or None
+    invia_mail_ringraziamento(donatore, campagna, registrazione_donatore_persona)
+    return 'Notifica inviata!', True

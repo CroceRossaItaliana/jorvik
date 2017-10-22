@@ -31,7 +31,7 @@
                 <i class="fa fa-fw fa-money"></i>
                 Donazioni
                 <span class="badge">
-                    {{ campagna.totale_donazioni|importo }}
+                    {% euro campagna.totale_donazioni %}
                 </span>
 
             </a>
