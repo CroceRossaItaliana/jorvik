@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     'two_factor',
 
     'donazioni',
+    'mailup',
 ]
 
 

@@ -1889,6 +1889,14 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                                               ~Q(codice_fiscale__in=cf_nazionali) & ~Q(partita_iva__in=piva_nazionali)))
         return filtro
 
+    @cached_property
+    def mailup(self):
+        from mailup.models import AccountMailUp
+        try:
+            return self.account_mailup
+        except AccountMailUp.DoesNotExist:
+            return None
+
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
     """

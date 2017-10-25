@@ -21,6 +21,18 @@
             <i class="fa fa-fw fa-file-excel-o"></i>
             Importa Donazioni/Donatori
         </a>
+        {% if campagna.organizzatore.mailup %}
+        <a href="{{ campagna.url_importa_da_mailup }}" role="button" class="btn btn-large btn-primary">
+            <i class="fa fa-fw fa-arrow-circle-o-down"></i>
+            Importa Contatti da MailUp
+        </a>
+         {% endif %}
+        <hr />
+        <i class="fa fa-fw fa-plus-circle"></i><b>Aggiungi una donazione</b>: vai alla schermata di inserimento nuova donazione<br />
+        <i class="fa fa-fw fa-file-excel-o"></i><b>Importa Donazioni/Donatori</b>: importa donazioni da XLS/CSV <br />
+        {% if campagna.organizzatore.mailup %}
+        <i class="fa fa-fw fa-arrow-circle-o-down"></i><b>Importa Contatti da MailUp</b>: Importa contatti dalle liste MailUp della sede<br />
+        {% endif %}
     </div>
     {% endif %}
 

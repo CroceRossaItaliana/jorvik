@@ -1,4 +1,3 @@
-from datetime import datetime
 from unittest import mock
 
 from django.core.exceptions import ValidationError
@@ -12,6 +11,7 @@ from base.utils import poco_fa
 from base.utils_tests import crea_persona, crea_sede, crea_delega, crea_appartenenza, codice_fiscale
 from donazioni.models import Etichetta, Campagna, Donazione, Donatore
 from donazioni.tests.utils import crea_campagna, aggiungi_responsabile_campagna, mock_autonow
+from mailup.models import AccountMailUp
 
 
 class TestModelliCampagne(TestCase):
@@ -213,5 +213,3 @@ class TestModelliDonazioniDonatori(TestCase):
         self.assertEqual(istanza.id, id_donatore_con_cf)
         self.assertEqual(istanza.email, 'test3@test.it')
         self.assertEqual(istanza.codice_fiscale, 'nppdnc78b03e791v')
-        # self.assertEqual(istanza.nome, 'Domenico')
-        # self.assertEqual(istanza.cognome, 'Nappo')

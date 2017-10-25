@@ -1,7 +1,5 @@
 import requests
 
-from django.conf import settings
-
 from .endpoints import ENDPOINTS
 
 
@@ -18,11 +16,11 @@ class MailUpExpiredTokenException(MailUpAuthException):
 
 
 class Client:
-    def __init__(self):
-        self.id = settings.MAILUP_CLIENT_ID
-        self.secret = settings.MAILUP_CLIENT_SECRET
-        self.username = settings.MAILUP_USERNAME
-        self.password = settings.MAILUP_PASSWORD
+    def __init__(self, client_id, client_secret, username, password):
+        self.id = client_id
+        self.secret = client_secret
+        self.username = username
+        self.password = password
         self.token = ''
         self.refresh_token = ''
         self.expiration_token_in = 0
