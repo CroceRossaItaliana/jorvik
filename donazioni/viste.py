@@ -9,6 +9,7 @@ from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from django.utils.safestring import mark_safe
 from django.http import JsonResponse
+from django.utils.text import slugify
 
 from anagrafica.models import Sede, Appartenenza
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
@@ -18,8 +19,8 @@ from base.errori import errore_generico
 from base.utils import poco_fa
 from donazioni.elenchi import ElencoCampagne, ElencoEtichette, ElencoDonazioni, ElencoDonatori
 from donazioni.forms import (ModuloCampagna, ModuloEtichetta, ModuloDonazione, ModuloDonatore,
-                             ModuloImportDonazioni, ModuloImportDonazioniMapping, ModuloInviaNotifica)
-from donazioni.models import Campagna, Etichetta, Donatore, Donazione, AssociazioneDonatorePersona
+                             ModuloImportDonazioni, ModuloImportDonazioniMapping, ModuloInviaNotifica, ModuloImportaMailUp)
+from donazioni.models import Campagna, Etichetta, Donatore, Donazione, AssociazioneDonatorePersona, SedeCampagnaFittizia
 from donazioni.utils import invia_mail_ringraziamento, invia_notifica_donatore
 from donazioni.utils_importazione import analizza_file_import
 from ufficio_soci.models import Quota
@@ -453,7 +454,7 @@ def donatore_elimina(request, me, pk):
     if not me.permessi_almeno(donatore, COMPLETO):
         return redirect(ERRORE_PERMESSI)
     donatore.delete()
-    return redirect(reverse('donazioni_campagne_donatori'))
+    return redirect(reverse('donazioni_campagne_donatori_elenco'))
 
 
 @pagina_privata
@@ -645,6 +646,50 @@ def donazioni_import_step_2(request, me, campagna_id):
         contesto['riepilogo_messaggio'] = riepilogo_messaggio
 
     return 'donazioni_import.html', contesto
+
+
+@pagina_privata
+def donatori_importa_mailup(request, me, campagna_id):
+    campagna = get_object_or_404(Campagna, pk=campagna_id)
+    if not me.permessi_almeno(campagna, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+    sede = campagna.organizzatore
+    account = sede.mailup
+    if not account:
+        messages.add_message(request, messages.ERROR, "Il comitato organizzatore non ha configurato l'account MailUp")
+        return redirect(reverse('donazioni_campagne_donazioni', args=(campagna_id,)))
+    liste = account.liste()
+    modulo = ModuloImportaMailUp(request.POST or None, liste=liste)
+    if modulo.is_valid():
+        nuovi_contatti = []
+        campagna_fittizia = SedeCampagnaFittizia.ottieni_campagna_fittizia(sede=campagna.organizzatore, campagna=campagna)
+        for id_lista in modulo.cleaned_data['liste']:
+            contatti = account.contatti(id_lista)
+
+            for c in contatti:
+                donatore = Donatore(**c)
+                esiste_gia, istanza = Donatore.esiste_gia(donatore)
+                # import di profilo donatore senza donazioni: associazione a campagna fittizia
+                if esiste_gia:
+                    continue
+                donatore.save()
+                nome_lista = [l[1] for l in liste if l[0] == int(id_lista)][0]
+                etichetta = Etichetta(slug=slugify(nome_lista), comitato=sede)
+                etichetta.save()
+                donatore.etichette.add(etichetta)
+                nuovi_contatti.append(donatore)
+                donazione_fittizia = Donazione(importo=0, campagna=campagna_fittizia, donatore=donatore,
+                                               data=poco_fa(), permetti_scaricamento_ricevute=False,
+                                               )
+                donazione_fittizia.save()
+        messages.add_message(request, messages.SUCCESS, 'Importati {} nuovi contatti'.format(len(nuovi_contatti)))
+        return redirect(reverse('donazioni_campagne_donatori_elenco'))
+
+    contesto = {
+        'campagna': campagna,
+        'modulo': modulo,
+    }
+    return 'donazioni_import_mailup.html', contesto
 
 
 @pagina_privata

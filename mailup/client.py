@@ -16,13 +16,13 @@ class MailUpExpiredTokenException(MailUpAuthException):
 
 
 class Client:
-    def __init__(self, client_id, client_secret, username, password):
+    def __init__(self, client_id, client_secret, username, password, token='', refresh_token=''):
         self.id = client_id
         self.secret = client_secret
         self.username = username
         self.password = password
-        self.token = ''
-        self.refresh_token = ''
+        self.token = token
+        self.refresh_token = refresh_token
         self.expiration_token_in = 0
 
     @classmethod
@@ -55,6 +55,7 @@ class Client:
         self.token = res['access_token']
         self.refresh_token = res['refresh_token']
         self.expiration_token_in = res['expires_in']
+        return self.token, self.refresh_token
 
     def auth_refresh(self):
         data = {'grant_type': 'refresh_token',
@@ -65,6 +66,7 @@ class Client:
         self.refresh_token = res['refresh_token']
         self.expiration_token_in = res['expires_in']
 
+    @property
     def auth_headers(self):
 
         if self.token:
@@ -88,10 +90,19 @@ class Client:
          'Skipped': 0,
          'TotalElementsCount': 1}
         """
-        headers = {'accept': 'application/json',
-                   'authorization': 'Bearer {}'.format(self.token),
-                   'content-type': 'application/json'}
-        res = self._get(ENDPOINTS['read_lists'], headers=headers)
+        if not self.token:
+            self.auth()
+        res = self._get(ENDPOINTS['read_lists'], headers=self.auth_headers)
+        return res
+
+    def create_list(self):
+        pass
+
+    def read_recipients(self, id_list):
+        if not self.token:
+            self.auth()
+        endpoint = ENDPOINTS['read_recipients'].format(id_list) + '?PageSize=1000'
+        res = self._get(endpoint, headers=self.auth_headers)
         return res
 
     def _post(self, endpoint, data, **kwargs):

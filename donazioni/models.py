@@ -75,6 +75,10 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
         return '/donazioni/campagne/%d/donazioni/nuova/' % (self.pk,)
 
     @property
+    def url_importa_da_mailup(self):
+        return reverse('donazioni_campagna_importa_mailup', args=(self.pk,))
+
+    @property
     def url_importa_xls(self):
         return reverse('donazioni_campagna_importa', args=(self.pk,))
 
@@ -356,20 +360,11 @@ class Donatore(ModelloSemplice, ConCommenti):
         return '/donazioni/donatore/%d/donazioni/elenco/' % (self.pk,)
 
     @classmethod
-    def nuovo_o_esistente(cls, donatore):
+    def esiste_gia(cls, donatore):
         """
-        Questo metodo contribuisce ad implementare la logica del requisito C-9:
-        'Se sono forniti dati ulteriori dal donatore devono comprendere almeno uno
-        tra i seguenti blocchi di informazioni:
-            Indirizzo e-mail
-            Codice Fiscale (per persone fisiche)
-            Nome, Cognome, Data e Luogo di nascita (per persone fisiche)
-            Ragione sociale e codice fiscale (per persone giuridiche)
-            Nome, Cognome (per persone fisiche)'
-
-        Vedere anche i metodi privati _donatore_esistente e _riconcilia_istanze
+        Metodo che ritorna True se il donatore esiste già in Anagrafica centralizzata
         :param donatore: oggetto Donatore
-        :return: Record esistente o appena creato
+        :return: (bool, Donatore)
         """
         filtro = None
         if donatore.codice_fiscale:
@@ -391,7 +386,26 @@ class Donatore(ModelloSemplice, ConCommenti):
                        comune_nascita=donatore.comune_nascita)
 
         istanza_esistente = Donatore.objects.filter(filtro).first() if filtro else None
-        if not istanza_esistente:
+        return bool(istanza_esistente), istanza_esistente
+
+    @classmethod
+    def nuovo_o_esistente(cls, donatore):
+        """
+        Questo metodo contribuisce ad implementare la logica del requisito C-9:
+        'Se sono forniti dati ulteriori dal donatore devono comprendere almeno uno
+        tra i seguenti blocchi di informazioni:
+            Indirizzo e-mail
+            Codice Fiscale (per persone fisiche)
+            Nome, Cognome, Data e Luogo di nascita (per persone fisiche)
+            Ragione sociale e codice fiscale (per persone giuridiche)
+            Nome, Cognome (per persone fisiche)'
+
+        Vedere anche i metodi privati _donatore_esistente e _riconcilia_istanze
+        :param donatore: oggetto Donatore
+        :return: Record esistente o appena creato
+        """
+        esiste_gia, istanza = cls.esiste_gia(donatore)
+        if not esiste_gia:
             # Non esiste alcun donatore nell'anagrafica donatori centralizzata
             # Crea quindi un nuovo donatore dai dati derivanti dal modulo ModuloDonatore
             donatore.save()
@@ -403,8 +417,8 @@ class Donatore(ModelloSemplice, ConCommenti):
         # (quali indirizzo, telefono etc.)
         # Questo per evitare che dati inseriti per una campagna di un comitato
         # siano visibili ad altri comitati
-        istanza_esistente = cls._riconcilia_istanze(istanza_esistente, donatore)
-        return istanza_esistente
+        istanza = cls._riconcilia_istanze(istanza, donatore)
+        return istanza
 
     @classmethod
     def _riconcilia_istanze(cls, donatore_esistente, donatore_nuovo):
@@ -553,7 +567,7 @@ class Donazione(ModelloSemplice, ConMarcaTemporale):
                     instance.data = poco_fa()
                 else:
                     instance.data = ultima_donazione.data
-        if instance.donatore:
+        if instance.donatore and not instance.campagna.fittizia:
             if instance.modalita_singola_ricorrente == sender.RICORRENTE:
                 instance.donatore.periodico = True
                 instance.donatore.save()

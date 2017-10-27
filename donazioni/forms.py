@@ -364,3 +364,17 @@ class ModuloImportDonazioniMapping(forms.Form):
             # Rollback in caso di errori o di Test Importazione
             pass
         return riepilogo
+
+
+class ModuloImportaMailUp(forms.Form):
+    importa = forms.BooleanField(widget=forms.HiddenInput(),
+                                 required=False,
+                                 initial=True)
+    liste = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple,
+                                      required=False,
+                                      label='Importa dalle liste:')
+
+    def __init__(self, *args, **kwargs):
+        self.liste = kwargs.pop('liste')
+        super().__init__(*args, **kwargs)
+        self.fields['liste'].choices = self.liste
