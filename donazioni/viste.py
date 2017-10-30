@@ -79,7 +79,7 @@ def campagna_nuova(request, me):
         return redirect(campagna.url_responsabili)
 
     contesto = {
-        "modulo": modulo
+        'modulo': modulo
     }
     return 'donazioni_campagna_nuova.html', contesto
 

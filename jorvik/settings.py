@@ -31,10 +31,30 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+
     # Librerie terze
+    'bootstrap3',
+    'django_countries',
+    'autocomplete_light',
+    'django_extensions',
+    'loginas',
+    'django_cron',
+    'django.contrib.humanize',
+    'django_gravatar',
+    'compressor',
+    'easy_thumbnails',
+    'filer',
+    'ckeditor',
+    'ckeditor_filebrowser_filer',
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
+    'otp_yubikey',
+    'two_factor',
     'nocaptcha_recaptcha',
     # 'oauth2_provider',
     'mptt',
+
     # Moduli interni
     'base',
     'autenticazione',
@@ -48,29 +68,10 @@ INSTALLED_APPS = [
     'posta',
     'sangue',
     'formazione',
-    'bootstrap3',
-    'django_countries',
-    'autocomplete_light',
-    'django_extensions',
-    'loginas',
-    'django_cron',
-    'django.contrib.humanize',
-    'django_gravatar',
     'centrale_operativa',
-    'compressor',
-    'easy_thumbnails',
     'gestione_file',
     'segmenti',
     'articoli',
-    'filer',
-    'ckeditor',
-    'ckeditor_filebrowser_filer',
-
-    'django_otp',
-    'django_otp.plugins.otp_static',
-    'django_otp.plugins.otp_totp',
-    'otp_yubikey',
-    'two_factor',
 
     'donazioni',
     'mailup',
@@ -248,11 +249,6 @@ APIS_CONF.read(APIS_CONF_FILE)
 GOOGLE_KEY = APIS_CONF.get('google', 'api_key', fallback=os.environ.get("GOOGLE_KEY"))
 DOMPDF_ENDPOINT = APIS_CONF.get('dompdf', 'endpoint',
                                 fallback='')
-
-MAILUP_CLIENT_ID = APIS_CONF.get('mailup', 'client_id', fallback=os.environ.get("MAILUP_CLIENT_ID"))
-MAILUP_CLIENT_SECRET = APIS_CONF.get('mailup', 'client_secret', fallback=os.environ.get("MAILUP_CLIENT_SECRET"))
-MAILUP_USERNAME = APIS_CONF.get('mailup', 'username', fallback=os.environ.get("MAILUP_USERNAME"))
-MAILUP_PASSWORD = APIS_CONF.get('mailup', 'password', fallback=os.environ.get("MAILUP_PASSWORD"))
 
 DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']
 

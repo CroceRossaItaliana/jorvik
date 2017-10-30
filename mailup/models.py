@@ -12,8 +12,9 @@ class AccountMailUp(ModelloSemplice):
     client_secret = models.UUIDField(help_text='Secret key per il client MailUp')
     username = models.CharField(max_length=100, help_text='Username di un account MailUp')
     password = models.CharField(max_length=100, help_text='Password di un account MailUp')
-    token = models.CharField(max_length=200, help_text='Token')
-    refresh_token = models.CharField(max_length=200, help_text='Refresh Token')
+    token = models.CharField(max_length=200, help_text='Token', blank=True)
+    refresh_token = models.CharField(max_length=200, help_text='Refresh Token', blank=True)
+    console_address = models.URLField(blank=True, help_text='Indirizzo della console MailUp. Es. https://a0f8a2.emailsp.com')
 
     @classmethod
     def sedi_con_account(cls):

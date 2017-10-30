@@ -22,7 +22,7 @@ class ModuloCampagna(forms.ModelForm):
         fields = ('inizio', 'fine', 'nome', 'descrizione', 'organizzatore',
                   'testo_email_ringraziamento', 'permetti_scaricamento_ricevute')
         widgets = {
-            "descrizione": WYSIWYGSemplice(),
+            'descrizione': WYSIWYGSemplice(),
         }
 
     organizzatore = autocomplete_light.forms.ModelChoiceField('SedeDonazioniAutocompletamento',

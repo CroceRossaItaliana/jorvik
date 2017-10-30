@@ -42,6 +42,7 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
     testo_email_ringraziamento = models.TextField(blank=True,
                                                   help_text="Inserire il testo che sarà incluso nella mail da "
                                                             "inviare ai donatori che hanno fornito l'indirizzo email")
+    id_lista_mailup = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return self.nome
@@ -101,6 +102,10 @@ class Campagna(ModelloSemplice, ConMarcaTemporale, ConStorico, ConDelegati):
     @property
     def url_cancella(self):
         return '/donazioni/campagne/%d/elimina' % (self.pk,)
+
+    @property
+    def url_modulo_mailup(self):
+        return reverse('donazioni_campagna_modulo_mailup', args=(self.pk, ))
 
     @property
     def link(self):
