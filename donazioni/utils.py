@@ -36,6 +36,9 @@ def invia_mail_ringraziamento(donatore, campagna, gia_registrato=None):
              'donatore': donatore,
              'link_registrazione': link,
              'campagna': campagna}
+    if campagna.id_lista_mailup:
+        corpo.update({'url_registrazione_mailup': campagna.url_modulo_mailup,
+                      'testo_link_mailup': 'Iscriviti alla newsletter della campagna!'})
 
     Messaggio.invia_raw(
         oggetto=oggetto,
@@ -54,3 +57,77 @@ def invia_notifica_donatore(donazione):
     registrazione_donatore_persona = AssociazioneDonatorePersona.objects.filter(donatore=donatore).first() or None
     invia_mail_ringraziamento(donatore, campagna, registrazione_donatore_persona)
     return 'Notifica inviata!', True
+
+
+def crea_lista_mailup(campagna):
+    sede = campagna.organizzatore
+    responsabile = campagna.responsabili_attuali.first()
+    body = {
+        'Name': campagna.nome,
+        'Business': True,
+        'Customer': True,
+
+        'OwnerEmail': sede.presidente().email,
+        'Description': "Mailing list per la campagna donazioni economiche {}".format(campagna.nome),
+        'ReplyTo': responsabile.email,
+
+        'Format': 'html',
+        'NLSenderName': responsabile.nome_completo,
+        'CompanyName': 'CRI: {}'.format(sede.nome_completo),
+        'ContactName': responsabile.nome_completo,
+        'Address': sede.locazione.indirizzo,
+        'City': sede.locazione.comune,
+        'CountryCode': sede.locazione.stato.code,
+        'PermissionReminder': "Ricevi questa email perch\\u00e9 sei registrato "
+                              "alla newsletter della campagna donazioni economiche {}".format(campagna.nome),
+        'WebSiteUrl': sede.sito_web or 'https://gaia.cri.it/',
+        "UseDefaultSettings": True,
+        'Phone': sede.telefono or '3341954461',
+        'PostalCode': sede.locazione.cap,
+        'StateOrProvince': sede.locazione.provincia_breve,
+        'TimeZoneCode': "UTC+01:00.0",
+        'Charset': "UTF-8",
+        'SubscribedEmail': False,
+        'BouncedEmail': responsabile.email,
+        'FrontendForm': True,
+        'Public': True,
+        'ScopeCode': 0,
+        'TrackOnOpened': True,
+        'OptoutType': 3,
+        'SendEmailOptout': False,
+        'Disclaimer': "Per l'informativa sulla privacy D.Lgs 196/2003 visitare "
+                      "l'home page del sito. <br/> Policy AntiSPAM garantita da "
+                      "<a href=\"http://www.mailup.it/email-marketing/policy-antispam.asp\" target=_blank>"
+                      "<img src=\"http://doc.mailupnet.it/logo_small_R.gif\" border=\"0\" align=\"middle\" /></a>",
+        'HeaderListUnsubscriber': "<[listunsubscribe]>,<[mailto_uns]>",
+        'HeaderXAbuse': "Please report abuse here:  http://www.mailup.it/email-marketing/Policy-antispam_ENG.asp",
+
+        'SmsSenderName': responsabile.nome_completo,
+        'DefaultPrefix': "0039",
+        'SendConfirmSms': False,
+        'MultipartText': True,
+        'KBMax': 300,
+        'NotifyEmail': responsabile.email,
+        'idSettings': 1,
+        'ConversionlabTrackCode': '',
+        'LinkTrackingParameters': '',
+
+    }
+
+    client_mailup = sede.account_mailup
+
+    res = client_mailup.crea_lista(body)
+    return res
+
+
+def iscrivi_email(campagna, id_lista, nome, email, telefono):
+    body = {
+        "Name": nome or '',
+        "Email": email,
+        "MobileNumber": telefono or '',
+        "MobilePrefix": "0039"
+    }
+    sede = campagna.organizzatore
+    client_mailup = sede.account_mailup
+    res = client_mailup.iscrivi_email(id_lista, body)
+    return res

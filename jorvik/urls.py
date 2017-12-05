@@ -334,6 +334,8 @@ urlpatterns = [
         name='donazioni_campagna_importa_step_2'),
     url(r'^donazioni/campagne/(?P<campagna_id>[0-9]+)/importa_mailup/$', donazioni.viste.donatori_importa_mailup,
         name='donazioni_campagna_importa_mailup'),
+    url(r'^donazioni/campagne/(?P<campagna_id>[0-9]+)/newsletter_iscrizione/$', donazioni.viste.modulo_mailup,
+        name='donazioni_campagna_modulo_mailup'),
 
     url(r'^donazioni/donatori/ifrelenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', donazioni.viste.iframe_donatori_elenco),
     url(r'^donazioni/donatori/ifrelenco/(?P<elenco_id>.*)/$', donazioni.viste.iframe_donatori_elenco),

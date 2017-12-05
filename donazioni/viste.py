@@ -13,15 +13,15 @@ from django.utils.text import slugify
 
 from anagrafica.models import Sede, Appartenenza
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
-from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO, ERRORE_PERMESSI, MODIFICA, LETTURA
-from autenticazione.funzioni import pagina_privata
+from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO, ERRORE_PERMESSI, MODIFICA, LETTURA, ERRORE_ORFANO
+from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico
 from base.utils import poco_fa
 from donazioni.elenchi import ElencoCampagne, ElencoEtichette, ElencoDonazioni, ElencoDonatori
 from donazioni.forms import (ModuloCampagna, ModuloEtichetta, ModuloDonazione, ModuloDonatore,
                              ModuloImportDonazioni, ModuloImportDonazioniMapping, ModuloInviaNotifica, ModuloImportaMailUp)
 from donazioni.models import Campagna, Etichetta, Donatore, Donazione, AssociazioneDonatorePersona, SedeCampagnaFittizia
-from donazioni.utils import invia_mail_ringraziamento, invia_notifica_donatore
+from donazioni.utils import invia_mail_ringraziamento, invia_notifica_donatore, crea_lista_mailup, iscrivi_email
 from donazioni.utils_importazione import analizza_file_import
 from ufficio_soci.models import Quota
 
@@ -76,6 +76,11 @@ def campagna_nuova(request, me):
     if modulo.is_valid():
         campagna = modulo.save()
         request.session['campagna_creata'] = campagna.pk
+        sede = campagna.organizzatore
+        if sede.mailup:
+            id_lista = crea_lista_mailup(campagna)
+            campagna.id_lista_mailup = id_lista
+            campagna.save()
         return redirect(campagna.url_responsabili)
 
     contesto = {
@@ -128,6 +133,7 @@ def campagna(request, me, pk):
 @pagina_privata
 def campagna_fine(request, me, pk):
     campagna = get_object_or_404(Campagna, pk=pk)
+
     if not me.permessi_almeno(campagna, COMPLETO):
         return redirect(ERRORE_PERMESSI)
 
@@ -704,3 +710,33 @@ def autocompletamento_etichette(request, me):
     filtro_etichette = Q(comitato__in=chain(comitati, sedi_deleghe_campagne)) | Q(campagne__in=campagne_qs)
     etichette = Etichetta.objects.filter(filtro_etichette).filter(slug__icontains=term).distinct('slug').values_list('slug', flat=True)
     return JsonResponse(list(etichette), safe=False)
+
+
+@pagina_pubblica
+def modulo_mailup(request, me=None, campagna_id=None):
+    campagna = get_object_or_404(Campagna, pk=campagna_id)
+    id_lista_mailup = campagna.id_lista_mailup or None
+    if not id_lista_mailup:
+        redirect(ERRORE_ORFANO)
+
+    contesto = {
+        'campagna': campagna,
+        'lista': id_lista_mailup
+    }
+
+    if request.POST:
+        id_lista = request.POST['id_lista']
+        if id_lista != id_lista_mailup:
+            redirect(ERRORE_PERMESSI)
+
+        email = request.POST['email']
+        nome = request.POST.get('nome')
+        telefono = request.POST.get('telefono')
+
+        res = iscrivi_email(campagna, id_lista_mailup, nome, email, telefono)
+        if res:
+            contesto['successo'] = True
+
+    return 'modulo_mailup.html', contesto
+
+

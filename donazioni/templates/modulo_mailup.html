@@ -1,0 +1,44 @@
+{% extends 'donazioni_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load donazioni %}
+{% load utils %}
+{% block pagina_titolo %}
+    Iscriviti alla newsletter
+{% endblock %}
+
+{% block app_contenuto %}
+<div class="row">
+    <div class="col-md-12">
+    {% if successo %}
+        <div>
+        <h1>Richiesta di iscrizione riuscita!</h1>
+        </div>
+    {% else %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="panel panel-primary">
+                <div class="panel panel-heading">
+                    <h2 class="panel-title">Modulo iscrizione alla newsletter della campagna {{ campagna.nome }}</h2>
+                </div>
+                <div class="panel panel-body">
+                    <label class="control-label" for="email" >Email*</label>
+                    <input class="form-control" type="email" name="email" id="email" placeholder="Inserisci la tua email" required="required">
+                    <p >Quando invii il modulo, controlla la tua inbox per confermare l'iscrizione</p>
+                    <label class="control-label" for="nome" >Nome</label>
+                    <input class="form-control" type="text" name="nome" id="nome" placeholder="Inserisci il tuo nominativo">
+                    <label class="control-label" for="telefono" >Telefono</label>
+                    <input class="form-control" type="text" name="telefono" id="telefono" placeholder="+39123456789">
+                    <hr />
+                    <button class="btn btn-block btn-primary" type="submit" name="submit" value="true" >
+                    <i class="fa fa-fw fa-asterisk"></i>Iscriviti
+                    </button>
+                </div>
+                <input type="hidden" name="id_lista" value="{{ lista }}">
+            </div>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

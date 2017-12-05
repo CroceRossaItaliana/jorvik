@@ -1,3 +1,5 @@
+import json
+
 import requests
 
 from .endpoints import ENDPOINTS
@@ -34,12 +36,19 @@ class Client:
          'ErrorName': 'BadRequest',
          'ErrorStack': None}
         """
-        if any(('ErrorCode' in response, 'ErrorName' in response)):
-            error_code = response['ErrorCode']
-            error_description = response['ErrorDescription']
-            if error_code == '401' and 'expired' in error_description:
-                raise MailUpExpiredTokenException('Token scaduto. Eseguire client.auth_refresh()')
+        try:
+            res = response.json()
+        except ValueError:
+            error_code = '500'
+            error_description = 'MailUp REST API server error'
             raise MailUpException(error_code, error_description)
+        else:
+            if isinstance(res, dict) and any(('ErrorCode' in res, 'ErrorName' in res)):
+                error_code = res['ErrorCode']
+                error_description = res['ErrorDescription']
+                if error_code == '401' and 'expired' in error_description:
+                    raise MailUpExpiredTokenException('Token scaduto. Eseguire client.auth_refresh()')
+                raise MailUpException(error_code, error_description)
 
     def auth(self):
         """
@@ -51,7 +60,7 @@ class Client:
         data = {'grant_type': 'password',
                 'client_id': self.id, 'client_secret': self.secret,
                 'username': self.username, 'password': self.password}
-        res = self._post(ENDPOINTS['token'], data)
+        res, _ = self._post(ENDPOINTS['token'], data)
         self.token = res['access_token']
         self.refresh_token = res['refresh_token']
         self.expiration_token_in = res['expires_in']
@@ -61,18 +70,18 @@ class Client:
         data = {'grant_type': 'refresh_token',
                 'client_id': self.id, 'client_secret': self.secret,
                 'refresh_token': self.refresh_token, 'password': self.password}
-        res = self._post(ENDPOINTS['token'], data)
+        res, _ = self._post(ENDPOINTS['token'], data)
         self.token = res['access_token']
         self.refresh_token = res['refresh_token']
         self.expiration_token_in = res['expires_in']
+        return res
 
     @property
     def auth_headers(self):
-
         if self.token:
-            return {'accept': 'application/json',
-                    'authorization': 'Bearer {}'.format(self.token),
-                    'content-type': 'application/json'}
+            return {'Accept': 'application/json',
+                    'Authorization': 'Bearer {}'.format(self.token),
+                    'Content-type': 'application/json'}
         else:
             raise MailUpAuthException('Client non autenticato. Eseguire prima client.auth()')
 
@@ -92,35 +101,58 @@ class Client:
         """
         if not self.token:
             self.auth()
-        res = self._get(ENDPOINTS['read_lists'], headers=self.auth_headers)
-        return res
+        res, refreshed = self._get(ENDPOINTS['read_lists'], headers=self.auth_headers)
+        return res, refreshed
 
-    def create_list(self):
-        pass
+    def read_list(self, id_list):
+        if not self.token:
+            self.auth()
+        res, refreshed = self._get(ENDPOINTS['get_list'].format(id_list), headers=self.auth_headers)
+        return res, refreshed
+
+    def create_list(self, body):
+        body = json.dumps(body)
+        if not self.token:
+            self.auth()
+        endpoint = ENDPOINTS['create_list']
+        res, refreshed = self._post(endpoint, body, headers=self.auth_headers)
+        return res, refreshed
 
     def read_recipients(self, id_list):
         if not self.token:
             self.auth()
         endpoint = ENDPOINTS['read_recipients'].format(id_list) + '?PageSize=1000'
-        res = self._get(endpoint, headers=self.auth_headers)
-        return res
+        res, refreshed = self._get(endpoint, headers=self.auth_headers)
+        return res, refreshed
+
+    def subscribe(self, id_list, body):
+        body = json.dumps(body)
+        if not self.token:
+            self.auth()
+        endpoint = ENDPOINTS['subscribe'].format(id_list)
+        res, refreshed = self._post(endpoint, body, headers=self.auth_headers)
+        return res, refreshed
 
     def _post(self, endpoint, data, **kwargs):
+
         try:
-            res = requests.post(endpoint, data, **kwargs)
+            res = requests.post(endpoint, data=data, **kwargs)
             self._check_errors(res)
         except ConnectionError as exc:
             res = {'ErrorCode': 500, 'ErrorName': exc.__class__.__name__,
                    'ErrorDescription': 'Endpoint non raggiungibile'}
-            return res
+            return res, False
         except MailUpExpiredTokenException:
             self.auth_refresh()
-            res = self._post(endpoint, data, **kwargs)
+            kwargs['headers'] = self.auth_headers
+            res = requests.post(endpoint, data, **kwargs)
+            return res.json(), True
         except MailUpException as exc:
             res = {'ErrorCode': exc.args[0], 'ErrorName': exc.__class__.__name__,
                    'ErrorDescription': exc.args[1]}
-            return res
-        return res.json()
+            return res, False
+        else:
+            return res.json(), False
 
     def _get(self, endpoint, **kwargs):
         try:
@@ -129,7 +161,15 @@ class Client:
         except ConnectionError as exc:
             res = {'ErrorCode': 500, 'ErrorName': exc.__class__.__name__,
                    'ErrorDescription': 'Endpoint non raggiungibile'}
+            return res, False
         except MailUpExpiredTokenException:
             self.auth_refresh()
-            res = self._get(endpoint, **kwargs)
-        return res.json()
+            kwargs['headers'] = self.auth_headers
+            res = requests.get(endpoint, **kwargs)
+            return res.json(), True
+        except MailUpException as exc:
+            res = {'ErrorCode': exc.args[0], 'ErrorName': exc.__class__.__name__,
+                   'ErrorDescription': exc.args[1]}
+            return res, False
+        else:
+            return res.json(), False
