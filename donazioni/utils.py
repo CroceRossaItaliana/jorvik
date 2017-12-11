@@ -1,6 +1,11 @@
+from collections import OrderedDict
+from datetime import timedelta
+from itertools import groupby
+
 from django.conf import settings
 from django.template.loader import get_template
 
+from base.utils import poco_fa
 from donazioni.models import TokenRegistrazioneDonatore, AssociazioneDonatorePersona
 from posta.models import Messaggio
 
@@ -131,3 +136,38 @@ def iscrivi_email(campagna, id_lista, nome, email, telefono):
     client_mailup = sede.account_mailup
     res = client_mailup.iscrivi_email(id_lista, body)
     return res
+
+
+def donazioni_per_mese_anno(donazioni):
+    donazioni_mese_anno = groupby(donazioni, key=lambda i: (i.data.month, i.data.year))
+    totali = OrderedDict()
+    for k, grp in donazioni_mese_anno:
+        grp = list(grp)
+        totali[k] = {'totale': sum(d.importo for d in grp), 'count': len(grp)}
+    return totali
+
+
+def donazioni_chart_52_settimane(donazioni):
+    data_52_settimane_fa = poco_fa() - timedelta(weeks=52)
+    donazioni = donazioni.filter(data__gte=data_52_settimane_fa)
+    donazioni_settimana = groupby(donazioni, key=lambda i: (int(i.data.date().isocalendar()[1])))
+    labels = []
+    importi = []
+    num_donazioni = []
+    range_52 = iter(range(1, 53))
+    for k, grp in donazioni_settimana:
+        i = next(range_52)
+        grp = list(grp)
+        if k > i:
+            for riempitivo in range(i, k):
+                labels.append('W%s' % riempitivo)
+                num_donazioni.append(0)
+                importi.append(0.0)
+                next(range_52)
+        labels.append('W%s' % k)
+        num_donazioni.append({'meta': '# donazioni', 'value': len(grp)})
+        importi.append({'meta': 'importo', 'value': sum(d.importo for d in grp)})
+    statistiche = {'labels': labels,
+                   'num_donazioni': num_donazioni,
+                   'importi': importi}
+    return statistiche

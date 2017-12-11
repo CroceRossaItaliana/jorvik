@@ -2,7 +2,7 @@ from django import template
 from django.template.loader import render_to_string
 
 from base.stringhe import genera_uuid_casuale
-from donazioni.elenchi import ElencoDonatori
+from donazioni.elenchi import ElencoDonatori, ElencoCampagne
 
 register = template.Library()
 

@@ -37,6 +37,7 @@
 {% block filtering_form %}
     <form method="POST">
     {% csrf_token %}
+
         <div class="input-group">
 
             <textarea title="Filtra campagne per una o più etichette"
@@ -58,8 +59,13 @@
                     </button>
                 {% endif %}
             </span>
+
         </div>
     </form>
+    <span><a href={% url 'statistiche_elenco_campagne' elenco_id=elenco_id %} class="btn btn-default btn-xs" target="_parent">
+            <i class="fa fa-fw fa-bar-chart"></i>Statistiche
+        </a>
+    </span>
 {% endblock filtering_form %}
 {% block elenco_intestazione %}
 

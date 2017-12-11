@@ -1,0 +1,117 @@
+{% extends "donazioni_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+{% load humanize %}
+{% load donazioni %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}{% endblock %}
+    Statistiche
+{% endblock %}
+{% block app_contenuto %}
+    <div class="row">
+
+
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-money"></i>
+                    Riepilogo statistiche campagne
+                </h3>
+            </div>
+
+            <div class="panel-body">
+                <table class="table table-responsive table-striped">
+                    <tr>
+                        <td>Numero totale donazioni</td>
+                        <td class="grassetto">
+                            {{ donazioni.count }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Numero totale donatori</td>
+                        <td class="grassetto">{{ donatori.count }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Totale economico donazioni</td>
+                        <td class="grassetto">
+                           {% euro fondi_raccolti.totale %}
+                        </td>
+                    </tr>
+
+                </table>
+            </div>
+
+        </div>
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-table"></i>
+                    Statistiche per mese/anno
+                </h3>
+            </div>
+
+            <div class="panel-body">
+                <table class="table table-responsive table-striped">
+                    <tr>
+                        <td class="grassetto">Mese/Anno</td>
+                        <td class="grassetto">
+                            Numero donazioni
+                        </td>
+                        <td class="grassetto">
+                            Totale economico
+                        </td>
+                    </tr>
+                    {% for data, totali in donazioni_mese_anno.items %}
+                        <tr>
+                            <td>{{ data.0 }}/{{ data.1 }}</td>
+                            <td class="grassetto">
+                                {{ totali.count }}
+                            </td>
+                            <td class="grassetto">
+                                {% euro totali.totale %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+        </div>
+        <div class="ct-chart ct-chart-bar ct-golden-section"></div>
+    </div>
+{% endblock %}
+{% block pagina_javascript_extra %}
+
+    <script type="text/javascript" async>
+        $(document).ready(function () {
+            new Chartist.Bar('.ct-chart', {
+                    labels: {{ chart.labels|safe }},
+                    series: [
+                        {{ chart.num_donazioni|safe }},
+                        {{ chart.importi|safe}}
+                    ]
+                },
+                {
+                    seriesBarDistance: 10,
+                    fullWidth: true,
+                      plugins: [
+                        Chartist.plugins.tooltip()
+                      ],
+                    axisX: {
+                        offset: 60,
+                        labelInterpolationFnc: function skipLabels(value, index) {
+                          return index % 5  === 0 ? value : null;
+                        }
+                    },
+                    axisY: {
+                        offset: 80
+                    },
+                    scaleMinSpace: 15
+                }
+            );
+        });
+    </script>
+{% endblock %}

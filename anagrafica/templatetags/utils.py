@@ -44,7 +44,8 @@ def elenco(context, oggetto_elenco=None,):
     context.request.session["elenco_%s" % (elenco_id,)] = oggetto_elenco  # Passa elenco in sessione.
 
     context.update({
-        'iframe_url': "/us/elenco/%s/1/" % (elenco_id,)
+        'iframe_url': "/us/elenco/%s/1/" % (elenco_id,),
+        'elenco_id': elenco_id,
     })
     return render_to_string('us_elenchi_inc_iframe.html', context)
 

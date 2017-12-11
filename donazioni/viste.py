@@ -740,3 +740,28 @@ def modulo_mailup(request, me=None, campagna_id=None):
     return 'modulo_mailup.html', contesto
 
 
+@pagina_privata
+def statistiche_elenco_campagne(request, me, elenco_id):
+    elenco = request.session['elenco_%s' % elenco_id]
+    # Eventuale termine di ricerca
+    filtra = request.session.get("elenco_filtra_%s" % (elenco_id,), default="")
+
+    campagne = elenco.ordina(elenco.risultati())
+    if filtra:  # Filtra risultati per etichette
+        campagne = elenco.filtra(campagne, filtra)
+
+    donatori = Donatore.objects.filter(donazioni__campagna__in=campagne).distinct('id')
+    donazioni = Donazione.objects.filter(campagna__in=campagne).order_by('data')
+    from donazioni.utils import donazioni_per_mese_anno, donazioni_chart_52_settimane
+    donazioni_per_mese_anno = donazioni_per_mese_anno(donazioni)
+    donazioni_per_settimana = donazioni_chart_52_settimane(donazioni)
+    fondi_raccolti = donazioni.aggregate(totale=Sum('importo'))
+    contesto = {'elenco_id': elenco_id, 'campagne': campagne,
+                'donazioni': donazioni, 'donazioni_mese_anno': donazioni_per_mese_anno,
+                'chart': donazioni_per_settimana,
+                'donatori': donatori, 'fondi_raccolti': fondi_raccolti}
+    return 'donazioni_statistiche_campagne.html', contesto
+
+
+
+

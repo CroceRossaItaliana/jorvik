@@ -266,7 +266,7 @@ class ModuloImportDonazioniMapping(forms.Form):
         elif nome_campo.startswith('stato'):
             return _converti_stato(valore)
         else:
-            return getattr(utils_importazione, 'converti_{}'.format(nome_campo))(valore)
+            return getattr(utils_importazione, '_converti_{}'.format(nome_campo))(valore)
 
     def processa(self, campagna, dati_importati, test_import=True):
         # TODO metodo troppo lungo e con troppi livelli di identazione!

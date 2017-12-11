@@ -339,9 +339,8 @@ urlpatterns = [
 
     url(r'^donazioni/donatori/ifrelenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', donazioni.viste.iframe_donatori_elenco),
     url(r'^donazioni/donatori/ifrelenco/(?P<elenco_id>.*)/$', donazioni.viste.iframe_donatori_elenco),
-    url(r'^donazioni/donatori/elenco/$', donazioni.viste.donatori_elenco,
-        name='donazioni_campagne_donatori_elenco'),
-
+    url(r'^donazioni/donatori/elenco/$', donazioni.viste.donatori_elenco, name='donazioni_campagne_donatori_elenco'),
+    url(r'^donazioni/campagne/statistiche/(?P<elenco_id>.*)$', donazioni.viste.statistiche_elenco_campagne, name='statistiche_elenco_campagne'),
     url(r'^donazioni/etichette/$', donazioni.viste.etichette_elenco, name='donazioni_etichette'),
     url(r'^donazioni/etichette/nuova/$', donazioni.viste.etichetta_nuova, name='donazioni_etichette_nuova'),
     url(r'^donazioni/etichette/(?P<pk>[0-9]+)/$', donazioni.viste.etichetta, name='donazioni_etichetta'),
