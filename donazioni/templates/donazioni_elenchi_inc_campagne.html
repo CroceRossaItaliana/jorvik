@@ -40,7 +40,7 @@
 
         <div class="input-group">
 
-            <textarea title="Filtra campagne per una o più etichette"
+            <textarea style="resize: none" title="Filtra campagne per una o più etichette"
                     class="form-control"
                     name="filtra" id="filtra">
             {{ filtra }}</textarea>
@@ -60,13 +60,16 @@
                 {% endif %}
             </span>
 
-        </div>
+    </div>
+
     </form>
-    <span><a href={% url 'statistiche_elenco_campagne' elenco_id=elenco_id %} class="btn btn-default btn-xs" target="_parent">
-            <i class="fa fa-fw fa-bar-chart"></i>Statistiche
-        </a>
-    </span>
+
 {% endblock filtering_form %}
+{% block pulsanti_aggiuntivi %}
+    <a href="{% url 'statistiche_elenco_campagne' elenco_id=elenco_id %}" class="btn btn-primary" target="_parent">
+            <i class="fa fa-fw fa-bar-chart"></i>Vai alla pagina delle Statistiche
+            </a>
+{% endblock %}
 {% block elenco_intestazione %}
 
     <th>Nome</th>

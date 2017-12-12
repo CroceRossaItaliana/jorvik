@@ -7,7 +7,7 @@
     <div class="container-fluid">
         <div class="row allinea-centro">
 
-            <div class="col-sm-6">
+            <div class="col-sm-4">
                 {% block filtering_form %}
                 <form method="POST">
                 {% csrf_token %}
@@ -35,8 +35,11 @@
                     </form>
                     {% endblock filtering_form %}
             </div>
-
-            <div class="col-sm-6">
+            <div class="col-sm-4">
+                {% block pulsanti_aggiuntivi %}
+                {% endblock %}
+            </div>
+            <div class="col-sm-4">
 
                 <ul class="pagination piu-piccolo" style="margin-top: 0px;">
 

@@ -154,20 +154,24 @@ def donazioni_chart_52_settimane(donazioni):
     labels = []
     importi = []
     num_donazioni = []
+    export = OrderedDict()
     range_52 = iter(range(1, 53))
     for k, grp in donazioni_settimana:
         i = next(range_52)
         grp = list(grp)
         if k > i:
+            # riempi settimane mancanti con valori nulli
             for riempitivo in range(i, k):
+                export['W%s' % riempitivo] = {'count': 0, 'totale': 0.0}
                 labels.append('W%s' % riempitivo)
                 num_donazioni.append(0)
                 importi.append(0.0)
                 next(range_52)
+        export['W%s' % k] = {'count': len(grp), 'totale': sum(d.importo for d in grp)}
         labels.append('W%s' % k)
         num_donazioni.append({'meta': '# donazioni', 'value': len(grp)})
         importi.append({'meta': 'importo', 'value': sum(d.importo for d in grp)})
     statistiche = {'labels': labels,
                    'num_donazioni': num_donazioni,
                    'importi': importi}
-    return statistiche
+    return statistiche, export

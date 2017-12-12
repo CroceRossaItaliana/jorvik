@@ -16,12 +16,14 @@ from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
 from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO, ERRORE_PERMESSI, MODIFICA, LETTURA, ERRORE_ORFANO
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico
+from base.files import Excel, FoglioExcel
 from base.utils import poco_fa
 from donazioni.elenchi import ElencoCampagne, ElencoEtichette, ElencoDonazioni, ElencoDonatori
 from donazioni.forms import (ModuloCampagna, ModuloEtichetta, ModuloDonazione, ModuloDonatore,
                              ModuloImportDonazioni, ModuloImportDonazioniMapping, ModuloInviaNotifica, ModuloImportaMailUp)
 from donazioni.models import Campagna, Etichetta, Donatore, Donazione, AssociazioneDonatorePersona, SedeCampagnaFittizia
-from donazioni.utils import invia_mail_ringraziamento, invia_notifica_donatore, crea_lista_mailup, iscrivi_email
+from donazioni.utils import (donazioni_per_mese_anno, donazioni_chart_52_settimane,
+                             invia_mail_ringraziamento, invia_notifica_donatore, crea_lista_mailup, iscrivi_email)
 from donazioni.utils_importazione import analizza_file_import
 from ufficio_soci.models import Quota
 
@@ -742,7 +744,11 @@ def modulo_mailup(request, me=None, campagna_id=None):
 
 @pagina_privata
 def statistiche_elenco_campagne(request, me, elenco_id):
-    elenco = request.session['elenco_%s' % elenco_id]
+    try:
+        elenco = request.session['elenco_%s' % elenco_id]
+    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
+        raise ValueError("Elenco non presente in sessione.")
+
     # Eventuale termine di ricerca
     filtra = request.session.get("elenco_filtra_%s" % (elenco_id,), default="")
 
@@ -752,12 +758,35 @@ def statistiche_elenco_campagne(request, me, elenco_id):
 
     donatori = Donatore.objects.filter(donazioni__campagna__in=campagne).distinct('id')
     donazioni = Donazione.objects.filter(campagna__in=campagne).order_by('data')
-    from donazioni.utils import donazioni_per_mese_anno, donazioni_chart_52_settimane
-    donazioni_per_mese_anno = donazioni_per_mese_anno(donazioni)
-    donazioni_per_settimana = donazioni_chart_52_settimane(donazioni)
+
+    donazioni_mese_anno = donazioni_per_mese_anno(donazioni)
+    donazioni_per_settimana, donazioni_per_settimana_xls = donazioni_chart_52_settimane(donazioni)
     fondi_raccolti = donazioni.aggregate(totale=Sum('importo'))
-    contesto = {'elenco_id': elenco_id, 'campagne': campagne,
-                'donazioni': donazioni, 'donazioni_mese_anno': donazioni_per_mese_anno,
+    if request.POST:
+        excel = Excel(oggetto=me)
+        fogli = {'Riepilogo': FoglioExcel('Riepilogo', ['']),
+                 'Statistiche mese anno': FoglioExcel('Statistiche mese anno', ['Mese/Anno', '# Donazioni', 'Importo']),
+                 'Statistiche ultime 52 settimane': FoglioExcel('Statistiche ultime 52 settimane', ['# Settimana', '# Donazioni', 'Importo'])}
+        # Riepilogo
+        fogli['Riepilogo'].aggiungi_riga('Numero campagne', campagne.count())
+        if filtra:
+            fogli['Riepilogo'].aggiungi_riga('Filtro etichette applicato', filtra)
+
+        fogli['Riepilogo'].aggiungi_riga('Numero totale donazioni', donazioni.count())
+        fogli['Riepilogo'].aggiungi_riga('Numero totale donatori', donatori.count())
+        fogli['Riepilogo'].aggiungi_riga('Totale economico donazioni', '{} €'.format(fondi_raccolti['totale']))
+        for mese_anno, valori in donazioni_mese_anno.items():
+            mese = mese_anno[0]
+            anno = mese_anno[1]
+            fogli['Statistiche mese anno'].aggiungi_riga('{}/{}'.format(mese, anno), valori['count'], '{} €'.format(valori['totale']))
+        for settimana, valori in donazioni_per_settimana_xls.items():
+            fogli['Statistiche ultime 52 settimane'].aggiungi_riga(settimana, valori['count'], '{} €'.format(valori['totale']))
+        excel.fogli = fogli.values()
+        excel.genera_e_salva(nome='Statistiche_Donazioni.xlsx')
+        return redirect(excel.download_url)
+
+    contesto = {'elenco_id': elenco_id, 'campagne': campagne, 'filtra': filtra,
+                'donazioni': donazioni, 'donazioni_mese_anno': donazioni_mese_anno,
                 'chart': donazioni_per_settimana,
                 'donatori': donatori, 'fondi_raccolti': fondi_raccolti}
     return 'donazioni_statistiche_campagne.html', contesto
