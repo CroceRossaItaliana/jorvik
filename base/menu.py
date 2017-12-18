@@ -138,7 +138,9 @@ def menu(request):
                 ("Donatori", "fa-users", "/donazioni/donatori/elenco/"),
                 ("Donazioni", "fa-money", "/donazioni/donazioni/elenco/"),
             )) if me and (me.ha_permesso(GESTIONE_CAMPAGNE) or me.oggetti_permesso(GESTIONE_CAMPAGNA).exists()) else None,
-            ("Statistiche Campagne", "fa-chart", "/donazioni/campagne/statistiche"),
+            ("Statistiche Campagne", (
+                ("Statistiche ed estrazioni", "fa-line-chart", "/donazioni/statistiche/"),
+            )) if me and me.ha_permesso(STATISTICHE_CAMPAGNE) else None,
         ),
         "autorizzazioni": (
             ("Richieste", (

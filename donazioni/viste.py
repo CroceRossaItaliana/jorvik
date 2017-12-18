@@ -13,7 +13,8 @@ from django.utils.text import slugify
 
 from anagrafica.models import Sede, Appartenenza
 from anagrafica.permessi.applicazioni import RESPONSABILE_CAMPAGNA
-from anagrafica.permessi.costanti import GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO, ERRORE_PERMESSI, MODIFICA, LETTURA, ERRORE_ORFANO
+from anagrafica.permessi.costanti import (GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, COMPLETO, ERRORE_PERMESSI, MODIFICA, LETTURA, ERRORE_ORFANO,
+                                          STATISTICHE_CAMPAGNE)
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico
 from base.files import Excel, FoglioExcel
@@ -26,6 +27,14 @@ from donazioni.utils import (donazioni_per_mese_anno, donazioni_chart_52_settima
                              invia_mail_ringraziamento, invia_notifica_donatore, crea_lista_mailup, iscrivi_email)
 from donazioni.utils_importazione import analizza_file_import
 from ufficio_soci.models import Quota
+
+
+@pagina_privata
+def campagna_statistiche_nazionali(request, me):
+    if not me.ha_permesso(STATISTICHE_CAMPAGNE):
+        return redirect(ERRORE_PERMESSI)
+    contesto = {}
+    return 'donazioni_statistiche_nazionali.html', contesto
 
 
 @pagina_privata

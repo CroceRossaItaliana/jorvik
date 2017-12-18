@@ -50,7 +50,6 @@ EMISSIONE_TESSERINI = "EMISSIONE_TESSERINI"
 ASPIRANTE = "ASPIRANTE"
 
 # modulo donazioni
-
 # permesso per la delega di gestione campagne di un comitato
 GESTIONE_CAMPAGNE = "GESTIONE_CAMPAGNE"
 # permesso per il responsabile di una singola campagna
