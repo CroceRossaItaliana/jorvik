@@ -21,8 +21,8 @@ from anagrafica.permessi.costanti import (
     RUBRICA_REFERENTI_ATTIVITA, RUBRICA_REFERENTI_GRUPPI,
     RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE,
     RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO,
-    GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA
-)
+    GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA,
+    STATISTICHE_CAMPAGNE)
 
 """
 Questo file gestisce la espansione dei permessi in Gaia.
@@ -353,6 +353,16 @@ def espandi_gestione_campagna(qs_campagne, al_giorno=None):
     ]
 
 
+def espandi_statistiche_campagne(qs_campagne, al_giorno=None):
+    from donazioni.models import Donazione, Donatore, Etichetta, Campagna
+    return [
+        (LETTURA, Campagna.objects),
+        (LETTURA, Donazione.objects),
+        (LETTURA, Donatore.objects),
+        (LETTURA, Etichetta.objects),
+    ]
+
+
 ESPANDI_PERMESSI = {
     GESTIONE_SOCI:                      espandi_gestione_soci,
     ELENCHI_SOCI:                       espandi_elenchi_soci,
@@ -389,4 +399,5 @@ ESPANDI_PERMESSI = {
     RUBRICA_RESPONSABILI_AUTOPARCO:     espandi_rubrica_responsabili_autoparco,
     GESTIONE_CAMPAGNE:                  espandi_gestione_campagne,
     GESTIONE_CAMPAGNA:                  espandi_gestione_campagna,
+    STATISTICHE_CAMPAGNE:                  espandi_statistiche_campagne,
 }

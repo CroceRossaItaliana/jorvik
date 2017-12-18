@@ -9,7 +9,8 @@ from django.db.models import QuerySet, Q
 from anagrafica.costanti import NAZIONALE, REGIONALE, TERRITORIALE
 from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, \
     UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, \
-    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, DELEGATO_CAMPAGNE, RESPONSABILE_CAMPAGNA
+    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, DELEGATO_CAMPAGNE, RESPONSABILE_CAMPAGNA, \
+    DELEGATO_STATISTICHE_CAMPAGNE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.applicazioni import DELEGATO_AREA
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
@@ -24,7 +25,7 @@ from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_A
     RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
     RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
     RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, STATISTICHE_CAMPAGNE
 
 
 def permessi_persona(persona):
@@ -327,6 +328,12 @@ def permessi_responsabile_campagna(campagna):
     ]
 
 
+def permessi_delegato_statistiche_campagne(sede):
+    from donazioni.models import Campagna
+    return [
+        (STATISTICHE_CAMPAGNE, Campagna.objects),
+    ]
+
 # Non modificare
 
 
@@ -352,6 +359,7 @@ PERMESSI_FUNZIONI = (
     (RESPONSABILE_FORMAZIONE,   permessi_responsabile_formazione),
     (DELEGATO_CAMPAGNE,         permessi_delegato_campagne),
     (RESPONSABILE_CAMPAGNA,     permessi_responsabile_campagna),
+    (DELEGATO_STATISTICHE_CAMPAGNE, permessi_delegato_statistiche_campagne),
 )
 
 # Tieni in memoria anche come dizionari, per lookup veloci

@@ -17,7 +17,7 @@ from django.template.loader import get_template
 from django.views.generic import ListView
 from django.utils import timezone
 
-from anagrafica.costanti import TERRITORIALE, REGIONALE
+from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE
 from anagrafica.elenchi import ElencoDelegati
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
@@ -36,7 +36,8 @@ from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, 
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
-    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI, DELEGATO_CAMPAGNE
+    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI, DELEGATO_CAMPAGNE, \
+    DELEGATO_STATISTICHE_CAMPAGNE
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
     ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO, \
     RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
@@ -1074,6 +1075,18 @@ def strumenti_delegati(request, me):
     if modulo.is_valid():
         d = modulo.save(commit=False)
 
+        # solo il comitato nazionale può delegare DELEGATO_STATISTICHE_CAMPAGNE = 'DS'
+        if d.tipo == DELEGATO_STATISTICHE_CAMPAGNE and me not in Sede.objects.filter(
+                attiva=True, tipo=Sede.COMITATO, estensione=NAZIONALE
+        ).first().presidente:
+            return errore_generico(
+                request, me,
+                titolo="Errore di autorizazione per la delega",
+                messaggio="La delega per le 'Statistiche Campagne raccolta fondi' può essere assegnata soltanto a livello nazionale",
+                torna_titolo="Torna indietro",
+                torna_url="/strumenti/delegati/",
+            )
+
         if oggetto.deleghe.all().filter(Delega.query_attuale().q, tipo=delega, persona=d.persona).exists():
             return errore_generico(
                 request, me,
@@ -1608,6 +1621,11 @@ def _presidente_sede_ruoli(sede):
             (DELEGATO_CAMPAGNE, "Campagne Donazioni", sede.delegati_attuali(tipo=DELEGATO_CAMPAGNE).count()),
         ]
     })
+
+    if sede.estensione == NAZIONALE:
+        sezioni['Responsabili'].append((DELEGATO_STATISTICHE_CAMPAGNE,
+                                        'Delegato statistiche campagne',
+                                        sede.delegati_attuali(tipo=DELEGATO_STATISTICHE_CAMPAGNE).count()))
 
     return sezioni
 

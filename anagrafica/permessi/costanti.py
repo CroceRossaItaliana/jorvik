@@ -48,9 +48,15 @@ GESTIONE_CENTRALE_OPERATIVA_SEDE = "GESTIONE_CENTRALE_OPERATIVA_SEDE"
 GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE = "GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE"
 EMISSIONE_TESSERINI = "EMISSIONE_TESSERINI"
 ASPIRANTE = "ASPIRANTE"
+
 # modulo donazioni
-GESTIONE_CAMPAGNE = "GESTIONE_CAMPAGNE"  # permesso per la delega di gestione campagne di un comitato
-GESTIONE_CAMPAGNA = "GESTIONE_CAMPAGNA"  # permesso per il responsabile di una singola campagna
+
+# permesso per la delega di gestione campagne di un comitato
+GESTIONE_CAMPAGNE = "GESTIONE_CAMPAGNE"
+# permesso per il responsabile di una singola campagna
+GESTIONE_CAMPAGNA = "GESTIONE_CAMPAGNA"
+# permesso per la visualizzazione delle statistiche a livello nazionale
+STATISTICHE_CAMPAGNE = 'STATISTICHE_CAMPAGNE'
 
 # Tipologia degli oggetti assegnati ad ogni Permesso.
 PERMESSI_OGGETTI = (
@@ -90,6 +96,7 @@ PERMESSI_OGGETTI = (
     (ASPIRANTE,                 ('formazione', 'InvitoCorsoBase')),
     (GESTIONE_CAMPAGNE,         ('anagrafica', 'Sede')),
     (GESTIONE_CAMPAGNA,         ('donazioni', 'Campagna')),
+    (STATISTICHE_CAMPAGNE,      ('donazioni', 'Campagna')),
 )
 
 # Tipologia degli oggetti assegnati ad ogni Delega.
@@ -104,6 +111,7 @@ DELEGHE_OGGETTI = (
     (REFERENTE_GRUPPO,          ('anagrafica', 'Gruppo', 'sede__in')),
     (DELEGATO_CAMPAGNE,         ('anagrafica', 'Sede', None)),
     (RESPONSABILE_CAMPAGNA,     ('donazioni', 'Campagna', 'sede__in')),
+    (STATISTICHE_CAMPAGNE,      ('donazioni', 'Campagna', None)),
 )
 
 
