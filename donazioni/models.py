@@ -445,6 +445,30 @@ class Donatore(ModelloSemplice, ConCommenti):
         res['media_class'] = 'rosso-scuro' if res['media'] >= settings.SOGLIA_MEDIA_DONAZIONE else ''
         return res
 
+    @property
+    def riga_excel(self):
+        return (self.nome_completo, self.email, self.partita_iva or self.codice_fiscale,
+                self.luogo_nascita, self.data_nascita or '', self.residenza,
+                self.telefono or '', self.cellulare or '',
+                self.get_professione_display(), self.get_lingua_display(),
+                self.get_tipo_donatore_display(),
+                'Sì' if self.periodico else 'No')
+
+    @cached_property
+    def luogo_nascita(self):
+        return '{} {} {}'.format(self.comune_nascita, self.provincia_nascita, self.stato_nascita)
+
+    @cached_property
+    def residenza(self):
+        return '{} {} {} {}'.format(self.indirizzo, self.comune_residenza, self.provincia_residenza, self.stato_residenza)
+
+    @classmethod
+    def intestazione_excel(cls):
+        return ('Nominativo', 'Email', 'CF o PIVA',
+                'Luogo di nascita', 'Data di nascita', 'Residenza',
+                'Telefono', 'Cellulare',
+                'Professione', 'Lingua', 'Tipo Donatore', 'Donatore Periodico')
+
     def commento_notifica_destinatari(self, mittente):
         from anagrafica.models import Persona
 

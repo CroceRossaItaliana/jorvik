@@ -763,26 +763,8 @@ def statistiche_elenco_campagne(request, me, elenco_id):
     donazioni_per_settimana, donazioni_per_settimana_xls = donazioni_chart_52_settimane(donazioni)
     fondi_raccolti = donazioni.aggregate(totale=Sum('importo'))
     if request.POST:
-        excel = Excel(oggetto=me)
-        fogli = {'Riepilogo': FoglioExcel('Riepilogo', ['']),
-                 'Statistiche mese anno': FoglioExcel('Statistiche mese anno', ['Mese/Anno', '# Donazioni', 'Importo']),
-                 'Statistiche ultime 52 settimane': FoglioExcel('Statistiche ultime 52 settimane', ['# Settimana', '# Donazioni', 'Importo'])}
-        # Riepilogo
-        fogli['Riepilogo'].aggiungi_riga('Numero campagne', campagne.count())
-        if filtra:
-            fogli['Riepilogo'].aggiungi_riga('Filtro etichette applicato', filtra)
-
-        fogli['Riepilogo'].aggiungi_riga('Numero totale donazioni', donazioni.count())
-        fogli['Riepilogo'].aggiungi_riga('Numero totale donatori', donatori.count())
-        fogli['Riepilogo'].aggiungi_riga('Totale economico donazioni', '{} €'.format(fondi_raccolti['totale']))
-        for mese_anno, valori in donazioni_mese_anno.items():
-            mese = mese_anno[0]
-            anno = mese_anno[1]
-            fogli['Statistiche mese anno'].aggiungi_riga('{}/{}'.format(mese, anno), valori['count'], '{} €'.format(valori['totale']))
-        for settimana, valori in donazioni_per_settimana_xls.items():
-            fogli['Statistiche ultime 52 settimane'].aggiungi_riga(settimana, valori['count'], '{} €'.format(valori['totale']))
-        excel.fogli = fogli.values()
-        excel.genera_e_salva(nome='Statistiche_Donazioni.xlsx')
+        excel = _crea_report_excel(campagne, donatori, donazioni, donazioni_mese_anno,
+                                   donazioni_per_settimana_xls, filtra, fondi_raccolti, me)
         return redirect(excel.download_url)
 
     contesto = {'elenco_id': elenco_id, 'campagne': campagne, 'filtra': filtra,
@@ -792,5 +774,29 @@ def statistiche_elenco_campagne(request, me, elenco_id):
     return 'donazioni_statistiche_campagne.html', contesto
 
 
+def _crea_report_excel(campagne, donatori, donazioni, donazioni_mese_anno, donazioni_per_settimana_xls, filtra, fondi_raccolti, me):
+    excel = Excel(oggetto=me)
+    fogli = {'Riepilogo': FoglioExcel('Riepilogo', ['']),
+             'Statistiche mese anno': FoglioExcel('Statistiche mese anno', ['Mese/Anno', '# Donazioni', 'Importo']),
+             'Soggetti Donatori': FoglioExcel('Soggetti Donatori', Donatore.intestazione_excel()),
+             'Statistiche ultime 52 settimane': FoglioExcel('Statistiche ultime 52 settimane', ['# Settimana', '# Donazioni', 'Importo'])}
+    # Riepilogo
+    fogli['Riepilogo'].aggiungi_riga('Numero campagne', campagne.count())
+    if filtra:
+        fogli['Riepilogo'].aggiungi_riga('Filtro etichette applicato', filtra)
+    fogli['Riepilogo'].aggiungi_riga('Numero totale donazioni', donazioni.count())
+    fogli['Riepilogo'].aggiungi_riga('Numero totale donatori', donatori.count())
+    fogli['Riepilogo'].aggiungi_riga('Totale economico donazioni', '{} €'.format(fondi_raccolti['totale']))
 
+    for d in donatori:
+        fogli['Soggetti Donatori'].aggiungi_riga(*d.riga_excel)
 
+    for mese_anno, valori in donazioni_mese_anno.items():
+        mese = mese_anno[0]
+        anno = mese_anno[1]
+        fogli['Statistiche mese anno'].aggiungi_riga('{}/{}'.format(mese, anno), valori['count'], '{} €'.format(valori['totale']))
+    for settimana, valori in donazioni_per_settimana_xls.items():
+        fogli['Statistiche ultime 52 settimane'].aggiungi_riga(settimana, valori['count'], '{} €'.format(valori['totale']))
+    excel.fogli = fogli.values()
+    excel.genera_e_salva(nome='Statistiche_Donazioni.xlsx')
+    return excel
