@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+
+  db:
+    image: mdillon/postgis
+
+  web:
+    image: app
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    links:
+      - db
+    depends_on:
+      - db
+      - django_build
+      - django_migrate
+      - django_collectstatic
+
+  django_build:  # Install all pip requirements (TODO prepare image)
+    build: .
+    image: app
+    # Ensure dependencies are up-to-date
+    command: pip install --upgrade -r requirements.txt
+
+  django_migrate:  # Apply database migrations
+    build: .
+    command: python manage.py migrate --noinput
+    links:
+      - db
+    depends_on:
+      - db
+
+  django_collectstatic:  # Collect static files
+    build: .
+    command: python manage.py collectstatic --noinput
+    links:
+      - db
+    depends_on:
+      - db
