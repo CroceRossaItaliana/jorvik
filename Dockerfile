@@ -1,21 +1,9 @@
-FROM alfioemanuele/gaia-jorvik
-
-RUN rm -rf /vagrant
-
-RUN rm /usr/bin/python3
-RUN ln -s /usr/bin/python3.5 /usr/bin/python3
-
-ADD . /vagrant
-WORKDIR /vagrant
-
-#ENV PYTHONPATH \$PYTHONPATH:/usr/local/lib/python3.5/dist-packages
-RUN pip3 install -r requirements.txt
-
-RUN cp /vagrant/config/pgsql.cnf.sample /vagrant/config/pgsql.cnf
-RUN sed -i -e 's/host = localhost/host = db/' /vagrant/config/pgsql.cnf
-RUN sed -i -e 's/user = postgres/user = jorvik/' /vagrant/config/pgsql.cnf
-RUN sed -i -e 's/password =/password = jorvik/' /vagrant/config/pgsql.cnf
-
-EXPOSE 8000
-
-CMD python3 manage.py migrate --noinput && python3 manage.py collectstatic --noinput && python3 manage.py runserver 0.0.0.0:8000
+ # TODO replace w/ ubuntu and install geolibs
+ # see https://docs.djangoproject.com/en/1.11/ref/contrib/gis/install/geolibs/#installing-geospatial-libraries
+ FROM python:3
+ ENV PYTHONUNBUFFERED 1
+ RUN apt-get update; apt-get --assume-yes install binutils libproj-dev gdal-bin
+ RUN mkdir /code
+ WORKDIR /code
+ ADD . /code/
+ RUN pip install -r requirements.txt
