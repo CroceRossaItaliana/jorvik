@@ -1,7 +1,5 @@
 FROM alfioemanuele/jorvik-docker-base:latest
 
-# Working directory
-
 # Entrypoint
 COPY ./config/docker-entrypoint.sh /tmp
 RUN chmod +x /tmp/docker-entrypoint.sh
