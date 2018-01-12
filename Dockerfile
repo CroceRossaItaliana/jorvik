@@ -3,10 +3,10 @@ FROM alfioemanuele/jorvik-docker-base:latest
 # Working directory
 RUN mkdir /code
 ADD . /code/
-WORKDIR /code
 
 # Entrypoint
 RUN chmod +x ./config/docker-entrypoint.sh
+WORKDIR /code
 ENTRYPOINT ["bash", "./config/docker-entrypoint.sh"]
 
 # Start development server
