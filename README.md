@@ -121,18 +121,16 @@ Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 
 * **Eseguire comandi sulla macchina Web (Django)**
 
     ```bash
-    $ docker-compose ps
-              Name                     Command               State                Ports
-    ---------------------------------------------------------------------------------------------
-    jorvik_db_1         docker-entrypoint.sh postgres    Up      5432/tcp
-    jorvik_pdf_1        docker-php-entrypoint apac ...   Up      80/tcp
-    jorvik_selenium_1   /opt/bin/entry_point.sh          Up      4444/tcp, 0.0.0.0:5900->5900/tcp
-    jorvik_web_1        bash ./config/docker-entry ...   Up      0.0.0.0:8000->8000/tcp
+    # Shell di Django
+    $ docker-compose exec web python manage.py shell
+
+    # Bash
+    $ docker-compose exec web bash
     ```
 
-    ```bash
-    $ docker exec -it jorvik_web_1 python manage.py shell
-    ```
+    Oppure
+
+
 
 ### Autenticazione a due fattori
 
