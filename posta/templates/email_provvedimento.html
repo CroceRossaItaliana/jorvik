@@ -5,7 +5,7 @@
 
 <p class="grassetto">Ciao {{ provvedimento.persona.nome_completo }},</p>
 <p>Questa è una email di attivazione che ti avvisa l'avvenuta registrazione di un provvedimento disciplinare.</p>
-<p>Nello specifico è stato registrato un provvedimento di <strong> _PROVVEDIMENTO </strong> per <strong> {{ provvedimento.motivazione }} </strong>, inizio del provvedimento <strong> {{ provvedimento.inizio }} </strong> e numero di protocollo <strong> {{ provvedimento.protocollo_numero }} </strong>. </p>
+<p>Nello specifico è stato registrato un provvedimento di <strong> {{ provvedimento.get_tipo_display }} </strong> per <strong> {{ provvedimento.motivazione }} </strong>, inizio del provvedimento <strong> {{ provvedimento.inizio }} </strong> e numero di protocollo <strong> {{ provvedimento.protocollo_numero }} </strong>. </p>
 
 <p>Se pensi ci sia stato un errore contatta il tuo presidente</p>
 
