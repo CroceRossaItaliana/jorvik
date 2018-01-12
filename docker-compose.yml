@@ -13,8 +13,10 @@ services:
       - "8000:8000"
     links:
       - db
+      - pdf
     depends_on:
       - db
+      - pdf
     environment:
       - "DJANGO_LIVE_TEST_SERVER_ADDRESS=web:8081-8090"
 
@@ -24,3 +26,6 @@ services:
       - web
     ports:
       - "5900:5900"  # VNC (debugging)
+
+  pdf:
+    build: https://github.com/CroceRossaItaliana/gaia-dompdf.git#master
