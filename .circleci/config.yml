@@ -38,7 +38,7 @@ jobs:
             set -x
             docker-compose up -d
 
-      - test:
-          override:
-            - python manage.py test -v 3 --parallel 1
+  test:
+    override:
+      - docker-compose exec -e SKIP_DJANGO_MIGRATE=1 web python manage.py test -v 3 --parallel 1
 
