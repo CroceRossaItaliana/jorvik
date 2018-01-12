@@ -87,12 +87,10 @@ Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 
   * Preferenze > Progetto > Interprete > Aggiungi interprete remoto
     ![image](https://cloud.githubusercontent.com/assets/621062/10762277/4da18088-7cbd-11e5-924e-a2737d7783e1.png)
 
-  * Scegliere **"Vagrant"** e **`/usr/bin/python3`** come interprete, e cliccare OK
-    ![image](https://cloud.githubusercontent.com/assets/621062/10762319/7ce52214-7cbd-11e5-8cbf-26bfe0565b7e.png)
+  * Scegliere **"Docker-Compose"** e **`web`** come da immagine, e cliccare OK
+    ![image](https://user-images.githubusercontent.com/621062/34888028-7a95f13e-f7c0-11e7-9eaa-e6bad16c7f51.png)
 
-    **Nota bene**: Su Mac OS X, se questo step fallisce ("impossibile trovare vagrant"), e' per via di un bug noto con la piattaforma. In tal caso e' necessario chiudere e riavviare PyChar da Terminale, con il comando `charm`.
-
-  * Assicurarsi che l'interprete "Vagrant" sia ora selezionato come predefinito per il progetto, quindi cliccare OK
+  * Assicurarsi che l'interprete "Remote Python 3.x Docker..." sia ora selezionato come predefinito per il progetto, quindi cliccare OK
 
 6. **Usare il tasto "Run" su PyCharm** per controllare e avviare il server
   ![image](https://cloud.githubusercontent.com/assets/621062/10762357/abcb3050-7cbd-11e5-9fdf-c08a0b439369.png)
