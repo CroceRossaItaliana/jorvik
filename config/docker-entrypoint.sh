@@ -7,6 +7,8 @@
 # before starting the Django development server.
 #
 
+cd /code
+
 if [ "$SKIP_ALL" ]
 then
     SKIP_REQUIREMENTS_CHECK=1
