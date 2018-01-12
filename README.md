@@ -83,7 +83,7 @@ Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 
    Questo avviera' i container necessari per lo sviluppo ed il testing di Gaia (web, database, pdf, selenium).
 
 6. **Installare PyCharm Professional** da [JetBrains](https://www.jetbrains.com/pycharm/). La licenza e' gratis per gli studenti. Contattaci se necessiti di una licenza per lavorare su Jorvik: abbiamo un numero limitato di licenze per i volontari, quindi approfitta del trial di 30 giorni per assicurarti di voler collaborare.
-6. **Configurare PyCharm per usare Vagrant**:
+6. **Configurare PyCharm per usare l'interprete del container Docker**:
   * Preferenze > Progetto > Interprete > Aggiungi interprete remoto
     ![image](https://cloud.githubusercontent.com/assets/621062/10762277/4da18088-7cbd-11e5-924e-a2737d7783e1.png)
 
@@ -125,9 +125,6 @@ Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 
     # Bash
     $ docker-compose exec web bash
     ```
-
-    Oppure
-
 
 
 ### Autenticazione a due fattori
