@@ -18,6 +18,7 @@ services:
       - db
       - pdf
       - selenium
+    hostname: web
     environment:
       - "DJANGO_LIVE_TEST_SERVER_ADDRESS=web:8081-8181"
 
