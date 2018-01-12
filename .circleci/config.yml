@@ -15,16 +15,11 @@ jobs:
       - setup_remote_docker
 
       - run:
-          name: Start containers
-          command: |
-            set -x
-            docker-compose up -d
-
-      - run:
           name: Django tests
           command: |
             pwd
             ls
+            docker-compose up -d
             docker-compose ps
             docker-compose logs web
             docker-compose run -e SKIP_DJANGO_MIGRATE=1 web python manage.py test -v 3 --parallel 1
