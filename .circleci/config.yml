@@ -2,7 +2,7 @@ version: 2
 
 jobs:
 
-  build:
+  test:
     docker:
       - image: ubuntu:latest
 
@@ -40,7 +40,8 @@ jobs:
           command: |
             set -x
             docker-compose up -d
-test:
-  override:
-    - docker-compose exec -e SKIP_DJANGO_MIGRATE=1 web python manage.py test -v 3 --parallel 1
 
+      - run:
+          name: Django tests
+          command: |
+            docker-compose exec -e SKIP_DJANGO_MIGRATE=1 web python manage.py test -v 3 --parallel 1
