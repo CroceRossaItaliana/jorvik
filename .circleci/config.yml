@@ -17,8 +17,8 @@ jobs:
           name: Install Dependencies
           command: |
             set -x
-            sudo apt-get update
-            sudo apt-get install -y curl
+            apt-get update
+            apt-get install -y curl
 
       - run:
           name: Install Docker client
