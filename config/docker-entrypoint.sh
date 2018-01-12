@@ -7,8 +7,26 @@
 # before starting the Django development server.
 #
 
-pip install --upgrade -r requirements.txt
-python manage.py collectstatic --noinput
-python manage.py migrate --noinput
+if [ "$SKIP_ALL" ]
+then
+    SKIP_REQUIREMENTS_CHECK=1
+    SKIP_DJANGO_COLLECSTATIC=1
+    SKIP_DJANGO_MIGRATE=1
+fi
+
+if [ -z "$SKIP_REQUIREMENTS_CHECK" ]
+then
+    pip install --upgrade -r requirements.txt
+fi
+
+if [ -z "$SKIP_DJANGO_COLLECTSTATIC" ]
+then
+    python manage.py collectstatic --noinput
+fi
+
+if [ -z "$SKIP_DJANGO_MIGRATE" ]
+then
+    python manage.py migrate --noinput
+fi
 
 exec "$@"
