@@ -3,6 +3,7 @@ version: 2
 jobs:
 
   build:
+
     docker:
       - image: alfioemanuele/jorvik-docker-circleci:latest
 
@@ -26,4 +27,4 @@ jobs:
             ls
             docker-compose ps
             docker-compose logs web
-            docker-compose exec -e SKIP_DJANGO_MIGRATE=1 web python manage.py test -v 3 --parallel 1
+            docker-compose run -e SKIP_DJANGO_MIGRATE=1 web python manage.py test -v 3 --parallel 1
