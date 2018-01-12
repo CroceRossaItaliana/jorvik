@@ -22,6 +22,8 @@ jobs:
       - run:
           name: Django tests
           command: |
+            pwd
+            ls
             docker-compose ps
             docker-compose logs web
             docker-compose exec -e SKIP_DJANGO_MIGRATE=1 web python manage.py test -v 3 --parallel 1

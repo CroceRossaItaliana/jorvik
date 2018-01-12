@@ -6,8 +6,8 @@ ADD . /code/
 WORKDIR /code
 
 # Entrypoint
-RUN chmod +x /code/config/docker-entrypoint.sh
-ENTRYPOINT ["/code/config/docker-entrypoint.sh"]
+RUN chmod +x ./config/docker-entrypoint.sh
+ENTRYPOINT ["bash", "./config/docker-entrypoint.sh"]
 
 # Start development server
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
