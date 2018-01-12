@@ -41,3 +41,4 @@ jobs:
       - test:
           override:
             - python manage.py test -v 3 --parallel 1
+
