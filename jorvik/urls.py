@@ -16,6 +16,7 @@ import attivita.viste
 import autenticazione.viste
 import base.viste, base.errori
 import centrale_operativa.viste
+import donazioni.viste
 import formazione.viste
 import gestione_file.viste
 import gruppi.viste
@@ -309,6 +310,60 @@ urlpatterns = [
     url(r'^token-sicuro/(?P<codice>.*)/$', base.viste.verifica_token),
 
     url(r'^password-dimenticata/$', base.viste.redirect_semplice, {"nuovo_url": "/recupera_password/"}),
+
+    # Campagne Raccolta Fondi (Donazioni)
+
+    url(r'^donazioni/$', donazioni.viste.donazioni_home, name='donazioni_home'),
+    url(r'^donazioni/campagne/$', donazioni.viste.campagne_elenco, name='donazioni_campagne'),
+    url(r'^donazioni/donazioni/elenco/$', donazioni.viste.donazioni, name='donazioni_campagne_elenco'),
+    url(r'^donazioni/campagne/nuova/$', donazioni.viste.campagna_nuova, name='donazioni_campagne_nuova'),
+    url(r'^donazioni/statistiche/$', donazioni.viste.campagna_statistiche_nazionali, name='campagna_statistiche_nazionali'),
+    url(r'^donazioni/campagne/autocompletamento/etichette$', donazioni.viste.autocompletamento_etichette,
+        name='donazioni_etichette_autocompletamento'),
+    url(r'^donazioni/campagne/(?P<pk>[0-9]+)/$', donazioni.viste.campagna, name='donazioni_campagna'),
+    url(r'^donazioni/campagne/(?P<pk>[0-9]+)/fine/$', donazioni.viste.campagna_fine, name='donazioni_campagna_fine'),
+    url(r'^donazioni/campagne/(?P<pk>[0-9]+)/modifica/$', donazioni.viste.campagna_modifica, name='donazioni_campagna_modifica'),
+    url(r'^donazioni/campagne/(?P<pk>[0-9]+)/elimina/$', donazioni.viste.campagna_elimina, name='donazioni_campagna_elimina'),
+    url(r'^donazioni/campagne/(?P<pk>[0-9]+)/responsabili/$', donazioni.viste.campagna_responsabili, name='donazioni_campagna_responsabili'),
+
+    # import Donazioni
+    url(r'^donazioni/campagne/(?P<campagna_id>[0-9]+)/importa_donazioni/$', donazioni.viste.donazioni_import,
+        name='donazioni_campagna_importa'),
+    url(r'^donazioni/campagne/(?P<campagna_id>[0-9]+)/importa_donazioni/step_1/$', donazioni.viste.donazioni_import_step_1,
+        name='donazioni_campagna_importa_step_1'),
+    url(r'^donazioni/campagne/(?P<campagna_id>[0-9]+)/importa_donazioni/step_2/$', donazioni.viste.donazioni_import_step_2,
+        name='donazioni_campagna_importa_step_2'),
+    url(r'^donazioni/campagne/(?P<campagna_id>[0-9]+)/importa_mailup/$', donazioni.viste.donatori_importa_mailup,
+        name='donazioni_campagna_importa_mailup'),
+    url(r'^donazioni/campagne/(?P<campagna_id>[0-9]+)/newsletter_iscrizione/$', donazioni.viste.modulo_mailup,
+        name='donazioni_campagna_modulo_mailup'),
+
+    url(r'^donazioni/donatori/ifrelenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', donazioni.viste.iframe_donatori_elenco),
+    url(r'^donazioni/donatori/ifrelenco/(?P<elenco_id>.*)/$', donazioni.viste.iframe_donatori_elenco),
+    url(r'^donazioni/donatori/elenco/$', donazioni.viste.donatori_elenco, name='donazioni_campagne_donatori_elenco'),
+    url(r'^donazioni/campagne/statistiche/(?P<elenco_id>.*)$', donazioni.viste.statistiche_elenco_campagne, name='statistiche_elenco_campagne'),
+    url(r'^donazioni/etichette/$', donazioni.viste.etichette_elenco, name='donazioni_etichette'),
+    url(r'^donazioni/etichette/nuova/$', donazioni.viste.etichetta_nuova, name='donazioni_etichette_nuova'),
+    url(r'^donazioni/etichette/(?P<pk>[0-9]+)/$', donazioni.viste.etichetta, name='donazioni_etichetta'),
+    url(r'^donazioni/etichette/(?P<pk>[0-9]+)/elimina$', donazioni.viste.etichetta_elimina, name='donazioni_etichetta_elimina'),
+    url(r'^donazioni/etichette/(?P<pk>[0-9]+)/modifica$', donazioni.viste.etichetta_modifica, name='donazioni_etichetta_modifica'),
+
+    # Donazioni
+    url(r'^donazioni/campagne/(?P<campagna_id>[0-9]+)/donazioni/nuova/$', donazioni.viste.donazione_nuova, name='donazioni_campagne_nuova_donazione'),
+    url(r'^donazioni/campagne/(?P<campagna_id>[0-9]+)/donazioni/elenco/$', donazioni.viste.donazioni_elenco, name='donazioni_campagne_donazioni'),
+    url(r'^donazioni/campagne/(?P<campagna_id>[0-9]+)/donatori/elenco/$', donazioni.viste.donatori_campagna_elenco,
+        name='donazioni_campagne_donatori'),
+    url(r'^donazioni/donazione/(?P<pk>[0-9]+)/$', donazioni.viste.donazione, name='donazioni_donazione'),
+    url(r'^donazioni/donazione/(?P<pk>[0-9]+)/modifica$', donazioni.viste.donazione_modifica, name='donazioni_donazione_modifica'),
+    url(r'^donazioni/donazione/(?P<pk>[0-9]+)/ricevuta', donazioni.viste.donazione_ricevuta, name='donazioni_donazione_modifica'),
+    url(r'^donazioni/donazione/(?P<pk>[0-9]+)/notifica', donazioni.viste.donazione_invia_notifica, name='donazioni_donazione_modifica'),
+    url(r'^donazioni/donazione/(?P<pk>[0-9]+)/elimina$', donazioni.viste.donazione_elimina, name='donazioni_donazione_elimina'),
+
+    # Donatori
+    url(r'^donazioni/donatore/(?P<pk>[0-9]+)/$', donazioni.viste.donatore, name='donazioni_donatore'),
+    url(r'^donazioni/donatore/(?P<pk>[0-9]+)/modifica$', donazioni.viste.donatore_modifica, name='donazioni_donatore_modifica'),
+    url(r'^donazioni/donatore/(?P<pk>[0-9]+)/elimina$', donazioni.viste.donatore_elimina, name='donazioni_donatore_elimina'),
+    url(r'^donazioni/donatore/(?P<pk>[0-9]+)/donazioni/elenco/$', donazioni.viste.donatore_donazioni_elenco, name='donazioni_donatore_donazioni'),
 
     # Amministrazione
 

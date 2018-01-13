@@ -196,6 +196,9 @@ class VistaDecorata(object):
         @method_decorator(pagina_privata)
         def dispatch(self, request, *args, **kwargs):
             return super(ListaArticoli, self).dispatch(request, *args, **kwargs)
+
+    Nota: Se si sovrascrive get_context_data, ricordarsi di effettuare come prima cosa la chiamata
+    a super(MyClassView, self).get_context_data(**kwargs) per ottenere il contesto decorato con *me* e *menu*.
     """
     permetti_embed = False
 

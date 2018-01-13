@@ -25,6 +25,9 @@ RESPONSABILE_AUTOPARCO = 'AP'
 RESPONSABILE_PATENTI = 'PA'
 RESPONSABILE_DONAZIONI = 'DO'
 DIRETTORE_CORSO = 'DC'
+DELEGATO_CAMPAGNE = 'CD'
+RESPONSABILE_CAMPAGNA = 'RC'
+DELEGATO_STATISTICHE_CAMPAGNE = 'DS'
 
 OBIETTIVI = {
     1: DELEGATO_OBIETTIVO_1,
@@ -54,8 +57,11 @@ PERMESSI_NOMI = (
     (RESPONSABILE_FORMAZIONE,   "Responsabile Formazione"),
     (DIRETTORE_CORSO,           "Direttore Corso"),
     (RESPONSABILE_AUTOPARCO,    "Responsabile Autoparco"),
-    #(RESPONSABILE_PATENTI,      "Responsabile Patenti"),
-    #(RESPONSABILE_DONAZIONI,    "Responsabile Donazioni Sangue"),
+    (DELEGATO_CAMPAGNE,         "Responsabile Campagne di raccolta fondi"),
+    (RESPONSABILE_CAMPAGNA,     "Responsabile Campagna di raccolta fondi"),
+    (DELEGATO_STATISTICHE_CAMPAGNE, "Responsabile Dati Statistici Campagne raccolta fondi"),
+    # (RESPONSABILE_PATENTI,      "Responsabile Patenti"),
+    # (RESPONSABILE_DONAZIONI,    "Responsabile Donazioni Sangue"),
 )
 
 DELEGHE_RUBRICA = (

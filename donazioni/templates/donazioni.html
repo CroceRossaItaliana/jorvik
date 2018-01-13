@@ -1,0 +1,71 @@
+{% extends 'donazioni_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load donazioni %}
+{% load utils %}
+{% block pagina_titolo %}
+    Donazioni Economiche
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro text-success">
+        Campagne Raccolta Fondi - Donazioni Economiche
+    </h2>
+
+    <p class="allinea-centro">
+        <img  alt="Emblema CRI" src="https://upload.wikimedia.org/wikipedia/it/thumb/4/4a/Emblema_CRI.svg/300px-Emblema_CRI.svg.png" width="180" height="180" />
+    </p>
+
+
+    <div class="alert alert-info">
+        <h4><i class="fa fa-info-circle"></i> (TODO: Migliorare) Benvenuto nella sezione dedicata alle campagne di raccolta fondi CRI.</h4>
+        <p>Usa il men&ugrave; sulla sinistra, il quale ti permetter&agrave; di accedere alle funzioni relative alla gestione delle campagne.
+           Puoi creare nuove etichette da associare alle singole campagne, accedere all'anagrafica dei donatori e alle singole donazioni.
+
+        </p>
+    </div>
+
+    <div class="row ">
+
+        <div class="col-md-3 allinea-centro">
+            <h3>{{ campagne_gestite.count }}</h3>
+            <p class="grassetto">Campagne Gestite</p>
+        </div>
+
+        <div class="col-md-3 allinea-centro">
+            <h3>{{ sedi_gestite.count }}</h3>
+            <p class="grassetto">Sedi Gestite</p>
+        </div>
+        <div class="col-md-3 allinea-centro">
+            <h3>{% euro fondi_raccolti %}</h3>
+            <p class="grassetto">Fondi Raccolti</p>
+        </div>
+
+        <div class="col-md-3 allinea-centro">
+            <h3>{{ donatori.count }}</h3>
+            <p class="grassetto">Donatori Censiti</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            {% if sedi_gestite %}
+            <p>Sei abilitato alla gestione delle campagne per le seguenti sedi:</p>
+            <ul>
+                {% for sede in sedi_gestite %}
+                    <li>{{ sede.link|safe }}</li>
+                {% endfor %}
+            </ul>
+            {% elif campagne_gestite %}
+                <p>Sei abilitato alla gestione delle seguenti campagne:</p>
+                <ul>
+                {% for c in campagne_gestite %}
+                    <li>{{ c.link|safe }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+
+
+{% endblock %}

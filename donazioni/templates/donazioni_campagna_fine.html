@@ -1,0 +1,49 @@
+{% extends 'donazioni_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load mptt_tags %}
+{% load utils %}
+
+{% block pagina_titolo %}
+    Creazione Campagna completata!
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="text-success">
+        <i class="fa fa-fw fa-check-circle"></i>
+        Creazione Campagna completata!
+    </h2>
+
+    <div class="alert alert-block ">
+        <h4><i class="fa fa-fw fa-question-circle"></i> Che succeder&agrave; ora?</h4>
+        <ul>
+          <li>Abbiamo mandato delle e-mail ai <strong>Responsabili della Campagna</strong>
+              che hai selezionato, informandoli della delega.
+              Ti ricordiamo che un responsabile di una campagna raccolta fondi potrà gestire le donazioni
+          e i donatori della singola campagna di cui è responsabile ma non potrà crearne di nuove.
+            <ul>
+                {% for p in campagna.responsabili_attuali %}
+                    <li>{{ p.link|safe }}</li>
+                {% endfor %}
+            </ul>
+          </li><br />
+        </ul>
+    </div>
+
+    <p>
+        <a href="/donazioni/campagne/" class="btn btn-primary">
+            <i class="fa fa-fw fa-mail-reply"></i>
+            Torna all'elenco delle Campagne
+        </a>
+    </p>
+
+
+    <p>
+        <a href="{{ campagna.url }}" class="btn btn-default">
+            <i class="fa fa-fw fa-pencil"></i>
+            Vai alla scheda informativa della Campagna
+        </a>
+    </p>
+
+{% endblock %}

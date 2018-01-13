@@ -17,7 +17,7 @@ from django.template.loader import get_template
 from django.views.generic import ListView
 from django.utils import timezone
 
-from anagrafica.costanti import TERRITORIALE, REGIONALE
+from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE
 from anagrafica.elenchi import ElencoDelegati
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
@@ -36,7 +36,8 @@ from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, 
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
-    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI
+    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI, DELEGATO_CAMPAGNE, \
+    DELEGATO_STATISTICHE_CAMPAGNE
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
     ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO, \
     RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
@@ -64,6 +65,7 @@ from base.stringhe import genera_uuid_casuale
 from base.utils import remove_none, poco_fa, oggi
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
+from donazioni.models import TokenRegistrazioneDonatore, AssociazioneDonatorePersona
 from posta.models import Messaggio, Q
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
@@ -72,7 +74,8 @@ from sangue.models import Donatore, Donazione
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
 TIPO_DIPENDENTE = 'dipendente'
-TIPO = (TIPO_VOLONTARIO, TIPO_ASPIRANTE, TIPO_DIPENDENTE )
+TIPO_SOGGETTO_DONATORE = 'soggetto_donatore'
+TIPO = (TIPO_VOLONTARIO, TIPO_ASPIRANTE, TIPO_DIPENDENTE, TIPO_SOGGETTO_DONATORE)
 
 # I vari step delle registrazioni
 STEP_COMITATO = 'comitato'
@@ -94,6 +97,7 @@ STEP = {
     TIPO_VOLONTARIO: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
     TIPO_ASPIRANTE: [STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
     TIPO_DIPENDENTE: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
+    TIPO_SOGGETTO_DONATORE: [STEP_COMITATO, STEP_CODICE_FISCALE, STEP_CREDENZIALI, STEP_ANAGRAFICA, STEP_FINE],
 }
 
 MODULI = {
@@ -141,6 +145,21 @@ def registrati(request, tipo, step=None):
         sessione = request.session['registrati'].copy()
     except KeyError:
         sessione = {}
+
+    # token temporaneo per soggetto economico
+    token = request.GET.get('t', '')
+    if token:
+        # precarica dati in sessione per il soggetto donatore
+        token_donatore = TokenRegistrazioneDonatore.objects.get(codice=token)
+        donatore = token_donatore.donatore
+        sede_appartenenza_donatore = token_donatore.sede
+        # TODO Precaricare i campi di anagrafica donatore eventualmente immessi in sessione
+        sessione['email'] = donatore.email
+        sessione['codice_fiscale'] = donatore.codice_fiscale
+        sessione['sede'] = sede_appartenenza_donatore.id
+        sessione['inizio'] = poco_fa().date()
+        sessione['donatore'] = donatore
+        request.session['registrati'] = sessione
 
     lista_step = [
         # Per ogni step:
@@ -319,6 +338,22 @@ def registrati_conferma(request, tipo):
         a.save()
         a.richiedi()
 
+    elif tipo == TIPO_SOGGETTO_DONATORE:
+        #  Appartenenza Donatore a sede
+        a = Appartenenza(
+            confermata=True,
+            persona=p,
+            inizio=dati['inizio'],
+            sede=dati['sede'],
+            membro=Appartenenza.SOGGETTO_DONATORE,
+        )
+        a.save()
+        d = sessione.get('donatore')
+        if not d:
+            d = Donatore.objects.filter(codice_fiscale=p.codice_fiscale, email=p.email_contatto).first()
+        donatore_persona = AssociazioneDonatorePersona(persona=p, donatore=d)
+        donatore_persona.save()
+
     else:
         raise ValueError("Non so come gestire questa iscrizione.")
 
@@ -473,6 +508,7 @@ def utente_documenti_zip(request, me):
     z.comprimi_e_salva(nome='Documenti.zip')
 
     return redirect(z.download_url)
+
 
 @pagina_privata
 def utente_storico(request, me):
@@ -1039,6 +1075,18 @@ def strumenti_delegati(request, me):
     if modulo.is_valid():
         d = modulo.save(commit=False)
 
+        # solo il comitato nazionale può delegare DELEGATO_STATISTICHE_CAMPAGNE = 'DS'
+        if d.tipo == DELEGATO_STATISTICHE_CAMPAGNE and me not in Sede.objects.filter(
+                attiva=True, tipo=Sede.COMITATO, estensione=NAZIONALE
+        ).first().presidente:
+            return errore_generico(
+                request, me,
+                titolo="Errore di autorizazione per la delega",
+                messaggio="La delega per le 'Statistiche Campagne raccolta fondi' può essere assegnata soltanto a livello nazionale",
+                torna_titolo="Torna indietro",
+                torna_url="/strumenti/delegati/",
+            )
+
         if oggetto.deleghe.all().filter(Delega.query_attuale().q, tipo=delega, persona=d.persona).exists():
             return errore_generico(
                 request, me,
@@ -1570,8 +1618,14 @@ def _presidente_sede_ruoli(sede):
             (RESPONSABILE_FORMAZIONE, "Formazione", sede.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE).count()),
             (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count()),
             (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count()),
+            (DELEGATO_CAMPAGNE, "Campagne Donazioni", sede.delegati_attuali(tipo=DELEGATO_CAMPAGNE).count()),
         ]
     })
+
+    if sede.estensione == NAZIONALE:
+        sezioni['Responsabili'].append((DELEGATO_STATISTICHE_CAMPAGNE,
+                                        'Delegato statistiche campagne',
+                                        sede.delegati_attuali(tipo=DELEGATO_STATISTICHE_CAMPAGNE).count()))
 
     return sezioni
 
@@ -1616,6 +1670,7 @@ def presidente_checklist(request, me, sede_pk):
         (RESPONSABILE_FORMAZIONE, sede),
         (RESPONSABILE_AUTOPARCO, sede),
         (DELEGATO_CO, sede),
+        (DELEGATO_CAMPAGNE, sede),
     ]
 
     for unita in sede.espandi():

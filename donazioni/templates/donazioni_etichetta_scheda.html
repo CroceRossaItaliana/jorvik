@@ -1,0 +1,84 @@
+{% extends "donazioni_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+{% load humanize %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}Etichetta {{ etichetta }}{% endblock %}
+{% endblock %}
+
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro grassetto text-success">
+        {{ etichetta.slug }}
+    </h2>
+
+    <div class="row">
+
+
+    <div class="col-md-6">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-home"></i>
+                    Comitato
+                </h3>
+            </div>
+
+            <div class="panel-body">
+                <strong>
+                    <a href="{{ etichetta.comitato.url }}" target="_new">
+                        {{ etichetta.comitato.nome }}
+                    </a>
+                </strong><br />
+                {{ etichetta.comitato.get_tipo_display }} &mdash;
+                {{ etichetta.comitato.get_estensione_display }}
+            </div>
+
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-fw fa-money"></i>
+                    Campagne a cui è stata associata l'etichetta
+                </h3>
+            </div>
+
+            <div class="panel-body">
+            <ul>
+                {% for c in etichetta.campagne.all %}
+                    <li>{{ c.link|safe }}</li>
+                {% endfor %}
+            </ul>
+            </div>
+
+        </div>
+    </div>
+    </div>
+    {% if puo_modificare and not etichetta.default %}
+    <div class="row">
+        <div class="col-md-3">
+            <p>
+            <a href="{{ etichetta.url_modifica }}" role="button" class="btn btn-large btn-primary">
+                <i class="fa fa-edit"></i>
+                Modifica etichetta
+            </a>
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p>
+            <a href="{{ etichetta.url_cancella }}" role="button" class="btn btn-large btn-primary">
+                <i class="fa fa-remove"></i>
+                Elimina etichetta
+            </a>
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+{% endblock %}

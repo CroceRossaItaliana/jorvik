@@ -6,9 +6,11 @@ from datetime import timedelta
 
 from django.db.models import QuerySet, Q
 
+from anagrafica.costanti import NAZIONALE, REGIONALE, TERRITORIALE
 from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, \
     UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, \
-    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO
+    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, DELEGATO_CAMPAGNE, RESPONSABILE_CAMPAGNA, \
+    DELEGATO_STATISTICHE_CAMPAGNE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.applicazioni import DELEGATO_AREA
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
@@ -23,7 +25,7 @@ from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_A
     RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
     RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
     RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA, STATISTICHE_CAMPAGNE
 
 
 def permessi_persona(persona):
@@ -89,7 +91,8 @@ def permessi_presidente(sede):
         + permessi_responsabile_formazione(sede) \
         + permessi_responsabile_autoparco(sede) \
         + permessi_delegato_centrale_operativa(sede) \
-        + _espandi(sede)
+        + _espandi(sede) \
+        + permessi_delegato_campagne(sede)
 
 
 def permessi_ufficio_soci_unita(sede):
@@ -309,6 +312,28 @@ def permessi_responsabile_autoparco(sede):
     ]
 
 
+def permessi_delegato_campagne(sede):
+    from donazioni.models import Campagna
+    return [
+
+        (GESTIONE_CAMPAGNE, sede.espandi(includi_me=True, pubblici=True).filter(sede.query_puo_avere_campagne().q)),
+        (GESTIONE_CAMPAGNA, Campagna.objects.filter(organizzatore__in=sede.espandi(includi_me=True, pubblici=True))),
+    ]
+
+
+def permessi_responsabile_campagna(campagna):
+    from donazioni.models import Campagna
+    return [
+        (GESTIONE_CAMPAGNA, Campagna.objects.filter(pk=campagna.pk)),
+    ]
+
+
+def permessi_delegato_statistiche_campagne(sede):
+    from donazioni.models import Campagna
+    return [
+        (STATISTICHE_CAMPAGNE, Campagna.objects),
+    ]
+
 # Non modificare
 
 
@@ -332,6 +357,9 @@ PERMESSI_FUNZIONI = (
     (DELEGATO_OBIETTIVO_5,      permessi_delegato_obiettivo_5),
     (DELEGATO_OBIETTIVO_6,      permessi_delegato_obiettivo_6),
     (RESPONSABILE_FORMAZIONE,   permessi_responsabile_formazione),
+    (DELEGATO_CAMPAGNE,         permessi_delegato_campagne),
+    (RESPONSABILE_CAMPAGNA,     permessi_responsabile_campagna),
+    (DELEGATO_STATISTICHE_CAMPAGNE, permessi_delegato_statistiche_campagne),
 )
 
 # Tieni in memoria anche come dizionari, per lookup veloci

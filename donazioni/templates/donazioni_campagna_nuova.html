@@ -1,0 +1,65 @@
+{% extends 'donazioni_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Crea una nuova Campagna Donazioni Economiche
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="row">
+
+        <div class="col-md-6">
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-money"></i>
+                        Crea una nuova Campagna
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-asterisk"></i>
+                            Crea Campagna
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="alert alert-info">
+                <i class="fa fa-fw fa-info-circle"></i>
+                <strong>Creazione di una campagna di raccolta fondi</strong>:
+                Inserisci i dati relativi alla campagna che stai creando:
+                <ul>
+                    <li>Date di <strong>inizio</strong> e <strong>fine</strong></li>
+                    <li><strong>Nome</strong> della campagna e <strong>Descrizione estesa</strong></li>
+                    <li><strong>Testo email di ringraziamento</strong>
+                        sarà incluso nella mail inviata al donatore (solo a quelli che forniscono un indirizzo email).</li>
+                    <li><strong>Comitato organizzatore</strong>: Puoi scegliere fra le sedi CRI di cui hai la delega per la gestione campagne raccolta fondi.
+                        Inizia a digitare il nome di un comitato per selezionarne uno.
+                    </li>
+                    <li><strong>Etichette</strong>: Puoi aggiungere una o più etichette per la campagna.
+                        Queste ti permetteranno di identificare e ricercare più facilmente una campagna fra quelle che gestisci.
+                        Le etichette disponibili sono quelle create nella sezione Etichette, oltre a quelle create dal Comitato Nazionale.
+                        <br />Puoi anche lasciare il campo vuoto e aggiungere etichette successivamente.
+                        <strong>Verrà creata e aggiunta un'etichetta con lo stesso nome della campagna.</strong>
+                    </li>
+                </ul>
+                <hr />
+                <i class="fa fa-fw fa-info-circle"></i> <strong>Nota bene</strong>:
+                Dopo questo step potrai nominare uno o pi&ugrave; responsabili della campagna.
+                Questi potranno  gestire interamente la singola campagna.
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}

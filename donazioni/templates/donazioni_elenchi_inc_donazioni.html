@@ -1,0 +1,85 @@
+{% extends 'donazioni_elenchi_inc_vuoto.html' %}
+{% load donazioni %}
+{% load utils %}
+
+{% block placeholderfiltro %}"Filtra..."{% endblock %}
+{% block elenco_intestazione %}
+
+    <th xmlns="http://www.w3.org/1999/html">Data</th>
+    <th>Donatore</th>
+    <th>Importo</th>
+    <th>Campagna</th>
+    <th>Notifica inviata</th>
+
+{% endblock %}
+
+
+{% block elenco_riga %}
+
+    <td class="piu-piccolo">
+        <i class="fa fa-calendar"></i>
+        {{ obj.data }}
+    </td>
+
+    <td class="piu-piccolo allinea-sinistra">
+    {% if obj.donatore %}
+        <a href="{{obj.donatore.url}}" target="_parent"><i class="fa fa-user"></i> {{ obj.donatore}}</a>
+    {% endif %}
+    </td>
+
+    <td class="piu-piccolo allinea-sinistra">
+        <i class="fa"></i>
+        {% euro obj.importo %}
+    </td>
+
+    <td class="piu-piccolo allinea-sinistra">
+        <a href="{{obj.campagna.url}}" target="_parent">{{ obj.campagna }}</a>
+        {% if obj.modalita_singola_ricorrente == 'R' %}
+            <br/><i>Donazione Ricorrente</i>
+        {% endif %}
+    </td>
+    <td>
+        {% if obj.email_inviata %}
+            <i class="fa fa-check-square"></i>
+        {% else %}
+            <i class="fa fa-ban"></i>
+        {% endif %}
+    </td>
+
+{% endblock %}
+
+{% block elenco_riga_azioni %}
+
+    {% permessi_almeno obj "modifica" as puo_modificare %}
+    {% permessi_almeno obj "lettura" as puo_leggere %}
+    {% permessi_almeno obj "completo" as puo_eliminare %}
+
+    {% if puo_leggere %}
+         <a href="{{ obj.url }}" class="btn btn-default btn-xs" target="_parent">
+             <i class="fa fa-fw fa-file"></i><span>Scheda</span>
+        </a>
+    {% endif %}
+    {% if puo_modificare %}
+        <a href="{{ obj.url_modifica }}" class="btn btn-primary btn-xs" target="_parent">
+            <i class="fa fa-fw fa-edit"></i><span>Modifica</span>
+        </a>
+    {% endif %}
+    {% if puo_eliminare %}
+        <a href="{{ obj.url_cancella }}" class="btn btn-primary btn-xs" target="_parent">
+            <i class="fa fa-fw fa-remove"></i><span>Elimina</span>
+        </a>
+        {% if obj.permetti_scaricamento_ricevute and obj.campagna.permetti_scaricamento_ricevute %}
+            {% if obj.ricevuta %}
+                <a href="{{ obj.url_ricevuta }}" class="btn btn-primary btn-xs" target="_blank">
+                    <i class="fa fa-fw fa-file-pdf-o"></i><span>Ricevuta</span>
+                </a>
+            {% endif %}
+            {% if obj.donatore and obj.donatore.email%}
+                <a href="{{ obj.url_invia_notifica }}" class="btn btn-primary btn-xs" target="_parent">
+                    <i class="fa fa-fw fa-send-o"></i><span>Invia Notifica</span>
+                </a>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+{% endblock %}

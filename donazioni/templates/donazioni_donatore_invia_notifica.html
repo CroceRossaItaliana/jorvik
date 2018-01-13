@@ -1,0 +1,37 @@
+{% extends "donazioni_donatore_scheda.html" %}
+{% load utils %}
+{% load donazioni %}
+{% load bootstrap3 %}
+{% block scheda_contenuto %}
+    <h2 class="allinea-centro grassetto text-success">
+        Donatore {{ donazione.donatore }}
+    </h2>
+
+    <div class="row">
+
+        <div class="col-md-12">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-send-o"></i>
+                        Clicca su Invia per mandare al donatore una mail di ringraziamento con il link di registrazione, nel caso non l'abbia ancora fatto, ed una notifica di scaricamento della ricevuta
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-send-o"></i>
+                            Invia
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block pagina_javascript_extra %}
+{% endblock %}

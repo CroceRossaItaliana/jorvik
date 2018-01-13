@@ -1,0 +1,24 @@
+{% extends 'donazioni_campagna_scheda.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Lista donatori
+{% endblock %}
+
+{% block scheda_contenuto %}
+    <h4 class="allinea-centro text-success">
+        Lista donatori per la campagna {{ campagna.nome }}
+    </h4>
+    <div class="alert alert-info">
+        <i class="fa fa-info-circle"></i>
+        In questo elenco, sono riportati i donatori censiti per la campagna
+        in oggetto; le colonne <i>Totale donazioni</i> e <i>Media donazione</i>,
+        invece, si riferiscono alle donazioni effettuate per tutte
+        le campagne donazioni economiche presenti in Gaia. <br />
+    <i class="fa fa-info-circle"></i>
+        Se un donatore ha una media donazione superiore ad una certa soglia, la riga sarà evidenziata.
+    </div>
+    {% load donazioni %}
+    {% elenco_donatori elenco %}
+{% endblock %}

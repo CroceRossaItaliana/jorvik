@@ -1,0 +1,72 @@
+{% extends "donazioni_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+{% load humanize %}
+{% load donazioni %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}{% endblock %}
+    {{ campagna.nome }} ({{ campagna.organizzatore.nome_completo }})
+    &mdash; Campagna
+{% endblock %}
+
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro grassetto text-success">
+        {{ campagna.nome }}
+    </h2>
+
+    <ul class="nav nav-tabs">
+        <li role="presentation" {% if request.path == campagna.url %}class="active"{% endif %}>
+            <a href="{{ campagna.url }}">
+                <i class="fa fa-fw fa-info"></i>
+                Informazioni
+            </a>
+        </li>
+        <li role="presentation" {% if request.path == campagna.url_elenco_donazioni %}class="active"{% endif %}>
+            <a href="{{ campagna.url_elenco_donazioni }}">
+                <i class="fa fa-fw fa-money"></i>
+                Donazioni
+                <span class="badge">
+                    {% euro campagna.totale_donazioni %}
+                </span>
+
+            </a>
+        </li>
+        <li role="presentation" {% if request.path == campagna.url_elenco_donatori %}class="active"{% endif %}>
+            <a href="{{ campagna.url_elenco_donatori }}">
+                <i class="fa fa-fw fa-male"></i>
+                Donatori
+                <span class="badge">
+                    {{ campagna.donatori_censiti.count }}
+                </span>
+            </a>
+        </li>
+        {% permessi_almeno campagna "modifica" as puo_modificare %}
+        {% if puo_modificare %}
+        <li role="presentation" {% if request.path == campagna.url_modifica %}class="active"{% endif %}>
+            <a href="{{ campagna.url_modifica }}" class="text-danger">
+                <i class="fa fa-fw fa-edit"></i>
+                Gestione Campagna
+            </a>
+        </li>
+        <li role="presentation" {% if request.path == campagna.url_responsabili %}class="active"{% endif %}>
+            <a href="{{ campagna.url_responsabili }}" class="text-danger">
+                <i class="fa fa-fw fa-male"></i>
+                Responsabili
+                <span class="badge">
+                    {{ campagna.responsabili_attuali.count }}
+                </span>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+
+    <p>&nbsp;</p>
+    {% block scheda_contenuto %}
+    {% endblock %}
+
+{% endblock app_contenuto %}

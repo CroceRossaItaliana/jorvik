@@ -401,10 +401,12 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
     QUOTA_SOCIO = 'Q'
     QUOTA_SOSTENITORE = 'S'
     RICEVUTA = 'R'
+    RICEVUTA_DONAZIONE = 'D'
     TIPO = (
         (QUOTA_SOCIO, "Quota Socio"),
         (QUOTA_SOSTENITORE, "Ricevuta Sostenitore"),
         (RICEVUTA, "Ricevuta"),
+        (RICEVUTA_DONAZIONE, "Ricevuta Donazione"),
     )
     tipo = models.CharField(max_length=1, default=QUOTA_SOCIO, choices=TIPO)
 
@@ -460,7 +462,8 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
 
         # Scompone l'importo in Quota e Extra (Donazione)
         #  (solo se QUOTA VOLONTARIO)
-        da_pagare = q.tesseramento().importo_da_pagare(q.persona, kwargs.get('riduzione', None))
+        if tipo != Quota.RICEVUTA_DONAZIONE:
+            da_pagare = q.tesseramento().importo_da_pagare(q.persona, kwargs.get('riduzione', None))
         if tipo == Quota.QUOTA_SOCIO and importo > da_pagare:
             q.importo = da_pagare
             q.importo_extra = importo - da_pagare

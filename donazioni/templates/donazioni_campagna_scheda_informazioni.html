@@ -1,0 +1,128 @@
+{% extends "donazioni_campagna_scheda.html" %}
+{% load utils %}
+{% block scheda_contenuto %}
+    <div class="row">
+
+        <div class="col-md-3">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-user"></i>
+                        Responsabili
+                        <span class="pull-right">
+                            {{ corso.responsabili_attuali.count }}
+                        </span>
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    <div class="btn-group btn-group-vertical">
+                    {% for responsabile in campagna.responsabili_attuali %}
+                        {% card responsabile extra_class='' %}
+
+                    {% empty %}
+                        <i class="fa fa-fw fa-warning"></i>
+                        Nessun responsabile.
+
+                    {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-home"></i>
+                        Organizzatore
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    <strong>
+                        <a href="{{ campagna.organizzatore.url }}" target="_new">
+                            {{ campagna.organizzatore.nome }}
+                        </a>
+                    </strong><br />
+                    {{ campagna.organizzatore.get_tipo_display }} &mdash;
+                    {{ campagna.organizzatore.get_estensione_display }}
+                </div>
+
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-calendar"></i>
+                        Data di inizio
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    {{ campagna.inizio }}
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-calendar"></i>
+                        Data di fine
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    {{ campagna.fine }}
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <h4><i class="fa fa-fw fa-info-circle"></i> Informazioni</h4>
+            {{ campagna.descrizione|safe }}
+        </div>
+        <div class="col-md-4">
+            <h4><i class="fa fa-fw fa-file-text"></i> Testo Email di ringraziamento</h4>
+            {{ campagna.testo_email_ringraziamento|safe }}
+        </div>
+        <div class="col-md-4">
+            <h4>
+            <i class="fa fa-fw fa-tags"></i> Etichette associate
+            <span class="badge">
+                {{ campagna.etichette.count }}
+            </span>
+
+        </h4>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Slug etichette</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            <tr class="piu-piccolo">
+                <td>
+                    {% for e in campagna.etichette.all %}
+                    <span class="badge">{{ e.slug }}</span>
+                        {% empty %}
+                        <i class="fa fa-fw fa-info-circle"></i>
+                Nessuna etichetta inserita.
+                        {% endfor %}
+                </td>
+            </tr>
+
+            </tbody>
+        </table>
+        </div>
+    </div>
+    {% endblock %}

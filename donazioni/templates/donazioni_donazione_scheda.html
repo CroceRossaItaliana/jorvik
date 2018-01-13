@@ -1,0 +1,115 @@
+{% extends "donazioni_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+{% load humanize %}
+{% load donazioni %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}Scheda Donazione{% endblock %}
+{% endblock %}
+
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro grassetto text-success">
+        Scheda Donazione
+    </h2>
+
+    <div class="row">
+
+        <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-fw fa-money"></i>
+                        Dati Donazione
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    <table class="table table-responsive table-striped">
+                        <tr>
+                            <td>Campagna</td>
+                            <td class="grassetto">
+                                <a href="{{ donazione.campagna.url }}">{{ donazione.campagna }}</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Metodo Pagamento</td>
+                            <td class="grassetto">{{ donazione.get_metodo_pagamento_display }}</td>
+                        </tr>
+                        <tr>
+                            <td>Modalità Donazione</td>
+                            <td class="grassetto">{{ donazione.get_modalita_singola_ricorrente_display }}</td>
+                        </tr>
+                        <tr>
+                            <td>Importo</td>
+                            <td class="grassetto">{% euro donazione.importo %}</td>
+                        </tr>
+                        <tr>
+                            <td>Codice Transazione</td>
+                            <td class="monospace">{{ donazione.transazione }}</td>
+                        </tr>
+                        <tr>
+                            <td>Data</td>
+                            <td class="piu-piccolo">
+                            <i class="fa fa-calendar"></i>
+                                {{ donazione.data }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Data di Inserimento</td>
+                            <td class="piu-piccolo">
+                                <i class="fa fa-calendar"></i>
+                                {{ donazione.creazione }}
+                            </td>
+                        </tr>
+                        {% if donazione.modalita_singola_ricorrente == 'R' %}
+                        <tr>
+                            <td colspan="2">Donazione Ricorrente</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td>Donatore</td>
+                            <td>
+                                {% if donazione.donatore %}<i class="fa fa-fw fa-user"></i>
+                                <a href="{{ donazione.donatore.url }}">{{ donazione.donatore }}</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-md-6">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3">
+            {% if puo_modificare %}
+            <p>
+            <a href="{{ donazione.url_modifica }}" role="button" class="btn btn-large btn-primary">
+                <i class="fa fa-edit"></i>
+                Modifica dati donazione
+            </a>
+            </p>
+            {% endif %}
+        </div>
+        <div class="col-md-3">
+            {% if puo_eliminare %}
+            <p>
+            <a href="{{ donazione.url_cancella }}" role="button" class="btn btn-large btn-primary">
+                <i class="fa fa-remove"></i>
+                Elimina donazione
+            </a>
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}

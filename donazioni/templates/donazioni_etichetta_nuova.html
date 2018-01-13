@@ -1,0 +1,56 @@
+{% extends 'donazioni_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Crea o Modifica un'Etichetta
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="row">
+
+        <div class="col-md-6">
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-tags"></i>
+                        Crea/Modifica Etichetta
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-asterisk"></i>
+                            Salva Etichetta
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="alert alert-info">
+                <i class="fa fa-fw fa-info-circle"></i>
+                <strong>Creazione di un'Etichetta</strong>:
+                Le etichette sono specifiche per un singolo comitato e pertanto sono visibili soltanto ai delegati delle campagne di tali comitati.
+
+                <ul>
+                    <li><strong>Slug</strong> dell'etichetta. Lo slug servirà a classificare ed
+                        identificare una campagna di raccolta fondi e saranno usate per funzionalità di ricerca.
+                        Il formato del campo slug può contenere soltanto caratteri alfanumerici e trattini, mentre gli spazi non sono ammessi.
+                        Es: maratona-milano. <br />
+                    Potrai usare questa etichetta all'atto di creazione di una nuova campagna</li>
+                    <li><strong>Comitato</strong>: Puoi scegliere fra le sedi CRI di cui hai la delega per la gestione campagne raccolta fondi.
+                        Inizia a digitare il nome di un comitato per selezionarne uno.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

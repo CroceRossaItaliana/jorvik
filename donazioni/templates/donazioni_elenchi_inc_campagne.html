@@ -1,0 +1,120 @@
+{% extends 'donazioni_elenchi_inc_vuoto.html' %}
+{% load staticfiles %}
+{% load compress %}
+
+{% block base_head_extra %}
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'css/tag-editor.css'%}">
+    {% endcompress %}
+{% endblock base_head_extra %}
+
+{% block pagina_javascript_extra %}
+    <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.min.js"></script>
+    <script src="{% static 'js/jquery.caret.min.js' %}"></script>
+    <script src="{% static 'js/tag-editor.min.js' %}"></script>
+    <script>
+    $( function() {
+        $( "#filtra" ).tagEditor(
+            {
+                autocomplete: {
+                    source: '/donazioni/campagne/autocompletamento/etichette',
+                    position: { collision: 'flip' },
+                    minLength: 2,
+                    delay: 200,
+                    autoFocus: true,
+                    messages: {
+                        noResult: '',
+                        results: function() {}
+                    }
+                },
+                placeholder: 'Filtra per etichette ...'
+
+            })
+      });
+      </script>
+
+{% endblock %}
+{% block filtering_form %}
+    <form method="POST">
+    {% csrf_token %}
+
+        <div class="input-group">
+
+            <textarea style="resize: none" title="Filtra campagne per una o più etichette"
+                    class="form-control"
+                    name="filtra" id="filtra">
+            {{ filtra }}</textarea>
+            <span class="input-group-addon">
+
+                <button class="btn btn-primary" type="submit"
+                    title="Filtra risultati">
+                    <i class="fa fa-fw fa-search"></i>
+                </button>
+
+                {% if filtra %}
+                    <button class="btn btn-danger" type="submit"
+                            title="Rimuovi filtro - Mostra tutti"
+                            name="filtra" value="">
+                        <i class="fa fa-fw fa-times"></i>
+                    </button>
+                {% endif %}
+            </span>
+
+    </div>
+
+    </form>
+
+{% endblock filtering_form %}
+{% block pulsanti_aggiuntivi %}
+    <a href="{% url 'statistiche_elenco_campagne' elenco_id=elenco_id %}" class="btn btn-primary" target="_parent">
+            <i class="fa fa-fw fa-bar-chart"></i>Vai alla pagina delle Statistiche
+            </a>
+{% endblock %}
+{% block elenco_intestazione %}
+
+    <th>Nome</th>
+    <th>Sede Organizzatrice</th>
+    <th>Date</th>
+    <th>Etichette</th>
+
+{% endblock %}
+
+
+{% block elenco_riga %}
+
+    <td><strong>{{ obj.nome }}</strong><br /></td>
+    <td class="piu-piccolo">
+        {{ obj.organizzatore.link|safe }}
+    </td>
+
+    <td class="piu-piccolo">
+    Da: {{ obj.inizio }}<br/>
+    A: {{ obj.fine }}
+    </td>
+
+    <td class="piu-piccolo">
+       {% for etichetta in obj.etichette.all %}
+           <span class="badge small">{{ etichetta.slug }}</span><br />
+       {% endfor %}
+    </td>
+
+{% endblock %}
+
+{% block elenco_riga_azioni %}
+
+    {% load utils %}
+    {% permessi_almeno obj "lettura" as puo_leggere %}
+    {% permessi_almeno obj "completo" as puo_eliminare %}
+
+    {% if puo_leggere %}
+         <a href="{{ obj.url }}" class="btn btn-default btn-xs" target="_parent">
+            <i class="fa fa-fw fa-file"></i>Scheda
+        </a>
+    {% endif %}
+    {% if puo_eliminare and obj.cancellabile %}
+        <a href="{{ obj.url_cancella }}" class="btn btn-primary btn-xs" target="_parent">
+            <i class="fa fa-fw fa-remove"></i>Elimina
+        </a>
+    {% endif %}
+
+{% endblock %}

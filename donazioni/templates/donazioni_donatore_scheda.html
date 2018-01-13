@@ -1,0 +1,50 @@
+{% extends "donazioni_vuota.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+{% load humanize %}
+{% load donazioni %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}{% endblock %}
+    {{ donatore }}
+    &mdash; Donatore
+{% endblock %}
+
+
+{% block app_contenuto %}
+
+    <ul class="nav nav-tabs">
+        <li role="presentation" {% if request.path == donatore.url %}class="active"{% endif %}>
+            <a href="{{ donatore.url }}">
+                <i class="fa fa-fw fa-info"></i>
+                Informazioni
+            </a>
+        </li>
+        <li role="presentation" {% if request.path == donatore.url_elenco_donazioni %}class="active"{% endif %}>
+            <a href="{{ donatore.url_elenco_donazioni }}">
+                <i class="fa fa-fw fa-money"></i>
+                Storico Donazioni
+                <span class="badge">
+                    {% euro donatore.statistiche_donazioni.totale %}
+                </span>
+
+            </a>
+        </li>
+        {% permessi_almeno donatore "modifica" as puo_modificare %}
+        {% if puo_modificare %}
+        <li role="presentation" {% if request.path == donatore.url_modifica %}class="active"{% endif %}>
+            <a href="{{ donatore.url_modifica }}" class="text-danger">
+                <i class="fa fa-fw fa-edit"></i>
+                Gestione Donatore
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+
+    <p>&nbsp;</p>
+    {% block scheda_contenuto %}
+    {% endblock %}
+
+{% endblock app_contenuto %}

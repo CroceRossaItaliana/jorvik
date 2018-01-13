@@ -2,18 +2,27 @@ from datetime import date
 
 from django.db.models import Q
 
+
 __author__ = 'alfioemanuele'
 
-from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
-    GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, MODIFICA, LETTURA, COMPLETO, \
-    GESTIONE_AUTOPARCHI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI_SEDE, GESTIONE, GESTIONE_AREE_SEDE, \
-    GESTIONE_REFERENTI_ATTIVITA, GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI, \
-    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
-    RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1, RUBRICA_DELEGATI_OBIETTIVO_2, \
-    RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
-    RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
-    RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO
+from anagrafica.permessi.costanti import (
+    GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE,
+    GESTIONE_CORSI_SEDE, GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA,
+    GESTIONE_ATTIVITA, GESTIONE_CORSO, MODIFICA, LETTURA, COMPLETO,
+    GESTIONE_AUTOPARCHI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI_SEDE,
+    GESTIONE, GESTIONE_AREE_SEDE, GESTIONE_REFERENTI_ATTIVITA,
+    GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI,
+    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, RUBRICA_UFFICIO_SOCI,
+    RUBRICA_UFFICIO_SOCI_UNITA, RUBRICA_PRESIDENTI,
+    RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1,
+    RUBRICA_DELEGATI_OBIETTIVO_2, RUBRICA_DELEGATI_OBIETTIVO_3,
+    RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6,
+    RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA,
+    RUBRICA_REFERENTI_ATTIVITA, RUBRICA_REFERENTI_GRUPPI,
+    RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE,
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO,
+    GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA,
+    STATISTICHE_CAMPAGNE)
 
 """
 Questo file gestisce la espansione dei permessi in Gaia.
@@ -100,72 +109,91 @@ def espandi_rubriche(qs_sedi, al_giorno=date.today()):
         return []
 
 
+
+# FIXME check if al_giorno=date.today() is a potential bug (btw is not used)
 def espandi_rubrica_ufficio_soci(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
+
 
 
 def espandi_rubrica_ufficio_soci_unita(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
 
+
 def espandi_rubrica_presidenti(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
+
 
 
 def espandi_rubrica_delegati_area(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
 
+
 def espandi_rubrica_delegati_obiettivo_1(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
+
 
 
 def espandi_rubrica_delegati_obiettivo_2(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
 
+
 def espandi_rubrica_delegati_obiettivo_3(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
+
 
 
 def espandi_rubrica_delegati_obiettivo_4(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
 
+
 def espandi_rubrica_delegati_obiettivo_6(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
+
 
 
 def espandi_rubrica_delegati_giovani(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
 
+
 def espandi_rubrica_responsabili_area(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
+
 
 
 def espandi_rubrica_referenti_attivita(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
 
+
 def espandi_rubrica_referenti_gruppi(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
+
 
 
 def espandi_rubrica_centrali_operative(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
 
+
 def espandi_rubrica_responsabili_formazione(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
+
 
 
 def espandi_rubrica_direttori_corsi(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
 
+
 def espandi_rubrica_responsabili_autoparco(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
+
 
 
 def espandi_gestione_sede(qs_sedi, al_giorno=None):
@@ -302,6 +330,39 @@ def espandi_gestione_gruppi_sede(qs_sedi, al_giorno=None):
         return []
 
 
+def espandi_gestione_campagne(qs_sedi, al_giorno=None):
+    from donazioni.models import Campagna, Etichetta, Donazione, Donatore
+    qs_campagne = Campagna.objects.filter(organizzatore__in=qs_sedi)
+    return [
+        (COMPLETO, qs_campagne),
+        (COMPLETO, Etichetta.objects.filter(comitato__in=qs_sedi)),
+        (COMPLETO, Donazione.objects.filter(campagna__in=qs_campagne)),
+        (COMPLETO, Donatore.objects.filter(donazioni__campagna__in=qs_campagne)),
+    ]
+
+
+def espandi_gestione_campagna(qs_campagne, al_giorno=None):
+    from donazioni.models import Donazione, Donatore, Etichetta
+    return [
+        (MODIFICA, qs_campagne),
+        (COMPLETO, Donazione.objects.filter(campagna__in=qs_campagne)),
+        (COMPLETO, Donatore.objects.filter(donazioni__campagna__in=qs_campagne)),
+        (COMPLETO, Etichetta.objects.filter(
+            comitato__in=qs_campagne.order_by('organizzatore').distinct('organizzatore').values_list('organizzatore', flat=True))
+         ),
+    ]
+
+
+def espandi_statistiche_campagne(qs_campagne, al_giorno=None):
+    from donazioni.models import Donazione, Donatore, Etichetta, Campagna
+    return [
+        (LETTURA, Campagna.objects),
+        (LETTURA, Donazione.objects),
+        (LETTURA, Donatore.objects),
+        (LETTURA, Etichetta.objects),
+    ]
+
+
 ESPANDI_PERMESSI = {
     GESTIONE_SOCI:                      espandi_gestione_soci,
     ELENCHI_SOCI:                       espandi_elenchi_soci,
@@ -336,4 +397,7 @@ ESPANDI_PERMESSI = {
     RUBRICA_RESPONSABILI_FORMAZIONE:    espandi_rubrica_responsabili_formazione,
     RUBRICA_DIRETTORI_CORSI:            espandi_rubrica_direttori_corsi,
     RUBRICA_RESPONSABILI_AUTOPARCO:     espandi_rubrica_responsabili_autoparco,
+    GESTIONE_CAMPAGNE:                  espandi_gestione_campagne,
+    GESTIONE_CAMPAGNA:                  espandi_gestione_campagna,
+    STATISTICHE_CAMPAGNE:                  espandi_statistiche_campagne,
 }

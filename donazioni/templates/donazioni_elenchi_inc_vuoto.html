@@ -1,0 +1,138 @@
+{% extends 'base_bootstrap.html' %}
+
+{% block pagina_titolo %}Elenco{% endblock %}
+
+{% block pagina_corpo %}
+
+    <div class="container-fluid">
+        <div class="row allinea-centro">
+
+            <div class="col-sm-4">
+                {% block filtering_form %}
+                <form method="POST">
+                {% csrf_token %}
+                    <div class="input-group">
+                        <input  type="text" class="form-control" name="filtra"
+                                placeholder={% block placeholderfiltro %}Filtra...{% endblock placeholderfiltro%} value="{{ filtra }}"
+                                {% if filtra %}autofocus{% endif %}
+                        >
+                        <span class="input-group-btn">
+
+                            <button class="btn btn-primary" type="submit"
+                                title="Filtra risultati">
+                                <i class="fa fa-fw fa-search"></i>
+                            </button>
+
+                            {% if filtra %}
+                                <button class="btn btn-danger" type="submit"
+                                        title="Rimuovi filtro - Mostra tutti"
+                                        name="filtra" value="">
+                                    <i class="fa fa-fw fa-times"></i>
+                                </button>
+                            {% endif %}
+                        </span>
+                    </div>
+                    </form>
+                    {% endblock filtering_form %}
+            </div>
+            <div class="col-sm-4">
+                {% block pulsanti_aggiuntivi %}
+                {% endblock %}
+            </div>
+            <div class="col-sm-4">
+
+                <ul class="pagination piu-piccolo" style="margin-top: 0px;">
+
+                    {% if ha_precedente %}
+                        <li class="prev">
+                            <a href="{{ pagina_precedente }}">
+                                <i class="fa fa-arrow-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="prev disabled">
+                            <a href="#">
+                                <i class="fa fa-arrow-left"></i>
+                            </a>
+                        </li>
+
+                    {% endif %}
+
+                    <li class="active">
+                        <a href="#">Pag. {{ pagina }} di {{ pagine }} (Tot: {{ totale }})</a>
+                    </li>
+
+                    {% if ha_successivo %}
+                        <li class="prev">
+                            <a href="{{ pagina_successiva }}">
+                                <i class="fa fa-arrow-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="prev disabled">
+                            <a href="#">
+                                <i class="fa fa-arrow-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+
+        </div>
+
+        <div class="row">
+
+            <table class="table table-striped table-condensed">
+                <thead>
+                    {% block elenco_intestazione %}
+
+                    {% endblock %}
+
+                    {% block elenco_intestazione_azioni %}
+                        <th>Azioni</th>
+                    {% endblock %}
+                </thead>
+
+                {% for obj in risultati %}
+
+                    <tr class="{% block elenco_riga_classe %}{% endblock %}">
+
+                        {% block elenco_riga %}
+
+                        {% endblock %}
+
+                        <td>
+                            <div class="btn-group" style="display: flex">
+                                {% block elenco_riga_azioni %}
+
+                                {% endblock %}
+                            </div>
+                        </td>
+
+                    </tr>
+
+
+                {% empty %}
+
+                    {% block elenco_vuoto %}
+
+                        {% if filtra %}
+                            <div class="alert alert-warning">
+                                <h4><i class="fa fa-fw fa-search"></i> Nessun risultato trovato &mdash; Prova a cambiare il termine di ricerca.</h4>
+                                <p><i class="fa fa-fw fa-warning"></i> Assicurati di aver digitato apostrofi ed accenti correttamente.</p>
+                            </div>
+
+
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <h4><i class="fa fa-fw fa-info-circle"></i> Questo elenco &egrave; vuoto.</h4>
+                            </div>
+
+                        {% endif %}
+                    {% endblock %}
+                {% endfor %}
+            </table>
+        </div>
+
+    </div>
+{% endblock %}

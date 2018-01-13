@@ -1,0 +1,29 @@
+{% extends 'donazioni_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Lista donatori
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h4 class="allinea-centro text-success">
+        Lista donatori
+    </h4>
+    <div class="alert alert-info">
+        <i class="fa fa-info-circle"></i>
+        In questo elenco, sono riportati i donatori censiti per le campagne
+        per le quali hai la delega; le colonne <i>Totale donazioni</i> e <i>Media donazione</i>,
+        invece, si riferiscono alle donazioni effettuate per tutte le campagne donazioni economiche presenti in Gaia,
+        comprese quelle per cui non hai la delega.<br />
+        <i class="fa fa-info-circle"></i>
+        Se un donatore ha una media donazione superiore ad una certa soglia, la riga sarà evidenziata.<br />
+        <i class="fa fa-info-circle"></i>
+        In questo elenco sono presenti anche i profili di potenziali donatori importati massivamente (es. Amazon, MailUp),
+    cioè soggetti che non hanno ancora registrato alcuna donazione ma sono associati fittizziamente alle campagne di cui hai la delega.
+    </div>
+    {% load donazioni %}
+    {% elenco_donatori elenco %}
+
+{% endblock %}

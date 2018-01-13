@@ -1,0 +1,114 @@
+{% extends "donazioni_campagna_scheda.html" %}
+
+{% load bootstrap3 %}
+{% load static %}
+{% load utils %}
+{% load humanize %}
+
+{% block pagina_titolo %}
+    Import donazioni da file - {{ campagna.nome }}
+    &mdash; Campagna Raccolta Fondi
+{% endblock %}
+
+
+{% block scheda_contenuto %}
+
+    <h2 class="allinea-centro grassetto text-success">
+        Importa donazioni per la campagna raccolta fondi {{ campagna }}
+    </h2>
+    <div class="row">
+        <div class="col-md-6">
+        {% if modulo_mapping %}
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-exchange"></i>
+                    Mapping
+                </h2>
+            </div>
+            <div class="panel-body">
+                <form method="POST" name="step-2" action="{{ campagna.url_importa_xls_step_2 }}">
+                    {% csrf_token %}
+                    {% bootstrap_form modulo_mapping %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-fw fa-arrow-circle-o-down"></i> Importa
+                    </button>
+                    <button type="submit" class="btn btn-primary" name="test_import">
+                        <i class="fa fa-fw fa-check-circle"></i> Testa importazione
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-file-excel-o"></i>
+                        Modulo importazione donazioni economiche
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <form method="POST" enctype="multipart/form-data" name="step-1" action="{{ campagna.url_importa_xls_step_1 }}">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-fw fa-arrow-circle-o-right"></i> Passa al mapping dei campi
+                        </button>
+                    </form>
+                </div>
+        </div>
+        {% endif %}
+        </div>
+        <div class="col-md-6">
+            {% if riepilogo_errori or riepilogo_messaggio %}
+                <div class="alert alert-danger">
+                {{ riepilogo_messaggio|safe }}
+                <ul class="piu-piccolo">
+                {{ riepilogo_errori|safe }}
+                </ul>
+                </div>
+            {% endif %}
+            <div class="alert alert-info">
+                <i class="fa fa-fw fa-info-circle"></i>
+                <strong>Step 1: Sceli il file XLS/CSV da importare</strong>
+                <ul>
+                    <li>Carica il file XLS o CSV dal tuo computer.</li>
+                    <li>Definisci il numero di righe di intestazione, cioè il numero di righe
+                    da saltare prima dei dati veri e propri.</li>
+                    <li>Scegli il formato fra XLS o CSV</li>
+                    <li>Solo per file CSV, scegli il separatore</li>
+                    <li>Se il file XLS/CSV è un'esportazione da piattaforme supportate (Sito cri.it, PayPal, etc.)
+                        il mapping fra colonne e campi sarà automatico e nella schermata successiva non avrai modo di
+                        modificarlo</li>
+                    <li>Premi 'Passa al mapping dei campi' per passare alla schermata successiva (Step 2)</li>
+
+                </ul>
+                <i class="fa fa-fw fa-info-circle"></i>
+                <strong>Step 2: Mapping (corrispondenza colonne/campi)</strong>
+                <ul>
+                    <li>Nella schermata successiva, definisci le corrispondenze fra
+                        le colonne del file importato con i campi  necessari per definire
+                        Donazione e Donatore in Gaia. Se nello step 1 hai scelto un formato sorgente, questo mapping sarà automatico</li>
+                    <li><strong>Deve essere presente almeno la colonna per l'importo della donazione,
+                        altrimenti saranno inseriti soltanto i dati dell'eventuale donatore/utente.</strong></li>
+                    <li>Una volta completata l'associazione colonne - campi, effettua un test di importazione
+                     cliccando su "Testa Importazione". Ricorda che
+                        se hai scelto un formato predefinito (ad esempio sito CRI.it),
+                        le associazioni non sono modificabili.</li>
+                    <li>Leggi il riepilogo in alto nella pagina per controllare se ci sono errori nei dati</li>
+                    <li>Se non noti errori inaspettati, effettua l'import vero e proprio cliccando su "Importa",
+                     altrimenti controlla nuovamente il file importato.</li>
+                </ul>
+                <i class="fa fa-fw fa-info-circle"></i>
+                <strong>Nota Bene</strong>
+                <ul>
+                    <li>Per i formati che non includono donazioni ma soltanto profili donatori (es. Amazon),
+                    i profili saranno registrati nell'anagrafica centralizzata dei donatori ma non li vedrai nell'elenco dei donatori di questa campagna.</li>
+                    <li>Potrai visualizzare i profili donatori importati alla pagina <a href="/donazioni/donatori/elenco">Donatori</a>.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <hr />
+{% endblock %}

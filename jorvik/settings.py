@@ -31,10 +31,30 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+
     # Librerie terze
+    'bootstrap3',
+    'django_countries',
+    'autocomplete_light',
+    'django_extensions',
+    'loginas',
+    'django_cron',
+    'django.contrib.humanize',
+    'django_gravatar',
+    'compressor',
+    'easy_thumbnails',
+    'filer',
+    'ckeditor',
+    'ckeditor_filebrowser_filer',
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
+    'otp_yubikey',
+    'two_factor',
     'nocaptcha_recaptcha',
     # 'oauth2_provider',
     'mptt',
+
     # Moduli interni
     'base',
     'autenticazione',
@@ -48,29 +68,13 @@ INSTALLED_APPS = [
     'posta',
     'sangue',
     'formazione',
-    'bootstrap3',
-    'django_countries',
-    'autocomplete_light',
-    'django_extensions',
-    'loginas',
-    'django_cron',
-    'django.contrib.humanize',
-    'django_gravatar',
     'centrale_operativa',
-    'compressor',
-    'easy_thumbnails',
     'gestione_file',
     'segmenti',
     'articoli',
-    'filer',
-    'ckeditor',
-    'ckeditor_filebrowser_filer',
 
-    'django_otp',
-    'django_otp.plugins.otp_static',
-    'django_otp.plugins.otp_totp',
-    'otp_yubikey',
-    'two_factor',
+    'donazioni',
+    'mailup',
 ]
 
 
@@ -195,9 +199,6 @@ SESSION_COOKIE_PATH = '/'
 
 GENERAL_CONF = configparser.ConfigParser()
 GENERAL_CONF.read(GENERAL_CONF_FILE)
-
-# Driver per i test funzionali
-DRIVER_WEB = 'firefox'
 
 # Configurazione E-mail
 EMAIL_CONF = configparser.ConfigParser()
@@ -383,3 +384,11 @@ FORMAZIONE_VALIDITA_INVITI = 7
 
 POSTA_MASSIVA_TIMEOUT = 30
 DATE_FORMAT = '%d/%m/%Y'
+
+# ### Donazioni economiche
+# Nella lista dei donatori la media delle donazioni per ciascun
+# utente sarà evidenziata graficamente se al di sopra di una certa soglia
+SOGLIA_MEDIA_DONAZIONE = 100
+# Scaglioni media donazione per filtraggio lista donatori
+SCAGLIONI_MEDIA_DONAZIONE = (("0-50", "Fra 0 e 50"), ("50-100", "Fra 50 e 100"),
+                             ("100-500", "Fra 100 e 500"), ("500-inf", "Oltre 500"),)

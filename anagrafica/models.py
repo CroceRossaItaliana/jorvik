@@ -39,7 +39,7 @@ from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI
     DIRETTORE_CORSO, RESPONSABILE_AREA, REFERENTE, OBIETTIVI
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
-    GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE
+    GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE, GESTIONE_CAMPAGNE, GESTIONE_CAMPAGNA
 from anagrafica.permessi.delega import delega_permessi, delega_incarichi
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_APPARTENENZE, INCARICO_GESTIONE_TRASFERIMENTI, \
     INCARICO_GESTIONE_ESTENSIONI, INCARICO_GESTIONE_RISERVE, INCARICO_ASPIRANTE
@@ -56,7 +56,7 @@ from base.models import ModelloSemplice, ModelloAlbero, ConAutorizzazioni, ConAl
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
 from base.utils import is_list, sede_slugify, UpperCaseCharField, TitleCharField, poco_fa, mezzanotte_24_ieri, \
-    mezzanotte_00, mezzanotte_24
+    mezzanotte_00, mezzanotte_24, concept
 from autoslug import AutoSlugField
 
 from curriculum.models import Titolo, TitoloPersonale
@@ -460,6 +460,23 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.membro(Appartenenza.VOLONTARIO, **kwargs)
 
     @property
+    def soggetto_donatore(self):
+        """
+        Controlla se membro soggetto donatore
+        (cioè registrato dopo aver effettuato una donazione economica)
+        """
+        return self.membro(Appartenenza.SOGGETTO_DONATORE)
+
+    @property
+    def donazioni_economiche(self):
+        if not self.soggetto_donatore:
+            return []
+        from donazioni.models import AssociazioneDonatorePersona
+        associazione_donatore = AssociazioneDonatorePersona.objects.get(persona=self)
+        donatore = associazione_donatore.donatore
+        return donatore.donazioni
+
+    @property
     def ordinario(self, **kwargs):
         """
         Controlla se membro ordinario
@@ -507,6 +524,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         if self.volontario:
             lista += [('/utente/', 'Volontario', 'fa-user')]
+
         elif not hasattr(self, 'aspirante'):
             lista += [('/utente/', 'Utente', 'fa-user')]
 
@@ -535,6 +553,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         if self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE):
             lista += [('/formazione/', 'Formazione', 'fa-graduation-cap')]
+
+        if self.ha_permesso(GESTIONE_CAMPAGNE) or self.ha_permesso(GESTIONE_CAMPAGNA):
+            lista += [('/donazioni/', 'Donatori', 'fa-money')]
 
         tipi = []
         for d in self.deleghe_attuali():
@@ -1332,6 +1353,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     MILITARE = 'MI'
     DONATORE = 'DO'
     SOSTENITORE = 'SO'
+    SOGGETTO_DONATORE = 'SD'  # Donatore economico (vedi modulo 'donazioni')
 
     # Quale tipo di membro puo' partecipare alle attivita'?
     MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO,)
@@ -1363,9 +1385,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         (ORDINARIO, 'Socio Ordinario'),
         (SOSTENITORE, 'Sostenitore'),
         (DIPENDENTE, 'Dipendente'),
-        #(INFERMIERA, 'Infermiera Volontaria'),
-        #(MILITARE, 'Membro Militare'),
-        #(DONATORE, 'Donatore Finanziario'),
+        (SOGGETTO_DONATORE, 'Soggetto Donatore'),
     )
     PRECEDENZE_MODIFICABILI = (ESTESO,)
     NON_MODIFICABILE = (ESTESO,)
@@ -1831,7 +1851,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         else:
             queryset = self.__class__.objects.none()
 
-
         # Cosa fare con le sedi disattive?
         if ignora_disattive:
             return queryset.filter(attiva=True)
@@ -1848,6 +1867,35 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     def unita_sottostanti(self):
         return self.ottieni_figli().filter(estensione=TERRITORIALE)
+
+    @classmethod
+    @concept
+    def query_puo_avere_campagne(cls):
+        """
+        Requisito A-18 del modulo Donazioni Economiche.
+        Le entità autorizzate alla creazione di campagne saranno:
+        •Comitato nazionale
+        •Comitato territoriale
+        •Comitato regionale, solo quando abbiano impostato CF e PIVA
+            e questi sono diversi dal Comitato nazionale
+        :return: Oggetto Query. Per via del decoratore @concept, il metodo ritorna un queryset
+        """
+        nazionali_dati = cls.objects.filter(estensione=NAZIONALE).values_list('codice_fiscale', 'partita_iva')
+        cf_nazionali = (p[0] for p in nazionali_dati if p[0])
+        piva_nazionali = (p[1] for p in nazionali_dati if p[1])
+        filtro = Q(estensione__in=[NAZIONALE, LOCALE])
+        filtro |= (Q(estensione=REGIONALE) & (~Q(codice_fiscale__isnull=True) & ~Q(partita_iva__isnull=True) &
+                                              ~Q(codice_fiscale__exact='') & ~Q(partita_iva__exact='') &
+                                              ~Q(codice_fiscale__in=cf_nazionali) & ~Q(partita_iva__in=piva_nazionali)))
+        return filtro
+
+    @cached_property
+    def mailup(self):
+        from mailup.models import AccountMailUp
+        try:
+            return self.account_mailup
+        except AccountMailUp.DoesNotExist:
+            return None
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):

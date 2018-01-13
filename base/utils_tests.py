@@ -70,6 +70,16 @@ def crea_sede(presidente=None, estensione=LOCALE, genitore=None):
     return s
 
 
+def crea_delega(persona, oggetto, tipo):
+    d = Delega(
+            inizio="1980-12-10",
+            persona=persona,
+            tipo=tipo,
+            oggetto=oggetto
+        )
+    d.save()
+    return d
+
 def crea_locazione(dati=None, geo=False):
     if not dati and geo:
         indirizzo = 'Via Toscana, 12 - 00187 Roma'

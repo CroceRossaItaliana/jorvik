@@ -8,7 +8,8 @@ from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_1, DELEGATO_OBIE
     REFERENTE, RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO, \
     RESPONSABILE_AUTOPARCO, DELEGATO_CO, REFERENTE_GRUPPO, RUBRICHE_TITOLI
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, \
-    GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
+    GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, GESTIONE_CAMPAGNE, \
+    GESTIONE_CAMPAGNA, STATISTICHE_CAMPAGNE
 from base.utils import remove_none
 
 __author__ = 'alfioemanuele'
@@ -130,6 +131,17 @@ def menu(request):
                 ("Statistiche", "fa-bar-chart", "/attivita/statistiche/") if me and me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE).exists() else None,
             ))
         ) if me and me.volontario else None,
+        "donazioni": (
+            ("Campagne Raccolta Fondi", (
+                ("Campagne", "fa-list", "/donazioni/campagne/"),
+                ("Etichette", "fa-tags", "/donazioni/etichette/"),
+                ("Donatori", "fa-users", "/donazioni/donatori/elenco/"),
+                ("Donazioni", "fa-money", "/donazioni/donazioni/elenco/"),
+            )) if me and (me.ha_permesso(GESTIONE_CAMPAGNE) or me.oggetti_permesso(GESTIONE_CAMPAGNA).exists()) else None,
+            ("Statistiche Campagne", (
+                ("Statistiche ed estrazioni", "fa-line-chart", "/donazioni/statistiche/"),
+            )) if me and me.ha_permesso(STATISTICHE_CAMPAGNE) else None,
+        ),
         "autorizzazioni": (
             ("Richieste", (
                 ("In attesa", "fa-user-plus", "/autorizzazioni/"),

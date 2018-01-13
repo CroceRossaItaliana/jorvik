@@ -102,6 +102,51 @@
             </table>
 
 
+        {#        RICEVUTE DONAZIONI     #}
+        {% if me.soggetto_donatore %}
+        <p>&nbsp;</p>
+            <h4><i class="fa fa-money fa-fw"></i> Storico donazioni e ricevute </h4>
+
+            <table class="table table-condensed table-responsive">
+                <thead>
+                    <th>Campagna</th>
+                    <th>Importo</th>
+                    <th>Data</th>
+                    <th>Ricevuta</th>
+                </thead>
+                <tbody>
+
+                    {% for d in me.donazioni_economiche.all %}
+                        <tr>
+                            <td>{{ d.campagna }}</td>
+                            <td>{% euro d.importo %}</td>
+                            <td>{{ d.data }}</td>
+                            <td>
+                                {% if d.con_ricevuta %}
+                                    <a href="{{ d.url_ricevuta }}" target="_blank">
+                                        Scarica Ricevuta pdf
+                                    </a>
+                                {% else %}
+                                    Non è possibile scaricare una ricevuta per questa donazione
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                    {% empty %}
+
+                        <tr class="warning">
+                            <td colspan="4">
+                                <p><i class="fa fa-fw fa-info-circle"></i>
+                                    Nessuna donazione registrata.
+                                </p>
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+
 
             <p>&nbsp;</p>
             <h4><i class="fa fa-money fa-fw"></i> Ricevute e quote associative</h4>

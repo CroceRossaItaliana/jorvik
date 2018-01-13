@@ -1,5 +1,4 @@
 from autocomplete_light import shortcuts as autocomplete_light
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 
 from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE

@@ -1,0 +1,96 @@
+{% extends 'donazioni_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Modifica donazione
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="row">
+
+        <div class="col-md-6">
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-money"></i>
+                        Modifica donazione
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <fieldset>
+                            <legend>Donazione:</legend>
+                            {% bootstrap_form modulo %}
+                        </fieldset>
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-asterisk"></i>
+                            Modifica
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="alert alert-info">
+                <i class="fa fa-fw fa-info-circle"></i>
+                <strong>Modifica i dati della donazione</strong>:
+                <ul>
+                    <li><strong>Metodo Pagamento</strong>: a scelta fra Contanti, Bancaria (es. bonifico)
+                        o i vari sistemi di pagamento online</li>
+                    <li><strong>Importo</strong>: importo in EUR della donazione economica</li>
+                    <li><strong>Codice Transazione</strong>: inserire se presente un codice che identifichi univocamente la donazione (e.g. CRO bonifico)</li>
+                    <li><strong>Data</strong>: Data della donazione. Può essere lasciata
+                    in bianco. In tal caso, la donazione avrà la data odierna.</li>
+                    <li><strong>Donazione Ricorrente</strong>:
+                        Spuntare la casella se si tratta di una donazione ricorrente.</li>
+                </ul>
+            </div>
+            <div class="panel panel-info">
+
+                <div class="panel-heading">
+                    <i class="fa fa-fw fa-user"></i> Dati del donatore associato a questa donazione
+                </div>
+
+                <div class="panel-body">
+
+                    <p>Informazioni di base del donatore.
+                        Per visualizzare i dati completi ed accedere al modulo di modifica,
+                        vai alla <a href="{{ donatore.url }}">scheda donatore</a></p>
+
+                    <table class="table table-responsive table-striped">
+                        <tr>
+                            <td>Nome</td>
+                            <td class="grassetto">{{ donatore.nome }}</td>
+                        </tr>
+                        <tr>
+                            <td>Cognome</td>
+                            <td class="grassetto">{{ donatore.cognome }}</td>
+                        </tr>
+                        <tr>
+                            <td>Codice Fiscale</td>
+                            <td class="monospace">{{ donatore.codice_fiscale }}</td>
+                        </tr>
+                        <tr>
+                            <td>Email</td>
+                            <td>{{ donatore.email }}</td>
+                        </tr>
+                        <tr>
+                            <td>Data di nascita</td>
+                            <td>{{ donatore.data_nascita|default_if_none:"" }}</td>
+                        </tr>
+
+                    </table>
+
+            </div>
+        </div>
+
+    </div>
+    </div>
+
+{% endblock %}

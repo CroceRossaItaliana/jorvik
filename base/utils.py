@@ -202,6 +202,13 @@ def poco_fa():
     return timezone.now() - timedelta(minutes=1)
 
 
+def mai():
+    """
+    Un secondo fa. Utile per terminare o iniziare le appartenenze.
+    """
+    return timezone.now() + timedelta(weeks=500)
+
+
 def oggi():
     return poco_fa().date()
 
