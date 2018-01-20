@@ -12,7 +12,7 @@ from freezegun import freeze_time
 
 from anagrafica.models import Appartenenza, Sede, Persona, Fototessera, Dimissione, ProvvedimentoDisciplinare, \
     Estensione, Trasferimento
-from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE, LOCALE
+from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE, LOCALE, TERRITORIALE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import MODIFICA
 from attivita.models import Area, Partecipazione, Turno
@@ -1906,24 +1906,22 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         )
 
         # registra e cancella quota volontario locale da US locale
-        quota = Quota.objects.create(
-            persona=volontario, appartenenza=appartenenza, sede=sede,
-            data_versamento=oggi.strftime('%d/%m/%Y'), registrato_da=delegato
-        )
+        quota = Quota.nuova(appartenenza=appartenenza, data_versamento=oggi,
+                            registrato_da=delegato, causale="Quota",
+                            importo=8.0)
 
         self.client.login(email="mario@rossi.it", password="prova")
-        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_annulla', args=(quota.pk,))))
+        response = self.client.post('{}{}'.format(self.live_server_url, "/us/ricevute/annulla/%d" % quota.pk))
         # ricevuta non registrata
         self.assertEqual(response.status_code, 200)
 
         # registra quota volontario territoriale da US locale
-        quota = Quota.objects.create(
-            persona=volontario_territoriale, appartenenza=appartenenza_territoriale, sede=sede,
-            data_versamento=oggi.strftime('%d/%m/%Y'), registrato_da=delegato
-        )
+        quota = Quota.nuova(appartenenza=appartenenza_territoriale,
+                            data_versamento=oggi, registrato_da=delegato,
+                            causale="Quota", importo=8.0)
 
         self.client.login(email="mario@rossi.it", password="prova")
         # qui ci va la cancellazione
-        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_annulla', args=(quota.pk,))))
+        response = self.client.post('{}{}'.format(self.live_server_url, "/us/ricevute/annulla/%d" % quota.pk))
         # ricevuta non registrata
         self.assertEqual(response.status_code, 200)
