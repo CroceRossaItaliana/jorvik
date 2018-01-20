@@ -1,6 +1,6 @@
 [client]
-host = localhost
+host = db
 port = 5432
-database = jorvik
+database = postgres
 user = postgres
 password =
