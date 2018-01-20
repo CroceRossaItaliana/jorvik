@@ -12,7 +12,7 @@ from freezegun import freeze_time
 
 from anagrafica.models import Appartenenza, Sede, Persona, Fototessera, Dimissione, ProvvedimentoDisciplinare, \
     Estensione, Trasferimento
-from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE, LOCALE
+from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE, LOCALE, TERRITORIALE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import MODIFICA
 from attivita.models import Area, Partecipazione, Turno
@@ -31,6 +31,8 @@ from ufficio_soci.models import Tesseramento, Tesserino, Quota, Riduzione
 class TestBase(TestCase):
 
     def setUp(self):
+        super(self, TestBase).setUp()
+
         self.p, self.s, self.a = crea_persona_sede_appartenenza()
         self.oggi = datetime.date(2015, 1, 1)
         self.quindici_anni_fa = (datetime.date(2000, 1, 1))
@@ -1867,3 +1869,57 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             # ricevuta non registrata
             self.assertEqual(response.status_code, 302)
             self.assertTrue(response['location'].find('?appena_registrata='))
+
+    @freeze_time('2016-11-14')
+    def test_cancellazione_quota_socio(self):
+
+        # Crea oggetti e nomina un delegato US locale
+        delegato = crea_persona()
+        sessione_delegato_locale = self.sessione_utente(persona=delegato)
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
+        sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
+
+        # Crea oggetti e nomina un delegato US territoriale
+        delegato_territoriale = crea_persona()
+        sessione_delegato_territoriale = self.sessione_utente(persona=delegato_territoriale)
+        volontario_territoriale = crea_persona()
+        sede_territoriale = crea_sede(estensione=TERRITORIALE, genitore=sede)
+        sede_territoriale.aggiungi_delegato(UFFICIO_SOCI, delegato_territoriale)
+        appartenenza_territoriale = crea_appartenenza(persona=volontario_territoriale, sede=sede_territoriale)
+
+        sede_territoriale.locazione = crea_locazione()
+        sede_territoriale.save()
+
+        oggi = poco_fa()
+        inizio_anno = oggi.replace(month=1, day=1)
+        fine_soci = inizio_anno.replace(month=3) - datetime.timedelta(days=1)
+
+        Tesseramento.objects.create(
+            stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
+            anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+            quota_aspirante=8, quota_sostenitore=8
+        )
+
+        # registra e cancella quota volontario locale da US locale
+        quota = Quota.nuova(appartenenza=appartenenza, data_versamento=oggi,
+                            registrato_da=delegato, causale="Quota",
+                            importo=8.0)
+
+        sessione_delegato_locale.visit("%s/us/ricevute/%d/annulla/" % (self.live_server_url, quota.pk))
+        self.assertTrue(sessione_delegato_locale.is_text_present("ANNULLATA"))
+
+        # registra quota volontario territoriale da US locale
+        quota = Quota.nuova(appartenenza=appartenenza_territoriale,
+                            data_versamento=oggi, registrato_da=delegato,
+                            causale="Quota", importo=8.0)
+
+        sessione_delegato_locale.visit("%s/us/ricevute/%d/annulla/" % (self.live_server_url, quota.pk))
+        self.assertTrue(sessione_delegato_locale.is_text_present("ANNULLATA"))
+
+        # registra quota volontario territoriale da US territoriale (queo)
+        quota = Quota.nuova(appartenenza=appartenenza_territoriale,
+                            data_versamento=oggi, registrato_da=delegato_territoriale,
+                            causale="Quota", importo=8.0)
+
+        sessione_delegato_territoriale.visit("%s/us/ricevute/%d/annulla/" % (self.live_server_url, quota.pk))
+        self.assertTrue(sessione_delegato_territoriale.is_text_present("ANNULLATA"))
