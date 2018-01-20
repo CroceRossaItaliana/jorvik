@@ -1867,3 +1867,63 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             # ricevuta non registrata
             self.assertEqual(response.status_code, 302)
             self.assertTrue(response['location'].find('?appena_registrata='))
+
+    @freeze_time('2016-11-14')
+    def test_cancellazione_quota_socio(self):
+
+        # Crea oggetti e nomina un delegato US locale
+        delegato = crea_persona()
+        utente = crea_utenza(delegato, email="mario@rossi.it", password="prova")
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
+        sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
+
+        sede.telefono = '+3902020202'
+        sede.email = 'comitato@prova.it'
+        sede.codice_fiscale = '01234567891'
+        sede.partita_iva = '01234567891'
+        sede.locazione = crea_locazione()
+        sede.save()
+
+        # Crea oggetti e nomina un delegato US territoriale
+        delegato_territoriale = crea_persona()
+        utente_territoriale = crea_utenza(delegato_territoriale, email="marco@rossi.it", password="prova")
+        volontario_territoriale = crea_persona()
+        sede_territoriale = crea_sede(estensione=TERRITORIALE, genitore=sede)
+        sede_territoriale.aggiungi_delegato(UFFICIO_SOCI, delegato_territoriale)
+        appartenenza_territoriale = crea_appartenenza(persona=volontario_territoriale, sede=sede_territoriale)
+
+        sede_territoriale.locazione = crea_locazione()
+        sede_territoriale.save()
+
+        oggi = poco_fa()
+        inizio_anno = oggi.replace(month=1, day=1)
+        fine_soci = inizio_anno.replace(month=3) - datetime.timedelta(days=1)
+
+        Tesseramento.objects.create(
+            stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
+            anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+            quota_aspirante=8, quota_sostenitore=8
+        )
+
+        # registra e cancella quota volontario locale da US locale
+        quota = Quota.objects.create(
+            persona=volontario, appartenenza=appartenenza, sede=sede,
+            data_versamento=oggi.strftime('%d/%m/%Y'), registrato_da=delegato
+        )
+
+        self.client.login(email="mario@rossi.it", password="prova")
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_annulla', args=(quota.pk,))))
+        # ricevuta non registrata
+        self.assertEqual(response.status_code, 200)
+
+        # registra quota volontario territoriale da US locale
+        quota = Quota.objects.create(
+            persona=volontario_territoriale, appartenenza=appartenenza_territoriale, sede=sede,
+            data_versamento=oggi.strftime('%d/%m/%Y'), registrato_da=delegato
+        )
+
+        self.client.login(email="mario@rossi.it", password="prova")
+        # qui ci va la cancellazione
+        response = self.client.post('{}{}'.format(self.live_server_url, reverse('us_ricevute_annulla', args=(quota.pk,))))
+        # ricevuta non registrata
+        self.assertEqual(response.status_code, 200)
