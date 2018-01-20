@@ -227,7 +227,9 @@ STATIC_ROOT = MEDIA_CONF.get('static', 'static_root', fallback='assets/')
 STATIC_URL = MEDIA_CONF.get('static', 'static_url', fallback='/assets/')
 
 # Driver per i test funzionali
-DRIVER_WEB = DEBUG_CONF.get('test', 'driver', fallback='firefox')
+SELENIUM_DRIVER = DEBUG_CONF.get('test', 'driver', fallback='firefox')
+SELENIUM_BROWSER = DEBUG_CONF.get('test', 'browser', fallback='firefox')
+SELENIUM_URL = DEBUG_CONF.get('test', 'url', fallback=None)
 
 host = "%s" % (DEBUG_CONF.get('production', 'host'),)
 if host == 'localhost':
