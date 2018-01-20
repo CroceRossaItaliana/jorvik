@@ -104,9 +104,9 @@ def valida_email_personale(email):
 def valida_data_nel_passato(data):
     if isinstance(data, datetime):
         if data > datetime.now():
-            raise ValidationError("Data ed ora non possono essere nel passato.")
+            raise ValidationError("Data ed ora non possono essere nel futuro.")
     elif isinstance(data, date):
         if data > date.today():
-            raise ValidationError("La data non può essere nel passato.")
+            raise ValidationError("La data non può essere nel futuro.")
     else:
         raise TypeError("Fornito tipo di data non valido.")
