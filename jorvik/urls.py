@@ -316,6 +316,7 @@ urlpatterns = [
     url(r'^admin/import/presidenti/$', anagrafica.viste.admin_import_presidenti),
     url(r'^admin/pulisci/email/$', anagrafica.viste.admin_pulisci_email),
     url(r'^admin/statistiche/$', anagrafica.viste.admin_statistiche),
+    url(r'^admin/report_federazione/$', anagrafica.viste.admin_report_federazione),
 
     url(r'^admin/', include(admin.site.urls)),
     url(r'^login/', include('loginas.urls')),   # Login come utente
