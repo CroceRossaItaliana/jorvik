@@ -1880,13 +1880,6 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         volontario, sede, appartenenza = crea_persona_sede_appartenenza()
         sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
 
-        sede.telefono = '+3902020202'
-        sede.email = 'comitato@prova.it'
-        sede.codice_fiscale = '01234567891'
-        sede.partita_iva = '01234567891'
-        sede.locazione = crea_locazione()
-        sede.save()
-
         # Crea oggetti e nomina un delegato US territoriale
         delegato_territoriale = crea_persona()
         sessione_delegato_territoriale = self.sessione_utente(persona=delegato_territoriale)
