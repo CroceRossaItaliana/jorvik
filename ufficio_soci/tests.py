@@ -31,6 +31,8 @@ from ufficio_soci.models import Tesseramento, Tesserino, Quota, Riduzione
 class TestBase(TestCase):
 
     def setUp(self):
+        super(self, TestBase).setUp()
+
         self.p, self.s, self.a = crea_persona_sede_appartenenza()
         self.oggi = datetime.date(2015, 1, 1)
         self.quindici_anni_fa = (datetime.date(2000, 1, 1))
@@ -1868,12 +1870,13 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             self.assertEqual(response.status_code, 302)
             self.assertTrue(response['location'].find('?appena_registrata='))
 
+    serialised_rollback = True
     @freeze_time('2016-11-14')
     def test_cancellazione_quota_socio(self):
 
         # Crea oggetti e nomina un delegato US locale
         delegato = crea_persona()
-        utente = crea_utenza(delegato, email="mario@rossi.it", password="prova")
+        sessione_delegato_locale = self.sessione_utente(persona=delegato)
         volontario, sede, appartenenza = crea_persona_sede_appartenenza()
         sede.aggiungi_delegato(UFFICIO_SOCI, delegato)
 
@@ -1886,7 +1889,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
 
         # Crea oggetti e nomina un delegato US territoriale
         delegato_territoriale = crea_persona()
-        utente_territoriale = crea_utenza(delegato_territoriale, email="marco@rossi.it", password="prova")
+        sessione_delegato_territoriale = self.sessione_utente(persona=delegato_territoriale)
         volontario_territoriale = crea_persona()
         sede_territoriale = crea_sede(estensione=TERRITORIALE, genitore=sede)
         sede_territoriale.aggiungi_delegato(UFFICIO_SOCI, delegato_territoriale)
@@ -1910,18 +1913,14 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
                             registrato_da=delegato, causale="Quota",
                             importo=8.0)
 
-        self.client.login(email="mario@rossi.it", password="prova")
-        response = self.client.post('{}{}'.format(self.live_server_url, "/us/ricevute/annulla/%d" % quota.pk))
-        # ricevuta non registrata
-        self.assertEqual(response.status_code, 200)
+        sessione_delegato_locale.visit("%s/us/ricevute/%d/annulla/" % (self.live_server_url, quota.pk))
+        self.assertTrue(sessione_delegato_locale.is_text_present("ANNULLATA"))
 
         # registra quota volontario territoriale da US locale
         quota = Quota.nuova(appartenenza=appartenenza_territoriale,
                             data_versamento=oggi, registrato_da=delegato,
                             causale="Quota", importo=8.0)
 
-        self.client.login(email="mario@rossi.it", password="prova")
         # qui ci va la cancellazione
-        response = self.client.post('{}{}'.format(self.live_server_url, "/us/ricevute/annulla/%d" % quota.pk))
-        # ricevuta non registrata
-        self.assertEqual(response.status_code, 200)
+        sessione_delegato_locale.visit("%s/us/ricevute/%d/annulla/" % (self.live_server_url, quota.pk))
+        self.assertTrue(sessione_delegato_locale.is_text_present("ANNULLATA"))
