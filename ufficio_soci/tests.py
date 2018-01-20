@@ -1870,7 +1870,6 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             self.assertEqual(response.status_code, 302)
             self.assertTrue(response['location'].find('?appena_registrata='))
 
-    serialised_rollback = True
     @freeze_time('2016-11-14')
     def test_cancellazione_quota_socio(self):
 
