@@ -6,3 +6,7 @@
 
 # site_key =
 # secret_key =
+
+[dompdf]
+
+endpoint = http://pdf/www/render.php
