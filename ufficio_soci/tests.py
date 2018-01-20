@@ -1921,6 +1921,13 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
                             data_versamento=oggi, registrato_da=delegato,
                             causale="Quota", importo=8.0)
 
-        # qui ci va la cancellazione
         sessione_delegato_locale.visit("%s/us/ricevute/%d/annulla/" % (self.live_server_url, quota.pk))
         self.assertTrue(sessione_delegato_locale.is_text_present("ANNULLATA"))
+
+        # registra quota volontario territoriale da US territoriale (queo)
+        quota = Quota.nuova(appartenenza=appartenenza_territoriale,
+                            data_versamento=oggi, registrato_da=delegato_territoriale,
+                            causale="Quota", importo=8.0)
+
+        sessione_delegato_territoriale.visit("%s/us/ricevute/%d/annulla/" % (self.live_server_url, quota.pk))
+        self.assertTrue(sessione_delegato_territoriale.is_text_present("ANNULLATA"))
