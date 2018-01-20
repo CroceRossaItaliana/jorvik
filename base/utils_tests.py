@@ -50,13 +50,20 @@ def crea_utenza(persona, email="mario@rossi.it", password="prova"):
     return u
 
 
-def crea_sede(presidente=None, estensione=LOCALE, genitore=None):
+def crea_sede(presidente=None, estensione=LOCALE, genitore=None,
+              locazione=None):
     ESTENSIONE_DICT = dict(ESTENSIONE)
+    locazione = locazione or crea_locazione()
     s = Sede(
         nome="Com. " + ESTENSIONE_DICT[estensione] + " " + names.get_last_name(),
         tipo=Sede.COMITATO,
         estensione=estensione,
         genitore=genitore,
+        telefono='+3902020202',
+        email='comitato@prova.it',
+        codice_fiscale='01234567891',
+        partita_iva='01234567891',
+        locazione=locazione
     )
     s.save()
     if presidente is not None:
