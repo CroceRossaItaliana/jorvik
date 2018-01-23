@@ -5,7 +5,10 @@
 {% load base_tags %}
 
 {% block pagina_corpo %}
-    {% include "includes/live_chat.html" %}
+
+    {% if not debug %}
+        {% include "includes/live_chat.html" %}
+    {% endif %}
 
     {% block pagina_testata %}
 

@@ -1089,7 +1089,7 @@ def us_ricevute(request, me):
 def us_ricevute_annulla(request, me, pk):
     ricevuta = get_object_or_404(Quota, pk=pk)
 
-    if ricevuta.sede not in me.oggetti_permesso(GESTIONE_SOCI):
+    if ricevuta.appartenenza.sede not in me.oggetti_permesso(GESTIONE_SOCI):
         return redirect(ERRORE_PERMESSI)
 
     if ricevuta.stato == ricevuta.REGISTRATA:

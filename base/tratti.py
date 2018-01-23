@@ -148,7 +148,6 @@ class ConStorico(models.Model):
 
         return risultato
 
-
     @classmethod
     @concept
     def query_attuale_in_anno(cls, anno, **kwargs):

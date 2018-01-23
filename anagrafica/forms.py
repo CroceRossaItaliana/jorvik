@@ -16,7 +16,7 @@ from django.utils.timezone import now
 
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega, \
     Fototessera, Trasferimento, Riserva
-from anagrafica.validators import valida_almeno_14_anni
+from anagrafica.validators import valida_almeno_14_anni, valida_data_nel_passato
 from autenticazione.models import Utenza
 from autocomplete_light import shortcuts as autocomplete_light
 
@@ -465,6 +465,11 @@ class ModuloModificaDataInizioAppartenenza(ModelForm):
         if self.instance and not self.instance.modificabile(inizio):
             raise ValidationError("La data non può sovrapporsi con appartenenze precedenti.")
         return inizio
+
+
+class ModuloReportFederazione(forms.Form):
+    data = forms.DateTimeField(help_text="Data e ora per i quali computare il report.",
+                               validators=[valida_data_nel_passato,],)
 
 
 class ModuloImportPresidenti(forms.Form):

@@ -10,7 +10,7 @@ cd $JORVIK_DIRECTORY
 
 sudo bash config/provision-psql.sh
 sudo apt-get upgrade
-sudo apt-get install -y --force-yes git python3-pip binutils libproj-dev gdal-bin python3-dev libmysqlclient-dev libjpeg-dev libpq-dev libxml2-dev libxslt-dev
+sudo apt-get install -y --force-yes git python3-pip binutils libproj-dev gdal-bin python3-dev libmysqlclient-dev libjpeg-dev libpq-dev libxml2-dev libxslt-dev libfreetype6-dev
 
 sudo mkdir -p /log/
 sudo chmod a+rw /log/
