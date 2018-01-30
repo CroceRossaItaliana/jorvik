@@ -21,10 +21,10 @@ from autenticazione.utils_test import TestFunzionale
 from base.geo import Locazione
 from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, \
-    crea_utenza, crea_locazione, email_fittizzia
+    crea_utenza, crea_locazione, email_fittizzia, crea_tesseramento
 from ufficio_soci.elenchi import ElencoElettoratoAlGiorno, ElencoSociAlGiorno, ElencoSostenitori, ElencoExSostenitori, \
     ElencoVolontari, ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoSenzaTurni
-from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota
+from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota, ModuloElencoQuote
 from ufficio_soci.models import Tesseramento, Tesserino, Quota, Riduzione
 
 
@@ -1869,6 +1869,46 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             # ricevuta non registrata
             self.assertEqual(response.status_code, 302)
             self.assertTrue(response['location'].find('?appena_registrata='))
+
+    @freeze_time('2017-01-30')
+    def test_elenco_non_paganti_dimessi_assenti(self):
+        """
+        Verifica che i volontari dimessi non vengano inclusi nell'elenco dei volontari
+         che non hanno pagato la quota associativa per l'anno dell'elenco.
+        """
+        presidente = crea_persona()
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        sessione_presidente = self.sessione_utente(persona=presidente)
+        crea_tesseramento(anno=2017)
+
+        # Vai all'elenco quote da pagare
+        sessione_presidente.visit("%s/us/quote/" % self.live_server_url)
+        with sessione_presidente.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.DA_VERSARE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario deve pagare la quota
+            self.assertTrue(iframe.is_text_present(volontario.nome))
+
+        # Dimetti il volontario
+        sessione_presidente.visit("%s/us/dimissioni/%d/" % (self.live_server_url,
+                                                            volontario.pk))
+        sessione_presidente.select('motivo', Dimissione.VOLONTARIE)
+        sessione_presidente.fill('info', 'Una motivazione di esempio')
+        sessione_presidente.check('trasforma_in_sostenitore')
+        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
+
+        # Vai nuovamente all'elenco quote da pagare
+        sessione_presidente.visit("%s/us/quote/" % self.live_server_url)
+        with sessione_presidente.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.DA_VERSARE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario NON compare in elenco come dovente pagare quota
+            self.assertFalse(iframe.is_text_present(volontario.nome))
+
 
     @freeze_time('2016-11-14')
     def test_cancellazione_quota_socio(self):
