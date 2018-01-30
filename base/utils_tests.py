@@ -12,6 +12,7 @@ from autenticazione.models import Utenza
 from base.geo import Locazione
 from base.utils import poco_fa
 from jorvik.settings import SELENIUM_DRIVER, SELENIUM_URL, SELENIUM_BROWSER
+from ufficio_soci.models import Tesseramento
 
 
 def codice_fiscale(length=16):
@@ -36,6 +37,21 @@ def crea_persona():
     )
     p.refresh_from_db()
     return p
+
+
+def crea_tesseramento(anno=None):
+    anno = anno or poco_fa().year
+    inizio_anno = poco_fa()
+    inizio_anno = inizio_anno.replace(day=1, month=1, hour=0, minute=0, second=0)
+    if anno:
+        inizio_anno = inizio_anno.replace(year=anno)
+    fine_soci = inizio_anno.replace(day=31, month=3, hour=23, minute=59, second=59)
+    t = Tesseramento.objects.create(
+        stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
+        anno=anno, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+        quota_aspirante=8, quota_sostenitore=8
+    )
+    return t
 
 
 def crea_utenza(persona, email="mario@rossi.it", password="prova"):
