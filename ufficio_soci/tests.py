@@ -31,7 +31,7 @@ from ufficio_soci.models import Tesseramento, Tesserino, Quota, Riduzione
 class TestBase(TestCase):
 
     def setUp(self):
-        super(self, TestBase).setUp()
+        super(TestBase, self).setUp()
 
         self.p, self.s, self.a = crea_persona_sede_appartenenza()
         self.oggi = datetime.date(2015, 1, 1)
@@ -1892,12 +1892,12 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             self.assertTrue(iframe.is_text_present(volontario.nome))
 
         # Dimetti il volontario
-        sessione_presidente.visit("%s/us/dimissioni/%d/" % (self.live_server_url,
-                                                            volontario.pk))
-        sessione_presidente.select('motivo', Dimissione.VOLONTARIE)
-        sessione_presidente.fill('info', 'Una motivazione di esempio')
-        sessione_presidente.check('trasforma_in_sostenitore')
-        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
+        d = Dimissione(
+            persona=volontario, appartenenza=appartenenza,
+            sede=sede, motivo=Dimissione.VOLONTARIE,
+            richiedente=presidente, info="Una motivazione di esempio"
+        )
+        d.applica(trasforma_in_sostenitore=False, invia_notifica=False)
 
         # Vai nuovamente all'elenco quote da pagare
         sessione_presidente.visit("%s/us/quote/" % self.live_server_url)
