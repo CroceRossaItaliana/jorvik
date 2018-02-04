@@ -1907,7 +1907,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             iframe.find_by_xpath("//button[@type='submit']").first.click()
 
             # Il volontario NON compare in elenco come dovente pagare quota
-            self.assertFalse(iframe.is_text_present(volontario.nome))
+            self.assertTrue(iframe.is_text_not_present(volontario.nome))
 
 
     @freeze_time('2016-11-14')
