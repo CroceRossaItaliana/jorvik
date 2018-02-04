@@ -19,7 +19,7 @@ from attivita.models import Area, Partecipazione, Turno
 from attivita.models import Attivita
 from autenticazione.utils_test import TestFunzionale
 from base.geo import Locazione
-from base.utils import poco_fa
+from base.utils import poco_fa, oggi
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, \
     crea_utenza, crea_locazione, email_fittizzia, crea_tesseramento
 from ufficio_soci.elenchi import ElencoElettoratoAlGiorno, ElencoSociAlGiorno, ElencoSostenitori, ElencoExSostenitori, \
@@ -2031,6 +2031,54 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             iframe.find_by_xpath("//button[@type='submit']").first.click()
 
             # Il volontario non e' ancora presente
+            self.assertTrue(iframe.is_text_not_present(volontario.nome))
+
+    @freeze_time('2017-01-30')
+    def test_elenco_paganti_dimessi_assenti(self):
+        """
+        Verifica che il volontario che e' stato dimesso non appaio piu' nell'elenco
+         dei volontari aventi pagato quota. Questo e' perche' questo NON e' un elenco
+         di quote, bensi' un elenco di soci attuali che hanno pagato la quota.
+        """
+        crea_tesseramento(anno=2017)
+
+        presidente = crea_persona()
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        sessione = self.sessione_utente(persona=presidente)
+
+        # Registra una quota per il volontario
+        Quota.nuova(appartenenza=appartenenza, data_versamento=oggi(),
+                    registrato_da=presidente, importo=8, tipo=Quota.QUOTA_SOCIO,
+                    causale="Quota Socio 2017", invia_notifica=False)
+
+        # Vai all'elenco quote versate
+        sessione.visit("%s/us/quote/" % self.live_server_url)
+        with sessione.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.VERSATE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario e' presente come pagante
+            self.assertTrue(iframe.is_text_present(volontario.nome))
+
+        # Dimetti il volontario
+        d = Dimissione(
+            persona=volontario, appartenenza=appartenenza,
+            sede=sede, motivo=Dimissione.VOLONTARIE,
+            richiedente=presidente, info="Una motivazione di esempio"
+        )
+        d.save()
+        d.applica(trasforma_in_sostenitore=False, invia_notifica=False)
+
+        # Vai all'elenco quote versate
+        sessione.visit("%s/us/quote/" % self.live_server_url)
+        with sessione.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.VERSATE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario NON e' piu' presente come pagante
             self.assertTrue(iframe.is_text_not_present(volontario.nome))
 
 
