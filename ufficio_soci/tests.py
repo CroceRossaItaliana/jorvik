@@ -1897,7 +1897,53 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             sede=sede, motivo=Dimissione.VOLONTARIE,
             richiedente=presidente, info="Una motivazione di esempio"
         )
+        d.save()
         d.applica(trasforma_in_sostenitore=False, invia_notifica=False)
+
+        # Vai nuovamente all'elenco quote da pagare
+        sessione_presidente.visit("%s/us/quote/" % self.live_server_url)
+        with sessione_presidente.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.DA_VERSARE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario NON compare in elenco come dovente pagare quota
+            self.assertTrue(iframe.is_text_not_present(volontario.nome))
+
+    @freeze_time('2017-01-30')
+    def test_elenco_non_paganti_trasferiti_uscenti_assenti(self):
+        """
+        Verifica che i volontari trasferiti verso un altro comitato
+         non vengano inclusi nell'elenco dei volontari
+         che non hanno pagato la quota associativa per l'anno dell'elenco.
+        """
+        presidente = crea_persona()
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        sessione_presidente = self.sessione_utente(persona=presidente)
+        crea_tesseramento(anno=2017)
+
+        presidente_nuova_sede = crea_persona()
+        nuova_sede = crea_sede(presidente=presidente_nuova_sede)
+
+        # Vai all'elenco quote da pagare
+        sessione_presidente.visit("%s/us/quote/" % self.live_server_url)
+        with sessione_presidente.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.DA_VERSARE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario deve pagare la quota
+            self.assertTrue(iframe.is_text_present(volontario.nome))
+
+        # Trasferisci il volontario presso la nuova sede
+        t = Trasferimento(
+            richiedente=volontario, persona=volontario,
+            destinazione=nuova_sede,
+            motivo="Mi andava di trasferirmi"
+        )
+        t.save()
+        t.richiedi(notifiche_attive=False)
+        t.autorizzazione_concessa(modulo=None, auto=True, data=poco_fa())
 
         # Vai nuovamente all'elenco quote da pagare
         sessione_presidente.visit("%s/us/quote/" % self.live_server_url)
