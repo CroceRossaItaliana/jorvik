@@ -876,7 +876,9 @@ def us_quote_nuova(request, me):
             "importo": tesseramento.importo_quota_volontario(),
             "riduzione": None
         }
-        modulo = ModuloQuotaVolontario(request.POST or None, initial=dati_iniziali, sedi=sedi)
+        modulo = ModuloQuotaVolontario(request.POST or None,
+                                       initial=dati_iniziali, sedi=sedi,
+                                       tesseramento=tesseramento)
 
         if modulo and modulo.is_valid():
 
