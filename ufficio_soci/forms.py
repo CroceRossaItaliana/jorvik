@@ -94,8 +94,6 @@ class ModuloElencoQuote(forms.Form):
     )
     tipo = forms.ChoiceField(choices=TIPO, initial=DA_VERSARE)
     anno = forms.IntegerField()
-    al_giorno = forms.DateField(help_text="La data alla quale generare l'elenco.",
-                                required=True, initial=datetime.date.today)
 
     def __init__(self, *args, **kwargs):
         super(ModuloElencoQuote, self).__init__(*args, **kwargs)
@@ -105,25 +103,6 @@ class ModuloElencoQuote(forms.Form):
             self.fields['anno'].initial = min(datetime.datetime.now().year, Tesseramento.objects.latest('anno').anno if Tesseramento.objects.all().exists() else 9999)
         except Tesseramento.DoesNotExist:
             pass
-
-    def clean_al_giorno(self):
-        al_giorno = self.cleaned_data.get("al_giorno")
-        if al_giorno > datetime.date.today():
-            raise ValidationError("Impossibile generare elenchi nel futuro.")
-        return al_giorno
-
-    def clean(self):
-        valori = super(ModuloElencoQuote, self).clean()
-
-        anno = valori.get("anno")
-        al_giorno = valori.get("al_giorno")
-
-        if anno and al_giorno:
-            if al_giorno.year < anno:
-                raise ValidationError("Impossibile generare l'elenco per l'anno %d "
-                                      "alla data specificata." % anno)
-
-        return valori
 
 
 class ModuloAggiungiPersona(ModuloStepAnagrafica):
