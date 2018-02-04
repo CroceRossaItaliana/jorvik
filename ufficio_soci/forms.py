@@ -268,19 +268,23 @@ class ModuloElencoIVCM(forms.Form):
 
 class ModuloQuotaGenerico(forms.Form):
     riduzione = forms.ModelChoiceField(
-        label='Riduzione', queryset=Riduzione.objects.all(), widget=forms.RadioSelect,
+        label='Riduzione', queryset=Riduzione.objects.all(),
+        widget=forms.RadioSelect,
         required=False, empty_label='Nessuna'
     )
     importo = forms.FloatField(help_text="Il totale versato in euro, comprensivo dell'eventuale "
                                          "donazione aggiuntiva.")
-    data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro], initial=datetime.date.today)
+    data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro],
+                                      initial=datetime.date.today)
 
     sedi = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, tesseramento=None, **kwargs):
         self.sedi = kwargs.pop('sedi')
         super(ModuloQuotaGenerico, self).__init__(*args, **kwargs)
         self.fields['importo'].widget.attrs['min'] = self.initial.get('importo', 0)
+        if tesseramento:
+            self.fields['riduzione'].queryset = Riduzione.objects.filter(tesseramento=tesseramento)
 
     def clean_quota(self, data):
 
