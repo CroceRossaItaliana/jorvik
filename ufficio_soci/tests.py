@@ -19,19 +19,19 @@ from attivita.models import Area, Partecipazione, Turno
 from attivita.models import Attivita
 from autenticazione.utils_test import TestFunzionale
 from base.geo import Locazione
-from base.utils import poco_fa
+from base.utils import poco_fa, oggi
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, \
-    crea_utenza, crea_locazione, email_fittizzia
+    crea_utenza, crea_locazione, email_fittizzia, crea_tesseramento
 from ufficio_soci.elenchi import ElencoElettoratoAlGiorno, ElencoSociAlGiorno, ElencoSostenitori, ElencoExSostenitori, \
     ElencoVolontari, ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoSenzaTurni
-from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota
+from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota, ModuloElencoQuote
 from ufficio_soci.models import Tesseramento, Tesserino, Quota, Riduzione
 
 
 class TestBase(TestCase):
 
     def setUp(self):
-        super(self, TestBase).setUp()
+        super(TestBase, self).setUp()
 
         self.p, self.s, self.a = crea_persona_sede_appartenenza()
         self.oggi = datetime.date(2015, 1, 1)
@@ -1869,6 +1869,347 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
             # ricevuta non registrata
             self.assertEqual(response.status_code, 302)
             self.assertTrue(response['location'].find('?appena_registrata='))
+
+    @freeze_time('2017-01-30')
+    def test_elenco_non_paganti_dimessi_assenti(self):
+        """
+        Verifica che i volontari dimessi non vengano inclusi nell'elenco dei volontari
+         che non hanno pagato la quota associativa per l'anno dell'elenco.
+        """
+        presidente = crea_persona()
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        sessione_presidente = self.sessione_utente(persona=presidente)
+        crea_tesseramento(anno=2017)
+
+        # Vai all'elenco quote da pagare
+        sessione_presidente.visit("%s/us/quote/" % self.live_server_url)
+        with sessione_presidente.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.DA_VERSARE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario deve pagare la quota
+            self.assertTrue(iframe.is_text_present(volontario.nome))
+
+        # Dimetti il volontario
+        d = Dimissione(
+            persona=volontario, appartenenza=appartenenza,
+            sede=sede, motivo=Dimissione.VOLONTARIE,
+            richiedente=presidente, info="Una motivazione di esempio"
+        )
+        d.save()
+        d.applica(trasforma_in_sostenitore=False, invia_notifica=False)
+
+        # Vai nuovamente all'elenco quote da pagare
+        sessione_presidente.visit("%s/us/quote/" % self.live_server_url)
+        with sessione_presidente.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.DA_VERSARE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario NON compare in elenco come dovente pagare quota
+            self.assertTrue(iframe.is_text_not_present(volontario.nome))
+
+    @freeze_time('2017-01-30')
+    def test_elenco_non_paganti_trasferiti_uscenti_assenti(self):
+        """
+        Verifica che i volontari trasferiti verso un altro comitato
+         non vengano inclusi nell'elenco dei volontari
+         che non hanno pagato la quota associativa per l'anno dell'elenco.
+        """
+        presidente = crea_persona()
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        sessione_presidente = self.sessione_utente(persona=presidente)
+        crea_tesseramento(anno=2017)
+
+        presidente_nuova_sede = crea_persona()
+        nuova_sede = crea_sede(presidente=presidente_nuova_sede)
+
+        # Vai all'elenco quote da pagare
+        sessione_presidente.visit("%s/us/quote/" % self.live_server_url)
+        with sessione_presidente.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.DA_VERSARE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario deve pagare la quota
+            self.assertTrue(iframe.is_text_present(volontario.nome))
+
+        # Trasferisci il volontario presso la nuova sede
+        t = Trasferimento(
+            richiedente=volontario, persona=volontario,
+            destinazione=nuova_sede,
+            motivo="Mi andava di trasferirmi"
+        )
+        t.save()
+        t.richiedi(notifiche_attive=False)
+        t.autorizzazione_concessa(modulo=None, auto=True, data=poco_fa())
+
+        # Vai nuovamente all'elenco quote da pagare
+        sessione_presidente.visit("%s/us/quote/" % self.live_server_url)
+        with sessione_presidente.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.DA_VERSARE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario NON compare in elenco come dovente pagare quota
+            self.assertTrue(iframe.is_text_not_present(volontario.nome))
+
+
+    @freeze_time('2017-01-30')
+    def test_elenco_non_paganti_trasferiti_entranti_presenti(self):
+        """
+        Verifica che i volontari trasferiti verso questo comitato
+         vengono inclusi nell'elenco dei volontari che non hanno pagato
+         la quota, se non hanno pagato la quota presso il loro comitato
+         di origine.
+        """
+
+        crea_tesseramento(anno=2017)
+
+        vecchio_presidente = crea_persona()
+        volontario, vecchia_sede, vecchia_appartenenza = crea_persona_sede_appartenenza(presidente=vecchio_presidente)
+
+        nuovo_presidente = crea_persona()
+        nuova_sede = crea_sede(presidente=nuovo_presidente)
+
+        sessione = self.sessione_utente(persona=nuovo_presidente)
+
+        # Trasferisci il volontario presso la nuova sede
+        t = Trasferimento(
+            richiedente=volontario, persona=volontario,
+            destinazione=nuova_sede, motivo="Una qualunque"
+        )
+        t.save()
+        t.richiedi(notifiche_attive=False)
+        t.autorizzazione_concessa(modulo=None, auto=True, data=poco_fa())
+
+        # Vai all'elenco quote da pagare
+        sessione.visit("%s/us/quote/" % self.live_server_url)
+        with sessione.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.DA_VERSARE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario non e' ancora presente
+            self.assertTrue(iframe.is_text_present(volontario.nome))
+
+
+    @freeze_time('2017-01-30')
+    def test_elenco_non_paganti_estesi_entranti_assenti(self):
+        """
+        Verifiche che i volontari che sono estesi presso questo comitato
+         non vengono inclusi nell'elenco, neanche se non hanno ancora pagato
+         la quota associativa.
+        """
+
+        crea_tesseramento(anno=2017)
+
+        vecchio_presidente = crea_persona()
+        volontario, vecchia_sede, vecchia_appartenenza = crea_persona_sede_appartenenza(presidente=vecchio_presidente)
+
+        nuovo_presidente = crea_persona()
+        nuova_sede = crea_sede(presidente=nuovo_presidente)
+
+        sessione = self.sessione_utente(persona=nuovo_presidente)
+
+        # Creiamo una estensione di servizio
+        e = Estensione(
+            richiedente=volontario, persona=volontario,
+            destinazione=nuova_sede, motivo="Per divertimento"
+        )
+        e.save()
+        e.richiedi(notifiche_attive=False)
+        e.autorizzazione_concessa(modulo=None, auto=True, data=poco_fa(),
+                                  notifiche_attive=True)
+
+        # Vai all'elenco quote da pagare
+        sessione.visit("%s/us/quote/" % self.live_server_url)
+        with sessione.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.DA_VERSARE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario non e' ancora presente
+            self.assertTrue(iframe.is_text_not_present(volontario.nome))
+
+    @freeze_time('2017-01-30')
+    def test_elenco_paganti_dimessi_assenti(self):
+        """
+        Verifica che il volontario che e' stato dimesso non appaio piu' nell'elenco
+         dei volontari aventi pagato quota. Questo e' perche' questo NON e' un elenco
+         di quote, bensi' un elenco di soci attuali che hanno pagato la quota.
+        """
+        crea_tesseramento(anno=2017)
+
+        presidente = crea_persona()
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        sessione = self.sessione_utente(persona=presidente)
+
+        # Registra una quota per il volontario
+        Quota.nuova(appartenenza=appartenenza, data_versamento=oggi(),
+                    registrato_da=presidente, importo=8, tipo=Quota.QUOTA_SOCIO,
+                    causale="Quota Socio 2017", invia_notifica=False)
+
+        # Vai all'elenco quote versate
+        sessione.visit("%s/us/quote/" % self.live_server_url)
+        with sessione.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.VERSATE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario e' presente come pagante
+            self.assertTrue(iframe.is_text_present(volontario.nome))
+
+        # Dimetti il volontario
+        d = Dimissione(
+            persona=volontario, appartenenza=appartenenza,
+            sede=sede, motivo=Dimissione.VOLONTARIE,
+            richiedente=presidente, info="Una motivazione di esempio"
+        )
+        d.save()
+        d.applica(trasforma_in_sostenitore=False, invia_notifica=False)
+
+        # Vai all'elenco quote versate
+        sessione.visit("%s/us/quote/" % self.live_server_url)
+        with sessione.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.VERSATE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario NON e' piu' presente come pagante
+            self.assertTrue(iframe.is_text_not_present(volontario.nome))
+
+
+    @freeze_time('2017-01-30')
+    def test_elenco_paganti_trasferiti_uscenti_assenti(self):
+        """
+        Verifica che il volontario che si e' trasferito presso un nuovo
+         comitato non appare piu' nel comitato di origine.
+        Questo e' perche' questo NON e' un elenco di quote, bensi' un elenco
+         di volontari attuali aventi pagato la quota.
+        """
+        crea_tesseramento(anno=2017)
+
+        presidente = crea_persona()
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        nuovo_presidente = crea_persona()
+        nuova_sede = crea_sede(presidente=nuovo_presidente)
+
+        sessione = self.sessione_utente(persona=presidente)
+
+        # Registra una quota per il volontario
+        Quota.nuova(appartenenza=appartenenza, data_versamento=oggi(),
+                    registrato_da=presidente, importo=8, tipo=Quota.QUOTA_SOCIO,
+                    causale="Quota Socio 2017", invia_notifica=False)
+
+        # Trasferisci il volontario presso la nuova sede
+        t = Trasferimento(
+            richiedente=volontario, persona=volontario,
+            destinazione=nuova_sede, motivo="Una qualunque"
+        )
+        t.save()
+        t.richiedi(notifiche_attive=False)
+        t.autorizzazione_concessa(modulo=None, auto=True, data=poco_fa())
+
+        # Vai all'elenco quote versate
+        sessione.visit("%s/us/quote/" % self.live_server_url)
+        with sessione.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.VERSATE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario NON e' piu' presente come pagante
+            self.assertTrue(iframe.is_text_not_present(volontario.nome))
+
+
+    @freeze_time('2017-01-30')
+    def test_elenco_paganti_trasferiti_entranti_presenti(self):
+        """
+        Verifica che il volontario che si e' trasferito presso un nuovo
+         comitato, dopo aver pagato la quota, appare ora nell'elenco dei paganti
+         presso il nuovo comitato.
+        Questo e' perche' questo NON e' un elenco di quote, bensi' un elenco
+         di volontari attuali aventi pagato la quota.
+        """
+        crea_tesseramento(anno=2017)
+
+        presidente = crea_persona()
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        nuovo_presidente = crea_persona()
+        nuova_sede = crea_sede(presidente=nuovo_presidente)
+
+        sessione = self.sessione_utente(persona=nuovo_presidente)
+
+        # Registra una quota per il volontario
+        Quota.nuova(appartenenza=appartenenza, data_versamento=oggi(),
+                    registrato_da=presidente, importo=8, tipo=Quota.QUOTA_SOCIO,
+                    causale="Quota Socio 2017", invia_notifica=False)
+
+        # Trasferisci il volontario presso la nuova sede
+        t = Trasferimento(
+            richiedente=volontario, persona=volontario,
+            destinazione=nuova_sede, motivo="Una qualunque"
+        )
+        t.save()
+        t.richiedi(notifiche_attive=False)
+        t.autorizzazione_concessa(modulo=None, auto=True, data=poco_fa())
+
+        # Vai all'elenco quote versate
+        sessione.visit("%s/us/quote/" % self.live_server_url)
+        with sessione.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.VERSATE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario e' presente nell'elenco del nuovo comitato
+            self.assertTrue(iframe.is_text_present(volontario.nome))
+
+    @freeze_time('2017-01-30')
+    def test_elenco_paganti_estesi_entranti_assenti(self):
+        """
+        Verifica che il volontario avente pagato la quota associativa non appare
+         nell'elenco dei paganti quota presso il comitato dove e' esteso.
+        """
+
+        crea_tesseramento(anno=2017)
+
+        presidente = crea_persona()
+        volontario, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+
+        nuovo_presidente = crea_persona()
+        nuova_sede = crea_sede(presidente=nuovo_presidente)
+
+        sessione = self.sessione_utente(persona=nuovo_presidente)
+
+        # Registra una quota per il volontario
+        Quota.nuova(appartenenza=appartenenza, data_versamento=oggi(),
+                    registrato_da=presidente, importo=8, tipo=Quota.QUOTA_SOCIO,
+                    causale="Quota Socio 2017", invia_notifica=False)
+
+        # Creiamo una estensione di servizio
+        e = Estensione(
+            richiedente=volontario, persona=volontario,
+            destinazione=nuova_sede, motivo="Per divertimento"
+        )
+        e.save()
+        e.richiedi(notifiche_attive=False)
+        e.autorizzazione_concessa(modulo=None, auto=True, data=poco_fa(),
+                                  notifiche_attive=True)
+
+        # Vai all'elenco quote versate
+        sessione.visit("%s/us/quote/" % self.live_server_url)
+        with sessione.get_iframe(0) as iframe:
+            iframe.select('tipo', ModuloElencoQuote.VERSATE)
+            iframe.fill('anno', '2017')
+            iframe.find_by_xpath("//button[@type='submit']").first.click()
+
+            # Il volontario NON e' presente nell'elenco del nuovo comitato
+            self.assertTrue(iframe.is_text_not_present(volontario.nome))
+
 
     @freeze_time('2016-11-14')
     def test_cancellazione_quota_socio(self):

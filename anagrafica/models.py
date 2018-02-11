@@ -2236,8 +2236,8 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         if data is None or not isinstance(data, date):
             data = poco_fa()
         data = datetime(data.year, data.month, data.day)
-        self.protocollo_data = modulo.cleaned_data['protocollo_data']
-        self.protocollo_numero = modulo.cleaned_data['protocollo_numero']
+        self.protocollo_data = modulo.cleaned_data['protocollo_data'] if modulo else None
+        self.protocollo_numero = modulo.cleaned_data['protocollo_numero'] if modulo else None
         origine = self.persona.sede_riferimento()
         app = Appartenenza(
             membro=Appartenenza.ESTESO,
