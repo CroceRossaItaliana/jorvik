@@ -901,13 +901,13 @@ def us_quote_nuova(request, me):
             elif appartenenza.sede not in sedi or comitato not in sedi:
                 modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
 
-            if not comitato.locazione:
+            elif not comitato.locazione:
                 return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un indirizzo "
                                                  "per la Sede del Comitato di %s. Il Presidente può gestire i dati "
                                                  "della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
 
-            if not comitato.codice_fiscale:
+            elif not comitato.codice_fiscale:
                 return errore_generico(request, me, titolo="Necessario impostare codice fiscale del Comitato",
                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un "
                                                  "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
