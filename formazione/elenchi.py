@@ -12,7 +12,7 @@ class ElencoPartecipantiCorsiBase(ElencoVistaAnagrafica):
 
     def excel_colonne(self):
         return super(ElencoPartecipantiCorsiBase, self).excel_colonne() + (
-            ("Stato", lambda p: 'Iscritto' if not p.aspirante or self.args[0][0].pk not in p.aspirante.inviti_attivi else 'Invitato'),
+            ("Stato", lambda p: self.args[0][0].pk),
         )
 
     def risultati(self):
