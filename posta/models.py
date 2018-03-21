@@ -369,9 +369,13 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             totale,
         ))
 
-
     @classmethod
-    def costruisci(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo={}, mittente=None, destinatari=[], allegati=[], **kwargs):
+    def costruisci(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None, mittente=None,
+                   destinatari=None, allegati=None, **kwargs):
+
+        corpo = corpo or {}
+        destinatari = destinatari or []
+        allegati = allegati or []
 
         corpo.update({
             "mittente": mittente,
@@ -406,7 +410,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         return m
 
     @classmethod
-    def costruisci_e_invia(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo={}, mittente=None, destinatari=[], allegati=[], utenza=False, **kwargs):
+    def costruisci_e_invia(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None, mittente=None,
+                           destinatari=None, allegati=None, utenza=False, **kwargs):
         """
         Scorciatoia per costruire rapidamente un messaggio di posta e inviarlo immediatamente.
          IMPORTANTE. Non adatto per messaggi con molti destinatari. In caso di fallimento immediato, il messaggio
@@ -416,14 +421,17 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         :param corpo: Sostituzioni da fare nel modello. Dizionario {nome: valore}
         :param mittente: Mittente del messaggio. None per Notifiche da Gaia.
         :param destinatari: Un elenco di destinatari (oggetti Persona).
+        :param allegati: Allegati messaggio
         :return: Un oggetto Messaggio inviato.
         """
-        m = cls.costruisci(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente, destinatari=destinatari, allegati=allegati, **kwargs)
+        m = cls.costruisci(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente, destinatari=destinatari,
+                           allegati=allegati, **kwargs)
         m.invia(utenza=utenza)
         return m
 
     @classmethod
-    def costruisci_e_accoda(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo={}, mittente=None, destinatari=[], allegati=[], **kwargs):
+    def costruisci_e_accoda(cls, oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None, mittente=None,
+                            destinatari=None, allegati=None, **kwargs):
         """
         Scorciatoia per costruire rapidamente un messaggio di posta e accodarlo per l'invio asincrono.
         :param oggetto: Oggetto del messaggio.
@@ -431,9 +439,11 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         :param corpo: Sostituzioni da fare nel modello. Dizionario {nome: valore}
         :param mittente: Mittente del messaggio. None per Notifiche da Gaia.
         :param destinatari: Un elenco di destinatari (oggetti Persona).
+        :param allegati: Allegati del messaggio
         :return: Un oggetto Messaggio accodato.
         """
-        m = cls.costruisci(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente, destinatari=destinatari, allegati=[], **kwargs)
+        m = cls.costruisci(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente, destinatari=destinatari,
+                           allegati=allegati, **kwargs)
         m.accoda()
         return m
 
