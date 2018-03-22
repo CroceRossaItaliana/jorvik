@@ -20,7 +20,7 @@ logger = get_task_logger(__name__)
 # noinspection PyUnusedLocal
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(10.0, process_queue.s(50), name='email queue processor')
+    sender.add_periodic_task(10.0, process_queue.s(1500), name='email queue processor')
 
 
 @app.task(ignore_result=True)
@@ -29,14 +29,15 @@ def send(pk):
     try:
         from posta.models import Messaggio
         Messaggio.invia(pk)
-    except Exception:
+        return 'OK'
+    except Exception as e:
         logger.error(traceback.format_exc())
+        return str(e)
 
 
 @app.task(ignore_result=True)
 def process_queue(limit=None):
     from posta.models import Messaggio
-    logger.info('Running')
     with transaction.atomic():
         # noinspection PyBroadException
         try:
@@ -49,11 +50,12 @@ def process_queue(limit=None):
             msgids = [msg.pk for msg in Messaggio.objects.raw(query, limit)]
         except Exception:
             logger.error(traceback.format_exc())
-            return
+            return -1
 
     # fuori lock
     count = len(msgids)
     if count:
-        logger.info('Processing %d messages', count)
+        logger.debug('Processing %d messages', count)
         tasks = group(send.s(pk) for pk in msgids)
         tasks.delay()
+    return count
