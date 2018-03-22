@@ -54,6 +54,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     # Flag per i messaggi cancellati (perche' obsoleti)
     eliminato = models.BooleanField(default=False, null=False)
 
+    priorita = models.IntegerField(default=0)
+
     @property
     def destinatari(self):
         """
