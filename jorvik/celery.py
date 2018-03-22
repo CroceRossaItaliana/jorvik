@@ -1,0 +1,59 @@
+from __future__ import absolute_import
+
+import os
+import traceback
+from celery import Celery, group
+from celery.utils.log import get_task_logger
+from django.db import transaction
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'jorvik.settings')
+
+app = Celery('jorvik')
+app.config_from_object('django.conf:settings', namespace='CELERY')
+
+# Load task modules from all registered Django app configs.
+app.autodiscover_tasks()
+
+logger = get_task_logger(__name__)
+
+
+# noinspection PyUnusedLocal
+@app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    sender.add_periodic_task(10.0, process_queue.s(50), name='email queue processor')
+
+
+@app.task(ignore_result=True)
+def send(pk):
+    # noinspection PyBroadException
+    try:
+        from posta.models import Messaggio
+        Messaggio.invia(pk)
+    except Exception:
+        logger.error(traceback.format_exc())
+
+
+@app.task(ignore_result=True)
+def process_queue(limit=None):
+    from posta.models import Messaggio
+    logger.info('Running')
+    with transaction.atomic():
+        # noinspection PyBroadException
+        try:
+            # purtroppo skip_locked è stata inserita solo dalla version 1.11
+            query = '''SELECT id FROM posta_messaggio WHERE terminato is NULL ORDER BY priorita'''
+            if limit is not None:
+                query += ' LIMIT %s'
+                limit = (limit,)
+            query += ' FOR UPDATE SKIP LOCKED'
+            msgids = [msg.pk for msg in Messaggio.objects.raw(query, limit)]
+        except Exception:
+            logger.error(traceback.format_exc())
+            return
+
+    # fuori lock
+    count = len(msgids)
+    if count:
+        logger.info('Processing %d messages', count)
+        tasks = group(send.s(pk) for pk in msgids)
+        tasks.delay()
