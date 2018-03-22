@@ -2,20 +2,18 @@
 Questo modulo definisce i modelli del modulo di Posta di Gaia.
 """
 import logging
+from smtplib import SMTPException, SMTPRecipientsRefused
 
-from smtplib import SMTPException, SMTPResponseException, SMTPServerDisconnected, SMTPRecipientsRefused
-from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives, get_connection
+from django.core.mail import EmailMultiAlternatives, get_connection
+from django.db import transaction, DatabaseError
 from django.db.models import QuerySet
-from django.db.transaction import atomic
-from django.template import Context
 from django.template.loader import get_template
-from django.utils.encoding import force_text
 from django.utils.html import strip_tags
+from lxml import html
 
 from base.models import *
 from base.tratti import *
 from social.models import ConGiudizio
-from lxml import html
 
 logger = logging.getLogger('posta')
 
@@ -118,185 +116,101 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     def allegati_pronti(self):
         return ()
 
-    def invia(self, connection=None, utenza=False):
-        """
-        Salva e invia immediatamente il messaggio.
-        :return:
-        """
-        self.save()  # Assicurati che sia salvato
-
-        connection = connection or get_connection()
-
-        if self.mittente is None:
-            mittente_nome = self.SUPPORTO_NOME
-            mittente_email = self.SUPPORTO_EMAIL
-        else:
-            mittente_nome = self.mittente.nome_completo
-            mittente_email = self.mittente.email
-            if not mittente_email:
-                mittente_email = self.NOREPLY_EMAIL
-
-        if self.rispondi_a:  # Rispondi a definito?
-            if not self.mittente:  # Se si, e nessun mittente, usa nome mittente del reply-to
-                mittente_nome = self.rispondi_a.nome_completo
-            reply_to = "%s <%s>" % (self.rispondi_a.nome_completo, self.rispondi_a.email)
-
-        else:  # Altrimenti, imposta reply-to allo stesso mittente.
-            reply_to = "%s <%s>" % (mittente_nome, mittente_email)
-
-        mittente = "%s <%s>" % (mittente_nome, self.NOREPLY_EMAIL)
-
-        plain_text = strip_tags(self.corpo)
-        successo = True
-
+    def log(self, *args, **kwargs):
         if self.logging:
-            logger.debug('MSG %s: Inizio: Oggetto=%s' % (self.pk, self.oggetto))
-        # E-mail al supporto
-        if not self.oggetti_destinatario.all().exists():
+            logger.debug(*args, **kwargs)
+
+    def invia(self, connection=None, utenza=None):
+        if self.terminato:
+            self.log('Messaggio pk={} già inviato'.format(self.pk))
+            return
+
+        with transaction.atomic():
             try:
+                messaggio = Messaggio.objects.select_for_update(nowait=True).get(pk=self.pk)
+            except (Messaggio.DoesNotExist, DatabaseError):  # DatabaseError se è locked, quindi in invio
+                return
+
+            nome_mittente = messaggio.mittente.nome_completo if messaggio.mittente else self.SUPPORTO_NOME
+
+            if messaggio.rispondi_a:
+                if not messaggio.mittente:
+                    nome_mittente = messaggio.rispondi_a.nome_completo
+                reply_to = ['{} <{}>'.format(messaggio.rispondi_a.nome_completo, messaggio.rispondi_a.email)]
+            else:
+                reply_to = None
+
+            mittente = '{} <{}>'.format(nome_mittente, self.NOREPLY_EMAIL)
+            plain_text = strip_tags(messaggio.corpo)
+
+            connection = connection or get_connection()
+
+            # non metto filter su inviato altrimenti non posso distiguere quelle senza destinatari
+            destinatari = messaggio.oggetti_destinatario.all()
+
+            for d in destinatari:
+                if d.inviato:
+                    continue
+
+                mail_to = [d.persona.email]
+                if utenza:
+                    email_utenza = getattr(getattr(d.persona, 'utenza', {}), 'email', None)
+                    if email_utenza != d.persona.email:
+                        mail_to.append(email_utenza)
+
                 msg = EmailMultiAlternatives(
-                    subject=self.oggetto,
+                    subject=messaggio.oggetto,
+                    body=plain_text,
+                    from_email=mittente,
+                    reply_to=reply_to,
+                    to=mail_to,
+                    attachments=messaggio.allegati_pronti(),
+                    connection=connection)
+                msg.attach_alternative(messaggio.corpo, 'text/html')
+                mail_to = ','.join(mail_to)
+                try:
+                    # self.log('Invio email a {}'.format(mail_to))
+                    msg.send()
+                except SMTPRecipientsRefused as e:
+                    self.log('Destinatari rifiutati {}: {}'.format(mail_to, e))
+                    d.errore = str(e)
+                    d.invalido = d.inviato = True
+                except SMTPException as e:
+                    self.log('Errore invio email ai destinatari {}: {}'.format(mail_to, e))
+                    d.errore = str(e)
+                    messaggio.priorita += 1     # aumento priorità così verrà rischedulato dopo
+                else:
+                    d.inviato = True
+                    d.errore = None
+                finally:
+                    d.tentativo = datetime.now()
+                    d.save()
+
+            if not destinatari:
+                msg = EmailMultiAlternatives(
+                    subject=messaggio.oggetto,
                     body=plain_text,
                     from_email=mittente,
                     reply_to=[reply_to],
                     to=[self.SUPPORTO_EMAIL],
-                    attachments=self.allegati_pronti(),
-                    connection=connection,
-                )
-                msg.attach_alternative(self.corpo, "text/html")
-                msg.send()
-            except SMTPException as e:
-                if self.logging:
-                    logger.debug('MSG %s: errore grave %s' % (self.pk, e))
-                successo = False
-
-        # E-mail a delle persone
-        if self.logging:
-            logger.debug('MSG %s: Destinatari=%d' % (self.pk, self.oggetti_destinatario.filter(inviato=False).count()))
-        if not self.oggetti_destinatario.filter(inviato=False).exists():
-            successo = True
-        for d in self.oggetti_destinatario.filter(inviato=False):
-            destinatari = []
-            if hasattr(d, 'persona') and d.persona and d.persona.email:
-                destinatari.append(d.persona.email)
-            if hasattr(d.persona, 'utenza') and d.persona.utenza and d.persona.utenza.email:
-                if utenza and d.persona.utenza.email != d.persona.email:
-                    destinatari.append(d.persona.utenza.email)
-
-            if self.logging:
-                logger.debug('MSG %s: Num=%d Destinatari=%s' % (self.pk, len(destinatari), d.pk))
-                # si usa la funzione interna hash, è più stupida ma serve solo per controllare la presenza ripetuta
-                # di email nel log
-                logger.debug('MSG %s: Hash destinatari=%s' % (self.pk, ','.join([str(hash(email)) for email in destinatari])))
-            # Non diamo per scontato che esistano destinatari
-            if destinatari:
-                # Assicurati che la connessione sia aperta
-                connection.open()
-
-                # Evita duplicati in invii lunghi (se ci sono problemi con lock)...
-                d.refresh_from_db()
-                if d.inviato:
-                    if self.logging:
-                        logger.debug('MSG %s: destinatario duplicato: msg=%s, dest=%s' % (self.pk, self.oggetto, ','.join(destinatari)))
-                    print("%s  (*) msg=%d, dest=%d, protezione invio duplicato" % (
-                        datetime.now().isoformat(' '),
-                        self.pk,
-                        d.pk,
-                    ))
-                    continue
-
+                    attachments=messaggio.allegati_pronti(),
+                    connection=connection)
+                msg.attach_alternative(messaggio.corpo, 'text/html')
                 try:
-                    msg = EmailMultiAlternatives(
-                        subject=self.oggetto,
-                        body=plain_text,
-                        from_email=mittente,
-                        reply_to=[reply_to],
-                        to=destinatari,
-                        attachments=self.allegati_pronti(),
-                        connection=connection,
-                    )
-                    msg.attach_alternative(self.corpo, "text/html")
                     msg.send()
-                    d.inviato = True
-
                 except SMTPException as e:
-                    if self.logging:
-                        logger.debug('MSG %s: eccezione %s' % (self.pk, e,))
+                    self.log('Errore invio email a indirizzo del supporto: {}'.format(e))
+                    messaggio.ultimo_tentativo = datetime.now()
+                    messaggio.save()
+                    return
+                else:
+                    pass
+                    # self.log('Inviata email a indirizzo del supporto {}'.format(self.SUPPORTO_EMAIL))
 
-                    if isinstance(e, SMTPRecipientsRefused):
-                        try:
-                            if any([code == 250 for email, code in e.recipients.items()]):
-                                # Almeno un'email è partita, il messaggio si considera inviato
-                                d.inviato = True
-                                successo = True
-                            else:
-                                # E-mail di destinazione rotta: ignora.
-                                d.inviato = True
-                                d.invalido = True
-                        except AttributeError:
-                            # E-mail di destinazione rotta: ignora.
-                            d.inviato = True
-                            d.invalido = True
-
-                    elif isinstance(e, SMTPResponseException) and e.smtp_code == 501:
-                        # E-mail di destinazione rotta: ignora.
-                        d.inviato = True
-                        d.invalido = True
-
-                    elif isinstance(e, SMTPServerDisconnected):
-                        # Se il server si e' disconnesso, riconnetti.
-                        successo = False  # Questo messaggio verra' inviato al prossimo tentativo.
-                        connection.close()  # Chiudi handle alla connessione
-                        connection.open()  # Riconnettiti
-
-                    else:
-                        successo = False  # Altro errore... riprova piu' tardi.
-
-                    d.errore = str(e)
-
-                except TypeError as e:
-                    if self.logging:
-                        logger.debug('MSG %s: eccezione %s' % (self.pk, e,))
-                    d.inviato = True
-                    d.invalido = True
-                    d.errore = "Nessun indirizzo e-mail. Saltato"
-
-                except AttributeError as e:
-                    if self.logging:
-                        logger.debug('MSG %s: eccezione %s' % (self.pk, e,))
-                    d.inviato = True
-                    d.invalido = True
-                    d.errore = "Destinatario non valido. Saltato"
-
-                except UnicodeEncodeError as e:
-                    if self.logging:
-                        logger.debug('MSG %s: eccezione %s' % (self.pk, e,))
-                    d.inviato = True
-                    d.invalido = True
-                    d.errore = "Indirizzo e-mail non valido. Saltato."
-
-                if not d.inviato or d.invalido:
-                    if self.logging:
-                        logger.debug('MSG %s: errore invio destinatario=%s, errore=%s' % (self.pk, d.pk, d.errore))
-                    print("%s  (!) errore invio id=%d, destinatario=%d, errore=%s" % (
-                        datetime.now().isoformat(' '),
-                        self.pk,
-                        d.pk,
-                        d.errore,
-                    ))
-                d.tentativo = datetime.now()
-                d.save()
-                if self.logging:
-                    logger.debug('MSG %s: salvataggio destinatario=%s' % (self.pk, d.pk))
-                    logger.debug('MSG %s: termine invio successo=%s, inviato=%s invalido=%s errore=%s' % (self.pk, successo, d.inviato, d.invalido, d.errore))
-
-        if successo:
-            self.terminato = datetime.now()
-
-        self.ultimo_tentativo = datetime.now()
-        if self.logging:
-            logger.debug('MSG %s: salvataggio terminato=%s ultimo_tentativo=%s' % (self.pk, self.terminato, self.ultimo_tentativo))
-        self.save()
+        messaggio.ultimo_tentativo = datetime.now()
+        if not messaggio.oggetti_destinatario.filter(inviato=False):
+            messaggio.terminato = messaggio.ultimo_tentativo
+        messaggio.save()
 
     def aggiungi_destinatario(self, persona):
         """
