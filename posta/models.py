@@ -120,18 +120,15 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         if self.logging:
             logger.debug(*args, **kwargs)
 
-    def invia(self, connection=None, utenza=None):
-        if self.terminato:
-            self.log('Messaggio pk={} già inviato'.format(self.pk))
-            return
-
+    @staticmethod
+    def invia(pk, connection=None, utenza=None):
         with transaction.atomic():
             try:
-                messaggio = Messaggio.objects.select_for_update(nowait=True).get(pk=self.pk)
+                messaggio = Messaggio.objects.select_for_update(nowait=True).get(pk=pk, terminato__isnull=True)
             except (Messaggio.DoesNotExist, DatabaseError):  # DatabaseError se è locked, quindi in invio
                 return
 
-            nome_mittente = messaggio.mittente.nome_completo if messaggio.mittente else self.SUPPORTO_NOME
+            nome_mittente = messaggio.mittente.nome_completo if messaggio.mittente else Messaggio.SUPPORTO_NOME
 
             if messaggio.rispondi_a:
                 if not messaggio.mittente:
@@ -140,7 +137,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             else:
                 reply_to = None
 
-            mittente = '{} <{}>'.format(nome_mittente, self.NOREPLY_EMAIL)
+            mittente = '{} <{}>'.format(nome_mittente, Messaggio.NOREPLY_EMAIL)
             plain_text = strip_tags(messaggio.corpo)
 
             connection = connection or get_connection()
@@ -169,14 +166,14 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 msg.attach_alternative(messaggio.corpo, 'text/html')
                 mail_to = ','.join(mail_to)
                 try:
-                    # self.log('Invio email a {}'.format(mail_to))
+                    # messaggio.log('Invio email a {}'.format(mail_to))
                     msg.send()
                 except SMTPRecipientsRefused as e:
-                    self.log('Destinatari rifiutati {}: {}'.format(mail_to, e))
+                    messaggio.log('Destinatari rifiutati {}: {}'.format(mail_to, e))
                     d.errore = str(e)
                     d.invalido = d.inviato = True
                 except SMTPException as e:
-                    self.log('Errore invio email ai destinatari {}: {}'.format(mail_to, e))
+                    messaggio.log('Errore invio email ai destinatari {}: {}'.format(mail_to, e))
                     d.errore = str(e)
                     messaggio.priorita += 1     # aumento priorità così verrà rischedulato dopo
                 else:
@@ -192,20 +189,20 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     body=plain_text,
                     from_email=mittente,
                     reply_to=[reply_to],
-                    to=[self.SUPPORTO_EMAIL],
+                    to=[Messaggio.SUPPORTO_EMAIL],
                     attachments=messaggio.allegati_pronti(),
                     connection=connection)
                 msg.attach_alternative(messaggio.corpo, 'text/html')
                 try:
                     msg.send()
                 except SMTPException as e:
-                    self.log('Errore invio email a indirizzo del supporto: {}'.format(e))
+                    messaggio.log('Errore invio email a indirizzo del supporto: {}'.format(e))
                     messaggio.ultimo_tentativo = datetime.now()
                     messaggio.save()
                     return
                 else:
                     pass
-                    # self.log('Inviata email a indirizzo del supporto {}'.format(self.SUPPORTO_EMAIL))
+                    # messaggio.log('Inviata email a indirizzo del supporto {}'.format(Messaggio.SUPPORTO_EMAIL))
 
         messaggio.ultimo_tentativo = datetime.now()
         if not messaggio.oggetti_destinatario.filter(inviato=False):
