@@ -122,10 +122,11 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     @staticmethod
     def invia(pk):
         with transaction.atomic():
+            results = []
             try:
                 messaggio = Messaggio.objects.select_for_update(nowait=True).get(pk=pk, terminato__isnull=True)
             except (Messaggio.DoesNotExist, DatabaseError):  # DatabaseError se è locked, quindi in invio
-                return
+                return ['OK: Riga lockata nel db']
 
             nome_mittente = messaggio.mittente.nome_completo if messaggio.mittente else Messaggio.SUPPORTO_NOME
 
@@ -171,18 +172,21 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     messaggio.log('Destinatari rifiutati {}: {}'.format(mail_to, e))
                     d.errore = str(e)
                     d.invalido = d.inviato = True
+                    results.append('FAIL: Destinatari rifiutati {} - {}'.format(mail_to, e))
                 except SMTPException as e:
                     messaggio.log('Errore invio email ai destinatari {}: {}'.format(mail_to, e))
                     d.errore = str(e)
                     messaggio.priorita += 1     # aumento priorità così verrà rischedulato dopo
+                    results.append('FAIL: {} - {}'.format(mail_to, e))
                 else:
                     d.inviato = True
                     d.errore = None
+                    results.append('OK: {} - Email inviata correttamente'.format(mail_to))
                 finally:
                     d.tentativo = datetime.now()
                     d.save()
 
-            if not destinatari:
+            if len(destinatari) == 0:
                 msg = EmailMultiAlternatives(
                     subject=messaggio.oggetto,
                     body=plain_text,
@@ -198,15 +202,16 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     messaggio.log('Errore invio email a indirizzo del supporto: {}'.format(e))
                     messaggio.ultimo_tentativo = datetime.now()
                     messaggio.save()
-                    return
+                    return ['FAIL: Invio a supporto - {}'.format(e)]
                 else:
-                    pass
                     # messaggio.log('Inviata email a indirizzo del supporto {}'.format(Messaggio.SUPPORTO_EMAIL))
+                    return ['OK: Inviata a supporto']
 
         messaggio.ultimo_tentativo = datetime.now()
         if not messaggio.oggetti_destinatario.filter(inviato=False):
             messaggio.terminato = messaggio.ultimo_tentativo
         messaggio.save()
+        return results
 
     @classmethod
     def in_coda(cls):
