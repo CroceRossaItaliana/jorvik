@@ -34,22 +34,26 @@ def send(pk):
         return ['FAIL: worker {}'.format(e)]
 
 
-@app.task(ignore_result=True)
-def process_queue(limit=None):
+def get_email_batch(limit=None):
     from posta.models import Messaggio
     with transaction.atomic():
-        # noinspection PyBroadException
-        try:
-            # purtroppo skip_locked è stata inserita solo dalla version 1.11
-            query = '''SELECT id FROM posta_messaggio WHERE terminato is NULL ORDER BY priorita'''
-            if limit is not None:
-                query += ' LIMIT %s'
-                limit = (limit,)
-            query += ' FOR UPDATE SKIP LOCKED'
-            msgids = [msg.pk for msg in Messaggio.objects.raw(query, limit)]
-        except Exception:
-            logger.error(traceback.format_exc())
-            return -1
+        # purtroppo skip_locked è stata inserita solo dalla version 1.11
+        query = '''SELECT id FROM posta_messaggio WHERE terminato is NULL ORDER BY priorita'''
+        if limit is not None:
+            query += ' LIMIT %s'
+            limit = (limit,)
+        query += ' FOR UPDATE SKIP LOCKED'
+        return [msg.pk for msg in Messaggio.objects.raw(query, limit)]
+
+
+@app.task(ignore_result=True)
+def process_queue(limit=None):
+    # noinspection PyBroadException
+    try:
+        msgids = get_email_batch(limit=limit)
+    except Exception:
+        logger.error(traceback.format_exc())
+        return -1
 
     # fuori lock
     count = len(msgids)

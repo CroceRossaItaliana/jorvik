@@ -2,7 +2,7 @@
 Questo modulo definisce i modelli del modulo di Posta di Gaia.
 """
 import logging
-from smtplib import SMTPException, SMTPRecipientsRefused
+from smtplib import SMTPException, SMTPRecipientsRefused, SMTPResponseException, SMTPAuthenticationError
 
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.db import transaction, DatabaseError
@@ -150,7 +150,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 if d.inviato:
                     continue
 
-                mail_to = [d.persona.email]
+                mail_to = [d.persona.email or Messaggio.SUPPORTO_EMAIL]
                 if messaggio.utenza:
                     email_utenza = getattr(getattr(d.persona, 'utenza', {}), 'email', None)
                     if email_utenza != d.persona.email:
@@ -173,12 +173,21 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     messaggio.log('Destinatari rifiutati {}: {}'.format(mail_to, e))
                     d.errore = str(e)
                     d.invalido = d.inviato = True
+                    messaggio.terminato = messaggio.ultimo_tentativo
                     results.append('FAIL: Destinatari rifiutati {} - {}'.format(mail_to, e))
-                except SMTPException as e:
+                except SMTPResponseException as e:
                     messaggio.log('Errore invio email ai destinatari {}: {}'.format(mail_to, e))
                     d.errore = str(e)
-                    messaggio.priorita += 1     # aumento priorità così verrà rischedulato dopo
+                    if not isinstance(e, SMTPAuthenticationError) and ((e.smtp_code // 100) == 5):
+                        d.invalido = d.inviato = True
+                        messaggio.terminato = messaggio.ultimo_tentativo
+                    else:
+                        messaggio.priorita += 1     # aumento priorità così verrà rischedulato dopo
                     results.append('FAIL: {} - {}'.format(mail_to, e))
+                except SMTPException as e:
+                    messaggio.log('Errore generico invio email {}: {}'.format(mail_to, e))
+                    d.errore = str(e)
+                    results.append('FAIL: SMTPException {} - {}'.format(mail_to, e))
                 else:
                     d.inviato = True
                     d.errore = None
@@ -247,6 +256,20 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         return msg.send(fail_silently=fallisci_silenziosamente)
 
     @staticmethod
+    def smaltisci_coda(dimensione_massima=50):
+        """
+            Metodo usato solo in test, non chiamare direttamente in produzione
+            la coda è gestita da celery
+        :param dimensione_massima: numero di emails da smistare
+        :return: None
+        """
+        from django.core import mail
+        assert hasattr(mail, 'outbox'), 'Questo metodo è da utilzzare solo per unittest'
+        from jorvik.celery import get_email_batch
+        for pk in get_email_batch(dimensione_massima):
+            Messaggio.invia(pk)
+
+    @staticmethod
     def costruisci_e_invia(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None, mittente=None,
                            destinatari=None, allegati=None, **kwargs):
         """
@@ -269,8 +292,8 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         allegati = set([a.pk for a in allegati])
         mittente = mittente.pk if mittente else None
 
-        crea_email(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente, destinatari=destinatari,
-                   allegati=allegati, **kwargs)
+        return crea_email(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente, destinatari=destinatari,
+                          allegati=allegati, **kwargs)
 
     costruisci_e_accoda = costruisci_e_invia
 
