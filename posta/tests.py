@@ -37,6 +37,7 @@ class TestMessaggio(TestCase):
             oggetto="Solo email di contatto",
             modello="email.html"
         )
+        Messaggio.smaltisci_coda()
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
         self.assertTrue(email.subject.find('Solo email di contatto') > -1)
@@ -51,6 +52,7 @@ class TestMessaggio(TestCase):
             modello="email.html",
             utenza=True
         )
+        Messaggio.smaltisci_coda()
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
         self.assertTrue(email.subject.find('Entrambe le email') > -1)
@@ -68,6 +70,7 @@ class TestMessaggio(TestCase):
             modello="email.html",
             utenza=True
         )
+        Messaggio.smaltisci_coda()
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
         self.assertTrue(email.subject.find('Stessa email') > -1)
@@ -85,6 +88,7 @@ class TestMessaggio(TestCase):
             modello="email.html",
             utenza=True
         )
+        Messaggio.smaltisci_coda()
         # c'è anche quella precedente
         self.assertEqual(len(mail.outbox), 2)
         email = mail.outbox[1]
@@ -105,6 +109,7 @@ class TestMessaggio(TestCase):
             modello="email.html",
             utenza=True
         )
+        Messaggio.smaltisci_coda()
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
         self.assertTrue(email.subject.find('Email contatto') > -1)
@@ -128,6 +133,7 @@ class TestInviiMassivi(TestCase):
             modello="email.html",
             utenza=True
         )
+        Messaggio.smaltisci_coda()
 
     def _reset_coda(self):
         Messaggio.objects.all().delete()
@@ -235,7 +241,7 @@ class TestInviiMassivi(TestCase):
     def test_fallimento_helo(self, mock_smtp):
         """
         In caso di fallimento durante helo il messaggio viene rimesso in coda, tranne che in caso
-        di errore 501 che è permanente
+        di errore 5XX che è permanente
         """
         self.assertEqual(Messaggio.in_coda().count(), 0)
         codici = (500, 501, 504, 521, 421)
@@ -244,7 +250,7 @@ class TestInviiMassivi(TestCase):
             instance = mock_smtp.return_value
             instance.sendmail.side_effect = smtplib.SMTPHeloError(code=codice, msg=msg)
             self._invia_msg_singolo()
-            if codice == 501:
+            if (codice // 100) == 5:
                 self.assertEqual(Messaggio.in_coda().count(), 0)
             else:
                 self.assertEqual(Messaggio.in_coda().count(), 1)
@@ -268,7 +274,7 @@ class TestInviiMassivi(TestCase):
     def test_fallimento_data(self, mock_smtp):
         """
         In caso di fallimento durante il comando data  il messaggio viene rimesso in coda,
-        tranne che in caso di errore 501 che è permanente
+        tranne che in caso di errore 5XX che è permanente
         """
         codici = (451, 554, 500, 501, 503, 421, 552, 451, 452)
         for codice in codici:
@@ -276,7 +282,7 @@ class TestInviiMassivi(TestCase):
             instance = mock_smtp.return_value
             instance.sendmail.side_effect = smtplib.SMTPDataError(code=codice, msg=msg)
             self._invia_msg_singolo()
-            if codice == 501:
+            if (codice // 100) == 5:
                 self.assertEqual(Messaggio.in_coda().count(), 0)
             else:
                 self.assertEqual(Messaggio.in_coda().count(), 1)
@@ -309,7 +315,7 @@ class TestInviiMassivi(TestCase):
     def test_fallimento_sender(self, mock_smtp):
         """
         In caso di fallimento del sender il messaggio viene rimesso in coda,
-        tranne che in caso di errore 501 che è permanente
+        tranne che in caso di errore 5XX che è permanente
         """
         codici = (451, 452, 500, 501, 421)
         for codice in codici:
@@ -317,7 +323,7 @@ class TestInviiMassivi(TestCase):
             instance = mock_smtp.return_value
             instance.sendmail.side_effect = smtplib.SMTPSenderRefused(code=codice, msg=msg, sender=Messaggio.SUPPORTO_EMAIL)
             self._invia_msg_singolo()
-            if codice == 501:
+            if (codice // 100) == 5:
                 self.assertEqual(Messaggio.in_coda().count(), 0)
             else:
                 self.assertEqual(Messaggio.in_coda().count(), 1)
