@@ -20,7 +20,7 @@ logger = get_task_logger(__name__)
 # noinspection PyUnusedLocal
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(10.0, process_queue.s(1500), name='email queue processor')
+    sender.add_periodic_task(10.0, process_queue.s(500), name='email queue processor')
 
 
 @app.task(ignore_result=True)
