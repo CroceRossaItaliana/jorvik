@@ -28,11 +28,10 @@ def send(pk):
     # noinspection PyBroadException
     try:
         from posta.models import Messaggio
-        Messaggio.invia(pk)
-        return 'OK'
+        return Messaggio.invia(pk)
     except Exception as e:
         logger.error(traceback.format_exc())
-        return str(e)
+        return ['FAIL: worker {}'.format(e)]
 
 
 @app.task(ignore_result=True)
