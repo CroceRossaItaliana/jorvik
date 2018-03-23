@@ -267,6 +267,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         destinatari = set([d.pk for d in destinatari])
         allegati = allegati or []
         allegati = set([a.pk for a in allegati])
+        mittente = mittente.pk if mittente else None
 
         crea_email(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente, destinatari=destinatari,
                    allegati=allegati, **kwargs)
