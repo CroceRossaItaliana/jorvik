@@ -141,6 +141,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             plain_text = strip_tags(messaggio.corpo)
 
             connection = get_connection()
+            messaggio.ultimo_tentativo = datetime.now()
 
             # non metto filter su inviato altrimenti non posso distiguere quelle senza destinatari
             destinatari = messaggio.oggetti_destinatario.all()
@@ -183,7 +184,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     d.errore = None
                     results.append('OK: {} - Email inviata correttamente'.format(mail_to))
                 finally:
-                    d.tentativo = datetime.now()
+                    d.tentativo = messaggio.ultimo_tentativo
                     d.save()
 
             if len(destinatari) == 0:
@@ -200,14 +201,14 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     msg.send()
                 except SMTPException as e:
                     messaggio.log('Errore invio email a indirizzo del supporto: {}'.format(e))
-                    messaggio.ultimo_tentativo = datetime.now()
-                    messaggio.save()
                     return ['FAIL: Invio a supporto - {}'.format(e)]
                 else:
                     # messaggio.log('Inviata email a indirizzo del supporto {}'.format(Messaggio.SUPPORTO_EMAIL))
+                    messaggio.terminato = messaggio.ultimo_tentativo
                     return ['OK: Inviata a supporto']
+                finally:
+                    messaggio.save()
 
-        messaggio.ultimo_tentativo = datetime.now()
         if not messaggio.oggetti_destinatario.filter(inviato=False):
             messaggio.terminato = messaggio.ultimo_tentativo
         messaggio.save()
