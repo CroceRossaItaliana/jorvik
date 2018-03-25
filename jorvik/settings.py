@@ -126,6 +126,7 @@ MEDIA_CONF_FILE = 'config/media.cnf' if os.path.isfile('config/media.cnf') else 
 DEBUG_CONF_FILE = 'config/debug.cnf' if os.path.isfile('config/debug.cnf') else 'config/debug.cnf.sample'
 APIS_CONF_FILE = 'config/apis.cnf' if os.path.isfile('config/apis.cnf') else 'config/apis.cnf.sample'
 GENERAL_CONF_FILE = 'config/general.cnf' if os.path.isfile('config/general.cnf') else 'config/general.cnf.sample'
+GSUITE_CONF_FILE = 'config/gsuite.cnf.sample' if os.path.isfile('config/gsuite.cnf') else 'config/gsuite.cnf.sample'
 
 # MySQL
 MYSQL_CONF = configparser.ConfigParser()

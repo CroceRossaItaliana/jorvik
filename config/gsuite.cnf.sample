@@ -1,0 +1,5 @@
+[service]
+account_email =
+account_pkcs12_file_path =
+scopes = https://www.googleapis.com/auth/admin.directory.user,https://www.googleapis.com/auth/admin.directory.groups
+bind_user =
