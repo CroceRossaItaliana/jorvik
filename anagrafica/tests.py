@@ -2888,3 +2888,28 @@ class TestFunzionaliAnagrafica(TestFunzionale):
         self.assertTrue(sessione_delegato_dicomano.is_text_present("Referenti"))
         self.assertTrue(sessione_delegato_dicomano.is_text_present("Volontari"))
         self.assertFalse(sessione_delegato_dicomano.is_text_present("Delegati Obiettivo III (Emergenze)"))
+
+    def test_email_contatto_no_servizio(self):
+        EMAIL = email_fittizzia()
+        persona = crea_persona()
+        persona.email_contatto = EMAIL
+
+        self.assertEqual(persona.email, EMAIL)
+
+    def test_email_servizio(self):
+        EMAIL_CONTATTO, EMAIL_SERVIZIO = email_fittizzia(), email_fittizzia()
+        persona = crea_persona()
+        persona.email_contatto = EMAIL_CONTATTO
+        persona.email_servizio = EMAIL_SERVIZIO
+
+        self.assertEqual(persona.email, EMAIL_SERVIZIO)
+
+    def test_aggiorna_email_servizio(self):
+        EMAIL_CONTATTO, EMAIL_SERVIZIO = email_fittizzia(), None
+        persona = crea_persona()
+        persona.email_contatto = EMAIL_CONTATTO
+        persona.email_servizio = EMAIL_SERVIZIO
+
+        persona.aggiorna_email_servizio()
+
+        self.assertEqual(persona.email, EMAIL_CONTATTO)

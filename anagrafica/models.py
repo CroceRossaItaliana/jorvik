@@ -111,6 +111,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     cap_residenza = models.CharField("CAP di Residenza", max_length=16, null=True)
     email_contatto = models.EmailField("Email di contatto", max_length=255, blank=True,
                                        validators=[valida_email_personale])
+    email_servizio = models.EmailField('Indirizzo email servizio', max_length=254,
+                                       unique=True, null=True, blank=True)
+
     note = models.TextField("Note aggiuntive", max_length=10000, blank=True, null=True,)
 
     avatar = models.ImageField("Avatar", blank=True, null=True,
@@ -185,8 +188,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return normalizza_nome(self.nome + " " + self.cognome)
 
     # Q: Qual e' l'email di questa persona?
-    # A: Una persona puo' avere da zero a due indirizzi email.
+    # A: Una persona puo' avere da zero a tre indirizzi email.
     #    - Persona.email_contatto e' quella scelta dalla persona per il contatto.
+    #    - Persona.email_servizio e' quella impostata come e-mail di servizio (@<regione>.cri.it).
     #    - Persona.utenza.email (o Persona.email_utenza) e' quella utilizzata per accedere al sistema.
     #    - Persona.email puo' essere usato per ottenere, in ordine, l'email di contatto,
     #       oppure, se non impostata, quella di utenza. Se nemmeno una utenza e' disponibile,
@@ -196,11 +200,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def email(self):
         """
         Restituisce l'email preferita dalla persona.
-        Se impostata, restituisce l'email di contatto, altrimento l'email di utenza.
+        In ordine: e-mail servizio, e-mail contatto, altrimenti l'email di utenza.
         :return:
         """
+        if self.email_servizio:
+            return self.email_servizio
+
         if self.email_contatto:
             return self.email_contatto
+
         return self.email_utenza
 
     @property
@@ -1218,6 +1226,19 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                     for sede in sedi_attuali:
                         attivi.append({'segmento': segmento, 'sede': sede})
         return attivi
+
+    @property
+    def ha_email_servizio(self):
+        return True if self.email_servizio else False
+
+    def aggiorna_email_servizio(self):
+        """
+        Se l'e-mail di contatto e' dell'organizzazione
+        la copia in e-mail di servizio. Non svuota email_contatto
+        perchè è l'ultimo letto per priorita'
+        """
+        self.email_servizio = self.email_contatto
+        self.save()
 
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
