@@ -50,8 +50,12 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     # Flag per i messaggi cancellati (perche' obsoleti)
     eliminato = models.BooleanField(default=False, null=False)
 
-    priorita = models.IntegerField(default=0)
-    utenza = models.BooleanField(default=False)
+    priorita = models.IntegerField(default=0, help_text="La priorità viene utilizzata per stabilire "
+                                                        "l'ordine nello smistamento della coda, quando "
+                                                        "c'è un errore questo valore viene incrementato")
+    utenza = models.BooleanField(default=False, help_text="Se l'utente possiede un'email differente da quella "
+                                                          "utilizzata per il login, il messaggio viene recapito ad "
+                                                          "entrambe")
 
     @property
     def destinatari(self):
