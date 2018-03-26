@@ -37,7 +37,6 @@ class TestMessaggio(TestCase):
             oggetto="Solo email di contatto",
             modello="email.html"
         )
-        Messaggio.smaltisci_coda()
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
         self.assertTrue(email.subject.find('Solo email di contatto') > -1)
@@ -52,7 +51,6 @@ class TestMessaggio(TestCase):
             modello="email.html",
             utenza=True
         )
-        Messaggio.smaltisci_coda()
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
         self.assertTrue(email.subject.find('Entrambe le email') > -1)
@@ -70,7 +68,6 @@ class TestMessaggio(TestCase):
             modello="email.html",
             utenza=True
         )
-        Messaggio.smaltisci_coda()
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
         self.assertTrue(email.subject.find('Stessa email') > -1)
@@ -88,7 +85,6 @@ class TestMessaggio(TestCase):
             modello="email.html",
             utenza=True
         )
-        Messaggio.smaltisci_coda()
         # c'è anche quella precedente
         self.assertEqual(len(mail.outbox), 2)
         email = mail.outbox[1]
@@ -109,7 +105,6 @@ class TestMessaggio(TestCase):
             modello="email.html",
             utenza=True
         )
-        Messaggio.smaltisci_coda()
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
         self.assertTrue(email.subject.find('Email contatto') > -1)
@@ -133,7 +128,6 @@ class TestInviiMassivi(TestCase):
             modello="email.html",
             utenza=True
         )
-        Messaggio.smaltisci_coda()
 
     def _reset_coda(self):
         Messaggio.objects.all().delete()
