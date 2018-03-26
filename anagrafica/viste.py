@@ -25,7 +25,7 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
     ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail, \
-    ModuloUSModificaUtenza, ModuloReportFederazione
+    ModuloUSModificaUtenza, ModuloReportFederazione, ModuloEmailServizio
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -537,6 +537,7 @@ def utente_contatti(request, me):
 
         modulo_email_accesso = ModuloModificaEmailAccesso(request.POST, instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(request.POST, instance=me)
+        modulo_email_servizio = ModuloEmailServizio(request.POST, instance=me)
         modulo_numero_telefono = ModuloCreazioneTelefono(request.POST)
 
         if modulo_email_accesso.is_valid():
@@ -558,12 +559,15 @@ def utente_contatti(request, me):
 
         modulo_email_accesso = ModuloModificaEmailAccesso(instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(instance=me)
+        modulo_email_servizio = ModuloEmailServizio(instance=me)
+
         modulo_numero_telefono = ModuloCreazioneTelefono()
 
     numeri = me.numeri_telefono.all()
     contesto = {
         'modulo_email_accesso': modulo_email_accesso,
         'modulo_email_contatto': modulo_email_contatto,
+        'modulo_email_servizio': modulo_email_servizio,
         'modulo_numero_telefono': modulo_numero_telefono,
         'numeri': numeri,
         'attesa_conferma_accesso': request.session.get(parametri_cambio_email['accesso']['session_code'], False),

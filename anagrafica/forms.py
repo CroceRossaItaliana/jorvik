@@ -298,6 +298,12 @@ class ModuloModificaEmailContatto(ModelForm):
         fields = ['email_contatto']
 
 
+class ModuloEmailServizio(ModelForm):
+    class Meta:
+        model = Persona
+        fields = ['email_servizio']
+
+
 class ModuloCreazioneTelefono(forms.Form):
     PERSONALE = "P"
     SERVIZIO = "S"

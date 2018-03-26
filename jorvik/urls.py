@@ -93,7 +93,7 @@ urlpatterns = [
     url(r'^utente/documenti/zip/$', anagrafica.viste.utente_documenti_zip),
     url(r'^utente/documenti/cancella/(?P<pk>.*)/$', anagrafica.viste.utente_documenti_cancella),
     url(r'^utente/storico/$', anagrafica.viste.utente_storico),
-    url(r'^utente/contatti/$', anagrafica.viste.utente_contatti),
+    url(r'^utente/contatti/$', anagrafica.viste.utente_contatti, name='anagrafica-utente_contatti'),
     url(r'^utente/rubrica/referenti/$', anagrafica.viste.utente_rubrica_referenti),
     url(r'^utente/rubrica/volontari/$', anagrafica.viste.utente_rubrica_volontari),
     url(r'^utente/rubrica/(?P<rubrica>.*)/$', anagrafica.viste.rubrica_delegati),

@@ -1233,6 +1233,23 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                                                     self.utenza.email,
                                                     self.email_servizio))
 
+    @property
+    def email_servizio_candidata(self):
+
+        def _prossimo(omonimi):
+            num = list()
+            for p in omonimi:
+                prog = p.email_contatto.split('@')[0].replace("{0}.{1}".format(p.nome, p.cognome), '')
+                num.append(int(prog)) if prog else 0
+
+            return max(num) if num else 0
+
+        omonimi = Persona.objects.filter(nome=self.nome, cognome=self.cognome) # regione ?
+        progressivo = '' if len(omonimi) == 0 else _prossimo(omonimi) + 1
+
+        return "{0}.{1}{2}@{3}.cri.it".format(self.nome, self.cognome,
+                                              progressivo, 'regione')
+
     def aggiorna_email_servizio(self):
         """
         Se l'e-mail di contatto o l'email utenza e' dell'organizzazione
