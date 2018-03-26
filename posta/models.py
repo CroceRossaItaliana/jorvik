@@ -120,6 +120,17 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             logger.debug(*args, **kwargs)
 
     @staticmethod
+    def get_email_batch(limit=None):
+        with transaction.atomic():
+            # purtroppo skip_locked è stata inserita solo dalla version 1.11
+            query = '''SELECT id FROM posta_messaggio WHERE terminato is NULL ORDER BY priorita'''
+            if limit is not None:
+                query += ' LIMIT %s'
+                limit = (limit,)
+            query += ' FOR UPDATE SKIP LOCKED'
+            return [msg.pk for msg in Messaggio.objects.raw(query, limit)]
+
+    @staticmethod
     def invia(pk):
         with transaction.atomic():
             results = []
@@ -265,8 +276,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         """
         from django.core import mail
         assert hasattr(mail, 'outbox'), 'Questo metodo è da utilzzare solo per unittest'
-        from jorvik.celery import get_email_batch
-        for pk in get_email_batch(dimensione_massima):
+        for pk in Messaggio.get_email_batch(dimensione_massima):
             Messaggio.invia(pk)
 
     @staticmethod

@@ -1,4 +1,7 @@
+import traceback
+
 from celery import shared_task
+from celery.utils.log import get_task_logger
 from django.db import transaction
 from django.template.loader import get_template
 from django.utils.text import Truncator
@@ -6,6 +9,9 @@ from django.utils.text import Truncator
 from .models import Messaggio
 from anagrafica.models import Persona
 from base.models import Allegato
+
+
+logger = get_task_logger('posta')
 
 
 @shared_task(ignore_result=True)
@@ -44,3 +50,15 @@ def crea_email(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None,
             a.save()
 
         return m
+
+
+@shared_task(ignore_result=True)
+def send(pk):
+    # noinspection PyBroadException
+    try:
+        from posta.models import Messaggio
+        return Messaggio.invia(pk)
+    except Exception as e:
+        logger.error(traceback.format_exc())
+        return ['FAIL: worker {}'.format(e)]
+
