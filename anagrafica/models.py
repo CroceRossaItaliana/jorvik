@@ -1229,15 +1229,22 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def ha_email_servizio(self):
-        return True if self.email_servizio else False
+        return any(".cri.it" in email for email in (self.email_contatto,
+                                                    self.utenza.email,
+                                                    self.email_servizio))
 
     def aggiorna_email_servizio(self):
         """
-        Se l'e-mail di contatto e' dell'organizzazione
-        la copia in e-mail di servizio. Non svuota email_contatto
-        perchè è l'ultimo letto per priorita'
+        Se l'e-mail di contatto o l'email utenza e' dell'organizzazione
+        la copia in e-mail di servizio. Verificate entrambe, assunta
+        quella dell'utenza come principale quindi fatta dopo.
         """
-        self.email_servizio = self.email_contatto
+        if ".cri.it" in self.email_contatto:
+            self.email_servizio = self.email_contatto
+
+        if ".cri.it" in self.utenza.email:
+            self.email_servizio = self.utenza.email
+
         self.save()
 
 

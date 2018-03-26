@@ -21,8 +21,10 @@ class Command(BaseCommand):
         dryrun = options.get('dryrun')
 
         for p in persone:
-            if ".cri.it" in p.email_contatto and not p.email_servizio:
-                if not dryrun: p.aggiorna_email_servizio()
+            if not p.ha_email_servizio:
+                if not dryrun:
+                    p.aggiorna_email_servizio()
+
                 aggiornati += 1
 
         self.stdout.write(self.style.SUCCESS("Valutate %s persone. Cambiate %s. "
