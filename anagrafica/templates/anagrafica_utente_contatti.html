@@ -174,32 +174,46 @@
 
                 </div>
 
+                <a name="gsuite"></a>
 
                 <div class="panel panel-info">
 
                     <div class="panel-heading">
                         <h4 class="panel-title">
                             <i class="fa fa-fw fa-envelope"></i>
-                            E-mail organizzazione
+                            E-mail di servizio
                             <span class="text-muted">(opzionale)</span>
                         </h4>
 
                     </div>
-
-                    <div class="panel-body">
-                         <p>
-                            Questa è la tua e-mail dell'organizzazione. Potrai decidere dopo averla creata
-                             se usarla come e-mail di contatto o come e-mail di login.
-                        </p>
-                        {% bootstrap_form modulo_email_servizio %}
-
-
-                        <button class="btn btn-block btn-info" type="submit">
-                            <i class="fa fa-save fa-fw"></i>
-                               Attiva subito
-                        </button>
-                    </div>
-
+                    {% if me.volontario %}
+                        {% if me.ha_email_servizio %}
+                            <div class="panel-body">
+                             <p>
+                                Questa è la tua e-mail dell'organizzazione. Potrai decidere dopo averla creata
+                                 se usarla come e-mail di contatto o come e-mail di login.
+                            </p>
+                            {% bootstrap_form modulo_email_servizio %}
+                            <button class="btn btn-block btn-info" type="submit">
+                                <i class="fa fa-reload fa-fw"></i>
+                                   Reset password
+                            </button>
+                        </div>
+                        {% else %}
+                            <div class="panel-body">
+                                <p>Vuoi attivare una e-mail di servizio?</p>
+                                {% bootstrap_form modulo_email_servizio %}
+                                {% if errore_crea_email_servizio %}
+                                    <span class="alert alert-warning">{{ errore_crea_email_servizio }}</span>
+                                    <br /><br />
+                                {% endif %}
+                                <button class="btn btn-block btn-info" type="submit">
+                                    <i class="fa fa-save fa-fw"></i>
+                                       Attiva subito
+                                </button>
+                            </div>
+                        {% endif %}
+                    {% endif %}
                 </div>
 
 

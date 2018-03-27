@@ -6,8 +6,6 @@ Documentazione config.: https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 from django.core.urlresolvers import reverse_lazy
 
-from anagrafica.gsuite import GsuiteLib
-
 try:
     import configparser
 except ImportError:
@@ -392,6 +390,3 @@ FORMAZIONE_VALIDITA_INVITI = 7
 
 POSTA_MASSIVA_TIMEOUT = 30
 DATE_FORMAT = '%d/%m/%Y'
-
-# Gsuite
-gsuite = GsuiteLib(GSUITE_CONF)

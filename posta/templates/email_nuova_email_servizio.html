@@ -1,0 +1,11 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p class="grassetto">Ciao {{ nome }}, benvenuto/a!</p>
+    <p>Il tuo indirizzo e-mail dell'organizzazione è stato attivato.</p>
+    <p></p>
+    <p>Indirizzo e-mail: <b>{{ email_servizio }}</b></p>
+    <p>Password temporanea: <b>{{ password }}</b></p>
+    <p></p>
+    <p>Per qualunque ulteriore informazione contattaci rispondendo a questa email.</p>
+{% endblock %}

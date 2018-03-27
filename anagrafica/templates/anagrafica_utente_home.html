@@ -39,11 +39,10 @@
         <p>&nbsp;</p>
     </div>
 
-    {% if me.volontario and me.ha_email_servizio %}
+    {% if me.volontario and not me.ha_email_servizio %}
     <div class="alert alert-info">
         <h4><i class="fa fa-fw fa-google"></i> Account G-Suite</h4>
         <p>Vuoi attivare l'<b>e-mail personale di servizio</b>?
-        Sarebbe {{ me.email_servizio_candidata }}.
             <a href="{% url 'anagrafica-utente_contatti' %}#gsuite">Vai in anagrafica</a></p>
 
     </div>

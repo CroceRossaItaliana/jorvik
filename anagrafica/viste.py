@@ -532,12 +532,14 @@ def utente_contatti(request, me):
     stato_conferma_contatto = None
     errore_conferma_accesso = None
     errore_conferma_contatto = None
+    errore_crea_email_servizio = None
 
     if request.method == 'POST':
 
         modulo_email_accesso = ModuloModificaEmailAccesso(request.POST, instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(request.POST, instance=me)
         modulo_email_servizio = ModuloEmailServizio(request.POST, instance=me)
+
         modulo_numero_telefono = ModuloCreazioneTelefono(request.POST)
 
         if modulo_email_accesso.is_valid():
@@ -545,6 +547,14 @@ def utente_contatti(request, me):
 
         if modulo_email_contatto.is_valid():
             _richiesta_conferma_email(request, me, parametri_cambio_email['contatto'], modulo_email_contatto)
+
+        if modulo_email_servizio.is_valid():
+            try:
+                me.crea_email_servizio(modulo_email_servizio.data.get('email_servizio'))
+            except ValueError as e:
+                # TODO: log? new relic?
+                me.email_servizio = None
+                errore_crea_email_servizio = str(e)
 
         if modulo_numero_telefono.is_valid():
             me.aggiungi_numero_telefono(
@@ -559,7 +569,11 @@ def utente_contatti(request, me):
 
         modulo_email_accesso = ModuloModificaEmailAccesso(instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(instance=me)
-        modulo_email_servizio = ModuloEmailServizio(instance=me)
+
+        email_candidata = me.email_servizio_candidata if not me.ha_email_servizio else ''
+
+        modulo_email_servizio = ModuloEmailServizio(instance=me,
+                                                    initial=dict(email_servizio=email_candidata or me.email_servizio))
 
         modulo_numero_telefono = ModuloCreazioneTelefono()
 
@@ -576,6 +590,7 @@ def utente_contatti(request, me):
         'stato_conferma_contatto': stato_conferma_contatto,
         'errore_conferma_accesso': errore_conferma_accesso,
         'errore_conferma_contatto': errore_conferma_contatto,
+        'errore_crea_email_servizio': errore_crea_email_servizio
     }
 
     return 'anagrafica_utente_contatti.html', contesto

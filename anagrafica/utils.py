@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, unicode_literals
 
+import string
+
 from django.template.loader import get_template
+from django.utils.crypto import random
 from django.utils.timezone import now
 
 from anagrafica.models import Persona, Delega
@@ -62,3 +65,7 @@ def termina_deleghe_giovani():
     terminare = deleghe_giovani.filter(persona__in=delegati_giovani_terminare)
     for delega in terminare:
         delega.termina(data=mezzanotte_24_ieri(now()))
+
+
+def random_password(length=8):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=8))

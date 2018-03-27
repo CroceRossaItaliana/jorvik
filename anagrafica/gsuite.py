@@ -1,5 +1,8 @@
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from oauth2client.service_account import ServiceAccountCredentials
+
+from jorvik.settings import GSUITE_CONF
 
 
 class GsuiteLib:
@@ -10,6 +13,7 @@ class GsuiteLib:
         self.secret = gsettings.get('service', 'secret') or 'notasecret'
         self.scopes = gsettings.get('service', 'scopes').split(',')
         self.bind_user = gsettings.get('service', 'bind_user')
+        self.base_domain = gsettings.get('service', 'base_domain')
         self.service = None
 
     def init_service(self, service):
@@ -36,17 +40,43 @@ class GsuiteLib:
                                             orderBy=order_by).execute()
         return results.get('users', [])
 
-    def new_user(self, data):
-        self.service.users().insert(body=data)
+    def new_user(self, data, genera_password=False):
+        from anagrafica.utils import random_password
+        if genera_password:
+            data['password'] = random_password()
+
+        try:
+            return self.service.users().insert(body=data).execute(), data.get('password')
+        except HttpError as e:
+            raise ValueError("Errore: %s" % e._get_reason())
+
+
+gsuite = GsuiteLib(GSUITE_CONF)
 
 
 if __name__ == '__main__':
+
     from jorvik.settings import GSUITE_CONF
 
     gsuite = GsuiteLib(GSUITE_CONF)
 
     gsuite.init_service('directory_v1')
+
     print("Test reading users")
+    users = gsuite.list_users(limit=10)
+    for user in users:
+        print('{0} ({1})'.format(user['primaryEmail'],
+                                 user['name']['fullName']))
+
+    print("Test creating user")
+    data = dict(primaryEmail='foobar@{0}'.format(gsuite.base_domain),
+                name=dict(givenName='Foo', familyName='Bar', fullName='Foo Bar'),
+                password="foobar123")
+
+    user, password = gsuite.new_user(data)
+    print("User created with password %s" % password)
+
+    print("Listing again")
     users = gsuite.list_users(limit=10)
     for user in users:
         print('{0} ({1})'.format(user['primaryEmail'],

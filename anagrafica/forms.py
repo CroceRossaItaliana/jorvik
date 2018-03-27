@@ -303,6 +303,10 @@ class ModuloEmailServizio(ModelForm):
         model = Persona
         fields = ['email_servizio']
 
+    def __init__(self, *args, **kwargs):
+        super(ModuloEmailServizio, self).__init__(*args, **kwargs)
+        self.fields['email_servizio'].widget.attrs['readonly'] = True
+
 
 class ModuloCreazioneTelefono(forms.Form):
     PERSONALE = "P"

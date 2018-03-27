@@ -29,9 +29,11 @@ from django.db.models import Q, QuerySet, Avg
 from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 import phonenumbers
+from googleapiclient.errors import HttpError
 from mptt.querysets import TreeQuerySet
 
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
+from anagrafica.gsuite import gsuite
 
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI_NOMI_DICT, UFFICIO_SOCI_UNITA, \
     DELEGHE_RUBRICA, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_4, \
@@ -60,6 +62,7 @@ from base.utils import is_list, sede_slugify, UpperCaseCharField, TitleCharField
 from autoslug import AutoSlugField
 
 from curriculum.models import Titolo, TitoloPersonale
+from jorvik.settings import GSUITE_CONF
 from posta.models import Messaggio
 from django.apps import apps
 
@@ -652,6 +655,42 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             destinatari=[self]
         )
 
+    def invia_email_nuova_email_servizio(self, password=''):
+        """
+        Invia una email di benvenuto nell'email di servizio con la password
+        da usare al primo login.
+        """
+        from posta.models import Messaggio
+
+        Messaggio.costruisci_e_invia(
+            oggetto="Nuovo indirizzo e-mail di servizio",
+            modello="email_nuova_email_servizio.html",
+            corpo={
+                'nome': self.nome_completo,
+                'email_servizio': self.email_servizio,
+                'password': password
+            },
+            destinatari=[self]
+        )
+
+    def invia_email_reset_email_servizio(self, password=''):
+        """
+        Invia una email di benvenuto nell'email di servizio con la password
+        da usare al primo login.
+        """
+        from posta.models import Messaggio
+
+        Messaggio.costruisci_e_invia(
+            oggetto="Password reset e-mail di servizio",
+            modello="email_reset_email_servizio.html",
+            corpo={
+                'nome': self.nome_completo,
+                'email_servizio': self.email_servizio,
+                'password': password
+            },
+            destinatari=[self]
+        )
+
     def posta_in_arrivo(self):
         """
         Ottiene il queryset della posta in arrivo per la Persona.
@@ -1229,9 +1268,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def ha_email_servizio(self):
-        return any(".cri.it" in email for email in (self.email_contatto,
-                                                    self.utenza.email,
-                                                    self.email_servizio))
+        return any(gsuite.base_domain in email for email in (self.email_contatto,
+                                                             self.utenza.email,
+                                                             self.email_servizio))
 
     @property
     def email_servizio_candidata(self):
@@ -1244,11 +1283,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
             return max(num) if num else 0
 
-        omonimi = Persona.objects.filter(nome=self.nome, cognome=self.cognome) # regione ?
-        progressivo = '' if len(omonimi) == 0 else _prossimo(omonimi) + 1
+        occorrenze = Persona.objects.filter(nome=self.nome, cognome=self.cognome) # regione ?
+        progressivo = '' if len(occorrenze) == 1 else _prossimo(occorrenze) + 1
 
-        return "{0}.{1}{2}@{3}.cri.it".format(self.nome, self.cognome,
-                                              progressivo, 'regione')
+        # TODO: come gestiamo l'attributo regione?
+        return "{0}.{1}{2}@{3}{4}".format(self.nome, self.cognome,
+                                          progressivo, '',
+                                          gsuite.base_domain).lower()
 
     def aggiorna_email_servizio(self):
         """
@@ -1256,13 +1297,38 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         la copia in e-mail di servizio. Verificate entrambe, assunta
         quella dell'utenza come principale quindi fatta dopo.
         """
-        if ".cri.it" in self.email_contatto:
+        if gsuite.base_domain in self.email_contatto:
             self.email_servizio = self.email_contatto
 
-        if ".cri.it" in self.utenza.email:
+        if gsuite.base_domain in self.utenza.email:
             self.email_servizio = self.utenza.email
 
         self.save()
+
+    def crea_email_servizio(self, email):
+        """
+        Valida l'email richiesta e chiede a Google l'attivazione.
+        """
+        if not email:
+            raise ValueError("E-mail non valida")
+
+        if not gsuite.base_domain in email:
+            raise ValueError("E-mail non del dominio @{0}".format(gsuite.base_domain))
+
+        data = dict(primaryEmail=email,
+                    name=dict(givenName=self.nome,
+                              familyName=self.cognome,
+                              fullName="{0} {1}".format(self.nome, self.cognome)),
+                    emails=[dict(address=self.utenza.email, customType='email_utenza')],
+                    password='FooBar123', changePasswordAtNextLogin=True)
+
+        gsuite.init_service('directory_v1')
+        user, password = gsuite.new_user(data, genera_password=True)
+
+        self.email_servizio = user.get('primaryEmail')
+        self.save()
+
+        self.invia_email_nuova_email_servizio(password)
 
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):

@@ -4,3 +4,4 @@ account_pkcs12_file_path =
 secret =
 scopes = https://www.googleapis.com/auth/admin.directory.user,https://www.googleapis.com/auth/admin.directory.groups
 bind_user =
+base_domain = .cri.it
