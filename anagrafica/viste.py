@@ -25,7 +25,7 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
     ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail, \
-    ModuloUSModificaUtenza, ModuloReportFederazione, ModuloEmailServizio, ModuloResetEmailServizio
+    ModuloUSModificaUtenza, ModuloReportFederazione, ModuloEmailServizio
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -542,7 +542,6 @@ def utente_contatti(request, me):
         modulo_email_accesso = ModuloModificaEmailAccesso(request.POST, instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(request.POST, instance=me)
         modulo_email_servizio = ModuloEmailServizio(request.POST, instance=me)
-        modulo_reset_email_servizio = ModuloResetEmailServizio(request.POST)
 
         modulo_numero_telefono = ModuloCreazioneTelefono(request.POST)
 
@@ -589,7 +588,6 @@ def utente_contatti(request, me):
 
         modulo_email_servizio = ModuloEmailServizio(instance=me,
                                                     initial=dict(email_servizio=email_candidata or me.email_servizio))
-        modulo_reset_email_servizio = ModuloResetEmailServizio()
 
         modulo_numero_telefono = ModuloCreazioneTelefono()
 
@@ -608,7 +606,6 @@ def utente_contatti(request, me):
         'errore_conferma_contatto': errore_conferma_contatto,
         'errore_crea_email_servizio': errore_crea_email_servizio,
         'errore_reset_email_servizio': errore_reset_email_servizio,
-        'modulo_reset_email_servizio': modulo_reset_email_servizio,
         'successo_reset_email_servizio': successo_reset_email_servizio,
         'successo_crea_email_servizio': successo_crea_email_servizio
     }
