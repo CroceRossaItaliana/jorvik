@@ -25,7 +25,7 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
     ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail, \
-    ModuloUSModificaUtenza, ModuloReportFederazione, ModuloEmailServizio
+    ModuloUSModificaUtenza, ModuloReportFederazione, ModuloEmailServizio, ModuloResetEmailServizio
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -533,12 +533,16 @@ def utente_contatti(request, me):
     errore_conferma_accesso = None
     errore_conferma_contatto = None
     errore_crea_email_servizio = None
+    errore_reset_email_servizio = None
+    successo_crea_email_servizio = None
+    successo_reset_email_servizio = None
 
     if request.method == 'POST':
 
         modulo_email_accesso = ModuloModificaEmailAccesso(request.POST, instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(request.POST, instance=me)
         modulo_email_servizio = ModuloEmailServizio(request.POST, instance=me)
+        modulo_reset_email_servizio = ModuloResetEmailServizio(request.POST)
 
         modulo_numero_telefono = ModuloCreazioneTelefono(request.POST)
 
@@ -548,12 +552,14 @@ def utente_contatti(request, me):
         if modulo_email_contatto.is_valid():
             _richiesta_conferma_email(request, me, parametri_cambio_email['contatto'], modulo_email_contatto)
 
-        if modulo_email_servizio.is_valid():
+        # TODO: better form handling
+        if modulo_email_servizio.data.get('email_servizio', None):
             try:
                 me.crea_email_servizio(modulo_email_servizio.data.get('email_servizio'))
+                successo_crea_email_servizio = "Email creata con successo."
             except ValueError as e:
                 # TODO: log? new relic?
-                me.email_servizio = None
+                me.email_servizio = ''
                 errore_crea_email_servizio = str(e)
 
         if modulo_numero_telefono.is_valid():
@@ -563,6 +569,15 @@ def utente_contatti(request, me):
             )
 
     else:
+
+        if request.GET.get('reset_gsuite_password', False):
+            try:
+                me.reset_email_servizio()
+                successo_reset_email_servizio = "Password aggiornata."
+            except ValueError as e:
+                errore_reset_email_servizio = str(e)
+
+            #TODO: simple redirect to remove query string memory
 
         stato_conferma_accesso, errore_conferma_accesso = _conferma_email(request, me, parametri_cambio_email['accesso'])
         stato_conferma_contatto, errore_conferma_contatto = _conferma_email(request, me, parametri_cambio_email['contatto'])
@@ -574,6 +589,7 @@ def utente_contatti(request, me):
 
         modulo_email_servizio = ModuloEmailServizio(instance=me,
                                                     initial=dict(email_servizio=email_candidata or me.email_servizio))
+        modulo_reset_email_servizio = ModuloResetEmailServizio()
 
         modulo_numero_telefono = ModuloCreazioneTelefono()
 
@@ -590,11 +606,20 @@ def utente_contatti(request, me):
         'stato_conferma_contatto': stato_conferma_contatto,
         'errore_conferma_accesso': errore_conferma_accesso,
         'errore_conferma_contatto': errore_conferma_contatto,
-        'errore_crea_email_servizio': errore_crea_email_servizio
+        'errore_crea_email_servizio': errore_crea_email_servizio,
+        'errore_reset_email_servizio': errore_reset_email_servizio,
+        'modulo_reset_email_servizio': modulo_reset_email_servizio,
+        'successo_reset_email_servizio': successo_reset_email_servizio,
+        'successo_crea_email_servizio': successo_crea_email_servizio
     }
 
     return 'anagrafica_utente_contatti.html', contesto
 
+
+@pagina_privata
+def utente_contatti_gsuite(request, me):
+
+    return 'anagrafica_utente_contatti.html', contesto
 
 @pagina_privata
 def utente_rubrica_referenti(request, me):

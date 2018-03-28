@@ -1268,9 +1268,21 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def ha_email_servizio(self):
-        return any(gsuite.base_domain in email for email in (self.email_contatto,
-                                                             self.utenza.email,
-                                                             self.email_servizio))
+        return any(gsuite.base_domain in email for email in (self.email_contatto or '',
+                                                             self.utenza.email or '',
+                                                             self.email_servizio or ''))
+
+    def trova_email_servizio(self):
+        if gsuite.base_domain in self.email_servizio:
+            return self.email_servizio, 'email_servizio'
+
+        if gsuite.base_domain in self.email_contatto:
+            return self.email_contatto, 'email_contatto'
+
+        if gsuite.base_domain in self.utenza.email:
+            return self.utenza.email, 'utenza__email'
+
+        return
 
     @property
     def email_servizio_candidata(self):
@@ -1278,13 +1290,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         def _prossimo(omonimi):
             num = list()
             for p in omonimi:
-                prog = p.email_contatto.split('@')[0].replace("{0}.{1}".format(p.nome, p.cognome), '')
-                num.append(int(prog)) if prog else 0
+                if p.ha_email_servizio:
+                    prog = p.trova_email_servizio().split('@')[0].replace("{0}.{1}".format(p.nome, p.cognome), '')
+                    num.append(int(prog)) if prog else 0
 
             return max(num) if num else 0
 
         occorrenze = Persona.objects.filter(nome=self.nome, cognome=self.cognome) # regione ?
-        progressivo = '' if len(occorrenze) == 1 else _prossimo(occorrenze) + 1
+        prossimo = _prossimo(occorrenze)
+        progressivo = '' if prossimo == 0 else prossimo + 1
 
         # TODO: come gestiamo l'attributo regione?
         return "{0}.{1}{2}@{3}{4}".format(self.nome, self.cognome,
@@ -1312,7 +1326,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         if not email:
             raise ValueError("E-mail non valida")
 
-        if not gsuite.base_domain in email:
+        if gsuite.base_domain not in email:
             raise ValueError("E-mail non del dominio @{0}".format(gsuite.base_domain))
 
         data = dict(primaryEmail=email,
@@ -1329,6 +1343,28 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         self.save()
 
         self.invia_email_nuova_email_servizio(password)
+
+    def reset_email_servizio(self):
+        """
+        Imposta una nuova password per l'email di servizio e notifica
+        """
+
+        if not self.ha_email_servizio:
+            raise ValueError("Nessuna email di servizio trovata")
+
+        email = self.trova_email_servizio()
+
+        data = dict(primaryEmail=email,
+                    name=dict(givenName=self.nome,
+                              familyName=self.cognome,
+                              fullName="{0} {1}".format(self.nome, self.cognome)),
+                    emails=[dict(address=self.utenza.email, customType='email_utenza')],
+                    changePasswordAtNextLogin=True)
+
+        gsuite.init_service('directory_v1')
+        user, password = gsuite.update_user(email, data, genera_password=True)
+
+        self.invia_email_reset_email_servizio(password)
 
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):

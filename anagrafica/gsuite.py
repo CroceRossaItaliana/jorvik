@@ -50,6 +50,16 @@ class GsuiteLib:
         except HttpError as e:
             raise ValueError("Errore: %s" % e._get_reason())
 
+    def update_user(self, email, data, genera_password=False):
+        from anagrafica.utils import random_password
+        if genera_password:
+            data['password'] = random_password()
+
+        try:
+            return self.service.users().update(userKey=email, body=data).execute(), data.get('password')
+        except HttpError as e:
+            raise ValueError("Errore: %s" % e._get_reason())
+
 
 gsuite = GsuiteLib(GSUITE_CONF)
 
