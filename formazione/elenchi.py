@@ -11,8 +11,19 @@ class ElencoPartecipantiCorsiBase(ElencoVistaAnagrafica):
         return 'formazione_elenchi_inc_iscritti.html'
 
     def excel_colonne(self):
+
+        # stato_iscritto ritorna se la persona è iscritta o invitata al corso.
+        def stato_iscritto(value,self):
+            try:
+                go = value.aspirante
+            except :
+                go = None
+            if(not go or self.args[0][0].pk not in go.inviti_attivi):
+                return "Iscritto"
+            else:
+                return "Invitato"
         return super(ElencoPartecipantiCorsiBase, self).excel_colonne() + (
-            ("Stato", lambda p: self.args[0][0].pk),
+            ("Stato", lambda p: stato_iscritto(p,self)),
         )
 
     def risultati(self):

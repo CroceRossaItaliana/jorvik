@@ -664,14 +664,6 @@ def us_elenco_download(request, me, elenco_id):
             })
 
         persona_colonne = [y if y is not None else "" for y in [x(persona) for x in colonne]]
-        torna_utente = Persona.objects.get(codice_fiscale=persona_colonne[2])
-        try:
-            partecipazione = PartecipazioneCorsoBase.objects.get(persona_id=torna_utente.pk,
-                                                                 corso_id=persona_colonne[len(persona_colonne)-1])
-            stato_iscrizione = "Iscritto"
-        except PartecipazioneCorsoBase.DoesNotExist:
-            stato_iscrizione = "Invitato"
-        persona_colonne[len(persona_colonne)-1] = stato_iscrizione
         if not fogli_multipli:
             persona_colonne += [elenco.excel_foglio(persona)]
 

@@ -8,7 +8,6 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import timezone
-from django.contrib.contenttypes.models import ContentType
 from freezegun import freeze_time
 
 from anagrafica.models import Appartenenza, Sede, Persona, Fototessera, Dimissione, ProvvedimentoDisciplinare, \
@@ -16,6 +15,7 @@ from anagrafica.models import Appartenenza, Sede, Persona, Fototessera, Dimissio
 from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE, LOCALE, TERRITORIALE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, DIRETTORE_CORSO
 from anagrafica.permessi.costanti import MODIFICA
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI
 from attivita.models import Area, Partecipazione, Turno
 from attivita.models import Attivita
 from autenticazione.utils_test import TestFunzionale
@@ -2294,9 +2294,8 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
                                               anno=2018, progressivo=1)
 
         # nomina delegato corso
-        ctype = ContentType.objects.get_for_model(CorsoBase)
         Delega.objects.create(persona=direttore_corso, stato=Delega.ATTIVA, tipo=DIRETTORE_CORSO,
-                              inizio=poco_fa(), oggetto_tipo=ctype,
+                              inizio=poco_fa(), oggetto_tipo=corso_base,
                               oggetto=corso_base, firmatario=presidente)
 
         # invito al corso aspirante1 e sostenitore1
@@ -2311,10 +2310,12 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         # autorizzazioni al corso aspirante2 e sostenitore2
         Autorizzazione.objects.create(richiedente=aspirante2, firmatario=direttore_corso, concessa=True,
                                       oggetto_tipo=58, oggetto=partecipazione1, progressivo=1,
-                                      destinatario_ruolo="CB-part", destinatario_oggetto=corso_base, necessaria=False)
+                                      destinatario_ruolo=INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,
+                                      destinatario_oggetto=corso_base, necessaria=False)
         Autorizzazione.objects.create(richiedente=sostenitore2, firmatario=direttore_corso, concessa=True,
                                       oggetto_tipo=58, oggetto=partecipazione2, progressivo=1,
-                                      destinatario_ruolo="CB-part", destinatario_oggetto=corso_base, necessaria=False)
+                                      destinatario_ruolo=INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,
+                                      destinatario_oggetto=corso_base, necessaria=False)
 
         # sessione
         sessione_direttore = self.sessione_utente(persona=direttore_corso)
