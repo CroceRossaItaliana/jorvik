@@ -2295,8 +2295,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
 
         # nomina delegato corso
         Delega.objects.create(persona=direttore_corso, stato=Delega.ATTIVA, tipo=DIRETTORE_CORSO,
-                              inizio=poco_fa(), oggetto_tipo=corso_base,
-                              oggetto=corso_base, firmatario=presidente)
+                              inizio=poco_fa(), oggetto=corso_base, firmatario=presidente)
 
         # invito al corso aspirante1 e sostenitore1
         InvitoCorsoBase.objects.create(persona=aspirante1, corso=corso_base, invitante=direttore_corso)
@@ -2309,11 +2308,11 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
 
         # autorizzazioni al corso aspirante2 e sostenitore2
         Autorizzazione.objects.create(richiedente=aspirante2, firmatario=direttore_corso, concessa=True,
-                                      oggetto_tipo=58, oggetto=partecipazione1, progressivo=1,
+                                      oggetto=partecipazione1, progressivo=1,
                                       destinatario_ruolo=INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,
                                       destinatario_oggetto=corso_base, necessaria=False)
         Autorizzazione.objects.create(richiedente=sostenitore2, firmatario=direttore_corso, concessa=True,
-                                      oggetto_tipo=58, oggetto=partecipazione2, progressivo=1,
+                                      oggetto=partecipazione2, progressivo=1,
                                       destinatario_ruolo=INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,
                                       destinatario_oggetto=corso_base, necessaria=False)
 

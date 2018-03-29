@@ -30,7 +30,6 @@ from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona,
     ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, \
     ModuloLavoraTesserini, ModuloScaricaTesserini, ModuloDimissioniSostenitore
 from ufficio_soci.models import Quota, Tesseramento, Tesserino, Riduzione
-from formazione.models import PartecipazioneCorsoBase
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
