@@ -326,6 +326,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             msg = Messaggio.costruisci_e_accoda(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente,
                                                 destinatari=destinatari, allegati=allegati, **kwargs)
             Messaggio.invia(msg.pk)
+            return msg
 
     def __str__(self):
         return self.oggetto
