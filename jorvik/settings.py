@@ -82,6 +82,7 @@ STATICFILES_FINDERS = (
 
 # Cronjob attivi
 CRON_CLASSES = [
+    "posta.cron.CronSmaltisciCodaPosta",
     "base.cron.CronCancellaFileScaduti",
     "base.cron.CronApprovaNegaAuto",
     "base.cron.CronRichiesteInAttesa",
