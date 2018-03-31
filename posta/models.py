@@ -287,16 +287,13 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     def costruisci_e_accoda(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None, mittente=None,
                             destinatari=None, allegati=None, **kwargs):
         """
-        Scorciatoia per costruire rapidamente un messaggio di posta e inviarlo immediatamente.
-         IMPORTANTE. Non adatto per messaggi con molti destinatari. In caso di fallimento immediato, il messaggio
-                     viene accodato per l'invio asincrono.
         :param oggetto: Oggetto del messaggio.
         :param modello: Modello da utilizzare per l'invio.
         :param corpo: Sostituzioni da fare nel modello. Dizionario {nome: valore}
         :param mittente: Mittente del messaggio. None per Notifiche da Gaia.
         :param destinatari: Un elenco di destinatari (oggetti Persona).
         :param allegati: Allegati messaggio
-        :return: Un oggetto Messaggio inviato.
+        :return: Un oggetto Messaggio
         """
 
         from .tasks import crea_email
