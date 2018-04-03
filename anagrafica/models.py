@@ -114,7 +114,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     cap_residenza = models.CharField("CAP di Residenza", max_length=16, null=True)
     email_contatto = models.EmailField("Email di contatto", max_length=255, blank=True,
                                        validators=[valida_email_personale])
-    email_servizio = models.EmailField('Indirizzo email servizio', max_length=254,
+    email_servizio = models.EmailField('Email di servizio', max_length=254,
                                        unique=True, null=True, blank=True)
 
     note = models.TextField("Note aggiuntive", max_length=10000, blank=True, null=True,)
@@ -741,7 +741,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         from formazione.models import PartecipazioneCorsoBase, CorsoBase
         return PartecipazioneCorsoBase.con_esito_ok().filter(persona=self, corso__stato=CorsoBase.ATTIVO).first()
-    
+
     @property
     def volontario_da_meno_di_un_anno(self):
         """
@@ -1267,6 +1267,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return attivi
 
     @property
+    def regione(self):
+        sede_riferimento = self.sede_riferimento()
+        if sede_riferimento \
+                and sede_riferimento.estensione == REGIONALE \
+                and sede_riferimento.locazione:
+            return sede_riferimento.locazione.regione
+
+        return None
+
+    @property
     def ha_email_servizio(self):
         return any(gsuite.base_domain in email for email in (self.email_contatto or '',
                                                              self.utenza.email or '',
@@ -1296,13 +1306,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
             return max(num) if num else 0
 
-        occorrenze = Persona.objects.filter(nome=self.nome, cognome=self.cognome) # regione ?
+        if not self.regione:
+            return "N/A: Regione non impostabile"
+
+        # Non contata la regione nel filtro: uno spostamento permetterebe di preservare
+        # l'email al netto della sotto-organizzazione (regione)
+        occorrenze = Persona.objects.filter(nome=self.nome, cognome=self.cognome)
+
         prossimo = _prossimo(occorrenze)
         progressivo = '' if prossimo == 0 else prossimo + 1
 
-        # TODO: come gestiamo l'attributo regione?
         return "{0}.{1}{2}@{3}{4}".format(self.nome, self.cognome,
-                                          progressivo, '',
+                                          progressivo, self.regione,
                                           gsuite.base_domain).lower()
 
     def aggiorna_email_servizio(self):
@@ -2560,7 +2575,7 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
         permissions = (
             ('view_provvedimentodisciplinare', "Can view Provvediemto disciplinare"),
         )
-    
+
     def __str__(self):
         return self.persona.__str__()
 
