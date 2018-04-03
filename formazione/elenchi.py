@@ -19,6 +19,8 @@ class ElencoPartecipantiCorsiBase(ElencoVistaAnagrafica):
                 aspirante = None
             if not aspirante or self.args[0][0].pk not in aspirante.inviti_attivi:
                 return "Iscritto"
+            else:
+                return "Invitato"
         return super(ElencoPartecipantiCorsiBase, self).excel_colonne() + (
             ("Stato", lambda p: stato_iscritto(p,self)),
         )
