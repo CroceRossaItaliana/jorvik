@@ -1296,6 +1296,11 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def email_servizio_candidata(self):
+        """
+        Calcola una possibile e-mail di servizio in base a regione,
+        nome, cognome e altri omonimi.
+        :return: string
+        """
 
         def _prossimo(omonimi):
             num = list()
@@ -1347,7 +1352,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         data = dict(primaryEmail=email,
                     name=dict(givenName=self.nome,
                               familyName=self.cognome,
-                              fullName="{0} {1}".format(self.nome, self.cognome)),
+                              fullName=self.nome_completo),
                     emails=[dict(address=self.utenza.email, customType='email_utenza')],
                     password='FooBar123', changePasswordAtNextLogin=True)
 

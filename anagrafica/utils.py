@@ -67,5 +67,10 @@ def termina_deleghe_giovani():
         delega.termina(data=mezzanotte_24_ieri(now()))
 
 
-def random_password(length=8):
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+def random_password(length=12):
+    """
+    Genera una nuova password con caratteri alfanumerici minuscoli e maiuscoli
+    :param length: lunghezza della stringa generata come password
+    :return: stringa
+    """
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
