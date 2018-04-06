@@ -209,16 +209,20 @@
                         </div>
                         {% else %}
                             <div class="panel-body">
+                                {% if me.email_servizio_candidata %}
                                 <p>Vuoi attivare una e-mail di servizio?</p>
                                 {% bootstrap_form modulo_email_servizio %}
                                 {% if errore_crea_email_servizio %}
                                     <span class="alert alert-warning">{{ errore_crea_email_servizio }}</span>
                                     <br />
                                 {% endif %}
-                                {% if me.regione %}
+
                                 <button class="btn btn-block btn-info" type="submit">
                                     <i class="fa fa-save fa-fw"></i>Attiva subito
                                 </button>
+                                {% else %}
+                                    <p class="text-warning">Non è possibile proporre un indirizzo di servizio.</p>
+                                    <p>Contatta il supporto per maggiori dettagli.</p>
                                 {% endif %}
                             </div>
                         {% endif %}

@@ -49,7 +49,7 @@ from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_per
     persona_permessi_almeno, persona_ha_permessi
 from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
     crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb, valida_almeno_14_anni, \
-    valida_partita_iva, valida_iban, valida_email_personale
+    valida_partita_iva, valida_iban, valida_email_personale, valida_dominio_email
 from attivita.models import Turno, Partecipazione
 from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
@@ -1267,16 +1267,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return attivi
 
     @property
-    def regione(self):
-        sede_riferimento = self.sede_riferimento()
-        if sede_riferimento \
-                and sede_riferimento.estensione == REGIONALE \
-                and sede_riferimento.locazione:
-            return sede_riferimento.locazione.regione
-
-        return None
-
-    @property
     def ha_email_servizio(self):
         return any(gsuite.base_domain in email for email in (self.email_contatto or '',
                                                              self.utenza.email or '',
@@ -1311,8 +1301,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
             return max(num) if num else 0
 
-        if not self.regione:
-            return "N/A: Regione non impostabile"
+        if not self.sede_riferimento():
+            return None
+
+        dominio_email = self.sede_riferimento().primo_dominio_email()
+        if not dominio_email or dominio_email not in gsuite.base_domain:
+            return None
 
         # Non contata la regione nel filtro: uno spostamento permetterebe di preservare
         # l'email al netto della sotto-organizzazione (regione)
@@ -1321,9 +1315,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         prossimo = _prossimo(occorrenze)
         progressivo = '' if prossimo == 0 else prossimo + 1
 
-        return "{0}.{1}{2}@{3}{4}".format(self.nome, self.cognome,
-                                          progressivo, self.regione,
-                                          gsuite.base_domain).lower()
+        return "{0}.{1}{2}@{3}".format(self.nome, self.cognome, progressivo,
+                                       self.sede_riferimento().primo_dominio_email()).lower()
 
     def aggiorna_email_servizio(self):
         """
@@ -1755,6 +1748,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     partita_iva = models.CharField("Partita IVA", max_length=32, blank=True,
                                    validators=[valida_partita_iva])
 
+    dominio_email = models.CharField("Dominio email", max_length=200, blank=True,
+                                     null=True, validators=[valida_dominio_email])
+
     attiva = models.BooleanField("Attiva", default=True, db_index=True)
     __attiva_default = None
 
@@ -2029,6 +2025,18 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     def unita_sottostanti(self):
         return self.ottieni_figli().filter(estensione=TERRITORIALE)
+
+    def primo_dominio_email(self):
+        """
+        Cerca la prima sede con dominio_email valorizzato
+        """
+        genitori = [s.id for s in self.get_ancestors(ascending=True, include_self=True)]
+        sedi = Sede.objects.filter(Q(dominio_email__isnull=False, genitore__in=genitori) |
+                                   Q(id=self.id))
+        if sedi:
+            return sedi.first().dominio_email
+
+        return None
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):

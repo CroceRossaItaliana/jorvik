@@ -110,3 +110,8 @@ def valida_data_nel_passato(data):
             raise ValidationError("La data non può essere nel futuro.")
     else:
         raise TypeError("Fornito tipo di data non valido.")
+
+
+def valida_dominio_email(data):
+    if '@' in data or data.startswith('.'):
+        raise ValidationError("Non inserire il carattere @ o iniziare con il .")
