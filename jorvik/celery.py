@@ -2,12 +2,14 @@ from __future__ import absolute_import
 
 import os
 from celery import Celery
+
+from jorvik.settings import CELERY_CONF
 from posta.queue import process_queue
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'jorvik.settings')
 
 app = Celery('jorvik')
-app.config_from_object('django.conf:settings', namespace='CELERY')
+app.conf.update(CELERY_CONF.items('celery'))
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
