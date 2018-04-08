@@ -401,7 +401,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
     class Meta:
         verbose_name = "Invito di partecipazione a corso base"
         verbose_name_plural = "Inviti di partecipazione a corso base"
-        ordering = ('persona__nome', 'persona__cognome', 'persona__codice_fiscale',)
+        ordering = ('persona__cognome', 'persona__nome', 'persona__codice_fiscale',)
         permissions = (
             ("view_invitocorsobase", "Can view invito partecipazione corso base"),
         )
@@ -544,7 +544,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     class Meta:
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
-        ordering = ('persona__nome', 'persona__cognome', 'persona__codice_fiscale',)
+        ordering = ('persona__cognome', 'persona__nome', 'persona__codice_fiscale',)
         permissions = (
             ("view_partecipazionecorsobarse", "Can view corso Richiesta di partecipazione"),
         )
