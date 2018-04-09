@@ -82,7 +82,6 @@ STATICFILES_FINDERS = (
 
 # Cronjob attivi
 CRON_CLASSES = [
-    "posta.cron.CronSmaltisciCodaPosta",
     "base.cron.CronCancellaFileScaduti",
     "base.cron.CronApprovaNegaAuto",
     "base.cron.CronRichiesteInAttesa",
@@ -126,6 +125,7 @@ MEDIA_CONF_FILE = 'config/media.cnf' if os.path.isfile('config/media.cnf') else 
 DEBUG_CONF_FILE = 'config/debug.cnf' if os.path.isfile('config/debug.cnf') else 'config/debug.cnf.sample'
 APIS_CONF_FILE = 'config/apis.cnf' if os.path.isfile('config/apis.cnf') else 'config/apis.cnf.sample'
 GENERAL_CONF_FILE = 'config/general.cnf' if os.path.isfile('config/general.cnf') else 'config/general.cnf.sample'
+CELERY_CONF_FILE = 'config/celery.cnf' if os.path.isfile('config/celery.cnf') else 'config/celery.cnf.sample'
 
 # MySQL
 MYSQL_CONF = configparser.ConfigParser()
@@ -195,6 +195,9 @@ SESSION_COOKIE_PATH = '/'
 
 GENERAL_CONF = configparser.ConfigParser()
 GENERAL_CONF.read(GENERAL_CONF_FILE)
+
+CELERY_CONF = configparser.ConfigParser()
+CELERY_CONF.read(CELERY_CONF_FILE)
 
 # Driver per i test funzionali
 DRIVER_WEB = 'firefox'

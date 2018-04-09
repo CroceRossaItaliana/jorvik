@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os
@@ -28,6 +29,8 @@ from base.geo import Locazione
 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Estensione
 from attivita.models import Attivita, Area
+from posta.models import Messaggio
+from posta.tasks import crea_email
 import argparse
 
 
@@ -40,6 +43,8 @@ parser.add_argument('--membri-sede', dest='membri_sedi', action='append',
 parser.add_argument('--dati-di-esempio', dest='esempio', action='store_const',
                     default=False, const=True,
                     help='installa dei dati di esempio')
+parser.add_argument('--email-di-esempio', dest='email', type=int, default=0,
+                    help='installa delle email di esempio per test coda celery')
 parser.add_argument('--reset', dest='reset', action='store_true',
                     help='cancella i dati prima di caricare quelli di esempio. Funziona solo con --dati-di-esempio')
 parser.add_argument('--aggiorna-province', dest='province', action='store_const',
@@ -336,6 +341,21 @@ if args.province:
 
         print("-- %s\t%d\t%s" % (pv, num, provincia))
 
+if args.email:
+    print("Installo emails di esempio")
+    if args.reset:
+        Messaggio.objects.all().delete()
 
+    persone = iter(Persona.objects.all().order_by('?'))
+    for n in range(args.email):
+        try:
+            mittente = next(persone).pk
+            destinatari = [next(persone).pk for _ in range(random.randint(0, 5))]
+            job = crea_email(oggetto='Prova email numero {}'.format(n + 1),
+                             modello='test_email.html',
+                             mittente=mittente,
+                             destinatari=destinatari)
+        except StopIteration:
+            persone = iter(Persona.objects.all().order_by('?')) # rewind
 
 print("Finita esecuzione.")
