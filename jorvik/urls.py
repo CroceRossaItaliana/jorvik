@@ -63,6 +63,7 @@ urlpatterns = [
 
     # Modulo di recupero password
     url(r'^recupera_password/$', base.viste.recupera_password, name='recupera_password'),
+    url(r'^reimposta_password_servizio/$', base.viste.reimposta_password_servizio, name='reimposta_password_servizio'),
     url(r'^reimposta_password/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
         base.viste.recupera_password_conferma, name='recupera_password_conferma'),
     url(r'^recupera_password_completo/$', base.viste.recupero_password_completo, name='recupero_password_completo'),

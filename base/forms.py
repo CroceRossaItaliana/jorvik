@@ -5,6 +5,11 @@ from django_countries import countries
 from nocaptcha_recaptcha.fields import NoReCaptchaField
 
 
+class ModuloResetPasswordServizio(forms.Form):
+    email = forms.EmailField(label='Email')
+    #captcha = NoReCaptchaField()
+
+
 class ModuloRecuperaPassword(forms.Form):
     codice_fiscale = forms.CharField(label='Codice Fiscale', max_length=16)
     email = forms.EmailField(label='Email')

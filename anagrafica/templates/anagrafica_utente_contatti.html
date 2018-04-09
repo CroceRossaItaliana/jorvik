@@ -200,34 +200,10 @@
                                 <span class="alert alert-warning">{{ errore_reset_email_servizio }}</span>
                                 <br />
                             {% endif %}
-                            <a class="btn btn-block btn-warning"
-                                id="btn-enable_reset_password">
+                            <a class="btn btn-block btn-warning" id="btn-enable_reset_password"
+                               href="{% url 'reimposta_password_servizio' %}">
                                 <i class="fa fa-reload fa-fw"></i>Reset password
                             </a>
-                            <div id="confirm-reset-email-servizio" style="display: none">
-                                <input type="text" value="" class="form-control" id="email_servizio_check" />
-                                <small>Per procedere con il reset riscrivi il tuo indirizzo e-mail di servizio.</small>
-
-                            <a href="{% url 'anagrafica-utente_contatti' %}?reset_gsuite_password=1" disabled="true"
-                                class="btn btn-block btn-danger"
-                                id="btn-reset_password"
-                                onclick="return confirm('Vuoi procedere con il rest della password dell\'email di servizio?')">
-                                <i class="fa fa-reload fa-fw"></i>
-                                   Reset password
-                            </a>
-                            </div>
-                            <script type="text/javascript">
-                                $('#email_servizio_check').keyup(function(){
-                                    if ($(this).val() == '{{me.email_servizio}}'){
-                                        $('#btn-reset_password').removeAttr('disabled');
-                                    }
-                                });
-                                $('#btn-enable_reset_password').click(function(){
-                                    $('#confirm-reset-email-servizio').toggle();
-                                    $(this).toggle();
-                                });
-
-                            </script>
                         </div>
                         {% else %}
                             <div class="panel-body">
