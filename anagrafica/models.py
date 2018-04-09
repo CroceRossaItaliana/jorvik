@@ -1296,7 +1296,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             num = list()
             for p in omonimi:
                 if p.ha_email_servizio:
-                    prog = p.trova_email_servizio().split('@')[0].replace("{0}.{1}".format(p.nome, p.cognome), '')
+                    email, _ = p.trova_email_servizio()
+                    prog = p.email.split('@')[0].replace("{0}.{1}".format(p.nome, p.cognome), '')
                     num.append(int(prog)) if prog else 0
 
             return max(num) if num else 0

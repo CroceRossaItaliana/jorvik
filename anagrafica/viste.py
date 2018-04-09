@@ -551,13 +551,11 @@ def utente_contatti(request, me):
         if modulo_email_contatto.is_valid():
             _richiesta_conferma_email(request, me, parametri_cambio_email['contatto'], modulo_email_contatto)
 
-        # TODO: better form handling
         if modulo_email_servizio.data.get('email_servizio', None):
             try:
                 me.crea_email_servizio(modulo_email_servizio.data.get('email_servizio'))
                 successo_crea_email_servizio = "Email creata con successo."
             except ValueError as e:
-                # TODO: log? new relic?
                 me.email_servizio = ''
                 errore_crea_email_servizio = str(e)
 
