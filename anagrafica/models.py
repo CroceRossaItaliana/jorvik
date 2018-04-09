@@ -1305,7 +1305,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return None
 
         dominio_email = self.sede_riferimento().primo_dominio_email()
-        if not dominio_email or dominio_email not in gsuite.base_domain:
+        if not dominio_email or gsuite.base_domain not in dominio_email:
             return None
 
         # Non contata la regione nel filtro: uno spostamento permetterebe di preservare
