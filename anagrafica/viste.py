@@ -25,7 +25,7 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
     ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail, \
-    ModuloUSModificaUtenza, ModuloReportFederazione
+    ModuloUSModificaUtenza, ModuloReportFederazione, ModuloEmailServizio
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
@@ -532,11 +532,15 @@ def utente_contatti(request, me):
     stato_conferma_contatto = None
     errore_conferma_accesso = None
     errore_conferma_contatto = None
+    errore_crea_email_servizio = None
+    successo_crea_email_servizio = None
 
     if request.method == 'POST':
 
         modulo_email_accesso = ModuloModificaEmailAccesso(request.POST, instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(request.POST, instance=me)
+        modulo_email_servizio = ModuloEmailServizio(request.POST, instance=me)
+
         modulo_numero_telefono = ModuloCreazioneTelefono(request.POST)
 
         if modulo_email_accesso.is_valid():
@@ -544,6 +548,15 @@ def utente_contatti(request, me):
 
         if modulo_email_contatto.is_valid():
             _richiesta_conferma_email(request, me, parametri_cambio_email['contatto'], modulo_email_contatto)
+
+        if modulo_email_servizio.data.get('email_servizio', None):
+            try:
+                me.crea_email_servizio(modulo_email_servizio.data.get('email_servizio'))
+                successo_crea_email_servizio = "Email creata con successo."
+            except ValueError as e:
+                me.email_servizio = ''
+                errore_crea_email_servizio = str(e)
+                raise ValueError(e)
 
         if modulo_numero_telefono.is_valid():
             me.aggiungi_numero_telefono(
@@ -558,12 +571,19 @@ def utente_contatti(request, me):
 
         modulo_email_accesso = ModuloModificaEmailAccesso(instance=me.utenza)
         modulo_email_contatto = ModuloModificaEmailContatto(instance=me)
+
+        email_candidata = me.email_servizio_candidata if not me.ha_email_servizio else ''
+
+        modulo_email_servizio = ModuloEmailServizio(instance=me,
+                                                    initial=dict(email_servizio=email_candidata or me.email_servizio))
+
         modulo_numero_telefono = ModuloCreazioneTelefono()
 
     numeri = me.numeri_telefono.all()
     contesto = {
         'modulo_email_accesso': modulo_email_accesso,
         'modulo_email_contatto': modulo_email_contatto,
+        'modulo_email_servizio': modulo_email_servizio,
         'modulo_numero_telefono': modulo_numero_telefono,
         'numeri': numeri,
         'attesa_conferma_accesso': request.session.get(parametri_cambio_email['accesso']['session_code'], False),
@@ -572,10 +592,17 @@ def utente_contatti(request, me):
         'stato_conferma_contatto': stato_conferma_contatto,
         'errore_conferma_accesso': errore_conferma_accesso,
         'errore_conferma_contatto': errore_conferma_contatto,
+        'errore_crea_email_servizio': errore_crea_email_servizio,
+        'successo_crea_email_servizio': successo_crea_email_servizio
     }
 
     return 'anagrafica_utente_contatti.html', contesto
 
+
+@pagina_privata
+def utente_contatti_gsuite(request, me):
+
+    return 'anagrafica_utente_contatti.html', contesto
 
 @pagina_privata
 def utente_rubrica_referenti(request, me):

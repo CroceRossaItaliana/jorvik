@@ -29,9 +29,11 @@ from django.db.models import Q, QuerySet, Avg
 from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 import phonenumbers
+from googleapiclient.errors import HttpError
 from mptt.querysets import TreeQuerySet
 
 from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
+from anagrafica.gsuite import gsuite
 
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI_NOMI_DICT, UFFICIO_SOCI_UNITA, \
     DELEGHE_RUBRICA, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_4, \
@@ -47,7 +49,7 @@ from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_per
     persona_permessi_almeno, persona_ha_permessi
 from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
     crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb, valida_almeno_14_anni, \
-    valida_partita_iva, valida_iban, valida_email_personale
+    valida_partita_iva, valida_iban, valida_email_personale, valida_dominio_email
 from attivita.models import Turno, Partecipazione
 from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
@@ -60,6 +62,7 @@ from base.utils import is_list, sede_slugify, UpperCaseCharField, TitleCharField
 from autoslug import AutoSlugField
 
 from curriculum.models import Titolo, TitoloPersonale
+from jorvik.settings import GSUITE_CONF
 from posta.models import Messaggio
 from django.apps import apps
 
@@ -111,6 +114,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     cap_residenza = models.CharField("CAP di Residenza", max_length=16, null=True)
     email_contatto = models.EmailField("Email di contatto", max_length=255, blank=True,
                                        validators=[valida_email_personale])
+    email_servizio = models.EmailField('Email di servizio', max_length=254,
+                                       unique=True, null=True, blank=True)
+
     note = models.TextField("Note aggiuntive", max_length=10000, blank=True, null=True,)
 
     avatar = models.ImageField("Avatar", blank=True, null=True,
@@ -185,8 +191,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return normalizza_nome(self.nome + " " + self.cognome)
 
     # Q: Qual e' l'email di questa persona?
-    # A: Una persona puo' avere da zero a due indirizzi email.
+    # A: Una persona puo' avere da zero a tre indirizzi email.
     #    - Persona.email_contatto e' quella scelta dalla persona per il contatto.
+    #    - Persona.email_servizio e' quella impostata come e-mail di servizio (@<regione>.cri.it).
     #    - Persona.utenza.email (o Persona.email_utenza) e' quella utilizzata per accedere al sistema.
     #    - Persona.email puo' essere usato per ottenere, in ordine, l'email di contatto,
     #       oppure, se non impostata, quella di utenza. Se nemmeno una utenza e' disponibile,
@@ -196,11 +203,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def email(self):
         """
         Restituisce l'email preferita dalla persona.
-        Se impostata, restituisce l'email di contatto, altrimento l'email di utenza.
+        In ordine: e-mail servizio, e-mail contatto, altrimenti l'email di utenza.
         :return:
         """
+        if self.email_servizio:
+            return self.email_servizio
+
         if self.email_contatto:
             return self.email_contatto
+
         return self.email_utenza
 
     @property
@@ -644,6 +655,42 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             destinatari=[self]
         )
 
+    def invia_email_nuova_email_servizio(self, password=''):
+        """
+        Invia una email di benvenuto nell'email di servizio con la password
+        da usare al primo login.
+        """
+        from posta.models import Messaggio
+
+        Messaggio.costruisci_e_invia(
+            oggetto="Nuovo indirizzo e-mail di servizio",
+            modello="email_nuova_email_servizio.html",
+            corpo={
+                'nome': self.nome_completo,
+                'email_servizio': self.email_servizio,
+                'password': password
+            },
+            destinatari=[self]
+        )
+
+    def invia_email_reset_email_servizio(self, password=''):
+        """
+        Invia una email di benvenuto nell'email di servizio con la password
+        da usare al primo login.
+        """
+        from posta.models import Messaggio
+
+        Messaggio.costruisci_e_invia(
+            oggetto="Password reset e-mail di servizio",
+            modello="email_reset_email_servizio.html",
+            corpo={
+                'nome': self.nome_completo,
+                'email_servizio': self.email_servizio,
+                'password': password
+            },
+            destinatari=[self]
+        )
+
     def posta_in_arrivo(self):
         """
         Ottiene il queryset della posta in arrivo per la Persona.
@@ -694,7 +741,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         from formazione.models import PartecipazioneCorsoBase, CorsoBase
         return PartecipazioneCorsoBase.con_esito_ok().filter(persona=self, corso__stato=CorsoBase.ATTIVO).first()
-    
+
     @property
     def volontario_da_meno_di_un_anno(self):
         """
@@ -1219,6 +1266,120 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                         attivi.append({'segmento': segmento, 'sede': sede})
         return attivi
 
+    @property
+    def ha_email_servizio(self):
+        return any(gsuite.base_domain in email for email in (self.email_contatto or '',
+                                                             self.utenza.email or '',
+                                                             self.email_servizio or ''))
+
+    def trova_email_servizio(self):
+        if gsuite.base_domain in self.email_servizio:
+            return self.email_servizio, 'email_servizio'
+
+        if gsuite.base_domain in self.email_contatto:
+            return self.email_contatto, 'email_contatto'
+
+        if gsuite.base_domain in self.utenza.email:
+            return self.utenza.email, 'utenza__email'
+
+        return
+
+    @property
+    def email_servizio_candidata(self):
+        """
+        Calcola una possibile e-mail di servizio in base a regione,
+        nome, cognome e altri omonimi.
+        :return: string
+        """
+
+        def _prossimo(omonimi):
+            num = list()
+            for p in omonimi:
+                if p.ha_email_servizio:
+                    email, _ = p.trova_email_servizio()
+                    prog = p.email.split('@')[0].replace("{0}.{1}".format(p.nome, p.cognome), '')
+                    num.append(int(prog)) if prog else 0
+
+            return max(num) if num else 0
+
+        if not self.sede_riferimento():
+            return None
+
+        dominio_email = self.sede_riferimento().primo_dominio_email()
+        if not dominio_email or gsuite.base_domain not in dominio_email:
+            return None
+
+        # Non contata la regione nel filtro: uno spostamento permetterebe di preservare
+        # l'email al netto della sotto-organizzazione (regione)
+        occorrenze = Persona.objects.filter(nome=self.nome, cognome=self.cognome)
+
+        prossimo = _prossimo(occorrenze)
+        progressivo = '' if prossimo == 0 else prossimo + 1
+
+        return "{0}.{1}{2}@{3}".format(self.nome, self.cognome, progressivo,
+                                       self.sede_riferimento().primo_dominio_email()).lower()
+
+    def aggiorna_email_servizio(self):
+        """
+        Se l'e-mail di contatto o l'email utenza e' dell'organizzazione
+        la copia in e-mail di servizio. Verificate entrambe, assunta
+        quella dell'utenza come principale quindi fatta dopo.
+        """
+        if gsuite.base_domain in self.email_contatto:
+            self.email_servizio = self.email_contatto
+
+        if gsuite.base_domain in self.utenza.email:
+            self.email_servizio = self.utenza.email
+
+        self.save()
+
+    def crea_email_servizio(self, email):
+        """
+        Valida l'email richiesta e chiede a Google l'attivazione.
+        """
+        if not email:
+            raise ValueError("E-mail non valida")
+
+        if gsuite.base_domain not in email:
+            raise ValueError("E-mail non del dominio @{0}".format(gsuite.base_domain))
+
+        data = dict(primaryEmail=email,
+                    name=dict(givenName=self.nome,
+                              familyName=self.cognome,
+                              fullName=self.nome_completo),
+                    emails=[dict(address=self.utenza.email, customType='email_utenza')],
+                    password='FooBar123', changePasswordAtNextLogin=True)
+
+        gsuite.init_service('directory_v1')
+        user, password = gsuite.new_user(data, genera_password=True)
+
+        self.email_servizio = user.get('primaryEmail')
+        self.save()
+
+        self.invia_email_nuova_email_servizio(password)
+
+    def reset_email_servizio(self):
+        """
+        Imposta una nuova password per l'email di servizio e notifica
+        """
+
+        if not self.ha_email_servizio:
+            raise ValueError("Nessuna email di servizio trovata")
+
+        email = self.trova_email_servizio()
+
+        data = dict(primaryEmail=email,
+                    name=dict(givenName=self.nome,
+                              familyName=self.cognome,
+                              fullName="{0} {1}".format(self.nome, self.cognome)),
+                    emails=[dict(address=self.utenza.email, customType='email_utenza')],
+                    changePasswordAtNextLogin=True)
+
+        gsuite.init_service('directory_v1')
+        user, password = gsuite.update_user(email, data, genera_password=True)
+
+        self.invia_email_reset_email_servizio(password)
+
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
     """
@@ -1588,6 +1749,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     partita_iva = models.CharField("Partita IVA", max_length=32, blank=True,
                                    validators=[valida_partita_iva])
 
+    dominio_email = models.CharField("Dominio email", max_length=200, blank=True,
+                                     null=True, validators=[valida_dominio_email])
+
     attiva = models.BooleanField("Attiva", default=True, db_index=True)
     __attiva_default = None
 
@@ -1862,6 +2026,18 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     def unita_sottostanti(self):
         return self.ottieni_figli().filter(estensione=TERRITORIALE)
+
+    def primo_dominio_email(self):
+        """
+        Cerca la prima sede con dominio_email valorizzato
+        """
+        genitori = [s.id for s in self.get_ancestors(ascending=True, include_self=True)]
+        sedi = Sede.objects.filter(Q(dominio_email__isnull=False, genitore__in=genitori) |
+                                   Q(id=self.id))
+        if sedi:
+            return sedi.first().dominio_email
+
+        return None
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
@@ -2413,7 +2589,7 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
         permissions = (
             ('view_provvedimentodisciplinare', "Can view Provvediemto disciplinare"),
         )
-    
+
     def __str__(self):
         return self.persona.__str__()
 

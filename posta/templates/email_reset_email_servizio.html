@@ -1,0 +1,15 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p class="grassetto">Ciao {{ nome }}, benvenuto/a!</p>
+    <p>E' stato richiesto il reset della password dell'e-mail di servizio
+        <b>{{ email_servizio }}</b>.</p>
+    <p></p>
+    <p>Password temporanea: <b>{{ password }}</b></p>
+    <p></p>
+    <p><b>Attenzione:</b> se non sei stato tu a richiedere il cambio ti suggeriamo di
+        cambiare la tua password d'accesso al portale GAIA e di contattarci
+        rispondendo a questa email.</p>
+    <p></p>
+    <p>Per qualunque ulteriore informazione contattaci rispondendo a questa email.</p>
+{% endblock %}

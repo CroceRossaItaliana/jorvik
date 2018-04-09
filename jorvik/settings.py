@@ -126,6 +126,7 @@ MEDIA_CONF_FILE = 'config/media.cnf' if os.path.isfile('config/media.cnf') else 
 DEBUG_CONF_FILE = 'config/debug.cnf' if os.path.isfile('config/debug.cnf') else 'config/debug.cnf.sample'
 APIS_CONF_FILE = 'config/apis.cnf' if os.path.isfile('config/apis.cnf') else 'config/apis.cnf.sample'
 GENERAL_CONF_FILE = 'config/general.cnf' if os.path.isfile('config/general.cnf') else 'config/general.cnf.sample'
+GSUITE_CONF_FILE = 'config/gsuite.cnf' if os.path.isfile('config/gsuite.cnf') else 'config/gsuite.cnf.sample'
 
 # MySQL
 MYSQL_CONF = configparser.ConfigParser()
@@ -142,6 +143,10 @@ DEBUG = DEBUG_CONF.getboolean('debug', 'debug')
 SECRET_KEY = DEBUG_CONF.get('production', 'secret_key')
 JORVIK_LOG_FILE = DEBUG_CONF.get('debug', 'debug_log', fallback=os.path.join('..', 'log', 'debug.log'))
 JORVIK_LOG = os.path.join(BASE_DIR, JORVIK_LOG_FILE)
+
+# Gsuite
+GSUITE_CONF = configparser.ConfigParser()
+GSUITE_CONF.read(GSUITE_CONF_FILE)
 
 PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',

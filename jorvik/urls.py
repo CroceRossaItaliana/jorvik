@@ -63,6 +63,7 @@ urlpatterns = [
 
     # Modulo di recupero password
     url(r'^recupera_password/$', base.viste.recupera_password, name='recupera_password'),
+    url(r'^reimposta_password_servizio/$', base.viste.reimposta_password_servizio, name='reimposta_password_servizio'),
     url(r'^reimposta_password/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
         base.viste.recupera_password_conferma, name='recupera_password_conferma'),
     url(r'^recupera_password_completo/$', base.viste.recupero_password_completo, name='recupero_password_completo'),
@@ -93,7 +94,7 @@ urlpatterns = [
     url(r'^utente/documenti/zip/$', anagrafica.viste.utente_documenti_zip),
     url(r'^utente/documenti/cancella/(?P<pk>.*)/$', anagrafica.viste.utente_documenti_cancella),
     url(r'^utente/storico/$', anagrafica.viste.utente_storico),
-    url(r'^utente/contatti/$', anagrafica.viste.utente_contatti),
+    url(r'^utente/contatti/$', anagrafica.viste.utente_contatti, name='anagrafica-utente_contatti'),
     url(r'^utente/rubrica/referenti/$', anagrafica.viste.utente_rubrica_referenti),
     url(r'^utente/rubrica/volontari/$', anagrafica.viste.utente_rubrica_volontari),
     url(r'^utente/rubrica/(?P<rubrica>.*)/$', anagrafica.viste.rubrica_delegati),

@@ -29,7 +29,8 @@ from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_priv
 from autenticazione.models import Utenza
 from base import errori
 from base.errori import errore_generico, messaggio_generico
-from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLocalizzatore, ModuloLocalizzatoreItalia
+from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLocalizzatore, ModuloLocalizzatoreItalia, \
+    ModuloResetPasswordServizio
 from base.forms_extra import ModuloRichiestaSupportoPersone
 from base.geo import Locazione
 from base.models import Autorizzazione, Token
@@ -151,6 +152,41 @@ def recupera_password(request):
         'modulo': modulo,
     })
     return 'base_recupera_password.html', contesto
+
+
+@pagina_privata
+def reimposta_password_servizio(request, me):
+    """
+    Mostra semplicemente la pagina di reset password servizio.
+    """
+
+    contesto = {}
+    if request.method == 'POST':
+        modulo = ModuloResetPasswordServizio(request.POST)
+        if modulo.is_valid():
+
+            try:
+                me.reset_email_servizio()
+                successo_reset_email_servizio = "Password aggiornata."
+                return messaggio_generico(request, None,
+                                          titolo=successo_reset_email_servizio,
+                                          messaggio="Ti abbiamo inviato una e-mail con "
+                                                    "una nuova password per l'utilizzo della"
+                                                    "tua casella di servizio ",
+                                          torna_url=reverse('anagrafica-utente_contatti'),
+                                          torna_titolo="Torna ai contatti")
+            except ValueError as e:
+                errore_reset_email_servizio = str(e)
+                contesto.update({'errore': errore_reset_email_servizio})
+
+    else:
+        modulo = ModuloResetPasswordServizio(dict(email=me.email_servizio))
+
+    contesto.update({
+        'modulo': modulo,
+    })
+
+    return 'base_reimposta_password_servizio.html', contesto
 
 
 @pagina_anonima

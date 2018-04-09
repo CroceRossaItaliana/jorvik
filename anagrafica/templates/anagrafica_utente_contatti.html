@@ -174,7 +174,58 @@
 
                 </div>
 
+                <a name="gsuite"></a>
 
+                <div class="panel panel-info">
+
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-fw fa-envelope"></i>
+                            E-mail di servizio
+                            <span class="text-muted">(opzionale)</span>
+                        </h4>
+
+                    </div>
+                    {% if me.volontario %}
+                        {% if me.ha_email_servizio %}
+                            <div class="panel-body">
+                             <p>
+                                Questa è la tua e-mail dell'organizzazione. Potrai decidere dopo averla creata
+                                 se usarla come e-mail di contatto o come e-mail di login.
+                            </p>
+
+                            <pre>{{ me.email_servizio }}</pre>
+
+                            {% if errore_reset_email_servizio %}
+                                <span class="alert alert-warning">{{ errore_reset_email_servizio }}</span>
+                                <br />
+                            {% endif %}
+                            <a class="btn btn-block btn-warning" id="btn-enable_reset_password"
+                               href="{% url 'reimposta_password_servizio' %}">
+                                <i class="fa fa-reload fa-fw"></i>Reset password
+                            </a>
+                        </div>
+                        {% else %}
+                            <div class="panel-body">
+                                {% if me.email_servizio_candidata %}
+                                <p>Vuoi attivare una e-mail di servizio?</p>
+                                {% bootstrap_form modulo_email_servizio %}
+                                {% if errore_crea_email_servizio %}
+                                    <span class="alert alert-warning">{{ errore_crea_email_servizio }}</span>
+                                    <br />
+                                {% endif %}
+
+                                <button class="btn btn-block btn-info" type="submit">
+                                    <i class="fa fa-save fa-fw"></i>Attiva subito
+                                </button>
+                                {% else %}
+                                    <p class="text-warning">Non è possibile proporre un indirizzo di servizio.</p>
+                                    <p>Contatta il supporto per maggiori dettagli.</p>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
 
 
 
@@ -262,9 +313,6 @@
                                  </button>
                             </div>
 
-
-
-
                         </div>
                     </div>
 
@@ -273,9 +321,6 @@
 
             </div>
         </div>
-
-
-
 
     </form>
 
