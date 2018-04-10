@@ -141,7 +141,15 @@ def posta_scrivi(request, me):
             ai.save()
             allegati.append(ai)
 
-        messaggio = Messaggio.costruisci(
+        # Invia o accoda il messaggio, a seconda del numero di destinatari.
+        if len(modulo.cleaned_data['destinatari']) > MAX_VISIBILI:
+            funzione = Messaggio.costruisci_e_accoda
+            azione = "accodato"
+        else:
+            funzione = Messaggio.costruisci_e_invia
+            azione = "inviato"
+
+        messaggio = funzione(
             oggetto=modulo.cleaned_data['oggetto'],
             modello='email_utente.html',
             corpo={"testo": modulo.cleaned_data['testo']},
@@ -152,15 +160,6 @@ def posta_scrivi(request, me):
                 for el in modulo.cleaned_data['destinatari']
             ],
         )
-
-        # Invia o accoda il messaggio, a seconda del numero di destinatari.
-        if len(modulo.cleaned_data['destinatari']) > MAX_VISIBILI:
-            messaggio.accoda()
-            azione = "accodato"
-
-        else:
-            messaggio.invia()
-            azione = "inviato"
 
         # Porta alla schermata del messaggio.
         return redirect("/posta/in-uscita/1/%d/?%s" % (messaggio.pk, azione,))
