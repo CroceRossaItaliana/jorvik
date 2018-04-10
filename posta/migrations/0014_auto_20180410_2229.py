@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='destinatario',
             name='errore',
-            field=models.CharField(blank=True, db_index=True, default=None, max_length=2048, null=True),
+            field=models.CharField(blank=True, db_index=True, default=None, max_length=512, null=True),
         ),
     ]
