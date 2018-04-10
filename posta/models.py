@@ -349,4 +349,4 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
     inviato = models.BooleanField(default=False, db_index=True)
     invalido = models.BooleanField(default=False, db_index=True)
     tentativo = models.DateTimeField(default=None, blank=True, null=True, db_index=True)
-    errore = models.CharField(max_length=2048, blank=True, null=True, default=None, db_index=True)
+    errore = models.CharField(max_length=512, blank=True, null=True, default=None, db_index=True)
