@@ -1,0 +1,12 @@
+[celery]
+# questo file accetta le opzioni come descritto al seguente url
+# http://docs.celeryproject.org/en/latest/userguide/configuration.html
+
+# broker_url di default quando non viene definito
+# amqp://guest:**@127.0.0.1:5672//
+
+# se si utilizza rabbitmq come broker
+#broker_url = amqp://myuser:mypassword@localhost:5672/myvhost
+
+# se si utilizza redis come broker
+#broker_url = redis://:password@hostname:port/db_number
