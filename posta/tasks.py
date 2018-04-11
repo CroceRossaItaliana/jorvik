@@ -15,13 +15,13 @@ logger = get_task_logger('posta')
 
 
 @shared_task(ignore_result=True)
-def crea_email(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None, mittente=None, destinatari=None,
-               allegati=None, **kwargs):
+def crea_email(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None, mittente_id=None, destinatari_ids=None,
+               allegati_ids=None, **kwargs):
+
+    mittente = Persona.objects.get(pk=mittente_id) if mittente_id is not None else None
+    allegati = Allegato.objects.filter(id__in=allegati_ids) if allegati_ids is not None else []
 
     corpo = corpo or {}
-    destinatari = destinatari or []
-    allegati = allegati or []
-
     corpo.update({
         'mittente': mittente,
         'allegati': allegati,
@@ -30,11 +30,6 @@ def crea_email(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None,
     oggetto = Truncator(oggetto).chars(Messaggio.LUNGHEZZA_MASSIMA_OGGETTO)
 
     with transaction.atomic():
-        try:
-            mittente = Persona.objects.get(pk=mittente)
-        except Persona.DoesNotExist:
-            mittente = None
-
         m = Messaggio(oggetto=oggetto,
                       mittente=mittente,
                       corpo=get_template(modello).render(corpo),
@@ -42,10 +37,11 @@ def crea_email(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None,
         m.processa_link()
         m.save()
 
-        for d in destinatari:
-            m.oggetti_destinatario.create(persona_id=d)
+        if destinatari_ids is not None:
+            for d in destinatari_ids:
+                m.oggetti_destinatario.create(persona_id=d)
 
-        for a in Allegato.objects.filter(id__in=allegati):
+        for a in allegati:
             a.oggetto = m
             a.save()
 
