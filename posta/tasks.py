@@ -19,8 +19,9 @@ def crea_email(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None,
                allegati=None, **kwargs):
 
     corpo = corpo or {}
+    mittente = Persona.objects.get(pk=mittente) if mittente is not None else None
     destinatari = destinatari or []
-    allegati = allegati or []
+    allegati = Allegato.objects.filter(id__in=allegati) if allegati is not None else []
 
     corpo.update({
         'mittente': mittente,
@@ -30,11 +31,6 @@ def crea_email(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None,
     oggetto = Truncator(oggetto).chars(Messaggio.LUNGHEZZA_MASSIMA_OGGETTO)
 
     with transaction.atomic():
-        try:
-            mittente = Persona.objects.get(pk=mittente)
-        except Persona.DoesNotExist:
-            mittente = None
-
         m = Messaggio(oggetto=oggetto,
                       mittente=mittente,
                       corpo=get_template(modello).render(corpo),
@@ -45,7 +41,7 @@ def crea_email(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None,
         for d in destinatari:
             m.oggetti_destinatario.create(persona_id=d)
 
-        for a in Allegato.objects.filter(id__in=allegati):
+        for a in allegati:
             a.oggetto = m
             a.save()
 
