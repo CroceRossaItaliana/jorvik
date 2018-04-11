@@ -297,14 +297,17 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         """
 
         from .tasks import crea_email
-        destinatari = destinatari or []
-        destinatari = set([d.pk for d in destinatari])
-        allegati = allegati or []
-        allegati = set([a.pk for a in allegati])
-        mittente = mittente.pk if mittente else None
 
-        return crea_email(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente, destinatari=destinatari,
-                          allegati=allegati, **kwargs)
+        mittente_id = mittente.pk if mittente else None
+
+        destinatari = destinatari or []
+        destinatari_ids = set([d.pk for d in destinatari])
+
+        allegati = allegati or []
+        allegati_ids = [a.pk for a in allegati]
+
+        return crea_email(oggetto=oggetto, modello=modello, corpo=corpo, mittente_id=mittente_id,
+                          destinatari_ids=destinatari_ids, allegati_ids=allegati_ids, **kwargs)
 
     @staticmethod
     def costruisci_e_invia(oggetto=None, modello=None, corpo=None, mittente=None, destinatari=None, allegati=None,
