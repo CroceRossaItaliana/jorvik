@@ -349,12 +349,12 @@ if args.email:
     persone = iter(Persona.objects.all().order_by('?'))
     for n in range(args.email):
         try:
-            mittente = next(persone).pk
-            destinatari = [next(persone).pk for _ in range(random.randint(0, 5))]
+            mittente_id = next(persone).pk
+            destinatari_ids = [next(persone).pk for _ in range(random.randint(0, 5))]
             job = crea_email(oggetto='Prova email numero {}'.format(n + 1),
                              modello='test_email.html',
-                             mittente=mittente,
-                             destinatari=destinatari)
+                             mittente_id=mittente_id,
+                             destinatari_ids=destinatari_ids)
         except StopIteration:
             persone = iter(Persona.objects.all().order_by('?')) # rewind
 
