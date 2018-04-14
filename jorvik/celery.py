@@ -10,6 +10,10 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'jorvik.settings')
 
 app = Celery('jorvik')
 app.conf.update(CELERY_CONF.items('celery'))
+app.conf.task_routes = {
+    'posta.queue.process_queue': {'queue': 'coda_email_accodamento'},
+    'posta.tasks.send': {'queue': 'coda_email_invio'}
+}
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
