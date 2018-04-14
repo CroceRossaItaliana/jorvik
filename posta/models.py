@@ -143,14 +143,19 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         except (Messaggio.DoesNotExist, DatabaseError):  # DatabaseError se è locked, quindi in invio
             return ['OK: Riga lockata nel db']
 
-        nome_mittente = messaggio.mittente.nome_completo if messaggio.mittente else Messaggio.SUPPORTO_NOME
+        if messaggio.mittente:
+            nome_mittente = messaggio.mittente.nome_completo
+            email_mittente = messaggio.mittente.email or Messaggio.NOREPLY_EMAIL
+        else:
+            nome_mittente = Messaggio.SUPPORTO_NOME
+            email_mittente = Messaggio.SUPPORTO_EMAIL
 
-        if messaggio.rispondi_a:
-            if not messaggio.mittente:
+        if messaggio.rispondi_a:  # Rispondi a definito?
+            if not messaggio.mittente:  # Se si, e nessun mittente, usa nome mittente del reply-to
                 nome_mittente = messaggio.rispondi_a.nome_completo
             reply_to = ['{} <{}>'.format(messaggio.rispondi_a.nome_completo, messaggio.rispondi_a.email)]
-        else:
-            reply_to = None
+        else:  # Altrimenti, imposta reply-to allo stesso mittente
+            reply_to = ['{} <{}>'.format(nome_mittente, email_mittente)]
 
         mittente = '{} <{}>'.format(nome_mittente, Messaggio.NOREPLY_EMAIL)
         plain_text = strip_tags(messaggio.corpo)
