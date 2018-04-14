@@ -170,7 +170,16 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             if d.inviato:
                 continue
 
-            mail_to = [d.persona.email or Messaggio.SUPPORTO_EMAIL]
+            # Se la persona non ha un indirizzo di posta, segna questo oggetto Destinatario
+            # come inviato e continua col prossimo Destinatario.
+            if not d.persona.email:
+                d.inviato = True
+                d.errore = "Nessun indirizzo email"
+                results.append("OK: Persona id=%d non ha email" % (d.persona.pk,))
+                d.save()
+                continue
+
+            mail_to = [d.persona.email]
             if messaggio.utenza:
                 email_utenza = getattr(getattr(d.persona, 'utenza', {}), 'email', None)
                 if email_utenza != d.persona.email:
