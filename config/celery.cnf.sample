@@ -1,13 +1,11 @@
 [celery]
-# questo file accetta le opzioni come descritto al seguente url
+# Questa sezione accetta le opzioni di celery documentate all'URI
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html
 
-# se si utilizza redis come broker
 #broker_url = redis://:password@hostname:port/db_number
 
-broker_url = redis://
-result_backend = redis://
+broker_url = redis://localhost
+result_backend = redis://localhost
 
-[cleanup]
-periodo = 3600
-limite = 500
+[riaccoda]
+periodo = 3600  # 3600s = 1h

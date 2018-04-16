@@ -183,7 +183,7 @@ class TestInviiMassivi(TestCase):
             oggetto="Email contatto",
             modello="email.html",
         )
-        messaggio.smaltisci_coda()
+        messaggio._smaltisci_coda()
         self.assertEqual(Messaggio.in_coda().count(), 0)
 
     def test_messaggio_con_destinatario_vuoto(self):
@@ -194,7 +194,7 @@ class TestInviiMassivi(TestCase):
             oggetto="Email contatto",
             modello="email.html",
         )
-        messaggio.smaltisci_coda()
+        messaggio._smaltisci_coda()
         self.assertEqual(Messaggio.in_coda().count(), 0)
 
     @patch('smtplib.SMTP')
@@ -204,7 +204,7 @@ class TestInviiMassivi(TestCase):
             oggetto="Email contatto",
             modello="email.html",
         )
-        messaggio.smaltisci_coda()
+        messaggio._smaltisci_coda()
         self.assertEqual(Messaggio.in_coda().count(), 0)
 
     @patch('smtplib.SMTP')
@@ -216,7 +216,7 @@ class TestInviiMassivi(TestCase):
             oggetto="Email contatto",
             modello="email.html",
         )
-        messaggio.smaltisci_coda()
+        messaggio._smaltisci_coda()
         self.assertEqual(Messaggio.in_coda().count(), 0)
 
     @patch('smtplib.SMTP')
