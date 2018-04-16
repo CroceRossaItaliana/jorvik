@@ -15,3 +15,5 @@ def invia_mail(self, pk):
         raise self.retry(countdown=5, exc=exc)
     except ErrorePostaFatale:
         pass
+    except Exception as e:
+        logger.error('Errore imprevisto {}'.format(e))
