@@ -10,9 +10,8 @@ def invia_mail(self, pk):
     try:
         return Messaggio.invia(pk)
     except ErrorePostaTemporaneo as exc:  # chiede a celery di riprovare fra 5 minui
-        # raise self.retry(countdown=60 * 5, exc=exc)
         logger.error('{}'.format(exc))
-        raise self.retry(countdown=5, exc=exc)
+        raise self.retry(exc=exc)
     except ErrorePostaFatale:
         pass
     except Exception as e:
