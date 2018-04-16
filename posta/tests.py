@@ -244,7 +244,7 @@ class TestInviiMassivi(TestCase):
             instance = mock_smtp.return_value
             instance.sendmail.side_effect = smtplib.SMTPHeloError(code=codice, msg=msg)
             self._invia_msg_singolo()
-            if (codice // 100) == 5:
+            if codice == 501:
                 self.assertEqual(Messaggio.in_coda().count(), 0)
             else:
                 self.assertEqual(Messaggio.in_coda().count(), 1)
@@ -276,7 +276,7 @@ class TestInviiMassivi(TestCase):
             instance = mock_smtp.return_value
             instance.sendmail.side_effect = smtplib.SMTPDataError(code=codice, msg=msg)
             self._invia_msg_singolo()
-            if (codice // 100) == 5:
+            if codice == 501:
                 self.assertEqual(Messaggio.in_coda().count(), 0)
             else:
                 self.assertEqual(Messaggio.in_coda().count(), 1)
@@ -317,7 +317,7 @@ class TestInviiMassivi(TestCase):
             instance = mock_smtp.return_value
             instance.sendmail.side_effect = smtplib.SMTPSenderRefused(code=codice, msg=msg, sender=Messaggio.SUPPORTO_EMAIL)
             self._invia_msg_singolo()
-            if (codice // 100) == 5:
+            if codice == 501:
                 self.assertEqual(Messaggio.in_coda().count(), 0)
             else:
                 self.assertEqual(Messaggio.in_coda().count(), 1)

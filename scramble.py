@@ -30,7 +30,6 @@ from base.geo import Locazione
 from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Estensione
 from attivita.models import Attivita, Area
 from posta.models import Messaggio
-from posta.tasks import crea_email
 import argparse
 
 
@@ -343,18 +342,21 @@ if args.province:
 
 if args.email:
     print("Installo emails di esempio")
+    # setup di celery per poter accodare
+    from jorvik.celery import app
+
     if args.reset:
         Messaggio.objects.all().delete()
 
     persone = iter(Persona.objects.all().order_by('?'))
     for n in range(args.email):
         try:
-            mittente_id = next(persone).pk
-            destinatari_ids = [next(persone).pk for _ in range(random.randint(0, 5))]
-            job = crea_email(oggetto='Prova email numero {}'.format(n + 1),
-                             modello='test_email.html',
-                             mittente_id=mittente_id,
-                             destinatari_ids=destinatari_ids)
+            mittente = next(persone)
+            destinatari = [next(persone) for _ in range(random.randint(0, 5))]
+            job = Messaggio.costruisci_e_accoda(oggetto='Prova email numero {}'.format(n + 1),
+                                                modello='test_email.html',
+                                                mittente=mittente,
+                                                destinatari=destinatari)
         except StopIteration:
             persone = iter(Persona.objects.all().order_by('?')) # rewind
 
