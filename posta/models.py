@@ -245,7 +245,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 except SMTPResponseException as e:
                     messaggio.log('Errore invio email ai destinatari {}: {}'.format(mail_to, e))
                     d.errore = str(e)
-                    if not isinstance(e, SMTPAuthenticationError) and ((e.smtp_code // 100) == 5):
+                    if e.smtp_code == 501:
                         d.invalido = d.inviato = True
                         risultati.append('FAIL: {} - {}'.format(mail_to, e))
                         destinatari.remove(d)
