@@ -337,7 +337,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             messaggi = messaggi[:dimensione_massima]
 
         for messaggio in messaggi:
-            Messaggio.invia(messaggio.pk)
+            res = Messaggio.invia(messaggio.pk)
+            if isinstance(res, Exception):
+                raise res
 
     @staticmethod
     def costruisci_email(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None, mittente=None,
@@ -400,14 +402,11 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
         msg = Messaggio.costruisci_email(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente,
                                          destinatari=destinatari, allegati=allegati, **kwargs)
-        try:
-            Messaggio.invia(msg.pk)
-        except ErrorePostaTemporaneo:   # metto in coda celery
+        res = Messaggio.invia(msg.pk)
+        if isinstance(res, ErrorePostaTemporaneo):  # metto in coda celery
             msg.task_id = uuid()
             msg.save()
             invia_mail.apply_async((msg.pk,), task_id=msg.task_id)
-        except ErrorePostaFatale:       # pazienza
-            pass
 
         return msg
 
