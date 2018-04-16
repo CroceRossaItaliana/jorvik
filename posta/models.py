@@ -380,8 +380,6 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 a.oggetto = m
                 a.save()
 
-            m.save()
-
             return m
 
     @staticmethod
