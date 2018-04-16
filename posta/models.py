@@ -184,6 +184,11 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 except (ConnectionError, SMTPException) as e:  # supponiamo che l'indirizzo del supporto sia corretto
                     messaggio.log('Errore invio email a indirizzo del supporto: {}'.format(e))
                     return ErrorePostaTemporaneo('Errore invio email a indirizzo del supporto')
+                except Exception as e:
+                    messaggio.log('Errore invio email a indirizzo del supporto: {}'.format(e))
+                    messaggio.terminato = messaggio.ultimo_tentativo
+                    messaggio.task_id = None
+                    return ErrorePostaFatale('Errore imprevisto invio a indirizzo del supporto'.format(e))
                 else:
                     # messaggio.log('Inviata email a indirizzo del supporto {}'.format(Messaggio.SUPPORTO_EMAIL))
                     messaggio.terminato = messaggio.ultimo_tentativo
@@ -223,6 +228,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     attachments=messaggio.allegati_pronti(),
                     connection=connection)
                 msg.attach_alternative(messaggio.corpo, 'text/html')
+
                 mail_to = ','.join(mail_to)
                 try:
                     # messaggio.log('Invio email a {}'.format(mail_to))
@@ -235,19 +241,24 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     messaggio.log('Destinatari rifiutati {}: {}'.format(mail_to, e))
                     d.errore = str(e)
                     d.invalido = d.inviato = True
-                    messaggio.terminato = messaggio.ultimo_tentativo
                     risultati.append('FAIL: Destinatari rifiutati {} - {}'.format(mail_to, e))
                 except SMTPResponseException as e:
                     messaggio.log('Errore invio email ai destinatari {}: {}'.format(mail_to, e))
                     d.errore = str(e)
                     if not isinstance(e, SMTPAuthenticationError) and ((e.smtp_code // 100) == 5):
                         d.invalido = d.inviato = True
-                        messaggio.terminato = messaggio.ultimo_tentativo
                         risultati.append('FAIL: {} - {}'.format(mail_to, e))
+                        destinatari.remove(d)
                 except SMTPException as e:
                     messaggio.log('Errore generico invio email {}: {}'.format(mail_to, e))
                     d.errore = str(e)
                     risultati.append('FAIL: SMTPException {} - {}'.format(mail_to, e))
+                except Exception as e:
+                    messaggio.log('Errore imprevisto invio email {}: {}'.format(mail_to, e))
+                    d.errore = str(e)
+                    d.invalido = d.inviato = True
+                    risultati.append('FAIL: {} - Errore imprevisto {}'.format(mail_to, e))
+                    destinatari.remove(d)
                 else:
                     d.inviato = True
                     d.errore = None
