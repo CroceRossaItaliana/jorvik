@@ -6,14 +6,30 @@ from smtplib import SMTPException, SMTPRecipientsRefused, SMTPResponseException,
 
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.db import transaction, DatabaseError
+from django.template.loader import get_template
 from django.utils.html import strip_tags
+from celery import uuid
+from django.utils.text import Truncator
 from lxml import html
 
+from .tasks import invia_mail
 from base.models import *
 from base.tratti import *
 from social.models import ConGiudizio
 
 logger = logging.getLogger('posta')
+
+
+class ErrorePosta(Exception):
+    pass
+
+
+class ErrorePostaTemporaneo(ErrorePosta):
+    pass
+
+
+class ErrorePostaFatale(ErrorePosta):
+    pass
 
 
 class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
@@ -32,7 +48,6 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         )
 
     LUNGHEZZA_MASSIMA_OGGETTO = 256
-    CARATTERI_RIDUZIONE_OGGETTTO = '...'
 
     # Limite oggetto dato da RFC 2822 e' 998 caratteri in oggetto, ma ridotto per comodita
     oggetto = models.CharField(max_length=LUNGHEZZA_MASSIMA_OGGETTO, db_index=True,
@@ -50,12 +65,11 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     # Flag per i messaggi cancellati (perche' obsoleti)
     eliminato = models.BooleanField(default=False, null=False)
 
-    priorita = models.IntegerField(default=0, help_text="La priorità viene utilizzata per stabilire "
-                                                        "l'ordine nello smistamento della coda, quando "
-                                                        "c'è un errore questo valore viene incrementato")
     utenza = models.BooleanField(default=False, help_text="Se l'utente possiede un'email differente da quella "
                                                           "utilizzata per il login, il messaggio viene recapito ad "
                                                           "entrambe")
+
+    task_id = models.CharField(max_length=36, blank=True, null=True)
 
     @property
     def destinatari(self):
@@ -124,133 +138,156 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             logger.debug(*args, **kwargs)
 
     @staticmethod
-    def get_email_batch(limit=None):
-        with transaction.atomic():
-            # purtroppo skip_locked è stata inserita solo dalla version 1.11
-            query = '''SELECT id FROM posta_messaggio WHERE terminato is NULL ORDER BY priorita'''
-            if limit is not None:
-                query += ' LIMIT %s'
-                limit = (limit,)
-            query += ' FOR UPDATE SKIP LOCKED'
-            return [msg.pk for msg in Messaggio.objects.raw(query, limit)]
-
-    @staticmethod
-    @transaction.atomic()
-    def invia(pk):
-        results = []
-        try:
-            messaggio = Messaggio.objects.select_for_update(nowait=True).get(pk=pk, terminato__isnull=True)
-        except (Messaggio.DoesNotExist, DatabaseError):  # DatabaseError se è locked, quindi in invio
-            return ['OK: Riga lockata nel db']
-
-        if messaggio.mittente:
-            nome_mittente = messaggio.mittente.nome_completo
-            email_mittente = messaggio.mittente.email or Messaggio.NOREPLY_EMAIL
-        else:
-            nome_mittente = Messaggio.SUPPORTO_NOME
-            email_mittente = Messaggio.SUPPORTO_EMAIL
-
-        if messaggio.rispondi_a:  # Rispondi a definito?
-            if not messaggio.mittente:  # Se si, e nessun mittente, usa nome mittente del reply-to
-                nome_mittente = messaggio.rispondi_a.nome_completo
-            reply_to = ['{} <{}>'.format(messaggio.rispondi_a.nome_completo, messaggio.rispondi_a.email)]
-        else:  # Altrimenti, imposta reply-to allo stesso mittente
-            reply_to = ['{} <{}>'.format(nome_mittente, email_mittente)]
-
-        mittente = '{} <{}>'.format(nome_mittente, Messaggio.NOREPLY_EMAIL)
-        plain_text = strip_tags(messaggio.corpo)
-
-        connection = get_connection()
-        messaggio.ultimo_tentativo = datetime.now()
-
-        # non metto filter su inviato altrimenti non posso distiguere quelle senza destinatari
-        destinatari = messaggio.oggetti_destinatario.all()
-
-        for d in destinatari:
-            if d.inviato:
-                continue
-
-            # Se la persona non ha un indirizzo di posta, segna questo oggetto Destinatario
-            # come inviato e continua col prossimo Destinatario.
-            if not d.persona.email:
-                d.inviato = True
-                d.errore = "Nessun indirizzo email"
-                results.append("OK: Persona id=%d non ha email" % (d.persona.pk,))
-                d.save()
-                continue
-
-            mail_to = [d.persona.email]
-            if messaggio.utenza:
-                email_utenza = getattr(getattr(d.persona, 'utenza', {}), 'email', None)
-                if email_utenza != d.persona.email:
-                    mail_to.append(email_utenza)
-
-            msg = EmailMultiAlternatives(
-                subject=messaggio.oggetto,
-                body=plain_text,
-                from_email=mittente,
-                reply_to=reply_to,
-                to=mail_to,
-                attachments=messaggio.allegati_pronti(),
-                connection=connection)
-            msg.attach_alternative(messaggio.corpo, 'text/html')
-            mail_to = ','.join(mail_to)
+    def invia_no_lock(pk):
             try:
-                # messaggio.log('Invio email a {}'.format(mail_to))
-                msg.send()
-            except SMTPRecipientsRefused as e:
-                messaggio.log('Destinatari rifiutati {}: {}'.format(mail_to, e))
-                d.errore = str(e)
-                d.invalido = d.inviato = True
-                messaggio.terminato = messaggio.ultimo_tentativo
-                results.append('FAIL: Destinatari rifiutati {} - {}'.format(mail_to, e))
-            except SMTPResponseException as e:
-                messaggio.log('Errore invio email ai destinatari {}: {}'.format(mail_to, e))
-                d.errore = str(e)
-                if not isinstance(e, SMTPAuthenticationError) and ((e.smtp_code // 100) == 5):
-                    d.invalido = d.inviato = True
-                    messaggio.terminato = messaggio.ultimo_tentativo
-                else:
-                    messaggio.priorita += 1     # aumento priorità così verrà rischedulato dopo
-                results.append('FAIL: {} - {}'.format(mail_to, e))
-            except SMTPException as e:
-                messaggio.log('Errore generico invio email {}: {}'.format(mail_to, e))
-                d.errore = str(e)
-                results.append('FAIL: SMTPException {} - {}'.format(mail_to, e))
+                messaggio = Messaggio.objects.select_for_update(nowait=True).get(pk=pk, terminato__isnull=True)
+            except Messaggio.DoesNotExist:  # Messaggio già inviato
+                return ['SKIP: Mesaggio già inviato']
+            except DatabaseError:  # DatabaseError se è locked, quindi in invio
+                return ['SKIP: Riga lockata nel db']
+
+            if messaggio.mittente:
+                nome_mittente = messaggio.mittente.nome_completo
+                email_mittente = messaggio.mittente.email or Messaggio.NOREPLY_EMAIL
             else:
-                d.inviato = True
-                d.errore = None
-                results.append('OK: {} - Email inviata correttamente'.format(mail_to))
-            finally:
-                d.tentativo = messaggio.ultimo_tentativo
-                d.save()
+                nome_mittente = Messaggio.SUPPORTO_NOME
+                email_mittente = Messaggio.SUPPORTO_EMAIL
 
-        if len(destinatari) == 0:
-            msg = EmailMultiAlternatives(
-                subject=messaggio.oggetto,
-                body=plain_text,
-                from_email=mittente,
-                reply_to=reply_to,
-                to=[Messaggio.SUPPORTO_EMAIL],
-                attachments=messaggio.allegati_pronti(),
-                connection=connection)
-            msg.attach_alternative(messaggio.corpo, 'text/html')
-            try:
-                msg.send()
-            except SMTPException as e:
-                messaggio.log('Errore invio email a indirizzo del supporto: {}'.format(e))
-                return ['FAIL: Invio a supporto - {}'.format(e)]
+            if messaggio.rispondi_a:  # Rispondi a definito?
+                if not messaggio.mittente:  # Se si, e nessun mittente, usa nome mittente del reply-to
+                    nome_mittente = messaggio.rispondi_a.nome_completo
+                reply_to = ['{} <{}>'.format(messaggio.rispondi_a.nome_completo, messaggio.rispondi_a.email)]
+            else:  # Altrimenti, imposta reply-to allo stesso mittente
+                reply_to = ['{} <{}>'.format(nome_mittente, email_mittente)]
+
+            mittente = '{} <{}>'.format(nome_mittente, Messaggio.NOREPLY_EMAIL)
+            plain_text = strip_tags(messaggio.corpo)
+
+            connection = get_connection()
+            messaggio.ultimo_tentativo = datetime.now()
+
+            # non metto filter su inviato altrimenti non posso distiguere quelle senza destinatari
+            destinatari = list(messaggio.oggetti_destinatario.all())
+
+            if len(destinatari) == 0:
+                msg = EmailMultiAlternatives(
+                    subject=messaggio.oggetto,
+                    body=plain_text,
+                    from_email=mittente,
+                    reply_to=reply_to,
+                    to=[Messaggio.SUPPORTO_EMAIL],
+                    attachments=messaggio.allegati_pronti(),
+                    connection=connection)
+                msg.attach_alternative(messaggio.corpo, 'text/html')
+                try:
+                    msg.send()
+                except (ConnectionError, SMTPException) as e:  # supponiamo che l'indirizzo del supporto sia corretto
+                    messaggio.log('Errore invio email a indirizzo del supporto: {}'.format(e))
+                    return ErrorePostaTemporaneo('Errore invio email a indirizzo del supporto')
+                except Exception as e:
+                    messaggio.log('Errore invio email a indirizzo del supporto: {}'.format(e))
+                    messaggio.terminato = messaggio.ultimo_tentativo
+                    messaggio.task_id = None
+                    return ErrorePostaFatale('Errore imprevisto invio a indirizzo del supporto'.format(e))
+                else:
+                    # messaggio.log('Inviata email a indirizzo del supporto {}'.format(Messaggio.SUPPORTO_EMAIL))
+                    messaggio.terminato = messaggio.ultimo_tentativo
+                    messaggio.task_id = None
+                    return ['OK: Inviata a supporto']
+                finally:
+                    messaggio.save()
+
+            risultati = []
+            for d in list(destinatari):
+                if d.inviato:
+                    destinatari.remove(d)
+                    continue
+
+                # Se la persona non ha un indirizzo di posta, segna questo oggetto Destinatario
+                # come inviato e continua col prossimo Destinatario
+                if not d.persona.email:
+                    d.inviato = True
+                    d.errore = 'Nessun indirizzo email'
+                    risultati.append('OK: Persona id={} non ha email'.format(d.persona.pk))
+                    d.save()
+                    destinatari.remove(d)
+                    continue
+
+                mail_to = [d.persona.email]
+                if messaggio.utenza:
+                    email_utenza = getattr(getattr(d.persona, 'utenza', {}), 'email', None)
+                    if email_utenza != d.persona.email:
+                        mail_to.append(email_utenza)
+
+                msg = EmailMultiAlternatives(
+                    subject=messaggio.oggetto,
+                    body=plain_text,
+                    from_email=mittente,
+                    reply_to=reply_to,
+                    to=mail_to,
+                    attachments=messaggio.allegati_pronti(),
+                    connection=connection)
+                msg.attach_alternative(messaggio.corpo, 'text/html')
+
+                mail_to = ','.join(mail_to)
+                try:
+                    # messaggio.log('Invio email a {}'.format(mail_to))
+                    msg.send()
+                except ConnectionError as e:
+                    messaggio.log('Errore di connessione al server di posta {}'.format(e))
+                    messaggio.save()
+                    return ErrorePostaTemporaneo('Errore di connessione al server di posta')  # occorre rifare connect
+                except SMTPRecipientsRefused as e:
+                    messaggio.log('Destinatari rifiutati {}: {}'.format(mail_to, e))
+                    d.errore = str(e)
+                    d.invalido = d.inviato = True
+                    risultati.append('FAIL: Destinatari rifiutati {} - {}'.format(mail_to, e))
+                except SMTPResponseException as e:
+                    messaggio.log('Errore invio email ai destinatari {}: {}'.format(mail_to, e))
+                    d.errore = str(e)
+                    if e.smtp_code == 501:
+                        d.invalido = d.inviato = True
+                        risultati.append('FAIL: {} - {}'.format(mail_to, e))
+                        destinatari.remove(d)
+                except SMTPException as e:
+                    messaggio.log('Errore generico invio email {}: {}'.format(mail_to, e))
+                    d.errore = str(e)
+                    risultati.append('FAIL: SMTPException {} - {}'.format(mail_to, e))
+                except Exception as e:
+                    messaggio.log('Errore imprevisto invio email {}: {}'.format(mail_to, e))
+                    d.errore = str(e)
+                    d.invalido = d.inviato = True
+                    risultati.append('FAIL: {} - Errore imprevisto {}'.format(mail_to, e))
+                    destinatari.remove(d)
+                else:
+                    d.inviato = True
+                    d.errore = None
+                    risultati.append('OK: {} - Email inviata correttamente'.format(mail_to))
+                    destinatari.remove(d)
+                finally:
+                    d.tentativo = messaggio.ultimo_tentativo
+                    d.save()
+
+            if destinatari:
+                return ErrorePostaTemporaneo('Messaggio non inviato a tutti i destinatari')
             else:
                 # messaggio.log('Inviata email a indirizzo del supporto {}'.format(Messaggio.SUPPORTO_EMAIL))
                 messaggio.terminato = messaggio.ultimo_tentativo
-                return ['OK: Inviata a supporto']
-            finally:
+                messaggio.task_id = None
                 messaggio.save()
 
-        if not messaggio.oggetti_destinatario.filter(inviato=False):
-            messaggio.terminato = messaggio.ultimo_tentativo
-        messaggio.save()
-        return results
+            return risultati
+
+    @staticmethod
+    def invia(pk):
+        # Non posso lanciare eccezioni dentro transaction.atomic()
+        # altrimenti la transazione fa il rollback e il messaggio non viene salvato
+        # Quindi per fare raise ritorno l'eccezione come risultato e nel caso la lancio
+        with transaction.atomic():
+            res = Messaggio.invia_no_lock(pk)
+        if isinstance(res, Exception):
+            raise res
+        return res
 
     @classmethod
     def in_coda(cls):
@@ -294,12 +331,19 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         """
         from django.core import mail
         assert hasattr(mail, 'outbox'), 'Questo metodo è da utilzzare solo per unittest'
-        for pk in Messaggio.get_email_batch(dimensione_massima):
-            Messaggio.invia(pk)
+
+        messaggi = Messaggio.objects.filter(terminato__isnull=True)
+        if dimensione_massima is not None:
+            messaggi = messaggi[:dimensione_massima]
+
+        for messaggio in messaggi:
+            res = Messaggio.invia(messaggio.pk)
+            if isinstance(res, Exception):
+                raise res
 
     @staticmethod
-    def costruisci_e_accoda(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None, mittente=None,
-                            destinatari=None, allegati=None, **kwargs):
+    def costruisci_email(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None, mittente=None,
+                         destinatari=None, allegati=None, **kwargs):
         """
         :param oggetto: Oggetto del messaggio.
         :param modello: Modello da utilizzare per l'invio.
@@ -310,18 +354,33 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         :return: Un oggetto Messaggio
         """
 
-        from .tasks import crea_email
-
-        mittente_id = mittente.pk if mittente else None
-
         destinatari = destinatari or []
-        destinatari_ids = set([d.pk for d in destinatari])
-
         allegati = allegati or []
-        allegati_ids = [a.pk for a in allegati]
 
-        return crea_email(oggetto=oggetto, modello=modello, corpo=corpo, mittente_id=mittente_id,
-                          destinatari_ids=destinatari_ids, allegati_ids=allegati_ids, **kwargs)
+        corpo = corpo or {}
+        corpo.update({
+            'mittente': mittente,
+            'allegati': allegati,
+        })
+
+        oggetto = Truncator(oggetto).chars(Messaggio.LUNGHEZZA_MASSIMA_OGGETTO)
+
+        with transaction.atomic():
+            m = Messaggio(oggetto=oggetto,
+                          mittente=mittente,
+                          corpo=get_template(modello).render(corpo),
+                          **kwargs)
+            m.processa_link()
+            m.save()
+
+            for d in destinatari:
+                m.oggetti_destinatario.create(persona=d)
+
+            for a in allegati:
+                a.oggetto = m
+                a.save()
+
+            return m
 
     @staticmethod
     def costruisci_e_invia(oggetto=None, modello=None, corpo=None, mittente=None, destinatari=None, allegati=None,
@@ -339,11 +398,35 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         :return: Un oggetto Messaggio inviato.
         """
 
-        with transaction.atomic():
-            msg = Messaggio.costruisci_e_accoda(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente,
-                                                destinatari=destinatari, allegati=allegati, **kwargs)
-            Messaggio.invia(msg.pk)
-            return msg
+        msg = Messaggio.costruisci_email(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente,
+                                         destinatari=destinatari, allegati=allegati, **kwargs)
+        res = Messaggio.invia(msg.pk)
+        if isinstance(res, ErrorePostaTemporaneo):  # metto in coda celery
+            msg.task_id = uuid()
+            msg.save()
+            invia_mail.apply_async((msg.pk,), task_id=msg.task_id)
+
+        return msg
+
+    @staticmethod
+    def costruisci_e_accoda(oggetto=None, modello=None, corpo=None, mittente=None, destinatari=None, allegati=None,
+                            **kwargs):
+        """
+        Scorciatoia per costruire rapidamente un messaggio di posta e inviarlo alla coda celery.
+        :param oggetto: Oggetto deltilizzare per l'invio.
+        :param modello: Modello da utilizzare per l'invio.
+        :param corpo: Sostituzioni da fare nel modello. Dizionario {nome: valore}
+        :param mittente: Mittente del messaggio. None per Notifiche da Gaia.
+        :param destinatari: Un elenco di destinatari (oggetti Persona).
+        :param allegati: Allegati messaggio
+        :return: Un oggetto Messaggio accodato.
+        """
+
+        kwargs['task_id'] = uuid()
+        msg = Messaggio.costruisci_email(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente,
+                                         destinatari=destinatari, allegati=allegati, **kwargs)
+        invia_mail.apply_async((msg.pk,), task_id=kwargs['task_id'])
+        return msg
 
     def __str__(self):
         return self.oggetto

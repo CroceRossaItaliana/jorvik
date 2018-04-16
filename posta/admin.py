@@ -18,7 +18,7 @@ class AdminDestinatarioInline(ReadonlyAdminMixin, admin.TabularInline):
 @admin.register(Messaggio)
 class AdminMessaggio(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['oggetto', 'mittente__codice_fiscale', 'mittente__email_contatto', 'mittente__utenza__email']
-    list_display = ('oggetto', 'mittente', 'creazione', 'ultimo_tentativo', 'terminato', )
+    list_display = ('oggetto', 'mittente', 'creazione', 'ultimo_tentativo', 'terminato', 'task_id')
     list_filter = ('creazione', 'terminato', 'ultimo_tentativo',)
     raw_id_fields = ('mittente', 'rispondi_a')
     inlines = [AdminDestinatarioInline]
