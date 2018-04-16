@@ -4,39 +4,47 @@ from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
 
 
-def rischedula_invii_falliti(self, limit=None):
-    from django.db import transaction, DatabaseError
+def rischedula_invii_falliti(self, massimo_messaggi=None):
+    """
+    Un task celery per riaccodare l'invio di tutti i messaggi che non sono stati inviati,
+     e non sono attualmente in coda per l'invio (ad esempio, in seguito allo svuotamento
+     della coda di posta).
+
+    :param self:                Task celery.
+    :param massimo_messaggi:    Il numero massimo di messaggi da riaccodare per l'invio.
+    """
     from .models import Messaggio
     from .tasks import invia_mail
 
-    messaggi = Messaggio.objects.filter(task_id__isnull=False)
-    if limit is not None:
-        messaggi = messaggi[:limit]
+    riaccodati = 0
+    non_riaccodati = 0
 
-    rischedulati = 0
+    # Per ognuno dei messaggi in coda
+    for messaggio in Messaggio.in_coda():
 
-    for messaggio in messaggi:
-        try:
+        # Assicuriamoci di avere l'ultima copia del messaggio
+        messaggio.refresh_from_db()
+
+        # Se il messaggio ha un task_id associato, assicuriamoci che il task sia in esecuzione
+        task = None
+        if messaggio.task_id is not None:
+            # Controlla lo stato del task Celery
+            # http://docs.celeryproject.org/en/latest/reference/celery.result.html#celery.result.AsyncResult.state
             task = self.app.AsyncResult(messaggio.task_id)
-            if not task.failed():
+            if task.state in ("STARTED", "RETRY", "FAILURE", "SUCCESS"):
+                # Il task e' ancora in coda. Ignora.
+                non_riaccodati += 1
                 continue
 
-            # per sicurezza creo un nuovo task_id
-            task_id = uuid()
-            with transaction.atomic():
-                try:
-                    messaggio = Messaggio.objects.select_for_update(nowait=True).get(pk=messaggio.pk)
-                except DatabaseError:   # per qualche motivo un worker ci sta lavorando
-                    continue
-                messaggio.task_id = task_id
-                messaggio.save()
-
-            # pulisco i risultati precedenti
+            # Dimentichiamoci del task che e' morto
             task.forget()
 
-            invia_mail.apply_async((messaggio.pk,), task_id=messaggio.task_id)
-            rischedulati += 1
-        except Exception as e:
-            logger.error(e)
-            return -1
-    return rischedulati
+        # Il task e' morto. Ad esempio, la coda e' stata svuotata.
+        # Creiamo un nuovo task ID e riaccodiamo il task.
+        messaggio.task_id = uuid()
+        messaggio.save()
+        invia_mail.apply_async((messaggio.pk,), task_id=messaggio.task_id)
+
+        riaccodati += 1
+
+    return "%d gia' in invio, %d riaccodati per l'invio" % (non_riaccodati, riaccodati)
