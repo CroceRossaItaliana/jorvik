@@ -7,6 +7,8 @@ WORKDIR /code
 
 # Entrypoint
 RUN chmod +x ./config/docker-entrypoint.sh
+COPY ./config/docker-compose/* ./config/
+
 ENTRYPOINT ["bash", "./config/docker-entrypoint.sh"]
 
 # Start development server
