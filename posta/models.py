@@ -186,7 +186,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         connessione = connessione or get_connection()
 
         # Per ogni destinatario a cui abbiamo non e' stato inviato il messaggio
-        for destinatario in self.oggetti_destinatario.filter(inviato__isnull=True):
+        for destinatario in self.oggetti_destinatario.all().filter(inviato=False):
 
             if destinatario.inviato:
                 continue
@@ -212,7 +212,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             email = EmailMultiAlternatives(subject=self.oggetto,
                                            body=corpo_plain,
                                            from_email=mittente,
-                                           reply_to=rispondi_a,
+                                           reply_to=[rispondi_a],
                                            to=email_to,
                                            attachments=self.allegati_pronti(),
                                            connection=connessione)
@@ -228,7 +228,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             email = EmailMultiAlternatives(subject=self.oggetto,
                                            body=corpo_plain,
                                            from_email=mittente,
-                                           reply_to=rispondi_a,
+                                           reply_to=[rispondi_a],
                                            to=[Messaggio.SUPPORTO_EMAIL],
                                            attachments=self.allegati_pronti(),
                                            connection=connessione)
@@ -273,6 +273,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
                 # Qualunque errore nell'inviare una email al supporto e' da considerare temporaneo
                 except Exception as e:
+                    logger.error(str(e))
                     invio_terminato = False
 
             else:  # Email con destinatario
@@ -283,9 +284,11 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                 # In caso di un errore temporaneo, maca come terminato
                 except ErrorePostaTemporaneo as e:
                     invio_terminato = False
+                    logger.info(str(e))
 
                 except ErrorePostaFatale as e:
                     # Questo messaggio non e' stato inviato.
+                    logger.info(str(e))
                     pass
 
         # Se abbiamo esaurito il numero massimo di tentativi, non provare nuovamente.
@@ -293,6 +296,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             invio_terminato = True
 
         if invio_terminato:
+            logger.debug("Invio terminato")
             self.terminato = timezone.now()
 
         self.save()
@@ -435,7 +439,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         msg.task_id = uuid()
         msg.save()
 
-        invia_mail.apply_async((msg.pk,), task_id=kwargs['task_id'])
+        invia_mail.apply_async((msg.pk,), task_id=msg.task_id)
 
         return msg
 
@@ -488,6 +492,9 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
                                          malformato). Non provare nuovamente.
         """
 
+        logger.debug("Tentativo di invio per messaggio=%d, destinatario=%d" % (self.messaggio.pk,
+                                                                               self.pk,))
+
         try:
             self.tentativo = timezone.now()
             email.send()
@@ -497,6 +504,7 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
             self.errore = str(e)
             self.errore_codice = self.ERRORE_SMTP_CONNESSIONE_FALLITA
             self.save()
+            logger.info("ErrorePostaTemporaneo: ConnectionError")
             raise ErrorePostaTemporaneo("Errore di connessione al server SMTP")
 
         # Il server di posta ha rifiutato alcuni di questi indirizzi
@@ -506,6 +514,7 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
             self.invalido = True
             self.inviato = True
             self.save()
+            logger.info("ErrorePostaFatale: Indirizzo destinatario invalido")
             raise ErrorePostaFatale("Indirizzo destinatario invalido")
 
         # Errore SMTP con codice di errore
@@ -518,10 +527,12 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
                 self.invalido = True
                 self.inviato = True
                 self.save()
+                logger.info("ErrorePostaFatale: Errore SMTP fatale (5XX)")
                 raise ErrorePostaFatale("Errore SMTP fatale (5XX)")
 
             else:
                 self.save()
+                logger.info("ErrorePostaTemporaneo: Errore SMTP non fatale")
                 raise ErrorePostaTemporaneo("Errore SMTP non fatale")
 
         except SMTPException as e:
@@ -530,9 +541,11 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
             self.invalido = False
             self.inviato = True
             self.save()
+            logger.info("ErrorePostaTemporaneo: Errore SMTP inaspettato: %s" % (self.errore,))
             raise ErrorePostaTemporaneo("Errore SMTP inaspettato: %s" % (self.errore,))
 
         # Messaggio inviato correttamente
         self.inviato = True
         self.errore = None
         self.save()
+        logger.debug("OK. Email inviata correttamente.")
