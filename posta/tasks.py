@@ -10,14 +10,16 @@ def invia_mail(self, pk):
     from posta.models import Messaggio
 
     messaggio = Messaggio.objects.get(pk=pk)
+    logger.info("messaggio id=%d" % pk)
 
     # Controlla che il messaggio sia stato inviato
     if messaggio.terminato:
+        logger.warning("Il messaggio e' gia' stato inviato. Esco.")
         return
 
     # Controlla che siamo il task giusto (evita duplicati)
-    if messaggio.worker_id != self.request.id:
-        logger.error("Worker ID non corrispondente.")
+    if messaggio.task_id != self.request.id:
+        logger.warning("Worker ID non corrispondente. Possibile duplicato. Esco.")
         return
 
     invio_terminato = messaggio.invia()
@@ -27,5 +29,6 @@ def invia_mail(self, pk):
         raise self.retry()
 
     # Messaggio inviato con successo.
-    messaggio.worker_id = None
+    logger.info("Messaggio inviato. Rimuovo task_id e salvo.")
+    messaggio.task_id = None
     messaggio.save()

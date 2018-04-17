@@ -9,6 +9,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'jorvik.settings')
 
 app = Celery('jorvik')
 app.conf.update(CELERY_CONF.items('celery'))
+
+# Per favore, ricordati di aggiornare anche i seguenti file:
+# - /docker-compose.yml
 app.conf.task_routes = {
     'posta.queue.rischedula_invii_falliti': {'queue': 'coda_email_rischedula'},
     'posta.tasks.invia_mail': {'queue': 'coda_email_invio'}
@@ -30,7 +33,7 @@ def setup_periodic_tasks(sender, **kwargs):
 
 
 @after_task_publish.connect
-def update_sent_state(sender=None, body=None, **kwargs):
+def update_sent_state(sender=None, headers=None, **kwargs):
     """
     Questo segnale si occupa di cambiare lo stato di un task che e' stato aggiunto
      in coda a "QUEUED". Questo ci permette di disinguere i task che sono stati
@@ -39,4 +42,4 @@ def update_sent_state(sender=None, body=None, **kwargs):
     """
     task = current_app.tasks.get(sender)
     backend = task.backend if task else current_app.backend
-    backend.store_result(body['id'], None, "QUEUED")
+    backend.store_result(headers['id'], None, "QUEUED")
