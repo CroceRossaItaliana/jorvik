@@ -484,7 +484,12 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
 
     def invia(self, email):
         """
-        Invia una email associata a questo oggetto destinatario.
+        Invia una email e aggiorna questo oggetto Destinatario con il risultato
+         dell'operazione di invio.
+
+        Questo metodo non controlla se l'invio e' gia' stato effettuato o meno - e'
+         responsabilita' del codice chiamante assicurarsi di non effettuare tentativi inutili
+         e/o duplicati, controllando che `Destinatario.inviato` sia False.
 
         :param email:   Un oggetto EmailMultiAlternatives pronto all'invio.
         :throws ErrorePostaTemporaneo:  Nel caso di un errore temporaneo. E' possibile riprovare piu' tardi.
