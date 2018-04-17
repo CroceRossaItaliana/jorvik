@@ -42,7 +42,7 @@ services:
     environment:
       - "SKIP_DJANGO_COLLECSTATIC=1"
       - "SKIP_DJANGO_MIGRATE=1"
-    command: "celery worker -b redis://broker -B -l info"
+    command: "celery worker -b redis://broker -A jorvik -l info -Q coda_email_rischedula,coda_email_invio -B"
 
   pdf:
     build: https://github.com/CroceRossaItaliana/gaia-dompdf.git#master
