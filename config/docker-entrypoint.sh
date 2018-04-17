@@ -10,6 +10,7 @@
 if [ "$SKIP_ALL" ]
 then
     SKIP_REQUIREMENTS_CHECK=1
+    SKIP_CONFIGURATION=1
     SKIP_DJANGO_COLLECSTATIC=1
     SKIP_DJANGO_MIGRATE=1
 fi
@@ -17,6 +18,11 @@ fi
 if [ -z "$SKIP_REQUIREMENTS_CHECK" ]
 then
     pip install --upgrade -r requirements.txt
+fi
+
+if [ -z "$SKIP_CONFIGURATION" ]
+then
+    cp ./config/docker-compose/* config/
 fi
 
 if [ -z "$SKIP_DJANGO_COLLECTSTATIC" ]
