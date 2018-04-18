@@ -412,6 +412,15 @@ class ModuloNuovaRicevuta(forms.Form):
 
 class ModuloFiltraEmissioneTesserini(forms.Form):
 
+    def __init__(self, *args, **kwargs):
+        sedi = kwargs.pop("sedi")  # passo le sedi permesse
+        sedi_sottosedi = [sede.esplora() for sede in sedi]
+        id_sede = [scelte.id for scelte in sedi_sottosedi[0]]
+        nomi_sede = [scelte.nome_completo for scelte in sedi_sottosedi[0]]
+        scelte_sede = list(zip(id_sede, nomi_sede))
+        super(ModuloFiltraEmissioneTesserini, self).__init__(*args, **kwargs)
+        self.fields['comitato'] = forms.MultipleChoiceField(choices=scelte_sede, initial=id_sede)
+
     stato_richiesta = forms.MultipleChoiceField(choices=Tesserino.STATO_RICHIESTA)
     tipo_richiesta = forms.MultipleChoiceField(choices=Tesserino.TIPO_RICHIESTA, initial=(Tesserino.RILASCIO,
                                                                                           Tesserino.RINNOVO,
@@ -419,6 +428,7 @@ class ModuloFiltraEmissioneTesserini(forms.Form):
     stato_emissione = forms.MultipleChoiceField(choices=Tesserino.STATO_EMISSIONE, initial=(("", Tesserino.STAMPATO,
                                                                                              Tesserino.SPEDITO_CASA,
                                                                                              Tesserino.SPEDITO_SEDE)),)
+    comitato = forms.MultipleChoiceField()
 
     DATA_RICHIESTA_DESC = '-creazione'
     DATA_RICHIESTA_ASC = 'creazione'
