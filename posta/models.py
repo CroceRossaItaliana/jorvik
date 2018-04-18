@@ -501,15 +501,17 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
 
         logger.debug("Tentativo di invio per messaggio=%d, destinatario=%d" % (self.messaggio.pk,
                                                                                self.pk,))
+        self.tentativo = timezone.now()
 
         try:
-            self.tentativo = timezone.now()
             email.send()
 
         # Errore di connessione al server SMTP
         except ConnectionError as e:
             self.errore = str(e)
             self.errore_codice = self.ERRORE_SMTP_CONNESSIONE_FALLITA
+            self.inviato = False
+            self.invalido = False
             self.save()
             logger.info("ErrorePostaTemporaneo: ConnectionError")
             raise ErrorePostaTemporaneo("Errore di connessione al server SMTP")
@@ -531,13 +533,15 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
 
             # Errore fatale
             if not isinstance(e, SMTPAuthenticationError) and ((e.smtp_code // 100) == 5):
-                self.invalido = True
-                self.inviato = True
+                self.invalido = False
+                self.inviato = False
                 self.save()
                 logger.info("ErrorePostaFatale: Errore SMTP fatale (5XX)")
                 raise ErrorePostaFatale("Errore SMTP fatale (5XX)")
 
             else:
+                self.invalido = False
+                self.inviato = False
                 self.save()
                 logger.info("ErrorePostaTemporaneo: Errore SMTP non fatale")
                 raise ErrorePostaTemporaneo("Errore SMTP non fatale")
@@ -546,7 +550,7 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
             self.errore = str(e)
             self.errore_codice = self.ERRORE_SMTP_INASPETTATO
             self.invalido = False
-            self.inviato = True
+            self.inviato = False
             self.save()
             logger.info("ErrorePostaTemporaneo: Errore SMTP inaspettato: %s" % (self.errore,))
             raise ErrorePostaTemporaneo("Errore SMTP inaspettato: %s" % (self.errore,))
@@ -554,5 +558,7 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
         # Messaggio inviato correttamente
         self.inviato = True
         self.errore = None
+        self.errore_codice = None
+        self.invalido = False
         self.save()
         logger.debug("OK. Email inviata correttamente.")
