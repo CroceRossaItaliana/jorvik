@@ -8,4 +8,5 @@ broker_url = redis://localhost
 result_backend = redis://localhost
 
 [riaccoda]
-periodo = 3600  # 3600s = 1h
+# 3600s = 1h
+periodo = 3600
