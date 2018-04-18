@@ -58,7 +58,10 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     corpo = models.TextField(blank=True, null=False, default="(Nessun corpo)")
 
     ultimo_tentativo = models.DateTimeField(blank=True, null=True, default=None)
-    terminato = models.DateTimeField(blank=True, null=True, default=None)
+    terminato = models.DateTimeField(blank=True, null=True, default=None,
+                                     help_text="La data di termine dell'invio. Questa data e' impostata "
+                                               "quando l'invio e' terminato con successo, oppure quando "
+                                               "sono esauriti i tentativi di invio.")
 
     # Il mittente e' una persona o None (il sistema di Gaia)
     mittente = models.ForeignKey("anagrafica.Persona", default=None, null=True, blank=True, on_delete=models.CASCADE)
@@ -468,8 +471,7 @@ class Destinatario(ModelloSemplice, ConMarcaTemporale):
                                 related_name='oggetti_sono_destinatario', on_delete=models.CASCADE)
 
     inviato = models.BooleanField(default=False, db_index=True,
-                                  help_text="Indica se l'email per questo destinatario e' stata inviata, oppure "
-                                            "sono stati esauriti i tentativi di invio.")
+                                  help_text="Indica se l'email per questo destinatario e' stata inviata,")
 
     invalido = models.BooleanField(default=False, db_index=True,
                                    help_text="Indica se il destinatario e' invalido.")
