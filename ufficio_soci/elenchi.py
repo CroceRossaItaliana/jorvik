@@ -665,7 +665,7 @@ class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
     def risultati(self):
         qs_sedi = self.args[0]
         tesserini_richiesti = super(ElencoTesseriniDaRichiedere, self).risultati()
-        return Persona.objects.filter(
+        tesserini_da_richiedere = Persona.objects.filter(
             Appartenenza.query_attuale(
                 sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
             ).via("appartenenze"),
@@ -677,13 +677,22 @@ class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
             pk__in=tesserini_richiesti.values_list('id', flat=True)
 
         ).annotate(
-                appartenenza_tipo=F('appartenenze__membro'),
-                appartenenza_inizio=F('appartenenze__inizio'),
-                appartenenza_sede=F('appartenenze__sede'),
+            appartenenza_tipo=F('appartenenze__membro'),
+            appartenenza_inizio=F('appartenenze__inizio'),
+            appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
+        if tesserini_da_richiedere:
+            id_tesserini_da_richiedere = [i.id for i in tesserini_da_richiedere]
+            tesserini_rifiutati = Tesserino.objects.filter(persona_id__in=id_tesserini_da_richiedere,
+                                                    stato_richiesta=Tesserino.RIFIUTATO)
+            id_tesserini_rifiutati = tesserini_rifiutati.values_list('persona_id', flat=True).distinct()
+            if id_tesserini_rifiutati:
+                # persone con tesserino non rifiutato
+                tesserini_da_richiedere = tesserini_da_richiedere.exclude(pk__in=id_tesserini_rifiutati)
+        return tesserini_da_richiedere
 
     def template(self):
         return "us_elenchi_inc_tesserini_da_richiedere.html"
@@ -716,3 +725,44 @@ class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
 
     def template(self):
         return "us_elenchi_inc_tesserini_senza_fototessera.html"
+
+
+class ElencoTesseriniRifiutati(ElencoTesseriniRichiesti):
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        tesserini_richiesti = super(ElencoTesseriniRifiutati, self).risultati()
+        tesserini_da_richiedere = Persona.objects.filter(
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
+            ).via("appartenenze"),
+
+            # Con fototessera confermata
+            Fototessera.con_esito_ok().via("fototessere"),
+
+        ).exclude(  # Escludi quelli richiesti da genitore
+            pk__in=tesserini_richiesti.values_list('id', flat=True)
+
+        ).annotate(
+            appartenenza_tipo=F('appartenenze__membro'),
+            appartenenza_inizio=F('appartenenze__inizio'),
+            appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+        if tesserini_da_richiedere:
+            id_tesserini_da_richiedere = [i.id for i in tesserini_da_richiedere]
+            tesserini_rifiutati = Tesserino.objects.filter(persona_id__in=id_tesserini_da_richiedere,
+                                                    stato_richiesta=Tesserino.RIFIUTATO)
+            id_tesserini_rifiutati = tesserini_rifiutati.values_list('persona_id', flat=True).distinct()
+            if id_tesserini_rifiutati:
+                # persone con tesserino rifiutato
+                persone_tesserini_rifiutati = Persona.objects.filter(id__in=id_tesserini_rifiutati)
+                return persone_tesserini_rifiutati
+            # nessuna persona con tesserino rifiutato
+            return Persona.objects.none()
+        return tesserini_da_richiedere
+
+    def template(self):
+        return "us_elenchi_inc_tesserini_rifiutati.html"
