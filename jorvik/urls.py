@@ -172,7 +172,6 @@ urlpatterns = [
     url(r'^attivita/gruppi/(?P<pk>[0-9]+)/iscriviti/$', gruppi.viste.attivita_gruppi_gruppo_iscriviti),
     url(r'^attivita/gruppi/(?P<pk>[0-9]+)/espelli/(?P<persona_pk>[0-9]+)/$', gruppi.viste.attivita_gruppi_gruppo_espelli),
     url(r'^attivita/gruppi/(?P<pk>[0-9]+)/abbandona/$', gruppi.viste.attivita_gruppi_gruppo_abbandona),
-    url(r'^attivita/gruppi/(?P<pk>[0-9]+)/elimina/$', gruppi.viste.attivita_gruppi_gruppo_elimina),
     url(r'^attivita/reperibilita/$', centrale_operativa.viste.attivita_reperibilita),
     url(r'^attivita/reperibilita/(?P<reperibilita_pk>[0-9]+)/cancella/$', centrale_operativa.viste.attivita_reperibilita_cancella),
     url(r'^attivita/scheda/(?P<pk>[0-9]+)/$', attivita.viste.attivita_scheda_informazioni),
