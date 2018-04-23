@@ -8,7 +8,7 @@ from django.forms import ModelForm
 from django.utils.timezone import now
 
 from anagrafica.forms import ModuloStepAnagrafica
-from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva, Trasferimento
+from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva, Trasferimento, Sede
 from anagrafica.validators import valida_almeno_14_anni
 from base.utils import rimuovi_scelte, testo_euro
 from ufficio_soci.validators import valida_data_non_nel_futuro
@@ -413,13 +413,10 @@ class ModuloNuovaRicevuta(forms.Form):
 class ModuloFiltraEmissioneTesserini(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        sedi = kwargs.pop("sedi")  # passo le sedi permesse
-        sedi_sottosedi = [sede.esplora() for sede in sedi]
-        id_sede = [scelte.id for scelte in sedi_sottosedi[0]]
-        nomi_sede = [scelte.nome_completo for scelte in sedi_sottosedi[0]]
-        scelte_sede = list(zip(id_sede, nomi_sede))
+        sedi = kwargs.pop("sedi")
         super(ModuloFiltraEmissioneTesserini, self).__init__(*args, **kwargs)
-        self.fields['comitato'] = forms.MultipleChoiceField(choices=scelte_sede, initial=id_sede)
+        self.fields['sedi'] = forms.ModelMultipleChoiceField(queryset=sedi, initial=sedi)
+        self.sedi = sedi
 
     stato_richiesta = forms.MultipleChoiceField(choices=Tesserino.STATO_RICHIESTA)
     tipo_richiesta = forms.MultipleChoiceField(choices=Tesserino.TIPO_RICHIESTA, initial=(Tesserino.RILASCIO,
@@ -428,7 +425,7 @@ class ModuloFiltraEmissioneTesserini(forms.Form):
     stato_emissione = forms.MultipleChoiceField(choices=Tesserino.STATO_EMISSIONE, initial=(("", Tesserino.STAMPATO,
                                                                                              Tesserino.SPEDITO_CASA,
                                                                                              Tesserino.SPEDITO_SEDE)),)
-    comitato = forms.MultipleChoiceField()
+    sedi = forms.ModelMultipleChoiceField(queryset='')
 
     DATA_RICHIESTA_DESC = '-creazione'
     DATA_RICHIESTA_ASC = 'creazione'
@@ -444,6 +441,14 @@ class ModuloFiltraEmissioneTesserini(forms.Form):
 
     cerca = forms.CharField(initial="", required=False, help_text="(Opzionale) Parte del Codice Fiscale o "
                                                                   " codice tesserino.")
+
+    def clean(self):
+        sedi = self.cleaned_data['sedi']
+
+        sedi_selezionate = [str(selezionate.id) for selezionate in sedi]
+        sedi_possibili = [str(possibili.id) for possibili in self.sedi]
+        if not sedi_selezionate or not set(sedi_selezionate).issubset(sedi_possibili):
+            raise ValidationError("Sede selezionata non permessa.")
 
 
 class ModuloLavoraTesserini(forms.Form):
