@@ -10,7 +10,7 @@ from django.utils.safestring import mark_safe
 from anagrafica.costanti import REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione, Riserva, \
-    Trasferimento
+    Trasferimento, Delega
 from anagrafica.permessi.applicazioni import PRESIDENTE
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA, EMISSIONE_TESSERINI
 from autenticazione.forms import ModuloCreazioneUtenza
@@ -1276,6 +1276,10 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
 def us_tesserini_emissione(request, me):
     sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
 
+    sedi = Sede.objects.filter(id__in=sedi.values_list('id', flat=True))
+    # Comitati Regionali, Locali e Provinciali.
+    sedi = sedi.espandi(pubblici=True).comitati()
+
     tesserini = Tesserino.objects.none()
 
     modulo = ModuloFiltraEmissioneTesserini(request.POST or None, sedi = sedi)
@@ -1283,8 +1287,7 @@ def us_tesserini_emissione(request, me):
 
     if modulo.is_valid():
         stato_emissione = modulo.cleaned_data['stato_emissione']
-        sedi_selezionate = modulo.cleaned_data['comitato']
-        sedi = Sede.objects.filter(pk__in=sedi_selezionate)
+        sedi_selezionate = modulo.cleaned_data['sedi'].espandi(pubblici=True)
         stato_emissione_q = Q(stato_emissione__in=stato_emissione)
         if '' in stato_emissione:
             stato_emissione_q |= Q(stato_emissione__isnull=True)
@@ -1299,6 +1302,14 @@ def us_tesserini_emissione(request, me):
             tipo_richiesta__in=modulo.cleaned_data['tipo_richiesta'],
             stato_richiesta__in=modulo.cleaned_data['stato_richiesta']
         ).order_by(modulo.cleaned_data['ordine'])
+
+        # id richiedenti tesserino che hanno delega per le sedi selezionate nel filtro.
+        richiedenti_id = Delega.objects.filter(persona_id__in=tesserini.values_list('richiesto_da', flat=True),
+                                        oggetto_id__in=sedi_selezionate, oggetto_tipo=21)\
+                                        .values_list('persona_id', flat=True)
+        # tesserini richiesti per le sole sedi selezionate.
+        q = Q(richiesto_da__in=tesserini.values_list('richiesto_da', flat=True) and richiedenti_id)
+        tesserini = Tesserino.objects.filter(q)
 
     contesto = {
         "tesserini": tesserini,
