@@ -8,7 +8,7 @@ from django.forms import ModelForm
 from django.utils.timezone import now
 
 from anagrafica.forms import ModuloStepAnagrafica
-from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva, Trasferimento, Sede
+from anagrafica.models import Estensione, Appartenenza, Persona, Dimissione, Riserva, Trasferimento
 from anagrafica.validators import valida_almeno_14_anni
 from base.utils import rimuovi_scelte, testo_euro
 from ufficio_soci.validators import valida_data_non_nel_futuro
