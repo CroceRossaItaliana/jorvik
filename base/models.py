@@ -262,7 +262,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         if not persona:
             return  # Nessun destinatario, nessuna e-mail.
 
-        Messaggio.costruisci_e_invia(
+        Messaggio.costruisci_e_accoda(
             oggetto="Richiesta di %s da %s" % (self.oggetto.RICHIESTA_NOME, self.richiedente.nome_completo,),
             modello="email_autorizzazione_richiesta.html",
             corpo={
@@ -308,7 +308,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         if aggiunte_corpo:
             corpo.update(aggiunte_corpo)
 
-        Messaggio.costruisci_e_invia(
+        Messaggio.costruisci_e_accoda(
             oggetto=oggetto,
             modello=modello,
             corpo=corpo,
@@ -407,7 +407,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                 "DATA_AVVIO_TRASFERIMENTI_AUTO": settings.DATA_AVVIO_TRASFERIMENTI_AUTO
             }
 
-            Messaggio.costruisci_e_invia(
+            Messaggio.costruisci_e_accoda(
                 oggetto=oggetto,
                 modello=modello,
                 corpo=corpo,

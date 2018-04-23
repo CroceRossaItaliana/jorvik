@@ -9,6 +9,11 @@ from base.tratti import ConMarcaTemporale
 from django.contrib.gis.measure import Distance, D
 from jorvik.settings import GOOGLE_KEY
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 class Locazione(ConMarcaTemporale, models.Model):
 
@@ -79,10 +84,19 @@ class Locazione(ConMarcaTemporale, models.Model):
         """
         Usa le API di Google (Geocode) per cercare l'indirizzo,
         ritorna una stringa (indirizzo formattato) per ogni risultato.
+
         :param indirizzo: Indirizzo da cercare
         :return: Lista di risultati.
         """
-        gmaps = googlemaps.Client(key=GOOGLE_KEY)
+        try:
+            gmaps = googlemaps.Client(key=GOOGLE_KEY)
+
+        except ValueError:
+            # API key not configured
+            logger.warning("Chiave API Google non configurata. Le ricerche geografiche non ritorneranno "
+                           "alcun risultato.")
+            return []
+
         risultati = gmaps.geocode(indirizzo, region="it", language="it")
         return [
             (x['formatted_address'], cls.controlla_posizione(x['geometry']['location']),
