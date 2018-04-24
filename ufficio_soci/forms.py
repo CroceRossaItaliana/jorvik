@@ -411,12 +411,10 @@ class ModuloNuovaRicevuta(forms.Form):
 
 
 class ModuloFiltraEmissioneTesserini(forms.Form):
-
-    def __init__(self, *args, **kwargs):
-        sedi = kwargs.pop("sedi")
+    def __init__(self, *args, sedi, **kwargs):
         super(ModuloFiltraEmissioneTesserini, self).__init__(*args, **kwargs)
-        self.fields['sedi'] = forms.ModelMultipleChoiceField(queryset=sedi, initial=sedi)
-        self.sedi = sedi
+        self.fields['sedi'].initial = sedi
+        self.fields['sedi'].queryset = sedi
 
     stato_richiesta = forms.MultipleChoiceField(choices=Tesserino.STATO_RICHIESTA)
     tipo_richiesta = forms.MultipleChoiceField(choices=Tesserino.TIPO_RICHIESTA, initial=(Tesserino.RILASCIO,
@@ -425,7 +423,7 @@ class ModuloFiltraEmissioneTesserini(forms.Form):
     stato_emissione = forms.MultipleChoiceField(choices=Tesserino.STATO_EMISSIONE, initial=(("", Tesserino.STAMPATO,
                                                                                              Tesserino.SPEDITO_CASA,
                                                                                              Tesserino.SPEDITO_SEDE)),)
-    sedi = forms.ModelMultipleChoiceField(queryset='')
+    sedi = forms.ModelMultipleChoiceField(queryset=None)
 
     DATA_RICHIESTA_DESC = '-creazione'
     DATA_RICHIESTA_ASC = 'creazione'
@@ -441,14 +439,6 @@ class ModuloFiltraEmissioneTesserini(forms.Form):
 
     cerca = forms.CharField(initial="", required=False, help_text="(Opzionale) Parte del Codice Fiscale o "
                                                                   " codice tesserino.")
-
-    def clean(self):
-        sedi = self.cleaned_data['sedi']
-
-        sedi_selezionate = [str(selezionate.id) for selezionate in sedi]
-        sedi_possibili = [str(possibili.id) for possibili in self.sedi]
-        if not sedi_selezionate or not set(sedi_selezionate).issubset(sedi_possibili):
-            raise ValidationError("Sede selezionata non permessa.")
 
 
 class ModuloLavoraTesserini(forms.Form):

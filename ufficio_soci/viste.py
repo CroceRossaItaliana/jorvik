@@ -1303,13 +1303,10 @@ def us_tesserini_emissione(request, me):
             stato_richiesta__in=modulo.cleaned_data['stato_richiesta']
         ).order_by(modulo.cleaned_data['ordine'])
 
-        # id richiedenti tesserino che hanno delega per le sedi selezionate nel filtro.
-        richiedenti_id = Delega.objects.filter(persona_id__in=tesserini.values_list('richiesto_da', flat=True),
-                                        oggetto_id__in=sedi_selezionate, oggetto_tipo=21)\
-                                        .values_list('persona_id', flat=True)
-        # tesserini richiesti per le sole sedi selezionate.
-        q = Q(richiesto_da__in=tesserini.values_list('richiesto_da', flat=True) and richiedenti_id)
-        tesserini = Tesserino.objects.filter(q)
+        # Ottiene oggetto Q per tutte le appartenenze attuali come Volontario in una delle Sedi selezionate.
+        q = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO, sede__in=sedi_selezionate) \
+            .via("persona__appartenenze")
+        tesserini = tesserini.filter(q)
 
     contesto = {
         "tesserini": tesserini,
