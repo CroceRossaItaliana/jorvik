@@ -10,7 +10,7 @@ from django.utils.safestring import mark_safe
 from anagrafica.costanti import REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione, Riserva, \
-    Trasferimento, Delega
+    Trasferimento
 from anagrafica.permessi.applicazioni import PRESIDENTE
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA, EMISSIONE_TESSERINI
 from autenticazione.forms import ModuloCreazioneUtenza
