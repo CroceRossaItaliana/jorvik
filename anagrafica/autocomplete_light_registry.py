@@ -33,13 +33,8 @@ class PersonaAutocompletamento(AutocompletamentoBase):
 
     def choices_for_request(self, filtra_per_sede=True):
 
-        # Le mie sedi di competenza:
-        #  1. La mia Sede attuale
-        #  2. Il mio Comitato
-        #  3. Le mie Sedi di competenza
-        sedi = self.request.user.persona.sedi_attuali() \
-            | self.request.user.persona.sedi_attuali().ottieni_comitati().espandi() \
-            | self.request.user.persona.sedi_deleghe_attuali(espandi=True, pubblici=True)
+        # Le mie Sedi di competenza
+        sedi = self.request.user.persona.sedi_deleghe_attuali(espandi=True, pubblici=True)
 
         self.choices = self.choices.filter(
             # 1. Appartenente a una delle sedi
