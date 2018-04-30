@@ -97,6 +97,11 @@ Per la configurazione automatica dell'ambiente di sviluppo su **Linux, Mac OS X 
     * Scegliere **"Docker-Compose"** e **`web`** come da immagine, e cliccare OK. ([Vedi immagine](https://user-images.githubusercontent.com/621062/34888028-7a95f13e-f7c0-11e7-9eaa-e6bad16c7f51.png))
     * Assicurarsi che l'interprete "Remote Python 3.x Docker..." sia ora selezionato come predefinito per il progetto, quindi cliccare OK
 7. **Installa i dati di esempio**, scegliendo la configurazione `[jorvik] installa dati di esempio`** su PyCharm e premendo il taso "Run" ([Vedi immagine](https://user-images.githubusercontent.com/621062/39449785-eaa78f0a-4cc0-11e8-8e0d-a6034d53ad31.png)).
+    * Questo creerà una utenza di esempio che può essere usata per coadivare lo sviluppo, con le seguenti informazioni (e credenziali)
+        * Nome: Douglas Adams
+        * Delega: Presidente presso il Comitato di Gaia
+        * Email di accesso: `supporto@gaia.cri.it`
+        * Password: `42`
 8. **Avvia Jorvik** direttamente da PyCharm, scegliendo la configurazione `[jorvik] runserver`  ([Vedi immagine](https://user-images.githubusercontent.com/621062/39448999-c4bb7c40-4cbe-11e8-86be-4ba906ddc3ba.png)). Questo avvierà tutti i servizi necessari, utilizzando Docker Compose:
     * `web`: Un server di sviluppo Django (`runserver`), che rileverà automaticamente le modifiche al codice e si riavvierà automaticamente;
     * `db`: Un server di database PostgreSQL;
