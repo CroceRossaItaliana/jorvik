@@ -51,11 +51,30 @@ Puoi trovare la **[Documentazione sul Wiki del progetto](https://github.com/Croc
 
 ### Requisiti
 
+#### Sviluppo
+
+Per lo sviluppo di Jorvik, potrai utilizzare i container già pronti che ti permetteranno
+di lavorare su Gaia senza la necessità di configurare manualmente un sistema di produzione.
+
+* **[Docker CE](https://www.docker.com/community-edition)** (o EE)
+* **[Python 3.4 e superiore](https://www.python.org/downloads/)**
+* **[Docker Compose](https://docs.docker.com/compose/install)**
+* **Linux, OS X o Windows 10**, ovvero qualunque OS che supporta i requisiti sopra elencati.
+
+
+#### Produzione
+
+Se vuoi configurare manualmente un sistema di produzione, puoi installare manualmente
+i requisiti necessari. A meno che tu abbia intenzione di mettere online un *fork* di Gaia
+su di un ambiente di produzione, questo è un metodo sconsigliato.
+
 * **[Python 3.4 e superiore](https://www.python.org/downloads/)** (es. `python3`)
 * **[PIP 3](https://www.python.org/downloads/)** (es. `pip3`)
+  * Usa quindi PIP per installare tutti i requisiti Python, che sono specificati [requirements.txt](requirements.txt).
 * **[PostgreSQL](http://www.postgresql.org/) 9.4+** con [PostGIS](http://postgis.net/))
 * **[GEOS](http://trac.osgeo.org/geos/)** (Geometry Engine Open Source)
-* **Linux**, Mac OS X e, probabilmente, Windows Server 2008 o 7 e superiori
+* **[Redis](https://redis.io/)**, o un altro broker supportato da [Celery](http://www.celeryproject.org/).
+* **Linux**.
 
 ### Ambiente di sviluppo
 
