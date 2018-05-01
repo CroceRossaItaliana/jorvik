@@ -303,7 +303,7 @@ if args.esempio:
                         if not Utenza.objects.filter(email="supporto@gaia.cri.it").exists():
                             utenza = Utenza.objects.create(
                                 persona=persona, email="supporto@gaia.cri.it",
-                                password='pbkdf2_sha256$20000$ldk8aPLgcMXK$Cwni1ubmmKpzxO8xM75ZuwNR+k6ZHA5JTVxJFbgIzgo='
+                                password='pbkdf2_sha256$24000$vuuP6g3dJTyz$55k2PL/NCVk2j4T+cvA9pGeIkFRT2lxKMbjFLZeYR3Y='
                             )
                 elif indice == 1:
                     d = Delega.objects.create(persona=persona, tipo=UFFICIO_SOCI, oggetto=sede, inizio=poco_fa())
