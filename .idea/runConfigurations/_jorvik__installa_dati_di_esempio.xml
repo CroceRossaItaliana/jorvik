@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="[jorvik] django: runcrons" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="[jorvik] installa dati di esempio" type="PythonConfigurationType" factoryName="Python">
     <module name="jorvik" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -13,8 +13,8 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="manage.py" />
-    <option name="PARAMETERS" value="runcrons" />
+    <option name="SCRIPT_NAME" value="scramble.py" />
+    <option name="PARAMETERS" value="--dati-di-esempio" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
