@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="[jorvik] django: runcrons" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="[jorvik] test" type="DjangoTestsConfigurationType" factoryName="Django tests">
     <module name="jorvik" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -13,11 +13,11 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="manage.py" />
-    <option name="PARAMETERS" value="runcrons" />
-    <option name="SHOW_COMMAND_LINE" value="false" />
-    <option name="EMULATE_TERMINAL" value="false" />
-    <option name="MODULE_MODE" value="false" />
+    <option name="TARGET" value="" />
+    <option name="SETTINGS_FILE" value="" />
+    <option name="CUSTOM_SETTINGS" value="false" />
+    <option name="USE_OPTIONS" value="true" />
+    <option name="OPTIONS" value="--noinput" />
     <method />
   </configuration>
 </component>

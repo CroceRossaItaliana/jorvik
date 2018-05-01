@@ -5,7 +5,7 @@
     <option name="PARENT_ENVS" value="true" />
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
-      <env name="SKIP_DJANGO_COLLECSTATIC" value="1" />
+      <env name="SKIP_DJANGO_COLLECTSTATIC" value="1" />
       <env name="SKIP_DJANGO_MIGRATE" value="1" />
     </envs>
     <option name="SDK_HOME" value="" />
