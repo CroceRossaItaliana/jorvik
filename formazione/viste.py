@@ -513,6 +513,11 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
 
 
 @pagina_privata
+def aspirante_corso_base_firme(request, me, pk):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    return corso.genera_pdf_firme()
+
+@pagina_privata
 def aspirante_corso_base_report(request, me, pk):
     corso = get_object_or_404(CorsoBase, pk=pk)
     if not me.permessi_almeno(corso, MODIFICA):

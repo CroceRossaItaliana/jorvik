@@ -280,6 +280,7 @@ urlpatterns = [
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/ritirati/$', formazione.viste.aspirante_corso_base_ritirati),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/report/$', formazione.viste.aspirante_corso_base_report),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/report/schede/$', formazione.viste.aspirante_corso_base_report_schede),
+    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/firme/$', formazione.viste.aspirante_corso_base_firme),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/modifica/$', formazione.viste.aspirante_corso_base_modifica),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/attiva/$', formazione.viste.aspirante_corso_base_attiva),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/termina/$', formazione.viste.aspirante_corso_base_termina),

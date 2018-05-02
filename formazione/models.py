@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.db.transaction import atomic
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.utils.timezone import now
 
@@ -217,6 +217,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return "%sreport/" % (self.url,)
 
     @property
+    def url_firme(self):
+        return "%sfirme/" % (self.url,)
+
+    @property
     def url_report_schede(self):
         return self.url + "report/schede/"
 
@@ -360,6 +364,33 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def idonei(self):
         return self.partecipazioni_confermate().filter(esito_esame=PartecipazioneCorsoBase.IDONEO)
+
+    def genera_pdf_firme(self):
+        """
+        Genera il fogli firme delle lezioni del corso.
+        """
+
+        iscritti = [x.persona.nome_completo for x in self.partecipazioni_confermate()]
+
+        z = Zip(oggetto=self)
+        for lezione in self.lezioni.all():
+
+            pdf = PDF(oggetto=self)
+            pdf.genera_e_salva(
+                nome="Firme lezione %s.pdf" % lezione.nome,
+                corpo={
+                    "corso": self,
+                    "iscritti": iscritti,
+                    "lezione": lezione,
+                    "data": lezione.inizio.date,
+                },
+                modello="pdf_firme_lezione.html",
+            )
+            z.aggiungi_file(file_path=pdf.file.path, nome_file=pdf.nome)
+
+        z.comprimi_e_salva(nome="Fogli firme %s.zip" % (self.nome, ))
+
+        return redirect(z.download_url)
 
     def genera_pdf(self):
         """
