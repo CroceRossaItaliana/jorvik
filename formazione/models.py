@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.db.transaction import atomic
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.timezone import now
 
@@ -370,9 +370,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         Genera il fogli firme delle lezioni del corso.
         """
 
-        iscritti = [x.persona.nome_completo for x in self.partecipazioni_confermate()]
+        iscritti = [partecipazione.persona for partecipazione in self.partecipazioni_confermate()]
 
-        z = Zip(oggetto=self)
+        archivio = Zip(oggetto=self)
         for lezione in self.lezioni.all():
 
             pdf = PDF(oggetto=self)
@@ -382,15 +382,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                     "corso": self,
                     "iscritti": iscritti,
                     "lezione": lezione,
-                    "data": lezione.inizio.date,
+                    "data": lezione.inizio,
                 },
                 modello="pdf_firme_lezione.html",
             )
-            z.aggiungi_file(file_path=pdf.file.path, nome_file=pdf.nome)
+            archivio.aggiungi_file(file_path=pdf.file.path, nome_file=pdf.nome)
 
-        z.comprimi_e_salva(nome="Fogli firme %s.zip" % (self.nome, ))
+        archivio.comprimi_e_salva(nome="Fogli firme %s.zip" % self.nome)
 
-        return redirect(z.download_url)
+        return archivio
 
     def genera_pdf(self):
         """

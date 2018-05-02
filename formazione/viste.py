@@ -518,7 +518,8 @@ def aspirante_corso_base_firme(request, me, pk):
     if not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    return corso.genera_pdf_firme()
+    archivio = corso.genera_pdf_firme()
+    return redirect(archivio.download_url)
 
 
 @pagina_privata
