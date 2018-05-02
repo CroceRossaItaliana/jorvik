@@ -1,72 +1,57 @@
+{% extends 'pdf_standard.html' %}
 {% load static %}
 
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-        <title>Foglio firme {{ lezione }} del {{ data }}</title>
-        <meta name="generator" content="Gaia">
-        <meta name="author" content="Gaia">
-        <meta name="changedby" content="Gaia">
-        <style>
-            html, body {
-                /* Margini della pagina */
-                padding: 30px 30px 30px 30px;
-                font-family: 'Times New Roman', 'Tahoma', sans-serif;
-                color: #333;
-            }
+{% block css_extra %}
+#logo {
+    width: 40%;
+}
 
-            #logo {
-                width: 40%;
-            }
+h2, h3 {
+    text-align: center;
+}
 
-            h2, h3 {
-                text-align: center;
-            }
+h2 {
+    color: #c00;
+}
 
-            h2 {
-                color: #c00;
-            }
+table.elenco {
+    width: 100%;
+    text-align: left;
+    font-size: 11pt;
+    border-collapse: collapse;
+}
 
-            table.elenco {
-                border: 1px solid #bbb;
-                width: 100%;
-                text-align: left;
-                font-size: 11pt;
-                border-collapse: collapse;
-            }
+table.elenco td, th {
+    border: 1px solid #666;
+    padding: 6px 4px;
+}
 
-            table.elenco td, th {
-                border: 1px solid;
-                padding: 6px 4px;
-            }
+table.elenco td:nth-child(2), th:nth-child(2) {
+    width: 20%;
+}
 
-            .footer {
-                position: fixed;
-                bottom: 0;
-                padding-top: 10px;
-                border-top: 1px solid #888;
-                font-size: smaller;
-                color: #666;
-            }
+#footer_pdf {
+    position: fixed;
+    bottom: 0;
+}
 
-            .firma {
-                position: fixed;
-                text-align: right;
-                bottom: 25mm;
-                right: 5mm;
-            }
+.firma {
+    position: fixed;
+    text-align: right;
+    bottom: 25mm;
+    right: 5mm;
+}
 
-            .linea {
-                position: fixed;
-                border-bottom: 1px solid black;
-                width: 40mm;
-                bottom: 15mm;
-                right: 0;
-            }
-        </style>
-    </head>
-    <body>
+.linea {
+    position: fixed;
+    border-bottom: 1px solid black;
+    width: 40mm;
+    bottom: 15mm;
+    right: 0;
+}
+{% endblock %}
 
+{% block corpo %}
 {% for iscritto in iscritti %}
     {% if forloop.first or forloop.counter0|divisibleby:16 %}
         <center>
@@ -75,33 +60,29 @@
 
         <h2>{{ corso.sede.comitato }}</h2>
         <h3>CORSO DI FORMAZIONE PER VOLONTARI DELLA C.R.I.</h3>
-        <h3>{{ lezione }} del {{ data }}</h3>
+        <h3>{{ lezione }} del {{ lezione.inizio|date:"SHORT_DATE_FORMAT" }}</h3>
         <br />
 
         <table class="elenco">
-                <tr>
-                    <th>Cognome e Nome</th>
-                    <th>Firma</th>
-                </tr>
+            <tr>
+                <th>Cognome e Nome</th>
+                <th style="width: 2%;">Firma</th>
+            </tr>
     {% endif %}
-                <tr>
-                    <td style="padding-left: 4pt;">{{ iscritto }}</td>
-                    <td>&nbsp;</td>
-                </tr>
+            <tr>
+                <td>{{ iscritto }}</td>
+                <td>&nbsp;</td>
+            </tr>
     {% if forloop.last or forloop.counter|divisibleby:16 %}
         </table>
 
         <div class="firma">Firma Direttore</div>
         <div class="linea">&nbsp;</div>
-        <div class="footer">
-            Documento stampabile generato digitalmente da <strong>Gaia</strong>. Autenticato: {{ timestamp }}
-        </div>
 
-        {% if forloop.counter != iscritti|length %}
+        {% if not forloop.last %}
             <div style="page-break-after: always;">&nbsp;</div>
         {% endif %}
 
     {% endif %}
 {% endfor %}
-    </body>
-</html>
+{% endblock %}
