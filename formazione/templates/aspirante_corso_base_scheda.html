@@ -153,10 +153,10 @@
                     Scarica report
                 </a>
             </li>
-            <li role="presentation" {% if corso.url_firme in request.path %}class="active"{% endif %}>
-                <a href="{{ corso.url_firme }}" class="text-danger">
+            <li role="presentation">
+                <a href="{{ corso.url_firme }}">
                     <i class="fa fa-fw fa-file-pdf-o"></i>
-                    Scarica firme
+                    Scarica foglio firme
                 </a>
             </li>
         {% endif %}
