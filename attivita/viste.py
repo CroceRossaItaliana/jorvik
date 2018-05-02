@@ -155,6 +155,14 @@ def attivita_organizza(request, me):
         attivita.estensione = attivita.sede.comitato
         attivita.save()
 
+        # Crea gruppo per questa specifica attività se la casella viene selezionata.
+        crea_gruppo = modulo.cleaned_data['gruppo']
+        if crea_gruppo:
+            area = Area.objects.get(id=attivita.area_id)
+            Gruppo.objects.create(nome=attivita.nome, sede_id=attivita.sede.id, obiettivo=area.obiettivo,
+                                  attivita_id=attivita.id, estensione=attivita.estensione.estensione,
+                                  area_id=area.id)
+
         if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
             # Io sono il referente.
             attivita.aggiungi_delegato(REFERENTE, me, firmatario=me, inizio=poco_fa())
@@ -334,7 +342,10 @@ def attivita_scheda_cancella(request, me, pk):
     if not attivita.cancellabile:
         return errore_generico(request, me, titolo="Attività non cancellabile",
                                messaggio="Questa attività non può essere cancellata.")
-
+    
+    gruppo = Gruppo.objects.filter(attivita=attivita)
+    if gruppo.exists():
+        gruppo.delete()
     attivita.delete()
     return messaggio_generico(request, me, titolo="Attività cancellata",
                               messaggio="L'attività è stata cancellata con successo.",

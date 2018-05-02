@@ -45,9 +45,7 @@
                         {{ gruppo.nome }}
                     </strong><br />
 
-                    {% if gruppo.attivita %}
-                        <strong>{{ gruppo.attivita.link|safe }}</strong><br />
-                    {% endif %}
+                    Area: {{ gruppo.area.nome }}<br />
                     {{ gruppo.sede.link|safe }}
                 </td>
                 <td>
@@ -87,8 +85,63 @@
         {% empty %}
             <tr class="info allinea-centro">
             <td colspan="3">
-                <h4><i class="fa fa-fw fa-info-circle"></i> Nessun gruppo di lavoro</h4>
-                <p>Torna pi&ugrave; tardi.</p>
+                <h4><i class="fa fa-fw fa-info-circle"></i> Nessun gruppo di lavoro per aree</h4>
+
+            </td>
+            </tr>
+        {% endfor %}
+
+        {% for gruppo in gruppi_specifici_disponibili %}
+            <tr class="
+                {% if gruppo in gruppi_gestione %}warning
+                {% elif gruppo in miei_gruppi %}success
+                {% endif %}">
+                <td style="width: 60%;">
+                    <strong>
+                        {{ gruppo.nome }}
+                    </strong><br />
+
+                    Attività: <strong>{{ gruppo.attivita.link|safe }}</strong><br />
+                    {{ gruppo.sede.link|safe }}
+                </td>
+                <td>
+                    {% for delegato in gruppo.delegati_attuali %}
+                        {{ delegato.link|safe }}<br />
+
+                    {% empty %}
+                        Nessun referente
+
+                    {% endfor %}
+                </td>
+                <td>
+                    <a href="/attivita/gruppi/{{ gruppo.pk }}/"
+                       class="btn btn-sm btn-block btn-warning">
+                        <i class="fa fa-fw fa-list"></i>
+                        Membri
+                    </a>
+
+                    {% if gruppo in miei_gruppi %}
+                        <a href="/attivita/gruppi/{{ gruppo.pk }}/abbandona/"
+                           class="btn btn-sm btn-block btn-danger">
+                            <i class="fa fa-fw fa-times"></i>
+                            Abbandona
+                        </a>
+
+                    {% else %}
+                        <a href="/attivita/gruppi/{{ gruppo.pk }}/iscriviti/"
+                           class="btn btn-sm btn-block btn-success">
+                            <i class="fa fa-fw fa-check"></i>
+                            Iscriviti
+                        </a>
+
+                    {% endif %}
+                </td>
+            </tr>
+
+        {% empty %}
+            <tr class="info allinea-centro">
+            <td colspan="3">
+                <h4><i class="fa fa-fw fa-info-circle"></i> Nessun gruppo di lavoro per attività specifiche</h4>
 
             </td>
             </tr>
