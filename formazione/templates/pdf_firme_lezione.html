@@ -1,0 +1,107 @@
+{% load static %}
+
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <title>Foglio firme {{ lezione }} del {{ data }}</title>
+        <meta name="generator" content="Gaia">
+        <meta name="author" content="Gaia">
+        <meta name="changedby" content="Gaia">
+        <style>
+            html, body {
+                /* Margini della pagina */
+                padding: 30px 30px 30px 30px;
+                font-family: 'Times New Roman', 'Tahoma', sans-serif;
+                color: #333;
+            }
+
+            #logo {
+                width: 40%;
+            }
+
+            h2, h3 {
+                text-align: center;
+            }
+
+            h2 {
+                color: #c00;
+            }
+
+            table.elenco {
+                border: 1px solid #bbb;
+                width: 100%;
+                text-align: left;
+                font-size: 11pt;
+                border-collapse: collapse;
+            }
+
+            table.elenco td, th {
+                border: 1px solid;
+                padding: 6px 4px;
+            }
+
+            .footer {
+                position: fixed;
+                bottom: 0;
+                padding-top: 10px;
+                border-top: 1px solid #888;
+                font-size: smaller;
+                color: #666;
+            }
+
+            .firma {
+                position: fixed;
+                text-align: right;
+                bottom: 25mm;
+                right: 5mm;
+            }
+
+            .linea {
+                position: fixed;
+                border-bottom: 1px solid black;
+                width: 40mm;
+                bottom: 15mm;
+                right: 0;
+            }
+        </style>
+    </head>
+    <body>
+
+{% for iscritto in iscritti %}
+    {% if forloop.first or forloop.counter0|divisibleby:16 %}
+        <center>
+            <img id="logo" src="{% static 'img/Emblema_CRI.png' %}" name="LogoCri" />
+        </center>
+
+        <h2>{{ corso.sede.comitato }}</h2>
+        <h3>CORSO DI FORMAZIONE PER VOLONTARI DELLA C.R.I.</h3>
+        <h3>{{ lezione }} del {{ data }}</h3>
+        <br />
+
+        <table class="elenco">
+                <tr>
+                    <th>Cognome e Nome</th>
+                    <th>Firma</th>
+                </tr>
+    {% endif %}
+                <tr>
+                    <td style="padding-left: 4pt;">{{ iscritto }}</td>
+                    <td>&nbsp;</td>
+                </tr>
+    {% if forloop.last or forloop.counter|divisibleby:16 %}
+        </table>
+
+        <div class="firma">Firma Direttore</div>
+        <div class="linea">&nbsp;</div>
+        <div class="footer">
+            Documento stampabile generato digitalmente da <strong>Gaia</strong>. Autenticato: {{ timestamp }}
+        </div>
+
+        {% if forloop.counter != iscritti|length %}
+            <div style="page-break-after: always;">&nbsp;</div>
+        {% endif %}
+
+    {% endif %}
+{% endfor %}
+    </body>
+</html>
