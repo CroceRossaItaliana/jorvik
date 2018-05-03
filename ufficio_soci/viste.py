@@ -1288,7 +1288,6 @@ def us_tesserini_emissione(request, me):
     if modulo.is_valid():
         stato_emissione = modulo.cleaned_data['stato_emissione']
         sedi_selezionate = modulo.cleaned_data['sedi'].espandi(pubblici=True)
-        print(sedi_selezionate)
         stato_emissione_q = Q(stato_emissione__in=stato_emissione)
         if '' in stato_emissione:
             stato_emissione_q |= Q(stato_emissione__isnull=True)
