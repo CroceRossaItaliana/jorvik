@@ -329,5 +329,5 @@ urlpatterns = [
     url(r'^filebrowser_filer/', include('ckeditor_filebrowser_filer.urls')),
     url(r'^jsi18n/$', javascript_catalog, js_info_dict, name='javascript-catalog'),
     # OAuth 2.0
-    # url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 ]

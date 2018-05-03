@@ -33,7 +33,8 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     # Librerie terze
     'nocaptcha_recaptcha',
-    # 'oauth2_provider',
+    'oauth2_provider',
+    'corsheaders',
     'mptt',
     # Moduli interni
     'base',
@@ -102,6 +103,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'two_factor.middleware.threadlocals.ThreadLocals',
     'autenticazione.two_factor.middleware.Require2FA',
+    'corsheaders.middleware.CorsMiddleware',
 )
 
 # Imposta anagrafica.Utenza come modello di autenticazione
@@ -388,3 +390,5 @@ FORMAZIONE_VALIDITA_INVITI = 7
 
 POSTA_MASSIVA_TIMEOUT = 30
 DATE_FORMAT = '%d/%m/%Y'
+
+CORS_ORIGIN_ALLOW_ALL = True
