@@ -1277,8 +1277,8 @@ def us_tesserini_emissione(request, me):
     sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
 
     sedi = Sede.objects.filter(id__in=sedi.values_list('id', flat=True))
-    # Comitati Regionali, Locali e Provinciali.
-    sedi = sedi.espandi(pubblici=True).comitati()
+    # Comitati Locali e Provinciali.
+    sedi = sedi.espandi(pubblici=True).comitati().exclude(estensione=REGIONALE)
 
     tesserini = Tesserino.objects.none()
 

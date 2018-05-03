@@ -413,7 +413,6 @@ class ModuloNuovaRicevuta(forms.Form):
 class ModuloFiltraEmissioneTesserini(forms.Form):
     def __init__(self, *args, sedi, **kwargs):
         super(ModuloFiltraEmissioneTesserini, self).__init__(*args, **kwargs)
-        self.fields['sedi'].initial = sedi
         self.fields['sedi'].queryset = sedi
 
     stato_richiesta = forms.MultipleChoiceField(choices=Tesserino.STATO_RICHIESTA)
