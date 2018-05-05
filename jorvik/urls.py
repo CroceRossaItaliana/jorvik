@@ -25,7 +25,7 @@ import ufficio_soci.viste
 import veicoli.viste
 from anagrafica.forms import ModuloModificaPassword
 from autenticazione.funzioni import pagina_privata, pagina_privata_no_cambio_firma
-from jorvik.settings import MEDIA_ROOT
+from jorvik.settings import MEDIA_ROOT, DEBUG
 
 from autenticazione.two_factor.urls import urlpatterns as tf_urls
 
@@ -328,6 +328,15 @@ urlpatterns = [
     url(r'^filer/', include('filer.urls')),
     url(r'^filebrowser_filer/', include('ckeditor_filebrowser_filer.urls')),
     url(r'^jsi18n/$', javascript_catalog, js_info_dict, name='javascript-catalog'),
+
     # OAuth 2.0
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+
+    # REST api
+    url(r'^api/', include('api.urls', namespace='api')),
+
 ]
+
+if DEBUG:
+    urlpatterns += [url(r'^api-auth/', include('rest_framework.urls')),]
+

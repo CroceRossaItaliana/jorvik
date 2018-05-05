@@ -44,3 +44,4 @@ unicodecsv==0.14.1
 celery[redis]==4.1.0
 django-oauth-toolkit==0.12.0
 django-cors-middleware
+djangorestframework==3.6
