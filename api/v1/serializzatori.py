@@ -12,24 +12,24 @@ def luogo(comune, stato, provincia=None, cap=None,
           indirizzo=None, via=None, civico=None,
           regione=None):
     dati = {"comune": comune,
-            "stato": stato}
+            "stato": str(stato)}
 
-    if provincia is not None:
+    if provincia:
         dati.update({"provicina": provincia})
 
-    if cap is not None:
+    if cap:
         dati.update({"cap": cap})
 
-    if indirizzo is not None:
+    if indirizzo:
         dati.update({"indirizzo": indirizzo})
 
-    if via is not None:
+    if via:
         dati.update({"via": via})
 
-    if civico is not None:
+    if civico:
         dati.update({"civico": civico})
 
-    if regione is not None:
+    if regione:
         dati.update({"regione": regione})
 
     return dati
@@ -62,7 +62,8 @@ def locazione(locazione):
 
 def persona_anagrafica_base(persona):
     assert isinstance(persona, Persona)
-    dati = {"nomeCompleto": persona.nomeCompleto,
+    dati = {"id": persona.pk,
+            "nome_completo": persona.nome_completo,
             "nome": persona.nome,
             "cognome": persona.cognome}
     if persona.email is not None:
@@ -73,10 +74,10 @@ def persona_anagrafica_base(persona):
 def persona_anagrafica_completa(persona):
     assert isinstance(persona, Persona)
     dati = persona_anagrafica_base(persona)
-    dati.update({"luogoDiNascita": luogo_di_nascita(persona),
-                 "luogoDiResidenza": luogo_di_residenza(persona),
+    dati.update({"luogo_di_nascita": luogo_di_nascita(persona),
+                 "luogo_di_residenza": luogo_di_residenza(persona),
                  "sesso": persona.genere,
-                 "codiceFiscale": persona.codice_fiscale})
+                 "codice_fiscale": persona.codice_fiscale})
     return dati
 
 
@@ -86,14 +87,18 @@ def _con_storico(oggetto_con_storico):
             "fine": oggetto_con_storico.fine}
 
 
-def sede(sede):
-    assert isinstance(sede, Sede)
-    dati = {"nome": sede.nome,
-            "locazione": locazione(sede.locazione),
-            "estensione": _campo(sede.estensione, sede.get_estensione_display()),
-            "tipo": _campo(sede.tipo, sede.get_tipo_display())}
-    if sede.comitato:
-        dati.update({"comitato": sede(sede.comitato)})
+def sede(_sede, includi_comitato=True):
+    assert isinstance(_sede, Sede)
+    dati = {"nome": _sede.nome,
+            "estensione": _campo(_sede.estensione, _sede.get_estensione_display()),
+            "tipo": _campo(_sede.tipo, _sede.get_tipo_display())}
+
+    if _sede.locazione:
+        dati.update({"locazione": locazione(_sede.locazione)})
+
+    if _sede.comitato and includi_comitato:
+        dati.update({"comitato": sede(_sede.comitato, includi_comitato=False)})
+
     return dati
 
 
@@ -103,3 +108,6 @@ def appartenenza(appartenenza):
     dati.update({"tipo": _campo(id=appartenenza.membro, descrizione=appartenenza.get_membro_display()),
                  "sede": sede(appartenenza.sede)})
     return dati
+
+
+
