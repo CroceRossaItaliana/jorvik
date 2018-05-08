@@ -11,10 +11,11 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from anagrafica.models import Appartenenza, Sede, Persona, Fototessera, Dimissione, ProvvedimentoDisciplinare, \
-    Estensione, Trasferimento
+    Estensione, Trasferimento, Delega
 from anagrafica.costanti import NAZIONALE, PROVINCIALE, REGIONALE, LOCALE, TERRITORIALE
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI, DIRETTORE_CORSO
 from anagrafica.permessi.costanti import MODIFICA
+from anagrafica.permessi.incarichi import INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI
 from attivita.models import Area, Partecipazione, Turno
 from attivita.models import Attivita
 from autenticazione.utils_test import TestFunzionale
@@ -22,10 +23,12 @@ from base.geo import Locazione
 from base.utils import poco_fa, oggi
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, \
     crea_utenza, crea_locazione, email_fittizzia, crea_tesseramento
+from base.models import Autorizzazione
 from ufficio_soci.elenchi import ElencoElettoratoAlGiorno, ElencoSociAlGiorno, ElencoSostenitori, ElencoExSostenitori, \
     ElencoVolontari, ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoSenzaTurni
 from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota, ModuloElencoQuote
 from ufficio_soci.models import Tesseramento, Tesserino, Quota, Riduzione
+from formazione.models import Aspirante, CorsoBase, InvitoCorsoBase, PartecipazioneCorsoBase
 
 
 class TestBase(TestCase):
@@ -2264,3 +2267,63 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
 
         sessione_delegato_territoriale.visit("%s/us/ricevute/%d/annulla/" % (self.live_server_url, quota.pk))
         self.assertTrue(sessione_delegato_territoriale.is_text_present("ANNULLATA"))
+
+
+    @freeze_time('2018-03-21')
+    def test_download_iscritti(self):
+
+        # crea oggetti e appartenza
+        presidente = crea_persona()
+        direttore_corso = crea_persona()
+        aspirante1 = crea_persona()
+        aspirante2 = crea_persona()
+        sostenitore1 = crea_persona()
+        sostenitore2 = crea_persona()
+        sede = crea_sede(presidente)
+        crea_appartenenza(direttore_corso, sede, tipo=Appartenenza.DIPENDENTE)
+        crea_appartenenza(sostenitore1, sede, tipo=Appartenenza.SOSTENITORE)
+        crea_appartenenza(sostenitore2, sede, tipo=Appartenenza.SOSTENITORE)
+
+        # crea locazione, aspiranti e corso
+        locazione = crea_locazione()
+        Aspirante.objects.create(raggio=900, locazione=locazione, persona=aspirante1)
+        Aspirante.objects.create(raggio=900, locazione=locazione, persona=aspirante2)
+        corso_base = CorsoBase.objects.create(locazione=locazione, stato=Delega.ATTIVA, sede=sede,
+                                              data_inizio=poco_fa(),
+                                              data_esame=datetime.date(2018, 10, 10),
+                                              anno=2018, progressivo=1)
+
+        # nomina delegato corso
+        Delega.objects.create(persona=direttore_corso, stato=Delega.ATTIVA, tipo=DIRETTORE_CORSO,
+                              inizio=poco_fa(), oggetto=corso_base, firmatario=presidente)
+
+        # invito al corso aspirante1 e sostenitore1
+        InvitoCorsoBase.objects.create(persona=aspirante1, corso=corso_base, invitante=direttore_corso)
+        InvitoCorsoBase.objects.create(persona=sostenitore1, corso=corso_base, invitante=direttore_corso)
+
+        # iscritti al corso aspirante2 e sostenitore2
+        partecipazione1 = PartecipazioneCorsoBase.objects.create(persona=aspirante2, corso=corso_base, confermata=True)
+        partecipazione2 = PartecipazioneCorsoBase.objects.create(persona=sostenitore2, corso=corso_base,
+                                                                 confermata=True)
+
+        # autorizzazioni al corso aspirante2 e sostenitore2
+        Autorizzazione.objects.create(richiedente=aspirante2, firmatario=direttore_corso, concessa=True,
+                                      oggetto=partecipazione1, progressivo=1,
+                                      destinatario_ruolo=INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,
+                                      destinatario_oggetto=corso_base, necessaria=False)
+        Autorizzazione.objects.create(richiedente=sostenitore2, firmatario=direttore_corso, concessa=True,
+                                      oggetto=partecipazione2, progressivo=1,
+                                      destinatario_ruolo=INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,
+                                      destinatario_oggetto=corso_base, necessaria=False)
+
+        # sessione
+        sessione_direttore = self.sessione_utente(persona=direttore_corso)
+        sessione_direttore.visit("%s/aspirante/corso-base/%d/iscritti/" % (self.live_server_url, corso_base.pk))
+        with sessione_direttore.get_iframe(0) as iframe_direttore:
+            link = iframe_direttore.find_link_by_partial_text("Excel: Un foglio per sede").first._element.get_attribute(
+                'href')
+        try:
+            sessione_direttore.visit(link)
+            self.assertFalse(sessione_direttore.is_text_present("Server Error (500)"))
+        except:
+            self.assertTrue(True)

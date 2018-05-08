@@ -4,6 +4,8 @@ services:
 
   db:
     image: mdillon/postgis
+    ports:
+      - "5432:5432"
 
   web:
     build: .
@@ -14,6 +16,7 @@ services:
     links:
       - db
       - pdf
+      - broker
     depends_on:
       - db
       - pdf
@@ -26,6 +29,22 @@ services:
     image: selenium/standalone-firefox-debug
     ports:
       - "5900:5900"  # VNC (debugging)
+
+  broker:
+    image: redis
+    ports:
+      - "6379:6379"  # Redis TCP
+
+  celery:
+    build: .
+    volumes:
+      - .:/code
+    depends_on:
+      - broker
+    environment:
+      - "SKIP_DJANGO_COLLECSTATIC=1"
+      - "SKIP_DJANGO_MIGRATE=1"
+    command: "celery worker -b redis://broker -A jorvik -l info -Q coda_email_rischedula,coda_email_invio -B"
 
   pdf:
     build: https://github.com/CroceRossaItaliana/gaia-dompdf.git#master

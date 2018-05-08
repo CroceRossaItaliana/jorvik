@@ -13,3 +13,4 @@ assets/
 .venv
 /log/debug.log
 /ghostdriver.log
+celerybeat-schedule

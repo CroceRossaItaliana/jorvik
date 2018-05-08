@@ -1,0 +1,8 @@
+[celery]
+
+broker_url = redis://broker
+result_backend = redis://broker
+
+[riaccoda]
+# 3600s = 1h
+periodo = 3600

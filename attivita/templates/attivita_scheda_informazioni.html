@@ -91,13 +91,17 @@
                 </div>
 
                 <div class="panel-body">
-                    Tutti i Volontari di
-                    <strong>
-                        <a href="{{ attivita.sede.url }}" target="_new">
-                            {{ attivita.sede.nome }}
+                    {% if attivita.estensione %}
+                        Tutti i Volontari di
+                        <strong>
+                        <a href="{{ attivita.estensione.url }}" target="_new">
+                            {{ attivita.estensione.nome }}
                         </a>
-                    </strong><br />
-                    ({{ attivita.sede.get_estensione_display }} e sottostanti)
+                        </strong><br />
+                        ({{ attivita.estensione.get_estensione_display }} e sottostanti)
+                    {% else %}
+                        Nessuno.
+                    {% endif %}
                 </div>
 
             </div>
