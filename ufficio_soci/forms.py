@@ -411,6 +411,9 @@ class ModuloNuovaRicevuta(forms.Form):
 
 
 class ModuloFiltraEmissioneTesserini(forms.Form):
+    def __init__(self, *args, sedi, **kwargs):
+        super(ModuloFiltraEmissioneTesserini, self).__init__(*args, **kwargs)
+        self.fields['sedi'].queryset = sedi
 
     stato_richiesta = forms.MultipleChoiceField(choices=Tesserino.STATO_RICHIESTA)
     tipo_richiesta = forms.MultipleChoiceField(choices=Tesserino.TIPO_RICHIESTA, initial=(Tesserino.RILASCIO,
@@ -419,6 +422,7 @@ class ModuloFiltraEmissioneTesserini(forms.Form):
     stato_emissione = forms.MultipleChoiceField(choices=Tesserino.STATO_EMISSIONE, initial=(("", Tesserino.STAMPATO,
                                                                                              Tesserino.SPEDITO_CASA,
                                                                                              Tesserino.SPEDITO_SEDE)),)
+    sedi = forms.ModelMultipleChoiceField(queryset=None)
 
     DATA_RICHIESTA_DESC = '-creazione'
     DATA_RICHIESTA_ASC = 'creazione'
