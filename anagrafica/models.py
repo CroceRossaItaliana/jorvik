@@ -241,6 +241,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def in_riserva(self):
         return Riserva.query_attuale(Riserva.con_esito_ok().q, persona=self).exists()
 
+    @property
+    def ultimo_tesserino(self):
+        return self.tesserini.all().order_by("creazione").last()
+
     def __str__(self):
         return self.nome_completo
 
@@ -694,7 +698,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         from formazione.models import PartecipazioneCorsoBase, CorsoBase
         return PartecipazioneCorsoBase.con_esito_ok().filter(persona=self, corso__stato=CorsoBase.ATTIVO).first()
-    
+
     @property
     def volontario_da_meno_di_un_anno(self):
         """

@@ -1,0 +1,8 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p>La richiesta di tesserino del volontario <strong>{{ volontario_tesserino_rifiutato }}</strong> è stata rifiutata con la seguente motivazione:<br />
+       <strong>{{ motivo_rifiuto }}</strong>
+    <p>
+    <p>Puoi visualizzare le richieste dei tesserini rifiutati <a href='https://gaia.cri.it/us/tesserini/rifiutati/'>cliccando qui</a>.</p>
+{% endblock %}
