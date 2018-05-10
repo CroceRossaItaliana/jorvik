@@ -41,3 +41,4 @@ django-two-factor-auth==1.4.0
 django-otp-yubikey==0.3.4
 freezegun==0.3.9
 unicodecsv==0.14.1
+celery[redis]==4.1.0
