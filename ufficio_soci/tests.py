@@ -25,7 +25,7 @@ from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_
     crea_utenza, crea_locazione, email_fittizzia, crea_tesseramento
 from base.models import Autorizzazione
 from ufficio_soci.elenchi import ElencoElettoratoAlGiorno, ElencoSociAlGiorno, ElencoSostenitori, ElencoExSostenitori, \
-    ElencoVolontari, ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoSenzaTurni, ElencoTesseriniRifiutati
+    ElencoVolontari, ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoSenzaTurni
 from ufficio_soci.forms import ModuloElencoElettorato, ModuloReclamaQuota, ModuloElencoQuote
 from ufficio_soci.models import Tesseramento, Tesserino, Quota, Riduzione
 from formazione.models import Aspirante, CorsoBase, InvitoCorsoBase, PartecipazioneCorsoBase
@@ -699,55 +699,6 @@ class TestBase(TestCase):
 
         da_richiedere = el_da_richiedere.risultati()
         self.assertEqual(da_richiedere .count(), 4)
-
-        el_rifiutati = ElencoTesseriniRifiutati([sede])
-        rifiutati = el_rifiutati.risultati()
-        self.assertEqual(rifiutati.count(), 0)
-
-        self.client.login(username=presidente.utenza.email, password='prova')
-        response = self.client.get(reverse('us-tesserini-richiedi', args=(vol_2.pk,)))
-        self.assertNotContains(response, "Il Comitato non ha un indirizzo")
-
-        richiesti = el_richiesti.risultati()
-        self.assertEqual(richiesti.count(), 2)
-
-        da_richiedere = el_da_richiedere.risultati()
-        self.assertEqual(da_richiedere.count(), 3)
-
-        Tesserino.objects.filter(
-            valido=False, tipo_richiesta=Tesserino.RILASCIO, stato_richiesta=Tesserino.RICHIESTO
-        ).update(stato_richiesta=Tesserino.RIFIUTATO, stato_emissione='',
-                 motivo_rifiutato='Fototessera non conforme', data_conferma=poco_fa(), valido=False)
-
-        rifiutati = el_rifiutati.risultati()
-        self.assertEqual(rifiutati.count(), 1)
-
-        richiesti = el_richiesti.risultati()
-        self.assertEqual(richiesti.count(), 1)
-
-        da_richiedere = el_da_richiedere.risultati()
-        self.assertEqual(da_richiedere.count(), 3)
-
-        self.client.login(username=presidente.utenza.email, password='prova')
-        response = self.client.get(reverse('us-tesserini-richiedi', args=(vol_2.pk,)))
-        self.assertNotContains(response, "Il Comitato non ha un indirizzo")
-        self.assertNotContains(response, "Esiste già una richiesta di un tesserino per la persona")
-        self.assertContains(response, 'Richiesta inoltrata')
-
-        self.assertEqual(Tesserino.objects.all().count(), 4)
-        self.assertEqual(Tesserino.objects.filter(
-            valido=False, tipo_richiesta=Tesserino.RILASCIO, stato_richiesta=Tesserino.RIFIUTATO
-        ).count(), 1)
-        self.assertEqual(Tesserino.objects.filter(
-            valido=False, tipo_richiesta=Tesserino.RILASCIO, stato_richiesta=Tesserino.RICHIESTO
-        ).count(), 1)
-        self.assertEqual(Tesserino.objects.filter(
-            valido=False, tipo_richiesta=Tesserino.RILASCIO, stato_richiesta=Tesserino.ACCETTATO
-        ).count(), 1)
-        self.assertEqual(Tesserino.objects.filter(
-            valido=False, tipo_richiesta=Tesserino.DUPLICATO, stato_richiesta=Tesserino.RICHIESTO
-        ).count(), 1)
-
 
     def test_termine_estensioni(self):
         presidente_com1 = crea_persona()
