@@ -16,7 +16,7 @@ from anagrafica.permessi.applicazioni import REFERENTE
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
     GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, GESTIONE_AUTOPARCHI_SEDE, \
-    GESTIONE_GRUPPI_SEDE, GESTIONE_GRUPPO, GESTIONE_AREE_SEDE, GESTIONE_REFERENTI_ATTIVITA, \
+    GESTIONE_GRUPPI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI, GESTIONE_AREE_SEDE, GESTIONE_REFERENTI_ATTIVITA, \
     GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, \
     RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
     RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1, RUBRICA_DELEGATI_OBIETTIVO_2, \
@@ -233,17 +233,20 @@ def permessi_delegato_area(area):
     """
     from anagrafica.models import Sede
     from attivita.models import Area, Attivita
+    from gruppi.models import Gruppo
     if isinstance(area, QuerySet):
         qs_area = area
     else:
         qs_area = area.queryset_modello()
     sede = Sede.objects.filter(aree__in=qs_area)
     attivita = Attivita.objects.filter(area__in=qs_area)
+    gruppi = Gruppo.objects.filter(area__in=qs_area)
     return [
         (RUBRICA_DELEGATI_AREA,         sede),
         (GESTIONE_ATTIVITA_AREA,        qs_area),
         (GESTIONE_ATTIVITA,             attivita),
         (GESTIONE_REFERENTI_ATTIVITA,   attivita),
+        (GESTIONE_GRUPPI,               gruppi)
     ]
 
 
