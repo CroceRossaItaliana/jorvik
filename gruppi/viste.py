@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
+from django.contrib.contenttypes.models import ContentType
 
 from anagrafica.models import Sede, Persona
 from anagrafica.models import Appartenenza as App
@@ -22,7 +23,6 @@ def attivita_gruppo(request, me):
     """
     # Sono responsabile di queste aree di intervento.
     area_permessi = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
-    id_sede_aree = area_permessi.values_list('sede_id', flat=True)
 
     # Attività nelle aree di cui sono responsabile.
     attivita_specifica = Attivita.objects.filter(area__in=area_permessi)
@@ -141,11 +141,12 @@ def attivita_gruppi_gruppo_elimina(request, me, pk):
     """
     Elimina un gruppo.
     """
-    # Verifica se sono un delegato d'area.
-    if not me.deleghe_attuali(tipo=DELEGATO_AREA).exists():
+    gruppo = get_object_or_404(Gruppo, pk=pk)
+
+    # Se non ho i permessi per eliminare il gruppo.
+    if not me.permessi_almeno(gruppo, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    gruppo = get_object_or_404(Gruppo, pk=pk)
     gruppo.delete()
 
     return messaggio_generico(request, me, titolo="Hai eliminato il gruppo",

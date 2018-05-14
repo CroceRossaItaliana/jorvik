@@ -1,0 +1,13 @@
+{% extends "base_messaggio_generico.html" %}
+
+{% block avviso_post_messaggio %}
+    <a href="{{ messaggio_torna_url }}" class="btn btn-default btn-success">
+        <i class="fa fa-fw fa-cancel"></i>
+        {{ messaggio_torna_titolo }}
+    </a>
+
+    <a href="{{ messaggio_esegui_url }}" class="btn btn-default btn-danger">
+        <i class="fa fa-fw fa-check"></i>
+        {{ messaggio_esegui_titolo }}
+    </a>
+{% endblock %}
