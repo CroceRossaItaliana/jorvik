@@ -116,6 +116,10 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
         return "/attivita/scheda/%d/cancella/" % (self.pk,)
 
     @property
+    def url_cancella_gruppo(self):
+        return "/attivita/scheda/%d/cancella-gruppo/" % (self.pk,)
+
+    @property
     def link(self):
         return "<a href='%s'>%s</a>" % (
             self.url, self.nome
