@@ -560,7 +560,7 @@ class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     class Meta:
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
-        ordering = ['stato', 'persona__nome', 'persona__cognome']
+        ordering = ('stato', 'persona__cognome', 'persona__nome')
         index_together = [
             ['persona', 'turno'],
             ['persona', 'turno', 'stato'],

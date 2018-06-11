@@ -7,7 +7,7 @@ from django.db.models import Sum, Q
 from django.shortcuts import redirect, get_object_or_404
 from django.utils.safestring import mark_safe
 
-from anagrafica.costanti import REGIONALE
+from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione, Riserva, \
     Trasferimento
@@ -1276,13 +1276,18 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
 def us_tesserini_emissione(request, me):
     sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
 
+    sedi = Sede.objects.filter(id__in=sedi.values_list('id', flat=True))
+    # Comitati Locali e Provinciali.
+    sedi_espandi = sedi.espandi(pubblici=True).comitati().exclude(estensione__in=[NAZIONALE, REGIONALE])
+
     tesserini = Tesserino.objects.none()
 
-    modulo = ModuloFiltraEmissioneTesserini(request.POST or None)
+    modulo = ModuloFiltraEmissioneTesserini(request.POST or None, sedi=sedi_espandi)
     modulo_compilato = True if request.POST else False
 
     if modulo.is_valid():
         stato_emissione = modulo.cleaned_data['stato_emissione']
+        sedi_selezionate = modulo.cleaned_data['sedi'].espandi(pubblici=True)
         stato_emissione_q = Q(stato_emissione__in=stato_emissione)
         if '' in stato_emissione:
             stato_emissione_q |= Q(stato_emissione__isnull=True)
@@ -1297,6 +1302,11 @@ def us_tesserini_emissione(request, me):
             tipo_richiesta__in=modulo.cleaned_data['tipo_richiesta'],
             stato_richiesta__in=modulo.cleaned_data['stato_richiesta']
         ).order_by(modulo.cleaned_data['ordine'])
+
+        # Ottiene oggetto Q per tutte le appartenenze attuali come Volontario in una delle Sedi selezionate.
+        q = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO, sede__in=sedi_selezionate) \
+            .via("persona__appartenenze")
+        tesserini = tesserini.filter(q)
 
     contesto = {
         "tesserini": tesserini,
