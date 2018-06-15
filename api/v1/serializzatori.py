@@ -15,7 +15,7 @@ def luogo(comune, stato, provincia=None, cap=None,
             "stato": str(stato)}
 
     if provincia:
-        dati.update({"provicina": provincia})
+        dati.update({"provincia": provincia})
 
     if cap:
         dati.update({"cap": cap})
