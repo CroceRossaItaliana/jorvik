@@ -1,0 +1,35 @@
+<div class="modal fade" role="dialog" aria-labelledby="privacy_modal" aria-hidden="true" id="privacy_modal">
+    <div class="modal-dialog modal-sm" style="width:80vw;">
+        <div class="modal-content">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">Informativa sul trattamento dei dati personali</h4>
+                </div>
+
+                <div class="modal-body" style="height:60vh; overflow: auto;">
+
+                    {% include "base_privacy_policy.html" %}
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="onConfirmClicked()">Accetta e procedi</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var redirectUrl = '';
+    $('#privacy_modal').on('show.bs.modal', function (event) {
+         redirectUrl=$(event.relatedTarget).attr('data-redirect');
+    });
+
+    var onConfirmClicked = function(){
+        window.open(redirectUrl, '_blank');
+    };
+
+</script>
