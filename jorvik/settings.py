@@ -6,6 +6,8 @@ Documentazione config.: https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 from django.core.urlresolvers import reverse_lazy
 
+from api.settings import OAUTH2_PROVIDER
+
 try:
     import configparser
 except ImportError:
@@ -33,7 +35,8 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     # Librerie terze
     'nocaptcha_recaptcha',
-    # 'oauth2_provider',
+    'oauth2_provider',
+    'corsheaders',
     'mptt',
     # Moduli interni
     'base',
@@ -71,6 +74,7 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_totp',
     'otp_yubikey',
     'two_factor',
+    'rest_framework',
 ]
 
 
@@ -102,6 +106,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'two_factor.middleware.threadlocals.ThreadLocals',
     'autenticazione.two_factor.middleware.Require2FA',
+    'corsheaders.middleware.CorsMiddleware',
 )
 
 # Imposta anagrafica.Utenza come modello di autenticazione
@@ -388,3 +393,13 @@ FORMAZIONE_VALIDITA_INVITI = 7
 
 POSTA_MASSIVA_TIMEOUT = 30
 DATE_FORMAT = '%d/%m/%Y'
+
+CORS_ORIGIN_ALLOW_ALL = True
+
+# API: permetti autenticazione tramite OAuth 2.0
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.ext.rest_framework.OAuth2Authentication',
+        'rest_framework.authentication.SessionAuthentication',
+    )
+}

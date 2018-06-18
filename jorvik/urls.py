@@ -9,6 +9,7 @@ from django.contrib import admin
 from django.contrib.auth.views import password_change, password_change_done
 from django.shortcuts import redirect
 from django.views.i18n import javascript_catalog
+from oauth2_provider import views as oauth2_provider_views
 
 import anagrafica.viste
 import articoli.viste
@@ -25,7 +26,7 @@ import ufficio_soci.viste
 import veicoli.viste
 from anagrafica.forms import ModuloModificaPassword
 from autenticazione.funzioni import pagina_privata, pagina_privata_no_cambio_firma
-from jorvik.settings import MEDIA_ROOT
+from jorvik.settings import MEDIA_ROOT, DEBUG
 
 from autenticazione.two_factor.urls import urlpatterns as tf_urls
 
@@ -328,6 +329,18 @@ urlpatterns = [
     url(r'^filer/', include('filer.urls')),
     url(r'^filebrowser_filer/', include('ckeditor_filebrowser_filer.urls')),
     url(r'^jsi18n/$', javascript_catalog, js_info_dict, name='javascript-catalog'),
+
     # OAuth 2.0
-    # url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    #url(r'^o/authorize/$', oauth2_provider_views.AuthorizationView.as_view(), name="authorize"),
+    #url(r'^o/token/$', oauth2_provider_views.TokenView.as_view(), name="token"),
+    #url(r'^o/revoke_token/$', oauth2_provider_views.RevokeTokenView.as_view(), name="revoke-token"),
+
+    # REST api
+    url(r'^api/', include('api.urls', namespace='api')),
+
 ]
+
+if DEBUG:
+    urlpatterns += [url(r'^api-auth/', include('rest_framework.urls')),]
+
