@@ -34,6 +34,13 @@ class FiltroSegmentoQuerySet(models.QuerySet):
         :param utente: Utente su cui filtrare gli oggetti
         :return: Queryset filtrato
         """
+        for articolo_segmento in self:
+            # se il segmento è AB ovvero "Tutti i volontari di una regione"
+            if articolo_segmento.segmento == 'AB':
+                sedi = [sede.id for sede in articolo_segmento.sede.esplora()]
+                # se la sede della persona è nella regione
+                if utente.segmenti_collegati[len(utente.segmenti_collegati) - 1]['sede'].id in sedi:
+                    utente.segmenti_collegati[len(utente.segmenti_collegati) - 1]['sede'] = articolo_segmento.sede.esplora()[0]
         filtri = self._get_filtri(utente.segmenti_collegati)
         return self.filter(filtri)
 
