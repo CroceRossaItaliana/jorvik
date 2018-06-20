@@ -155,6 +155,14 @@ def attivita_organizza(request, me):
         attivita.estensione = attivita.sede.comitato
         attivita.save()
 
+        # Crea gruppo per questa specifica attività se la casella viene selezionata.
+        crea_gruppo = modulo.cleaned_data['gruppo']
+        if crea_gruppo:
+            area = attivita.area
+            Gruppo.objects.create(nome=attivita.nome, sede=attivita.sede, obiettivo=area.obiettivo,
+                                  attivita=attivita, estensione=attivita.estensione.estensione,
+                                  area=area)
+
         if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
             # Io sono il referente.
             attivita.aggiungi_delegato(REFERENTE, me, firmatario=me, inizio=poco_fa())
@@ -335,9 +343,19 @@ def attivita_scheda_cancella(request, me, pk):
         return errore_generico(request, me, titolo="Attività non cancellabile",
                                messaggio="Questa attività non può essere cancellata.")
 
+    titolo_messaggio = "Attività cancellata"
+    testo_messaggio = "L'attività è stata cancellata con successo."
+    if 'cancella-gruppo' in request.path.split('/'):
+        try:
+            gruppo = Gruppo.objects.get(attivita=attivita)
+            gruppo.delete()
+            titolo_messaggio = "Attività e gruppo cancellati"
+            testo_messaggio = "L'attività e il gruppo associato sono stati cancellati con successo."
+        except Gruppo.DoesNotExist:
+            testo_messaggio = "L'attività è stata cancellata con successo (non esisteva un gruppo associato a quest'attività)."
     attivita.delete()
-    return messaggio_generico(request, me, titolo="Attività cancellata",
-                              messaggio="L'attività è stata cancellata con successo.",
+    return messaggio_generico(request, me, titolo=titolo_messaggio,
+                              messaggio=testo_messaggio,
                               torna_titolo="Gestione attività", torna_url="/attivita/gestisci/")
 
 
