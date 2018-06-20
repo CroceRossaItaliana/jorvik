@@ -12,7 +12,7 @@ __author__ = 'alfioemanuele'
 
 RAW_ID_FIELDS_CORSOBASE = ['sede', 'locazione',]
 RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE = ['persona', 'corso', 'destinazione',]
-RAW_ID_FIELDS_INVITOCORSOBASE = ['persona', 'corso',]
+RAW_ID_FIELDS_INVITOCORSOBASE = ['persona', 'corso', 'invitante',]
 RAW_ID_FIELDS_LEZIONECORSOBASE = ['corso',]
 RAW_ID_FIELDS_ASSENZACORSOBASE = ['lezione', 'persona', 'registrata_da',]
 RAW_ID_FIELDS_ASPIRANTE = ['persona', 'locazione',]
