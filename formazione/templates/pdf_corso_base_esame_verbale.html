@@ -7,7 +7,7 @@
 <div lang="it-IT" text="#000000" dir="ltr" style=" line-height: 150%; background: transparent; padding-top: 0.3cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
     <!-- Logo CRI -->
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
-        <img src="{% static 'img/Emblema_CRI.png' %}" name="LogoCri" align="middle" width="300" height="300">
+        <img src="{% static "img/Emblema_CRI.png" %}" name="LogoCri" align="middle" width="300" height="270">
         <br/>
         <font face="Arial, sans-serif" style="font-size: 9pt" color="#cc0000">
             {{ corso.sede.comitato }}
@@ -27,10 +27,9 @@
     </p>
     <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
         <br/>
-        <br/>
     </p>
     <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
-        Nel giorno {{ corso.data_esame|date:"D" }} del mese di {{ corso.data_esame|date:"M" }} dell'anno {{ corso.data_esame|date:"Y" }},
+        Nel giorno {{ corso.data_esame|date:"I" }} del mese di {{ corso.data_esame|date:"F" }} dell'anno {{ corso.data_esame|date:"Y" }},
         nei locali del {{ corso.sede }}, siti in {{ corso.locazione.comune }},
         {{ corso.locazione.via }}, n. {{ corso.locazione.civico }}, ai sensi del Regolamento sul
         Corso di Formazione per Volontari della C.R.I. attualmente vigente , si è riunita la Commissione
@@ -48,7 +47,7 @@
         </li>
         <li>
             <div>
-                Docente del corso che ha trattato almeno una delle lezioni sulle attività della C.R.I. e del Movimento Internazionale di croce Rossa e Mezzaluna Rossa:________________________________
+                Docente del corso che ha trattato almeno una delle lezioni sulle attività della C.R.I. e del Movimento Internazionale di croce Rossa e Mezzaluna :________________________________
             </div>
         </li>
     </ul>
@@ -62,9 +61,7 @@
         Sono stati esaminati n. {{ numero_aspiranti }} aspiranti Volontari, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione Esaminatrice, sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati.
     </p>
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%; page-break-before: always">
-        <span class="sd-abs-pos" style="position: absolute; top: 1.53cm; left: 0cm; width: 65px">
-            <img src="{% static 'img/Emblema_CRI.png' %}" name="LogoCri" align="middle" width="300" height="300">
-        </span>
+        <img src="{% static "img/Emblema_CRI.png" %}" name="LogoCri" align="middle" width="300" height="270">
     </p>
     <p class="western" align="center" style="margin-bottom: 0.35cm; line-height: 150%">
         <font size="4" style="font-size: 14pt">
@@ -96,6 +93,7 @@
                 <th>Cognome e Nome</th>
                 <th>Luogo di Nascita</th>
                 <th>Data di Nascita</th>
+                <th>Codice fiscale</th>
                 <th>Esito</th>
             </tr>
         </thead>
@@ -105,6 +103,7 @@
                 <td>{{ p.persona.cognome }} {{ p.persona.nome }}</td>
                 <td>{{ p.persona.comune_nascita }}</td>
                 <td>{{ p.persona.data_nascita|date:"SHORT_DATE_FORMAT" }}</td>
+                <td>{{ p.persona.codice_fiscale }}</td>
                 <td><strong>{{ p.get_esito_esame_display }}</strong></td>
             </tr>
         {% endfor %}
