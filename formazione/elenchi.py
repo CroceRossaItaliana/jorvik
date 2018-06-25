@@ -1,7 +1,7 @@
 from django.db.models import Q
 
 from anagrafica.models import Persona
-from formazione.models import InvitoCorsoBase, PartecipazioneCorsoBase
+from formazione.models import InvitoCorsoBase, PartecipazioneCorsoBase, Aspirante
 from ufficio_soci.elenchi import ElencoVistaAnagrafica
 
 
@@ -11,8 +11,18 @@ class ElencoPartecipantiCorsiBase(ElencoVistaAnagrafica):
         return 'formazione_elenchi_inc_iscritti.html'
 
     def excel_colonne(self):
+        # stato_iscritto ritorna se la persona è iscritta o invitata al corso.
+        def stato_iscritto( persona_id, self ):
+            try:
+                aspirante = persona_id.aspirante
+            except Aspirante.DoesNotExist:
+                aspirante = None
+            if not aspirante or self.args[0][0].pk not in aspirante.inviti_attivi:
+                return "Iscritto"
+            else:
+                return "Invitato"
         return super(ElencoPartecipantiCorsiBase, self).excel_colonne() + (
-            ("Stato", lambda p: 'Iscritto' if not p.aspirante or self.args[0][0].pk not in p.aspirante.inviti_attivi else 'Invitato'),
+            ("Stato", lambda p: stato_iscritto(p,self)),
         )
 
     def risultati(self):

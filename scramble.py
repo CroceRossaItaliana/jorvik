@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os
@@ -28,6 +29,7 @@ from base.geo import Locazione
 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Estensione
 from attivita.models import Attivita, Area
+from posta.models import Messaggio
 import argparse
 
 
@@ -40,6 +42,8 @@ parser.add_argument('--membri-sede', dest='membri_sedi', action='append',
 parser.add_argument('--dati-di-esempio', dest='esempio', action='store_const',
                     default=False, const=True,
                     help='installa dei dati di esempio')
+parser.add_argument('--email-di-esempio', dest='email', type=int, default=0,
+                    help='installa delle email di esempio per test coda celery')
 parser.add_argument('--reset', dest='reset', action='store_true',
                     help='cancella i dati prima di caricare quelli di esempio. Funziona solo con --dati-di-esempio')
 parser.add_argument('--aggiorna-province', dest='province', action='store_const',
@@ -299,7 +303,7 @@ if args.esempio:
                         if not Utenza.objects.filter(email="supporto@gaia.cri.it").exists():
                             utenza = Utenza.objects.create(
                                 persona=persona, email="supporto@gaia.cri.it",
-                                password='pbkdf2_sha256$20000$ldk8aPLgcMXK$Cwni1ubmmKpzxO8xM75ZuwNR+k6ZHA5JTVxJFbgIzgo='
+                                password='pbkdf2_sha256$24000$vuuP6g3dJTyz$55k2PL/NCVk2j4T+cvA9pGeIkFRT2lxKMbjFLZeYR3Y='
                             )
                 elif indice == 1:
                     d = Delega.objects.create(persona=persona, tipo=UFFICIO_SOCI, oggetto=sede, inizio=poco_fa())
@@ -336,6 +340,24 @@ if args.province:
 
         print("-- %s\t%d\t%s" % (pv, num, provincia))
 
+if args.email:
+    print("Installo emails di esempio")
+    # setup di celery per poter accodare
+    from jorvik.celery import app
 
+    if args.reset:
+        Messaggio.objects.all().delete()
+
+    persone = iter(Persona.objects.all().order_by('?'))
+    for n in range(args.email):
+        try:
+            mittente = next(persone)
+            destinatari = [next(persone) for _ in range(random.randint(0, 5))]
+            job = Messaggio.costruisci_e_accoda(oggetto='Prova email numero {}'.format(n + 1),
+                                                modello='test_email.html',
+                                                mittente=mittente,
+                                                destinatari=destinatari)
+        except StopIteration:
+            persone = iter(Persona.objects.all().order_by('?')) # rewind
 
 print("Finita esecuzione.")

@@ -1,0 +1,12 @@
+[celery]
+# Questa sezione accetta le opzioni di celery documentate all'URI
+# http://docs.celeryproject.org/en/latest/userguide/configuration.html
+
+#broker_url = redis://:password@hostname:port/db_number
+
+broker_url = redis://localhost
+result_backend = redis://localhost
+
+[riaccoda]
+# 3600s = 1h
+periodo = 3600
