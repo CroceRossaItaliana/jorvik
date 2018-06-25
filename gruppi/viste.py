@@ -6,7 +6,7 @@ from anagrafica.models import Sede, Persona
 from anagrafica.models import Appartenenza as App
 from anagrafica.permessi.costanti import GESTIONE_GRUPPO, MODIFICA, ERRORE_PERMESSI
 from autenticazione.funzioni import pagina_privata
-from base.errori import messaggio_generico
+from base.errori import messaggio_generico, messaggio_conferma
 from base.utils import poco_fa
 from gruppi.elenchi import ElencoMembriGruppo
 from gruppi.models import Gruppo, Appartenenza
@@ -35,14 +35,16 @@ def attivita_gruppo(request, me):
     modulo_attivita_non_specifica = ModuloGruppoNonSpecifico(request.POST or None, area_permessi=area_permessi,
                                                              request=request.POST)
 
+    from anagrafica.permessi.applicazioni import REFERENTE_GRUPPO
     if 'specifico' in request.POST:
         if modulo_attivita_specifica.is_valid():
             attivita_specifica = modulo_attivita_specifica.cleaned_data['attivita_specifica']
             area = Area.objects.get(id=attivita_specifica.area_id)
-            Gruppo.objects.create(nome=attivita_specifica.nome, sede=attivita_specifica.sede,
+            gruppo = Gruppo.objects.create(nome=attivita_specifica.nome, sede=attivita_specifica.sede,
                                   obiettivo=area.obiettivo, attivita=attivita_specifica,
                                   estensione=attivita_specifica.estensione.estensione,
                                   area=attivita_specifica.area)
+            gruppo.aggiungi_delegato(REFERENTE_GRUPPO, me)
             return messaggio_generico(request, None,
                                       titolo="Gruppo creato",
                                       messaggio="Hai creato un gruppo per un attività specifica",
@@ -53,8 +55,9 @@ def attivita_gruppo(request, me):
         if modulo_attivita_non_specifica.is_valid():
             nome_gruppo = modulo_attivita_non_specifica.cleaned_data['nome']
             area = modulo_attivita_non_specifica.cleaned_data['area']
-            Gruppo.objects.create(nome=nome_gruppo, sede=area.sede, obiettivo=area.obiettivo,
+            gruppo = Gruppo.objects.create(nome=nome_gruppo, sede=area.sede, obiettivo=area.obiettivo,
                                   attivita=None, estensione=area.sede.estensione, area_id=area.id)
+            gruppo.aggiungi_delegato(REFERENTE_GRUPPO, me)
             return messaggio_generico(request, None,
                                       titolo="Gruppo creato",
                                       messaggio="Hai creato un gruppo per un'area",
@@ -138,6 +141,27 @@ def attivita_gruppi_gruppo_abbandona(request, me, pk):
 
 @pagina_privata
 def attivita_gruppi_gruppo_elimina(request, me, pk):
+    """
+    Elimina un gruppo.
+    """
+    gruppo = get_object_or_404(Gruppo, pk=pk)
+
+    # Se non ho i permessi per eliminare il gruppo.
+    if not me.permessi_almeno(gruppo, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    return messaggio_conferma(request, me, titolo="Confermi eliminazione gruppo?",
+                              messaggio="Il gruppo '%s' sta per essere eliminato." % (
+                                  gruppo.nome,
+                              ), 
+			      torna_titolo="Torna a crea gruppo",
+                              torna_url="/attivita/gruppo/",
+			      esegui_titolo="Procedi ed elimina",
+			      esegui_url="/attivita/gruppi/%s/elimina_conferma" % gruppo.id)
+
+
+@pagina_privata
+def attivita_gruppi_gruppo_elimina_conferma(request, me, pk):
     """
     Elimina un gruppo.
     """
