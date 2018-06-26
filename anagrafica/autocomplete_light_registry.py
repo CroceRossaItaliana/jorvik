@@ -128,12 +128,16 @@ class IscrivibiliCorsiAutocompletamento(PersonaAutocompletamento):
     }
 
     def choices_for_request(self):
+        volontari = self.model.objects.filter(
+            Q(Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).via("appartenenze")))
+
         self.choices = self.choices.filter(
             Q(Appartenenza.query_attuale(membro=Appartenenza.SOSTENITORE).via("appartenenze")) |
             Q(aspirante__isnull=False)
         ).exclude(
-            Q(Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).via("appartenenze"))
+            pk__in=volontari.values_list('pk', flat=True)
         ).order_by('nome', 'cognome', 'codice_fiscale').distinct('nome', 'cognome', 'codice_fiscale')
+
         return super(PersonaAutocompletamento, self).choices_for_request()
 
 
