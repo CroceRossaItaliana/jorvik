@@ -2,6 +2,21 @@
 
 {% load static %}
 
+{% block css_extra %}
+    table.elenco {
+        border: 1px solid #bbb;
+        width: 100%;
+        text-align: left;
+        font-size: 11pt;
+        border-collapse: collapse;
+    }
+
+    table.elenco td, th {
+        border: 1px solid;
+        padding: 6px 4px;
+    }
+{% endblock %}
+
 {% block corpo %}
 
 <div lang="it-IT" text="#000000" dir="ltr" style=" line-height: 150%; background: transparent; padding-top: 0.3cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
@@ -33,7 +48,7 @@
         nei locali del {{ corso.sede }}, siti in {{ corso.locazione.comune }},
         {{ corso.locazione.via }}, n. {{ corso.locazione.civico }}, ai sensi del Regolamento sul
         Corso di Formazione per Volontari della C.R.I. attualmente vigente , si è riunita la Commissione
-        Esaminatrice convocata con O.P. n° {{ corso.op_convocazione }} del {{ corso.data_convocazione }} e composta da:</p>
+        Esaminatrice convocata con protocollo n° {{ corso.op_convocazione }} del {{ corso.data_convocazione }} e composta da:</p>
     <ul>
         <li>
             <div>
@@ -52,7 +67,7 @@
         </li>
     </ul>
     <p class="western" align="justify" style="margin-bottom: 0.35cm; line-height: 150%">
-        per sottoporre ad esame finale i candidati del Corso di Formazione per Volontari della Croce Rossa Italiana attivato con O.P n° {{ corso.op_attivazione }} del {{ corso.data_attivazione }}. L’elenco dei candidati, allegato alla presente, è parte integrante del presente verbale.
+        per sottoporre ad esame finale i candidati del Corso di Formazione per Volontari della Croce Rossa Italiana attivato con protocollo n° {{ corso.op_attivazione }} del {{ corso.data_attivazione }}. L’elenco dei candidati, allegato alla presente, è parte integrante del presente verbale.
     </p>
     <p class="western" align="justify" style="margin-bottom: 0.35cm; line-height: 150%">
         Gli esaminandi vengono sottoposti ad una prova orale ed ad una prova pratica nell'applicazione delle tecniche di primo soccorso senza particolari ausili tecnici, chiamata di soccorso e verifica attitudini all'impiego nelle varie attività C.R.I.
@@ -86,30 +101,28 @@
             <b>ELENCO CANDIDATI IDONEI/NON IDONEI/ASSENTI</b>
         </font>
     </p>
-    <p class="western" style="margin-bottom: 0.35cm; line-height: 150%"><br><br>
-        <table class="table table-bordered table-striped">
-        <thead>
-            <tr>
-                <th>Cognome e Nome</th>
-                <th>Luogo di Nascita</th>
-                <th>Data di Nascita</th>
-                <th>Codice fiscale</th>
-                <th>Esito</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for p in partecipazioni %}
-            <tr>
-                <td>{{ p.persona.cognome }} {{ p.persona.nome }}</td>
-                <td>{{ p.persona.comune_nascita }}</td>
-                <td>{{ p.persona.data_nascita|date:"SHORT_DATE_FORMAT" }}</td>
-                <td>{{ p.persona.codice_fiscale }}</td>
-                <td><strong>{{ p.get_esito_esame_display }}</strong></td>
-            </tr>
-        {% endfor %}
-        </tbody>
-        </table>
-    </p>
+    <table class="elenco">
+    <thead>
+        <tr>
+            <th>Cognome e Nome</th>
+            <th>Luogo di Nascita</th>
+            <th>Data di Nascita</th>
+            <th>Codice fiscale</th>
+            <th>Esito</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for p in partecipazioni %}
+        <tr>
+            <td>{{ p.persona.cognome }} {{ p.persona.nome }}</td>
+            <td>{{ p.persona.comune_nascita }}</td>
+            <td>{{ p.persona.data_nascita|date:"SHORT_DATE_FORMAT" }}</td>
+            <td>{{ p.persona.codice_fiscale }}</td>
+            <td><b>{{ p.get_esito_esame_display }}</b></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    </table>
     <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
         <br/>
         <br/>

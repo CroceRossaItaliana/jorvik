@@ -365,15 +365,19 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         """
         Genera il verbale del corso.
         """
+        def key_cognome(elem):
+            return elem.persona.cognome
+
         if not self.ha_verbale:
             raise ValueError("Questo corso non ha un verbale.")
 
+        partecipazioni = self.partecipazioni_confermate()
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva(
             nome="Verbale Esame del Corso Base %d-%d.pdf" % (self.progressivo, self.anno),
             corpo={
                 "corso": self,
-                "partecipazioni": self.partecipazioni_confermate(),
+                "partecipazioni": sorted(partecipazioni, key=key_cognome),
                 "numero_idonei": self.idonei().count(),
                 "numero_non_idonei": self.non_idonei().count(),
                 "numero_aspiranti": self.partecipazioni_confermate().count(),

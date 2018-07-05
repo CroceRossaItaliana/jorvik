@@ -4,7 +4,7 @@
 
 {% block corpo %}
 
-<div style="font-family: 'Arial, sans-serif', 'Tahoma'; padding: 10px 10px 10px 10px; color: #000; font-size: 12pt">
+<div style="font-family: 'Arial, sans-serif', 'Tahoma'; padding: 8px 10px 8px 10px; color: #000; font-size: 12pt">
     <!-- Logo CRI -->
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
         <img src="{% static 'img/Emblema_CRI.png' %}" name="LogoCri" align="middle" width="300" height="270">
@@ -21,58 +21,45 @@
         </font>
     </p>
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
-        <font face="Arial, sans-serif"size="4" style="font-size: 14pt">
+        <font face="Arial, sans-serif"size="4" style="font-size: 12pt">
             <b>Verbale di Esame Finale</b>
         </font>
     </p>
     <p class="western" align="center" style="margin-top: 0.10cm; margin-bottom: 0.25cm; line-height: 115%">
-        <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
+        <font face="Arial, sans-serif" size="2" style="font-size: 11pt">
             <u>VALUTAZIONE PERSONALE</u>
         </font>
     </p>
     <p class="western" align="center" style="margin-bottom: 0.35cm; line-height: 115%">
-        <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
+        <font face="Arial, sans-serif" size="2" style="font-size: 11pt">
             Verbale n. <b> {{ corso.progressivo }}</b> del <b> {{ corso.data_esame|date:"DATE_FORMAT" }}</b>
         </font>
         <br/>
     </p>
     <p class="western" style="margin-bottom: 0cm; line-height: 115%">
-        <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
+        <font face="Arial, sans-serif" size="1" style="font-size: 10pt">
             Candidato/a <b> {{ persona.nome_completo }}</b> Codice Fiscale: <b> {{ persona.codice_fiscale }}
-            <br /></b>nato/a a <b> {{ persona.luogo_nascita }}</b> il <b> {{ persona.data_nascita|date:"DATE_FORMAT" }}</b>
+            </b>nato/a a <b> {{ persona.luogo_nascita }}</b> il <b> {{ persona.data_nascita|date:"DATE_FORMAT" }}</b>
         </font>
     </p>
     <p class="western" style="margin-bottom: 0.25cm; line-height: 115%">
-        <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
+        <font face="Arial, sans-serif" size="2" style="font-size: 11pt">
             <i><b>I PARTE: La Croce Rossa</b></i>
         </font>
-    </p>
-    <p class="western" style="margin-bottom: 0.25cm; line-height: 115%">
-        <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
+        <br/>
+        <font face="Arial, sans-serif" size="2" style="font-size: 10pt">
             <span style="font-weight: normal">
-                <b>{{ partecipazione.get_esito_parte_1_display }}</b>
+                <b>{{ partecipazione.get_esito_parte_1_display }}. </b>Argomenti: {{ partecipazione.argomento_parte_1 }}
             </span>
         </font>
     </p>
-    <p class="western" style="margin-bottom: 0cm; line-height: 100%">
-        <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
-            Argomenti: {{ partecipazione.argomento_parte_1 }}
-        </font>
-    </p>
-    <br/>
     <p class="western" style="margin-bottom: 0.25cm; line-height: 115%">
-        <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
+        <font face="Arial, sans-serif" size="2" style="font-size: 11pt">
             <i><b>II PARTE: gesti salvavita ed elementi di Primo Soccorso</b></i>
         </font>
-    </p>
-    <p class="western" style="margin-bottom: 0.25cm; line-height: 115%">
-        <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
-            <b>{{ partecipazione.get_esito_parte_2_display }}</b>
-        </font>
-    </p>
-    <p class="western" style="margin-bottom: 0cm; line-height: 100%">
-        <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
-            Argomenti: {{ partecipazione.argomento_parte_2 }}
+        <br/>
+        <font face="Arial, sans-serif" size="2" style="font-size: 10pt">
+            <b>{{ partecipazione.get_esito_parte_2_display }}. </b> Argomenti: {{ partecipazione.argomento_parte_2 }}
         </font>
     </p>
     <table>
@@ -80,7 +67,7 @@
             <td valign="top">
                 {% if partecipazione.extra_1 %}X{% else %}_{% endif %}
             </td>
-            <td>
+            <td style="font-size: 10pt">
                 <b>Prova pratica su gesti salvavita ed elementi di Primo Soccorso sostituita da colloquio </b>(ai sensi dell’art. 10.3 del Regolamento sul Corso di Formazione per Volontari della Croce Rossa Italiana)
             </td>
         </tr>
@@ -88,32 +75,32 @@
             <td valign="top">
                 <br/>{% if partecipazione.extra_2 %}X{% else %}_{% endif %}
             </td>
-            <td>
+            <td style="font-size: 10pt">
                 <br/><b>Verifica effettuata solo sulla Parte I del programma del corso </b>(ai sensi dell’art. 10.4 del Regolamento sul Corso di Formazione per Volontari della Croce Rossa Italiana)
             </td>
         </tr>
     </table>
+    <br/>
     <p class="western" style="margin-bottom: 0.25cm; line-height: 115%">
-        <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
+        <font face="Arial, sans-serif" size="2" style="font-size: 11pt">
             <i><b>ESITO FINALE</b></i>
         </font>
-    </p>
-    <p class="western" style="margin-bottom: 0.25cm; line-height: 115%">
-        <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
+        <br/>
+        <font face="Arial, sans-serif" size="1" style="font-size: 10pt">
             In base ai risultati ottenuti dalle domande teoriche e nelle prove pratiche, {{ persona.nome_completo }} è risultat{{ persona.genere_o_a }}
         </font>
     </p>
     <p class="western" align="center" style="margin-bottom: 0.35cm; line-height: 115%">
-        <font face="Arial, sans-serif" size="5" style="font-size: 16pt">
+        <font face="Arial, sans-serif" size="4" style="font-size: 14pt">
             <b>{{ partecipazione.get_esito_esame_display }}</b>
         </font>
     </p>
     <p class="western" style="margin-bottom: 0.20cm; line-height: 115%">
-        <font face="Arial, sans-serif" size="3" style="font-size: 12pt">
+        <font face="Arial, sans-serif" size="2" style="font-size: 10pt">
             <i><b>La Commissione Esaminatrice</b></i>
         </font>
     </p>
-    <table>
+    <table style="font-size: 10pt">
         <tr>
             <td>
                 _____________________________________
