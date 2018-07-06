@@ -369,6 +369,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         """
         Genera il fogli firme delle lezioni del corso.
         """
+        def key_cognome(elem):
+           return elem.cognome
 
         iscritti = [partecipazione.persona for partecipazione in self.partecipazioni_confermate()]
 
@@ -380,7 +382,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 nome="Firme lezione %s.pdf" % lezione.nome,
                 corpo={
                     "corso": self,
-                    "iscritti": iscritti,
+                    "iscritti": sorted(iscritti, key=key_cognome),
                     "lezione": lezione,
                     "data": lezione.inizio,
                 },
