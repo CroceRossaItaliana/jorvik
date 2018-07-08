@@ -71,7 +71,6 @@ def attivita_gruppo(request, me):
     }
     return 'attivita_gruppo.html', contesto
 
-
 @pagina_privata
 def attivita_gruppi(request, me):
     """
@@ -83,11 +82,11 @@ def attivita_gruppi(request, me):
     # Attività a cui partecipo.
     partecipazioni_attivita_specifice = Partecipazione.objects.filter(persona=me, confermata=True
                                                                      ).values_list('turno', flat=True)
-    attivita_specifiche = Turno.objects.filter(id=partecipazioni_attivita_specifice
+    attivita_specifiche = Turno.objects.filter(id__in=partecipazioni_attivita_specifice
                                               ).values_list('attivita', flat=True)
 
     # Gruppi disponibili per le attività a cui partecipo.
-    gruppi_specifici_disponibili = Gruppo.objects.filter(attivita=attivita_specifiche)
+    gruppi_specifici_disponibili = Gruppo.objects.filter(attivita__in=attivita_specifiche)
 
     miei_gruppi = Gruppo.objects.filter(Appartenenza.query_attuale().via("appartenenze"),
                                         appartenenze__persona=me)
