@@ -184,6 +184,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return normalizza_nome(self.nome + " " + self.cognome)
 
+    @property
+    def cognome_nome_completo(self):
+        """
+        Restituisce il nome e cognome
+        :return: "Nome Cognome".
+        """
+        return normalizza_nome(self.cognome + " " + self.nome)
+
+
     # Q: Qual e' l'email di questa persona?
     # A: Una persona puo' avere da zero a due indirizzi email.
     #    - Persona.email_contatto e' quella scelta dalla persona per il contatto.
