@@ -12,7 +12,7 @@ from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.costanti import NAZIONALE
 from anagrafica.models import Sede
-from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE
+from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE, REFERENTE_GRUPPO
 from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO, \
     GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE, \
     GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
@@ -159,9 +159,11 @@ def attivita_organizza(request, me):
         crea_gruppo = modulo.cleaned_data['gruppo']
         if crea_gruppo:
             area = attivita.area
-            Gruppo.objects.create(nome=attivita.nome, sede=attivita.sede, obiettivo=area.obiettivo,
-                                  attivita=attivita, estensione=attivita.estensione.estensione,
-                                  area=area)
+            gruppo = Gruppo.objects.create(nome=attivita.nome, sede=attivita.sede, obiettivo=area.obiettivo,
+                                           attivita=attivita, estensione=attivita.estensione.estensione,
+                                           area=area)
+
+            gruppo.aggiungi_delegato(REFERENTE_GRUPPO, me)
 
         if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
             # Io sono il referente.
