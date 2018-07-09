@@ -67,12 +67,12 @@ table.elenco td:nth-child(2), th:nth-child(2) {
 
         <table class="elenco">
             <tr>
-                <th>Nome e Cognome</th>
+                <th>Cognome e Nome</th>
                 <th style="width: 50mm;">Firma</th>
             </tr>
     {% endif %}
             <tr>
-                <td>{{ iscritto }}</td>
+                <td>{{ iscritto.cognome_nome_completo }}</td>
                 <td>&nbsp;</td>
             </tr>
     {% if forloop.last or forloop.counter|divisibleby:16 %}
