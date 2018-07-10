@@ -1217,6 +1217,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                     attivi.append({'segmento': segmento, 'sede__isnull': True})
                     for sede in sedi_attuali:
                         attivi.append({'segmento': segmento, 'sede': sede})
+                        attivi.append({'sedi_sottostanti': True, 'sede': sede.genitore})
         return attivi
 
 
