@@ -4,7 +4,7 @@ from django.utils.encoding import force_text
 
 from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera, ProvvedimentoDisciplinare
 from attivita.models import Partecipazione
-from base.utils import filtra_queryset, testo_euro
+from base.utils import filtra_queryset, testo_euro, oggi
 from curriculum.models import TitoloPersonale
 from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote, ModuloElencoPerTitoli
 from datetime import date, datetime
@@ -442,11 +442,19 @@ class ElencoQuote(ElencoVistaSoci):
         attivi = membri == modulo.MEMBRI_VOLONTARI
         ordinari = membri == modulo.MEMBRI_ORDINARI
 
+        anno = modulo.cleaned_data['anno']
+
         try:
-            tesseramento = Tesseramento.objects.get(anno=modulo.cleaned_data.get('anno'))
+            tesseramento = Tesseramento.objects.get(anno=anno)
 
         except Tesseramento.DoesNotExist:  # Errore tesseramento anno non esistente
             raise ValueError("Anno di tesseramento non valido o gestito da Gaia.")
+
+        # Dobbiamo ridurre il set a tutti i volontari che sono, al giorno attuale, appartenenti a questa sede
+        # Nel caso di un anno passato, generiamo l'elenco al 31 dicembre. Nel caso dell'anno in corso,
+        # generiamo l'elenco al giorno attuale. Questo e' equivalente a:
+        #  giorno = min(31/dicembre/<anno selezionato>, oggi)
+        giorno_appartenenza = min(date(day=31, month=12, year=anno), oggi())
 
         if modulo.cleaned_data['tipo'] == modulo.VERSATE:
             origine = tesseramento.paganti(attivi=attivi, ordinari=ordinari)  # Persone con quote pagate
@@ -455,8 +463,10 @@ class ElencoQuote(ElencoVistaSoci):
             origine = tesseramento.non_paganti(attivi=attivi, ordinari=ordinari)  # Persone con quote NON pagate
 
         # Ora filtra per Sede
-        q = Appartenenza.query_attuale_in_anno(modulo.cleaned_data.get('anno'))
-        app = Appartenenza.objects.filter(pk__in=q).filter(sede__in=qs_sedi, membro=Appartenenza.VOLONTARIO)
+        q = Appartenenza.query_attuale(al_giorno=giorno_appartenenza,
+                                       membro=Appartenenza.VOLONTARIO)
+
+        app = Appartenenza.objects.filter(pk__in=q).filter(sede__in=qs_sedi)
         return origine.filter(appartenenze__in=app).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
@@ -474,7 +484,6 @@ class ElencoQuote(ElencoVistaSoci):
     def template(self):
         modulo = self.modulo_riempito
         return 'us_elenchi_inc_quote.html'
-
 
 
 class ElencoOrdinari(ElencoVistaSoci):

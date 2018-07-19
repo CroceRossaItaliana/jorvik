@@ -1,10 +1,30 @@
 {% extends 'us_vuota.html' %}
 
 
-{% load bootstrap3 %}
+{% load bootstrap3 l10n %}
 
 {% block pagina_titolo %}
     Nuova Ricevuta
+{% endblock %}
+
+{% block pagina_javascript %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function(){
+            var importo = {{ tesseramento.quota_sostenitore_value|unlocalize }};
+            $(document).on('click', '[name=tipo_ricevuta]', function(event) {
+                if ($('#id_tipo_ricevuta :selected').attr('value') === 'S') {
+                    $('#id_importo').attr('min', importo);
+                    $('#id_importo + .help-block').html('Il totale versato in euro, per un importo minimo di ' + importo + ' €.');
+                }
+                else {
+                    $('#id_importo').attr('min', 0.01);
+                    $('#id_importo + .help-block').html('Il totale versato in euro.');
+                }
+            });
+            $('[name=tipo_ricevuta]').trigger('click');
+        });
+    </script>
 {% endblock %}
 
 {% block app_contenuto %}
@@ -14,6 +34,16 @@
         <i class="fa fa-fw fa-info-circle"></i>
         Da questa pagina puoi registrare una nuova ricevuta generica, oppure una
          ricevuta del versamento di un Sostenitore CRI.
+    </p>
+    <p>
+        <i class="fa fa-fw fa-info-circle"></i>
+        Ricordati che:
+        <ul>
+            <li>Può diventare Sostenitore ogni persona che già non sia Volontario CRI e che decide di versare una quota, a partire da {% if tesseramento %}{{ tesseramento.quota_sostenitore }}{% endif %} €, ad un Comitato CRI. Un Sostenitore non è un Volontario e quindi non è un Socio CRI: il pagamento della quota da Sostenitore non dà diritto a nessun beneficio aggiuntivo alla persona in questione. Una persona può essere Sostenitore in più Comitati.</li>
+            <li>L'albo dei Sostenitori non è un libro Soci, nè una sua sezione: è l'elenco delle persone che sostengono economicamente il Comitato in quell'anno solare.</li>
+            <li>La quota da Sostenitore deve essere versata annualmente e la verifica del versamento è in capo ai Comitati CRI che si impegnano a rimuovere dall'elenco dei Sostenitori le persone che non hanno versato entro l'anno la quota prevista.</li>
+            <li>Se un Sostenitore diviene Volontario a seguito di un Corso Base, mantiene la qualifica fino al termine dell'anno solare per il quale ha versato la quota. Sarà cura del Comitato rimuovere la persona dall'elenco dei Sostenitori a fine anno.</li>
+        </ul>
     </p>
     <p>
         <i class="fa fa-fw fa-question-circle"></i>

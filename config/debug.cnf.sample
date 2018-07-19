@@ -4,15 +4,22 @@
 debug = 1
 
 # percorso del file di log relativo alla root del progetto es: ../log/debug.log per i log in /home/gaia/log/debug.log
-;debug_log =
+debug_log = log/debug.log
 
 [production]
 
 # Host permesso (quando debug spento)
 host = localhost
 
+# Opzionalmente, aggiungi l'IP del gateway/load balancer.
+# Questo e' necessario se il load balancer fa richieste dirette
+# per controllare la salute del server applicativo.
+#gateway = 127.0.0.1
+
 # Chiave segreta (qui di esempio)
 secret_key = nxtg7fptenicbiqqwaqtnxtg7fptenicbiqqwaqt
 
 [test]
-driver = firefox
+driver = remote
+url = http://selenium:4444/wd/hub
+browser = firefox

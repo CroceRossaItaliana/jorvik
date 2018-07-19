@@ -113,7 +113,7 @@ class SostenitoreAutocompletamento(PersonaAutocompletamento):
 
 class VolontarioSedeAutocompletamento(PersonaAutocompletamento):
     def choices_for_request(self):
-        sedi = [d.oggetto for d in self.request.user.persona.deleghe_attuali(tipo__in=(UFFICIO_SOCI, UFFICIO_SOCI_UNITA))]
+        sedi = self.request.user.persona.sedi_deleghe_attuali(tipo__in=(UFFICIO_SOCI, UFFICIO_SOCI_UNITA), espandi=True)
         self.choices = self.choices.filter(Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO, sede__in=sedi).via("appartenenze"))
         return super(VolontarioSedeAutocompletamento, self).choices_for_request()
 
@@ -128,12 +128,16 @@ class IscrivibiliCorsiAutocompletamento(PersonaAutocompletamento):
     }
 
     def choices_for_request(self):
+        volontari = self.model.objects.filter(
+            Q(Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).via("appartenenze")))
+
         self.choices = self.choices.filter(
             Q(Appartenenza.query_attuale(membro=Appartenenza.SOSTENITORE).via("appartenenze")) |
             Q(aspirante__isnull=False)
         ).exclude(
-            Q(Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).via("appartenenze"))
+            pk__in=volontari.values_list('pk', flat=True)
         ).order_by('nome', 'cognome', 'codice_fiscale').distinct('nome', 'cognome', 'codice_fiscale')
+
         return super(PersonaAutocompletamento, self).choices_for_request()
 
 

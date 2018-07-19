@@ -1,5 +1,5 @@
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
-from django.test import LiveServerTestCase
+from django.test import LiveServerTestCase, TestCase
 
 from base.utils_tests import sessione_utente, sessione_anonimo
 

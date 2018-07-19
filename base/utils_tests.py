@@ -11,7 +11,8 @@ from attivita.models import Area, Attivita, Turno, Partecipazione
 from autenticazione.models import Utenza
 from base.geo import Locazione
 from base.utils import poco_fa
-from jorvik.settings import DRIVER_WEB
+from jorvik.settings import SELENIUM_DRIVER, SELENIUM_URL, SELENIUM_BROWSER
+from ufficio_soci.models import Tesseramento
 
 
 def codice_fiscale(length=16):
@@ -38,6 +39,21 @@ def crea_persona():
     return p
 
 
+def crea_tesseramento(anno=None):
+    anno = anno or poco_fa().year
+    inizio_anno = poco_fa()
+    inizio_anno = inizio_anno.replace(day=1, month=1, hour=0, minute=0, second=0)
+    if anno:
+        inizio_anno = inizio_anno.replace(year=anno)
+    fine_soci = inizio_anno.replace(day=31, month=3, hour=23, minute=59, second=59)
+    t = Tesseramento.objects.create(
+        stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
+        anno=anno, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+        quota_aspirante=8, quota_sostenitore=8
+    )
+    return t
+
+
 def crea_utenza(persona, email="mario@rossi.it", password="prova"):
     u = Utenza(
         persona=persona,
@@ -50,13 +66,20 @@ def crea_utenza(persona, email="mario@rossi.it", password="prova"):
     return u
 
 
-def crea_sede(presidente=None, estensione=LOCALE, genitore=None):
+def crea_sede(presidente=None, estensione=LOCALE, genitore=None,
+              locazione=None):
     ESTENSIONE_DICT = dict(ESTENSIONE)
+    locazione = locazione or crea_locazione()
     s = Sede(
         nome="Com. " + ESTENSIONE_DICT[estensione] + " " + names.get_last_name(),
         tipo=Sede.COMITATO,
         estensione=estensione,
         genitore=genitore,
+        telefono='+3902020202',
+        email='comitato@prova.it',
+        codice_fiscale='01234567891',
+        partita_iva='01234567891',
+        locazione=locazione
     )
     s.save()
     if presidente is not None:
@@ -166,10 +189,11 @@ def crea_partecipazione(persona, turno):
     return p
 
 
-def crea_sessione(wait_time=7):
+def crea_sessione(wait_time=5):
     from splinter import Browser
-    browser = Browser(DRIVER_WEB, wait_time=wait_time)
-    browser.driver.set_window_size(1600, 1400)
+    browser = Browser(driver_name=SELENIUM_DRIVER, url=SELENIUM_URL,
+                      browser=SELENIUM_BROWSER,
+                      wait_time=wait_time)
     return browser
 
 

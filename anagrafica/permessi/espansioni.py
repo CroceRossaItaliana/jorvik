@@ -28,12 +28,13 @@ Questo file gestisce la espansione dei permessi in Gaia.
 
 
 def espandi_persona(persona, al_giorno=None):
-    from anagrafica.models import Persona, Appartenenza, Trasferimento, Estensione
+    from anagrafica.models import Persona, Appartenenza, Trasferimento, Estensione, Riserva
     from ufficio_soci.models import Quota, Tesserino
     try:
         return [
             (LETTURA,   Trasferimento.objects.filter(persona=persona)),
             (LETTURA,   Estensione.objects.filter(persona=persona)),
+            (LETTURA,   Riserva.objects.filter(persona=persona)),
             (LETTURA,   Quota.objects.filter(persona=persona)),
             (LETTURA,   Tesserino.objects.filter(persona=persona)),
         ]

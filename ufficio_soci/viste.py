@@ -7,7 +7,7 @@ from django.db.models import Sum, Q
 from django.shortcuts import redirect, get_object_or_404
 from django.utils.safestring import mark_safe
 
-from anagrafica.costanti import REGIONALE
+from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
 from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione, Riserva, \
     Trasferimento
@@ -876,7 +876,9 @@ def us_quote_nuova(request, me):
             "importo": tesseramento.importo_quota_volontario(),
             "riduzione": None
         }
-        modulo = ModuloQuotaVolontario(request.POST or None, initial=dati_iniziali, sedi=sedi)
+        modulo = ModuloQuotaVolontario(request.POST or None,
+                                       initial=dati_iniziali, sedi=sedi,
+                                       tesseramento=tesseramento)
 
         if modulo and modulo.is_valid():
 
@@ -899,13 +901,13 @@ def us_quote_nuova(request, me):
             elif appartenenza.sede not in sedi or comitato not in sedi:
                 modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
 
-            if not comitato.locazione:
+            elif not comitato.locazione:
                 return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un indirizzo "
                                                  "per la Sede del Comitato di %s. Il Presidente può gestire i dati "
                                                  "della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
 
-            if not comitato.codice_fiscale:
+            elif not comitato.codice_fiscale:
                 return errore_generico(request, me, titolo="Necessario impostare codice fiscale del Comitato",
                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un "
                                                  "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
@@ -960,6 +962,7 @@ def us_ricevute_nuova(request, me):
         if 'appena_registrata' in request.GET else None
 
     modulo = ModuloNuovaRicevuta(request.POST or None)
+    tesseramento = Tesseramento.ultimo_tesseramento()
 
     if modulo.is_valid():
 
@@ -970,6 +973,9 @@ def us_ricevute_nuova(request, me):
         data_versamento = modulo.cleaned_data['data_versamento']
 
         appartenenza = persona.appartenenze_attuali(al_giorno=data_versamento, sede__in=sedi).first()
+        appartenenza_sostenitore = persona.appartenenze_attuali(
+            al_giorno=data_versamento, sede__in=sedi, membro=Appartenenza.SOSTENITORE
+        ).first()
 
         comitato = None
 
@@ -985,7 +991,7 @@ def us_ricevute_nuova(request, me):
                                                 'come Volontario o Sostenitore per alla Sede o '
                                                 'partecipante confermato ad un corso base attivo.')
 
-        elif tipo_ricevuta == Quota.QUOTA_SOSTENITORE and (not appartenenza or appartenenza.membro != Appartenenza.SOSTENITORE):
+        elif tipo_ricevuta == Quota.QUOTA_SOSTENITORE and not appartenenza_sostenitore:
             modulo.add_error('persona', 'Questa persona non è registrata come Sostenitore CRI '
                                         'della Sede. Non è quindi possibile registrare la Ricevuta '
                                         'come Sostenitore CRI.')
@@ -1001,6 +1007,19 @@ def us_ricevute_nuova(request, me):
                                    messaggio="Per poter rilasciare ricevute, è necessario impostare un "
                                              "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
                                              "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+
+        elif (
+                tipo_ricevuta == Quota.QUOTA_SOSTENITORE and
+                Quota.objects.filter(
+                    persona=persona, sede=comitato, anno=data_versamento.year, tipo=Quota.QUOTA_SOSTENITORE,
+                    stato=Quota.REGISTRATA
+                ).exists()
+        ):
+            return errore_generico(
+                request, me, titolo="Quota già registrata",
+                messaggio="La quota per l'anno %s è già stata registrata per la Sede del Comitato di %s." % (
+                    data_versamento.year, comitato.nome_completo
+                ))
 
         else:
             # OK, paga quota!
@@ -1026,6 +1045,7 @@ def us_ricevute_nuova(request, me):
         "ultime_quote": ultime_quote,
         "anno": questo_anno,
         "appena_registrata": appena_registrata,
+        "tesseramento": tesseramento,
     }
     return 'us_ricevute_nuova.html', contesto
 
@@ -1071,7 +1091,7 @@ def us_ricevute(request, me):
 def us_ricevute_annulla(request, me, pk):
     ricevuta = get_object_or_404(Quota, pk=pk)
 
-    if ricevuta.sede not in me.oggetti_permesso(GESTIONE_SOCI):
+    if ricevuta.appartenenza.sede not in me.oggetti_permesso(GESTIONE_SOCI):
         return redirect(ERRORE_PERMESSI)
 
     if ricevuta.stato == ricevuta.REGISTRATA:
@@ -1256,13 +1276,18 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
 def us_tesserini_emissione(request, me):
     sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
 
+    sedi = Sede.objects.filter(id__in=sedi.values_list('id', flat=True))
+    # Comitati Locali e Provinciali.
+    sedi_espandi = sedi.espandi(pubblici=True).comitati().exclude(estensione__in=[NAZIONALE, REGIONALE])
+
     tesserini = Tesserino.objects.none()
 
-    modulo = ModuloFiltraEmissioneTesserini(request.POST or None)
+    modulo = ModuloFiltraEmissioneTesserini(request.POST or None, sedi=sedi_espandi)
     modulo_compilato = True if request.POST else False
 
     if modulo.is_valid():
         stato_emissione = modulo.cleaned_data['stato_emissione']
+        sedi_selezionate = modulo.cleaned_data['sedi'].espandi(pubblici=True)
         stato_emissione_q = Q(stato_emissione__in=stato_emissione)
         if '' in stato_emissione:
             stato_emissione_q |= Q(stato_emissione__isnull=True)
@@ -1277,6 +1302,11 @@ def us_tesserini_emissione(request, me):
             tipo_richiesta__in=modulo.cleaned_data['tipo_richiesta'],
             stato_richiesta__in=modulo.cleaned_data['stato_richiesta']
         ).order_by(modulo.cleaned_data['ordine'])
+
+        # Ottiene oggetto Q per tutte le appartenenze attuali come Volontario in una delle Sedi selezionate.
+        q = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO, sede__in=sedi_selezionate) \
+            .via("persona__appartenenze")
+        tesserini = tesserini.filter(q)
 
     contesto = {
         "tesserini": tesserini,

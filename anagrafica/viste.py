@@ -25,14 +25,14 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
     ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail, \
-    ModuloUSModificaUtenza
+    ModuloUSModificaUtenza, ModuloReportFederazione
 from anagrafica.forms import ModuloStepCodiceFiscale
 from anagrafica.forms import ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
 from anagrafica.importa import VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari
 from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento, \
-    ProvvedimentoDisciplinare, Sede, Riserva
+    ProvvedimentoDisciplinare, Sede, Riserva, Dimissione
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
@@ -1805,6 +1805,47 @@ def admin_statistiche(request, me):
         "totale_regione_volontari": totale_regione_volontari,
     }
     return 'admin_statistiche.html', contesto
+
+
+@pagina_privata
+def admin_report_federazione(request, me):
+
+    if not me.utenza.is_superuser:
+        return redirect(ERRORE_PERMESSI)
+
+    modulo = ModuloReportFederazione(request.POST or None,
+                                     initial={"data": oggi()})
+    contesto = {"modulo": modulo,}
+
+    fasce_di_eta = [(0, 30), (30, 41), (41, 51), (51, 66), (66, 999)]
+    # fasce_di_anzianita = [(0, 1), (1, 5), (5, 10), (10, 21), (21, 30), (30, 999)]
+
+    if modulo.is_valid():
+
+        volontari_per_fasce_di_eta = []
+        tutti_volontari = Persona.objects.filter(Appartenenza
+                                                 .query_attuale(al_giorno=modulo.cleaned_data['data'],
+                                                                membro__in=Appartenenza.MEMBRO_SOCIO)
+                                                 .via("appartenenze")) \
+                                         .distinct('nome', 'cognome', 'codice_fiscale')
+
+        for fascia_di_eta in fasce_di_eta:
+            eta_minima, eta_massima = fascia_di_eta
+            r = tutti_volontari.filter(Persona.query_eta_minima(eta_minima).q,
+                                       Persona.query_eta_massima(eta_massima - 1).q) \
+                               .count()
+            volontari_per_fasce_di_eta.append((fascia_di_eta, r))
+
+        decessi = Dimissione.objects.filter(motivo=Dimissione.DECEDUTO,
+                                            creazione__gt=modulo.cleaned_data['data'] - datetime.timedelta(days=365),
+                                            creazione__lte=modulo.cleaned_data['data']) \
+                                    .count()
+
+        contesto.update({"volontari_per_fasce_di_eta": volontari_per_fasce_di_eta,
+                         "volontari": tutti_volontari.count(),
+                         "decessi": decessi,})
+
+    return 'admin_report_federazione.html', contesto
 
 
 @pagina_privata

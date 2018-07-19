@@ -266,19 +266,23 @@ class ModuloElencoIVCM(forms.Form):
 
 class ModuloQuotaGenerico(forms.Form):
     riduzione = forms.ModelChoiceField(
-        label='Riduzione', queryset=Riduzione.objects.all(), widget=forms.RadioSelect,
+        label='Riduzione', queryset=Riduzione.objects.all(),
+        widget=forms.RadioSelect,
         required=False, empty_label='Nessuna'
     )
     importo = forms.FloatField(help_text="Il totale versato in euro, comprensivo dell'eventuale "
                                          "donazione aggiuntiva.")
-    data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro], initial=datetime.date.today)
+    data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro],
+                                      initial=datetime.date.today)
 
     sedi = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, tesseramento=None, **kwargs):
         self.sedi = kwargs.pop('sedi')
         super(ModuloQuotaGenerico, self).__init__(*args, **kwargs)
         self.fields['importo'].widget.attrs['min'] = self.initial.get('importo', 0)
+        if tesseramento:
+            self.fields['riduzione'].queryset = Riduzione.objects.filter(tesseramento=tesseramento)
 
     def clean_quota(self, data):
 
@@ -381,8 +385,33 @@ class ModuloNuovaRicevuta(forms.Form):
 
     data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro])
 
+    def clean(self):
+        data = self.cleaned_data
+        tesseramento = Tesseramento.ultimo_tesseramento()
+        if (self.cleaned_data['tipo_ricevuta'] == Quota.QUOTA_SOSTENITORE and
+                self.cleaned_data['importo'] < tesseramento.quota_sostenitore):
+            self.add_error(
+                'importo', 'L\'importo minimo per la quota sostenitore per l\'anno {} è di {} €'.format(
+                    tesseramento.anno, tesseramento.quota_sostenitore
+                )
+            )
+
+        return data
+
+    def clean_data_versamento(self):
+        data = self.cleaned_data['data_versamento']
+        if data.year != now().year:
+            self.add_error(
+                'data_versamento',
+                'Non è possibile registrare quote sostenitore per un anno diverso da quello corrente.'
+            )
+        return data
+
 
 class ModuloFiltraEmissioneTesserini(forms.Form):
+    def __init__(self, *args, sedi, **kwargs):
+        super(ModuloFiltraEmissioneTesserini, self).__init__(*args, **kwargs)
+        self.fields['sedi'].queryset = sedi
 
     stato_richiesta = forms.MultipleChoiceField(choices=Tesserino.STATO_RICHIESTA)
     tipo_richiesta = forms.MultipleChoiceField(choices=Tesserino.TIPO_RICHIESTA, initial=(Tesserino.RILASCIO,
@@ -391,6 +420,7 @@ class ModuloFiltraEmissioneTesserini(forms.Form):
     stato_emissione = forms.MultipleChoiceField(choices=Tesserino.STATO_EMISSIONE, initial=(("", Tesserino.STAMPATO,
                                                                                              Tesserino.SPEDITO_CASA,
                                                                                              Tesserino.SPEDITO_SEDE)),)
+    sedi = forms.ModelMultipleChoiceField(queryset=None)
 
     DATA_RICHIESTA_DESC = '-creazione'
     DATA_RICHIESTA_ASC = 'creazione'

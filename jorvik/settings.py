@@ -6,6 +6,8 @@ Documentazione config.: https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 from django.core.urlresolvers import reverse_lazy
 
+from api.settings import OAUTH2_PROVIDER
+
 try:
     import configparser
 except ImportError:
@@ -33,7 +35,8 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     # Librerie terze
     'nocaptcha_recaptcha',
-    # 'oauth2_provider',
+    'oauth2_provider',
+    'corsheaders',
     'mptt',
     # Moduli interni
     'base',
@@ -71,6 +74,7 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_totp',
     'otp_yubikey',
     'two_factor',
+    'rest_framework',
 ]
 
 
@@ -82,7 +86,6 @@ STATICFILES_FINDERS = (
 
 # Cronjob attivi
 CRON_CLASSES = [
-    "posta.cron.CronSmaltisciCodaPosta",
     "base.cron.CronCancellaFileScaduti",
     "base.cron.CronApprovaNegaAuto",
     "base.cron.CronRichiesteInAttesa",
@@ -103,6 +106,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'two_factor.middleware.threadlocals.ThreadLocals',
     'autenticazione.two_factor.middleware.Require2FA',
+    'corsheaders.middleware.CorsMiddleware',
 )
 
 # Imposta anagrafica.Utenza come modello di autenticazione
@@ -126,6 +130,7 @@ MEDIA_CONF_FILE = 'config/media.cnf' if os.path.isfile('config/media.cnf') else 
 DEBUG_CONF_FILE = 'config/debug.cnf' if os.path.isfile('config/debug.cnf') else 'config/debug.cnf.sample'
 APIS_CONF_FILE = 'config/apis.cnf' if os.path.isfile('config/apis.cnf') else 'config/apis.cnf.sample'
 GENERAL_CONF_FILE = 'config/general.cnf' if os.path.isfile('config/general.cnf') else 'config/general.cnf.sample'
+CELERY_CONF_FILE = 'config/celery.cnf' if os.path.isfile('config/celery.cnf') else 'config/celery.cnf.sample'
 
 # MySQL
 MYSQL_CONF = configparser.ConfigParser()
@@ -196,6 +201,9 @@ SESSION_COOKIE_PATH = '/'
 GENERAL_CONF = configparser.ConfigParser()
 GENERAL_CONF.read(GENERAL_CONF_FILE)
 
+CELERY_CONF = configparser.ConfigParser()
+CELERY_CONF.read(CELERY_CONF_FILE)
+
 # Driver per i test funzionali
 DRIVER_WEB = 'firefox'
 
@@ -227,7 +235,9 @@ STATIC_ROOT = MEDIA_CONF.get('static', 'static_root', fallback='assets/')
 STATIC_URL = MEDIA_CONF.get('static', 'static_url', fallback='/assets/')
 
 # Driver per i test funzionali
-DRIVER_WEB = DEBUG_CONF.get('test', 'driver', fallback='firefox')
+SELENIUM_DRIVER = DEBUG_CONF.get('test', 'driver', fallback='firefox')
+SELENIUM_BROWSER = DEBUG_CONF.get('test', 'browser', fallback='firefox')
+SELENIUM_URL = DEBUG_CONF.get('test', 'url', fallback=None)
 
 host = "%s" % (DEBUG_CONF.get('production', 'host'),)
 if host == 'localhost':
@@ -236,12 +246,18 @@ else:
     www_host = "www.%s" % (host,)
     ALLOWED_HOSTS = ['localhost', '127.0.0.1', host, www_host]
 
+# Permetti gateway o load balancer
+gateway = DEBUG_CONF.get('production', 'gateway', fallback='')
+if gateway:
+    # TODO usare X-Forward-IP
+    ALLOWED_HOSTS.append(gateway)
+
 # Configurazione dei servizi API
 APIS_CONF = configparser.ConfigParser()
 APIS_CONF.read(APIS_CONF_FILE)
 GOOGLE_KEY = APIS_CONF.get('google', 'api_key', fallback=os.environ.get("GOOGLE_KEY"))
 DOMPDF_ENDPOINT = APIS_CONF.get('dompdf', 'endpoint',
-                                fallback='http://pdf-server.alacriter.uk.92-222-162-128.alacriter.uk/render/www/render.php')
+                                fallback='')
 
 DESTINATARI_REPORT = ['sviluppo@cri.it', 'info@gaia.cri.it']
 
@@ -377,3 +393,13 @@ FORMAZIONE_VALIDITA_INVITI = 7
 
 POSTA_MASSIVA_TIMEOUT = 30
 DATE_FORMAT = '%d/%m/%Y'
+
+CORS_ORIGIN_ALLOW_ALL = True
+
+# API: permetti autenticazione tramite OAuth 2.0
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.ext.rest_framework.OAuth2Authentication',
+        'rest_framework.authentication.SessionAuthentication',
+    )
+}
