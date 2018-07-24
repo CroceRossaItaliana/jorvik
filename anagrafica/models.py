@@ -925,7 +925,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return 'Non è presente alcun firmatario'
         if not motivazione:
             return 'Non è stata indicata la motivazione'
-        if not motivazione:
+        if not data:
             return 'Non è stata indicata data di trasferimento'
         try:
             if not isinstance(sede, Sede):
