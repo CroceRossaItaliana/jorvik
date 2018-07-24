@@ -940,10 +940,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 richiedente=firmatario,
                 motivo=motivazione,
             )
-            trasferimento.richiedi(notifiche_attive=False)
-            for autorizzazione in trasferimento.autorizzazioni:
-                autorizzazione.concedi(firmatario, auto=True, notifiche_attive=False, data=data_inizio)
-            trasferimento.refresh_from_db()
+            trasferimento.autorizzazione_concessa(modulo=None, auto=True, notifiche_attive=False, data=data_inizio)
             return trasferimento.appartenenza
         else:
             return 'La persone non è un volontario o è già nella sede indicata'
