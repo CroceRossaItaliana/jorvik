@@ -939,6 +939,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 persona=self,
                 richiedente=firmatario,
                 motivo=motivazione,
+                massivo=True
             )
             trasferimento.autorizzazione_concessa(modulo=None, auto=True, notifiche_attive=False, data=data_inizio)
             return trasferimento.appartenenza
@@ -2109,6 +2110,8 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
     protocollo_numero = models.CharField('Numero di protocollo', max_length=16, null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
     motivo = models.CharField(max_length=2048, null=True, blank=False,)
+    massivo = models.BooleanField(null=False, blank=False, default=False,
+                                  help_text='Se effettuato tramite spostamento massivo da interfaccia admin')
 
     RICHIESTA_NOME = "trasferimento"
 
