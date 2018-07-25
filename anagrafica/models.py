@@ -1414,6 +1414,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
 
     RICHIESTA_NOME = "Appartenenza"
 
+    def __str__(self):
+        return 'Appartenenza a {}'.format(self.sede)
+
     @classmethod
     def membro_permesso(cls, estensione=REGIONALE, membro=ORDINARIO):
         """
@@ -2111,6 +2114,9 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
 
     # Data fissa di 30gg come da regolamento CRI
     APPROVAZIONE_AUTOMATICA = timedelta(days=30)
+
+    def __str__(self):
+        return 'Trasferimento'
 
     def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiTrasferimento
