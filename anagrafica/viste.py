@@ -859,7 +859,7 @@ def utente_trasferimento(request, me):
 
     if not me.volontario:
         return errore_no_volontario(request, me)
-    storico = me.trasferimenti.filter(massivo=False)
+    storico = me.trasferimenti.all()
 
     modulo = ModuloCreazioneTrasferimento(request.POST or None)
     if modulo.is_valid():
