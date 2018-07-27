@@ -1,9 +1,11 @@
 import datetime
 import re
+from collections import defaultdict
 from io import BytesIO
 from random import randint, choice
 
 import unicodecsv
+from django.contrib.admin import helpers
 from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client
@@ -37,6 +39,7 @@ from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_
 from formazione.models import Aspirante, CorsoBase, PartecipazioneCorsoBase
 from posta.models import Messaggio, Autorizzazione
 from ufficio_soci.forms import ModuloElencoVolontari
+from ufficio_soci.models import Tesserino
 from veicoli.models import Autoparco
 
 
@@ -2511,6 +2514,64 @@ class TestAnagrafica(TestCase):
 
 
 class TestFunzionaliAnagrafica(TestFunzionale):
+
+    def _crea_dati_tesserini(self, presidente, sede):
+        tesserini = defaultdict(list)
+        persone = []
+        for x in range(0, 10):
+            persona = crea_persona()
+            persone.append(persona)
+            crea_appartenenza(persona, sede)
+            richiesta = choice(
+                (Tesserino.RIFIUTATO, Tesserino.RICHIESTO, Tesserino.ACCETTATO)
+            )
+            tesserini[richiesta].append(
+                Tesserino.objects.create(persona=persona, emesso_da=sede, tipo_richiesta=choice(
+                    (Tesserino.RILASCIO, Tesserino.DUPLICATO, Tesserino.RINNOVO)
+                ), stato_richiesta=richiesta, motivo_richiesta='test', richiesto_da=presidente)
+            )
+        return tesserini, persone
+
+    def test_spostamento_tesserini(self):
+        presidente1 = crea_persona()
+        sede1 = crea_sede(presidente=presidente1, estensione=REGIONALE)
+        crea_utenza(presidente1, email=email_fittizzia())
+        tesserini1, persone1 = self._crea_dati_tesserini(presidente1, sede1)
+
+        presidente2 = crea_persona()
+        sede2 = crea_sede(presidente=presidente2, estensione=REGIONALE)
+        crea_utenza(presidente2, email=email_fittizzia())
+        tesserini2, persone2 = self._crea_dati_tesserini(presidente2, sede2)
+
+        admin = crea_utenza(None, email=email_fittizzia())
+        admin.is_staff = True
+        admin.is_superuser = True
+        admin.save()
+
+        for stato, tesserini in tesserini1.items():
+            self.assertEqual(sede1.tesserini_emessi.filter(stato_richiesta=stato).count(), len(tesserini))
+        for stato, tesserini in tesserini2.items():
+            self.assertEqual(sede2.tesserini_emessi.filter(stato_richiesta=stato).count(), len(tesserini))
+        data = {
+            helpers.ACTION_CHECKBOX_NAME: [sede1.pk],
+            'destinazione': [sede2],
+            'do_action': True,
+        }
+        self.client.login(username=admin.email, password='prova')
+        response = self.client.post(reverse('admin:anagrafica_sposta_tesserini_post'), data=data)
+        self.assertContains(response, '{} tesserini trasferiti con successo'.format(len(tesserini1[Tesserino.RICHIESTO])))
+        sede1.refresh_from_db()
+        sede2.refresh_from_db()
+        for stato, tesserini in tesserini1.items():
+            if stato != Tesserino.RICHIESTO:
+                self.assertEqual(sede1.tesserini_emessi.filter(stato_richiesta=stato).count(), len(tesserini))
+            else:
+                self.assertEqual(sede1.tesserini_emessi.filter(stato_richiesta=stato).count(), 0)
+        for stato, tesserini in tesserini2.items():
+            if stato != Tesserino.RICHIESTO:
+                self.assertEqual(sede2.tesserini_emessi.filter(stato_richiesta=stato).count(), len(tesserini))
+            else:
+                self.assertEqual(sede2.tesserini_emessi.filter(stato_richiesta=stato).count(), len(tesserini) + len(tesserini1[Tesserino.RICHIESTO]))
 
     def test_sede_trasferimento(self):
         presidente = crea_persona()

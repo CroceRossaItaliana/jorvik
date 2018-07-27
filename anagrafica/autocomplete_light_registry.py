@@ -128,12 +128,16 @@ class IscrivibiliCorsiAutocompletamento(PersonaAutocompletamento):
     }
 
     def choices_for_request(self):
+        volontari = self.model.objects.filter(
+            Q(Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).via("appartenenze")))
+
         self.choices = self.choices.filter(
             Q(Appartenenza.query_attuale(membro=Appartenenza.SOSTENITORE).via("appartenenze")) |
             Q(aspirante__isnull=False)
         ).exclude(
-            Q(Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).via("appartenenze"))
+            pk__in=volontari.values_list('pk', flat=True)
         ).order_by('nome', 'cognome', 'codice_fiscale').distinct('nome', 'cognome', 'codice_fiscale')
+
         return super(PersonaAutocompletamento, self).choices_for_request()
 
 
@@ -172,6 +176,18 @@ class SedeTrasferimentoAutocompletamento(SedeAutocompletamento):
         return super(SedeTrasferimentoAutocompletamento, self).choices_for_request()
 
 
+class SedeRegionaleAutocompletamento(SedeAutocompletamento):
+    search_fields = ['nome']
+    model = Sede
+
+    def choices_for_request(self):
+        self.choices = self.choices.filter(
+            tipo=Sede.COMITATO,
+            estensione__in=[REGIONALE],
+        )
+        return super(SedeRegionaleAutocompletamento, self).choices_for_request()
+
+
 class SedeNuovoCorsoAutocompletamento(SedeAutocompletamento):
     def choices_for_request(self):
         return self.persona.oggetti_permesso(GESTIONE_CORSI_SEDE)
@@ -183,6 +199,7 @@ autocomplete_light.register(SostenitoreAutocompletamento)
 autocomplete_light.register(VolontarioSedeAutocompletamento)
 autocomplete_light.register(IscrivibiliCorsiAutocompletamento)
 autocomplete_light.register(SedeAutocompletamento)
+autocomplete_light.register(SedeRegionaleAutocompletamento)
 autocomplete_light.register(ComitatoAutocompletamento)
 autocomplete_light.register(SedeTrasferimentoAutocompletamento)
 autocomplete_light.register(SedeNuovoCorsoAutocompletamento)

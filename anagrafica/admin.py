@@ -16,7 +16,7 @@ from anagrafica.models import Persona, Sede, Appartenenza, Delega, Documento, Fo
 from autenticazione.models import Utenza
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
-
+from ufficio_soci.models import Tesserino
 
 RAW_ID_FIELDS_PERSONA = []
 RAW_ID_FIELDS_SEDE = []
@@ -231,6 +231,94 @@ class AdminSede(ReadonlyAdminMixin, MPTTModelAdmin):
     raw_id_fields = ('genitore', 'locazione',)
     list_display_links = ('nome', 'estensione',)
     inlines = [InlineDelegaSede,]
+    actions = ['sposta_tesserini', ]
+
+    messaggio_spostamento = ungettext_lazy(
+        '%(num)s tesserino trasferito con successo', '%(num)s tesserini trasferiti con successo', 'num'
+    )
+
+    def _has_transfer_permission(self, request, obj=None):
+        change_permission = Tesserino._meta.app_label + '.' + get_permission_codename('transfer', Tesserino._meta)
+        return request.user.has_perm(change_permission)
+
+    def get_actions(self, request):
+        actions = super(AdminSede, self).get_actions(request)
+        if not self._has_transfer_permission(request) and 'sposta_tesserini' in actions:
+            del actions['sposta_tesserini']
+        return actions
+
+    def get_urls(self):
+        urls = super(AdminSede, self).get_urls()
+        custom_urls = [
+            url(r'^sposta_tesserini_azione/$',
+                self.admin_site.admin_view(self.sposta_tesserini_post),
+                name='anagrafica_sposta_tesserini_post'),
+        ]
+        return custom_urls + urls
+
+    def sposta_tesserini(self, request, queryset):
+        from anagrafica.forms import ModuloSpostaTesserini
+
+        if not self._has_transfer_permission(request):
+            self.message_user(request, 'Non si hanno i diritti per l\'operazione richiesta', level=messages.WARNING)
+            return HttpResponseRedirect(reverse('admin:ufficio_soci_tesserino_changelist'))
+
+        contesto = {
+            'title': 'Seleziona il comitato a cui assegnare i tesserini',
+            'etichetta_invio': 'Avvia trasferimento',
+            'eseguito': False,
+        }
+
+        form = ModuloSpostaTesserini()
+        contesto.update({
+            'opts': self.model._meta,
+            'form': form,
+            'dati_pronti': True,
+            'queryset': queryset,
+            'action': 'sposta_tesserini',
+            'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
+            'pks': queryset.values_list('pk', flat=True),
+        })
+        return render(request, 'admin/anagrafica/trasferimento_tesserini.html', contesto)
+
+    def sposta_tesserini_post(self, request):
+        from anagrafica.forms import ModuloSpostaTesserini
+
+        if not self._has_transfer_permission(request):
+            self.message_user(request, 'Non si hanno i diritti per l\'operazione richiesta', level=messages.WARNING)
+            return HttpResponseRedirect(reverse('admin:ufficio_soci_tesserino_changelist'))
+
+        queryset = Sede.objects.filter(pk__in=[int(pk) for pk in request.POST.get(helpers.ACTION_CHECKBOX_NAME, '').split(',')])
+        destinazione = None
+        if 'do_action' in request.POST:
+            form = ModuloSpostaTesserini(request.POST)
+            if form.is_valid():
+                destinazione = form.cleaned_data['destinazione']
+                spostati = Tesserino.objects.filter(
+                    emesso_da__in=queryset, stato_richiesta=Tesserino.RICHIESTO
+                ).update(emesso_da=destinazione)
+                self.message_user(request, self.messaggio_spostamento % {'num': spostati})
+            contesto = {
+                'title': 'Esito dei trasferimenti',
+                'eseguito': True
+            }
+        else:
+            self.message_user(request, 'Non è stata richiesta alcuna azione', level=messages.INFO)
+            return HttpResponseRedirect(reverse('admin:ufficio_soci_tesserino_changelist'))
+
+        contesto .update({
+            'opts': Sede._meta,
+            'form': form,
+            'dati_pronti': True,
+            'queryset': queryset,
+            'destinazione': destinazione,
+            'action': 'sposta_tesserini',
+            'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
+            'pks': queryset.values_list('pk', flat=True),
+            'eseguito': 'do_action' in request.POST,
+        })
+        return render(request, 'admin/anagrafica/trasferimento_tesserini.html', contesto)
+
 
 
 # admin.site.register(Appartenenza)

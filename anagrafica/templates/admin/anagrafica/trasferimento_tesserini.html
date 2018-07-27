@@ -1,0 +1,50 @@
+{% extends "admin/base_custom.html" %}
+{% load i18n admin_urls l10n %}
+
+{% if not is_popup %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+</div>
+{% endblock %}
+{% endif %}
+
+{% block content %}
+    {% if eseguito %}
+    <p>
+        I tesserini dei seguenti comitati sono stati trasferiti alla sede {{ destinazione }}
+        <ul>
+        {% for sede in queryset %}
+            <li>{{ sede }}</li>
+        {% endfor %}
+        </ul>
+    </p>
+    {% else %}
+    <p>
+        Stai per trasferire le richieste di emissione di tesserini per i seguenti comitati:
+        <ul>
+        {% for sede in queryset %}
+            <li>{{ sede }}</li>
+        {% endfor %}
+        </ul>
+    </p>
+    <p>
+        Questa modifica viene effettuata senza annullare le richieste esistenti, ma cambiando la sede di appartenenza delle richieste stess.
+    </p>
+    {% endif %}
+    {% if not eseguito %}
+    <form action="{% url "admin:anagrafica_sposta_tesserini_post" %}" method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %}>
+    {{ form.errors }}
+        {% csrf_token %}
+        <input type="hidden" name="action" value="{{ action }}">
+        <input type="hidden" name="do_action" value="yes">
+        {{ form.as_p }}
+        <div>
+            <input type="submit" class="default" style="float: none" value="{{ etichetta_invio }}">
+        </div>
+        <input type="hidden" name="{{ action_checkbox_name }}" value="{{ pks|join:',' }}" />
+    </form>
+    {% endif %}
+{% endblock %}

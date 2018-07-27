@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 from django.forms import ModelForm
 from django.utils.safestring import mark_safe
+from django.templatetags.static import static
 from django.utils.timezone import now
 
 from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega, \
@@ -499,3 +500,21 @@ class ModuloUSModificaUtenza(ModuloUtenza):
             raise ValidationError("Puoi solo cambiare l'e-mail di accesso se questa è stata "
                                   "richiesta dall'utente, oppure hai già avvisato l'utente della "
                                   "modifica e della nuova e-mail per accedere.")
+
+
+class ModuloSpostaTesserini(forms.Form):
+
+    destinazione = autocomplete_light.ModelChoiceField("SedeRegionaleAutocompletamento", error_messages={
+        'invalid': "E' possibile trasferire i tesserini esclusivamente verso un Comitato Regionale"
+    })
+
+    @property
+    def media(self):
+        extra = '' if settings.DEBUG else '.min'
+        js = [
+            'core.js',
+            'vendor/jquery/jquery%s.js' % extra,
+            'jquery.init.js',
+            'admin/RelatedObjectLookups.js',
+        ]
+        return forms.Media(js=[static('admin/js/%s' % url) for url in js]) + super(ModuloSpostaTesserini, self).media

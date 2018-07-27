@@ -25,6 +25,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
         verbose_name_plural = "Richieste Tesserino Associativo"
         permissions = (
             ("view_tesserino", "Can view tesserino"),
+            ('transfer_tesserino', "Can transfer tesserino"),
         )
 
     persona = models.ForeignKey('anagrafica.Persona', related_name='tesserini', on_delete=models.CASCADE)
