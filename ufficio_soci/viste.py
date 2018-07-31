@@ -3,6 +3,7 @@ import random
 from collections import OrderedDict
 
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Sum, Q
 from django.shortcuts import redirect, get_object_or_404
 from django.utils.safestring import mark_safe
@@ -18,7 +19,7 @@ from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
 from base.files import Excel, FoglioExcel
 from base.notifiche import NOTIFICA_INVIA
-from base.utils import poco_fa, testo_euro, oggi
+from base.utils import poco_fa, testo_euro, oggi, mezzanotte_24_ieri
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
@@ -118,12 +119,15 @@ def us_reclama(request, me):
 def us_reclama_persona(request, me, persona_pk):
 
     persona = get_object_or_404(Persona, pk=persona_pk)
+    volontario = False
 
     sedi = []
     ss = me.oggetti_permesso(GESTIONE_SOCI)
     for s in ss:  # Per ogni sede di mia competenza
         if persona.reclamabile_in_sede(s):  # Posso reclamare?
             sedi += [s]  # Aggiungi a elenco sedi
+            volontario = volontario or persona.appartenenze_attuali()\
+                .filter(sede=s, membro=Appartenenza.VOLONTARIO).exists()
 
     if persona.appartenenze_attuali().filter(membro=Appartenenza.SOSTENITORE).exists():
         messaggio_extra = "<br>Questa persona è già registrata come sostenitore. Prima di poterla reclamare deve essere dimessa dal ruolo di sostenitore"
@@ -176,6 +180,10 @@ def us_reclama_persona(request, me, persona_pk):
                                                         "cambio appartenenza.")
                 continua = False
 
+        sede = modulo_appartenenza.cleaned_data.get('sede')
+        appartenenza_volontario = Appartenenza.query_attuale(persona=persona, sede=sede,
+                                                             membro=Appartenenza.VOLONTARIO).first()
+
         # Controllo eta' minima socio
         if modulo_appartenenza.cleaned_data.get('membro') in Appartenenza.MEMBRO_SOCIO \
                 and persona.eta < Persona.ETA_MINIMA_SOCIO:
@@ -191,48 +199,56 @@ def us_reclama_persona(request, me, persona_pk):
             continua = False
 
         if continua:
+            with transaction.atomic():
+                app = modulo_appartenenza.save(commit=False)
+                app.persona = persona
+                app.save()
 
-            app = modulo_appartenenza.save(commit=False)
-            app.persona = persona
-            app.save()
+                # Termina app. ordinario - I dipendenti rimangono tali
+                if appartenenza_ordinario:
+                    appartenenza_ordinario.fine = app.inizio
+                    appartenenza_ordinario.save()
 
-            # Termina app. ordinario - I dipendenti rimangono tali
-            if appartenenza_ordinario:
-                appartenenza_ordinario.fine = app.inizio
-                appartenenza_ordinario.save()
+                # se volontario nella stessa sede mette in riserva
+                if appartenenza_volontario and appartenenza_volontario.riserve.exclude(fine__isnull=True).exists():
+                    Riserva.objects.create(inizio=mezzanotte_24_ieri(app.inizio),
+                                           persona=persona,
+                                           motivo="Adozione come dipendente",
+                                           appartenenza=appartenenza_volontario)
 
-            q = modulo_quota.cleaned_data
-            riduzione = q.get('riduzione', None)
-            registra_quota = q.get('registra_quota')
-            importo = q.get('importo')
-            data_versamento = q.get('data_versamento')
+                q = modulo_quota.cleaned_data
+                riduzione = q.get('riduzione', None)
+                registra_quota = q.get('registra_quota')
+                importo = q.get('importo')
+                data_versamento = q.get('data_versamento')
 
-            if registra_quota == modulo_quota.SI:
-                if riduzione:
-                    suffisso = ' - %s' % riduzione.descrizione
-                else:
-                    suffisso = ''
-                quota = Quota.nuova(
-                    appartenenza=app,
-                    data_versamento=data_versamento,
-                    registrato_da=me,
-                    importo=importo,
-                    causale="Iscrizione %s anno %d%s" % (
-                        app.get_membro_display(),
-                        q.get('data_versamento').year,
-                        suffisso,
-                    ),
-                    tipo=Quota.QUOTA_SOCIO,
-                    invia_notifica=True,
-                    riduzione=riduzione,
-                )
+                if registra_quota == modulo_quota.SI:
+                    if riduzione:
+                        suffisso = ' - %s' % riduzione.descrizione
+                    else:
+                        suffisso = ''
+                    Quota.nuova(
+                        appartenenza=app,
+                        data_versamento=data_versamento,
+                        registrato_da=me,
+                        importo=importo,
+                        causale="Iscrizione %s anno %d%s" % (
+                            app.get_membro_display(),
+                            q.get('data_versamento').year,
+                            suffisso,
+                        ),
+                        tipo=Quota.QUOTA_SOCIO,
+                        invia_notifica=True,
+                        riduzione=riduzione,
+                    )
 
-            return redirect(persona.url)
+                return redirect(persona.url)
 
     contesto = {
         "modulo_appartenenza": modulo_appartenenza,
         "modulo_quota": modulo_quota,
         "persona": persona,
+        "volontario": volontario
     }
 
     return 'us_reclama_persona.html', contesto

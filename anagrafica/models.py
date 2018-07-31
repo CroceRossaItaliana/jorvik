@@ -1113,6 +1113,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         ).exists():
             return True
 
+        # Se è volontario è possibile reclamarlo previa messa in riserva (gestito altrove)
+        if self.appartenenze_attuali().filter(
+            membro=Appartenenza.VOLONTARIO
+        ).exists() and not self.appartenenze_attuali().exclude(
+            membro=Appartenenza.VOLONTARIO
+        ).exists():
+            return True
+
         return False
 
 
