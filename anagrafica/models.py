@@ -355,6 +355,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return self.appartenenze.filter(confermata=True, **kwargs).order_by('inizio').first()
 
+    def appartenenze_per_presidente(self, presidente):
+        """
+        Ottiene il queryset delle appartenenze attuali e confermate, in base al Presidente
+        """
+        attuali = self.appartenenze_attuali()
+        sedi_pres = presidente.sedi_attuali()
+        da_rimuovere = []
+        for appartenza in attuali:
+            if not appartenza.sede in sedi_pres and not appartenza.sede.genitore in sedi_pres:
+                da_rimuovere.append(appartenza.id)
+        return attuali.exclude(id__in=da_rimuovere)
+
     def ingresso(self, **kwargs):
         """
         Ottiene la data di ingresso della persona o None se non disponibile.
@@ -1105,6 +1117,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         ).exists():
             return True
 
+        # I soci sostenitori della propria sede o superiore possono essere reclamati (ma solo se sono **solo** sostenitori)
+        if self.appartenenze_attuali().filter(
+                sede=sede,
+                membro=Appartenenza.SOSTENITORE
+        ).exists() and not self.appartenenze_attuali().exclude(
+            sede=sede,
+            membro=Appartenenza.SOSTENITORE
+        ).exists():
+            return True
+
         # I dipendenti possono essere reclamati (ma solo se sono **solo** dipendenti)
         if self.appartenenze_attuali().filter(
             membro=Appartenenza.DIPENDENTE
@@ -1448,6 +1470,24 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         if estensione != REGIONALE and membro == cls.ORDINARIO:
             return False
         return True
+
+    def membro_a_stringa(self):
+        if self.membro == self.VOLONTARIO:
+            return 'Volontario, '+self.sede.nome_completo
+        elif self.membro == self.ESTESO:
+            return 'Esteso, '+self.sede.nome_completo
+        elif self.membro == self.ORDINARIO:
+            return 'Ordinario, '+self.sede.nome_completo
+        elif self.membro == self.DIPENDENTE:
+            return 'Dipendente, '+self.sede.nome_completo
+        elif self.membro == self.INFERMIERA:
+            return 'Infermiera, '+self.sede.nome_completo
+        elif self.membro == self.MILITARE:
+            return 'Militare, '+self.sede.nome_completo
+        elif self.membro == self.DONATORE:
+            return 'Donatore, '+self.sede.nome_completo
+        elif self.membro == self.SOSTENITORE:
+            return 'Sostenitore, '+self.sede.nome_completo
 
     def richiedi(self, notifiche_attive=True):
         """
@@ -2466,6 +2506,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     RADIAZIONE = 'RAD'
     DECEDUTO = 'DEC'
     TRASFORMAZIONE = 'TRA'
+    SCADENZA = 'SCA'
     ALTRO = 'ALT'
 
     MOTIVI_VOLONTARI = (
@@ -2474,6 +2515,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         (RISERVA, 'Mancato rientro da riserva'),
         (QUOTA, 'Mancato versamento quota annuale'),
         (RADIAZIONE, 'Radiazione da Croce Rossa Italiana'),
+        (SCADENZA, 'Scadenza contatto o altro'),
         (DECEDUTO, 'Decesso'),
     )
 

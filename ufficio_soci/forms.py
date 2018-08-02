@@ -202,17 +202,35 @@ class ModuloSenzaTurni(forms.Form):
         return self.cleaned_data
 
 
+class AppartenenzaModelChoiceField(forms.ModelChoiceField):
+
+    def label_from_instance(self, obj):
+        return obj.membro_a_stringa()
+
 class ModuloCreazioneDimissioni(ModelForm):
+
     class Meta:
         model = Dimissione
         fields = ['motivo', 'info', ]
 
+    appartenenza = AppartenenzaModelChoiceField(queryset=Appartenenza.objects.none(), required = False)
     trasforma_in_sostenitore = forms.BooleanField(help_text="In caso di Dimissioni Volontarie seleziona quest'opzione "
                                                             "per trasformare il volontario in sostenitore. ", required=False)
 
     def __init__(self, *args, **kwargs):
+        self.persona = kwargs.pop('pers')
+        self.me = kwargs.pop('me')
         super(ModuloCreazioneDimissioni, self).__init__(*args, **kwargs)
         self.fields['motivo'].choices = (("", "---------"),) + Dimissione.MOTIVI_VOLONTARI
+        self.fields['appartenenza'].queryset = self.persona.appartenenze_per_presidente(presidente=self.me)
+        self.fields['appartenenza'].help_text = "Seleziona quale Appartenza vuoi far terminare."
+
+
+    def clean_appartenenza(self):
+        appartenenza = self.cleaned_data['appartenenza']
+        if not appartenenza:
+            raise ValidationError("Scegli un'opzione valida.")
+        return appartenenza
 
     def clean_trasforma_in_sostenitore(self):
         trasforma_in_sostenitore = self.cleaned_data['trasforma_in_sostenitore']

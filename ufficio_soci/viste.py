@@ -257,8 +257,8 @@ def us_reclama_persona(request, me, persona_pk):
 @pagina_privata
 def us_dimissioni(request, me, pk):
 
-    modulo = ModuloCreazioneDimissioni(request.POST or None)
     persona = get_object_or_404(Persona, pk=pk)
+    modulo = ModuloCreazioneDimissioni(request.POST or None, pers=persona, me=me)
 
     if not me.permessi_almeno(persona, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -267,28 +267,8 @@ def us_dimissioni(request, me, pk):
         dim = modulo.save(commit=False)
         dim.richiedente = me
         dim.persona = persona
-        dim.sede = dim.persona.sede_riferimento()
-        if persona.volontario:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
-        elif persona.ordinario:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.ORDINARIO).first()
-        elif persona.dipendente:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.DIPENDENTE).first()
-        elif persona.est_donatore:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.DONATORE).first()
-        elif persona.militare:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.MILITARE).first()
-        elif persona.infermiera:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.INFERMIERA).first()
-        elif persona.sostenitore:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.SOSTENITORE).first()
-        else:
-            return errore_generico(
-                request, me, torna_url=request.path_info, torna_titolo='Modulo dimissioni',
-                titolo='Errore appartenenza',
-                messaggio='L\'utente selezionato non appartenenze dalle quali possa essere dimesso'
-            )
-        dim.appartenenza = appartenenza
+        dim.appartenenza = modulo.cleaned_data['appartenenza']
+        dim.sede = dim.appartenenza.sede
         dim.save()
         dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'])
 
