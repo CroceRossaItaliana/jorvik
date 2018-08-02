@@ -181,8 +181,7 @@ def us_reclama_persona(request, me, persona_pk):
                 continua = False
 
         sede = modulo_appartenenza.cleaned_data.get('sede')
-        appartenenza_volontario = Appartenenza.query_attuale(persona=persona, sede=sede,
-                                                             membro=Appartenenza.VOLONTARIO).first()
+        appartenenza_volontario = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.VOLONTARIO).first()
 
         # Controllo eta' minima socio
         if modulo_appartenenza.cleaned_data.get('membro') in Appartenenza.MEMBRO_SOCIO \
@@ -210,7 +209,8 @@ def us_reclama_persona(request, me, persona_pk):
                     appartenenza_ordinario.save()
 
                 # se volontario nella stessa sede mette in riserva
-                if appartenenza_volontario and appartenenza_volontario.riserve.exclude(fine__isnull=True).exists():
+                if appartenenza_volontario \
+                        and (appartenenza_volontario.riserve.exclude(fine__isnull=True).exists() or not appartenenza_volontario.riserve.exclude(fine__isnull=True)):
                     Riserva.objects.create(inizio=mezzanotte_24_ieri(app.inizio),
                                            persona=persona,
                                            motivo="Adozione come dipendente",
