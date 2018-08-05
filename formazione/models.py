@@ -217,6 +217,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return "%sreport/" % (self.url,)
 
     @property
+    def url_firme(self):
+        return "%sfirme/" % (self.url,)
+
+    @property
     def url_report_schede(self):
         return self.url + "report/schede/"
 
@@ -360,6 +364,35 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def idonei(self):
         return self.partecipazioni_confermate().filter(esito_esame=PartecipazioneCorsoBase.IDONEO)
+
+    def genera_pdf_firme(self):
+        """
+        Genera il fogli firme delle lezioni del corso.
+        """
+        def key_cognome(elem):
+           return elem.cognome
+
+        iscritti = [partecipazione.persona for partecipazione in self.partecipazioni_confermate()]
+
+        archivio = Zip(oggetto=self)
+        for lezione in self.lezioni.all():
+
+            pdf = PDF(oggetto=self)
+            pdf.genera_e_salva(
+                nome="Firme lezione %s.pdf" % lezione.nome,
+                corpo={
+                    "corso": self,
+                    "iscritti": sorted(iscritti, key=key_cognome),
+                    "lezione": lezione,
+                    "data": lezione.inizio,
+                },
+                modello="pdf_firme_lezione.html",
+            )
+            archivio.aggiungi_file(file_path=pdf.file.path, nome_file=pdf.nome)
+
+        archivio.comprimi_e_salva(nome="Fogli firme %s.zip" % self.nome)
+
+        return archivio
 
     def genera_pdf(self):
         """
