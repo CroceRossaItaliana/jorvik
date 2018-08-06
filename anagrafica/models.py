@@ -2515,7 +2515,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         (RISERVA, 'Mancato rientro da riserva'),
         (QUOTA, 'Mancato versamento quota annuale'),
         (RADIAZIONE, 'Radiazione da Croce Rossa Italiana'),
-        (SCADENZA, 'Scadenza contatto o altro'),
+        (SCADENZA, 'Scadenza contratto o altro'),
         (DECEDUTO, 'Decesso'),
     )
 

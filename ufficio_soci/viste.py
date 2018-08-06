@@ -210,7 +210,9 @@ def us_reclama_persona(request, me, persona_pk):
 
                 # se volontario nella stessa sede mette in riserva
                 if appartenenza_volontario \
-                        and (appartenenza_volontario.riserve.exclude(fine__isnull=True).exists() or not appartenenza_volontario.riserve.exclude(fine__isnull=True)):
+                        and app.membro == app.DIPENDENTE \
+                        and (appartenenza_volontario.riserve.exclude(fine__isnull=True).exists() or not appartenenza_volontario.riserve.exclude(fine__isnull=True)) \
+                        and (appartenenza_volontario.sede == app.sede or appartenenza_volontario.sede.genitore == app.sede):
                     Riserva.objects.create(inizio=mezzanotte_24_ieri(app.inizio),
                                            persona=persona,
                                            motivo="Adozione come dipendente",
