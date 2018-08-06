@@ -208,11 +208,11 @@ def us_reclama_persona(request, me, persona_pk):
                     appartenenza_ordinario.fine = app.inizio
                     appartenenza_ordinario.save()
 
-                # se volontario nella stessa sede mette in riserva
+                # se volontario nello stesso comitato e sta passando a dipendente mette in riserva
                 if appartenenza_volontario \
                         and app.membro == app.DIPENDENTE \
                         and (appartenenza_volontario.riserve.exclude(fine__isnull=True).exists() or not appartenenza_volontario.riserve.exclude(fine__isnull=True)) \
-                        and (appartenenza_volontario.sede == app.sede or appartenenza_volontario.sede.genitore == app.sede):
+                        and (appartenenza_volontario.sede == app.sede or appartenenza_volontario.sede.genitore == app.sede or appartenenza_volontario.sede.genitore == app.sede.genitore):
                     Riserva.objects.create(inizio=mezzanotte_24_ieri(app.inizio),
                                            persona=persona,
                                            motivo="Adozione come dipendente",
