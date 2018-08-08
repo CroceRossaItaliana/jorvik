@@ -132,7 +132,20 @@ class ElencoVistaSoci(ElencoVistaAnagrafica):
             ("Giovane", lambda p: "Si" if p.giovane else "No"),
             ("Ingresso in CRI", lambda p: p.ingresso().date()),
             ("Tipo Attuale", lambda p: _tipo_socio(p) if p.appartenenza_tipo else "N/A"),
-            ("A partire dal", lambda p: p.appartenenza_inizio.date() if p.appartenenza_inizio else "N/A")
+            ("A partire dal", lambda p: p.appartenenza_inizio.date() if p.appartenenza_inizio else "N/A"),
+        )
+
+
+class ElencoVistaTesseriniRifiutati(ElencoVistaSoci):
+    """
+    Aggiunge all'elecno, esportato in excel, il motivo del rifiuto
+     del tesserino e il tipo di rilascio.
+    """
+
+    def excel_colonne(self):
+        return super(ElencoVistaTesseriniRifiutati, self).excel_colonne() + (
+            ("Motivo rifiuto tesserino", lambda p: p.ultimo_tesserino.motivo_rifiutato),
+            ("Tipo richiesta tesserino", lambda p: p.ultimo_tesserino.get_tipo_richiesta_display())
         )
 
 
@@ -673,13 +686,16 @@ class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
             # Con fototessera confermata
             Fototessera.con_esito_ok().via("fototessere"),
 
+            # Escludi tesserini rifiutati
+            ~Q(tesserini__stato_richiesta=Tesserino.RIFIUTATO),
+
         ).exclude(  # Escludi quelli richiesti da genitore
             pk__in=tesserini_richiesti.values_list('id', flat=True)
 
         ).annotate(
-                appartenenza_tipo=F('appartenenze__membro'),
-                appartenenza_inizio=F('appartenenze__inizio'),
-                appartenenza_sede=F('appartenenze__sede'),
+            appartenenza_tipo=F('appartenenze__membro'),
+            appartenenza_inizio=F('appartenenze__inizio'),
+            appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
@@ -716,3 +732,32 @@ class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
 
     def template(self):
         return "us_elenchi_inc_tesserini_senza_fototessera.html"
+
+
+class ElencoTesseriniRifiutati(ElencoVistaTesseriniRifiutati, ElencoTesseriniRichiesti):
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        tesserini_richiesti = super(ElencoTesseriniRifiutati, self).risultati()
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
+            ).via("appartenenze"),
+
+            # Escludi tesserini non rifiutati
+            Q(tesserini__stato_richiesta=Tesserino.RIFIUTATO),
+
+        ).exclude(  # Escludi quelli richiesti da genitore
+            pk__in=tesserini_richiesti.values_list('id', flat=True)
+
+        ).annotate(
+            appartenenza_tipo=F('appartenenze__membro'),
+            appartenenza_inizio=F('appartenenze__inizio'),
+            appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+    def template(self):
+        return "us_elenchi_inc_tesserini_rifiutati.html"

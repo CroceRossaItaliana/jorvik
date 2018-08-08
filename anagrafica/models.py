@@ -250,6 +250,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def in_riserva(self):
         return Riserva.query_attuale(Riserva.con_esito_ok().q, persona=self).exists()
 
+    @property
+    def ultimo_tesserino(self):
+        return self.tesserini.all().order_by("creazione").last()
+
     def __str__(self):
         return self.nome_completo
 
@@ -703,7 +707,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         from formazione.models import PartecipazioneCorsoBase, CorsoBase
         return PartecipazioneCorsoBase.con_esito_ok().filter(persona=self, corso__stato=CorsoBase.ATTIVO).first()
-    
+
     @property
     def volontario_da_meno_di_un_anno(self):
         """
@@ -934,7 +938,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return 'Non è presente alcun firmatario'
         if not motivazione:
             return 'Non è stata indicata la motivazione'
-        if not motivazione:
+        if not data:
             return 'Non è stata indicata data di trasferimento'
         try:
             if not isinstance(sede, Sede):
@@ -948,11 +952,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 persona=self,
                 richiedente=firmatario,
                 motivo=motivazione,
+                massivo=True
             )
-            trasferimento.richiedi(notifiche_attive=False)
-            for autorizzazione in trasferimento.autorizzazioni:
-                autorizzazione.concedi(firmatario, auto=True, notifiche_attive=False, data=data_inizio)
-            trasferimento.refresh_from_db()
+            trasferimento.autorizzazione_concessa(modulo=None, auto=True, notifiche_attive=False, data=data_inizio)
             return trasferimento.appartenenza
         else:
             return 'La persone non è un volontario o è già nella sede indicata'
@@ -1426,6 +1428,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     CONDIZIONE_ATTUALE_AGGIUNTIVA = Q(confermata=True)
 
     RICHIESTA_NOME = "Appartenenza"
+
+    def __str__(self):
+        return 'Appartenenza a {}'.format(self.sede)
 
     @classmethod
     def membro_permesso(cls, estensione=REGIONALE, membro=ORDINARIO):
@@ -2119,11 +2124,16 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
     protocollo_numero = models.CharField('Numero di protocollo', max_length=16, null=True, blank=True)
     protocollo_data = models.DateField('Data di presa in carico', null=True, blank=True)
     motivo = models.CharField(max_length=2048, null=True, blank=False,)
+    massivo = models.BooleanField(null=False, blank=False, default=False,
+                                  help_text='Se effettuato tramite spostamento massivo da interfaccia admin')
 
     RICHIESTA_NOME = "trasferimento"
 
     # Data fissa di 30gg come da regolamento CRI
     APPROVAZIONE_AUTOMATICA = timedelta(days=30)
+
+    def __str__(self):
+        return 'Trasferimento'
 
     def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiTrasferimento
