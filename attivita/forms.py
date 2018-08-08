@@ -73,6 +73,8 @@ class ModuloCreazioneArea(ModelForm):
 
 
 class ModuloOrganizzaAttivita(ModelForm):
+
+    gruppo = forms.BooleanField(required=False, initial=False, label="Vuoi creare un gruppo di lavoro per quest'attività?")
     class Meta:
         model = Attivita
         fields = ['nome', 'area', ]

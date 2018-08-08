@@ -9,7 +9,7 @@ class AdminGruppo(ReadonlyAdminMixin, admin.ModelAdmin):
     pass
 
 class AdminAppartenenza(ReadonlyAdminMixin, admin.ModelAdmin):
-    pass
+    list_display = ('id', 'creazione', 'gruppo', 'persona')
 
 admin.site.register(Gruppo, AdminGruppo)
 admin.site.register(Appartenenza, AdminAppartenenza)
