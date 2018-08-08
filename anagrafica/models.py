@@ -359,13 +359,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         Ottiene il queryset delle appartenenze attuali e confermate, in base al Presidente
         """
-        attuali = self.appartenenze_attuali()
-        sedi_pres = presidente.sedi_attuali()
-        da_rimuovere = []
-        for appartenza in attuali:
-            if not appartenza.sede in sedi_pres and not appartenza.sede.genitore in sedi_pres:
-                da_rimuovere.append(appartenza.id)
-        return attuali.exclude(id__in=da_rimuovere)
+        return [(appartenenza.pk, appartenenza.membro_a_stringa()) for appartenenza in self.appartenenze_attuali() \
+                if presidente in appartenenza.sede.delegati_attuali() \
+                or presidente in appartenenza.sede.genitore.delegati_attuali()]
 
     def ingresso(self, **kwargs):
         """
