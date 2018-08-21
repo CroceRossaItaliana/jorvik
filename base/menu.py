@@ -124,6 +124,7 @@ def menu(request):
                 ("Reperibilità", "fa-thumb-tack", "/attivita/reperibilita/"),
             )),
             ("Gestione", (
+                ("Gruppi di lavoro", "fa-pencil", "/attivita/gruppo/") if me and me.oggetti_permesso(GESTIONE_ATTIVITA_AREA).exists() else None,
                 ("Organizza attività", "fa-asterisk", "/attivita/organizza/") if me and me.oggetti_permesso(GESTIONE_ATTIVITA_AREA).exists() else None,
                 ("Elenco attività", "fa-list", "/attivita/gestisci/") if me and me.oggetti_permesso(GESTIONE_ATTIVITA).exists() else None,
                 ("Aree di intervento", "fa-list", "/attivita/aree/") if me and me.oggetti_permesso(GESTIONE_AREE_SEDE).exists() else None,

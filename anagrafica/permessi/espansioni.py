@@ -6,7 +6,7 @@ __author__ = 'alfioemanuele'
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
     GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, MODIFICA, LETTURA, COMPLETO, \
-    GESTIONE_AUTOPARCHI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI_SEDE, GESTIONE, GESTIONE_AREE_SEDE, \
+    GESTIONE_AUTOPARCHI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI, GESTIONE_GRUPPI_SEDE, GESTIONE, GESTIONE_AREE_SEDE, \
     GESTIONE_REFERENTI_ATTIVITA, GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI, \
     GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
     RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1, RUBRICA_DELEGATI_OBIETTIVO_2, \
@@ -292,6 +292,15 @@ def espandi_gestione_gruppo(qs_gruppi, al_giorno=None):
         return []
 
 
+def espandi_gestione_gruppi(qs_gruppi, al_giorno=None):
+    try:
+        return [
+            (MODIFICA, qs_gruppi),
+        ]
+    except (AttributeError, ValueError, KeyError, TypeError):
+        return []
+
+
 def espandi_gestione_gruppi_sede(qs_sedi, al_giorno=None):
     from gruppi.models import Gruppo
     try:
@@ -316,6 +325,7 @@ ESPANDI_PERMESSI = {
     GESTIONE_CORSO:                     espandi_gestione_corso,
     GESTIONE_AUTOPARCHI_SEDE:           espandi_gestione_autoparchi_sede,
     GESTIONE_GRUPPO:                    espandi_gestione_gruppo,
+    GESTIONE_GRUPPI:                    espandi_gestione_gruppi,
     GESTIONE_GRUPPI_SEDE:               espandi_gestione_gruppi_sede,
     GESTIONE_CENTRALE_OPERATIVA_SEDE:   espandi_gestione_centrale_operativa_sede,
     GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE:    espandi_gestione_poteri_centrale_operativa_sede,

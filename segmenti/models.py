@@ -67,6 +67,10 @@ class BaseSegmento(six.with_metaclass(BaseSegmentoBase, models.Model)):
         help_text='Usato solo con il segmento \'Volontari aventi un dato titolo\''
     )
     sede = models.ForeignKey(Sede, blank=True, null=True, limit_choices_to=LIMITED_CHOICES,)
+    sedi_sottostanti = models.BooleanField(default=False, db_index=True,
+                                       help_text="Se selezionato, il segmento viene applicato utilizzando la sede "
+                                                 "selezionata e le sedi sottostanti.")
+
     _metodo = None
     _oggetto_collegato = None
 
@@ -88,5 +92,10 @@ class BaseSegmento(six.with_metaclass(BaseSegmentoBase, models.Model)):
         if self.titolo:
             filters['titoli_personali__titolo'] = self.titolo.pk
         if self.sede:
-            filters['appartenenze__sede'] = self.sede.pk
+            if self.sedi_sottostanti:
+                filters['appartenenze__sede__in'] = self.sede.espandi(includi_me=True, pubblici=True)
+            else:
+                filters['appartenenze__sede'] = self.sede.pk
+
         return filters
+

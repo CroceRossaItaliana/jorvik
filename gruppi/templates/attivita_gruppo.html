@@ -1,0 +1,118 @@
+{% extends 'attivita_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Creazione ed eliminazione gruppi.
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h3>
+        <i class="fa fa-fw fa-users"></i>
+        Gruppi di lavoro
+    </h3>
+
+    <div class="alert alert-info">
+        <i class="fa fa-fw fa-info-circle"></i> Da qui
+        potrai creare dei gruppi di lavoro per il tuo comitato ed eliminare quelli di cui sei responsabile.
+    </div>
+
+    <table class="table table-striped table-responsive">
+        <thead>
+            <th>
+                Gruppo
+            </th>
+            <th>
+                Referenti
+            </th>
+            <th>
+                Azione
+            </th>
+        </thead>
+
+        <tbody>
+
+        {% for gruppo in gruppi_gestione %}
+            <tr>
+                <td style="width: 60%;">
+                    <strong>
+                        {{ gruppo.nome }}
+                    </strong><br />
+
+                    {% if gruppo.attivita %}
+                        Attività: <strong>{{ gruppo.attivita.link|safe }}</strong><br />
+                    {% else %}
+                        Area: {{ gruppo.area.nome }}<br />
+                    {% endif %}
+                    {{ gruppo.sede.link|safe }}
+                </td>
+                <td>
+                    {% for delegato in gruppo.delegati_attuali %}
+                        {{ delegato.link|safe }}<br />
+
+                    {% empty %}
+                        Nessun referente
+
+                    {% endfor %}
+                </td>
+                <td>
+                    <a href="/attivita/gruppi/{{ gruppo.pk }}/elimina/"
+                       class="btn btn-sm btn-block btn-danger">
+                        <i class="fa fa-fw fa-times"></i>
+                            Elimina gruppo
+                    </a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr class="info allinea-centro">
+            <td colspan="3">
+                <h4><i class="fa fa-fw fa-info-circle"></i> Nessun gruppo di lavoro</h4>
+            </td>
+            </tr>
+        {% endfor %}
+
+        </tbody>
+
+
+    </table>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Crea gruppo di lavoro per un'attività specifica
+                </div>
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo_attivita_specifica %}
+                        <button type="submit" class="btn btn-block btn-primary" name="specifico">
+                            Crea gruppo di lavoro per un'attività specifica
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Crea gruppo di lavoro per un'area
+                </div>
+                <div class="panel-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form modulo_attivita_non_specifica %}
+                        <button type="submit" class="btn btn-block btn-primary" name="non_specifico">
+                            Crea gruppo di lavoro per un'area
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
