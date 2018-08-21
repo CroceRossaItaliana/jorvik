@@ -24,7 +24,7 @@ from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti, ElencoDimessi, ElencoTrasferiti, \
     ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva, ElencoIVCM, ElencoTesseriniSenzaFototessera, \
-    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoExSostenitori, ElencoSenzaTurni
+    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoTesseriniRifiutati, ElencoExSostenitori, ElencoSenzaTurni
 from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
     ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, \
@@ -1179,6 +1179,20 @@ def us_tesserini_richiesti(request, me):
 
 
 @pagina_privata
+def us_tesserini_rifiutati(request, me):
+    """
+    Mostra l'elenco dei volontari per i quali è stata rifiutata la
+     richiesta del tesserino.
+    """
+    sedi = me.oggetti_permesso(GESTIONE_SOCI)
+    elenco = ElencoTesseriniRifiutati(sedi)
+    contesto = {
+        "elenco": elenco
+    }
+    return "us_tesserini_rifiutati.html", contesto
+
+
+@pagina_privata
 def us_tesserini_richiedi(request, me, persona_pk=None):
     """
     Effettua la richiesta di tesserino per il volontario.
@@ -1379,6 +1393,22 @@ def us_tesserini_emissione_processa(request, me):
             tesserini.update(valido=valido)
 
             fine = True
+
+            # invio messaggio all'US richiedente se tesserino rifiutato
+            if stato_richiesta == Tesserino.RIFIUTATO:
+                for tesserino in tesserini:
+                    persona = tesserino.persona
+                    Messaggio.costruisci_e_accoda(
+                        oggetto="Richiesta tesserino rifiutata",
+                        modello="email_tesserino_rifiutato.html",
+                        corpo={
+                            "mittente": me.nome + " " + me.cognome,
+                            "volontario_tesserino_rifiutato": persona.nome + " " + persona.cognome,
+                            "motivo_rifiuto": tesserino.motivo_rifiutato,
+                        },
+                        mittente=me,
+                        destinatari=[tesserino.richiesto_da]
+                    )
 
     else:
         modulo = ModuloScaricaTesserini(request.POST if 'tesserini' not in request.POST else None)

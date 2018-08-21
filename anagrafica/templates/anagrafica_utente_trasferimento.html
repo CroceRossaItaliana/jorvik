@@ -91,7 +91,11 @@
                             <td>{{ trasferimento.esito}}</td>
                             <td>{{ trasferimento.creazione|date:"SHORT_DATE_FORMAT" }}</td>
                             <td>
+                                {% if not trasferimento.massivo %}
                                 <a href="{{ trasferimento.url_pdf }}" target="_blank">Scarica PDF</a>
+                                {% else %}
+                                &nbsp;
+                                {% endif %}
                                 {% if trasferimento.esito == trasferimento.ESITO_PENDING %} -
                                 <a href="/utente/trasferimento/{{ trasferimento.pk }}/ritira/"
                                    data-conferma="Vuoi veramente ritirare la richiesta di trasferimento?">

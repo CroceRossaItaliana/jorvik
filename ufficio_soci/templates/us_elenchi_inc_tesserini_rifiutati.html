@@ -1,0 +1,18 @@
+{% extends "us_elenchi_inc_persone.html" %}
+
+{% block elenco_intestazione_extra %}
+    <th>Motivo rifiuto</th>
+    <th>Tipo richiesta</th>
+{% endblock %}
+
+{% block elenco_riga_extra %}
+    <td style="color:red;">{{ persona.ultimo_tesserino.motivo_rifiutato }}</td>
+    <td>{{ persona.ultimo_tesserino.get_tipo_richiesta_display }}</td>
+{% endblock %}
+
+{% block elenco_riga_azioni_extra %}
+    <a href="" disabled="disabled"
+       target="_self" class="btn btn-default">
+        <i class="fa fa-fw fa-check"></i> Richiedi Tesserino
+    </a>
+{% endblock %}
