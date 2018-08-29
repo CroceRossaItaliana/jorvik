@@ -216,6 +216,10 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(ModuloProfiloModificaAnagrafica, self).__init__(*args, **kwargs)
+        self.fields['nome'].disabled = True
+        self.fields['cognome'].disabled = True
+        self.fields['codice_fiscale'].disabled = True
+        self.fields['data_nascita'].disabled = True
         #self.fields['note'].widget = forms.Textarea
 
 
