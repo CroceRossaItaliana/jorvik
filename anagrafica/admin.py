@@ -10,6 +10,7 @@ from django.shortcuts import render
 from django.utils.six import text_type
 from django.utils.translation import ungettext_lazy
 from mptt.admin import MPTTModelAdmin
+from reversion.admin import VersionAdmin
 
 from anagrafica.models import Persona, Sede, Appartenenza, Delega, Documento, Fototessera, Estensione, Trasferimento, \
     Riserva, Dimissione, Telefono, ProvvedimentoDisciplinare
@@ -70,7 +71,7 @@ class InlineTelefonoPersona(ReadonlyAdminMixin, admin.StackedInline):
 
 
 @admin.register(Persona)
-class AdminPersona(ReadonlyAdminMixin, admin.ModelAdmin):
+class AdminPersona(ReadonlyAdminMixin, VersionAdmin):
     search_fields = ['nome', 'cognome', 'codice_fiscale', 'utenza__email', 'email_contatto', '=id',]
     list_display = ('nome', 'cognome', 'utenza', 'email_contatto', 'codice_fiscale', 'data_nascita', 'stato',
                     'ultima_modifica', )

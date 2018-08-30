@@ -68,7 +68,7 @@ INSTALLED_APPS = [
     'filer',
     'ckeditor',
     'ckeditor_filebrowser_filer',
-
+    'reversion',
     'django_otp',
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
@@ -107,6 +107,7 @@ MIDDLEWARE_CLASSES = (
     'two_factor.middleware.threadlocals.ThreadLocals',
     'autenticazione.two_factor.middleware.Require2FA',
     'corsheaders.middleware.CorsMiddleware',
+    'reversion.middleware.RevisionMiddleware',
 )
 
 # Imposta anagrafica.Utenza come modello di autenticazione
