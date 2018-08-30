@@ -2558,7 +2558,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         Appartenenza.query_attuale(
             al_giorno=self.creazione, persona=self.persona, membro=precedente_appartenenza.membro
         ).update(fine=mezzanotte_24_ieri(data), terminazione=Appartenenza.DIMISSIONE)
-        self.persona.chiudi_tutto(mezzanotte_24_ieri(data), anche_deleghe=False)
+        self.persona.chiudi_tutto(mezzanotte_24_ieri(data), anche_deleghe=True)
 
         if trasforma_in_sostenitore:
             app = Appartenenza(precedente=precedente_appartenenza, persona=self.persona,

@@ -271,7 +271,6 @@ def us_dimissioni(request, me, pk):
         dim.persona = persona
         dim.appartenenza = modulo.cleaned_data['appartenenza']
         dim.sede = dim.appartenenza.sede
-        dim.save()
         dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'])
 
         if dim.motivo == dim.DECEDUTO:
@@ -281,6 +280,21 @@ def us_dimissioni(request, me, pk):
         else:
             messaggio = "Le dimissioni sono state registrate con successo"
 
+        if persona.appartenenze_attuali().exclude(id=dim.appartenenza.id).exists():
+            for appartenenza_restante in persona.appartenenze_attuali().exclude(id=dim.appartenenza.id):
+                presidente_da_contattare = appartenenza_restante.sede.presidente()
+                oggetto = "Riapertura deleghe: %s" % (persona.nome_completo)
+                Messaggio.costruisci_e_accoda(
+                    oggetto=oggetto,
+                    modello="email_testo.html",
+                    mittente=me,
+                    destinatari=[presidente_da_contattare],
+                    corpo={
+                        "testo": "Corpo del messaggio per spiegare al presidente di creare nuovamente le deleghe rimosse",
+                    },
+                )
+
+        dim.save()
         return messaggio_generico(request, me, titolo="Dimissioni registrate",
                                   messaggio=messaggio,
                                   torna_titolo="Vai allo storico appartenenze",
