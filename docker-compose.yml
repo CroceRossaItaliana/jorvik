@@ -28,6 +28,7 @@ services:
   selenium:
     image: selenium/standalone-firefox-debug
     ports:
+      - "4444:4444"  # VNC (debugging)
       - "5900:5900"  # VNC (debugging)
 
   broker:
