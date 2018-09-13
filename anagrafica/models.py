@@ -1114,12 +1114,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         ).exists():
             return True
 
-        # I soci sostenitori della propria sede o superiore possono essere reclamati (ma solo se sono **solo** sostenitori)
+        # I soci sostenitori possono essere reclamati (ma solo se sono **solo** sostenitori)
         if self.appartenenze_attuali().filter(
-                sede=sede,
                 membro=Appartenenza.SOSTENITORE
         ).exists() and not self.appartenenze_attuali().exclude(
-            sede=sede,
             membro=Appartenenza.SOSTENITORE
         ).exists():
             return True
