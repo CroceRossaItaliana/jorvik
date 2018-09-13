@@ -546,7 +546,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             lista += [('/utente/', 'Utente', 'fa-user')]
 
         if hasattr(self, 'aspirante'):
-            lista += [('/aspirante/', 'Aspirante', 'fa-user', self.aspirante.corsi().count())]
+            if self.dipendente:
+                lista += [('/utente/', 'Utente', 'fa-user')]
+            else:
+                lista += [('/aspirante/', 'Aspirante', 'fa-user', self.aspirante.corsi().count())]
 
         if self.volontario:
             lista += [('/attivita/', 'Attività', 'fa-calendar')]
