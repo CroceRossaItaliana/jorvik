@@ -160,6 +160,7 @@ def us_reclama_persona(request, me, persona_pk):
 
     if modulo_appartenenza.is_valid():
         sede = modulo_appartenenza.cleaned_data.get('sede')
+        membro = modulo_appartenenza.cleaned_data.get('membro')
         continua = True
         if not modulo_quota.is_valid() and modulo_quota.get('registra_quota') == modulo_quota.SI:
             continua = False
@@ -171,8 +172,8 @@ def us_reclama_persona(request, me, persona_pk):
                                                         "data selezionata. Inserisci la data corretta di "
                                                         "cambio appartenenza.")
                 continua = False
-            if not appartenenza_ordinario.appartiene_a(sede=sede):
-                modulo_appartenenza.add_error('membro', "La persona e' gia un ordinario"
+            if membro == Appartenenza.ORDINARIO and not appartenenza_ordinario.appartiene_a(sede=sede):
+                modulo_appartenenza.add_error('membro', "La persona e' gia un ordinario "
                                                         "in un altro comitato: %s "
                                               % appartenenza_ordinario.sede.nome_completo)
                 continua = False
@@ -184,8 +185,8 @@ def us_reclama_persona(request, me, persona_pk):
                                                         "data selezionata. Inserisci la data corretta di "
                                                         "cambio appartenenza.")
                 continua = False
-            if not appartenenza_dipendente.appartiene_a(sede=sede):
-                modulo_appartenenza.add_error('membro', "La persona e' gia dipendente"
+            if membro == Appartenenza.DIPENDENTE and not appartenenza_dipendente.appartiene_a(sede=sede):
+                modulo_appartenenza.add_error('membro', "La persona e' gia dipendente "
                                                         "in un altro comitato: %s "
                                               % appartenenza_dipendente.sede.nome_completo)
                 continua = False
@@ -193,8 +194,8 @@ def us_reclama_persona(request, me, persona_pk):
         sede = modulo_appartenenza.cleaned_data.get('sede')
         appartenenza_volontario = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.VOLONTARIO).first()
         if appartenenza_volontario:
-            if not appartenenza_volontario.appartiene_a(sede=sede):
-                modulo_appartenenza.add_error('membro', "La persona e' gia volontario"
+            if membro == Appartenenza.VOLONTARIO and not appartenenza_volontario.appartiene_a(sede=sede):
+                modulo_appartenenza.add_error('membro', "La persona e' gia volontario "
                                                         "in un altro comitato: %s "
                                               % appartenenza_volontario.sede.nome_completo)
                 continua = False

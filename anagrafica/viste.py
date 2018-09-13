@@ -2,6 +2,7 @@ import codecs
 import csv
 import datetime
 from collections import OrderedDict
+from django.db import transaction
 from importlib import import_module
 
 from django.apps import apps
@@ -1215,7 +1216,18 @@ def _profilo_appartenenze(request, me, persona):
                                                           instance=app,
                                                           prefix="%d" % (app.pk,))
             if ("%s-inizio" % (app.pk,)) in request.POST and modulo.is_valid():
-                modulo.save()
+                with transaction.atomic():
+                    if app.membro == Appartenenza.DIPENDENTE:
+                        app_volontario = persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
+                        if app_volontario:
+                            try:
+                                riserva = Riserva.objects.get(appartenenza=app_volontario)
+                            except Riserva.DoesNotExists:
+                                pass
+                            else:
+                                riserva.inizio = modulo.cleaned_data['inizio']
+                                riserva.save()
+                    modulo.save()
 
         moduli += [modulo]
         terminabili += [terminabile]
