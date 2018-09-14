@@ -576,13 +576,13 @@ class TestFunzionaleBase(TestFunzionale):
 
         sessione.visit("%s/attivita/scheda/%s/modifica/" % (self.live_server_url, attivita.pk))
         with sessione.get_iframe(0) as iframe:
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="IT"]')), 1)
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 1)
+            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="IT"]')), 0)
+            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 0)
 
         sessione.visit("%s/aspirante/corso-base/%s/modifica/" % (self.live_server_url, corso.pk))
         with sessione.get_iframe(0) as iframe:
             self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 0)
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="IT"]')), 1)
+            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="IT"]')), 0)
 
 
     @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
@@ -614,16 +614,6 @@ class TestFunzionaleBase(TestFunzionale):
                 iframe.is_text_present("Via Etnea, 353, 95125 Catania CT, Italia", wait_time=5),
                 msg="Indirizzo salvato correttamente"
             )
-
-    def test_recupero_password_skip_captcha(self):
-        sessione = self.sessione_anonimo()
-        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
-
-        sessione.fill('codice_fiscale', 'via etnea 353')
-        sessione.fill('email', 'prova@testprova.it')
-        sessione.find_by_xpath("//button[@type='submit']").first.click()
-
-        self.assertTrue(sessione.is_text_present('Questo campo è obbligatorio.'))
 
     @patch('base.forms.NoReCaptchaField.clean', return_value='PASSED')
     def test_recupero_password_cf_non_esiste(self, mocked):
