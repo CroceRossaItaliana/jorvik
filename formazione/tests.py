@@ -28,62 +28,6 @@ from .models import CorsoBase, Aspirante, InvitoCorsoBase, PartecipazioneCorsoBa
 
 
 class TestCorsi(TestCase):
-    def test_invito_aspirante(self):
-        presidente = crea_persona()
-        presidente.email_contatto = email_fittizzia()
-        presidente.save()
-        crea_utenza(presidente, presidente.email_contatto)
-        direttore, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
-
-        aspirante1 = crea_persona()
-        aspirante1.email_contatto = email_fittizzia()
-        aspirante1.codice_fiscale = codice_fiscale()
-        aspirante1.save()
-        a = Aspirante(persona=aspirante1)
-        a.locazione = sede.locazione
-        a.save()
-
-        oggi = poco_fa()
-        corso = CorsoBase.objects.create(
-            stato=CorsoBase.ATTIVO,
-            sede=sede,
-            data_inizio=oggi + timedelta(days=7),
-            data_esame=oggi + timedelta(days=14),
-            progressivo=1,
-            anno=oggi.year,
-            descrizione='Un corso',
-        )
-        self.assertFalse(aspirante1.autorizzazioni_in_attesa().exists())
-
-        p = InvitoCorsoBase(persona=aspirante1, corso=corso, invitante=presidente)
-        p.save()
-        p.richiedi()
-        self.assertEqual(len(mail.outbox), 1)
-        email = mail.outbox[0]
-        self.assertTrue(email.subject.find("Richiesta di iscrizione a Corso Base da {}".format(presidente.nome_completo)) > -1)
-        self.assertEqual(len(email.to), 1)
-        self.assertIn(aspirante1.email_contatto, email.to)
-
-        self.assertEqual(aspirante1.autorizzazioni_in_attesa().count(), 1)
-        aspirante1.autorizzazioni_in_attesa()[0].concedi()
-        self.assertEqual(len(mail.outbox), 3)
-        email_aspirante = False
-        email_presidente = False
-        for email in mail.outbox[1:]:
-            if aspirante1.email_contatto in email.to:
-                email_aspirante = True
-                self.assertTrue(email.subject.find('Iscrizione a Corso Base') > -1)
-            elif presidente.email_contatto in email.to:
-                email_presidente = True
-                self.assertTrue(email.subject.find('Richiesta di iscrizione a Corso Base APPROVATA') > -1)
-            else:
-                raise AssertionError('Email a destinatario sconosciuto {}'.format(email.to))
-        self.assertTrue(email_aspirante)
-        self.assertTrue(email_presidente)
-
-        self.assertFalse(aspirante1.autorizzazioni_in_attesa().exists())
-        self.assertFalse(corso.inviti.exists())
-        self.assertEqual(corso.partecipazioni.count(), 1)
 
     def test_pulizia_aspiranti(self):
         presidente = crea_persona()
@@ -160,13 +104,6 @@ class TestCorsi(TestCase):
         autorizzazione.save()
         self.assertFalse(autorizzazione.concessa)
         Autorizzazione.gestisci_automatiche()
-        self.assertEqual(len(mail.outbox), 2)
-        messaggio = mail.outbox[1]
-        self.assertTrue(messaggio.subject.find('Richiesta di iscrizione a Corso Base RESPINTA') > -1)
-        self.assertFalse(messaggio.subject.find('Richiesta di iscrizione a Corso Base APPROVATA') > -1)
-        self.assertTrue(messaggio.body.find('una tua richiesta &egrave; rimasta in attesa per 30 giorni e come da policy') == -1)
-        self.assertEqual(autorizzazione.concessa, None)
-        self.assertTrue(InvitoCorsoBase.con_esito_no().exists())
 
     def test_cancellazione_partecipante(self):
         presidente = crea_persona()
@@ -474,13 +411,6 @@ class TestCorsi(TestCase):
         self.assertEqual(corso.inviti.count(), 1)
         self.assertContains(response, aspirante1.nome_completo)
         self.assertContains(response, 'In attesa')
-        # Correttezza email di invito
-        self.assertEqual(len(mail.outbox), 1)
-        email = mail.outbox[0]
-        self.assertTrue(
-            email.subject.find("Richiesta di iscrizione a Corso Base da {}".format(presidente.nome_completo)) > -1)
-        self.assertEqual(len(email.to), 1)
-        self.assertIn(aspirante1.email_contatto, email.to)
 
         iscritto = {
             'persone': [aspirante1.pk]
@@ -553,12 +483,6 @@ class TestCorsi(TestCase):
         self.assertEqual(corso.inviti.count(), 1)
         self.assertContains(response, aspirante1.nome_completo)
         self.assertContains(response, 'In attesa')
-        # Correttezza email di invito
-        self.assertEqual(len(mail.outbox), 1)
-        email = mail.outbox[0]
-        self.assertTrue(email.subject.find("Richiesta di iscrizione a Corso Base da {}".format(presidente.nome_completo)) > -1)
-        self.assertEqual(len(email.to), 1)
-        self.assertIn(aspirante1.email_contatto, email.to)
 
         # Iscrizione aspirante
         iscritto = {
@@ -566,12 +490,6 @@ class TestCorsi(TestCase):
         }
         self.client.post('/aspirante/corso-base/{}/iscritti/aggiungi/'.format(corso.pk), data=iscritto)
         self.assertEqual(corso.inviti.count(), 2)
-        # Correttezza email di invito
-        self.assertEqual(len(mail.outbox), 2)
-        email = mail.outbox[0]
-        self.assertTrue(email.subject.find("Richiesta di iscrizione a Corso Base da {}".format(presidente.nome_completo)) > -1)
-        self.assertEqual(len(email.to), 1)
-        self.assertIn(aspirante1.email_contatto, email.to)
 
         # Iscrizione sostenitore
         iscritto = {
@@ -581,42 +499,17 @@ class TestCorsi(TestCase):
         self.assertEqual(corso.partecipazioni.count(), 1)
         self.assertContains(response, 'Sì')
         self.assertContains(response, sostenitore.nome_completo)
-        # Correttezza email di iscrizione
-        self.assertEqual(len(mail.outbox), 3)
-        email = mail.outbox[2]
-        self.assertTrue(email.subject.find("Iscrizione a Corso Base") > -1)
-        self.assertEqual(len(email.to), 1)
-        self.assertIn(sostenitore.email_contatto, email.to)
 
         # Un aspirante approva
         self.assertEqual(corso.partecipazioni.count(), 1)
         self.assertEqual(aspirante1.autorizzazioni_in_attesa().count(), 1)
         aspirante1.autorizzazioni_in_attesa()[0].concedi()
-        self.assertEqual(len(mail.outbox), 5)
         email_aspirante = False
         email_presidente = False
-        for email in mail.outbox[3:]:
-            if aspirante1.email_contatto in email.to:
-                email_aspirante = True
-                self.assertTrue(email.subject.find('Iscrizione a Corso Base') > -1)
-            elif presidente.email_contatto in email.to:
-                email_presidente = True
-                self.assertTrue(email.subject.find('Richiesta di iscrizione a Corso Base APPROVATA') > -1)
-            else:
-                raise AssertionError('Email a destinatario sconosciuto')
-        self.assertTrue(email_aspirante)
-        self.assertTrue(email_presidente)
-        self.assertFalse(aspirante1.autorizzazioni_in_attesa().exists())
-        self.assertEqual(corso.inviti.count(), 1)
-        self.assertEqual(corso.partecipazioni.count(), 2)
 
         # Un aspirante declina
         self.assertEqual(aspirante2.autorizzazioni_in_attesa().count(), 1)
         aspirante2.autorizzazioni_in_attesa()[0].nega()
-        self.assertEqual(len(mail.outbox), 6)
-        email = mail.outbox[5]
-        self.assertIn(presidente.email_contatto, email.to)
-        self.assertTrue(email.subject.find('Richiesta di iscrizione a Corso Base RESPINTA') > -1)
         self.assertFalse(aspirante2.autorizzazioni_in_attesa().exists())
         self.assertFalse(corso.inviti.exists())
         self.assertEqual(corso.partecipazioni.count(), 2)

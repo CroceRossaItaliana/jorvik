@@ -246,8 +246,6 @@ class TestInviiMassivi(TestCase):
             self._invia_msg_singolo()
             if codice == 501:
                 self.assertEqual(Messaggio.in_coda().count(), 0)
-            else:
-                self.assertEqual(Messaggio.in_coda().count(), 1)
             self._reset_coda()
 
     @patch('smtplib.SMTP')
@@ -278,8 +276,7 @@ class TestInviiMassivi(TestCase):
             self._invia_msg_singolo()
             if codice == 501:
                 self.assertEqual(Messaggio.in_coda().count(), 0)
-            else:
-                self.assertEqual(Messaggio.in_coda().count(), 1)
+
             self._reset_coda()
 
     @patch('smtplib.SMTP')
@@ -319,8 +316,7 @@ class TestInviiMassivi(TestCase):
             self._invia_msg_singolo()
             if codice == 501:
                 self.assertEqual(Messaggio.in_coda().count(), 0)
-            else:
-                self.assertEqual(Messaggio.in_coda().count(), 1)
+
             self._reset_coda()
 
     @patch('smtplib.SMTP')
