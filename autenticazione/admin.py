@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin, GroupAdmin, Group
 from django_otp.plugins.otp_static.models import StaticDevice
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from otp_yubikey.models import YubikeyDevice
+from reversion.admin import VersionAdmin
 
 from autenticazione.forms import ModuloModificaUtenza, ModuloCreazioneUtenza
 from autenticazione.models import Utenza
@@ -39,7 +40,7 @@ class YubikeyDeviceInlineAdmin(admin.TabularInline):
 
 
 @admin.register(Utenza)
-class AdminUtenza(ReadonlyAdminMixin, UserAdmin):
+class AdminUtenza(ReadonlyAdminMixin, VersionAdmin, UserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Permessi', {'fields': ('is_active', 'is_staff', 'is_superuser', 'richiedi_2fa',
