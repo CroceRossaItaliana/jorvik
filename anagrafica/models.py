@@ -978,7 +978,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             appartenenza.save()
         self.chiudi_tutto(mezzanotte_24_ieri(data))
 
-    def chiudi_tutto(self, data, anche_deleghe=True):
+    def chiudi_tutto(self, data, da_dipendente=False):
         """
         Chiude tutti i ruoli collegati a fronte di dimissioni / espulsioni / trasferimenti
 
@@ -996,46 +996,47 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         for riserva in self.riserve.filter(Q(fine__isnull=True) | Q(fine__gte=poco_fa())):
             riserva.termina(data=data)
 
-        for estensione in self.estensioni_attuali():
-            estensione.termina(data=data)
+        if not da_dipendente:
+            for estensione in self.estensioni_attuali():
+                estensione.termina(data=data)
 
-        if anche_deleghe:
-            # Per le attività bisogna attivare dei fallback quindi le gestiamo separatamente
-            for delega in self.deleghe_attuali(tipo__in=OBIETTIVI.values()):
-                delega.termina(data=data)
+        # Per le attività bisogna attivare dei fallback quindi le gestiamo separatamente
+        for delega in self.deleghe_attuali(tipo__in=OBIETTIVI.values()):
+            delega.termina(data=data)
 
-            for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
-                delega.termina(data=data)
-                if not delega.oggetto.delegati_attuali(al_giorno=data).exists():
-                    for delegato_obiettivo in Delega.objects.filter(
-                        tipo=delega.oggetto.codice_obiettivo,
-                        oggetto_tipo=ContentType.objects.get_for_model(Sede),
-                        oggetto_id=delega.oggetto.sede_id,
-                        inizio__lte=data
-                    ).filter(Q(fine__isnull=True) | Q(fine__gt=data)):
-                        delega.oggetto.aggiungi_delegato(
-                            RESPONSABILE_AREA, delegato_obiettivo.persona,
-                            inizio=mezzanotte_00(data + timedelta(days=1))
-                        )
+        for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
+            delega.termina(data=data)
+            if not delega.oggetto.delegati_attuali(al_giorno=data).exists():
+                for delegato_obiettivo in Delega.objects.filter(
+                    tipo=delega.oggetto.codice_obiettivo,
+                    oggetto_tipo=ContentType.objects.get_for_model(Sede),
+                    oggetto_id=delega.oggetto.sede_id,
+                    inizio__lte=data
+                ).filter(Q(fine__isnull=True) | Q(fine__gt=data)):
+                    delega.oggetto.aggiungi_delegato(
+                        RESPONSABILE_AREA, delegato_obiettivo.persona,
+                        inizio=mezzanotte_00(data + timedelta(days=1))
+                    )
 
-            for delega in self.deleghe_attuali(tipo=REFERENTE):
-                delega.termina(data=data)
-                if not delega.oggetto.referenti_attuali(al_giorno=data).exists():
-                    for responsabile_area in delega.oggetto.area.delegati_attuali(al_giorno=data):
-                        delega.oggetto.aggiungi_delegato(
-                            REFERENTE, responsabile_area,
-                            inizio=mezzanotte_00(data + timedelta(days=1))
-                        )
+        for delega in self.deleghe_attuali(tipo=REFERENTE):
+            delega.termina(data=data)
+            if not delega.oggetto.referenti_attuali(al_giorno=data).exists():
+                for responsabile_area in delega.oggetto.area.delegati_attuali(al_giorno=data):
+                    delega.oggetto.aggiungi_delegato(
+                        REFERENTE, responsabile_area,
+                        inizio=mezzanotte_00(data + timedelta(days=1))
+                    )
 
-            # Tutte le altre deleghe le terminiamo e basta
-            for delega in self.deleghe_attuali(solo_attive=False):
-                delega.termina(data=data)
+        # Tutte le altre deleghe le terminiamo e basta
+        for delega in self.deleghe_attuali(solo_attive=False):
+            delega.termina(data=data)
 
-        for partecipazione in self.partecipazioni.filter(turno__fine__gte=poco_fa()):
-            partecipazione.delete()
+        if not da_dipendente:
+            for partecipazione in self.partecipazioni.filter(turno__fine__gte=poco_fa()):
+                partecipazione.delete()
 
-        for richieste in self.autorizzazioni_in_attesa():
-            richieste.oggetto.autorizzazioni_ritira()
+            for richieste in self.autorizzazioni_in_attesa():
+                richieste.oggetto.autorizzazioni_ritira()
 
     def ottieni_o_genera_aspirante(self):
         try:
@@ -2549,6 +2550,11 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         else:
             template = "email_dimissioni.html"
 
+        da_dipendente = False
+        if precedente_appartenenza.membro == Appartenenza.DIPENDENTE:
+            if self.persona.appartenenze_attuali(membro__in=(Appartenenza.VOLONTARIO, Appartenenza.SOSTENITORE)).exists():
+                da_dipendente = True
+
         # impostiamo l'orario di chiusura alle 0.0 del giorno corrente
         data = poco_fa()
         if precedente_appartenenza.membro == Appartenenza.VOLONTARIO:
@@ -2562,7 +2568,8 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         Appartenenza.query_attuale(
             al_giorno=self.creazione, persona=self.persona, membro=precedente_appartenenza.membro
         ).update(fine=mezzanotte_24_ieri(data), terminazione=Appartenenza.DIMISSIONE)
-        self.persona.chiudi_tutto(mezzanotte_24_ieri(data), anche_deleghe=True)
+
+        self.persona.chiudi_tutto(mezzanotte_24_ieri(data), da_dipendente=da_dipendente)
 
         if trasforma_in_sostenitore:
             app = Appartenenza(precedente=precedente_appartenenza, persona=self.persona,
