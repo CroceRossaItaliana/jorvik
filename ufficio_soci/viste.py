@@ -16,7 +16,7 @@ from anagrafica.permessi.applicazioni import PRESIDENTE
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA, EMISSIONE_TESSERINI
 from autenticazione.forms import ModuloCreazioneUtenza
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
-from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
+from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico, messaggio_avvertimento
 from base.files import Excel, FoglioExcel
 from base.notifiche import NOTIFICA_INVIA
 from base.utils import poco_fa, testo_euro, oggi, mezzanotte_24_ieri
@@ -297,25 +297,39 @@ def us_dimissioni(request, me, pk):
         else:
             messaggio = "Le dimissioni sono state registrate con successo"
 
+        dim.save()
+
         if persona.appartenenze_attuali().exclude(id=dim.appartenenza.id).exists():
             for appartenenza_restante in persona.appartenenze_attuali().exclude(id=dim.appartenenza.id):
-                presidente_da_contattare = appartenenza_restante.sede.presidente()
-                oggetto = "Riapertura deleghe: %s" % (persona.nome_completo)
-                Messaggio.costruisci_e_accoda(
-                    oggetto=oggetto,
-                    modello="email_testo.html",
-                    mittente=me,
-                    destinatari=[presidente_da_contattare],
-                    corpo={
-                        "testo": "Corpo del messaggio per spiegare al presidente di creare nuovamente le deleghe rimosse",
-                    },
-                )
 
-        dim.save()
-        return messaggio_generico(request, me, titolo="Dimissioni registrate",
-                                  messaggio=messaggio,
-                                  torna_titolo="Vai allo storico appartenenze",
-                                  torna_url=persona.url_profilo_appartenenze)
+                testo_email = "Le dimissioni di %s sono state registrate con successo, ti invitiamo a  " \
+                              "creare nuovamente le deleghe che desideri mantenere attive " % persona.nome_completo
+
+                if appartenenza_restante.sede.presidente() == me:
+                    oggetto = "Riapertura deleghe: %s" % (persona.nome_completo)
+                    Messaggio.costruisci_e_accoda(
+                        oggetto=oggetto,
+                        modello="email_testo.html",
+                        mittente=me,
+                        destinatari=[me],
+                        corpo={
+                            "testo": testo_email,
+                        },
+                    )
+
+                messaggio = "Le dimissioni sono state registrate con successo, <strong>MA</strong> sara' necessario " \
+                            "creare nuovamente le deleghe di <strong>%s</strong> nel caso faccia ancora parte " \
+                            "del tuo comitato" % persona.nome_completo
+
+                return messaggio_avvertimento(request, me, titolo="Dimissioni registrate",
+                                          messaggio=messaggio,
+                                          torna_titolo="Vai allo storico appartenenze",
+                                          torna_url=persona.url_profilo_appartenenze)
+        else:
+            return messaggio_generico(request, me, titolo="Dimissioni registrate",
+                                      messaggio=messaggio,
+                                      torna_titolo="Vai allo storico appartenenze",
+                                      torna_url=persona.url_profilo_appartenenze)
 
     contesto = {
         "modulo": modulo,
