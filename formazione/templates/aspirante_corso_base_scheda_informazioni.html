@@ -131,7 +131,7 @@
             <div class="panel-body">
                 <div class="btn-group btn-group-vertical">
                 {% for direttore in corso.delegati_attuali %}
-                    {% card direttore extra_class='' %}
+                    {% card direttore extra_class='' mute_contact=True %}
 
                 {% empty %}
                     <i class="fa fa-fw fa-warning"></i>
