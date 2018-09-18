@@ -2535,14 +2535,13 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     def applica(self, trasforma_in_sostenitore=False, invia_notifica=True):
         from gruppi.models import Appartenenza as App
         precedente_appartenenza = self.appartenenza
-        precedente_sede = self.persona.sede_riferimento()
+        precedente_sede = precedente_appartenenza.sede
         destinatari = set()
         presidente = None
-        if self.persona.sede_riferimento():
-            us = self.persona.sede_riferimento().delegati_ufficio_soci()
+        if precedente_sede:
+            us = precedente_sede.delegati_ufficio_soci()
             destinatari = set(us)
-        if self.persona.comitato_riferimento():
-            presidente = self.persona.comitato_riferimento().presidente()
+            presidente = precedente_sede.presidente()
             destinatari.add(presidente)
 
         if precedente_appartenenza.membro == Appartenenza.SOSTENITORE:
