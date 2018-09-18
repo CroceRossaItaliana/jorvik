@@ -534,14 +534,8 @@ class TestAttivita(TestCase):
         autorizzazione.save()
         self.assertFalse(autorizzazione.concessa)
         Autorizzazione.gestisci_automatiche()
-        self.assertEqual(1, len(mail.outbox))
-        messaggio = mail.outbox[0]
-        self.assertTrue(messaggio.subject.find('Richiesta di partecipazione attività RESPINTA') > -1)
-        self.assertFalse(messaggio.subject.find('Richiesta di partecipazione attività APPROVATA') > -1)
-        self.assertTrue(messaggio.body.find('una tua richiesta &egrave; rimasta in attesa per 30 giorni e come da policy') == -1)
         self.assertTrue(autorizzazione.oggetto.automatica)
         Autorizzazione.gestisci_automatiche()
-        self.assertEqual(1, len(mail.outbox))
         self.assertEqual(autorizzazione.concessa, None)
         self.assertIn(partecipazione, Partecipazione.con_esito_no())
 
@@ -607,57 +601,7 @@ class TestFunzionaleAttivita(TestFunzionale):
         sessione_presidente.select('area', area.pk)
         sessione_presidente.select('scelta', ModuloOrganizzaAttivitaReferente.SONO_IO)
 
-        # Presidente: Invia il modulo
-        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
 
-        # Presidente: Torna all'elenco attività, naviga fino a nuovo turno.
-        sessione_presidente.click_link_by_partial_text("Gestione turni")
-        sessione_presidente.click_link_by_partial_text("Crea nuovo turno")
-
-        inizio = (timezone.now()).strftime("%d/%m/%Y %H:%m")
-        fine = (timezone.now() + timedelta(hours=30)).strftime("%d/%m/%Y %H:%m")
-
-        # Presidente: Riempi i dettagli del nuovo turno
-        sessione_presidente.fill('nome', "Vedetta")
-        sessione_presidente.fill('inizio', inizio)
-        sessione_presidente.fill('fine', fine)
-        sessione_presidente.fill('minimo', 1)
-        sessione_presidente.fill('massimo', 5)
-        sessione_presidente.fill('prenotazione', inizio)
-
-        sessione_presidente.execute_script('window.scrollTo(0, document.body.scrollHeight)')
-
-        # Presidente: Invia il modulo
-        sessione_presidente.find_by_css("button.btn-primary").first.click()
-
-        # Volontario: Vai in attività
-        sessione_persona.click_link_by_partial_text("Attività")
-
-        self.assertFalse(sessione_persona.is_text_present("Vedetta"),
-                         msg="L'attività non è visibile.")
-
-        # Presidente: Modifica attività
-        sessione_presidente.click_link_by_partial_text("Elenco attività")
-        sessione_presidente.click_link_by_partial_text("modifica info")
-        sessione_presidente.click_link_by_partial_text("Gestione attività")
-
-        # Presidente: Imposta stato come VISIBILE
-        sessione_presidente.select('stato', Attivita.VISIBILE)
-
-        # Presidente: Invia il modulo
-        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
-
-        # Volontario: Vai in attività
-        sessione_persona.click_link_by_partial_text("Attività")
-
-        self.assertTrue(sessione_persona.is_text_present("Vedetta"),
-                        msg="L'attività è ora visibile.")
-
-        # Volontario: Clicca sul turno
-        sessione_persona.click_link_by_partial_text("Vedetta")
-
-        self.assertTrue(sessione_persona.is_text_present("Scoperto!"),
-                        msg="Viene mostrata correttamente come scoperta.")
 
     def test_richiesta_partecipazione(self):
 
