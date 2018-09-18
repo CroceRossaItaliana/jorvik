@@ -20,6 +20,6 @@ host = localhost
 secret_key = nxtg7fptenicbiqqwaqtnxtg7fptenicbiqqwaqt
 
 [test]
-driver = chrome
+driver = firefox
 url = http://localhost:4444/wd/hub
-browser = chrome
+browser = firefox
