@@ -44,7 +44,7 @@ class Command(BaseCommand):
             _data_nascita = xlrd.xldate.xldate_as_datetime(float(c(row_idx, 3).value), xl_workbook.datemode)
             _inizio_appartenenza = xlrd.xldate.xldate_as_datetime(float(c(row_idx, 4).value), xl_workbook.datemode)
             note = "{} \n\r {}".format(c(row_idx, 8).value, c(row_idx, 8).value)
-            nome, cognome, cf, data_nascita, inizio_appartenenza, status, email_contatto, note = c(row_idx, 1).value, c(row_idx, 1).value,\
+            nome, cognome, cf, data_nascita, inizio_appartenenza, status, email_contatto, note = c(row_idx, 1).value, c(row_idx, 0).value,\
                                                                                            c(row_idx, 2).value, _data_nascita,\
                                                                                            _inizio_appartenenza, Appartenenza.DIPENDENTE,\
                                                                                            c(row_idx, 6).value, note
