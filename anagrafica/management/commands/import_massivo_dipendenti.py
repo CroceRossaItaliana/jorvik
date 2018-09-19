@@ -49,10 +49,12 @@ class Command(BaseCommand):
                                                                                            _inizio_appartenenza, Appartenenza.DIPENDENTE,\
                                                                                            c(row_idx, 6).value, note
 
-            campi_persona = ["nome", "cognome", "codice_fiscale", "data_nascita", "email_contatto", "note"]
+            campi_persona = ["nome", "cognome", "codice_fiscale", "data_nascita", "email_contatto", "note", "indirizzo_residenza",
+                             "comune_residenza", "provincia_residenza", "cap_residenza"]
 
             _row_dict = dict(nome=nome, cognome=cognome, codice_fiscale=cf, data_nascita=data_nascita,
-                             inizio_appartenenza=inizio_appartenenza, status=status, email_contatto=email_contatto)
+                             inizio_appartenenza=inizio_appartenenza, status=status, email_contatto=email_contatto,
+                             indirizzo_residenza='-', comune_residenza='-', provincia_residenza='-', cap_residenza='-')
 
             _row = "Nome: {nome} Cognome: {cognome} CF: {codice_fiscale} Nascita: {data_nascita} " \
                    "Init: {inizio_appartenenza} Status: {status} email_contatto: {email_contatto}".format(**_row_dict)
@@ -69,9 +71,10 @@ class Command(BaseCommand):
                 if not dry_run:
                     persona.save()
 
-            for app in persona.appartenenze_attuali():
-                app.fine = poco_fa()
-                app.save()
+            # non chiudo appartenenze
+            #for app in persona.appartenenze_attuali():
+            #    app.fine = poco_fa()
+            #    app.save()
 
             if dry_run:
                 self.stdout.write(self.style.NOTICE('Dry run skip creating apertenenza to {}'.format(sede)))
