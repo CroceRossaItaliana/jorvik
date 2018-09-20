@@ -386,7 +386,7 @@ def us_estensione(request, me):
 
     if modulo.is_valid():
         est = modulo.save(commit=False)
-        if not est.persona.sede_riferimento():
+        if not est.persona.sedi_riferimento().exists():
             return errore_nessuna_appartenenza(request, me)
         if not me.permessi_almeno(est.persona, MODIFICA):
             return redirect(ERRORE_PERMESSI)
@@ -420,10 +420,9 @@ def us_trasferimento(request, me):
                                                          #     ad una delle sedi che gestisco io
 
     modulo = ModuloCreazioneTrasferimento(request.POST or None)
-
     if modulo.is_valid():
         trasf = modulo.save(commit=False)
-        if not trasf.persona.sedi_riferimento().exist():
+        if not trasf.persona.sedi_riferimento().exists():
             return errore_nessuna_appartenenza(request, me)
         if not me.permessi_almeno(trasf.persona, MODIFICA):
             return redirect(ERRORE_PERMESSI)

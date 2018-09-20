@@ -2221,7 +2221,11 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
             appartenenzaVecchia.terminazione = Appartenenza.TRASFERIMENTO
             appartenenzaVecchia.save()
 
-            self.persona.chiudi_tutto(mezzanotte_24_ieri(data))
+            da_dipendente = False
+            if self.persona.appartenenze_attuali(membro__in=(Appartenenza.DIPENDENTE,)).exists():
+                    da_dipendente = True
+
+            self.persona.chiudi_tutto(mezzanotte_24_ieri(data), da_dipendente=da_dipendente)
 
             # Invia notifica tramite e-mail
             app = Appartenenza.objects.create(
@@ -2247,7 +2251,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
 
     def richiedi(self, notifiche_attive=True):
 
-        if not self.persona.sedi_riferimento().exist():
+        if not self.persona.sedi_riferimento().exists():
             raise ValueError("Impossibile richiedere trasferimento: Nessuna appartenenza attuale.")
 
         self.autorizzazione_richiedi_sede_riferimento(
