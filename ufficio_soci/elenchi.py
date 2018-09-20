@@ -578,6 +578,9 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
                 "data_nascita__lte": nascita_minima,
             })
 
+        dipendenti = Persona.objects.filter(
+            Q(Appartenenza.query_attuale(membro=Appartenenza.DIPENDENTE).via("appartenenze")))
+
         r = Persona.objects.filter(
             Appartenenza.query_attuale(
                 al_giorno=oggi,
@@ -594,6 +597,8 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
                 Q(fine__gte=oggi) | Q(fine__isnull=True), inizio__lte=oggi, tipo=ProvvedimentoDisciplinare.SOSPENSIONE
             ).values_list('persona_id', flat=True)
 
+        ).exclude(
+            pk__in=dipendenti.values_list('pk', flat=True)
         ).annotate(
             appartenenza_tipo=F('appartenenze__membro'),
             appartenenza_inizio=F('appartenenze__inizio'),
