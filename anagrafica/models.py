@@ -1059,6 +1059,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.sedi_attuali(membro__in=membro, **kwargs).\
             order_by('-appartenenze__inizio').first()
 
+    def sedi_riferimento(self, membro=None, **kwargs):
+        membro = membro or Appartenenza.MEMBRO_DIRETTO
+        return self.sedi_attuali(membro__in=membro, **kwargs). \
+            order_by('-appartenenze__inizio')
+
+    def comitati_riferimento(self, **kwargs):
+        sedi = self.sede_riferimento(**kwargs)
+        comitati = [x.comitato for x in sedi]
+        if comitati:
+            return comitati
+        return sedi
+
     def comitato_riferimento(self, **kwargs):
         sede = self.sede_riferimento(**kwargs)
         if sede:
@@ -2235,7 +2247,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
 
     def richiedi(self, notifiche_attive=True):
 
-        if not self.persona.sede_riferimento():
+        if not self.persona.sedi_riferimento().exist():
             raise ValueError("Impossibile richiedere trasferimento: Nessuna appartenenza attuale.")
 
         self.autorizzazione_richiedi_sede_riferimento(

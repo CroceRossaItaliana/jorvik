@@ -423,7 +423,7 @@ def us_trasferimento(request, me):
 
     if modulo.is_valid():
         trasf = modulo.save(commit=False)
-        if not trasf.persona.sede_riferimento():
+        if not trasf.persona.sedi_riferimento().exist():
             return errore_nessuna_appartenenza(request, me)
         if not me.permessi_almeno(trasf.persona, MODIFICA):
             return redirect(ERRORE_PERMESSI)
