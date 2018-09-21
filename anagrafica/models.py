@@ -1150,7 +1150,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         if self.appartenenze_attuali().filter(
             membro=Appartenenza.VOLONTARIO
         ).exists() and not self.appartenenze_attuali().exclude(
-            membro=Appartenenza.VOLONTARIO
+            membro__in=[Appartenenza.ESTESO,Appartenenza.VOLONTARIO]
+        ).exists():
+            return True
+
+        # Se è volontario in estensione è possibile reclamarlo previa messa in riserva (gestito altrove)
+        if self.appartenenze_attuali().filter(
+                membro=Appartenenza.ESTESO
+        ).exists() and not self.appartenenze_attuali().exclude(
+            membro__in=[Appartenenza.ESTESO,Appartenenza.VOLONTARIO]
         ).exists():
             return True
 
