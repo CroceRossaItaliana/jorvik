@@ -179,17 +179,22 @@ def us_reclama_persona(request, me, persona_pk):
                 continua = False
 
         appartenenza_dipendente = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.DIPENDENTE).first()
-        if appartenenza_dipendente:  # Se dipendente.
-            if modulo_appartenenza.cleaned_data['inizio'] < appartenenza_dipendente.inizio:
-                modulo_appartenenza.add_error('inizio', "La persona non era dipendente alla "
-                                                        "data selezionata. Inserisci la data corretta di "
-                                                        "cambio appartenenza.")
-                continua = False
-            if membro == Appartenenza.DIPENDENTE and not appartenenza_dipendente.appartiene_a(sede=sede):
-                modulo_appartenenza.add_error('membro', "La persona e' gia dipendente "
-                                                        "in un altro comitato: %s "
-                                              % appartenenza_dipendente.sede.nome_completo)
-                continua = False
+        if appartenenza_dipendente and membro == Appartenenza.DIPENDENTE: # Se dipendente e vuole diventare dipendente
+                if appartenenza_dipendente.appartiene_a(sede=sede):
+                    modulo_appartenenza.add_error('membro', "La persona e' gia dipendente nel tuo comitato")
+                    continua = False
+                else:
+                    modulo_appartenenza.add_error('membro', "La persona e' gia dipendente "
+                                                            "in un altro comitato: %s "
+                                                  % appartenenza_dipendente.sede.nome_completo)
+                    continua = False
+
+                if modulo_appartenenza.cleaned_data['inizio'] < appartenenza_dipendente.inizio:
+                    modulo_appartenenza.add_error('inizio', "La persona non era dipendente alla "
+                                                            "data selezionata. Inserisci la data corretta di "
+                                                            "cambio appartenenza.")
+                    continua = False
+
 
         sede = modulo_appartenenza.cleaned_data.get('sede')
         appartenenza_volontario = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.VOLONTARIO).first()
@@ -199,7 +204,10 @@ def us_reclama_persona(request, me, persona_pk):
                                                         "in un altro comitato: %s "
                                               % appartenenza_volontario.sede.nome_completo)
                 continua = False
-
+        if appartenenza_dipendente:
+            if membro == Appartenenza.VOLONTARIO and appartenenza_dipendente.appartiene_a(sede=sede):
+                modulo_appartenenza.add_error('membro', "La persona e' gia dipendente nel tuo comitato")
+                continua = False
 
         # Controllo eta' minima socio
         if modulo_appartenenza.cleaned_data.get('membro') in Appartenenza.MEMBRO_SOCIO \

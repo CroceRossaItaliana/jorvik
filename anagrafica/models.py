@@ -1054,6 +1054,11 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             ))
             return a
 
+    def ottieni_sede_se_attuale(self, sede, membro=None, **kwargs):
+        membro = membro or Appartenenza.MEMBRO_DIRETTO
+        return self.sedi_attuali(pk__in=sede.pk, membro__in=membro, **kwargs). \
+            order_by('-appartenenze__inizio').first()
+
     def sede_riferimento(self, membro=None, **kwargs):
         membro = membro or Appartenenza.MEMBRO_DIRETTO
         return self.sedi_attuali(membro__in=membro, **kwargs).\
@@ -2351,7 +2356,10 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(app.sede, testo_extra)
 
     def richiedi(self, notifiche_attive=True):
-        if not self.persona.sede_riferimento():
+        sede = self.persona.ottieni_sede_se_attuale(sede=self.richiedente.sede,membro=Appartenenza.VOLONTARIO)
+        if not sede:
+            sede = self.persona.ottieni_sede_se_attuale(sede=self.richiedente.sede,membro=Appartenenza.ESTESO)
+        if not sede:
             raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
 
         self.autorizzazione_richiedi_sede_riferimento(
@@ -2359,6 +2367,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
             INCARICO_GESTIONE_ESTENSIONI,
             invia_notifica_presidente=notifiche_attive,
             auto=Autorizzazione.MANUALE,
+            forza_sede_riferimento=sede,
         )
         if self.destinazione.presidente():
             Messaggio.costruisci_e_invia(
