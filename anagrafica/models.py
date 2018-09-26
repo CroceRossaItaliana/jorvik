@@ -978,7 +978,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             appartenenza.save()
         self.chiudi_tutto(mezzanotte_24_ieri(data))
 
-    def chiudi_tutto(self, data, da_dipendente=False):
+    def chiudi_tutto(self, data, da_dipendente=False, mittente_mail=None):
         """
         Chiude tutti i ruoli collegati a fronte di dimissioni / espulsioni / trasferimenti
 
@@ -1002,10 +1002,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         # Per le attività bisogna attivare dei fallback quindi le gestiamo separatamente
         for delega in self.deleghe_attuali(tipo__in=OBIETTIVI.values()):
-            delega.termina(data=data)
+            delega.termina(mittente=mittente_mail, data=data)
 
         for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
-            delega.termina(data=data)
+            delega.termina(mittente=mittente_mail, data=data)
             if not delega.oggetto.delegati_attuali(al_giorno=data).exists():
                 for delegato_obiettivo in Delega.objects.filter(
                     tipo=delega.oggetto.codice_obiettivo,
@@ -1019,7 +1019,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                     )
 
         for delega in self.deleghe_attuali(tipo=REFERENTE):
-            delega.termina(data=data)
+            delega.termina(mittente=mittente_mail, data=data)
             if not delega.oggetto.referenti_attuali(al_giorno=data).exists():
                 for responsabile_area in delega.oggetto.area.delegati_attuali(al_giorno=data):
                     delega.oggetto.aggiungi_delegato(
@@ -1029,7 +1029,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         # Tutte le altre deleghe le terminiamo e basta
         for delega in self.deleghe_attuali(solo_attive=False):
-            delega.termina(data=data)
+            delega.termina(mittente=mittente_mail, data=data)
 
         if not da_dipendente:
             for partecipazione in self.partecipazioni.filter(turno__fine__gte=poco_fa()):
@@ -2568,7 +2568,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     info = models.CharField(max_length=512, help_text="Maggiori informazioni sulla causa della dimissione")
     richiedente = models.ForeignKey(Persona, on_delete=models.SET_NULL, null=True)
 
-    def applica(self, trasforma_in_sostenitore=False, invia_notifica=True):
+    def applica(self, applicante=None, trasforma_in_sostenitore=False, invia_notifica=True):
         from gruppi.models import Appartenenza as App
         precedente_appartenenza = self.appartenenza
         precedente_sede = precedente_appartenenza.sede
@@ -2604,7 +2604,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
             al_giorno=self.creazione, persona=self.persona, membro=precedente_appartenenza.membro
         ).update(fine=mezzanotte_24_ieri(data), terminazione=Appartenenza.DIMISSIONE)
 
-        self.persona.chiudi_tutto(mezzanotte_24_ieri(data), da_dipendente=da_dipendente)
+        self.persona.chiudi_tutto(mezzanotte_24_ieri(data), mittente_mail=applicante, da_dipendente=da_dipendente)
 
         if trasforma_in_sostenitore:
             app = Appartenenza(precedente=precedente_appartenenza, persona=self.persona,

@@ -297,7 +297,7 @@ def us_dimissioni(request, me, pk):
         dim.persona = persona
         dim.appartenenza = modulo.cleaned_data['appartenenza']
         dim.sede = dim.appartenenza.sede
-        dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'])
+        dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'], ap)
 
         if dim.motivo == dim.DECEDUTO:
             messaggio = 'Il decesso è stato registrato.<br>Vista la motivazione non sarà inviata alcuna notifica ' \
@@ -309,31 +309,34 @@ def us_dimissioni(request, me, pk):
         dim.save()
 
         if persona.appartenenze_attuali().exclude(id=dim.appartenenza.id).exists():
-            for appartenenza_restante in persona.appartenenze_attuali().exclude(id=dim.appartenenza.id):
+            presidenti_da_contattare = set()
+            for appartenenza_restante in persona.appartenenze_attuali():
+                pdc = appartenenza_restante.sede.presidente()
+                if not pdc in presidenti_da_contattare:
+                    presidenti_da_contattare.add(pdc)
 
-                testo_email = "Le dimissioni di %s sono state registrate con successo, ti invitiamo a  " \
-                              "creare nuovamente le deleghe che desideri mantenere attive " % persona.nome_completo
+            testo_email = "Le dimissioni di %s sono state registrate con successo, ti invitiamo a  " \
+                          "creare nuovamente le deleghe che desideri mantenere attive " % persona.nome_completo
 
-                if appartenenza_restante.sede.presidente() == me:
-                    oggetto = "Riapertura deleghe: %s" % (persona.nome_completo)
-                    Messaggio.costruisci_e_accoda(
-                        oggetto=oggetto,
-                        modello="email_testo.html",
-                        mittente=me,
-                        destinatari=[me],
-                        corpo={
-                            "testo": testo_email,
-                        },
-                    )
+            oggetto = "Riapertura deleghe: %s" % (persona.nome_completo)
+            Messaggio.costruisci_e_accoda(
+                oggetto=oggetto,
+                modello="email_testo.html",
+                mittente=me,
+                destinatari=presidenti_da_contattare,
+                corpo={
+                    "testo": testo_email,
+                },
+            )
 
-                messaggio = "Le dimissioni sono state registrate con successo, <strong>MA</strong> sara' necessario " \
-                            "creare nuovamente le deleghe di <strong>%s</strong> nel caso faccia ancora parte " \
-                            "del tuo comitato" % persona.nome_completo
+            messaggio = "Le dimissioni sono state registrate con successo, <strong>MA</strong> sara' necessario " \
+                        "creare nuovamente le deleghe di <strong>%s</strong> nel caso faccia ancora parte " \
+                        "del tuo comitato" % persona.nome_completo
 
-                return messaggio_avvertimento(request, me, titolo="Dimissioni registrate",
-                                          messaggio=messaggio,
-                                          torna_titolo="Vai allo storico appartenenze",
-                                          torna_url=persona.url_profilo_appartenenze)
+            return messaggio_avvertimento(request, me, titolo="Dimissioni registrate",
+                                      messaggio=messaggio,
+                                      torna_titolo="Vai allo storico appartenenze",
+                                      torna_url=persona.url_profilo_appartenenze)
         else:
             return messaggio_generico(request, me, titolo="Dimissioni registrate",
                                       messaggio=messaggio,
