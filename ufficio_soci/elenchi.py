@@ -579,7 +579,7 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
             })
 
         dipendenti = Persona.objects.filter(
-            Q(Appartenenza.query_attuale(membro=Appartenenza.DIPENDENTE, sede__in=qs_sedi).via("appartenenze")))
+            Q(Appartenenza.query_attuale(membro=Appartenenza.DIPENDENTE, sede__in=qs_sedi, fine__isnull=True).via("appartenenze")))
 
         r = Persona.objects.filter(
             Appartenenza.query_attuale(

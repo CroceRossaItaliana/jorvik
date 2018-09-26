@@ -1205,13 +1205,16 @@ def _profilo_anagrafica(request, me, persona):
 
 def _profilo_appartenenze(request, me, persona):
     puo_modificare = me.permessi_almeno(persona, MODIFICA)
-
+    alredy_valid = False
     moduli = []
     terminabili = []
     for app in persona.appartenenze.all():
         modulo = None
         terminabile = me.permessi_almeno(app.estensione.first(), MODIFICA)
-        if app.attuale() and app.modificabile() and puo_modificare:
+        for modulo in moduli:
+            if not modulo is None and modulo.is_valid:
+                alredy_valid = True
+        if app.attuale() and app.modificabile() and puo_modificare and not alredy_valid:
             modulo = ModuloModificaDataInizioAppartenenza(request.POST or None,
                                                           instance=app,
                                                           prefix="%d" % (app.pk,))
@@ -1222,7 +1225,7 @@ def _profilo_appartenenze(request, me, persona):
                         if app_volontario:
                             try:
                                 riserva = Riserva.objects.get(appartenenza=app_volontario)
-                            except Riserva.DoesNotExists:
+                            except Exception:
                                 pass
                             else:
                                 riserva.inizio = modulo.cleaned_data['inizio']

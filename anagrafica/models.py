@@ -1547,7 +1547,10 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
                 if self.precedente.terminazione not in self.MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI:
                     flag &= False
                 elif inizio:
-                    flag &= inizio > self.precedente.fine
+                    if isinstance(inizio, date):
+                        flag &= inizio > self.precedente.fine.date()
+                    else:
+                        flag &= inizio > self.precedente.fine
             aperte = Appartenenza.objects.filter(persona=self.persona, fine__isnull=True, membro=self.membro).exclude(pk=self.pk)
             if aperte.exists():
                 flag &= False
