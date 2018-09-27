@@ -297,7 +297,7 @@ def us_dimissioni(request, me, pk):
         dim.persona = persona
         dim.appartenenza = modulo.cleaned_data['appartenenza']
         dim.sede = dim.appartenenza.sede
-        dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'], ap)
+        dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'], applicante=me)
 
         if dim.motivo == dim.DECEDUTO:
             messaggio = 'Il decesso è stato registrato.<br>Vista la motivazione non sarà inviata alcuna notifica ' \
