@@ -1054,11 +1054,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             ))
             return a
 
-    def ottieni_sede_se_attuale(self, sede, membro=None, **kwargs):
-        membro = membro or Appartenenza.MEMBRO_DIRETTO
-        return self.sedi_attuali(pk__in=sede.pk, membro__in=membro, **kwargs). \
-            order_by('-appartenenze__inizio').first()
-
     def sede_riferimento(self, membro=None, **kwargs):
         membro = membro or Appartenenza.MEMBRO_DIRETTO
         return self.sedi_attuali(membro__in=membro, **kwargs).\
@@ -2360,7 +2355,10 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         if not app_estendibile:
             raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
         sede = app_estendibile.sede
+<<<<<<< HEAD
 
+=======
+>>>>>>> Estensione risolto bug bloccante
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
             INCARICO_GESTIONE_ESTENSIONI,
