@@ -2356,11 +2356,10 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(app.sede, testo_extra)
 
     def richiedi(self, notifiche_attive=True):
-        sede = self.persona.ottieni_sede_se_attuale(sede=self.richiedente.sede,membro=Appartenenza.VOLONTARIO)
-        if not sede:
-            sede = self.persona.ottieni_sede_se_attuale(sede=self.richiedente.sede,membro=Appartenenza.ESTESO)
-        if not sede:
+        app_estendibile = self.persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
+        if not app_estendibile:
             raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
+        sede = app_estendibile.sede
 
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
