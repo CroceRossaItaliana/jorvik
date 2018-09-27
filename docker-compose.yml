@@ -4,6 +4,8 @@ services:
 
   db:
     image: mdillon/postgis
+    ports:
+      - "5432:5432"
 
   web:
     build: .
@@ -15,18 +17,22 @@ services:
       - db
       - pdf
       - broker
-      - selenium
     depends_on:
       - db
       - pdf
+      - selenium
     hostname: web
     environment:
       - "DJANGO_LIVE_TEST_SERVER_ADDRESS=web:8081-8181"
+    networks:
+      default:
+        aliases:
+          - web
+
 
   selenium:
     image: selenium/standalone-firefox-debug
     ports:
-      - "4444:4444"  # VNC (debugging)
       - "5900:5900"  # VNC (debugging)
 
   broker:
