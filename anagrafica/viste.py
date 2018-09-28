@@ -33,10 +33,11 @@ from anagrafica.forms import ModuloStepAnagrafica
 from anagrafica.importa import VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari
 from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento, \
     ProvvedimentoDisciplinare, Sede, Riserva, Dimissione
-from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, COMMISSARIO, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
     RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI
+
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
     ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO, \
     RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
@@ -1570,6 +1571,7 @@ def _presidente_sede_ruoli(sede):
             (RESPONSABILE_FORMAZIONE, "Formazione", sede.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE).count()),
             (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count()),
             (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count()),
+            # (COMMISSARIO, "Commissario", sede.delegati_attuali(tipo=COMMISSARIO).count()),
         ]
     })
 
@@ -1851,6 +1853,8 @@ def admin_report_federazione(request, me):
 @pagina_privata
 def admin_import_presidenti(request, me):
 
+    # TODO: controllo che il presidente o il commissario non abia gia una nomina su un altra sede
+
     if not me.utenza.is_superuser:
         return redirect(ERRORE_PERMESSI)
 
@@ -1860,47 +1864,77 @@ def admin_import_presidenti(request, me):
     moduli = []
     esiti = []
     for i in range(0, numero_presidenti_per_pagina):
-        modulo = ModuloImportPresidenti(request.POST or None, prefix="presidente_%d" % i)
+        modulo = ModuloImportPresidenti(request.POST or None, prefix="presidenti_%d" % i)
 
         if modulo.is_valid():
 
             # Ottieni i dati
-            presidente = modulo.cleaned_data['presidente']
+            nomina = modulo.cleaned_data['nomina']
+            persona = modulo.cleaned_data['persona']
             sede = modulo.cleaned_data['sede']
 
-            # Se la Sede ha un Presidente, termina la sua Delega e notifica.
-            delega_presidente_precedente = sede.deleghe_attuali(tipo=PRESIDENTE).first()
-            if delega_presidente_precedente:
+            # Controllo se la Sede ha un Presidente
+            delega_persona_precedente = sede.deleghe_attuali(tipo=PRESIDENTE).first()
+            isPresidente = True
+            # Se non è presente controllo se esiete un Commissario
+            if not delega_persona_precedente:
+                delega_persona_precedente = sede.deleghe_attuali(tipo=COMMISSARIO).first()
+                isPresidente = False
 
-                # Se il Presidente è già stato nominato.
-                if delega_presidente_precedente.persona == presidente:
+            # Se una delle due figure esiste (Presidente/Commissario)
+            if delega_persona_precedente:
+
+                # Se è già stato nominato in questa sede.
+                if delega_persona_precedente.persona == persona:
                     esiti += [
-                        (presidente, sede, "Saltato. Era già Presidente di questa Sede.")
+                        (
+                            persona,
+                            sede,
+                            "Saltato. Era già {} di questa Sede.".format(
+                                'Presidente' if nomina == 'Presidente' else 'Commissario'
+                            )
+                         )
                     ]
                     continue
 
-                # Termina la Presidenza.
-                delega_presidente_precedente.termina(mittente=me, accoda=True)
+                # Termina la Presidenza/Commissariato.
+                delega_persona_precedente.termina(mittente=me, accoda=True)
 
                 # Termina tutte le Deleghe correlate.
-                delega_presidente_precedente.presidente_termina_deleghe_dipendenti()
+                delega_persona_precedente.presidenziali_termina_deleghe_dipendenti()
+
 
             # Crea la nuova delega e notifica.
             delega = Delega(
-                persona=presidente,
-                tipo=PRESIDENTE,
+                persona=persona,
+                tipo=PRESIDENTE if nomina == 'Presidente' else COMMISSARIO,
                 oggetto=sede,
                 inizio=poco_fa(),
                 firmatario=me,
             )
+
             delega.save()
-            delega.invia_notifica_creazione()
+            delega.invia_notifica_creazione() # TODO: verificare se funzione anche per commissario
+
+            ##### PROTOTIPO STRINGA
+            '''
+            "OK, Nomina effettuata. Vecchio {Presidente/Commissario} dimesso {Cod-Fiscale}"
+            or
+            "OK, Nomina effettuata. Non vi era alcuna nomina."
+            '''
+            #####
+
+            msg = "OK, Nomina effettuata."
+            if delega_persona_precedente:
+                msg += "Vecchio {} dimesso {}".format(
+                    'Presidente' if isPresidente else 'Commissario',
+                    delega_persona_precedente.persona.codice_fiscale
+                )
+            else:
+                msg += "OK, Nomina effettuata. Non vi era alcuna nomina."
 
             esiti += [
-                (presidente, sede, "OK. Nomina effettuata%s." % (
-                    (", vecchio Presidente %s dimesso" % delega_presidente_precedente.persona.codice_fiscale)
-                    if delega_presidente_precedente else ", non vi era alcun Presidente."
-                ))
+                (persona, sede, msg)
             ]
 
         moduli += [modulo]
