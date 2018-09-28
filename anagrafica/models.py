@@ -2355,10 +2355,6 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         if not app_estendibile:
             raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
         sede = app_estendibile.sede
-<<<<<<< HEAD
-
-=======
->>>>>>> Estensione risolto bug bloccante
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
             INCARICO_GESTIONE_ESTENSIONI,
