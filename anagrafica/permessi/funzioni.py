@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from django.db.models import QuerySet, Q
 
-from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, \
+from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO,\
     UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, \
     DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
@@ -319,6 +319,7 @@ def permessi_responsabile_autoparco(sede):
 # Nota bene: Non inserire () dopo il nome della funzione.
 PERMESSI_FUNZIONI = (
     (PRESIDENTE,                permessi_presidente),
+    (COMMISSARIO,               permessi_presidente),
     (UFFICIO_SOCI,              permessi_ufficio_soci),
     (UFFICIO_SOCI_UNITA,        permessi_ufficio_soci_unita),
     (DELEGATO_AREA,             permessi_delegato_area),
