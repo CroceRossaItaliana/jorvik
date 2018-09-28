@@ -10,7 +10,7 @@ from django.contrib.admin.widgets import AdminDateWidget
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
-from django.forms import ModelForm
+from django.forms import ModelForm, ChoiceField
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 
@@ -473,7 +473,13 @@ class ModuloReportFederazione(forms.Form):
 
 
 class ModuloImportPresidenti(forms.Form):
-    presidente = autocomplete_light.ModelChoiceField("PresidenteAutocompletamento")
+    nomina = forms.ChoiceField(widget=forms.Select(),
+                      choices=(
+                          [('Seleziona', ''), ('Presidente', 'Presidente'), ('Commissario', 'Commissario'),]
+                      ),
+                      initial='Nomina',
+                      required=True,)
+    persona = autocomplete_light.ModelChoiceField("PresidenteAutocompletamento")
     sede = autocomplete_light.ModelChoiceField("ComitatoAutocompletamento")
 
 
