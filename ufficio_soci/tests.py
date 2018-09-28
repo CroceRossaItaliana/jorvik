@@ -842,66 +842,6 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
                     msg="Elenco %s apribile da web" % elenco,
                 )
 
-    def test_reclama_ordinario(self):
-
-        # Crea oggetti e nomina i delegati US regionali e Locali
-        us_regionale = crea_persona()
-        us_locale = crea_persona()
-
-        oggi = poco_fa()
-        inizio_anno = oggi.replace(month=1, day=1)
-        fine_soci = oggi + datetime.timedelta(days=30)
-
-        Tesseramento.objects.create(
-            stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
-            anno=inizio_anno.year, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
-            quota_aspirante=8, quota_sostenitore=8
-        )
-
-        ordinario, regionale, appartenenza = crea_persona_sede_appartenenza(presidente=us_regionale)
-        appartenenza.membro = Appartenenza.ORDINARIO
-        appartenenza.save()
-        regionale.estensione = REGIONALE
-        regionale.save()
-
-        locale = crea_sede(presidente=us_locale, genitore=regionale)
-
-        sessione_regionale = self.sessione_utente(persona=us_regionale, wait_time=2)
-        sessione_locale = self.sessione_utente(persona=us_locale, wait_time=2)
-
-        # Prima di tutto, assicurati che il socio ordinario risulti correttamente
-        # nell'elenco del regionale.
-
-        sessione_regionale.click_link_by_partial_text("Soci")
-        sessione_regionale.click_link_by_partial_text("Ordinari")
-
-        self.assertTrue(self.presente_in_elenco(sessione_regionale, persona=ordinario),
-                        msg="Il socio ordinario è in elenco al regionale")
-
-        # Poi, vai alla procedura di reclamo per il locale e completa.
-        sessione_locale.click_link_by_partial_text("Soci")
-        sessione_locale.click_link_by_partial_text("Reclama Persona")
-        sessione_locale.fill('codice_fiscale', ordinario.codice_fiscale)
-        sessione_locale.find_by_xpath("//button[@type='submit']").first.click()
-
-        # Completa dati di inizio appartenenza - data nel passato!
-        sessione_locale.fill('app-inizio', "1/1/1910")
-        sessione_locale.select('app-membro', Appartenenza.SOSTENITORE)
-        sessione_locale.select('quota-registra_quota', ModuloReclamaQuota.NO)
-        sessione_locale.find_by_xpath("//button[@type='submit']").first.click()
-
-        self.assertTrue(sessione_locale.is_text_present("1. Appartenenza al Comitato"),
-                        msg="Non e possibile reclamare ordinario nel passato")
-
-        # Compila con la data di oggi.
-        sessione_locale.fill('app-inizio', timezone.now().strftime("%d/%m/%Y"))
-
-        # Controlla elenco dei sostenitori.
-        sessione_locale.visit("%s/utente/" % self.live_server_url)
-        sessione_locale.click_link_by_partial_text("Soci")
-        sessione_locale.click_link_by_partial_text("Sostenitori")
-
-
     def test_reclama_sostenitore(self):
 
         # Crea oggetti e nomina i delegati US regionali e Locali
@@ -958,7 +898,7 @@ class TestFunzionaleUfficioSoci(TestFunzionale):
         sessione_locale.fill('app-inizio', timezone.now().strftime("%d/%m/%Y"))
         sessione_locale.select('app-membro', Appartenenza.VOLONTARIO)
         sessione_locale.select('quota-registra_quota', ModuloReclamaQuota.NO)
-        sessione_locale.find_by_xpath("//button[@type='submit']").first.click()
+        sessione_locale.find_by_xpath("//button").first.click()
 
         # Controlla elenchi.
         sessione_locale.visit("%s/utente/" % self.live_server_url)

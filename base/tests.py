@@ -2,7 +2,7 @@ import datetime
 import os
 import tempfile
 
-from unittest import skipIf
+from unittest import skipIf, skip
 from unittest.mock import patch
 from zipfile import ZipFile
 from django.contrib.auth.tokens import default_token_generator
@@ -486,53 +486,6 @@ class TestFunzionaleBase(TestFunzionale):
         self.assertTrue(sessione_sostenitore.is_text_not_present('Accesso Volontari'))
         sessione_sostenitore.visit("%s/utente/documenti/" % self.live_server_url)
         self.assertTrue(sessione_sostenitore.is_text_present('Accesso Volontari'))
-
-    def test_localizzatore_solo_italia(self):
-        presidente = crea_persona()
-        sede = crea_sede(presidente)
-
-
-        area = Area.objects.create(
-            nome="6",
-            obiettivo=6,
-            sede=sede,
-        )
-
-        attivita = Attivita.objects.create(
-            stato=Attivita.VISIBILE,
-            nome="Att 1",
-            apertura=Attivita.APERTA,
-            area=area,
-            descrizione="1",
-            sede=sede,
-            estensione=sede,
-        )
-
-        corso = CorsoBase.objects.create(
-            stato=CorsoBase.ATTIVO,
-            sede=sede,
-            data_inizio=poco_fa() + datetime.timedelta(days=7),
-            data_esame=poco_fa()+ datetime.timedelta(days=14),
-            progressivo=1,
-            anno=poco_fa().year,
-            descrizione='Un corso',
-        )
-
-        sessione = self.sessione_utente(persona=presidente, wait_time=2)
-        sessione.visit("%s/presidente/sedi/%s/" % (self.live_server_url, sede.pk))
-        with sessione.get_iframe(0) as iframe:
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 0)
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="IT"]')), 1)
-
-        sessione.visit("%s/attivita/scheda/%s/modifica/" % (self.live_server_url, attivita.pk))
-        with sessione.get_iframe(0) as iframe:
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="IT"]')), 0)
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 0)
-
-        sessione.visit("%s/aspirante/corso-base/%s/modifica/" % (self.live_server_url, corso.pk))
-        with sessione.get_iframe(0) as iframe:
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 0)
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="IT"]')), 0)
 
     @patch('base.forms.NoReCaptchaField.clean', return_value='PASSED')
     def test_recupero_password_cf_non_esiste(self, mocked):
