@@ -1975,7 +1975,7 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             messaggi += [
                  Messaggio.costruisci_e_invia(
                      oggetto="IMPORTANTE: Check-list nuovo Presidente",
-                     modello="email_delega_notifica_nuovo_presidente.html",
+                     modello="email_delega_notifica_nuova_nomina_presidenziale.html",
                      corpo={
                          "delega": self,
                      },
