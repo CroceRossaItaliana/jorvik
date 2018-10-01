@@ -1853,7 +1853,33 @@ def admin_report_federazione(request, me):
 @pagina_privata
 def admin_import_presidenti(request, me):
 
-    # TODO: controllo che il presidente o il commissario non abia gia una nomina su un altra sede
+    def __get_presidiata(sede):
+        """
+            Ritorna delega del presidente o commissario se la sede è presidiata.
+        """
+        delega_presidente = sede.deleghe_attuali(
+            al_giorno=datetime.datetime.now(), tipo=PRESIDENTE, fine=None
+        ).first()
+        delega_commissario = sede.deleghe_attuali(
+            al_giorno=datetime.datetime.now(), tipo=COMMISSARIO, fine=None
+        ).first()
+
+        if delega_presidente and delega_commissario:
+            # Ritorna l'ultimo in carica
+            if int(delega_presidente.inizio.strftime('%s')) > int(delega_commissario.inizio.strftime('%s')):
+                return delega_presidente, True
+            else:
+                return delega_commissario, False
+        elif delega_presidente:
+            # Ritorna Presidente
+            return delega_presidente, True
+        elif delega_commissario:
+            # Ritorna Commissario
+            return delega_commissario, False
+        else:
+            # Non è presidiata da nessuno
+            return None, False
+
 
     if not me.utenza.is_superuser:
         return redirect(ERRORE_PERMESSI)
@@ -1873,13 +1899,8 @@ def admin_import_presidenti(request, me):
             persona = modulo.cleaned_data['persona']
             sede = modulo.cleaned_data['sede']
 
-            # Controllo se la Sede ha un Presidente
-            delega_persona_precedente = sede.deleghe_attuali(tipo=PRESIDENTE).first()
-            isPresidente = True
-            # Se non è presente controllo se esiete un Commissario
-            if not delega_persona_precedente:
-                delega_persona_precedente = sede.deleghe_attuali(tipo=COMMISSARIO).first()
-                isPresidente = False
+            # Prendo l'ultima delega da commissario/presidente per la sede
+            delega_persona_precedente, isPresidente = __get_presidiata(sede)
 
             # Se una delle due figure esiste (Presidente/Commissario)
             if delega_persona_precedente:
@@ -1890,10 +1911,10 @@ def admin_import_presidenti(request, me):
                         (
                             persona,
                             sede,
-                            "Saltato. Era già {} di questa Sede.".format(
-                                'Presidente' if nomina == 'Presidente' else 'Commissario'
+                            "Saltato. E' già {} di questa Sede.".format(
+                                'Presidente' if isPresidente else 'Commissario'
                             )
-                         )
+                        )
                     ]
                     continue
 
@@ -1902,6 +1923,20 @@ def admin_import_presidenti(request, me):
 
                 # Termina tutte le Deleghe correlate.
                 delega_persona_precedente.presidenziali_termina_deleghe_dipendenti()
+
+
+            # Controllo se è gia commissario di un altra sede
+            gia_presidente = persona.deleghe_attuali(
+                al_giorno=datetime.datetime.now(), tipo=PRESIDENTE, fine=None
+            ).first()
+            if gia_presidente:
+                gia_presidente.termina(mittente=me, accoda=True)
+            else:
+                gia_commissario = persona.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(),tipo=COMMISSARIO, fine=None
+                ).first()
+                if gia_commissario:
+                    gia_commissario.termina(mittente=me, accoda=True)
 
 
             # Crea la nuova delega e notifica.
@@ -1914,15 +1949,8 @@ def admin_import_presidenti(request, me):
             )
 
             delega.save()
-            delega.invia_notifica_creazione() # TODO: verificare se funzione anche per commissario
+            delega.invia_notifica_creazione()
 
-            ##### PROTOTIPO STRINGA
-            '''
-            "OK, Nomina effettuata. Vecchio {Presidente/Commissario} dimesso {Cod-Fiscale}"
-            or
-            "OK, Nomina effettuata. Non vi era alcuna nomina."
-            '''
-            #####
 
             msg = "OK, Nomina effettuata."
             if delega_persona_precedente:
@@ -1931,7 +1959,7 @@ def admin_import_presidenti(request, me):
                     delega_persona_precedente.persona.codice_fiscale
                 )
             else:
-                msg += "OK, Nomina effettuata. Non vi era alcuna nomina."
+                msg += "Non vi era alcuna nomina."
 
             esiti += [
                 (persona, sede, msg)
@@ -1944,6 +1972,7 @@ def admin_import_presidenti(request, me):
         "numero_presidenti_per_pagina": numero_presidenti_per_pagina,
         "esiti": esiti,
     }
+
     return 'admin_import_presidenti.html', contesto
 
 
