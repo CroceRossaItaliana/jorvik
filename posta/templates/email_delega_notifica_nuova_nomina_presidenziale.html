@@ -4,11 +4,11 @@
 
 {% block corpo %}
 
-    <p class="grassetto">Ciao {{ delega.tipo|nomina_presidenziale }}</p>
+    <p class="grassetto">Ciao {{ delega.tipo|nomina_presidenziale }}!</p>
 
     <p>Ricevi questo messaggio perch&eacute; sei di recente stat{{ delega.persona.genere_o_a }}
         nominat{{ delega.persona.genere_o_a }}
-        Presidente del {{ delega.oggetto.link|safe }}. Vogliamo approfittare di questa occasione per
+        {{ delega.tipo|nomina_presidenziale }} del {{ delega.oggetto.link|safe }}. Vogliamo approfittare di questa occasione per
         congratularci per la tua nuova carica e augurarti un ottimo futuro ricco di soddisfazioni.</p>
 
     <p>Ti inviamo questa e-mail per aiutarti nel completare rapidamente tutte le cose da fare su Gaia.</p>
@@ -44,7 +44,7 @@
     <p>In fondo ad ogni pagina, trovi un collegamento "<strong>Supporto</strong>", che ti permetter&agrave;
         di scrivere alla nostra Squadra. Ricorda sempre di accedere a Gaia prima di cliccare su questo collegamento:
         identificandoti, infatti, gestiremo la tua richiesta pi&ugrave; rapidamente e potremo assegnare una
-        priorit&agrave; maggiore alla tua richiesta, in quanto Presidente del {{ delega.oggetto.link|safe }}.</p>
+        priorit&agrave; maggiore alla tua richiesta, in quanto {{ delega.tipo|nomina_presidenziale }} del {{ delega.oggetto.link|safe }}.</p>
 
     <p>
         Buona giornata,<br />
