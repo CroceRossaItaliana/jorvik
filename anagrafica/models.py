@@ -1971,7 +1971,7 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
         )]
 
         # Se presidente, invia check-list.
-        if self.tipo == PRESIDENTE:
+        if self.tipo == PRESIDENTE or self.tipo == COMMISSARIO:
             messaggi += [
                  Messaggio.costruisci_e_invia(
                      oggetto="IMPORTANTE: Check-list nuovo Presidente",
@@ -2017,7 +2017,7 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
          tutte le deleghe che dipendono da questa.
         """
 
-        if not self.tipo == PRESIDENTE or not self.tipo == COMMISSARIO:
+        if not self.tipo == PRESIDENTE and not self.tipo == COMMISSARIO:
             raise ValueError("La delega non è di tipo Presidente/Commissario.")
 
         if self.fine:
