@@ -2262,8 +2262,10 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
 
     def richiedi(self, notifiche_attive=True):
 
-        if not self.persona.sedi_riferimento().exists():
-            raise ValueError("Impossibile richiedere trasferimento: Nessuna appartenenza attuale.")
+        app_trasferibile = self.persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
+        if not app_trasferibile:
+            raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
+        sede = app_trasferibile.sede
 
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
@@ -2271,6 +2273,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
             invia_notifica_presidente=notifiche_attive,
             auto=Autorizzazione.AP_AUTO,
             scadenza=self.APPROVAZIONE_AUTOMATICA,
+            forza_sede_riferimento=sede,
         )
 
     def url(self):
