@@ -1974,7 +1974,7 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
         if self.tipo == PRESIDENTE or self.tipo == COMMISSARIO:
             messaggi += [
                  Messaggio.costruisci_e_invia(
-                     oggetto="IMPORTANTE: Check-list nuovo Presidente",
+                     oggetto="IMPORTANTE: Check-list nuovo {}".format('Presidente' if self.tipo == PRESIDENTE else 'Commissario'),
                      modello="email_delega_notifica_nuova_nomina_presidenziale.html",
                      corpo={
                          "delega": self,
@@ -2010,6 +2010,14 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
         self.save()
         if notifica:
             self.invia_notifica_terminazione(mittente=mittente, accoda=accoda)
+
+
+    def termina_presidenza(self, mittente=None, accoda=False, notifica=True):
+        self.fine = datetime.now()
+        self.save()
+        if notifica:
+            self.invia_notifica_terminazione(mittente=mittente, accoda=accoda)
+
 
     def presidenziali_termina_deleghe_dipendenti(self, mittente=None):
         """
