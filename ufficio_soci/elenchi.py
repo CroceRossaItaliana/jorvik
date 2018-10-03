@@ -563,13 +563,13 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
             )
 
         aggiuntivi = {
-            # Anzianita' minima
+            # Anzianita' minima 
             "pk__in": Persona.objects.filter(
                 Appartenenza.con_esito_ok(
                     membro__in=Appartenenza.MEMBRO_ANZIANITA,
                     inizio__lte=anzianita_minima
                 ).via("appartenenze")
-            ).only("id")
+            ).only("id") 
         }
         if self.modulo_riempito.cleaned_data['elettorato'] == ModuloElencoElettorato.ELETTORATO_PASSIVO:
             # Elettorato passivo,
@@ -580,7 +580,10 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         dipendenti = Persona.objects.filter(
             Q(Appartenenza.query_attuale(membro=Appartenenza.DIPENDENTE, sede__in=qs_sedi,
-                                         fine__isnull=True).via("appartenenze")))
+                                            al_giorno=oggi
+                                            ).via("appartenenze")))
+                                            
+        print("dipendenti", dipendenti.values_list('pk', flat=True) )
 
         r = Persona.objects.filter(
             Appartenenza.query_attuale(
