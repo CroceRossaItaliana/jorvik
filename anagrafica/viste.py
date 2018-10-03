@@ -1919,7 +1919,7 @@ def admin_import_presidenti(request, me):
                     continue
 
                 # Termina la Presidenza/Commissariato.
-                delega_persona_precedente.termina(mittente=me, accoda=True)
+                delega_persona_precedente.termina_presidenza(mittente=me, accoda=True)
 
                 # Termina tutte le Deleghe correlate.
                 delega_persona_precedente.presidenziali_termina_deleghe_dipendenti()
@@ -1930,13 +1930,13 @@ def admin_import_presidenti(request, me):
                 al_giorno=datetime.datetime.now(), tipo=PRESIDENTE, fine=None
             ).first()
             if gia_presidente:
-                gia_presidente.termina(mittente=me, accoda=True)
+                gia_presidente.termina_presidenza(mittente=me, accoda=True)
             else:
                 gia_commissario = persona.deleghe_attuali(
-                    al_giorno=datetime.datetime.now(),tipo=COMMISSARIO, fine=None
+                    al_giorno=datetime.datetime.now(), tipo=COMMISSARIO, fine=None
                 ).first()
                 if gia_commissario:
-                    gia_commissario.termina(mittente=me, accoda=True)
+                    gia_commissario.termina_presidenza(mittente=me, accoda=True)
 
 
             # Crea la nuova delega e notifica.
