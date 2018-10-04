@@ -23,7 +23,7 @@ from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_A
     RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
     RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
     RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI
 
 
 def permessi_persona(persona):
@@ -80,6 +80,28 @@ def permessi_presidente(sede):
     sede_espansa = sede.espandi(includi_me=True)
     return [
         (RUBRICA_PRESIDENTI,    sede.espandi(includi_me=True, pubblici=True)),
+        (GESTIONE_SEDE,         sede_espansa),
+        (GESTIONE_GRUPPI_SEDE,  sede_espansa),
+        (GESTIONE_GRUPPI_SEDE,  sede_espansa),
+    ] \
+        + permessi_ufficio_soci(sede) \
+        + permessi_responsabile_attivita(sede) \
+        + permessi_responsabile_formazione(sede) \
+        + permessi_responsabile_autoparco(sede) \
+        + permessi_delegato_centrale_operativa(sede) \
+        + _espandi(sede)
+
+def permessi_commissario(sede):
+    """
+    Permessi della delega di COMMISSARIO.
+
+    :param sede: Il sede di cui si e' presidenti.
+    :return: Lista di permessi
+    """
+
+    sede_espansa = sede.espandi(includi_me=True)
+    return [
+        (RUBRICA_COMMISSARI,    sede.espandi(includi_me=True, pubblici=True)),
         (GESTIONE_SEDE,         sede_espansa),
         (GESTIONE_GRUPPI_SEDE,  sede_espansa),
         (GESTIONE_GRUPPI_SEDE,  sede_espansa),
@@ -318,8 +340,8 @@ def permessi_responsabile_autoparco(sede):
 # Funzioni permessi
 # Nota bene: Non inserire () dopo il nome della funzione.
 PERMESSI_FUNZIONI = (
-    (PRESIDENTE,                permessi_presidente),
     (COMMISSARIO,               permessi_presidente),
+    (PRESIDENTE,                permessi_presidente),
     (UFFICIO_SOCI,              permessi_ufficio_soci),
     (UFFICIO_SOCI_UNITA,        permessi_ufficio_soci_unita),
     (DELEGATO_AREA,             permessi_delegato_area),

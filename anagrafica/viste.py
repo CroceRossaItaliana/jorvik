@@ -1571,7 +1571,6 @@ def _presidente_sede_ruoli(sede):
             (RESPONSABILE_FORMAZIONE, "Formazione", sede.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE).count()),
             (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count()),
             (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count()),
-            # (COMMISSARIO, "Commissario", sede.delegati_attuali(tipo=COMMISSARIO).count()),
         ]
     })
 

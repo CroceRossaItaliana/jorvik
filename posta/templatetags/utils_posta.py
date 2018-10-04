@@ -1,5 +1,4 @@
 from django.template import Library
-from anagrafica.models import Delega
 from anagrafica.permessi.applicazioni import PRESIDENTE
 
 
