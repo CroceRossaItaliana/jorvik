@@ -206,6 +206,9 @@ def registrati(request, tipo, step=None):
             }
             return 'anagrafica_registrati_errore.html', contesto
 
+        elif not modulo.is_valid():
+            return 'anagrafica_registrati_step_' + step + '.html', contesto
+
         else:
             if uid is not None or request.session['registrazione_id'] != registration_code:
 
