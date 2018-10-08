@@ -1660,7 +1660,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         # Se non esiste controllo che ci sia un commissario
         if not delegato_attuale:
             delegato_attuale = self.deleghe_attuali(tipo=COMMISSARIO).first()
-        # Ricontrollo se non esiste il commisario non è presidiata
+        # Ricontrollo se non esiste il commissario non è presidiata
         if not delegato_attuale:
             return False
         # Deve avere una locazione geografica

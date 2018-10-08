@@ -19,7 +19,7 @@ from anagrafica.permessi.applicazioni import PRESIDENTE
 register = Library()
 
 @register.filter
-def select_presidente_commisario_da_persona(persona):
+def select_presidente_commissario_da_persona(persona):
     return 'Presidente' if persona.deleghe_attuali(tipo=PRESIDENTE).exists() else 'Commissario'
 
 @register.simple_tag(takes_context=True)
