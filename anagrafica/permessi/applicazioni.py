@@ -39,7 +39,7 @@ OBIETTIVI = {
 # Nomi assegnati
 PERMESSI_NOMI = (
     (PRESIDENTE,                "Presidente"),
-    (COMMISSARIO,               "Commisario"),
+    (COMMISSARIO,               "Commissario"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
     (UFFICIO_SOCI_UNITA,        "Ufficio Soci Unità territoriali"),
     (DELEGATO_AREA,             "Delegato d'Area"),
