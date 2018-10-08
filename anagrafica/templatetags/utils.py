@@ -22,6 +22,10 @@ register = Library()
 def select_presidente_commissario_da_persona(persona):
     return 'Presidente' if persona.deleghe_attuali(tipo=PRESIDENTE).exists() else 'Commissario'
 
+@register.filter
+def select_presidente_commisario_da_sede(sede):
+    return 'Presidente' if sede.presidente() else 'Commissario'
+
 @register.simple_tag(takes_context=True)
 def card(context, persona=None, nome=True, extra_class="btn btn-sm btn-default", avatar=False, mute_contact=False):
 
