@@ -1158,10 +1158,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     @property
     def nuovo_presidente(self):
         """
-        Ritorna True se la persona e' un nuovo presidente (meno di un mese)
+        Ritorna True se la persona e' un nuovo presidente/commissario (meno di un mese)
         """
         un_mese_fa = poco_fa() - timedelta(days=30)
-        return self.deleghe_attuali(tipo=PRESIDENTE, inizio__gte=un_mese_fa).exists()
+        nuovo_presidente = self.deleghe_attuali(tipo=PRESIDENTE, inizio__gte=un_mese_fa).exists()
+        nuovo_commissario = self.deleghe_attuali(tipo=COMMISSARIO, inizio__gte=un_mese_fa).exists()
+        return nuovo_presidente or nuovo_commissario
 
     def oggetti_deleghe(self, *args, tipo=PRESIDENTE, **kwargs):
         deleghe = self.deleghe_attuali(*args, tipo=tipo, **kwargs)
@@ -1649,18 +1651,23 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     @property
     def richiede_revisione_dati(self):
         """
-        Ritorna True se i dati non sono stati aggiornati dall'entrata in carica del Presidente.
+        Ritorna True se i dati non sono stati aggiornati dall'entrata in carica del Presidente/Commissario.
         """
         # Deve essere un Comitato
         if not self.comitato == self:
             return False
-        presidente_attuale = self.deleghe_attuali(tipo=PRESIDENTE).first()
-        if not presidente_attuale:
+        delegato_attuale = self.deleghe_attuali(tipo=PRESIDENTE).first()
+        # Se non esiste controllo che ci sia un commissario
+        if not delegato_attuale:
+            delegato_attuale = self.deleghe_attuali(tipo=COMMISSARIO).first()
+        # Ricontrollo se non esiste il commisario non è presidiata
+        if not delegato_attuale:
             return False
         # Deve avere una locazione geografica
         if not self.locazione:
             return True
-        return self.ultima_modifica < presidente_attuale.inizio
+
+        return self.ultima_modifica < delegato_attuale.inizio
 
     @property
     def link(self):
