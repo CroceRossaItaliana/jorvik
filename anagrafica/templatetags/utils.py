@@ -14,9 +14,13 @@ from base.stringhe import genera_uuid_casuale
 from base.tratti import ConDelegati
 from base.utils import testo_euro
 from ufficio_soci.elenchi import Elenco
+from anagrafica.permessi.applicazioni import PRESIDENTE
 
 register = Library()
 
+@register.filter
+def select_presidente_commisario_da_persona(persona):
+    return 'Presidente' if persona.deleghe_attuali(tipo=PRESIDENTE).exists() else 'Commissario'
 
 @register.simple_tag(takes_context=True)
 def card(context, persona=None, nome=True, extra_class="btn btn-sm btn-default", avatar=False, mute_contact=False):
