@@ -2077,9 +2077,18 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             destinatari=[self.persona],
         )
 
-    def termina(self, mittente=None, accoda=False, notifica=True, data=None):
-        self.fine = mezzanotte_24(data)
+    def termina(self, mittente=None, accoda=False, notifica=True, data=None, *args, **kwargs):
+        if kwargs.get('termina_at'):
+            """ May be called from: anagrafica.viste.strumenti_delegati_termina
+            on the following pages:
+            - /presidente/sedi/<id>/delegati/US/
+            - /attivita/scheda/<id>/referenti/
+            """
+            self.fine = kwargs.get('termina_at')
+        else:
+            self.fine = mezzanotte_24(data)
         self.save()
+
         if notifica:
             self.invia_notifica_terminazione(mittente=mittente, accoda=accoda)
 

@@ -11,12 +11,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.contrib.auth import login
+from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.template.loader import get_template
 
 # Le viste base vanno qui.
 from django.views.generic import ListView
-from django.utils import timezone
 
 from anagrafica.costanti import TERRITORIALE, REGIONALE
 from anagrafica.elenchi import ElencoDelegati
@@ -27,8 +27,7 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
     ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail, \
     ModuloUSModificaUtenza, ModuloReportFederazione
-from anagrafica.forms import ModuloStepCodiceFiscale
-from anagrafica.forms import ModuloStepAnagrafica
+from anagrafica.forms import ModuloStepCodiceFiscale, ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
 from anagrafica.importa import VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari
@@ -48,8 +47,7 @@ from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LE
     RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, GESTIONE_SOCI
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
     INCARICO_GESTIONE_FOTOTESSERE
-from anagrafica.utils import _conferma_email
-from anagrafica.utils import _richiesta_conferma_email
+from anagrafica.utils import _conferma_email, _richiesta_conferma_email
 from articoli.viste import get_articoli
 from attivita.forms import ModuloStatisticheAttivitaPersona
 from attivita.models import Partecipazione
@@ -1087,8 +1085,8 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
     if not me.permessi_almeno(delega.oggetto, GESTIONE):
         return redirect(ERRORE_PERMESSI)
 
-    delega.termina(mittente=me)
-
+    delega.termina(mittente=me,
+                   termina_at=poco_fa())
     return redirect("/strumenti/delegati/")
 
 
