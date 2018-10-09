@@ -355,6 +355,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return self.appartenenze.filter(confermata=True, **kwargs).order_by('inizio').first()
 
+    def appartenenze_per_presidente(self, presidente):
+        """
+        Ottiene il queryset delle appartenenze attuali e confermate, in base al Presidente
+        """
+        return [(appartenenza.pk, appartenenza.membro_a_stringa()) for appartenenza in self.appartenenze_attuali() \
+                if presidente in appartenenza.sede.delegati_attuali() \
+                or presidente in appartenenza.sede.genitore.delegati_attuali()]
+
     def ingresso(self, **kwargs):
         """
         Ottiene la data di ingresso della persona o None se non disponibile.
@@ -538,7 +546,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             lista += [('/utente/', 'Utente', 'fa-user')]
 
         if hasattr(self, 'aspirante'):
-            lista += [('/aspirante/', 'Aspirante', 'fa-user', self.aspirante.corsi().count())]
+            if self.dipendente:
+                lista += [('/utente/', 'Utente', 'fa-user')]
+            else:
+                lista += [('/aspirante/', 'Aspirante', 'fa-user', self.aspirante.corsi().count())]
 
         if self.volontario:
             lista += [('/attivita/', 'Attività', 'fa-calendar')]
@@ -967,7 +978,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             appartenenza.save()
         self.chiudi_tutto(mezzanotte_24_ieri(data))
 
-    def chiudi_tutto(self, data):
+    def chiudi_tutto(self, data, da_dipendente=False, mittente_mail=None):
         """
         Chiude tutti i ruoli collegati a fronte di dimissioni / espulsioni / trasferimenti
 
@@ -985,15 +996,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         for riserva in self.riserve.filter(Q(fine__isnull=True) | Q(fine__gte=poco_fa())):
             riserva.termina(data=data)
 
-        for estensione in self.estensioni_attuali():
-            estensione.termina(data=data)
+        if not da_dipendente:
+            for estensione in self.estensioni_attuali():
+                estensione.termina(data=data)
 
         # Per le attività bisogna attivare dei fallback quindi le gestiamo separatamente
         for delega in self.deleghe_attuali(tipo__in=OBIETTIVI.values()):
-            delega.termina(data=data)
+            delega.termina(mittente=mittente_mail, data=data)
 
         for delega in self.deleghe_attuali(tipo=RESPONSABILE_AREA):
-            delega.termina(data=data)
+            delega.termina(mittente=mittente_mail, data=data)
             if not delega.oggetto.delegati_attuali(al_giorno=data).exists():
                 for delegato_obiettivo in Delega.objects.filter(
                     tipo=delega.oggetto.codice_obiettivo,
@@ -1007,7 +1019,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                     )
 
         for delega in self.deleghe_attuali(tipo=REFERENTE):
-            delega.termina(data=data)
+            delega.termina(mittente=mittente_mail, data=data)
             if not delega.oggetto.referenti_attuali(al_giorno=data).exists():
                 for responsabile_area in delega.oggetto.area.delegati_attuali(al_giorno=data):
                     delega.oggetto.aggiungi_delegato(
@@ -1017,13 +1029,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         # Tutte le altre deleghe le terminiamo e basta
         for delega in self.deleghe_attuali(solo_attive=False):
-            delega.termina(data=data)
+            delega.termina(mittente=mittente_mail, data=data)
 
-        for partecipazione in self.partecipazioni.filter(turno__fine__gte=poco_fa()):
-            partecipazione.delete()
+        if not da_dipendente:
+            for partecipazione in self.partecipazioni.filter(turno__fine__gte=poco_fa()):
+                partecipazione.delete()
 
-        for richieste in self.autorizzazioni_in_attesa():
-            richieste.oggetto.autorizzazioni_ritira()
+            for richieste in self.autorizzazioni_in_attesa():
+                richieste.oggetto.autorizzazioni_ritira()
 
     def ottieni_o_genera_aspirante(self):
         try:
@@ -1045,6 +1058,18 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         membro = membro or Appartenenza.MEMBRO_DIRETTO
         return self.sedi_attuali(membro__in=membro, **kwargs).\
             order_by('-appartenenze__inizio').first()
+
+    def sedi_riferimento(self, membro=None, **kwargs):
+        membro = membro or Appartenenza.MEMBRO_DIRETTO
+        return self.sedi_attuali(membro__in=membro, **kwargs). \
+            order_by('-appartenenze__inizio')
+
+    def comitati_riferimento(self, **kwargs):
+        sedi = self.sede_riferimento(**kwargs)
+        comitati = [x.comitato for x in sedi]
+        if comitati:
+            return comitati
+        return sedi
 
     def comitato_riferimento(self, **kwargs):
         sede = self.sede_riferimento(**kwargs)
@@ -1105,11 +1130,35 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         ).exists():
             return True
 
+        # I soci sostenitori possono essere reclamati (ma solo se sono **solo** sostenitori)
+        if self.appartenenze_attuali().filter(
+                membro=Appartenenza.SOSTENITORE
+        ).exists() and not self.appartenenze_attuali().exclude(
+            membro=Appartenenza.SOSTENITORE
+        ).exists():
+            return True
+
         # I dipendenti possono essere reclamati (ma solo se sono **solo** dipendenti)
         if self.appartenenze_attuali().filter(
             membro=Appartenenza.DIPENDENTE
         ).exists() and not self.appartenenze_attuali().exclude(
             membro=Appartenenza.DIPENDENTE
+        ).exists():
+            return True
+
+        # Se è volontario è possibile reclamarlo previa messa in riserva (gestito altrove)
+        if self.appartenenze_attuali().filter(
+            membro=Appartenenza.VOLONTARIO
+        ).exists() and not self.appartenenze_attuali().exclude(
+            membro__in=[Appartenenza.ESTESO,Appartenenza.VOLONTARIO]
+        ).exists():
+            return True
+
+        # Se è volontario in estensione è possibile reclamarlo previa messa in riserva (gestito altrove)
+        if self.appartenenze_attuali().filter(
+                membro=Appartenenza.ESTESO
+        ).exists() and not self.appartenenze_attuali().exclude(
+            membro__in=[Appartenenza.ESTESO,Appartenenza.VOLONTARIO]
         ).exists():
             return True
 
@@ -1441,6 +1490,24 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             return False
         return True
 
+    def membro_a_stringa(self):
+        if self.membro == self.VOLONTARIO:
+            return 'Volontario, '+self.sede.nome_completo
+        elif self.membro == self.ESTESO:
+            return 'Esteso, '+self.sede.nome_completo
+        elif self.membro == self.ORDINARIO:
+            return 'Ordinario, '+self.sede.nome_completo
+        elif self.membro == self.DIPENDENTE:
+            return 'Dipendente, '+self.sede.nome_completo
+        elif self.membro == self.INFERMIERA:
+            return 'Infermiera, '+self.sede.nome_completo
+        elif self.membro == self.MILITARE:
+            return 'Militare, '+self.sede.nome_completo
+        elif self.membro == self.DONATORE:
+            return 'Donatore, '+self.sede.nome_completo
+        elif self.membro == self.SOSTENITORE:
+            return 'Sostenitore, '+self.sede.nome_completo
+
     def richiedi(self, notifiche_attive=True):
         """
         Richiede di confermare l'appartenenza.
@@ -1480,7 +1547,10 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
                 if self.precedente.terminazione not in self.MODIFICABILE_SE_TERMINAZIONI_PRECEDENTI:
                     flag &= False
                 elif inizio:
-                    flag &= inizio > self.precedente.fine
+                    if isinstance(inizio, date):
+                        flag &= inizio > self.precedente.fine.date()
+                    else:
+                        flag &= inizio > self.precedente.fine
             aperte = Appartenenza.objects.filter(persona=self.persona, fine__isnull=True, membro=self.membro).exclude(pk=self.pk)
             if aperte.exists():
                 flag &= False
@@ -1511,6 +1581,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         else:
             return False
 
+
+    def appartiene_a(self, sede):
+        return self.sede == sede or self.sede.genitore == sede or self.sede == sede.genitore or self.sede.genitore == sede.genitore
 
 class SedeQuerySet(TreeQuerySet):
 
@@ -2159,7 +2232,11 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
             appartenenzaVecchia.terminazione = Appartenenza.TRASFERIMENTO
             appartenenzaVecchia.save()
 
-            self.persona.chiudi_tutto(mezzanotte_24_ieri(data))
+            da_dipendente = False
+            if self.persona.appartenenze_attuali(membro__in=(Appartenenza.DIPENDENTE,)).exists():
+                    da_dipendente = True
+
+            self.persona.chiudi_tutto(mezzanotte_24_ieri(data), da_dipendente=da_dipendente)
 
             # Invia notifica tramite e-mail
             app = Appartenenza.objects.create(
@@ -2185,8 +2262,10 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
 
     def richiedi(self, notifiche_attive=True):
 
-        if not self.persona.sede_riferimento():
-            raise ValueError("Impossibile richiedere trasferimento: Nessuna appartenenza attuale.")
+        app_trasferibile = self.persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
+        if not app_trasferibile:
+            raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
+        sede = app_trasferibile.sede
 
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
@@ -2194,6 +2273,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
             invia_notifica_presidente=notifiche_attive,
             auto=Autorizzazione.AP_AUTO,
             scadenza=self.APPROVAZIONE_AUTOMATICA,
+            forza_sede_riferimento=sede,
         )
 
     def url(self):
@@ -2274,14 +2354,16 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         self.autorizzazioni.first().notifica_sede_autorizzazione_concessa(app.sede, testo_extra)
 
     def richiedi(self, notifiche_attive=True):
-        if not self.persona.sede_riferimento():
+        app_estendibile = self.persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
+        if not app_estendibile:
             raise ValueError("Impossibile richiedere estensione: Nessuna appartenenza attuale.")
-
+        sede = app_estendibile.sede
         self.autorizzazione_richiedi_sede_riferimento(
             self.persona,
             INCARICO_GESTIONE_ESTENSIONI,
             invia_notifica_presidente=notifiche_attive,
             auto=Autorizzazione.MANUALE,
+            forza_sede_riferimento=sede,
         )
         if self.destinazione.presidente():
             Messaggio.costruisci_e_invia(
@@ -2458,6 +2540,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     RADIAZIONE = 'RAD'
     DECEDUTO = 'DEC'
     TRASFORMAZIONE = 'TRA'
+    SCADENZA = 'SCA'
     ALTRO = 'ALT'
 
     MOTIVI_VOLONTARI = (
@@ -2466,6 +2549,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         (RISERVA, 'Mancato rientro da riserva'),
         (QUOTA, 'Mancato versamento quota annuale'),
         (RADIAZIONE, 'Radiazione da Croce Rossa Italiana'),
+        (SCADENZA, 'Scadenza contratto o altro'),
         (DECEDUTO, 'Decesso'),
     )
 
@@ -2480,17 +2564,16 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     info = models.CharField(max_length=512, help_text="Maggiori informazioni sulla causa della dimissione")
     richiedente = models.ForeignKey(Persona, on_delete=models.SET_NULL, null=True)
 
-    def applica(self, trasforma_in_sostenitore=False, invia_notifica=True):
+    def applica(self, applicante=None, trasforma_in_sostenitore=False, invia_notifica=True):
         from gruppi.models import Appartenenza as App
         precedente_appartenenza = self.appartenenza
-        precedente_sede = self.persona.sede_riferimento()
+        precedente_sede = precedente_appartenenza.sede
         destinatari = set()
         presidente = None
-        if self.persona.sede_riferimento():
-            us = self.persona.sede_riferimento().delegati_ufficio_soci()
+        if precedente_sede:
+            us = precedente_sede.delegati_ufficio_soci()
             destinatari = set(us)
-        if self.persona.comitato_riferimento():
-            presidente = self.persona.comitato_riferimento().presidente()
+            presidente = precedente_sede.presidente()
             destinatari.add(presidente)
 
         if precedente_appartenenza.membro == Appartenenza.SOSTENITORE:
@@ -2498,10 +2581,15 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         else:
             template = "email_dimissioni.html"
 
+        da_dipendente = False
+        if precedente_appartenenza.membro == Appartenenza.DIPENDENTE:
+            if self.persona.appartenenze_attuali(membro__in=(Appartenenza.VOLONTARIO, Appartenenza.SOSTENITORE)).exists():
+                da_dipendente = True
+
         # impostiamo l'orario di chiusura alle 0.0 del giorno corrente
         data = poco_fa()
         if precedente_appartenenza.membro == Appartenenza.VOLONTARIO:
-            Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=mezzanotte_24_ieri(data))
+            # Delega.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=mezzanotte_24_ieri(data))
             App.query_attuale(al_giorno=self.creazione, persona=self.persona).update(fine=mezzanotte_24_ieri(data))
             #TODO reperibilita'
             [
@@ -2511,7 +2599,8 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         Appartenenza.query_attuale(
             al_giorno=self.creazione, persona=self.persona, membro=precedente_appartenenza.membro
         ).update(fine=mezzanotte_24_ieri(data), terminazione=Appartenenza.DIMISSIONE)
-        self.persona.chiudi_tutto(mezzanotte_24_ieri(data))
+
+        self.persona.chiudi_tutto(mezzanotte_24_ieri(data), mittente_mail=applicante, da_dipendente=da_dipendente)
 
         if trasforma_in_sostenitore:
             app = Appartenenza(precedente=precedente_appartenenza, persona=self.persona,

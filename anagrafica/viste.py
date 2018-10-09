@@ -2,6 +2,7 @@ import codecs
 import csv
 import datetime
 from collections import OrderedDict
+from django.db import transaction
 from importlib import import_module
 
 from django.apps import apps
@@ -1204,18 +1205,32 @@ def _profilo_anagrafica(request, me, persona):
 
 def _profilo_appartenenze(request, me, persona):
     puo_modificare = me.permessi_almeno(persona, MODIFICA)
-
+    alredy_valid = False
     moduli = []
     terminabili = []
     for app in persona.appartenenze.all():
         modulo = None
         terminabile = me.permessi_almeno(app.estensione.first(), MODIFICA)
-        if app.attuale() and app.modificabile() and puo_modificare:
+        for modulo in moduli:
+            if not modulo is None and modulo.is_valid:
+                alredy_valid = True
+        if app.attuale() and app.modificabile() and puo_modificare and not alredy_valid:
             modulo = ModuloModificaDataInizioAppartenenza(request.POST or None,
                                                           instance=app,
                                                           prefix="%d" % (app.pk,))
             if ("%s-inizio" % (app.pk,)) in request.POST and modulo.is_valid():
-                modulo.save()
+                with transaction.atomic():
+                    if app.membro == Appartenenza.DIPENDENTE:
+                        app_volontario = persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
+                        if app_volontario:
+                            try:
+                                riserva = Riserva.objects.get(appartenenza=app_volontario)
+                            except Exception:
+                                pass
+                            else:
+                                riserva.inizio = modulo.cleaned_data['inizio']
+                                riserva.save()
+                    modulo.save()
 
         moduli += [modulo]
         terminabili += [terminabile]

@@ -16,6 +16,14 @@
         e la quota associativa.
     </div>
 
+    {% if volontario %}
+    <div class="alert alert-danger">
+        <i class="fa fa-fw fa-info-circle"></i>
+        Attenzione! Modificando il ruolo della persona da volontario in dipendente,
+        verrà automaticamente considerata volontario in riserva.
+    </div>
+    {% endif %}
+
     <div class="row">
         <div class="col-md-6">
         <form method="POST">

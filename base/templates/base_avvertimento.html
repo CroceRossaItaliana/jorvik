@@ -1,0 +1,28 @@
+{% extends "base_vuota.html" %}
+
+{% block base_body_classe %}sfondo-grigio-chiaro{% endblock %}
+
+{% block pagina_titolo %}Avviso{% endblock %}
+
+{% block pagina_principale %}
+    <div class="container">
+        <div class="row">
+
+            <div class="col-md-8 col-md-offset-2 sfondo-bianco bordi-arrotondati-5
+                        padding-15 box-ombreggiato-2 margine-verticale-20
+                         {% block avviso_classe %}allinea-centro{% endblock %}">
+                <h2 class="{% block avviso_titolo_classe %}{% endblock %}">
+                    {% block avviso_titolo %}avviso_titolo{% endblock %}
+                </h2>
+                {% block avviso_corpo %}
+                    <div class="alert alert-warning">
+                        <p> <strong>Attenzione!</strong> </p>
+                        <p>{% block avviso_messaggio %}avviso_messaggio{% endblock %}</p>
+                    </div>
+                    {% block avviso_post_messaggio %}{% endblock %}
+                {% endblock %}
+                <p>&nbsp;</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

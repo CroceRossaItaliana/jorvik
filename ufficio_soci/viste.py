@@ -3,6 +3,7 @@ import random
 from collections import OrderedDict
 
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Sum, Q
 from django.shortcuts import redirect, get_object_or_404
 from django.utils.safestring import mark_safe
@@ -15,10 +16,10 @@ from anagrafica.permessi.applicazioni import PRESIDENTE
 from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA, EMISSIONE_TESSERINI
 from autenticazione.forms import ModuloCreazioneUtenza
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
-from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
+from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico, messaggio_avvertimento
 from base.files import Excel, FoglioExcel
 from base.notifiche import NOTIFICA_INVIA
-from base.utils import poco_fa, testo_euro, oggi
+from base.utils import poco_fa, testo_euro, oggi, mezzanotte_24_ieri
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
@@ -118,12 +119,15 @@ def us_reclama(request, me):
 def us_reclama_persona(request, me, persona_pk):
 
     persona = get_object_or_404(Persona, pk=persona_pk)
+    volontario = False
 
     sedi = []
     ss = me.oggetti_permesso(GESTIONE_SOCI)
     for s in ss:  # Per ogni sede di mia competenza
         if persona.reclamabile_in_sede(s):  # Posso reclamare?
             sedi += [s]  # Aggiungi a elenco sedi
+            volontario = volontario or persona.appartenenze_attuali()\
+                .filter(sede=s, membro=Appartenenza.VOLONTARIO).exists()
 
     if persona.appartenenze_attuali().filter(membro=Appartenenza.SOSTENITORE).exists():
         messaggio_extra = "<br>Questa persona è già registrata come sostenitore. Prima di poterla reclamare deve essere dimessa dal ruolo di sostenitore"
@@ -155,7 +159,8 @@ def us_reclama_persona(request, me, persona_pk):
     modulo_quota = ModuloReclamaQuota(request.POST or None, initial=dati_iniziali, sedi=sedi, prefix="quota")
 
     if modulo_appartenenza.is_valid():
-
+        sede = modulo_appartenenza.cleaned_data.get('sede')
+        membro = modulo_appartenenza.cleaned_data.get('membro')
         continua = True
         if not modulo_quota.is_valid() and modulo_quota.get('registra_quota') == modulo_quota.SI:
             continua = False
@@ -167,13 +172,41 @@ def us_reclama_persona(request, me, persona_pk):
                                                         "data selezionata. Inserisci la data corretta di "
                                                         "cambio appartenenza.")
                 continua = False
+            if membro == Appartenenza.ORDINARIO and not appartenenza_ordinario.appartiene_a(sede=sede):
+                modulo_appartenenza.add_error('membro', "La persona e' gia un ordinario "
+                                                        "in un altro comitato: %s "
+                                              % appartenenza_ordinario.sede.nome_completo)
+                continua = False
 
         appartenenza_dipendente = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.DIPENDENTE).first()
-        if appartenenza_dipendente:  # Se dipendente.
-            if modulo_appartenenza.cleaned_data['inizio'] < appartenenza_dipendente.inizio:
-                modulo_appartenenza.add_error('inizio', "La persona non era dipendente alla "
-                                                        "data selezionata. Inserisci la data corretta di "
-                                                        "cambio appartenenza.")
+        if appartenenza_dipendente and membro == Appartenenza.DIPENDENTE: # Se dipendente e vuole diventare dipendente
+                if appartenenza_dipendente.appartiene_a(sede=sede):
+                    modulo_appartenenza.add_error('membro', "La persona e' gia dipendente nel tuo comitato")
+                    continua = False
+                else:
+                    modulo_appartenenza.add_error('membro', "La persona e' gia dipendente "
+                                                            "in un altro comitato: %s "
+                                                  % appartenenza_dipendente.sede.nome_completo)
+                    continua = False
+
+                if modulo_appartenenza.cleaned_data['inizio'] < appartenenza_dipendente.inizio:
+                    modulo_appartenenza.add_error('inizio', "La persona non era dipendente alla "
+                                                            "data selezionata. Inserisci la data corretta di "
+                                                            "cambio appartenenza.")
+                    continua = False
+
+
+        sede = modulo_appartenenza.cleaned_data.get('sede')
+        appartenenza_volontario = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.VOLONTARIO).first()
+        if appartenenza_volontario:
+            if membro == Appartenenza.VOLONTARIO and not appartenenza_volontario.appartiene_a(sede=sede):
+                modulo_appartenenza.add_error('membro', "La persona e' gia volontario "
+                                                        "in un altro comitato: %s "
+                                              % appartenenza_volontario.sede.nome_completo)
+                continua = False
+        if appartenenza_dipendente:
+            if membro == Appartenenza.VOLONTARIO and appartenenza_dipendente.appartiene_a(sede=sede):
+                modulo_appartenenza.add_error('membro', "La persona e' gia dipendente nel tuo comitato")
                 continua = False
 
         # Controllo eta' minima socio
@@ -191,48 +224,59 @@ def us_reclama_persona(request, me, persona_pk):
             continua = False
 
         if continua:
+            with transaction.atomic():
+                app = modulo_appartenenza.save(commit=False)
+                app.persona = persona
+                app.save()
 
-            app = modulo_appartenenza.save(commit=False)
-            app.persona = persona
-            app.save()
+                # Termina app. ordinario - I dipendenti rimangono tali
+                if appartenenza_ordinario:
+                    appartenenza_ordinario.fine = app.inizio
+                    appartenenza_ordinario.save()
 
-            # Termina app. ordinario - I dipendenti rimangono tali
-            if appartenenza_ordinario:
-                appartenenza_ordinario.fine = app.inizio
-                appartenenza_ordinario.save()
+                # se volontario nello stesso comitato e sta passando a dipendente mette in riserva
+                if appartenenza_volontario \
+                        and app.membro == app.DIPENDENTE \
+                        and (appartenenza_volontario.riserve.exclude(fine__isnull=True).exists() or not appartenenza_volontario.riserve.exclude(fine__isnull=True)) \
+                        and appartenenza_volontario.appartiene_a(sede=sede):
+                    Riserva.objects.create(inizio=mezzanotte_24_ieri(app.inizio),
+                                           persona=persona,
+                                           motivo="Adozione come dipendente",
+                                           appartenenza=appartenenza_volontario)
 
-            q = modulo_quota.cleaned_data
-            riduzione = q.get('riduzione', None)
-            registra_quota = q.get('registra_quota')
-            importo = q.get('importo')
-            data_versamento = q.get('data_versamento')
+                q = modulo_quota.cleaned_data
+                riduzione = q.get('riduzione', None)
+                registra_quota = q.get('registra_quota')
+                importo = q.get('importo')
+                data_versamento = q.get('data_versamento')
 
-            if registra_quota == modulo_quota.SI:
-                if riduzione:
-                    suffisso = ' - %s' % riduzione.descrizione
-                else:
-                    suffisso = ''
-                quota = Quota.nuova(
-                    appartenenza=app,
-                    data_versamento=data_versamento,
-                    registrato_da=me,
-                    importo=importo,
-                    causale="Iscrizione %s anno %d%s" % (
-                        app.get_membro_display(),
-                        q.get('data_versamento').year,
-                        suffisso,
-                    ),
-                    tipo=Quota.QUOTA_SOCIO,
-                    invia_notifica=True,
-                    riduzione=riduzione,
-                )
+                if registra_quota == modulo_quota.SI:
+                    if riduzione:
+                        suffisso = ' - %s' % riduzione.descrizione
+                    else:
+                        suffisso = ''
+                    Quota.nuova(
+                        appartenenza=app,
+                        data_versamento=data_versamento,
+                        registrato_da=me,
+                        importo=importo,
+                        causale="Iscrizione %s anno %d%s" % (
+                            app.get_membro_display(),
+                            q.get('data_versamento').year,
+                            suffisso,
+                        ),
+                        tipo=Quota.QUOTA_SOCIO,
+                        invia_notifica=True,
+                        riduzione=riduzione,
+                    )
 
-            return redirect(persona.url)
+                return redirect(persona.url)
 
     contesto = {
         "modulo_appartenenza": modulo_appartenenza,
         "modulo_quota": modulo_quota,
         "persona": persona,
+        "volontario": volontario
     }
 
     return 'us_reclama_persona.html', contesto
@@ -241,8 +285,8 @@ def us_reclama_persona(request, me, persona_pk):
 @pagina_privata
 def us_dimissioni(request, me, pk):
 
-    modulo = ModuloCreazioneDimissioni(request.POST or None)
     persona = get_object_or_404(Persona, pk=pk)
+    modulo = ModuloCreazioneDimissioni(request.POST or None, pers=persona, me=me)
 
     if not me.permessi_almeno(persona, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -251,30 +295,9 @@ def us_dimissioni(request, me, pk):
         dim = modulo.save(commit=False)
         dim.richiedente = me
         dim.persona = persona
-        dim.sede = dim.persona.sede_riferimento()
-        if persona.volontario:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
-        elif persona.ordinario:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.ORDINARIO).first()
-        elif persona.dipendente:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.DIPENDENTE).first()
-        elif persona.est_donatore:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.DONATORE).first()
-        elif persona.militare:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.MILITARE).first()
-        elif persona.infermiera:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.INFERMIERA).first()
-        elif persona.sostenitore:
-            appartenenza = persona.appartenenze_attuali(membro=Appartenenza.SOSTENITORE).first()
-        else:
-            return errore_generico(
-                request, me, torna_url=request.path_info, torna_titolo='Modulo dimissioni',
-                titolo='Errore appartenenza',
-                messaggio='L\'utente selezionato non appartenenze dalle quali possa essere dimesso'
-            )
-        dim.appartenenza = appartenenza
-        dim.save()
-        dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'])
+        dim.appartenenza = modulo.cleaned_data['appartenenza']
+        dim.sede = dim.appartenenza.sede
+        dim.applica(trasforma_in_sostenitore=modulo.cleaned_data['trasforma_in_sostenitore'], applicante=me)
 
         if dim.motivo == dim.DECEDUTO:
             messaggio = 'Il decesso è stato registrato.<br>Vista la motivazione non sarà inviata alcuna notifica ' \
@@ -283,10 +306,42 @@ def us_dimissioni(request, me, pk):
         else:
             messaggio = "Le dimissioni sono state registrate con successo"
 
-        return messaggio_generico(request, me, titolo="Dimissioni registrate",
-                                  messaggio=messaggio,
-                                  torna_titolo="Vai allo storico appartenenze",
-                                  torna_url=persona.url_profilo_appartenenze)
+        dim.save()
+
+        if persona.appartenenze_attuali().exclude(id=dim.appartenenza.id).exists():
+            presidenti_da_contattare = set()
+            for appartenenza_restante in persona.appartenenze_attuali():
+                pdc = appartenenza_restante.sede.presidente()
+                if not pdc in presidenti_da_contattare:
+                    presidenti_da_contattare.add(pdc)
+
+            testo_email = "Le dimissioni di %s sono state registrate con successo, ti invitiamo a  " \
+                          "creare nuovamente le deleghe che desideri mantenere attive " % persona.nome_completo
+
+            oggetto = "Riapertura deleghe: %s" % (persona.nome_completo)
+            Messaggio.costruisci_e_accoda(
+                oggetto=oggetto,
+                modello="email_testo.html",
+                mittente=me,
+                destinatari=presidenti_da_contattare,
+                corpo={
+                    "testo": testo_email,
+                },
+            )
+
+            messaggio = "Le dimissioni sono state registrate con successo, <strong>MA</strong> sara' necessario " \
+                        "creare nuovamente le deleghe di <strong>%s</strong> nel caso faccia ancora parte " \
+                        "del tuo comitato" % persona.nome_completo
+
+            return messaggio_avvertimento(request, me, titolo="Dimissioni registrate",
+                                      messaggio=messaggio,
+                                      torna_titolo="Vai allo storico appartenenze",
+                                      torna_url=persona.url_profilo_appartenenze)
+        else:
+            return messaggio_generico(request, me, titolo="Dimissioni registrate",
+                                      messaggio=messaggio,
+                                      torna_titolo="Vai allo storico appartenenze",
+                                      torna_url=persona.url_profilo_appartenenze)
 
     contesto = {
         "modulo": modulo,
@@ -342,7 +397,7 @@ def us_estensione(request, me):
 
     if modulo.is_valid():
         est = modulo.save(commit=False)
-        if not est.persona.sede_riferimento():
+        if not est.persona.sedi_riferimento().exists():
             return errore_nessuna_appartenenza(request, me)
         if not me.permessi_almeno(est.persona, MODIFICA):
             return redirect(ERRORE_PERMESSI)
@@ -376,10 +431,9 @@ def us_trasferimento(request, me):
                                                          #     ad una delle sedi che gestisco io
 
     modulo = ModuloCreazioneTrasferimento(request.POST or None)
-
     if modulo.is_valid():
         trasf = modulo.save(commit=False)
-        if not trasf.persona.sede_riferimento():
+        if not trasf.persona.sedi_riferimento().exists():
             return errore_nessuna_appartenenza(request, me)
         if not me.permessi_almeno(trasf.persona, MODIFICA):
             return redirect(ERRORE_PERMESSI)
