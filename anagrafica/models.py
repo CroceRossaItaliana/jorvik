@@ -25,6 +25,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db import models
 from django.db.models import Q, QuerySet, Avg
 from django.utils.functional import cached_property
 from django_countries.fields import CountryField
@@ -36,7 +37,7 @@ from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, R
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI_NOMI_DICT, UFFICIO_SOCI_UNITA, \
     DELEGHE_RUBRICA, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_4, \
     RESPONSABILE_FORMAZIONE, DELEGATO_OBIETTIVO_6, DELEGATO_OBIETTIVO_5, RESPONSABILE_AUTOPARCO, DELEGATO_CO, \
-    DIRETTORE_CORSO, RESPONSABILE_AREA, REFERENTE, OBIETTIVI
+    DIRETTORE_CORSO, RESPONSABILE_AREA, REFERENTE, OBIETTIVI, COMMISSARIO
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
     GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE
@@ -1206,10 +1207,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     @property
     def nuovo_presidente(self):
         """
-        Ritorna True se la persona e' un nuovo presidente (meno di un mese)
+        Ritorna True se la persona e' un nuovo presidente/commissario (meno di un mese)
         """
         un_mese_fa = poco_fa() - timedelta(days=30)
-        return self.deleghe_attuali(tipo=PRESIDENTE, inizio__gte=un_mese_fa).exists()
+        nuovo_presidente = self.deleghe_attuali(tipo=PRESIDENTE, inizio__gte=un_mese_fa).exists()
+        nuovo_commissario = self.deleghe_attuali(tipo=COMMISSARIO, inizio__gte=un_mese_fa).exists()
+        return nuovo_presidente or nuovo_commissario
 
     def oggetti_deleghe(self, *args, tipo=PRESIDENTE, **kwargs):
         deleghe = self.deleghe_attuali(*args, tipo=tipo, **kwargs)
@@ -1721,18 +1724,23 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     @property
     def richiede_revisione_dati(self):
         """
-        Ritorna True se i dati non sono stati aggiornati dall'entrata in carica del Presidente.
+        Ritorna True se i dati non sono stati aggiornati dall'entrata in carica del Presidente/Commissario.
         """
         # Deve essere un Comitato
         if not self.comitato == self:
             return False
-        presidente_attuale = self.deleghe_attuali(tipo=PRESIDENTE).first()
-        if not presidente_attuale:
+        delegato_attuale = self.deleghe_attuali(tipo=PRESIDENTE).first()
+        # Se non esiste controllo che ci sia un commissario
+        if not delegato_attuale:
+            delegato_attuale = self.deleghe_attuali(tipo=COMMISSARIO).first()
+        # Ricontrollo se non esiste il commissario non è presidiata
+        if not delegato_attuale:
             return False
         # Deve avere una locazione geografica
         if not self.locazione:
             return True
-        return self.ultima_modifica < presidente_attuale.inizio
+
+        return self.ultima_modifica < delegato_attuale.inizio
 
     @property
     def link(self):
@@ -2043,11 +2051,11 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
         )]
 
         # Se presidente, invia check-list.
-        if self.tipo == PRESIDENTE:
+        if self.tipo == PRESIDENTE or self.tipo == COMMISSARIO:
             messaggi += [
                  Messaggio.costruisci_e_invia(
-                     oggetto="IMPORTANTE: Check-list nuovo Presidente",
-                     modello="email_delega_notifica_nuovo_presidente.html",
+                     oggetto="IMPORTANTE: Check-list nuovo {}".format('Presidente' if self.tipo == PRESIDENTE else 'Commissario'),
+                     modello="email_delega_notifica_nuova_nomina_presidenziale.html",
                      corpo={
                          "delega": self,
                      },
@@ -2092,13 +2100,16 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
         if notifica:
             self.invia_notifica_terminazione(mittente=mittente, accoda=accoda)
 
-    def presidente_termina_deleghe_dipendenti(self, mittente=None):
+
+
+    def presidenziali_termina_deleghe_dipendenti(self, mittente=None):
         """
-        Nel caso di una delega come Presidente, termina anche
+        Nel caso di una delega come Presidente o Commissario, termina anche
          tutte le deleghe che dipendono da questa.
         """
-        if not self.tipo == PRESIDENTE:
-            raise ValueError("La delega non è di tipo Presidente.")
+
+        if not self.tipo == PRESIDENTE and not self.tipo == COMMISSARIO:
+            raise ValueError("La delega non è di tipo Presidente/Commissario.")
 
         if self.fine:
             nel_periodo_presidenziale = {
@@ -2161,7 +2172,7 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
         numero_deleghe = deleghe.count()
 
         for delega in deleghe:
-            delega.termina(mittente=mittente, accoda=True)
+            delega.termina(mittente=mittente, accoda=True, termina_at=datetime.now())
 
         return numero_deleghe
 

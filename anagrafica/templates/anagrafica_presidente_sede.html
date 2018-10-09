@@ -21,7 +21,7 @@
     <div class="alert alert-danger alert-block">
         <h4><i class="fa fa-fw fa-warning"></i> Richiesta verifica dei dati del Comitato</h4>
         <p>I dati del {{ sede.nome_completo }} non sono stati cambiati da quando sei diventat{{ me.genere_o_a }}
-            Presidente.</p>
+            {{ sede | select_presidente_commisario_da_sede }}.</p>
         <p>Per favore, verifica la correttezza delle informazioni inserite, incluso l'indirizzo
             e la <a href="{{ sede.url }}" target="_blank">posizione sulla mappa</a>, aggiungi le informazioni mancanti,
             e clicca su 'Salva informazioni'. Una volta che le informazioni saranno aggiornate, questo

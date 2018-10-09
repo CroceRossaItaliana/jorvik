@@ -6,7 +6,7 @@ from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_1, DELEGATO_OBIE
     DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, PRESIDENTE, \
     UFFICIO_SOCI, UFFICIO_SOCI_UNITA, DELEGATO_AREA, RESPONSABILE_AREA, \
     REFERENTE, RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO, \
-    RESPONSABILE_AUTOPARCO, DELEGATO_CO, REFERENTE_GRUPPO, RUBRICHE_TITOLI
+    RESPONSABILE_AUTOPARCO, DELEGATO_CO, REFERENTE_GRUPPO, RUBRICHE_TITOLI, COMMISSARIO
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, \
     GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
 from base.utils import remove_none
@@ -59,7 +59,8 @@ def menu(request):
                 rubriche.append(titolo)
                 if (delega in deleghe_attuali or
                     PRESIDENTE in deleghe_attuali or
-                    UFFICIO_SOCI in deleghe_attuali
+                    UFFICIO_SOCI in deleghe_attuali or
+                    COMMISSARIO in deleghe_attuali
                 ) and (delega != PRESIDENTE or (PRESIDENTE in deleghe_attuali and sedi_presidenti_sottostanti)):
                     RUBRICA_BASE.append(
                         (titolo, "fa-book", "".join(("/utente/rubrica/", slug, '/')))
