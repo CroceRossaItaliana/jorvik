@@ -31,6 +31,16 @@ def espandi_persona(persona, al_giorno=None):
     from anagrafica.models import Persona, Appartenenza, Trasferimento, Estensione, Riserva
     from ufficio_soci.models import Quota, Tesserino
     try:
+        """
+        Punto 3: https://github.com/CroceRossaItaliana/jorvik/wiki/Deleghe,-Permessi-e-Livelli-di-Accesso#creare-una-nuova-delega-ie-ruolo
+        
+        [Permesso, QuerySet]
+        * Il Permesso è una costante tra i permessi dichiarati in anagrafica/permessi/costanti.py
+        * QuerySet è l'elenco degli oggetti sui quali è valido il permesso.
+        
+          Il tipo di modello del QuerySet deve essere concorde da quello aspettato dal Permesso,
+          specificato e verificabile in PERMESSI_OGGETTI all'interno di anagrafica/permessi/costanti.py
+        """
         return [
             (LETTURA,   Trasferimento.objects.filter(persona=persona)),
             (LETTURA,   Estensione.objects.filter(persona=persona)),

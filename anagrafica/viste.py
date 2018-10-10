@@ -1181,8 +1181,12 @@ def utente_curriculum_cancella(request, me, pk=None):
 
 def _profilo_anagrafica(request, me, persona):
     puo_modificare = me.permessi_almeno(persona, MODIFICA)
-    modulo = ModuloProfiloModificaAnagrafica(request.POST or None, instance=persona, prefix="anagrafica")
+    modulo = ModuloProfiloModificaAnagrafica(request.POST or None,
+                                            me=me,
+                                            instance=persona,
+                                            prefix="anagrafica")
     modulo_numero_telefono = ModuloCreazioneTelefono(request.POST or None, prefix="telefono")
+    
     if puo_modificare and modulo.is_valid():
         Log.registra_modifiche(me, modulo)
         modulo.save()
@@ -1500,10 +1504,9 @@ def _sezioni_profilo(puo_leggere, puo_modificare):
 @pagina_privata
 def profilo(request, me, pk, sezione=None):
     persona = get_object_or_404(Persona, pk=pk)
-    puo_modificare = me.permessi_almeno(persona, MODIFICA)
-    puo_leggere = me.permessi_almeno(persona, LETTURA)
+    puo_modificare = me.permessi_almeno(oggetto=persona, minimo=MODIFICA)
+    puo_leggere = me.permessi_almeno(oggetto=persona, minimo=LETTURA)
     sezioni = OrderedDict(_sezioni_profilo(puo_leggere, puo_modificare))
-
     contesto = {
         "persona": persona,
         "puo_modificare": puo_modificare,
@@ -1516,21 +1519,17 @@ def profilo(request, me, pk, sezione=None):
         return 'anagrafica_profilo_profilo.html', contesto
 
     else:  # Sezione aperta
-
         if sezione not in sezioni:
             return redirect(ERRORE_PERMESSI)
 
         s = sezioni[sezione]
         risposta = s[2](request, me, persona)
-
         try:
             f_template, f_contesto = risposta
             contesto.update(f_contesto)
             return f_template, contesto
-
         except ValueError:
             return risposta
-
 
 @pagina_privata
 def presidente(request, me):
