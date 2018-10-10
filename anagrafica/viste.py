@@ -1032,7 +1032,7 @@ def strumenti_delegati(request, me):
 
     modulo = ModuloCreazioneDelega(request.POST or None, initial={
         "inizio": datetime.date.today(),
-    })
+    }, me=me)
 
     if modulo.is_valid():
         d = modulo.save(commit=False)
