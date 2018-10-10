@@ -215,8 +215,19 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
                   'note',]
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('me')
         super(ModuloProfiloModificaAnagrafica, self).__init__(*args, **kwargs)
-        #self.fields['note'].widget = forms.Textarea
+
+        """
+        Utente autorizzato nel sistema può essere sia Presidente che Ufficio soci,
+        ma se l'utente e il profilo (instance da modificare) non appartengono alla
+        stessa sede di riferimento l'utente non può modificare i seguenti campi.
+        (sistemato il 08-10'18 da akarlkvist)
+        """
+        if user:
+            if user.sede_riferimento != self.instance.sede_riferimento:
+                for f in ['codice_fiscale', 'nome', 'cognome', 'data_nascita']:
+                    self.fields[f].disabled = True
 
 
 class ModuloProfiloTitoloPersonale(autocomplete_light.ModelForm):
