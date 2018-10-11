@@ -199,6 +199,10 @@ def us_reclama_persona(request, me, persona_pk):
         sede = modulo_appartenenza.cleaned_data.get('sede')
         appartenenza_volontario = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.VOLONTARIO).first()
         if appartenenza_volontario:
+            if appartenenza_volontario.appartiene_a(sede=sede):
+                modulo_appartenenza.add_error('membro', "La persona e' gia volontario nel tuo comitato")
+                continua = False
+
             if membro == Appartenenza.VOLONTARIO and not appartenenza_volontario.appartiene_a(sede=sede):
                 modulo_appartenenza.add_error('membro', "La persona e' gia volontario "
                                                         "in un altro comitato: %s "
