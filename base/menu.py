@@ -86,7 +86,8 @@ def menu(request):
             )) if me and me.volontario else None,
             VOCE_RUBRICA,
             ("Curriculum", (
-                ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
+                # Competenze personali commentate per non visuallizarle
+                #("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
                 ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
                 ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if me and (me.volontario or me.dipendente) else None,
                 ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
