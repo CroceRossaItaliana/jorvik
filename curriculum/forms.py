@@ -28,7 +28,8 @@ class ModuloNuovoTitoloPersonale(autocomplete_light.ModelForm):
             }
             
             self.fields['area'] = forms.ChoiceField(
-                choices=[('', '----')] + SELECT_AREA_CHOICES[tipo]
+                choices=[('', '----')] + SELECT_AREA_CHOICES[tipo],
+                required=False,
             )
     
             # Rearrange the order of fields, put <area> before <titolo> field
