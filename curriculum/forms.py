@@ -1,7 +1,8 @@
-from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
+from autocomplete_light import shortcuts as autocomplete_light
 
-from curriculum.models import TitoloPersonale, Titolo
+from .areas import TITOLO_STUDIO_CHOICES, PATENTE_CIVILE_CHOICES
+from .models import TitoloPersonale, Titolo
 
 
 class ModuloNuovoTitoloPersonale(autocomplete_light.ModelForm):
@@ -10,14 +11,36 @@ class ModuloNuovoTitoloPersonale(autocomplete_light.ModelForm):
         fields = ['titolo',]
 
     def __init__(self, tipo, tipo_display, *args, **kwargs):
-        super(ModuloNuovoTitoloPersonale, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        
         self.fields['titolo'].label = tipo_display
         self.fields['titolo'].queryset = Titolo.objects.filter(
-            inseribile_in_autonomia=True, tipo=tipo,
+            tipo=tipo,
+            inseribile_in_autonomia=True
         )
 
+        """ Add <area> field conditionally"""
+        if tipo in [Titolo.TITOLO_CRI, Titolo.TITOLO_STUDIO, Titolo.PATENTE_CIVILE]:
+            SELECT_AREA_CHOICES = {
+                Titolo.TITOLO_CRI:      Titolo.AREA_CHOICES,  # Titoli CRI (TC)
+                Titolo.TITOLO_STUDIO:   TITOLO_STUDIO_CHOICES,  # Titoli di studio (TS)
+                Titolo.PATENTE_CIVILE:  PATENTE_CIVILE_CHOICES,  # Patenti civili (PP)
+            }
+            
+            self.fields['area'] = forms.ChoiceField(
+                choices=[('', '----')] + SELECT_AREA_CHOICES[tipo]
+            )
+    
+            # Rearrange the order of fields, put <area> before <titolo> field
+            self.order_fields(('area', 'titolo',))
 
-
+        # Override autocomplete's input placeholder attr
+        placeholder = 'Inizia a digitare ...'
+        if tipo == Titolo.PATENTE_CRI:
+            placeholder = 'Scrivi "Patente"'
+        self.fields['titolo'].widget.attrs['placeholder'] = placeholder
+            
+            
 class ModuloDettagliTitoloPersonale(forms.ModelForm):
     class Meta:
         model = TitoloPersonale

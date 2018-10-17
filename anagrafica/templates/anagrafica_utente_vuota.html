@@ -85,4 +85,11 @@
 
 </div>
 
+<script>
+    $('#id_area').on('change', function(e) {
+        let area_id = $(this).val();
+        $('#id_titolo-autocomplete').yourlabsAutocomplete().data['area'] = area_id;
+    });
+</script>
+
 {% endblock %}
