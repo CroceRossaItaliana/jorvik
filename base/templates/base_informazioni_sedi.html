@@ -9,6 +9,25 @@
 {% block pagina_titolo %}Elenco Sedi CRI con Recapiti e Mappa{% endblock %}
 
 {% block pagina_principale %}
+    <script>
+        $(document).ready(function(){
+
+        // cerca tag a nella lista .children che contiene la parola lazio nell href
+
+        $('.children a[href*="lazio"]').parent('p').each(function() {
+
+        var text = $(this).html();
+
+        // sostituisci il testo
+
+        text = text.replace("Sede Regionale", "Sede Provinciale");
+
+        $(this).html(text);
+
+        });
+
+        });
+    </script>
 {% cache 1800 informazioni_sedi_v5 %}
 
 
@@ -86,7 +105,5 @@
 
         </div>
     </div>
-
-
 {% endcache %}
 {% endblock %}
