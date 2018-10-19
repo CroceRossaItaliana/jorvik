@@ -6,6 +6,7 @@ __author__ = 'alfioemanuele'
 # Tipologie di applicativi esistenti
 
 PRESIDENTE = 'PR'
+COMMISSARIO = 'CM'
 UFFICIO_SOCI = 'US'
 UFFICIO_SOCI_UNITA = 'UU'
 UFFICIO_SOCI_TEMPORANEO = 'UT'
@@ -38,6 +39,7 @@ OBIETTIVI = {
 # Nomi assegnati
 PERMESSI_NOMI = (
     (PRESIDENTE,                "Presidente"),
+    (COMMISSARIO,               "Commissario"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
     (UFFICIO_SOCI_UNITA,        "Ufficio Soci Unità territoriali"),
     (DELEGATO_AREA,             "Delegato d'Area"),
@@ -59,7 +61,7 @@ PERMESSI_NOMI = (
 )
 
 DELEGHE_RUBRICA = (
-    PRESIDENTE, UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
+    PRESIDENTE, COMMISSARIO, UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
     DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
     DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6,
     RESPONSABILE_FORMAZIONE, DELEGATO_CO, RESPONSABILE_AUTOPARCO,
@@ -69,6 +71,7 @@ PERMESSI_NOMI_DICT = dict(PERMESSI_NOMI)
 
 RUBRICHE_TITOLI = OrderedDict((
     ('presidenti', (PRESIDENTE, 'Presidenti', True)),
+    # ('commissari', (COMMISSARIO, 'Commissari', True)),
     ('delegati_us', (UFFICIO_SOCI, 'Delegati Ufficio Soci', True)),
     ('delegati_us_unita', (UFFICIO_SOCI_UNITA, 'Delegati Ufficio Soci Unità territoriali', True)),
     ('delegati_obiettivo_1', (DELEGATO_OBIETTIVO_1, 'Delegati Obiettivo I (Salute)', True)),

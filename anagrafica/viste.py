@@ -2,6 +2,7 @@ import codecs
 import csv
 import datetime
 from collections import OrderedDict
+from django.db import transaction
 from importlib import import_module
 
 from django.apps import apps
@@ -10,12 +11,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.contrib.auth import login
+from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.template.loader import get_template
 
 # Le viste base vanno qui.
 from django.views.generic import ListView
-from django.utils import timezone
 
 from anagrafica.costanti import TERRITORIALE, REGIONALE
 from anagrafica.elenchi import ElencoDelegati
@@ -26,17 +27,17 @@ from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloMo
     ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
     ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail, \
     ModuloUSModificaUtenza, ModuloReportFederazione
-from anagrafica.forms import ModuloStepCodiceFiscale
-from anagrafica.forms import ModuloStepAnagrafica
+from anagrafica.forms import ModuloStepCodiceFiscale, ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
 from anagrafica.importa import VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari
 from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento, \
     ProvvedimentoDisciplinare, Sede, Riserva, Dimissione
-from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, COMMISSARIO, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
     RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI
+
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
     ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO, \
     RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
@@ -47,8 +48,7 @@ from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LE
     RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, GESTIONE_SOCI
 from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
     INCARICO_GESTIONE_FOTOTESSERE
-from anagrafica.utils import _conferma_email
-from anagrafica.utils import _richiesta_conferma_email
+from anagrafica.utils import _conferma_email, _richiesta_conferma_email
 from articoli.viste import get_articoli
 from attivita.forms import ModuloStatisticheAttivitaPersona
 from attivita.models import Partecipazione
@@ -1034,7 +1034,7 @@ def strumenti_delegati(request, me):
 
     modulo = ModuloCreazioneDelega(request.POST or None, initial={
         "inizio": datetime.date.today(),
-    })
+    }, me=me)
 
     if modulo.is_valid():
         d = modulo.save(commit=False)
@@ -1086,8 +1086,8 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
     if not me.permessi_almeno(delega.oggetto, GESTIONE):
         return redirect(ERRORE_PERMESSI)
 
-    delega.termina(mittente=me)
-
+    delega.termina(mittente=me,
+                   termina_at=poco_fa())
     return redirect("/strumenti/delegati/")
 
 
@@ -1183,8 +1183,12 @@ def utente_curriculum_cancella(request, me, pk=None):
 
 def _profilo_anagrafica(request, me, persona):
     puo_modificare = me.permessi_almeno(persona, MODIFICA)
-    modulo = ModuloProfiloModificaAnagrafica(request.POST or None, instance=persona, prefix="anagrafica")
+    modulo = ModuloProfiloModificaAnagrafica(request.POST or None,
+                                            me=me,
+                                            instance=persona,
+                                            prefix="anagrafica")
     modulo_numero_telefono = ModuloCreazioneTelefono(request.POST or None, prefix="telefono")
+    
     if puo_modificare and modulo.is_valid():
         Log.registra_modifiche(me, modulo)
         modulo.save()
@@ -1204,18 +1208,32 @@ def _profilo_anagrafica(request, me, persona):
 
 def _profilo_appartenenze(request, me, persona):
     puo_modificare = me.permessi_almeno(persona, MODIFICA)
-
+    alredy_valid = False
     moduli = []
     terminabili = []
     for app in persona.appartenenze.all():
         modulo = None
         terminabile = me.permessi_almeno(app.estensione.first(), MODIFICA)
-        if app.attuale() and app.modificabile() and puo_modificare:
+        for modulo in moduli:
+            if not modulo is None and modulo.is_valid:
+                alredy_valid = True
+        if app.attuale() and app.modificabile() and puo_modificare and not alredy_valid:
             modulo = ModuloModificaDataInizioAppartenenza(request.POST or None,
                                                           instance=app,
                                                           prefix="%d" % (app.pk,))
             if ("%s-inizio" % (app.pk,)) in request.POST and modulo.is_valid():
-                modulo.save()
+                with transaction.atomic():
+                    if app.membro == Appartenenza.DIPENDENTE:
+                        app_volontario = persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
+                        if app_volontario:
+                            try:
+                                riserva = Riserva.objects.get(appartenenza=app_volontario)
+                            except Exception:
+                                pass
+                            else:
+                                riserva.inizio = modulo.cleaned_data['inizio']
+                                riserva.save()
+                    modulo.save()
 
         moduli += [modulo]
         terminabili += [terminabile]
@@ -1502,10 +1520,9 @@ def _sezioni_profilo(puo_leggere, puo_modificare):
 @pagina_privata
 def profilo(request, me, pk, sezione=None):
     persona = get_object_or_404(Persona, pk=pk)
-    puo_modificare = me.permessi_almeno(persona, MODIFICA)
-    puo_leggere = me.permessi_almeno(persona, LETTURA)
+    puo_modificare = me.permessi_almeno(oggetto=persona, minimo=MODIFICA)
+    puo_leggere = me.permessi_almeno(oggetto=persona, minimo=LETTURA)
     sezioni = OrderedDict(_sezioni_profilo(puo_leggere, puo_modificare))
-
     contesto = {
         "persona": persona,
         "puo_modificare": puo_modificare,
@@ -1518,21 +1535,17 @@ def profilo(request, me, pk, sezione=None):
         return 'anagrafica_profilo_profilo.html', contesto
 
     else:  # Sezione aperta
-
         if sezione not in sezioni:
             return redirect(ERRORE_PERMESSI)
 
         s = sezioni[sezione]
         risposta = s[2](request, me, persona)
-
         try:
             f_template, f_contesto = risposta
             contesto.update(f_contesto)
             return f_template, contesto
-
         except ValueError:
             return risposta
-
 
 @pagina_privata
 def presidente(request, me):
@@ -1851,6 +1864,34 @@ def admin_report_federazione(request, me):
 @pagina_privata
 def admin_import_presidenti(request, me):
 
+    def __get_presidiata(sede):
+        """
+            Ritorna delega del presidente o commissario se la sede è presidiata.
+        """
+        delega_presidente = sede.deleghe_attuali(
+            al_giorno=datetime.datetime.now(), tipo=PRESIDENTE, fine=None
+        ).first()
+        delega_commissario = sede.deleghe_attuali(
+            al_giorno=datetime.datetime.now(), tipo=COMMISSARIO, fine=None
+        ).first()
+
+        if delega_presidente and delega_commissario:
+            # Ritorna l'ultimo in carica
+            if int(delega_presidente.inizio.strftime('%s')) > int(delega_commissario.inizio.strftime('%s')):
+                return delega_presidente, True
+            else:
+                return delega_commissario, False
+        elif delega_presidente:
+            # Ritorna Presidente
+            return delega_presidente, True
+        elif delega_commissario:
+            # Ritorna Commissario
+            return delega_commissario, False
+        else:
+            # Non è presidiata da nessuno
+            return None, False
+
+
     if not me.utenza.is_superuser:
         return redirect(ERRORE_PERMESSI)
 
@@ -1860,47 +1901,79 @@ def admin_import_presidenti(request, me):
     moduli = []
     esiti = []
     for i in range(0, numero_presidenti_per_pagina):
-        modulo = ModuloImportPresidenti(request.POST or None, prefix="presidente_%d" % i)
+        modulo = ModuloImportPresidenti(request.POST or None, prefix="presidenti_%d" % i)
 
         if modulo.is_valid():
 
             # Ottieni i dati
-            presidente = modulo.cleaned_data['presidente']
+            nomina = modulo.cleaned_data['nomina']
+            persona = modulo.cleaned_data['persona']
             sede = modulo.cleaned_data['sede']
 
-            # Se la Sede ha un Presidente, termina la sua Delega e notifica.
-            delega_presidente_precedente = sede.deleghe_attuali(tipo=PRESIDENTE).first()
-            if delega_presidente_precedente:
+            # Prendo l'ultima delega da commissario/presidente per la sede
+            delega_persona_precedente, isPresidente = __get_presidiata(sede)
 
-                # Se il Presidente è già stato nominato.
-                if delega_presidente_precedente.persona == presidente:
+            # Se una delle due figure esiste (Presidente/Commissario)
+            if delega_persona_precedente:
+
+                # Se è già stato nominato in questa sede.
+                if delega_persona_precedente.persona == persona:
                     esiti += [
-                        (presidente, sede, "Saltato. Era già Presidente di questa Sede.")
+                        (
+                            persona,
+                            sede,
+                            "Saltato. E' già {} di questa Sede.".format(
+                                'Presidente' if isPresidente else 'Commissario'
+                            )
+                        )
                     ]
                     continue
 
-                # Termina la Presidenza.
-                delega_presidente_precedente.termina(mittente=me, accoda=True)
+                # Termina la Presidenza/Commissariato.
+                delega_persona_precedente.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
 
                 # Termina tutte le Deleghe correlate.
-                delega_presidente_precedente.presidente_termina_deleghe_dipendenti()
+                delega_persona_precedente.presidenziali_termina_deleghe_dipendenti()
+
+
+            # Controllo se è gia commissario di un altra sede
+            gia_presidente = persona.deleghe_attuali(
+                al_giorno=datetime.datetime.now(), tipo=PRESIDENTE, fine=None
+            ).first()
+            if gia_presidente:
+                gia_presidente.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+            else:
+                gia_commissario = persona.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=COMMISSARIO, fine=None
+                ).first()
+                if gia_commissario:
+                    gia_commissario.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+
 
             # Crea la nuova delega e notifica.
             delega = Delega(
-                persona=presidente,
-                tipo=PRESIDENTE,
+                persona=persona,
+                tipo=PRESIDENTE if nomina == 'Presidente' else COMMISSARIO,
                 oggetto=sede,
                 inizio=poco_fa(),
                 firmatario=me,
             )
+
             delega.save()
             delega.invia_notifica_creazione()
 
+
+            msg = "OK, Nomina effettuata."
+            if delega_persona_precedente:
+                msg += "Vecchio {} dimesso {}".format(
+                    'Presidente' if isPresidente else 'Commissario',
+                    delega_persona_precedente.persona.codice_fiscale
+                )
+            else:
+                msg += "Non vi era alcuna nomina."
+
             esiti += [
-                (presidente, sede, "OK. Nomina effettuata%s." % (
-                    (", vecchio Presidente %s dimesso" % delega_presidente_precedente.persona.codice_fiscale)
-                    if delega_presidente_precedente else ", non vi era alcun Presidente."
-                ))
+                (persona, sede, msg)
             ]
 
         moduli += [modulo]
@@ -1910,6 +1983,7 @@ def admin_import_presidenti(request, me):
         "numero_presidenti_per_pagina": numero_presidenti_per_pagina,
         "esiti": esiti,
     }
+
     return 'admin_import_presidenti.html', contesto
 
 

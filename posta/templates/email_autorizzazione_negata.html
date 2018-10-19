@@ -9,7 +9,8 @@
     {% include richiesta.template_path %}
     <hr />
 
-    <p>La richiesta &egrave; stata respinta da {{ richiesta.firmatario.link|safe }} il {{ richiesta.firmatario.ultima_modifica }}.</p>
+    <p>La richiesta &egrave; stata respinta da {{ richiesta.firmatario.link|safe }} il {{ declined_at }}.</p>
+
     {% if richiesta.motivo_negazione %}
         <p>{{ richiesta.firmatario.nome }} ha fornito la seguenta motivazione: <strong>{{ richiesta.motivo_negazione }}</strong>.</p>
     {% endif %}

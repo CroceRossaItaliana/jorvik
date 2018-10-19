@@ -303,7 +303,8 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         corpo = {
             "richiesta": self,
             "firmatario": self.firmatario,
-            "giorni": self.giorni_automatici
+            "giorni": self.giorni_automatici,
+            
         }
         if aggiunte_corpo:
             corpo.update(aggiunte_corpo)
@@ -330,7 +331,10 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         else:
             modello = "email_autorizzazione_negata.html"
         oggetto = "Richiesta di %s RESPINTA" % (self.oggetto.RICHIESTA_NOME,)
-        self._invia_notifica(modello, oggetto, auto)
+        aggiunte_corpo = {
+            'declined_at': datetime.now()
+        }
+        self._invia_notifica(modello, oggetto, auto, aggiunte_corpo=aggiunte_corpo)
 
     def controlla_concedi_automatico(self):
         if self.scadenza and self.concessa is None and self.scadenza < now() and not self.oggetto.ritirata:

@@ -10,7 +10,7 @@ from django.contrib.admin.widgets import AdminDateWidget
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
-from django.forms import ModelForm
+from django.forms import ModelForm, ChoiceField
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 
@@ -215,8 +215,19 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
                   'note',]
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('me')
         super(ModuloProfiloModificaAnagrafica, self).__init__(*args, **kwargs)
-        #self.fields['note'].widget = forms.Textarea
+
+        """
+        Utente autorizzato nel sistema può essere sia Presidente che Ufficio soci,
+        ma se l'utente e il profilo (instance da modificare) non appartengono alla
+        stessa sede di riferimento l'utente non può modificare i seguenti campi.
+        (sistemato il 08-10'18 da akarlkvist)
+        """
+        if user:
+            if user.sede_riferimento != self.instance.sede_riferimento:
+                for f in ['codice_fiscale', 'nome', 'cognome', 'data_nascita']:
+                    self.fields[f].disabled = True
 
 
 class ModuloProfiloTitoloPersonale(autocomplete_light.ModelForm):
@@ -384,9 +395,43 @@ class ModuloCreazioneRiserva(ModelForm):
 class ModuloCreazioneDelega(autocomplete_light.ModelForm):
     class Meta:
         model = Delega
-        fields = ['persona', ]
+        fields = ['persona',]
 
-    def clean_inizio(self):  # Impedisce inizio passato
+    def __init__(self, *args, **kwargs):
+        self.me = kwargs.pop('me')
+        super().__init__(*args, **kwargs)
+
+    def clean_persona(self):
+        me_sede = self.me.sede_riferimento()  # Authorized user's <Sede> (myself)
+        persona = self.cleaned_data['persona']  # Selected user whom to be given <Delega> in <Sede>
+        
+        """
+        1) <me> may give to <persona> a new <Delega> if <persona> has <Appartenenza> in
+        the same <Sede> as "Volontario in Estensione" or...
+        2) <me> and <persona> have the same "sede di riferimento".
+        """
+
+        # Get all <Appartenenze attuali> (with not expired <fine> datetime) where
+        # <persona> is "Volontario in Estensione"
+        persona_appartenenze = persona.appartenenze_attuali().filter(
+            membro=Appartenenza.ESTESO,
+            sede=me_sede
+        )
+        if persona_appartenenze.count():
+            # It's okay. <me> and <persona> have the same sede,
+            # and persona is "Volontario in Estensione"
+            pass
+        else:
+            # Persona has no "appartenenza".
+            # Check sede_riferimento of both subjects.
+            if me_sede != persona.sede_riferimento():
+                # me and persona have different sede. <me> can't give <Delega> to <persona>
+                raise forms.ValidationError("Il volontario non è appartenente alla tua sede.")
+            
+        return persona
+    
+    def clean_inizio(self):
+        """ Impedisce inizio passato """
         inizio = self.cleaned_data['inizio']
         if inizio < datetime.date.today():
             raise forms.ValidationError("La data di inzio non può essere passata.")
@@ -473,7 +518,13 @@ class ModuloReportFederazione(forms.Form):
 
 
 class ModuloImportPresidenti(forms.Form):
-    presidente = autocomplete_light.ModelChoiceField("PresidenteAutocompletamento")
+    nomina = forms.ChoiceField(widget=forms.Select(),
+                      choices=(
+                          [('Seleziona', ''), ('Presidente', 'Presidente'), ('Commissario', 'Commissario'),]
+                      ),
+                      initial='Nomina',
+                      required=True,)
+    persona = autocomplete_light.ModelChoiceField("PresidenteAutocompletamento")
     sede = autocomplete_light.ModelChoiceField("ComitatoAutocompletamento")
 
 

@@ -49,7 +49,7 @@
                         <tbody>
                         {% for modulo in moduli %}
                             <tr>
-                                <td>{% bootstrap_form modulo layout="horizontal" size='sm' horizontal_label_class='col-md-2' horizontal_field_class='col-md-3' %}</td>
+                                <td>{% bootstrap_form modulo layout="horizontal" size='sm' horizontal_label_class='col-md-1' horizontal_field_class='col-md-3' %}</td>
                             </tr>
                         {% endfor %}
                         </tbody>
@@ -69,17 +69,17 @@
                 <table class="table table-striped">
                     <thead>
                     <tr>
-                        <td>Presidente</td>
+                        <td>Persona</td>
                         <td>Sede</td>
                         <td>Esito</td>
                     </tr>
                     </thead>
                     <tbody>
-                    {% for presidente, sede, esito in esiti %}
+                    {% for persona, sede, esito in esiti %}
                         <tr>
                             <td>
-                                {{ presidente.link|safe }}<br />
-                                <span class="monospace">{{ presidente.codice_fiscale }}</span>
+                                {{ persona.link|safe }}<br />
+                                <span class="monospace">{{ persona.codice_fiscale }}</span>
                             </td>
                             <td>
                                 {{ sede.link|safe }}

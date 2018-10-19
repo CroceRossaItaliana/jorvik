@@ -227,3 +227,11 @@ body, p, span, div {
 .articolo img[align=right] {
     padding: 5px 0 5px 5px;
 }
+
+.table.table-striped.table-condensed.piu-piccolo td{
+    padding-top: 15px;
+}
+
+.table.table-striped.table-condensed.piu-piccolo td .form-group{
+    margin-bottom: 0;
+}
