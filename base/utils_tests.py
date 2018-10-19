@@ -1,18 +1,18 @@
 import random
 import string
+import names
 from datetime import timedelta
 from codicefiscale import build
-import names
 
-from anagrafica.costanti import LOCALE, ESTENSIONE
-from anagrafica.models import Persona, Sede, Appartenenza, Delega
-from anagrafica.permessi.applicazioni import PRESIDENTE
-from attivita.models import Area, Attivita, Turno, Partecipazione
 from autenticazione.models import Utenza
 from base.geo import Locazione
 from base.utils import poco_fa
-from jorvik.settings import SELENIUM_DRIVER, SELENIUM_URL, SELENIUM_BROWSER
+from anagrafica.costanti import LOCALE, ESTENSIONE
+from anagrafica.models import Persona, Sede, Appartenenza, Delega
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI
+from attivita.models import Area, Attivita, Turno, Partecipazione
 from ufficio_soci.models import Tesseramento
+from jorvik.settings import SELENIUM_DRIVER, SELENIUM_URL, SELENIUM_BROWSER
 
 
 def codice_fiscale(length=16):
@@ -91,6 +91,25 @@ def crea_sede(presidente=None, estensione=LOCALE, genitore=None,
         )
         d.save()
     return s
+
+
+def crea_delega(sede=None, **kwargs):
+    if not sede:
+        sede = crea_sede()
+        print('[sede] <sede> argument was not passed. Created a sede %s' % sede)
+
+    params = {
+        'creazione': kwargs.get('creazione', "1980-12-01"),
+        'inizio': kwargs.get('inizio', "1980-12-10"),
+        'persona': crea_persona(),
+        'tipo': kwargs.get('tipo', UFFICIO_SOCI),
+        'stato': kwargs.get('stato', 'a'),
+        'oggetto': sede,
+    }
+    delega = Delega(**params)
+    delega.save()
+    print('[delega] Created %s' % delega)
+    return delega
 
 
 def crea_locazione(dati=None, geo=False):

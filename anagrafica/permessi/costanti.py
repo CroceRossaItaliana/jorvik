@@ -11,7 +11,7 @@ Questo file gestisce i permessi in Gaia.
  ============================================================================================
 """
 from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA, REFERENTE, DIRETTORE_CORSO, \
-    RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO
+    RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 
 GESTIONE_SEDE = "GESTIONE_SEDE"
@@ -20,6 +20,7 @@ ELENCHI_SOCI = "ELENCHI_SOCI"
 RUBRICA_UFFICIO_SOCI = "RUBRICA_UFFICIO_SOCI"
 RUBRICA_UFFICIO_SOCI_UNITA = "RUBRICA_UFFICIO_SOCI_UNITA"
 RUBRICA_PRESIDENTI = "RUBRICA_PRESIDENTI"
+RUBRICA_COMMISSARI = "RUBRICA_COMMISSARI"
 RUBRICA_DELEGATI_AREA = "RUBRICA_DELEGATI_AREA"
 RUBRICA_DELEGATI_OBIETTIVO_1 = "RUBRICA_DELEGATI_OBIETTIVO_1"
 RUBRICA_DELEGATI_OBIETTIVO_2 = "RUBRICA_DELEGATI_OBIETTIVO_2"
@@ -58,6 +59,7 @@ PERMESSI_OGGETTI = (
     (RUBRICA_UFFICIO_SOCI,      ('anagrafica', 'Sede')),
     (RUBRICA_UFFICIO_SOCI_UNITA,('anagrafica', 'Sede')),
     (RUBRICA_PRESIDENTI,        ('anagrafica', 'Sede')),
+    (RUBRICA_COMMISSARI,       ('anagrafica', 'Sede')),
     (RUBRICA_DELEGATI_AREA,     ('attivita', 'Area')),
     (RUBRICA_DELEGATI_OBIETTIVO_1,  ('anagrafica', 'Sede')),
     (RUBRICA_DELEGATI_OBIETTIVO_2,  ('anagrafica', 'Sede')),
@@ -92,6 +94,7 @@ PERMESSI_OGGETTI = (
 # Tipologia degli oggetti assegnati ad ogni Delega.
 DELEGHE_OGGETTI = (
     (PRESIDENTE,                ('anagrafica', 'Sede', None)),
+    #(COMMISSARIO,                ('anagrafica', 'Sede', None)),
     (UFFICIO_SOCI,              ('anagrafica', 'Sede', None)),
     (DELEGATO_AREA,             ('attivita', 'Area', 'sede__in')),
     (RESPONSABILE_AREA,         ('attivita', 'Area', 'sede__in')),

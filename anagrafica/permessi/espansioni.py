@@ -13,7 +13,7 @@ from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_A
     RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
     RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
     RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI
 
 """
 Questo file gestisce la espansione dei permessi in Gaia.
@@ -31,6 +31,16 @@ def espandi_persona(persona, al_giorno=None):
     from anagrafica.models import Persona, Appartenenza, Trasferimento, Estensione, Riserva
     from ufficio_soci.models import Quota, Tesserino
     try:
+        """
+        Punto 3: https://github.com/CroceRossaItaliana/jorvik/wiki/Deleghe,-Permessi-e-Livelli-di-Accesso#creare-una-nuova-delega-ie-ruolo
+        
+        [Permesso, QuerySet]
+        * Il Permesso è una costante tra i permessi dichiarati in anagrafica/permessi/costanti.py
+        * QuerySet è l'elenco degli oggetti sui quali è valido il permesso.
+        
+          Il tipo di modello del QuerySet deve essere concorde da quello aspettato dal Permesso,
+          specificato e verificabile in PERMESSI_OGGETTI all'interno di anagrafica/permessi/costanti.py
+        """
         return [
             (LETTURA,   Trasferimento.objects.filter(persona=persona)),
             (LETTURA,   Estensione.objects.filter(persona=persona)),
@@ -109,6 +119,10 @@ def espandi_rubrica_ufficio_soci_unita(qs_sedi, al_giorno=date.today()):
 
 
 def espandi_rubrica_presidenti(qs_sedi, al_giorno=date.today()):
+    return espandi_rubriche(qs_sedi, al_giorno)
+
+
+def espandi_rubrica_commissari(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
 
@@ -332,6 +346,7 @@ ESPANDI_PERMESSI = {
     RUBRICA_UFFICIO_SOCI:               espandi_rubrica_ufficio_soci,
     RUBRICA_UFFICIO_SOCI_UNITA:         espandi_rubrica_ufficio_soci_unita,
     RUBRICA_PRESIDENTI:                 espandi_rubrica_presidenti,
+    RUBRICA_COMMISSARI:                 espandi_rubrica_commissari,
     RUBRICA_DELEGATI_AREA:              espandi_rubrica_delegati_area,
     RUBRICA_DELEGATI_OBIETTIVO_1:       espandi_rubrica_delegati_obiettivo_1,
     RUBRICA_DELEGATI_OBIETTIVO_2:       espandi_rubrica_delegati_obiettivo_2,

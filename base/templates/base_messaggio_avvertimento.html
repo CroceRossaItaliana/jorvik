@@ -1,0 +1,20 @@
+{% extends "base_avvertimento.html" %}
+
+{% block pagina_titolo %}{{ messaggio_titolo }}{% endblock %}
+
+{% block avviso_titolo_classe %}text-success{% endblock %}
+
+{% block avviso_titolo %}
+    {{ messaggio_titolo|safe }}
+{% endblock %}
+
+{% block avviso_messaggio %}
+    <p>{{ messaggio_messaggio|safe }}</p>
+{% endblock %}
+
+{% block avviso_post_messaggio %}
+    <a href="{{ messaggio_torna_url }}" class="btn btn-default btn-success">
+        <i class="fa fa-fw fa-check"></i>
+        {{ messaggio_torna_titolo }}
+    </a>
+{% endblock %}
