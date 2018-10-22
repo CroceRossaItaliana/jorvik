@@ -9,7 +9,26 @@
 {% endblock %}
 
 {% block pagina_principale %}
+    <script>
 
+        $(document).ready(function(){
+
+            // cerca tag a nella lista .children che contiene la parola lazio nell href
+
+            $('ul a[href*="lazio-dellarea-metropolitana-roma-capitale-p"]').parent('li').each(function() {
+
+                var text = $(this).html();
+
+                // sostituisci il testo
+
+                text = text.replace("Sede Provinciale", "Sede Regionale");
+                $(this).html(text);
+
+            });
+
+        });
+
+    </script>
 
     <div class="container">
 
