@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
 from django import template
 from django.contrib.messages import constants
 from django.utils.six import string_types
+from anagrafica.permessi.costanti import PRESIDENTE, COMMISSARIO
 
 register = template.Library()
 
@@ -31,3 +33,23 @@ def level_to_bootstrap(message):
         constants.ERROR: 'alert-danger',
     }
     return map.get(message.level, 'alert-info')
+
+
+@register.filter
+def select_nomina_presidenziale(sede):
+    delega_presidenziale= sede.deleghe_attuali(
+        al_giorno=datetime.now(), tipo=PRESIDENTE, fine=None
+    ).first()
+
+    if delega_presidenziale:
+        return 'Presidente'
+
+    delega_presidenziale = sede.deleghe_attuali(
+        al_giorno=datetime.now(), tipo=COMMISSARIO, fine=None
+    ).first()
+
+    if delega_presidenziale:
+        return 'Commissario'
+    # Caso in cui non ci sono delegati
+    else:
+        return ''

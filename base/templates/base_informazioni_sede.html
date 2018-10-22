@@ -3,6 +3,7 @@
 {% load bootstrap3 %}
 {% load mptt_tags %}
 {% load l10n %}
+{% load base_tags %}
 
 {% block pagina_titolo %}
     {{ sede.nome }} - {{ sede.get_tipo_display }}, {{ sede.get_estensione_display }}
@@ -50,9 +51,10 @@
                 {% endif %}
 
                 {% if presidente %}
-                    <dt>Presidente <i class="fa fa-fw fa-user"></i></dt>
+                    <dt>{{ sede | select_nomina_presidenziale }} <i class="fa fa-fw fa-user"></i></dt>
                     <dd>{{ presidente.link|safe }}</dd>
                 {% endif %}
+
 
                 {% if sede.locazione %}
                     <dt>Indirizzo <i class="fa fa-fw fa-map-marker"></i></dt>
