@@ -24,12 +24,12 @@ class Titolo(ModelloSemplice, ConVecchioID):
     )
 
     # Area a cui appartiene titolo (dati allineati al doc. elenco_corsi.xls)
-    AREA_SALUTE          = '1'
-    AREA_SOCIALE         = '2'
-    AREA_EMERGENZE       = '3'
-    AREA_PRINCIPI_VALORI = '4'
-    AREA_GIOVANI         = '5'
-    AREA_SVILUPPO        = '6'
+    AREA_SALUTE          = 'atc1'
+    AREA_SOCIALE         = 'atc2'
+    AREA_EMERGENZE       = 'atc3'
+    AREA_PRINCIPI_VALORI = 'atc4'
+    AREA_GIOVANI         = 'atc5'
+    AREA_SVILUPPO        = 'atc6'
     AREA_CHOICES = [
         (AREA_SALUTE, 'Salute'),
         (AREA_SOCIALE, 'Sociale'),
@@ -49,7 +49,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
     inseribile_in_autonomia = models.BooleanField(default=True,)
 
     nome = models.CharField(max_length=255, db_index=True)
-    area = models.CharField(max_length=1,
+    area = models.CharField(max_length=5,
                             choices=AREA_CHOICES,
                             null=True,
                             blank=True,

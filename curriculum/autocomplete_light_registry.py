@@ -5,6 +5,7 @@ from .models import Titolo
 
 
 class TitoloAutocompletamento(autocomplete_light.AutocompleteModelBase):
+    split_words = True
     search_fields = ['nome',]
     model = Titolo
     attrs = {
@@ -25,7 +26,7 @@ class TitoloAutocompletamento(autocomplete_light.AutocompleteModelBase):
         
         # Filter by <area>
         area_id = r.GET.get('area', None)
-        if area_id is not None:
+        if area_id not in ['', None]:
             # Titoli CRI (TC)
             if titoli_tipo == Titolo.TITOLO_CRI:
                 self.choices = self.choices.filter(area=area_id)
