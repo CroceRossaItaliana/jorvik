@@ -214,7 +214,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def genere_codice_fiscale(self):
-        return ottieni_genere_da_codice_fiscale(self.codice_fiscale, default=None)
+        return ottieni_genere_da_codice_fiscale(self.codice_fiscale)
 
     @property
     def email_firma(self):
@@ -1115,7 +1115,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         return False
 
-
     def genera_foglio_di_servizio(self):
         storico = Partecipazione.con_esito_ok().filter(persona=self, stato=Partecipazione.RICHIESTA)\
             .order_by('-turno__inizio')
@@ -1185,11 +1184,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return False
         return True
 
-    def save(self, *args, **kwargs):
-        self.nome = normalizza_nome(self.nome)
-        self.cognome = normalizza_nome(self.cognome)
-        super(Persona,self).save(*args, **kwargs)
-
     def appartiene_al_segmento(self, segmento):
         """
         Ritorna True se un utente appartiene ad un segmento
@@ -1230,6 +1224,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                         attivi.append({'segmento': segmento, 'sede': sede})
                         attivi.append({'sedi_sottostanti': True, 'sede': sede.genitore})
         return attivi
+
+    def save(self, *args, **kwargs):
+        self.nome = normalizza_nome(self.nome)
+        self.cognome = normalizza_nome(self.cognome)
+        
+        # FIxed JO-733
+        if self.genere_codice_fiscale and not self.genere:
+            self.genere = self.genere_codice_fiscale
+            
+        super().save(*args, **kwargs)
 
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
