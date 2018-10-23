@@ -259,6 +259,7 @@ def informazioni_sedi(request, me):
     contesto = {
         'sedi': Sede.objects.filter(attiva=True),
         'massimo_lista': REGIONALE,
+        'capitale': Sede.objects.filter(attiva=True, nome="Comitato dell'Area Metropolitana di Roma Capitale").first(),
     }
     return 'base_informazioni_sedi.html', contesto
 
