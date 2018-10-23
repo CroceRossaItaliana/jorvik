@@ -1,21 +1,24 @@
+from django import forms
 from django.conf.urls import url
 from django.contrib import admin, messages
 from django.contrib.admin import helpers
 from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.core.urlresolvers import reverse
-from django import forms
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.six import text_type
 from django.utils.translation import ungettext_lazy
+
 from mptt.admin import MPTTModelAdmin
 
-from anagrafica.models import Persona, Sede, Appartenenza, Delega, Documento, Fototessera, Estensione, Trasferimento, \
-    Riserva, Dimissione, Telefono, ProvvedimentoDisciplinare
 from autenticazione.models import Utenza
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
+from .models import Persona, Sede, Appartenenza, Delega, Documento,\
+    Fototessera, Estensione, Trasferimento, Riserva, Dimissione, Telefono, \
+    ProvvedimentoDisciplinare
+
 
 
 RAW_ID_FIELDS_PERSONA = []
