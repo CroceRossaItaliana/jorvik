@@ -179,17 +179,17 @@ class ModuloStepCredenziali(forms.Form):
 class ModuloStepAnagrafica(ModelForm):
     class Meta:
         model = Persona
-        fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita', 'provincia_nascita', 'stato_nascita',
-                  'codice_fiscale',
-                  'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
-                  'cap_residenza', 'conoscenza', ]
+        fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita',
+                  'provincia_nascita', 'stato_nascita', 'codice_fiscale',
+                  'indirizzo_residenza', 'comune_residenza', 'provincia_residenza',
+                  'stato_residenza', 'cap_residenza', 'conoscenza',]
 
     def clean_codice_fiscale(self):
         codice_fiscale = self.cleaned_data.get('codice_fiscale')
+        # TODO:
         # Qui si potrebbe controllare la validita' del codice fiscale,
-        #  cosa che attualmente abbiamo deciso di non fare.
-        codice_fiscale = codice_fiscale.upper()
-        return codice_fiscale
+        # cosa che attualmente abbiamo deciso di non fare.
+        return codice_fiscale.upper()
 
     def clean_data_nascita(self):
         data_nascita = self.cleaned_data.get('data_nascita')
