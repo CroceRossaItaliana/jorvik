@@ -53,3 +53,72 @@ class MieAppartenenzeAttuali(APIView):
         appartenenze = [serializzatori.appartenenza(i) for i in appartenenze]
         dati = {"appartenenze": appartenenze}
         return Response(dati)
+
+
+class MiaAppartenenzaComplaeta(APIView):
+
+    """
+        ID utente, - Persona
+
+        nome, - Persona
+
+        cognome, - Persona
+
+        indirizzo mail di contatto - Persona
+
+        rispettiva sede di appartenenza, - Persona
+
+        ID comitato,
+
+        nome comitato,
+
+        estensione del comitato R/P/L/T,
+
+        delega
+    """
+    permission_classes = (permissions.IsAuthenticated,
+                          TokenHasScope)
+    required_scopes = [SCOPE_ANAGRAFICA_LETTURA_BASE,
+                       SCOPE_ANAGRAFICA_LETTURA_COMPLETA,
+                       SCOPE_APPARTENENZE_LETTURA]
+
+    def get(self, request, format=None):
+        me = request.user.persona
+
+        # Persona
+        dati = {
+            'id_persona': me.pk,
+            'nome': me.nome,
+            'cognome': me.cognome
+        }
+        if me.email is not None:
+            dati['email'] = me.email
+
+        # Comitato
+        deleghe = me.deleghe_attuali()
+
+        l_deleghe = []
+        for delega in deleghe:
+            d_delega = {
+                'id': delega.id,
+                'tipo': delega.tipo,
+            }
+            l_deleghe.append(d_delega)
+        dati['deleghe'] = l_deleghe
+
+        # appartenenze
+        appartenenze = me.appartenenze_attuali()
+        l_appartenenza  = []
+
+        for appartenenza in appartenenze:
+            comitato = appartenenza.sede
+            l_appartenenza.append({
+                'id': comitato.id,
+                'nome': comitato.nome,
+                'estensione': serializzatori._campo(comitato.estensione, comitato.get_estensione_display()),
+            })
+        dati['appartenenze'] = l_appartenenza
+
+
+        return Response(dati)
+
