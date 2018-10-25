@@ -1498,22 +1498,17 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         return True
 
     def membro_a_stringa(self):
-        if self.membro == self.VOLONTARIO:
-            return 'Volontario, '+self.sede.nome_completo
-        elif self.membro == self.ESTESO:
-            return 'Esteso, '+self.sede.nome_completo
-        elif self.membro == self.ORDINARIO:
-            return 'Ordinario, '+self.sede.nome_completo
-        elif self.membro == self.DIPENDENTE:
-            return 'Dipendente, '+self.sede.nome_completo
-        elif self.membro == self.INFERMIERA:
-            return 'Infermiera, '+self.sede.nome_completo
-        elif self.membro == self.MILITARE:
-            return 'Militare, '+self.sede.nome_completo
-        elif self.membro == self.DONATORE:
-            return 'Donatore, '+self.sede.nome_completo
-        elif self.membro == self.SOSTENITORE:
-            return 'Sostenitore, '+self.sede.nome_completo
+        name = ''
+        membro = self.membro
+        if membro == self.VOLONTARIO:       name = 'Volontario, '
+        elif membro == self.ESTESO:         name = 'Esteso, '
+        elif membro == self.ORDINARIO:      name = 'Ordinario, '
+        elif membro == self.DIPENDENTE:     name = 'Dipendente, '
+        elif membro == self.INFERMIERA:     name = 'Infermiera, '
+        elif membro == self.MILITARE:       name = 'Militare, '
+        elif membro == self.DONATORE:       name = 'Donatore, '
+        elif membro == self.SOSTENITORE:    name = 'Sostenitore, '
+        return name + self.sede.nome_completo
 
     def richiedi(self, notifiche_attive=True):
         """
