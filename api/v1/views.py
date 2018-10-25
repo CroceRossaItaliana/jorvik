@@ -90,7 +90,8 @@ class MiaAppartenenzaComplaeta(APIView):
             'id_persona': me.pk,
             'nome': me.nome,
             'cognome': me.cognome,
-            'tipo': ""
+            'data_di_nascita': me.data_nascita,
+            'codice_fiscale': me.codice_fiscale,
         }
         if me.email is not None:
             dati['email'] = me.email
