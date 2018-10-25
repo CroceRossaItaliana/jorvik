@@ -89,7 +89,8 @@ class MiaAppartenenzaComplaeta(APIView):
         dati = {
             'id_persona': me.pk,
             'nome': me.nome,
-            'cognome': me.cognome
+            'cognome': me.cognome,
+            'tipo': ""
         }
         if me.email is not None:
             dati['email'] = me.email
@@ -116,6 +117,10 @@ class MiaAppartenenzaComplaeta(APIView):
             l_appartenenza.append({
                 'id': comitato.id,
                 'nome': comitato.nome,
+                'tipo': {
+                    'id': appartenenza.membro,
+                    'descrizione': appartenenza.get_membro_display()
+                },
                 'comitato': {
                     'id': comitato.estensione,
                     'descrizione': comitato.get_estensione_display()
