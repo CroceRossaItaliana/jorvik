@@ -1588,9 +1588,12 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         else:
             return False
 
-
     def appartiene_a(self, sede):
-        return self.sede == sede or self.sede.genitore == sede or self.sede == sede.genitore or self.sede.genitore == sede.genitore
+        return self.sede == sede or \
+               self.sede.genitore == sede or \
+               self.sede == sede.genitore or \
+               self.sede.genitore == sede.genitore
+
 
 class SedeQuerySet(TreeQuerySet):
 
