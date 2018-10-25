@@ -117,10 +117,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     avatar = models.ImageField("Avatar", blank=True, null=True,
                                upload_to=GeneratoreNomeFile('avatar/'),
                                validators=[valida_dimensione_file_5mb])
-
-
     # Privacy
-
     POLICY_PUBBLICO = 9
     POLICY_REGISTRATI = 7
     POLICY_SEDE = 5
@@ -133,15 +130,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         (POLICY_RISTRETTO, "Ai Responsabili della mia Sede CRI"),
     )
 
-    privacy_contatti = models.SmallIntegerField(choices=POLICY, default=POLICY_SEDE, db_index=True,
-                                                help_text="A chi mostrare il mio indirizzo e-mail e i miei numeri "
-                                                          "di telefono.")
-    privacy_curriculum = models.SmallIntegerField(choices=POLICY, default=POLICY_RISTRETTO, db_index=True,
-                                                  help_text="A chi mostrare il mio curriculum (competenze pers., "
-                                                            "patenti, titoli di studio e CRI)")
-    privacy_deleghe = models.SmallIntegerField(choices=POLICY, default=POLICY_RISTRETTO, db_index=True,
-                                               help_text="A chi mostrare i miei incarichi, come presidenze, "
-                                                         "referenze attività, deleghe, ecc.")
+    privacy_contatti = models.SmallIntegerField(choices=POLICY, default=POLICY_SEDE,
+        db_index=True, help_text="A chi mostrare il mio indirizzo e-mail e i "
+                                 "miei numeri di telefono.")
+    privacy_curriculum = models.SmallIntegerField(choices=POLICY, default=POLICY_RISTRETTO,
+        db_index=True, help_text="A chi mostrare il mio curriculum ("
+                "competenze pers., patenti, titoli di studio e CRI)")
+    privacy_deleghe = models.SmallIntegerField(choices=POLICY, default=POLICY_RISTRETTO,
+        db_index=True, help_text="A chi mostrare i miei incarichi, "
+                "come presidenze, referenze attività, deleghe, ecc.")
 
     iv = models.BooleanField(verbose_name="Infermiera V.", default=False, db_index=True)
     cm = models.BooleanField(verbose_name="Corpo Militare", default=False, db_index=True)
@@ -173,8 +170,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                              "formazione, servizi sanitari, servizi sociali, ecc.)"),
         (CONOSCENZA_ALTRO, "Altro"),
     )
-    conoscenza = models.CharField(max_length=2, choices=CONOSCENZA, default=None, blank=False, null=True, db_index=True,
-                                  help_text="Come sei venuto/a a conoscenza delle opportunità di "
+    conoscenza = models.CharField(max_length=2, choices=CONOSCENZA,
+        default=None, blank=False, null=True, db_index=True,
+        help_text="Come sei venuto/a a conoscenza delle opportunità di "
                                             "volontariato della CRI?")
 
     @property
@@ -193,14 +191,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return normalizza_nome(self.cognome + " " + self.nome)
 
-
-    # Q: Qual e' l'email di questa persona?
-    # A: Una persona puo' avere da zero a due indirizzi email.
-    #    - Persona.email_contatto e' quella scelta dalla persona per il contatto.
-    #    - Persona.utenza.email (o Persona.email_utenza) e' quella utilizzata per accedere al sistema.
-    #    - Persona.email puo' essere usato per ottenere, in ordine, l'email di contatto,
-    #       oppure, se non impostata, quella di utenza. Se nemmeno una utenza e' disponibile,
-    #       viene ritornato None.
+    """
+    Q: Qual e' l'email di questa persona?
+    A: Una persona puo' avere da zero a due indirizzi email.
+    - Persona.email_contatto e' quella scelta dalla persona per il contatto.
+    - Persona.utenza.email (o Persona.email_utenza) e' quella utilizzata per accedere al sistema.
+    - Persona.email puo' essere usato per ottenere, in ordine, l'email di contatto,
+      oppure, se non impostata, quella di utenza.
+      Se nemmeno una utenza e' disponibile, viene ritornato None.
+    """
 
     @property
     def email(self):
@@ -255,12 +254,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def ultimo_tesserino(self):
         return self.tesserini.all().order_by("creazione").last()
 
-    # Q: Qual e' il numero di telefono di questa persona?
-    # A: Una persona puo' avere da zero ad illimitati numeri di telefono.
-    #    - Persona.numeri_telefono ottiene l'elenco di oggetti Telefono.
-    #    - Per avere un elenco di numeri di telefono formattati, usare ad esempio
-    #       numeri = [str(x) for x in Persona.numeri_telefono]
-    #    - Usare Persona.aggiungi_numero_telefono per aggiungere un numero di telefono.
+    """
+    Q: Qual e' il numero di telefono di questa persona?
+    A: Una persona puo' avere da zero ad illimitati numeri di telefono.
+      - Persona.numeri_telefono ottiene l'elenco di oggetti Telefono.
+      - Per avere un elenco di numeri di telefono formattati, usare ad esempio
+      numeri = [str(x) for x in Persona.numeri_telefono]
+      - Usare Persona.aggiungi_numero_telefono per aggiungere un numero di telefono.
+    """
+
     def numeri_pubblici(self):
         numeri_servizio = self.numeri_telefono.filter(servizio=True)
         if numeri_servizio.exists():
