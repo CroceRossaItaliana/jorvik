@@ -255,22 +255,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def ultimo_tesserino(self):
         return self.tesserini.all().order_by("creazione").last()
 
-    def __str__(self):
-        return self.nome_completo
-
-    class Meta:
-        verbose_name_plural = "Persone"
-        app_label = 'anagrafica'
-        index_together = [
-            ['nome', 'cognome'],
-            ['nome', 'cognome', 'codice_fiscale'],
-            ['id', 'nome', 'cognome', 'codice_fiscale'],
-        ]
-        permissions = (
-            ('view_persona', "Can view persona"),
-            ('transfer_persona', "Can transfer persona"),
-        )
-
     # Q: Qual e' il numero di telefono di questa persona?
     # A: Una persona puo' avere da zero ad illimitati numeri di telefono.
     #    - Persona.numeri_telefono ottiene l'elenco di oggetti Telefono.
@@ -584,7 +568,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         lista += [('/articoli/', 'Articoli', 'fa-newspaper-o')]
         lista += [('/documenti/', 'Documenti', 'fa-folder')]
         return lista
-
 
     def oggetti_permesso(self, permesso, al_giorno=None,
                          solo_deleghe_attive=True):
@@ -1276,6 +1259,22 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                         attivi.append({'segmento': segmento, 'sede': sede})
                         attivi.append({'sedi_sottostanti': True, 'sede': sede.genitore})
         return attivi
+
+    def __str__(self):
+        return self.nome_completo
+
+    class Meta:
+        verbose_name_plural = "Persone"
+        app_label = 'anagrafica'
+        index_together = [
+            ['nome', 'cognome'],
+            ['nome', 'cognome', 'codice_fiscale'],
+            ['id', 'nome', 'cognome', 'codice_fiscale'],
+        ]
+        permissions = (
+            ('view_persona', "Can view persona"),
+            ('transfer_persona', "Can transfer persona"),
+        )
 
     def save(self, *args, **kwargs):
         self.nome = normalizza_nome(self.nome)
