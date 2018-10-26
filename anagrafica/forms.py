@@ -404,30 +404,38 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
     def clean_persona(self):
         me_sede = self.me.sede_riferimento()  # Authorized user's <Sede> (myself)
         persona = self.cleaned_data['persona']  # Selected user whom to be given <Delega> in <Sede>
-        
-        """
-        1) <me> may give to <persona> a new <Delega> if <persona> has <Appartenenza> in
-        the same <Sede> as "Volontario in Estensione" or...
-        2) <me> and <persona> have the same "sede di riferimento".
-        """
+        persona_appartenenze = persona.appartenenze_attuali(
+            membro__in=Appartenenza.MEMBRO_ATTIVITA)
 
-        # Get all <Appartenenze attuali> (with not expired <fine> datetime) where
-        # <persona> is "Volontario in Estensione"
-        persona_appartenenze = persona.appartenenze_attuali().filter(
-            membro=Appartenenza.ESTESO,
-            sede=me_sede
-        )
-        if persona_appartenenze.count():
-            # It's okay. <me> and <persona> have the same sede,
-            # and persona is "Volontario in Estensione"
-            pass
-        else:
-            # Persona has no "appartenenza".
-            # Check sede_riferimento of both subjects.
-            if me_sede != persona.sede_riferimento():
-                # me and persona have different sede. <me> can't give <Delega> to <persona>
-                raise forms.ValidationError("Il volontario non è appartenente alla tua sede.")
-            
+        validations_case = None
+        validation_errors = {
+            'case_es': "Il volontario non è appartenente alla tua sede.",
+        }
+
+        """
+        Case ES:
+        <me> can't give <Delega> to <persona>:
+        1) <me> and <persona> have different <sede appartenenza>
+        2) <persona> hasn't "ES" membership in <me_sede> where <me> is "PR"
+        """
+        if me_sede != persona.sede_riferimento():
+            caso_es = persona_appartenenze.filter(membro=Appartenenza.ESTESO,
+                                                    sede=me_sede).count()
+            # if caso_es found records in db means that <me> can proceed with
+            # adding <persona> without validation error
+            validations_case = None if caso_es else 'case_es'
+
+        # Case VO
+        # <Appartenenza> of <persona> with "VO" membership belongs to <me_sede>:
+        # <me_sede> is parent of <persona>'s sede.
+        caso_vo = persona_appartenenze.filter(membro=Appartenenza.VOLONTARIO)
+        persona_appart_a_me_sede = [a.appartiene_a(me_sede) for a in caso_vo]
+        if any(persona_appart_a_me_sede):
+            validations_case = None
+
+        # Return validation error-msg that depends by a validations case name
+        if validations_case:
+            raise forms.ValidationError(validation_errors[validations_case])
         return persona
     
     def clean_inizio(self):
