@@ -408,17 +408,25 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
         # Queries for possible cases
         persona_appartenenze = persona.appartenenze_attuali(
             membro__in=Appartenenza.MEMBRO_ATTIVITA)
-        case_es = persona_appartenenze.filter(sede=me_sede).count()
-        case_vo = persona_appartenenze.filter(membro=Appartenenza.VOLONTARIO)
+        persona_estesa = persona_appartenenze.filter(sede=me_sede).count()
+        persona_volontario = persona_appartenenze.filter(membro=Appartenenza.VOLONTARIO)
         stesse_sedi = me_sede == persona.sede_riferimento()
 
-        # Possible cases
+        """
+        Possible cases:
+        1) [OK] Persona è estesa (ES) nel mio comitato.
+        2) [OK] <me> e <persona> abbiamo la stessa sede di riferimento.
+        3) [FAIL] Persona è estesa (ES) nel mio comitato, <me> e <Persona>
+            abbiamo 2 sedi di riferimento diversi.
+        4) [OK] Persona come Volontario (VO), la sua sede appartiene a sede di <me>.
+        5) [OK] Persona come Volontario (VO), <me> è Presidente nella mia sede.
+        """
         CASES = (
-            case_es,
+            persona_estesa,
             stesse_sedi,
-            stesse_sedi and case_es,
-            any([a.appartiene_a(me_sede) for a in case_vo]),
-            any([a for a in case_vo if a.sede.presidente() == self.me]),
+            stesse_sedi and persona_estesa,
+            any([a.appartiene_a(me_sede) for a in persona_volontario]),
+            any([a for a in persona_volontario if a.sede.presidente() == self.me])
         )
         if not any(CASES):
             # All CASES return False, so the form returns validation error.
