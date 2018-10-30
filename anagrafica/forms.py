@@ -404,38 +404,28 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
     def clean_persona(self):
         me_sede = self.me.sede_riferimento()  # Authorized user's <Sede> (myself)
         persona = self.cleaned_data['persona']  # Selected user whom to be given <Delega> in <Sede>
+
+        # Queries for possible cases
         persona_appartenenze = persona.appartenenze_attuali(
             membro__in=Appartenenza.MEMBRO_ATTIVITA)
+        case_es = persona_appartenenze.filter(sede=me_sede).count()
+        case_vo = persona_appartenenze.filter(membro=Appartenenza.VOLONTARIO)
+        stesse_sedi = me_sede == persona.sede_riferimento()
 
-        validations_case = None
-        validation_errors = {
-            'case_es': "Il volontario non è appartenente alla tua sede.",
-        }
-
-        """
-        Case ES:
-        <me> can't give <Delega> to <persona>:
-        1) <me> and <persona> have different <sede appartenenza>
-        2) <persona> hasn't "ES" membership in <me_sede> where <me> is "PR"
-        """
-        if me_sede != persona.sede_riferimento():
-            caso_es = persona_appartenenze.filter(membro=Appartenenza.ESTESO,
-                                                    sede=me_sede).count()
-            # if caso_es found records in db means that <me> can proceed with
-            # adding <persona> without validation error
-            validations_case = None if caso_es else 'case_es'
-
-        # Case VO
-        # <Appartenenza> of <persona> with "VO" membership belongs to <me_sede>:
-        # <me_sede> is parent of <persona>'s sede.
-        caso_vo = persona_appartenenze.filter(membro=Appartenenza.VOLONTARIO)
-        persona_appart_a_me_sede = [a.appartiene_a(me_sede) for a in caso_vo]
-        if any(persona_appart_a_me_sede):
-            validations_case = None
-
-        # Return validation error-msg that depends by a validations case name
-        if validations_case:
-            raise forms.ValidationError(validation_errors[validations_case])
+        # Possible cases
+        CASES = (
+            case_es,
+            stesse_sedi,
+            stesse_sedi and case_es,
+            any([a.appartiene_a(me_sede) for a in case_vo]),
+            any([a for a in case_vo if a.sede.presidente() == self.me]),
+        )
+        if not any(CASES):
+            # All CASES return False, so the form returns validation error.
+            raise forms.ValidationError(
+                "Il volontario non è appartenente alla tua sede."
+            )
+        # Some case returned True, so <me> can proceed with creating new delega.
         return persona
     
     def clean_inizio(self):
