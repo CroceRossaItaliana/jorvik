@@ -1900,7 +1900,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         # Se sono unita' territoriale, ritorna il mio genitore.
         return self.genitore
 
-    def superiore(self, estensione=LOCALE):
+    def superiore(self, estensione=LOCALE, **kargs):
         """
         Ritorna la sede superiore con estensione specificata
         :param estensione:
@@ -1911,6 +1911,8 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             try:
                 x = x.genitore
                 if x.estensione == estensione:
+                    if kargs.get('many'):
+                        return x.ottieni_fratelli(includimi=True)
                     return x
             except:
                 return None

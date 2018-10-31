@@ -1305,18 +1305,21 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
                                          "'Sedi'." % (comitato,),
                                **torna)
 
-    regionale = comitato.superiore(estensione=REGIONALE)
-    if not regionale:
+    regionali = comitato.superiore(estensione=REGIONALE, many=True)
+    if not regionali:
         raise ValueError("%s non ha un comitato regionale." % (comitato,))
 
-    # Crea la richiesta di tesserino
-    tesserino = Tesserino.objects.create(
-        persona=persona,
-        emesso_da=regionale,
-        tipo_richiesta=tipo_richiesta,
-        stato_richiesta=Tesserino.RICHIESTO,
-        richiesto_da=me,
-    )
+    tesserini = []
+    for sede in regionali:
+        # Crea la richiesta di tesserino
+        tesserino = Tesserino.objects.create(
+            persona=persona,
+            emesso_da=sede,
+            tipo_richiesta=tipo_richiesta,
+            stato_richiesta=Tesserino.RICHIESTO,
+            richiesto_da=me,
+        )
+        tesserini.append(tesserino)
 
     if duplicato:
         oggetto = "Richiesta Duplicato Tesserino inoltrata"
@@ -1329,19 +1332,29 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
         modello="posta_richiesta_tesserino.html",
         corpo={
             "persona": persona,
-            "tesserino": tesserino,
+            "tesserino": tesserini[0] if len(tesserini) == 1 else tesserini,
+            "is_list": False if len(tesserini) == 1 else True,
             "duplicato": duplicato
         },
         mittente=me,
         destinatari=[persona]
     )
 
+    def __componi_messaggio(tesserini, persona):
+        tes = ""
+        for tesserino in tesserini:
+            tes += "({})".format(tesserino.emesso_da)
+
+        messaggio = "La richiesta di stampa è stata inoltrata correttamente {} {} per il volontario {}".format(
+            "alla Sede di" if len(tesserini) == 1 else "alle Sedi di",
+            tes,
+            persona.nome_completo
+        )
+        return messaggio
+
     # Mostra un messaggio
     return messaggio_generico(request, me, titolo="Richiesta inoltrata",
-                              messaggio="La richiesta di stampa è stata inoltrata correttamente alla Sede di "
-                                        "emissione (%s) per il Volontario %s." % (
-                                  tesserino.emesso_da, persona.nome_completo,
-                              ), **torna)
+                              messaggio=__componi_messaggio(tesserini, persona), **torna)
 
 
 @pagina_privata
