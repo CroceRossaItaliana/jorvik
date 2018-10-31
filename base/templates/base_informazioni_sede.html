@@ -16,7 +16,7 @@
 
             // cerca tag a nella lista .children che contiene la parola lazio nell href
 
-            $('ul a[href*="lazio-dellarea-metropolitana-roma-capitale-p"]').parent('li').each(function() {
+            $('ul a[href*="lazio"]').parent('li').each(function() {
 
                 var text = $(this).html();
 
@@ -55,7 +55,12 @@
 
                 <h4 class="allinea-centro">
                     {{ sede.get_tipo_display }} &mdash;
-                    {{ sede.get_estensione_display }}
+                    {% if sede.nome == "Comitato dell'Area Metropolitana di Roma Capitale" %}
+                        Sede Provinciale
+                    {% else %}
+                        {{ sede.get_estensione_display }}
+                    {% endif %}
+
                 </h4>
 
                 <dl class="dl-horizontal">
