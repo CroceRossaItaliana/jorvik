@@ -229,7 +229,7 @@ class ElencoVolontari(ElencoVistaSoci):
         qs_sedi = self.args[0]
 
         modulo = self.modulo_riempito
-        if modulo.cleaned_data['includi_estesi'] == modulo.SI:
+        if modulo and modulo.cleaned_data['includi_estesi'] == modulo.SI:
             appartenenze = [Appartenenza.VOLONTARIO, Appartenenza.ESTESO]
         else:
             appartenenze = [Appartenenza.VOLONTARIO,]
