@@ -1,6 +1,9 @@
+__author__ = 'alfioemanuele'
 from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import reverse
 
-from anagrafica.costanti import REGIONALE, TERRITORIALE, LOCALE
+from base.utils import remove_none
+from anagrafica.costanti import REGIONALE, TERRITORIALE #, LOCALE
 from anagrafica.models import Sede
 from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, \
     DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, PRESIDENTE, \
@@ -9,9 +12,9 @@ from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_1, DELEGATO_OBIE
     RESPONSABILE_AUTOPARCO, DELEGATO_CO, REFERENTE_GRUPPO, RUBRICHE_TITOLI, COMMISSARIO
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, \
     GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
-from base.utils import remove_none
 
-__author__ = 'alfioemanuele'
+
+
 
 """
 Questa pagina contiene i vari menu che vengono mostrati nella barra laterale dei template.
@@ -69,6 +72,8 @@ def menu(request):
     VOCE_RUBRICA = ("Rubrica", (
         RUBRICA_BASE
     ))
+
+
 
     elementi = {
         "utente": (
@@ -199,12 +204,14 @@ def menu(request):
             )),
         ),
         "formazione": (
-            ("Corsi Base", (
-                ("Elenco Corsi Base", "fa-list", "/formazione/corsi-base/elenco/"),
-                ("Domanda formativa", "fa-area-chart", "/formazione/corsi-base/domanda/")
-                    if gestione_corsi_sede else None,
-                ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-base/nuovo/")
-                    if gestione_corsi_sede else None,
+            ("I tuoi Corsi", (
+                ("Pianifica nuovo",
+                 "fa-asterisk", reverse('formazione:new_course')
+                                if gestione_corsi_sede else None),
+                ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
+                ("Domanda formativa",
+                 "fa-area-chart", reverse('formazione:domanda'))
+                                if gestione_corsi_sede else None,
             )),
             ("Corsi di Formazione", (
                 ("Elenco Corsi di Formazione", "fa-list", "/formazione/corsi-formazione/"),

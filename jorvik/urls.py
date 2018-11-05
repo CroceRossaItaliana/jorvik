@@ -289,7 +289,7 @@ urlpatterns = [
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/lezioni/$', formazione.viste.aspirante_corso_base_lezioni),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/lezioni/(?P<lezione_pk>[0-9]+)/cancella/$', formazione.viste.aspirante_corso_base_lezioni_cancella),
 
-    url(r'^formazione/', include('formazione.urls')),
+    url(r'^formazione/', include('formazione.urls', namespace='formazione')),
 
     url(r'^supporto/$', base.viste.supporto),
     url(r'^geo/localizzatore/imposta/$', base.viste.geo_localizzatore_imposta),
