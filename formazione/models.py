@@ -1,14 +1,10 @@
-# coding=utf-8
-
-"""
-Questo modulo definisce i modelli del modulo di Formazione di Gaia.
-"""
 import datetime
 
 from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
+from django.db import models
 from django.db.models import Q
 from django.db.transaction import atomic
+from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.timezone import now
@@ -24,10 +20,10 @@ from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico, ConPDF
 from base.utils import concept, poco_fa
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
-from django.db import models
 
 
-class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazione, ConCommenti, ConGiudizio):
+class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
+            ConGeolocalizzazione, ConCommenti, ConGiudizio):
     # Tipologia di corso
     CORSO_NUOVO = 'C1'
     BASE = 'BA'
@@ -48,8 +44,10 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazion
         (ANNULLATO, 'Annullato'),
     )
     stato = models.CharField('Stato', choices=STATO, max_length=1, default=PREPARAZIONE)
-    sede = models.ForeignKey(Sede, related_query_name='%(class)s_corso', help_text="La Sede organizzatrice del Corso.")
-    # tipo = models.CharField('Tipo', choices=TIPO_CHOICES, max_length=4)
+    sede = models.ForeignKey(Sede, related_query_name='%(class)s_corso',
+                             help_text="La Sede organizzatrice del Corso.")
+    tipo = models.CharField('Tipo', choices=TIPO_CHOICES, max_length=4,
+                            blank=True)
 
     class Meta:
         abstract = True
@@ -61,16 +59,9 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazion
 class CorsoBase(Corso, ConVecchioID, ConPDF):
     MAX_PARTECIPANTI = 30
 
-    class Meta:
-        verbose_name = "Corso Base"
-        verbose_name_plural = "Corsi Base"
-        ordering = ['-anno', '-progressivo']
-        permissions = (
-            ("view_corsobase", "Can view corso base"),
-        )
-
-    data_inizio = models.DateTimeField(blank=False, null=False, help_text="La data di inizio del corso. "
-                                                                          "Utilizzata per la gestione delle iscrizioni.")
+    data_inizio = models.DateTimeField(blank=False, null=False,
+        help_text="La data di inizio del corso. "
+                  "Utilizzata per la gestione delle iscrizioni.")
     data_esame = models.DateTimeField(blank=False, null=False)
     progressivo = models.SmallIntegerField(blank=False, null=False, db_index=True)
     anno = models.SmallIntegerField(blank=False, null=False, db_index=True)
@@ -156,9 +147,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     @property
     def possibile_cancellare_iscritti(self):
         return self.stato in [Corso.ATTIVO, Corso.PREPARAZIONE]
-
-    def __str__(self):
-        return self.nome
 
     @property
     def url(self):
@@ -419,8 +407,20 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         )
         return pdf
 
+    class Meta:
+        verbose_name = "Corso Base"
+        verbose_name_plural = "Corsi Base"
+        ordering = ['-anno', '-progressivo']
+        permissions = (
+            ("view_corsobase", "Can view corso base"),
+        )
 
-class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, models.Model):
+    def __str__(self):
+        return str(self.nome)
+
+
+class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni,
+                      ConMarcaTemporale, models.Model):
     persona = models.ForeignKey(Persona, related_name='inviti_corsi', on_delete=models.CASCADE)
     corso = models.ForeignKey(CorsoBase, related_name='inviti', on_delete=models.PROTECT)
     invitante = models.ForeignKey(Persona, related_name='+', on_delete=models.CASCADE)
@@ -519,7 +519,8 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
         )
 
 
-class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
+class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
+                              ConAutorizzazioni, ConPDF):
 
     persona = models.ForeignKey(Persona, related_name='partecipazioni_corsi', on_delete=models.CASCADE)
     corso = models.ForeignKey(CorsoBase, related_name='partecipazioni', on_delete=models.PROTECT)
@@ -733,7 +734,8 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         ).values_list('pk', flat=True)
 
 
-class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
+class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
+                       ConGiudizio, ConStorico):
 
     corso = models.ForeignKey(CorsoBase, related_name='lezioni', on_delete=models.PROTECT)
     nome = models.CharField(max_length=128)
