@@ -94,7 +94,8 @@ def localizzatore(context, oggetto_localizzatore=None, continua_url=None, solo_i
 
 
 @register.simple_tag(takes_context=True)
-def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None, almeno=0):
+def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None,
+             almeno=0, *args, **kwargs):
     if not isinstance(oggetto, ConDelegati):
         raise ValueError("Il tag delegati puo' solo essere usato con un oggetto ConDelegati, ma e' stato usato con un oggetto %s." % (oggetto_localizzatore.__class__.__name__,))
 
@@ -105,6 +106,7 @@ def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None, alme
     context.request.session['continua_url'] = continua_url
     context.request.session['delega'] = delega
     context.request.session['almeno'] = almeno
+    context.request.session['is_course'] = kwargs.get('is_course', False)
     url = "/strumenti/delegati/"
     context.update({
         'iframe_url': url,

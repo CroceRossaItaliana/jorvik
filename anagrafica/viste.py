@@ -1023,19 +1023,28 @@ def profilo_turni_foglio(request, me, pk=None):
 
 @pagina_privata
 def strumenti_delegati(request, me):
-    app_label = request.session['app_label']
-    model = request.session['model']
-    pk = int(request.session['pk'])
-    continua_url = request.session['continua_url']
-    almeno = request.session['almeno']
-    delega = request.session['delega']
-    oggetto = apps.get_model(app_label, model)
-    oggetto = oggetto.objects.get(pk=pk)
+    session = request.session
 
-    modulo = ModuloCreazioneDelega(request.POST or None, initial={
-        "inizio": datetime.date.today(),
-    }, me=me)
+    # Get values store in the session
+    app_label = session['app_label']
+    model = session['model']
+    pk = int(session['pk'])
+    continua_url = session['continua_url']
+    almeno = session['almeno']
+    delega = session['delega']
 
+    # Get kind of object
+    oggetto = apps.get_model(app_label, model).objects.get(pk=pk)
+
+    # Instantiate a new form
+    modulo = ModuloCreazioneDelega(
+        request.POST or None,
+        initial={'inizio': datetime.date.today()},
+        me=me,
+        is_course=session['is_course']
+    )
+
+    # Check form is valid
     if modulo.is_valid():
         d = modulo.save(commit=False)
 

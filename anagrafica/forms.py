@@ -398,20 +398,23 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
         fields = ['persona',]
 
     def __init__(self, *args, **kwargs):
-        self.me = kwargs.pop('me')
+        # These attrs are passed in anagrafica.viste.strumenti_delegati()
+        for attr in ['me', 'is_course']:
+            setattr(self, attr, kwargs.pop(attr))
         super().__init__(*args, **kwargs)
 
-    def clean_persona(self):
-        me_sede = self.me.sede_riferimento()  # Authorized user's <Sede> (myself)
-        persona = self.cleaned_data['persona']  # Selected user whom to be given <Delega> in <Sede>
+    def _validate_delega_per_corso(self, persona):
+        """
+        Validate only Volontario membership on url:
+        /formazione/corsi-base/<pk>/direttori/
 
-        # Queries for possible cases
-        persona_appartenenze = persona.appartenenze_attuali(
-            membro__in=Appartenenza.MEMBRO_ATTIVITA)
-        persona_estesa = persona_appartenenze.filter(sede=me_sede).count()
-        persona_volontario = persona_appartenenze.filter(membro=Appartenenza.VOLONTARIO)
-        stesse_sedi = me_sede == persona.sede_riferimento()
+        Task: https://jira.gaia.cri.it/browse/JO-754
+        """
+        if not self.persona_volontario:
+            raise forms.ValidationError("Questa persona non è Volontario.")
+        return persona
 
+    def _validate_delega(self, me_sede, persona):
         """
         Possible cases:
         1) [OK] Persona è estesa (ES) nel mio comitato.
@@ -422,19 +425,39 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
         5) [OK] Persona come Volontario (VO), <me> è Presidente nella mia sede.
         """
         CASES = (
-            persona_estesa,
-            stesse_sedi,
-            stesse_sedi and persona_estesa,
-            any([a.appartiene_a(me_sede) for a in persona_volontario]),
-            any([a for a in persona_volontario if a.sede.presidente() == self.me])
+            self.persona_estesa,
+            self.stesse_sedi,
+            self.stesse_sedi and self.persona_estesa,
+            any([a.appartiene_a(me_sede) for a in self.persona_volontario]),
+            any([a for a in self.persona_volontario if
+                 a.sede.presidente() == self.me])
         )
         if not any(CASES):
             # All CASES return False, so the form returns validation error.
             raise forms.ValidationError(
                 "Il volontario non è appartenente alla tua sede."
             )
+
         # Some case returned True, so <me> can proceed with creating new delega.
         return persona
+
+    def clean_persona(self):
+        me_sede = self.me.sede_riferimento()  # Authorized user's <Sede> (myself)
+        persona = self.cleaned_data['persona']  # Selected user whom to be given <Delega> in <Sede>
+
+        # Queries for possible cases
+        persona_appartenenze = persona.appartenenze_attuali(
+            membro__in=Appartenenza.MEMBRO_ATTIVITA)
+        self.persona_estesa = persona_appartenenze.filter(
+            sede=me_sede).count()
+        self.persona_volontario = persona_appartenenze.filter(
+            membro=Appartenenza.VOLONTARIO)
+        self.stesse_sedi = me_sede == persona.sede_riferimento()
+
+        if self.is_course:
+            return self._validate_delega_per_corso(persona)
+        else:
+            return self._validate_delega(me_sede, persona)
     
     def clean_inizio(self):
         """ Impedisce inizio passato """
