@@ -28,12 +28,13 @@ from django.db import models
 
 
 class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazione, ConCommenti, ConGiudizio):
-
-    class Meta:
-        abstract = True
-        permissions = (
-            ("view_corso", "Can view corso"),
-        )
+    # Tipologia di corso
+    CORSO_NUOVO = 'C1'
+    BASE = 'BA'
+    TIPO_CHOICES = (
+        (CORSO_NUOVO, 'Corso'),
+        (BASE, 'Corso Base'),
+    )
 
     # Stato del corso
     PREPARAZIONE = 'P'
@@ -48,17 +49,16 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazion
     )
     stato = models.CharField('Stato', choices=STATO, max_length=1, default=PREPARAZIONE)
     sede = models.ForeignKey(Sede, related_query_name='%(class)s_corso', help_text="La Sede organizzatrice del Corso.")
+    # tipo = models.CharField('Tipo', choices=TIPO_CHOICES, max_length=4)
+
+    class Meta:
+        abstract = True
+        permissions = (
+            ("view_corso", "Can view corso"),
+        )
 
 
 class CorsoBase(Corso, ConVecchioID, ConPDF):
-
-    ## Tipologia di corso
-    #BASE = 'BA'
-    #TIPO = (
-    #    (BASE, 'Corso Base'),
-    #)
-    #tipo = models.CharField('Tipo', choices=TIPO, max_length=2, default=BASE)
-
     MAX_PARTECIPANTI = 30
 
     class Meta:

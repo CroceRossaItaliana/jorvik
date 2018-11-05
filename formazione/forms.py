@@ -5,7 +5,7 @@ from django.forms import ModelForm
 from autocomplete_light import shortcuts as autocomplete_light
 from base.wysiwyg import WYSIWYGSemplice
 
-from .models import (CorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase)
+from .models import Corso, CorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase
 
 
 class ModuloCreazioneCorsoBase(ModelForm):
@@ -26,13 +26,17 @@ class ModuloCreazioneCorsoBase(ModelForm):
         if sede.locazione is None:
             raise forms.ValidationError(
                 "La Sede CRI selezionata non ha alcun indirizzo impostato. "
-                "Il Presidente può modificare i dettagli della Sede, ""
+                "Il Presidente può modificare i dettagli della Sede, "
                 "tra cui l'indirizzo della stessa.")
         return sede
 
     class Meta:
         model = CorsoBase
-        fields = ['data_inizio', 'sede',]
+        fields = ['tipo', 'data_inizio', 'sede',]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.order_fields(('tipo', 'data_inizio', 'sede', 'locazione'))
 
 
 class ModuloModificaLezione(ModelForm):
