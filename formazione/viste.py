@@ -55,30 +55,32 @@ def formazione_corsi_base_domanda(request, me):
 
 @pagina_privata
 def formazione_corsi_base_nuovo(request, me):
-    modulo = ModuloCreazioneCorsoBase(request.POST or None, initial={"data_inizio":
-                                                                     datetime.now() + timedelta(days=14)})
-    modulo.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
+    data_inizio = datetime.now() + timedelta(days=14)
+    form = ModuloCreazioneCorsoBase(
+        request.POST or None, initial={"data_inizio": data_inizio}
+    )
+    form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
 
-    if modulo.is_valid():
-        corso = CorsoBase.nuovo(
-            anno=modulo.cleaned_data['data_inizio'].year,
-            sede=modulo.cleaned_data['sede'],
-            data_inizio=modulo.cleaned_data['data_inizio'],
-            data_esame=modulo.cleaned_data['data_inizio'],
+    if form.is_valid():
+        cd = form.cleaned_data
+        course = CorsoBase.nuovo(
+            anno=cd['data_inizio'].year,
+            sede=cd['sede'],
+            data_inizio=cd['data_inizio'],
+            data_esame=cd['data_inizio'],
         )
 
-        if modulo.cleaned_data['locazione'] == modulo.PRESSO_SEDE:
-            corso.locazione = corso.sede.locazione
-            corso.save()
+        if cd['locazione'] == form.PRESSO_SEDE:
+            course.locazione = course.sede.locazione
+            course.save()
 
-        request.session['corso_base_creato'] = corso.pk
+        request.session['corso_base_creato'] = course.pk
+        return redirect(course.url_direttori)
 
-        return redirect(corso.url_direttori)
-
-    contesto = {
-        "modulo": modulo
+    context = {
+        'modulo': form
     }
-    return 'formazione_corsi_base_nuovo.html', contesto
+    return 'formazione_corsi_base_nuovo.html', context
 
 
 @pagina_privata
