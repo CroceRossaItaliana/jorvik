@@ -1,28 +1,29 @@
 from datetime import datetime, timedelta
 
-from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.transaction import atomic
+# from django.conf import settings
+# from django.core.exceptions import ObjectDoesNotExist
+# from django.db.transaction import atomic
+# from django.template import Context
+from django.utils import timezone
 from django.shortcuts import redirect, get_object_or_404
-from django.template import Context
 from django.template.loader import get_template
 
 from anagrafica.models import Persona
 from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
-from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA
+from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
+    GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA)
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
-from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico
+from base.errori import errore_generico, messaggio_generico # ci_siamo_quasi
 from base.files import Zip
 from base.models import Log
 from base.utils import poco_fa
-from formazione.elenchi import ElencoPartecipantiCorsiBase
-from formazione.forms import ModuloCreazioneCorsoBase, ModuloModificaLezione, ModuloModificaCorsoBase, \
-    ModuloIscrittiCorsoBaseAggiungi, ModuloVerbaleAspiranteCorsoBase
-from formazione.models import CorsoBase, AssenzaCorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase, Aspirante, \
-    InvitoCorsoBase
-from django.utils import timezone
-
 from posta.models import Messaggio
+from .elenchi import ElencoPartecipantiCorsiBase
+from .models import (CorsoBase, AssenzaCorsoBase, LezioneCorsoBase,
+    PartecipazioneCorsoBase, Aspirante, InvitoCorsoBase)
+from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
+    ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi,
+    ModuloVerbaleAspiranteCorsoBase)
 
 
 @pagina_privata
