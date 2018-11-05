@@ -1,17 +1,14 @@
-from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
+from autocomplete_light import shortcuts as autocomplete_light
 from base.wysiwyg import WYSIWYGSemplice
-from formazione.models import CorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase
+
+from .models import (CorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase)
 
 
 class ModuloCreazioneCorsoBase(ModelForm):
-    class Meta:
-        model = CorsoBase
-        fields = ['data_inizio', 'sede',]
-
     PRESSO_SEDE = "PS"
     ALTROVE = "AL"
     LOCAZIONE = (
@@ -20,15 +17,22 @@ class ModuloCreazioneCorsoBase(ModelForm):
     )
 
     locazione = forms.ChoiceField(choices=LOCAZIONE, initial=PRESSO_SEDE,
-                                  help_text="La posizione del Corso è importante per "
-                                            "aiutare gli aspiranti a trovare i Corsi "
-                                            "che si svolgono vicino a loro.")
+                    help_text="La posizione del Corso è importante per "
+                                "aiutare gli aspiranti a trovare i Corsi "
+                                "che si svolgono vicino a loro.")
 
     def clean_sede(self):
-        if self.cleaned_data['sede'].locazione is None:
-            raise forms.ValidationError("La Sede CRI selezionata non ha alcun indirizzo impostato. "
-                                        "Il Presidente può modificare i dettagli della Sede, tra cui l'indirizzo della stessa.")
-        return self.cleaned_data['sede']
+        sede = self.cleaned_data['sede']
+        if sede.locazione is None:
+            raise forms.ValidationError(
+                "La Sede CRI selezionata non ha alcun indirizzo impostato. "
+                "Il Presidente può modificare i dettagli della Sede, ""
+                "tra cui l'indirizzo della stessa.")
+        return sede
+
+    class Meta:
+        model = CorsoBase
+        fields = ['data_inizio', 'sede',]
 
 
 class ModuloModificaLezione(ModelForm):
