@@ -4,16 +4,10 @@
 {% load mptt_tags %}
 {% load utils %}
 
-{% block pagina_titolo %}
-    Seleziona Direttore/i Corso Base
-{% endblock %}
+{% block pagina_titolo %}Seleziona Direttore/i Corso Base{% endblock %}
 
 {% block app_contenuto %}
-
-    <h2 class="allinea-centro text-success">
-        Seleziona Direttore/i Corso Base
-    </h2>
-
+    <h2 class="allinea-centro text-success">Seleziona Direttore/i Corso Base</h2>
     <div class="alert alert-block alert-info">
         <h4><i class="fa fa-fw fa-question-circle"></i> Chi è il direttore?</h4>
         <ul>
@@ -29,8 +23,4 @@
     </div>
 
     {% delegati delega corso continua_url=continua_url almeno=1 %}
-
-
-
-
 {% endblock %}

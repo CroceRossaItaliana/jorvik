@@ -3,15 +3,10 @@
 {% load bootstrap3 %}
 {% load mptt_tags %}
 
-{% block pagina_titolo %}
-    Corsi Base
-{% endblock %}
+{% block pagina_titolo %}Corsi{% endblock %}
 
 {% block app_contenuto %}
-
-    <h2 class="allinea-centro text-success">
-        Corsi Base
-    </h2>
+    <h2 class="allinea-centro text-success">Corsi</h2>
 
     <table class="table table-striped table-bordered">
         <thead>
@@ -22,11 +17,8 @@
         </thead>
 
         {% for corso in corsi %}
-
             <tr>
-
                 <td>{{ corso.get_stato_display }}</td>
-
                 <td>
                     <i class="fa fa-fw fa-pencil"></i>
                         <strong>{{ corso.link|safe }}</strong><br />
@@ -57,18 +49,14 @@
                 </td>
 
                 <td>
-
                     <strong>{{ corso.partecipazioni_confermate_o_in_attesa.count }} richieste</strong>
-                    <br />
+                    <br>
                     <span class="piu-piccolo text-muted">
-                        <i class="fa fa-fw fa-check"></i> {{ corso.partecipazioni_confermate.count }} confermate<br />
-                        <i class="fa fa-fw fa-clock-o"></i> {{ corso.partecipazioni_in_attesa.count }} in attesa<br />
-                        <i class="fa fa-fw fa-times"></i> {{ corso.partecipazioni_negate.count }} neg./rit.<br />
-
-
+                        <i class="fa fa-fw fa-check"></i> {{ corso.partecipazioni_confermate.count }} confermate<br>
+                        <i class="fa fa-fw fa-clock-o"></i> {{ corso.partecipazioni_in_attesa.count }} in attesa<br>
+                        <i class="fa fa-fw fa-times"></i> {{ corso.partecipazioni_negate.count }} neg./rit.<br>
                     </span>
                 </td>
-
             </tr>
 
         {% empty %}
@@ -76,24 +64,20 @@
                 <td colspan="4">
                     <h4><i class="fa fa-fw fa-info-circle"></i> Ancora nessun corso pianificato.</h4>
                     <p>Puoi controllare la domanda formativa della zona e valutare l'attivazione di un
-                    nuovo corso base.</p>
+                    nuovo corso.</p>
                 </td>
             </tr>
-
         {% endfor %}
-
     </table>
-
 
     {% if puo_pianificare %}
         <div class="alert alert-success">
             <h4><i class="fa fa-asterisk"></i> Vuoi pianificare un nuovo corso?</h4>
-            <p>Se vuoi pianificare un nuovo corso base, clicca su
-                <a href="/formazione/corsi-base/nuovo/" class="btn btn-xs btn-success">Pianifica un Nuovo Corso</a>.</p>
+            <p>Se vuoi pianificare un nuovo corso, clicca su
+                <a href='{% url "formazione:new_course" %}'
+                   class="btn btn-xs btn-success">Pianifica un Nuovo Corso</a>.</p>
             <p>Potrai assegnare un Direttore del Corso che si occuper&agrave; di organizzarne i particolari.</p>
         </div>
     {% endif %}
-
-
 
 {% endblock %}

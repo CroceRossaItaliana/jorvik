@@ -3,24 +3,18 @@
 {% load bootstrap3 %}
 {% load mptt_tags %}
 
-{% block pagina_titolo %}
-    Pianifica un Corso Base
-{% endblock %}
+{% block pagina_titolo %}Pianifica un corso{% endblock %}
 
 {% block app_contenuto %}
-
     <div class="row">
-
         <div class="col-md-6">
-
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h2 class="panel-title">
                         <i class="fa fa-fw fa-calendar"></i>
-                        Pianifica un Corso Base
+                        Pianifica un nuovo corso
                     </h2>
                 </div>
-
                 <div class="panel-body">
                     <form method="POST">
                         {% csrf_token %}
@@ -31,15 +25,9 @@
                             Pianifica il Corso
                         </button>
                     </form>
-
-
                 </div>
-
-
             </div>
-
         </div>
-
         <div class="col-md-6">
             <div class="alert alert-info">
                 <i class="fa fa-fw fa-calendar"></i> <strong>Data ed ora di inizio</strong>:
@@ -47,7 +35,6 @@
                 effettuata la presentazione del Corso. Questa data sar&agrave; comunicata
                 agli aspiranti nella tua zona come data di inziio del Corso.
             </div>
-
             <div class="alert alert-info">
                 <i class="fa fa-fw fa-info-circle"></i> <strong>Nota bene</strong>:
                 Dopo questo step potrai nominare uno o pi&ugrave; direttori del corso.
@@ -55,14 +42,6 @@
                 come le date delle lezioni, la descrizione, nonch&eacute; gestire
                 interamente il corso per te.
             </div>
-
-
         </div>
-
-
     </div>
-
-
-
-
 {% endblock %}
