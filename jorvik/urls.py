@@ -1,15 +1,18 @@
-"""
-Questo modulo contiene la configurazione per il routing degli URL.
-
-(c)2015 Croce Rossa Italiana
-"""
-import django, django.views, django.views.static, django.contrib.auth.views
+# import django
+# import django.views
+# import django.views.static
+import django.contrib.auth.views
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth.views import password_change, password_change_done
-from django.shortcuts import redirect
+# from django.shortcuts import redirect
 from django.views.i18n import javascript_catalog
 from oauth2_provider import views as oauth2_provider_views
+from autenticazione.funzioni import pagina_privata_no_cambio_firma # pagina_privata
+from autenticazione.two_factor.urls import urlpatterns as tf_urls
+from anagrafica.forms import ModuloModificaPassword
+
+from .settings import MEDIA_ROOT, DEBUG
 
 import anagrafica.viste
 import articoli.viste
@@ -24,11 +27,6 @@ import posta.viste
 import social.viste
 import ufficio_soci.viste
 import veicoli.viste
-from anagrafica.forms import ModuloModificaPassword
-from autenticazione.funzioni import pagina_privata, pagina_privata_no_cambio_firma
-from jorvik.settings import MEDIA_ROOT, DEBUG
-
-from autenticazione.two_factor.urls import urlpatterns as tf_urls
 
 
 handler404 = base.errori.non_trovato
@@ -270,7 +268,6 @@ urlpatterns = [
     url(r'^veicolo/(?P<veicolo>.*)/collocazioni/$', veicoli.viste.veicoli_collocazioni),
     url(r'^veicolo/dettagli/(?P<veicolo>.*)/$', veicoli.viste.veicolo_dettagli),
 
-
     url(r'^aspirante/$', formazione.viste.aspirante_home),
     url(r'^aspirante/impostazioni/$', formazione.viste.aspirante_impostazioni),
     url(r'^aspirante/impostazioni/cancella/$', formazione.viste.aspirante_impostazioni_cancella),
@@ -292,33 +289,21 @@ urlpatterns = [
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/lezioni/$', formazione.viste.aspirante_corso_base_lezioni),
     url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/lezioni/(?P<lezione_pk>[0-9]+)/cancella/$', formazione.viste.aspirante_corso_base_lezioni_cancella),
 
-    url(r'^formazione/$', formazione.viste.formazione),
-    url(r'^formazione/corsi-base/elenco/$', formazione.viste.formazione_corsi_base_elenco),
-    url(r'^formazione/corsi-base/domanda/$', formazione.viste.formazione_corsi_base_domanda),
-    url(r'^formazione/corsi-base/nuovo/$', formazione.viste.formazione_corsi_base_nuovo),
-    url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/direttori/$', formazione.viste.formazione_corsi_base_direttori),
-    url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/fine/$', formazione.viste.formazione_corsi_base_fine),
+    url(r'^formazione/', include('formazione.urls')),
 
     url(r'^supporto/$', base.viste.supporto),
-
     url(r'^geo/localizzatore/imposta/$', base.viste.geo_localizzatore_imposta),
     url(r'^geo/localizzatore/$', base.viste.geo_localizzatore),
     url(r'^strumenti/delegati/$', anagrafica.viste.strumenti_delegati),
     url(r'^strumenti/delegati/(?P<delega_pk>[0-9]+)/termina/$', anagrafica.viste.strumenti_delegati_termina),
-
     url(r'^social/commenti/nuovo/', social.viste.commenti_nuovo),
     url(r'^social/commenti/cancella/(?P<pk>[0-9]+)/', social.viste.commenti_cancella),
-
     url(r'^media/(?P<path>.*)$', django.views.static.serve, {"document_root": MEDIA_ROOT}),
-
     url(r'^pdf/(?P<app_label>.*)/(?P<model>.*)/(?P<pk>[0-9]+)/$', base.viste.pdf),
-
     url(r'^token-sicuro/(?P<codice>.*)/$', base.viste.verifica_token),
-
     url(r'^password-dimenticata/$', base.viste.redirect_semplice, {"nuovo_url": "/recupera_password/"}),
 
     # Amministrazione
-
     url(r'^admin/import/volontari/$', anagrafica.viste.admin_import_volontari),
     url(r'^admin/import/presidenti/$', anagrafica.viste.admin_import_presidenti),
     url(r'^admin/pulisci/email/$', anagrafica.viste.admin_pulisci_email),
@@ -331,7 +316,7 @@ urlpatterns = [
     # Autocompletamento
     url(r'^autocomplete/', include('autocomplete_light.urls')),
 
-    #Filer
+    # Filer
     url(r'^filer/', include('filer.urls')),
     url(r'^filebrowser_filer/', include('ckeditor_filebrowser_filer.urls')),
     url(r'^jsi18n/$', javascript_catalog, js_info_dict, name='javascript-catalog'),
@@ -349,4 +334,3 @@ urlpatterns = [
 
 if DEBUG:
     urlpatterns += [url(r'^api-auth/', include('rest_framework.urls')),]
-
