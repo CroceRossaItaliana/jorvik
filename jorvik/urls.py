@@ -27,6 +27,7 @@ import posta.viste
 import social.viste
 import ufficio_soci.viste
 import veicoli.viste
+from formazione import urls_aspirante as formazione_urls_aspirante
 
 
 handler404 = base.errori.non_trovato
@@ -268,27 +269,8 @@ urlpatterns = [
     url(r'^veicolo/(?P<veicolo>.*)/collocazioni/$', veicoli.viste.veicoli_collocazioni),
     url(r'^veicolo/dettagli/(?P<veicolo>.*)/$', veicoli.viste.veicolo_dettagli),
 
-    url(r'^aspirante/$', formazione.viste.aspirante_home),
-    url(r'^aspirante/impostazioni/$', formazione.viste.aspirante_impostazioni),
-    url(r'^aspirante/impostazioni/cancella/$', formazione.viste.aspirante_impostazioni_cancella),
-    url(r'^aspirante/corsi-base/$', formazione.viste.aspirante_corsi_base),
-    url(r'^aspirante/sedi/$', formazione.viste.aspirante_sedi),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/$', formazione.viste.aspirante_corso_base_informazioni),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/mappa/$', formazione.viste.aspirante_corso_base_mappa),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/$', formazione.viste.aspirante_corso_base_iscritti),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/aggiungi/$', formazione.viste.aspirante_corso_base_iscritti_aggiungi),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/cancella/(?P<iscritto>[0-9]+)/$', formazione.viste.aspirante_corso_base_iscritti_cancella, name='formazione-iscritti-cancella'),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscriviti/$', formazione.viste.aspirante_corso_base_iscriviti),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/ritirati/$', formazione.viste.aspirante_corso_base_ritirati),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/report/$', formazione.viste.aspirante_corso_base_report),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/report/schede/$', formazione.viste.aspirante_corso_base_report_schede),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/firme/$', formazione.viste.aspirante_corso_base_firme),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/modifica/$', formazione.viste.aspirante_corso_base_modifica),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/attiva/$', formazione.viste.aspirante_corso_base_attiva),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/termina/$', formazione.viste.aspirante_corso_base_termina),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/lezioni/$', formazione.viste.aspirante_corso_base_lezioni),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/lezioni/(?P<lezione_pk>[0-9]+)/cancella/$', formazione.viste.aspirante_corso_base_lezioni_cancella),
-
+    # Formazione
+    url(r'^aspirante/', include(formazione_urls_aspirante, namespace='aspirante')),
     url(r'^formazione/', include('formazione.urls', namespace='formazione')),
 
     url(r'^supporto/$', base.viste.supporto),
