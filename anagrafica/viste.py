@@ -1025,7 +1025,7 @@ def profilo_turni_foglio(request, me, pk=None):
 def strumenti_delegati(request, me):
     session = request.session
 
-    # Get values store in the session
+    # Get values stored in the session
     app_label = session['app_label']
     model = session['model']
     pk = int(session['pk'])
@@ -1033,7 +1033,7 @@ def strumenti_delegati(request, me):
     almeno = session['almeno']
     delega = session['delega']
 
-    # Get kind of object
+    # Get object
     oggetto = apps.get_model(app_label, model).objects.get(pk=pk)
 
     # Instantiate a new form
@@ -1041,7 +1041,7 @@ def strumenti_delegati(request, me):
         request.POST or None,
         initial={'inizio': datetime.date.today()},
         me=me,
-        is_course=session['is_course']
+        course=oggetto
     )
 
     # Check form is valid

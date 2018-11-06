@@ -3,26 +3,26 @@ import unicodecsv
 import stdnum
 from dateutil.parser import parse
 
-from django import forms
 from django.conf import settings
+from django import forms
+from django.forms import ModelForm, ChoiceField
 from django.contrib.admin.templatetags.admin_static import static
 from django.contrib.admin.widgets import AdminDateWidget
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet
-from django.forms import ModelForm, ChoiceField
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
+# from django.db.models import QuerySet
 
-from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega, \
-    Fototessera, Trasferimento, Riserva
-from anagrafica.validators import valida_almeno_14_anni, valida_data_nel_passato
-from autenticazione.models import Utenza
 from autocomplete_light import shortcuts as autocomplete_light
-
+from autenticazione.models import Utenza
 from base.forms import ModuloMotivoNegazione
 from curriculum.models import TitoloPersonale
 from sangue.models import Donatore, Donazione
+from formazione.models import Corso
+from .models import (Sede, Persona, Appartenenza, Documento, Estensione,
+    ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva)
+from .validators import valida_almeno_14_anni, valida_data_nel_passato
 
 
 class ModuloSpostaPersone(object):
@@ -399,8 +399,9 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
 
     def __init__(self, *args, **kwargs):
         # These attrs are passed in anagrafica.viste.strumenti_delegati()
-        for attr in ['me', 'is_course']:
-            setattr(self, attr, kwargs.pop(attr))
+        for attr in ['me', 'course']:
+            if attr in kwargs:
+                setattr(self, attr, kwargs.pop(attr))
         super().__init__(*args, **kwargs)
 
     def _validate_delega_per_corso(self, persona):
@@ -454,7 +455,7 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
             membro=Appartenenza.VOLONTARIO)
         self.stesse_sedi = me_sede == persona.sede_riferimento()
 
-        if self.is_course:
+        if self.course.tipo == Corso.CORSO_NUOVO:
             return self._validate_delega_per_corso(persona)
         else:
             return self._validate_delega(me_sede, persona)

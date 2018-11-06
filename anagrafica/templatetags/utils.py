@@ -106,7 +106,6 @@ def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None,
     context.request.session['continua_url'] = continua_url
     context.request.session['delega'] = delega
     context.request.session['almeno'] = almeno
-    context.request.session['is_course'] = kwargs.get('is_course', False)
     url = "/strumenti/delegati/"
     context.update({
         'iframe_url': url,
