@@ -69,8 +69,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     data_attivazione = models.DateField(blank=True, null=True)
     data_convocazione = models.DateField(blank=True, null=True)
-    op_attivazione = models.CharField(max_length=255, blank=True, null=True)
-    op_convocazione = models.CharField(max_length=255, blank=True, null=True)
+    op_attivazione = models.CharField('Ordinanza presidenziale attivazione',
+                                        max_length=255, blank=True, null=True)
+    op_convocazione = models.CharField('Ordinanza presidenziale convocazione',
+                                        max_length=255, blank=True, null=True)
 
     PUOI_ISCRIVERTI_OK = "IS"
     PUOI_ISCRIVERTI = (PUOI_ISCRIVERTI_OK,)
