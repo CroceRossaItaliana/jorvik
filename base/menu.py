@@ -1,19 +1,18 @@
-__author__ = 'alfioemanuele'
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 
-from base.utils import remove_none
+from .utils import remove_none
 from anagrafica.costanti import REGIONALE, TERRITORIALE #, LOCALE
+from anagrafica.permessi.applicazioni import (DELEGATO_OBIETTIVO_1,
+    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4,
+    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, PRESIDENTE, UFFICIO_SOCI,
+    UFFICIO_SOCI_UNITA, DELEGATO_AREA, RESPONSABILE_AREA, REFERENTE,
+    RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, DELEGATO_CO,
+    REFERENTE_GRUPPO, RUBRICHE_TITOLI, COMMISSARIO)
+from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA,
+    GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE,
+    EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE)
 from anagrafica.models import Sede
-from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, \
-    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, PRESIDENTE, \
-    UFFICIO_SOCI, UFFICIO_SOCI_UNITA, DELEGATO_AREA, RESPONSABILE_AREA, \
-    REFERENTE, RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO, \
-    RESPONSABILE_AUTOPARCO, DELEGATO_CO, REFERENTE_GRUPPO, RUBRICHE_TITOLI, COMMISSARIO
-from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, \
-    GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
-
-
 
 
 """
@@ -220,7 +219,7 @@ def menu(request):
         ),
         "aspirante": (
             ("Aspirante", (
-                ("Home page", "fa-home", "/aspirante/"),
+                ("Home page", "fa-home", reverse('aspirante:home')),
                 ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
                 ("Storico", "fa-clock-o", "/utente/storico/"),
                 ("Contatti", "fa-envelope", "/utente/contatti/"),
@@ -230,9 +229,9 @@ def menu(request):
                 ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
             )),
             ("Nelle vicinanze", (
-                ("Impostazioni", "fa-gears", "/aspirante/impostazioni/"),
-                ("Corsi Base", "fa-list", "/aspirante/corsi-base/"),
-                ("Sedi CRI", "fa-list", "/aspirante/sedi/"),
+                ("Corsi", "fa-list", reverse('aspirante:corsi_base')),
+                ("Sedi CRI", "fa-list", reverse('aspirante:sedi')),
+                ("Impostazioni", "fa-gears", reverse('aspirante:settings')),
             )),
             ("Sicurezza", (
                 ("Cambia password", "fa-key", "/utente/cambia-password/"),
@@ -241,7 +240,7 @@ def menu(request):
             ),
         ) if me and hasattr(me, 'aspirante') else (
             ("Gestione Corsi", (
-                ("Elenco Corsi Base", "fa-list", "/formazione/corsi-base/elenco/"),
+                ("Elenco Corsi Base", "fa-list", reverse('formazione:list_courses')),
             )),
         ),
     }
