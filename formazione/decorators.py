@@ -15,7 +15,6 @@ def access_to_courses(function):
         except IndexError:
             return r
         else:
-            context = r[1] if len(r) >= 2 else None
             if context and ('corsi' in context):
                 is_aspirante = me.ha_aspirante
                 is_volontario = me.volontario
