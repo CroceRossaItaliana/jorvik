@@ -814,12 +814,6 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
     def comitati(self):
         return self.sedi().filter(estensione__in=[LOCALE, PROVINCIALE, TERRITORIALE])
 
-    def corso(self):
-        return CorsoBase.objects.filter(
-            PartecipazioneCorsoBase.con_esito_ok(persona=self.persona).via("partecipazioni"),
-            stato=Corso.ATTIVO,
-        ).first()
-
     def richiesta_corso(self):
         return CorsoBase.objects.filter(
             PartecipazioneCorsoBase.con_esito_pending(persona=self.persona).via("partecipazioni"),
@@ -831,7 +825,14 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
         Ritorna un elenco di Corsi (Base) nelle vicinanze dell'Aspirante.
         :return: Un elenco di Corsi.
         """
-        return self.nel_raggio(CorsoBase.pubblici().filter(**kwargs))
+        corsi = CorsoBase.pubblici().filter(**kwargs)
+        return self.nel_raggio(corsi)
+
+    def corso(self):
+        partecipazione = PartecipazioneCorsoBase.con_esito_ok(persona=self.persona)
+        partecipazione = partecipazione.via("partecipazioni")
+        corso = CorsoBase.objects.filter(partecipazione, stato=Corso.ATTIVO)
+        return corso.first()
 
     def calcola_raggio(self):
         """
