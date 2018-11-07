@@ -1,5 +1,6 @@
 import json
 import random
+import re
 from collections import OrderedDict
 
 from django.core.paginator import Paginator
@@ -1305,21 +1306,34 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
                                          "'Sedi'." % (comitato,),
                                **torna)
 
-    regionali = comitato.superiore(estensione=REGIONALE, many=True)
-    if not regionali:
+    regionale = comitato.superiore(estensione=REGIONALE)
+
+    if not regionale:
         raise ValueError("%s non ha un comitato regionale." % (comitato,))
 
     tesserini = []
-    for sede in regionali:
+
+    if re.search('roma', regionale.nome) or re.search('Roma', regionale.nome):
+        lazio = Sede.objects.filter(nome="Comitato Regionale Lazio").first()
         # Crea la richiesta di tesserino
         tesserino = Tesserino.objects.create(
             persona=persona,
-            emesso_da=sede,
+            emesso_da=lazio,
             tipo_richiesta=tipo_richiesta,
             stato_richiesta=Tesserino.RICHIESTO,
             richiesto_da=me,
         )
         tesserini.append(tesserino)
+
+    # Crea la richiesta di tesserino
+    tesserino = Tesserino.objects.create(
+        persona=persona,
+        emesso_da=regionale,
+        tipo_richiesta=tipo_richiesta,
+        stato_richiesta=Tesserino.RICHIESTO,
+        richiesto_da=me,
+    )
+    tesserini.append(tesserino)
 
     if duplicato:
         oggetto = "Richiesta Duplicato Tesserino inoltrata"
@@ -1353,8 +1367,9 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
         return messaggio
 
     # Mostra un messaggio
-    return messaggio_generico(request, me, titolo="Richiesta inoltrata",
-                              messaggio=__componi_messaggio(tesserini, persona), **torna)
+    return messaggio_generico(
+        request, me, titolo="Richiesta inoltrata", messaggio=__componi_messaggio(tesserini, persona)
+        , **torna)
 
 
 @pagina_privata
@@ -1362,6 +1377,7 @@ def us_tesserini_emissione(request, me):
     sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
 
     sedi = Sede.objects.filter(id__in=sedi.values_list('id', flat=True))
+
     # Comitati Locali e Provinciali.
     sedi_espandi = sedi.espandi(pubblici=True).comitati().exclude(estensione__in=[NAZIONALE, REGIONALE])
 
