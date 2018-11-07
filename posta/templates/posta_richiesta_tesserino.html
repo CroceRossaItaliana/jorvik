@@ -8,8 +8,8 @@
     <p>La richiesta di stampa &egrave; stata inoltrata
         {% if is_list %}
             &nbsp;alle Sedi di emissione
-            {% for tesserino in tesserini %}
-                ({{ tesserino.emesso_da }})
+            {% for tes in tesserino %}
+                ({{ tes.emesso_da }})
             {% endfor %}
         {% else %}
             &nbsp;alla Sede di emissione ({{ tesserino.emesso_da }})
