@@ -19,7 +19,8 @@ from base.models import Log
 from base.utils import poco_fa
 from posta.models import Messaggio
 from .elenchi import ElencoPartecipantiCorsiBase
-from .models import (CorsoBase, AssenzaCorsoBase, LezioneCorsoBase,
+from .decorators import access_to_courses
+from .models import (Corso, CorsoBase, AssenzaCorsoBase, LezioneCorsoBase,
     PartecipazioneCorsoBase, Aspirante, InvitoCorsoBase)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi,
@@ -101,7 +102,6 @@ def formazione_corsi_base_direttori(request, me, pk):
         "corso": corso,
         "continua_url": continua_url
     }
-
     return 'formazione_corsi_base_direttori.html', contesto
 
 
@@ -119,10 +119,8 @@ def formazione_corsi_base_fine(request, me, pk):
     }
     return 'formazione_corsi_base_fine.html', contesto
 
-
 @pagina_pubblica
 def aspirante_corso_base_informazioni(request, me=None, pk=None):
-
     corso = get_object_or_404(CorsoBase, pk=pk)
     puo_modificare = me and me.permessi_almeno(corso, MODIFICA)
     puoi_partecipare = corso.persona(me) if me else None
@@ -268,21 +266,20 @@ def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
 
 @pagina_privata
 def aspirante_corso_base_modifica(request, me, pk):
-
-    corso = get_object_or_404(CorsoBase, pk=pk)
-    if not me.permessi_almeno(corso, MODIFICA):
+    course = get_object_or_404(CorsoBase, pk=pk)
+    if not me.permessi_almeno(course, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    modulo = ModuloModificaCorsoBase(request.POST or None, instance=corso)
-    if modulo.is_valid():
-        modulo.save()
+    form = ModuloModificaCorsoBase(request.POST or None, instance=course)
+    if form.is_valid():
+        form.save()
 
-    contesto = {
-        "corso": corso,
+    context = {
+        "corso": course,
         "puo_modificare": True,
-        "modulo": modulo,
+        "modulo": form,
     }
-    return 'aspirante_corso_base_scheda_modifica.html', contesto
+    return 'aspirante_corso_base_scheda_modifica.html', context
 
 
 @pagina_privata
@@ -570,14 +567,13 @@ def aspirante_home(request, me):
 
 
 @pagina_privata
-def aspirante_corsi_base(request, me):
-    if not me.ha_aspirante:
-        return redirect(ERRORE_PERMESSI)
-
-    contesto = {
-        "corsi": me.aspirante.corsi(),
+@access_to_courses
+def aspirante_corsi(request, me):
+    """ url: /aspirante/corsi/ """
+    context = {
+        'corsi': me.aspirante.corsi(),
     }
-    return 'aspirante_corsi_base.html', contesto
+    return 'aspirante_corsi_base.html', context
 
 
 @pagina_privata
@@ -606,12 +602,16 @@ def aspirante_impostazioni_cancella(request, me):
         return redirect(ERRORE_PERMESSI)
 
     if not me.cancellabile:
-        return errore_generico(request, me, titolo="Impossibile cancellare automaticamente il profilo da Gaia",
-                               messaggio="E' necessario richiedere la cancellazione manuale al personale di supporto.")
+        return errore_generico(request, me,
+            titolo="Impossibile cancellare automaticamente il profilo da Gaia",
+            messaggio="E' necessario richiedere la cancellazione manuale al personale di supporto."
+        )
 
     # Cancella!
     me.delete()
 
-    return messaggio_generico(request, me, titolo="Il tuo profilo è stato cancellato da Gaia",
-                              messaggio="Abbiamo rimosso tutti i tuoi dati dal nostro sistema. "
-                                        "Se cambierai idea, non esitare a iscriverti nuovamente! ")
+    return messaggio_generico(request, me,
+        titolo="Il tuo profilo è stato cancellato da Gaia",
+        messaggio="Abbiamo rimosso tutti i tuoi dati dal nostro sistema. "
+                "Se cambierai idea, non esitare a iscriverti nuovamente! "
+    )
