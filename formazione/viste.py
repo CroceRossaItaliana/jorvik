@@ -657,7 +657,8 @@ def aspirante_impostazioni_cancella(request, me):
     # Cancella!
     me.delete()
 
-    # return messaggio_generico(request, me,
-    #     titolo="Il tuo profilo è stato cancellato da Gaia",
-    #     messaggio="Abbiamo rimosso tutti i tuoi dati dal nostro sistema. "
-    #             "Se cambierai idea, non
+    return messaggio_generico(request, me,
+        titolo="Il tuo profilo è stato cancellato da Gaia",
+        messaggio="Abbiamo rimosso tutti i tuoi dati dal nostro sistema. "
+                "Se cambierai idea, non esitare a iscriverti nuovamente! "
+    )
