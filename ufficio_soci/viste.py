@@ -952,26 +952,14 @@ def us_quote_nuova(request, me):
             ).first()
             comitato = appartenenza.sede.comitato if appartenenza else None
 
-            if not appartenenza:
-                modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
-                                                  'alla Sede.')
+            def __is_us_territoriale(me):
+                from anagrafica.permessi.applicazioni import UFFICIO_SOCI_UNITA
+                for delega in me.deleghe_attuali():
+                    if delega.tipo == UFFICIO_SOCI_UNITA:
+                        return True
+                return False
 
-            elif appartenenza.sede not in sedi or comitato not in sedi:
-                modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
-
-            elif not comitato.locazione:
-                return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
-                                       messaggio="Per poter rilasciare ricevute, è necessario impostare un indirizzo "
-                                                 "per la Sede del Comitato di %s. Il Presidente può gestire i dati "
-                                                 "della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
-
-            elif not comitato.codice_fiscale:
-                return errore_generico(request, me, titolo="Necessario impostare codice fiscale del Comitato",
-                                       messaggio="Per poter rilasciare ricevute, è necessario impostare un "
-                                                 "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
-                                                 "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
-
-            else:
+            def __paga_quota():
                 if riduzione:
                     suffisso = ' - %s' % riduzione.descrizione
                 else:
@@ -988,6 +976,33 @@ def us_quote_nuova(request, me):
                     riduzione=riduzione,
                 )
                 return redirect("/us/quote/nuova/?appena_registrata=%d" % (ricevuta.pk,))
+
+            if not comitato.locazione:
+                return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
+                                       messaggio="Per poter rilasciare ricevute, è necessario impostare un indirizzo "
+                                                 "per la Sede del Comitato di %s. Il Presidente può gestire i dati "
+                                                 "della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+            elif not comitato.codice_fiscale:
+                return errore_generico(request, me, titolo="Necessario impostare codice fiscale del Comitato",
+                                       messaggio="Per poter rilasciare ricevute, è necessario impostare un "
+                                                 "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
+                                                 "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+
+            if not appartenenza:
+                modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
+                                                  'alla Sede.')
+
+            elif __is_us_territoriale(me):
+                if appartenenza.sede not in sedi:
+                    modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
+                else:
+                    __paga_quota()
+
+            elif appartenenza.sede not in sedi or comitato not in sedi:
+                modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
+
+            else:
+                __paga_quota()
 
         ultime_quote = Quota.objects.filter(registrato_da=me, tipo=Quota.QUOTA_SOCIO).order_by('-creazione')[:15]
 
