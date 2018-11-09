@@ -11,7 +11,8 @@ from django.utils.timezone import now
 
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE
 from anagrafica.models import Sede, Persona, Appartenenza
-from anagrafica.permessi.incarichi import INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI, INCARICO_ASPIRANTE
+from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE,
+    INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
 from base.files import PDF, Zip
 from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
@@ -54,6 +55,35 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
         permissions = (
             ("view_corso", "Can view corso"),
         )
+
+
+class CorsoFile(models.Model):
+    from anagrafica.validators import valida_dimensione_file_8mb
+    from .validators import validate_file_extension
+
+    is_enabled = models.BooleanField(default=True)
+    corso = models.ForeignKey('CorsoBase')
+    file = models.FileField('FIle', null=True, blank=True,
+        upload_to='corsi/',
+        validators=[valida_dimensione_file_8mb, validate_file_extension],
+        # help_text="Formati dei file supportati: doc, xls, pdf, zip, "
+        #     "jpg (max 8mb))",
+    )
+
+    def __str__(self):
+        file = self.file if self.file else ''
+        corso = self.corso if hasattr(self, 'corso') else ''
+        return '<%s> of %s' % (file, corso)
+
+
+class CorsoLink(models.Model):
+    is_enabled = models.BooleanField(default=True)
+    corso = models.ForeignKey('CorsoBase')
+    link = models.URLField('Link', null=True, blank=True)
+
+    def __str__(self):
+        corso = self.corso if hasattr(self, 'corso') else ''
+        return '<%s> of %s' % (self.link, corso)
 
 
 class CorsoBase(Corso, ConVecchioID, ConPDF):

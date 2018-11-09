@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 # from django.template import Context
 from django.utils import timezone
 from django.shortcuts import redirect, get_object_or_404
+from django.core.urlresolvers import reverse
 from django.template.loader import get_template
 
 from anagrafica.models import Persona
@@ -264,20 +265,66 @@ def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
     lezione.delete()
     return redirect(corso.url_lezioni)
 
+
 @pagina_privata
 def aspirante_corso_base_modifica(request, me, pk):
+    from .models import CorsoFile, CorsoLink
+    from .forms import CorsoFileFormSet, CorsoLinkFormSet
+
     course = get_object_or_404(CorsoBase, pk=pk)
+    course_files = CorsoFile.objects.filter(corso=course)
+    course_links = CorsoLink.objects.filter(corso=course)
+
+    FILEFORM_PREFIX = 'files'
+    LINKFORM_PREFIX = 'links'
+
     if not me.permessi_almeno(course, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    form = ModuloModificaCorsoBase(request.POST or None, instance=course)
-    if form.is_valid():
-        form.save()
+    if request.method == 'POST':
+        course_form = ModuloModificaCorsoBase(request.POST, instance=course)
+        file_formset = CorsoFileFormSet(request.POST, request.FILES,
+                                        queryset=course_files,
+                                        form_kwargs={'empty_permitted': False},
+                                        prefix=FILEFORM_PREFIX)
+        link_formset = CorsoLinkFormSet(request.POST,
+                                        queryset=course_links,
+                                        prefix=LINKFORM_PREFIX)
+
+        if course_form.is_valid():
+            course_form.save()
+
+        if file_formset.is_valid():
+            file_formset.save(commit=False)
+
+            for obj in file_formset.deleted_objects:
+                obj.delete()
+
+            for form in file_formset:
+                if form.is_valid() and not form.empty_permitted:
+                    instance = form.instance
+                    instance.corso = course
+            file_formset.save()
+
+        if link_formset.is_valid():
+            link_formset.save(commit=False)
+            for form in link_formset:
+                instance = form.instance
+                instance.corso = course
+            link_formset.save()
+
+        return redirect(reverse('aspirante:modify', args=[pk]))
+    else:
+        course_form = ModuloModificaCorsoBase(instance=course)
+        file_formset = CorsoFileFormSet(queryset=course_files, prefix=FILEFORM_PREFIX)
+        link_formset = CorsoLinkFormSet(queryset=course_links, prefix=LINKFORM_PREFIX)
 
     context = {
-        "corso": course,
-        "puo_modificare": True,
-        "modulo": form,
+        'corso': course,
+        'puo_modificare': True,
+        'modulo': course_form,
+        'file_formset': file_formset,
+        'link_formset': link_formset,
     }
     return 'aspirante_corso_base_scheda_modifica.html', context
 
@@ -610,8 +657,7 @@ def aspirante_impostazioni_cancella(request, me):
     # Cancella!
     me.delete()
 
-    return messaggio_generico(request, me,
-        titolo="Il tuo profilo è stato cancellato da Gaia",
-        messaggio="Abbiamo rimosso tutti i tuoi dati dal nostro sistema. "
-                "Se cambierai idea, non esitare a iscriverti nuovamente! "
-    )
+    # return messaggio_generico(request, me,
+    #     titolo="Il tuo profilo è stato cancellato da Gaia",
+    #     messaggio="Abbiamo rimosso tutti i tuoi dati dal nostro sistema. "
+    #             "Se cambierai idea, non

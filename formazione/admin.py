@@ -1,11 +1,12 @@
+from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericTabularInline
+
 from anagrafica.admin import RAW_ID_FIELDS_DELEGA
 from anagrafica.models import Delega
-from django.contrib import admin
-
 from base.admin import InlineAutorizzazione
-from django.contrib.contenttypes.admin import GenericTabularInline
-from formazione.models import CorsoBase, PartecipazioneCorsoBase, AssenzaCorsoBase, Aspirante, LezioneCorsoBase, InvitoCorsoBase
 from gruppi.readonly_admin import ReadonlyAdminMixin
+from .models import (CorsoBase, CorsoFile,  CorsoLink, Aspirante,
+    PartecipazioneCorsoBase, AssenzaCorsoBase, LezioneCorsoBase, InvitoCorsoBase)
 
 
 __author__ = 'alfioemanuele'
@@ -66,6 +67,20 @@ class AdminCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     raw_id_fields = RAW_ID_FIELDS_CORSOBASE
     inlines = [InlineDelegaCorsoBase, InlinePartecipazioneCorsoBase, InlineInvitoCorsoBase, InlineLezioneCorsoBase]
     actions = [admin_corsi_base_attivi_invia_messaggi]
+
+
+@admin.register(CorsoFile)
+class AdminCorsoFile(admin.ModelAdmin):
+    list_display = ['__str__', 'file', 'is_enabled', 'corso',]
+    list_filter = ['is_enabled',]
+    raw_id_fields = ('corso',)
+
+
+@admin.register(CorsoLink)
+class AdminCorsoLink(admin.ModelAdmin):
+    list_display = ['link', 'is_enabled', 'corso',]
+    list_filter = ['is_enabled', ]
+    raw_id_fields = ('corso',)
 
 
 @admin.register(PartecipazioneCorsoBase)

@@ -1,11 +1,12 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import ModelForm
+from django.forms import ModelForm, modelformset_factory
 
 from autocomplete_light import shortcuts as autocomplete_light
 from base.wysiwyg import WYSIWYGSemplice
 
-from .models import Corso, CorsoBase, LezioneCorsoBase, PartecipazioneCorsoBase
+from .models import (CorsoBase, CorsoLink, CorsoFile, LezioneCorsoBase,
+    PartecipazioneCorsoBase)
 
 
 class ModuloCreazioneCorsoBase(ModelForm):
@@ -67,6 +68,39 @@ class ModuloModificaCorsoBase(ModelForm):
         widgets = {
             "descrizione": WYSIWYGSemplice(),
         }
+
+
+class CorsoLinkForm(ModelForm):
+    class Meta:
+        model = CorsoFile
+        fields = ['file',]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        acceptable_extensions = [
+            'application/pdf',
+            'application/msword', # .doc
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', # .docx
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel', # xls
+            'application/vnd.ms-powerpoint',
+            'application/x-rar-compressed', 'application/octet-stream', # rar
+            'application/zip', 'application/octet-stream',
+            'application/x-zip-compressed', 'multipart/x-zip',
+            'image/jpeg',
+            'image/png',
+            'text/csv',
+            'application/rtf',
+        ]
+        self.fields['file'].widget.attrs = {'accept': ", ".join(
+            acceptable_extensions)}
+
+CorsoFileFormSet = modelformset_factory(CorsoFile, form=CorsoLinkForm, extra=1,
+                                        max_num=2)
+
+
+CorsoLinkFormSet = modelformset_factory(CorsoLink, fields=('link',), extra=1,
+                                        max_num=2)
 
 
 class ModuloIscrittiCorsoBaseAggiungi(forms.Form):
