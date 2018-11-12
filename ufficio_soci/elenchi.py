@@ -588,7 +588,7 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         r = Persona.objects.filter(
             Appartenenza.query_attuale(
-                al_giorno=oggi,
+                    al_giorno=oggi,
                 sede__in=qs_sedi, membro=Appartenenza.VOLONTARIO,
             ).via("appartenenze"),
             Q(**aggiuntivi),
@@ -749,13 +749,16 @@ class ElencoTesseriniRifiutati(ElencoVistaTesseriniRifiutati, ElencoTesseriniRic
     def risultati(self):
         qs_sedi = self.args[0]
         tesserini_richiesti = super(ElencoTesseriniRifiutati, self).risultati()
-        query_set = Persona.objects.filter(
+        return Persona.objects.filter(
             Appartenenza.query_attuale(
                 sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
             ).via("appartenenze"),
 
             # Escludi tesserini non rifiutati
             Q(tesserini__stato_richiesta=Tesserino.RIFIUTATO),
+
+        ).exclude(  # Escludi quelli richiesti da genitore
+            pk__in=tesserini_richiesti.values_list('id', flat=True)
 
         ).annotate(
             appartenenza_tipo=F('appartenenze__membro'),
@@ -765,21 +768,6 @@ class ElencoTesseriniRifiutati(ElencoVistaTesseriniRifiutati, ElencoTesseriniRic
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
-
-        def __is_appartenenza_roma(sedi):
-            for sede in sedi:
-                if re.search('roma', sede.nome) or re.search('Roma', sede.nome):
-                    return True
-                elif re.search('lazio', sede.nome) or re.search('Lazio', sede.nome):
-                    return True
-            return False
-
-        if __is_appartenenza_roma(qs_sedi):
-            return query_set
-        else:
-            return query_set.exclude(
-                pk__in=tesserini_richiesti.values_list('id', flat=True)
-            )
 
     def template(self):
         return "us_elenchi_inc_tesserini_rifiutati.html"
