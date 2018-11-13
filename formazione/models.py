@@ -74,7 +74,7 @@ class FormazioneTitleGoal(models.Model):
         (OBBIETTIVO_STRATEGICO_EMERGENZA, 'Emergenza)'),
         (OBBIETTIVO_STRATEGICO_ADVOCACY, 'Advocacy e mediazione umanitaria'),
         (OBBIETTIVO_STRATEGICO_GIOVANI, 'Giovani'),
-        (OBBIETTIVO_STRATEGICO_GIOVANI, 'Sviluppo'),
+        (OBBIETTIVO_STRATEGICO_SVILUPPO, 'Sviluppo'),
         # 'Operatore CRI Attività di Emergenza (OPEM)',
     )
     unit_reference = models.CharField("Unità riferimento", max_length=3,
