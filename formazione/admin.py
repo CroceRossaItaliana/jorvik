@@ -5,8 +5,9 @@ from anagrafica.admin import RAW_ID_FIELDS_DELEGA
 from anagrafica.models import Delega
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
-from .models import (CorsoBase, CorsoFile,  CorsoLink, Aspirante,
-    PartecipazioneCorsoBase, AssenzaCorsoBase, LezioneCorsoBase, InvitoCorsoBase)
+from .models import (CorsoBase, CorsoFile, CorsoLink,
+    Aspirante, PartecipazioneCorsoBase, AssenzaCorsoBase, LezioneCorsoBase,
+    InvitoCorsoBase, FormazioneTitleGoal, FormazioneTitleLevel, FormazioneTitle)
 
 
 __author__ = 'alfioemanuele'
@@ -17,6 +18,38 @@ RAW_ID_FIELDS_INVITOCORSOBASE = ['persona', 'corso', 'invitante',]
 RAW_ID_FIELDS_LEZIONECORSOBASE = ['corso',]
 RAW_ID_FIELDS_ASSENZACORSOBASE = ['lezione', 'persona', 'registrata_da',]
 RAW_ID_FIELDS_ASPIRANTE = ['persona', 'locazione',]
+
+
+@admin.register(FormazioneTitle)
+class AdminTitle(admin.ModelAdmin):
+    list_display = ['name', 'livello_name', 'goal_obbiettivo_stragetico',
+                    'goal_propedeuticita', 'goal_unit_reference']
+    list_filter = ['livello__goal__unit_reference',]
+
+    def livello_name(self, obj):
+        return obj.livello.name
+
+    def goal_obbiettivo_stragetico(self, obj):
+        return obj.livello.goal_obbiettivo_stragetico
+
+    def goal_propedeuticita(self, obj):
+        return obj.livello.goal_propedeuticita
+
+    def goal_unit_reference(self, obj):
+        return obj.livello.goal_unit_reference
+
+
+@admin.register(FormazioneTitleLevel)
+class AdminTitleLevel(admin.ModelAdmin):
+    list_display = ['name', 'goal_obbiettivo_stragetico',
+                    'goal_propedeuticita', 'goal_unit_reference']
+    list_filter = ['goal',]
+
+
+@admin.register(FormazioneTitleGoal)
+class AdminTitleGoal(admin.ModelAdmin):
+    list_display = ['__str__', 'obbiettivo_stragetico', 'propedeuticita', 'unit_reference']
+    list_filter = ['unit_reference',]
 
 
 class InlineDelegaCorsoBase(ReadonlyAdminMixin, GenericTabularInline):
