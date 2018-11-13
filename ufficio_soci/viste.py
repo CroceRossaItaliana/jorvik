@@ -1481,22 +1481,11 @@ def us_tesserini_emissione_processa(request, me):
                              motivo_rifiutato=motivo_rifiutato,
                              data_conferma=poco_fa())
 
-            # TODO:
-            # Eliminare il tesserino in piu per roma Coordinamento o Lazio
-            # tesserino = Tesserino.objects.create(
-            #     persona=persona,
-            #     emesso_da=lazio,
-            #     tipo_richiesta=tipo_richiesta,
-            #     stato_richiesta=Tesserino.RICHIESTO,
-            #     richiesto_da=me,
-            # )
-
             if __multi_richiesta(sedi):
                 # Devo eliminare richiesta tesserino di Roma Coordinamento
                 tesserini_lazio = tesserini.filter(
                     emesso_da=Sede.objects.filter(nome="Comitato Regionale Lazio").first(),
                 )
-                print("TESSERINI LAZIO", tesserini_lazio)
                 for tesserino in tesserini_lazio:
                     tess = Tesserino.objects.filter(
                         persona=tesserino.persona,
@@ -1505,7 +1494,6 @@ def us_tesserini_emissione_processa(request, me):
                         ).first(),
                         stato_richiesta=Tesserino.RICHIESTO
                     )
-                    print("TESSERINO ROMA COR", tess)
                     tess.delete()
 
             # Attiva i tesserini o disattiva come appropriato
