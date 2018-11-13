@@ -8,7 +8,7 @@
 {% block pagina_titolo %}
     {% block scheda_titolo %}{% endblock %}
     {{ corso.nome }} ({{ corso.sede.nome_completo }})
-    &mdash; Corso Base
+    &mdash; Corso
 {% endblock %}
 
 
@@ -51,7 +51,7 @@
     {% if puo_modificare and corso.stato == corso.PREPARAZIONE %}
         <div class="alert alert-warning alert-block">
             <h4><i class="fa fa-fw fa-warning"></i> Il corso non &egrave; ancora attivo</h4>
-            <p>Questo corso base &egrave; ancora una bozza ("In Preparazione"). &Egrave; necessario
+            <p>Questo corso &egrave; ancora una bozza ("In Preparazione"). &Egrave; necessario
                 attivare il corso affinch&eacute; questo possa essere trovato dagli aspiranti.
                 Completa i passi necessari e clicca sul pulsante per attivare il corso:
             </p>
@@ -73,7 +73,6 @@
                     {{ corso.aspiranti_nelle_vicinanze.count }})
                 </a>
             </p>
-
         </div>
     {% endif %}
 
@@ -95,9 +94,7 @@
                     Completa i dati per generare il verbale e terminare il corso
                 </a>
             </p>
-
         </div>
-
     {% endif %}
 
 
@@ -119,9 +116,8 @@
         {% endif %}
 
         {% if puo_modificare %}
-
             <li role="presentation" {% if request.path == corso.url_iscritti %}class="active"{% endif %}>
-                <a href="{{ corso.url_iscritti }}" class="text-danger">
+                <a href="{{ corso.url_iscritti }}">
                     <i class="fa fa-fw fa-group"></i>
                     Iscrizioni
                     <span class="badge">
@@ -134,21 +130,30 @@
                     </span>
                 </a>
             </li>
-
             <li role="presentation" {% if request.path == corso.url_modifica %}class="active"{% endif %}>
                 <a href="{{ corso.url_modifica }}" class="text-danger">
                     <i class="fa fa-fw fa-pencil"></i>
                     Gestione corso
                 </a>
             </li>
+            {% if corso.tipo == 'C1' %}
+            <li role="presentation" {% if request.path == corso.url_modifica %}class="active"{% endif %}>
+                <a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"
+                   class="text-danger">
+                    <i class="fa fa-fw fa-pencil"></i>
+                    Estensioni
+                </a>
+            </li>{% endif %}
+        </ul>
+        <ul class="nav nav-tabs">
             <li role="presentation" {% if corso.url_lezioni in request.path %}class="active"{% endif %}>
-                <a href="{{ corso.url_lezioni }}" class="text-danger">
+                <a href="{{ corso.url_lezioni }}">
                     <i class="fa fa-fw fa-calendar"></i>
                     Lezioni
                 </a>
             </li>
             <li role="presentation" {% if corso.url_report in request.path %}class="active"{% endif %}>
-                <a href="{{ corso.url_report }}" class="text-danger">
+                <a href="{{ corso.url_report }}">
                     <i class="fa fa-fw fa-file-excel-o"></i>
                     Scarica report
                 </a>
@@ -160,10 +165,7 @@
                 </a>
             </li>
         {% endif %}
-
-
-    </ul>
-
+        </ul>
 
     <p>&nbsp;</p>
     {% block scheda_contenuto %}

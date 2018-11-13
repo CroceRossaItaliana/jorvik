@@ -21,8 +21,8 @@ from base.utils import poco_fa
 from posta.models import Messaggio
 from .elenchi import ElencoPartecipantiCorsiBase
 from .decorators import access_to_courses
-from .models import (Corso, CorsoBase, AssenzaCorsoBase, LezioneCorsoBase,
-    PartecipazioneCorsoBase, Aspirante, InvitoCorsoBase)
+from .models import (Corso, CorsoBase, CorsoEstensione, AssenzaCorsoBase,
+    LezioneCorsoBase, PartecipazioneCorsoBase, Aspirante, InvitoCorsoBase)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi,
     ModuloVerbaleAspiranteCorsoBase)
@@ -119,6 +119,7 @@ def formazione_corsi_base_fine(request, me, pk):
         "corso": corso,
     }
     return 'formazione_corsi_base_fine.html', contesto
+
 
 @pagina_pubblica
 def aspirante_corso_base_informazioni(request, me=None, pk=None):
@@ -662,3 +663,83 @@ def aspirante_impostazioni_cancella(request, me):
         messaggio="Abbiamo rimosso tutti i tuoi dati dal nostro sistema. "
                 "Se cambierai idea, non esitare a iscriverti nuovamente! "
     )
+
+
+@pagina_privata
+def aspirante_corso_estensioni_modifica(request, me, pk):
+    from .forms import CorsoSelectExtensionTypeForm, CorsoSelectExtensionFormSet
+
+    SELECT_EXTENSION_TYPE_FORM_PREFIX = 'extension_type'
+    SELECT_EXTENSIONS_FORMSET_PREFIX = 'extensions'
+
+    course = get_object_or_404(CorsoBase, pk=pk)
+    if not me.permessi_almeno(course, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    if not course.tipo == Corso.CORSO_NUOVO:
+        # The page is not accessible if the type of course is not CORSO_NUOVO
+        return redirect(ERRORE_PERMESSI)
+
+    if request.method == 'POST':
+        select_extension_type_form = CorsoSelectExtensionTypeForm(request.POST,
+                                    instance=course,
+                                    prefix=SELECT_EXTENSION_TYPE_FORM_PREFIX)
+        select_extensions_formset = CorsoSelectExtensionFormSet(request.POST,
+                                    prefix=SELECT_EXTENSIONS_FORMSET_PREFIX,
+                                    form_kwargs={'corso': course})
+
+        if select_extension_type_form.is_valid() and \
+            select_extensions_formset.is_valid():
+            select_extensions_formset.save(commit=False)
+
+            for form in select_extensions_formset:
+                if form.is_valid:
+                    cd = form.cleaned_data
+                    instance = form.save(commit=False)
+                    instance.corso = course
+                    corso = instance.corso
+
+                    # Skip blank extra formset
+                    if cd == {} and len(select_extensions_formset) >= 1:
+                        continue
+
+                    # Do validation only with specified extension type
+                    if corso.extension_type == CorsoBase.EXT_LVL_REGIONALE:
+                        msg = 'Questo campo è obbligatorio.'
+                        if not cd.get('sede'):
+                            form.add_error('sede', msg)
+                        if not cd.get('segmento'):
+                            form.add_error('segmento', msg)
+                        if cd.get('sedi_sottostanti') and not cd.get('sede'):
+                            form.add_error('sede', 'Seleziona una sede')
+
+                    # No errors nor new added error - save form instance
+                    if not form.errors:
+                        instance.save()
+
+            # Return form with error without saving
+            if any(select_extensions_formset.errors):
+                pass
+            else:
+                # Save all forms and redirect to the same page.
+                select_extension_type_form.save()
+                select_extensions_formset.save()
+                return redirect(reverse('aspirante:estensioni_modifica', args=[pk]))
+
+    else:
+        select_extension_type_form = CorsoSelectExtensionTypeForm(
+            prefix=SELECT_EXTENSION_TYPE_FORM_PREFIX,
+            instance=course
+        )
+        select_extensions_formset = CorsoSelectExtensionFormSet(
+            prefix=SELECT_EXTENSIONS_FORMSET_PREFIX,
+            form_kwargs={'corso': course},
+        )
+
+    context = {
+        'corso': course,
+        'puo_modificare': True,
+        'select_extension_type_form': select_extension_type_form,
+        'select_extensions_formset': select_extensions_formset,
+    }
+    return 'aspirante_corso_estensioni_modifica.html', context

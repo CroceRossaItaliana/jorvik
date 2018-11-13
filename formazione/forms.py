@@ -5,8 +5,8 @@ from django.forms import ModelForm, modelformset_factory
 from autocomplete_light import shortcuts as autocomplete_light
 from base.wysiwyg import WYSIWYGSemplice
 
-from .models import (CorsoBase, CorsoLink, CorsoFile, LezioneCorsoBase,
-    PartecipazioneCorsoBase)
+from .models import (CorsoBase, CorsoLink, CorsoFile, CorsoEstensione,
+                     LezioneCorsoBase, PartecipazioneCorsoBase)
 
 
 class ModuloCreazioneCorsoBase(ModelForm):
@@ -108,6 +108,39 @@ class ModuloIscrittiCorsoBaseAggiungi(forms.Form):
                                                           help_text="Ricerca per Codice Fiscale "
                                                                     "i Sostenitori o gli Aspiranti "
                                                                     "CRI da iscrivere a questo Corso Base.")
+
+
+class CorsoSelectExtensionTypeForm(ModelForm):
+    class Meta:
+        model = CorsoBase
+        fields = ['extension_type',]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['extension_type'].choices = CorsoBase.EXTENSION_TYPE_CHOICES
+
+        if not self.instance.get_course_extensions(is_active=True).count():
+            # Useful to set EXT_MIA_SEDE as select's default value to avoid
+            # possible issues with ExtensionFormSet
+            self.initial['extension_type'] = CorsoBase.EXT_MIA_SEDE
+
+class CorsoExtensionForm(ModelForm):
+    titolo = autocomplete_light.ModelMultipleChoiceField(
+        "EstensioneLivelloRegionaleTitolo", required=False)
+    sede = autocomplete_light.ModelMultipleChoiceField(
+        "EstensioneLivelloRegionaleSede", required=False)
+
+    class Meta:
+        model = CorsoEstensione
+        fields = ['segmento', 'titolo', 'sede', 'sedi_sottostanti',]
+
+    def __init__(self, *args, **kwargs):
+        self.corso = kwargs.pop('corso')
+        super().__init__(*args, **kwargs)
+
+
+CorsoSelectExtensionFormSet = modelformset_factory(CorsoEstensione, extra=1,
+    max_num=2, form=CorsoExtensionForm, can_delete=True)
 
 
 class ModuloConfermaIscrizioneCorsoBase(forms.Form):

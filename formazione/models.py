@@ -23,6 +23,77 @@ from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
 
 
+class FormazioneTitle(ModelloSemplice, ConMarcaTemporale):
+    name = models.CharField('Nome del corso', max_length=255)
+    livello = models.ForeignKey('FormazioneTitleLevel', null=True, blank=True,
+        verbose_name="Livello", on_delete=models.PROTECT)
+
+    class Meta:
+        verbose_name = 'Titolo'
+        verbose_name_plural = 'Titoli'
+
+    def __str__(self):
+        return str(self.name)
+
+
+class FormazioneTitleLevel(models.Model):
+    name = models.CharField('Nome', max_length=255)
+    goal = models.ForeignKey('FormazioneTitleGoal', null=True, blank=True)
+
+    @property
+    def goal_obbiettivo_stragetico(self):
+        return self.goal.unit_reference
+
+    @property
+    def goal_propedeuticita(self):
+        return self.goal.propedeuticita
+
+    @property
+    def goal_unit_reference(self):
+        return self.goal.get_unit_reference_display()
+
+    def __str__(self):
+        return "%s - %s" % (self.name, self.goal)
+
+    class Meta:
+        verbose_name = 'Titolo: Livello'
+        verbose_name_plural = 'Titoli: Livelli'
+
+
+class FormazioneTitleGoal(models.Model):
+    OBBIETTIVO_STRATEGICO_SALUTE = '1'
+    OBBIETTIVO_STRATEGICO_SOCIALE = '2'
+    OBBIETTIVO_STRATEGICO_EMERGENZA = '3'
+    OBBIETTIVO_STRATEGICO_ADVOCACY = '4'
+    OBBIETTIVO_STRATEGICO_GIOVANI = '5'
+    OBBIETTIVO_STRATEGICO_SVILUPPO = '6'
+
+    OBBIETTIVI_STRATEGICI = (
+        (OBBIETTIVO_STRATEGICO_SALUTE, 'Salute'),
+        (OBBIETTIVO_STRATEGICO_SOCIALE, 'Sociale'),
+        (OBBIETTIVO_STRATEGICO_EMERGENZA, 'Emergenza)'),
+        (OBBIETTIVO_STRATEGICO_ADVOCACY, 'Advocacy e mediazione umanitaria'),
+        (OBBIETTIVO_STRATEGICO_GIOVANI, 'Giovani'),
+        (OBBIETTIVO_STRATEGICO_GIOVANI, 'Sviluppo'),
+        # 'Operatore CRI Attività di Emergenza (OPEM)',
+    )
+    unit_reference = models.CharField("Unità riferimento", max_length=3,
+        null=True, blank=True, choices=OBBIETTIVI_STRATEGICI)
+    propedeuticita = models.CharField("Propedeuticità", max_length=255,
+        null=True, blank=True)
+
+    @property
+    def obbiettivo_stragetico(self):
+        return self.unit_reference
+
+    def __str__(self):
+        return "%s (Obbiettivo %s)" % (self.propedeuticita, self.unit_reference)
+
+    class Meta:
+        verbose_name = 'Titolo: Propedeuticità'
+        verbose_name_plural = 'Titoli: Propedeuticità'
+
+
 class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
             ConGeolocalizzazione, ConCommenti, ConGiudizio):
     # Tipologia di corso
@@ -89,6 +160,13 @@ class CorsoLink(models.Model):
 class CorsoBase(Corso, ConVecchioID, ConPDF):
     MAX_PARTECIPANTI = 30
 
+    EXT_MIA_SEDE        = '1'
+    EXT_LVL_REGIONALE   = '2'
+    EXTENSION_TYPE_CHOICES = [
+        (EXT_MIA_SEDE, "Solo su mia sede di appartenenza"),
+        (EXT_LVL_REGIONALE, "A livello regionale"),
+    ]
+
     data_inizio = models.DateTimeField(blank=False, null=False,
         help_text="La data di inizio del corso. "
                   "Utilizzata per la gestione delle iscrizioni.")
@@ -103,6 +181,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                                         max_length=255, blank=True, null=True)
     op_convocazione = models.CharField('Ordinanza presidenziale convocazione',
                                         max_length=255, blank=True, null=True)
+    extension_type = models.CharField(max_length=5, blank=True, null=True,
+                                      choices=EXTENSION_TYPE_CHOICES)
 
     PUOI_ISCRIVERTI_OK = "IS"
     PUOI_ISCRIVERTI = (PUOI_ISCRIVERTI_OK,)
@@ -439,6 +519,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         )
         return pdf
 
+    def get_course_extensions(self, **kwargs):
+        """Returns CorsoEstensione objects related to the course"""
+        return self.corsoestensione_set.filter(**kwargs)
+
     class Meta:
         verbose_name = "Corso Base"
         verbose_name_plural = "Corsi Base"
@@ -450,6 +534,35 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def __str__(self):
         return str(self.nome)
 
+
+class CorsoEstensione(ConMarcaTemporale):
+    from segmenti.segmenti import NOMI_SEGMENTI
+
+
+    corso = models.ForeignKey(CorsoBase, db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    segmento = models.CharField(max_length=9, choices=NOMI_SEGMENTI, blank=True)
+    titolo = models.ManyToManyField(FormazioneTitle, blank=True)
+    sede = models.ManyToManyField(Sede)
+    sedi_sottostanti = models.BooleanField(default=False, db_index=True)
+
+    class Meta:
+        verbose_name = 'Estensione del Corso'
+        verbose_name_plural = 'Estensioni del Corso'
+
+    def __str__(self):
+        return '%s' % self.corso if hasattr(self, 'corso') else 'No CorsoBase set.'
+
+    def visible_by_extension_type(self):
+        type = self.corso.extension_type
+        if type == CorsoBase.EXT_MIA_SEDE:
+            self.is_active = False
+        elif type == CorsoBase.EXT_LVL_REGIONALE:
+            self.is_active = True
+
+    def save(self):
+        self.visible_by_extension_type()
+        super().save()
 
 class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni,
                       ConMarcaTemporale, models.Model):

@@ -5,7 +5,7 @@ from anagrafica.admin import RAW_ID_FIELDS_DELEGA
 from anagrafica.models import Delega
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
-from .models import (CorsoBase, CorsoFile, CorsoLink,
+from .models import (CorsoBase, CorsoFile, CorsoEstensione, CorsoLink,
     Aspirante, PartecipazioneCorsoBase, AssenzaCorsoBase, LezioneCorsoBase,
     InvitoCorsoBase, FormazioneTitleGoal, FormazioneTitleLevel, FormazioneTitle)
 
@@ -114,6 +114,12 @@ class AdminCorsoLink(admin.ModelAdmin):
     list_display = ['link', 'is_enabled', 'corso',]
     list_filter = ['is_enabled', ]
     raw_id_fields = ('corso',)
+
+
+@admin.register(CorsoEstensione)
+class AdminCorsoEstensione(admin.ModelAdmin):
+    list_display = ['corso', 'is_active', 'segmento', 'sedi_sottostanti']
+    raw_id_fields = ['sede', 'titolo',]
 
 
 @admin.register(PartecipazioneCorsoBase)

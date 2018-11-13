@@ -9,7 +9,7 @@ from .viste import (aspirante_home, aspirante_sedi, aspirante_corsi,
     aspirante_corso_base_report_schede, aspirante_corso_base_firme,
     aspirante_corso_base_modifica, aspirante_corso_base_attiva,
     aspirante_corso_base_termina, aspirante_corso_base_lezioni,
-    aspirante_corso_base_lezioni_cancella)
+    aspirante_corso_base_lezioni_cancella, aspirante_corso_estensioni_modifica)
 
 
 url_shortcut = 'corso-base/(?P<pk>[0-9]+)'
@@ -50,4 +50,6 @@ urlpatterns = [
         name='formazione_iscritti_cancella'),
     url(rf'^{url_shortcut}/iscriviti/$', aspirante_corso_base_iscriviti,
         name='subscribe'),
+    url(rf'^{url_shortcut}/estensioni/$', aspirante_corso_estensioni_modifica,
+        name='estensioni_modifica'),
 ]
