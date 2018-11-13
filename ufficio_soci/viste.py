@@ -1420,7 +1420,20 @@ def us_tesserini_emissione(request, me):
 @pagina_privata
 def us_tesserini_emissione_processa(request, me):
 
+    def __multi_richiesta(sedi):
+        """
+        Nel caso di Comitato lazio i tesserini richiesti sono sempre 2 (Comitato regionale Lazio-Comitato dell' area metropolitana di roma Coordinamento)
+        :return: True se in sedi è presente Comitato lazio o roma coordinamento
+        """
+        for sede in sedi:
+            if re.search('roma', sede.nome) or re.search('Roma', sede.nome):
+                return True
+            elif re.search('lazio', sede.nome) or re.search('Lazio', sede.nome):
+                return True
+        return False
+
     sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
+
 
     if not request.POST:  # Qui si arriva tramite POST.
         return redirect("/us/tesserini/emissione/")
@@ -1467,6 +1480,33 @@ def us_tesserini_emissione_processa(request, me):
                              stato_emissione=stato_emissione,
                              motivo_rifiutato=motivo_rifiutato,
                              data_conferma=poco_fa())
+
+            # TODO:
+            # Eliminare il tesserino in piu per roma Coordinamento o Lazio
+            # tesserino = Tesserino.objects.create(
+            #     persona=persona,
+            #     emesso_da=lazio,
+            #     tipo_richiesta=tipo_richiesta,
+            #     stato_richiesta=Tesserino.RICHIESTO,
+            #     richiesto_da=me,
+            # )
+
+            if __multi_richiesta(sedi):
+                # Devo eliminare richiesta tesserino di Roma Coordinamento
+                tesserini_lazio = tesserini.filter(
+                    emesso_da=Sede.objects.filter(nome="Comitato Regionale Lazio").first(),
+                )
+                print("TESSERINI LAZIO", tesserini_lazio)
+                for tesserino in tesserini_lazio:
+                    tess = Tesserino.objects.filter(
+                        persona=tesserino.persona,
+                        emesso_da=Sede.objects.filter(
+                            nome="Comitato dell'aria Metropolitana di roma capitale Coordinamento"
+                        ).first(),
+                        stato_richiesta=Tesserino.RICHIESTO
+                    )
+                    print("TESSERINO ROMA COR", tess)
+                    tess.delete()
 
             # Attiva i tesserini o disattiva come appropriato
             valido = (stato_emissione and stato_richiesta == Tesserino.ACCETTATO)
