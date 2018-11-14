@@ -158,7 +158,10 @@ class CorsoLink(models.Model):
 
 
 class CorsoBase(Corso, ConVecchioID, ConPDF):
-    MAX_PARTECIPANTI = 30
+    from django.core.validators import MinValueValidator
+
+    MIN_PARTECIPANTI = 20
+    MAX_PARTECIPANTI = 50
 
     EXT_MIA_SEDE        = '1'
     EXT_LVL_REGIONALE   = '2'
@@ -183,6 +186,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                                         max_length=255, blank=True, null=True)
     extension_type = models.CharField(max_length=5, blank=True, null=True,
                                       choices=EXTENSION_TYPE_CHOICES)
+    min_participants = models.SmallIntegerField("Minimo partecipanti",
+        default=MIN_PARTECIPANTI,
+        validators=[MinValueValidator(MIN_PARTECIPANTI)])
+    max_participants = models.SmallIntegerField("Massimo partecipanti",
+                                                default=MAX_PARTECIPANTI)
 
     PUOI_ISCRIVERTI_OK = "IS"
     PUOI_ISCRIVERTI = (PUOI_ISCRIVERTI_OK,)

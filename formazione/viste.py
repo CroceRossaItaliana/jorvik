@@ -314,7 +314,9 @@ def aspirante_corso_base_modifica(request, me, pk):
                 instance.corso = course
             link_formset.save()
 
-        return redirect(reverse('aspirante:modify', args=[pk]))
+        if course_form.is_valid() and file_formset.is_valid() and \
+                link_formset.is_valid():
+            return redirect(reverse('aspirante:modify', args=[pk]))
     else:
         course_form = ModuloModificaCorsoBase(instance=course)
         file_formset = CorsoFileFormSet(queryset=course_files, prefix=FILEFORM_PREFIX)

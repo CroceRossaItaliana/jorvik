@@ -5,7 +5,7 @@ from django.forms import ModelForm, modelformset_factory
 from autocomplete_light import shortcuts as autocomplete_light
 from base.wysiwyg import WYSIWYGSemplice
 
-from .models import (CorsoBase, CorsoLink, CorsoFile, CorsoEstensione,
+from .models import (Corso, CorsoBase, CorsoLink, CorsoFile, CorsoEstensione,
                      LezioneCorsoBase, PartecipazioneCorsoBase)
 
 
@@ -37,7 +37,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.order_fields(('tipo', 'data_inizio', 'sede', 'locazione'))
+        self.order_fields(('tipo',  'data_inizio', 'sede', 'locazione'))
 
 
 class ModuloModificaLezione(ModelForm):
@@ -62,12 +62,32 @@ class ModuloModificaLezione(ModelForm):
 class ModuloModificaCorsoBase(ModelForm):
     class Meta:
         model = CorsoBase
-        fields = ['data_inizio', 'data_esame', 'descrizione',
+        fields = ['data_inizio', 'data_esame',
+                  'min_participants', 'max_participants',
+                  'descrizione',
                   'data_attivazione', 'data_convocazione',
                   'op_attivazione', 'op_convocazione',]
         widgets = {
             "descrizione": WYSIWYGSemplice(),
         }
+
+    def clean(self):
+        cd = self.cleaned_data
+        if 'min_participants' in cd and 'max_participants' in cd:
+            min, max = cd['min_participants'], cd['max_participants']
+            if min > max:
+                self.add_error('min_participants', "Numero minimo di "
+                    "partecipanti non può essere maggiore del numero massimo.")
+            if max < min:
+                self.add_error('max_participants', "Numero massimo di "
+                    "partecipanti non può essere minore del numero minimo.")
+        return cd
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.tipo != Corso.CORSO_NUOVO:
+            self.fields.pop('min_participants')
+            self.fields.pop('max_participants')
 
 
 class CorsoLinkForm(ModelForm):
