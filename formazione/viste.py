@@ -335,15 +335,19 @@ def aspirante_corso_base_modifica(request, me, pk):
 @pagina_privata
 def aspirante_corso_base_attiva(request, me, pk):
     corso = get_object_or_404(CorsoBase, pk=pk)
+
     if not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
+
     if corso.stato != corso.PREPARAZIONE:
-        return messaggio_generico(request, me, titolo="Il corso è già attivo",
+        return messaggio_generico(request, me,
+                                  titolo="Il corso è già attivo",
                                   messaggio="Non puoi attivare un corso già attivo",
                                   torna_titolo="Torna al Corso",
                                   torna_url=corso.url)
     if not corso.attivabile():
-        return errore_generico(request, me, titolo="Impossibile attivare questo corso",
+        return errore_generico(request, me,
+                               titolo="Impossibile attivare questo corso",
                                messaggio="Non sono soddisfatti tutti i criteri di attivazione. "
                                          "Torna alla pagina del corso e verifica che tutti i "
                                          "criteri siano stati soddisfatti prima di attivare un "
@@ -352,30 +356,33 @@ def aspirante_corso_base_attiva(request, me, pk):
                                torna_url=corso.url)
 
     if corso.data_inizio < poco_fa():
-        return errore_generico(request, me, titolo="Impossibile attivare un corso già iniziato",
+        return errore_generico(request, me,
+                               titolo="Impossibile attivare un corso già iniziato",
                                messaggio="Siamo spiacenti, ma non possiamo attivare il corso e inviare "
                                          "le e-mail a tutti gli aspiranti nella zona se il corso è "
                                          "già iniziato. Ti inviato a verificare i dati del corso.",
                                torna_titolo="Torna al Corso",
                                torna_url=corso.url)
 
-    corpo = {"corso": corso, "persona": me}
-    testo = get_template("email_aspirante_corso_inc_testo.html").render(corpo)
+    email_body = {"corso": corso, "persona": me}
+    text = get_template("email_aspirante_corso_inc_testo.html").render(
+        email_body)
 
     if request.POST:
         corso.attiva(rispondi_a=me)
-        return messaggio_generico(request, me, titolo="Corso attivato con successo",
+        return messaggio_generico(request, me,
+                                  titolo="Corso attivato con successo",
                                   messaggio="A breve tutti gli aspiranti nelle vicinanze verranno informati "
                                             "dell'attivazione di questo corso base.",
                                   torna_titolo="Torna al Corso",
                                   torna_url=corso.url)
 
-    contesto = {
+    context = {
         "corso": corso,
         "puo_modificare": True,
-        "testo": testo,
+        "testo": text,
     }
-    return 'aspirante_corso_base_scheda_attiva.html', contesto
+    return 'aspirante_corso_base_scheda_attiva.html', context
 
 
 @pagina_privata
@@ -448,20 +455,20 @@ def aspirante_corso_base_termina(request, me, pk):
 
 @pagina_privata
 def aspirante_corso_base_iscritti(request, me, pk):
-
     corso = get_object_or_404(CorsoBase, pk=pk)
+
     if not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
     elenco = ElencoPartecipantiCorsiBase(corso.queryset_modello())
     in_attesa = corso.partecipazioni_in_attesa()
-    contesto = {
+    context = {
         "corso": corso,
         "puo_modificare": True,
         "elenco": elenco,
         "in_attesa": in_attesa,
     }
-    return 'aspirante_corso_base_scheda_iscritti.html', contesto
+    return 'aspirante_corso_base_scheda_iscritti.html', context
 
 
 @pagina_privata
@@ -745,3 +752,16 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
         'select_extensions_formset': select_extensions_formset,
     }
     return 'aspirante_corso_estensioni_modifica.html', context
+
+@pagina_privata
+def aspirante_corso_estensioni_informa(request, me, pk):
+    course = get_object_or_404(CorsoBase, pk=pk)
+
+    if not me.permessi_almeno(course, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    context = {
+        'corso': course,
+        'puo_modificare': True,
+    }
+    return 'aspirante_corso_informa_persone.html', context

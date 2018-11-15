@@ -27,10 +27,12 @@
 
     {% if corso.possibile_aggiungere_iscritti %}
         <div class="alert alert-block alert-info">
-            <a href="{{ corso.url_iscritti_aggiungi }}"
-               class="pull-right btn btn-info btn-xs">
-                <i class="fa fa-fw fa-plus-circle"></i>
+            <a href="{{ corso.url_iscritti_aggiungi }}" class="pull-right btn btn-info btn-xs" style="margin: 0 0 0 10px;"><i class="fa fa-fw fa-plus-circle"></i>
                 Iscrivi persone
+            </a>
+
+            <a href="{% url 'aspirante:informa' corso.pk %}" class="pull-right btn btn-info btn-xs"><i class="fa fa-fw fa-plus-circle"></i>
+                Informa persone
             </a>
             <p>Vuoi iscrivere persone a questo corso base?</p>
         </div>

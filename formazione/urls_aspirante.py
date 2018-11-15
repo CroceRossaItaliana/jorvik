@@ -46,4 +46,6 @@ urlpatterns = [
         name='subscribe'),
     url(r'^%s/estensioni/$' % url_shortcut, v.aspirante_corso_estensioni_modifica,
         name='estensioni_modifica'),
+    url(r'^%s/informa/$' % url_shortcut, v.aspirante_corso_estensioni_informa,
+        name='informa'),
 ]
