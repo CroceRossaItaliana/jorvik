@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.paginator import Paginator
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.utils.timezone import now
 
 from anagrafica.models import Persona
@@ -49,7 +49,7 @@ def posta(request, me, direzione="in-arrivo", pagina=1, messaggio_id=None):
     if messaggio_id is None:
         messaggio = None
     else:
-        messaggio = Messaggio.objects.get(pk=messaggio_id)
+        messaggio = get_object_or_404(Messaggio, pk=messaggio_id)
 
         # Controlla che io abbia i permessi per leggere il messaggio:
         #  - Devo essere o mittente o destinatario
