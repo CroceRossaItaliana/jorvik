@@ -13,7 +13,6 @@
 
 
 {% block app_contenuto %}
-
     <h2 class="allinea-centro grassetto text-success">
         {{ corso.nome }}
     </h2>
@@ -34,69 +33,6 @@
         <i class="fa fa-fw fa-info-circle"></i>
         {{ corso.get_stato_display }}
     </h4>
-
-    {% if puo_modificare and corso.stato == corso.PREPARAZIONE and corso.prossimo %}
-        <div class="alert alert-danger">
-            <h4><i class="fa fa-warning"></i> Non c'è tempo da perdere!</h4>
-            <p>Questo corso inizier&agrave; a breve, ma non hai ancora attivato il Corso su Gaia.</p>
-            <p>Questo vuol dire che il corso non pu&ograve; ancora essere raggiunto da
-                <strong>nessuno dei {{ corso.aspiranti_nelle_vicinanze.count }} aspiranti</strong>
-                che aspettano un corso nelle vicinanze su Gaia. Ti consigliamo di completare con
-                quanti pi&ugrave; dettagli possibile la scheda
-                di questo corso e procedere all'attivazione: raggiungerai cos&igrave; tutti
-                gli aspiranti nelle vicinanze.</p>
-        </div>
-    {% endif %}
-
-    {% if puo_modificare and corso.stato == corso.PREPARAZIONE %}
-        <div class="alert alert-warning alert-block">
-            <h4><i class="fa fa-fw fa-warning"></i> Il corso non &egrave; ancora attivo</h4>
-            <p>Questo corso &egrave; ancora una bozza ("In Preparazione"). &Egrave; necessario
-                attivare il corso affinch&eacute; questo possa essere trovato dagli aspiranti.
-                Completa i passi necessari e clicca sul pulsante per attivare il corso:
-            </p>
-
-            <p>
-                {% checkbox corso.descrizione %}:
-                Inserisci una descrizione del Corso per gli Aspiranti dalla scheda "Gestione corso";
-            </p>
-            <p>
-                {% checkbox corso.locazione %}:
-                Inserisci l'indirizzo del Corso dalla scheda "Gestione corso";
-            </p>
-            <p>
-                <a class="btn btn-warning {% if not corso.attivabile %}disabled{% endif %}"
-                    {% if corso.attivabile %}href="{{ corso.url_attiva }}"{% endif %}
-                >
-                    <i class="fa fa-fw fa-check-circle"></i>
-                    Attiva il corso e informa gli aspiranti in zona (pi&ugrave; di
-                    {{ corso.aspiranti_nelle_vicinanze.count }})
-                </a>
-            </p>
-        </div>
-    {% endif %}
-
-    {% if puo_modificare and corso.terminabile %}
-        <div class="alert alert-success alert-block">
-            <h4><i class="fa fa-fw fa-warning"></i> Genera il verbale e termina il corso</h4>
-            <p>
-                Il corso si &egrave; concluso, ma &egrave; ancora necessario generare il verbale
-                del corso.
-            </p>
-            <p>
-                Una volta generato il verbale, tutti i partecipanti verranno informati dell'esito
-                e, coloro che saranno stati promossi, verranno trasformati automaticamente in
-                volontari.
-            </p>
-            <p>
-                <a class="btn btn-success" href="{{ corso.url_termina }}">
-                    <i class="fa fa-fw fa-check-circle"></i>
-                    Completa i dati per generare il verbale e terminare il corso
-                </a>
-            </p>
-        </div>
-    {% endif %}
-
 
     <ul class="nav nav-tabs">
         <li role="presentation" {% if request.path == corso.url %}class="active"{% endif %}>
@@ -145,7 +81,8 @@
                 </a>
             </li>{% endif %}
         </ul>
-        <ul class="nav nav-tabs">
+
+        <ul class="nav nav-tabs" style="margin-bottom:25px;">
             <li role="presentation" {% if corso.url_lezioni in request.path %}class="active"{% endif %}>
                 <a href="{{ corso.url_lezioni }}">
                     <i class="fa fa-fw fa-calendar"></i>
@@ -166,6 +103,75 @@
             </li>
         {% endif %}
         </ul>
+
+    {% if puo_modificare and corso.stato == corso.PREPARAZIONE and corso.prossimo %}
+        <div class="alert alert-danger">
+            <h4><i class="fa fa-warning"></i> Non c'è tempo da perdere!</h4>
+            <p>Questo corso inizier&agrave; a breve, ma non hai ancora attivato il Corso su Gaia.</p>
+            <p>Questo vuol dire che il corso non pu&ograve; ancora essere raggiunto da
+                <strong>nessuno dei {{ corso.aspiranti_nelle_vicinanze.count }} aspiranti</strong>
+                che aspettano un corso nelle vicinanze su Gaia. Ti consigliamo di completare con
+                quanti pi&ugrave; dettagli possibile la scheda
+                di questo corso e procedere all'attivazione: raggiungerai cos&igrave; tutti
+                gli aspiranti nelle vicinanze.</p>
+        </div>
+    {% endif %}
+
+    {% if puo_modificare and corso.stato == corso.PREPARAZIONE %}
+        <div class="alert alert-warning alert-block">
+            <h4><i class="fa fa-fw fa-warning"></i> Il corso non &egrave; ancora attivo</h4>
+            <p>Questo corso &egrave; ancora una bozza ("In Preparazione"). &Egrave; necessario
+                attivare il corso affinch&eacute; questo possa essere trovato dagli aspiranti.
+                Completa i passi necessari e clicca sul pulsante per attivare il corso:
+            </p>
+
+            <p>
+                {% checkbox corso.descrizione %}:
+                Inserisci una descrizione del Corso per gli Aspiranti dalla scheda "Gestione corso";
+            </p>
+            <p>
+                {% checkbox corso.locazione %}:
+                Inserisci l'indirizzo del Corso dalla scheda "Gestione corso";
+            </p>
+            <p style="text-align: center;margin-top: 20px;">
+                <a class="btn btn-warning {% if not corso.attivabile %}disabled{% endif %}"
+                    {% if corso.attivabile %}href="{{ corso.url_attiva }}"{% endif %}>
+                    <i class="fa fa-fw fa-check-circle"></i>
+                    {% if corso.extension_type == '1' %}
+                    Attiva il corso e informa gli aspiranti in zona (pi&ugrave; di
+                    {{ corso.aspiranti_nelle_vicinanze.count }})
+
+                    {% elif corso.extension_type == '2' %}
+                    Attiva il corso e informa i volontari dei segmenti selezionati.
+
+                    {% else %}
+                    Attiva il corso
+                    {% endif %}
+                </a>
+            </p>
+        </div>
+    {% endif %}
+
+    {% if puo_modificare and corso.terminabile %}
+        <div class="alert alert-success alert-block">
+            <h4><i class="fa fa-fw fa-warning"></i> Genera il verbale e termina il corso</h4>
+            <p>
+                Il corso si &egrave; concluso, ma &egrave; ancora necessario generare il verbale
+                del corso.
+            </p>
+            <p>
+                Una volta generato il verbale, tutti i partecipanti verranno informati dell'esito
+                e, coloro che saranno stati promossi, verranno trasformati automaticamente in
+                volontari.
+            </p>
+            <p>
+                <a class="btn btn-success" href="{{ corso.url_termina }}">
+                    <i class="fa fa-fw fa-check-circle"></i>
+                    Completa i dati per generare il verbale e terminare il corso
+                </a>
+            </p>
+        </div>
+    {% endif %}
 
     <p>&nbsp;</p>
     {% block scheda_contenuto %}
