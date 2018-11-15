@@ -709,7 +709,7 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
                     corso = instance.corso
 
                     # Skip blank extra formset
-                    if cd == {} and len(select_extensions_formset) >= 1:
+                    if cd == {} and len(select_extensions_formset) > 1:
                         continue
 
                     # Do validation only with specified extension type
@@ -733,6 +733,15 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
                 # Save all forms and redirect to the same page.
                 select_extension_type_form.save()
                 select_extensions_formset.save()
+
+                # Set EXT_MIA_SEDE if course has no extensions
+                reset_corso_ext = CorsoBase.objects.get(pk=pk)
+                corso_has_extensions = reset_corso_ext.has_extensions()
+                new_objects = select_extensions_formset.new_objects
+                if not corso_has_extensions and not new_objects:
+                    reset_corso_ext.extension_type = CorsoBase.EXT_MIA_SEDE
+                    reset_corso_ext.save()
+
                 return redirect(reverse('aspirante:estensioni_modifica', args=[pk]))
 
     else:
