@@ -1422,8 +1422,8 @@ def us_tesserini_emissione_processa(request, me):
 
     def __multi_richiesta(sedi):
         """
-        Nel caso di Comitato lazio i tesserini richiesti sono sempre 2 (Comitato regionale Lazio-Comitato dell' area metropolitana di roma Coordinamento)
-        :return: True se in sedi è presente Comitato lazio o roma coordinamento
+        Nel caso di Comitato lazio i tesserini richiesti sono sempre 2 (Comitato regionale Lazio e Comitato dell' area metropolitana di roma Coordinamento)
+        :return: True se in sedi è presente Comitato lazio o roma
         """
         for sede in sedi:
             if re.search('roma', sede.nome) or re.search('Roma', sede.nome):
@@ -1483,14 +1483,11 @@ def us_tesserini_emissione_processa(request, me):
 
             if __multi_richiesta(sedi):
                 # Devo eliminare richiesta tesserino di Roma Coordinamento
-                tesserini_lazio = tesserini.filter(
-                    emesso_da=Sede.objects.filter(nome="Comitato Regionale Lazio").first(),
-                )
-                for tesserino in tesserini_lazio:
+                for tesserino in tesserini:
                     tess = Tesserino.objects.filter(
                         persona=tesserino.persona,
                         emesso_da=Sede.objects.filter(
-                            nome="Comitato dell'aria Metropolitana di roma capitale Coordinamento"
+                            nome="Comitato dell'Area Metropolitana di Roma Capitale Coordinamento"
                         ).first(),
                         stato_richiesta=Tesserino.RICHIESTO
                     )
