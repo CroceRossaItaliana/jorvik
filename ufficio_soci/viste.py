@@ -917,6 +917,17 @@ def us_quote_nuova(request, me):
 
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
 
+    def __is_us_territoriale(me, sedi):
+        from anagrafica.permessi.applicazioni import UFFICIO_SOCI_UNITA
+        from anagrafica.costanti import LOCALE
+        sedi_tmp = sedi
+        for delega in me.deleghe_attuali():
+            if delega.tipo == UFFICIO_SOCI_UNITA and delega.oggetto.estensione == LOCALE:
+                sedi_tmp = sedi_tmp.exclude(nome=delega.oggetto)
+        return sedi_tmp
+
+    sedi = __is_us_territoriale(me, sedi)
+
     questo_anno = poco_fa().year
 
     try:
@@ -947,20 +958,13 @@ def us_quote_nuova(request, me):
             importo = modulo.cleaned_data['importo']
             data_versamento = modulo.cleaned_data['data_versamento']
 
-
             appartenenza = volontario.appartenenze_attuali(
                 al_giorno=data_versamento, membro=Appartenenza.VOLONTARIO
             ).first()
             comitato = appartenenza.sede.comitato if appartenenza else None
 
-            if not appartenenza:
-                modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
-                                                  'alla Sede.')
-
-            elif appartenenza.sede not in sedi or comitato not in sedi:
-                modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
-
-            elif not comitato.locazione:
+            # Controlli che generano errore generico (fanno il redirect su una pagina di errore)
+            if not comitato.locazione:
                 return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un indirizzo "
                                                  "per la Sede del Comitato di %s. Il Presidente può gestire i dati "
@@ -971,6 +975,14 @@ def us_quote_nuova(request, me):
                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un "
                                                  "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
                                                  "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+
+            # Controlli che aggiungono errori alla form
+            if not appartenenza:
+                modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
+                                                    'alla Sede.')
+
+            elif appartenenza.sede not in sedi: # or comitato not in sedi:
+                modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
 
             else:
                 if riduzione:

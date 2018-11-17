@@ -1613,7 +1613,7 @@ class SedeQuerySet(TreeQuerySet):
         comitati_dei_territoriali_presenti = Sede.objects.filter(figli__in=territoriali_presenti)
         return comitati_presenti | comitati_dei_territoriali_presenti
 
-    def espandi(self, pubblici=False, ignora_disattivi=True):
+    def espandi(self, pubblici=False, ignora_disattivi=True, **kwargs):
         """
         Espande il QuerySet.
         Se pubblico, me e tutte le sedi sottostanti.
@@ -1629,6 +1629,9 @@ class SedeQuerySet(TreeQuerySet):
 
         if ignora_disattivi:
             qs = qs.filter(attiva=True)
+
+        if not kwargs.get('includi_me'):
+            qs = qs.exclude(estensione__in=[NAZIONALE, REGIONALE, PROVINCIALE, LOCALE])
 
         return qs
 
