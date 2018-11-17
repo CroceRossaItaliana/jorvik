@@ -1,3 +1,4 @@
+import re
 from django.contrib.admin import ModelAdmin
 from django.db.models import Q, F
 from django.utils.encoding import force_text
@@ -587,7 +588,7 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         r = Persona.objects.filter(
             Appartenenza.query_attuale(
-                al_giorno=oggi,
+                    al_giorno=oggi,
                 sede__in=qs_sedi, membro=Appartenenza.VOLONTARIO,
             ).via("appartenenze"),
             Q(**aggiuntivi),
