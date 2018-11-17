@@ -1,5 +1,6 @@
 import json
 import random
+import re
 from collections import OrderedDict
 
 from django.core.paginator import Paginator
@@ -1306,8 +1307,23 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
                                **torna)
 
     regionale = comitato.superiore(estensione=REGIONALE)
+
     if not regionale:
         raise ValueError("%s non ha un comitato regionale." % (comitato,))
+
+    tesserini = []
+
+    if re.search('roma', regionale.nome) or re.search('Roma', regionale.nome):
+        lazio = Sede.objects.filter(nome="Comitato Regionale Lazio").first()
+        # Crea la richiesta di tesserino
+        tesserino = Tesserino.objects.create(
+            persona=persona,
+            emesso_da=lazio,
+            tipo_richiesta=tipo_richiesta,
+            stato_richiesta=Tesserino.RICHIESTO,
+            richiesto_da=me,
+        )
+        tesserini.append(tesserino)
 
     # Crea la richiesta di tesserino
     tesserino = Tesserino.objects.create(
@@ -1317,6 +1333,7 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
         stato_richiesta=Tesserino.RICHIESTO,
         richiesto_da=me,
     )
+    tesserini.append(tesserino)
 
     if duplicato:
         oggetto = "Richiesta Duplicato Tesserino inoltrata"
@@ -1329,19 +1346,30 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
         modello="posta_richiesta_tesserino.html",
         corpo={
             "persona": persona,
-            "tesserino": tesserino,
+            "tesserino": tesserini[0] if len(tesserini) == 1 else tesserini,
+            "is_list": False if len(tesserini) == 1 else True,
             "duplicato": duplicato
         },
         mittente=me,
         destinatari=[persona]
     )
 
+    def __componi_messaggio(tesserini, persona):
+        tes = ""
+        for tesserino in tesserini:
+            tes += "({})".format(tesserino.emesso_da)
+
+        messaggio = "La richiesta di stampa è stata inoltrata correttamente {} {} per il volontario {}".format(
+            "alla Sede di" if len(tesserini) == 1 else "alle Sedi di",
+            tes,
+            persona.nome_completo
+        )
+        return messaggio
+
     # Mostra un messaggio
-    return messaggio_generico(request, me, titolo="Richiesta inoltrata",
-                              messaggio="La richiesta di stampa è stata inoltrata correttamente alla Sede di "
-                                        "emissione (%s) per il Volontario %s." % (
-                                  tesserino.emesso_da, persona.nome_completo,
-                              ), **torna)
+    return messaggio_generico(
+        request, me, titolo="Richiesta inoltrata", messaggio=__componi_messaggio(tesserini, persona)
+        , **torna)
 
 
 @pagina_privata
@@ -1349,6 +1377,7 @@ def us_tesserini_emissione(request, me):
     sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
 
     sedi = Sede.objects.filter(id__in=sedi.values_list('id', flat=True))
+
     # Comitati Locali e Provinciali.
     sedi_espandi = sedi.espandi(pubblici=True).comitati().exclude(estensione__in=[NAZIONALE, REGIONALE])
 
@@ -1391,7 +1420,20 @@ def us_tesserini_emissione(request, me):
 @pagina_privata
 def us_tesserini_emissione_processa(request, me):
 
+    def __multi_richiesta(sedi):
+        """
+        Nel caso di Comitato lazio i tesserini richiesti sono sempre 2 (Comitato regionale Lazio e Comitato dell' area metropolitana di roma Coordinamento)
+        :return: True se in sedi è presente Comitato lazio o roma
+        """
+        for sede in sedi:
+            if re.search('roma', sede.nome) or re.search('Roma', sede.nome):
+                return True
+            elif re.search('lazio', sede.nome) or re.search('Lazio', sede.nome):
+                return True
+        return False
+
     sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
+
 
     if not request.POST:  # Qui si arriva tramite POST.
         return redirect("/us/tesserini/emissione/")
@@ -1438,6 +1480,18 @@ def us_tesserini_emissione_processa(request, me):
                              stato_emissione=stato_emissione,
                              motivo_rifiutato=motivo_rifiutato,
                              data_conferma=poco_fa())
+
+            if __multi_richiesta(sedi):
+                # Devo eliminare richiesta tesserino di Roma Coordinamento
+                for tesserino in tesserini:
+                    tess = Tesserino.objects.filter(
+                        persona=tesserino.persona,
+                        emesso_da=Sede.objects.filter(
+                            nome="Comitato dell'Area Metropolitana di Roma Capitale Coordinamento"
+                        ).first(),
+                        stato_richiesta=Tesserino.RICHIESTO
+                    )
+                    tess.delete()
 
             # Attiva i tesserini o disattiva come appropriato
             valido = (stato_emissione and stato_richiesta == Tesserino.ACCETTATO)
