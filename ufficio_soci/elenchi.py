@@ -543,6 +543,12 @@ class ElencoInRiserva(ElencoVistaSoci):
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
+    def excel_colonne(self):
+        return super(ElencoInRiserva, self).excel_colonne() + (
+            ("Data inizio", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().inizio),
+            ("Data fine", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().fine),
+        )
+
 
 class ElencoElettoratoAlGiorno(ElencoVistaSoci):
     """
