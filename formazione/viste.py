@@ -20,7 +20,7 @@ from base.models import Log
 from base.utils import poco_fa
 from posta.models import Messaggio
 from .elenchi import ElencoPartecipantiCorsiBase
-from .decorators import access_to_courses
+from .decorators import can_access_to_course
 from .models import (Corso, CorsoBase, CorsoEstensione, AssenzaCorsoBase,
     LezioneCorsoBase, PartecipazioneCorsoBase, Aspirante, InvitoCorsoBase)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
@@ -71,6 +71,7 @@ def formazione_corsi_base_nuovo(request, me):
             sede=cd['sede'],
             data_inizio=cd['data_inizio'],
             data_esame=cd['data_inizio'],
+            tipo=cd['tipo']
         )
 
         if cd['locazione'] == form.PRESSO_SEDE:
@@ -122,6 +123,7 @@ def formazione_corsi_base_fine(request, me, pk):
 
 
 @pagina_pubblica
+@can_access_to_course
 def aspirante_corso_base_informazioni(request, me=None, pk=None):
     corso = get_object_or_404(CorsoBase, pk=pk)
     puo_modificare = me and me.permessi_almeno(corso, MODIFICA)
@@ -137,24 +139,28 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
 
 @pagina_privata
 def aspirante_corso_base_iscriviti(request, me=None, pk=None):
-
     corso = get_object_or_404(CorsoBase, pk=pk)
+
     puoi_partecipare = corso.persona(me)
     if not puoi_partecipare in corso.PUOI_ISCRIVERTI:
-        return errore_generico(request, me, titolo="Non puoi partecipare a questo corso",
-                               messaggio="Siamo spiacenti, ma non sembra che tu possa partecipare "
-                                         "a questo corso per qualche motivo. ",
-                               torna_titolo="Torna al corso",
-                               torna_url=corso.url)
+        return errore_generico(request, me,
+           titolo="Non puoi partecipare a questo corso",
+           messaggio="Siamo spiacenti, ma non sembra che tu possa partecipare "
+                     "a questo corso per qualche motivo.",
+           torna_titolo="Torna al corso",
+           torna_url=corso.url
+        )
 
     p = PartecipazioneCorsoBase(persona=me, corso=corso)
     p.save()
     p.richiedi()
-    return messaggio_generico(request, me, titolo="Sei iscritto al corso base",
-                              messaggio="Complimenti! Abbiamo inoltrato la tua richiesta al direttore "
-                                        "del corso, che ti contatterà appena possibile.",
-                              torna_titolo="Torna al corso",
-                              torna_url=corso.url)
+    return messaggio_generico(request, me,
+        titolo="Sei iscritto al corso",
+        messaggio="Complimenti! Abbiamo inoltrato la tua richiesta al direttore "
+                "del corso, che ti contatterà appena possibile.",
+        torna_titolo="Torna al corso",
+        torna_url=corso.url
+    )
 
 
 @pagina_privata
@@ -181,15 +187,15 @@ def aspirante_corso_base_ritirati(request, me=None, pk=None):
 
 
 @pagina_privata
+@can_access_to_course
 def aspirante_corso_base_mappa(request, me, pk):
-
     corso = get_object_or_404(CorsoBase, pk=pk)
     puo_modificare = me.permessi_almeno(corso, MODIFICA)
-    contesto = {
+    context = {
         "corso": corso,
         "puo_modificare": puo_modificare
     }
-    return 'aspirante_corso_base_scheda_mappa.html', contesto
+    return 'aspirante_corso_base_scheda_mappa.html', context
 
 
 @pagina_privata
@@ -624,11 +630,22 @@ def aspirante_home(request, me):
 
 
 @pagina_privata
-@access_to_courses
+@can_access_to_course
 def aspirante_corsi(request, me):
     """ url: /aspirante/corsi/ """
+    from base.geo import ConGeolocalizzazioneRaggio
+
+    if me.ha_aspirante:
+        corsi = me.aspirante.corsi(tipo=Corso.BASE)
+    elif me.volontario:
+        corsi = CorsoBase.pubblici().filter(tipo=Corso.CORSO_NUOVO)
+        # TODO: corsi nel raggio per VOLONTARIO
+        # corsi = ConGeolocalizzazioneRaggio.nel_raggio(corsi)
+    # else:
+    #     corsi = me.courses_within_area()
+
     context = {
-        'corsi': me.aspirante.corsi(),
+        'corsi':  corsi
     }
     return 'aspirante_corsi_base.html', context
 
@@ -747,11 +764,12 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
     else:
         select_extension_type_form = CorsoSelectExtensionTypeForm(
             prefix=SELECT_EXTENSION_TYPE_FORM_PREFIX,
-            instance=course
+            instance=course,
         )
         select_extensions_formset = CorsoSelectExtensionFormSet(
             prefix=SELECT_EXTENSIONS_FORMSET_PREFIX,
             form_kwargs={'corso': course},
+            queryset=CorsoEstensione.objects.filter(corso=course)
         )
 
     context = {
@@ -761,6 +779,7 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
         'select_extensions_formset': select_extensions_formset,
     }
     return 'aspirante_corso_estensioni_modifica.html', context
+
 
 @pagina_privata
 def aspirante_corso_estensioni_informa(request, me, pk):

@@ -22,6 +22,12 @@ class ModuloCreazioneCorsoBase(ModelForm):
                                 "aiutare gli aspiranti a trovare i Corsi "
                                 "che si svolgono vicino a loro.")
 
+    def clean_tipo(self):
+        tipo = self.cleaned_data['tipo']
+        if not tipo:
+            raise ValidationError('Seleziona un valore.')
+        return tipo
+
     def clean_sede(self):
         sede = self.cleaned_data['sede']
         if sede.locazione is None:
@@ -115,6 +121,7 @@ class CorsoLinkForm(ModelForm):
         self.fields['file'].widget.attrs = {'accept': ", ".join(
             acceptable_extensions)}
 
+
 CorsoFileFormSet = modelformset_factory(CorsoFile, form=CorsoLinkForm, extra=1,
                                         max_num=2)
 
@@ -124,10 +131,10 @@ CorsoLinkFormSet = modelformset_factory(CorsoLink, fields=('link',), extra=1,
 
 
 class ModuloIscrittiCorsoBaseAggiungi(forms.Form):
-    persone = autocomplete_light.ModelMultipleChoiceField("IscrivibiliCorsiAutocompletamento",
-                                                          help_text="Ricerca per Codice Fiscale "
-                                                                    "i Sostenitori o gli Aspiranti "
-                                                                    "CRI da iscrivere a questo Corso Base.")
+    persone = autocomplete_light.ModelMultipleChoiceField(
+        "IscrivibiliCorsiAutocompletamento", help_text="Ricerca per Codice "
+        "Fiscale i Sostenitori o gli Aspiranti CRI da iscrivere a questo Corso Base."
+    )
 
 
 class CorsoSelectExtensionTypeForm(ModelForm):
@@ -139,10 +146,11 @@ class CorsoSelectExtensionTypeForm(ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['extension_type'].choices = CorsoBase.EXTENSION_TYPE_CHOICES
 
-        if not self.instance.get_course_extensions(is_active=True).count():
+        if not self.instance.get_extensions(is_active=True).count():
             # Useful to set EXT_MIA_SEDE as select's default value to avoid
             # possible issues with ExtensionFormSet
             self.initial['extension_type'] = CorsoBase.EXT_MIA_SEDE
+
 
 class CorsoExtensionForm(ModelForm):
     titolo = autocomplete_light.ModelMultipleChoiceField(
