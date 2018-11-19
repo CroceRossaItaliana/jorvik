@@ -1934,10 +1934,15 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         Espande la Sede.
         Se pubblico, me e tutte le sedi sottostanti.
         Se privato, me e le unita' territoriali incluse.
+        Se la sede è un territoriale non ha nessun discendete quindi ritorna semplicemente se stesso.
         :param includi_me: Includimi nel queryset ritornato.
         :param pubblici: Espandi i pubblici, ritornando tutto al di sotto.
         :param ignora_disattive: Nasconde le sedi disattive.
         """
+
+        # Sede Territoriale ritorna se stessa
+        if self.estensione == TERRITORIALE:
+            return self.queryset_modello()
 
         # Sede pubblica... ritorna tutto sotto di se.
         if pubblici and self.estensione in [NAZIONALE, REGIONALE]:
