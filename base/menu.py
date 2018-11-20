@@ -68,46 +68,50 @@ def menu(request):
                         (titolo, "fa-book", "".join(("/utente/rubrica/", slug, '/')))
                     )
 
+    ME_VOLONTARIO = me and (me.volontario or me.dipendente)
+    VOCE_PERSONA = ("Persona", (
+        ("Benvenuto", "fa-bolt", "/utente/"),
+        ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
+        ("Storico", "fa-clock-o", "/utente/storico/"),
+        ("Documenti", "fa-folder", "/utente/documenti/") if ME_VOLONTARIO else None,
+        ("Contatti", "fa-envelope", "/utente/contatti/"),
+        ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
+    ))
+
+    VOCE_VOLONTARIO = ("Volontario", (
+        ("Corsi", "fa-list", reverse('aspirante:corsi_base')),
+        ("Estensione", "fa-random", "/utente/estensione/"),
+        ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
+        ("Riserva", "fa-pause", "/utente/riserva/"),
+    )) if me and me.volontario else None
+
     VOCE_RUBRICA = ("Rubrica", (
         RUBRICA_BASE
     ))
 
+    VOCE_CV = ("Curriculum", (
+        # Competenze personali commentate per non visuallizarle
+        #("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
+        ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
+        ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if ME_VOLONTARIO else None,
+        ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
+        ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/") if ME_VOLONTARIO else None,
+    ))
 
+    VOCE_DONATORE = ("Donatore", (
+        ("Profilo Donatore", "fa-user", "/utente/donazioni/profilo/"),
+        ("Donazioni di Sangue", "fa-flask", "/utente/donazioni/sangue/")
+            if hasattr(me, 'donatore') else None,
+    )) if me and me.volontario else None
+
+    VOCE_SICUREZZA = ("Sicurezza", (
+        ("Cambia password", "fa-key", "/utente/cambia-password/"),
+        ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
+    ))
 
     elementi = {
-        "utente": (
-            (("Persona", (
-                ("Benvenuto", "fa-bolt", "/utente/"),
-                ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
-                ("Storico", "fa-clock-o", "/utente/storico/"),
-                ("Documenti", "fa-folder", "/utente/documenti/") if me and (me.volontario or me.dipendente) else None,
-                ("Contatti", "fa-envelope", "/utente/contatti/"),
-                ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
-            )),
-            ("Volontario", (
-                ("Estensione", "fa-random", "/utente/estensione/"),
-                ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
-                ("Riserva", "fa-pause", "/utente/riserva/"),
-            )) if me and me.volontario else None,
-            VOCE_RUBRICA,
-            ("Curriculum", (
-                # Competenze personali commentate per non visuallizarle
-                #("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
-                ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
-                ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if me and (me.volontario or me.dipendente) else None,
-                ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
-                ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente) else None,
-            )),
-            ("Donatore", (
-                ("Profilo Donatore", "fa-user", "/utente/donazioni/profilo/"),
-                ("Donazioni di Sangue", "fa-flask", "/utente/donazioni/sangue/")
-                    if hasattr(me, 'donatore') else None,
-            )) if me and me.volontario else None,
-            ("Sicurezza", (
-                ("Cambia password", "fa-key", "/utente/cambia-password/"),
-                ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
-            )),
-        )) if me and not hasattr(me, 'aspirante') else None,
+        "utente": (VOCE_PERSONA, VOCE_VOLONTARIO, VOCE_RUBRICA, VOCE_CV,
+                   VOCE_DONATORE, VOCE_SICUREZZA) if me and not hasattr(me, 'aspirante') else None,
         "posta": (
             ("Posta", (
                 ("Scrivi", "fa-pencil", "/posta/scrivi/"),
@@ -207,9 +211,8 @@ def menu(request):
                 ("Pianifica nuovo", "fa-asterisk", reverse(
                     'formazione:new_course')) if gestione_corsi_sede else None,
                 ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
-                ("Domanda formativa",
-                 "fa-area-chart", reverse('formazione:domanda'))
-                                if gestione_corsi_sede else None,
+                ("Domanda formativa", "fa-area-chart", reverse(
+                    'formazione:domanda')) if gestione_corsi_sede else None,
             )),
             ("Corsi di Formazione", (
                 ("Elenco Corsi di Formazione", "fa-list", "/formazione/corsi-formazione/"),
@@ -239,7 +242,7 @@ def menu(request):
             ),
         ) if me and hasattr(me, 'aspirante') else (
             ("Gestione Corsi", (
-                ("Elenco Corsi Base", "fa-list", reverse('formazione:list_courses')),
+                ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
             )),
         ),
     }
