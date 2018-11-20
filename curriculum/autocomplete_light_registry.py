@@ -27,9 +27,11 @@ class TitoloAutocompletamento(autocomplete_light.AutocompleteModelBase):
         # Filter by <area>
         area_id = r.GET.get('area', None)
         if area_id not in ['', None]:
+
             # Titoli CRI (TC)
             if titoli_tipo == Titolo.TITOLO_CRI:
-                self.choices = self.choices.filter(area=area_id)
+                self.choices = self.choices.filter(
+                    livello__goal__unit_reference=area_id)
             
             # Titoli di studio (TS)
             elif titoli_tipo == Titolo.TITOLO_STUDIO:

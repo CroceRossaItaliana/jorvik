@@ -2,12 +2,12 @@ from autocomplete_light import shortcuts as autocomplete_light
 
 from anagrafica.autocomplete_light_registry import AutocompletamentoBase
 from anagrafica.models import Sede
-from .models import FormazioneTitle
+from curriculum.models import Titolo
 
 
 class EstensioneLivelloRegionaleTitolo(AutocompletamentoBase):
-    search_fields = ['name',]
-    model = FormazioneTitle
+    search_fields = ['nome',]
+    model = Titolo
 
 
 class EstensioneLivelloRegionaleSede(AutocompletamentoBase):

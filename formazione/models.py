@@ -19,79 +19,9 @@ from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.models import ModelloSemplice
 from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico, ConPDF
 from base.utils import concept, poco_fa
+from curriculum.models import Titolo
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
-
-
-class FormazioneTitle(ModelloSemplice, ConMarcaTemporale):
-    name = models.CharField('Nome del corso', max_length=255)
-    livello = models.ForeignKey('FormazioneTitleLevel', null=True, blank=True,
-        verbose_name="Livello", on_delete=models.PROTECT)
-
-    class Meta:
-        verbose_name = 'Titolo'
-        verbose_name_plural = 'Titoli'
-
-    def __str__(self):
-        return str(self.name)
-
-
-class FormazioneTitleLevel(models.Model):
-    name = models.CharField('Nome', max_length=255)
-    goal = models.ForeignKey('FormazioneTitleGoal', null=True, blank=True)
-
-    @property
-    def goal_obbiettivo_stragetico(self):
-        return self.goal.unit_reference
-
-    @property
-    def goal_propedeuticita(self):
-        return self.goal.propedeuticita
-
-    @property
-    def goal_unit_reference(self):
-        return self.goal.get_unit_reference_display()
-
-    def __str__(self):
-        return "%s - %s" % (self.name, self.goal)
-
-    class Meta:
-        verbose_name = 'Titolo: Livello'
-        verbose_name_plural = 'Titoli: Livelli'
-
-
-class FormazioneTitleGoal(models.Model):
-    OBBIETTIVO_STRATEGICO_SALUTE = '1'
-    OBBIETTIVO_STRATEGICO_SOCIALE = '2'
-    OBBIETTIVO_STRATEGICO_EMERGENZA = '3'
-    OBBIETTIVO_STRATEGICO_ADVOCACY = '4'
-    OBBIETTIVO_STRATEGICO_GIOVANI = '5'
-    OBBIETTIVO_STRATEGICO_SVILUPPO = '6'
-
-    OBBIETTIVI_STRATEGICI = (
-        (OBBIETTIVO_STRATEGICO_SALUTE, 'Salute'),
-        (OBBIETTIVO_STRATEGICO_SOCIALE, 'Sociale'),
-        (OBBIETTIVO_STRATEGICO_EMERGENZA, 'Emergenza)'),
-        (OBBIETTIVO_STRATEGICO_ADVOCACY, 'Advocacy e mediazione umanitaria'),
-        (OBBIETTIVO_STRATEGICO_GIOVANI, 'Giovani'),
-        (OBBIETTIVO_STRATEGICO_SVILUPPO, 'Sviluppo'),
-        # 'Operatore CRI Attività di Emergenza (OPEM)',
-    )
-    unit_reference = models.CharField("Unità riferimento", max_length=3,
-        null=True, blank=True, choices=OBBIETTIVI_STRATEGICI)
-    propedeuticita = models.CharField("Propedeuticità", max_length=255,
-        null=True, blank=True)
-
-    @property
-    def obbiettivo_stragetico(self):
-        return self.unit_reference
-
-    def __str__(self):
-        return "%s (Obbiettivo %s)" % (self.propedeuticita, self.unit_reference)
-
-    class Meta:
-        verbose_name = 'Titolo: Propedeuticità'
-        verbose_name_plural = 'Titoli: Propedeuticità'
 
 
 class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
@@ -118,8 +48,7 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
     stato = models.CharField('Stato', choices=STATO, max_length=1, default=PREPARAZIONE)
     sede = models.ForeignKey(Sede, related_query_name='%(class)s_corso',
                              help_text="La Sede organizzatrice del Corso.")
-    tipo = models.CharField('Tipo', choices=TIPO_CHOICES, max_length=4,
-                            blank=True)
+    tipo = models.CharField('Tipo', max_length=4, choices=TIPO_CHOICES, blank=True)
 
     class Meta:
         abstract = True
@@ -359,9 +288,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return c
 
     def attivabile(self):
-        """
-        Controlla se il corso base e' attivabile.
-        """
+        """Controlla se il corso base e' attivabile."""
 
         if not self.locazione:
             return False
@@ -405,7 +332,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def attiva(self, rispondi_a=None):
         if not self.attivabile():
             raise ValueError("Questo corso non è attivabile.")
-
         self._invia_email_agli_aspiranti(rispondi_a=rispondi_a)
         self.stato = self.ATTIVO
         self.save()
@@ -527,10 +453,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         )
         return pdf
 
-    def get_course_extensions(self, **kwargs):
-        """Returns CorsoEstensione objects related to the course"""
-        return self.corsoestensione_set.filter(**kwargs)
-
     class Meta:
         verbose_name = "Corso Base"
         verbose_name_plural = "Corsi Base"
@@ -553,13 +475,6 @@ class CorsoEstensione(ConMarcaTemporale):
     titolo = models.ManyToManyField(FormazioneTitle, blank=True)
     sede = models.ManyToManyField(Sede)
     sedi_sottostanti = models.BooleanField(default=False, db_index=True)
-
-    class Meta:
-        verbose_name = 'Estensione del Corso'
-        verbose_name_plural = 'Estensioni del Corso'
-
-    def __str__(self):
-        return '%s' % self.corso if hasattr(self, 'corso') else 'No CorsoBase set.'
 
     def visible_by_extension_type(self):
         type = self.corso.extension_type
