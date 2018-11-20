@@ -1630,7 +1630,7 @@ class SedeQuerySet(TreeQuerySet):
         if ignora_disattivi:
             qs = qs.filter(attiva=True)
 
-        if not kwargs.get('includi_me'):
+        if kwargs.get('territoriale'):
             qs = qs.exclude(estensione__in=[NAZIONALE, REGIONALE, PROVINCIALE, LOCALE])
 
         return qs
