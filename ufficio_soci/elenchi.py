@@ -3,7 +3,8 @@ from django.contrib.admin import ModelAdmin
 from django.db.models import Q, F
 from django.utils.encoding import force_text
 
-from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera, ProvvedimentoDisciplinare
+from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera, ProvvedimentoDisciplinare, Trasferimento, Dimissione
+from base.models import Autorizzazione
 from attivita.models import Partecipazione
 from base.utils import filtra_queryset, testo_euro, oggi
 from curriculum.models import TitoloPersonale
@@ -395,6 +396,21 @@ class ElencoDimessi(ElencoVistaAnagrafica):
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
+    def excel_colonne(self):
+
+        def _data(p):
+            dim = Dimissione.objects.filter(persona=p.pk).order_by('ultima_modifica').first()
+            return dim.creazione
+
+        def _motivo(p):
+            dim = Dimissione.objects.filter(persona=p.pk).order_by('ultima_modifica').first()
+            return dim.motivo
+
+        return super(ElencoDimessi, self).excel_colonne() + (
+            ('Data dimissioni', lambda p: _data(p)),
+            ('Motivazioni', lambda p: _motivo(p))
+        )
+
 
 class ElencoTrasferiti(ElencoVistaAnagrafica):
     """
@@ -418,6 +434,25 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
+
+    def excel_colonne(self):
+
+        # TODO:
+        def _data(p):
+            autorizazzioni = Trasferimento.objects.filter(persona=p.id).order_by('creazione').first().autorizzazioni
+            return ''
+
+        def _motivo(p):
+            return Trasferimento.objects.filter(persona=p.id).order_by('creazione').first().motivo
+
+        def _destinazione(p):
+            return Trasferimento.objects.filter(persona=p.id).order_by('creazione').first().destinazione
+
+        return super(ElencoTrasferiti, self).excel_colonne() + (
+            ('Data del trasferimento', lambda p: _data(p)),
+            ('Comitato di destinazione', lambda p: _destinazione(p)),
+            ('Motivazione', lambda p: _motivo(p)),
+        )
 
 
 class ElencoDipendenti(ElencoVistaSoci):
