@@ -133,7 +133,7 @@ def permessi_ufficio_soci_unita(sede):
     return [
         (RUBRICA_UFFICIO_SOCI_UNITA, sede.espandi(includi_me=True, pubblici=True)),
         (GESTIONE_SOCI,     gestione_soci),
-        (ELENCHI_SOCI,      sede_qs),
+        (ELENCHI_SOCI,      gestione_soci),
     ]
 
 
