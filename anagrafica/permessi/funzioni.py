@@ -126,7 +126,7 @@ def permessi_ufficio_soci_unita(sede):
     from anagrafica.costanti import LOCALE
 
     if sede.estensione == LOCALE:
-        gestione_soci = sede_qs.espandi(includi_me=False)
+        gestione_soci = sede_qs.espandi(territoriale=True)
     else:
         gestione_soci = sede_qs
 
