@@ -1325,7 +1325,7 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
 
     tesserini = []
 
-    if re.search('roma', regionale.nome) or re.search('Roma', regionale.nome):
+    if regionale.nome == "Comitato dell'Area Metropolitana di Roma Capitale Coordinamento":
         lazio = Sede.objects.filter(nome="Comitato Regionale Lazio").first()
         # Crea la richiesta di tesserino
         tesserino = Tesserino.objects.create(
