@@ -168,7 +168,7 @@ class CorsoExtensionForm(ModelForm):
 
 
 CorsoSelectExtensionFormSet = modelformset_factory(CorsoEstensione, extra=1,
-    max_num=2, form=CorsoExtensionForm, can_delete=True)
+    max_num=3, form=CorsoExtensionForm, can_delete=True)
 
 
 class ModuloConfermaIscrizioneCorsoBase(forms.Form):

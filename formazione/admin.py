@@ -16,6 +16,7 @@ RAW_ID_FIELDS_INVITOCORSOBASE = ['persona', 'corso', 'invitante',]
 RAW_ID_FIELDS_LEZIONECORSOBASE = ['corso',]
 RAW_ID_FIELDS_ASSENZACORSOBASE = ['lezione', 'persona', 'registrata_da',]
 RAW_ID_FIELDS_ASPIRANTE = ['persona', 'locazione',]
+RAW_ID_FIELDS_ESTENSIONE = ['sede', 'titolo',]
 
 
 class InlineDelegaCorsoBase(ReadonlyAdminMixin, GenericTabularInline):
@@ -49,6 +50,11 @@ class InlineAssenzaCorsoBase(ReadonlyAdminMixin, admin.TabularInline):
     raw_id_fields = RAW_ID_FIELDS_ASSENZACORSOBASE
     extra = 0
 
+class InlineEstensioneCorso(ReadonlyAdminMixin, admin.TabularInline):
+    model = CorsoEstensione
+    raw_id_fields = RAW_ID_FIELDS_ESTENSIONE
+    extra = 0
+
 
 def admin_corsi_base_attivi_invia_messaggi(modeladmin, request, queryset):
     corsi = queryset.filter(stato=CorsoBase.ATTIVO)
@@ -64,7 +70,8 @@ class AdminCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     list_display = ['progressivo', 'anno', 'stato', 'sede', 'data_inizio', 'data_esame', ]
     list_filter = ['anno', 'creazione', 'stato', 'data_inizio', ]
     raw_id_fields = RAW_ID_FIELDS_CORSOBASE
-    inlines = [InlineDelegaCorsoBase, InlinePartecipazioneCorsoBase, InlineInvitoCorsoBase, InlineLezioneCorsoBase]
+    inlines = [InlineDelegaCorsoBase, InlinePartecipazioneCorsoBase,
+               InlineInvitoCorsoBase, InlineLezioneCorsoBase, InlineEstensioneCorso]
     actions = [admin_corsi_base_attivi_invia_messaggi]
 
 
@@ -85,7 +92,7 @@ class AdminCorsoLink(admin.ModelAdmin):
 @admin.register(CorsoEstensione)
 class AdminCorsoEstensione(admin.ModelAdmin):
     list_display = ['corso', 'is_active', 'segmento', 'sedi_sottostanti']
-    raw_id_fields = ['sede', 'titolo',]
+    raw_id_fields = RAW_ID_FIELDS_ESTENSIONE
 
 
 @admin.register(PartecipazioneCorsoBase)

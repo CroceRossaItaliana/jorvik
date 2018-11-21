@@ -1,13 +1,14 @@
-def access_to_courses(function):
-    from django.shortcuts import redirect
-    from .models import Corso
-    from anagrafica.permessi.costanti import ERRORE_PERMESSI
+from django.shortcuts import redirect
+from .models import Corso
+from anagrafica.permessi.costanti import ERRORE_PERMESSI
 
+
+def can_access_to_course(function):
     def wrapper(request, *args, **kwargs):
         me = request.me
-
-        if not me.ha_aspirante:
-            return redirect(ERRORE_PERMESSI)
+        REDIRECT_ERR = redirect(ERRORE_PERMESSI)
+        if not me.ha_aspirante and not me.volontario:
+            return REDIRECT_ERR
 
         r = function(request, *args, **kwargs)
         try:
@@ -15,19 +16,27 @@ def access_to_courses(function):
         except IndexError:
             return r
         else:
-            if context and ('corsi' in context):
-                is_aspirante = me.ha_aspirante
-                is_volontario = me.volontario
+            if not context:
+                return r
 
-                # Filter displayed courses by membership of Persona (nel raggio)
-                params = dict()
-                if is_aspirante:
-                    params = {'tipo': Corso.BASE}
-                if is_volontario:
-                    params = {'tipo': Corso.CORSO_NUOVO}
+        is_aspirante = me.ha_aspirante
+        is_volontario = me.volontario
 
-                # Update context data with new queryset
-                context['corsi'] = me.aspirante.corsi(**params)
+        if 'corso' in context:
+            corso = context['corso']
+            if corso.tipo == Corso.CORSO_NUOVO:
+                # Aspirante can't access to CORSO_NUOVO page.
+                if is_aspirante and not is_volontario:
+                    return REDIRECT_ERR
+
+        if 'corsi' in context:
+            if is_aspirante and not is_volontario:
+                # Update corsi queryset
+                context['corsi'] = me.aspirante.corsi(tipo=Corso.BASE)
+
+            if is_volontario and not is_aspirante:
+                params = {'tipo': Corso.CORSO_NUOVO}
+
         return r
 
     wrapper.__doc__ = function.__doc__

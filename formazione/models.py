@@ -114,6 +114,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     op_convocazione = models.CharField('Ordinanza presidenziale convocazione',
                                         max_length=255, blank=True, null=True)
     extension_type = models.CharField(max_length=5, blank=True, null=True,
+                                      default=EXT_MIA_SEDE,
                                       choices=EXTENSION_TYPE_CHOICES)
     min_participants = models.SmallIntegerField("Minimo partecipanti",
         default=MIN_PARTECIPANTI,
@@ -131,14 +132,22 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO = "VOL"
     NON_PUOI_ISCRIVERTI_TROPPO_TARDI = "TAR"
     NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO = "ALT"
-    NON_PUOI_ISCRIVERTI = (NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO, NON_PUOI_ISCRIVERTI_TROPPO_TARDI,
-                           NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO,)
+    NON_PUOI_SEI_ASPIRANTE = 'ASP'
+    NON_PUOI_ISCRIVERTI = (NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO,
+                           NON_PUOI_ISCRIVERTI_TROPPO_TARDI,
+                           NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO,
+                           NON_PUOI_SEI_ASPIRANTE)
 
     NON_PUOI_ISCRIVERTI_SOLO_SE_IN_AUTONOMIA = (NON_PUOI_ISCRIVERTI_TROPPO_TARDI,)
 
     def persona(self, persona):
-        if (not Aspirante.objects.filter(persona=persona).exists()) and persona.volontario:
-            return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
+        # Checks related to tipo.CORSO_NUOVO (not old CorsoBase)
+        if Corso.CORSO_NUOVO == self.tipo:
+            if persona.ha_aspirante:
+                return self.NON_PUOI_SEI_ASPIRANTE
+
+        # if (not Aspirante.objects.filter(persona=persona).exists()) and persona.volontario:
+        #     return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
 
         if PartecipazioneCorsoBase.con_esito_ok(persona=persona, corso__stato=self.ATTIVO).exclude(corso=self).exists():
             return self.NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO
@@ -203,7 +212,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def nome(self):
-        return "Corso Base %d/%d (%s)" % (self.progressivo, self.anno, self.sede)
+        course_type = 'Corso Base' if self.tipo == Corso.BASE else 'Corso'
+        return "%s %d/%d (%s)" % (course_type, self.progressivo, self.anno, self.sede)
 
     @property
     def link(self):
@@ -337,19 +347,114 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         self.save()
 
     def _invia_email_agli_aspiranti(self, rispondi_a=None):
-        for aspirante in self.aspiranti_nelle_vicinanze():
-            persona = aspirante.persona
-            if not aspirante.persona.volontario:
-                Messaggio.costruisci_e_accoda(
-                    oggetto="Nuovo Corso per Volontari CRI",
-                    modello="email_aspirante_corso.html",
-                    corpo={
-                        "persona": persona,
-                        "corso": self,
-                    },
-                    destinatari=[persona],
-                    rispondi_a=rispondi_a
-                )
+        is_nuovo_corso = self.tipo == Corso.CORSO_NUOVO
+        if is_nuovo_corso:
+            print('_send_email_to_participants')
+            recepients = self.get_volunteers_by_course_requirements()
+        else:
+            recepients = self.aspiranti_nelle_vicinanze()
+
+        for recepient in recepients:
+            if is_nuovo_corso:
+                persona = recepient
+            else:
+                persona = recepient.persona
+
+            email_data = dict(
+                oggetto="Nuovo Corso per Volontari CRI",
+                modello="email_aspirante_corso.html",
+                corpo={
+                    'persona': persona,
+                    'corso': self,
+                },
+                destinatari=[persona],
+                rispondi_a=rispondi_a
+            )
+
+            if is_nuovo_corso:
+                # If course tipo is CORSO_NUOVO to send to volunteers only
+                Messaggio.costruisci_e_accoda(**email_data)
+            elif not is_nuovo_corso and not recepient.persona.volontario:
+                # to send to <Aspirante> only
+                Messaggio.costruisci_e_accoda(**email_data)
+
+    def has_extensions(self, is_active=True, **kwargs):
+        """ Case: extension_type == EXT_LVL_REGIONALE """
+        return self.corsoestensione_set.filter(is_active=is_active).exists()
+
+    def get_extensions(self, **kwargs):
+        """ Returns CorsoEstensione objects related to the course """
+        return self.corsoestensione_set.filter(**kwargs)
+
+    def get_extensions_sede(self, with_expanded=True, **kwargs):
+        """ Returns SedeQuerySet """
+        if with_expanded:
+            return self.expand_extensions_sedi_sottostanti()
+        else:
+            return CorsoEstensione.get_sede(course=self, **kwargs)
+
+    def expand_extensions_sedi_sottostanti(self):
+        expanded = Sede.objects.none()
+
+        for e in self.get_extensions():
+            all_sede = e.sede.all()
+            expanded |= all_sede
+            for sede in all_sede:
+                if e.sedi_sottostanti:
+                    expanded |= sede.esplora()
+        return expanded.distinct()
+
+    def get_extensions_titles(self, **kwargs):
+        """ Returns <FormazioneTitle> QuerySet """
+        return CorsoEstensione.get_titles(course=self, **kwargs)
+
+    def get_volunteers_by_course_requirements(self, **kwargs):
+        persons = None
+
+        if self.tipo == Corso.CORSO_NUOVO:
+            corso_extension = self.extension_type
+            if CorsoBase.EXT_MIA_SEDE == corso_extension:
+                by_only_sede = self.get_volunteers_by_only_sede()
+                persons = by_only_sede
+
+            if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
+                by_ext_sede = self.get_volunteers_by_ext_sede()
+                by_ext_titles = self.get_volunteers_by_ext_titles()
+                persons = by_ext_sede | by_ext_titles
+
+        if persons is None:
+            # Sede of course (was set in the first step of course creation)
+            persons = Persona.objects.filter(sede=self.sede)
+
+        return persons.filter(**kwargs).distinct()
+
+    @property
+    def get_firmatario_sede(self):
+        course_created_by = self.deleghe.last()
+        if not hasattr(course_created_by, 'firmatario'):
+            return Sede.objects.none()
+
+        return course_created_by.firmatario.sede_riferimento()
+
+    def get_volunteers_by_only_sede(self):
+        app = Appartenenza.objects.filter(sede=self.get_firmatario_sede,
+                                          membro=Appartenenza.VOLONTARIO)
+        return self._query_get_volunteers_by_sede(app)
+
+    def get_volunteers_by_ext_sede(self):
+        app = Appartenenza.objects.filter(sede__in=self.get_extensions_sede(),
+                                          membro=Appartenenza.VOLONTARIO)
+        return self._query_get_volunteers_by_sede(app)
+
+    def _query_get_volunteers_by_sede(self, appartenenze):
+        return Persona.to_contact_for_courses(corso=self).filter(
+            id__in=appartenenze.values_list('persona__id', flat=True)
+        )
+
+    def get_volunteers_by_ext_titles(self):
+        sede = self.get_extensions_sede()
+        titles = self.get_extensions_titles().values_list('id', flat=True)
+        return Persona.objects.filter(sede__in=sede, titoli_personali__in=titles)
 
     @property
     def concluso(self):
@@ -467,12 +572,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
 class CorsoEstensione(ConMarcaTemporale):
     from segmenti.segmenti import NOMI_SEGMENTI
-
+    from curriculum.models import Titolo
 
     corso = models.ForeignKey(CorsoBase, db_index=True)
     is_active = models.BooleanField(default=True, db_index=True)
     segmento = models.CharField(max_length=9, choices=NOMI_SEGMENTI, blank=True)
-    titolo = models.ManyToManyField(FormazioneTitle, blank=True)
+    titolo = models.ManyToManyField(Titolo, blank=True)
     sede = models.ManyToManyField(Sede)
     sedi_sottostanti = models.BooleanField(default=False, db_index=True)
 
@@ -483,9 +588,43 @@ class CorsoEstensione(ConMarcaTemporale):
         elif type == CorsoBase.EXT_LVL_REGIONALE:
             self.is_active = True
 
+    @classmethod
+    def get_sede(cls, course, **kwargs):
+        sede = cls._get_related_objects_to_course(course, 'sede', **kwargs)
+        return sede if sede else Sede.objects.none()
+
+    @classmethod
+    def get_titles(cls, course, **kwargs):
+        titles = cls._get_related_objects_to_course(course, 'titolo', **kwargs)
+        return titles if titles else Titolo.objects.none()
+
+    @classmethod
+    def _get_related_objects_to_course(cls, course, field, **kwargs):
+        course_extensions = cls.objects.filter(corso=course.pk, **kwargs)
+        if not course_extensions.exists():
+            return ValueError('_get_related_objects_to_course: field <%s>' % field)
+
+        objects = []
+        for i in course_extensions:
+            elem = getattr(i, field).all()
+            if elem:
+                for e in elem:
+                    objects.append(e)
+        if objects:
+            model = ContentType.objects.get_for_model(objects[0]).model_class()
+            return model.objects.filter(id__in=[obj.id for obj in objects]).distinct()
+
+    def __str__(self):
+        return '%s' % self.corso if hasattr(self, 'corso') else 'No CorsoBase set.'
+
     def save(self):
         self.visible_by_extension_type()
         super().save()
+
+    class Meta:
+        verbose_name = 'Estensione del Corso'
+        verbose_name_plural = 'Estensioni del Corso'
+
 
 class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni,
                       ConMarcaTemporale, models.Model):
