@@ -3,7 +3,7 @@ from django.contrib.admin import ModelAdmin
 from django.db.models import Q, F
 from django.utils.encoding import force_text
 
-from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera, ProvvedimentoDisciplinare, Trasferimento, Dimissione
+from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera, ProvvedimentoDisciplinare, Trasferimento, Dimissione, Estensione
 from base.models import Autorizzazione
 from attivita.models import Partecipazione
 from base.utils import filtra_queryset, testo_euro, oggi
@@ -363,6 +363,12 @@ class ElencoEstesi(ElencoVistaSoci):
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
+
+    def excel_colonne(self):
+
+        return super(ElencoEstesi, self).excel_colonne() + (
+            ('Data inizio estensione', lambda p: Estensione.objects.filter(persona=p.pk).order_by('ultima_modifica').first().protocollo_data),
+        )
 
 
 class ElencoVolontariGiovani(ElencoVolontari):
