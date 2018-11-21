@@ -443,16 +443,14 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
 
     def excel_colonne(self):
 
-        # TODO:
         def _data(p):
-            autorizazzioni = Trasferimento.objects.filter(persona=p.id).order_by('creazione').first().autorizzazioni
-            return ''
+            return Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione').first().protocollo_data
 
         def _motivo(p):
-            return Trasferimento.objects.filter(persona=p.id).order_by('creazione').first().motivo
+            return Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione').first().motivo
 
         def _destinazione(p):
-            return Trasferimento.objects.filter(persona=p.id).order_by('creazione').first().destinazione
+            return Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione').first().destinazione
 
         return super(ElencoTrasferiti, self).excel_colonne() + (
             ('Data del trasferimento', lambda p: _data(p)),
