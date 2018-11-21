@@ -918,13 +918,27 @@ def us_quote_nuova(request, me):
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
 
     def __is_us_territoriale(me, sedi):
-        from anagrafica.permessi.applicazioni import UFFICIO_SOCI_UNITA
+        """
+        In Gaia non è prevista la Delega US T su sede LOCALE
+        US T su LOCALE gestisce tutte le sedi territoriali al di sotto di essa
+        US su LOCALE gestisce tutte le sedi territoriali più la sede locale
+        :param me:
+        :param sedi:
+        :return: ritorna una lista di sedi gestite da un delegato con US o US T
+        """
+        from anagrafica.permessi.applicazioni import UFFICIO_SOCI_UNITA, UFFICIO_SOCI
         from anagrafica.costanti import LOCALE
-        sedi_tmp = sedi
+        sedi_us_t = []
+        sedi_us = []
         for delega in me.deleghe_attuali():
+            # prende le sedi locali su cui è delegato con US T (queste devono essere eliminate)
             if delega.tipo == UFFICIO_SOCI_UNITA and delega.oggetto.estensione == LOCALE:
-                sedi_tmp = sedi_tmp.exclude(nome=delega.oggetto)
-        return sedi_tmp
+                sedi_us_t.append(delega.oggetto)
+            # prende le sedi locali su cui è delegato con US (queste devono essere aggiunte)
+            elif delega.tipo == UFFICIO_SOCI and delega.oggetto.estensione == LOCALE:
+                sedi_us.append(delega.oggetto)
+            sedi_exclude = set(sedi_us_t) - set(sedi_us_t)
+        return sedi.exclude(nome__in=sedi_exclude)
 
     sedi = __is_us_territoriale(me, sedi)
 
