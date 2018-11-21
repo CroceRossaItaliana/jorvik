@@ -366,8 +366,15 @@ class ElencoEstesi(ElencoVistaSoci):
 
     def excel_colonne(self):
 
+        def _comitato(p):
+            if p.appartenenza_tipo == Appartenenza.ESTESO:
+                return Estensione.objects.filter(persona=p.pk, ritirata=False).order_by('creazione').first().destinazione
+            else:
+                return Estensione.objects.filter(persona=p.pk, ritirata=False).order_by('creazione').first().appartenenza
+
         return super(ElencoEstesi, self).excel_colonne() + (
-            ('Data inizio estensione', lambda p: Estensione.objects.filter(persona=p.pk).order_by('ultima_modifica').first().protocollo_data),
+            ('Data inizio estensione', lambda p: Estensione.objects.filter(persona=p.pk, ritirata=False).order_by('creazione').first().protocollo_data),
+            ('Comitato', lambda p: _comitato(p)),
         )
 
 
