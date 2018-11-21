@@ -22,6 +22,7 @@ def can_access_to_course(function):
         is_aspirante = me.ha_aspirante
         is_volontario = me.volontario
 
+        # viste.aspirante_corso_base_informazioni
         if 'corso' in context:
             corso = context['corso']
             if corso.tipo == Corso.CORSO_NUOVO:
@@ -29,14 +30,11 @@ def can_access_to_course(function):
                 if is_aspirante and not is_volontario:
                     return REDIRECT_ERR
 
+        # viste.aspirante_corsi
         if 'corsi' in context:
             if is_aspirante and not is_volontario:
                 # Update corsi queryset
                 context['corsi'] = me.aspirante.corsi(tipo=Corso.BASE)
-
-            if is_volontario and not is_aspirante:
-                params = {'tipo': Corso.CORSO_NUOVO}
-
         return r
 
     wrapper.__doc__ = function.__doc__

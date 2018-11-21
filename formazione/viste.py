@@ -639,8 +639,6 @@ def aspirante_corsi(request, me):
         corsi = me.aspirante.corsi(tipo=Corso.BASE)
     elif me.volontario:
         corsi = CorsoBase.pubblici().filter(tipo=Corso.CORSO_NUOVO)
-        # TODO: corsi nel raggio per VOLONTARIO
-        # corsi = ConGeolocalizzazioneRaggio.nel_raggio(corsi)
     # else:
     #     corsi = me.courses_within_area()
 
