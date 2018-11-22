@@ -7,6 +7,7 @@ __author__ = 'alfioemanuele'
 
 PRESIDENTE = 'PR'
 COMMISSARIO = 'CM'
+CONSIGLIERE = 'CN'
 UFFICIO_SOCI = 'US'
 UFFICIO_SOCI_UNITA = 'UU'
 UFFICIO_SOCI_TEMPORANEO = 'UT'
@@ -40,6 +41,7 @@ OBIETTIVI = {
 PERMESSI_NOMI = (
     (PRESIDENTE,                "Presidente"),
     (COMMISSARIO,               "Commissario"),
+    (CONSIGLIERE,               "Consigliere"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
     (UFFICIO_SOCI_UNITA,        "Ufficio Soci Unità territoriali"),
     (DELEGATO_AREA,             "Delegato d'Area"),

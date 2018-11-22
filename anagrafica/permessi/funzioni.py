@@ -8,7 +8,7 @@ from django.db.models import QuerySet, Q
 
 from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO,\
     UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, \
-    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO
+    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, CONSIGLIERE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.applicazioni import DELEGATO_AREA
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
@@ -112,6 +112,17 @@ def permessi_commissario(sede):
         + permessi_responsabile_autoparco(sede) \
         + permessi_delegato_centrale_operativa(sede) \
         + _espandi(sede)
+
+
+def permessi_consigliere(sede):
+    """
+    Permessi della delega di CONSIGLIERE.
+
+    :param sede: Sede di cui si e' consigliere.
+    :return: Lista di permessi.
+    """
+    return []
+
 
 
 def permessi_ufficio_soci_unita(sede):
@@ -349,6 +360,7 @@ def permessi_responsabile_autoparco(sede):
 # Nota bene: Non inserire () dopo il nome della funzione.
 PERMESSI_FUNZIONI = (
     (COMMISSARIO,               permessi_presidente),
+    (CONSIGLIERE,               permessi_consigliere),
     (PRESIDENTE,                permessi_presidente),
     (UFFICIO_SOCI,              permessi_ufficio_soci),
     (UFFICIO_SOCI_UNITA,        permessi_ufficio_soci_unita),
