@@ -8,12 +8,13 @@
 {% block app_contenuto %}
     <h2><i class="fa fa-fw fa-home"></i> Corsi nelle tue vicinanze</h2>
 
+    {% if me.aspirante %}
     <div class="alert alert-info">
         <i class="fa fa-fw fa-info-circle"></i>
         Questo &egrave; un elenco dei Corsi nel raggio di {{ me.aspirante.raggio|default:"0" }} km
-        da {{ me.aspirante.locazione|default:"n/a" }}. Puoi modificare la posizione
-        dal menu "{% if me.aspirante %}Aspirante{%else%}Volontario{%endif%}" > "Impostazioni".
+        da {{ me.aspirante.locazione|default:"n/a" }}. Puoi modificare la posizione dal menu "Aspirante" > "Impostazioni".
     </div>
+    {%endif%}
 
     <table class="table table-striped table-bordered">
         <thead>

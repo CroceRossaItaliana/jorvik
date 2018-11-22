@@ -9,16 +9,15 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.timezone import now
 
-from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE
 from anagrafica.models import Sede, Persona, Appartenenza
+from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE
 from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE,
     INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
 from base.files import PDF, Zip
-from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
-from base.models import ModelloSemplice
-from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico, ConPDF
 from base.utils import concept, poco_fa
+from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico, ConPDF
+from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione, ModelloSemplice
 from curriculum.models import Titolo
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
@@ -182,13 +181,47 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     @classmethod
     @concept
     def pubblici(cls):
-        """
-        Concept per Corsi Base pubblici (attivi e non ancora iniziati...)
-        """
-        return Q(
-            data_inizio__gte=timezone.now() - datetime.timedelta(days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI),
-            stato=cls.ATTIVO
-        )
+        """ Concept per Corsi pubblici (attivi e non ancora iniziati...) """
+        return Q(stato=cls.ATTIVO,
+            data_inizio__gte=timezone.now() - datetime.timedelta(
+                days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI
+            ))
+
+    @classmethod
+    def find_courses_for_volunteer(cls, volunteer):
+        sede = volunteer.sede_riferimento()
+        if not sede:
+            return cls.objects.none()
+
+        titoli = volunteer.titoli_personali_confermati()
+        courses_list = list()
+        courses = cls.pubblici().filter(tipo=Corso.CORSO_NUOVO)
+        for course in courses:
+            # Course has extensions.
+            # Filter courses by titles and sede comparsion
+            if course.has_extensions():
+                volunteer_titolo = titoli.values_list('id', flat=True)
+                t = course.get_extensions_titles()
+                s = course.get_extensions_sede()
+                ext_t_list = t.values_list('id', flat=True)
+
+                # Course has required titles but volunteer has not at least one
+                if t and not (set(volunteer_titolo) & set(ext_t_list)):
+                    continue
+
+                if s and (sede in s):
+                    courses_list.append(course.pk)
+                else:
+                    # Extensions have sede but volunteer's sede is not in the list
+                    continue
+            else:
+                # Course has no extensions.
+                # Filter by firmatario sede if sede of volunteer is the same
+                firmatario = course.get_firmatario_sede
+                if firmatario and (sede in [firmatario]):
+                    courses_list.append(course.pk)
+
+        return CorsoBase.objects.filter(id__in=courses_list)
 
     @property
     def iniziato(self):
@@ -600,9 +633,9 @@ class CorsoEstensione(ConMarcaTemporale):
 
     @classmethod
     def _get_related_objects_to_course(cls, course, field, **kwargs):
-        course_extensions = cls.objects.filter(corso=course.pk, **kwargs)
+        course_extensions = cls.objects.filter(corso=course, **kwargs)
         if not course_extensions.exists():
-            return ValueError('_get_related_objects_to_course: field <%s>' % field)
+            return None
 
         objects = []
         for i in course_extensions:

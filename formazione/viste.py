@@ -633,14 +633,11 @@ def aspirante_home(request, me):
 @can_access_to_course
 def aspirante_corsi(request, me):
     """ url: /aspirante/corsi/ """
-    from base.geo import ConGeolocalizzazioneRaggio
 
     if me.ha_aspirante:
         corsi = me.aspirante.corsi(tipo=Corso.BASE)
     elif me.volontario:
-        corsi = CorsoBase.pubblici().filter(tipo=Corso.CORSO_NUOVO)
-    # else:
-    #     corsi = me.courses_within_area()
+        corsi = CorsoBase.find_courses_for_volunteer(volunteer=me)
 
     context = {
         'corsi':  corsi
