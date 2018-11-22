@@ -9,6 +9,10 @@ class EstensioneLivelloRegionaleTitolo(AutocompletamentoBase):
     search_fields = ['nome',]
     model = Titolo
 
+    def choices_for_request(self):
+        self.choices = self.choices.filter(tipo=Titolo.TITOLO_CRI)
+        return super().choices_for_request()
+
 
 class EstensioneLivelloRegionaleSede(AutocompletamentoBase):
     search_fields = ['nome',]
