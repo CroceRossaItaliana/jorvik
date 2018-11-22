@@ -59,9 +59,12 @@ class TestCorsoNuovo(TestCase):
         self.c2 = create_course(data_inizio, self.sede, extension_type=CorsoBase.EXT_LVL_REGIONALE) # corso_2_ext_a_livello_regionale
         self.c3 = create_course(data_inizio, self.sede, tipo=Corso.BASE)
 
+    def _login_as(self, email, password='prova'):
+        self.client.login(username=email, password=password)
+
     def test_corso_nuovo_invisible_to_aspirante(self):
         email = self.aspirante1.persona.email_contatto
-        login = self.client.login(username=email, password='prova')
+        login = self._login_as(self.aspirante1.persona.email_contatto)
         response = self.client.get(reverse('aspirante:corsi_base'))
         ctx = response.context
 
@@ -69,19 +72,24 @@ class TestCorsoNuovo(TestCase):
         self.assertEqual(str(ctx['user']), email)  # user is logged in
         self.assertEqual(response.status_code, 200)
         self.assertTrue('corsi' in ctx)
-        self.assertFalse(self.c1 in ctx['corsi'])  # Nuovo not in ctx
-        self.assertFalse(self.c2 in ctx['corsi'])  # Nuovo not in ctx
-        self.assertTrue(self.c3 in ctx['corsi'])  # Base in ctx
+        self.assertFalse(self.c1 in ctx['corsi'])  # Nuovo excluded
+        self.assertFalse(self.c2 in ctx['corsi'])  # Nuovo excluded
+        self.assertTrue(self.c3 in ctx['corsi'])  # CorsoBase in list of courses
 
-        # Courses can access to
+    def test_aspirante_have_access_to_corso_base(self):
         c3 = self.c3
+        login = self._login_as(self.aspirante1.persona.email_contatto)
         response = self.client.get(reverse('aspirante:info', args=[c3.pk]))
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, c3.nome, status_code=200)
 
-        # Courses can not access to
+    def test_aspirante_no_access_to_corso_nuovo(self):
+        login = self._login_as(self.aspirante1.persona.email_contatto)
+
         response = self.client.get(reverse('aspirante:info', args=[self.c1.pk]))
         self.assertEqual(response.status_code, 302)
+
         response = self.client.get(reverse('aspirante:info', args=[self.c2.pk]))
         self.assertEqual(response.status_code, 302)
 
@@ -90,3 +98,4 @@ class TestCorsoNuovo(TestCase):
 
     def test_corso_nuovo_extensions_link_visible_only_for_corso_nuovo(self):
         pass
+
