@@ -193,20 +193,21 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         if not sede:
             return cls.objects.none()
 
-        titoli = volunteer.titoli_personali_confermati()
+        titoli = volunteer.titoli_personali_confermati().filter(
+                                                titolo__tipo=Titolo.TITOLO_CRI)
         courses_list = list()
         courses = cls.pubblici().filter(tipo=Corso.CORSO_NUOVO)
         for course in courses:
             # Course has extensions.
             # Filter courses by titles and sede comparsion
             if course.has_extensions():
-                volunteer_titolo = titoli.values_list('id', flat=True)
+                volunteer_titolo = titoli.values_list('titolo', flat=True)
                 t = course.get_extensions_titles()
                 s = course.get_extensions_sede()
                 ext_t_list = t.values_list('id', flat=True)
 
                 # Course has required titles but volunteer has not at least one
-                if t and not (set(volunteer_titolo) & set(ext_t_list)):
+                if t and not volunteer.has_required_titles_for_course(course):
                     continue
 
                 if s and (sede in s):

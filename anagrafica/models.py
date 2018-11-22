@@ -1297,6 +1297,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             # TODO: what to return otherwise?
             pass
 
+    def has_required_titles_for_course(self, course):
+        volunteer_titles = self.titoli_personali_confermati().filter(
+            titolo__tipo=Titolo.TITOLO_CRI).values_list('titolo', flat=True)
+
+        corso_titles = course.get_extensions_titles().values_list('id',flat=True)
+        intersection = set(volunteer_titles) & set(corso_titles)
+
+        return len(intersection) == len(corso_titles)
+
     def save(self, *args, **kwargs):
         self.nome = normalizza_nome(self.nome)
         self.cognome = normalizza_nome(self.cognome)
