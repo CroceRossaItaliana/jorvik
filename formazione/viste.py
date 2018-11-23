@@ -58,20 +58,22 @@ def formazione_corsi_base_domanda(request, me):
 
 @pagina_privata
 def formazione_corsi_base_nuovo(request, me):
-    data_inizio = datetime.now() + timedelta(days=14)
+    now = datetime.now() + timedelta(days=14)
     form = ModuloCreazioneCorsoBase(
-        request.POST or None, initial={"data_inizio": data_inizio}
+        request.POST or None, initial={"data_inizio": now}
     )
     form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
 
     if form.is_valid():
         cd = form.cleaned_data
+        tipo, data_inizio, data_esame = cd['tipo'], cd['data_inizio'], cd['data_esame']
+        data_esame = data_esame if tipo == Corso.CORSO_NUOVO else data_inizio
         course = CorsoBase.nuovo(
-            anno=cd['data_inizio'].year,
+            anno=data_inizio.year,
             sede=cd['sede'],
-            data_inizio=cd['data_inizio'],
-            data_esame=cd['data_inizio'],
-            tipo=cd['tipo']
+            data_inizio=data_inizio,
+            data_esame=data_esame,
+            tipo=tipo
         )
 
         if cd['locazione'] == form.PRESSO_SEDE:

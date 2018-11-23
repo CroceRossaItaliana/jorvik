@@ -37,13 +37,21 @@ class ModuloCreazioneCorsoBase(ModelForm):
                 "tra cui l'indirizzo della stessa.")
         return sede
 
+    def clean(self):
+        cd = self.cleaned_data
+        if cd['data_esame'] < cd['data_inizio']:
+            self.add_error('data_esame', "La data deve essere successiva "
+                                         "alla data di inizio.")
+        return cd
+
     class Meta:
         model = CorsoBase
-        fields = ['tipo', 'data_inizio', 'sede',]
+        fields = ['tipo', 'data_inizio', 'data_esame', 'sede',]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.order_fields(('tipo',  'data_inizio', 'sede', 'locazione'))
+        self.order_fields(('tipo',  'data_inizio', 'data_esame', 'sede',
+                           'locazione'))
 
 
 class ModuloModificaLezione(ModelForm):
