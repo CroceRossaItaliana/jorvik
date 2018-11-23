@@ -153,9 +153,22 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
            torna_url=corso.url
         )
 
+    if corso.is_reached_max_participants_limit:
+        # TODO: informa direttore
+        # send_mail()
+
+        return errore_generico(request, me,
+           titolo="Non puoi partecipare a questo corso",
+           messaggio="È stato raggiunto il limite massimo di richieste di "
+                     "partecipazione al corso.",
+           torna_titolo="Torna al corso",
+           torna_url=corso.url
+        )
+
     p = PartecipazioneCorsoBase(persona=me, corso=corso)
     p.save()
     p.richiedi()
+
     return messaggio_generico(request, me,
         titolo="Sei iscritto al corso",
         messaggio="Complimenti! Abbiamo inoltrato la tua richiesta al direttore "

@@ -385,20 +385,16 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         self.stato = self.ATTIVO
         self.save()
 
-    def _invia_email_agli_aspiranti(self, rispondi_a=None):
-        is_nuovo_corso = self.tipo == Corso.CORSO_NUOVO
-        if is_nuovo_corso:
-            print('_send_email_to_participants')
+    def _corso_activation_recepients_for_email(self):
+        if self.is_nuovo_corso:
             recepients = self.get_volunteers_by_course_requirements()
         else:
             recepients = self.aspiranti_nelle_vicinanze()
+        return recepients
 
-        for recepient in recepients:
-            if is_nuovo_corso:
-                persona = recepient
-            else:
-                persona = recepient.persona
-
+    def _invia_email_agli_aspiranti(self, rispondi_a=None):
+        for recepient in self._corso_activation_recepients_for_email():
+            persona = recepient if self.is_nuovo_corso else recepient.persona
             email_data = dict(
                 oggetto="Nuovo Corso per Volontari CRI",
                 modello="email_aspirante_corso.html",
@@ -410,10 +406,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 rispondi_a=rispondi_a
             )
 
-            if is_nuovo_corso:
+            if self.is_nuovo_corso:
                 # If course tipo is CORSO_NUOVO to send to volunteers only
                 Messaggio.costruisci_e_accoda(**email_data)
-            elif not is_nuovo_corso and not recepient.persona.volontario:
+            elif not self.is_nuovo_corso and not recepient.persona.volontario:
                 # to send to <Aspirante> only
                 Messaggio.costruisci_e_accoda(**email_data)
 
@@ -450,11 +446,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def get_volunteers_by_course_requirements(self, **kwargs):
         persons = None
 
-        if self.tipo == Corso.CORSO_NUOVO:
+        if self.is_nuovo_corso:
             corso_extension = self.extension_type
             if CorsoBase.EXT_MIA_SEDE == corso_extension:
-                by_only_sede = self.get_volunteers_by_only_sede()
-                persons = by_only_sede
+                persons = self.get_volunteers_by_only_sede()
 
             if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
                 by_ext_sede = self.get_volunteers_by_ext_sede()
@@ -493,7 +488,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def get_volunteers_by_ext_titles(self):
         sede = self.get_extensions_sede()
         titles = self.get_extensions_titles().values_list('id', flat=True)
-        return Persona.objects.filter(sede__in=sede, titoli_personali__in=titles)
+        return Persona.objects.filter(sede__in=sede,
+                                      titoli_personali__in=titles)
 
     @property
     def concluso(self):
@@ -596,6 +592,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             modello="pdf_corso_base_esame_verbale.html",
         )
         return pdf
+
+    @property
+    def is_reached_max_participants_limit(self):
+        actual_requests = PartecipazioneCorsoBase.objects.filter(corso=self)
+        return self.max_participants + 10 == actual_requests
+
+    @property
+    def is_nuovo_corso(self):
+        return self.tipo == Corso.CORSO_NUOVO
 
     class Meta:
         verbose_name = "Corso"
