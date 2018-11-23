@@ -199,3 +199,16 @@ class TestCorsoNuovo(TestCase):
         c.get_volunteers_by_ext_sede()
         c.get_volunteers_by_ext_titles()
         """
+
+    def test_course_activated_volunteers_informed(self):
+        pass
+
+    def test_property_is_corso_nuovo(self):
+        self.assertTrue(self.c1.is_nuovo_corso)
+        self.assertTrue(self.c2.is_nuovo_corso)
+        self.assertFalse(self.c3.is_nuovo_corso)
+
+    def test_field_extension_type(self):
+        self.assertTrue(self.c1.extension_type, CorsoBase.EXT_MIA_SEDE)
+        self.assertTrue(self.c2.extension_type, CorsoBase.EXT_LVL_REGIONALE)
+        self.assertTrue(self.c3.extension_type, CorsoBase.EXT_MIA_SEDE)
