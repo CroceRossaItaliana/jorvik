@@ -180,6 +180,7 @@
                 <tr>
                     <th>Data</th>
                     <th>Argomento</th>
+                    <th>Docente</th>
                 </tr>
             </thead>
             <tbody>
@@ -190,9 +191,8 @@
                             {{ lezione.inizio.time|date:"TIME_FORMAT" }}
                             &mdash;{{ lezione.fine.time|date:"TIME_FORMAT" }}
                         </td>
-                        <th>
-                            {{ lezione.nome }}
-                        </th>
+                        <th>{{ lezione.nome }}</th>
+                        <td>{{ lezione.docente }}</td>
                     </tr>
                 {% empty %}
                     <tr class="warning">
