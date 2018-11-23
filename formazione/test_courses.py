@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from base.utils_tests import (crea_persona_sede_appartenenza, crea_persona,
-    crea_appartenenza, email_fittizzia, crea_utenza, codice_fiscale, crea_locazione)
+from base.utils_tests import (crea_persona, crea_utenza, codice_fiscale,
+    email_fittizzia, crea_persona_sede_appartenenza, crea_appartenenza,
+    crea_locazione)
 from anagrafica.models import *
 from formazione.models import *
 
@@ -19,6 +20,7 @@ def create_persona(with_utenza=True):
     else:
         return persona
 
+
 def create_aspirante(sede, persona=None):
     if not persona:
         persona = create_persona()[0]
@@ -27,6 +29,7 @@ def create_aspirante(sede, persona=None):
     a.locazione = sede.locazione
     a.save()
     return a
+
 
 def create_course(data_inizio, sede, extension_type=CorsoBase.EXT_MIA_SEDE,
         tipo=Corso.CORSO_NUOVO, **kwargs):
@@ -37,6 +40,24 @@ def create_course(data_inizio, sede, extension_type=CorsoBase.EXT_MIA_SEDE,
     corso.locazione = sede.locazione
     corso.save()
     return corso
+
+def create_delega():
+    """ required for course directors """
+    return
+
+
+def create_volunteer():
+    # create appartenenza
+    return
+
+
+def create_extension():
+    return
+
+
+def create_extensions_for_course(course):
+    return
+
 
 class TestCorsoNuovo(TestCase):
     def setUp(self):
@@ -58,6 +79,10 @@ class TestCorsoNuovo(TestCase):
         self.c1 = create_course(data_inizio, self.sede) # corso_1_ext_mia_sede
         self.c2 = create_course(data_inizio, self.sede, extension_type=CorsoBase.EXT_LVL_REGIONALE) # corso_2_ext_a_livello_regionale
         self.c3 = create_course(data_inizio, self.sede, tipo=Corso.BASE)
+
+        """ Create titles """
+
+        """ Create extensions """
 
     def _login_as(self, email, password='prova'):
         self.client.login(username=email, password=password)
@@ -99,3 +124,78 @@ class TestCorsoNuovo(TestCase):
     def test_corso_nuovo_extensions_link_visible_only_for_corso_nuovo(self):
         pass
 
+    def test_volunteer_has_required_titles(self):
+        pass
+        """
+        has all titles
+        not all titles
+        """
+
+    def test_volunteer_available_courses_listing(self):
+        pass
+
+    def test_volunteer_can_participate_at_course(self):
+        pass
+
+    def test_corso_nuovo_new_fields_on_modify_page(self):
+        pass
+
+    def test_corso_nuovo_fields_visible_only_for_corso_nuovo(self):
+        pass
+
+    def test_corso_nuovo_extensions(self):
+        pass
+        """
+        1) CAN list course: [user titles == corso ext titles (all required)] + [
+        user sede in corso ext sede]
+        2) CAN list course: corso has only sede without titles, user sede in 
+        corso sede
+        """
+
+    def test_corso_nuovo_extensions_sede(self):
+        pass
+        """
+        user app. sede in course extensions sede 
+        """
+
+    def test_corso_nuovo_extensions_sede_expanded(self):
+        pass
+        """
+        - user appartenenza sede is in courses' extensions expanded sede
+        - 1st extension has sedi_sottostanti, 2nd extension not, user's sede 
+        is in one of them.
+        - user app. sede is not in course extensions sede (corso non visible)
+        """
+
+    def test_volunteer_listing_course_found_by_firmatario_sede(self):
+        pass
+        """
+        if CorsoBase.extension_type = MIA_SEDE
+        user app sede == firmatario_sede
+        """
+
+    def test_method_corsobase_has_extensions(self):
+        # self.assertTrue(c2.has_extensions())
+        pass
+
+    def test_method_persona_has_required_titles_for_course(self):
+        pass
+
+    def test_method_corsobase_get_extensions(self):
+        pass
+
+    def test_method_corsobase_get_extensions_sede(self):
+        pass
+
+    def test_method_corsobase_get_extensions_titles(self):
+        pass
+
+    def test_method_corsobase_get_volunteers_by__(self):
+        pass
+        """
+        c.get_extensions_titles()
+        c.get_volunteers_by_course_requirements()
+        c.get_volunteers_by_only_sede()
+        c.get_volunteers_by_ext_sede()
+        c.get_volunteers_by_ext_titles()
+        """
