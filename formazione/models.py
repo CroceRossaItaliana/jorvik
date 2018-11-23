@@ -980,11 +980,13 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
         ).values_list('pk', flat=True)
 
 
-class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
-                       ConGiudizio, ConStorico):
-
+class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
     corso = models.ForeignKey(CorsoBase, related_name='lezioni', on_delete=models.PROTECT)
     nome = models.CharField(max_length=128)
+    docente = models.ForeignKey(Persona, null=True, default='',
+                                verbose_name='Docente della lezione',)
+    obiettivo = models.CharField('Obiettivo formativo della lezione',
+                                 max_length=128, null=True, default='')
 
     class Meta:
         verbose_name = "Lezione di Corso Base"
@@ -999,9 +1001,7 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
 
     @property
     def url_cancella(self):
-        return "%s%d/cancella/" % (
-            self.corso.url_lezioni, self.pk
-        )
+        return "%s%d/cancella/" % (self.corso.url_lezioni, self.pk)
 
 
 class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):

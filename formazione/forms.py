@@ -47,10 +47,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
 
 
 class ModuloModificaLezione(ModelForm):
-    class Meta:
-        model = LezioneCorsoBase
-        fields = ['nome', 'inizio', 'fine']
-
+    docente = autocomplete_light.ModelChoiceField("DocenteLezioniCorso")
     fine = forms.DateTimeField()
 
     def clean(self):
@@ -63,6 +60,10 @@ class ModuloModificaLezione(ModelForm):
 
         if inizio >= fine:
             self.add_error('fine', "La fine deve essere successiva all'inizio.")
+
+    class Meta:
+        model = LezioneCorsoBase
+        fields = ['nome', 'inizio', 'fine', 'docente', 'obiettivo']
 
 
 class ModuloModificaCorsoBase(ModelForm):
