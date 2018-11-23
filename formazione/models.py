@@ -598,8 +598,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return pdf
 
     class Meta:
-        verbose_name = "Corso Base"
-        verbose_name_plural = "Corsi Base"
+        verbose_name = "Corso"
+        verbose_name_plural = "Corsi"
         ordering = ['-anno', '-progressivo']
         permissions = (
             ("view_corsobase", "Can view corso base"),
@@ -989,8 +989,8 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                                  max_length=128, null=True, default='')
 
     class Meta:
-        verbose_name = "Lezione di Corso Base"
-        verbose_name_plural = "Lezioni di Corsi Base"
+        verbose_name = "Lezione di Corso"
+        verbose_name_plural = "Lezioni di Corsi"
         ordering = ['inizio']
         permissions = (
             ("view_lezionecorsobase", "Can view corso Lezione di Corso Base"),
@@ -1011,8 +1011,8 @@ class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
     registrata_da = models.ForeignKey(Persona, related_name='assenze_corsi_base_registrate', null=True, on_delete=models.SET_NULL)
 
     class Meta:
-        verbose_name = "Assenza a Corso Base"
-        verbose_name_plural = "Assenze ai Corsi Base"
+        verbose_name = "Assenza a Corso"
+        verbose_name_plural = "Assenze ai Corsi"
         permissions = (
             ("view_assenzacorsobase", "Can view corso Assenza a Corso Base"),
         )
