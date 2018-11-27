@@ -36,6 +36,11 @@ class InvitaCorsoNuovoAutocompletamento(AutocompletamentoBase):
     model = Persona
     search_fields = ['codice_fiscale',]
     choice_html_format = """<span class="block" data-value="%s"><strong>%s</strong> %s</span>"""
+    attrs = {
+        'required': False,
+        'placeholder': 'Inserisci il codice fiscale',
+        'data-autocomplete-minimum-characters': 16,
+    }
 
     def choices_for_request(self):
         self.choices = self.choices.filter(Q(Appartenenza.query_attuale(
