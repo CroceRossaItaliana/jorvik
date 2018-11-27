@@ -157,7 +157,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         # if (not Aspirante.objects.filter(persona=persona).exists()) and persona.volontario:
         #     return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
 
-        if PartecipazioneCorsoBase.con_esito_ok(persona=persona, corso__stato=self.ATTIVO).exclude(corso=self).exists():
+        if PartecipazioneCorsoBase.con_esito_ok(persona=persona,
+                                                corso__tipo=self.BASE,
+                                                corso__stato=self.ATTIVO).exclude(corso=self).exists():
             return self.NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO
 
         # Controlla se gia' iscritto.
@@ -680,8 +682,7 @@ class CorsoEstensione(ConMarcaTemporale):
         verbose_name_plural = 'Estensioni del Corso'
 
 
-class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni,
-                      ConMarcaTemporale, models.Model):
+class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, models.Model):
     persona = models.ForeignKey(Persona, related_name='inviti_corsi', on_delete=models.CASCADE)
     corso = models.ForeignKey(CorsoBase, related_name='inviti', on_delete=models.PROTECT)
     invitante = models.ForeignKey(Persona, related_name='+', on_delete=models.CASCADE)
@@ -695,19 +696,6 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni,
     RICHIESTA_NOME = "iscrizione a Corso"
 
     APPROVAZIONE_AUTOMATICA = datetime.timedelta(days=settings.SCADENZA_AUTORIZZAZIONE_AUTOMATICA)
-
-    class Meta:
-        verbose_name = "Invito di partecipazione a corso base"
-        verbose_name_plural = "Inviti di partecipazione a corso base"
-        ordering = ('persona__cognome', 'persona__nome', 'persona__codice_fiscale',)
-        permissions = (
-            ("view_invitocorsobase", "Can view invito partecipazione corso base"),
-        )
-
-    def __str__(self):
-        return "Invit di part. di %s a %s" % (
-            self.persona, self.corso
-        )
 
     def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
         with atomic():
@@ -778,6 +766,17 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni,
             mittente=None,
             destinatari=[mittente],
         )
+
+    class Meta:
+        verbose_name = "Invito di partecipazione a corso"
+        verbose_name_plural = "Inviti di partecipazione a corso"
+        ordering = ('persona__cognome', 'persona__nome', 'persona__codice_fiscale',)
+        permissions = (
+            ("view_invitocorsobase", "Can view invito partecipazione corso base"),
+        )
+
+    def __str__(self):
+        return "Invit di part. di %s a %s" % (self.persona, self.corso)
 
 
 class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,

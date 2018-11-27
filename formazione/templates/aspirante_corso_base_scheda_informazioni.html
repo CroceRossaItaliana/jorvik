@@ -158,7 +158,7 @@
         <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
         {{ corso.descrizione|default:"Ancora non disponibili"|safe }}
 
-        {% if puoi_partecipare == corso.SEI_ISCRITTO_NON_PUOI_RITIRARTI %}
+        {% if puoi_partecipare == corso.SEI_ISCRITTO_NON_PUOI_RITIRARTI or puo_modificare %}
             {% if corso.get_course_links or corso.get_course_files %}<h3>Materiale didattico</h3>{%endif%}
             {% if corso.get_course_links %}
                 <strong>Link:</strong><br>
@@ -175,17 +175,17 @@
                     <a href="{{file.file.url}}" target="_blank">{{file.filename}}</a><br>
                 {% endfor %}
             {% endif %}
+        {% endif %}
 
-            {% if corso.tipo == corso.CORSO_NUOVO and corso.get_extensions_titles %}
-                <p>
-                    <strong>Titoli necessari:</strong>
-                    <ul>
-                    {% for e in corso.get_extensions_titles %}
-                        <li>{{ e.nome }}</li>
-                    {% endfor %}
-                    </ul>
-                </p>
-            {% endif %}
+        {% if corso.tipo == corso.CORSO_NUOVO and corso.get_extensions_titles %}
+            <p>
+                <strong>Titoli necessari:</strong>
+                <ul>
+                {% for e in corso.get_extensions_titles %}
+                    <li>{{ e.nome }}</li>
+                {% endfor %}
+                </ul>
+            </p>
         {% endif %}
     </div>
 
