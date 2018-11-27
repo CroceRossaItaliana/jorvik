@@ -21,7 +21,7 @@ from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione, Modello
 from curriculum.models import Titolo
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
-
+from .validators import course_file_directory_path
 
 class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
             ConGeolocalizzazione, ConCommenti, ConGiudizio):
@@ -63,11 +63,15 @@ class CorsoFile(models.Model):
     is_enabled = models.BooleanField(default=True)
     corso = models.ForeignKey('CorsoBase')
     file = models.FileField('FIle', null=True, blank=True,
-        upload_to='corsi/',
+        upload_to=course_file_directory_path,
         validators=[valida_dimensione_file_8mb, validate_file_extension],
         # help_text="Formati dei file supportati: doc, xls, pdf, zip, "
         #     "jpg (max 8mb))",
     )
+
+    def filename(self):
+        import os
+        return os.path.basename(self.file.name)
 
     def __str__(self):
         file = self.file if self.file else ''

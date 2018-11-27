@@ -8,3 +8,8 @@ def validate_file_extension(value):
     if ext.lower() not in valid_extensions:
         raise ValidationError("Estensione <%s> di questo file non è "
                               "accettabile." % ext)
+
+
+def course_file_directory_path(instance, filename):
+    # file will be uploaded to MEDIA_ROOT/course/<course_id>
+    return 'courses/%s/%s' % (instance.id, filename)
