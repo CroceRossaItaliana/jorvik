@@ -209,6 +209,6 @@ class TestCorsoNuovo(TestCase):
         self.assertFalse(self.c3.is_nuovo_corso)
 
     def test_field_extension_type(self):
-        self.assertTrue(self.c1.extension_type, CorsoBase.EXT_MIA_SEDE)
-        self.assertTrue(self.c2.extension_type, CorsoBase.EXT_LVL_REGIONALE)
-        self.assertTrue(self.c3.extension_type, CorsoBase.EXT_MIA_SEDE)
+        self.assertEqual(self.c1.extension_type, CorsoBase.EXT_MIA_SEDE)
+        self.assertEqual(self.c2.extension_type, CorsoBase.EXT_LVL_REGIONALE)
+        self.assertEqual(self.c3.extension_type, CorsoBase.EXT_MIA_SEDE)
