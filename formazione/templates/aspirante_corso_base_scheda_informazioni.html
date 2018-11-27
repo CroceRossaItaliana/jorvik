@@ -158,15 +158,34 @@
         <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
         {{ corso.descrizione|default:"Ancora non disponibili"|safe }}
 
-        {% if corso.tipo == corso.CORSO_NUOVO and corso.get_extensions_titles %}
-            <p>
-                <strong>Titoli necessari:</strong>
-                <ul>
-                {% for e in corso.get_extensions_titles %}
-                    <li>{{ e.nome }}</li>
+        {% if puoi_partecipare == corso.SEI_ISCRITTO_NON_PUOI_RITIRARTI %}
+            {% if corso.get_course_links or corso.get_course_files %}<h3>Materiale didattico</h3>{%endif%}
+            {% if corso.get_course_links %}
+                <strong>Link:</strong><br>
+                {% for link in corso.get_course_links %}
+                    <a href="{{link.link}}" target="_blank">{{link.link}}</a><br>
                 {% endfor %}
-                </ul>
-            </p>
+            {% endif %}
+
+            <br>
+
+            {% if corso.get_course_links %}
+                <strong>File:</strong><br>
+                {% for file in corso.get_course_files %}
+                    <a href="{{file.file.url}}" target="_blank">{{file.filename}}</a><br>
+                {% endfor %}
+            {% endif %}
+
+            {% if corso.tipo == corso.CORSO_NUOVO and corso.get_extensions_titles %}
+                <p>
+                    <strong>Titoli necessari:</strong>
+                    <ul>
+                    {% for e in corso.get_extensions_titles %}
+                        <li>{{ e.nome }}</li>
+                    {% endfor %}
+                    </ul>
+                </p>
+            {% endif %}
         {% endif %}
     </div>
 

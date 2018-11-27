@@ -606,6 +606,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def is_nuovo_corso(self):
         return self.tipo == Corso.CORSO_NUOVO
 
+    def get_course_links(self):
+        return self.corsolink_set.filter(is_enabled=True)
+
+    def get_course_files(self):
+        return self.corsofile_set.filter(is_enabled=True)
+
     class Meta:
         verbose_name = "Corso"
         verbose_name_plural = "Corsi"
@@ -686,7 +692,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni,
     IN_ATTESA_ASPIRANTE = 2
     INVITO_INVIATO = -1
 
-    RICHIESTA_NOME = "iscrizione a Corso Base"
+    RICHIESTA_NOME = "iscrizione a Corso"
 
     APPROVAZIONE_AUTOMATICA = datetime.timedelta(days=settings.SCADENZA_AUTORIZZAZIONE_AUTOMATICA)
 
@@ -842,7 +848,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
             ("view_partecipazionecorsobarse", "Can view corso Richiesta di partecipazione"),
         )
 
-    RICHIESTA_NOME = "Iscrizione Corso Base"
+    RICHIESTA_NOME = "Iscrizione Corso"
 
     def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
         # Quando un aspirante viene iscritto, tutte le richieste presso altri corsi devono essere cancellati.

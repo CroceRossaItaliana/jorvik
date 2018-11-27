@@ -137,11 +137,11 @@
                 <a class="btn btn-warning {% if not corso.attivabile %}disabled{% endif %}"
                     {% if corso.attivabile %}href="{{ corso.url_attiva }}"{% endif %}>
                     <i class="fa fa-fw fa-check-circle"></i>
-                    {% if corso.extension_type == '1' %}
+                    {% if corso.extension_type == corso.EXT_MIA_SEDE %}
                     Attiva il corso e informa gli aspiranti in zona (pi&ugrave; di
                     {{ corso.aspiranti_nelle_vicinanze.count }})
 
-                    {% elif corso.extension_type == '2' %}
+                    {% elif corso.extension_type == corso.EXT_LVL_REGIONALE %}
                     Attiva il corso e informa i volontari dei segmenti selezionati.
 
                     {% else %}
