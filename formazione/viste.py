@@ -59,8 +59,8 @@ def formazione_corsi_base_domanda(request, me):
 @pagina_privata
 def formazione_corsi_base_nuovo(request, me):
     now = datetime.now() + timedelta(days=14)
-    form = ModuloCreazioneCorsoBase(
-        request.POST or None, initial={"data_inizio": now}
+    form = ModuloCreazioneCorsoBase(request.POST or None,
+        initial={'data_inizio': now, 'data_esame': now + timedelta(days=14)}
     )
     form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
 
@@ -538,7 +538,7 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                                          "stadio della vita del corso base.",
                                torna_titolo="Torna al corso base", torna_url=corso.url_iscritti)
 
-    modulo = ModuloIscrittiCorsoBaseAggiungi(request.POST or None)
+    modulo = ModuloIscrittiCorsoBaseAggiungi(request.POST or None, corso=corso)
     risultati = []
     if modulo.is_valid():
 

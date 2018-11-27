@@ -141,9 +141,17 @@ CorsoLinkFormSet = modelformset_factory(CorsoLink, fields=('link',), extra=1,
 
 class ModuloIscrittiCorsoBaseAggiungi(forms.Form):
     persone = autocomplete_light.ModelMultipleChoiceField(
-        "IscrivibiliCorsiAutocompletamento", help_text="Ricerca per Codice "
-        "Fiscale i Sostenitori o gli Aspiranti CRI da iscrivere a questo Corso Base."
-    )
+        "IscrivibiliCorsiAutocompletamento",
+        help_text="Ricerca per Codice Fiscale i Sostenitori o gli Aspiranti CRI "
+                  "da iscrivere a questo Corso.")
+
+    def __init__(self, *args, **kwargs):
+        self.corso = kwargs.pop('corso')
+        super().__init__(*args, **kwargs)
+
+        # Change dynamically autocomplete class, depending on Corso tipo
+        if self.corso.is_nuovo_corso and 'persone' in self.fields:
+            self.fields['persone'].widget.autocomplete_arg = 'InvitaCorsoNuovoAutocompletamento'
 
 
 class CorsoSelectExtensionTypeForm(ModelForm):
