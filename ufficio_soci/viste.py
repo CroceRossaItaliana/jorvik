@@ -947,7 +947,6 @@ def us_quote_nuova(request, me):
         return sedi_tmp
 
     sedi = __is_us_territoriale(me, sedi)
-    print('SEDI', sedi)
     questo_anno = poco_fa().year
 
     try:
@@ -981,10 +980,17 @@ def us_quote_nuova(request, me):
             appartenenza = volontario.appartenenze_attuali(
                 al_giorno=data_versamento, membro=Appartenenza.VOLONTARIO
             ).first()
+
             comitato = appartenenza.sede.comitato if appartenenza else None
 
-            # Controlli che generano errore generico (fanno il redirect su una pagina di errore)
-            if not comitato.locazione:
+            if not appartenenza:
+                modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
+                                                    'alla Sede.')
+
+            elif appartenenza.sede not in sedi: # or comitato not in sedi:
+                modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
+
+            elif not comitato.locazione:
                 return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un indirizzo "
                                                  "per la Sede del Comitato di %s. Il Presidente può gestire i dati "
@@ -995,14 +1001,6 @@ def us_quote_nuova(request, me):
                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un "
                                                  "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
                                                  "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
-
-            # Controlli che aggiungono errori alla form
-            if not appartenenza:
-                modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
-                                                    'alla Sede.')
-
-            elif appartenenza.sede not in sedi: # or comitato not in sedi:
-                modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
 
             else:
                 if riduzione:
