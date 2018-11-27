@@ -374,7 +374,7 @@ class ElencoEstesi(ElencoVistaSoci):
 
         return super(ElencoEstesi, self).excel_colonne() + (
             ('Data inizio estensione', lambda p: Estensione.objects.filter(persona=p.pk, ritirata=False).order_by('creazione').first().protocollo_data),
-            ('Comitato', lambda p: _comitato(p)),
+            ('Comitato di estensione', lambda p: _comitato(p)),
         )
 
 
@@ -417,7 +417,8 @@ class ElencoDimessi(ElencoVistaAnagrafica):
 
         def _motivo(p):
             dim = Dimissione.objects.filter(persona=p.pk).order_by('ultima_modifica').first()
-            return dim.motivo
+            motivi = dict(Dimissione.MOTIVI)
+            return motivi[dim.motivo]
 
         return super(ElencoDimessi, self).excel_colonne() + (
             ('Data dimissioni', lambda p: _data(p)),
@@ -593,6 +594,7 @@ class ElencoInRiserva(ElencoVistaSoci):
         return super(ElencoInRiserva, self).excel_colonne() + (
             ("Data inizio", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().inizio),
             ("Data fine", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().fine),
+            ("Data inizio", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().motivo)
         )
 
 
