@@ -1001,6 +1001,14 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                                 verbose_name='Docente della lezione',)
     obiettivo = models.CharField('Obiettivo formativo della lezione',
                                  max_length=128, null=True, default='')
+    luogo = models.CharField(max_length=255, null=True, blank=True,
+                             verbose_name="il luogo di dove si svolgeranno le lezioni",
+                             help_text="Compilare nel caso il luogo è diverso "
+                                       "dal comitato che ha organizzato il corso.")
+
+    @property
+    def url_cancella(self):
+        return "%s%d/cancella/" % (self.corso.url_lezioni, self.pk)
 
     class Meta:
         verbose_name = "Lezione di Corso"
@@ -1012,10 +1020,6 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
 
     def __str__(self):
         return "Lezione: %s" % (self.nome,)
-
-    @property
-    def url_cancella(self):
-        return "%s%d/cancella/" % (self.corso.url_lezioni, self.pk)
 
 
 class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
