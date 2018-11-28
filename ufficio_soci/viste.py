@@ -918,16 +918,35 @@ def us_quote_nuova(request, me):
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
 
     def __is_us_territoriale(me, sedi):
-        from anagrafica.permessi.applicazioni import UFFICIO_SOCI_UNITA
+        """
+        In Gaia non è prevista la Delega US T su sede LOCALE
+        US T su LOCALE gestisce tutte le sedi territoriali al di sotto di essa
+        US su LOCALE gestisce tutte le sedi territoriali più la sede locale
+        :param me:
+        :param sedi:
+        :return: ritorna una lista di sedi gestite da un delegato con US o US T
+        """
+        from anagrafica.permessi.applicazioni import UFFICIO_SOCI_UNITA, UFFICIO_SOCI
         from anagrafica.costanti import LOCALE
-        sedi_tmp = sedi
+        sedi_us_t = []
+        sedi_us = []
+        espandi = []
         for delega in me.deleghe_attuali():
+            # prende le sedi locali su cui è delegato con US T (queste devono essere eliminate)
             if delega.tipo == UFFICIO_SOCI_UNITA and delega.oggetto.estensione == LOCALE:
-                sedi_tmp = sedi_tmp.exclude(nome=delega.oggetto)
+                sedi_us_t.append(delega.oggetto)
+                # se la delega US T è sul locale avra sicuramente potere su le sedi sottostanti
+                espandi.extend(delega.oggetto.unita_sottostanti())
+            # prende le sedi locali su cui è delegato con US (queste devono essere aggiunte)
+            elif delega.tipo == UFFICIO_SOCI and delega.oggetto.estensione == LOCALE:
+                sedi_us.append(delega.oggetto)
+
+            sedi_exclude = set(sedi_us_t) - set(sedi_us)
+        sedi_tmp = list(sedi.exclude(nome__in=sedi_exclude))
+        sedi_tmp.extend(list(Sede.objects.filter(nome__in=[sede.nome for sede in espandi])))
         return sedi_tmp
 
     sedi = __is_us_territoriale(me, sedi)
-
     questo_anno = poco_fa().year
 
     try:
@@ -961,10 +980,17 @@ def us_quote_nuova(request, me):
             appartenenza = volontario.appartenenze_attuali(
                 al_giorno=data_versamento, membro=Appartenenza.VOLONTARIO
             ).first()
+
             comitato = appartenenza.sede.comitato if appartenenza else None
 
-            # Controlli che generano errore generico (fanno il redirect su una pagina di errore)
-            if not comitato.locazione:
+            if not appartenenza:
+                modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
+                                                    'alla Sede.')
+
+            elif appartenenza.sede not in sedi: # or comitato not in sedi:
+                modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
+
+            elif not comitato.locazione:
                 return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un indirizzo "
                                                  "per la Sede del Comitato di %s. Il Presidente può gestire i dati "
@@ -975,14 +1001,6 @@ def us_quote_nuova(request, me):
                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un "
                                                  "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
                                                  "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
-
-            # Controlli che aggiungono errori alla form
-            if not appartenenza:
-                modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
-                                                    'alla Sede.')
-
-            elif appartenenza.sede not in sedi: # or comitato not in sedi:
-                modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
 
             else:
                 if riduzione:
