@@ -215,7 +215,6 @@ def aspirante_corso_base_mappa(request, me, pk):
 
 @pagina_privata
 def aspirante_corso_base_lezioni(request, me, pk):
-
     corso = get_object_or_404(CorsoBase, pk=pk)
     if not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -225,13 +224,16 @@ def aspirante_corso_base_lezioni(request, me, pk):
     moduli = []
     partecipanti_lezioni = []
     for lezione in lezioni:
-        modulo = ModuloModificaLezione(request.POST if request.POST and request.POST['azione'] == 'salva' else None,
-                                         instance=lezione,
-                                         prefix="%s" % (lezione.pk,))
-        if request.POST and request.POST['azione'] == 'salva' and modulo.is_valid():
-            modulo.save()
+        form = ModuloModificaLezione(
+            request.POST if request.POST and request.POST['azione'] == 'salva' else None,
+            instance=lezione,
+            corso=corso,
+            prefix="%s" % (lezione.pk,)
+        )
+        if request.POST and request.POST['azione'] == 'salva' and form.is_valid():
+            form.save()
 
-        moduli += [modulo]
+        moduli += [form]
         partecipanti_lezione = partecipanti.exclude(assenze_corsi_base__lezione=lezione).order_by('nome', 'cognome')
 
         if request.POST and request.POST['azione'] == 'salva':
@@ -248,7 +250,9 @@ def aspirante_corso_base_lezioni(request, me, pk):
         partecipanti_lezioni += [partecipanti_lezione]
 
     if request.POST and request.POST['azione'] == 'nuova':
-        modulo_nuova_lezione = ModuloModificaLezione(request.POST, prefix="nuova")
+        modulo_nuova_lezione = ModuloModificaLezione(request.POST,
+                                                     prefix="nuova",
+                                                     corso=corso)
         if modulo_nuova_lezione.is_valid():
             lezione = modulo_nuova_lezione.save(commit=False)
             lezione.corso = corso
@@ -258,19 +262,18 @@ def aspirante_corso_base_lezioni(request, me, pk):
         modulo_nuova_lezione = ModuloModificaLezione(prefix="nuova", initial={
             "inizio": timezone.now(),
             "fine": timezone.now() + timedelta(hours=2)
-        })
-
+        }, corso=corso)
 
     lezioni = zip(lezioni, moduli, partecipanti_lezioni)
 
-    contesto = {
+    context = {
         "corso": corso,
         "puo_modificare": True,
         "lezioni": lezioni,
         "partecipanti": partecipanti,
         "modulo_nuova_lezione": modulo_nuova_lezione,
     }
-    return 'aspirante_corso_base_scheda_lezioni.html', contesto
+    return 'aspirante_corso_base_scheda_lezioni.html', context
 
 
 @pagina_privata
@@ -391,12 +394,19 @@ def aspirante_corso_base_attiva(request, me, pk):
 
     if request.POST:
         corso.attiva(rispondi_a=me)
-        return messaggio_generico(request, me,
-                                  titolo="Corso attivato con successo",
-                                  messaggio="A breve tutti gli aspiranti nelle vicinanze verranno informati "
-                                            "dell'attivazione di questo corso base.",
-                                  torna_titolo="Torna al Corso",
-                                  torna_url=corso.url)
+        if corso.is_nuovo_corso:
+            messaggio = "A breve tutti i volontari dei segmenti selezionati "\
+                        "verranno informati dell'attivazione di questo corso."
+        else:
+            messaggio = "A breve tutti gli aspiranti nelle vicinanze verranno "\
+                        "informati dell'attivazione di questo corso base."
+        return messaggio_generico(
+            request, me,
+            titolo="Corso attivato con successo",
+            messaggio=messaggio,
+            torna_titolo="Torna al Corso",
+            torna_url=corso.url
+        )
 
     context = {
         "corso": corso,
@@ -529,20 +539,22 @@ def aspirante_corso_base_iscritti_cancella(request, me, pk, iscritto):
 @pagina_privata
 def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
     corso = get_object_or_404(CorsoBase, pk=pk)
+
     if not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
-
     if not corso.possibile_aggiungere_iscritti:
-        return errore_generico(request, me, titolo="Impossibile aggiungere iscritti",
-                               messaggio="Non si possono aggiungere altri iscritti a questo "
-                                         "stadio della vita del corso base.",
-                               torna_titolo="Torna al corso base", torna_url=corso.url_iscritti)
+        return errore_generico(request, me,
+           titolo="Impossibile aggiungere iscritti",
+           messaggio="Non si possono aggiungere altri iscritti a questo "
+                     "stadio della vita del corso.",
+           torna_titolo="Torna al corso",
+           torna_url=corso.url_iscritti
+        )
 
-    modulo = ModuloIscrittiCorsoBaseAggiungi(request.POST or None, corso=corso)
     risultati = []
-    if modulo.is_valid():
-
-        for persona in modulo.cleaned_data['persone']:
+    form = ModuloIscrittiCorsoBaseAggiungi(request.POST or None, corso=corso)
+    if form.is_valid():
+        for persona in form.cleaned_data['persone']:
             esito = corso.persona(persona)
             ok = PartecipazioneCorsoBase.NON_ISCRITTO
             partecipazione = None
@@ -581,13 +593,13 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                 "ok": ok,
             }]
 
-    contesto = {
+    context = {
         "corso": corso,
         "puo_modificare": True,
-        "modulo": modulo,
+        "modulo": form,
         "risultati": risultati,
     }
-    return 'aspirante_corso_base_scheda_iscritti_aggiungi.html', contesto
+    return 'aspirante_corso_base_scheda_iscritti_aggiungi.html', context
 
 
 @pagina_privata

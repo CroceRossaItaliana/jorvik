@@ -59,15 +59,28 @@ class ModuloModificaLezione(ModelForm):
     fine = forms.DateTimeField()
 
     def clean(self):
+        cd = self.cleaned_data
         try:
-            fine = self.cleaned_data['fine']
-            inizio = self.cleaned_data['inizio']
-
+            inizio = cd['inizio']
+            fine = cd['fine']
         except KeyError:
             raise ValidationError("Compila correttamente tutti i campi.")
 
         if inizio >= fine:
             self.add_error('fine', "La fine deve essere successiva all'inizio.")
+
+        data_inizio_corso = self.corso.data_inizio
+        err_data_lt_inizio_corso = 'Data precedente alla data di inizo corso.'
+        if inizio < data_inizio_corso:
+            self.add_error('inizio', err_data_lt_inizio_corso)
+        if fine < data_inizio_corso:
+            self.add_error('fine', err_data_lt_inizio_corso)
+
+        return cd
+    
+    def __init__(self, *args, **kwargs):
+        self.corso = kwargs.pop('corso')
+        super().__init__(*args, **kwargs)
 
     class Meta:
         model = LezioneCorsoBase

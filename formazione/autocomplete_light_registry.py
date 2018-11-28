@@ -12,7 +12,7 @@ class DocenteLezioniCorso(AutocompletamentoBase):
     model = Persona
 
     def choices_for_request(self):
-        app_attuali = Appartenenza.query_attuale(membro__in=Appartenenza.MEMBRO_ATTIVITA)
+        app_attuali = Appartenenza.query_attuale(membro__in=Appartenenza.MEMBRO_DIRETTO)
         app_attuali = app_attuali.values_list('persona__id', flat=True)
         self.choices = self.choices.filter(id__in=app_attuali)
         return super().choices_for_request()

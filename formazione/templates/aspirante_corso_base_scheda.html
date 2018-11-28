@@ -104,7 +104,7 @@
         {% endif %}
         </ul>
 
-    {% if puo_modificare and corso.stato == corso.PREPARAZIONE and corso.prossimo %}
+    {% if puo_modificare and corso.stato == corso.PREPARAZIONE and corso.prossimo and not corso.is_nuovo_corso %}
         <div class="alert alert-danger">
             <h4><i class="fa fa-warning"></i> Non c'è tempo da perdere!</h4>
             <p>Questo corso inizier&agrave; a breve, ma non hai ancora attivato il Corso su Gaia.</p>
@@ -137,15 +137,16 @@
                 <a class="btn btn-warning {% if not corso.attivabile %}disabled{% endif %}"
                     {% if corso.attivabile %}href="{{ corso.url_attiva }}"{% endif %}>
                     <i class="fa fa-fw fa-check-circle"></i>
-                    {% if corso.extension_type == corso.EXT_MIA_SEDE %}
-                    Attiva il corso e informa gli aspiranti in zona (pi&ugrave; di
-                    {{ corso.aspiranti_nelle_vicinanze.count }})
-
-                    {% elif corso.extension_type == corso.EXT_LVL_REGIONALE %}
-                    Attiva il corso e informa i volontari dei segmenti selezionati.
-
+                    {% if corso.is_nuovo_corso %}
+                        {% if corso.extension_type == corso.EXT_MIA_SEDE %}
+                            Attiva il corso e informa i volontari della mia sede
+                        {% elif corso.extension_type == corso.EXT_LVL_REGIONALE %}
+                            Attiva il corso e informa i volontari dei segmenti selezionati.
+                        {% else %}
+                            Attiva il corso
+                        {% endif %}
                     {% else %}
-                    Attiva il corso
+                        Attiva il corso e informa gli aspiranti in zona (più di {{ corso.aspiranti_nelle_vicinanze.count }})
                     {% endif %}
                 </a>
             </p>
