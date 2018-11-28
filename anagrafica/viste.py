@@ -1,14 +1,11 @@
-import codecs
-import csv
-import datetime
+import csv, datetime, codecs
 from collections import OrderedDict
-from django.db import transaction
 from importlib import import_module
 
 from django.apps import apps
+from django.db import transaction
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.utils import timezone
@@ -20,34 +17,44 @@ from django.views.generic import ListView
 
 from anagrafica.costanti import TERRITORIALE, REGIONALE
 from anagrafica.elenchi import ElencoDelegati
-from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
-    ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
-    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
-    ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
-    ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
-    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail, \
-    ModuloUSModificaUtenza, ModuloReportFederazione
+from anagrafica.forms import (ModuloStepComitato, ModuloStepCredenziali,
+    ModuloModificaAnagrafica, ModuloModificaAvatar, ModuloCreazioneDocumento,
+    ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto,
+    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento,
+    ModuloCreazioneDelega, ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera,
+    ModuloProfiloModificaAnagrafica, ModuloProfiloTitoloPersonale, ModuloUtenza,
+    ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
+    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza,
+    ModuloReportFederazione, ModuloImportPresidenti, ModuloPulisciEmail,
+    ModuloUSModificaUtenza)
 from anagrafica.forms import ModuloStepCodiceFiscale, ModuloStepAnagrafica
 
 # Tipi di registrazione permessi
-from anagrafica.importa import VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari
-from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento, \
-    ProvvedimentoDisciplinare, Sede, Riserva, Dimissione
-from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, COMMISSARIO, \
-    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
-    RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
-    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI
-
-from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
-    ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO, \
-    RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
-    RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1, RUBRICA_DELEGATI_OBIETTIVO_2, \
-    RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
-    RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
-    RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, GESTIONE_SOCI
-from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
-    INCARICO_GESTIONE_FOTOTESSERE
+from anagrafica.models import (Persona, Documento, Telefono, Estensione,
+    Delega, Appartenenza, Trasferimento, ProvvedimentoDisciplinare,
+    Sede, Riserva, Dimissione)
+from anagrafica.permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI,
+    PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, COMMISSARIO, DELEGATO_OBIETTIVO_2,
+    DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5,
+    DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO,
+    DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE,
+    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO,
+    PERMESSI_NOMI, RUBRICHE_TITOLI)
+from anagrafica.importa import (VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO,
+    VALIDAZIONE_OK, import_import_volontari)
+from anagrafica.permessi.costanti import (ERRORE_PERMESSI, COMPLETO, MODIFICA,
+    LETTURA, GESTIONE_SEDE, GESTIONE, ELENCHI_SOCI, GESTIONE_ATTIVITA,
+    GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO, RUBRICA_UFFICIO_SOCI,
+    RUBRICA_UFFICIO_SOCI_UNITA, RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA,
+    RUBRICA_DELEGATI_OBIETTIVO_2, RUBRICA_DELEGATI_OBIETTIVO_3,
+    RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6,
+    RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA,
+    RUBRICA_REFERENTI_ATTIVITA, RUBRICA_REFERENTI_GRUPPI,
+    RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE,
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, GESTIONE_SOCI,
+    RUBRICA_DELEGATI_OBIETTIVO_1)
+from anagrafica.permessi.incarichi import (INCARICO_GESTIONE_RISERVE,
+    INCARICO_GESTIONE_TITOLI, INCARICO_GESTIONE_FOTOTESSERE)
 from anagrafica.utils import _conferma_email, _richiesta_conferma_email
 from articoli.viste import get_articoli
 from attivita.forms import ModuloStatisticheAttivitaPersona
@@ -56,17 +63,19 @@ from attivita.stats import statistiche_attivita_persona
 from attivita.viste import attivita_storico_excel
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
-from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico, errore_no_volontario
+from base.errori import (errore_generico, errore_nessuna_appartenenza,
+                         messaggio_generico, errore_no_volontario)
 from base.files import Zip
 from base.models import Log
 from base.notifiche import NOTIFICA_INVIA
 from base.stringhe import genera_uuid_casuale
 from base.utils import remove_none, poco_fa, oggi
-from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
-from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio, Q
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
+from curriculum.models import Titolo, TitoloPersonale
+from curriculum.forms import (ModuloNuovoTitoloPersonale,
+                              ModuloDettagliTitoloPersonale)
 
 
 TIPO_VOLONTARIO = 'volontario'

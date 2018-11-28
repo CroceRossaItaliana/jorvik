@@ -1,5 +1,4 @@
 # coding=utf-8
-
 """
 Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 
@@ -11,60 +10,61 @@ Questo modulo definisce i modelli del modulo anagrafico di Gaia.
 - Comitato
 - Delega
 """
-from datetime import date, timedelta, datetime
 
+from datetime import date, timedelta, datetime
 import stdnum
 from django.conf import settings
+from django.apps import apps
+from django.db import models
+from django.db.models import Q, QuerySet, Avg
 from django.db.transaction import atomic
 from django.utils import timezone
-
-import codicefiscale
-import mptt
-from django.contrib.auth.models import PermissionsMixin
+from django.utils.functional import cached_property
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
-from django.db import models
-from django.db.models import Q, QuerySet, Avg
-from django.utils.functional import cached_property
-from django_countries.fields import CountryField
+
 import phonenumbers
+import codicefiscale
+import mptt
 from mptt.querysets import TreeQuerySet
-
-from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
-
-from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI_NOMI_DICT, UFFICIO_SOCI_UNITA, \
-    DELEGHE_RUBRICA, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_4, \
-    RESPONSABILE_FORMAZIONE, DELEGATO_OBIETTIVO_6, DELEGATO_OBIETTIVO_5, RESPONSABILE_AUTOPARCO, DELEGATO_CO, \
-    DIRETTORE_CORSO, RESPONSABILE_AREA, REFERENTE, OBIETTIVI, COMMISSARIO
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI
-from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
-    GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE
-from anagrafica.permessi.delega import delega_permessi, delega_incarichi
-from anagrafica.permessi.incarichi import INCARICO_GESTIONE_APPARTENENZE, INCARICO_GESTIONE_TRASFERIMENTI, \
-    INCARICO_GESTIONE_ESTENSIONI, INCARICO_GESTIONE_RISERVE, INCARICO_ASPIRANTE
-from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
-    persona_permessi_almeno, persona_ha_permessi
-from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
-    crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb, valida_almeno_14_anni, \
-    valida_partita_iva, valida_iban, valida_email_personale
-from attivita.models import Turno, Partecipazione
-from base.files import PDF, Excel, FoglioExcel
-from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
-from base.models import ModelloSemplice, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
-    Autorizzazione, ConVecchioID
-from base.stringhe import normalizza_nome, GeneratoreNomeFile
-from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
-from base.utils import is_list, sede_slugify, UpperCaseCharField, TitleCharField, poco_fa, mezzanotte_24_ieri, \
-    mezzanotte_00, mezzanotte_24, concept
+from django_countries.fields import CountryField
 from autoslug import AutoSlugField
 
+from attivita.models import Turno, Partecipazione
 from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio
-from django.apps import apps
-
 from base.notifiche import NOTIFICA_INVIA, NOTIFICA_NON_INVIARE
+from base.files import PDF, Excel, FoglioExcel
+from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
+from base.models import (ModelloSemplice, ModelloAlbero, ConAutorizzazioni,
+    ConAllegati, Autorizzazione, ConVecchioID)
+from base.stringhe import normalizza_nome, GeneratoreNomeFile
+from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
+from base.utils import (is_list, sede_slugify, UpperCaseCharField,
+    TitleCharField, poco_fa, mezzanotte_24_ieri, mezzanotte_00, mezzanotte_24, concept)
+from anagrafica.permessi.delega import delega_permessi, delega_incarichi
+from anagrafica.costanti import (ESTENSIONE, TERRITORIALE, LOCALE,
+                                 PROVINCIALE, REGIONALE, NAZIONALE)
+from anagrafica.permessi.applicazioni import (PRESIDENTE, PERMESSI_NOMI,
+    PERMESSI_NOMI_DICT, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, DELEGATO_OBIETTIVO_2,
+    DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_4,
+    RESPONSABILE_FORMAZIONE, DELEGATO_OBIETTIVO_6, DELEGATO_OBIETTIVO_5,
+    RESPONSABILE_AUTOPARCO, DELEGATO_CO, DIRETTORE_CORSO, RESPONSABILE_AREA,
+    REFERENTE, OBIETTIVI, COMMISSARIO, UFFICIO_SOCI)
+from anagrafica.permessi.costanti import (GESTIONE_ATTIVITA,
+    PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO,
+    GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE)
+from anagrafica.permessi.incarichi import (INCARICO_GESTIONE_APPARTENENZE,
+    INCARICO_GESTIONE_TRASFERIMENTI, INCARICO_GESTIONE_ESTENSIONI,
+    INCARICO_GESTIONE_RISERVE, INCARICO_ASPIRANTE)
+from anagrafica.permessi.persona import (persona_ha_permesso,
+    persona_oggetti_permesso, persona_permessi, persona_permessi_almeno,
+    persona_ha_permessi)
+from anagrafica.validators import (valida_codice_fiscale, valida_iban,
+    ottieni_genere_da_codice_fiscale, crea_validatore_dimensione_file,
+    valida_dimensione_file_8mb, valida_dimensione_file_5mb,
+    valida_almeno_14_anni, valida_partita_iva, valida_email_personale)
 
 
 class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
@@ -117,10 +117,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     avatar = models.ImageField("Avatar", blank=True, null=True,
                                upload_to=GeneratoreNomeFile('avatar/'),
                                validators=[valida_dimensione_file_5mb])
-
-
     # Privacy
-
     POLICY_PUBBLICO = 9
     POLICY_REGISTRATI = 7
     POLICY_SEDE = 5
@@ -133,15 +130,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         (POLICY_RISTRETTO, "Ai Responsabili della mia Sede CRI"),
     )
 
-    privacy_contatti = models.SmallIntegerField(choices=POLICY, default=POLICY_SEDE, db_index=True,
-                                                help_text="A chi mostrare il mio indirizzo e-mail e i miei numeri "
-                                                          "di telefono.")
-    privacy_curriculum = models.SmallIntegerField(choices=POLICY, default=POLICY_RISTRETTO, db_index=True,
-                                                  help_text="A chi mostrare il mio curriculum (competenze pers., "
-                                                            "patenti, titoli di studio e CRI)")
-    privacy_deleghe = models.SmallIntegerField(choices=POLICY, default=POLICY_RISTRETTO, db_index=True,
-                                               help_text="A chi mostrare i miei incarichi, come presidenze, "
-                                                         "referenze attività, deleghe, ecc.")
+    privacy_contatti = models.SmallIntegerField(choices=POLICY, default=POLICY_SEDE,
+        db_index=True, help_text="A chi mostrare il mio indirizzo e-mail e i "
+                                 "miei numeri di telefono.")
+    privacy_curriculum = models.SmallIntegerField(choices=POLICY, default=POLICY_RISTRETTO,
+        db_index=True, help_text="A chi mostrare il mio curriculum ("
+                "competenze pers., patenti, titoli di studio e CRI)")
+    privacy_deleghe = models.SmallIntegerField(choices=POLICY, default=POLICY_RISTRETTO,
+        db_index=True, help_text="A chi mostrare i miei incarichi, "
+                "come presidenze, referenze attività, deleghe, ecc.")
 
     iv = models.BooleanField(verbose_name="Infermiera V.", default=False, db_index=True)
     cm = models.BooleanField(verbose_name="Corpo Militare", default=False, db_index=True)
@@ -173,8 +170,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                              "formazione, servizi sanitari, servizi sociali, ecc.)"),
         (CONOSCENZA_ALTRO, "Altro"),
     )
-    conoscenza = models.CharField(max_length=2, choices=CONOSCENZA, default=None, blank=False, null=True, db_index=True,
-                                  help_text="Come sei venuto/a a conoscenza delle opportunità di "
+    conoscenza = models.CharField(max_length=2, choices=CONOSCENZA,
+        default=None, blank=False, null=True, db_index=True,
+        help_text="Come sei venuto/a a conoscenza delle opportunità di "
                                             "volontariato della CRI?")
 
     @property
@@ -193,14 +191,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return normalizza_nome(self.cognome + " " + self.nome)
 
-
-    # Q: Qual e' l'email di questa persona?
-    # A: Una persona puo' avere da zero a due indirizzi email.
-    #    - Persona.email_contatto e' quella scelta dalla persona per il contatto.
-    #    - Persona.utenza.email (o Persona.email_utenza) e' quella utilizzata per accedere al sistema.
-    #    - Persona.email puo' essere usato per ottenere, in ordine, l'email di contatto,
-    #       oppure, se non impostata, quella di utenza. Se nemmeno una utenza e' disponibile,
-    #       viene ritornato None.
+    """
+    Q: Qual e' l'email di questa persona?
+    A: Una persona puo' avere da zero a due indirizzi email.
+    - Persona.email_contatto e' quella scelta dalla persona per il contatto.
+    - Persona.utenza.email (o Persona.email_utenza) e' quella utilizzata per accedere al sistema.
+    - Persona.email puo' essere usato per ottenere, in ordine, l'email di contatto,
+      oppure, se non impostata, quella di utenza.
+      Se nemmeno una utenza e' disponibile, viene ritornato None.
+    """
 
     @property
     def email(self):
@@ -255,28 +254,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def ultimo_tesserino(self):
         return self.tesserini.all().order_by("creazione").last()
 
-    def __str__(self):
-        return self.nome_completo
+    """
+    Q: Qual e' il numero di telefono di questa persona?
+    A: Una persona puo' avere da zero ad illimitati numeri di telefono.
+      - Persona.numeri_telefono ottiene l'elenco di oggetti Telefono.
+      - Per avere un elenco di numeri di telefono formattati, usare ad esempio
+      numeri = [str(x) for x in Persona.numeri_telefono]
+      - Usare Persona.aggiungi_numero_telefono per aggiungere un numero di telefono.
+    """
 
-    class Meta:
-        verbose_name_plural = "Persone"
-        app_label = 'anagrafica'
-        index_together = [
-            ['nome', 'cognome'],
-            ['nome', 'cognome', 'codice_fiscale'],
-            ['id', 'nome', 'cognome', 'codice_fiscale'],
-        ]
-        permissions = (
-            ('view_persona', "Can view persona"),
-            ('transfer_persona', "Can transfer persona"),
-        )
-
-    # Q: Qual e' il numero di telefono di questa persona?
-    # A: Una persona puo' avere da zero ad illimitati numeri di telefono.
-    #    - Persona.numeri_telefono ottiene l'elenco di oggetti Telefono.
-    #    - Per avere un elenco di numeri di telefono formattati, usare ad esempio
-    #       numeri = [str(x) for x in Persona.numeri_telefono]
-    #    - Usare Persona.aggiungi_numero_telefono per aggiungere un numero di telefono.
     def numeri_pubblici(self):
         numeri_servizio = self.numeri_telefono.filter(servizio=True)
         if numeri_servizio.exists():
@@ -584,7 +570,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         lista += [('/articoli/', 'Articoli', 'fa-newspaper-o')]
         lista += [('/documenti/', 'Documenti', 'fa-folder')]
         return lista
-
 
     def oggetti_permesso(self, permesso, al_giorno=None,
                          solo_deleghe_attive=True):
@@ -1277,6 +1262,22 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                         attivi.append({'sedi_sottostanti': True, 'sede': sede.genitore})
         return attivi
 
+    def __str__(self):
+        return self.nome_completo
+
+    class Meta:
+        verbose_name_plural = "Persone"
+        app_label = 'anagrafica'
+        index_together = [
+            ['nome', 'cognome'],
+            ['nome', 'cognome', 'codice_fiscale'],
+            ['id', 'nome', 'cognome', 'codice_fiscale'],
+        ]
+        permissions = (
+            ('view_persona', "Can view persona"),
+            ('transfer_persona', "Can transfer persona"),
+        )
+
     def save(self, *args, **kwargs):
         self.nome = normalizza_nome(self.nome)
         self.cognome = normalizza_nome(self.cognome)
@@ -1498,22 +1499,17 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         return True
 
     def membro_a_stringa(self):
-        if self.membro == self.VOLONTARIO:
-            return 'Volontario, '+self.sede.nome_completo
-        elif self.membro == self.ESTESO:
-            return 'Esteso, '+self.sede.nome_completo
-        elif self.membro == self.ORDINARIO:
-            return 'Ordinario, '+self.sede.nome_completo
-        elif self.membro == self.DIPENDENTE:
-            return 'Dipendente, '+self.sede.nome_completo
-        elif self.membro == self.INFERMIERA:
-            return 'Infermiera, '+self.sede.nome_completo
-        elif self.membro == self.MILITARE:
-            return 'Militare, '+self.sede.nome_completo
-        elif self.membro == self.DONATORE:
-            return 'Donatore, '+self.sede.nome_completo
-        elif self.membro == self.SOSTENITORE:
-            return 'Sostenitore, '+self.sede.nome_completo
+        name = ''
+        membro = self.membro
+        if membro == self.VOLONTARIO:       name = 'Volontario, '
+        elif membro == self.ESTESO:         name = 'Esteso, '
+        elif membro == self.ORDINARIO:      name = 'Ordinario, '
+        elif membro == self.DIPENDENTE:     name = 'Dipendente, '
+        elif membro == self.INFERMIERA:     name = 'Infermiera, '
+        elif membro == self.MILITARE:       name = 'Militare, '
+        elif membro == self.DONATORE:       name = 'Donatore, '
+        elif membro == self.SOSTENITORE:    name = 'Sostenitore, '
+        return name + self.sede.nome_completo
 
     def richiedi(self, notifiche_attive=True):
         """
