@@ -7,10 +7,10 @@ from importlib import import_module
 
 from django.apps import apps
 from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
-from django.http import HttpResponse
-from django.shortcuts import render_to_response, redirect, get_object_or_404
+from django.core.urlresolvers import reverse
 from django.contrib.auth import login
+from django.contrib.contenttypes.models import ContentType
+from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.template.loader import get_template
@@ -1023,6 +1023,7 @@ def profilo_turni_foglio(request, me, pk=None):
 
 @pagina_privata
 def strumenti_delegati(request, me):
+    from formazione.forms import FormCreateDirettoreDelega
     session = request.session
 
     # Get values stored in the session
@@ -1037,16 +1038,19 @@ def strumenti_delegati(request, me):
     oggetto = apps.get_model(app_label, model).objects.get(pk=pk)
 
     # Instantiate a new form
-    modulo = ModuloCreazioneDelega(
-        request.POST or None,
-        initial={'inizio': datetime.date.today()},
-        me=me,
-        course=oggetto
-    )
+    form_data = {
+        'course': oggetto,
+        'me': me,
+        'initial': {'inizio': datetime.date.today()},
+    }
+    form = ModuloCreazioneDelega(request.POST or None, **form_data)
+    if model == 'corsobase':
+        if oggetto.is_nuovo_corso:
+            form = FormCreateDirettoreDelega(request.POST or None, **form_data)
 
     # Check form is valid
-    if modulo.is_valid():
-        d = modulo.save(commit=False)
+    if form.is_valid():
+        d = form.save(commit=False)
 
         if oggetto.deleghe.all().filter(Delega.query_attuale().q, tipo=delega, persona=d.persona).exists():
             return errore_generico(
@@ -1054,7 +1058,7 @@ def strumenti_delegati(request, me):
                 titolo="%s è già delegato" % (d.persona.nome_completo,),
                 messaggio="%s ha già una delega attuale come %s per %s" % (d.persona.nome_completo, PERMESSI_NOMI_DICT[delega], oggetto),
                 torna_titolo="Torna indietro",
-                torna_url="/strumenti/delegati/",
+                torna_url=reverse('strumenti_delegati'),
             )
 
         d.inizio = poco_fa()
@@ -1067,17 +1071,17 @@ def strumenti_delegati(request, me):
     deleghe = oggetto.deleghe.filter(tipo=delega)
     deleghe_attuali = oggetto.deleghe_attuali(tipo=delega)
 
-    contesto = {
+    context = {
         "continua_url": continua_url,
         "almeno": almeno,
         "delega": PERMESSI_NOMI_DICT[delega],
-        "modulo": modulo,
+        "modulo": form,
         "oggetto": oggetto,
         "deleghe": deleghe,
         "deleghe_attuali": deleghe_attuali,
     }
 
-    return 'anagrafica_strumenti_delegati.html', contesto
+    return 'anagrafica_strumenti_delegati.html', context
 
 
 @pagina_privata
@@ -1095,9 +1099,8 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
     if not me.permessi_almeno(delega.oggetto, GESTIONE):
         return redirect(ERRORE_PERMESSI)
 
-    delega.termina(mittente=me,
-                   termina_at=poco_fa())
-    return redirect("/strumenti/delegati/")
+    delega.termina(mittente=me, termina_at=poco_fa())
+    return redirect(reverse('strumenti_delegati'))
 
 
 @pagina_privata
