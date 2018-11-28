@@ -1,6 +1,7 @@
 import datetime
 
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Q
 from django.db.transaction import atomic
@@ -270,15 +271,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def url_modifica(self):
-        return "%smodifica/" % (self.url,)
+        return reverse('aspirante:modify', args=[self.pk])
 
     @property
     def url_attiva(self):
-        return "%sattiva/" % (self.url,)
+        return reverse('aspirante:activate', args=[self.pk])
 
     @property
     def url_termina(self):
-        return "%stermina/" % (self.url,)
+        return reverse('aspirante:terminate', args=[self.pk])
 
     @property
     def url_iscritti(self):
@@ -298,23 +299,27 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def url_mappa(self):
-        return "%smappa/" % (self.url,)
+        return reverse('aspirante:map', args=[self.pk])
 
     @property
     def url_lezioni(self):
-        return "%slezioni/" % (self.url,)
+        return reverse('aspirante:lessons', args=[self.pk])
 
     @property
     def url_report(self):
-        return "%sreport/" % (self.url,)
+        return reverse('aspirante:report', args=[self.pk])
 
     @property
     def url_firme(self):
-        return "%sfirme/" % (self.url,)
+        return reverse('aspirante:firme', args=[self.pk])
 
     @property
     def url_report_schede(self):
-        return self.url + "report/schede/"
+        return reverse('aspirante:report_schede', args=[self.pk])
+
+    @property
+    def url_estensioni(self):
+        return reverse('aspirante:estensioni_modifica', args=[self.pk])
 
     @classmethod
     def nuovo(cls, anno=None, **kwargs):
@@ -786,7 +791,6 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
     corso = models.ForeignKey(CorsoBase, related_name='partecipazioni', on_delete=models.PROTECT)
 
     # Stati per l'iscrizione da parte del direttore
-
     NON_ISCRITTO = 0
     ISCRITTO = 1
     IN_ATTESA_ASPIRANTE = 2
@@ -794,7 +798,6 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
     INVITO_INVIATO = -1
 
     # Dati per la generazione del verbale (esito)
-
     POSITIVO = "P"
     NEGATIVO = "N"
     ESITO = (

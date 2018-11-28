@@ -73,7 +73,7 @@
                 </a>
             </li>
             {% if corso.tipo == 'C1' %}
-            <li role="presentation" {% if request.path == corso.url_modifica %}class="active"{% endif %}>
+            <li role="presentation" {% if request.path == corso.url_estensioni %}class="active"{% endif %}>
                 <a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"
                    class="text-danger">
                     <i class="fa fa-fw fa-pencil"></i>
