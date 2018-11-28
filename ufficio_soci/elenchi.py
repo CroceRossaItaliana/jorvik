@@ -326,14 +326,14 @@ class ElencoEstesi(ElencoVistaSoci):
 
     def risultati(self):
         qs_sedi = self.args[0]
-
+        from django.db.models import BooleanField, Value
         if self.modulo_riempito.cleaned_data['estesi'] == self.modulo_riempito.ESTESI_INGRESSO:
             # Estesi in ingresso
             risultati = Persona.objects.filter(
                 Appartenenza.query_attuale(
                     sede__in=qs_sedi, membro=Appartenenza.ESTESO,
                 ).via("appartenenze")
-            )
+            ).annotate(is_ingresso=Value(value=True, output_field=BooleanField()))
 
         else:
             # Estesi in uscita
@@ -353,7 +353,7 @@ class ElencoEstesi(ElencoVistaSoci):
                 pk__in=volontari_da_me
             ).filter(
                 pk__in=estesi_da_qualche_parte
-            )
+            ).annotate(is_ingresso=Value(value=False, output_field=BooleanField()))
 
         return risultati.annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
@@ -367,10 +367,10 @@ class ElencoEstesi(ElencoVistaSoci):
     def excel_colonne(self):
 
         def _comitato(p):
-            if p.appartenenza_tipo == Appartenenza.ESTESO:
+            if not p.is_ingresso:
                 return Estensione.objects.filter(persona=p.pk, ritirata=False).order_by('creazione').first().destinazione
             else:
-                return Estensione.objects.filter(persona=p.pk, ritirata=False).order_by('creazione').first().appartenenza
+                return p.appartenenze_attuali().filter(fine=None).first().sede
 
         return super(ElencoEstesi, self).excel_colonne() + (
             ('Data inizio estensione', lambda p: Estensione.objects.filter(persona=p.pk, ritirata=False).order_by('creazione').first().protocollo_data),
@@ -594,7 +594,7 @@ class ElencoInRiserva(ElencoVistaSoci):
         return super(ElencoInRiserva, self).excel_colonne() + (
             ("Data inizio", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().inizio),
             ("Data fine", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().fine),
-            ("Data inizio", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().motivo)
+            ("Motivazioni", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().motivo)
         )
 
 
