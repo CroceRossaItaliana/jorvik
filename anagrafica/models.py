@@ -1468,6 +1468,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     # Membri sotto il diretto controllo di una altra Sede
     MEMBRO_ESTESO = (ESTESO,)
 
+    # Utilizzati in Corso Nuovo (formazione)
+    MEMBRO_CORSO = (VOLONTARIO, ESTESO, DIPENDENTE, INFERMIERA, MILITARE)
+
     MEMBRO = (
         (VOLONTARIO, 'Volontario'),
         (ESTESO, 'Volontario in Estensione'),

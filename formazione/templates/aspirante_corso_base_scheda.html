@@ -41,31 +41,7 @@
                 Informazioni
             </a>
         </li>
-
-        {% if corso.locazione %}
-            <li role="presentation" {% if corso.url_mappa in request.path %}class="active"{% endif %}>
-                <a href="{{ corso.url_mappa }}">
-                    <i class="fa fa-fw fa-globe"></i>
-                    Mappa
-                </a>
-            </li>
-        {% endif %}
-
         {% if puo_modificare %}
-            <li role="presentation" {% if request.path == corso.url_iscritti %}class="active"{% endif %}>
-                <a href="{{ corso.url_iscritti }}">
-                    <i class="fa fa-fw fa-group"></i>
-                    Iscrizioni
-                    <span class="badge">
-                        <i class="fa fa-fw fa-check"></i>
-                        {{ corso.partecipazioni_confermate.count }}
-                    </span>
-                    <span class="badge">
-                        <i class="fa fa-fw fa-clock-o"></i>
-                        {{ corso.numero_partecipazioni_in_attesa_e_inviti }}
-                    </span>
-                </a>
-            </li>
             <li role="presentation" {% if request.path == corso.url_modifica %}class="active"{% endif %}>
                 <a href="{{ corso.url_modifica }}" class="text-danger">
                     <i class="fa fa-fw fa-pencil"></i>
@@ -80,9 +56,37 @@
                     Estensioni
                 </a>
             </li>{% endif %}
+            <li role="presentation" {% if request.path == corso.url_iscritti %}class="active"{% endif %}>
+                <a href="{{ corso.url_iscritti }}">
+                    <i class="fa fa-fw fa-group"></i>
+                    Iscrizioni
+                    <span class="badge">
+                        <i class="fa fa-fw fa-check"></i>
+                        {{ corso.partecipazioni_confermate.count }}
+                    </span>
+                    <span class="badge">
+                        <i class="fa fa-fw fa-clock-o"></i>
+                        {{ corso.numero_partecipazioni_in_attesa_e_inviti }}
+                    </span>
+                </a>
+            </li>
+        {% endif %}
+        {% if corso.locazione %}
+            <li role="presentation" {% if corso.url_mappa in request.path %}class="active"{% endif %}>
+                <a href="{{ corso.url_mappa }}">
+                    <i class="fa fa-fw fa-globe"></i> Mappa
+                </a>
+            </li>
+        {% endif %}
         </ul>
 
+        {% if puo_modificare %}
         <ul class="nav nav-tabs" style="margin-bottom:25px;">
+            <li role="presentation">
+                <a href="{% url 'aspirante:informa' corso.pk %}">
+                    <i class="fa fa-fw fa-envelope"></i> Informa persone
+                </a>
+            </li>
             <li role="presentation" {% if corso.url_lezioni in request.path %}class="active"{% endif %}>
                 <a href="{{ corso.url_lezioni }}">
                     <i class="fa fa-fw fa-calendar"></i>
@@ -101,8 +105,8 @@
                     Scarica foglio firme
                 </a>
             </li>
-        {% endif %}
         </ul>
+        {% endif %}
 
     {% if puo_modificare and corso.stato == corso.PREPARAZIONE and corso.prossimo and not corso.is_nuovo_corso %}
         <div class="alert alert-danger">

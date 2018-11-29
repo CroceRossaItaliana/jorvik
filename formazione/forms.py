@@ -5,7 +5,7 @@ from django.forms import ModelForm, modelformset_factory
 from autocomplete_light import shortcuts as autocomplete_light
 from base.wysiwyg import WYSIWYGSemplice
 
-from anagrafica.models import Delega
+from anagrafica.models import Delega, Persona
 from .models import (Corso, CorsoBase, CorsoLink, CorsoFile, CorsoEstensione,
                      LezioneCorsoBase, PartecipazioneCorsoBase)
 
@@ -294,7 +294,10 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
                                "È necessario selezionare la Sede presso la quale il Volontario "
                                "diventerà Volontario (nel solo caso di superamento dell'esame).")
 
-class FormCreateDirettoreDelega(autocomplete_light.ModelForm):
+
+class FormCreateDirettoreDelega(ModelForm):
+    persona = autocomplete_light.ModelChoiceField('CreateDirettoreDelegaAutocompletamento')
+
     class Meta:
         model = Delega
         fields = ['persona',]
