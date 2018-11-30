@@ -805,13 +805,36 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
 
 @pagina_privata
 def aspirante_corso_estensioni_informa(request, me, pk):
+    from .forms import InformCourseParticipantsForm
+
     course = get_object_or_404(CorsoBase, pk=pk)
 
     if not me.permessi_almeno(course, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
+    qs = Persona.objects.filter()
+    form_data = {
+        'instance': course,
+    }
+    form = InformCourseParticipantsForm(request.POST or None, **form_data)
+    if form.is_valid():
+        cd = form.cleaned_data
+        recipients = cd['recipients']
+        if recipients == form.UNCONFIRMED_REQUESTS:
+            pass
+        elif recipients == form.CONFIRMED_REQUESTS:
+            pass
+        elif recipients == form.INVIA_QUESTIONARIO:
+            pass
+        elif recipients == form.ALL:
+            pass
+        else:
+            # todo: something went wrong ...
+            pass
+
     context = {
         'corso': course,
+        'form': form,
         'puo_modificare': True,
     }
     return 'aspirante_corso_informa_persone.html', context

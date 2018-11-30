@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm, modelformset_factory
@@ -308,3 +310,29 @@ class FormCreateDirettoreDelega(ModelForm):
             if attr in kwargs:
                 setattr(self, attr, kwargs.pop(attr))
         super().__init__(*args, **kwargs)
+
+
+class InformCourseParticipantsForm(forms.Form):
+    ALL = '1'
+    UNCONFIRMED_REQUESTS = '2'
+    CONFIRMED_REQUESTS  = '3'
+    INVIA_QUESTIONARIO  = '4'
+
+    CHOICES = (
+        (ALL, "A tutti (già iscritti + chi ha fatto richiesta)"),
+        (UNCONFIRMED_REQUESTS, 'Solo a chi ha fatto richieste'),
+        (CONFIRMED_REQUESTS, 'Partecipanti confermati'),
+    )
+
+    recipient_type = forms.ChoiceField(choices=CHOICES, label='Destinatari')
+    message = forms.CharField(label='Messaggio', required=True)
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance')
+        super().__init__(*args, **kwargs)
+
+        # Append INVIA_QUESTIONARIO option to select if data_esame is reached
+        if datetime.now() > self.instance.data_esame:
+            self.fields['recipient_type'].widget.choices.append(
+                (self.INVIA_QUESTIONARIO, "Invia questionario di gradimento ai partecipanti")
+            )
