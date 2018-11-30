@@ -21,13 +21,13 @@ class Titolo(ModelloSemplice, ConVecchioID):
         (TITOLO_CRI, "Titolo CRI"),
     )
 
-    livello = models.ForeignKey('TitleLevel', null=True, blank=True,
-                                verbose_name="Livello",
-                                on_delete=models.PROTECT)
+    goal = models.ForeignKey('TitleGoal', null=True, blank=True,
+        verbose_name="Obbiettivo", on_delete=models.PROTECT)
     nome = models.CharField(max_length=255, db_index=True)
     area = models.CharField(max_length=5, null=True, blank=True, db_index=True,
         choices=OBBIETTIVI_STRATEGICI)
     tipo = models.CharField(max_length=2, choices=TIPO, db_index=True)
+    is_active = models.BooleanField(default=True)
     richiede_conferma = models.BooleanField(default=False,)
     richiede_data_ottenimento = models.BooleanField(default=False,)
     richiede_luogo_ottenimento = models.BooleanField(default=False,)
@@ -42,31 +42,11 @@ class Titolo(ModelloSemplice, ConVecchioID):
         )
 
     def __str__(self):
+        # if self.tipo == self.TITOLO_CRI and self.goal:
+        #     return "%s - %s - %s" % (self.nome, self.goal,
+        #                              self.goal.get_unit_reference_display())
+        # else:
         return str(self.nome)
-
-
-class TitleLevel(models.Model):
-    name = models.CharField('Nome', max_length=255)
-    goal = models.ForeignKey('TitleGoal', null=True, blank=True)
-
-    @property
-    def goal_obbiettivo_stragetico(self):
-        return self.goal.unit_reference
-
-    @property
-    def goal_propedeuticita(self):
-        return self.goal.propedeuticita
-
-    @property
-    def goal_unit_reference(self):
-        return self.goal.get_unit_reference_display()
-
-    def __str__(self):
-        return "%s - %s" % (self.name, self.goal)
-
-    class Meta:
-        verbose_name = 'Titolo: Livello'
-        verbose_name_plural = 'Titoli: Livelli'
 
 
 class TitleGoal(models.Model):

@@ -30,8 +30,7 @@ class TitoloAutocompletamento(autocomplete_light.AutocompleteModelBase):
 
             # Titoli CRI (TC)
             if titoli_tipo == Titolo.TITOLO_CRI:
-                self.choices = self.choices.filter(
-                    livello__goal__unit_reference=area_id)
+                self.choices = self.choices.filter(goal__unit_reference=area_id)
             
             # Titoli di studio (TS)
             elif titoli_tipo == Titolo.TITOLO_STUDIO:

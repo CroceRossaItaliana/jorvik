@@ -126,6 +126,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         validators=[MinValueValidator(MIN_PARTECIPANTI)])
     max_participants = models.SmallIntegerField("Massimo partecipanti",
                                                 default=MAX_PARTECIPANTI)
+    titolo_cri = models.ForeignKey(Titolo, blank=True, null=True,
+                                   verbose_name="Titolo CRI")
 
     PUOI_ISCRIVERTI_OK = "IS"
     PUOI_ISCRIVERTI = (PUOI_ISCRIVERTI_OK,)

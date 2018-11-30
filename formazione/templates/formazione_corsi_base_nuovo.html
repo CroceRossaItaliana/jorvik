@@ -44,4 +44,15 @@
             </div>
         </div>
     </div>
+
+<script>
+    var form_group = $('#id_titolo_cri').closest('.form-group');
+    form_group.hide();
+    $('#id_tipo').on('change', function(e){
+        let value = $(this).find('option:selected').val();
+        if (value && value == 'C1') {form_group.show();}
+        else {form_group.hide();}
+    });
+</script>
+
 {% endblock %}

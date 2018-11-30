@@ -2,39 +2,32 @@ from django.contrib import admin
 
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
-from .models import (Titolo, TitleGoal, TitleLevel, TitoloPersonale)
+from .models import (Titolo, TitleGoal, TitoloPersonale) #, TitleLevel, )
 
 
 @admin.register(Titolo)
 class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['nome', ]
-    list_display = ('nome', 'livello_name', 'tipo', 'inseribile_in_autonomia',
-        'area', 'goal_obbiettivo_stragetico', 'goal_propedeuticita',
-        'goal_unit_reference')
-    list_filter = ("tipo", "richiede_conferma", "inseribile_in_autonomia",
-                   'livello__goal__unit_reference',)
-
-    def livello_name(self, obj):
-        return obj.livello.name if hasattr(obj.livello, 'name') else 'not set'
+    list_display = ('nome', 'tipo', 'goal_obbiettivo_stragetico', 'goal_propedeuticita',
+        'goal_unit_reference', 'inseribile_in_autonomia', 'area',)
+    list_filter = ('is_active', "tipo", "richiede_conferma",
+        "inseribile_in_autonomia", 'goal__unit_reference',)
 
     def goal_obbiettivo_stragetico(self, obj):
-        return obj.livello.goal_obbiettivo_stragetico if hasattr(obj.livello,
-                                    'goal_obbiettivo_stragetico') else 'not set'
+        return obj.goal.unit_reference if hasattr(obj.goal,
+                                    'unit_reference') else 'not set'
 
     def goal_propedeuticita(self, obj):
-        return obj.livello.goal_propedeuticita if hasattr(obj.livello,
-                                    'goal_propedeuticita') else 'not set'
+        return obj.goal.propedeuticita if hasattr(obj.goal,
+                                    'propedeuticita') else 'not set'
 
     def goal_unit_reference(self, obj):
-        return obj.livello.goal_unit_reference if hasattr(obj.livello,
-                                    'goal_unit_reference') else 'not set'
+        return obj.goal.get_unit_reference_display() if hasattr(obj.goal,
+                                    'unit_reference') else 'not set'
 
-
-@admin.register(TitleLevel)
-class AdminTitleLevel(admin.ModelAdmin):
-    list_display = ['name', 'goal_obbiettivo_stragetico',
-                    'goal_propedeuticita', 'goal_unit_reference']
-    list_filter = ['goal',]
+    goal_obbiettivo_stragetico.short_description = 'Obiettivo strategico di riferimento'
+    goal_propedeuticita.short_description = 'Propedeuticità'
+    goal_unit_reference.short_description = 'Unità  riferimento'
 
 
 @admin.register(TitleGoal)

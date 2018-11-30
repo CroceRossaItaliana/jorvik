@@ -49,12 +49,24 @@ class ModuloCreazioneCorsoBase(ModelForm):
 
     class Meta:
         model = CorsoBase
-        fields = ['tipo', 'data_inizio', 'data_esame', 'sede',]
+        fields = ['tipo', 'titolo_cri', 'data_inizio', 'data_esame', 'sede',]
+        help_texts = {
+            # 'titolo_cri': 'Da selezionare se il tipo di corso non è Corso Base',
+        }
 
     def __init__(self, *args, **kwargs):
+        from curriculum.models import Titolo
+
         super().__init__(*args, **kwargs)
-        self.order_fields(('tipo',  'data_inizio', 'data_esame', 'sede',
-                           'locazione'))
+        self.order_fields(('tipo',  'titolo_cri', 'data_inizio', 'data_esame',
+                           'sede', 'locazione'))
+
+        self.fields['titolo_cri'].queryset = Titolo.objects.filter(
+            is_active=True,
+            goal__isnull=False,
+            goal__unit_reference__isnull=False,
+            tipo=Titolo.TITOLO_CRI,
+        ).order_by('goal__unit_reference')
 
 
 class ModuloModificaLezione(ModelForm):
@@ -94,7 +106,7 @@ class ModuloModificaCorsoBase(ModelForm):
     class Meta:
         model = CorsoBase
         fields = ['data_inizio', 'data_esame',
-                  'min_participants', 'max_participants',
+                  'titolo_cri', 'min_participants', 'max_participants',
                   'descrizione',
                   'data_attivazione', 'data_convocazione',
                   'op_attivazione', 'op_convocazione',]
@@ -116,9 +128,14 @@ class ModuloModificaCorsoBase(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance.tipo != Corso.CORSO_NUOVO:
+        instance = self.instance
+        is_nuovo = instance.tipo == Corso.CORSO_NUOVO
+        if not is_nuovo:
             self.fields.pop('min_participants')
             self.fields.pop('max_participants')
+            self.fields.pop('titolo_cri')
+        if is_nuovo and instance.stato == Corso.ATTIVO:
+            self.fields['titolo_cri'].widget.attrs['disabled'] = 'disabled'
 
 
 class CorsoLinkForm(ModelForm):
