@@ -445,26 +445,27 @@ def aspirante_corso_base_termina(request, me, pk):
 
     azione = request.POST.get('azione', default=ModuloVerbaleAspiranteCorsoBase.SALVA_SOLAMENTE)
     generazione_verbale = azione == ModuloVerbaleAspiranteCorsoBase.GENERA_VERBALE
-
     termina_corso = generazione_verbale
 
     for partecipante in corso.partecipazioni_confermate():
 
-        modulo = ModuloVerbaleAspiranteCorsoBase(
+        form = ModuloVerbaleAspiranteCorsoBase(
             request.POST or None, prefix="part_%d" % partecipante.pk,
             instance=partecipante,
             generazione_verbale=generazione_verbale
         )
-        modulo.fields['destinazione'].queryset = corso.possibili_destinazioni()
-        modulo.fields['destinazione'].initial = corso.sede
+        if corso.is_nuovo_corso:
+            pass
+        else:
+            form.fields['destinazione'].queryset = corso.possibili_destinazioni()
+            form.fields['destinazione'].initial = corso.sede
 
-        if modulo.is_valid():
-            modulo.save()
-
+        if form.is_valid():
+            form.save()
         elif generazione_verbale:
             termina_corso = False
 
-        partecipanti_moduli += [(partecipante, modulo)]
+        partecipanti_moduli += [(partecipante, form)]
 
     if termina_corso:  # Se il corso può essere terminato.
         corso.termina(mittente=me)
@@ -474,14 +475,14 @@ def aspirante_corso_base_termina(request, me, pk):
                                   torna_titolo="Vai al Report del Corso Base",
                                   torna_url=corso.url_report)
 
-    contesto = {
+    context = {
         "corso": corso,
         "puo_modificare": True,
         "partecipanti_moduli": partecipanti_moduli,
         "azione_genera_verbale": ModuloVerbaleAspiranteCorsoBase.GENERA_VERBALE,
         "azione_salva_solamente": ModuloVerbaleAspiranteCorsoBase.SALVA_SOLAMENTE,
     }
-    return 'aspirante_corso_base_scheda_termina.html', contesto
+    return 'aspirante_corso_base_scheda_termina.html', context
 
 
 @pagina_privata
@@ -806,6 +807,7 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
 @pagina_privata
 def aspirante_corso_estensioni_informa(request, me, pk):
     from .forms import InformCourseParticipantsForm
+    from django.contrib import messages
 
     course = get_object_or_404(CorsoBase, pk=pk)
 
@@ -818,19 +820,24 @@ def aspirante_corso_estensioni_informa(request, me, pk):
     }
     form = InformCourseParticipantsForm(request.POST or None, **form_data)
     if form.is_valid():
+        sent_with_success = True
         cd = form.cleaned_data
-        recipients = cd['recipients']
-        if recipients == form.UNCONFIRMED_REQUESTS:
+        recipient_type = cd['recipient_type']
+        if recipient_type == form.UNCONFIRMED_REQUESTS:
             pass
-        elif recipients == form.CONFIRMED_REQUESTS:
+        elif recipient_type == form.CONFIRMED_REQUESTS:
             pass
-        elif recipients == form.INVIA_QUESTIONARIO:
+        elif recipient_type == form.INVIA_QUESTIONARIO:
             pass
-        elif recipients == form.ALL:
+        elif recipient_type == form.ALL:
             pass
         else:
             # todo: something went wrong ...
             pass
+
+        if sent_with_success:
+            messages.success(request, "Il messaggio ai volontari è stato inviato con successo. ")
+            return redirect(reverse('aspirante:informa', args=[pk]))
 
     context = {
         'corso': course,

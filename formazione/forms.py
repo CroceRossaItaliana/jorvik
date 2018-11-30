@@ -231,7 +231,6 @@ class ModuloConfermaIscrizioneCorsoBase(forms.Form):
 
 
 class ModuloVerbaleAspiranteCorsoBase(ModelForm):
-
     GENERA_VERBALE = 'genera_verbale'
     SALVA_SOLAMENTE = 'salva'
 
@@ -247,7 +246,11 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
 
     def __init__(self, *args, generazione_verbale=False, **kwargs):
         self.generazione_verbale = generazione_verbale
-        super(ModuloVerbaleAspiranteCorsoBase, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+
+        if not self.instance.corso.is_nuovo_corso:
+            # This field is not required if Corso Nuovo
+            self.fields.pop('destinazione')
 
     def clean(self):
         """
@@ -307,7 +310,6 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
         # Se sto generando il verbale, controlla che tutti i campi
         # obbligatori siano stati riempiti.
         if self.generazione_verbale:
-
             if not destinazione:
                 self.add_error('destinazione',
                                "È necessario selezionare la Sede presso la quale il Volontario "
@@ -342,7 +344,7 @@ class InformCourseParticipantsForm(forms.Form):
     )
 
     recipient_type = forms.ChoiceField(choices=CHOICES, label='Destinatari')
-    message = forms.CharField(label='Messaggio', required=True)
+    message = forms.CharField(label='Messaggio', required=True) #widget=WYSIWYGSemplice())
 
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance')

@@ -522,11 +522,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return self.stato == self.TERMINATO and self.partecipazioni_confermate().exists()
 
     def termina(self, mittente=None):
-        """
-        Termina il corso base, genera il verbale e volontarizza.
-        """
-
+        """ Termina il corso base, genera il verbale e volontarizza. """
         from django.db import transaction
+
         with transaction.atomic():
             # Per maggiore sicurezza, questa cosa viene eseguita in una transazione.
 
@@ -540,9 +538,14 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 # Comunica il risultato all'aspirante/volontario.
                 partecipante.notifica_esito_esame(mittente=mittente)
 
-                if partecipante.idoneo:  # Se idoneo, volontarizza.
-                    partecipante.persona.da_aspirante_a_volontario(sede=partecipante.destinazione,
-                                                                   mittente=mittente)
+                # Actions required only for CorsoBase (Aspirante as participant)
+                if not self.is_nuovo_corso:
+                    # Se idoneo, volontarizza
+                    if partecipante.idoneo:
+                        partecipante.persona.da_aspirante_a_volontario(
+                            sede=partecipante.destinazione,
+                            mittente=mittente)
+
 
             # Cancella tutte le eventuali partecipazioni in attesa.
             PartecipazioneCorsoBase.con_esito_pending(corso=self).delete()
@@ -550,6 +553,30 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             # Salva lo stato del corso come terminato.
             self.stato = Corso.TERMINATO
             self.save()
+
+        if self.is_nuovo_corso:
+            self.set_titolo_cri_to_participants()
+
+    def set_titolo_cri_to_participants(self):
+        """ Sets <titolo_cri> in Persona's Curriculum (TitoloPersonale) """
+
+        # todo: unfinished
+        objs = [
+            TitoloPersonale(
+                confermata=True,
+                titolo=self.titolo_cri,
+                persona=persona,
+                # data_ottenimento='',
+                # luogo_ottenimento='',
+                data_scadenza='',
+                # codice='',
+                # codice_corso='',
+                # certificato='',
+                # certificato_da='',
+            )
+            for persona in self.partecipazioni_confermate()
+        ]
+        TitoloPersonale.objects.bulk_create(objs)
 
     def non_idonei(self):
         return self.partecipazioni_confermate().filter(esito_esame=PartecipazioneCorsoBase.NON_IDONEO)
@@ -892,12 +919,14 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
         )
 
     def notifica_esito_esame(self, mittente=None):
-        """
-        Invia una e-mail al partecipante con l'esito del proprio esame.
-        """
+        """ Invia una e-mail al partecipante con l'esito del proprio esame. """
+
+        template = "email_%s_corso_esito.html"
+        template = template % 'volontario' if self.corso.is_nuovo_corso else 'aspirante'
+
         Messaggio.costruisci_e_accoda(
             oggetto="Esito del Corso Base: %s" % self.corso,
-            modello="email_aspirante_corso_esito.html",
+            modello=template,
             corpo={
                 "partecipazione": self,
                 "corso": self.corso,
