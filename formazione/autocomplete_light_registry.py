@@ -7,6 +7,23 @@ from anagrafica.models import Persona, Appartenenza, Sede
 from curriculum.models import Titolo
 
 
+class AutocompletamentoBasePersonaModelMixin(AutocompletamentoBase):
+    choice_html_format = """<span class="block" data-value="%s"><strong>%s</strong> %s</span>"""
+
+    def choice_html(self, choice):
+        if choice.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).exists():
+            app = choice.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
+        else:
+            app = choice.appartenenze_attuali().first() if choice else None
+
+        # Example: Charles Campbell (Volontario del Comitato 1 sotto Metropolitano)
+        data_value = self.choice_value(choice)
+        full_name = self.choice_label(choice)
+        membership = ("(%s del %s)" % (app.get_membro_display(), app.sede)) if app else ''
+
+        return self.choice_html_format % (data_value, full_name, membership)
+
+
 class DocenteLezioniCorso(AutocompletamentoBase):
     search_fields = ['nome', 'cognome', 'codice_fiscale',]
     model = Persona
@@ -32,10 +49,9 @@ class EstensioneLivelloRegionaleSede(AutocompletamentoBase):
     model = Sede
 
 
-class InvitaCorsoNuovoAutocompletamento(AutocompletamentoBase):
+class InvitaCorsoNuovoAutocompletamento(AutocompletamentoBasePersonaModelMixin):
     model = Persona
     search_fields = ['codice_fiscale',]
-    choice_html_format = """<span class="block" data-value="%s"><strong>%s</strong> %s</span>"""
     attrs = {
         'required': False,
         'placeholder': 'Inserisci il codice fiscale',
@@ -48,19 +64,20 @@ class InvitaCorsoNuovoAutocompletamento(AutocompletamentoBase):
         ))
         return super().choices_for_request()
 
-    def choice_html(self, choice):
-        if choice.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).exists():
-            app = choice.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
-        else:
-            app = choice.appartenenze_attuali().first() if choice else None
-        return self.choice_html_format % (
-            self.choice_value(choice),
-            self.choice_label(choice),
-            ("(%s del %s)" % (app.get_membro_display(), app.sede)) if app else '',
-        )
+
+class CreateDirettoreDelegaAutocompletamento(AutocompletamentoBasePersonaModelMixin):
+    model = Persona
+    search_fields = ['nome', 'cognome', 'codice_fiscale',]
+
+    def choices_for_request(self):
+        self.choices = self.choices.filter(Q(Appartenenza.query_attuale(
+            membro__in=Appartenenza.MEMBRO_CORSO).via("appartenenze")
+        )).distinct('nome', 'cognome', 'codice_fiscale')
+        return super().choices_for_request()
 
 
 autocomplete_light.register(EstensioneLivelloRegionaleTitolo)
 autocomplete_light.register(EstensioneLivelloRegionaleSede)
 autocomplete_light.register(DocenteLezioniCorso)
 autocomplete_light.register(InvitaCorsoNuovoAutocompletamento)
+autocomplete_light.register(CreateDirettoreDelegaAutocompletamento)
