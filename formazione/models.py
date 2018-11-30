@@ -397,16 +397,16 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         self.stato = self.ATTIVO
         self.save()
 
-    def _corso_activation_recepients_for_email(self):
+    def _corso_activation_recipients_for_email(self):
         if self.is_nuovo_corso:
-            recepients = self.get_volunteers_by_course_requirements()
+            recipients = self.get_volunteers_by_course_requirements()
         else:
-            recepients = self.aspiranti_nelle_vicinanze()
-        return recepients
+            recipients = self.aspiranti_nelle_vicinanze()
+        return recipients
 
     def _invia_email_agli_aspiranti(self, rispondi_a=None):
-        for recepient in self._corso_activation_recepients_for_email():
-            persona = recepient if self.is_nuovo_corso else recepient.persona
+        for recipient in self._corso_activation_recipients_for_email():
+            persona = recipient if self.is_nuovo_corso else recipient.persona
             email_data = dict(
                 oggetto="Nuovo Corso per Volontari CRI",
                 modello="email_aspirante_corso.html",
@@ -421,7 +421,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             if self.is_nuovo_corso:
                 # If course tipo is CORSO_NUOVO to send to volunteers only
                 Messaggio.costruisci_e_accoda(**email_data)
-            elif not self.is_nuovo_corso and not recepient.persona.volontario:
+            elif not self.is_nuovo_corso and not recipient.persona.volontario:
                 # to send to <Aspirante> only
                 Messaggio.costruisci_e_accoda(**email_data)
 
@@ -483,13 +483,17 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return course_created_by.firmatario.sede_riferimento()
 
     def get_volunteers_by_only_sede(self):
-        app = Appartenenza.objects.filter(sede=self.get_firmatario_sede,
-                                          membro=Appartenenza.VOLONTARIO)
+        app_attuali = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).q
+        app = Appartenenza.objects.filter(app_attuali,
+                                          sede=self.get_firmatario_sede,
+                                          confermata=True)
         return self._query_get_volunteers_by_sede(app)
 
     def get_volunteers_by_ext_sede(self):
-        app = Appartenenza.objects.filter(sede__in=self.get_extensions_sede(),
-                                          membro=Appartenenza.VOLONTARIO)
+        app_attuali = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).q
+        app = Appartenenza.objects.filter(app_attuali,
+                                          sede__in=self.get_extensions_sede(),
+                                          confermata=True)
         return self._query_get_volunteers_by_sede(app)
 
     def _query_get_volunteers_by_sede(self, appartenenze):
