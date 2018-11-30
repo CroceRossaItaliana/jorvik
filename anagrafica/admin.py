@@ -242,7 +242,7 @@ class AdminAppartenenza(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["membro", "persona__nome", "persona__cognome", "persona__codice_fiscale",
                      "persona__utenza__email", "sede__nome"]
     list_display = ("persona", "sede", "attuale", "inizio", "fine", "creazione")
-    list_filter = ("membro", "inizio", "fine")
+    list_filter = ('confermata', "membro", "inizio", "fine")
     raw_id_fields = RAW_ID_FIELDS_APPARTENENZA
     inlines = [InlineAutorizzazione]
 

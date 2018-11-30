@@ -124,8 +124,8 @@
     {% if puo_modificare and corso.stato == corso.PREPARAZIONE %}
         <div class="alert alert-warning alert-block">
             <h4><i class="fa fa-fw fa-warning"></i> Il corso non &egrave; ancora attivo</h4>
-            <p>Questo corso &egrave; ancora una bozza ("In Preparazione"). &Egrave; necessario
-                attivare il corso affinch&eacute; questo possa essere trovato dagli aspiranti.
+            <p>Questo corso &egrave; ancora una bozza ("In Preparazione").
+                È necessario attivare il corso affinch&eacute; questo possa essere trovato {% if corso.is_nuovo_corso %}dai volontari{%else%}dagli aspiranti{%endif%}.
                 Completa i passi necessari e clicca sul pulsante per attivare il corso:
             </p>
 
