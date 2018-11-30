@@ -24,6 +24,7 @@ from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
 from .validators import course_file_directory_path
 
+
 class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
             ConGeolocalizzazione, ConCommenti, ConGiudizio):
     # Tipologia di corso
@@ -781,7 +782,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
         )
 
     def __str__(self):
-        return "Invit di part. di %s a %s" % (self.persona, self.corso)
+        return "Invito di part. di <%s> a <%s>" % (self.persona, self.corso)
 
 
 class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
