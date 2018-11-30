@@ -6,8 +6,10 @@ __author__ = 'alfioemanuele'
 # Tipologie di applicativi esistenti
 
 PRESIDENTE = 'PR'
+VICE_PRESIDENTE = 'VPR'
 COMMISSARIO = 'CM'
 CONSIGLIERE = 'CN'
+CONSIGLIERE_GIOVANE = 'CNG'
 UFFICIO_SOCI = 'US'
 UFFICIO_SOCI_UNITA = 'UU'
 UFFICIO_SOCI_TEMPORANEO = 'UT'
@@ -40,8 +42,10 @@ OBIETTIVI = {
 # Nomi assegnati
 PERMESSI_NOMI = (
     (PRESIDENTE,                "Presidente"),
+    (VICE_PRESIDENTE,           "Vice Presidente"),
     (COMMISSARIO,               "Commissario"),
     (CONSIGLIERE,               "Consigliere"),
+    (CONSIGLIERE_GIOVANE,       "Consigliere giovane"),
     (UFFICIO_SOCI,              "Ufficio Soci"),
     (UFFICIO_SOCI_UNITA,        "Ufficio Soci Unità territoriali"),
     (DELEGATO_AREA,             "Delegato d'Area"),
