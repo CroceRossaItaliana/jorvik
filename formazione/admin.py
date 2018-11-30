@@ -75,6 +75,12 @@ class AdminCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     actions = [admin_corsi_base_attivi_invia_messaggi]
 
 
+@admin.register(InvitoCorsoBase)
+class AdminInvitoCorsoBase(admin.ModelAdmin):
+    list_display = ['persona', 'corso', 'invitante',]
+    list_filter = ['ritirata', 'confermata', 'automatica']
+
+
 @admin.register(CorsoFile)
 class AdminCorsoFile(admin.ModelAdmin):
     list_display = ['__str__', 'file', 'is_enabled', 'corso',]
