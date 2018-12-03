@@ -1,0 +1,11 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p class="grassetto">Ciao, questo messaggio è stato inviato dal direttore corso {{ corso.nome }}.</p>
+
+    <hr>
+    <p>{{ message|safe }}</p>
+    <hr>
+
+    <p><strong><a href="{{ corso.url }}">Clicca qui per aprire la pagina del Corso con maggiori informazioni.</a></strong></p>
+{% endblock %}

@@ -105,6 +105,7 @@ class AdminCorsoEstensione(admin.ModelAdmin):
 class AdminPartecipazioneCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['persona__nome', 'persona__cognome', 'persona__codice_fiscale', 'corso__progressivo', ]
     list_display = ['persona', 'corso', 'esito', 'creazione', ]
+    list_filter = ['confermata',]
     raw_id_fields = RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE
     inlines = [InlineAutorizzazione]
 

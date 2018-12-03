@@ -820,20 +820,34 @@ def aspirante_corso_estensioni_informa(request, me, pk):
     }
     form = InformCourseParticipantsForm(request.POST or None, **form_data)
     if form.is_valid():
-        sent_with_success = True
         cd = form.cleaned_data
+        recipients = PartecipazioneCorsoBase.objects.none()
+        sent_with_success = False
+
         recipient_type = cd['recipient_type']
-        if recipient_type == form.UNCONFIRMED_REQUESTS:
-            pass
+        if recipient_type == form.ALL:
+            recipients = course.partecipazioni_in_attesa() | course.partecipazioni_confermate()
+        elif recipient_type == form.UNCONFIRMED_REQUESTS:
+            recipients = course.partecipazioni_in_attesa()
         elif recipient_type == form.CONFIRMED_REQUESTS:
-            pass
+            recipients = course.partecipazioni_confermate()
         elif recipient_type == form.INVIA_QUESTIONARIO:
-            pass
-        elif recipient_type == form.ALL:
             pass
         else:
             # todo: something went wrong ...
             pass
+
+        if recipients:
+            sent_with_success = Messaggio.costruisci_e_invia(
+                oggetto="Informativa dal direttore Corso %s" % course.nome,
+                modello="email_corso_informa_participants.html",
+                corpo={
+                    'corso': course,
+                    'message': cd['message'],
+                },
+                mittente=me,
+                destinatari=[r.persona for r in recipients]
+            )
 
         if sent_with_success:
             messages.success(request, "Il messaggio ai volontari è stato inviato con successo. ")

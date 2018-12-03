@@ -334,8 +334,8 @@ class FormCreateDirettoreDelega(ModelForm):
 class InformCourseParticipantsForm(forms.Form):
     ALL = '1'
     UNCONFIRMED_REQUESTS = '2'
-    CONFIRMED_REQUESTS  = '3'
-    INVIA_QUESTIONARIO  = '4'
+    CONFIRMED_REQUESTS = '3'
+    INVIA_QUESTIONARIO = '4'
 
     CHOICES = (
         (ALL, "A tutti (già iscritti + chi ha fatto richiesta)"),
@@ -344,7 +344,8 @@ class InformCourseParticipantsForm(forms.Form):
     )
 
     recipient_type = forms.ChoiceField(choices=CHOICES, label='Destinatari')
-    message = forms.CharField(label='Messaggio', required=True) #widget=WYSIWYGSemplice())
+    message = forms.CharField(label='Messaggio', required=True,
+                              max_length=3000,) #  widget=WYSIWYGSemplice())
 
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance')
