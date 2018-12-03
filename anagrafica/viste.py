@@ -36,7 +36,7 @@ from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, 
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, COMMISSARIO, \
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
     RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
-    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI, CONSIGLIERE, VICE_PRESIDENTE
+    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI, CONSIGLIERE, VICE_PRESIDENTE, CONSIGLIERE_GIOVANE
 
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
     ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO, \
@@ -1588,6 +1588,7 @@ def _presidente_sede_ruoli(sede):
             (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count()),
             (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count()),
             (CONSIGLIERE, "Consigliere", sede.delegati_attuali(tipo=CONSIGLIERE).count()),
+            (CONSIGLIERE_GIOVANE, "Consigliere giovane", sede.delegati_attuali(tipo=CONSIGLIERE_GIOVANE).count()),
         ]
     })
 
@@ -1908,6 +1909,8 @@ def admin_import_presidenti(request, me):
     for i in range(0, numero_presidenti_per_pagina):
         modulo = ModuloImportPresidenti(request.POST or None, prefix="presidenti_%d" % i)
 
+        msg = ""
+
         if modulo.is_valid():
 
             # Ottieni i dati
@@ -1915,48 +1918,132 @@ def admin_import_presidenti(request, me):
             persona = modulo.cleaned_data['persona']
             sede = modulo.cleaned_data['sede']
 
-            # Prendo l'ultima delega da commissario/presidente per la sede
-            delega_persona_precedente, isPresidente = __get_presidiata(sede)
+            if nomina == PRESIDENTE or nomina == COMMISSARIO:
+                # Prendo l'ultima delega da commissario/presidente per la sede
+                delega_persona_precedente, isPresidente = __get_presidiata(sede)
 
-            # Se una delle due figure esiste (Presidente/Commissario)
-            if delega_persona_precedente:
+                # Se una delle due figure esiste (Presidente/Commissario)
+                if delega_persona_precedente:
 
-                # Se è già stato nominato in questa sede.
-                if delega_persona_precedente.persona == persona:
-                    esiti += [
-                        (
-                            persona,
-                            sede,
-                            "Saltato. E' già {} di questa Sede.".format(
-                                'Presidente' if isPresidente else 'Commissario'
+                    # Se è già stato nominato in questa sede.
+                    if delega_persona_precedente.persona == persona:
+                        esiti += [
+                            (
+                                persona,
+                                sede,
+                                "Saltato. E' già {} di questa Sede.".format(
+                                    'Presidente' if isPresidente else 'Commissario'
+                                )
                             )
-                        )
-                    ]
-                    continue
+                        ]
+                        continue
 
-                # Termina la Presidenza/Commissariato.
-                delega_persona_precedente.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+                    # Termina la Presidenza/Commissariato.
+                    delega_persona_precedente.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
 
-                # Termina tutte le Deleghe correlate.
-                delega_persona_precedente.presidenziali_termina_deleghe_dipendenti()
+                    # Termina tutte le Deleghe correlate.
+                    delega_persona_precedente.presidenziali_termina_deleghe_dipendenti()
 
-            # Controllo se è gia commissario di un altra sede
-            gia_presidente = persona.deleghe_attuali(
-                al_giorno=datetime.datetime.now(), tipo=PRESIDENTE, fine=None
-            ).first()
-            if gia_presidente:
-                gia_presidente.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
-            else:
-                gia_commissario = persona.deleghe_attuali(
-                    al_giorno=datetime.datetime.now(), tipo=COMMISSARIO, fine=None
+                # Controllo se è gia commissario di un altra sede
+                gia_presidente = persona.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=PRESIDENTE, fine=None
                 ).first()
-                if gia_commissario:
-                    gia_commissario.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+                if gia_presidente:
+                    gia_presidente.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+                else:
+                    gia_commissario = persona.deleghe_attuali(
+                        al_giorno=datetime.datetime.now(), tipo=COMMISSARIO, fine=None
+                    ).first()
+                    if gia_commissario:
+                        gia_commissario.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+
+                    msg = "OK, Nomina effettuata."
+                    if delega_persona_precedente:
+                        msg += "Vecchio {} dimesso {}".format(
+                            'Presidente' if isPresidente else 'Commissario',
+                            delega_persona_precedente.persona.codice_fiscale
+                        )
+                    else:
+                        msg += "Non vi era alcuna nomina."
+
+            elif nomina == CONSIGLIERE:
+                deleghe_consigliere = sede.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE, fine=None
+                )
+
+                for delega in deleghe_consigliere:
+                    # Se è già stato nominato in questa sede.
+                    if delega.persona == persona:
+                        esiti += [
+                            (
+                                persona,
+                                sede,
+                                "Saltato. E' già Consigliere di questa Sede."
+                            )
+                        ]
+                        continue
+
+                gia_consigliere = persona.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE, fine=None
+                ).first()
+
+                if gia_consigliere:
+                    gia_consigliere.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+
+                msg = "OK, Nomina effettuata."
+            elif nomina == CONSIGLIERE_GIOVANE:
+                delega_consigliere_giovane = sede.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE_GIOVANE, fine=None
+                ).first()
+
+                if delega_consigliere_giovane:
+                    if delega_consigliere_giovane.persona == persona:
+                        esiti += [
+                            (
+                                persona,
+                                sede,
+                                "Saltato. E' già Consigliere giovane di questa Sede."
+                            )
+                        ]
+                        continue
+
+                gia_consigliere = persona.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE_GIOVANE, fine=None
+                ).first()
+
+                if gia_consigliere:
+                    gia_consigliere.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+
+                msg = "OK, Nomina effettuata."
+            elif nomina == VICE_PRESIDENTE:
+                delega_vice_presidente = sede.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=VICE_PRESIDENTE, fine=None
+                ).first()
+
+                if delega_vice_presidente:
+                    if delega_vice_presidente.persona == persona:
+                        esiti += [
+                            (
+                                persona,
+                                sede,
+                                "Saltato. E' già Vice Presidente di questa Sede."
+                            )
+                        ]
+                        continue
+
+                gia_consigliere = persona.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=VICE_PRESIDENTE, fine=None
+                ).first()
+
+                if gia_consigliere:
+                    gia_consigliere.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+
+                msg = "OK, Nomina effettuata."
 
             # Crea la nuova delega e notifica.
             delega = Delega(
                 persona=persona,
-                tipo=PRESIDENTE if nomina == 'Presidente' else COMMISSARIO,
+                tipo=nomina,
                 oggetto=sede,
                 inizio=poco_fa(),
                 firmatario=me,
@@ -1964,15 +2051,6 @@ def admin_import_presidenti(request, me):
 
             delega.save()
             delega.invia_notifica_creazione()
-
-            msg = "OK, Nomina effettuata."
-            if delega_persona_precedente:
-                msg += "Vecchio {} dimesso {}".format(
-                    'Presidente' if isPresidente else 'Commissario',
-                    delega_persona_precedente.persona.codice_fiscale
-                )
-            else:
-                msg += "Non vi era alcuna nomina."
 
             esiti += [
                 (persona, sede, msg)
