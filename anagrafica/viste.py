@@ -1897,7 +1897,6 @@ def admin_import_presidenti(request, me):
             # Non è presidiata da nessuno
             return None, False
 
-
     if not me.utenza.is_superuser:
         return redirect(ERRORE_PERMESSI)
 
@@ -1941,7 +1940,6 @@ def admin_import_presidenti(request, me):
                 # Termina tutte le Deleghe correlate.
                 delega_persona_precedente.presidenziali_termina_deleghe_dipendenti()
 
-
             # Controllo se è gia commissario di un altra sede
             gia_presidente = persona.deleghe_attuali(
                 al_giorno=datetime.datetime.now(), tipo=PRESIDENTE, fine=None
@@ -1955,7 +1953,6 @@ def admin_import_presidenti(request, me):
                 if gia_commissario:
                     gia_commissario.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
 
-
             # Crea la nuova delega e notifica.
             delega = Delega(
                 persona=persona,
@@ -1967,7 +1964,6 @@ def admin_import_presidenti(request, me):
 
             delega.save()
             delega.invia_notifica_creazione()
-
 
             msg = "OK, Nomina effettuata."
             if delega_persona_precedente:

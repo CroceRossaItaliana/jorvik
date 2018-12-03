@@ -23,6 +23,7 @@ from autocomplete_light import shortcuts as autocomplete_light
 from base.forms import ModuloMotivoNegazione
 from curriculum.models import TitoloPersonale
 from sangue.models import Donatore, Donazione
+from anagrafica.permessi.applicazioni import PRESIDENTE, COMMISSARIO, CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE
 
 
 class ModuloSpostaPersone(object):
@@ -526,7 +527,14 @@ class ModuloReportFederazione(forms.Form):
 class ModuloImportPresidenti(forms.Form):
     nomina = forms.ChoiceField(widget=forms.Select(),
                       choices=(
-                          [('Seleziona', ''), ('Presidente', 'Presidente'), ('Commissario', 'Commissario'),]
+                          [
+                              ('Seleziona', ''),
+                              (PRESIDENTE, 'Presidente'),
+                              (COMMISSARIO, 'Commissario'),
+                              (CONSIGLIERE, 'Consigliere'),
+                              (CONSIGLIERE_GIOVANE, 'Consigliere giovane'),
+                              (VICE_PRESIDENTE, 'Vice presidente'),
+                          ]
                       ),
                       initial='Nomina',
                       required=True,)
