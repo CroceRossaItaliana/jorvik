@@ -22,6 +22,7 @@ from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione, Modello
 from curriculum.models import Titolo
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
+from survey.models import Survey
 from .validators import course_file_directory_path
 
 
@@ -128,6 +129,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                                                 default=MAX_PARTECIPANTI)
     titolo_cri = models.ForeignKey(Titolo, blank=True, null=True,
                                    verbose_name="Titolo CRI")
+    survey = models.ForeignKey(Survey, blank=True, null=True,
+                               verbose_name='Questionario di gradimento')
 
     PUOI_ISCRIVERTI_OK = "IS"
     PUOI_ISCRIVERTI = (PUOI_ISCRIVERTI_OK,)
