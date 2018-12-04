@@ -67,7 +67,8 @@ admin_corsi_base_attivi_invia_messaggi.short_description = "(Solo corsi attivi) 
 @admin.register(CorsoBase)
 class AdminCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['sede__nome', 'sede__genitore__nome', 'progressivo', 'anno', ]
-    list_display = ['progressivo', 'anno', 'stato', 'sede', 'data_inizio', 'data_esame', ]
+    list_display = ['progressivo', 'tipo', 'stato', 'anno', 'sede',
+                    'data_inizio', 'data_esame', ]
     list_filter = ['tipo', 'anno', 'creazione', 'stato', 'data_inizio', ]
     raw_id_fields = RAW_ID_FIELDS_CORSOBASE
     inlines = [InlineDelegaCorsoBase, InlinePartecipazioneCorsoBase,
