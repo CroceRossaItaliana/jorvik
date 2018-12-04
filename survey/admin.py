@@ -22,6 +22,5 @@ class AdminSurvey(admin.ModelAdmin):
 
 @admin.register(SurveyResult)
 class AdminSurveyResult(admin.ModelAdmin):
-    list_display = ['response', 'user', 'question', 'created_at'] #,
-    # 'updated_at']
-    raw_id_fields = ['user', 'survey', 'question']
+    list_display = ['course', 'user', 'question', 'response', 'created_at', 'updated_at']
+    raw_id_fields = ['user', 'survey', 'question', 'course']

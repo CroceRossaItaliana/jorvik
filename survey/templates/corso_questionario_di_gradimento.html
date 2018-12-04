@@ -11,7 +11,7 @@
         <div class="panel-body">
           <p style="text-align: center; font-size: 18px;">{{ survey.text }}</p>
 
-          {% if has_responses %}
+          {% if puo_modificare and has_responses %}
             <p style="text-align:center;font-weight:bold;">
               <a href="{% url 'survey:course_download_results' corso.pk %}">Scaricare il Report con le risposte dei partecipanti</a>
             </p>

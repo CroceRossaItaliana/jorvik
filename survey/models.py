@@ -83,6 +83,7 @@ class Question(models.Model):
 
 class SurveyResult(models.Model):
     user = models.ForeignKey(Persona)
+    course = models.ForeignKey('formazione.CorsoBase', blank=True, null=True)
     survey = models.ForeignKey(Survey)
     question = models.ForeignKey(Question)
     response = models.TextField(max_length=1000, blank=True, null=True)
@@ -91,7 +92,7 @@ class SurveyResult(models.Model):
 
     @classmethod
     def get_responses_for_course(cls, course):
-        return cls.objects.filter(survey__corsobase=course)
+        return cls.objects.filter(course=course)
 
     @classmethod
     def generate_report_for_course(cls, course):

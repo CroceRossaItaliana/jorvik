@@ -36,9 +36,10 @@ def course_survey(request, me, pk):
             if question.qid in cd:
                 response = cd.get(question.qid)
                 result, created = SurveyResult.objects.get_or_create(
+                    course=course,
                     user=me,
                     survey=survey,
-                    question=question,
+                    question=question
                 )
                 if result:
                     result.response = response
