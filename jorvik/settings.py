@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'social',
     'posta',
     'sangue',
+    'survey',
     'formazione',
     'bootstrap3',
     'django_countries',

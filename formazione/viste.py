@@ -832,18 +832,30 @@ def aspirante_corso_estensioni_informa(request, me, pk):
         elif recipient_type == form.CONFIRMED_REQUESTS:
             recipients = course.partecipazioni_confermate()
         elif recipient_type == form.INVIA_QUESTIONARIO:
-            pass
+            recipients = course.partecipazioni_confermate()
         else:
             # todo: something went wrong ...
             pass
 
-        if recipients:
+        if recipients and not recipient_type == form.INVIA_QUESTIONARIO:
             sent_with_success = Messaggio.costruisci_e_invia(
-                oggetto="Informativa dal direttore Corso %s" % course.nome,
+                oggetto="Informativa dal direttore %s" % course.nome,
                 modello="email_corso_informa_participants.html",
                 corpo={
                     'corso': course,
                     'message': cd['message'],
+                },
+                mittente=me,
+                destinatari=[r.persona for r in recipients]
+            )
+
+        if recipients and recipient_type == form.INVIA_QUESTIONARIO:
+            sent_with_success = Messaggio.costruisci_e_invia(
+                oggetto="Questionario di gradimento del %s" % course.nome,
+                modello="email_corso_questionario_gradimento.html",
+                corpo={
+                    'corso': course,
+                    'message': cd['message']
                 },
                 mittente=me,
                 destinatari=[r.persona for r in recipients]

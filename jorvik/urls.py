@@ -272,6 +272,7 @@ urlpatterns = [
     # Formazione
     url(r'^aspirante/', include(formazione_urls_aspirante, namespace='aspirante')),
     url(r'^formazione/', include('formazione.urls', namespace='formazione')),
+    url(r'^survey/', include('survey.urls', namespace='survey')),
 
     url(r'^supporto/$', base.viste.supporto),
     url(r'^geo/localizzatore/imposta/$', base.viste.geo_localizzatore_imposta),

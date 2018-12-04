@@ -1,7 +1,7 @@
 {% extends 'email.html' %}
 
 {% block corpo %}
-    <p class="grassetto">Ciao, questo messaggio è stato inviato dal direttore corso {{ corso.nome }}.</p>
+    <p class="grassetto">Ciao, questo messaggio è stato inviato dal direttore {{ corso.nome }}.</p>
 
     <hr>
     <p>{{ message|safe }}</p>

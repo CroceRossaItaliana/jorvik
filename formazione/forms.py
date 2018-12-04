@@ -337,22 +337,20 @@ class InformCourseParticipantsForm(forms.Form):
     CONFIRMED_REQUESTS = '3'
     INVIA_QUESTIONARIO = '4'
 
-    CHOICES = (
-        (ALL, "A tutti (già iscritti + chi ha fatto richiesta)"),
-        (UNCONFIRMED_REQUESTS, 'Solo a chi ha fatto richieste'),
-        (CONFIRMED_REQUESTS, 'Partecipanti confermati'),
-    )
-
-    recipient_type = forms.ChoiceField(choices=CHOICES, label='Destinatari')
-    message = forms.CharField(label='Messaggio', required=True,
-                              max_length=3000,) #  widget=WYSIWYGSemplice())
+    message = forms.CharField(label='Messaggio', required=True, max_length=3000)
 
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance')
-        super().__init__(*args, **kwargs)
 
-        # Append INVIA_QUESTIONARIO option to select if data_esame is reached
-        if datetime.now() > self.instance.data_esame:
-            self.fields['recipient_type'].widget.choices.append(
-                (self.INVIA_QUESTIONARIO, "Invia questionario di gradimento ai partecipanti")
-            )
+        CHOICES = [
+            (self.ALL, "A tutti (già iscritti + chi ha fatto richiesta)"),
+            (self.UNCONFIRMED_REQUESTS, 'Solo a chi ha fatto richieste'),
+            (self.CONFIRMED_REQUESTS, 'Partecipanti confermati'),
+        ]
+
+        if self.instance.concluso:
+            CHOICES.append((self.INVIA_QUESTIONARIO,
+                            "Invia questionario di gradimento ai partecipanti"))
+
+        super().__init__(*args, **kwargs)
+        self.fields['recipient_type'] = forms.ChoiceField(choices=CHOICES, label='Destinatari')
