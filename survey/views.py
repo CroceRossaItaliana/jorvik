@@ -44,7 +44,7 @@ def course_survey(request, me, pk):
                 if result:
                     result.response = response
                 if created:
-                    result.can_edit = False
+                    pass
                 result.save()
 
         messages.success(request, 'Grazie, abbiamo salvato le tue risposte.')
