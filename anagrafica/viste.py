@@ -1931,7 +1931,7 @@ def admin_import_presidenti(request, me):
                 if delega_persona_precedente:
 
                     # Se è già stato nominato in questa sede.
-                    if delega_persona_precedente.persona == persona:
+                    if delega_persona_precedente.persona == persona and isPresidente:
                         esiti += [
                             (
                                 persona,
