@@ -122,6 +122,14 @@ def permessi_ufficio_soci_unita(sede):
     :return: Lista di permessi.
     """
     sede_qs = sede.queryset_modello()
+
+    # from anagrafica.costanti import LOCALE
+    #
+    # if sede.estensione == LOCALE:
+    #     gestione_soci = sede_qs.espandi(territoriale=True)
+    # else:
+    #     gestione_soci = sede_qs
+
     return [
         (RUBRICA_UFFICIO_SOCI_UNITA, sede.espandi(includi_me=True, pubblici=True)),
         (GESTIONE_SOCI,     sede_qs),

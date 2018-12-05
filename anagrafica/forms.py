@@ -179,17 +179,17 @@ class ModuloStepCredenziali(forms.Form):
 class ModuloStepAnagrafica(ModelForm):
     class Meta:
         model = Persona
-        fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita', 'provincia_nascita', 'stato_nascita',
-                  'codice_fiscale',
-                  'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
-                  'cap_residenza', 'conoscenza', ]
+        fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita',
+                  'provincia_nascita', 'stato_nascita', 'codice_fiscale',
+                  'indirizzo_residenza', 'comune_residenza', 'provincia_residenza',
+                  'stato_residenza', 'cap_residenza', 'conoscenza',]
 
     def clean_codice_fiscale(self):
         codice_fiscale = self.cleaned_data.get('codice_fiscale')
+        # TODO:
         # Qui si potrebbe controllare la validita' del codice fiscale,
-        #  cosa che attualmente abbiamo deciso di non fare.
-        codice_fiscale = codice_fiscale.upper()
-        return codice_fiscale
+        # cosa che attualmente abbiamo deciso di non fare.
+        return codice_fiscale.upper()
 
     def clean_data_nascita(self):
         data_nascita = self.cleaned_data.get('data_nascita')
@@ -404,30 +404,36 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
     def clean_persona(self):
         me_sede = self.me.sede_riferimento()  # Authorized user's <Sede> (myself)
         persona = self.cleaned_data['persona']  # Selected user whom to be given <Delega> in <Sede>
-        
-        """
-        1) <me> may give to <persona> a new <Delega> if <persona> has <Appartenenza> in
-        the same <Sede> as "Volontario in Estensione" or...
-        2) <me> and <persona> have the same "sede di riferimento".
-        """
 
-        # Get all <Appartenenze attuali> (with not expired <fine> datetime) where
-        # <persona> is "Volontario in Estensione"
-        persona_appartenenze = persona.appartenenze_attuali().filter(
-            membro=Appartenenza.ESTESO,
-            sede=me_sede
+        # Queries for possible cases
+        persona_appartenenze = persona.appartenenze_attuali(
+            membro__in=Appartenenza.MEMBRO_ATTIVITA)
+        persona_estesa = persona_appartenenze.filter(sede=me_sede).count()
+        persona_volontario = persona_appartenenze.filter(membro=Appartenenza.VOLONTARIO)
+        stesse_sedi = me_sede == persona.sede_riferimento()
+
+        """
+        Possible cases:
+        1) [OK] Persona è estesa (ES) nel mio comitato.
+        2) [OK] <me> e <persona> abbiamo la stessa sede di riferimento.
+        3) [FAIL] Persona è estesa (ES) nel mio comitato, <me> e <Persona>
+            abbiamo 2 sedi di riferimento diversi.
+        4) [OK] Persona come Volontario (VO), la sua sede appartiene a sede di <me>.
+        5) [OK] Persona come Volontario (VO), <me> è Presidente nella mia sede.
+        """
+        CASES = (
+            persona_estesa,
+            stesse_sedi,
+            stesse_sedi and persona_estesa,
+            any([a.appartiene_a(me_sede) for a in persona_volontario]),
+            any([a for a in persona_volontario if a.sede.presidente() == self.me])
         )
-        if persona_appartenenze.count():
-            # It's okay. <me> and <persona> have the same sede,
-            # and persona is "Volontario in Estensione"
-            pass
-        else:
-            # Persona has no "appartenenza".
-            # Check sede_riferimento of both subjects.
-            if me_sede != persona.sede_riferimento():
-                # me and persona have different sede. <me> can't give <Delega> to <persona>
-                raise forms.ValidationError("Il volontario non è appartenente alla tua sede.")
-            
+        if not any(CASES):
+            # All CASES return False, so the form returns validation error.
+            raise forms.ValidationError(
+                "Il volontario non è appartenente alla tua sede."
+            )
+        # Some case returned True, so <me> can proceed with creating new delega.
         return persona
     
     def clean_inizio(self):

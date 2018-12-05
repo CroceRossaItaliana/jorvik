@@ -7,9 +7,10 @@ from datetime import date
 from django.contrib.contenttypes.models import ContentType
 
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, REFERENTE, DIRETTORE_CORSO, \
-    RESPONSABILE_FORMAZIONE
+    RESPONSABILE_FORMAZIONE, COMMISSARIO
 
 INCARICO_PRESIDENZA = "PRES"
+INCARICO_COMMISSARIO = "COM"
 INCARICO_GESTIONE_SOCI = "US-GEN"
 INCARICO_GESTIONE_TRASFERIMENTI = "US-TRASF"
 INCARICO_GESTIONE_ESTENSIONI = "US-EST"
@@ -25,6 +26,7 @@ INCARICO_ASPIRANTE = "ASP"
 
 INCARICHI = (
     (INCARICO_PRESIDENZA,                       "Presidenza"),
+    (INCARICO_COMMISSARIO,                      "Commissario"),
     (INCARICO_GESTIONE_SOCI,                    "Gestione dei Soci"),
     (INCARICO_GESTIONE_TRASFERIMENTI,           "Gestione dei Trasferimenti"),
     (INCARICO_GESTIONE_ESTENSIONI,              "Gestione delle Estensioni"),
@@ -41,6 +43,7 @@ INCARICHI_DICT = dict(INCARICHI)
 
 INCARICHI_TIPO = (
     (INCARICO_PRESIDENZA,                       "anagrafica.Sede"),
+    (INCARICO_COMMISSARIO,                      "anagrafica.Sede"),
     (INCARICO_GESTIONE_SOCI,                    "anagrafica.Sede"),
     (INCARICO_GESTIONE_TRASFERIMENTI,           "anagrafica.Sede"),
     (INCARICO_GESTIONE_ESTENSIONI,              "anagrafica.Sede"),
@@ -102,12 +105,21 @@ def espandi_incarichi_presidente(sede, al_giorno=None):
     ] \
         + espandi_incarichi_ufficio_soci(sede, al_giorno=al_giorno)
 
+def espandi_incarichi_commissario(sede, al_giorno=None):
+    return [
+       (INCARICO_GESTIONE_SANGUE,                       sede),
+       (INCARICO_PRESIDENZA,                            sede),
+
+    ] \
+        + espandi_incarichi_ufficio_soci(sede, al_giorno=al_giorno)
+
 
 # Questo dizionario contiene la corrispondenza tra la funzione di
 ESPANSIONE_DELEGHE = {
     UFFICIO_SOCI_UNITA:     espandi_incarichi_ufficio_soci_unita,
     UFFICIO_SOCI:           espandi_incarichi_ufficio_soci,
     PRESIDENTE:             espandi_incarichi_presidente,
+    COMMISSARIO:            espandi_incarichi_commissario,
     REFERENTE:              espandi_incarichi_referente_attivita,
     DIRETTORE_CORSO:        espandi_incarichi_direttore_corso,
     RESPONSABILE_FORMAZIONE:espandi_incarichi_responsabile_formazione,

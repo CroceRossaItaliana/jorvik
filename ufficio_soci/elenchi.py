@@ -1,8 +1,10 @@
+import re
 from django.contrib.admin import ModelAdmin
 from django.db.models import Q, F
 from django.utils.encoding import force_text
 
-from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera, ProvvedimentoDisciplinare
+from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera, ProvvedimentoDisciplinare, Trasferimento, Dimissione, Estensione
+from base.models import Autorizzazione
 from attivita.models import Partecipazione
 from base.utils import filtra_queryset, testo_euro, oggi
 from curriculum.models import TitoloPersonale
@@ -229,7 +231,7 @@ class ElencoVolontari(ElencoVistaSoci):
         qs_sedi = self.args[0]
 
         modulo = self.modulo_riempito
-        if modulo.cleaned_data['includi_estesi'] == modulo.SI:
+        if modulo and modulo.cleaned_data['includi_estesi'] == modulo.SI:
             appartenenze = [Appartenenza.VOLONTARIO, Appartenenza.ESTESO]
         else:
             appartenenze = [Appartenenza.VOLONTARIO,]
@@ -324,14 +326,14 @@ class ElencoEstesi(ElencoVistaSoci):
 
     def risultati(self):
         qs_sedi = self.args[0]
-
+        from django.db.models import BooleanField, Value
         if self.modulo_riempito.cleaned_data['estesi'] == self.modulo_riempito.ESTESI_INGRESSO:
             # Estesi in ingresso
             risultati = Persona.objects.filter(
                 Appartenenza.query_attuale(
                     sede__in=qs_sedi, membro=Appartenenza.ESTESO,
                 ).via("appartenenze")
-            )
+            ).annotate(is_ingresso=Value(value=True, output_field=BooleanField()))
 
         else:
             # Estesi in uscita
@@ -351,7 +353,7 @@ class ElencoEstesi(ElencoVistaSoci):
                 pk__in=volontari_da_me
             ).filter(
                 pk__in=estesi_da_qualche_parte
-            )
+            ).annotate(is_ingresso=Value(value=False, output_field=BooleanField()))
 
         return risultati.annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
@@ -361,6 +363,19 @@ class ElencoEstesi(ElencoVistaSoci):
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
+
+    def excel_colonne(self):
+
+        def _comitato(p):
+            if not p.is_ingresso:
+                return Estensione.objects.filter(persona=p.pk, ritirata=False).order_by('creazione').first().destinazione
+            else:
+                return p.appartenenze_attuali().filter(fine=None).first().sede
+
+        return super(ElencoEstesi, self).excel_colonne() + (
+            ('Data inizio estensione', lambda p: Estensione.objects.filter(persona=p.pk, ritirata=False).order_by('creazione').first().protocollo_data),
+            ('Comitato di estensione', lambda p: _comitato(p)),
+        )
 
 
 class ElencoVolontariGiovani(ElencoVolontari):
@@ -394,6 +409,22 @@ class ElencoDimessi(ElencoVistaAnagrafica):
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
+    def excel_colonne(self):
+
+        def _data(p):
+            dim = Dimissione.objects.filter(persona=p.pk).order_by('ultima_modifica').first()
+            return dim.creazione
+
+        def _motivo(p):
+            dim = Dimissione.objects.filter(persona=p.pk).order_by('ultima_modifica').first()
+            motivi = dict(Dimissione.MOTIVI)
+            return motivi[dim.motivo]
+
+        return super(ElencoDimessi, self).excel_colonne() + (
+            ('Data dimissioni', lambda p: _data(p)),
+            ('Motivazioni', lambda p: _motivo(p))
+        )
+
 
 class ElencoTrasferiti(ElencoVistaAnagrafica):
     """
@@ -417,6 +448,23 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
+
+    def excel_colonne(self):
+
+        def _data(p):
+            return Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione').first().protocollo_data
+
+        def _motivo(p):
+            return Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione').first().motivo
+
+        def _destinazione(p):
+            return Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione').first().destinazione
+
+        return super(ElencoTrasferiti, self).excel_colonne() + (
+            ('Data del trasferimento', lambda p: _data(p)),
+            ('Comitato di destinazione', lambda p: _destinazione(p)),
+            ('Motivazione', lambda p: _motivo(p)),
+        )
 
 
 class ElencoDipendenti(ElencoVistaSoci):
@@ -542,6 +590,13 @@ class ElencoInRiserva(ElencoVistaSoci):
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
+    def excel_colonne(self):
+        return super(ElencoInRiserva, self).excel_colonne() + (
+            ("Data inizio", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().inizio),
+            ("Data fine", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().fine),
+            ("Motivazioni", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().motivo)
+        )
+
 
 class ElencoElettoratoAlGiorno(ElencoVistaSoci):
     """
@@ -587,7 +642,7 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         r = Persona.objects.filter(
             Appartenenza.query_attuale(
-                al_giorno=oggi,
+                    al_giorno=oggi,
                 sede__in=qs_sedi, membro=Appartenenza.VOLONTARIO,
             ).via("appartenenze"),
             Q(**aggiuntivi),

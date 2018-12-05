@@ -9,7 +9,7 @@ from gruppi.readonly_admin import ReadonlyAdminMixin
 @admin.register(Titolo)
 class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["nome", ]
-    list_display = ("nome", "tipo", "inseribile_in_autonomia",)
+    list_display = ("nome", "tipo", "inseribile_in_autonomia", 'area',)
     list_filter = ("tipo", "richiede_conferma", "inseribile_in_autonomia",)
 
 

@@ -1107,9 +1107,12 @@ def utente_curriculum(request, me, tipo=None):
     tipo_display = dict(Titolo.TIPO)[tipo]
     request.session['titoli_tipo'] = tipo
 
-    titolo_selezionato = None
-    modulo = ModuloNuovoTitoloPersonale(tipo, tipo_display, request.POST or None)
     valida_secondo_form = True
+    titolo_selezionato = None
+    modulo = ModuloNuovoTitoloPersonale(tipo,
+                                        tipo_display,
+                                        request.POST or None,
+                                        me=me)
     if modulo.is_valid():
         titolo_selezionato = modulo.cleaned_data['titolo']
         passo = 2

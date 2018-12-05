@@ -3,13 +3,33 @@
 {% load bootstrap3 %}
 {% load mptt_tags %}
 {% load l10n %}
+{% load base_tags %}
 
 {% block pagina_titolo %}
     {{ sede.nome }} - {{ sede.get_tipo_display }}, {{ sede.get_estensione_display }}
 {% endblock %}
 
 {% block pagina_principale %}
+    <script>
 
+        $(document).ready(function(){
+
+            // cerca tag a nella lista .children che contiene la parola lazio nell href
+
+            $('ul a[href*="lazio"]').parent('li').each(function() {
+
+                var text = $(this).html();
+
+                // sostituisci il testo
+
+                text = text.replace("Sede Regionale", "Sede Provinciale");
+                $(this).html(text);
+
+            });
+
+        });
+
+    </script>
 
     <div class="container">
 
@@ -35,7 +55,12 @@
 
                 <h4 class="allinea-centro">
                     {{ sede.get_tipo_display }} &mdash;
-                    {{ sede.get_estensione_display }}
+                    {% if sede.nome == "Comitato dell'Area Metropolitana di Roma Capitale" %}
+                        Sede Provinciale
+                    {% else %}
+                        {{ sede.get_estensione_display }}
+                    {% endif %}
+
                 </h4>
 
                 <dl class="dl-horizontal">
@@ -50,9 +75,10 @@
                 {% endif %}
 
                 {% if presidente %}
-                    <dt>Presidente <i class="fa fa-fw fa-user"></i></dt>
+                    <dt>{{ sede | select_nomina_presidenziale }} <i class="fa fa-fw fa-user"></i></dt>
                     <dd>{{ presidente.link|safe }}</dd>
                 {% endif %}
+
 
                 {% if sede.locazione %}
                     <dt>Indirizzo <i class="fa fa-fw fa-map-marker"></i></dt>

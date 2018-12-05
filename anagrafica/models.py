@@ -215,7 +215,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def genere_codice_fiscale(self):
-        return ottieni_genere_da_codice_fiscale(self.codice_fiscale, default=None)
+        return ottieni_genere_da_codice_fiscale(self.codice_fiscale)
 
     @property
     def email_firma(self):
@@ -1165,7 +1165,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         return False
 
-
     def genera_foglio_di_servizio(self):
         storico = Partecipazione.con_esito_ok().filter(persona=self, stato=Partecipazione.RICHIESTA)\
             .order_by('-turno__inizio')
@@ -1237,11 +1236,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return False
         return True
 
-    def save(self, *args, **kwargs):
-        self.nome = normalizza_nome(self.nome)
-        self.cognome = normalizza_nome(self.cognome)
-        super(Persona,self).save(*args, **kwargs)
-
     def appartiene_al_segmento(self, segmento):
         """
         Ritorna True se un utente appartiene ad un segmento
@@ -1282,6 +1276,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                         attivi.append({'segmento': segmento, 'sede': sede})
                         attivi.append({'sedi_sottostanti': True, 'sede': sede.genitore})
         return attivi
+
+    def save(self, *args, **kwargs):
+        self.nome = normalizza_nome(self.nome)
+        self.cognome = normalizza_nome(self.cognome)
+        
+        # FIxed JO-733
+        if self.genere_codice_fiscale and not self.genere:
+            self.genere = self.genere_codice_fiscale
+            
+        super().save(*args, **kwargs)
 
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
@@ -1584,9 +1588,12 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         else:
             return False
 
-
     def appartiene_a(self, sede):
-        return self.sede == sede or self.sede.genitore == sede or self.sede == sede.genitore or self.sede.genitore == sede.genitore
+        return self.sede == sede or \
+               self.sede.genitore == sede or \
+               self.sede == sede.genitore or \
+               self.sede.genitore == sede.genitore
+
 
 class SedeQuerySet(TreeQuerySet):
 
@@ -1606,7 +1613,7 @@ class SedeQuerySet(TreeQuerySet):
         comitati_dei_territoriali_presenti = Sede.objects.filter(figli__in=territoriali_presenti)
         return comitati_presenti | comitati_dei_territoriali_presenti
 
-    def espandi(self, pubblici=False, ignora_disattivi=True):
+    def espandi(self, pubblici=False, ignora_disattivi=True, **kwargs):
         """
         Espande il QuerySet.
         Se pubblico, me e tutte le sedi sottostanti.
@@ -1622,6 +1629,9 @@ class SedeQuerySet(TreeQuerySet):
 
         if ignora_disattivi:
             qs = qs.filter(attiva=True)
+
+        # if kwargs.get('territoriale'):
+        #     qs = qs.exclude(estensione__in=[NAZIONALE, REGIONALE, PROVINCIALE, LOCALE])
 
         return qs
 
@@ -1846,7 +1856,10 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             return "%s" % (self.nome,)
 
     def presidente(self):
-        return self.comitato.delegati_attuali(tipo=PRESIDENTE).first()
+        delega_presidenziale = self.comitato.delegati_attuali(tipo=PRESIDENTE).first()
+        if not delega_presidenziale:
+            delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO).first()
+        return delega_presidenziale
 
     def delegati_ufficio_soci(self):
         """
@@ -1921,10 +1934,15 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         Espande la Sede.
         Se pubblico, me e tutte le sedi sottostanti.
         Se privato, me e le unita' territoriali incluse.
+        Se la sede è un territoriale non ha nessun discendete quindi ritorna semplicemente se stesso.
         :param includi_me: Includimi nel queryset ritornato.
         :param pubblici: Espandi i pubblici, ritornando tutto al di sotto.
         :param ignora_disattive: Nasconde le sedi disattive.
         """
+
+        # Sede Territoriale ritorna se stessa
+        if self.estensione == TERRITORIALE:
+            return self.queryset_modello()
 
         # Sede pubblica... ritorna tutto sotto di se.
         if pubblici and self.estensione in [NAZIONALE, REGIONALE]:
@@ -2338,11 +2356,12 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     RICHIESTA_NOME = "Estensione"
 
     def attuale(self, **kwargs):
-        """
-        Controlla che l'estensione sia stata confermata e
-         l'appartenenza creata sia in corso.
-        """
-        return self.esito == self.ESITO_OK and self.appartenenza.attuale(**kwargs)
+        """ Controlla che l'estensione sia stata confermata
+        e l'appartenenza creata sia in corso. """
+        app_attuale = self.appartenenza
+        app_attuale = False if app_attuale is None \
+                            else app_attuale.attuale(**kwargs)
+        return self.esito == self.ESITO_OK and app_attuale
 
     def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiEstensione
