@@ -1,17 +1,10 @@
 {% extends 'email.html' %}
 
 {% block corpo %}
-
     <p class="grassetto">Ciao {{ persona.nome }}!</p>
-    <p>Ricevi questo messaggio perch&eacute; sei stato iscritto ad un Corso Base per
-        diventare Volontari{{ persona.genere_o_a }}!</p>
-    <p>Il corso &egrave; organizzato dal {{ corso.sede.link|safe }} e avr&agrave; inizio
-        il {{ corso.data_inizio }}.</p>
-
-    <p><strong>
-        <a href="{{ corso.url }}">
-            Clicca qui per aprire la pagina del Corso con maggiori informazioni.
-        </a>
-    </strong></p>
-
+    <p>Ricevi questo messaggio perch&eacute; sei stato iscritto ad un Corso{% if corso.is_nuovo_corso %} Base{%endif%} per diventare Volontari{{ persona.genere_o_a }}!</p>
+    <p>Il corso &egrave; organizzato dal {{ corso.sede.link|safe }} e avr&agrave; inizio il {{ corso.data_inizio }}.</p>
+    <p>
+        <strong><a href="{{ corso.url }}">Clicca qui per aprire la pagina del Corso con maggiori informazioni.</a></strong>
+    </p>
 {% endblock %}

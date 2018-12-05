@@ -15,8 +15,8 @@ class RespondToCourseSurveyForm(ModelForm):
         self.course = kwargs.pop('course')
         super().__init__(*args, **kwargs)
         self.fields.pop('text')
-        survey = self.instance
 
+        survey = self.instance
         responses = survey.get_responses_dict(self.me)
         for question in survey.get_questions():
             if not question.is_active:

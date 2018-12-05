@@ -110,29 +110,20 @@
                                 {% else %}
                                     <i class="fa fa-fw fa-times"></i>
                                     No
-
                                 {% endif %}
                             </td>
-
                         </tr>
-
                         {% empty %}
                             <tr class="warning">
                                 <td colspan="3">
-                                    Seleziona una o pi&ugrave; persone da iscrivere al
-                                    corso base. Qui vedrai l'esito della procedura
-                                    di iscrizione.
+                                    Seleziona una o pi&ugrave; persone da iscrivere al corso{% if not corso.is_nuovo_corso %} base{%endif%}. Qui vedrai l'esito della procedura di iscrizione.
                                 </td>
                             </tr>
-
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-
     </div>
-
 </div>
-
 {% endblock %}

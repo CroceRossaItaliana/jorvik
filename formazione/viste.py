@@ -572,10 +572,14 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                         partecipazione.richiedi()
                         ok = PartecipazioneCorsoBase.IN_ATTESA_ASPIRANTE
                 else:
-                    partecipazione = PartecipazioneCorsoBase.objects.create(persona=persona, corso=corso)
+                    partecipazione = PartecipazioneCorsoBase.objects.create(
+                        persona=persona,
+                        corso=corso
+                    )
                     ok = PartecipazioneCorsoBase.ISCRITTO
+                    subject = "Iscrizione a Corso %s"
                     Messaggio.costruisci_e_invia(
-                        oggetto="Iscrizione a Corso Base",
+                        oggetto=subject % '' if corso.is_nuovo_corso else 'Base',
                         modello="email_corso_base_iscritto.html",
                         corpo={
                             "persona": persona,
@@ -863,6 +867,10 @@ def aspirante_corso_estensioni_informa(request, me, pk):
 
         if sent_with_success:
             messages.success(request, "Il messaggio ai volontari è stato inviato con successo. ")
+            return redirect(reverse('aspirante:informa', args=[pk]))
+
+        if not recipients:
+            messages.success(request,  "Il messaggio non è stato inviato a nessuno.")
             return redirect(reverse('aspirante:informa', args=[pk]))
 
     context = {
