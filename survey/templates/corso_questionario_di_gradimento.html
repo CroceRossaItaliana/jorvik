@@ -22,7 +22,12 @@
               {% csrf_token %}
               {% bootstrap_form form %}
 
-              <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva</button>
+              {% if puo_modificare %}
+                {# Director of course can only read form data #}
+              {% else %}
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva</button>
+              {% endif %}
+
           </form>
         </div>
     </div>
