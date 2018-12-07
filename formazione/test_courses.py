@@ -212,3 +212,9 @@ class TestCorsoNuovo(TestCase):
         self.assertEqual(self.c1.extension_type, CorsoBase.EXT_MIA_SEDE)
         self.assertEqual(self.c2.extension_type, CorsoBase.EXT_LVL_REGIONALE)
         self.assertEqual(self.c3.extension_type, CorsoBase.EXT_MIA_SEDE)
+
+    def test_termina_corso_nuovo(self):
+        pass
+
+    def test_termina_corso_titolo_cri_is_set_to_volunteers(self):
+        pass
