@@ -30,13 +30,13 @@
 
     {% load utils %}
     {% permessi_almeno persona "modifica" as puo_modificare %}
-    {% permessi_almeno persona "lettura" as puo_leggere %}
+{#    {% permessi_almeno persona "lettura" as puo_leggere %}#}
 
-    {% if puo_leggere %}
+{#    {% if puo_leggere %}#}
         <a href="{{ persona.url }}" class="btn btn-default" target="_new">
             <i class="fa fa-fw fa-file-o"></i> Scheda
         </a>
-    {% endif %}
+{#    {% endif %}#}
 
     <a href="{{ persona.messaggio_url }}" class="btn btn-default" target="_new">
         <i class="fa fa-fw fa-envelope-o"></i> Msg.
