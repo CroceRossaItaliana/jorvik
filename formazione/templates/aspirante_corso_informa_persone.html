@@ -14,8 +14,14 @@
                 {% csrf_token %}
                 {% bootstrap_form form %}
 
-                <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Vai</button>
+                <button id="sendInformaPersoneBtn" type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Invia</button>
             </form>
+            <script>
+            $('#sendInformaPersoneBtn').on('click', function(e){
+                confirmed = confirm("Confermi l'invio del messaggio?");
+                if (!confirmed) e.preventDefault();
+            });
+            </script>
         </div>
     </div>
 {% endblock %}
