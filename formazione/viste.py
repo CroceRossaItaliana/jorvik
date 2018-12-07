@@ -257,6 +257,11 @@ def aspirante_corso_base_lezioni(request, me, pk):
             lezione = modulo_nuova_lezione.save(commit=False)
             lezione.corso = corso
             lezione.save()
+
+            if corso.is_nuovo_corso:
+                # Informa docente della lezione
+                lezione.send_messagge_to_docente(me)
+
             return redirect("%s#%d" % (corso.url_lezioni, lezione.pk,))
     else:
         modulo_nuova_lezione = ModuloModificaLezione(prefix="nuova", initial={
@@ -469,11 +474,21 @@ def aspirante_corso_base_termina(request, me, pk):
 
     if termina_corso:  # Se il corso può essere terminato.
         corso.termina(mittente=me)
-        return messaggio_generico(request, me, titolo="Corso base terminato",
-                                  messaggio="Il verbale è stato generato con successo. Tutti gli idonei "
-                                            "sono stati resi volontari delle rispettive sedi.",
-                                  torna_titolo="Vai al Report del Corso Base",
-                                  torna_url=corso.url_report)
+
+        if corso.is_nuovo_corso:
+            email_title = "Corso terminato."
+            return_title = "Vai al Report del Corso"
+        else:
+            email_title = "Corso base terminato"
+            return_title = "Vai al Report del Corso Base"
+
+        return messaggio_generico(request, me,
+          titolo=email_title,
+          messaggio="Il verbale è stato generato con successo. Tutti gli idonei "
+                    "sono stati resi volontari delle rispettive sedi.",
+          torna_titolo=return_title,
+          torna_url=corso.url_report
+        )
 
     context = {
         "corso": corso,
@@ -577,9 +592,14 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                         corso=corso
                     )
                     ok = PartecipazioneCorsoBase.ISCRITTO
-                    subject = "Iscrizione a Corso %s"
+
+                    if corso.is_nuovo_corso:
+                        subject = "Iscrizione a Corso %s" % corso.titolo_cri
+                    else:
+                        subject = "Iscrizione a Corso Base"
+
                     Messaggio.costruisci_e_invia(
-                        oggetto=subject % '' if corso.is_nuovo_corso else 'Base',
+                        oggetto=subject,
                         modello="email_corso_base_iscritto.html",
                         corpo={
                             "persona": persona,
@@ -843,7 +863,7 @@ def aspirante_corso_estensioni_informa(request, me, pk):
 
         if recipients and not recipient_type == form.INVIA_QUESTIONARIO:
             sent_with_success = Messaggio.costruisci_e_invia(
-                oggetto="Informativa dal direttore %s" % course.nome,
+                oggetto="Informativa dal direttore %s (%s)" % (course.nome, course.titolo_cri),
                 modello="email_corso_informa_participants.html",
                 corpo={
                     'corso': course,
@@ -855,7 +875,7 @@ def aspirante_corso_estensioni_informa(request, me, pk):
 
         if recipients and recipient_type == form.INVIA_QUESTIONARIO:
             sent_with_success = Messaggio.costruisci_e_invia(
-                oggetto="Questionario di gradimento del %s" % course.nome,
+                oggetto="Questionario di gradimento del %s per %s" % (course.nome, course.titolo_cri),
                 modello="email_corso_questionario_gradimento.html",
                 corpo={
                     'corso': course,
