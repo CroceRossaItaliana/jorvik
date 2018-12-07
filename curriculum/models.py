@@ -28,18 +28,36 @@ class Titolo(ModelloSemplice, ConVecchioID):
         choices=OBBIETTIVI_STRATEGICI)
     tipo = models.CharField(max_length=2, choices=TIPO, db_index=True)
     is_active = models.BooleanField(default=True)
-    richiede_conferma = models.BooleanField(default=False,)
-    richiede_data_ottenimento = models.BooleanField(default=False,)
-    richiede_luogo_ottenimento = models.BooleanField(default=False,)
-    richiede_data_scadenza = models.BooleanField(default=False,)
-    richiede_codice = models.BooleanField(default=False,)
-    inseribile_in_autonomia = models.BooleanField(default=True,)
+    expires_after = models.IntegerField(null=True, blank=True, verbose_name="Scadenza",
+        help_text='Indicare in giorni (es: per 1 anno indicare 365)')
+    richiede_conferma = models.BooleanField(default=False)
+    richiede_data_ottenimento = models.BooleanField(default=False)
+    richiede_luogo_ottenimento = models.BooleanField(default=False)
+    richiede_data_scadenza = models.BooleanField(default=False)
+    richiede_codice = models.BooleanField(default=False)
+    inseribile_in_autonomia = models.BooleanField(default=True)
     
     class Meta:
         verbose_name_plural = "Titoli: Elenco"
         permissions = (
             ("view_titolo", "Can view titolo"),
         )
+
+    @property
+    def is_titolo_cri(self):
+        return self.tipo == self.TITOLO_CRI
+
+    @property
+    def is_course_title(self):
+        is_titolo_cri = self.is_titolo_cri
+        has_goal = self.goal
+        return is_titolo_cri and bool(has_goal) and bool(has_goal.obbiettivo_stragetico)
+
+    @property
+    def expires_after_timedelta(self):
+        from datetime import timedelta
+        days = self.expires_after if self.expires_after else 0
+        return timedelta(days=days)
 
     def __str__(self):
         # if self.tipo == self.TITOLO_CRI and self.goal:
@@ -95,6 +113,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                                        null=True,
                                        related_name="titoli_da_me_certificati",
                                        on_delete=models.SET_NULL)
+    # is_active = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "Titolo personale"
@@ -110,6 +129,15 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     def autorizzazione_negata(self, modulo=None, notifiche_attive=True, data=None):
         # Alla negazione, cancella titolo personale.
         self.delete()
+
+    @property
+    def is_expired_course_title(self):
+        from datetime import date
+        now = timezone.now()
+        today = date(now.year, now.month, now.day)
+        if self.titolo.is_course_title and today > self.data_scadenza:
+            return True
+        return False
 
     def __str__(self):
         return "%s di %s" % (self.titolo, self.persona)

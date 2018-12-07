@@ -2,14 +2,14 @@ from django.contrib import admin
 
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
-from .models import (Titolo, TitleGoal, TitoloPersonale) #, TitleLevel, )
+from .models import (Titolo, TitleGoal, TitoloPersonale)
 
 
 @admin.register(Titolo)
 class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['nome', ]
     list_display = ('nome', 'tipo', 'goal_obbiettivo_stragetico', 'goal_propedeuticita',
-        'goal_unit_reference', 'inseribile_in_autonomia', 'area',)
+        'goal_unit_reference', 'inseribile_in_autonomia', 'expires_after', 'area',)
     list_filter = ('is_active', "tipo", "richiede_conferma",
         "inseribile_in_autonomia", 'goal__unit_reference',)
 
