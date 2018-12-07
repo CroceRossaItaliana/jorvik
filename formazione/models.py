@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.timezone import now
 
-from anagrafica.models import Sede, Persona, Appartenenza
+from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE
 from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE,
     INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
@@ -411,9 +411,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def _invia_email_agli_aspiranti(self, rispondi_a=None):
         for recipient in self._corso_activation_recipients_for_email():
-            persona = recipient if self.is_nuovo_corso else recipient.persona
+            if self.is_nuovo_corso:
+                persona = recipient
+                subject = "Nuovo Corso %s per Volontari CRI" % self.titolo_cri
+            else:
+                persona = recipient.persona
+                subject = "Nuovo Corso per Volontari CRI"
+
             email_data = dict(
-                oggetto="Nuovo Corso per Volontari CRI",
+                oggetto=subject,
                 modello="email_aspirante_corso.html",
                 corpo={
                     'persona': persona,
@@ -480,12 +486,17 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return persons.filter(**kwargs).distinct()
 
     @property
-    def get_firmatario_sede(self):
-        course_created_by = self.deleghe.last()
-        if not hasattr(course_created_by, 'firmatario'):
-            return Sede.objects.none()
+    def get_firmatario(self):
+        last = self.deleghe.last()
+        return last.firmatario if hasattr(last, 'firmatario') else last
 
-        return course_created_by.firmatario.sede_riferimento()
+    @property
+    def get_firmatario_sede(self):
+        course_created_by = self.get_firmatario
+        if course_created_by is not None:
+            return course_created_by.sede_riferimento()
+        else:
+            return course_created_by # returns None
 
     def get_volunteers_by_only_sede(self):
         app_attuali = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).q
@@ -562,22 +573,24 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def set_titolo_cri_to_participants(self):
         """ Sets <titolo_cri> in Persona's Curriculum (TitoloPersonale) """
+        from curriculum.models import TitoloPersonale
 
-        # todo: unfinished
         objs = [
             TitoloPersonale(
                 confermata=True,
                 titolo=self.titolo_cri,
-                persona=persona,
+                persona=p.persona,
+                certificato_da=self.get_firmatario,
+                data_scadenza=timezone.now() + self.titolo_cri.expires_after_timedelta,
+
+                # todo: attending details
                 # data_ottenimento='',
                 # luogo_ottenimento='',
-                data_scadenza='',
                 # codice='',
                 # codice_corso='',
                 # certificato='',
-                # certificato_da='',
             )
-            for persona in self.partecipazioni_confermate()
+            for p in self.partecipazioni_confermate()
         ]
         TitoloPersonale.objects.bulk_create(objs)
 
@@ -785,7 +798,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
         """
         self.autorizzazioni_ritira()
         Messaggio.costruisci_e_invia(
-            oggetto="Annullamento invito al Corso Base: %s" % self.corso,
+            oggetto="Annullamento invito al Corso: %s" % self.corso,
             modello="email_aspirante_corso_deiscrizione_invito.html",
             corpo={
                 "invito": self,
@@ -797,7 +810,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
             destinatari=[self.persona],
         )
         Messaggio.costruisci_e_invia(
-            oggetto="Annullamento invito al Corso Base: %s" % self.corso,
+            oggetto="Annullamento invito al Corso: %s" % self.corso,
             modello="email_aspirante_corso_deiscrizione_invito_mittente.html",
             corpo={
                 "invito": self,
@@ -928,7 +941,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
         template = template % 'volontario' if self.corso.is_nuovo_corso else 'aspirante'
 
         Messaggio.costruisci_e_accoda(
-            oggetto="Esito del Corso Base: %s" % self.corso,
+            oggetto="Esito del Corso: %s" % self.corso,
             modello=template,
             corpo={
                 "partecipazione": self,
@@ -941,12 +954,10 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
         )
 
     def disiscrivi(self, mittente=None):
-        """
-        Disiscrive partecipante dal corso base.
-        """
+        """ Disiscrive partecipante dal corso base. """
         self.autorizzazioni_ritira()
         Messaggio.costruisci_e_invia(
-            oggetto="Disiscrizione dal Corso Base: %s" % self.corso,
+            oggetto="Disiscrizione dal Corso: %s" % self.corso,
             modello="email_aspirante_corso_deiscrizione.html",
             corpo={
                 "partecipazione": self,
@@ -958,7 +969,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
             destinatari=[self.persona],
         )
         Messaggio.costruisci_e_invia(
-            oggetto="Disiscrizione dal Corso Base: %s" % self.corso,
+            oggetto="Disiscrizione dal Corso: %s" % self.corso,
             modello="email_aspirante_corso_deiscrizione_mittente.html",
             corpo={
                 "partecipazione": self,
@@ -976,8 +987,12 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
         )
 
     def autorizzazione_concedi_modulo(self):
-        from formazione.forms import ModuloConfermaIscrizioneCorsoBase
-        return ModuloConfermaIscrizioneCorsoBase
+        from formazione.forms import (ModuloConfermaIscrizioneCorsoBase,
+                                      ModuloConfermaIscrizioneCorso)
+        if self.corso.is_nuovo_corso:
+            return ModuloConfermaIscrizioneCorso
+        else:
+            return ModuloConfermaIscrizioneCorsoBase
 
     def genera_scheda_valutazione(self):
         pdf = PDF(oggetto=self)
@@ -1048,16 +1063,28 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                              help_text="Compilare nel caso il luogo è diverso "
                                        "dal comitato che ha organizzato il corso.")
 
-    @property
-    def url_cancella(self):
-        return "%s%d/cancella/" % (self.corso.url_lezioni, self.pk)
-
     class Meta:
         verbose_name = "Lezione di Corso"
         verbose_name_plural = "Lezioni di Corsi"
         ordering = ['inizio']
         permissions = (
             ("view_lezionecorsobase", "Can view corso Lezione di Corso Base"),
+        )
+
+    @property
+    def url_cancella(self):
+        return "%s%d/cancella/" % (self.corso.url_lezioni, self.pk)
+
+    def send_messagge_to_docente(self, me):
+        Messaggio.costruisci_e_invia(
+            oggetto='Lezione al %s' % self.corso.nome,
+            modello="email_docente_assegnato_a_corso.html",
+            corpo={
+                "persona": self.docente,
+                "corso": self.corso,
+            },
+            mittente=me,
+            destinatari=[self.docente]
         )
 
     def __str__(self):
