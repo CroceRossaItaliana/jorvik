@@ -27,12 +27,21 @@ class AutocompletamentoBasePersonaModelMixin(AutocompletamentoBase):
 class DocenteLezioniCorso(AutocompletamentoBase):
     search_fields = ['nome', 'cognome', 'codice_fiscale',]
     model = Persona
+    choice_html_format = """<span class="block" data-value="%s"><strong>%s</strong> %s</span>"""
 
     def choices_for_request(self):
         app_attuali = Appartenenza.query_attuale(membro__in=Appartenenza.MEMBRO_CORSO)
         app_attuali = app_attuali.values_list('persona__id', flat=True)
         self.choices = self.choices.filter(id__in=app_attuali)
         return super().choices_for_request()
+
+    def choice_html(self, choice):
+        app = choice.appartenenze_attuali().first() if choice else None
+        return self.choice_html_format % (
+            self.choice_value(choice),
+            self.choice_label(choice),
+            ("(%s del %s)" % (app.get_membro_display(), app.sede)) if app else '',
+        )
 
 
 class EstensioneLivelloRegionaleTitolo(AutocompletamentoBase):
