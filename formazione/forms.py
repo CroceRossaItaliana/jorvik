@@ -45,6 +45,10 @@ class ModuloCreazioneCorsoBase(ModelForm):
         if cd['data_esame'] < cd['data_inizio']:
             self.add_error('data_esame', "La data deve essere successiva "
                                          "alla data di inizio.")
+
+        if cd['tipo'] == Corso.CORSO_NUOVO and not cd['titolo_cri']:
+            self.add_error('titolo_cri', 'Seleziona un titolo per il Corso.')
+
         return cd
 
     class Meta:
@@ -220,14 +224,17 @@ class CorsoExtensionForm(ModelForm):
 CorsoSelectExtensionFormSet = modelformset_factory(CorsoEstensione, extra=1,
     max_num=3, form=CorsoExtensionForm, can_delete=True)
 
+class ModuloConfermaIscrizioneCorso(forms.Form):
+    IS_CORSO_NUOVO = True
 
 class ModuloConfermaIscrizioneCorsoBase(forms.Form):
-    conferma_1 = forms.BooleanField(label="Ho incontrato questo aspirante, ad esempio alla presentazione del "
-                                    "corso, e mi ha chiesto di essere iscritto al Corso.")
-    conferma_2 = forms.BooleanField(label="Confermo di voler iscrivere questo aspirante al Corso e comprendo che "
-                                    "questa azione non sarà facilmente reversibile. Sarà comunque possibile "
-                                    "non ammettere l'aspirante all'esame, qualora dovesse non presentarsi "
-                                    "al resto delle lezioni (questo sarà verbalizzato).")
+    conferma_1 = forms.BooleanField(
+        label="Ho incontrato questo aspirante, ad esempio alla presentazione del corso, e mi ha chiesto di essere iscritto al Corso.")
+    conferma_2 = forms.BooleanField(
+        label="Confermo di voler iscrivere questo aspirante al Corso e comprendo che "
+              "questa azione non sarà facilmente reversibile. Sarà comunque possibile "
+              "non ammettere l'aspirante all'esame, qualora dovesse non presentarsi "
+              "al resto delle lezioni (questo sarà verbalizzato).")
 
 
 class ModuloVerbaleAspiranteCorsoBase(ModelForm):
@@ -248,7 +255,7 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
         self.generazione_verbale = generazione_verbale
         super().__init__(*args, **kwargs)
 
-        if not self.instance.corso.is_nuovo_corso:
+        if self.instance.corso.is_nuovo_corso:
             # This field is not required if Corso Nuovo
             self.fields.pop('destinazione')
 
@@ -258,15 +265,17 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
          del verbale del corso base.
         """
 
-        ammissione = self.cleaned_data['ammissione']
-        motivo_non_ammissione = self.cleaned_data['motivo_non_ammissione']
-        esito_parte_1 = self.cleaned_data['esito_parte_1']
-        argomento_parte_1 = self.cleaned_data['argomento_parte_1']
-        esito_parte_2 = self.cleaned_data['esito_parte_2']
-        argomento_parte_2 = self.cleaned_data['argomento_parte_2']
-        extra_1 = self.cleaned_data['extra_1']
-        extra_2 = self.cleaned_data['extra_2']
-        destinazione = self.cleaned_data['destinazione']
+        cd = super().clean()
+
+        ammissione = cd['ammissione']
+        motivo_non_ammissione = cd['motivo_non_ammissione']
+        esito_parte_1 = cd['esito_parte_1']
+        argomento_parte_1 = cd['argomento_parte_1']
+        esito_parte_2 = cd['esito_parte_2']
+        argomento_parte_2 = cd['argomento_parte_2']
+        extra_1 = cd['extra_1']
+        extra_2 = cd['extra_2']
+        destinazione = cd.get('destinazione')
 
         # Controlla che non ci siano conflitti (incoerenze) nei dati.
         if ammissione != PartecipazioneCorsoBase.NON_AMMESSO:
@@ -307,13 +316,14 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
                 self.add_error('motivo_non_ammissione', "Devi specificare la motivazione di non "
                                                         "ammissione all'esame.")
 
-        # Se sto generando il verbale, controlla che tutti i campi
-        # obbligatori siano stati riempiti.
+
+        # Se sto generando il verbale, controlla che tutti i campi obbligatori siano stati riempiti.
         if self.generazione_verbale:
-            if not destinazione:
+            if not destinazione and not self.instance.corso.is_nuovo_corso:
                 self.add_error('destinazione',
-                               "È necessario selezionare la Sede presso la quale il Volontario "
-                               "diventerà Volontario (nel solo caso di superamento dell'esame).")
+                   "È necessario selezionare la Sede presso la quale il Volontario "
+                   "diventerà Volontario (nel solo caso di superamento dell'esame)."
+                )
 
 
 class FormCreateDirettoreDelega(ModelForm):
