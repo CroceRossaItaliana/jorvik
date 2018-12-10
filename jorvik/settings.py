@@ -92,7 +92,8 @@ CRON_CLASSES = [
     "base.cron.CronRichiesteInAttesa",
     "base.cron.PulisciAspirantiVolontari",
     "anagrafica.cron.CronReportComitati",
-    "centrale_operativa.cron.CronCancellaCoturniInvalidi"
+    "centrale_operativa.cron.CronCancellaCoturniInvalidi",
+    'curriculum.cron.CronCheckExpiredCourseTitles',
 ]
 
 # Classi middleware (intercetta & computa)
