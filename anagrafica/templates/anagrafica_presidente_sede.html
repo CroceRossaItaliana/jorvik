@@ -85,9 +85,13 @@
                                 <span class="badge">
                                     {{ numero }}
                                 </span>
+                                {% if sezione == 'Cariche elettive' %}
+                                    <span>{{ valore }}</span>
+                                {% else %}
                                 <a href="/presidente/sedi/{{ sede.pk }}/delegati/{{ chiave }}/">
                                     {{ valore }}
                                 </a>
+                                {% endif %}
 
                             </li>
 

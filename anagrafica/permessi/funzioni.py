@@ -8,7 +8,7 @@ from django.db.models import QuerySet, Q
 
 from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO,\
     UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, \
-    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO
+    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.applicazioni import DELEGATO_AREA
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
@@ -114,6 +114,17 @@ def permessi_commissario(sede):
         + _espandi(sede)
 
 
+def permessi_consigliere(sede):
+    """
+    Permessi della delega di CONSIGLIERE.
+
+    :param sede: Sede di cui si e' consigliere.
+    :return: Lista di permessi.
+    """
+    return []
+
+
+
 def permessi_ufficio_soci_unita(sede):
     """
     Permessi della delega di UFFICIO SOCI.
@@ -122,13 +133,6 @@ def permessi_ufficio_soci_unita(sede):
     :return: Lista di permessi.
     """
     sede_qs = sede.queryset_modello()
-
-    # from anagrafica.costanti import LOCALE
-    #
-    # if sede.estensione == LOCALE:
-    #     gestione_soci = sede_qs.espandi(territoriale=True)
-    # else:
-    #     gestione_soci = sede_qs
 
     return [
         (RUBRICA_UFFICIO_SOCI_UNITA, sede.espandi(includi_me=True, pubblici=True)),
@@ -346,10 +350,13 @@ def permessi_responsabile_autoparco(sede):
 
 
 # Funzioni permessi
-# Nota bene: Non inserire () dopo il nome della funzione.
+# Nota bene: Non inserire () dopo il nome della funzione. VICE_PRESIDENTE
 PERMESSI_FUNZIONI = (
     (COMMISSARIO,               permessi_presidente),
+    (CONSIGLIERE,               permessi_consigliere),
+    (CONSIGLIERE_GIOVANE,       permessi_consigliere),
     (PRESIDENTE,                permessi_presidente),
+    (VICE_PRESIDENTE,           permessi_presidente),
     (UFFICIO_SOCI,              permessi_ufficio_soci),
     (UFFICIO_SOCI_UNITA,        permessi_ufficio_soci_unita),
     (DELEGATO_AREA,             permessi_delegato_area),
