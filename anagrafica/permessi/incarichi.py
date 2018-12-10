@@ -7,7 +7,7 @@ from datetime import date
 from django.contrib.contenttypes.models import ContentType
 
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, REFERENTE, DIRETTORE_CORSO, \
-    RESPONSABILE_FORMAZIONE, COMMISSARIO
+    RESPONSABILE_FORMAZIONE, COMMISSARIO, VICE_PRESIDENTE
 
 INCARICO_PRESIDENZA = "PRES"
 INCARICO_COMMISSARIO = "COM"
@@ -119,6 +119,7 @@ ESPANSIONE_DELEGHE = {
     UFFICIO_SOCI_UNITA:     espandi_incarichi_ufficio_soci_unita,
     UFFICIO_SOCI:           espandi_incarichi_ufficio_soci,
     PRESIDENTE:             espandi_incarichi_presidente,
+    VICE_PRESIDENTE:             espandi_incarichi_presidente,
     COMMISSARIO:            espandi_incarichi_commissario,
     REFERENTE:              espandi_incarichi_referente_attivita,
     DIRETTORE_CORSO:        espandi_incarichi_direttore_corso,

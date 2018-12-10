@@ -37,8 +37,8 @@ from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, R
 from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI_NOMI_DICT, UFFICIO_SOCI_UNITA, \
     DELEGHE_RUBRICA, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_4, \
     RESPONSABILE_FORMAZIONE, DELEGATO_OBIETTIVO_6, DELEGATO_OBIETTIVO_5, RESPONSABILE_AUTOPARCO, DELEGATO_CO, \
-    DIRETTORE_CORSO, RESPONSABILE_AREA, REFERENTE, OBIETTIVI, COMMISSARIO
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+    DIRETTORE_CORSO, RESPONSABILE_AREA, REFERENTE, OBIETTIVI, COMMISSARIO, CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE
+from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PERMESSI_NOMI_DICT
 from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
     GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE
 from anagrafica.permessi.delega import delega_permessi, delega_incarichi
@@ -1630,9 +1630,6 @@ class SedeQuerySet(TreeQuerySet):
         if ignora_disattivi:
             qs = qs.filter(attiva=True)
 
-        # if kwargs.get('territoriale'):
-        #     qs = qs.exclude(estensione__in=[NAZIONALE, REGIONALE, PROVINCIALE, LOCALE])
-
         return qs
 
 
@@ -2118,8 +2115,6 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
         if notifica:
             self.invia_notifica_terminazione(mittente=mittente, accoda=accoda)
 
-
-
     def presidenziali_termina_deleghe_dipendenti(self, mittente=None):
         """
         Nel caso di una delega come Presidente o Commissario, termina anche
@@ -2155,7 +2150,7 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             tipo__in=[UFFICIO_SOCI, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1,
                       DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4,
                       DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE,
-                      RESPONSABILE_AUTOPARCO, DELEGATO_CO],
+                      RESPONSABILE_AUTOPARCO, DELEGATO_CO, CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE],
         ).filter(**per_la_sede_espansa).filter(**nel_periodo_presidenziale)
 
         per_i_corsi_delle_sedi = {

@@ -551,7 +551,7 @@ def aspirante_corso_base_report_schede(request, me, pk):
         # Se idoneo, genera l'attestato.
         if p.idoneo:
             attestato = p.genera_attestato()
-            archivio.aggiungi_file(attestato.file.path, "%s - Attesato.pdf" % p.persona.nome_completo)
+            archivio.aggiungi_file(attestato.file.path, "%s - Attestato.pdf" % p.persona.nome_completo)
 
     archivio.comprimi_e_salva(nome="Corso %d-%d.zip" % (corso.progressivo, corso.anno))
     return redirect(archivio.download_url)

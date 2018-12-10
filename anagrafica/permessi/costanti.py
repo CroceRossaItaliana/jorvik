@@ -11,7 +11,7 @@ Questo file gestisce i permessi in Gaia.
  ============================================================================================
 """
 from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA, REFERENTE, DIRETTORE_CORSO, \
-    RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO
+    RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO, CONSIGLIERE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 
 GESTIONE_SEDE = "GESTIONE_SEDE"
@@ -94,6 +94,7 @@ PERMESSI_OGGETTI = (
 # Tipologia degli oggetti assegnati ad ogni Delega.
 DELEGHE_OGGETTI = (
     (PRESIDENTE,                ('anagrafica', 'Sede', None)),
+    (CONSIGLIERE,                ('anagrafica', 'Sede', None)),
     #(COMMISSARIO,                ('anagrafica', 'Sede', None)),
     (UFFICIO_SOCI,              ('anagrafica', 'Sede', None)),
     (DELEGATO_AREA,             ('attivita', 'Area', 'sede__in')),
