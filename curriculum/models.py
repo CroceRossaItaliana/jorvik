@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db import models
 from django.utils import timezone
 
@@ -132,12 +134,17 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     @property
     def is_expired_course_title(self):
-        from datetime import date
         now = timezone.now()
         today = date(now.year, now.month, now.day)
         if self.is_course_title and today > self.data_scadenza:
             return True
         return False
+
+    @classmethod
+    def get_expired_course_titles(cls):
+        now = timezone.now()
+        today = date(now.year, now.month, now.day)
+        return cls.objects.filter(is_course_title=True, data_scadenza=today)
 
     def __str__(self):
         return "%s di %s" % (self.titolo, self.persona)
