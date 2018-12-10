@@ -582,6 +582,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 persona=p.persona,
                 certificato_da=self.get_firmatario,
                 data_scadenza=timezone.now() + self.titolo_cri.expires_after_timedelta,
+                is_course_title=True,
 
                 # todo: attending details
                 # data_ottenimento='',

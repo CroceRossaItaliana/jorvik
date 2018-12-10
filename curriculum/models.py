@@ -113,7 +113,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                                        null=True,
                                        related_name="titoli_da_me_certificati",
                                        on_delete=models.SET_NULL)
-    # is_active = models.BooleanField(default=True)
+    is_course_title = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Titolo personale"
@@ -135,7 +135,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         from datetime import date
         now = timezone.now()
         today = date(now.year, now.month, now.day)
-        if self.titolo.is_course_title and today > self.data_scadenza:
+        if self.is_course_title and today > self.data_scadenza:
             return True
         return False
 
