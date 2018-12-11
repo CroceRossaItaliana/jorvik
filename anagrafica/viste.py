@@ -1569,31 +1569,31 @@ def _presidente_sede_ruoli(sede):
 
     sezioni.update({
         "Obiettivi Strategici": [
-            (DELEGATO_OBIETTIVO_1, "Obiettivo Strategico I", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_1).count()),
-            (DELEGATO_OBIETTIVO_2, "Obiettivo Strategico II", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_2).count()),
-            (DELEGATO_OBIETTIVO_3, "Obiettivo Strategico III", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count()),
-            (DELEGATO_OBIETTIVO_4, "Obiettivo Strategico IV", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_4).count()),
-            (DELEGATO_OBIETTIVO_5, "Obiettivo Strategico V", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_5).count()),
-            (DELEGATO_OBIETTIVO_6, "Obiettivo Strategico VI", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_6).count()),
+            (DELEGATO_OBIETTIVO_1, "Obiettivo Strategico I", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_1).count(), []),
+            (DELEGATO_OBIETTIVO_2, "Obiettivo Strategico II", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_2).count(),[]),
+            (DELEGATO_OBIETTIVO_3, "Obiettivo Strategico III", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count(), []),
+            (DELEGATO_OBIETTIVO_4, "Obiettivo Strategico IV", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_4).count(), []),
+            (DELEGATO_OBIETTIVO_5, "Obiettivo Strategico V", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_5).count(), []),
+            (DELEGATO_OBIETTIVO_6, "Obiettivo Strategico VI", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_6).count(), []),
         ]
 
     })
 
     sezioni.update({
         "Responsabili": [
-            (UFFICIO_SOCI, "Ufficio Soci", sede.delegati_attuali(tipo=UFFICIO_SOCI).count()),
-            (UFFICIO_SOCI_UNITA, "Ufficio Soci per Unità territoriale", sede.delegati_attuali(tipo=UFFICIO_SOCI_UNITA).count()),
-            (RESPONSABILE_FORMAZIONE, "Formazione", sede.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE).count()),
-            (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count()),
-            (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count()),
+            (UFFICIO_SOCI, "Ufficio Soci", sede.delegati_attuali(tipo=UFFICIO_SOCI).count(), []),
+            (UFFICIO_SOCI_UNITA, "Ufficio Soci per Unità territoriale", sede.delegati_attuali(tipo=UFFICIO_SOCI_UNITA).count(), []),
+            (RESPONSABILE_FORMAZIONE, "Formazione", sede.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE).count(), []),
+            (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count(), []),
+            (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count(), []),
         ]
     })
 
     sezioni.update({
         "Cariche elettive": [
-            (VICE_PRESIDENTE, "Vice Presidente", sede.delegati_attuali(tipo=VICE_PRESIDENTE).count()),
-            (CONSIGLIERE, "Consigliere", sede.delegati_attuali(tipo=CONSIGLIERE).count()),
-            (CONSIGLIERE_GIOVANE, "Consigliere giovane", sede.delegati_attuali(tipo=CONSIGLIERE_GIOVANE).count()),
+            (VICE_PRESIDENTE, "Vice Presidente", sede.delegati_attuali(tipo=VICE_PRESIDENTE).count(), [sede.vice_presidente()] if sede.vice_presidente() else []),
+            (CONSIGLIERE, "Consigliere", sede.delegati_attuali(tipo=CONSIGLIERE).count(), sede.consiglieri()),
+            (CONSIGLIERE_GIOVANE, "Consigliere giovane", sede.delegati_attuali(tipo=CONSIGLIERE_GIOVANE).count(), [sede.consigliere_giovane()] if sede.consigliere_giovane() else []),
         ]
     })
 
