@@ -281,6 +281,9 @@ def informazioni_sede(request, me, slug):
         'vicini': vicini,
         'da_mostrare': vicini | sede.ottieni_discendenti(includimi=True),
         'presidente': sede.presidente(),
+        'vice_presidente': sede.vice_presidente(),
+        'consiglieri': sede.consiglieri(),
+        'consigliere_giovane': sede.consigliere_giovane(),
         'vicini_km': vicini_km,
     }
     return 'base_informazioni_sede.html', contesto
