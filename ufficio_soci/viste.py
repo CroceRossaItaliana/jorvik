@@ -1,6 +1,7 @@
 import json
 import random
 import re
+from datetime import datetime
 from collections import OrderedDict
 
 from django.core.paginator import Paginator
@@ -453,7 +454,6 @@ def us_trasferimento(request, me):
             trasf.save()
             if me.sede_riferimento().comitato == trasf.destinazione.comitato:
                 trasf.esegui()
-
                 Messaggio.costruisci_e_invia(
                     oggetto="Richiesta di trasferimento",
                     modello="email_richiesta_trasferimento_cc.html",
@@ -474,6 +474,14 @@ def us_trasferimento(request, me):
                                       torna_url="/us/trasferimento/")
             else:
                 trasf.richiedi()
+                autorizzazione = trasf.autorizzazioni.first()
+                autorizzazione.concessa = True
+                autorizzazione.firmatario = trasf.richiedente
+                autorizzazione.necessaria = False
+                autorizzazione.save()
+                trasf.confermata = True
+                trasf.protocollo_data = datetime.now()
+                trasf.save()
 
                 Messaggio.costruisci_e_invia(
                     oggetto="Richiesta di trasferimento",
