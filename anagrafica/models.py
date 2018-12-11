@@ -1853,10 +1853,22 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             return "%s" % (self.nome,)
 
     def presidente(self):
-        delega_presidenziale = self.comitato.delegati_attuali(tipo=PRESIDENTE).first()
+        delega_presidenziale = self.comitato.delegati_attuali(tipo=PRESIDENTE, solo_deleghe_attive=True).first()
         if not delega_presidenziale:
-            delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO).first()
+            delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True).first()
         return delega_presidenziale
+
+    def vice_presidente(self):
+        delega_vice_presidenziale = self.comitato.delegati_attuali(tipo=VICE_PRESIDENTE, solo_deleghe_attive=True).first()
+        return delega_vice_presidenziale if delega_vice_presidenziale else None
+
+    def consigliere_giovane(self):
+        delega_consigliere_giovane = self.comitato.delegati_attuali(tipo=CONSIGLIERE_GIOVANE, solo_deleghe_attive=True).first()
+        return delega_consigliere_giovane if delega_consigliere_giovane else None
+
+    def consiglieri(self):
+        delega_consiglieri = self.comitato.delegati_attuali(tipo=CONSIGLIERE, solo_deleghe_attive=True)
+        return delega_consiglieri if delega_consiglieri else []
 
     def delegati_ufficio_soci(self):
         """
