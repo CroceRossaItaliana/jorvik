@@ -5,7 +5,7 @@
 {% block pagina_principale %}
 <div class="container">
 
-    <div class="row allinea-centro" role="navigation" id="menu-applicazione">
+    <div class="row allinea-centro gaia-topnav" role="navigation" id="menu-applicazione">
         <ul class="nav nav-tabs nav-justified">
             {% for app_slug, app_nome, app_icona, app_num in user.applicazioni_disponibili %}
                 <li role="presentation" class="{% if request.path|startswith:app_slug %}active{% endif %}{% if app_slug == '/aspirante/' and '/utente/' in request.path %}active{% endif %}">
@@ -34,7 +34,7 @@
         </div>
 
         {% block menu_laterale %}
-        <div role="navigation" class="{% block menu_laterale_col %}col-md-3{% endblock %} well well-sm">
+        <div role="navigation" class="{% block menu_laterale_col %}col-md-3{% endblock %} well well-sm gaia-left-sidebar">
             <ul id="sezione" class="nav nav-pills nav-stacked navbar-collapse collapse">
                 {% for sezione_nome, sezione_pagine in menu.elementi_anagrafica %}
                     <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>

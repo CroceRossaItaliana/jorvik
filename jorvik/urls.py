@@ -68,14 +68,16 @@ urlpatterns = [
     url(r'^recupera_password_completo/$', base.viste.recupero_password_completo, name='recupero_password_completo'),
 
     # Informazioni
-    url(r'^informazioni/$', base.viste.informazioni),
+    url(r'^informazioni/$', base.viste.informazioni, name='informazioni'),
     url(r'^informazioni/statistiche/$', base.viste.informazioni_statistiche),
     url(r'^informazioni/aggiornamenti/$', base.viste.informazioni_aggiornamenti),
     url(r'^informazioni/sicurezza/$', base.viste.informazioni_sicurezza),
     url(r'^informazioni/condizioni/$', base.viste.informazioni_condizioni, name='informazioni_condizioni'),
     url(r'^informazioni/cookie/$', base.viste.informazioni_cookie, name='informazioni_cookie'),
     url(r'^informazioni/cookie/imposta/$', base.viste.imposta_cookie, name='imposta_cookie'),
-    url(r'^informazioni/verifica-tesserino/$', ufficio_soci.viste.verifica_tesserino),
+    url(r'^informazioni/verifica-tesserino/$',
+        ufficio_soci.viste.verifica_tesserino,
+        name='informazioni_verifica_tesserino'),
     url(r'^informazioni/sedi/$', base.viste.informazioni_sedi),
     url(r'^informazioni/sedi/(?P<slug>.*)/$', base.viste.informazioni_sede),
     url(r'^informazioni/formazione/$', base.viste.formazione),
@@ -274,7 +276,7 @@ urlpatterns = [
     url(r'^formazione/', include('formazione.urls', namespace='formazione')),
     url(r'^survey/', include('survey.urls', namespace='survey')),
 
-    url(r'^supporto/$', base.viste.supporto),
+    url(r'^supporto/$', base.viste.supporto, name='supporto_page'),
     url(r'^geo/localizzatore/imposta/$', base.viste.geo_localizzatore_imposta),
     url(r'^geo/localizzatore/$', base.viste.geo_localizzatore),
     url(r'^strumenti/delegati/$', anagrafica.viste.strumenti_delegati,
