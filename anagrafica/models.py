@@ -2294,17 +2294,9 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
             else:
                 self.automatica = False
             self.save()
-            self.richiedi(notifiche_attive=False)
-            self.confermata = True
+            # self.richiedi()
             if notifiche_attive:
                 autorizzazione = self.autorizzazioni.first()
-                autorizzazione.concessa = True
-                autorizzazione.firmatario = self.richiedente
-                autorizzazione.necessaria = False
-                autorizzazione.save()
-                self.protocollo_data = datetime.now()
-                self.save()
-
                 autorizzazione.notifica_sede_autorizzazione_concessa(appartenenzaVecchia.sede, testo_extra)
                 autorizzazione.notifica_sede_autorizzazione_concessa(app.sede, testo_extra)
 
