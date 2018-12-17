@@ -23,6 +23,8 @@ from formazione.models import Corso
 from .models import (Sede, Persona, Appartenenza, Documento, Estensione,
     ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva)
 from .validators import valida_almeno_14_anni, valida_data_nel_passato
+from anagrafica.permessi.applicazioni import (PRESIDENTE, COMMISSARIO,
+    CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE)
 
 
 class ModuloSpostaPersone(object):
@@ -550,7 +552,14 @@ class ModuloReportFederazione(forms.Form):
 class ModuloImportPresidenti(forms.Form):
     nomina = forms.ChoiceField(widget=forms.Select(),
                       choices=(
-                          [('Seleziona', ''), ('Presidente', 'Presidente'), ('Commissario', 'Commissario'),]
+                          [
+                              ('Seleziona', ''),
+                              (PRESIDENTE, 'Presidente'),
+                              (COMMISSARIO, 'Commissario'),
+                              (CONSIGLIERE, 'Consigliere'),
+                              (CONSIGLIERE_GIOVANE, 'Consigliere giovane'),
+                              (VICE_PRESIDENTE, 'Vice presidente'),
+                          ]
                       ),
                       initial='Nomina',
                       required=True,)

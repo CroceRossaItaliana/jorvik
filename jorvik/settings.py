@@ -405,3 +405,9 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     )
 }
+
+from django.utils.translation import ugettext_lazy as _
+
+COUNTRIES_OVERRIDE = {
+    'KS': _('Kosovo'),
+}

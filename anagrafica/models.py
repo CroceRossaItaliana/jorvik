@@ -27,8 +27,9 @@ from .permessi.applicazioni import (PRESIDENTE, PERMESSI_NOMI, COMMISSARIO,
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_1,
     REFERENTE, DELEGATO_OBIETTIVO_4, RESPONSABILE_FORMAZIONE,
     DELEGATO_OBIETTIVO_6, DELEGATO_OBIETTIVO_5, RESPONSABILE_AUTOPARCO,
-    DELEGATO_CO, DIRETTORE_CORSO, RESPONSABILE_AREA)
-from .permessi.applicazioni import UFFICIO_SOCI
+    DELEGATO_CO, DIRETTORE_CORSO, RESPONSABILE_AREA, CONSIGLIERE,
+                                    CONSIGLIERE_GIOVANE, VICE_PRESIDENTE)
+from .permessi.applicazioni import UFFICIO_SOCI, PERMESSI_NOMI_DICT
 from .permessi.costanti import (GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT,
     GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, GESTIONE_SEDE,
     GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE)
@@ -1645,7 +1646,7 @@ class SedeQuerySet(TreeQuerySet):
         comitati_dei_territoriali_presenti = Sede.objects.filter(figli__in=territoriali_presenti)
         return comitati_presenti | comitati_dei_territoriali_presenti
 
-    def espandi(self, pubblici=False, ignora_disattivi=True):
+    def espandi(self, pubblici=False, ignora_disattivi=True, **kwargs):
         """
         Espande il QuerySet.
         Se pubblico, me e tutte le sedi sottostanti.
@@ -1885,10 +1886,22 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             return "%s" % (self.nome,)
 
     def presidente(self):
-        delega_presidenziale = self.comitato.delegati_attuali(tipo=PRESIDENTE).first()
+        delega_presidenziale = self.comitato.delegati_attuali(tipo=PRESIDENTE, solo_deleghe_attive=True).first()
         if not delega_presidenziale:
-            delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO).first()
+            delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True).first()
         return delega_presidenziale
+
+    def vice_presidente(self):
+        delega_vice_presidenziale = self.comitato.delegati_attuali(tipo=VICE_PRESIDENTE, solo_deleghe_attive=True).first()
+        return delega_vice_presidenziale if delega_vice_presidenziale else None
+
+    def consigliere_giovane(self):
+        delega_consigliere_giovane = self.comitato.delegati_attuali(tipo=CONSIGLIERE_GIOVANE, solo_deleghe_attive=True).first()
+        return delega_consigliere_giovane if delega_consigliere_giovane else None
+
+    def consiglieri(self):
+        delega_consiglieri = self.comitato.delegati_attuali(tipo=CONSIGLIERE, solo_deleghe_attive=True)
+        return delega_consiglieri if delega_consiglieri else []
 
     def delegati_ufficio_soci(self):
         """
@@ -1963,10 +1976,15 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         Espande la Sede.
         Se pubblico, me e tutte le sedi sottostanti.
         Se privato, me e le unita' territoriali incluse.
+        Se la sede è un territoriale non ha nessun discendete quindi ritorna semplicemente se stesso.
         :param includi_me: Includimi nel queryset ritornato.
         :param pubblici: Espandi i pubblici, ritornando tutto al di sotto.
         :param ignora_disattive: Nasconde le sedi disattive.
         """
+
+        # Sede Territoriale ritorna se stessa
+        if self.estensione == TERRITORIALE:
+            return self.queryset_modello()
 
         # Sede pubblica... ritorna tutto sotto di se.
         if pubblici and self.estensione in [NAZIONALE, REGIONALE]:
@@ -2142,8 +2160,6 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
         if notifica:
             self.invia_notifica_terminazione(mittente=mittente, accoda=accoda)
 
-
-
     def presidenziali_termina_deleghe_dipendenti(self, mittente=None):
         """
         Nel caso di una delega come Presidente o Commissario, termina anche
@@ -2179,7 +2195,7 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             tipo__in=[UFFICIO_SOCI, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1,
                       DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4,
                       DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE,
-                      RESPONSABILE_AUTOPARCO, DELEGATO_CO],
+                      RESPONSABILE_AUTOPARCO, DELEGATO_CO, CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE],
         ).filter(**per_la_sede_espansa).filter(**nel_periodo_presidenziale)
 
         per_i_corsi_delle_sedi = {
@@ -2380,11 +2396,12 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     RICHIESTA_NOME = "Estensione"
 
     def attuale(self, **kwargs):
-        """
-        Controlla che l'estensione sia stata confermata e
-         l'appartenenza creata sia in corso.
-        """
-        return self.esito == self.ESITO_OK and self.appartenenza.attuale(**kwargs)
+        """ Controlla che l'estensione sia stata confermata
+        e l'appartenenza creata sia in corso. """
+        app_attuale = self.appartenenza
+        app_attuale = False if app_attuale is None \
+                            else app_attuale.attuale(**kwargs)
+        return self.esito == self.ESITO_OK and app_attuale
 
     def autorizzazione_concedi_modulo(self):
         from anagrafica.forms import ModuloConsentiEstensione

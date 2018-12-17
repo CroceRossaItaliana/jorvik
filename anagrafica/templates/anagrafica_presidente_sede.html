@@ -79,15 +79,28 @@
 
                         <h4>{{ sezione }}</h4>
                         <ul>
-                        {% for chiave, valore, numero in ruoli %}
+                        {% for chiave, valore, numero, sotto_sezione in ruoli %}
 
                             <li>
                                 <span class="badge">
                                     {{ numero }}
                                 </span>
-                                <a href="/presidente/sedi/{{ sede.pk }}/delegati/{{ chiave }}/">
-                                    {{ valore }}
-                                </a>
+                                {% if sezione == 'Cariche elettive' %}
+                                    <span>{{ valore }}</span>
+                                    {% if sotto_sezione %}
+                                        <ul>
+                                            {% for nomina in sotto_sezione %}
+                                                <li>
+                                                    {{ nomina }}
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                {% else %}
+                                    <a href="/presidente/sedi/{{ sede.pk }}/delegati/{{ chiave }}/">
+                                        {{ valore }}
+                                    </a>
+                                {% endif %}
 
                             </li>
 
