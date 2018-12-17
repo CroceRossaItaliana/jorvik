@@ -109,9 +109,15 @@ def menu(request):
         ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
     ))
 
+    VOCE_LINKS = ("Links", (
+        ("Portale convenzioni", "fa-key", reverse('pages:page', args=['portale-convenzioni'])),
+        ("Segnalazione aggressione", "fa-cogs", reverse('pages:page', args=['report-violence'])),
+    ))
+
     elementi = {
         "utente": (VOCE_PERSONA, VOCE_VOLONTARIO, VOCE_RUBRICA, VOCE_CV,
-                   VOCE_DONATORE, VOCE_SICUREZZA) if me and not hasattr(me, 'aspirante') else None,
+                   VOCE_DONATORE, VOCE_SICUREZZA, VOCE_LINKS) if me and \
+                                        not hasattr(me, 'aspirante') else None,
         "posta": (
             ("Posta", (
                 ("Scrivi", "fa-pencil", "/posta/scrivi/"),
@@ -238,8 +244,7 @@ def menu(request):
             ("Sicurezza", (
                 ("Cambia password", "fa-key", "/utente/cambia-password/"),
                 ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
-            ),
-            ),
+            )),
         ) if me and hasattr(me, 'aspirante') else (
             ("Gestione Corsi", (
                 ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),

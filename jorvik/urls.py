@@ -37,7 +37,6 @@ js_info_dict = {
 }
 
 urlpatterns = [
-
     # Home page!
     url(r'^$', base.viste.index),
 
@@ -276,7 +275,10 @@ urlpatterns = [
     url(r'^formazione/', include('formazione.urls', namespace='formazione')),
     url(r'^survey/', include('survey.urls', namespace='survey')),
 
+    # Static pages
+    url(r'^page/', include('static_page.urls', namespace='pages')),
     url(r'^supporto/$', base.viste.supporto, name='supporto_page'),
+
     url(r'^geo/localizzatore/imposta/$', base.viste.geo_localizzatore_imposta),
     url(r'^geo/localizzatore/$', base.viste.geo_localizzatore),
     url(r'^strumenti/delegati/$', anagrafica.viste.strumenti_delegati,
@@ -315,7 +317,6 @@ urlpatterns = [
 
     # REST api
     url(r'^api/', include('api.urls', namespace='api')),
-
 ]
 
 if DEBUG:

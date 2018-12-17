@@ -1,0 +1,18 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block app_contenuto %}
+  <style>
+    .single-page {}
+    .single-page h1 {padding-bottom:10px;}
+    .single-page ul {}
+    .single-page ul li {padding-bottom:6px;}
+    .single-page p {margin-bottom:25px; line-height:22px;}
+  </style>
+
+    <div class="articolo single-page">
+      <h1>{{ page.title }}</h1>
+      {{ page.text|safe }}
+    </div>
+{% endblock %}
