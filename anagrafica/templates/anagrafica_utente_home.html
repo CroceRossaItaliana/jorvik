@@ -30,7 +30,7 @@
     {% endif %}
 
     {% if me.nuovo_presidente %}
-        <div class="alert alert-success">
+        <div class="alert" style="border: 1px solid #f1f1f1;">
             <p class="grassetto">
                 <i class="fa fa-fw fa-smile-o"></i>
                 Ciao neo {{ me | select_presidente_commissario_da_persona }}!
@@ -40,7 +40,7 @@
     {% endif %}
 
     {% if not me.numeri_telefono.exists %}
-        <div class="alert alert-warning">
+        <div class="alert" style="background-color: #f1f1f1;">
             <h4>
                 <i class="fa fa-fw fa-warning"></i>
                 Aggiungi il tuo numero di cellulare nella sezione Contatti
@@ -58,7 +58,7 @@
     {% endif %}
 
     {% if me.titoli_personali.all.count < 3 %}
-        <div class="alert alert-info">
+        <div class="alert" style="background-color: #f1f1f1;">
             <h4>
                 <i class="fa fa-fw fa-info-circle"></i>
                 Completa il tuo Curriculum

@@ -24,17 +24,13 @@
                     {% block login_buttom %}
                     {% if me %}
                         <p class="navbar-btn btn-group topnavbar-r">
-                            <a class="btn btn-sm topnavbar-r__welcome-user-btn" href="/utente/">
-                                <i class="fa fa-user"></i> Ciao, <strong>{{ me.nome }}</strong>
-                            </a>
+                            <a class="btn btn-sm topnavbar-r__welcome-user-btn" href="/utente/"><i class="fa fa-user"></i> Ciao, <strong>{{ me.nome }}</strong></a>
+
                             {% if me.admin %}
-                                <a class="btn btn-sm" href="/admin/">
-                                    <i class="fa fa-cogs"></i> Amministrazione
-                                </a>
+                            <a class="btn btn-sm without-bg-cri" href="/admin/"><i class="fa fa-cogs"></i> Amministrazione</a>
                             {% endif %}
-                            <a class="btn btn-sm topnavbar-r__login-btn" href="{% url 'logout' %}">
-                                <i class="fa fa-sign-out"></i> Logout
-                            </a>
+
+                            <a class="btn btn-sm topnavbar-r__login-btn" href="{% url 'logout' %}"><i class="fa fa-sign-out"></i> Logout</a>
                         </p>
                     {% else %}
                         <p class="navbar-btn btn-group">

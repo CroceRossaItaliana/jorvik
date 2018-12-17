@@ -5,6 +5,9 @@
   background-image: none;
   border: 1px solid #cc0000;
 }
+.with-bg-cri:hover {
+  color: #f1f1f1;
+}
 .without-bg-cri {
   color: #cc0000;
   background-color: #fff;
@@ -82,4 +85,14 @@
   display: block;
   margin: 0 auto;
   width: 150px;
+}
+.single-page h1 {
+  padding-bottom: 10px;
+}
+.single-page ul li {
+  padding-bottom: 6px;
+}
+.single-page p {
+  margin-bottom: 25px;
+  line-height: 22px;
 }
