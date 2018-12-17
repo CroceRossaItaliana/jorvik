@@ -70,11 +70,11 @@
     {% block pagina_principale %}{% endblock %}
 
     {% if not embed %}
-    <div style="text-align:center;"><img src="{% static 'img/un-italia-che-aiuta.png' %}" width="150" alt="Un'Italia che aiuta"></div>
     <div class="container-fluid footer-container-fluid">
-      <footer class="row">
+      <img class="footer-main__logo-uica" src="{% static 'img/un-italia-che-aiuta.png' %}" alt="Un'Italia che aiuta">
+      <footer class="row footer-main">
       {% block pagina_footer %}
-        <ul class="footer-main">
+        <ul class="footer-main__nav">
           <li class="footer-main__link"><strong><a href="{% url 'supporto_page' %}"><i class="fa fa-support"></i> Supporto</a></strong></li>
           <li class="footer-main__link"><a href="{% url 'informazioni' %}">Informazioni</a></li>
           <li class="footer-main__link"><a href="{% url 'informazioni_verifica_tesserino' %}">Verifica un tesserino CRI</a></li>
