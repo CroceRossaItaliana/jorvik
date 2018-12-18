@@ -136,14 +136,20 @@
                 Completa i passi necessari e clicca sul pulsante per attivare il corso:
             </p>
 
-            <p>
-                {% checkbox corso.descrizione %}:
-                Inserisci una descrizione del Corso per i Corsisti dalla scheda "Gestione corso";
-            </p>
-            <p>
-                {% checkbox corso.locazione %}:
-                Inserisci l'indirizzo del Corso dalla scheda "Gestione corso";
-            </p>
+            {% if corso.is_nuovo_corso %}
+                <p>
+                    {% if corso.extension_type == corso.EXT_MIA_SEDE %}
+                        <i class="fa fa-fw text-danger fa-square"></i> <span class="text-danger">DA FARE</span>:
+                    {% else %}
+                        <i class="fa fa-fw text-success fa-check-square"></i> <span class="text-success">FATTO</span>:
+                    {% endif %}
+                    Conferma l'estensione a chi vuoi aprire il Corso dalla scheda "Estensioni"
+                </p>
+            {% endif %}
+
+            <p>{% checkbox corso.descrizione %}: Inserisci una descrizione del Corso per i Corsisti dalla scheda "Gestione corso"</p>
+            <p>{% checkbox corso.locazione %}: Inserisci l'indirizzo del Corso dalla scheda "Gestione corso"</p>
+
             <p style="text-align: center;margin-top: 20px;">
                 <a class="btn btn-warning {% if not corso.attivabile %}disabled{% endif %}"
                     {% if corso.attivabile %}href="{{ corso.url_attiva }}"{% endif %}>

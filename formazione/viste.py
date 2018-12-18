@@ -65,15 +65,21 @@ def formazione_corsi_base_nuovo(request, me):
     form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
 
     if form.is_valid():
+        kwargs = {}
         cd = form.cleaned_data
         tipo, data_inizio, data_esame = cd['tipo'], cd['data_inizio'], cd['data_esame']
         data_esame = data_esame if tipo == Corso.CORSO_NUOVO else data_inizio
+
+        if tipo == Corso.CORSO_NUOVO:
+            kwargs['titolo_cri'] = cd['titolo_cri']
+
         course = CorsoBase.nuovo(
             anno=data_inizio.year,
             sede=cd['sede'],
             data_inizio=data_inizio,
             data_esame=data_esame,
-            tipo=tipo
+            tipo=tipo,
+            **kwargs
         )
 
         if cd['locazione'] == form.PRESSO_SEDE:

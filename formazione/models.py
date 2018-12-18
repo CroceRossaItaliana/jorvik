@@ -207,8 +207,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @classmethod
     def find_courses_for_volunteer(cls, volunteer):
-        sede = volunteer.sede_riferimento()
-        if not sede:
+        sede = volunteer.sedi_attuali(membro=Appartenenza.VOLONTARIO)
+        if sede:
+            sede = sede.last()
+        else:
             return cls.objects.none()
 
         titoli = volunteer.titoli_personali_confermati().filter(
@@ -350,6 +352,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             progressivo=progressivo,
             **kwargs
         )
+        # if c.tipo == Corso.CORSO_NUOVO and c.titolo_cri:
+
+
         c.save()
         return c
 
@@ -360,6 +365,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             return False
 
         if not self.descrizione:
+            return False
+
+        if self.is_nuovo_corso and self.extension_type != CorsoBase.EXT_LVL_REGIONALE:
             return False
 
         return True

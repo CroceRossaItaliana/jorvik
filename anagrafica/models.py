@@ -2099,9 +2099,16 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
                                              destinatario_oggetto_id=self.oggetto.pk)
 
     def invia_notifica_creazione(self):
+        delega_tipo = self.get_tipo_display()
+        obj = self.oggetto
+
+        msg_subject = "%s per %s" % (delega_tipo, obj)
+        if hasattr(obj, 'is_nuovo_corso') and obj.is_nuovo_corso:
+            msg_subject = '%s per %s (%s)' % (delega_tipo, obj, obj.titolo_cri)
+
         messaggi = []
         messaggi += [Messaggio.costruisci_e_invia(
-            oggetto="%s per %s" % (self.get_tipo_display(), self.oggetto,),
+            oggetto=msg_subject,
             modello="email_delega_notifica_creazione.html",
             corpo={
                 "delega": self,
