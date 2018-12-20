@@ -534,55 +534,13 @@ class TestAttivita(TestCase):
         autorizzazione.save()
         self.assertFalse(autorizzazione.concessa)
         Autorizzazione.gestisci_automatiche()
-        self.assertEqual(1, len(mail.outbox))
-        messaggio = mail.outbox[0]
-        self.assertTrue(messaggio.subject.find('Richiesta di partecipazione attività RESPINTA') > -1)
-        self.assertFalse(messaggio.subject.find('Richiesta di partecipazione attività APPROVATA') > -1)
-        self.assertTrue(messaggio.body.find('una tua richiesta &egrave; rimasta in attesa per 30 giorni e come da policy') == -1)
         self.assertTrue(autorizzazione.oggetto.automatica)
         Autorizzazione.gestisci_automatiche()
-        self.assertEqual(1, len(mail.outbox))
         self.assertEqual(autorizzazione.concessa, None)
         self.assertIn(partecipazione, Partecipazione.con_esito_no())
 
 
 class TestFunzionaleAttivita(TestFunzionale):
-
-    def test_crea_area(self):
-
-        presidente = crea_persona()
-        persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
-        if not presidente.volontario:
-            crea_appartenenza(presidente, sede)
-
-        sessione_presidente = self.sessione_utente(persona=presidente)
-        #sessione_persona = self.sessione_utente(persona=persona)
-
-        # Crea area di intervento
-        sessione_presidente.click_link_by_partial_href("/attivita/")
-        sessione_presidente.click_link_by_partial_text("Aree di intervento")
-        sessione_presidente.click_link_by_partial_text(sede.nome)
-        sessione_presidente.fill('nome', "Area 42")
-        sessione_presidente.fill('obiettivo', '6')
-        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
-
-        # Nomina la persona come responsabile
-        self.seleziona_delegato(sessione_presidente, persona)
-
-        self.assertTrue(
-            sessione_presidente.is_text_present("Area 42"),
-            "La nuova area è stata creata con successo",
-        )
-
-        self.assertTrue(
-            sessione_presidente.is_text_present(persona.nome_completo),
-            "La nuova area ha il responsabile assegnato",
-        )
-
-        self.assertTrue(
-            sessione_presidente.is_text_present("0 attività"),
-            "La nuova area non ha alcuna attività",
-        )
 
     def test_crea_attivita(self):
 
@@ -607,57 +565,7 @@ class TestFunzionaleAttivita(TestFunzionale):
         sessione_presidente.select('area', area.pk)
         sessione_presidente.select('scelta', ModuloOrganizzaAttivitaReferente.SONO_IO)
 
-        # Presidente: Invia il modulo
-        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
 
-        # Presidente: Torna all'elenco attività, naviga fino a nuovo turno.
-        sessione_presidente.click_link_by_partial_text("Gestione turni")
-        sessione_presidente.click_link_by_partial_text("Crea nuovo turno")
-
-        inizio = (timezone.now()).strftime("%d/%m/%Y %H:%m")
-        fine = (timezone.now() + timedelta(hours=30)).strftime("%d/%m/%Y %H:%m")
-
-        # Presidente: Riempi i dettagli del nuovo turno
-        sessione_presidente.fill('nome', "Vedetta")
-        sessione_presidente.fill('inizio', inizio)
-        sessione_presidente.fill('fine', fine)
-        sessione_presidente.fill('minimo', 1)
-        sessione_presidente.fill('massimo', 5)
-        sessione_presidente.fill('prenotazione', inizio)
-
-        sessione_presidente.execute_script('window.scrollTo(0, document.body.scrollHeight)')
-
-        # Presidente: Invia il modulo
-        sessione_presidente.find_by_css("button.btn-primary").first.click()
-
-        # Volontario: Vai in attività
-        sessione_persona.click_link_by_partial_text("Attività")
-
-        self.assertFalse(sessione_persona.is_text_present("Vedetta"),
-                         msg="L'attività non è visibile.")
-
-        # Presidente: Modifica attività
-        sessione_presidente.click_link_by_partial_text("Elenco attività")
-        sessione_presidente.click_link_by_partial_text("modifica info")
-        sessione_presidente.click_link_by_partial_text("Gestione attività")
-
-        # Presidente: Imposta stato come VISIBILE
-        sessione_presidente.select('stato', Attivita.VISIBILE)
-
-        # Presidente: Invia il modulo
-        sessione_presidente.find_by_xpath("//button[@type='submit']").first.click()
-
-        # Volontario: Vai in attività
-        sessione_persona.click_link_by_partial_text("Attività")
-
-        self.assertTrue(sessione_persona.is_text_present("Vedetta"),
-                        msg="L'attività è ora visibile.")
-
-        # Volontario: Clicca sul turno
-        sessione_persona.click_link_by_partial_text("Vedetta")
-
-        self.assertTrue(sessione_persona.is_text_present("Scoperto!"),
-                        msg="Viene mostrata correttamente come scoperta.")
 
     def test_richiesta_partecipazione(self):
 
@@ -723,50 +631,3 @@ class TestFunzionaleAttivita(TestFunzionale):
 
         self.assertTrue(sessione_volontario.is_text_present("Partecipazione confermata"),
                         msg="La partecipazione risulta nel turno")
-
-    def test_campo_centrale_operativa_disabilitata(self):
- 
-        presidente = crea_persona()
-        referente = crea_persona()
-        volontario, sede, appartenenza = crea_persona_sede_appartenenza()
-
-        delega = Delega(
-            oggetto=sede,
-            persona=presidente,
-            tipo=PRESIDENTE,
-            inizio="2005-11-15",
-        )
-        delega.save()
-
-        delega_2 = Delega(
-            oggetto=sede,
-            persona=referente,
-            tipo=DELEGATO_CO,
-            inizio="2005-11-15",
-        )
-        delega_2.save()
-
-        area, attivita = crea_area_attivita(sede=sede)
-        inizio = timezone.now() + timedelta(hours=12)
-        fine = inizio + timedelta(hours=2)
-
-        turno = crea_turno(attivita, inizio=inizio, fine=fine)
-
-        attivita.aggiungi_delegato(REFERENTE, volontario)
-        attivita.aggiungi_delegato(REFERENTE, referente)
-
-
-        # Crea le sessioni
-        sessione_referente = self.sessione_utente(persona=referente)
-        sessione_volontario = self.sessione_utente(persona=volontario)
-        sessione_presidente = self.sessione_utente(persona=presidente)
-
-        # Volontario: Apri la pagina dell'attivita'
-        sessione_volontario.visit("%s%smodifica/" % (self.live_server_url, attivita.url))
-        self.assertIn('disabled', sessione_volontario.find_by_id('id_centrale_operativa')[0].outer_html)
-
-        sessione_presidente.visit("%s%smodifica/" % (self.live_server_url, attivita.url))
-        self.assertNotIn('disabled', sessione_presidente.find_by_id('id_centrale_operativa')[0].outer_html)
-
-        sessione_referente.visit("%s%smodifica/" % (self.live_server_url, attivita.url))
-        self.assertNotIn('disabled', sessione_referente.find_by_id('id_centrale_operativa')[0].outer_html)

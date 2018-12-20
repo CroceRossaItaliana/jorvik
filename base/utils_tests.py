@@ -210,10 +210,10 @@ def crea_partecipazione(persona, turno):
 
 def crea_sessione(wait_time=5):
     from splinter import Browser
-    browser = Browser(driver_name=SELENIUM_DRIVER, url=SELENIUM_URL,
-                      browser=SELENIUM_BROWSER,
-                      wait_time=wait_time)
-    return browser
+    if SELENIUM_DRIVER == 'remote':
+        return Browser(driver_name=SELENIUM_DRIVER, url=SELENIUM_URL, browser=SELENIUM_BROWSER)
+
+    return Browser(driver_name=SELENIUM_DRIVER)
 
 
 def email_fittizzia():

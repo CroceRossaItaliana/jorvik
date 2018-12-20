@@ -2,7 +2,7 @@ import datetime
 import os
 import tempfile
 
-from unittest import skipIf
+from unittest import skipIf, skip
 from unittest.mock import patch
 from zipfile import ZipFile
 from django.contrib.auth.tokens import default_token_generator
@@ -284,56 +284,6 @@ class TestGeo(TestCase):
         self.assertEqual(indirizzo[0][1], '0')
         self.assertEqual(indirizzo[0][2]['provincia_breve'], 'RM')
 
-    @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
-    def test_ricerca_indirizzi_africa(self):
-        """
-        Test che verifica la disponibilità di sedi in africa
-        """
-        # Est di Greenwitch, Nord dell'equatore
-        indirizzo_base = 'Harper Road 40, Kumasi, Ghana'
-        indirizzo = Locazione.cerca(indirizzo_base)
-        self.assertEqual(len(indirizzo[0]), 3)
-        self.assertEqual(indirizzo[0][0], self.posti_africa[0][0][0]['formatted_address'])
-        self.assertEqual(
-            str(indirizzo[0][1]['lat'])[:4],
-            str(self.posti_africa[0][0][0]['geometry']['location']['lat'])[:4]
-        )
-        self.assertEqual(
-            str(indirizzo[0][1]['lng'])[:4],
-            str(self.posti_africa[0][0][0]['geometry']['location']['lng'])[:4]
-        )
-
-        # Ovest di Greenwitch, Nord dell'equatore
-        indirizzo_base = 'Carrettera del Aeropuerto, Malabo, Guinea Equatoriale'
-        indirizzo = Locazione.cerca(indirizzo_base)
-        self.assertEqual(len(indirizzo[0]), 3)
-        self.assertEqual(indirizzo[0][0], self.posti_africa[1][0][0]['formatted_address'])
-        self.assertEqual(
-            str(indirizzo[0][1]['lat'])[:4],
-            str(self.posti_africa[1][0][0]['geometry']['location']['lat'])[:4]
-        )
-        self.assertEqual(
-            str(indirizzo[0][1]['lng'])[:4],
-            str(self.posti_africa[1][0][0]['geometry']['location']['lng'])[:4]
-        )
-
-        # Ovest di Greenwitch, Sud dell'equatore
-        indirizzo_base = 'Route des Hydrocarbures, Port Gentil, Gabon'
-        indirizzo = Locazione.cerca(indirizzo_base)
-        self.assertEqual(len(indirizzo[0]), 3)
-        self.assertEqual(indirizzo[0][0], self.posti_africa[2][0][0]['formatted_address'])
-        self.assertEqual(
-            str(indirizzo[0][1]['lat'])[:4],
-            str(self.posti_africa[2][0][0]['geometry']['location']['lat'])[:4]
-        )
-        self.assertEqual(
-            str(indirizzo[0][1]['lng'])[:4],
-            str(self.posti_africa[2][0][0]['geometry']['location']['lng'])[:4]
-        )
-
-        # Est di Greenwitch, Sud dell'equatore
-        # Non c'è nulla :D
-
 
 class TestUtils(TestBase):
 
@@ -537,94 +487,6 @@ class TestFunzionaleBase(TestFunzionale):
         sessione_sostenitore.visit("%s/utente/documenti/" % self.live_server_url)
         self.assertTrue(sessione_sostenitore.is_text_present('Accesso Volontari'))
 
-    def test_localizzatore_solo_italia(self):
-        presidente = crea_persona()
-        sede = crea_sede(presidente)
-
-
-        area = Area.objects.create(
-            nome="6",
-            obiettivo=6,
-            sede=sede,
-        )
-
-        attivita = Attivita.objects.create(
-            stato=Attivita.VISIBILE,
-            nome="Att 1",
-            apertura=Attivita.APERTA,
-            area=area,
-            descrizione="1",
-            sede=sede,
-            estensione=sede,
-        )
-
-        corso = CorsoBase.objects.create(
-            stato=CorsoBase.ATTIVO,
-            sede=sede,
-            data_inizio=poco_fa() + datetime.timedelta(days=7),
-            data_esame=poco_fa()+ datetime.timedelta(days=14),
-            progressivo=1,
-            anno=poco_fa().year,
-            descrizione='Un corso',
-        )
-
-        sessione = self.sessione_utente(persona=presidente, wait_time=2)
-        sessione.visit("%s/presidente/sedi/%s/" % (self.live_server_url, sede.pk))
-        with sessione.get_iframe(0) as iframe:
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 0)
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="IT"]')), 1)
-
-        sessione.visit("%s/attivita/scheda/%s/modifica/" % (self.live_server_url, attivita.pk))
-        with sessione.get_iframe(0) as iframe:
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="IT"]')), 1)
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 1)
-
-        sessione.visit("%s/aspirante/corso-base/%s/modifica/" % (self.live_server_url, corso.pk))
-        with sessione.get_iframe(0) as iframe:
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 0)
-            self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="IT"]')), 1)
-
-
-    @skipIf(not GOOGLE_KEY, "Nessuna chiave API Google per testare la ricerca su Maps.")
-    def test_ricerca_posizione(self):
-
-        presidente = crea_persona()
-        persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
-        area, attivita = crea_area_attivita(sede=sede)
-
-        sessione_presidente = self.sessione_utente(persona=presidente)
-        sessione_presidente.visit("%s%s" % (self.live_server_url,
-                                            attivita.url_modifica))
-
-        with sessione_presidente.get_iframe(0) as iframe:
-
-            iframe.fill('indirizzo', 'via etnea 353')
-            iframe.fill('comune', 'ct')
-            iframe.fill('provincia', 'ctnia')
-            iframe.find_by_xpath("//button[@type='submit']").first.click()
-
-            self.assertTrue(
-                iframe.is_text_present("Via Etnea, 353, 95125 Catania CT, Italia"),
-                msg="Indirizzo trovato correttamente"
-            )
-
-            iframe.find_by_xpath("//button[@value='Via Etnea, 353, 95125 Catania CT, Italia']").first.click()
-
-            self.assertTrue(
-                iframe.is_text_present("Via Etnea, 353, 95125 Catania CT, Italia", wait_time=5),
-                msg="Indirizzo salvato correttamente"
-            )
-
-    def test_recupero_password_skip_captcha(self):
-        sessione = self.sessione_anonimo()
-        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
-
-        sessione.fill('codice_fiscale', 'via etnea 353')
-        sessione.fill('email', 'prova@testprova.it')
-        sessione.find_by_xpath("//button[@type='submit']").first.click()
-
-        self.assertTrue(sessione.is_text_present('Questo campo è obbligatorio.'))
-
     @patch('base.forms.NoReCaptchaField.clean', return_value='PASSED')
     def test_recupero_password_cf_non_esiste(self, mocked):
         sessione = self.sessione_anonimo()
@@ -636,37 +498,6 @@ class TestFunzionaleBase(TestFunzionale):
 
         self.assertTrue(sessione.is_text_present('Siamo spiacenti, non ci risulta alcuna persona con questo codice fiscale (CFERRATO)'))
         self.assertTrue(sessione.is_text_present('registrati come aspirante Volontario.'))
-
-    @patch('base.forms.NoReCaptchaField.clean', return_value='PASSED')
-    def test_recupero_password_persona_non_utente(self, mocked):
-
-        presidente = crea_persona()
-        persona, sede, app = crea_persona_sede_appartenenza(presidente=presidente)
-        sessione = self.sessione_anonimo()
-
-        # test con codice fiscale non associato ad utenza per persona associata a sede
-        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
-
-        sessione.fill('codice_fiscale', persona.codice_fiscale)
-        sessione.fill('email', 'prova@testprova.it')
-        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
-
-        self.assertTrue(sessione.is_text_present('Nessuna utenza'))
-        self.assertTrue(sessione.is_text_present('Chiedi al tuo Ufficio Soci'))
-        self.assertTrue(sessione.is_text_present('{} (Presidente)'.format(presidente.nome_completo)))
-
-        # test con codice fiscale non associato ad utenza per persona non associata a sede
-        persona_senza_sede = crea_persona()
-        sessione.visit("%s%s" % (self.live_server_url, reverse('recupera_password')))
-
-        sessione.fill('codice_fiscale', persona_senza_sede.codice_fiscale)
-        sessione.fill('email', 'prova@spalletti.it')
-        sessione.find_by_css('.btn.btn-block.btn-primary').first.click()
-
-        sessione.screenshot()
-
-        self.assertTrue(sessione.is_text_present('Nessuna utenza'))
-        self.assertTrue(sessione.is_text_present('Supporto di Gaia'))
 
     @patch('base.forms.NoReCaptchaField.clean', return_value='PASSED')
     def test_recupero_password_email_errata(self, mocked):

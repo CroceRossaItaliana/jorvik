@@ -4,15 +4,11 @@ services:
 
   db:
     image: mdillon/postgis
-    ports:
-      - "5432:5432"
 
   web:
     build: .
     volumes:
       - .:/code
-    ports:
-      - "8000:8000"
     links:
       - db
       - pdf
@@ -24,6 +20,11 @@ services:
     hostname: web
     environment:
       - "DJANGO_LIVE_TEST_SERVER_ADDRESS=web:8081-8181"
+    networks:
+      default:
+        aliases:
+          - web
+
 
   selenium:
     image: selenium/standalone-firefox-debug
