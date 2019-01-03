@@ -170,7 +170,7 @@ class Riduzione(ModelloSemplice, ConMarcaTemporale):
 
     nome = models.CharField(max_length=255, help_text='Compare nelle maschere di registrazione quote')
     quota = models.FloatField(default=1.00)
-    descrizione = models.CharField(max_length=500, help_text='Dicitira riportata sulle ricevute e nella causale della quota')
+    descrizione = models.CharField(max_length=500, help_text='Dicitura riportata sulle ricevute e nella causale della quota')
     tesseramento = models.ForeignKey('ufficio_soci.Tesseramento')
 
     def __str__(self):
