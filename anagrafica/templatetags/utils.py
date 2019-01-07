@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_text
 
+from jorvik.settings import GOOGLE_KEY
 from anagrafica.models import Persona, Delega
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import PERMESSI_TESTO, NESSUNO
@@ -266,7 +267,7 @@ class NodoMappa(template.Node):
             function loadScript() {
               var script = document.createElement("script");
               script.type = "text/javascript";
-              script.src = "https://maps.google.com/maps/api/js?sensor=false&callback=initialize";
+              script.src = "https://maps.googleapis.com/maps/api/js?sensor=false&callback=initialize&key=""" + GOOGLE_KEY + """ ";
               document.body.appendChild(script);
           }
           window.onload = loadScript;
