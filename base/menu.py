@@ -1,4 +1,5 @@
 from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import reverse
 
 from anagrafica.costanti import REGIONALE, TERRITORIALE, LOCALE
 from anagrafica.models import Sede
@@ -70,6 +71,14 @@ def menu(request):
         RUBRICA_BASE
     ))
 
+    VOCE_LINKS = ("Links", (
+        ("Portale convenzioni", "fa-key", reverse('pages:page', args=['portale-convenzioni'])),
+        ("Corporate benefits", "fa-key", ''),
+        ("Portale Italo", "fa-key", ''),
+        ("Convenzioni teatri", "fa-film", '/page/convenzione-teatri/'),
+        ("Segnalazione aggressione", "fa-cogs", reverse('pages:page', args=['report-violence'])),
+    ))
+
     elementi = {
         "utente": (
             (("Persona", (
@@ -103,6 +112,7 @@ def menu(request):
                 ("Cambia password", "fa-key", "/utente/cambia-password/"),
                 ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
             )),
+            VOCE_LINKS
         )) if me and not hasattr(me, 'aspirante') else None,
         "posta": (
             ("Posta", (

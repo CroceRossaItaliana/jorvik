@@ -5,7 +5,7 @@
 {% block pagina_principale %}
 <div class="container">
 
-    <div class="row allinea-centro" role="navigation" id="menu-applicazione">
+    <div class="row allinea-centro gaia-topnav" role="navigation" id="menu-applicazione">
         <ul class="nav nav-tabs nav-justified">
             {% for app_slug, app_nome, app_icona, app_num in user.applicazioni_disponibili %}
                 <li role="presentation" class="{% if request.path|startswith:app_slug %}active{% endif %}{% if app_slug == '/aspirante/' and '/utente/' in request.path %}active{% endif %}">
@@ -34,22 +34,21 @@
         </div>
 
         {% block menu_laterale %}
-        <div role="navigation" class="{% block menu_laterale_col %}col-md-3{% endblock %} well well-sm">
-            <ul id="sezione" class="nav nav-pills nav-stacked navbar-collapse collapse">
-                {% for sezione_nome, sezione_pagine in menu.elementi_anagrafica %}
-                    <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
-                    {% for link_nome, link_icona, link_url in sezione_pagine %}
-
-                        <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
-                            <a href="{{ link_url|urlencode }}">
-                                <i class="fa {{ link_icona }} fa-fw"></i>
-                                {{ link_nome }}
-                            </a>
-                        </li>
-                    {% endfor %}
-                    <hr />
+        <div role="navigation" class="{% block menu_laterale_col %}col-md-3{% endblock %} well well-sm gaia-left-sidebar">
+            {% for sezione_nome, sezione_pagine in menu.elementi_anagrafica %}
+            <div data-nav-id="{{forloop.counter}}" class="collapsible-menu-title dropdown-header grassetto piu-grande" style="margin-bottom:3px; cursor:pointer;">{{ sezione_nome }}</div>
+            <ul id="sezione" data-nav-ul="{{forloop.counter}}" class="nav nav-pills nav-stacked collapsible-menu-ul">
+                {% for link_nome, link_icona, link_url in sezione_pagine %}
+                    <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
+                        <a href="{{ link_url }}">
+                            <i class="fa {{ link_icona }} fa-fw"></i>
+                            {{ link_nome }}
+                        </a>
+                    </li>
                 {% endfor %}
+                <hr />
             </ul>
+            {% endfor %}
         </div>
         {% endblock %}
 

@@ -299,6 +299,8 @@ urlpatterns = [
     url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/direttori/$', formazione.viste.formazione_corsi_base_direttori),
     url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/fine/$', formazione.viste.formazione_corsi_base_fine),
 
+    # Static pages
+    url(r'^page/', include('static_page.urls', namespace='pages')),
     url(r'^supporto/$', base.viste.supporto),
 
     url(r'^geo/localizzatore/imposta/$', base.viste.geo_localizzatore_imposta),
