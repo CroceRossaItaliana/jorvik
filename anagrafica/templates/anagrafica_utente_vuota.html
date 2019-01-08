@@ -40,7 +40,7 @@
             <ul id="sezione" data-nav-ul="{{forloop.counter}}" class="nav nav-pills nav-stacked collapsible-menu-ul">
                 {% for link_nome, link_icona, link_url in sezione_pagine %}
                     <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
-                        <a href="{{ link_url|urlencode }}">
+                        <a href="{{ link_url }}">
                             <i class="fa {{ link_icona }} fa-fw"></i>
                             {{ link_nome }}
                         </a>

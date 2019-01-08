@@ -93,13 +93,18 @@ function autoscroll(id) {
 // Collapsible menus in the left sidebar
 // template: anagrafica/templates/anagrafica_utente_vuota.html
 var css_class = 'collapsible-menu-active';
-var all_menu = $('.collapsible-menu-ul');
 var current_page_nav = $('.active').closest('ul');
 var prev_elem = null;
 
+// Show and hide various menus by default
+var all_menu = $('.collapsible-menu-ul');
+var all_menu_titles = $('.collapsible-menu-title');
+var menu_persona = $(all_menu_titles).filter(":contains('Persona')");
+var menu_links = $(all_menu_titles).filter(":contains('Links')");
 all_menu.hide();
-$(all_menu[0]).show();
-$(all_menu[6]).show();
+
+$('#sezione[data-nav-ul="'+menu_persona.data('nav-id')+'"]').show();
+$('#sezione[data-nav-ul="'+menu_links.data('nav-id')+'"]').show();
 current_page_nav.show();
 
 // sync with base/menu.py
