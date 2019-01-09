@@ -107,62 +107,6 @@
         </div>
     {% endif %}
 
-    {% if me.volontario or me.dipendente %}
-        <div class="alert alert-danger">
-            <h4>
-                <i class="fa fa-fw fa-info-circle"></i>
-                Portale convenzioni
-            </h4>
-
-            <div id="accordion">
-                <div class="card">
-                    <div class="card-header" id="headingOne">
-                        <p class="mb-0">
-
-                            Siamo lieti di presentarti il nuovo portale di convenzioni riservate esclusivamente ai volontari
-
-                            e ai lavoratori di Croce Rossa Italiana. Potrai accedere al portale corporate benefits per scoprire tutte le convenzioni, sconti e offerte su un´ampia gamma di prodotti e servizi dei più
-
-                            prestigiosi marchi e delle migliori aziende. Potrai beneficiare dei numerosi vantaggi in modo esclusivo e riservato.
-
-                            <a data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">Continua a leggere...</a>
-                        </p>
-                    </div>
-
-                    <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
-                        <div class="card-body">
-                            <p>
-
-                                La prima volta che accederai al sito, ti verrà chiesto di effettuare una registrazione iniziale per poter entrare
-                                con la tua mail con estensione "cri.it".  Se non dovessi avere un indirizzo email con estensione "cri.it" <br/>
-
-                                per effettuare la registrazione ti preghiamo di fornire il tuo indirizzo email personale con cui entri in GAIA e il codice di
-                                registrazione: CRI2018.  Le volte successive è sufficiente effettuare l´accesso con l´indirizzo email e password forniti durante la registrazione. <br/>
-
-                                Ogni mese, il portale si arricchisce con nuove convenzioni, offerte e sconti messi a disposizione da prestigiosi fornitori.
-                                Puoi rimanere sempre aggiornato sulle novità iscrivendoti alla newsletter mensile direttamente sul portale.  <br/>
-
-                                Scopri tutte le convenzioni e le offerte in esclusiva per te sul portale:
-
-                                <a href="#" data-toggle="modal" data-target="#privacy_modal" data-redirect="https://cri.convenzioniaziendali.it">
-                                    corporate benefits
-                                </a> <br/>
-
-                                Per i tuoi viaggi in treno invece, potrai accedere al portale per le prenotazioni dei biglietti, in esclusiva per te con sconti dedicati:
-
-                                <a href="#" data-toggle="modal" data-target="#privacy_modal" data-redirect="https://criv.simplecrs.it/oauth2/crocerossa">
-                                    vai a Italo
-                                </a> <br/>
-
-                                Scopri un mondo di convenzioni per te, con Croce Rossa Italiana.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    {% endif %}
-
     <div class="articoli">
     {% for articolo in articoli %}
         {% include "includes/elemento_lista.html" %}

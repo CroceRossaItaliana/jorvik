@@ -36,18 +36,20 @@
         {% block menu_laterale %}
         <div role="navigation" class="{% block menu_laterale_col %}col-md-3{% endblock %} well well-sm gaia-left-sidebar">
             {% for sezione_nome, sezione_pagine in menu.elementi_anagrafica %}
-            <div data-nav-id="{{forloop.counter}}" class="collapsible-menu-title dropdown-header grassetto piu-grande" style="margin-bottom:3px; cursor:pointer;">{{ sezione_nome }}</div>
-            <ul id="sezione" data-nav-ul="{{forloop.counter}}" class="nav nav-pills nav-stacked collapsible-menu-ul">
-                {% for link_nome, link_icona, link_url in sezione_pagine %}
-                    <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
-                        <a href="{{ link_url }}">
-                            <i class="fa {{ link_icona }} fa-fw"></i>
-                            {{ link_nome }}
-                        </a>
-                    </li>
-                {% endfor %}
-                <hr />
-            </ul>
+                {% if sezione_pagine|length %}
+                <div data-nav-id="{{forloop.counter}}" class="collapsible-menu-title dropdown-header grassetto piu-grande" style="margin-bottom:3px; cursor:pointer;">{{ sezione_nome }}</div>
+                <ul id="sezione" data-nav-ul="{{forloop.counter}}" class="nav nav-pills nav-stacked collapsible-menu-ul">
+                    {% for link_nome, link_icona, link_url in sezione_pagine %}
+                        <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
+                            <a href="{{ link_url }}">
+                                <i class="fa {{ link_icona }} fa-fw"></i>
+                                {{ link_nome }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                    <hr />
+                </ul>
+                {% endif %}
             {% endfor %}
         </div>
         {% endblock %}

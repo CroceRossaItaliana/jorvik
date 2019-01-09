@@ -10,7 +10,8 @@ from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_1, DELEGATO_OBIE
     RESPONSABILE_AUTOPARCO, DELEGATO_CO, REFERENTE_GRUPPO, RUBRICHE_TITOLI, COMMISSARIO
 from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, \
     GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
-from base.utils import remove_none
+from .utils import remove_none
+from .models import Menu
 
 __author__ = 'alfioemanuele'
 
@@ -71,13 +72,8 @@ def menu(request):
         RUBRICA_BASE
     ))
 
-    VOCE_LINKS = ("Links", (
-        ("Portale convenzioni", "fa-key", reverse('pages:page', args=['portale-convenzioni'])),
-        ("Corporate benefits", "fa-key", ''),
-        ("Portale Italo", "fa-key", ''),
-        ("Convenzioni teatri", "fa-film", '/page/convenzione-teatri/'),
-        ("Segnalazione aggressione", "fa-cogs", reverse('pages:page', args=['report-violence'])),
-    ))
+    VOCE_LINKS = ("Links", tuple((link.name, link.icon_class, link.url)
+            for link in Menu.objects.filter(is_active=True).order_by('order')))
 
     elementi = {
         "utente": (
