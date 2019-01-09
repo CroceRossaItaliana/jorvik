@@ -2,15 +2,18 @@ from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 
 from base.geo import Locazione
-from base.models import Autorizzazione, Token, Allegato
+from base.models import Autorizzazione, Token, Allegato, Menu
 from gruppi.readonly_admin import ReadonlyAdminMixin
 
 
+@admin.register(Token)
 class TokenAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
     pass
 
-# Aggiugni al pannello di amministrazione
-admin.site.register(Token, TokenAdmin)
+@admin.register(Menu)
+class MenuAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
+    list_display = ['url', 'order', 'is_active', 'name',]
+
 
 def locazione_aggiorna(modello, request, queryset):
     for locazione in queryset:
