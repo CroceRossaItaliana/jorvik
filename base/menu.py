@@ -72,14 +72,8 @@ def menu(request):
         RUBRICA_BASE
     ))
 
-    VOCE_LINKS = ("Links", (
-        ("Portale convenzioni", "fa-key", reverse('pages:page', args=['portale-convenzioni'])),
-        ("Corporate Benefits", "fa-key", ''),
-        ("Portale Italo", "fa-train", ''),
-        ("Teatri", "fa-film", '/page/convenzione-teatri/'),
-        ("Segnalazione aggressione", "fa-cogs", reverse('pages:page', args=['report-violence'])),
-    ) + tuple((link.name, link.css_class, link.url) for link in
-              Menu.objects.filter(is_active=True).order_by('order')))
+    VOCE_LINKS = ("Links", tuple((link.name, link.icon_class, link.url)
+            for link in Menu.objects.filter(is_active=True).order_by('order')))
 
     elementi = {
         "utente": (
