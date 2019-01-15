@@ -230,6 +230,16 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
                 for f in ['codice_fiscale', 'nome', 'cognome', 'data_nascita']:
                     self.fields[f].disabled = True
 
+class ModuloProfiloModificaAnagraficaDomicilio(ModelForm):
+    class Meta:
+        model = Persona
+        fields = ['domicilio_uguale_a_residenza', 'domicilio_indirizzo',
+                  'domicilio_comune', 'domicilio_provincia',
+                  'domicilio_stato', 'domicilio_cap']
+
+    def clean(self):
+        cd = self.cleaned_data
+        return cd
 
 class ModuloProfiloTitoloPersonale(autocomplete_light.ModelForm):
 
