@@ -5,7 +5,7 @@ from django.contrib.admin import helpers
 from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.six import text_type
 from django.utils.translation import ungettext_lazy
@@ -105,8 +105,34 @@ class AdminPersona(ReadonlyAdminMixin, admin.ModelAdmin):
             url(r'^trasferisci_azione/$',
                 self.admin_site.admin_view(self.sposta_persone_post),
                 name='anagrafica_persona_trasferisci_post'),
+            url(r'^report/conoscenza/$',
+                self.admin_site.admin_view(self.conoscneza_report),
+                name='anagrafica_persona_report_conoscneza'),
         ]
+
+
         return custom_urls + urls
+
+    def conoscneza_report(self, request):
+        import csv
+        from datetime import datetime
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment;filename=Report-conoscneza-%s.csv' % datetime.now()
+
+        writer = csv.writer(response, delimiter=';')
+        writer.writerow(['Nome Cognome', 'Codice Fiscale', 'Citta', 'Provincia', 'Conoscenza'])
+
+        queryset = Persona.objects.filter(conoscenza__isnull=False)
+        for persona in queryset:
+            writer.writerow([persona.nome_completo,
+                             persona.codice_fiscale,
+                             persona.comune_residenza,
+                             persona.provincia_residenza,
+                             persona.conoscenza or 'Non impostato'
+            ])
+
+        return response
 
     def _sposta_persone(self, request, form_class, queryset=None):
         from anagrafica.forms import ModuloSpostaPersoneManuale, ModuloSpostaPersoneDaCSV
