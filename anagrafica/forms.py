@@ -183,7 +183,9 @@ class ModuloStepAnagrafica(ModelForm):
         fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita',
                   'provincia_nascita', 'stato_nascita', 'codice_fiscale',
                   'indirizzo_residenza', 'comune_residenza', 'provincia_residenza',
-                  'stato_residenza', 'cap_residenza', 'conoscenza',]
+                  'stato_residenza', 'cap_residenza', 'domicilio_uguale_a_residenza',
+                  'domicilio_indirizzo', 'domicilio_comune', 'domicilio_provincia',
+                  'domicilio_stato', 'domicilio_cap', 'conoscenza',]
 
     def clean_codice_fiscale(self):
         codice_fiscale = self.cleaned_data.get('codice_fiscale')
@@ -197,6 +199,13 @@ class ModuloStepAnagrafica(ModelForm):
         valida_almeno_14_anni(data_nascita)
         return data_nascita
 
+    def clean(self):
+        cd = self.cleaned_data
+        if True == cd['domicilio_uguale_a_residenza']:
+            for f in ('indirizzo', 'comune', 'provincia', 'stato', 'cap'):
+                domicilio_key = 'domicilio_%s' % f
+                residenza_value = cd['%s_residenza' % f]
+                cd[domicilio_key] = residenza_value
 
 class ModuloModificaAnagrafica(ModelForm):
     class Meta:
@@ -230,6 +239,7 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
                 for f in ['codice_fiscale', 'nome', 'cognome', 'data_nascita']:
                     self.fields[f].disabled = True
 
+
 class ModuloProfiloModificaAnagraficaDomicilio(ModelForm):
     class Meta:
         model = Persona
@@ -240,6 +250,7 @@ class ModuloProfiloModificaAnagraficaDomicilio(ModelForm):
     def clean(self):
         cd = self.cleaned_data
         return cd
+
 
 class ModuloProfiloTitoloPersonale(autocomplete_light.ModelForm):
 
