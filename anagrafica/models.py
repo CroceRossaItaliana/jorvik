@@ -83,7 +83,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     # Stati
     PERSONA = 'P'
     STATO = (
-        (PERSONA,       'Persona'),
+        (PERSONA, 'Persona'),
     )
 
     # Costanti
@@ -94,14 +94,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     nome = TitleCharField("Nome", max_length=64, db_index=True)
     cognome = TitleCharField("Cognome", max_length=64, db_index=True)
     codice_fiscale = UpperCaseCharField("Codice Fiscale", max_length=16, blank=False,
-                                        unique=True, db_index=True, validators=[valida_codice_fiscale, ])
+                unique=True, db_index=True, validators=[valida_codice_fiscale,])
     data_nascita = models.DateField("Data di nascita", db_index=True, null=True)
     genere = models.CharField("Sesso", max_length=1, choices=GENERE, db_index=True)
-
-    # Stato
     stato = models.CharField("Stato", max_length=1, choices=STATO, default=PERSONA, db_index=True)
 
-    # Informazioni anagrafiche aggiuntive - OPZIONALI (blank=True o default=..)
+    # Informazioni anagrafiche aggiuntive
+    # Residenza
     comune_nascita = models.CharField("Comune di Nascita", max_length=64, blank=True)
     provincia_nascita = models.CharField("Provincia di Nascita", max_length=2, blank=True)
     stato_nascita = CountryField("Stato di nascita", default="IT")
@@ -110,17 +109,22 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     provincia_residenza = models.CharField("Provincia di residenza", max_length=2, null=True)
     stato_residenza = CountryField("Stato di residenza", default="IT")
     cap_residenza = models.CharField("CAP di Residenza", max_length=16, null=True)
-    email_contatto = models.EmailField("Email di contatto", max_length=255, blank=True,
-                                       validators=[valida_email_personale])
+
+    # Domicilio
+    domicilio_uguale_a_residenza = models.BooleanField(default=False, verbose_name='Domicilio uguale a residenza')
+    domicilio_indirizzo = models.CharField("Indirizzo di domicilio", max_length=512, null=True, blank=True)
+    domicilio_comune = models.CharField("Comune di domicilio", max_length=64, null=True, blank=True)
+    domicilio_provincia = models.CharField("Provincia di domicilio", max_length=2, null=True, blank=True)
+    domicilio_stato = CountryField("Stato di domicilio", default="IT", null=True, blank=True)
+    domicilio_cap = models.CharField("CAP di domicilio", max_length=16, null=True, blank=True)
+
+    email_contatto = models.EmailField("Email di contatto", max_length=255,
+        blank=True, validators=[valida_email_personale])
     note = models.TextField("Note aggiuntive", max_length=10000, blank=True, null=True,)
-
     avatar = models.ImageField("Avatar", blank=True, null=True,
-                               upload_to=GeneratoreNomeFile('avatar/'),
-                               validators=[valida_dimensione_file_5mb])
-
+        upload_to=GeneratoreNomeFile('avatar/'), validators=[valida_dimensione_file_5mb])
 
     # Privacy
-
     POLICY_PUBBLICO = 9
     POLICY_REGISTRATI = 7
     POLICY_SEDE = 5
@@ -133,15 +137,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         (POLICY_RISTRETTO, "Ai Responsabili della mia Sede CRI"),
     )
 
-    privacy_contatti = models.SmallIntegerField(choices=POLICY, default=POLICY_SEDE, db_index=True,
-                                                help_text="A chi mostrare il mio indirizzo e-mail e i miei numeri "
-                                                          "di telefono.")
-    privacy_curriculum = models.SmallIntegerField(choices=POLICY, default=POLICY_RISTRETTO, db_index=True,
-                                                  help_text="A chi mostrare il mio curriculum (competenze pers., "
-                                                            "patenti, titoli di studio e CRI)")
-    privacy_deleghe = models.SmallIntegerField(choices=POLICY, default=POLICY_RISTRETTO, db_index=True,
-                                               help_text="A chi mostrare i miei incarichi, come presidenze, "
-                                                         "referenze attività, deleghe, ecc.")
+    privacy_contatti = models.SmallIntegerField(choices=POLICY,
+        default=POLICY_SEDE, db_index=True,
+        help_text="A chi mostrare il mio indirizzo e-mail e i miei numeri di telefono.")
+    privacy_curriculum = models.SmallIntegerField(choices=POLICY,
+        default=POLICY_RISTRETTO, db_index=True,
+        help_text="A chi mostrare il mio curriculum (competenze pers., patenti, titoli di studio e CRI)")
+    privacy_deleghe = models.SmallIntegerField(choices=POLICY,
+        default=POLICY_RISTRETTO, db_index=True,
+        help_text="A chi mostrare i miei incarichi, come presidenze, referenze attività, deleghe, ecc.")
 
     iv = models.BooleanField(verbose_name="Infermiera V.", default=False, db_index=True)
     cm = models.BooleanField(verbose_name="Corpo Militare", default=False, db_index=True)
