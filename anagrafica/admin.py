@@ -129,7 +129,7 @@ class AdminPersona(ReadonlyAdminMixin, admin.ModelAdmin):
                              persona.codice_fiscale,
                              persona.comune_residenza,
                              persona.provincia_residenza,
-                             persona.conoscenza or 'Non impostato'
+                             persona.get_conoscenza_display() or 'Non impostato'
             ])
 
         return response
