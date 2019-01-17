@@ -121,15 +121,18 @@ class AdminPersona(ReadonlyAdminMixin, admin.ModelAdmin):
         response['Content-Disposition'] = 'attachment;filename=Report-conoscneza-%s.csv' % datetime.now()
 
         writer = csv.writer(response, delimiter=';')
-        writer.writerow(['Nome Cognome', 'Codice Fiscale', 'Citta', 'Provincia', 'Conoscenza'])
+        writer.writerow(['Nome Cognome', 'Data Creazione Utenza',
+                         'Codice Fiscale', 'Citta', 'Provincia', 'Conoscenza'])
 
         queryset = Persona.objects.filter(conoscenza__isnull=False)
         for persona in queryset:
-            writer.writerow([persona.nome_completo,
-                             persona.codice_fiscale,
-                             persona.comune_residenza,
-                             persona.provincia_residenza,
-                             persona.get_conoscenza_display() or 'Non impostato'
+            writer.writerow([
+                persona.nome_completo,
+                persona.creazione.date(),
+                persona.codice_fiscale,
+                persona.comune_residenza,
+                persona.provincia_residenza,
+                persona.get_conoscenza_display() or 'Non impostato'
             ])
 
         return response
