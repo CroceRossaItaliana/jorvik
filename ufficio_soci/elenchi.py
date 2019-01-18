@@ -102,6 +102,11 @@ class ElencoVistaAnagrafica(ElencoVistaSemplice):
             ("CAP di residenza", lambda p: p.cap_residenza),
             ("Provincia di residenza", lambda p: p.provincia_residenza),
             ("Stato di residenza", lambda p: p.stato_residenza),
+            ("Indirizzo di domicilio", lambda p: p.domicilio_indirizzo),
+            ("Comune di domicilio", lambda p: p.domicilio_comune),
+            ("Provincia di domicilio", lambda p: p.domicilio_provincia),
+            ("Stato di domicilio", lambda p: p.domicilio_stato),
+            ("CAP di domicilio", lambda p: p.domicilio_cap),
             ("Email", lambda p: p.email),
             ("Numeri di telefono", lambda p: ", ".join([str(x) for x in p.numeri_telefono.all()])),
         )

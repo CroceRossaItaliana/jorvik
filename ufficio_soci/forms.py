@@ -106,13 +106,6 @@ class ModuloElencoQuote(forms.Form):
 
 
 class ModuloAggiungiPersona(ModuloStepAnagrafica):
-    class Meta:
-        model = Persona
-        fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita',
-                  'provincia_nascita', 'stato_nascita', 'codice_fiscale',
-                  'indirizzo_residenza', 'comune_residenza', 'provincia_residenza',
-                  'stato_residenza', 'cap_residenza', 'email_contatto', ]
-
     def clean_data_nascita(self):
         # Permette tutte le date di nascita.
         return self.cleaned_data.get('data_nascita')
