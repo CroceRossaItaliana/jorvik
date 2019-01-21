@@ -1,0 +1,26 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block app_contenuto %}
+  <div class="articolo single-page">
+    <h1>Monitoraggio 2019</h1>
+
+    <ul>
+    {% for form_id, response in type_form.items %}
+      <li>
+        {% if response.0 == True %}
+          <a href="https://crocerossaitaliana.typeform.com/to/{{ form_id }}?c={{ response.1 }}">{{ response.2 }}</a>
+        {% else %}
+          <span>{{ form_name }}</span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  {% if has_privacy_popup %}
+    {% include "base_privacy_policy_popup.html" %}
+  {% endif %}
+
+{% endblock %}
