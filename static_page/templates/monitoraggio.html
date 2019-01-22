@@ -6,17 +6,22 @@
   <div class="articolo single-page">
     <h1>Monitoraggio 2019</h1>
 
-    <ul>
-    {% for form_id, response in type_form.items %}
-      <li>
-        {% if response.0 == True %}
-          <a href="https://crocerossaitaliana.typeform.com/to/{{ form_id }}?c={{ response.1 }}">{{ response.2 }}</a>
-        {% else %}
-          <span>{{ form_name }}</span>
-        {% endif %}
-      </li>
-      {% endfor %}
-    </ul>
+    {% if not type_form %}
+      <p>Informazioni non disponibili causa errore del server. Contattare l'amministrazione.</p>
+
+    {% else %}
+      <ul>
+      {% for form_id, response in type_form.items %}
+        <li>
+          {% if response.0 == True %}
+            <a href="https://crocerossaitaliana.typeform.com/to/{{ form_id }}?c={{ response.1 }}">{{ response.2 }}</a>
+          {% else %}
+            <span><strong>FATTO</strong>: {{ response.2 }}</span>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
   </div>
 
   {% if has_privacy_popup %}

@@ -17,6 +17,8 @@ def view_page(request, me, slug):
 @pagina_privata
 def monitoraggio(request, me):
     import requests
+    from random import randint
+    from django.conf import settings
 
     btns = {
         'Sezione A – servizi di carattere sociale': 'by6gIZ',
@@ -34,29 +36,41 @@ def monitoraggio(request, me):
     if not hasattr(me, 'sede_riferimento'):
         return redirect('/')
 
-    TYPEFORM_API_DOMAIN = 'https://api.typeform.com'
-    HEADERS = {
-        'Authorization': "Bearer 14J1sNRF197fk89WAwzwBfpkLKmDAgjU6r9CTKwoQjim",
-        'Content-Type': 'application/json'
-    }
-
+    # Django
     context = {'type_form': dict()}
     user_comitato = me.sede_riferimento().id
 
+    # Typeform API
+    TYPEFORM_TOKEN = settings.DEBUG_CONF.get('typeform', 'token')
+    HEADERS = {
+        'Authorization': "Bearer %s" % TYPEFORM_TOKEN,
+        'Content-Type': 'application/json'
+    }
+    endpoint = "https://api.typeform.com/forms/%s/responses"
+    btn_values = btns.values()
+    test_request = requests.get(
+        endpoint % list(btn_values)[randint(0, len(btn_values))],
+        headers=HEADERS
+    )
+
+    if test_request.status_code != 200:
+        return 'monitoraggio.html', context
+
     for bottone_name, _id in btns.items():
-        endpoint = "%s/forms/%s/responses" % (TYPEFORM_API_DOMAIN, _id)
-        r = requests.get(endpoint, headers=HEADERS)
+        r = requests.get(endpoint % _id, headers=HEADERS)
         js = r.json()
+
+        type_form_dict = context['type_form']
 
         for item in js['items']:
             c = item.get('hidden', dict())
             c = c.get('c')
 
             if c and c == str(user_comitato):
-                context['type_form'][_id] = [False, user_comitato, bottone_name]
+                type_form_dict[_id] = [False, user_comitato, bottone_name]
                 break  # bottone spento
-            else:
-                context['type_form'][_id] = [True, user_comitato, bottone_name]
-                break
+
+        if not _id in type_form_dict:
+            type_form_dict[_id] = [True, user_comitato, bottone_name]
 
     return 'monitoraggio.html', context
