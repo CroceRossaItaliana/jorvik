@@ -59,17 +59,20 @@ def menu(request):
             if titolo not in rubriche:
                 rubriche.append(titolo)
                 if (delega in deleghe_attuali or
-                    PRESIDENTE in deleghe_attuali or
                     UFFICIO_SOCI in deleghe_attuali or
+                    PRESIDENTE in deleghe_attuali or
                     COMMISSARIO in deleghe_attuali):
+                    if UFFICIO_SOCI in deleghe_attuali and (delega == COMMISSARIO or delega == PRESIDENTE):
+                        continue
                     RUBRICA_BASE.append(
                         (titolo, "fa-book", "".join(("/utente/rubrica/", slug, '/')))
                     )
 
-    if UFFICIO_SOCI in deleghe_attuali:
-        for rubrica in RUBRICA_BASE:
-            if rubrica[0] == 'Commissari' or rubrica[0] == 'Presidenti':
-                RUBRICA_BASE.remove(rubrica)
+
+    # if UFFICIO_SOCI in deleghe_attuali:
+    #     for rubrica in RUBRICA_BASE:
+    #         if rubrica[0] == 'Commissari' or rubrica[0] == 'Presidenti':
+    #             RUBRICA_BASE.remove(rubrica)
 
     VOCE_RUBRICA = ("Rubrica", (
         RUBRICA_BASE
