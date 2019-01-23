@@ -65,9 +65,8 @@ def menu(request):
                     PRESIDENTE in deleghe_attuali or
                     UFFICIO_SOCI in deleghe_attuali or
                     COMMISSARIO in deleghe_attuali) and (
-                        delega != PRESIDENTE or (PRESIDENTE in deleghe_attuali and sedi_presidenti_sottostanti) or
-                        delega != COMMISSARIO or (COMMISSARIO in deleghe_attuali and sedi_deleghe_commissario)
-                    ):
+                        delega != PRESIDENTE or (PRESIDENTE in deleghe_attuali and sedi_presidenti_sottostanti)
+                    ) and (delega != COMMISSARIO or (COMMISSARIO in deleghe_attuali and sedi_deleghe_commissario)):
                     RUBRICA_BASE.append(
                         (titolo, "fa-book", "".join(("/utente/rubrica/", slug, '/')))
                     )
