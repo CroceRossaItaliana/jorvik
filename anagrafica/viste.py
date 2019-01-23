@@ -20,7 +20,7 @@ from django.contrib import messages
 # Le viste base vanno qui.
 from django.views.generic import ListView
 
-from anagrafica.costanti import TERRITORIALE, REGIONALE
+from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE, LOCALE
 from anagrafica.elenchi import ElencoDelegati
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
@@ -1819,9 +1819,19 @@ def admin_statistiche(request, me):
     totale_regione_volontari = 0
 
     regione_soci_volontari = []
+    regionale_m_f = []
     for regione in regionali:
         regione_soci = int(regione.membri_attuali(figli=True, membro__in=Appartenenza.MEMBRO_SOCIO).count())
         regione_volontari = int(regione.membri_attuali(figli=True, membro=Appartenenza.VOLONTARIO).count())
+        regionale_m_f.append(
+            (
+                regione,
+                {
+                    "m": int(regione.membri_attuali(figli=False, membro=Appartenenza.VOLONTARIO).filter(genere=Persona.MASCHIO).count()),
+                    "f": int(regione.membri_attuali(figli=False, membro=Appartenenza.VOLONTARIO).filter(genere=Persona.FEMMINA).count())
+                }
+            )
+        )
         regione_soci_volontari += [
             (
                 regione,
@@ -1831,6 +1841,42 @@ def admin_statistiche(request, me):
         ]
         totale_regione_soci += regione_soci
         totale_regione_volontari += regione_volontari
+
+    nazionale = Sede.objects.filter(estensione=NAZIONALE)[0]
+
+    nazionale_m_f = [(
+        nazionale,
+        {
+            "m": int(nazionale.membri_attuali(figli=False, membro=Appartenenza.VOLONTARIO).filter(genere=Persona.MASCHIO).count()),
+            "f": int(nazionale.membri_attuali(figli=False).filter(genere=Persona.FEMMINA).count())
+        }
+    )]
+
+    locali = Sede.objects.filter(estensione=LOCALE)
+    locale_m_f = []
+    for locale in locali:
+        locale_m_f.append(
+            (
+                locale,
+                {
+                    "m": int(locale.membri_attuali(figli=False).filter(genere=Persona.MASCHIO).count()),
+                    "f": int(locale.membri_attuali(figli=False).filter(genere=Persona.FEMMINA).count())
+                }
+            )
+        )
+
+    territoriali = Sede.objects.filter(estensione=TERRITORIALE)
+    territoriali_m_f = []
+    for terrioriale in territoriali:
+        territoriali_m_f.append(
+            (
+                terrioriale,
+                {
+                    "m": int(terrioriale.membri_attuali(figli=True).filter(genere=Persona.MASCHIO).count()),
+                    "f": int(terrioriale.membri_attuali(figli=True).filter(genere=Persona.FEMMINA).count())
+                }
+            )
+        )
 
     contesto = {
         "persone_numero": persone.count(),
@@ -1844,6 +1890,10 @@ def admin_statistiche(request, me):
         "regione_soci_volontari": regione_soci_volontari,
         "totale_regione_soci": totale_regione_soci,
         "totale_regione_volontari": totale_regione_volontari,
+        "nazionale_m_f": nazionale_m_f,
+        "regionale_m_f": regionale_m_f,
+        "locale_m_f": locale_m_f,
+        "territoriale_m_f": territoriali_m_f,
     }
     return 'admin_statistiche.html', contesto
 

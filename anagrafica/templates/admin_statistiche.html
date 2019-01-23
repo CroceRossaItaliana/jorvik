@@ -96,7 +96,55 @@
                     <td class="descrizione">Somma dei valori per Regione.</td>
                 </tr>
 
+                <tr>
+                    <td colspan="4" style="text-align: center; font-weight: bold; font-size: 14px">
+                        Quantita M/F
+                    </td>
+                </tr>
 
+                {% for regione, obj in nazionale_m_f %}
+                <tr>
+                    <td class="nome">Numero di Volontari nazionale M/F</td>
+                    <td class="nome">{{ regione.link|safe }}</td>
+                    <td class="metrica" colspan="2">
+                        {{ obj.m }} soci<br/>
+                        {{ obj.f }} volontari
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% for regione, obj in regionale_m_f %}
+                <tr>
+                    <td class="nome">Numero di Volontari per regione M/F</td>
+                    <td class="nome">{{ regione.link|safe }}</td>
+                    <td class="metrica" colspan="2">
+                        {{ obj.m }} soci<br/>
+                        {{ obj.f }} volontari
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% for regione, obj in locale_m_f %}
+                <tr>
+                    <td class="nome">Numero di Volontari per locale M/F</td>
+                    <td class="nome">{{ regione.link|safe }}</td>
+                    <td class="metrica" colspan="2">
+                        {{ obj.m }} soci<br/>
+                        {{ obj.f }} volontari
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% for regione, obj in territoriali_m_f %}
+                <tr>
+                    <td class="nome">Numero di Volontari per terriritoriale M/F</td>
+                    <td class="nome">{{ regione.link|safe }}</td>
+                    <td class="metrica" colspan="2">
+                        {{ obj.m }} soci<br/>
+                        {{ obj.f }} volontari
+                    </td>
+                </tr>
+                {% endfor %}
 
             </tbody>
         </table>
