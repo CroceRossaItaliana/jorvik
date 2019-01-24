@@ -85,6 +85,7 @@ RUBRICHE_TITOLI = OrderedDict((
     ('delegati_obiettivo_3', (DELEGATO_OBIETTIVO_3, 'Delegati Obiettivo III (Emergenze)', True)),
     ('delegati_obiettivo_4', (DELEGATO_OBIETTIVO_4, 'Delegati Obiettivo IV (Principi)', True)),
     ('delegati_obiettivo_5', (DELEGATO_OBIETTIVO_5, 'Delegati Obiettivo V (Giovani)', True)),
+    ('delegati_obiettivo_5_ut', (DELEGATO_OBIETTIVO_5, 'Delegati Obiettivo V Unità territoriale', True)),
     ('delegati_obiettivo_6', (DELEGATO_OBIETTIVO_6, 'Delegati Obiettivo VI (Sviluppo)', True)),
     ('delegati_area', (DELEGATO_AREA, 'Delegati Area', False)),
     # ('responsabili_area', (RESPONSABILE_AREA, 'Responsabili d\'Area', False)), rimosso perché non utile al momento
