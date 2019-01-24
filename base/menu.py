@@ -36,7 +36,7 @@ def menu(request):
         sedi_deleghe_normali = me.sedi_deleghe_attuali(deleghe=deleghe_normali) if me else Sede.objects.none()
         sedi_deleghe_normali = [sede.pk for sede in sedi_deleghe_normali if sede.comitati_sottostanti().exists() or sede.unita_sottostanti().exists()]
         presidente = me.deleghe_attuali(tipo=PRESIDENTE)
-        sedi_deleghe_presidente = me.sedi_deleghe_attuali(deleghe=presidente).exclude(estensione__in=(TERRITORIALE,)) if me else Sede.objects.none()
+        sedi_deleghe_presidente = me.sedi_deleghe_attuali(deleghe=presidente) if me else Sede.objects.none()
         sedi_presidenti_sottostanti = [sede.pk for sede in sedi_deleghe_presidente if sede.comitati_sottostanti().exists()]
         sedi_deleghe_presidente = list(sedi_deleghe_presidente.values_list('pk', flat=True))
         sedi = sedi_deleghe_normali + sedi_deleghe_presidente
