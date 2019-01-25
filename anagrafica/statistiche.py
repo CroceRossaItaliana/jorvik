@@ -7,20 +7,21 @@ import datetime
     
     {
         "nome": @NOME DA VISUALIZZARE,
-        "nazionali": [
-            {
-                "comitato": @COMITATO,
-                "statistiche": { @LISTA FI TUTTE LE STATISTICHE
-                    @NOMEVALORE: @VALORE NUMERICO STATISTICA
-                }
-            }
-        ],
+        "nazionali": @LISTA,
         "regionali": @LISTA,
         "locali": @LISTA,
         "territoriali": @LISTA 
     }
     
-    
+    @LISTA
+    [
+        {
+            "comitato": @COMITATO,
+            "statistiche": { @LISTA DI TUTTE LE STATISTICHE
+                @NOMEVALORE: @VALORE NUMERICO STATISTICA
+            }
+        }
+    ]
 '''
 
 
@@ -31,30 +32,27 @@ def statistica_num_vol_fascia_eta():
     territoriali = Sede.objects.filter(estensione=TERRITORIALE)
 
     def get_num_vol_fascia_eta(comitati=None, figli=False):
+        def count(query, min=0, max=9999):
+            i = 0
+            for el in query:
+                if el.eta >= min and el.eta <= max:
+                    i += 1
+            return i
+
         l = []
+
         for el in comitati:
+            persone = el.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO)
             l.append(
                 {
                     "comitato": el,
                     "statistiche": {
-                        "Da 14 a 18:": len(
-                            [   p for p in el.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO) if p.eta >=14 and p.eta <= 18]
-                        ),
-                        "Da 18 a 25:": len(
-                            [p for p in el.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO) if p.eta >=18 and p.eta <= 25]
-                        ),
-                        "Da 25 a 32:": len(
-                            [p for p in el.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO) if p.eta >=25 and p.eta <= 32]
-                        ),
-                        "Da 32 a 45:": len(
-                            [p for p in el.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO) if p.eta >=32 and p.eta <= 45]
-                        ),
-                        "Da 45 a 60:": len(
-                            [p for p in el.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO) if p.eta >=45 and p.eta <= 69]
-                        ),
-                        "Over 60": len(
-                            [p for p in el.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO) if p.eta >= 60]
-                        ),
+                        "Da 14 a 18:": count(persone, 14, 18),
+                        "Da 18 a 25:": count(persone, 18, 25),
+                        "Da 25 a 32:": count(persone, 25, 32),
+                        "Da 32 a 45:": count(persone, 32, 45),
+                        "Da 45 a 60:": count(persone, 54, 60),
+                        "Over 60": count(persone, 60),
                     }
                 }
             )
@@ -81,14 +79,13 @@ def statistica_num_vol_m_f():
     def get_m_f_statistiche(comitati=None, figli=False):
         l = []
         for el in comitati:
+            persone = el.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO)
             l.append(
                 {
                     "comitato": el,
                     "statistiche": {
-                        "M:": int(el.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO).filter(
-                            genere=Persona.MASCHIO).count()),
-                        "F:": int(el.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO).filter(
-                            genere=Persona.FEMMINA).count())
+                        "M:": int(persone.filter(genere=Persona.MASCHIO).count()),
+                        "F:": int(persone.filter(genere=Persona.FEMMINA).count())
                     }
                 }
             )
