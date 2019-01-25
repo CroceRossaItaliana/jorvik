@@ -171,6 +171,59 @@ def statistica_generale():
     return obj
 
 
+def statistica_num_nuovi_vol():
+
+    nazionali = Sede.objects.filter(estensione=NAZIONALE)
+    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
+    locali = Sede.objects.filter(estensione=LOCALE)
+    territoriali = Sede.objects.filter(estensione=TERRITORIALE)
+
+    def get_statistica_num_nuovi_vol(comitati=None, estensione=None):
+        l = []
+
+        for el in comitati:
+            start_current_year = datetime.datetime.now().date().replace(month=1, day=1)
+            finish_current_year = datetime.datetime.now().date().replace(month=12, day=31)
+
+            current = Appartenenza.objects.filter(
+                creazione__gte=start_current_year,
+                creazione__lte=finish_current_year,
+                terminazione=None,
+                membro=Appartenenza.VOLONTARIO
+            )
+
+            before = Appartenenza.objects.filter(
+                creazione__gte=start_current_year.replace(year=start_current_year.year - 1),
+                creazione__lte=finish_current_year.replace(year=finish_current_year.year - 1),
+                terminazione=None,
+                membro=Appartenenza.VOLONTARIO,
+                sede=el,
+                sede__estensione=estensione
+            )
+
+            l.append(
+                {
+                    "comitato": el,
+                    "statistiche": {
+                        "Anno corrente:": current.count(),
+                        "Anno precendente:": before.count(),
+                    }
+                }
+            )
+
+        return l
+
+    obj = {
+        "nome": STATISTICA[NUM_NUOVI_VOL],
+        "nazionali": get_statistica_num_nuovi_vol(nazionali, NAZIONALE),
+        "regionali": get_statistica_num_nuovi_vol(regionali, REGIONALE),
+        "locali": get_statistica_num_nuovi_vol(locali, LOCALE),
+        "territoriali": get_statistica_num_nuovi_vol(territoriali, TERRITORIALE)
+    }
+
+    return obj
+
+
 '''
     VALOTI STATISTICHE
 '''
@@ -178,6 +231,7 @@ GENERALI = 'generali'
 NUM_SOCI_VOL = 'num_soci_vol'
 NUM_VOL_M_F = 'num_vol_m_f'
 NUM_VOL_FASCIA_ETA = 'num_vol_fascia_eta'
+NUM_NUOVI_VOL = 'num_nuovi_vol'
 
 '''
     NOMI VISUALIZZARI STATISTICHE
@@ -187,6 +241,7 @@ STATISTICA = {
     NUM_SOCI_VOL: "Numero soci e Volontari",
     NUM_VOL_M_F: "Numero volontari M/F",
     NUM_VOL_FASCIA_ETA: "Numero volontari per fasciati di età",
+    NUM_NUOVI_VOL: "Numero nuovi volontari"
 }
 
 '''
@@ -197,4 +252,5 @@ FUNZIONI_STATISTICHE = {
         NUM_VOL_M_F: statistica_num_vol_m_f,
         NUM_SOCI_VOL: statistica_num_soci_vol,
         NUM_VOL_FASCIA_ETA: statistica_num_vol_fascia_eta,
+        NUM_NUOVI_VOL: statistica_num_nuovi_vol,
 }
