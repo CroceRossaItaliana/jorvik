@@ -210,7 +210,7 @@ def menu(request):
         ),
         "formazione": (
             ("Corsi", (
-                ("Pianifica nuovo", "fa-asterisk", reverse(
+                ("Attiva nuovo Corso", "fa-asterisk", reverse(
                     'formazione:new_course')) if gestione_corsi_sede else None,
                 ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
                 ("Domanda formativa", "fa-area-chart", reverse(
