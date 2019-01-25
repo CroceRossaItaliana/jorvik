@@ -209,7 +209,7 @@ def menu(request):
             )),
         ),
         "formazione": (
-            ("I tuoi Corsi", (
+            ("Corsi", (
                 ("Pianifica nuovo", "fa-asterisk", reverse(
                     'formazione:new_course')) if gestione_corsi_sede else None,
                 ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
