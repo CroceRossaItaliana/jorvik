@@ -20,6 +20,7 @@ from anagrafica.models import Sede
 
 from .utils import remove_none
 from .models import Menu
+from formazione.menus import formazione_menu
 
 
 def menu(request):
@@ -208,40 +209,9 @@ def menu(request):
                 if me and me.oggetti_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE).exists() else None,
             )),
         ),
-        "formazione": (
-            ("Corsi", (
-                ("Attiva nuovo Corso", "fa-asterisk", reverse(
-                    'formazione:new_course')) if gestione_corsi_sede else None,
-                ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
-                ("Domanda formativa", "fa-area-chart", reverse(
-                    'formazione:domanda')) if gestione_corsi_sede else None,
-            )),
-            ("Corsi di Formazione", (
-                ("Elenco Corsi di Formazione", "fa-list", "/formazione/corsi-formazione/"),
-                ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-formazione/nuovo/"),
-            )) if False else None,
-        ),
-        "aspirante": (
-            ("Aspirante", (
-                ("Home page", "fa-home", reverse('aspirante:home')),
-                ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
-                ("Storico", "fa-clock-o", "/utente/storico/"),
-                ("Contatti", "fa-envelope", "/utente/contatti/"),
-                ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
-                ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
-                ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
-                ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
-            )),
-            ("Nelle vicinanze", (
-                ("Corsi", "fa-list", reverse('aspirante:corsi_base')),
-                ("Sedi CRI", "fa-list", reverse('aspirante:sedi')),
-                ("Impostazioni", "fa-gears", reverse('aspirante:settings')),
-            )),
-            ("Sicurezza", (
-                ("Cambia password", "fa-key", "/utente/cambia-password/"),
-                ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
-            )),
-        ) if me and hasattr(me, 'aspirante') else (
+        'formazione': formazione_menu('formazione', gestione_corsi_sede),
+        'aspirante': formazione_menu('aspirante', gestione_corsi_sede) if me
+            and hasattr(me, 'aspirante') else (
             ("Gestione Corsi", (
                 ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
             )),
