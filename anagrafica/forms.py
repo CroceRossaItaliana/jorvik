@@ -587,15 +587,11 @@ class ModuloUSModificaUtenza(ModuloUtenza):
                                   "modifica e della nuova e-mail per accedere.")
 
 
-from anagrafica.statistiche import GENERALI, NUM_VOL_M_F, NUM_SOCI_VOL, NUM_VOL_FASCIA_ETA
+from anagrafica.statistiche import STATISTICA
+
 
 class ModuloStatistiche(forms.Form):
     select = (
-        [
-            (GENERALI, 'Generali'),
-            (NUM_SOCI_VOL, 'Numero soci e Volontari'),
-            (NUM_VOL_M_F, 'Numero volontari M/F'),
-            (NUM_VOL_FASCIA_ETA, 'Numero volontari per fascia di età'),
-        ]
+        [(k, v) for k, v in STATISTICA.items()]
     )
     tipo_statistiche = forms.ChoiceField(widget=forms.Select(), choices=select)
