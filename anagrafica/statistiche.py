@@ -17,7 +17,7 @@ import datetime
     [
         {
             "comitato": @COMITATO,
-            "statistiche": { @LISTA DI TUTTE LE STATISTICHE
+            "statistiche": {
                 @NOMEVALORE: @VALORE NUMERICO STATISTICA
             }
         }
@@ -148,6 +148,14 @@ def statistica_generale():
 
     totale_regione_soci = 0
     totale_regione_volontari = 0
+
+    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
+    for regione in regionali:
+        regione_soci = int(regione.membri_attuali(figli=True, membro__in=Appartenenza.MEMBRO_SOCIO).count())
+        regione_volontari = int(regione.membri_attuali(figli=True, membro=Appartenenza.VOLONTARIO).count())
+
+        totale_regione_soci += regione_soci
+        totale_regione_volontari += regione_volontari
 
     obj = {
         "persone_numero": persone.count(),
