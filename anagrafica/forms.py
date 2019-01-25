@@ -589,7 +589,6 @@ class ModuloUSModificaUtenza(ModuloUtenza):
 
 from anagrafica.statistiche import STATISTICA
 
-
 class ModuloStatistiche(forms.Form):
     select = (
         [(k, v) for k, v in STATISTICA.items()]
