@@ -585,3 +585,17 @@ class ModuloUSModificaUtenza(ModuloUtenza):
             raise ValidationError("Puoi solo cambiare l'e-mail di accesso se questa è stata "
                                   "richiesta dall'utente, oppure hai già avvisato l'utente della "
                                   "modifica e della nuova e-mail per accedere.")
+
+
+from anagrafica.statistiche import GENERALI, NUM_VOL_M_F, NUM_SOCI_VOL, NUM_VOL_FASCIA_ETA
+
+class ModuloStatistiche(forms.Form):
+    select = (
+        [
+            (GENERALI, 'Generali'),
+            (NUM_SOCI_VOL, 'Numero soci e Volontari'),
+            (NUM_VOL_M_F, 'Numero volontari M/F'),
+            (NUM_VOL_FASCIA_ETA, 'Numero volontari per fascia di età'),
+        ]
+    )
+    tipo_statistiche = forms.ChoiceField(widget=forms.Select(), choices=select)
