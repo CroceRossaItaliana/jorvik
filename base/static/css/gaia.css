@@ -96,3 +96,18 @@
   margin-bottom: 25px;
   line-height: 22px;
 }
+.theater-events {
+  width: 100%;
+}
+.theater-events td:nth-child(1) {
+  width: 30%;
+}
+.theater-events td a {
+  display: block;
+  margin-bottom: 10px;
+}
+.theater-events td img {
+  max-width: 150px;
+  width: 100%;
+  display: block;
+}

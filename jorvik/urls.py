@@ -29,6 +29,10 @@ import ufficio_soci.viste
 import veicoli.viste
 from formazione import urls_aspirante as formazione_urls_aspirante
 
+from jorvik.settings import MEDIA_ROOT, DEBUG
+
+from autenticazione.two_factor.urls import urlpatterns as tf_urls
+
 
 handler404 = base.errori.non_trovato
 
@@ -83,44 +87,7 @@ urlpatterns = [
     url(r'^informazioni/browser-supportati/$', base.viste.browser_supportati, name='browser_supportati'),
 
     # Applicazioni
-    url(r'^utente/$', anagrafica.viste.utente),
-    url(r'^utente/anagrafica/$', anagrafica.viste.utente_anagrafica),
-    url(r'^utente/estensione/$', anagrafica.viste.utente_estensione),
-    url(r'^utente/trasferimento/$', anagrafica.viste.utente_trasferimento),
-    url(r'^utente/fotografia/$', anagrafica.viste.utente_fotografia),
-    url(r'^utente/fotografia/avatar/$', anagrafica.viste.utente_fotografia_avatar),
-    url(r'^utente/fotografia/fototessera/$', anagrafica.viste.utente_fotografia_fototessera),
-    url(r'^utente/documenti/$', anagrafica.viste.utente_documenti),
-    url(r'^utente/documenti/zip/$', anagrafica.viste.utente_documenti_zip),
-    url(r'^utente/documenti/cancella/(?P<pk>.*)/$', anagrafica.viste.utente_documenti_cancella),
-    url(r'^utente/storico/$', anagrafica.viste.utente_storico),
-    url(r'^utente/contatti/$', anagrafica.viste.utente_contatti),
-    url(r'^utente/rubrica/referenti/$', anagrafica.viste.utente_rubrica_referenti),
-    url(r'^utente/rubrica/volontari/$', anagrafica.viste.utente_rubrica_volontari),
-    url(r'^utente/rubrica/(?P<rubrica>.*)/$', anagrafica.viste.rubrica_delegati),
-    url(r'^utente/curriculum/$', anagrafica.viste.utente_curriculum),
-    url(r'^utente/curriculum/(?P<pk>.*)/cancella/$', anagrafica.viste.utente_curriculum_cancella),
-    url(r'^utente/curriculum/(?P<tipo>.*)/$', anagrafica.viste.utente_curriculum),
-    url(r'^utente/riserva/$', anagrafica.viste.utente_riserva),
-    url(r'^utente/riserva/(?P<pk>.*)/termina/$', anagrafica.viste.utente_riserva_termina),
-    url(r'^utente/riserva/(?P<pk>.*)/ritira/$', anagrafica.viste.utente_riserva_ritira),
-    url(r'^utente/contatti/cancella-numero/(?P<pk>.*)/$', anagrafica.viste.utente_contatti_cancella_numero),
-    url(r'^utente/estensione/(?P<pk>.*)/estendi/$', anagrafica.viste.utente_estensione_estendi),
-    url(r'^utente/estensione/(?P<pk>.*)/termina/$', anagrafica.viste.utente_estensione_termina),
-    url(r'^utente/riserva/(?P<pk>.*)/termina/$', anagrafica.viste.utente_riserva_termina),
-    url(r'^utente/trasferimento/(?P<pk>.*)/ritira/$', anagrafica.viste.utente_trasferimento_ritira),
-    url(r'^utente/donazioni/profilo/$', anagrafica.viste.utente_donazioni_profilo),
-    url(r'^utente/donazioni/sangue/(?P<pk>.*)/cancella/$', anagrafica.viste.utente_donazioni_sangue_cancella),
-    url(r'^utente/donazioni/sangue/$', anagrafica.viste.utente_donazioni_sangue),
-    url(r'^utente/privacy/$', anagrafica.viste.utente_privacy),
-    url(r'^utente/cambia-password/?$', pagina_privata_no_cambio_firma(password_change), {
-        "template_name": "anagrafica_utente_cambia_password.html",
-        "password_change_form": ModuloModificaPassword,
-        "post_change_redirect": "/utente/cambia-password/fatto/"
-    }),
-    url(r'^utente/cambia-password/fatto/$', pagina_privata_no_cambio_firma(password_change_done), {
-        "template_name": "anagrafica_utente_cambia_password_fatto.html",
-    }),
+    url(r'^utente/', include('anagrafica.urls_utente', namespace='utente')),
 
     url(r'^profilo/(?P<pk>[0-9]+)/messaggio/$', anagrafica.viste.profilo_messaggio),
     url(r'^profilo/(?P<pk>[0-9]+)/turni/foglio/$', anagrafica.viste.profilo_turni_foglio),

@@ -978,3 +978,33 @@ class ConVecchioID(models.Model):
         abstract = True
 
     vecchio_id = models.IntegerField(default=None, null=True, blank=True, db_index=True)
+
+
+class Menu(models.Model):
+    POSITIONS_CHOICES = (
+        ('ls', 'Left Sidebar'),
+        ('rs', 'Right Sidebar'),
+        ('tn', 'Top Navbar'),
+        ('fn', 'Footer'),
+    )
+
+    is_active = models.BooleanField(default=True)
+    name = models.CharField(max_length=255)
+    url = models.URLField(null=True, blank=True)
+    icon_class = models.CharField(max_length=255, null=True, blank=True,
+                                  help_text="Separati con lo spazio")
+    css_class = models.CharField(max_length=255, null=True, blank=True,
+                                 help_text="Separati con lo spazio")
+    style = models.CharField(max_length=255, null=True, blank=True,
+                             help_text="inline css styles")
+    attrs = models.CharField(max_length=255, null=True, blank=True,
+                             help_text="tag attributes")
+    order = models.IntegerField(null=True, blank=True)
+    position = models.CharField(max_length=5, choices=POSITIONS_CHOICES,
+                                null=True, blank=True) #, help_text='not used - not required')
+
+    def __str__(self):
+        return '%s - %s' % (self.url, self.name)
+
+    def get_link_html(self):
+        return """<a href="%s">%s</a>""" % (self.url, self.name)

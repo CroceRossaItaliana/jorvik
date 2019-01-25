@@ -2,21 +2,20 @@ import codecs
 import csv
 import datetime
 from collections import OrderedDict
-from django.db import transaction
 from importlib import import_module
 
+from django.db import transaction
 from django.apps import apps
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.template.loader import get_template
-
-# Le viste base vanno qui.
-from django.views.generic import ListView
+# from django.views.generic import ListView
+from django.core.urlresolvers import reverse
+from django.shortcuts import (render_to_response, redirect, get_object_or_404, HttpResponse)
 
 from anagrafica.costanti import TERRITORIALE, REGIONALE
 from anagrafica.elenchi import ElencoDelegati
@@ -336,32 +335,46 @@ def utente(request, me):
 
 @pagina_privata
 def utente_anagrafica(request, me):
+    from .forms import ModuloProfiloModificaAnagraficaDomicilio
 
-    contesto = {
+    context = {
         "delegati": me.deleghe_anagrafica(),
     }
 
-    modulo_dati = ModuloModificaAnagrafica(request.POST or None, instance=me)
+    form_residenza = ModuloModificaAnagrafica(request.POST or None, instance=me)
+    form_domicilio = ModuloProfiloModificaAnagraficaDomicilio(request.POST or None, instance=me)
 
     if request.POST:
+        if form_residenza.is_valid() and form_domicilio.is_valid():
+            cd_residenza = form_residenza.cleaned_data
+            cd_domicilio = form_domicilio.cleaned_data
 
-        if modulo_dati.is_valid():
-            modulo_dati.save()
+            if True == cd_domicilio['domicilio_uguale_a_residenza']:
+                for f in ('indirizzo', 'comune', 'provincia', 'stato', 'cap'):
+                    domicilio_key = 'domicilio_%s' % f
+                    residenza_value = cd_residenza['%s_residenza' % f]
+                    setattr(form_domicilio.instance, domicilio_key, residenza_value)
 
+            form_residenza.save()
+            form_domicilio.save()
+
+            messages.success(request, "I tuoi dati anagrafici sono stati salvati correttamente.")
+            return redirect(reverse('utente:anagrafica'))
     else:
+        form_residenza = ModuloModificaAnagrafica(instance=me)
+        form_domicilio = ModuloProfiloModificaAnagraficaDomicilio(instance=me)
 
-        modulo_dati = ModuloModificaAnagrafica(instance=me)
-
-    contesto.update({
-        "modulo_dati": modulo_dati,
+    context.update({
+        "form_residenza": form_residenza,
+        "form_domicilio": form_domicilio,
     })
 
-    return 'anagrafica_utente_anagrafica.html', contesto
+    return 'anagrafica_utente_anagrafica.html', context
 
 
 @pagina_privata
 def utente_fotografia(request, me):
-   return redirect("/utente/fotografia/avatar/")
+   return redirect(reverse('utente:avatar'))
 
 
 @pagina_privata

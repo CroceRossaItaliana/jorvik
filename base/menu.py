@@ -1,7 +1,11 @@
+"""
+Questa pagina contiene i vari menu che vengono mostrati nella barra laterale dei template.
+La costante MENU è accessibile attraverso "menu" nei template.
+"""
+
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 
-from .utils import remove_none
 from anagrafica.costanti import REGIONALE, TERRITORIALE #, LOCALE
 from anagrafica.permessi.applicazioni import (DELEGATO_OBIETTIVO_1,
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4,
@@ -14,21 +18,16 @@ from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA
     EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE)
 from anagrafica.models import Sede
 
-
-"""
-Questa pagina contiene i vari menu che vengono mostrati nella barra laterale dei template.
-La costante MENU e' accessibile attraverso "menu" nei template.
-"""
+from .utils import remove_none
+from .models import Menu
 
 
 def menu(request):
-    """
-    Ottiene il menu per una data richiesta.
-    """
-    from base.viste import ORDINE_ASCENDENTE, ORDINE_DISCENDENTE, ORDINE_DEFAULT
+    """ Ottiene il menu per una data richiesta. """
+
+    # from base.viste import ORDINE_ASCENDENTE, ORDINE_DISCENDENTE, ORDINE_DEFAULT
 
     me = request.me if hasattr(request, 'me') else None
-
     deleghe_attuali = None
 
     if me:
@@ -44,7 +43,6 @@ def menu(request):
             oggetto_tipo=ContentType.objects.get_for_model(Sede),
             oggetto_id__in=sedi
         ).distinct().values_list('tipo', flat=True)
-
 
     gestione_corsi_sede = me.ha_permesso(GESTIONE_CORSI_SEDE) if me else False
 
@@ -109,15 +107,13 @@ def menu(request):
         ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
     ))
 
-    VOCE_LINKS = ("Links", (
-        ("Portale convenzioni", "fa-key", reverse('pages:page', args=['portale-convenzioni'])),
-        ("Segnalazione aggressione", "fa-cogs", reverse('pages:page', args=['report-violence'])),
-    ))
+    VOCE_LINKS = ("Links", tuple((link.name, link.icon_class, link.url)
+        for link in Menu.objects.filter(is_active=True).order_by('order')))
 
     elementi = {
         "utente": (VOCE_PERSONA, VOCE_VOLONTARIO, VOCE_RUBRICA, VOCE_CV,
-                   VOCE_DONATORE, VOCE_SICUREZZA, VOCE_LINKS) if me and \
-                                        not hasattr(me, 'aspirante') else None,
+                   VOCE_DONATORE, VOCE_SICUREZZA, VOCE_LINKS) \
+                    if me and not hasattr(me, 'aspirante') else None,
         "posta": (
             ("Posta", (
                 ("Scrivi", "fa-pencil", "/posta/scrivi/"),
