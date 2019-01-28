@@ -1766,7 +1766,6 @@ def admin_import_volontari(request, me):
 
     if modulo.is_valid():
 
-
         nome_file = handle_uploaded_file(request.FILES['file_csv'])
         with codecs.open(nome_file, encoding="utf-8") as csvfile:
             riga = unicode_csv_reader(csvfile, delimiter=modulo.cleaned_data['delimitatore'])
@@ -1819,7 +1818,6 @@ def admin_statistiche(request, me):
         }
 
         return 'admin_statistiche.html', contesto
-
 
     contesto = {
         "type": GENERALI,

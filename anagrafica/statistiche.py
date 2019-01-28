@@ -35,8 +35,14 @@ import datetime
     ]
 '''
 
-
+'''
+    STATISTICHE PER FASCI DI ETA
+    Numero di volontari per fasce:
+    14/18 - 18/25 - 25/32 - 32/45 - 45/60 - over 60
+    per Ogni comitato Nazionale/Regione/locale/territoriale
+'''
 def statistica_num_vol_fascia_eta():
+
     nazionali = Sede.objects.filter(estensione=NAZIONALE)
     regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
     locali = Sede.objects.filter(estensione=LOCALE)
@@ -80,6 +86,11 @@ def statistica_num_vol_fascia_eta():
     return obj
 
 
+'''
+    STATISTICA NUMERO M/F
+    Numero di volontario divesi per sesso
+    Per ogni comitato Nazionale/Regionale/Locale/Territoriale    
+'''
 def statistica_num_vol_m_f():
 
     nazionali = Sede.objects.filter(estensione=NAZIONALE)
@@ -113,9 +124,17 @@ def statistica_num_vol_m_f():
     return obj
 
 
+'''
+    STATISTICA NUMERO DI SOCI/VOLONTARI
+    Per Ogni comitato Regionale
+    valori visibili per anno corrente/precedente
+'''
 def statistica_num_soci_vol():
 
     regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
+
+    totale_regione_soci = 0
+    totale_regione_volontari = 0
 
     regione_soci_volontari = []
     for regione in regionali:
@@ -130,18 +149,41 @@ def statistica_num_soci_vol():
                 }
             }
         ]
+        totale_regione_soci += regione_soci
+        totale_regione_volontari += regione_volontari
 
     obj = {
         "nome": STATISTICA[NUM_SOCI_VOL],
         "nazionali": None,
         "regionali": regione_soci_volontari,
         "locali": None,
-        "territoriali": None
+        "territoriali": None,
+        "tot": [
+            {
+                "comitato": "Regionale",
+                "statistiche": {
+                    "Totale Soci": totale_regione_soci,
+                    "Totale Volontari": totale_regione_volontari,
+                },
+            }
+        ]
     }
 
     return obj
 
 
+'''
+    STATISTICHE GENERALI (DEFAULT)
+    persone_numero
+    soci_numero
+    soci_percentuale
+    soci_giovani_35_numero
+    soci_giovani_35_percentuale
+    sedi_numero
+    comitati_numero
+    totale_regione_soci
+    totale_regione_volontari
+'''
 def statistica_generale():
     oggi = datetime.date.today()
     nascita_minima_35 = datetime.date(oggi.year - 36, oggi.month, oggi.day)
@@ -157,17 +199,6 @@ def statistica_generale():
     sedi = Sede.objects.filter(attiva=True)
     comitati = sedi.comitati()
 
-    totale_regione_soci = 0
-    totale_regione_volontari = 0
-
-    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
-    for regione in regionali:
-        regione_soci = int(regione.membri_attuali(figli=True, membro__in=Appartenenza.MEMBRO_SOCIO).count())
-        regione_volontari = int(regione.membri_attuali(figli=True, membro=Appartenenza.VOLONTARIO).count())
-
-        totale_regione_soci += regione_soci
-        totale_regione_volontari += regione_volontari
-
     obj = {
         "persone_numero": persone.count(),
         "soci_numero": soci.count(),
@@ -175,54 +206,57 @@ def statistica_generale():
         "soci_giovani_35_numero": soci_giovani_35.count(),
         "soci_giovani_35_percentuale": soci_giovani_35.count() / soci.count() * 100,
         "sedi_numero": sedi.count(),
-        "comitati_numero": comitati.count(),
-        "totale_regione_soci": totale_regione_soci,
-        "totale_regione_volontari": totale_regione_volontari,
+        "comitati_numero": comitati.count()
     }
     return obj
 
 
+'''
+    STATISTICHE NUMERO NUOVI VOLONTARI
+    livello nazionale/regionale/locale/territoriale
+    valori visibili per anno corrente/precedente
+'''
 def statistica_num_nuovi_vol():
 
-    nazionali = Sede.objects.filter(estensione=NAZIONALE)
-    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
-    locali = Sede.objects.filter(estensione=LOCALE)
-    territoriali = Sede.objects.filter(estensione=TERRITORIALE)
-
-    def get_statistica_num_nuovi_vol(comitati=None, estensione=None, start=None, finish=None):
-        l = []
-
-        for el in comitati:
-
-            current = Appartenenza.objects.filter(
-                creazione__gte=start,
-                creazione__lte=start,
-                terminazione=None,
-                membro=Appartenenza.VOLONTARIO,
-                sede=el,
-                sede__estensione=estensione
-            )
-
-            before = Appartenenza.objects.filter(
-                creazione__gte=start.replace(year=start.year - 1),
-                creazione__lte=start.replace(year=start.year - 1),
-                terminazione=None,
-                membro=Appartenenza.VOLONTARIO,
-                sede=el,
-                sede__estensione=estensione
-            )
-
-            l.append(
-                {
-                    "comitato": el,
-                    "statistiche": {
-                        "Anno corrente:": current.count(),
-                        "Anno precendente:": before.count(),
-                    }
-                }
-            )
-
-        return l
+    # nazionali = Sede.objects.filter(estensione=NAZIONALE)
+    # regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
+    # locali = Sede.objects.filter(estensione=LOCALE)
+    # territoriali = Sede.objects.filter(estensione=TERRITORIALE)
+    #
+    # def get_statistica_num_nuovi_vol(comitati=None, estensione=None, start=None, finish=None):
+    #     l = []
+    #
+    #     for el in comitati:
+    #
+    #         current = Appartenenza.objects.filter(
+    #             creazione__gte=start,
+    #             creazione__lte=start,
+    #             terminazione=None,
+    #             membro=Appartenenza.VOLONTARIO,
+    #             sede=el,
+    #             sede__estensione=estensione
+    #         )
+    #
+    #         before = Appartenenza.objects.filter(
+    #             creazione__gte=start.replace(year=start.year - 1),
+    #             creazione__lte=start.replace(year=start.year - 1),
+    #             terminazione=None,
+    #             membro=Appartenenza.VOLONTARIO,
+    #             sede=el,
+    #             sede__estensione=estensione
+    #         )
+    #
+    #         l.append(
+    #             {
+    #                 "comitato": el,
+    #                 "statistiche": {
+    #                     "Anno corrente:": current.count(),
+    #                     "Anno precendente:": before.count(),
+    #                 }
+    #             }
+    #         )
+    #
+    #     return l
 
     def get_tot(start=None, finish=None, estensione=None):
         current = Appartenenza.objects.filter(
@@ -269,45 +303,50 @@ def statistica_num_nuovi_vol():
     return obj
 
 
+'''
+    STATISTICA NUMERO DIMESSI
+    livello nazionale/regionale/locale/territoriale
+    valori visibili per anno corrente/precedente
+'''
 def statistica_num_dimessi():
 
-    nazionali = Sede.objects.filter(estensione=NAZIONALE)
-    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
-    locali = Sede.objects.filter(estensione=LOCALE)
-    territoriali = Sede.objects.filter(estensione=TERRITORIALE)
-
-    def get_num_dimessi(comitati=[], estensione=None, start=None, finish=None):
-        l = []
-
-        for el in comitati:
-
-            current = Appartenenza.objects.filter(
-                creazione__gte=start,
-                creazione__lte=finish,
-                terminazione=Appartenenza.DIMISSIONE,
-                sede=el,
-                sede__estensione=estensione,
-            )
-
-            before = Appartenenza.objects.filter(
-                creazione__gte=start.replace(year=start.year - 1),
-                creazione__lte=finish.replace(year=finish.year - 1),
-                terminazione=Appartenenza.DIMISSIONE,
-                sede=el,
-                sede__estensione=estensione,
-            )
-
-            l.append(
-                {
-                    "comitato": el,
-                    "statistiche": {
-                        "Anno corrente:": current.count(),
-                        "Anno precendente:": before.count(),
-                    }
-                }
-            )
-
-        return l
+    # nazionali = Sede.objects.filter(estensione=NAZIONALE)
+    # regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
+    # locali = Sede.objects.filter(estensione=LOCALE)
+    # territoriali = Sede.objects.filter(estensione=TERRITORIALE)
+    #
+    # def get_num_dimessi(comitati=[], estensione=None, start=None, finish=None):
+    #     l = []
+    #
+    #     for el in comitati:
+    #
+    #         current = Appartenenza.objects.filter(
+    #             creazione__gte=start,
+    #             creazione__lte=finish,
+    #             terminazione=Appartenenza.DIMISSIONE,
+    #             sede=el,
+    #             sede__estensione=estensione,
+    #         )
+    #
+    #         before = Appartenenza.objects.filter(
+    #             creazione__gte=start.replace(year=start.year - 1),
+    #             creazione__lte=finish.replace(year=finish.year - 1),
+    #             terminazione=Appartenenza.DIMISSIONE,
+    #             sede=el,
+    #             sede__estensione=estensione,
+    #         )
+    #
+    #         l.append(
+    #             {
+    #                 "comitato": el,
+    #                 "statistiche": {
+    #                     "Anno corrente:": current.count(),
+    #                     "Anno precendente:": before.count(),
+    #                 }
+    #             }
+    #         )
+    #
+    #     return l
 
     def get_tot(start=None, finish=None, estensione=None):
 
@@ -353,34 +392,32 @@ def statistica_num_dimessi():
     return obj
 
 
+'''
+    STATISTICHE NUMERO SEDI
+    livello nazionale/regionale/locale/territoriale
+    valori visibili per anno corrente/precedente
+'''
 def statistica_num_sedi():
-
-    def get_tot(start=None, finish=None, estensione=None):
+    # TODO: Numero di sedi presenti nel'anno corrente/precedente
+    # Sede.creazione < anna corrente | Sede.createzione < anna precedente
+    def get_tot(estensione=None):
 
         current_attivo = Sede.objects.filter(
-            creazione__gte=start,
-            creazione__lte=finish,
             estensione=estensione,
             attiva=True
         )
 
         current_disattivo = Sede.objects.filter(
-            creazione__gte=start,
-            creazione__lte=finish,
             estensione=estensione,
             attiva=False
         )
 
         before_attivo = Sede.objects.filter(
-            creazione__gte=start.replace(year=start.year - 1),
-            creazione__lte=finish.replace(year=finish.year - 1),
             estensione=estensione,
             attiva=True
         )
 
         before_disattivo = Sede.objects.filter(
-            creazione__gte=start.replace(year=start.year - 1),
-            creazione__lte=finish.replace(year=finish.year - 1),
             estensione=estensione,
             attiva=False
         )
@@ -395,11 +432,63 @@ def statistica_num_sedi():
             }
         }
 
+    obj = {
+        "nome": STATISTICA[NUM_DIMESSI],
+        "nazionali": None,
+        "regionali": None,
+        "locali": None,
+        "territoriali": None,
+        "tot": [
+            get_tot(NAZIONALE),
+            get_tot(REGIONALE),
+            get_tot(LOCALE),
+            get_tot(TERRITORIALE),
+        ]
+    }
+
+    return obj
+
+
+'''
+    STATISTICHE NUMERO NUOVE SEDI
+    numero di nuove sedi nell'anno corrente/precedente
+    
+    livello nazionale/regionale/locale/territoriale
+    valori visibili per anno corrente/precedente
+'''
+def statistiche_num_sedi_nuove():
+    # TODO: numero di nuove sedi nell'anno corrente/precedente
+    # 31/12/corrente <= Sede.creazione >= 1/1/corrente
+    # 31/12/precedente <= Sede.creazione >= 1/1/precedente
+    def get_tot(start=None, finish=None, estensione=None):
+
+        current = Sede.objects.filter(
+            creazione__gte=start,
+            creazione__lte=finish,
+            estensione=estensione,
+            attiva=True
+        )
+
+        before = Sede.objects.filter(
+            creazione__gte=start.replace(year=start.year - 1),
+            creazione__lte=finish.replace(year=finish.year - 1),
+            estensione=estensione,
+            attiva=True
+        )
+
+        return {
+            "nome": dict(ESTENSIONE)[estensione],
+            "statistiche": {
+                'Totale nuove sedi anno corrente': current.count(),
+                'Totale nuove sedi anno precedente': before.count(),
+            }
+        }
+
     start = datetime.datetime.now().date().replace(month=1, day=1)
     finish = datetime.datetime.now().date().replace(month=12, day=31)
 
     obj = {
-        "nome": STATISTICA[NUM_DIMESSI],
+        "nome": STATISTICA[NUM_SEDI_NUOVE],
         "nazionali": None,
         "regionali": None,
         "locali": None,
@@ -425,6 +514,7 @@ NUM_VOL_FASCIA_ETA = 'num_vol_fascia_eta'
 NUM_NUOVI_VOL = 'num_nuovi_vol'
 NUM_DIMESSI = 'num_dimessi'
 NUM_SEDI = 'num_sedi'
+NUM_SEDI_NUOVE = 'num_sedi_nuove'
 
 '''
     NOMI VISUALIZZATI STATISTICHE
@@ -436,7 +526,8 @@ STATISTICA = {
     NUM_VOL_FASCIA_ETA: "Volontari per fasciati di età",
     NUM_NUOVI_VOL: "Nuovi volontari",
     NUM_DIMESSI: "Dimessi",
-    NUM_SEDI: "Sedi"
+    NUM_SEDI: "Sedi",
+    NUM_SEDI_NUOVE: "Sedi nuove"
 }
 
 '''
@@ -450,4 +541,5 @@ FUNZIONI_STATISTICHE = {
     NUM_NUOVI_VOL: statistica_num_nuovi_vol,
     NUM_DIMESSI: statistica_num_dimessi,
     NUM_SEDI: statistica_num_sedi,
+    NUM_SEDI_NUOVE: statistiche_num_sedi_nuove
 }
