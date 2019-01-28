@@ -343,45 +343,10 @@ def statistica_num_nuovi_vol():
 '''
 def statistica_num_dimessi():
 
-    # nazionali = Sede.objects.filter(estensione=NAZIONALE)
-    # regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
-    # locali = Sede.objects.filter(estensione=LOCALE)
-    # territoriali = Sede.objects.filter(estensione=TERRITORIALE)
-    #
-    # def get_num_dimessi(comitati=[], estensione=None, start=None, finish=None):
-    #     l = []
-    #
-    #     for el in comitati:
-    #
-    #         current = Appartenenza.objects.filter(
-    #             creazione__gte=start,
-    #             creazione__lte=finish,
-    #             terminazione=Appartenenza.DIMISSIONE,
-    #             sede=el,
-    #             sede__estensione=estensione,
-    #         )
-    #
-    #         before = Appartenenza.objects.filter(
-    #             creazione__gte=start.replace(year=start.year - 1),
-    #             creazione__lte=finish.replace(year=finish.year - 1),
-    #             terminazione=Appartenenza.DIMISSIONE,
-    #             sede=el,
-    #             sede__estensione=estensione,
-    #         )
-    #
-    #         l.append(
-    #             {
-    #                 "comitato": el,
-    #                 "statistiche": {
-    #                     "Anno corrente:": current.count(),
-    #                     "Anno precendente:": before.count(),
-    #                 }
-    #             }
-    #         )
-    #
-    #     return l
-
     def get_tot(start=None, finish=None, estensione=None):
+
+        current_year = start.year
+        before_year = current_year - 1
 
         current = Appartenenza.objects.filter(
             creazione__gte=start,
@@ -391,8 +356,8 @@ def statistica_num_dimessi():
         )
 
         before = Appartenenza.objects.filter(
-            creazione__gte=start.replace(year=start.year - 1),
-            creazione__lte=finish.replace(year=finish.year - 1),
+            creazione__gte=start.replace(year=before_year),
+            creazione__lte=finish.replace(year=before_year),
             terminazione=Appartenenza.DIMISSIONE,
             sede__estensione=estensione,
         )
@@ -400,8 +365,8 @@ def statistica_num_dimessi():
         return {
             "nome": dict(ESTENSIONE)[estensione],
             "statistiche": {
-                'Totale anno corrente': current.count(),
-                'Totale anno precedente': before.count()
+                'Totale al {}'.format(current_year): current.count(),
+                'Totale al {}'.format(before_year): before.count()
             }
         }
 
@@ -410,10 +375,10 @@ def statistica_num_dimessi():
 
     obj = {
         "nome": STATISTICA[NUM_DIMESSI],
-        "nazionali": None, #get_num_dimessi(nazionali, NAZIONALE, start, finish),
-        "regionali": None, #get_num_dimessi(regionali, REGIONALE, start, finish),
-        "locali": None, #get_num_dimessi(locali, LOCALE, start, finish),
-        "territoriali": None, #get_num_dimessi(territoriali, TERRITORIALE, start, finish),
+        "nazionali": None,
+        "regionali": None,
+        "locali": None,
+        "territoriali": None,
         "tot": [
             get_tot(start, finish, NAZIONALE),
             get_tot(start, finish, REGIONALE),
@@ -431,26 +396,29 @@ def statistica_num_dimessi():
     valori visibili per anno corrente/precedente
 '''
 def statistica_num_sedi():
-    # TODO: Numero di sedi presenti nel'anno corrente/precedente
-    # Sede.creazione < anna corrente | Sede.createzione < anna precedente
-    def get_tot(estensione=None):
+
+    def get_tot(current=None, before=None, estensione=None):
 
         current_attivo = Sede.objects.filter(
+            creazione__lte=current,
             estensione=estensione,
             attiva=True
         )
 
         current_disattivo = Sede.objects.filter(
+            creazione__lte=current,
             estensione=estensione,
             attiva=False
         )
 
         before_attivo = Sede.objects.filter(
+            creazione__lte=before,
             estensione=estensione,
             attiva=True
         )
 
         before_disattivo = Sede.objects.filter(
+            creazione__lte=before,
             estensione=estensione,
             attiva=False
         )
@@ -458,12 +426,15 @@ def statistica_num_sedi():
         return {
             "nome": dict(ESTENSIONE)[estensione],
             "statistiche": {
-                'Totale attivo anno corrente': current_attivo.count(),
-                'Totale disattivo anno corrente': current_disattivo.count(),
-                'Totale attivo anno precedente': before_attivo.count(),
-                'Totale disattivo anno precedente': before_disattivo.count(),
+                'Totale attivo {}'.format(current.year): current_attivo.count(),
+                'Totale disattivo {}'.format(current.year): current_disattivo.count(),
+                'Totale attivo {}'.format(before.year): before_attivo.count(),
+                'Totale disattivo {}'.format(before.year): before_disattivo.count(),
             }
         }
+
+    current = datetime.datetime.now().replace(day=31, month=12)
+    before = current.replace(year=current.year - 1)
 
     obj = {
         "nome": STATISTICA[NUM_DIMESSI],
@@ -472,10 +443,10 @@ def statistica_num_sedi():
         "locali": None,
         "territoriali": None,
         "tot": [
-            get_tot(NAZIONALE),
-            get_tot(REGIONALE),
-            get_tot(LOCALE),
-            get_tot(TERRITORIALE),
+            get_tot(current, before, NAZIONALE),
+            get_tot(current, before, REGIONALE),
+            get_tot(current, before, LOCALE),
+            get_tot(current, before, TERRITORIALE),
         ]
     }
 
