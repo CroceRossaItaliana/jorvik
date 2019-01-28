@@ -40,9 +40,7 @@
                         Selezione una delle tipologie di statistiche
                     </p>
                     {% csrf_token %}
-                    <p>{% bootstrap_form modulo layout='horizontal' %}</p>
-                    <br>
-                    <br>
+                    <p>{% bootstrap_form modulo %}</p>
                     <button type="submit" class="btn btn-primary btn-block">
                         <i class="fa fa-fw fa-search"></i>
                         Cerca
@@ -95,20 +93,6 @@
                         <td class="metrica">{{ obj.comitati_numero }}</td>
                         <td class="parziale">&nbsp;</td>
                         <td class="descrizione">Include Sede Nazionale, Regionali e Comitati.</td>
-                    </tr>
-
-                    <tr>
-                        <td class="nome">Totale Soci</td>
-                        <td class="metrica">{{ obj.totale_regione_soci }}</td>
-                        <td class="parziale">&nbsp;</td>
-                        <td class="descrizione">Somma dei valori per Regione.</td>
-                    </tr>
-
-                    <tr>
-                        <td class="nome">Totale Volontari</td>
-                        <td class="metrica">{{ obj.totale_regione_volontari }}</td>
-                        <td class="parziale">&nbsp;</td>
-                        <td class="descrizione">Somma dei valori per Regione.</td>
                     </tr>
                 </tbody>
             </table>

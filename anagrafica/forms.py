@@ -589,8 +589,25 @@ class ModuloUSModificaUtenza(ModuloUtenza):
 
 from anagrafica.statistiche import STATISTICA
 
+
+def genera_date():
+    l = []
+    now = datetime.datetime.now()
+    for el in range(0, 20):
+        kv = now.replace(year=now.year - el).year
+        l.append(
+            (kv, kv)
+        )
+    return l
+
+
 class ModuloStatistiche(forms.Form):
-    select = (
+
+    select_tipo = (
         [(k, v) for k, v in STATISTICA.items()]
     )
-    tipo_statistiche = forms.ChoiceField(widget=forms.Select(), choices=select)
+    select_anno = (
+        genera_date()
+    )
+    tipo_statistiche = forms.ChoiceField(widget=forms.Select(), choices=select_tipo, required=True)
+    anno = forms.ChoiceField(widget=forms.Select(), choices=select_anno, required=True)
