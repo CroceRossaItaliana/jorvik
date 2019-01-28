@@ -1809,10 +1809,17 @@ def admin_statistiche(request, me):
 
     if request.POST and modulo.is_valid():
         statistica = modulo.cleaned_data['tipo_statistiche']
+        livello_riferimento = modulo.cleaned_data['livello_riferimento']
+        nome_corso = modulo.cleaned_data['nome_corso']
+        area_riferimento = modulo.cleaned_data['area_riferimento']
 
         contesto = {
             "type": GENERALI if statistica == GENERALI else "",
-            "obj": FUNZIONI_STATISTICHE[statistica](),
+            "obj": FUNZIONI_STATISTICHE[statistica](
+                livello_riferimento=livello_riferimento,
+                nome_corso=nome_corso,
+                area_riferimento=area_riferimento
+            ),
             "ora": timezone.now(),
             "modulo": modulo,
         }

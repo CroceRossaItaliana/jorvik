@@ -244,6 +244,7 @@
         }
     </style>
     <script>
+
         $(document).ready(function () {
             changeForm($('[name=tipo_statistiche]').val());
         });
@@ -254,7 +255,7 @@
 
         $(document).reload(function () {
             changeForm($('[name=tipo_statistiche]').val());
-        })
+        });
 
         function changeForm(val) {
             switch (val){
@@ -273,4 +274,5 @@
 
     </script>
 {% endblock %}
+
 
