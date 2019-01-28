@@ -715,6 +715,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         )
         appartenenza.save()
 
+    def end_membership(self, membro, **kwargs):
+        self.appartenenze_attuali(membro=membro).update(**kwargs)
+
+    def end_sostenitore_membership(self):
+        self.end_membership(
+            Appartenenza.SOSTENITORE,
+            terminazione=Appartenenza.DIMISSIONE,
+            fine=datetime.now()
+        )
+
     def partecipazione_corso_base(self):
         """
         Ritorna la partecipazione confermata al corso base in corso, se esistente,
