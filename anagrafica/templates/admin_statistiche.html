@@ -41,7 +41,7 @@
                     </p>
                     {% csrf_token %}
                     <p>{% bootstrap_form modulo %}</p>
-                    <button type="submit" class="btn btn-primary btn-block">
+                    <button type="submit" class="btn btn-primary btn-block" name="btn-cerca">
                         <i class="fa fa-fw fa-search"></i>
                         Cerca
                     </button>
@@ -243,5 +243,34 @@
             font-size: smaller;
         }
     </style>
+    <script>
+        $(document).ready(function () {
+            changeForm($('[name=tipo_statistiche]').val());
+        });
+
+        $('[name=tipo_statistiche]').change(function () {
+            changeForm($(this).val());
+        });
+
+        $(document).reload(function () {
+            changeForm($('[name=tipo_statistiche]').val());
+        })
+
+        function changeForm(val) {
+            switch (val){
+                case 'num_corsi':
+                    $('input[name=livello_riferimento]').parent().show();
+                    $('input[name=nome_corso]').parent().show();
+                    $('input[name=area_riferimento]').parent().show();
+                    break;
+                default:
+                    $('input[name=livello_riferimento]').parent().hide();
+                    $('input[name=nome_corso]').parent().hide();
+                    $('input[name=area_riferimento]').parent().hide();
+                    break;
+            }
+        }
+
+    </script>
 {% endblock %}
 

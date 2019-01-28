@@ -594,4 +594,7 @@ class ModuloStatistiche(forms.Form):
         [(k, v) for k, v in STATISTICA.items()]
     )
     tipo_statistiche = forms.ChoiceField(widget=forms.Select(), choices=select_tipo, required=True)
+    livello_riferimento = forms.CharField(required=False)
+    nome_corso = forms.CharField(required=False)
+    area_riferimento = forms.CharField(required=False)
 
