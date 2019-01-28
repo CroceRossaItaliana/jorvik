@@ -461,10 +461,11 @@ def statistica_num_sedi():
     valori visibili per anno corrente/precedente
 '''
 def statistiche_num_sedi_nuove():
-    # TODO: numero di nuove sedi nell'anno corrente/precedente
-    # 31/12/corrente <= Sede.creazione >= 1/1/corrente
-    # 31/12/precedente <= Sede.creazione >= 1/1/precedente
+
     def get_tot(start=None, finish=None, estensione=None):
+
+        current_year = start.year
+        before_year = start.replace(year=current_year - 1).year
 
         current = Sede.objects.filter(
             creazione__gte=start,
@@ -474,17 +475,17 @@ def statistiche_num_sedi_nuove():
         )
 
         before = Sede.objects.filter(
-            creazione__gte=start.replace(year=start.year - 1),
-            creazione__lte=finish.replace(year=finish.year - 1),
+            creazione__gte=start.replace(year=before_year),
+            creazione__lte=finish.replace(year=before_year),
             estensione=estensione,
             attiva=True
         )
 
         return {
-            "nome": ESTENSIONE_DICT[estensione],
+            "nome": ESTENDIONI_DICT[estensione],
             "statistiche": {
-                'Totale nuove sedi al {}': current.count(),
-                'Totale nuove sedi al {}': before.count(),
+                'Totale nuove sedi al {}'.format(current_year): current.count(),
+                'Totale nuove sedi al {}'.format(before_year): before.count(),
             }
         }
 
