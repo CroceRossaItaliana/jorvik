@@ -27,7 +27,7 @@ import datetime
     @LIST_TOT
     [
         {
-            "comitato": @Comitato
+            "nome": @Comitato
             "statistiche": {
                 @NOMEVALORE: @VALORE NUMERICO STATISTICA
             }
@@ -69,7 +69,7 @@ def statistica_num_vol_fascia_eta():
                         "Da 25 a 32:": count(persone, 25, 32),
                         "Da 32 a 45:": count(persone, 32, 45),
                         "Da 45 a 60:": count(persone, 54, 60),
-                        "Over 60": count(persone, 60),
+                        "Over 60:": count(persone, 60),
                     }
                 }
             )
@@ -133,24 +133,55 @@ def statistica_num_soci_vol():
 
     regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
 
-    totale_regione_soci = 0
-    totale_regione_volontari = 0
+    totale_regione_soci_currente = 0
+    totale_regione_volontari_current = 0
+    totale_regione_soci_before = 0
+    totale_regione_volontari_before = 0
 
     regione_soci_volontari = []
+
+    finish_current = datetime.datetime.now().date().replace(month=12, day=31)
+    current_year = finish_current.year
+    finish_before = finish_current.replace(year=finish_current.year - 1)
+    before_year = finish_before.year
+
     for regione in regionali:
-        regione_soci = int(regione.membri_attuali(figli=True, membro__in=Appartenenza.MEMBRO_SOCIO).count())
-        regione_volontari = int(regione.membri_attuali(figli=True, membro=Appartenenza.VOLONTARIO).count())
+        regione_soci_current = int(
+            regione.membri_attuali(
+                figli=True, membro__in=Appartenenza.MEMBRO_SOCIO, creazione__lte=finish_current
+            ).count()
+        )
+        regione_soci_before = int(
+            regione.membri_attuali(
+                figli=True, membro__in=Appartenenza.MEMBRO_SOCIO, creazione__lte=finish_before
+            ).count()
+        )
+        regione_volontari_current = int(
+            regione.membri_attuali(
+                figli=True, membro=Appartenenza.VOLONTARIO, creazione__lte=finish_current
+            ).count()
+        )
+        regione_volontari_before = int(
+            regione.membri_attuali(
+                figli=True, membro=Appartenenza.VOLONTARIO, creazione__lte=finish_before
+            ).count()
+        )
+
         regione_soci_volontari += [
             {
                 "comitato": regione,
                 "statistiche": {
-                    "Soci:": regione_soci,
-                    "Volontari:": regione_volontari
+                    "Soci al {}:".format(current_year): regione_soci_current,
+                    "Volontari al {}:".format(current_year): regione_volontari_current,
+                    "Soci al {}:".format(before_year): regione_soci_before,
+                    "Volontari al {}:".format(before_year): regione_volontari_before,
                 }
             }
         ]
-        totale_regione_soci += regione_soci
-        totale_regione_volontari += regione_volontari
+        totale_regione_soci_currente += regione_soci_current
+        totale_regione_volontari_current += regione_volontari_current
+        totale_regione_soci_before += regione_soci_before
+        totale_regione_volontari_before += regione_volontari_before
 
     obj = {
         "nome": STATISTICA[NUM_SOCI_VOL],
@@ -160,10 +191,12 @@ def statistica_num_soci_vol():
         "territoriali": None,
         "tot": [
             {
-                "comitato": "Regionale",
+                "nome": "Regionale",
                 "statistiche": {
-                    "Totale Soci": totale_regione_soci,
-                    "Totale Volontari": totale_regione_volontari,
+                    "Totale Soci al {}".format(current_year): totale_regione_soci_currente,
+                    "Totale Volontari al {}".format(current_year): totale_regione_volontari_current,
+                    "Totale Soci al {}".format(before_year): totale_regione_soci_before,
+                    "Totale Volontari al {}".format(before_year): totale_regione_volontari_before,
                 },
             }
         ]
