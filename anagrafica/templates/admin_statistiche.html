@@ -120,9 +120,12 @@
                         {% for nazione in obj.nazionali %}
                             <tr>
                                 <td class="nome">{{ nazione.comitato.link|safe }}</td>
-                                <td class="metrica" colspan="2">
+                                <td class="" colspan="2">
                                     {% for k, v in nazione.statistiche.items %}
-                                        {{ k }} {{ v }}<br>
+                                        <div class="row">
+                                            <div class="col-xs-6 tiolo-metrica"> {{ k }} </div>
+                                            <div class="col-xs-6 metrica"> {{ v }} </div>
+                                        </div>
                                     {% endfor %}
                                 </td>
                             </tr>
@@ -142,9 +145,12 @@
                         {% for regione in obj.regionali %}
                             <tr>
                                 <td class="nome">{{ regione.comitato.link|safe }}</td>
-                                <td class="metrica" colspan="2">
+                                <td colspan="2">
                                     {% for k, v in regione.statistiche.items %}
-                                        {{ k }} {{ v }}<br>
+                                        <div class="row">
+                                            <div class="col-xs-6 tiolo-metrica"> {{ k }} </div>
+                                            <div class="col-xs-6 metrica"> {{ v }} </div>
+                                        </div>
                                     {% endfor %}
                                 </td>
                             </tr>
@@ -163,9 +169,12 @@
                     {% for locale in obj.locali %}
                         <tr>
                             <td class="nome">{{ locale.comitato.link|safe }}</td>
-                            <td class="metrica" colspan="2">
+                            <td colspan="2">
                                 {% for k, v in locale.statistiche.items %}
-                                    {{ k }} {{ v }}<br>
+                                    <div class="row">
+                                        <div class="col-xs-6 tiolo-metrica"> {{ k }} </div>
+                                        <div class="col-xs-6 metrica"> {{ v }} </div>
+                                    </div>
                                 {% endfor %}
                             </td>
                         </tr>
@@ -184,9 +193,12 @@
                     {% for territoriale in obj.locali %}
                         <tr>
                             <td class="nome">{{ territoriale.comitato.link|safe }}</td>
-                            <td class="metrica" colspan="2">
+                            <td colspan="2">
                                 {% for k, v in territoriale.statistiche.items %}
-                                    {{ k }} {{ v }}<br>
+                                    <div class="row">
+                                        <div class="col-xs-6 tiolo-metrica"> {{ k }} </div>
+                                        <div class="col-xs-6 metrica"> {{ v }} </div>
+                                    </div>
                                 {% endfor %}
                             </td>
                         </tr>
@@ -200,6 +212,7 @@
                             <td colspan="4" style="text-align: center; font-weight: bold; font-size: 14px">
                                 {{ subtot.nome }}
                             </td>
+                        {{ subtot.statistiche }}
                         </tr>
                         {% for k, v in subtot.statistiche.items %}
                             <tr>
@@ -217,9 +230,14 @@
         {% endif %}
     </div>
     <style>
+        .tiolo-metrica {
+            font-family: monospace;
+            text-align: left;
+            font-size: larger;
+        }
         .metrica {
             font-family: monospace;
-            text-align: right;
+            text-align: center;
             font-size: larger;
         }
         .descrizione {
