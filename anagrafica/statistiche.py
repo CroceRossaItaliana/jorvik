@@ -251,47 +251,11 @@ def statistica_generale():
 '''
 def statistica_num_nuovi_vol():
 
-    # nazionali = Sede.objects.filter(estensione=NAZIONALE)
-    # regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
-    # locali = Sede.objects.filter(estensione=LOCALE)
-    # territoriali = Sede.objects.filter(estensione=TERRITORIALE)
-    #
-    # def get_statistica_num_nuovi_vol(comitati=None, estensione=None, start=None, finish=None):
-    #     l = []
-    #
-    #     for el in comitati:
-    #
-    #         current = Appartenenza.objects.filter(
-    #             creazione__gte=start,
-    #             creazione__lte=start,
-    #             terminazione=None,
-    #             membro=Appartenenza.VOLONTARIO,
-    #             sede=el,
-    #             sede__estensione=estensione
-    #         )
-    #
-    #         before = Appartenenza.objects.filter(
-    #             creazione__gte=start.replace(year=start.year - 1),
-    #             creazione__lte=start.replace(year=start.year - 1),
-    #             terminazione=None,
-    #             membro=Appartenenza.VOLONTARIO,
-    #             sede=el,
-    #             sede__estensione=estensione
-    #         )
-    #
-    #         l.append(
-    #             {
-    #                 "comitato": el,
-    #                 "statistiche": {
-    #                     "Anno corrente:": current.count(),
-    #                     "Anno precendente:": before.count(),
-    #                 }
-    #             }
-    #         )
-    #
-    #     return l
-
     def get_tot(start=None, finish=None, estensione=None):
+
+        current_year = start.year
+        before_year = start.replace(year=current_year - 1).year
+
         current = Appartenenza.objects.filter(
             creazione__gte=start,
             creazione__lte=finish,
@@ -311,8 +275,8 @@ def statistica_num_nuovi_vol():
         return {
             "nome": ESTENDIONI_DICT[estensione],
             "statistiche": {
-                'Totale anno corrente': current.count(),
-                'Totale anno precedente': before.count()
+                'Totale nuovi volontari al {}'.format(current_year): current.count(),
+                'Totale nuovi volontari al {}'.format(before_year): before.count()
             }
         }
 
@@ -321,10 +285,10 @@ def statistica_num_nuovi_vol():
 
     obj = {
         "nome": STATISTICA[NUM_NUOVI_VOL],
-        "nazionali": None,#get_statistica_num_nuovi_vol(nazionali, NAZIONALE, start, finish),
-        "regionali": None, #get_statistica_num_nuovi_vol(regionali, REGIONALE, start, finish),
-        "locali": None,#get_statistica_num_nuovi_vol(locali, LOCALE, start, finish),
-        "territoriali": None, #get_statistica_num_nuovi_vol(territoriali, TERRITORIALE, start, finish),
+        "nazionali": None,
+        "regionali": None,
+        "locali": None,
+        "territoriali": None,
         "tot": [
             get_tot(start, finish, NAZIONALE),
             get_tot(start, finish, REGIONALE),
