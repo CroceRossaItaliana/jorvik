@@ -1,5 +1,5 @@
 from anagrafica.models import Appartenenza, Persona, Sede
-from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE, LOCALE, ESTENSIONE
+from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE, LOCALE, ESTENDIONI_DICT
 import datetime
 
 '''
@@ -309,7 +309,7 @@ def statistica_num_nuovi_vol():
         )
 
         return {
-            "nome": dict(ESTENSIONE)[estensione],
+            "nome": ESTENDIONI_DICT[estensione],
             "statistiche": {
                 'Totale anno corrente': current.count(),
                 'Totale anno precedente': before.count()
@@ -363,7 +363,7 @@ def statistica_num_dimessi():
         )
 
         return {
-            "nome": dict(ESTENSIONE)[estensione],
+            "nome": ESTENDIONI_DICT[estensione],
             "statistiche": {
                 'Totale al {}'.format(current_year): current.count(),
                 'Totale al {}'.format(before_year): before.count()
@@ -424,7 +424,7 @@ def statistica_num_sedi():
         )
 
         return {
-            "nome": dict(ESTENSIONE)[estensione],
+            "nome": ESTENDIONI_DICT[estensione],
             "statistiche": {
                 'Totale attivo {}'.format(current.year): current_attivo.count(),
                 'Totale disattivo {}'.format(current.year): current_disattivo.count(),
@@ -481,10 +481,10 @@ def statistiche_num_sedi_nuove():
         )
 
         return {
-            "nome": dict(ESTENSIONE)[estensione],
+            "nome": ESTENSIONE_DICT[estensione],
             "statistiche": {
-                'Totale nuove sedi anno corrente': current.count(),
-                'Totale nuove sedi anno precedente': before.count(),
+                'Totale nuove sedi al {}': current.count(),
+                'Totale nuove sedi al {}': before.count(),
             }
         }
 
