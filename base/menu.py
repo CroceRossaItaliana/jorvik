@@ -45,7 +45,6 @@ def menu(request):
             oggetto_id__in=sedi
         ).distinct().values_list('tipo', flat=True)
 
-
     gestione_corsi_sede = me.ha_permesso(GESTIONE_CORSI_SEDE) if me else False
 
     RUBRICA_BASE = [
@@ -60,13 +59,20 @@ def menu(request):
             if titolo not in rubriche:
                 rubriche.append(titolo)
                 if (delega in deleghe_attuali or
-                    PRESIDENTE in deleghe_attuali or
                     UFFICIO_SOCI in deleghe_attuali or
-                    COMMISSARIO in deleghe_attuali
-                ) and (delega != PRESIDENTE or (PRESIDENTE in deleghe_attuali and sedi_presidenti_sottostanti)):
+                    PRESIDENTE in deleghe_attuali or
+                    COMMISSARIO in deleghe_attuali):
+                    if UFFICIO_SOCI in deleghe_attuali and (delega == COMMISSARIO or delega == PRESIDENTE):
+                        continue
                     RUBRICA_BASE.append(
                         (titolo, "fa-book", "".join(("/utente/rubrica/", slug, '/')))
                     )
+
+
+    # if UFFICIO_SOCI in deleghe_attuali:
+    #     for rubrica in RUBRICA_BASE:
+    #         if rubrica[0] == 'Commissari' or rubrica[0] == 'Presidenti':
+    #             RUBRICA_BASE.remove(rubrica)
 
     VOCE_RUBRICA = ("Rubrica", (
         RUBRICA_BASE
