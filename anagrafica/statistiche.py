@@ -1,4 +1,5 @@
 from anagrafica.models import Appartenenza, Persona, Sede
+from formazione.models import CorsoBase
 from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE, LOCALE, ESTENDIONI_DICT
 import datetime
 
@@ -41,7 +42,7 @@ import datetime
     14/18 - 18/25 - 25/32 - 32/45 - 45/60 - over 60
     per Ogni comitato Nazionale/Regione/locale/territoriale
 '''
-def statistica_num_vol_fascia_eta():
+def statistica_num_vol_fascia_eta(**kwargs):
 
     nazionali = Sede.objects.filter(estensione=NAZIONALE)
     regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
@@ -91,7 +92,7 @@ def statistica_num_vol_fascia_eta():
     Numero di volontario divesi per sesso
     Per ogni comitato Nazionale/Regionale/Locale/Territoriale    
 '''
-def statistica_num_vol_m_f():
+def statistica_num_vol_m_f(**kwargs):
 
     nazionali = Sede.objects.filter(estensione=NAZIONALE)
     regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
@@ -129,7 +130,7 @@ def statistica_num_vol_m_f():
     Per Ogni comitato Regionale
     valori visibili per anno corrente/precedente
 '''
-def statistica_num_soci_vol():
+def statistica_num_soci_vol(**kwargs):
 
     regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
 
@@ -217,7 +218,7 @@ def statistica_num_soci_vol():
     totale_regione_soci
     totale_regione_volontari
 '''
-def statistica_generale():
+def statistica_generale(**kwargs):
     oggi = datetime.date.today()
     nascita_minima_35 = datetime.date(oggi.year - 36, oggi.month, oggi.day)
     persone = Persona.objects.all()
@@ -249,7 +250,7 @@ def statistica_generale():
     livello nazionale/regionale/locale/territoriale
     valori visibili per anno corrente/precedente
 '''
-def statistica_num_nuovi_vol():
+def statistica_num_nuovi_vol(**kwargs):
 
     def get_tot(start=None, finish=None, estensione=None):
 
@@ -305,7 +306,7 @@ def statistica_num_nuovi_vol():
     livello nazionale/regionale/locale/territoriale
     valori visibili per anno corrente/precedente
 '''
-def statistica_num_dimessi():
+def statistica_num_dimessi(**kwargs):
 
     def get_tot(start=None, finish=None, estensione=None):
 
@@ -359,7 +360,7 @@ def statistica_num_dimessi():
     livello nazionale/regionale/locale/territoriale
     valori visibili per anno corrente/precedente
 '''
-def statistica_num_sedi():
+def statistica_num_sedi(**kwargs):
 
     def get_tot(current=None, before=None, estensione=None):
 
@@ -424,7 +425,7 @@ def statistica_num_sedi():
     livello nazionale/regionale/locale/territoriale
     valori visibili per anno corrente/precedente
 '''
-def statistiche_num_sedi_nuove():
+def statistiche_num_sedi_nuove(**kwargs):
 
     def get_tot(start=None, finish=None, estensione=None):
 
@@ -473,6 +474,68 @@ def statistiche_num_sedi_nuove():
     return obj
 
 
+def statistica_num_corsi(**kwargs):
+
+    livello_riferimento = kwargs.get('livello_riferimento')
+    nome_corso = kwargs.get('nome_corso')
+    area_riferimento = kwargs.get('area_riferimento')
+
+    CorsoBase.objects.filter(
+        stato=None,
+
+    )
+
+    obj = {
+        "nome": STATISTICA[NUMERO_CORSI],
+        "nazionali": None,
+        "regionali": None,
+        "locali": None,
+        "territoriali": None,
+        "tot": [
+
+        ]
+    }
+
+    return obj
+
+
+def statistica_iivv_cm(**kwargs):
+
+    nazionali = Sede.objects.filter(estensione=NAZIONALE)
+    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
+    locali = Sede.objects.filter(estensione=LOCALE)
+    territoriali = Sede.objects.filter(estensione=TERRITORIALE)
+
+    def get_iivv_cm(comitato=None, figli=False):
+        l = []
+
+        for el in comitato:
+            membri_iv = el.membri_attuali(figli=figli).filter(iv=True)
+            membri_cm = el.membri_attuali(figli=figli).filter(cm=True)
+            l.append(
+                {
+                    "comitato": el,
+                    "statistiche": {
+                        "IIVV": membri_iv.count(),
+                        "CM": membri_cm.count(),
+                    }
+                }
+            )
+
+        return l
+
+    obj = {
+        "nome": STATISTICA[IIVV_CM],
+        "nazionali": get_iivv_cm(nazionali),
+        "regionali": get_iivv_cm(regionali),
+        "locali": get_iivv_cm(locali),
+        "territoriali": get_iivv_cm(territoriali),
+        "tot": None
+    }
+
+    return obj
+
+
 '''
     VALORI STATISTICHE
 '''
@@ -484,6 +547,8 @@ NUM_NUOVI_VOL = 'num_nuovi_vol'
 NUM_DIMESSI = 'num_dimessi'
 NUM_SEDI = 'num_sedi'
 NUM_SEDI_NUOVE = 'num_sedi_nuove'
+NUMERO_CORSI = 'num_corsi'
+IIVV_CM = 'iivv_cm'
 
 '''
     NOMI VISUALIZZATI STATISTICHE
@@ -496,7 +561,9 @@ STATISTICA = {
     NUM_NUOVI_VOL: "Nuovi volontari",
     NUM_DIMESSI: "Dimessi",
     NUM_SEDI: "Sedi",
-    NUM_SEDI_NUOVE: "Sedi nuove"
+    NUM_SEDI_NUOVE: "Sedi nuove",
+    NUMERO_CORSI: "Corsi",
+    IIVV_CM: "IIVV/CM"
 }
 
 '''
@@ -510,5 +577,7 @@ FUNZIONI_STATISTICHE = {
     NUM_NUOVI_VOL: statistica_num_nuovi_vol,
     NUM_DIMESSI: statistica_num_dimessi,
     NUM_SEDI: statistica_num_sedi,
-    NUM_SEDI_NUOVE: statistiche_num_sedi_nuove
+    NUM_SEDI_NUOVE: statistiche_num_sedi_nuove,
+    NUMERO_CORSI: statistica_num_corsi,
+    IIVV_CM: statistica_iivv_cm,
 }
