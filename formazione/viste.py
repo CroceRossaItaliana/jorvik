@@ -59,7 +59,9 @@ def formazione_corsi_base_domanda(request, me):
 @pagina_privata
 def formazione_corsi_base_nuovo(request, me):
     now = datetime.now() + timedelta(days=14)
-    form = ModuloCreazioneCorsoBase(request.POST or None,
+    form = ModuloCreazioneCorsoBase(
+        request.POST or None,
+        request.FILES or None,
         initial={'data_inizio': now, 'data_esame': now + timedelta(days=14)}
     )
     form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
@@ -79,6 +81,7 @@ def formazione_corsi_base_nuovo(request, me):
             data_inizio=data_inizio,
             data_esame=data_esame,
             tipo=tipo,
+            delibera_file=cd['delibera_file'],
             **kwargs
         )
 

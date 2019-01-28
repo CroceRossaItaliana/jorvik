@@ -12,6 +12,8 @@ from django.utils.timezone import now
 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE
+from anagrafica.validators import (valida_dimensione_file_5mb,
+   valida_dimensione_file_8mb, ValidateFileSize)
 from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE,
     INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
 from base.files import PDF, Zip
@@ -23,7 +25,8 @@ from curriculum.models import Titolo
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
 from survey.models import Survey
-from .validators import course_file_directory_path
+from .validators import (course_file_directory_path, validate_file_extension,
+                         delibera_file_upload_path)
 
 
 class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
@@ -60,9 +63,6 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
 
 
 class CorsoFile(models.Model):
-    from anagrafica.validators import valida_dimensione_file_8mb
-    from .validators import validate_file_extension
-
     is_enabled = models.BooleanField(default=True)
     corso = models.ForeignKey('CorsoBase')
     file = models.FileField('FIle', null=True, blank=True,
@@ -127,6 +127,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         validators=[MinValueValidator(MIN_PARTECIPANTI)])
     max_participants = models.SmallIntegerField("Massimo partecipanti",
                                                 default=MAX_PARTECIPANTI)
+    delibera_file = models.FileField('Delibera', null=True,
+        upload_to=delibera_file_upload_path,
+        validators=[ValidateFileSize(3), validate_file_extension]
+    )
     titolo_cri = models.ForeignKey(Titolo, blank=True, null=True,
                                    verbose_name="Titolo CRI")
     survey = models.ForeignKey(Survey, blank=True, null=True,

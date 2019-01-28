@@ -10,13 +10,10 @@
         <div class="col-md-6">
             <div class="panel panel-primary">
                 <div class="panel-heading">
-                    <h2 class="panel-title">
-                        <i class="fa fa-fw fa-calendar"></i>
-                        Pianifica un nuovo corso
-                    </h2>
+                    <h2 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Pianifica un nuovo corso</h2>
                 </div>
                 <div class="panel-body">
-                    <form method="POST">
+                    <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         {% bootstrap_form modulo %}
                         <button type="submit" class="btn btn-block btn-primary"
@@ -42,18 +39,26 @@
                 come le date delle lezioni, la descrizione, nonch&eacute; gestire
                 interamente il corso per te.
             </div>
+            <div class="alert alert-info">
+                <i class="fa fa-fw fa-info-circle"></i> <strong>Nota bene</strong>:
+                Nella delibera che dispone l’attivazione devono essere necessariamente indicati:<br>
+                a. data di inizio e di conclusione del corso;<br>
+                b. nome e qualifica del Direttore del corso;<br>
+                c. termine di scadenza fissato per le domande di ammissione;<br>
+                d. rinvio ai regolamenti vigenti per quanto concerne requisiti di partecipazione, programma e qualifiche dei docenti.
+            </div>
         </div>
     </div>
 
 <script>
     var form_group = $('#id_titolo_cri').closest('.form-group');
-    console.log(!$('#id_tipo option:selected').val() == "C1");
-    if ($('#id_tipo option:selected').val() != "C1") {
+    var course_value = 'C1';
+    if ($('#id_tipo option:selected').val() != course_value) {
         form_group.hide();
     }
     $('#id_tipo').on('change', function(e){
         let value = $(this).find('option:selected').val();
-        if (value && value == 'C1') {form_group.show();}
+        if (value && value == course_value) {form_group.show();}
         else {form_group.hide();}
     });
 </script>

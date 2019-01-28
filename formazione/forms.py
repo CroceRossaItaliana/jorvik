@@ -42,6 +42,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
 
     def clean(self):
         cd = self.cleaned_data
+
         if cd['data_esame'] < cd['data_inizio']:
             self.add_error('data_esame', "La data deve essere successiva "
                                          "alla data di inizio.")
@@ -51,9 +52,14 @@ class ModuloCreazioneCorsoBase(ModelForm):
 
         return cd
 
+    def clean_delibera_file(self):
+        cd = self.cleaned_data['delibera_file']
+        return cd
+
     class Meta:
         model = CorsoBase
-        fields = ['tipo', 'titolo_cri', 'data_inizio', 'data_esame', 'sede',]
+        fields = ['tipo', 'titolo_cri', 'data_inizio', 'data_esame',
+                  'delibera_file', 'sede',]
         help_texts = {
             # 'titolo_cri': 'Da selezionare se il tipo di corso non è Corso Base',
         }
@@ -63,7 +69,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
 
         super().__init__(*args, **kwargs)
         self.order_fields(('tipo',  'titolo_cri', 'data_inizio', 'data_esame',
-                           'sede', 'locazione'))
+                           'delibera_file', 'sede', 'locazione'))
 
         self.fields['titolo_cri'].queryset = Titolo.objects.filter(
             is_active=True,

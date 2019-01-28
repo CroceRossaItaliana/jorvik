@@ -68,12 +68,19 @@ admin_corsi_base_attivi_invia_messaggi.short_description = "(Solo corsi attivi) 
 class AdminCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['sede__nome', 'sede__genitore__nome', 'progressivo', 'anno', ]
     list_display = ['progressivo', 'tipo', 'stato', 'anno', 'sede',
-                    'data_inizio', 'data_esame', ]
+                    'data_inizio', 'data_esame', 'delibera_file_col',]
     list_filter = ['tipo', 'anno', 'creazione', 'stato', 'data_inizio', ]
     raw_id_fields = RAW_ID_FIELDS_CORSOBASE
     inlines = [InlineDelegaCorsoBase, InlinePartecipazioneCorsoBase,
                InlineInvitoCorsoBase, InlineLezioneCorsoBase, InlineEstensioneCorso]
     actions = [admin_corsi_base_attivi_invia_messaggi]
+
+    def delibera_file_col(self, obj):
+        from django.utils.html import format_html
+
+        file = obj.delibera_file
+        return format_html("""<a href="/media/%s">Delibera</a>""" % file) if file else ''
+    delibera_file_col.short_description = 'Delibera'
 
 
 @admin.register(InvitoCorsoBase)
