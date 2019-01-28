@@ -655,6 +655,7 @@ def rubrica_delegati(request, me, rubrica):
         tipo=delega,
         oggetto_tipo=ContentType.objects.get_for_model(Sede),
     )
+
     sedi_delega = me.sedi_deleghe_attuali(espandi=True, deleghe=deleghe).espandi(pubblici=espandi)
 
     if request.POST:  # Ho selezionato delle sedi. Elabora elenco.
