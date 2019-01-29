@@ -499,6 +499,11 @@ def statistica_num_corsi(**kwargs):
     return obj
 
 
+'''
+    STATISTICHE IIVV/CM
+
+    livello nazionale/regionale/locale/territoriale
+'''
 def statistica_iivv_cm(**kwargs):
 
     nazionali = Sede.objects.filter(estensione=NAZIONALE)
@@ -537,6 +542,54 @@ def statistica_iivv_cm(**kwargs):
 
 
 '''
+    STATISTICHE ORE DI SERVIZIO
+
+    livello nazionale/regionale/locale/territoriale
+'''
+def statistica_ore_servizio(**kwargs):
+
+    def get_tot(estensione=None, inizio=None, fine=None):
+
+        sedi = Sede.objects.filter(estensione=estensione)
+        from attivita.models import Attivita, Turno, Partecipazione
+
+        qs_attivita = Attivita.objects.filter(stato=Attivita.VISIBILE, sede__in=sedi)
+        qs_turni = Turno.objects.filter(attivita__in=qs_attivita, inizio__lte=inizio, fine__gte=fine)
+        qs_part = Partecipazione.con_esito_ok(turno__in=qs_turni)
+
+        from django.db.models import F, Sum
+        from datetime import timedelta
+
+        ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore'] or timedelta()
+
+        return {
+            "nome": ESTENDIONI_DICT[estensione],
+            "statistiche": {
+                "Ore di servizio": ore_di_servizio
+            }
+        }
+
+    inizio = kwargs.get('inizio')
+    fine = kwargs.get('fine')
+
+    obj = {
+        "nome": STATISTICA[ORE_SERVIZIO],
+        "nazionali": None,
+        "regionali": None,
+        "locali": None,
+        "territoriali": None,
+        "tot": [
+            get_tot(NAZIONALE, inizio, fine),
+            get_tot(REGIONALE, inizio, fine),
+            get_tot(LOCALE, inizio, fine),
+            get_tot(TERRITORIALE, inizio, fine),
+        ]
+    }
+
+    return obj
+
+
+'''
     VALORI STATISTICHE
 '''
 GENERALI = 'generali'
@@ -549,6 +602,7 @@ NUM_SEDI = 'num_sedi'
 NUM_SEDI_NUOVE = 'num_sedi_nuove'
 NUMERO_CORSI = 'num_corsi'
 IIVV_CM = 'iivv_cm'
+ORE_SERVIZIO = 'ore_servizio'
 
 '''
     NOMI VISUALIZZATI STATISTICHE
@@ -563,7 +617,8 @@ STATISTICA = {
     NUM_SEDI: "Sedi",
     NUM_SEDI_NUOVE: "Sedi nuove",
     NUMERO_CORSI: "Corsi",
-    IIVV_CM: "IIVV/CM"
+    IIVV_CM: "IIVV/CM",
+    ORE_SERVIZIO: "Ore di Servizio"
 }
 
 '''
@@ -580,4 +635,5 @@ FUNZIONI_STATISTICHE = {
     NUM_SEDI_NUOVE: statistiche_num_sedi_nuove,
     NUMERO_CORSI: statistica_num_corsi,
     IIVV_CM: statistica_iivv_cm,
+    ORE_SERVIZIO: statistica_ore_servizio,
 }

@@ -597,4 +597,6 @@ class ModuloStatistiche(forms.Form):
     livello_riferimento = forms.CharField(required=False)
     nome_corso = forms.CharField(required=False)
     area_riferimento = forms.CharField(required=False)
+    inizio = forms.DateField(required=False)
+    fine = forms.DateField(required=False)
 
