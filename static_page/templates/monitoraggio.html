@@ -14,7 +14,7 @@
       {% for form_id, response in type_form.items %}
         <li>
           {% if response.0 == True %}
-            <a href="https://crocerossaitaliana.typeform.com/to/{{ form_id }}?c={{ response.1 }}">{{ response.2 }}</a>
+            <a href="https://crocerossaitaliana.typeform.com/to/{{ form_id }}?c={{ response.1 }}&u={{request.user.id}}">{{ response.2 }}</a>
           {% else %}
             <span><strong>FATTO</strong>: {{ response.2 }}</span>
           {% endif %}

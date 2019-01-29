@@ -21,24 +21,24 @@ def monitoraggio(request, me):
     from django.conf import settings
 
     btns = {
-        'Sezione A – servizi di carattere sociale': 'by6gIZ',
-        'Sezione B – telefonia sociale, telesoccorso,  teleassistenza e telemedicina': 'AX0Rjm',
-        'Sezione C – salute': 'FZlCpn',
-        'Sezione D – ''''"ambiente", "sviluppo economico e coesione sociale", 
-            "cultura, sport e ricreazione", "cooperazione e solidarietà internazionale",
-            "protezione civile"
-        "''': "artG8g",
-        'Sezione E – relazioni': 'r3IRy8',
-        'Sezione F – organizzazione': 'DhH3Mk',
-        'Sezione G – risorse economiche e finanziarie': 'W6G6cD',
+        'by6gIZ': 'Sezione A – servizi di carattere sociale',
+        'AX0Rjm': 'Sezione B – telefonia sociale, telesoccorso, teleassistenza e telemedicina',
+        'FZlCpn': 'Sezione C – salute',
+        "artG8g": 'Sezione D – ''''"ambiente", "sviluppo economico e coesione sociale", "cultura, sport e ricreazione", "cooperazione e solidarietà internazionale",
+            "protezione civile"''',
+        'r3IRy8': 'Sezione E – relazioni',
+        'DhH3Mk': 'Sezione F – organizzazione',
+        'W6G6cD': 'Sezione G – risorse economiche e finanziarie',
     }
 
     if not hasattr(me, 'sede_riferimento'):
         return redirect('/')
 
     # Django
-    context = {'type_form': dict()}
     user_comitato = me.sede_riferimento().id
+    context = {
+        'type_form': {k: [True, user_comitato, v] for k, v in btns.items()}
+    }
 
     # Typeform API
     TYPEFORM_TOKEN = settings.DEBUG_CONF.get('typeform', 'token')
@@ -49,7 +49,7 @@ def monitoraggio(request, me):
     endpoint = "https://api.typeform.com/forms/%s/responses"
     btn_values = btns.values()
     test_request = requests.get(
-        endpoint % list(btn_values)[randint(0, len(btn_values))],
+        endpoint % list(btn_values)[0],
         headers=HEADERS
     )
 
@@ -67,10 +67,7 @@ def monitoraggio(request, me):
             c = c.get('c')
 
             if c and c == str(user_comitato):
-                type_form_dict[_id] = [False, user_comitato, bottone_name]
+                type_form_dict[_id][0] = False
                 break  # bottone spento
-
-        if not _id in type_form_dict:
-            type_form_dict[_id] = [True, user_comitato, bottone_name]
 
     return 'monitoraggio.html', context
