@@ -1,0 +1,25 @@
+{% extends "admin/change_list.html" %}
+{% load admin_urls i18n %}
+
+
+{% block object-tools %}
+    <ul class="object-tools">
+
+
+      {% block object-tools-items %}
+        {% if has_add_permission %}
+        <li>
+          {% url cl.opts|admin_urlname:'add' as add_url %}
+          <a href="{% add_preserved_filters add_url is_popup to_field %}" class="addlink">
+            {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
+          </a>
+        </li>
+        {% endif %}
+      <li>
+        {% url cl.opts|admin_urlname:'import_and_generate' as import_and_generate_static_page %}
+        <a href="{% add_preserved_filters import_and_generate_static_page is_popup to_field %}" class="customlink">Import Corsi/Glossario</a>
+      </li>
+      {% endblock %}
+    </ul>
+{% endblock %}
+
