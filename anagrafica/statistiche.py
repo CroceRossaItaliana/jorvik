@@ -561,8 +561,10 @@ def statistica_ore_servizio(**kwargs):
         )
         qs_turni = Turno.objects.filter(
             attivita__in=qs_attivita,
-            inizio__lte=inizio if inizio else datetime.datetime.now(),
-            fine__gte=fine if fine else datetime.datetime.now(),
+            # inizio__lte=inizio if inizio else datetime.datetime.now(),
+            # fine__gte=fine if fine else datetime.datetime.now(),
+            inizio__lte=datetime.datetime.now().date().replace(month=1, day=1),
+            fine__gte=datetime.datetime.now().date().replace(month=12, day=31)
         )
 
         ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore'] or timedelta()
@@ -574,8 +576,8 @@ def statistica_ore_servizio(**kwargs):
             }
         }
 
-    inizio = kwargs.get('inizio')
-    fine = kwargs.get('fine')
+    # inizio = kwargs.get('inizio')
+    # fine = kwargs.get('fine')
 
     obj = {
         "nome": STATISTICA[ORE_SERVIZIO],
@@ -584,10 +586,10 @@ def statistica_ore_servizio(**kwargs):
         "locali": None,
         "territoriali": None,
         "tot": [
-            get_tot(NAZIONALE, inizio, fine),
-            get_tot(REGIONALE, inizio, fine),
-            get_tot(LOCALE, inizio, fine),
-            get_tot(TERRITORIALE, inizio, fine),
+            get_tot(NAZIONALE),
+            get_tot(REGIONALE),
+            get_tot(LOCALE),
+            get_tot(TERRITORIALE),
         ]
     }
 
