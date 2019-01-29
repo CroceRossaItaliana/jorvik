@@ -1812,13 +1812,17 @@ def admin_statistiche(request, me):
         livello_riferimento = modulo.cleaned_data['livello_riferimento']
         nome_corso = modulo.cleaned_data['nome_corso']
         area_riferimento = modulo.cleaned_data['area_riferimento']
+        inizio = modulo.cleaned_data['inizio']
+        fine = modulo.cleaned_data['fine']
 
         contesto = {
-            "type": GENERALI if statistica == GENERALI else "",
+            "type": statistica,
             "obj": FUNZIONI_STATISTICHE[statistica](
                 livello_riferimento=livello_riferimento,
                 nome_corso=nome_corso,
-                area_riferimento=area_riferimento
+                area_riferimento=area_riferimento,
+                inizio=inizio,
+                fine=fine
             ),
             "ora": timezone.now(),
             "modulo": modulo,

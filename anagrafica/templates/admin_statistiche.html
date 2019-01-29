@@ -246,15 +246,11 @@
     <script>
 
         $(document).ready(function () {
-            changeForm($('[name=tipo_statistiche]').val());
+            changeForm("{{ type }}");
         });
 
         $('[name=tipo_statistiche]').change(function () {
             changeForm($(this).val());
-        });
-
-        $(document).reload(function () {
-            changeForm($('[name=tipo_statistiche]').val());
         });
 
         function changeForm(val) {
@@ -263,11 +259,22 @@
                     $('input[name=livello_riferimento]').parent().show();
                     $('input[name=nome_corso]').parent().show();
                     $('input[name=area_riferimento]').parent().show();
+                    $('input[name=inizio]').parent().hide();
+                    $('input[name=fine]').parent().hide();
+                    break;
+                case 'ore_servizio':
+                    $('input[name=livello_riferimento]').parent().hide();
+                    $('input[name=nome_corso]').parent().hide();
+                    $('input[name=area_riferimento]').parent().hide();
+                    $('input[name=inizio]').parent().show();
+                    $('input[name=fine]').parent().show();
                     break;
                 default:
                     $('input[name=livello_riferimento]').parent().hide();
                     $('input[name=nome_corso]').parent().hide();
                     $('input[name=area_riferimento]').parent().hide();
+                    $('input[name=inizio]').parent().hide();
+                    $('input[name=fine]').parent().hide();
                     break;
             }
         }
