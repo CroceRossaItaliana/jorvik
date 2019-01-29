@@ -2,6 +2,9 @@ from anagrafica.models import Appartenenza, Persona, Sede
 from formazione.models import CorsoBase
 from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE, LOCALE, ESTENDIONI_DICT
 import datetime
+from attivita.models import Attivita, Turno
+from django.db.models import F, Sum
+from datetime import timedelta
 
 '''
     OGNI FUNZIONE DOVRA AVERE QUESTO OUTPUT
@@ -551,14 +554,16 @@ def statistica_ore_servizio(**kwargs):
     def get_tot(estensione=None, inizio=None, fine=None):
 
         sedi = Sede.objects.filter(estensione=estensione)
-        from attivita.models import Attivita, Turno, Partecipazione
 
-        qs_attivita = Attivita.objects.filter(stato=Attivita.VISIBILE, sede__in=sedi)
-        qs_turni = Turno.objects.filter(attivita__in=qs_attivita, inizio__lte=inizio, fine__gte=fine)
-        qs_part = Partecipazione.con_esito_ok(turno__in=qs_turni)
-
-        from django.db.models import F, Sum
-        from datetime import timedelta
+        qs_attivita = Attivita.objects.filter(
+            stato=Attivita.VISIBILE,
+            sede__in=sedi
+        )
+        qs_turni = Turno.objects.filter(
+            attivita__in=qs_attivita,
+            inizio__lte=inizio if inizio else datetime.datetime.now(),
+            fine__gte=fine if fine else datetime.datetime.now(),
+        )
 
         ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore'] or timedelta()
 
