@@ -69,7 +69,8 @@ from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio, Q
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
-
+from anagrafica.statistiche import GENERALI, STATISTICHE
+from anagrafica.statistiche import ModuloStatisticheBase
 
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
@@ -1796,14 +1797,12 @@ def admin_import_volontari(request, me):
     return 'admin_import_volontari.html', contesto
 
 
-from anagrafica.statistiche import GENERALI, STATISTICHE
-
 @pagina_privata
 def admin_statistiche(request, me):
     if not me.utenza.is_staff:
         return redirect(ERRORE_PERMESSI)
 
-    from anagrafica.statistiche import ModuloStatisticheBase
+
 
     modulo = ModuloStatisticheBase(request.POST or None)
 
