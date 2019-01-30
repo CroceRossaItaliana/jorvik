@@ -1,0 +1,107 @@
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Comitato</th>
+            <th>Valori</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if obj.nazionali %}
+
+            <tr>
+                <td colspan="4" style="text-align: center; font-weight: bold; font-size: 14px">
+                    {{ obj.nome }}&nbsp;Nazionale
+                </td>
+            </tr>
+
+            {% for nazione in obj.nazionali %}
+                <tr>
+                    <td class="nome">{{ nazione.comitato.link|safe }}</td>
+                    <td class="" colspan="2">
+                        {% for k, v in nazione.statistiche.items %}
+                            <div class="row">
+                                <div class="col-xs-6 tiolo-metrica"> {{ k }} </div>
+                                <div class="col-xs-6 metrica"> {{ v }} </div>
+                            </div>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+
+        {% endif %}
+
+
+        {% if obj.regionali %}
+
+            <tr>
+                <td colspan="4" style="text-align: center; font-weight: bold; font-size: 14px">
+                    {{ obj.nome }}&nbsp;Regionale
+                </td>
+            </tr>
+
+            {% for regione in obj.regionali %}
+                <tr>
+                    <td class="nome">{{ regione.comitato.link|safe }}</td>
+                    <td colspan="2">
+                        {% for k, v in regione.statistiche.items %}
+                            <div class="row">
+                                <div class="col-xs-6 tiolo-metrica"> {{ k }} </div>
+                                <div class="col-xs-6 metrica"> {{ v }} </div>
+                            </div>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+
+        {% endif %}
+
+    {% if obj.locali %}
+
+        <tr>
+            <td colspan="4" style="text-align: center; font-weight: bold; font-size: 14px">
+                {{ obj.nome }}&nbsp;Locale
+            </td>
+        </tr>
+
+        {% for locale in obj.locali %}
+            <tr>
+                <td class="nome">{{ locale.comitato.link|safe }}</td>
+                <td colspan="2">
+                    {% for k, v in locale.statistiche.items %}
+                        <div class="row">
+                            <div class="col-xs-6 tiolo-metrica"> {{ k }} </div>
+                            <div class="col-xs-6 metrica"> {{ v }} </div>
+                        </div>
+                    {% endfor %}
+                </td>
+            </tr>
+        {% endfor %}
+
+    {% endif %}
+
+    {% if obj.territoriali %}
+
+        <tr>
+            <td colspan="4" style="text-align: center; font-weight: bold; font-size: 14px">
+                {{ obj.nome }}&nbsp;Territoriale
+            </td>
+        </tr>
+
+        {% for territoriale in obj.locali %}
+            <tr>
+                <td class="nome">{{ territoriale.comitato.link|safe }}</td>
+                <td colspan="2">
+                    {% for k, v in territoriale.statistiche.items %}
+                        <div class="row">
+                            <div class="col-xs-6 tiolo-metrica"> {{ k }} </div>
+                            <div class="col-xs-6 metrica"> {{ v }} </div>
+                        </div>
+                    {% endfor %}
+                </td>
+            </tr>
+        {% endfor %}
+
+    {% endif %}
+    </tbody>
+</table>
+

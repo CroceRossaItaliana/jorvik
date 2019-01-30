@@ -4,7 +4,8 @@ from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE, LOCALE, ESTE
 import datetime
 from attivita.models import Attivita, Turno
 from django.db.models import F, Sum
-from datetime import timedelta
+from datetime import timedelta, datetime
+from django import forms
 
 '''
     OGNI FUNZIONE DOVRA AVERE QUESTO OUTPUT
@@ -137,6 +138,7 @@ def statistica_num_soci_vol(**kwargs):
 
     regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
 
+
     totale_regione_soci_currente = 0
     totale_regione_volontari_current = 0
     totale_regione_soci_before = 0
@@ -144,7 +146,7 @@ def statistica_num_soci_vol(**kwargs):
 
     regione_soci_volontari = []
 
-    finish_current = datetime.datetime.now().date().replace(month=12, day=31)
+    finish_current = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
     current_year = finish_current.year
     finish_before = finish_current.replace(year=finish_current.year - 1)
     before_year = finish_before.year
@@ -222,6 +224,7 @@ def statistica_num_soci_vol(**kwargs):
     totale_regione_volontari
 '''
 def statistica_generale(**kwargs):
+    import datetime
     oggi = datetime.date.today()
     nascita_minima_35 = datetime.date(oggi.year - 36, oggi.month, oggi.day)
     persone = Persona.objects.all()
@@ -284,8 +287,8 @@ def statistica_num_nuovi_vol(**kwargs):
             }
         }
 
-    start = datetime.datetime.now().date().replace(month=1, day=1)
-    finish = datetime.datetime.now().date().replace(month=12, day=31)
+    start = datetime.now().date().replace(month=1, day=1, year=int(kwargs.get('anno_di_riferimento')))
+    finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
 
     obj = {
         "nome": STATISTICA[NUM_NUOVI_VOL],
@@ -338,8 +341,8 @@ def statistica_num_dimessi(**kwargs):
             }
         }
 
-    start = datetime.datetime.now().date().replace(month=1, day=1)
-    finish = datetime.datetime.now().date().replace(month=12, day=31)
+    start = datetime.now().date().replace(month=1, day=1, year=int(kwargs.get('anno_di_riferimento')))
+    finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
 
     obj = {
         "nome": STATISTICA[NUM_DIMESSI],
@@ -401,7 +404,7 @@ def statistica_num_sedi(**kwargs):
             }
         }
 
-    current = datetime.datetime.now().replace(day=31, month=12)
+    current = datetime.now().replace(day=31, month=12, year=int(kwargs.get('anno_di_riferimento')))
     before = current.replace(year=current.year - 1)
 
     obj = {
@@ -457,8 +460,8 @@ def statistiche_num_sedi_nuove(**kwargs):
             }
         }
 
-    start = datetime.datetime.now().date().replace(month=1, day=1)
-    finish = datetime.datetime.now().date().replace(month=12, day=31)
+    start = datetime.now().date().replace(month=1, day=1, year=int(kwargs.get('anno_di_riferimento')))
+    finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
 
     obj = {
         "nome": STATISTICA[NUM_SEDI_NUOVE],
@@ -561,10 +564,8 @@ def statistica_ore_servizio(**kwargs):
         )
         qs_turni = Turno.objects.filter(
             attivita__in=qs_attivita,
-            # inizio__lte=inizio if inizio else datetime.datetime.now(),
-            # fine__gte=fine if fine else datetime.datetime.now(),
-            inizio__lte=datetime.datetime.now().date().replace(month=1, day=1),
-            fine__gte=datetime.datetime.now().date().replace(month=12, day=31)
+            inizio__lte=datetime.now().date().replace(month=1, day=1),
+            fine__gte=datetime.now().date().replace(month=12, day=31)
         )
 
         ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore'] or timedelta()
@@ -575,10 +576,6 @@ def statistica_ore_servizio(**kwargs):
                 "Ore di servizio": ore_di_servizio
             }
         }
-
-    # inizio = kwargs.get('inizio')
-    # fine = kwargs.get('fine')
-
     obj = {
         "nome": STATISTICA[ORE_SERVIZIO],
         "nazionali": None,
@@ -594,6 +591,23 @@ def statistica_ore_servizio(**kwargs):
     }
 
     return obj
+
+
+ANNI_DI_RIFERIMENTO = 10
+
+def get_years():
+    l = []
+    current_year = datetime.now().year
+    for i in range(0, ANNI_DI_RIFERIMENTO):
+        year = "{}/{}".format(current_year - i, current_year - i - 1)
+        l.append(
+            (current_year - i, year)
+        )
+    return l
+
+
+def get_type():
+    return [(k, v) for k, v in STATISTICA.items()]
 
 
 '''
@@ -628,19 +642,28 @@ STATISTICA = {
     ORE_SERVIZIO: "Ore di Servizio"
 }
 
+
+class ModuloStatisticheBase(forms.Form):
+    tipo_statistiche = forms.ChoiceField(widget=forms.Select(), choices=get_type(), required=True)
+    livello_riferimento = forms.CharField(required=False)
+    nome_corso = forms.CharField(required=False)
+    area_riferimento = forms.CharField(required=False)
+    anno_di_riferimento = forms.ChoiceField(widget=forms.Select(), choices=get_years(), required=False)
+
+
 '''
     FUNZIONI CHE CALCOLANO LE STATISTICHE
 '''
-FUNZIONI_STATISTICHE = {
-    GENERALI: statistica_generale,
-    NUM_VOL_M_F: statistica_num_vol_m_f,
-    NUM_SOCI_VOL: statistica_num_soci_vol,
-    NUM_VOL_FASCIA_ETA: statistica_num_vol_fascia_eta,
-    NUM_NUOVI_VOL: statistica_num_nuovi_vol,
-    NUM_DIMESSI: statistica_num_dimessi,
-    NUM_SEDI: statistica_num_sedi,
-    NUM_SEDI_NUOVE: statistiche_num_sedi_nuove,
-    NUMERO_CORSI: statistica_num_corsi,
-    IIVV_CM: statistica_iivv_cm,
-    ORE_SERVIZIO: statistica_ore_servizio,
+STATISTICHE = {
+    GENERALI: (statistica_generale, ('statistiche_generali.html', )),
+    NUM_VOL_M_F: (statistica_num_vol_m_f, ('statistiche_per_comitati.html', )),
+    NUM_SOCI_VOL: (statistica_num_soci_vol, ('statistiche_per_comitati.html', 'statistiche_totali.html', )),
+    NUM_VOL_FASCIA_ETA: (statistica_num_vol_fascia_eta, ('statistiche_per_comitati.html', )),
+    NUM_NUOVI_VOL: (statistica_num_nuovi_vol, ('statistiche_totali.html', )),
+    NUM_DIMESSI: (statistica_num_dimessi, ('statistiche_totali.html', )),
+    NUM_SEDI: (statistica_num_sedi, ('statistiche_totali.html', )),
+    NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', )),
+    NUMERO_CORSI: (statistica_num_corsi, ('statistiche_per_comitati.html', )),
+    IIVV_CM: (statistica_iivv_cm, ('statistiche_per_comitati.html', )),
+    ORE_SERVIZIO: (statistica_ore_servizio, ('statistiche_totali.html', )),
 }

@@ -69,7 +69,6 @@ from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio, Q
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
-from anagrafica.forms import ModuloStatistiche
 
 
 TIPO_VOLONTARIO = 'volontario'
@@ -1797,42 +1796,47 @@ def admin_import_volontari(request, me):
     return 'admin_import_volontari.html', contesto
 
 
-from anagrafica.statistiche import GENERALI
-from anagrafica.statistiche import FUNZIONI_STATISTICHE
+from anagrafica.statistiche import GENERALI, STATISTICHE
 
 @pagina_privata
 def admin_statistiche(request, me):
     if not me.utenza.is_staff:
         return redirect(ERRORE_PERMESSI)
 
-    modulo = ModuloStatistiche(request.POST or None)
+    from anagrafica.statistiche import ModuloStatisticheBase
+
+    modulo = ModuloStatisticheBase(request.POST or None)
 
     if request.POST and modulo.is_valid():
-        statistica = modulo.cleaned_data['tipo_statistiche']
+        tipo = modulo.cleaned_data['tipo_statistiche']
         livello_riferimento = modulo.cleaned_data['livello_riferimento']
         nome_corso = modulo.cleaned_data['nome_corso']
         area_riferimento = modulo.cleaned_data['area_riferimento']
-        # inizio = modulo.cleaned_data['inizio']
-        # fine = modulo.cleaned_data['fine']
+        anno_di_riferimento = modulo.cleaned_data['anno_di_riferimento']
+
+        statistica = STATISTICHE[tipo]
 
         contesto = {
-            "type": statistica,
-            "obj": FUNZIONI_STATISTICHE[statistica](
+            "type": tipo,
+            "obj": statistica[0](
                 livello_riferimento=livello_riferimento,
                 nome_corso=nome_corso,
                 area_riferimento=area_riferimento,
-                # inizio=inizio,
-                # fine=fine
+                anno_di_riferimento=anno_di_riferimento
             ),
+            "views": statistica[1],
             "ora": timezone.now(),
-            "modulo": modulo,
+            "modulo": modulo
         }
 
         return 'admin_statistiche.html', contesto
 
+    statistica = STATISTICHE[GENERALI]
+
     contesto = {
         "type": GENERALI,
-        "obj": FUNZIONI_STATISTICHE[GENERALI](),
+        "obj": statistica[0](),
+        "views": statistica[1],
         "ora": timezone.now(),
         "modulo": modulo
     }

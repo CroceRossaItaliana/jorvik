@@ -585,18 +585,3 @@ class ModuloUSModificaUtenza(ModuloUtenza):
             raise ValidationError("Puoi solo cambiare l'e-mail di accesso se questa è stata "
                                   "richiesta dall'utente, oppure hai già avvisato l'utente della "
                                   "modifica e della nuova e-mail per accedere.")
-
-
-from anagrafica.statistiche import STATISTICA
-
-class ModuloStatistiche(forms.Form):
-    select_tipo = (
-        [(k, v) for k, v in STATISTICA.items()]
-    )
-    tipo_statistiche = forms.ChoiceField(widget=forms.Select(), choices=select_tipo, required=True)
-    livello_riferimento = forms.CharField(required=False)
-    nome_corso = forms.CharField(required=False)
-    area_riferimento = forms.CharField(required=False)
-    # inizio = forms.DateField(required=False)
-    # fine = forms.DateField(required=False)
-
