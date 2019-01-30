@@ -18,7 +18,7 @@ urlpatterns = [
     url(r'^fotografia/fototessera/$', views.utente_fotografia_fototessera, name='fototessera'),
     url(r'^documenti/$', views.utente_documenti, name='documenti'),
     url(r'^documenti/zip/$', views.utente_documenti_zip, name='documenti_zip'),
-    url(r'^documenti/cancella/(?P<pk>.*)/$', views.utente_documenti_cancella),
+    url(r'^documenti/cancella/(?P<pk>.*)/$', views.utente_documenti_cancella, name='remove_document'),
     url(r'^storico/$', views.utente_storico, name='storico'),
     url(r'^contatti/$', views.utente_contatti, name='contatti'),
     url(r'^rubrica/referenti/$', views.utente_rubrica_referenti),

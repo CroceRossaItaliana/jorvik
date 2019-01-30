@@ -441,25 +441,21 @@ def utente_documenti(request, me):
     if not me.volontario and not me.dipendente:
         return errore_no_volontario(request, me)
 
-    contesto = {
-        "documenti": me.documenti.all()
+    context = {
+        'documenti': me.documenti.all()
     }
 
-    if request.method == "POST":
-
-        nuovo_doc = Documento(persona=me)
-        modulo_aggiunta = ModuloCreazioneDocumento(request.POST, request.FILES, instance=nuovo_doc)
-
-        if modulo_aggiunta.is_valid():
-            modulo_aggiunta.save()
-
+    if request.method == 'POST':
+        doc = Documento(persona=me)
+        form = ModuloCreazioneDocumento(request.POST, request.FILES, instance=doc)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('utente:documenti'))
     else:
+        form = ModuloCreazioneDocumento()
 
-        modulo_aggiunta = ModuloCreazioneDocumento()
-
-    contesto.update({"modulo_aggiunta": modulo_aggiunta})
-
-    return 'anagrafica_utente_documenti.html', contesto
+    context.update({'modulo_aggiunta': form})
+    return 'anagrafica_utente_documenti.html', context
 
 
 @pagina_privata

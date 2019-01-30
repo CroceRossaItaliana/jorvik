@@ -1,53 +1,38 @@
 {% extends "anagrafica_utente_vuota.html" %}
 
 {% load bootstrap3 %}
-
 {% block pagina_titolo %}Gestione Documenti{% endblock %}
 
 {% block app_contenuto %}
-
     <div class="alert bg-info">
-        <p>
-            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire i tuoi documenti.
-        </p>
-
+        <p><i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire i tuoi documenti.</p>
     </div>
 
-    <form action="/utente/documenti/" method="POST" enctype="multipart/form-data">
-
+    <form action="{% url 'utente:documenti' %}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
 
         <div class="row">
-
             <div class="col-lg-8">
                 <div class="panel panel-info">
-
                     <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <i class="fa fa-folder-o fa-fw"></i> Documenti caricati
-
-                        </h4>
-
-
+                        <h4 class="panel-title"><i class="fa fa-folder-o fa-fw"></i> Documenti caricati</h4>
                     </div>
 
                     <div class="panel-body">
-
-
                         <table class="table table-condensed table-responsive">
-
                             <thead>
-                                <th>Data caricamento</th>
-                                <th>Tipo</th>
-                                <th>Visualizza</th>
-                                <th>Cancella</th>
+                                <th width="24%">Data caricamento</th>
+                                <th width="22%">Tipo</th>
+                                <th width="22%">Scadenza</th>
+                                <th width="22%">Visualizza</th>
+                                <th width="10%">Cancella</th>
                             </thead>
-
                             <tbody>
                             {% for d in documenti %}
                                 <tr>
-                                    <td>{{ d.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                    <td style="font-size: 12px;">{{ d.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
                                     <td>{{ d.get_tipo_display }}</td>
+                                    <td style="text-align:center;">{{ d.expires|date:"d/m/Y"|default:"-" }}</td>
                                     <td>
                                         <a href="{{ d.file.url }}" download title="Scarica il documento">
                                             <i class="fa fa-download"></i> Scarica
@@ -56,77 +41,38 @@
                                             {% endif %}
                                         </a>
                                     </td>
-                                    <td>
-                                        <a href="/utente/documenti/cancella/{{ d.pk }}/" title="Cancella il documento">
-                                            <i class="fa fa-remove"></i> Cancella
-                                        </a>
+                                    <td style="text-align:center;">
+                                        <a href="{% url 'utente:remove_document' d.pk %}" title="Cancella il documento"><i class="fa fa-remove"></i></a>
                                     </td>
                                 </tr>
 
                             {% empty %}
                                 <tr>
-                                    <td colspan="4" class="bg-warning">
-                                        <i class="fa fa-info"></i> Nessun documento caricato.
+                                    <td colspan="5" class="bg-warning"><i class="fa fa-info"></i> Nessun documento caricato.
                                     </td>
                                 </tr>
-
                             {% endfor %}
-
-
                             </tbody>
-
                         </table>
 
                         {% if documenti %}
-                            <a class="btn btn-default btn-block btn-sm" href="/utente/documenti/zip/">
-                                <i class="fa fa-download fa-fw"></i>
-                                Scarica tutti i documenti (ZIP)
-                            </a>
+                            <a class="btn btn-default btn-block btn-sm" href="{% url 'utente:documenti_zip' %}"><i class="fa fa-download fa-fw"></i> Scarica tutti i documenti (ZIP)</a>
                         {% endif %}
-
                     </div>
-
                 </div>
-
-
-
             </div>
 
             <div class="col-lg-4">
-
                 <div class="panel panel-primary">
-
                     <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <i class="fa fa-plus"></i> Aggiungi documento
-                        </h4>
-
+                        <h4 class="panel-title"><i class="fa fa-plus"></i> Aggiungi documento</h4>
                     </div>
-
                     <div class="panel-body">
                         {% bootstrap_form modulo_aggiunta %}
-
-                        <button class="btn btn-primary btn-block">
-                            <i class="fa fa-check"></i>
-                            Carica
-                        </button>
-
+                        <button class="btn btn-primary btn-block"><i class="fa fa-check"></i> Carica</button>
                     </div>
-
                 </div>
-
-
-
-
-
             </div>
-
-
-
         </div>
-
-
-
     </form>
-
 {% endblock %}

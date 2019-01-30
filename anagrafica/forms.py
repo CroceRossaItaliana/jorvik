@@ -208,6 +208,7 @@ class ModuloStepAnagrafica(ModelForm):
                 residenza_value = cd['%s_residenza' % f]
                 cd[domicilio_key] = residenza_value
 
+
 class ModuloModificaAnagrafica(ModelForm):
     class Meta:
         model = Persona
@@ -311,9 +312,35 @@ class ModuloNuovaFototessera(ModelForm):
 
 
 class ModuloCreazioneDocumento(ModelForm):
+    expires = forms.DateField(required=False)
+
     class Meta:
         model = Documento
-        fields = ['tipo', 'file']
+        fields = ['tipo', 'file', 'expires']
+        labels = {
+            'expires': "Data di scadenza",
+        }
+
+    def clean(self):
+        cd = self.cleaned_data
+        type = cd['tipo']
+
+        if type in [Documento.CARTA_IDENTITA, Documento.PATENTE_CIVILE]:
+            expires_error = None
+            expires = cd['expires']
+
+            if not expires:
+                expires_error = 'Indicare la data di scadenza del documento'
+            elif now().date() > expires:
+                expires_error = 'Non si può caricare documento scaduto.'
+
+            if expires_error:
+                raise ValidationError({'expires': ValidationError(expires_error)})
+
+        return cd
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class ModuloModificaPassword(PasswordChangeForm):

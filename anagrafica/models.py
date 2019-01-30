@@ -1380,9 +1380,7 @@ class Telefono(ConMarcaTemporale, ModelloSemplice):
 
 
 class Documento(ModelloSemplice, ConMarcaTemporale):
-    """
-    Rappresenta un documento caricato da un utente.
-    """
+    """ Rappresenta un documento caricato da un utente. """
 
     # Tipologie di documento caricabili
     CARTA_IDENTITA = 'I'
@@ -1402,6 +1400,7 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
     persona = models.ForeignKey(Persona, related_name="documenti", db_index=True, on_delete=models.CASCADE)
     file = models.FileField("File", upload_to=GeneratoreNomeFile('documenti/'),
                             validators=[valida_dimensione_file_8mb])
+    expires = models.DateField(null=True)
 
     class Meta:
         verbose_name_plural = "Documenti"
