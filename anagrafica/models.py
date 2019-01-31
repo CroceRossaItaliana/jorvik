@@ -1391,8 +1391,8 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
     def is_requested_for_course(self):
         """ Restituisce True se il proprietario del documento ha richieste di
         partecipazione ai corsi confermate o in attesa. """
-        if self.persona.richieste_di_partecipazione().count() > 0:
-            if self.tipo in [self.CARTA_IDENTITA, self.PATENTE_CIVILE]:
+        if self.tipo in [self.CARTA_IDENTITA, self.PATENTE_CIVILE]:
+            if self.persona.richieste_di_partecipazione().count() > 0:
                 return True
         return False
 

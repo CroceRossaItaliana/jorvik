@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm, modelformset_factory
@@ -230,8 +228,10 @@ class CorsoExtensionForm(ModelForm):
 CorsoSelectExtensionFormSet = modelformset_factory(CorsoEstensione, extra=1,
     max_num=3, form=CorsoExtensionForm, can_delete=True)
 
+
 class ModuloConfermaIscrizioneCorso(forms.Form):
     IS_CORSO_NUOVO = True
+
 
 class ModuloConfermaIscrizioneCorsoBase(forms.Form):
     conferma_1 = forms.BooleanField(
