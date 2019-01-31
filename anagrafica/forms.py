@@ -312,14 +312,11 @@ class ModuloNuovaFototessera(ModelForm):
 
 
 class ModuloCreazioneDocumento(ModelForm):
-    expires = forms.DateField(required=False)
+    expires = forms.DateField(required=False, label='Data di scadenza')
 
     class Meta:
         model = Documento
         fields = ['tipo', 'file', 'expires']
-        labels = {
-            'expires': "Data di scadenza",
-        }
 
     def clean(self):
         cd = self.cleaned_data
