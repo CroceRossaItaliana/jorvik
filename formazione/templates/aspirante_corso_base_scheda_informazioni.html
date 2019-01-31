@@ -22,14 +22,30 @@
                 </p>
             {% else %}
                 <p>Se sei interessat{{ me.genere_o_a }} a iscriverti a questo corso, clicca sul pulsante seguente.
-                    Notificheremo il tuo interesse al direttore del corso, che ti contatter&agrave;</p>
+                    Notificheremo il tuo interesse al direttore del corso, che ti contatterà
+
+                    <label for="autocert_assenza_condanne_penali">
+                        <input type="checkbox" id="autocert_assenza_condanne_penali" style="display: inline-block;">
+                        Autocertificare l’assenza di condanne penali, con sentenza passata in giudicato, per uno dei reati comportanti la destituzione di diritto dal pubblico impiego
+                    </label>
+                </p>
                 <p>
-                    <a href="{% url 'aspirante:subscribe' corso.pk %}" class="btn btn-block btn-success">
+                    <a href="{% url 'aspirante:subscribe' corso.pk %}" class="btn btn-block btn-success" id="VO_want_to_participate_to_this_course">
                         <i class="fa fa-fw fa-check-circle"></i> Voglio iscrivermi a questo corso
                     </a>
                 </p>
             {% endif %}
         </div>
+
+        <script>
+            $('#VO_want_to_participate_to_this_course').on('click', function(e) {
+                let autocert_assenza_condanne_penali = $('#autocert_assenza_condanne_penali');
+                if (!autocert_assenza_condanne_penali.is(':checked')) {
+                    e.preventDefault();
+                    autocert_assenza_condanne_penali.parent().css({'color': 'red'});
+                }
+            });
+        </script>
 
     {% elif puoi_partecipare in corso.SEI_ISCRITTO %}
         {% if puoi_partecipare == corso.SEI_ISCRITTO_PUOI_RITIRARTI %}
