@@ -460,14 +460,17 @@ def utente_documenti(request, me):
 
 @pagina_privata
 def utente_documenti_cancella(request, me, pk):
-
     doc = get_object_or_404(Documento, pk=pk)
 
     if not doc.persona == me:
         return redirect('/errore/permessi/')
 
-    doc.delete()
-    return redirect('/utente/documenti/')
+    if doc.can_be_deleted:
+        doc.delete()
+    else:
+        messages.error(request, 'Questo documento non può essere cancellato')
+
+    return redirect(reverse('utente:documenti'))
 
 
 @pagina_privata

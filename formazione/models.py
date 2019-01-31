@@ -148,11 +148,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO = "ALT"
     NON_PUOI_SEI_ASPIRANTE = 'ASP'
     NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI = 'NHT'
+    NON_HAI_CARICATO_DOCUMENTI_PERSONALI = 'NHCDP'
+    NON_HAI_DOCUMENTO_PERSONALE_VALIDO = 'NHDPV'
     NON_PUOI_ISCRIVERTI = (NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO,
                            NON_PUOI_ISCRIVERTI_TROPPO_TARDI,
                            NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO,
                            NON_PUOI_SEI_ASPIRANTE,
-                           NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI)
+                           NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI,
+                           NON_HAI_CARICATO_DOCUMENTI_PERSONALI,
+                           NON_HAI_DOCUMENTO_PERSONALE_VALIDO)
 
     NON_PUOI_ISCRIVERTI_SOLO_SE_IN_AUTONOMIA = (NON_PUOI_ISCRIVERTI_TROPPO_TARDI,)
 
@@ -182,6 +186,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         if self.troppo_tardi_per_iscriverti:
             return self.NON_PUOI_ISCRIVERTI_TROPPO_TARDI
+
+        if not persona.personal_identity_documents():
+            return self.NON_HAI_CARICATO_DOCUMENTI_PERSONALI
+
+        if persona.personal_identity_documents().filter(
+                expires__lt=datetime.datetime.now().date()):
+            return self.NON_HAI_DOCUMENTO_PERSONALE_VALIDO
 
         return self.PUOI_ISCRIVERTI_OK
 

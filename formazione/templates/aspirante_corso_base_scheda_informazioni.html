@@ -16,8 +16,7 @@
                     come aspirante su Gaia. Potrai vedere i corsi nelle tue vicinanze ed essere informato immediatamente
                     quando un nuovo corso viene attivato vicino a te!</p>
                 <p>
-                    <a href="https://gaia.cri.it/registrati/aspirante/"
-                       class="btn btn-block btn-success">
+                    <a href="/registrati/aspirante/" class="btn btn-block btn-success">
                         <i class="fa fa-fw fa-check-circle"></i> Voglio registrarmi come Aspirante
                     </a>
                 </p>
@@ -57,44 +56,31 @@
         {% endif %}
 
     {% elif puoi_partecipare in corso.NON_PUOI_ISCRIVERTI %}
+        <div class="alert alert-warning"><i class="fa fa-fw fa-info-circle"></i>
         {% if puoi_partecipare == corso.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO %}
-            <div class="alert alert-warning">
-                <i class="fa fa-fw fa-info-circle"></i>
                 Sei gi&agrave; parte di Croce Rossa Italiana, le funzionalit&agrave; di iscrizione al corso sono disabilitate.
-            </div>
-
         {% elif puoi_partecipare == corso.NON_PUOI_ISCRIVERTI_TROPPO_TARDI %}
-            <div class="alert alert-warning">
-                <i class="fa fa-fw fa-info-circle"></i>
                 Questo corso &egrave; gi&agrave; iniziato da troppo tempo per iscriverti.
-            </div>
-
         {% elif puoi_partecipare == corso.NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO %}
-            <div class="alert alert-warning">
-                <i class="fa fa-fw fa-info-circle"></i>
                 Sei gi&agrave; iscritt{{ me.genere_o_a }} a un altro corso, quindi non puoi iscriverti a questo.
-            </div>
         {% elif puoi_partecipare == corso.NON_PUOI_SEI_ASPIRANTE %}
-            <div class="alert alert-warning">
-                <i class="fa fa-fw fa-info-circle"></i>
-                Non puoi iscriverti a questo corso..
-            </div>
+                Non puoi iscriverti a questo corso.
+        {% elif puoi_partecipare == corso.NON_HAI_CARICATO_DOCUMENTI_PERSONALI %}
+            Per iscriverti a questo corso <a href="{% url 'utente:documenti' %}">inserisci la copia di un documento di riconoscimento</a> in corso di validità.
+        {% elif puoi_partecipare == corso.NON_HAI_DOCUMENTO_PERSONALE_VALIDO %}
+            Per iscriverti a questo corso devi <a href="{% url 'utente:documenti' %}">aggiornare il documento di riconoscimento</a> in corso di validità.
+        {% else %}
+            Non puoi partecipare a questo corso.
         {% endif %}
+        </div>
     {% endif %}
-
 {% endif %}
 
  <div class="row">
     <div class="col-md-3">
         <div class="panel panel-info">
             <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-user"></i>
-                    Direttori
-                    <span class="pull-right">
-                        {{ corso.delegati_attuali.count }}
-                    </span>
-                </h3>
+                <h3 class="panel-title"><i class="fa fa-fw fa-user"></i> Direttori <span class="pull-right">{{ corso.delegati_attuali.count }}</span></h3>
             </div>
 
             <div class="panel-body">
@@ -102,8 +88,7 @@
                 {% for direttore in corso.delegati_attuali %}
                     {% card direttore extra_class='' mute_contact=True %}
                 {% empty %}
-                    <i class="fa fa-fw fa-warning"></i>
-                    Nessun direttore.
+                    <i class="fa fa-fw fa-warning"></i> Nessun direttore.
                 {% endfor %}
                 </div>
             </div>
@@ -113,10 +98,7 @@
     <div class="col-md-3">
         <div class="panel panel-info">
             <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-home"></i>
-                    Organizzatore
-                </h3>
+                <h3 class="panel-title"><i class="fa fa-fw fa-home"></i> Organizzatore</h3>
             </div>
             <div class="panel-body">
                 <strong><a href="{{ corso.sede.url }}" target="_new">{{ corso.sede.nome }}</a></strong><br />
@@ -129,10 +111,7 @@
     <div class="col-md-3">
         <div class="panel panel-info">
             <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-calendar"></i>
-                    Data di inizio
-                </h3>
+                <h3 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Data di inizio</h3>
             </div>
             <div class="panel-body">
                 {{ corso.data_inizio }}

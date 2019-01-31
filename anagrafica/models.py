@@ -191,7 +191,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return normalizza_nome(self.cognome + " " + self.nome)
 
-
     # Q: Qual e' l'email di questa persona?
     # A: Una persona puo' avere da zero a due indirizzi email.
     #    - Persona.email_contatto e' quella scelta dalla persona per il contatto.
@@ -253,28 +252,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def ultimo_tesserino(self):
         return self.tesserini.all().order_by("creazione").last()
 
-    def __str__(self):
-        return self.nome_completo
-
-    class Meta:
-        verbose_name_plural = "Persone"
-        app_label = 'anagrafica'
-        index_together = [
-            ['nome', 'cognome'],
-            ['nome', 'cognome', 'codice_fiscale'],
-            ['id', 'nome', 'cognome', 'codice_fiscale'],
-        ]
-        permissions = (
-            ('view_persona', "Can view persona"),
-            ('transfer_persona', "Can transfer persona"),
-        )
-
     # Q: Qual e' il numero di telefono di questa persona?
     # A: Una persona puo' avere da zero ad illimitati numeri di telefono.
     #    - Persona.numeri_telefono ottiene l'elenco di oggetti Telefono.
     #    - Per avere un elenco di numeri di telefono formattati, usare ad esempio
     #       numeri = [str(x) for x in Persona.numeri_telefono]
     #    - Usare Persona.aggiungi_numero_telefono per aggiungere un numero di telefono.
+
     def numeri_pubblici(self):
         numeri_servizio = self.numeri_telefono.filter(servizio=True)
         if numeri_servizio.exists():
@@ -718,6 +702,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         from formazione.models import PartecipazioneCorsoBase, CorsoBase
         return PartecipazioneCorsoBase.con_esito_ok().filter(persona=self, corso__stato=CorsoBase.ATTIVO).first()
 
+    def richieste_di_partecipazione(self):
+        """ Restituisce richieste di partecipazione confermate e in attesa """
+        from formazione.models import PartecipazioneCorsoBase, CorsoBase
+
+        confirmed = PartecipazioneCorsoBase.con_esito_ok()
+        pending = PartecipazioneCorsoBase.con_esito_pending()
+        requests_to_courses = confirmed | pending
+
+        return requests_to_courses.filter(persona=self, corso__stato=CorsoBase.ATTIVO)
+
     @property
     def volontario_da_meno_di_un_anno(self):
         """
@@ -727,6 +721,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             inizio_anno = poco_fa().replace(month=1, day=1)
             r = self.appartenenze_attuali().filter(membro=Appartenenza.VOLONTARIO, inizio__gte=inizio_anno)
             return r.exists()
+
+    def personal_identity_documents(self):
+        return self.documenti.filter(tipo__in=[Documento.CARTA_IDENTITA,
+                                               Documento.PATENTE_CIVILE])
 
     @property
     def url(self):
@@ -1311,6 +1309,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         return len(intersection) == len(corso_titles)
 
+    def __str__(self):
+        return self.nome_completo
+
     def save(self, *args, **kwargs):
         self.nome = normalizza_nome(self.nome)
         self.cognome = normalizza_nome(self.cognome)
@@ -1320,6 +1321,19 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             self.genere = self.genere_codice_fiscale
             
         super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name_plural = "Persone"
+        app_label = 'anagrafica'
+        index_together = [
+            ['nome', 'cognome'],
+            ['nome', 'cognome', 'codice_fiscale'],
+            ['id', 'nome', 'cognome', 'codice_fiscale'],
+        ]
+        permissions = (
+            ('view_persona', "Can view persona"),
+            ('transfer_persona', "Can transfer persona"),
+        )
 
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
@@ -1401,6 +1415,21 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
     file = models.FileField("File", upload_to=GeneratoreNomeFile('documenti/'),
                             validators=[valida_dimensione_file_8mb])
     expires = models.DateField(null=True)
+
+    @property
+    def is_requested_for_course(self):
+        """ Restituisce True se il proprietario del documento ha richieste di
+        partecipazione ai corsi confermate o in attesa. """
+        if self.persona.richieste_di_partecipazione().count() > 0:
+            if self.tipo in [self.CARTA_IDENTITA, self.PATENTE_CIVILE]:
+                return True
+        return False
+
+    @property
+    def can_be_deleted(self):
+        if self.is_requested_for_course:
+            return False
+        return True
 
     class Meta:
         verbose_name_plural = "Documenti"
