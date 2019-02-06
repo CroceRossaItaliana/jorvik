@@ -7,38 +7,6 @@ from django.db.models import F, Sum
 from datetime import timedelta, datetime
 from django import forms
 
-'''
-    OGNI FUNZIONE DOVRA AVERE QUESTO OUTPUT
-    
-    {
-        "nome": @NOME DA VISUALIZZARE,
-        "nazionali": @LISTA,
-        "regionali": @LISTA,
-        "locali": @LISTA,
-        "territoriali": @LISTA 
-        "tot": @LIST_TOT
-    }
-    
-    @LISTA
-    [
-        {
-            "comitato": @COMITATO,
-            "statistiche": {
-                @NOMEVALORE: @VALORE NUMERICO STATISTICA
-            }
-        }
-    ]
-    
-    @LIST_TOT
-    [
-        {
-            "nome": @Comitato
-            "statistiche": {
-                @NOMEVALORE: @VALORE NUMERICO STATISTICA
-            }
-        }
-    ]
-'''
 
 '''
     STATISTICHE PER FASCI DI ETA
@@ -138,7 +106,6 @@ def statistica_num_soci_vol(**kwargs):
 
     regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
 
-
     totale_regione_soci_currente = 0
     totale_regione_volontari_current = 0
     totale_regione_soci_before = 0
@@ -184,10 +151,38 @@ def statistica_num_soci_vol(**kwargs):
                 }
             }
         ]
+
         totale_regione_soci_currente += regione_soci_current
         totale_regione_volontari_current += regione_volontari_current
         totale_regione_soci_before += regione_soci_before
         totale_regione_volontari_before += regione_volontari_before
+
+    # Elimino la doppia presenza delle sede Area Metropolitana di Roma Capitale
+    metropolitana_roma = Sede.objects.filter(nome="Comitato dell'Area Metropolitana di Roma Capitale")[0]
+    regione_soci_current = int(
+        metropolitana_roma.membri_attuali(
+            figli=False, membro__in=Appartenenza.MEMBRO_SOCIO, creazione__lte=finish_current
+        ).count()
+    )
+    regione_soci_before = int(
+        metropolitana_roma.membri_attuali(
+            figli=False, membro__in=Appartenenza.MEMBRO_SOCIO, creazione__lte=finish_before
+        ).count()
+    )
+    regione_volontari_current = int(
+        metropolitana_roma.membri_attuali(
+            figli=False, membro=Appartenenza.VOLONTARIO, creazione__lte=finish_current
+        ).count()
+    )
+    regione_volontari_before = int(
+        metropolitana_roma.membri_attuali(
+            figli=False, membro=Appartenenza.VOLONTARIO, creazione__lte=finish_before
+        ).count()
+    )
+    totale_regione_soci_currente -= regione_soci_current
+    totale_regione_volontari_current -= regione_volontari_current
+    totale_regione_soci_before -= regione_soci_before
+    totale_regione_volontari_before -= regione_volontari_before
 
     obj = {
         "nome": STATISTICA[NUM_SOCI_VOL],
