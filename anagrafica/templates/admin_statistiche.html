@@ -79,18 +79,29 @@
 
         function showAnnoRiferimento() {
             $('input[name=livello_riferimento]').parent().hide();
-                    $('input[name=nome_corso]').parent().hide();
-                    $('input[name=area_riferimento]').parent().hide();
-                    $('select[name=anno_di_riferimento]').parent().show();
+            $('input[name=nome_corso]').parent().hide();
+            $('input[name=area_riferimento]').parent().hide();
+            $('select[name=anno_di_riferimento]').parent().show();
+        }
+
+        function showNumCorsi() {
+            $('input[name=livello_riferimento]').parent().show();
+            $('input[name=area_riferimento]').parent().show();
+            $('input[name=nome_corso]').parent().show();
+            $('select[name=anno_di_riferimento]').parent().hide();
+        }
+
+        function showDefault() {
+            $('input[name=livello_riferimento]').parent().hide();
+            $('input[name=nome_corso]').parent().hide();
+            $('input[name=area_riferimento]').parent().hide();
+            $('select[name=anno_di_riferimento]').parent().hide();
         }
 
         function changeForm(val) {
             switch (val){
                 case 'num_corsi':
-                    $('input[name=livello_riferimento]').parent().show();
-                    $('input[name=nome_corso]').parent().show();
-                    $('input[name=area_riferimento]').parent().show();
-                    $('select[name=anno_di_riferimento]').parent().hide()
+                    showNumCorsi();
                     break;
                 case 'num_soci_vol':
                     showAnnoRiferimento();
@@ -106,12 +117,9 @@
                     break;
                 case 'num_sedi_nuove':
                     showAnnoRiferimento();
-                break;
+                    break;
                 default:
-                    $('input[name=livello_riferimento]').parent().hide();
-                    $('input[name=nome_corso]').parent().hide();
-                    $('input[name=area_riferimento]').parent().hide();
-                    $('select[name=anno_di_riferimento]').parent().hide();
+                    showDefault();
                     break;
             }
         }
