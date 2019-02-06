@@ -22,6 +22,7 @@ from base.utils import concept, poco_fa
 from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico, ConPDF
 from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione, ModelloSemplice
 from curriculum.models import Titolo
+from curriculum.areas import OBBIETTIVI_STRATEGICI
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
 from survey.models import Survey
@@ -133,6 +134,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     )
     titolo_cri = models.ForeignKey(Titolo, blank=True, null=True,
                                    verbose_name="Titolo CRI")
+    cdf_level = models.CharField(max_length=3, choices=Titolo.CDF_LIVELLI,
+                                 null=True, blank=True)
+    cdf_area = models.CharField(max_length=3, choices=OBBIETTIVI_STRATEGICI,
+                                 null=True, blank=True)
     survey = models.ForeignKey(Survey, blank=True, null=True,
                                verbose_name='Questionario di gradimento')
 

@@ -5,7 +5,11 @@ from django.forms import ModelForm, modelformset_factory
 from autocomplete_light import shortcuts as autocomplete_light
 from base.wysiwyg import WYSIWYGSemplice
 
+from anagrafica.permessi import applicazioni as permessi
+from anagrafica.costanti import LOCALE, REGIONALE, NAZIONALE
 from anagrafica.models import Delega, Persona
+from curriculum.models import Titolo
+from curriculum.areas import OBBIETTIVI_STRATEGICI
 from .models import (Corso, CorsoBase, CorsoLink, CorsoFile, CorsoEstensione,
                      LezioneCorsoBase, PartecipazioneCorsoBase)
 
@@ -18,10 +22,15 @@ class ModuloCreazioneCorsoBase(ModelForm):
         (ALTROVE, "Il corso si svolgerà altrove (specifica dopo).")
     )
 
+    DEFAULT_BLANK_LEVEL = ('', '---------'),
+    LEVELS_CHOICES = ()
+
+    level = forms.ChoiceField(choices=LEVELS_CHOICES, label='Livello', required=False)
+    area = forms.ChoiceField(choices=OBBIETTIVI_STRATEGICI, label='Area', required=False)
     locazione = forms.ChoiceField(choices=LOCAZIONE, initial=PRESSO_SEDE,
-                    help_text="La posizione del Corso è importante per "
-                                "aiutare gli aspiranti a trovare i Corsi "
-                                "che si svolgono vicino a loro.")
+        help_text="La posizione del Corso è importante per aiutare gli aspiranti "
+                  "a trovare i Corsi che si svolgono vicino a loro.")
+    titolo_cri = forms.ChoiceField(label='Titolo del Corso', required=False)
 
     def clean_tipo(self):
         tipo = self.cleaned_data['tipo']
@@ -38,25 +47,44 @@ class ModuloCreazioneCorsoBase(ModelForm):
                 "tra cui l'indirizzo della stessa.")
         return sede
 
+    def clean_delibera_file(self):
+        cd = self.cleaned_data['delibera_file']
+        return cd
+
     def clean(self):
         cd = self.cleaned_data
+        tipo = cd['tipo']
 
         if cd['data_esame'] < cd['data_inizio']:
             self.add_error('data_esame', "La data deve essere successiva "
                                          "alla data di inizio.")
 
-        if cd['tipo'] == Corso.CORSO_NUOVO and not cd['titolo_cri']:
-            self.add_error('titolo_cri', 'Seleziona un titolo per il Corso.')
+        if tipo == Corso.BASE:
+            # cd non può/deve avere valori per questi campi se corso è BASE
+            for field in ['area', 'level', 'titolo_cri']:
+                if field in cd:
+                    del cd[field]
 
-        return cd
+        if tipo == Corso.CORSO_NUOVO:
+            cd_titolo_cri = cd.get('titolo_cri')
 
-    def clean_delibera_file(self):
-        cd = self.cleaned_data['delibera_file']
+            if not cd_titolo_cri:
+                self.add_error('titolo_cri',
+                    "Seleziona un titolo per il Corso (l'elenco dei titoli "
+                    "si genera sulla base dell'area selezionata)")
+            else:
+                cd['titolo_cri'] = Titolo.objects.get(id=cd_titolo_cri)
+
+            if not cd['area']:
+                self.add_error('area', 'Seleziona area del Corso')
+            if not cd['level']:
+                self.add_error('level', 'Seleziona livello del Corso')
+
         return cd
 
     class Meta:
         model = CorsoBase
-        fields = ['tipo', 'titolo_cri', 'data_inizio', 'data_esame',
+        fields = ['tipo', 'level', 'titolo_cri', 'data_inizio', 'data_esame',
                   'delibera_file', 'sede',]
         help_texts = {
             # 'titolo_cri': 'Da selezionare se il tipo di corso non è Corso Base',
@@ -65,16 +93,35 @@ class ModuloCreazioneCorsoBase(ModelForm):
     def __init__(self, *args, **kwargs):
         from curriculum.models import Titolo
 
-        super().__init__(*args, **kwargs)
-        self.order_fields(('tipo',  'titolo_cri', 'data_inizio', 'data_esame',
-                           'delibera_file', 'sede', 'locazione'))
+        me = kwargs.pop('me')
 
-        self.fields['titolo_cri'].queryset = Titolo.objects.filter(
-            is_active=True,
-            goal__isnull=False,
-            goal__unit_reference__isnull=False,
-            tipo=Titolo.TITOLO_CRI,
-        ).order_by('goal__unit_reference')
+        super().__init__(*args, **kwargs)
+        self.order_fields(('tipo', 'level', 'area', 'titolo_cri', 'data_inizio',
+            'data_esame', 'delibera_file', 'sede', 'locazione'))
+
+        # GAIA-16
+        delega = me.deleghe_attuali().filter(tipo__in=[permessi.PRESIDENTE,
+                                                       permessi.RESPONSABILE_FORMAZIONE]).last()
+        if delega:
+            estensione_sede = delega.sede.all().first().estensione
+
+            levels = 2
+            if estensione_sede == LOCALE:
+                pass
+            elif estensione_sede == REGIONALE:
+                levels = 3
+            elif estensione_sede == NAZIONALE:
+                levels = 4
+
+        self.fields['level'].choices = Titolo.CDF_LIVELLI[:levels]
+        self.fields['area'].choices = list(self.DEFAULT_BLANK_LEVEL) + self.fields['area'].choices
+        self.fields['titolo_cri'].choices = list(self.DEFAULT_BLANK_LEVEL) + [
+            (choice.pk, choice) for choice in Titolo.objects.filter(
+                area__isnull=False,
+                nome__isnull=False,
+                tipo=Titolo.TITOLO_CRI,
+                is_active=True,
+            )]
 
 
 class ModuloModificaLezione(ModelForm):

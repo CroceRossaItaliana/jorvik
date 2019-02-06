@@ -62,7 +62,8 @@ def formazione_corsi_base_nuovo(request, me):
     form = ModuloCreazioneCorsoBase(
         request.POST or None,
         request.FILES or None,
-        initial={'data_inizio': now, 'data_esame': now + timedelta(days=14)}
+        initial={'data_inizio': now, 'data_esame': now + timedelta(days=14)},
+        me=me
     )
     form.fields['sede'].queryset = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
 
@@ -74,6 +75,8 @@ def formazione_corsi_base_nuovo(request, me):
 
         if tipo == Corso.CORSO_NUOVO:
             kwargs['titolo_cri'] = cd['titolo_cri']
+            kwargs['cdf_level'] = cd['level']
+            kwargs['cdf_area'] = cd['area']
 
         course = CorsoBase.nuovo(
             anno=data_inizio.year,

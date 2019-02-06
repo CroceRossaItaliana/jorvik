@@ -41,8 +41,7 @@ js_info_dict = {
 }
 
 urlpatterns = [
-    # Home page!
-    url(r'^$', base.viste.index),
+    url(r'^$', base.viste.index), # Home page
 
     # Moduli di registrazione
     url(r'^registrati/(?P<tipo>\w+)/conferma/$', anagrafica.viste.registrati_conferma),
@@ -51,6 +50,9 @@ urlpatterns = [
 
     # Modalita' manutenzione
     url(r'^manutenzione/$', base.viste.manutenzione),
+
+    # Curriculum app
+    url(r'^cv/', include('curriculum.urls', namespace='cv')),
 
     # Pagina di errore
     url(r'^errore/404/$', base.errori.non_trovato),
@@ -218,16 +220,17 @@ urlpatterns = [
     url(r'^us/elenco/(?P<elenco_id>.*)/modulo/$', ufficio_soci.viste.us_elenco_modulo),
     url(r'^us/elenco/(?P<elenco_id>.*)/$', ufficio_soci.viste.us_elenco),
 
+    url(r'^autoparco/(P<pk>.*)/$', veicoli.viste.veicoli_autoparco),
+    url(r'^autoparco/modifica/(?P<pk>.*)/$', veicoli.viste.veicoli_autoparco_modifica_o_nuovo),
+    url(r'^autoparco/nuovo/$', veicoli.viste.veicoli_autoparco_modifica_o_nuovo),
+
     url(r'^veicoli/$', veicoli.viste.veicoli),
     url(r'^veicoli/elenco/$', veicoli.viste.veicoli_elenco),
     url(r'^veicoli/autoparchi/$', veicoli.viste.veicoli_autoparchi),
     url(r'^veicoli/autoparco/elenco/(?P<autoparco>.*)/$', veicoli.viste.veicoli_elenco_autoparco),
     url(r'^veicolo/(P<pk>.*)/$', veicoli.viste.veicoli_veicolo),
-    url(r'^autoparco/(P<pk>.*)/$', veicoli.viste.veicoli_autoparco),
     url(r'^veicolo/nuovo/$', veicoli.viste.veicoli_veicolo_modifica_o_nuovo),
-    url(r'^autoparco/nuovo/$', veicoli.viste.veicoli_autoparco_modifica_o_nuovo),
     url(r'^veicolo/modifica/(?P<pk>.*)/$', veicoli.viste.veicoli_veicolo_modifica_o_nuovo),
-    url(r'^autoparco/modifica/(?P<pk>.*)/$', veicoli.viste.veicoli_autoparco_modifica_o_nuovo),
     url(r'^veicolo/manutenzioni/(?P<veicolo>.*)/$', veicoli.viste.veicoli_manutenzione),
     url(r'^veicolo/manutenzione/(?P<manutenzione>.*)/modifica/$', veicoli.viste.veicoli_modifica_manutenzione),
     url(r'^veicolo/rifornimento/(?P<rifornimento>.*)/modifica/$', veicoli.viste.veicoli_modifica_rifornimento),

@@ -10,7 +10,7 @@ class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['nome', ]
     list_display = ('nome', 'tipo', 'goal_obbiettivo_stragetico', 'goal_propedeuticita',
         'goal_unit_reference', 'inseribile_in_autonomia', 'expires_after', 'area',)
-    list_filter = ('is_active', "tipo", "richiede_conferma",
+    list_filter = ('is_active', 'cdf_livello', 'area', "tipo", "richiede_conferma",
         "inseribile_in_autonomia", 'goal__unit_reference',)
 
     def goal_obbiettivo_stragetico(self, obj):

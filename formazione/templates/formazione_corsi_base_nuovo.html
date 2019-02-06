@@ -51,15 +51,92 @@
     </div>
 
 <script>
-    var form_group = $('#id_titolo_cri').closest('.form-group');
+    // Select: Tipo -> Show "Tipo del Corso" field
+    var titolo_form_group = $('#id_titolo_cri').closest('.form-group');
+    var level_form_group = $('#id_level').closest('.form-group');
+    var area_form_group = $('#id_area').closest('.form-group');
     var course_value = 'C1';
+
     if ($('#id_tipo option:selected').val() != course_value) {
-        form_group.hide();
+        titolo_form_group.hide();
+        level_form_group.hide();
+        area_form_group.hide();
     }
+
     $('#id_tipo').on('change', function(e){
         let value = $(this).find('option:selected').val();
-        if (value && value == course_value) {form_group.show();}
-        else {form_group.hide();}
+        if (value && value == course_value) {
+            level_form_group.show();
+            area_form_group.show();
+        }
+        else {
+            titolo_form_group.hide();
+            level_form_group.hide();
+            area_form_group.hide();
+        }
+    });
+
+    $('#id_area').on('change', function(e){
+        let value = $(this).find('option:selected').val();
+        if (value) {
+            titolo_form_group.show();
+        } else {
+            titolo_form_group.hide();
+        }
+    });
+
+    // Select: Livello
+    var level_select = $('#id_level');
+    level_select.on('change', function(e){
+        // Reset area's selected option and hide its section
+        $('#id_area').prop('selectedIndex',0);
+        titolo_form_group.hide();
+
+        if ($(this).val()) {
+            area_form_group.show();
+        }
+    });
+
+    // Select: Area
+    var select_area = $('#id_area');
+    if (!select_area.prop('selectedIndex')) {
+      select_area.prop('selectedIndex',0);
+    }
+
+    $('#id_titolo_cri').find('option').not(':first').remove();
+    $('#id_area').on('change', function(e) {
+        let area_id = $(this).val();
+        let id_level_val = $('#id_level').val(); // default select option has '' value
+        if (area_id !== '') {
+            $.ajax({
+                type: "POST",
+                url: "{% url 'cv:cdf_titolo_json' %}",
+                data: {
+                    area: area_id,
+                    cdf_livello: id_level_val,
+                    csrf_token: "{{ csrf_token }}",
+                },
+                success: function(data) {
+                    let select_titolo_cri = $('#id_titolo_cri');
+                    select_titolo_cri.find('option').not(':first').remove();
+
+                    $.each(data, function(value, text) {
+                        select_titolo_cri.append($('<option>', {
+                            value: value,
+                            text: text
+                        }));
+                    });
+                    return data;
+                },
+                error: function(jqXHR, textStatus) {
+                    <!--console.log(textStatus);-->
+                },
+            });
+
+        } else {
+            titolo_form_group.hide();
+            $('#id_titolo_cri').find('option').not(':first').remove();
+        }
     });
 </script>
 

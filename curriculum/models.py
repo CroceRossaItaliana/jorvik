@@ -23,6 +23,17 @@ class Titolo(ModelloSemplice, ConVecchioID):
         (TITOLO_CRI, "Titolo CRI"),
     )
 
+    CDF_LIVELLO_I = '1'
+    CDF_LIVELLO_II = '2'
+    CDF_LIVELLO_III = '3'
+    CDF_LIVELLO_IV = '4'
+    CDF_LIVELLI = (
+        (CDF_LIVELLO_I, 'I Livello'),
+        (CDF_LIVELLO_II, 'II Livello'),
+        (CDF_LIVELLO_III, 'III Livello'),
+        (CDF_LIVELLO_IV, 'IV Livello'),
+    )
+
     goal = models.ForeignKey('TitleGoal', null=True, blank=True,
         verbose_name="Obbiettivo", on_delete=models.PROTECT)
     nome = models.CharField(max_length=255, db_index=True)
@@ -32,6 +43,9 @@ class Titolo(ModelloSemplice, ConVecchioID):
     is_active = models.BooleanField(default=True)
     expires_after = models.IntegerField(null=True, blank=True, verbose_name="Scadenza",
         help_text='Indicare in giorni (es: per 1 anno indicare 365)')
+    cdf_livello = models.CharField(max_length=3, choices=CDF_LIVELLI,
+                                   null=True, blank=True)
+    cdf_durata_corso = models.CharField(max_length=255, null=True, blank=True)
     richiede_conferma = models.BooleanField(default=False)
     richiede_data_ottenimento = models.BooleanField(default=False)
     richiede_luogo_ottenimento = models.BooleanField(default=False)
