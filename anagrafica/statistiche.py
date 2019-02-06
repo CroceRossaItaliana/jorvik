@@ -636,10 +636,10 @@ STATISTICA = {
     NUM_NUOVI_VOL: "Nuovi volontari",
     NUM_DIMESSI: "Dimessi",
     NUM_SEDI: "Sedi",
-    NUM_SEDI_NUOVE: "Sedi nuove",
-    NUMERO_CORSI: "Corsi",
-    IIVV_CM: "IIVV/CM",
-    ORE_SERVIZIO: "Ore di Servizio"
+    # NUM_SEDI_NUOVE: "Sedi nuove",
+    # NUMERO_CORSI: "Corsi",
+    # IIVV_CM: "IIVV/CM",
+    # ORE_SERVIZIO: "Ore di Servizio"
 }
 
 
@@ -662,8 +662,8 @@ STATISTICHE = {
     NUM_NUOVI_VOL: (statistica_num_nuovi_vol, ('statistiche_totali.html', )),
     NUM_DIMESSI: (statistica_num_dimessi, ('statistiche_totali.html', )),
     NUM_SEDI: (statistica_num_sedi, ('statistiche_totali.html', )),
-    NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', )),
-    NUMERO_CORSI: (statistica_num_corsi, ('statistiche_per_comitati.html', )),
-    IIVV_CM: (statistica_iivv_cm, ('statistiche_per_comitati.html', )),
-    ORE_SERVIZIO: (statistica_ore_servizio, ('statistiche_totali.html', )),
+    # NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', )),
+    # NUMERO_CORSI: (statistica_num_corsi, ('statistiche_per_comitati.html', )),
+    # IIVV_CM: (statistica_iivv_cm, ('statistiche_per_comitati.html', )),
+    # ORE_SERVIZIO: (statistica_ore_servizio, ('statistiche_totali.html', )),
 }
