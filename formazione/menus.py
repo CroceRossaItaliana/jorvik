@@ -7,7 +7,9 @@ def formazione_menu(menu_name, gestione_corsi_sede):
             ("Attiva nuovo Corso", "fa-asterisk", reverse('formazione:new_course')) if gestione_corsi_sede else None,
             ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
             ("Domanda formativa", "fa-area-chart", reverse('formazione:domanda')) if gestione_corsi_sede else None,
-        ))
+            ('Catalogo Corsi', 'fa-list-alt', '/page/catalogo-corsi/'),
+            ('Glossario Corsi', 'fa-book', '/page/glossario-corsi/'),
+        )),
     )
     ASPIRANTE = (
         ("Aspirante", (
