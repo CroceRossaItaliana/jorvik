@@ -17,6 +17,10 @@ def can_access_to_course(function):
             context = r[1]  # response context stored in the view
         except IndexError:
             return r
+        except AttributeError:
+            if r and hasattr(r, 'status_code'):
+                if r.status_code == 302:
+                    return redirect(r.url)
         else:
             if not context:
                 return r
