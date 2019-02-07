@@ -1810,8 +1810,6 @@ def admin_statistiche(request, me):
     if not me.utenza.is_staff:
         return redirect(ERRORE_PERMESSI)
 
-
-
     modulo = ModuloStatisticheBase(request.POST or None)
 
     if request.POST and modulo.is_valid():

@@ -6,7 +6,8 @@ from attivita.models import Attivita, Turno
 from django.db.models import F, Sum
 from datetime import timedelta, datetime
 from django import forms
-
+from curriculum.areas import OBBIETTIVI_STRATEGICI
+from formazione.models import Titolo
 
 '''
     STATISTICHE PER FASCI DI ETA
@@ -477,14 +478,45 @@ def statistiche_num_sedi_nuove(**kwargs):
 
 def statistica_num_corsi(**kwargs):
 
-    livello_riferimento = kwargs.get('livello_riferimento')
-    nome_corso = kwargs.get('nome_corso')
-    area_riferimento = kwargs.get('area_riferimento')
+    def get_tot(estensione=None, **kwargs):
+        livello_riferimento = kwargs.get('livello_riferimento')
+        nome_corso = kwargs.get('nome_corso')
+        area_riferimento = kwargs.get('area_riferimento')
+        anno = int(kwargs.get('anno_di_riferimento'))
 
-    CorsoBase.objects.filter(
-        stato=None,
+        filter_name = lambda x: nome_corso in x.nome
 
-    )
+        corsi_current = CorsoBase.objects.filter(
+            anno=anno,
+            sede__estensione=estensione,
+            cdf_level=livello_riferimento,
+            cdf_area=area_riferimento
+        )
+
+        corsi_before = CorsoBase.objects.filter(
+            anno=anno-1,
+            sede__estensione=estensione,
+            cdf_level=livello_riferimento,
+            cdf_area=area_riferimento
+        )
+
+        if nome_corso:
+            corsi_current = filter(
+                filter_name,
+                corsi_current
+            )
+            corsi_before = filter(
+                filter_name,
+                corsi_before
+            )
+
+        return {
+            "nome": ESTENDIONI_DICT[estensione],
+            "statistiche": {
+                "Corsi nel {}".format(anno): len(list(corsi_current)),
+                "Corsi nel {}".format(anno-1): len(list(corsi_before)),
+            }
+        }
 
     obj = {
         "nome": STATISTICA[NUMERO_CORSI],
@@ -493,7 +525,10 @@ def statistica_num_corsi(**kwargs):
         "locali": None,
         "territoriali": None,
         "tot": [
-
+            get_tot(NAZIONALE, **kwargs),
+            get_tot(REGIONALE, **kwargs),
+            get_tot(LOCALE, **kwargs),
+            get_tot(TERRITORIALE, **kwargs),
         ]
     }
 
@@ -631,19 +666,11 @@ STATISTICA = {
     NUM_NUOVI_VOL: "Nuovi volontari",
     NUM_DIMESSI: "Dimessi",
     NUM_SEDI: "Sedi",
-    # NUM_SEDI_NUOVE: "Sedi nuove",
-    # NUMERO_CORSI: "Corsi",
-    # IIVV_CM: "IIVV/CM",
-    # ORE_SERVIZIO: "Ore di Servizio"
+    NUM_SEDI_NUOVE: "Sedi nuove",
+    NUMERO_CORSI: "Corsi",
+    IIVV_CM: "IIVV/CM",
+    ORE_SERVIZIO: "Ore di Servizio"
 }
-
-
-class ModuloStatisticheBase(forms.Form):
-    tipo_statistiche = forms.ChoiceField(widget=forms.Select(), choices=get_type(), required=True)
-    livello_riferimento = forms.CharField(required=False)
-    nome_corso = forms.CharField(required=False)
-    area_riferimento = forms.CharField(required=False)
-    anno_di_riferimento = forms.ChoiceField(widget=forms.Select(), choices=get_years(), required=False)
 
 
 '''
@@ -657,8 +684,16 @@ STATISTICHE = {
     NUM_NUOVI_VOL: (statistica_num_nuovi_vol, ('statistiche_totali.html', )),
     NUM_DIMESSI: (statistica_num_dimessi, ('statistiche_totali.html', )),
     NUM_SEDI: (statistica_num_sedi, ('statistiche_totali.html', )),
-    # NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', )),
-    # NUMERO_CORSI: (statistica_num_corsi, ('statistiche_per_comitati.html', )),
-    # IIVV_CM: (statistica_iivv_cm, ('statistiche_per_comitati.html', )),
-    # ORE_SERVIZIO: (statistica_ore_servizio, ('statistiche_totali.html', )),
+    NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', )),
+    NUMERO_CORSI: (statistica_num_corsi, ('statistiche_totali.html', )),
+    IIVV_CM: (statistica_iivv_cm, ('statistiche_per_comitati.html', )),
+    ORE_SERVIZIO: (statistica_ore_servizio, ('statistiche_totali.html', )),
 }
+
+
+class ModuloStatisticheBase(forms.Form):
+    tipo_statistiche = forms.ChoiceField(widget=forms.Select(), choices=get_type(), required=True)
+    nome_corso = forms.CharField(required=False)
+    livello_riferimento = forms.ChoiceField(widget=forms.Select(), choices=Titolo.CDF_LIVELLI, required=False)
+    area_riferimento = forms.ChoiceField(widget=forms.Select(), choices=OBBIETTIVI_STRATEGICI, required=False)
+    anno_di_riferimento = forms.ChoiceField(widget=forms.Select(), choices=get_years(), required=False)

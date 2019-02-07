@@ -78,23 +78,23 @@
         });
 
         function showAnnoRiferimento() {
-            $('input[name=livello_riferimento]').parent().hide();
+            $('select[name=livello_riferimento]').parent().hide();
             $('input[name=nome_corso]').parent().hide();
-            $('input[name=area_riferimento]').parent().hide();
+            $('select[name=area_riferimento]').parent().hide();
             $('select[name=anno_di_riferimento]').parent().show();
         }
 
         function showNumCorsi() {
-            $('input[name=livello_riferimento]').parent().show();
-            $('input[name=area_riferimento]').parent().show();
+            $('select[name=livello_riferimento]').parent().show();
+            $('select[name=area_riferimento]').parent().show();
             $('input[name=nome_corso]').parent().show();
-            $('select[name=anno_di_riferimento]').parent().hide();
+            $('select[name=anno_di_riferimento]').parent().show();
         }
 
         function showDefault() {
-            $('input[name=livello_riferimento]').parent().hide();
+            $('select[name=livello_riferimento]').parent().hide();
             $('input[name=nome_corso]').parent().hide();
-            $('input[name=area_riferimento]').parent().hide();
+            $('select[name=area_riferimento]').parent().hide();
             $('select[name=anno_di_riferimento]').parent().hide();
         }
 
