@@ -1,15 +1,18 @@
-"""
-Questo modulo contiene la configurazione per il routing degli URL.
-
-(c)2015 Croce Rossa Italiana
-"""
-import django, django.views, django.views.static, django.contrib.auth.views
+# import django
+# import django.views
+# import django.views.static
+import django.contrib.auth.views
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth.views import password_change, password_change_done
-from django.shortcuts import redirect
+# from django.shortcuts import redirect
 from django.views.i18n import javascript_catalog
 from oauth2_provider import views as oauth2_provider_views
+from autenticazione.funzioni import pagina_privata_no_cambio_firma # pagina_privata
+from autenticazione.two_factor.urls import urlpatterns as tf_urls
+from anagrafica.forms import ModuloModificaPassword
+
+from .settings import MEDIA_ROOT, DEBUG
 
 import anagrafica.viste
 import articoli.viste
@@ -24,6 +27,7 @@ import posta.viste
 import social.viste
 import ufficio_soci.viste
 import veicoli.viste
+from formazione import urls_aspirante as formazione_urls_aspirante
 
 from jorvik.settings import MEDIA_ROOT, DEBUG
 
@@ -37,9 +41,7 @@ js_info_dict = {
 }
 
 urlpatterns = [
-
-    # Home page!
-    url(r'^$', base.viste.index),
+    url(r'^$', base.viste.index), # Home page
 
     # Moduli di registrazione
     url(r'^registrati/(?P<tipo>\w+)/conferma/$', anagrafica.viste.registrati_conferma),
@@ -48,6 +50,9 @@ urlpatterns = [
 
     # Modalita' manutenzione
     url(r'^manutenzione/$', base.viste.manutenzione),
+
+    # Curriculum app
+    url(r'^cv/', include('curriculum.urls', namespace='cv')),
 
     # Pagina di errore
     url(r'^errore/404/$', base.errori.non_trovato),
@@ -68,14 +73,16 @@ urlpatterns = [
     url(r'^recupera_password_completo/$', base.viste.recupero_password_completo, name='recupero_password_completo'),
 
     # Informazioni
-    url(r'^informazioni/$', base.viste.informazioni),
+    url(r'^informazioni/$', base.viste.informazioni, name='informazioni'),
     url(r'^informazioni/statistiche/$', base.viste.informazioni_statistiche),
     url(r'^informazioni/aggiornamenti/$', base.viste.informazioni_aggiornamenti),
     url(r'^informazioni/sicurezza/$', base.viste.informazioni_sicurezza),
     url(r'^informazioni/condizioni/$', base.viste.informazioni_condizioni, name='informazioni_condizioni'),
     url(r'^informazioni/cookie/$', base.viste.informazioni_cookie, name='informazioni_cookie'),
     url(r'^informazioni/cookie/imposta/$', base.viste.imposta_cookie, name='imposta_cookie'),
-    url(r'^informazioni/verifica-tesserino/$', ufficio_soci.viste.verifica_tesserino),
+    url(r'^informazioni/verifica-tesserino/$',
+        ufficio_soci.viste.verifica_tesserino,
+        name='informazioni_verifica_tesserino'),
     url(r'^informazioni/sedi/$', base.viste.informazioni_sedi),
     url(r'^informazioni/sedi/(?P<slug>.*)/$', base.viste.informazioni_sede),
     url(r'^informazioni/formazione/$', base.viste.formazione),
@@ -213,16 +220,17 @@ urlpatterns = [
     url(r'^us/elenco/(?P<elenco_id>.*)/modulo/$', ufficio_soci.viste.us_elenco_modulo),
     url(r'^us/elenco/(?P<elenco_id>.*)/$', ufficio_soci.viste.us_elenco),
 
+    url(r'^autoparco/(P<pk>.*)/$', veicoli.viste.veicoli_autoparco),
+    url(r'^autoparco/modifica/(?P<pk>.*)/$', veicoli.viste.veicoli_autoparco_modifica_o_nuovo),
+    url(r'^autoparco/nuovo/$', veicoli.viste.veicoli_autoparco_modifica_o_nuovo),
+
     url(r'^veicoli/$', veicoli.viste.veicoli),
     url(r'^veicoli/elenco/$', veicoli.viste.veicoli_elenco),
     url(r'^veicoli/autoparchi/$', veicoli.viste.veicoli_autoparchi),
     url(r'^veicoli/autoparco/elenco/(?P<autoparco>.*)/$', veicoli.viste.veicoli_elenco_autoparco),
     url(r'^veicolo/(P<pk>.*)/$', veicoli.viste.veicoli_veicolo),
-    url(r'^autoparco/(P<pk>.*)/$', veicoli.viste.veicoli_autoparco),
     url(r'^veicolo/nuovo/$', veicoli.viste.veicoli_veicolo_modifica_o_nuovo),
-    url(r'^autoparco/nuovo/$', veicoli.viste.veicoli_autoparco_modifica_o_nuovo),
     url(r'^veicolo/modifica/(?P<pk>.*)/$', veicoli.viste.veicoli_veicolo_modifica_o_nuovo),
-    url(r'^autoparco/modifica/(?P<pk>.*)/$', veicoli.viste.veicoli_autoparco_modifica_o_nuovo),
     url(r'^veicolo/manutenzioni/(?P<veicolo>.*)/$', veicoli.viste.veicoli_manutenzione),
     url(r'^veicolo/manutenzione/(?P<manutenzione>.*)/modifica/$', veicoli.viste.veicoli_modifica_manutenzione),
     url(r'^veicolo/rifornimento/(?P<rifornimento>.*)/modifica/$', veicoli.viste.veicoli_modifica_rifornimento),
@@ -232,57 +240,28 @@ urlpatterns = [
     url(r'^veicolo/(?P<veicolo>.*)/collocazioni/$', veicoli.viste.veicoli_collocazioni),
     url(r'^veicolo/dettagli/(?P<veicolo>.*)/$', veicoli.viste.veicolo_dettagli),
 
-
-    url(r'^aspirante/$', formazione.viste.aspirante_home),
-    url(r'^aspirante/impostazioni/$', formazione.viste.aspirante_impostazioni),
-    url(r'^aspirante/impostazioni/cancella/$', formazione.viste.aspirante_impostazioni_cancella),
-    url(r'^aspirante/corsi-base/$', formazione.viste.aspirante_corsi_base),
-    url(r'^aspirante/sedi/$', formazione.viste.aspirante_sedi),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/$', formazione.viste.aspirante_corso_base_informazioni),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/mappa/$', formazione.viste.aspirante_corso_base_mappa),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/$', formazione.viste.aspirante_corso_base_iscritti),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/aggiungi/$', formazione.viste.aspirante_corso_base_iscritti_aggiungi),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscritti/cancella/(?P<iscritto>[0-9]+)/$', formazione.viste.aspirante_corso_base_iscritti_cancella, name='formazione-iscritti-cancella'),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/iscriviti/$', formazione.viste.aspirante_corso_base_iscriviti),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/ritirati/$', formazione.viste.aspirante_corso_base_ritirati),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/report/$', formazione.viste.aspirante_corso_base_report),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/report/schede/$', formazione.viste.aspirante_corso_base_report_schede),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/firme/$', formazione.viste.aspirante_corso_base_firme),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/modifica/$', formazione.viste.aspirante_corso_base_modifica),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/attiva/$', formazione.viste.aspirante_corso_base_attiva),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/termina/$', formazione.viste.aspirante_corso_base_termina),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/lezioni/$', formazione.viste.aspirante_corso_base_lezioni),
-    url(r'^aspirante/corso-base/(?P<pk>[0-9]+)/lezioni/(?P<lezione_pk>[0-9]+)/cancella/$', formazione.viste.aspirante_corso_base_lezioni_cancella),
-
-    url(r'^formazione/$', formazione.viste.formazione),
-    url(r'^formazione/corsi-base/elenco/$', formazione.viste.formazione_corsi_base_elenco),
-    url(r'^formazione/corsi-base/domanda/$', formazione.viste.formazione_corsi_base_domanda),
-    url(r'^formazione/corsi-base/nuovo/$', formazione.viste.formazione_corsi_base_nuovo),
-    url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/direttori/$', formazione.viste.formazione_corsi_base_direttori),
-    url(r'^formazione/corsi-base/(?P<pk>[0-9]+)/fine/$', formazione.viste.formazione_corsi_base_fine),
+    # Formazione
+    url(r'^aspirante/', include(formazione_urls_aspirante, namespace='aspirante')),
+    url(r'^formazione/', include('formazione.urls', namespace='formazione')),
+    url(r'^survey/', include('survey.urls', namespace='survey')),
 
     # Static pages
     url(r'^page/', include('static_page.urls', namespace='pages')),
-    url(r'^supporto/$', base.viste.supporto),
+    url(r'^supporto/$', base.viste.supporto, name='supporto_page'),
 
     url(r'^geo/localizzatore/imposta/$', base.viste.geo_localizzatore_imposta),
     url(r'^geo/localizzatore/$', base.viste.geo_localizzatore),
-    url(r'^strumenti/delegati/$', anagrafica.viste.strumenti_delegati),
+    url(r'^strumenti/delegati/$', anagrafica.viste.strumenti_delegati,
+        name='strumenti_delegati'),
     url(r'^strumenti/delegati/(?P<delega_pk>[0-9]+)/termina/$', anagrafica.viste.strumenti_delegati_termina),
-
     url(r'^social/commenti/nuovo/', social.viste.commenti_nuovo),
     url(r'^social/commenti/cancella/(?P<pk>[0-9]+)/', social.viste.commenti_cancella),
-
     url(r'^media/(?P<path>.*)$', django.views.static.serve, {"document_root": MEDIA_ROOT}),
-
     url(r'^pdf/(?P<app_label>.*)/(?P<model>.*)/(?P<pk>[0-9]+)/$', base.viste.pdf),
-
     url(r'^token-sicuro/(?P<codice>.*)/$', base.viste.verifica_token),
-
     url(r'^password-dimenticata/$', base.viste.redirect_semplice, {"nuovo_url": "/recupera_password/"}),
 
     # Amministrazione
-
     url(r'^admin/import/volontari/$', anagrafica.viste.admin_import_volontari),
     url(r'^admin/import/presidenti/$', anagrafica.viste.admin_import_presidenti),
     url(r'^admin/pulisci/email/$', anagrafica.viste.admin_pulisci_email),
@@ -295,7 +274,7 @@ urlpatterns = [
     # Autocompletamento
     url(r'^autocomplete/', include('autocomplete_light.urls')),
 
-    #Filer
+    # Filer
     url(r'^filer/', include('filer.urls')),
     url(r'^filebrowser_filer/', include('ckeditor_filebrowser_filer.urls')),
     url(r'^jsi18n/$', javascript_catalog, js_info_dict, name='javascript-catalog'),
@@ -308,9 +287,7 @@ urlpatterns = [
 
     # REST api
     url(r'^api/', include('api.urls', namespace='api')),
-
 ]
 
 if DEBUG:
     urlpatterns += [url(r'^api-auth/', include('rest_framework.urls')),]
-

@@ -1,4 +1,5 @@
 from django import template
+from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import QuerySet, Max
 from django.template import Library
@@ -95,9 +96,11 @@ def localizzatore(context, oggetto_localizzatore=None, continua_url=None, solo_i
 
 
 @register.simple_tag(takes_context=True)
-def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None, almeno=0):
+def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None, almeno=0, *args, **kwargs):
     if not isinstance(oggetto, ConDelegati):
-        raise ValueError("Il tag delegati puo' solo essere usato con un oggetto ConDelegati, ma e' stato usato con un oggetto %s." % (oggetto_localizzatore.__class__.__name__,))
+        msg = "Il tag delegati può solo essere usato con un oggetto ConDelegati, " \
+              "ma è stato usato con un oggetto %s."
+        raise ValueError(msg % oggetto_localizzatore.__class__.__name__)
 
     oggetto_tipo = ContentType.objects.get_for_model(oggetto)
     context.request.session['app_label'] = oggetto_tipo.app_label
@@ -106,9 +109,8 @@ def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None, alme
     context.request.session['continua_url'] = continua_url
     context.request.session['delega'] = delega
     context.request.session['almeno'] = almeno
-    url = "/strumenti/delegati/"
     context.update({
-        'iframe_url': url,
+        'iframe_url': reverse('strumenti_delegati'),
     })
     return render_to_string('base_iframe_4_3.html', context)
 

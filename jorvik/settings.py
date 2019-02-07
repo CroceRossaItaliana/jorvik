@@ -19,10 +19,7 @@ from datetime import timedelta, date
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-# Deployment: https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
-
 # Elenca le applicazioni installate da abilitare
-
 INSTALLED_APPS = [
     'jorvik',
     'django.contrib.admin',
@@ -33,11 +30,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+
     # Librerie terze
     'nocaptcha_recaptcha',
     'oauth2_provider',
     'corsheaders',
     'mptt',
+
     # Moduli interni
     'base',
     'autenticazione',
@@ -50,6 +49,7 @@ INSTALLED_APPS = [
     'social',
     'posta',
     'sangue',
+    'survey',
     'static_page',
     'formazione',
     'bootstrap3',
@@ -92,7 +92,8 @@ CRON_CLASSES = [
     "base.cron.CronRichiesteInAttesa",
     "base.cron.PulisciAspirantiVolontari",
     "anagrafica.cron.CronReportComitati",
-    "centrale_operativa.cron.CronCancellaCoturniInvalidi"
+    "centrale_operativa.cron.CronCancellaCoturniInvalidi",
+    'curriculum.cron.CronCheckExpiredCourseTitles',
 ]
 
 # Classi middleware (intercetta & computa)

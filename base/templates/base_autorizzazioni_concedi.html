@@ -1,44 +1,32 @@
 {% extends 'base_avviso.html' %}
 
 {% load bootstrap3 %}
-
 {% block pagina_titolo %}Consenti{% endblock %}
-
 {% block avviso_titolo %}Consenti{% endblock %}
 
-
 {% block avviso_corpo %}
-
     {% if richiesta.necessaria %}
 
-        <p>Per dare consenso a questa richiesta, &egrave; necessario aggiungere le seguenti informazioni.</p>
+        {% if not modulo.IS_CORSO_NUOVO %}
+            <p>Per dare consenso a questa richiesta, &egrave; necessario aggiungere le seguenti informazioni.</p>
+        {% endif %}
 
         <form method="POST">
             {% csrf_token %}
             {% bootstrap_form modulo %}
 
             <button type="submit" class="btn btn-block btn-success">
-                <i class="fa fa-fw fa-check-circle">
-                    Consenti richiesta
-                </i>
+                <i class="fa fa-fw fa-check-circle"> <span style="font-family:'Telex',sans-serif">Consenti richiesta</span></i>
             </button>
         </form>
 
     {% else %}
-
-        <p class="text-success grassetto">
-            Richiesta autorizzata.
-
-        </p>
-
-
+        <p class="text-success grassetto">Richiesta autorizzata.</p>
     {% endif %}
 
-    <a class="btn btn-block btn-default" href="{{ torna_url }}">
-        <i class="fa fa-fw fa-mail-reply"></i>
-        Torna all'elenco richieste in attesa
-    </a>
-
-    <p>&nbsp;</p>
-
+    <p style="margin-top:10px;">
+        <a class="btn btn-block btn-default" href="{{ torna_url }}">
+            <i class="fa fa-fw fa-mail-reply"></i> Torna all'elenco richieste in attesa
+        </a>
+    </p>
 {% endblock %}

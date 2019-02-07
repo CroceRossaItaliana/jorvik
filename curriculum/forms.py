@@ -1,8 +1,8 @@
 from django import forms
 from autocomplete_light import shortcuts as autocomplete_light
 
-from .areas import TITOLO_STUDIO_CHOICES, PATENTE_CIVILE_CHOICES
-from .models import TitoloPersonale, Titolo
+from .areas import TITOLO_STUDIO_CHOICES, PATENTE_CIVILE_CHOICES, OBBIETTIVI_STRATEGICI
+from .models import Titolo, TitleGoal, TitoloPersonale
 
 
 class ModuloNuovoTitoloPersonale(autocomplete_light.ModelForm):
@@ -37,7 +37,7 @@ class ModuloNuovoTitoloPersonale(autocomplete_light.ModelForm):
         """ Add <area> field conditionally"""
         if tipo in [Titolo.TITOLO_CRI, Titolo.TITOLO_STUDIO, Titolo.PATENTE_CIVILE]:
             SELECT_AREA_CHOICES = {
-                Titolo.TITOLO_CRI:      Titolo.AREA_CHOICES,  # Titoli CRI (TC)
+                Titolo.TITOLO_CRI:      OBBIETTIVI_STRATEGICI,  # Titoli CRI (TC)
                 Titolo.TITOLO_STUDIO:   TITOLO_STUDIO_CHOICES,  # Titoli di studio (TS)
                 Titolo.PATENTE_CIVILE:  PATENTE_CIVILE_CHOICES,  # Patenti civili (PP)
             }

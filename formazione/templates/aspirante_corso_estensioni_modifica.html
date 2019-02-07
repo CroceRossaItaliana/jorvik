@@ -1,0 +1,57 @@
+{% extends 'aspirante_corso_base_scheda.html' %}
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block scheda_titolo %}Modifica{% endblock %}
+
+{% block scheda_contenuto %}
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h2 class="panel-title"><i class="fa fa-fw fa-pencil"></i>
+                Modifica estensioni</h2>
+        </div>
+        <div class="panel-body">
+            <form method="POST">
+                {% csrf_token %}
+
+                {% bootstrap_form select_extension_type_form %}
+                <section id="select_extensions_section">
+                    {% bootstrap_formset select_extensions_formset %}
+                </section>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa fa-fw fa-save"></i>
+                    Salva modifiche
+                </button>
+            </form>
+        </div>
+    </div>
+
+<script>
+$(function(){
+    let estensione = $('#id_extension_type-extension_type');
+    let estensioneType = estensione.val();
+    let select_extensions_section = $('#select_extensions_section');
+
+    estensione.on('change', function(e) {
+        let lastSelected = estensione.find("option:selected");
+        if (estensione.val() == '2') {
+            $('#select_extensions_section').show();
+        } else {
+            if (!confirm("Sei sicuro di voler modificare l'estensione del corso?")) {
+                e.preventDefault();
+                $('#id_extension_type-extension_type option').prop("selected", true);
+                estensioneType = '2';
+            } else {
+                estensioneType = $(this).prop('value');
+                select_extensions_section.hide();
+            }
+        }
+    });
+    if (estensioneType == '2') select_extensions_section.show(); // A livello regionale
+    else select_extensions_section.hide();
+});
+
+</script>
+
+{% endblock %}

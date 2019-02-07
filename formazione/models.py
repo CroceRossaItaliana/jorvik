@@ -1,39 +1,44 @@
-# coding=utf-8
-
-"""
-Questo modulo definisce i modelli del modulo di Formazione di Gaia.
-"""
 import datetime
 
 from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import reverse
+from django.db import models
 from django.db.models import Q
 from django.db.transaction import atomic
+from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.timezone import now
 
+from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE
-from anagrafica.models import Sede, Persona, Appartenenza
-from anagrafica.permessi.incarichi import INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI, INCARICO_ASPIRANTE
+from anagrafica.validators import (valida_dimensione_file_5mb,
+   valida_dimensione_file_8mb, ValidateFileSize)
+from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE,
+    INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
 from base.files import PDF, Zip
-from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
-from base.models import ModelloSemplice
-from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico, ConPDF
 from base.utils import concept, poco_fa
+from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico, ConPDF
+from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione, ModelloSemplice
+from curriculum.models import Titolo
+from curriculum.areas import OBBIETTIVI_STRATEGICI
 from posta.models import Messaggio
 from social.models import ConCommenti, ConGiudizio
-from django.db import models
+from survey.models import Survey
+from .validators import (course_file_directory_path, validate_file_extension,
+                         delibera_file_upload_path)
 
 
-class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazione, ConCommenti, ConGiudizio):
-
-    class Meta:
-        abstract = True
-        permissions = (
-            ("view_corso", "Can view corso"),
-        )
+class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
+            ConGeolocalizzazione, ConCommenti, ConGiudizio):
+    # Tipologia di corso
+    CORSO_NUOVO = 'C1'
+    BASE = 'BA'
+    TIPO_CHOICES = (
+        (CORSO_NUOVO, 'Corso'),
+        (BASE, 'Corso Base'),
+    )
 
     # Stato del corso
     PREPARAZIONE = 'P'
@@ -47,30 +52,63 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale, ConGeolocalizzazion
         (ANNULLATO, 'Annullato'),
     )
     stato = models.CharField('Stato', choices=STATO, max_length=1, default=PREPARAZIONE)
-    sede = models.ForeignKey(Sede, related_query_name='%(class)s_corso', help_text="La Sede organizzatrice del Corso.")
+    sede = models.ForeignKey(Sede, related_query_name='%(class)s_corso',
+                             help_text="La Sede organizzatrice del Corso.")
+    tipo = models.CharField('Tipo', max_length=4, choices=TIPO_CHOICES, blank=True)
+
+    class Meta:
+        abstract = True
+        permissions = (
+            ("view_corso", "Can view corso"),
+        )
+
+
+class CorsoFile(models.Model):
+    is_enabled = models.BooleanField(default=True)
+    corso = models.ForeignKey('CorsoBase')
+    file = models.FileField('FIle', null=True, blank=True,
+        upload_to=course_file_directory_path,
+        validators=[valida_dimensione_file_8mb, validate_file_extension],
+        # help_text="Formati dei file supportati: doc, xls, pdf, zip, "
+        #     "jpg (max 8mb))",
+    )
+
+    def filename(self):
+        import os
+        return os.path.basename(self.file.name)
+
+    def __str__(self):
+        file = self.file if self.file else ''
+        corso = self.corso if hasattr(self, 'corso') else ''
+        return '<%s> of %s' % (file, corso)
+
+
+class CorsoLink(models.Model):
+    is_enabled = models.BooleanField(default=True)
+    corso = models.ForeignKey('CorsoBase')
+    link = models.URLField('Link', null=True, blank=True)
+
+    def __str__(self):
+        corso = self.corso if hasattr(self, 'corso') else ''
+        return '<%s> of %s' % (self.link, corso)
 
 
 class CorsoBase(Corso, ConVecchioID, ConPDF):
+    from django.core.validators import MinValueValidator
 
-    ## Tipologia di corso
-    #BASE = 'BA'
-    #TIPO = (
-    #    (BASE, 'Corso Base'),
-    #)
-    #tipo = models.CharField('Tipo', choices=TIPO, max_length=2, default=BASE)
+    MIN_PARTECIPANTI = 20
+    MAX_PARTECIPANTI = 50
 
-    MAX_PARTECIPANTI = 30
+    EXT_MIA_SEDE        = '1'
+    EXT_LVL_REGIONALE   = '2'
+    EXTENSION_TYPE_CHOICES = [
+        (EXT_MIA_SEDE, "Solo su mia sede di appartenenza"),
+        (EXT_LVL_REGIONALE, "A livello regionale"),
+    ]
 
-    class Meta:
-        verbose_name = "Corso Base"
-        verbose_name_plural = "Corsi Base"
-        ordering = ['-anno', '-progressivo']
-        permissions = (
-            ("view_corsobase", "Can view corso base"),
-        )
-
-    data_inizio = models.DateTimeField(blank=False, null=False, help_text="La data di inizio del corso. "
-                                                                          "Utilizzata per la gestione delle iscrizioni.")
+    data_inizio = models.DateTimeField(blank=False, null=False,
+        help_text="La data di inizio del corso. "
+                  "Utilizzata per la gestione delle iscrizioni.")
     data_esame = models.DateTimeField(blank=False, null=False)
     progressivo = models.SmallIntegerField(blank=False, null=False, db_index=True)
     anno = models.SmallIntegerField(blank=False, null=False, db_index=True)
@@ -78,8 +116,30 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     data_attivazione = models.DateField(blank=True, null=True)
     data_convocazione = models.DateField(blank=True, null=True)
-    op_attivazione = models.CharField(max_length=255, blank=True, null=True)
-    op_convocazione = models.CharField(max_length=255, blank=True, null=True)
+    op_attivazione = models.CharField('Ordinanza presidenziale attivazione',
+                                        max_length=255, blank=True, null=True)
+    op_convocazione = models.CharField('Ordinanza presidenziale convocazione',
+                                        max_length=255, blank=True, null=True)
+    extension_type = models.CharField(max_length=5, blank=True, null=True,
+                                      default=EXT_MIA_SEDE,
+                                      choices=EXTENSION_TYPE_CHOICES)
+    min_participants = models.SmallIntegerField("Minimo partecipanti",
+        default=MIN_PARTECIPANTI,
+        validators=[MinValueValidator(MIN_PARTECIPANTI)])
+    max_participants = models.SmallIntegerField("Massimo partecipanti",
+                                                default=MAX_PARTECIPANTI)
+    delibera_file = models.FileField('Delibera', null=True,
+        upload_to=delibera_file_upload_path,
+        validators=[ValidateFileSize(3), validate_file_extension]
+    )
+    titolo_cri = models.ForeignKey(Titolo, blank=True, null=True,
+                                   verbose_name="Titolo CRI")
+    cdf_level = models.CharField(max_length=3, choices=Titolo.CDF_LIVELLI,
+                                 null=True, blank=True)
+    cdf_area = models.CharField(max_length=3, choices=OBBIETTIVI_STRATEGICI,
+                                 null=True, blank=True)
+    survey = models.ForeignKey(Survey, blank=True, null=True,
+                               verbose_name='Questionario di gradimento')
 
     PUOI_ISCRIVERTI_OK = "IS"
     PUOI_ISCRIVERTI = (PUOI_ISCRIVERTI_OK,)
@@ -91,16 +151,35 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO = "VOL"
     NON_PUOI_ISCRIVERTI_TROPPO_TARDI = "TAR"
     NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO = "ALT"
-    NON_PUOI_ISCRIVERTI = (NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO, NON_PUOI_ISCRIVERTI_TROPPO_TARDI,
-                           NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO,)
+    NON_PUOI_SEI_ASPIRANTE = 'ASP'
+    NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI = 'NHT'
+    NON_HAI_CARICATO_DOCUMENTI_PERSONALI = 'NHCDP'
+    NON_HAI_DOCUMENTO_PERSONALE_VALIDO = 'NHDPV'
+    NON_PUOI_ISCRIVERTI = (NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO,
+                           NON_PUOI_ISCRIVERTI_TROPPO_TARDI,
+                           NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO,
+                           NON_PUOI_SEI_ASPIRANTE,
+                           NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI,
+                           NON_HAI_CARICATO_DOCUMENTI_PERSONALI,
+                           NON_HAI_DOCUMENTO_PERSONALE_VALIDO)
 
     NON_PUOI_ISCRIVERTI_SOLO_SE_IN_AUTONOMIA = (NON_PUOI_ISCRIVERTI_TROPPO_TARDI,)
 
     def persona(self, persona):
-        if (not Aspirante.objects.filter(persona=persona).exists()) and persona.volontario:
-            return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
+        # Checks related to tipo.CORSO_NUOVO (not old CorsoBase)
+        if Corso.CORSO_NUOVO == self.tipo:
+            if persona.ha_aspirante:
+                return self.NON_PUOI_SEI_ASPIRANTE
 
-        if PartecipazioneCorsoBase.con_esito_ok(persona=persona, corso__stato=self.ATTIVO).exclude(corso=self).exists():
+            if not persona.has_required_titles_for_course(course=self):
+                return self.NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI
+
+        # if (not Aspirante.objects.filter(persona=persona).exists()) and persona.volontario:
+        #     return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
+
+        if PartecipazioneCorsoBase.con_esito_ok(persona=persona,
+                                                corso__tipo=self.BASE,
+                                                corso__stato=self.ATTIVO).exclude(corso=self).exists():
             return self.NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO
 
         # Controlla se gia' iscritto.
@@ -112,6 +191,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         if self.troppo_tardi_per_iscriverti:
             return self.NON_PUOI_ISCRIVERTI_TROPPO_TARDI
+
+        if not persona.personal_identity_documents():
+            return self.NON_HAI_CARICATO_DOCUMENTI_PERSONALI
+
+        if persona.personal_identity_documents().filter(
+                expires__lt=datetime.datetime.now().date()):
+            return self.NON_HAI_DOCUMENTO_PERSONALE_VALIDO
 
         return self.PUOI_ISCRIVERTI_OK
 
@@ -133,13 +219,50 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     @classmethod
     @concept
     def pubblici(cls):
-        """
-        Concept per Corsi Base pubblici (attivi e non ancora iniziati...)
-        """
-        return Q(
-            data_inizio__gte=timezone.now() - datetime.timedelta(days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI),
-            stato=cls.ATTIVO
-        )
+        """ Concept per Corsi pubblici (attivi e non ancora iniziati...) """
+        return Q(stato=cls.ATTIVO,
+            data_inizio__gte=timezone.now() - datetime.timedelta(
+                days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI
+            ))
+
+    @classmethod
+    def find_courses_for_volunteer(cls, volunteer):
+        sede = volunteer.sedi_attuali(membro=Appartenenza.VOLONTARIO)
+        if sede:
+            sede = sede.last()
+        else:
+            return cls.objects.none()
+
+        titoli = volunteer.titoli_personali_confermati().filter(
+                                                titolo__tipo=Titolo.TITOLO_CRI)
+        courses_list = list()
+        courses = cls.pubblici().filter(tipo=Corso.CORSO_NUOVO)
+        for course in courses:
+            # Course has extensions.
+            # Filter courses by titles and sede comparsion
+            if course.has_extensions():
+                volunteer_titolo = titoli.values_list('titolo', flat=True)
+                t = course.get_extensions_titles()
+                s = course.get_extensions_sede()
+                ext_t_list = t.values_list('id', flat=True)
+
+                # Course has required titles but volunteer has not at least one
+                if t and not volunteer.has_required_titles_for_course(course):
+                    continue
+
+                if s and (sede in s):
+                    courses_list.append(course.pk)
+                else:
+                    # Extensions have sede but volunteer's sede is not in the list
+                    continue
+            else:
+                # Course has no extensions.
+                # Filter by firmatario sede if sede of volunteer is the same
+                firmatario = course.get_firmatario_sede
+                if firmatario and (sede in [firmatario]):
+                    courses_list.append(course.pk)
+
+        return CorsoBase.objects.filter(id__in=courses_list)
 
     @property
     def iniziato(self):
@@ -157,16 +280,14 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def possibile_cancellare_iscritti(self):
         return self.stato in [Corso.ATTIVO, Corso.PREPARAZIONE]
 
-    def __str__(self):
-        return self.nome
-
     @property
     def url(self):
         return "/aspirante/corso-base/%d/" % (self.pk,)
 
     @property
     def nome(self):
-        return "Corso Base %d/%d (%s)" % (self.progressivo, self.anno, self.sede)
+        course_type = 'Corso Base' if self.tipo == Corso.BASE else 'Corso'
+        return "%s %d/%d (%s)" % (course_type, self.progressivo, self.anno, self.sede)
 
     @property
     def link(self):
@@ -178,15 +299,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def url_modifica(self):
-        return "%smodifica/" % (self.url,)
+        return reverse('aspirante:modify', args=[self.pk])
 
     @property
     def url_attiva(self):
-        return "%sattiva/" % (self.url,)
+        return reverse('aspirante:activate', args=[self.pk])
 
     @property
     def url_termina(self):
-        return "%stermina/" % (self.url,)
+        return reverse('aspirante:terminate', args=[self.pk])
 
     @property
     def url_iscritti(self):
@@ -206,23 +327,27 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def url_mappa(self):
-        return "%smappa/" % (self.url,)
+        return reverse('aspirante:map', args=[self.pk])
 
     @property
     def url_lezioni(self):
-        return "%slezioni/" % (self.url,)
+        return reverse('aspirante:lessons', args=[self.pk])
 
     @property
     def url_report(self):
-        return "%sreport/" % (self.url,)
+        return reverse('aspirante:report', args=[self.pk])
 
     @property
     def url_firme(self):
-        return "%sfirme/" % (self.url,)
+        return reverse('aspirante:firme', args=[self.pk])
 
     @property
     def url_report_schede(self):
-        return self.url + "report/schede/"
+        return reverse('aspirante:report_schede', args=[self.pk])
+
+    @property
+    def url_estensioni(self):
+        return reverse('aspirante:estensioni_modifica', args=[self.pk])
 
     @classmethod
     def nuovo(cls, anno=None, **kwargs):
@@ -247,18 +372,22 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             progressivo=progressivo,
             **kwargs
         )
+        # if c.tipo == Corso.CORSO_NUOVO and c.titolo_cri:
+
+
         c.save()
         return c
 
     def attivabile(self):
-        """
-        Controlla se il corso base e' attivabile.
-        """
+        """Controlla se il corso base e' attivabile."""
 
         if not self.locazione:
             return False
 
         if not self.descrizione:
+            return False
+
+        if self.is_nuovo_corso and self.extension_type != CorsoBase.EXT_LVL_REGIONALE:
             return False
 
         return True
@@ -297,25 +426,130 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def attiva(self, rispondi_a=None):
         if not self.attivabile():
             raise ValueError("Questo corso non è attivabile.")
-
         self._invia_email_agli_aspiranti(rispondi_a=rispondi_a)
         self.stato = self.ATTIVO
         self.save()
 
+    def _corso_activation_recipients_for_email(self):
+        if self.is_nuovo_corso:
+            recipients = self.get_volunteers_by_course_requirements()
+        else:
+            recipients = self.aspiranti_nelle_vicinanze()
+        return recipients
+
     def _invia_email_agli_aspiranti(self, rispondi_a=None):
-        for aspirante in self.aspiranti_nelle_vicinanze():
-            persona = aspirante.persona
-            if not aspirante.persona.volontario:
-                Messaggio.costruisci_e_accoda(
-                    oggetto="Nuovo Corso per Volontari CRI",
-                    modello="email_aspirante_corso.html",
-                    corpo={
-                        "persona": persona,
-                        "corso": self,
-                    },
-                    destinatari=[persona],
-                    rispondi_a=rispondi_a
-                )
+        for recipient in self._corso_activation_recipients_for_email():
+            if self.is_nuovo_corso:
+                persona = recipient
+                subject = "Nuovo Corso %s per Volontari CRI" % self.titolo_cri
+            else:
+                persona = recipient.persona
+                subject = "Nuovo Corso per Volontari CRI"
+
+            email_data = dict(
+                oggetto=subject,
+                modello="email_aspirante_corso.html",
+                corpo={
+                    'persona': persona,
+                    'corso': self,
+                },
+                destinatari=[persona],
+                rispondi_a=rispondi_a
+            )
+
+            if self.is_nuovo_corso:
+                # If course tipo is CORSO_NUOVO to send to volunteers only
+                Messaggio.costruisci_e_accoda(**email_data)
+            elif not self.is_nuovo_corso and not recipient.persona.volontario:
+                # to send to <Aspirante> only
+                Messaggio.costruisci_e_accoda(**email_data)
+
+    def has_extensions(self, is_active=True, **kwargs):
+        """ Case: extension_type == EXT_LVL_REGIONALE """
+        return self.corsoestensione_set.filter(is_active=is_active).exists()
+
+    def get_extensions(self, **kwargs):
+        """ Returns CorsoEstensione objects related to the course """
+        return self.corsoestensione_set.filter(**kwargs)
+
+    def get_extensions_sede(self, with_expanded=True, **kwargs):
+        """ Returns SedeQuerySet """
+        if with_expanded:
+            return self.expand_extensions_sedi_sottostanti()
+        else:
+            return CorsoEstensione.get_sede(course=self, **kwargs)
+
+    def expand_extensions_sedi_sottostanti(self):
+        expanded = Sede.objects.none()
+
+        for e in self.get_extensions():
+            all_sede = e.sede.all()
+            expanded |= all_sede
+            for sede in all_sede:
+                if e.sedi_sottostanti:
+                    expanded |= sede.esplora()
+        return expanded.distinct()
+
+    def get_extensions_titles(self, **kwargs):
+        """ Returns <FormazioneTitle> QuerySet """
+        return CorsoEstensione.get_titles(course=self, **kwargs)
+
+    def get_volunteers_by_course_requirements(self, **kwargs):
+        persons = None
+
+        if self.is_nuovo_corso:
+            corso_extension = self.extension_type
+            if CorsoBase.EXT_MIA_SEDE == corso_extension:
+                persons = self.get_volunteers_by_only_sede()
+
+            if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
+                by_ext_sede = self.get_volunteers_by_ext_sede()
+                by_ext_titles = self.get_volunteers_by_ext_titles()
+                persons = by_ext_sede | by_ext_titles
+
+        if persons is None:
+            # Sede of course (was set in the first step of course creation)
+            persons = Persona.objects.filter(sede=self.sede)
+
+        return persons.filter(**kwargs).distinct()
+
+    @property
+    def get_firmatario(self):
+        last = self.deleghe.last()
+        return last.firmatario if hasattr(last, 'firmatario') else last
+
+    @property
+    def get_firmatario_sede(self):
+        course_created_by = self.get_firmatario
+        if course_created_by is not None:
+            return course_created_by.sede_riferimento()
+        else:
+            return course_created_by # returns None
+
+    def get_volunteers_by_only_sede(self):
+        app_attuali = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).q
+        app = Appartenenza.objects.filter(app_attuali,
+                                          sede=self.get_firmatario_sede,
+                                          confermata=True)
+        return self._query_get_volunteers_by_sede(app)
+
+    def get_volunteers_by_ext_sede(self):
+        app_attuali = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).q
+        app = Appartenenza.objects.filter(app_attuali,
+                                          sede__in=self.get_extensions_sede(),
+                                          confermata=True)
+        return self._query_get_volunteers_by_sede(app)
+
+    def _query_get_volunteers_by_sede(self, appartenenze):
+        return Persona.to_contact_for_courses(corso=self).filter(
+            id__in=appartenenze.values_list('persona__id', flat=True)
+        )
+
+    def get_volunteers_by_ext_titles(self):
+        sede = self.get_extensions_sede()
+        titles = self.get_extensions_titles().values_list('id', flat=True)
+        return Persona.objects.filter(sede__in=sede,
+                                      titoli_personali__in=titles)
 
     @property
     def concluso(self):
@@ -330,11 +564,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return self.stato == self.TERMINATO and self.partecipazioni_confermate().exists()
 
     def termina(self, mittente=None):
-        """
-        Termina il corso base, genera il verbale e volontarizza.
-        """
-
+        """ Termina il corso base, genera il verbale e volontarizza. """
         from django.db import transaction
+
         with transaction.atomic():
             # Per maggiore sicurezza, questa cosa viene eseguita in una transazione.
 
@@ -348,9 +580,14 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 # Comunica il risultato all'aspirante/volontario.
                 partecipante.notifica_esito_esame(mittente=mittente)
 
-                if partecipante.idoneo:  # Se idoneo, volontarizza.
-                    partecipante.persona.da_aspirante_a_volontario(sede=partecipante.destinazione,
-                                                                   mittente=mittente)
+                # Actions required only for CorsoBase (Aspirante as participant)
+                if not self.is_nuovo_corso:
+                    # Se idoneo, volontarizza
+                    if partecipante.idoneo:
+                        partecipante.persona.da_aspirante_a_volontario(
+                            sede=partecipante.destinazione,
+                            mittente=mittente)
+
 
             # Cancella tutte le eventuali partecipazioni in attesa.
             PartecipazioneCorsoBase.con_esito_pending(corso=self).delete()
@@ -358,6 +595,33 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             # Salva lo stato del corso come terminato.
             self.stato = Corso.TERMINATO
             self.save()
+
+        if self.is_nuovo_corso:
+            self.set_titolo_cri_to_participants()
+
+    def set_titolo_cri_to_participants(self):
+        """ Sets <titolo_cri> in Persona's Curriculum (TitoloPersonale) """
+        from curriculum.models import TitoloPersonale
+
+        objs = [
+            TitoloPersonale(
+                confermata=True,
+                titolo=self.titolo_cri,
+                persona=p.persona,
+                certificato_da=self.get_firmatario,
+                data_scadenza=timezone.now() + self.titolo_cri.expires_after_timedelta,
+                is_course_title=True,
+
+                # todo: attending details
+                # data_ottenimento='',
+                # luogo_ottenimento='',
+                # codice='',
+                # codice_corso='',
+                # certificato='',
+            )
+            for p in self.partecipazioni_confermate()
+        ]
+        TitoloPersonale.objects.bulk_create(objs)
 
     def non_idonei(self):
         return self.partecipazioni_confermate().filter(esito_esame=PartecipazioneCorsoBase.NON_IDONEO)
@@ -419,6 +683,88 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         )
         return pdf
 
+    @property
+    def is_reached_max_participants_limit(self):
+        actual_requests = PartecipazioneCorsoBase.objects.filter(corso=self)
+        return self.max_participants + 10 == actual_requests
+
+    @property
+    def is_nuovo_corso(self):
+        return self.tipo == Corso.CORSO_NUOVO
+
+    def get_course_links(self):
+        return self.corsolink_set.filter(is_enabled=True)
+
+    def get_course_files(self):
+        return self.corsofile_set.filter(is_enabled=True)
+
+    class Meta:
+        verbose_name = "Corso"
+        verbose_name_plural = "Corsi"
+        ordering = ['-anno', '-progressivo']
+        permissions = (
+            ("view_corsobase", "Can view corso base"),
+        )
+
+    def __str__(self):
+        return str(self.nome)
+
+
+class CorsoEstensione(ConMarcaTemporale):
+    from segmenti.segmenti import NOMI_SEGMENTI
+    from curriculum.models import Titolo
+
+    corso = models.ForeignKey(CorsoBase, db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    segmento = models.CharField(max_length=9, choices=NOMI_SEGMENTI, blank=True)
+    titolo = models.ManyToManyField(Titolo, blank=True)
+    sede = models.ManyToManyField(Sede)
+    sedi_sottostanti = models.BooleanField(default=False, db_index=True)
+
+    def visible_by_extension_type(self):
+        type = self.corso.extension_type
+        if type == CorsoBase.EXT_MIA_SEDE:
+            self.is_active = False
+        elif type == CorsoBase.EXT_LVL_REGIONALE:
+            self.is_active = True
+
+    @classmethod
+    def get_sede(cls, course, **kwargs):
+        sede = cls._get_related_objects_to_course(course, 'sede', **kwargs)
+        return sede if sede else Sede.objects.none()
+
+    @classmethod
+    def get_titles(cls, course, **kwargs):
+        titles = cls._get_related_objects_to_course(course, 'titolo', **kwargs)
+        return titles if titles else Titolo.objects.none()
+
+    @classmethod
+    def _get_related_objects_to_course(cls, course, field, **kwargs):
+        course_extensions = cls.objects.filter(corso=course, **kwargs)
+        if not course_extensions.exists():
+            return None
+
+        objects = []
+        for i in course_extensions:
+            elem = getattr(i, field).all()
+            if elem:
+                for e in elem:
+                    objects.append(e)
+        if objects:
+            model = ContentType.objects.get_for_model(objects[0]).model_class()
+            return model.objects.filter(id__in=[obj.id for obj in objects]).distinct()
+
+    def __str__(self):
+        return '%s' % self.corso if hasattr(self, 'corso') else 'No CorsoBase set.'
+
+    def save(self):
+        self.visible_by_extension_type()
+        super().save()
+
+    class Meta:
+        verbose_name = 'Estensione del Corso'
+        verbose_name_plural = 'Estensioni del Corso'
+
 
 class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, models.Model):
     persona = models.ForeignKey(Persona, related_name='inviti_corsi', on_delete=models.CASCADE)
@@ -431,22 +777,9 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
     IN_ATTESA_ASPIRANTE = 2
     INVITO_INVIATO = -1
 
-    RICHIESTA_NOME = "iscrizione a Corso Base"
+    RICHIESTA_NOME = "iscrizione a Corso"
 
     APPROVAZIONE_AUTOMATICA = datetime.timedelta(days=settings.SCADENZA_AUTORIZZAZIONE_AUTOMATICA)
-
-    class Meta:
-        verbose_name = "Invito di partecipazione a corso base"
-        verbose_name_plural = "Inviti di partecipazione a corso base"
-        ordering = ('persona__cognome', 'persona__nome', 'persona__codice_fiscale',)
-        permissions = (
-            ("view_invitocorsobase", "Can view invito partecipazione corso base"),
-        )
-
-    def __str__(self):
-        return "Invit di part. di %s a %s" % (
-            self.persona, self.corso
-        )
 
     def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
         with atomic():
@@ -494,7 +827,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
         """
         self.autorizzazioni_ritira()
         Messaggio.costruisci_e_invia(
-            oggetto="Annullamento invito al Corso Base: %s" % self.corso,
+            oggetto="Annullamento invito al Corso: %s" % self.corso,
             modello="email_aspirante_corso_deiscrizione_invito.html",
             corpo={
                 "invito": self,
@@ -506,7 +839,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
             destinatari=[self.persona],
         )
         Messaggio.costruisci_e_invia(
-            oggetto="Annullamento invito al Corso Base: %s" % self.corso,
+            oggetto="Annullamento invito al Corso: %s" % self.corso,
             modello="email_aspirante_corso_deiscrizione_invito_mittente.html",
             corpo={
                 "invito": self,
@@ -518,14 +851,25 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
             destinatari=[mittente],
         )
 
+    class Meta:
+        verbose_name = "Invito di partecipazione a corso"
+        verbose_name_plural = "Inviti di partecipazione a corso"
+        ordering = ('persona__cognome', 'persona__nome', 'persona__codice_fiscale',)
+        permissions = (
+            ("view_invitocorsobase", "Can view invito partecipazione corso base"),
+        )
 
-class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
+    def __str__(self):
+        return "Invito di part. di <%s> a <%s>" % (self.persona, self.corso)
+
+
+class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
+                              ConAutorizzazioni, ConPDF):
 
     persona = models.ForeignKey(Persona, related_name='partecipazioni_corsi', on_delete=models.CASCADE)
     corso = models.ForeignKey(CorsoBase, related_name='partecipazioni', on_delete=models.PROTECT)
 
     # Stati per l'iscrizione da parte del direttore
-
     NON_ISCRITTO = 0
     ISCRITTO = 1
     IN_ATTESA_ASPIRANTE = 2
@@ -533,7 +877,6 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     INVITO_INVIATO = -1
 
     # Dati per la generazione del verbale (esito)
-
     POSITIVO = "P"
     NEGATIVO = "N"
     ESITO = (
@@ -586,7 +929,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
             ("view_partecipazionecorsobarse", "Can view corso Richiesta di partecipazione"),
         )
 
-    RICHIESTA_NOME = "Iscrizione Corso Base"
+    RICHIESTA_NOME = "Iscrizione Corso"
 
     def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
         # Quando un aspirante viene iscritto, tutte le richieste presso altri corsi devono essere cancellati.
@@ -621,12 +964,14 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         )
 
     def notifica_esito_esame(self, mittente=None):
-        """
-        Invia una e-mail al partecipante con l'esito del proprio esame.
-        """
+        """ Invia una e-mail al partecipante con l'esito del proprio esame. """
+
+        template = "email_%s_corso_esito.html"
+        template = template % 'volontario' if self.corso.is_nuovo_corso else 'aspirante'
+
         Messaggio.costruisci_e_accoda(
-            oggetto="Esito del Corso Base: %s" % self.corso,
-            modello="email_aspirante_corso_esito.html",
+            oggetto="Esito del Corso: %s" % self.corso,
+            modello=template,
             corpo={
                 "partecipazione": self,
                 "corso": self.corso,
@@ -638,12 +983,10 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         )
 
     def disiscrivi(self, mittente=None):
-        """
-        Disiscrive partecipante dal corso base.
-        """
+        """ Disiscrive partecipante dal corso base. """
         self.autorizzazioni_ritira()
         Messaggio.costruisci_e_invia(
-            oggetto="Disiscrizione dal Corso Base: %s" % self.corso,
+            oggetto="Disiscrizione dal Corso: %s" % self.corso,
             modello="email_aspirante_corso_deiscrizione.html",
             corpo={
                 "partecipazione": self,
@@ -655,7 +998,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
             destinatari=[self.persona],
         )
         Messaggio.costruisci_e_invia(
-            oggetto="Disiscrizione dal Corso Base: %s" % self.corso,
+            oggetto="Disiscrizione dal Corso: %s" % self.corso,
             modello="email_aspirante_corso_deiscrizione_mittente.html",
             corpo={
                 "partecipazione": self,
@@ -673,8 +1016,12 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         )
 
     def autorizzazione_concedi_modulo(self):
-        from formazione.forms import ModuloConfermaIscrizioneCorsoBase
-        return ModuloConfermaIscrizioneCorsoBase
+        from formazione.forms import (ModuloConfermaIscrizioneCorsoBase,
+                                      ModuloConfermaIscrizioneCorso)
+        if self.corso.is_nuovo_corso:
+            return ModuloConfermaIscrizioneCorso
+        else:
+            return ModuloConfermaIscrizioneCorsoBase
 
     def genera_scheda_valutazione(self):
         pdf = PDF(oggetto=self)
@@ -734,26 +1081,43 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 
 
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
-
     corso = models.ForeignKey(CorsoBase, related_name='lezioni', on_delete=models.PROTECT)
     nome = models.CharField(max_length=128)
+    docente = models.ForeignKey(Persona, null=True, default='',
+                                verbose_name='Docente della lezione',)
+    obiettivo = models.CharField('Obiettivo formativo della lezione',
+                                 max_length=128, null=True, default='')
+    luogo = models.CharField(max_length=255, null=True, blank=True,
+                             verbose_name="il luogo di dove si svolgeranno le lezioni",
+                             help_text="Compilare nel caso il luogo è diverso "
+                                       "dal comitato che ha organizzato il corso.")
 
     class Meta:
-        verbose_name = "Lezione di Corso Base"
-        verbose_name_plural = "Lezioni di Corsi Base"
+        verbose_name = "Lezione di Corso"
+        verbose_name_plural = "Lezioni di Corsi"
         ordering = ['inizio']
         permissions = (
             ("view_lezionecorsobase", "Can view corso Lezione di Corso Base"),
         )
 
-    def __str__(self):
-        return "Lezione: %s" % (self.nome,)
-
     @property
     def url_cancella(self):
-        return "%s%d/cancella/" % (
-            self.corso.url_lezioni, self.pk
+        return "%s%d/cancella/" % (self.corso.url_lezioni, self.pk)
+
+    def send_messagge_to_docente(self, me):
+        Messaggio.costruisci_e_invia(
+            oggetto='Lezione al %s' % self.corso.nome,
+            modello="email_docente_assegnato_a_corso.html",
+            corpo={
+                "persona": self.docente,
+                "corso": self.corso,
+            },
+            mittente=me,
+            destinatari=[self.docente]
         )
+
+    def __str__(self):
+        return "Lezione: %s" % (self.nome,)
 
 
 class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
@@ -763,8 +1127,8 @@ class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
     registrata_da = models.ForeignKey(Persona, related_name='assenze_corsi_base_registrate', null=True, on_delete=models.SET_NULL)
 
     class Meta:
-        verbose_name = "Assenza a Corso Base"
-        verbose_name_plural = "Assenze ai Corsi Base"
+        verbose_name = "Assenza a Corso"
+        verbose_name_plural = "Assenze ai Corsi"
         permissions = (
             ("view_assenzacorsobase", "Can view corso Assenza a Corso Base"),
         )
@@ -810,12 +1174,6 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
     def comitati(self):
         return self.sedi().filter(estensione__in=[LOCALE, PROVINCIALE, TERRITORIALE])
 
-    def corso(self):
-        return CorsoBase.objects.filter(
-            PartecipazioneCorsoBase.con_esito_ok(persona=self.persona).via("partecipazioni"),
-            stato=Corso.ATTIVO,
-        ).first()
-
     def richiesta_corso(self):
         return CorsoBase.objects.filter(
             PartecipazioneCorsoBase.con_esito_pending(persona=self.persona).via("partecipazioni"),
@@ -827,7 +1185,14 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
         Ritorna un elenco di Corsi (Base) nelle vicinanze dell'Aspirante.
         :return: Un elenco di Corsi.
         """
-        return self.nel_raggio(CorsoBase.pubblici().filter(**kwargs))
+        corsi = CorsoBase.pubblici().filter(**kwargs)
+        return self.nel_raggio(corsi)
+
+    def corso(self):
+        partecipazione = PartecipazioneCorsoBase.con_esito_ok(persona=self.persona)
+        partecipazione = partecipazione.via("partecipazioni")
+        corso = CorsoBase.objects.filter(partecipazione, stato=Corso.ATTIVO)
+        return corso.first()
 
     def calcola_raggio(self):
         """

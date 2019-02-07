@@ -1,10 +1,13 @@
-from datetime import datetime, date
-
 import stdnum
-from django.utils import timezone
-from stdnum.it import codicefiscale
-from django.core.exceptions import ValidationError
 import re
+
+from datetime import datetime, date
+from django.utils import timezone
+
+from django.core.exceptions import ValidationError
+from django.utils.deconstruct import deconstructible
+
+from stdnum.it import codicefiscale
 
 
 def _valida_codice_fiscale(codice_fiscale):
@@ -110,3 +113,17 @@ def valida_data_nel_passato(data):
             raise ValidationError("La data non può essere nel futuro.")
     else:
         raise TypeError("Fornito tipo di data non valido.")
+
+
+@deconstructible
+class ValidateFileSize(object):
+    def __init__(self, filesize=2):
+        self.filesize = filesize
+
+    def __call__(self, *args, **kwargs):
+        file = args[0]
+        filesize = file.file.size
+        megabyte_limit = self.filesize
+        if filesize > megabyte_limit * 1024 * 1024:
+            raise ValidationError(
+                "Seleziona un file più piccolo di %sMB" % str(megabyte_limit))

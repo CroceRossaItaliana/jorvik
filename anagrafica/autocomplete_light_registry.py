@@ -1,11 +1,11 @@
-from autocomplete_light import shortcuts as autocomplete_light
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 
-from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
-from anagrafica.models import Persona, Sede, Appartenenza
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI_UNITA, UFFICIO_SOCI
-from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE
+from autocomplete_light import shortcuts as autocomplete_light
+
+from .costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
+from .permessi.applicazioni import UFFICIO_SOCI_UNITA, UFFICIO_SOCI
+from .permessi.costanti import GESTIONE_CORSI_SEDE
+from .models import Persona, Sede, Appartenenza
 from formazione.models import PartecipazioneCorsoBase
 
 

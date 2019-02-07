@@ -1,16 +1,13 @@
 {% extends 'aspirante_corso_base_scheda.html' %}
 
-{% block scheda_titolo %}
-    Aggiungi Iscritti
-{% endblock %}
+{% block scheda_titolo %}Aggiungi Iscritti{% endblock %}
 
 {% load utils %}
 {% load bootstrap3 %}
 
+
 {% block scheda_contenuto %}
-
 <div class="row">
-
     <div class="col-md-4">
         <div class="panel panel-primary">
             <div class="panel-heading">
@@ -21,10 +18,13 @@
             </div>
             <div class="panel-body">
                 <p>Con questo modulo puoi selezionare uno o pi&ugrave;
-                    <strong>Sostenitori</strong> o <strong>Aspiranti</strong> da iscrivere a questo
-                    corso base.</p>
-                <p>Presidente e Ufficio Soci possono inserire i sostenitori
-                    dal pannello "Soci" > "Aggiungi Persona".</p>
+                    {% if corso.is_nuovo_corso %}
+                    <strong>Volontari</strong> da iscrivere a questo corso.
+                    {% else %}
+                    <strong>Sostenitori</strong> o <strong>Aspiranti</strong> da iscrivere a questo corso base.
+                    {% endif %}
+                </p>
+                <p>Presidente e Ufficio Soci possono inserire i sostenitori dal pannello "Soci" > "Aggiungi Persona".</p>
 
                 <form method="POST">
                     {% csrf_token %}
@@ -43,9 +43,7 @@
             </div>
             <div class="panel-footer">
                 <i class="fa fa-fw fa-envelope-o"></i>
-                Avviseremo per e-mail le persone che verranno
-                 iscritte al corso; le persone dovranno accettare
-                l'iscrizione perché sia effettiva.
+                Avviseremo per e-mail le persone che verranno iscritte al corso; le persone dovranno accettare l'iscrizione perché sia effettiva.
             </div>
         </div>
 
@@ -112,29 +110,20 @@
                                 {% else %}
                                     <i class="fa fa-fw fa-times"></i>
                                     No
-
                                 {% endif %}
                             </td>
-
                         </tr>
-
                         {% empty %}
                             <tr class="warning">
                                 <td colspan="3">
-                                    Seleziona una o pi&ugrave; persone da iscrivere al
-                                    corso base. Qui vedrai l'esito della procedura
-                                    di iscrizione.
+                                    Seleziona una o pi&ugrave; persone da iscrivere al corso{% if not corso.is_nuovo_corso %} base{%endif%}. Qui vedrai l'esito della procedura di iscrizione.
                                 </td>
                             </tr>
-
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-
     </div>
-
 </div>
-
 {% endblock %}

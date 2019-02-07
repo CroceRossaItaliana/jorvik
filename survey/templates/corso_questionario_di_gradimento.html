@@ -1,0 +1,34 @@
+{% extends 'aspirante_corso_base_scheda.html' %}
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block scheda_titolo %}Questionario di gradimento{% endblock %}
+{% block scheda_contenuto %}
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h2 class="panel-title"><i class="fa fa-fw fa-pencil"></i> Questionario di gradimento</h2>
+        </div>
+        <div class="panel-body">
+          <p style="text-align: center; font-size: 18px;">{{ survey.text }}</p>
+
+          {% if puo_modificare and has_responses %}
+            <p style="text-align:center;font-weight:bold;">
+              <a href="{% url 'survey:course_download_results' corso.pk %}">Scaricare il Report con le risposte dei partecipanti</a>
+            </p>
+            <hr>
+          {% endif %}
+
+          <form method="POST">
+              {% csrf_token %}
+              {% bootstrap_form form %}
+
+              {% if puo_modificare %}
+                {# Director of course can only read form data #}
+              {% else %}
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva</button>
+              {% endif %}
+
+          </form>
+        </div>
+    </div>
+{% endblock %}
