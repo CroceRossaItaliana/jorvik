@@ -276,9 +276,9 @@ class CorsoExtensionForm(ModelForm):
         self.corso = kwargs.pop('corso')
         super().__init__(*args, **kwargs)
 
-        if self.corso.is_nuovo_corso:
-            if self.corso.titolo_cri:
-                self.fields['titolo'].initial = self.corso.titolo_cri
+        if self.corso.is_nuovo_corso and self.corso.titolo_cri:
+            self.fields['titolo'].initial = Titolo.objects.filter(id__in=[
+                self.corso.titolo_cri.pk])
 
 
 CorsoSelectExtensionFormSet = modelformset_factory(CorsoEstensione, extra=1,
