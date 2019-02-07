@@ -8,6 +8,7 @@ from datetime import timedelta, datetime
 from django import forms
 from curriculum.areas import OBBIETTIVI_STRATEGICI
 from formazione.models import Titolo
+from formazione.models import Corso
 
 '''
     STATISTICHE PER FASCI DI ETA
@@ -500,21 +501,24 @@ def statistica_num_corsi(**kwargs):
             cdf_area=area_riferimento
         )
 
+        corsi_current_attivi = corsi_current.filter(stato__in=(Corso.PREPARAZIONE, Corso.ATTIVO))
+        corsi_current_disattivi = corsi_current.filter(stato__in=(Corso.TERMINATO, Corso.ANNULLATO))
+        corsi_before_attivi = corsi_before.filter(stato__in=(Corso.PREPARAZIONE, Corso.ATTIVO))
+        corsi_before_disattivi = corsi_before.filter(stato__in=(Corso.TERMINATO, Corso.ANNULLATO))
+
         if nome_corso:
-            corsi_current = filter(
-                filter_name,
-                corsi_current
-            )
-            corsi_before = filter(
-                filter_name,
-                corsi_before
-            )
+            corsi_current_attivi = filter(filter_name,corsi_current_attivi)
+            corsi_current_disattivi = filter(filter_name,corsi_current_disattivi)
+            corsi_before_attivi = filter(filter_name,corsi_before_attivi)
+            corsi_before_disattivi = filter(filter_name,corsi_before_disattivi)
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
             "statistiche": {
-                "Corsi nel {}".format(anno): len(list(corsi_current)),
-                "Corsi nel {}".format(anno-1): len(list(corsi_before)),
+                "Corsi nel {} Attivi".format(anno): len(list(corsi_current_attivi)),
+                "Corsi nel {} Disattivi".format(anno): len(list(corsi_current_disattivi)),
+                "Corsi nel {} Attivi".format(anno-1): len(list(corsi_before_attivi)),
+                "Corsi nel {} Disattivi".format(anno-1): len(list(corsi_before_disattivi)),
             }
         }
 
