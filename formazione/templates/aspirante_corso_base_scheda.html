@@ -13,8 +13,8 @@
 
 
 {% block app_contenuto %}
-    <h2 class="allinea-centro grassetto text-success">{{ corso.nome }}</h2>
-    <h4 style="margin: 0 0 20px;padding:0 0 10px;border-bottom: 1px solid #e6e6e6;text-align:center;">{{ corso.titolo_cri|default:"" }}</h4>
+    <h2 class="allinea-centro grassetto text-success" style="max-width:650px; margin: 0 auto; padding-bottom: 10px; font-size: 26px; ">{{ corso.titolo_cri|default:"" }}</h2>
+    <h4 style="margin: 0 0 20px;padding:0 0 10px;border-bottom: 1px solid #e6e6e6;text-align:center; font-size:16px;">{{ corso.nome }}</h4>
 
     <h4 class="allinea-centro">
         <i class="fa fa-fw fa-map-marker"></i>

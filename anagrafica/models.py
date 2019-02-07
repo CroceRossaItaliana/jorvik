@@ -1392,7 +1392,7 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
         """ Restituisce True se il proprietario del documento ha richieste di
         partecipazione ai corsi confermate o in attesa. """
         if self.tipo in [self.CARTA_IDENTITA, self.PATENTE_CIVILE]:
-            if self.persona.richieste_di_partecipazione().count() > 0:
+            if self.persona.richieste_di_partecipazione().count():
                 return True
         return False
 
@@ -1411,9 +1411,7 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
 
 
 class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzazioni):
-    """
-    Rappresenta un'appartenenza di una Persona ad un Sede.
-    """
+    """ Rappresenta un'appartenenza di una Persona ad un Sede. """
 
     class Meta:
         verbose_name_plural = "Appartenenze"

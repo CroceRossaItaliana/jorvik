@@ -3,6 +3,7 @@
 {% load utils %}
 {% load social %}
 {% load humanize %}
+{% load bootstrap3 %}
 
 {% block scheda_contenuto %}
 
@@ -82,7 +83,16 @@
         {% elif puoi_partecipare == corso.NON_PUOI_SEI_ASPIRANTE %}
                 Non puoi iscriverti a questo corso.
         {% elif puoi_partecipare == corso.NON_HAI_CARICATO_DOCUMENTI_PERSONALI %}
-            Per iscriverti a questo corso <a href="{% url 'utente:documenti' %}">inserisci la copia di un documento di riconoscimento</a> in corso di validità.
+            Per iscriverti a questo corso inserisci la copia di un documento di riconoscimento in corso di validità (CDI o Patente Civile).
+
+            <form action="{% url 'aspirante:info' corso.pk %}" method="post" enctype="multipart/form-data">
+                <div style="display: flex;justify-content: space-between; margin-top:10px;">
+                    {% bootstrap_form load_personal_document %}
+                </div>
+                {% csrf_token %}
+                <input type="submit" class="btn btn-primary" value="Carica">
+            </form>
+
         {% elif puoi_partecipare == corso.NON_HAI_DOCUMENTO_PERSONALE_VALIDO %}
             Per iscriverti a questo corso devi <a href="{% url 'utente:documenti' %}">aggiornare il documento di riconoscimento</a> in corso di validità.
         {% else %}

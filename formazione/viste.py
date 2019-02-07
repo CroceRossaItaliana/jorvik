@@ -9,7 +9,8 @@ from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.template.loader import get_template
 
-from anagrafica.models import Persona
+from anagrafica.models import Persona, Documento
+from anagrafica.forms import ModuloCreazioneDocumento
 from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
     GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA)
@@ -139,16 +140,30 @@ def formazione_corsi_base_fine(request, me, pk):
 @pagina_pubblica
 @can_access_to_course
 def aspirante_corso_base_informazioni(request, me=None, pk=None):
+    context = dict()
     corso = get_object_or_404(CorsoBase, pk=pk)
     puo_modificare = me and me.permessi_almeno(corso, MODIFICA)
     puoi_partecipare = corso.persona(me) if me else None
 
-    contesto = {
-        "corso": corso,
-        "puo_modificare": puo_modificare,
-        "puoi_partecipare": puoi_partecipare,
-    }
-    return 'aspirante_corso_base_scheda_informazioni.html', contesto
+    if puoi_partecipare == CorsoBase.NON_HAI_CARICATO_DOCUMENTI_PERSONALI:
+        if request.method == 'POST':
+            doc = Documento(persona=me)
+            load_personal_document_form = ModuloCreazioneDocumento(request.POST,
+                request.FILES, instance=doc)
+
+            if load_personal_document_form.is_valid():
+                load_personal_document_form.save()
+                return redirect(reverse('aspirante:info', kwargs={'pk': corso.pk}))
+        else:
+            load_personal_document_form = ModuloCreazioneDocumento()
+
+        context['load_personal_document'] = load_personal_document_form
+
+    context['corso'] = corso
+    context['puo_modificare'] = puo_modificare
+    context['puoi_partecipare'] = puoi_partecipare
+
+    return 'aspirante_corso_base_scheda_informazioni.html', context
 
 
 @pagina_privata

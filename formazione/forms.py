@@ -161,7 +161,7 @@ class ModuloModificaCorsoBase(ModelForm):
     class Meta:
         model = CorsoBase
         fields = ['data_inizio', 'data_esame',
-                  'titolo_cri', 'min_participants', 'max_participants',
+                  'min_participants', 'max_participants',
                   'descrizione',
                   'data_attivazione', 'data_convocazione',
                   'op_attivazione', 'op_convocazione',]
@@ -188,9 +188,11 @@ class ModuloModificaCorsoBase(ModelForm):
         if not is_nuovo:
             self.fields.pop('min_participants')
             self.fields.pop('max_participants')
-            self.fields.pop('titolo_cri')
-        if is_nuovo and instance.stato == Corso.ATTIVO:
-            self.fields['titolo_cri'].widget.attrs['disabled'] = 'disabled'
+
+        # The fields are commented because the field's logic was moved to ModuloCreazioneCorsoBase forms step
+            # self.fields.pop('titolo_cri')
+        # if is_nuovo and instance.stato == Corso.ATTIVO:
+        #     self.fields['titolo_cri'].widget.attrs['disabled'] = 'disabled'
 
 
 class CorsoLinkForm(ModelForm):
@@ -246,6 +248,9 @@ class CorsoSelectExtensionTypeForm(ModelForm):
     class Meta:
         model = CorsoBase
         fields = ['extension_type',]
+        labels = {
+            'extension_type': "Tipo dell'estensione",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -270,6 +275,10 @@ class CorsoExtensionForm(ModelForm):
     def __init__(self, *args, **kwargs):
         self.corso = kwargs.pop('corso')
         super().__init__(*args, **kwargs)
+
+        if self.corso.is_nuovo_corso:
+            if self.corso.titolo_cri:
+                self.fields['titolo'].initial = self.corso.titolo_cri
 
 
 CorsoSelectExtensionFormSet = modelformset_factory(CorsoEstensione, extra=1,
