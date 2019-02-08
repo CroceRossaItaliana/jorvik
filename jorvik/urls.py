@@ -51,9 +51,6 @@ urlpatterns = [
     # Modalita' manutenzione
     url(r'^manutenzione/$', base.viste.manutenzione),
 
-    # Curriculum app
-    url(r'^cv/', include('curriculum.urls', namespace='cv')),
-
     # Pagina di errore
     url(r'^errore/404/$', base.errori.non_trovato),
     url(r'^errore/orfano/$', base.errori.orfano),
@@ -173,19 +170,13 @@ urlpatterns = [
     url(r'^presidente/checklist/(?P<sede_pk>[0-9]+)/(?P<tipo>.*)/(?P<oggetto_tipo>[0-9]+)/(?P<oggetto_id>[0-9]+)/',
         anagrafica.viste.presidente_checklist_delegati),
 
-    url(r'^centrale-operativa/$', centrale_operativa.viste.co),
-    url(r'^centrale-operativa/reperibilita/$', centrale_operativa.viste.co_reperibilita),
-    url(r'^centrale-operativa/poteri/$', centrale_operativa.viste.co_poteri),
-    url(r'^centrale-operativa/poteri/(?P<part_pk>[0-9]+)/$', centrale_operativa.viste.co_poteri_switch),
-    url(r'^centrale-operativa/turni/$', centrale_operativa.viste.co_turni),
-    url(r'^centrale-operativa/turni/(?P<partecipazione_pk>[0-9]+)/monta/$', centrale_operativa.viste.co_turni_monta),
-    url(r'^centrale-operativa/turni/(?P<partecipazione_pk>[0-9]+)/smonta/$', centrale_operativa.viste.co_turni_smonta),
-
     # Applicazioni
+    url(r'^centrale-operativa/', include('centrale_operativa.urls', namespace='centrale_operativa')),
     url(r'^autoparco/', include('veicoli.urls_autoparco', namespace='autoparco')),
     url(r'^veicoli/', include('veicoli.urls', namespace='veicoli')),
     url(r'^utente/', include('anagrafica.urls_utente', namespace='utente')),
     url(r'^us/', include('ufficio_soci.urls', namespace='ufficio_soci')),
+    url(r'^cv/', include('curriculum.urls', namespace='cv')),
 
     # Formazione
     url(r'^aspirante/', include(formazione_urls_aspirante, namespace='aspirante')),
@@ -196,13 +187,13 @@ urlpatterns = [
     url(r'^page/', include('static_page.urls', namespace='pages')),
     url(r'^supporto/$', base.viste.supporto, name='supporto_page'),
 
-    url(r'^geo/localizzatore/imposta/$', base.viste.geo_localizzatore_imposta),
-    url(r'^geo/localizzatore/$', base.viste.geo_localizzatore),
     url(r'^strumenti/delegati/$', anagrafica.viste.strumenti_delegati, name='strumenti_delegati'),
     url(r'^strumenti/delegati/(?P<delega_pk>[0-9]+)/termina/$', anagrafica.viste.strumenti_delegati_termina),
     url(r'^social/commenti/nuovo/', social.viste.commenti_nuovo),
     url(r'^social/commenti/cancella/(?P<pk>[0-9]+)/', social.viste.commenti_cancella),
     url(r'^media/(?P<path>.*)$', django.views.static.serve, {"document_root": MEDIA_ROOT}),
+    url(r'^geo/localizzatore/imposta/$', base.viste.geo_localizzatore_imposta),
+    url(r'^geo/localizzatore/$', base.viste.geo_localizzatore),
     url(r'^pdf/(?P<app_label>.*)/(?P<model>.*)/(?P<pk>[0-9]+)/$', base.viste.pdf),
     url(r'^token-sicuro/(?P<codice>.*)/$', base.viste.verifica_token),
     url(r'^password-dimenticata/$', base.viste.redirect_semplice, {"nuovo_url": "/recupera_password/"}),
