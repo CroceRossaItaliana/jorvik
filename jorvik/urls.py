@@ -1,19 +1,12 @@
-# import django
-# import django.views
-# import django.views.static
-import django.contrib.auth.views
-from django.conf.urls import include, url
-from django.contrib import admin
-from django.contrib.auth.views import password_change, password_change_done
-# from django.shortcuts import redirect
-from django.views.i18n import javascript_catalog
-from oauth2_provider import views as oauth2_provider_views
-from autenticazione.funzioni import pagina_privata_no_cambio_firma # pagina_privata
-from autenticazione.two_factor.urls import urlpatterns as tf_urls
-from anagrafica.forms import ModuloModificaPassword
-
 from .settings import MEDIA_ROOT, DEBUG
+from django.contrib import admin
+from django.conf.urls import include, url
+from django.views.i18n import javascript_catalog
+import django.contrib.auth.views
 
+from oauth2_provider import views as oauth2_provider_views
+from autenticazione.two_factor.urls import urlpatterns as tf_urls
+from formazione import urls_aspirante as formazione_urls_aspirante
 import anagrafica.viste
 import articoli.viste
 import autenticazione.viste
@@ -22,11 +15,6 @@ import gestione_file.viste
 import posta.viste
 import social.viste
 import ufficio_soci.viste
-from formazione import urls_aspirante as formazione_urls_aspirante
-
-from jorvik.settings import MEDIA_ROOT, DEBUG
-
-from autenticazione.two_factor.urls import urlpatterns as tf_urls
 
 
 handler404 = base.errori.non_trovato
@@ -105,6 +93,7 @@ urlpatterns = [
     url(r'^articoli/(?P<anno>\d{4})/$', articoli.viste.ListaArticoli.as_view(), name='lista_articoli-per-anno'),
     url(r'^articoli/(?P<anno>\d{4})/(?P<mese>\d{1,2})/$', articoli.viste.ListaArticoli.as_view(), name='lista_articoli-per-mese'),
     url(r'^articoli/(?P<articolo_slug>[\w\-]+)/$', articoli.viste.DettaglioArticolo.as_view(), name='dettaglio_articolo'),
+
     url(r'^documenti/$', gestione_file.viste.ListaDocumenti.as_view(), name='lista_documenti'),
     url(r'^documenti/(?P<cartella>[0-9\-]+)/$', gestione_file.viste.ListaDocumenti.as_view(), name='lista_documenti'),
     url(r'^documenti/scarica/(?P<pk>[0-9\-]+)/$', gestione_file.viste.serve_protected_file, name='scarica_file'),
