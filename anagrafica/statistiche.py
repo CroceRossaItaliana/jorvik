@@ -501,16 +501,16 @@ def statistica_num_corsi(**kwargs):
             cdf_area=area_riferimento
         )
 
-        corsi_current_attivi = corsi_current.filter(stato__in=(Corso.PREPARAZIONE, Corso.ATTIVO))
-        corsi_current_disattivi = corsi_current.filter(stato__in=(Corso.TERMINATO, Corso.ANNULLATO))
-        corsi_before_attivi = corsi_before.filter(stato__in=(Corso.PREPARAZIONE, Corso.ATTIVO))
-        corsi_before_disattivi = corsi_before.filter(stato__in=(Corso.TERMINATO, Corso.ANNULLATO))
+        corsi_current_attivi = corsi_current.filter(stato=Corso.ATTIVO)
+        corsi_current_disattivi = corsi_current.filter(stato=Corso.TERMINATO)
+        corsi_before_attivi = corsi_before.filter(stato=Corso.ATTIVO)
+        corsi_before_disattivi = corsi_before.filter(stato=Corso.TERMINATO)
 
         if nome_corso:
-            corsi_current_attivi = filter(filter_name,corsi_current_attivi)
-            corsi_current_disattivi = filter(filter_name,corsi_current_disattivi)
-            corsi_before_attivi = filter(filter_name,corsi_before_attivi)
-            corsi_before_disattivi = filter(filter_name,corsi_before_disattivi)
+            corsi_current_attivi = filter(filter_name, corsi_current_attivi)
+            corsi_current_disattivi = filter(filter_name, corsi_current_disattivi)
+            corsi_before_attivi = filter(filter_name, corsi_before_attivi)
+            corsi_before_disattivi = filter(filter_name, corsi_before_disattivi)
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
