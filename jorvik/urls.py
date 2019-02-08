@@ -88,9 +88,6 @@ urlpatterns = [
     url(r'^informazioni/formazione/$', base.viste.formazione),
     url(r'^informazioni/browser-supportati/$', base.viste.browser_supportati, name='browser_supportati'),
 
-    # Applicazioni
-    url(r'^utente/', include('anagrafica.urls_utente', namespace='utente')),
-
     url(r'^profilo/(?P<pk>[0-9]+)/messaggio/$', anagrafica.viste.profilo_messaggio),
     url(r'^profilo/(?P<pk>[0-9]+)/turni/foglio/$', anagrafica.viste.profilo_turni_foglio),
     url(r'^profilo/(?P<pk>[0-9]+)/telefono/(?P<tel_pk>[0-9]+)/cancella/$', anagrafica.viste.profilo_telefono_cancella),
@@ -184,42 +181,6 @@ urlpatterns = [
     url(r'^centrale-operativa/turni/(?P<partecipazione_pk>[0-9]+)/monta/$', centrale_operativa.viste.co_turni_monta),
     url(r'^centrale-operativa/turni/(?P<partecipazione_pk>[0-9]+)/smonta/$', centrale_operativa.viste.co_turni_smonta),
 
-    url(r'^us/$', ufficio_soci.viste.us),
-    url(r'^us/provvedimento/$', ufficio_soci.viste.us_provvedimento),
-    url(r'^us/aggiungi/$', ufficio_soci.viste.us_aggiungi),
-    url(r'^us/reclama/$', ufficio_soci.viste.us_reclama),
-    url(r'^us/reclama/(?P<persona_pk>.*)/$', ufficio_soci.viste.us_reclama_persona),
-    url(r'^us/estensione/$', ufficio_soci.viste.us_estensione),
-    url(r'^us/estensione/(?P<pk>.*)/termina/$', ufficio_soci.viste.us_estensione_termina, name='us-termina-estensione'),
-    url(r'^us/trasferimento/$', ufficio_soci.viste.us_trasferimento),
-    url(r'^us/riserva/$', ufficio_soci.viste.us_riserva),
-    url(r'^us/riserva/(?P<pk>.*)/termina/$', ufficio_soci.viste.us_riserva_termina),
-    url(r'^us/dimissioni/(?P<pk>[0-9]+)/$', ufficio_soci.viste.us_dimissioni, name='us-dimissioni'),
-    url(r'^us/dimissioni/sostenitore/(?P<pk>[0-9]+)/$', ufficio_soci.viste.us_chiudi_sostenitore, name='us-chiudi-sostenitore'),
-
-    url(r'^us/elenchi/(?P<elenco_tipo>.*)/$', ufficio_soci.viste.us_elenchi),
-    url(r'^us/quote/$', ufficio_soci.viste.us_quote),
-    url(r'^us/quote/nuova/$', ufficio_soci.viste.us_quote_nuova, name='us_quote_nuova'),
-    url(r'^us/ricevute/$', ufficio_soci.viste.us_ricevute),
-    url(r'^us/ricevute/(?P<pk>[0-9]+)/annulla/$', ufficio_soci.viste.us_ricevute_annulla),
-    url(r'^us/ricevute/nuova/$', ufficio_soci.viste.us_ricevute_nuova, name='us_ricevute_nuova'),
-
-    url(r'^us/tesserini/$', ufficio_soci.viste.us_tesserini),
-    url(r'^us/tesserini/da-richiedere/$', ufficio_soci.viste.us_tesserini_da_richiedere),
-    url(r'^us/tesserini/senza-fototessera/$', ufficio_soci.viste.us_tesserini_senza_fototessera),
-    url(r'^us/tesserini/richiesti/$', ufficio_soci.viste.us_tesserini_richiesti),
-    url(r'^us/tesserini/rifiutati/$', ufficio_soci.viste.us_tesserini_rifiutati),
-    url(r'^us/tesserini/richiedi/(?P<persona_pk>[0-9]+)/$', ufficio_soci.viste.us_tesserini_richiedi, name='us-tesserini-richiedi'),
-    url(r'^us/tesserini/emissione/$', ufficio_soci.viste.us_tesserini_emissione),
-    url(r'^us/tesserini/emissione/processa/$', ufficio_soci.viste.us_tesserini_emissione_processa),
-    url(r'^us/tesserini/emissione/scarica/$', ufficio_soci.viste.us_tesserini_emissione_scarica),
-
-    url(r'^us/elenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', ufficio_soci.viste.us_elenco),
-    url(r'^us/elenco/(?P<elenco_id>.*)/download/$', ufficio_soci.viste.us_elenco_download),
-    url(r'^us/elenco/(?P<elenco_id>.*)/messaggio/$', ufficio_soci.viste.us_elenco_messaggio, name='us-elenco-messaggio'),
-    url(r'^us/elenco/(?P<elenco_id>.*)/modulo/$', ufficio_soci.viste.us_elenco_modulo),
-    url(r'^us/elenco/(?P<elenco_id>.*)/$', ufficio_soci.viste.us_elenco),
-
     url(r'^autoparco/(P<pk>.*)/$', veicoli.viste.veicoli_autoparco),
     url(r'^autoparco/modifica/(?P<pk>.*)/$', veicoli.viste.veicoli_autoparco_modifica_o_nuovo),
     url(r'^autoparco/nuovo/$', veicoli.viste.veicoli_autoparco_modifica_o_nuovo),
@@ -239,6 +200,10 @@ urlpatterns = [
     url(r'^veicolo/termina/fermo-tecnico/(?P<fermo>.*)/$', veicoli.viste.veicoli_termina_fermo_tecnico),
     url(r'^veicolo/(?P<veicolo>.*)/collocazioni/$', veicoli.viste.veicoli_collocazioni),
     url(r'^veicolo/dettagli/(?P<veicolo>.*)/$', veicoli.viste.veicolo_dettagli),
+
+    # Applicazioni
+    url(r'^utente/', include('anagrafica.urls_utente', namespace='utente')),
+    url(r'^us/', include('ufficio_soci.urls', namespace='ufficio_soci')),
 
     # Formazione
     url(r'^aspirante/', include(formazione_urls_aspirante, namespace='aspirante')),
@@ -267,7 +232,6 @@ urlpatterns = [
     url(r'^admin/pulisci/email/$', anagrafica.viste.admin_pulisci_email),
     url(r'^admin/statistiche/$', anagrafica.viste.admin_statistiche),
     url(r'^admin/report_federazione/$', anagrafica.viste.admin_report_federazione),
-
     url(r'^admin/', include(admin.site.urls)),
     url(r'^login/', include('loginas.urls')),   # Login come utente
 
