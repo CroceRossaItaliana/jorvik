@@ -181,27 +181,9 @@ urlpatterns = [
     url(r'^centrale-operativa/turni/(?P<partecipazione_pk>[0-9]+)/monta/$', centrale_operativa.viste.co_turni_monta),
     url(r'^centrale-operativa/turni/(?P<partecipazione_pk>[0-9]+)/smonta/$', centrale_operativa.viste.co_turni_smonta),
 
-    url(r'^autoparco/(P<pk>.*)/$', veicoli.viste.veicoli_autoparco),
-    url(r'^autoparco/modifica/(?P<pk>.*)/$', veicoli.viste.veicoli_autoparco_modifica_o_nuovo),
-    url(r'^autoparco/nuovo/$', veicoli.viste.veicoli_autoparco_modifica_o_nuovo),
-
-    url(r'^veicoli/$', veicoli.viste.veicoli),
-    url(r'^veicoli/elenco/$', veicoli.viste.veicoli_elenco),
-    url(r'^veicoli/autoparchi/$', veicoli.viste.veicoli_autoparchi),
-    url(r'^veicoli/autoparco/elenco/(?P<autoparco>.*)/$', veicoli.viste.veicoli_elenco_autoparco),
-    url(r'^veicolo/(P<pk>.*)/$', veicoli.viste.veicoli_veicolo),
-    url(r'^veicolo/nuovo/$', veicoli.viste.veicoli_veicolo_modifica_o_nuovo),
-    url(r'^veicolo/modifica/(?P<pk>.*)/$', veicoli.viste.veicoli_veicolo_modifica_o_nuovo),
-    url(r'^veicolo/manutenzioni/(?P<veicolo>.*)/$', veicoli.viste.veicoli_manutenzione),
-    url(r'^veicolo/manutenzione/(?P<manutenzione>.*)/modifica/$', veicoli.viste.veicoli_modifica_manutenzione),
-    url(r'^veicolo/rifornimento/(?P<rifornimento>.*)/modifica/$', veicoli.viste.veicoli_modifica_rifornimento),
-    url(r'^veicolo/rifornimenti/(?P<veicolo>.*)/$', veicoli.viste.veicoli_rifornimento),
-    url(r'^veicolo/fermi-tecnici/(?P<veicolo>.*)/$', veicoli.viste.veicoli_fermo_tecnico),
-    url(r'^veicolo/termina/fermo-tecnico/(?P<fermo>.*)/$', veicoli.viste.veicoli_termina_fermo_tecnico),
-    url(r'^veicolo/(?P<veicolo>.*)/collocazioni/$', veicoli.viste.veicoli_collocazioni),
-    url(r'^veicolo/dettagli/(?P<veicolo>.*)/$', veicoli.viste.veicolo_dettagli),
-
     # Applicazioni
+    url(r'^autoparco/', include('veicoli.urls_autoparco', namespace='autoparco')),
+    url(r'^veicoli/', include('veicoli.urls', namespace='veicoli')),
     url(r'^utente/', include('anagrafica.urls_utente', namespace='utente')),
     url(r'^us/', include('ufficio_soci.urls', namespace='ufficio_soci')),
 
@@ -216,8 +198,7 @@ urlpatterns = [
 
     url(r'^geo/localizzatore/imposta/$', base.viste.geo_localizzatore_imposta),
     url(r'^geo/localizzatore/$', base.viste.geo_localizzatore),
-    url(r'^strumenti/delegati/$', anagrafica.viste.strumenti_delegati,
-        name='strumenti_delegati'),
+    url(r'^strumenti/delegati/$', anagrafica.viste.strumenti_delegati, name='strumenti_delegati'),
     url(r'^strumenti/delegati/(?P<delega_pk>[0-9]+)/termina/$', anagrafica.viste.strumenti_delegati_termina),
     url(r'^social/commenti/nuovo/', social.viste.commenti_nuovo),
     url(r'^social/commenti/cancella/(?P<pk>[0-9]+)/', social.viste.commenti_cancella),
