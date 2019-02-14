@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 
+
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
     crea_validatore_dimensione_file, valida_dimensione_file_8mb,
@@ -29,7 +30,7 @@ from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.models import (ModelloSemplice, ModelloAlbero, ConAutorizzazioni,
     ConAllegati, Autorizzazione, ConVecchioID)
 from base.tratti import (ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF)
-from base.utils import (is_list, sede_slugify, UpperCaseCharField, concept,
+from base.utils import (is_list, sede_slugify, UpperCaseCharField, concept, oggi,
     TitleCharField, poco_fa, mezzanotte_24_ieri, mezzanotte_00, mezzanotte_24)
 from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio
@@ -359,9 +360,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return Sede.objects.filter(pk__in=[x.sede.pk for x in self.appartenenze_attuali(**kwargs)])
 
     def titoli_personali_confermati(self):
-        """
-        Ottiene queryset per TitoloPersonale con conferma approvata.
-        """
+        """ Ottiene queryset per TitoloPersonale con conferma approvata. """
         return self.titoli_personali.filter(confermata=True).select_related('titolo')
 
     def titoli_confermati(self):
@@ -1401,6 +1400,9 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
         if self.is_requested_for_course:
             return False
         return True
+
+    def __str__(self):
+        return str(self.file)
 
     class Meta:
         verbose_name_plural = "Documenti"

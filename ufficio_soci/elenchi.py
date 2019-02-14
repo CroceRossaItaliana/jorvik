@@ -1,18 +1,18 @@
-import re
-from django.contrib.admin import ModelAdmin
+from datetime import date, datetime
+
 from django.db.models import Q, F
 from django.utils.encoding import force_text
 
-from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera, ProvvedimentoDisciplinare, Trasferimento, Dimissione, Estensione
-from base.models import Autorizzazione
+from anagrafica.models import (Persona, Appartenenza, Riserva, Sede,
+                               Fototessera, ProvvedimentoDisciplinare,
+                               Trasferimento, Dimissione, Estensione)
 from attivita.models import Partecipazione
 from base.utils import filtra_queryset, testo_euro, oggi
 from curriculum.models import TitoloPersonale
-from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote, ModuloElencoPerTitoli
-from datetime import date, datetime
-from django.utils.timezone import now
-
-from ufficio_soci.models import Tesseramento, Quota, Tesserino
+from .models import Tesseramento, Quota, Tesserino
+from .forms import (ModuloElencoSoci, ModuloElencoElettorato,
+                    ModuloElencoQuote, ModuloElencoPerTitoli,
+                    ModuloElencoPerTitoliCorso)
 
 
 class Elenco:
@@ -62,7 +62,6 @@ class Elenco:
 
     def template(self):
         return 'us_elenchi_inc_vuoto.html'
-
 
 
 class ElencoVistaSemplice(Elenco):
@@ -643,7 +642,7 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
                                             al_giorno=oggi
                                             ).via("appartenenze")))
                                             
-        print("dipendenti", dipendenti.values_list('pk', flat=True) )
+        # print("dipendenti", dipendenti.values_list('pk', flat=True) )
 
         r = Persona.objects.filter(
             Appartenenza.query_attuale(
@@ -678,12 +677,11 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
 
 class ElencoPerTitoli(ElencoVistaAnagrafica):
-
     def risultati(self):
         qs_sedi = self.args[0]
-
-        metodo = self.modulo_riempito.cleaned_data['metodo']
-        titoli = self.modulo_riempito.cleaned_data['titoli']
+        cd = self.modulo_riempito.cleaned_data
+        metodo = cd['metodo']
+        titoli = cd['titoli']
 
         base = Persona.objects.filter(
             Appartenenza.query_attuale(
@@ -694,27 +692,37 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
             'utenza', 'numeri_telefono'
         )
 
-        if metodo == self.modulo_riempito.METODO_OR:  # Almeno un titolo
+        # Almeno un titolo
+        if metodo == self.modulo_riempito.METODO_OR:
+            base = base.filter(titoli_personali__in=TitoloPersonale.con_esito_ok().filter(
+                titolo__in=titoli))
 
-            return base.filter(titoli_personali__in=TitoloPersonale.con_esito_ok().filter(
-                    titolo__in=titoli,
-            )).distinct('cognome', 'nome', 'codice_fiscale')
-
-        else:  # Tutti i titoli
-
-            base = base.filter(
-                titoli_personali__in=TitoloPersonale.con_esito_ok()
-            )
-
+        # Tutti i titoli
+        else:
+            base = base.filter(titoli_personali__in=TitoloPersonale.con_esito_ok())
             for titolo in titoli:
-                base = base.filter(
-                    titoli_personali__titolo=titolo
-                )
+                base = base.filter(titoli_personali__titolo=titolo)
 
-            return base.distinct('cognome', 'nome', 'codice_fiscale')
+        return base.distinct('cognome', 'nome', 'codice_fiscale')
 
     def modulo(self):
         return ModuloElencoPerTitoli
+
+
+class ElencoPerTitoliCorso(ElencoPerTitoli):
+    def risultati(self):
+        cd = self.modulo_riempito.cleaned_data
+        self.kwargs['cleaned_data'] = cd
+
+        # Mostra persone con titoli scaduti/non scaduti
+        results = super().risultati()
+        return results.filter(titoli_personali__in=TitoloPersonale.con_esito_ok())
+
+    def modulo(self):
+        return ModuloElencoPerTitoliCorso
+
+    def template(self):
+        return 'formazione_albo_inc_elenchi_persone_titoli.html'
 
 
 class ElencoTesseriniRichiesti(ElencoVistaSoci):

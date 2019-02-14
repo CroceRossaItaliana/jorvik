@@ -8,6 +8,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Sum, Q
 from django.shortcuts import redirect, get_object_or_404
+from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 
 from anagrafica.costanti import NAZIONALE, REGIONALE
@@ -427,6 +428,7 @@ def us_estensione(request, me):
 
     return 'us_estensione.html', contesto
 
+
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_trasferimento(request, me):
     """
@@ -500,6 +502,7 @@ def us_trasferimento(request, me):
 
     return 'us_trasferimento.html', contesto
 
+
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensioni(request, me):
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
@@ -510,6 +513,7 @@ def us_estensioni(request, me):
     }
 
     return 'us_estensioni.html', contesto
+
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensione_termina(request, me, pk):
@@ -525,6 +529,7 @@ def us_estensione_termina(request, me, pk):
                                                 "terminata con successo",
                                       torna_titolo="Registra nuova estensione",
                                       torna_url="/us/estensione/")
+
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_riserva_termina(request, me, pk):
@@ -562,7 +567,6 @@ def us_provvedimento(request, me):
     }
 
     return "us_provvedimento.html", contesto
-
 
 
 @pagina_privata
@@ -636,10 +640,8 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
 
 @pagina_privata
 def us_elenco_modulo(request, me, elenco_id):
-
     try:  # Prova a ottenere l'elenco dalla sessione.
         elenco = request.session["elenco_%s" % (elenco_id,)]
-
     except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
         raise ValueError("Elenco non presente in sessione.")
 
@@ -649,8 +651,11 @@ def us_elenco_modulo(request, me, elenco_id):
     modulo = elenco.modulo()(request.POST or None)
 
     if request.POST and modulo.is_valid():  # Modulo ok
-        request.session["elenco_modulo_%s" % (elenco_id,)] = request.POST            # Salva modulo in sessione
-        return redirect("/us/elenco/%s/1/" % (elenco_id,))                           # Redirigi alla prima pagina
+        # Salva modulo in sessione
+        request.session["elenco_modulo_%s" % (elenco_id,)] = request.POST
+
+        # Redirigi alla prima pagina
+        return redirect("/us/elenco/%s/1/" % (elenco_id,))
 
     contesto = {
         "modulo": modulo
@@ -811,7 +816,6 @@ def us_elenchi(request, me, elenco_tipo):
         }
 
 
-
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_elenco_soci(request, me):
 
@@ -823,6 +827,7 @@ def us_elenco_soci(request, me):
     }
 
     return 'us_elenco_generico.html', contesto
+
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_riserva(request, me):
@@ -848,6 +853,7 @@ def us_riserva(request, me):
     }
 
     return "us_riserva.html", contesto
+
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_elenco_sostenitori(request, me):

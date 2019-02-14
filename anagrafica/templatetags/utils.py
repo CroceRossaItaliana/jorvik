@@ -18,15 +18,18 @@ from base.utils import testo_euro
 from ufficio_soci.elenchi import Elenco
 from anagrafica.permessi.applicazioni import PRESIDENTE
 
+
 register = Library()
 
 @register.filter
 def select_presidente_commissario_da_persona(persona):
     return 'Presidente' if persona.deleghe_attuali(tipo=PRESIDENTE).exists() else 'Commissario'
 
+
 @register.filter
 def select_presidente_commisario_da_sede(sede):
     return 'Presidente' if sede.presidente() else 'Commissario'
+
 
 @register.simple_tag(takes_context=True)
 def card(context, persona=None, nome=True, extra_class="btn btn-sm btn-default", avatar=False, mute_contact=False):
@@ -204,7 +207,10 @@ def differenza(a, b, piu=0):
 
 @register.filter(name='volte')
 def volte(number, meno=0):
-    return range(number-meno)
+    try:
+        return range(number-meno)
+    except TypeError:
+        pass
 
 
 class NodoMappa(template.Node):
