@@ -418,12 +418,12 @@ class ElencoDimessi(ElencoVistaAnagrafica):
 
         def _data(p):
             dim = Dimissione.objects.filter(persona=p.pk).order_by('ultima_modifica').first()
-            return dim.creazione
+            return dim.creazione if dim else ''
 
         def _motivo(p):
             dim = Dimissione.objects.filter(persona=p.pk).order_by('ultima_modifica').first()
             motivi = dict(Dimissione.MOTIVI)
-            return motivi[dim.motivo]
+            return motivi[dim.motivo] if dim else ''
 
         return super(ElencoDimessi, self).excel_colonne() + (
             ('Data dimissioni', lambda p: _data(p)),
