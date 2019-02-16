@@ -12,6 +12,7 @@
     <p>&nbsp;</p>
 
     <div class="container">
+
         <h3>
             Statistiche
             <span class="text-muted">
@@ -25,92 +26,105 @@
             Tutti i dati in questa pagina sono calcolati in tempo reale.
         </p>
 
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>Nome metrica</th>
-                    <th>Valore metrica</th>
-                    <th>Rapporti</th>
-                    <th>Descrizione</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="nome">Numero di Persone</td>
-                    <td class="metrica">{{ persone_numero }}</td>
-                    <td class="parziale">&nbsp;</td>
-                    <td class="descrizione">Include tutti i Soggetti registrati su Gaia.</td>
-                </tr>
-                <tr>
-                    <td class="nome">Numero di Soci CRI</td>
-                    <td class="metrica">{{ soci_numero }}</td>
-                    <td class="parziale">{{ soci_percentuale }}% delle Persone</td>
-                    <td class="descrizione">Persone con appartenenza attuale come Socio CRI.</td>
-                </tr>
-                <tr>
-                    <td class="nome">Numero di Soci CRI Giovani</td>
-                    <td class="metrica">{{ soci_giovani_35_numero }}</td>
-                    <td class="parziale">{{ soci_giovani_35_percentuale }}% dei Soci CRI</td>
-                    <td class="descrizione">
-                        Soci CRI con et&agrave; inferiore ai 36 anni
-                    </td>
-                </tr>
-                <tr>
-                    <td class="nome">Numero di Sedi CRI</td>
-                    <td class="metrica">{{ sedi_numero }}</td>
-                    <td class="parziale">&nbsp;</td>
-                    <td class="descrizione">Include Sede Nazionale, Regionali, Comitati e
-                        Unit&agrave; Territoriali distaccate.</td>
-                </tr>
-
-                <tr>
-                    <td class="nome">Numero di Comitati CRI</td>
-                    <td class="metrica">{{ comitati_numero }}</td>
-                    <td class="parziale">&nbsp;</td>
-                    <td class="descrizione">Include Sede Nazionale, Regionali e Comitati.</td>
-                </tr>
-
-                {% for regione, soci, volontari in regione_soci_volontari %}
-                <tr>
-
-                    <td class="nome">Numero di Soci e Volontari per regione</td>
-                    <td class="nome">{{ regione.link|safe }}</td>
-                    <td class="metrica" colspan="2">
-                        {{ soci }} soci<br/>
-                        {{ volontari }} volontari
-                    </td>
-                </tr>
-                {% endfor %}
-
-                <tr>
-                    <td class="nome">Totale Soci</td>
-                    <td class="metrica">{{ totale_regione_soci }}</td>
-                    <td class="parziale">&nbsp;</td>
-                    <td class="descrizione">Somma dei valori per Regione.</td>
-                </tr>
-
-                <tr>
-                    <td class="nome">Totale Volontari</td>
-                    <td class="metrica">{{ totale_regione_volontari }}</td>
-                    <td class="parziale">&nbsp;</td>
-                    <td class="descrizione">Somma dei valori per Regione.</td>
-                </tr>
-
-
-
-            </tbody>
-        </table>
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-search"></i>
+                    Statistiche
+                </h2>
+            </div>
+            <div class="panel-body">
+                <form method="POST" action="">
+                    <p class="text-info piu-piccolo">
+                        <i class="fa fa-fw fa-info-circle"></i>
+                        Selezione una delle tipologie di statistiche
+                    </p>
+                    {% csrf_token %}
+                    <p>{% bootstrap_form modulo %}</p>
+                    <button type="submit" class="btn btn-primary btn-block" name="btn-cerca">
+                        <i class="fa fa-fw fa-search"></i>
+                        Cerca
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% for v in views %}
+            {% include v %}
+        {% endfor %}
     </div>
-
     <style>
+        .tiolo-metrica {
+            font-family: monospace;
+            text-align: left;
+            font-size: larger;
+        }
         .metrica {
             font-family: monospace;
-            text-align: right;
+            text-align: center;
             font-size: larger;
         }
         .descrizione {
             font-size: smaller;
         }
     </style>
+    <script>
+
+        $(document).ready(function () {
+            changeForm("{{ type }}");
+        });
+
+        $('[name=tipo_statistiche]').change(function () {
+            changeForm($(this).val());
+        });
+
+        function showAnnoRiferimento() {
+            $('input[name=livello_riferimento]').parent().hide();
+            $('input[name=nome_corso]').parent().hide();
+            $('input[name=area_riferimento]').parent().hide();
+            $('select[name=anno_di_riferimento]').parent().show();
+        }
+
+        function showNumCorsi() {
+            $('input[name=livello_riferimento]').parent().show();
+            $('input[name=area_riferimento]').parent().show();
+            $('input[name=nome_corso]').parent().show();
+            $('select[name=anno_di_riferimento]').parent().hide();
+        }
+
+        function showDefault() {
+            $('input[name=livello_riferimento]').parent().hide();
+            $('input[name=nome_corso]').parent().hide();
+            $('input[name=area_riferimento]').parent().hide();
+            $('select[name=anno_di_riferimento]').parent().hide();
+        }
+
+        function changeForm(val) {
+            switch (val){
+                case 'num_corsi':
+                    showNumCorsi();
+                    break;
+                case 'num_soci_vol':
+                    showAnnoRiferimento();
+                    break;
+                case 'num_nuovi_vol':
+                    showAnnoRiferimento();
+                    break;
+                case 'num_dimessi':
+                    showAnnoRiferimento();
+                    break;
+                case 'num_sedi':
+                    showAnnoRiferimento();
+                    break;
+                case 'num_sedi_nuove':
+                    showAnnoRiferimento();
+                    break;
+                default:
+                    showDefault();
+                    break;
+            }
+        }
+
+    </script>
 {% endblock %}
+
 

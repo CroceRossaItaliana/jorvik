@@ -20,7 +20,7 @@ from django.contrib import messages
 # Le viste base vanno qui.
 from django.views.generic import ListView
 
-from anagrafica.costanti import TERRITORIALE, REGIONALE
+from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE, LOCALE
 from anagrafica.elenchi import ElencoDelegati
 from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
@@ -69,7 +69,8 @@ from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio, Q
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
-
+from anagrafica.statistiche import GENERALI, STATISTICHE
+from anagrafica.statistiche import ModuloStatisticheBase
 
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
@@ -1766,7 +1767,6 @@ def admin_import_volontari(request, me):
 
     if modulo.is_valid():
 
-
         nome_file = handle_uploaded_file(request.FILES['file_csv'])
         with codecs.open(nome_file, encoding="utf-8") as csvfile:
             riga = unicode_csv_reader(csvfile, delimiter=modulo.cleaned_data['delimitatore'])
@@ -1803,49 +1803,44 @@ def admin_statistiche(request, me):
     if not me.utenza.is_staff:
         return redirect(ERRORE_PERMESSI)
 
-    oggi = datetime.date.today()
-    nascita_minima_35 = datetime.date(oggi.year - 36, oggi.month, oggi.day)
-    persone = Persona.objects.all()
-    soci = Persona.objects.filter(
-        Appartenenza.query_attuale(membro__in=Appartenenza.MEMBRO_SOCIO).via("appartenenze")
-    ).distinct('nome', 'cognome', 'codice_fiscale')
-    soci_giovani_35 = soci.filter(
-        data_nascita__gt=nascita_minima_35,
-    )
-    sedi = Sede.objects.filter(attiva=True)
-    comitati = sedi.comitati()
-    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
 
-    totale_regione_soci = 0
-    totale_regione_volontari = 0
 
-    regione_soci_volontari = []
-    for regione in regionali:
-        regione_soci = int(regione.membri_attuali(figli=True, membro__in=Appartenenza.MEMBRO_SOCIO).count())
-        regione_volontari = int(regione.membri_attuali(figli=True, membro=Appartenenza.VOLONTARIO).count())
-        regione_soci_volontari += [
-            (
-                regione,
-                regione_soci,
-                regione_volontari,
+    modulo = ModuloStatisticheBase(request.POST or None)
+
+    if request.POST and modulo.is_valid():
+        tipo = modulo.cleaned_data['tipo_statistiche']
+        livello_riferimento = modulo.cleaned_data['livello_riferimento']
+        nome_corso = modulo.cleaned_data['nome_corso']
+        area_riferimento = modulo.cleaned_data['area_riferimento']
+        anno_di_riferimento = modulo.cleaned_data['anno_di_riferimento']
+
+        statistica = STATISTICHE[tipo]
+
+        contesto = {
+            "type": tipo,
+            "obj": statistica[0](
+                livello_riferimento=livello_riferimento,
+                nome_corso=nome_corso,
+                area_riferimento=area_riferimento,
+                anno_di_riferimento=anno_di_riferimento
             ),
-        ]
-        totale_regione_soci += regione_soci
-        totale_regione_volontari += regione_volontari
+            "views": statistica[1],
+            "ora": timezone.now(),
+            "modulo": modulo
+        }
+
+        return 'admin_statistiche.html', contesto
+
+    statistica = STATISTICHE[GENERALI]
 
     contesto = {
-        "persone_numero": persone.count(),
-        "soci_numero": soci.count(),
-        "soci_percentuale": soci.count() / persone.count() * 100,
-        "soci_giovani_35_numero": soci_giovani_35.count(),
-        "soci_giovani_35_percentuale": soci_giovani_35.count() / soci.count() * 100,
-        "sedi_numero": sedi.count(),
-        "comitati_numero": comitati.count(),
+        "type": GENERALI,
+        "obj": statistica[0](),
+        "views": statistica[1],
         "ora": timezone.now(),
-        "regione_soci_volontari": regione_soci_volontari,
-        "totale_regione_soci": totale_regione_soci,
-        "totale_regione_volontari": totale_regione_volontari,
+        "modulo": modulo
     }
+
     return 'admin_statistiche.html', contesto
 
 
