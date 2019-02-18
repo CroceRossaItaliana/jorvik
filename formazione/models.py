@@ -349,8 +349,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 partecipante.notifica_esito_esame(mittente=mittente)
 
                 if partecipante.idoneo:  # Se idoneo, volontarizza.
-                    partecipante.persona.da_aspirante_a_volontario(sede=partecipante.destinazione,
-                                                                   mittente=mittente)
+                    persona = partecipante.persona
+                    persona.da_aspirante_a_volontario(sede=partecipante.destinazione,
+                                                      mittente=mittente)
+                    if persona.sostenitore:
+                        persona.end_sostenitore_membership()
 
             # Cancella tutte le eventuali partecipazioni in attesa.
             PartecipazioneCorsoBase.con_esito_pending(corso=self).delete()

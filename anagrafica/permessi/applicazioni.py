@@ -67,7 +67,7 @@ PERMESSI_NOMI = (
 )
 
 DELEGHE_RUBRICA = (
-    PRESIDENTE, COMMISSARIO, UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
+    PRESIDENTE, COMMISSARIO, CONSIGLIERE_GIOVANE, UFFICIO_SOCI, UFFICIO_SOCI_UNITA,
     DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
     DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6,
     RESPONSABILE_FORMAZIONE, DELEGATO_CO, RESPONSABILE_AUTOPARCO,
@@ -77,7 +77,8 @@ PERMESSI_NOMI_DICT = dict(PERMESSI_NOMI)
 
 RUBRICHE_TITOLI = OrderedDict((
     ('presidenti', (PRESIDENTE, 'Presidenti', True)),
-    # ('commissari', (COMMISSARIO, 'Commissari', True)),
+    ('commissari', (COMMISSARIO, 'Commissari', True)),
+    ('condigliere_giovane', (CONSIGLIERE_GIOVANE, 'Consiglieri giovani', True)),
     ('delegati_us', (UFFICIO_SOCI, 'Delegati Ufficio Soci', True)),
     ('delegati_us_unita', (UFFICIO_SOCI_UNITA, 'Delegati Ufficio Soci Unità territoriali', True)),
     ('delegati_obiettivo_1', (DELEGATO_OBIETTIVO_1, 'Delegati Obiettivo I (Salute)', True)),
@@ -95,3 +96,4 @@ RUBRICHE_TITOLI = OrderedDict((
     ('direttori_corsi', (DIRETTORE_CORSO, 'Direttori Corsi', True)),
     ('responsabili_autoparco', (RESPONSABILE_AUTOPARCO, 'Responsabili Autoparco', True)),
 ))
+

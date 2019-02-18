@@ -16,6 +16,9 @@
                     Aggiungi una Persona
                 </div>
                 <div class="panel-body">
+                        {% if exists %}
+                            {% bootstrap_alert "Questa persona è già esistente" alert_type='danger' %}
+                        {% endif %}
                         <form method="POST">
                             {% csrf_token %}
                             {% bootstrap_form modulo_persona %}
