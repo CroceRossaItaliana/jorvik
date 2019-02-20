@@ -1,6 +1,6 @@
 from anagrafica.models import Appartenenza, Persona, Sede
 from formazione.models import CorsoBase
-from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE, LOCALE, ESTENDIONI_DICT
+from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE, LOCALE, ESTENDIONI_DICT, PROVINCIALE
 import datetime
 from attivita.models import Attivita, Turno
 from django.db.models import F, Sum
@@ -10,6 +10,46 @@ from curriculum.areas import OBBIETTIVI_STRATEGICI
 from formazione.models import Titolo
 from formazione.models import Corso
 
+
+def get_statistica_collapse_ric(comitati, f, **kwargs):
+    estensione = {NAZIONALE: REGIONALE, REGIONALE: LOCALE, LOCALE: TERRITORIALE, TERRITORIALE: None}
+    obj = []
+    for comitato in comitati:
+        if comitato.estensione == REGIONALE:
+            # trattare i provinciali come i locali ricordarsi che al di sotto dei provinciali ci sono i locali
+            locali = Sede.objects.filter(estensione=LOCALE, genitore=comitato)
+            provinciali = Sede.objects.filter(estensione=PROVINCIALE, genitore=comitato)
+            locali = list(locali) + list(provinciali)
+            for provinciale in provinciali:
+                locali += list(Sede.objects.filter(genitore=provinciale, estensione=LOCALE))
+            obj.append(
+                {
+                    "comitato": comitato,
+                    "statistiche": f(comitato=comitato, **{'figli': True}),
+                    "figli": get_statistica_collapse_ric(
+                        comitati=locali, f=f, **kwargs
+                    )
+                }
+            )
+            continue
+        elif comitato.estensione == PROVINCIALE:
+            continue
+        else:
+            obj.append(
+                {
+                    "comitato": comitato,
+                    "statistiche": f(comitato=comitato, **{'figli': True}),
+                    "figli": get_statistica_collapse_ric(
+                        comitati=Sede.objects.filter(
+                            genitore=comitato, estensione=estensione[comitato.estensione]
+                        ).exclude(nome__contains='Provinciale Di Roma') if estensione[comitato.estensione] else [],
+                        f=f, **kwargs
+                    )
+                }
+            )
+    return obj
+
+
 '''
     STATISTICHE PER FASCI DI ETA
     Numero di volontari per fasce:
@@ -18,12 +58,8 @@ from formazione.models import Corso
 '''
 def statistica_num_vol_fascia_eta(**kwargs):
 
-    nazionali = Sede.objects.filter(estensione=NAZIONALE)
-    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
-    locali = Sede.objects.filter(estensione=LOCALE)
-    territoriali = Sede.objects.filter(estensione=TERRITORIALE)
+    def get_num_vol_per_eta(comitato=None, **kwargs):
 
-    def get_num_vol_fascia_eta(comitati=None, figli=False):
         def count(query, min=0, max=9999):
             i = 0
             for el in query:
@@ -31,31 +67,22 @@ def statistica_num_vol_fascia_eta(**kwargs):
                     i += 1
             return i
 
-        l = []
-
-        for el in comitati:
-            persone = el.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO)
-            l.append(
-                {
-                    "comitato": el,
-                    "statistiche": {
-                        "Da 14 a 18:": count(persone, 14, 18),
-                        "Da 18 a 25:": count(persone, 18, 25),
-                        "Da 25 a 32:": count(persone, 25, 32),
-                        "Da 32 a 45:": count(persone, 32, 45),
-                        "Da 45 a 60:": count(persone, 54, 60),
-                        "Over 60:": count(persone, 60),
-                    }
-                }
-            )
-        return l
+        figli = kwargs.get('figli') if kwargs.get('figli') else False
+        persone = comitato.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO)
+        return {
+            "Da 14 a 18": count(persone, 14, 18),
+            "Da 18 a 25": count(persone, 18, 25),
+            "Da 25 a 32": count(persone, 25, 32),
+            "Da 32 a 45": count(persone, 32, 45),
+            "Da 45 a 60": count(persone, 54, 60),
+            "Over 60": count(persone, 60),
+        }
 
     obj = {
         "nome": STATISTICA[NUM_VOL_M_F],
-        "nazionali": get_num_vol_fascia_eta(nazionali, True),
-        "regionali": get_num_vol_fascia_eta(regionali),
-        "locali": get_num_vol_fascia_eta(locali),
-        "territoriali": get_num_vol_fascia_eta(territoriali)
+        "comitati": get_statistica_collapse_ric(
+            comitati=Sede.objects.filter(estensione=NAZIONALE), f=get_num_vol_per_eta
+        )
     }
 
     return obj
@@ -68,32 +95,20 @@ def statistica_num_vol_fascia_eta(**kwargs):
 '''
 def statistica_num_vol_m_f(**kwargs):
 
-    nazionali = Sede.objects.filter(estensione=NAZIONALE)
-    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
-    locali = Sede.objects.filter(estensione=LOCALE)
-    territoriali = Sede.objects.filter(estensione=TERRITORIALE)
+    def get_m_f_statistiche(comitato=None, **kwargs):
+        figli = kwargs.get('figli') if kwargs.get('figli') else False
+        persone = comitato.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO)
 
-    def get_m_f_statistiche(comitati=None, figli=False):
-        l = []
-        for el in comitati:
-            persone = el.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO)
-            l.append(
-                {
-                    "comitato": el,
-                    "statistiche": {
-                        "M:": int(persone.filter(genere=Persona.MASCHIO).count()),
-                        "F:": int(persone.filter(genere=Persona.FEMMINA).count())
-                    }
-                }
-            )
-        return l
+        return {
+            "M": persone.filter(genere=Persona.MASCHIO).count(),
+            "F": persone.filter(genere=Persona.FEMMINA).count()
+        }
 
     obj = {
         "nome": STATISTICA[NUM_VOL_M_F],
-        "nazionali": get_m_f_statistiche(nazionali, True),
-        "regionali": get_m_f_statistiche(regionali),
-        "locali": get_m_f_statistiche(locali),
-        "territoriali": get_m_f_statistiche(territoriali)
+        "comitati": get_statistica_collapse_ric(
+            comitati=Sede.objects.filter(estensione=NAZIONALE), f=get_m_f_statistiche
+        )
     }
 
     return obj
@@ -160,31 +175,33 @@ def statistica_num_soci_vol(**kwargs):
         totale_regione_volontari_before += regione_volontari_before
 
     # Elimino la doppia presenza delle sede Area Metropolitana di Roma Capitale
-    metropolitana_roma = Sede.objects.filter(nome="Comitato dell'Area Metropolitana di Roma Capitale")[0]
-    regione_soci_current = int(
-        metropolitana_roma.membri_attuali(
-            figli=False, membro__in=Appartenenza.MEMBRO_SOCIO, creazione__lte=finish_current
-        ).count()
-    )
-    regione_soci_before = int(
-        metropolitana_roma.membri_attuali(
-            figli=False, membro__in=Appartenenza.MEMBRO_SOCIO, creazione__lte=finish_before
-        ).count()
-    )
-    regione_volontari_current = int(
-        metropolitana_roma.membri_attuali(
-            figli=False, membro=Appartenenza.VOLONTARIO, creazione__lte=finish_current
-        ).count()
-    )
-    regione_volontari_before = int(
-        metropolitana_roma.membri_attuali(
-            figli=False, membro=Appartenenza.VOLONTARIO, creazione__lte=finish_before
-        ).count()
-    )
-    totale_regione_soci_currente -= regione_soci_current
-    totale_regione_volontari_current -= regione_volontari_current
-    totale_regione_soci_before -= regione_soci_before
-    totale_regione_volontari_before -= regione_volontari_before
+    metropolitana_roma = Sede.objects.filter(nome="Comitato dell'Area Metropolitana di Roma Capitale").first()
+    if metropolitana_roma:
+        regione_soci_current = int(
+            metropolitana_roma.membri_attuali(
+                figli=False, membro__in=Appartenenza.MEMBRO_SOCIO, creazione__lte=finish_current
+            ).count()
+        )
+        regione_soci_before = int(
+            metropolitana_roma.membri_attuali(
+                figli=False, membro__in=Appartenenza.MEMBRO_SOCIO, creazione__lte=finish_before
+            ).count()
+        )
+        regione_volontari_current = int(
+            metropolitana_roma.membri_attuali(
+                figli=False, membro=Appartenenza.VOLONTARIO, creazione__lte=finish_current
+            ).count()
+        )
+        regione_volontari_before = int(
+            metropolitana_roma.membri_attuali(
+                figli=False, membro=Appartenenza.VOLONTARIO, creazione__lte=finish_before
+            ).count()
+        )
+
+        totale_regione_soci_currente -= regione_soci_current
+        totale_regione_volontari_current -= regione_volontari_current
+        totale_regione_soci_before -= regione_soci_before
+        totale_regione_volontari_before -= regione_volontari_before
 
     obj = {
         "nome": STATISTICA[NUM_SOCI_VOL],
@@ -289,10 +306,6 @@ def statistica_num_nuovi_vol(**kwargs):
 
     obj = {
         "nome": STATISTICA[NUM_NUOVI_VOL],
-        "nazionali": None,
-        "regionali": None,
-        "locali": None,
-        "territoriali": None,
         "tot": [
             get_tot(start, finish, NAZIONALE),
             get_tot(start, finish, REGIONALE),
@@ -343,10 +356,6 @@ def statistica_num_dimessi(**kwargs):
 
     obj = {
         "nome": STATISTICA[NUM_DIMESSI],
-        "nazionali": None,
-        "regionali": None,
-        "locali": None,
-        "territoriali": None,
         "tot": [
             get_tot(start, finish, NAZIONALE),
             get_tot(start, finish, REGIONALE),
@@ -406,10 +415,6 @@ def statistica_num_sedi(**kwargs):
 
     obj = {
         "nome": STATISTICA[NUM_DIMESSI],
-        "nazionali": None,
-        "regionali": None,
-        "locali": None,
-        "territoriali": None,
         "tot": [
             get_tot(current, before, NAZIONALE),
             get_tot(current, before, REGIONALE),
@@ -462,10 +467,6 @@ def statistiche_num_sedi_nuove(**kwargs):
 
     obj = {
         "nome": STATISTICA[NUM_SEDI_NUOVE],
-        "nazionali": None,
-        "regionali": None,
-        "locali": None,
-        "territoriali": None,
         "tot": [
             get_tot(start, finish, NAZIONALE),
             get_tot(start, finish, REGIONALE),
@@ -524,10 +525,6 @@ def statistica_num_corsi(**kwargs):
 
     obj = {
         "nome": STATISTICA[NUMERO_CORSI],
-        "nazionali": None,
-        "regionali": None,
-        "locali": None,
-        "territoriali": None,
         "tot": [
             get_tot(NAZIONALE, **kwargs),
             get_tot(REGIONALE, **kwargs),
@@ -546,36 +543,21 @@ def statistica_num_corsi(**kwargs):
 '''
 def statistica_iivv_cm(**kwargs):
 
-    nazionali = Sede.objects.filter(estensione=NAZIONALE)
-    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
-    locali = Sede.objects.filter(estensione=LOCALE)
-    territoriali = Sede.objects.filter(estensione=TERRITORIALE)
+    def get_iivv_cm(comitato, **kwargs):
+        figli = kwargs.get('figli') if kwargs.get('figli') else False
+        membri_iv_n = comitato.membri_attuali(figli=figli).filter(iv=True)
+        membri_cm_n = comitato.membri_attuali(figli=figli).filter(cm=True)
 
-    def get_iivv_cm(comitato=None, figli=False):
-        l = []
-
-        for el in comitato:
-            membri_iv = el.membri_attuali(figli=figli).filter(iv=True)
-            membri_cm = el.membri_attuali(figli=figli).filter(cm=True)
-            l.append(
-                {
-                    "comitato": el,
-                    "statistiche": {
-                        "IIVV": membri_iv.count(),
-                        "CM": membri_cm.count(),
-                    }
-                }
-            )
-
-        return l
+        return {
+            "IIVV": membri_iv_n.count(),
+            "CM": membri_cm_n.count(),
+        }
 
     obj = {
         "nome": STATISTICA[IIVV_CM],
-        "nazionali": get_iivv_cm(nazionali),
-        "regionali": get_iivv_cm(regionali),
-        "locali": get_iivv_cm(locali),
-        "territoriali": get_iivv_cm(territoriali),
-        "tot": None
+        "comitati": get_statistica_collapse_ric(
+            comitati=Sede.objects.filter(estensione=NAZIONALE), f=get_iivv_cm
+        )
     }
 
     return obj
@@ -682,22 +664,32 @@ STATISTICA = {
 '''
 STATISTICHE = {
     GENERALI: (statistica_generale, ('statistiche_generali.html', )),
-    NUM_VOL_M_F: (statistica_num_vol_m_f, ('statistiche_per_comitati.html', )),
-    NUM_SOCI_VOL: (statistica_num_soci_vol, ('statistiche_per_comitati.html', 'statistiche_totali.html', )),
-    NUM_VOL_FASCIA_ETA: (statistica_num_vol_fascia_eta, ('statistiche_per_comitati.html', )),
-    NUM_NUOVI_VOL: (statistica_num_nuovi_vol, ('statistiche_totali.html', )),
-    NUM_DIMESSI: (statistica_num_dimessi, ('statistiche_totali.html', )),
-    NUM_SEDI: (statistica_num_sedi, ('statistiche_totali.html', )),
-    NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', )),
-    NUMERO_CORSI: (statistica_num_corsi, ('statistiche_totali.html', )),
-    IIVV_CM: (statistica_iivv_cm, ('statistiche_per_comitati.html', )),
+    NUM_VOL_M_F: (statistica_num_vol_m_f, ('statistiche_per_comitati_collapse.html', )),
+    NUM_SOCI_VOL: (statistica_num_soci_vol, ('statistiche_per_comitati.html', 'statistiche_totali.html', )),#
+    NUM_VOL_FASCIA_ETA: (statistica_num_vol_fascia_eta, ('statistiche_per_comitati_collapse.html', )),
+    NUM_NUOVI_VOL: (statistica_num_nuovi_vol, ('statistiche_totali.html', )),#
+    NUM_DIMESSI: (statistica_num_dimessi, ('statistiche_totali.html', )),#
+    NUM_SEDI: (statistica_num_sedi, ('statistiche_totali.html', )),#
+    NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', )),#
+    NUMERO_CORSI: (statistica_num_corsi, ('statistiche_totali.html', )),#
+    IIVV_CM: (statistica_iivv_cm, ('statistiche_per_comitati_collapse.html', )),
     ORE_SERVIZIO: (statistica_ore_servizio, ('statistiche_totali.html', )),
 }
 
+FILTRO_ANNO = 'ANNO'
+FILTRO_DATA = 'DATA'
+
+TIPO_CHOICES = [
+    (FILTRO_ANNO, 'Anno'),
+    (FILTRO_DATA, 'Data'),
+]
 
 class ModuloStatisticheBase(forms.Form):
     tipo_statistiche = forms.ChoiceField(widget=forms.Select(), choices=get_type(), required=True)
     nome_corso = forms.CharField(required=False)
     livello_riferimento = forms.ChoiceField(widget=forms.Select(), choices=Titolo.CDF_LIVELLI, required=False)
     area_riferimento = forms.ChoiceField(widget=forms.Select(), choices=OBBIETTIVI_STRATEGICI, required=False)
+    tipo_filtro = forms.ChoiceField(choices=TIPO_CHOICES, initial=FILTRO_ANNO, widget=forms.RadioSelect())
     anno_di_riferimento = forms.ChoiceField(widget=forms.Select(), choices=get_years(), required=False)
+    dal = forms.DateField(required=False)
+    al = forms.DateField(required=False)

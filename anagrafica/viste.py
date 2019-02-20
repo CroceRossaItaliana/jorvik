@@ -1817,7 +1817,10 @@ def admin_statistiche(request, me):
         livello_riferimento = modulo.cleaned_data['livello_riferimento']
         nome_corso = modulo.cleaned_data['nome_corso']
         area_riferimento = modulo.cleaned_data['area_riferimento']
+        tipo_filtro = modulo.cleaned_data['tipo_filtro']
         anno_di_riferimento = modulo.cleaned_data['anno_di_riferimento']
+        dal = modulo.cleaned_data['dal']
+        al = modulo.cleaned_data['al']
 
         statistica = STATISTICHE[tipo]
 
@@ -1827,7 +1830,9 @@ def admin_statistiche(request, me):
                 livello_riferimento=livello_riferimento,
                 nome_corso=nome_corso,
                 area_riferimento=area_riferimento,
-                anno_di_riferimento=anno_di_riferimento
+                anno_di_riferimento=anno_di_riferimento,
+                dal=dal,
+                al=al
             ),
             "views": statistica[1],
             "ora": timezone.now(),

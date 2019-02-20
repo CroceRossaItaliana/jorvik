@@ -55,12 +55,12 @@
     <style>
         .tiolo-metrica {
             font-family: monospace;
-            text-align: left;
+            text-align: right;
             font-size: larger;
         }
         .metrica {
             font-family: monospace;
-            text-align: center;
+            text-align: right   ;
             font-size: larger;
         }
         .descrizione {
@@ -77,25 +77,60 @@
             changeForm($(this).val());
         });
 
+        function showFiltroAnno(){
+            $('input[name=dal]').parent().hide();
+            $('input[name=al]').parent().hide();
+            $('select[name=anno_di_riferimento]').parent().show();
+        }
+
+        function showFiltroDate(){
+            $('input[name=dal]').parent().show();
+            $('input[name=al]').parent().show();
+            $('select[name=anno_di_riferimento]').parent().hide();
+        }
+
+        $('input[id=id_tipo_filtro_0]').click(function () {
+            showFiltroAnno()
+        });
+
+
+        $('input[id=id_tipo_filtro_1]').click(function () {
+            showFiltroDate()
+        });
+
         function showAnnoRiferimento() {
             $('select[name=livello_riferimento]').parent().hide();
             $('input[name=nome_corso]').parent().hide();
             $('select[name=area_riferimento]').parent().hide();
-            $('select[name=anno_di_riferimento]').parent().show();
+            $('div[id=id_tipo_filtro]').parent().show()   ;
+            if($('#id_tipo_filtro_0').is(':checked')){
+                showFiltroAnno()
+            }else{
+                showFiltroDate()
+            }
         }
 
         function showNumCorsi() {
             $('select[name=livello_riferimento]').parent().show();
             $('select[name=area_riferimento]').parent().show();
             $('input[name=nome_corso]').parent().show();
-            $('select[name=anno_di_riferimento]').parent().show();
+            $('div[id=id_tipo_filtro]').parent().show();
+            if($('#id_tipo_filtro_0').is(':checked')){
+                showFiltroAnno()
+            }else{
+                showFiltroDate()
+            }
         }
 
         function showDefault() {
             $('select[name=livello_riferimento]').parent().hide();
             $('input[name=nome_corso]').parent().hide();
             $('select[name=area_riferimento]').parent().hide();
+            $('input[name=dal]').parent().hide();
+            $('input[name=al]').parent().hide();
             $('select[name=anno_di_riferimento]').parent().hide();
+            $('div[id=id_tipo_filtro]').parent().hide();
+
         }
 
         function changeForm(val) {

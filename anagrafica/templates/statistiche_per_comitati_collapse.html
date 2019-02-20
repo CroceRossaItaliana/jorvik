@@ -1,0 +1,203 @@
+<div class="just-padding">
+
+    <div class="list-group list-group-root well">
+
+        {% if obj.comitati %}
+
+            {% for nazionale in obj.comitati %}
+
+                {% if nazionale.figli %}
+                    <a href="#{{ nazionale.comitato|cut:" " }}" class="list-group-item" data-toggle="collapse">
+                        <div class="row">
+                            <div class="col-xs-4"  >
+                                <i class="glyphicon glyphicon-chevron-right"></i>
+                                {{ nazionale.comitato }}&nbsp;(Nazionale)
+                            </div>
+                            <div class="col-xs-8 metrica">
+                                {% for k,v in nazionale.statistiche.items %}
+                                    {{ k }}:&nbsp;{{ v }}<br>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </a>
+                    <div class="list-group collapse" id="{{ nazionale.comitato|cut:" " }}">
+
+                        {% for regionale in nazionale.figli %}
+
+                            {% if regionale.figli %}
+                                <a href="#{{ regionale.comitato|cut:" " }}" class="list-group-item" data-toggle="collapse">
+                                    <div class="row">
+                                        <div class="col-xs-4">
+                                            <i class="glyphicon glyphicon-chevron-right"></i>
+                                            {{ regionale.comitato }}&nbsp;(Regionale)
+                                        </div>
+                                        <div class="col-xs-8 metrica">
+                                            {% for k,v in regionale.statistiche.items %}
+                                                {{ k }}:&nbsp;{{ v }}<br>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </a>
+                                <div class="list-group collapse" id="{{ regionale.comitato|cut:" " }}">
+
+                                    {% for locale in regionale.figli %}
+
+                                        {% if locale.figli %}
+
+                                            <a href="#{{ locale.comitato|cut:" " }}" class="list-group-item" data-toggle="collapse">
+                                                <div class="row">
+                                                    <div class="col-xs-4">
+                                                        <i class="glyphicon glyphicon-chevron-right"></i>
+                                                        {{ locale.comitato }}&nbsp;(Locale)
+                                                    </div>
+                                                    <div class="col-xs-8 metrica">
+                                                        {% for k,v in locale.statistiche.items %}
+                                                            {{ k }}:&nbsp;{{ v }}<br>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </a>
+
+                                            <div class="list-group collapse" id="{{ locale.comitato|cut:" " }}">
+
+                                                {% for territoriale in locale.figli %}
+
+                                                    <a class="list-group-item">
+                                                        <div class="row">
+                                                           <div class="col-xs-4">
+                                                               <i class="glyphicon glyphicon-minus"></i>
+                                                               {{ territoriale.comitato }}&nbsp;(Territoriale)
+                                                           </div>
+                                                            <div class="col-xs-8 metrica">
+                                                                {% for k,v in territoriale.statistiche.items %}
+                                                                    {{ k }}:&nbsp;{{ v }}<br>
+                                                                {% endfor %}
+                                                            </div>
+                                                        </div>
+                                                    </a>
+
+                                                {% endfor %}
+
+                                            </div>
+                                        {% else %}
+                                            <a class="list-group-item">
+                                                <div class="row">
+                                                    <div class="col-xs-4">
+                                                        <i class="glyphicon glyphicon-minus"></i>
+                                                        {{ locale.comitato }}&nbsp;(Locale)
+                                                    </div>
+                                                    <div class="col-xs-8 metrica">
+                                                        {% for k,v in locale.statistiche.items %}
+                                                            {{ k }}:&nbsp;{{ v }}<br>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        {% endif %}
+
+                                    {% endfor %}
+
+                                </div>
+
+                            {% else %}
+                                <a class="list-group-item">
+                                   <div class="row">
+                                        <div class="col-xs-4">
+                                            <i class="glyphicon glyphicon-minus"></i>
+                                            {{ regionale.comitato }}&nbsp;(Regionale)
+                                        </div>
+                                        <div class="col-xs-8 metrica">
+                                            {% for k,v in regionale.statistiche.items %}
+                                                {{ k }}:&nbsp;{{ v }}<br>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endif %}
+
+                        {% endfor %}
+
+                    </div>
+                {% else %}
+                    <a class="list-group-item">
+                        <div class="row">
+                            <div class="col-xs-3"  >
+                                <i class="glyphicon glyphicon-minus"></i>
+                                {{ nazionale.comitato }}&nbsp;(Nazionale)
+                            </div>
+                            <div class="col-xs-8 metrica">
+                                {% for k,v in nazionale.statistiche.items %}
+                                    {{ k }}:&nbsp;{{ v }}<br>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+
+            {% endfor %}
+
+        {% endif %}
+
+    </div>
+<div>
+
+<style>
+    .just-padding {
+    padding: 15px;
+}
+
+.list-group.list-group-root {
+    padding: 0;
+    overflow: hidden;
+}
+
+.list-group.list-group-root .list-group {
+    margin-bottom: 0;
+}
+
+.list-group.list-group-root .list-group-item {
+    border-radius: 0;
+    border-width: 1px 0 0 0;
+}
+
+.list-group.list-group-root > .list-group-item:first-child {
+    border-top-width: 0;
+}
+
+.list-group.list-group-root > .list-group > .list-group-item {
+    padding-left: 50px;
+}
+
+.list-group.list-group-root > .list-group > .list-group > .list-group-item {
+    padding-left: 100px;
+}
+
+.list-group.list-group-root > .list-group > .list-group > .list-group > .list-group-item {
+    padding-left: 150px;
+}
+
+.  {
+    position: absolute;
+    left: 500px;
+}
+
+.list-group-item .glyphicon {
+    margin-right: 5px;
+}
+</style>
+<script>
+    $(function() {
+
+      $('.list-group-item').on('click', function() {
+            $('.glyphicon-chevron-right, .glyphicon-chevron-down', this)
+            .toggleClass('glyphicon-chevron-right')
+            .toggleClass('glyphicon-chevron-down');
+      });
+
+    });
+
+    function openComitato(value) {
+        let el = document.createElement(value);
+        window.open("https://gaia.cri.it/" + el.href, '_new');
+    }
+</script>
