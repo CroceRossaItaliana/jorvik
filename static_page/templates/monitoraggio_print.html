@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    body {font-family: Arial, sans-serif;}
+    .results-table {border-collapse: collapse; max-width: 1024px; margin: 0 auto; width: 100%;}
+    .results-form-name {font-size: 24px; font-weight: bold; text-align: center; padding-top:25px; padding-bottom:12px;}
+    .results-form-name:not(:first-child) {border-top:1px solid #666;}
+    .results-item-td {padding-bottom: 25px; border-bottom:1px solid #666;}
+  </style>
+</head>
+<body {% if to_print %}onload="window.print()"{% endif %}>
+  <table class="results-table">
+    <tr>
+      <td colspan="2" align="center">
+        <strong>{{ request.user.persona.cognome }} {{ request.user.persona.nome }}</strong> - {{ request.user.persona.sede_riferimento }}<br>
+        <a href="mailto:{{ request.user.email }}">{{ request.user.email }}</a> - {{ request.user.persona.codice_fiscale }}
+      </td>
+    </tr>
+    {% for result in results.items %}
+    <tr>
+      <td colspan="2" class="results-form-name">{{ result.1.form_name }}</td>
+    </tr>
+    <tr>
+      <td width="70%"><strong>Domanda</strong></td>
+      <td width="30%"><strong>Risposta</strong></td>
+    </tr>
+    <tr>
+      <td class="results-item-td">{{ result.1.question_title }}</td>
+      <td class="results-item-td">{{ result.1.answer }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

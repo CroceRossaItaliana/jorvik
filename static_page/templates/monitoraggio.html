@@ -5,23 +5,64 @@
 {% block app_contenuto %}
   <div class="articolo single-page">
     <h1>Monitoraggio 2019</h1>
+    <h3>{{ section.2 }}</h3>
 
-    {% if not type_form %}
-      <p>Informazioni non disponibili causa errore del server. Contattare l'amministrazione.</p>
+    <style>
+      .typeform_widget {display:flex;justify-content:space-around;margin:25px 0 25px;padding:0;list-style:none;}
+      .typeform_widget li {}
+      .typeform_widget li a {background-color: #c00; color: #fff; padding: 7px 9px; border-radius: 3px;}
+      .typeform_widget li a.done {background-color: #309f30;}
+      .typeform_widget__wrapper {margin-bottom:25px;}
+      .typeform_widget-tools {display: flex; justify-content: end;}
+      .typeform_widget-tools ul {list-style:none; margin:0;
+      .typeform_widget-tools li {padding: 0 15px;}
+    </style>
 
-    {% else %}
-      <ul>
-      {% for form_id, response in type_form.items %}
-        <li>
-          {% if response.0 == True %}
-            <a href="https://crocerossaitaliana.typeform.com/to/{{ form_id }}?c={{ response.1 }}&u={{request.user.id}}">{{ response.2 }}</a>
-          {% else %}
-            <span><strong>FATTO</strong>: {{ response.2 }}</span>
-          {% endif %}
-        </li>
-        {% endfor %}
+    <ul class="typeform_widget">
+      <li><a href="?id=by6gIZ" class="{%if type_form.by6gIZ.0 %}done{%endif%} typeform_widget__btn">Sezione A</a></li>
+      <li><a href="?id=AX0Rjm" class="{%if type_form.AX0Rjm.0 %}done{%endif%} typeform_widget__btn">Sezione B</a></li>
+      <li><a href="?id=FZlCpn" class="{%if type_form.FZlCpn.0 %}done{%endif%} typeform_widget__btn">Sezione C</a></li>
+      <li><a href="?id=artG8g" class="{%if type_form.artG8g.0 %}done{%endif%} typeform_widget__btn">Sezione D</a></li>
+      <li><a href="?id=r3IRy8" class="{%if type_form.r3IRy8.0 %}done{%endif%} typeform_widget__btn">Sezione E</a></li>
+      <li><a href="?id=DhH3Mk" class="{%if type_form.DhH3Mk.0 %}done{%endif%} typeform_widget__btn">Sezione F</a></li>
+      <li><a href="?id=W6G6cD" class="{%if type_form.W6G6cD.0 %}done{%endif%} typeform_widget__btn">Sezione G</a></li>
+    </ul>
+
+    <script>
+      $('.typeform_widget__btn').on('click', function(e) {
+        if ($(this).hasClass('done')) {
+          e.preventDefault();
+          alert("Hai già compilato questa form.");
+        }
+      });
+    </script>
+
+    <div class="typeform_widget__wrapper">
+      {% if typeform_id and user_comitato and user_id %}
+        <div class="typeform-widget" data-url="https://crocerossaitaliana.typeform.com/to/{{typeform_id}}?c={{user_comitato}}&u={{user_id}}" data-transparency="100" data-hide-headers=true data-hide-footer=true style="width: 100%; height: 500px;"></div>
+        <script> (function() { var qs,js,q,s,d=document, gi=d.getElementById, ce=d.createElement, gt=d.getElementsByTagName, id="typef_orm", b="https://embed.typeform.com/"; if(!gi.call(d,id)) { js=ce.call(d,"script"); js.id=id; js.src=b+"embed.js"; q=gt.call(d,"script")[0]; q.parentNode.insertBefore(js,q) } })() </script>
+      {% endif %}
+
+      {% if is_done %}
+        <p style="text-align:center;"><strong>Questa sezione è già compilata.</strong></p>
+      {% endif %}
+    </div>
+
+    <div>
+      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Amet aut cupiditate ea eius error, illo illum laboriosam minima molestias provident quo recusandae sunt totam vel voluptas! Earum et praesentium repellendus?</p>
+      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Amet aut cupiditate ea eius error, illo illum laboriosam minima molestias provident quo recusandae sunt totam vel voluptas! Earum et praesentium repellendus?</p>
+    </div>
+
+    <div class="typeform_widget-tools">
+      {% if all_forms_are_completed %}
+      <ul class="typeform_widget-tools__list">
+        <li><a href="{% url 'pages:monitoraggio_actions' %}?action=print" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
+        <li><a href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail</a></li>
       </ul>
-    {% endif %}
+      {% else %}
+        <p><strong>Per stampare o inviare i risultati devi compilare tutte le form.</strong></p>
+      {% endif %}
+    </div>
   </div>
 
   {% if has_privacy_popup %}

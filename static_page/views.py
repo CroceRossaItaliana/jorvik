@@ -1,6 +1,8 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
+from django.core.urlresolvers import reverse
 from autenticazione.funzioni import pagina_privata
 from .models import Page
+from .monitoraggio import (get_responses, get_json_from_responses, TypeFormResponses)
 
 
 @pagina_privata
@@ -16,58 +18,63 @@ def view_page(request, me, slug):
 
 @pagina_privata
 def monitoraggio(request, me):
-    import requests
-    from random import randint
-    from django.conf import settings
-
-    btns = {
-        'by6gIZ': 'Sezione A – servizi di carattere sociale',
-        'AX0Rjm': 'Sezione B – telefonia sociale, telesoccorso, teleassistenza e telemedicina',
-        'FZlCpn': 'Sezione C – salute',
-        "artG8g": 'Sezione D – ''''"ambiente", "sviluppo economico e coesione sociale", "cultura, sport e ricreazione", "cooperazione e solidarietà internazionale",
-            "protezione civile"''',
-        'r3IRy8': 'Sezione E – relazioni',
-        'DhH3Mk': 'Sezione F – organizzazione',
-        'W6G6cD': 'Sezione G – risorse economiche e finanziarie',
-    }
-
     if not hasattr(me, 'sede_riferimento'):
         return redirect('/')
+
+    btns = TypeFormResponses.form_ids
 
     # Django
     user_comitato = me.sede_riferimento().id
     context = {
-        'type_form': {k: [True, user_comitato, v] for k, v in btns.items()}
+        'type_form': {k: [False, user_comitato, v] for k, v in btns.items()}
     }
 
-    # Typeform API
-    TYPEFORM_TOKEN = settings.DEBUG_CONF.get('typeform', 'token')
-    HEADERS = {
-        'Authorization': "Bearer %s" % TYPEFORM_TOKEN,
-        'Content-Type': 'application/json'
-    }
-    endpoint = "https://api.typeform.com/forms/%s/responses"
-    btn_values = btns.values()
-    test_request = requests.get(
-        endpoint % list(btn_values)[0],
-        headers=HEADERS
-    )
-
-    if test_request.status_code != 200:
+    # Test request
+    if get_responses(list(btns.keys())[0]).status_code != 200:
         return 'monitoraggio.html', context
 
-    for bottone_name, _id in btns.items():
-        r = requests.get(endpoint % _id, headers=HEADERS)
-        js = r.json()
-
-        type_form_dict = context['type_form']
-
-        for item in js['items']:
+    for _id, bottone_name in btns.items():
+        json = get_json_from_responses(_id)
+        for item in json['items']:
             c = item.get('hidden', dict())
             c = c.get('c')
 
             if c and c == str(user_comitato):
-                type_form_dict[_id][0] = False
+                context['type_form'][_id][0] = True
                 break  # bottone spento
 
+    is_done = False
+    typeform_id = request.GET.get('id', False)
+    if typeform_id:
+        typeform = context['type_form'][typeform_id]
+        is_done = typeform[0]
+        context['section'] = typeform
+        context['typeform_id'] = typeform_id
+
+    if is_done:
+        context['is_done'] = True
+    else:
+        context['user_comitato'] = user_comitato
+        context['user_id'] = request.user.id
+
+    context['all_forms_are_completed'] = False if False in [v[0] for k,v in context['type_form'].items()] else True
+
     return 'monitoraggio.html', context
+
+
+@pagina_privata
+def monitoraggio_actions(request, me):
+    redirect_url = redirect(reverse('pages:monitoraggio'))
+    if not hasattr(me, 'sede_riferimento'):
+        return redirect_url
+
+    action = request.GET.get('action')
+    if not action:
+        return redirect_url
+
+    responses = TypeFormResponses(request)
+
+    if action == 'print':
+        return responses.print()
+    elif action == 'send_via_mail':
+        return responses.send_via_mail()
