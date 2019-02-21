@@ -472,53 +472,19 @@ def statistica_num_sedi(**kwargs):
             }
         }
 
-    # def get_tot_date(current=None, before=None, estensione=None):
-    #
-    #     current_attivo = Sede.objects.filter(
-    #         creazione__lte=current,
-    #         estensione=estensione,
-    #         attiva=True
-    #     )
-    #
-    #     current_disattivo = Sede.objects.filter(
-    #         creazione__lte=current,
-    #         estensione=estensione,
-    #         attiva=False
-    #     )
-    #
-    #     return {
-    #         "nome": ESTENDIONI_DICT[estensione],
-    #         "statistiche": {
-    #             'Totale attivo dal {} al {}'.format(start, finish): current_attivo.count(),
-    #             'Totale disattivo dal {} al {}'.format(start, finish): current_disattivo.count()
-    #         }
-    #     }
-
     obj = {
-        "nome": STATISTICA[NUM_NUOVI_VOL],
+        "nome": STATISTICA[NUM_SEDI],
         "tot": []
     }
 
-    # tipo = kwargs.get('tipo_filtro')
-
-    # if tipo == FILTRO_ANNO:
-    start = datetime.now().date().replace(month=1, day=1, year=int(kwargs.get('anno_di_riferimento')))
-    finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
+    start = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
+    finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento'))-1)
     obj['tot'] = [
         get_tot_anno(start, finish, NAZIONALE),
         get_tot_anno(start, finish, REGIONALE),
         get_tot_anno(start, finish, LOCALE),
         get_tot_anno(start, finish, TERRITORIALE),
     ]
-    # elif tipo == FILTRO_DATA:
-    #     start = kwargs.get('dal')
-    #     finish = kwargs.get('al')
-    #     obj['tot'] = [
-    #         get_tot_date(start, finish, NAZIONALE),
-    #         get_tot_date(start, finish, REGIONALE),
-    #         get_tot_date(start, finish, LOCALE),
-    #         get_tot_date(start, finish, TERRITORIALE),
-    #     ]
 
     return obj
 
@@ -576,7 +542,7 @@ def statistiche_num_sedi_nuove(**kwargs):
         }
 
     obj = {
-        "nome": STATISTICA[NUM_NUOVI_VOL],
+        "nome": STATISTICA[NUM_SEDI_NUOVE],
         "tot": []
     }
 
