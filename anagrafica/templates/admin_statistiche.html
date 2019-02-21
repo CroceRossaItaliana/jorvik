@@ -58,6 +58,10 @@
             text-align: right;
             font-size: larger;
         }
+        .nome {
+            font-family: monospace;
+            text-align: left;
+        }
         .metrica {
             font-family: monospace;
             text-align: right   ;
@@ -123,6 +127,11 @@
         }
 
         function showDefault() {
+            if($('#id_tipo_filtro_0').is(':checked')){
+                showFiltroAnno()
+            }else{
+                showFiltroDate()
+            }
             $('select[name=livello_riferimento]').parent().hide();
             $('input[name=nome_corso]').parent().hide();
             $('select[name=area_riferimento]').parent().hide();

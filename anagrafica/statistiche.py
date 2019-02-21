@@ -272,7 +272,7 @@ def statistica_generale(**kwargs):
 '''
 def statistica_num_nuovi_vol(**kwargs):
 
-    def get_tot(start=None, finish=None, estensione=None):
+    def get_tot_anno(start=None, finish=None, estensione=None):
 
         current_year = start.year
         before_year = start.replace(year=current_year - 1).year
@@ -292,6 +292,7 @@ def statistica_num_nuovi_vol(**kwargs):
             membro=Appartenenza.VOLONTARIO,
             sede__estensione=estensione,
         )
+        print(current.count(), before.count())
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
@@ -301,18 +302,50 @@ def statistica_num_nuovi_vol(**kwargs):
             }
         }
 
-    start = datetime.now().date().replace(month=1, day=1, year=int(kwargs.get('anno_di_riferimento')))
-    finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
+    def get_tot_date(start=None, finish=None, estensione=None):
+
+        current = Appartenenza.objects.filter(
+            creazione__gte=start,
+            creazione__lte=finish,
+            terminazione=None,
+            membro=Appartenenza.VOLONTARIO,
+            sede__estensione=estensione,
+        )
+
+        return {
+            "nome": ESTENDIONI_DICT[estensione],
+            "statistiche": {
+                'Totale nuovi volontari dal {} al {}'.format(start, finish): current.count()
+            }
+        }
 
     obj = {
         "nome": STATISTICA[NUM_NUOVI_VOL],
-        "tot": [
-            get_tot(start, finish, NAZIONALE),
-            get_tot(start, finish, REGIONALE),
-            get_tot(start, finish, LOCALE),
-            get_tot(start, finish, TERRITORIALE),
-        ]
+        "tot": []
     }
+
+    tipo = kwargs.get('tipo_filtro')
+
+    if tipo == FILTRO_ANNO:
+        start = datetime.now().date().replace(month=1, day=1, year=int(kwargs.get('anno_di_riferimento')))
+        finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
+        obj['tot'] = [
+            get_tot_anno(start, finish, NAZIONALE),
+            get_tot_anno(start, finish, REGIONALE),
+            get_tot_anno(start, finish, LOCALE),
+            get_tot_anno(start, finish, TERRITORIALE),
+        ]
+    elif tipo == FILTRO_DATA:
+        print(tipo)
+        start = kwargs.get('dal')
+        finish = kwargs.get('al')
+        print(start, finish)
+        obj['tot'] = [
+            get_tot_date(start, finish, NAZIONALE),
+            get_tot_date(start, finish, REGIONALE),
+            get_tot_date(start, finish, LOCALE),
+            get_tot_date(start, finish, TERRITORIALE),
+        ]
 
     return obj
 
@@ -324,7 +357,7 @@ def statistica_num_nuovi_vol(**kwargs):
 '''
 def statistica_num_dimessi(**kwargs):
 
-    def get_tot(start=None, finish=None, estensione=None):
+    def get_tot_anno(start=None, finish=None, estensione=None):
 
         current_year = start.year
         before_year = current_year - 1
@@ -351,18 +384,47 @@ def statistica_num_dimessi(**kwargs):
             }
         }
 
-    start = datetime.now().date().replace(month=1, day=1, year=int(kwargs.get('anno_di_riferimento')))
-    finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
+    def get_tot_date(start=None, finish=None, estensione=None):
+
+        current = Appartenenza.objects.filter(
+            creazione__gte=start,
+            creazione__lte=finish,
+            terminazione=Appartenenza.DIMISSIONE,
+            sede__estensione=estensione,
+        )
+
+        return {
+            "nome": ESTENDIONI_DICT[estensione],
+            "statistiche": {
+                'Totale Volontari dimessi dal {} al {}'.format(start, finish): current.count()
+            }
+        }
 
     obj = {
         "nome": STATISTICA[NUM_DIMESSI],
-        "tot": [
-            get_tot(start, finish, NAZIONALE),
-            get_tot(start, finish, REGIONALE),
-            get_tot(start, finish, LOCALE),
-            get_tot(start, finish, TERRITORIALE),
-        ]
+        "tot": []
     }
+
+    tipo = kwargs.get('tipo_filtro')
+
+    if tipo == FILTRO_ANNO:
+        start = datetime.now().date().replace(month=1, day=1, year=int(kwargs.get('anno_di_riferimento')))
+        finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
+        obj['tot'] = [
+            get_tot_anno(start, finish, NAZIONALE),
+            get_tot_anno(start, finish, REGIONALE),
+            get_tot_anno(start, finish, LOCALE),
+            get_tot_anno(start, finish, TERRITORIALE),
+        ]
+    elif tipo == FILTRO_DATA:
+        start = kwargs.get('dal')
+        finish = kwargs.get('al')
+        obj['tot'] = [
+            get_tot_date(start, finish, NAZIONALE),
+            get_tot_date(start, finish, REGIONALE),
+            get_tot_date(start, finish, LOCALE),
+            get_tot_date(start, finish, TERRITORIALE),
+        ]
 
     return obj
 
@@ -374,7 +436,7 @@ def statistica_num_dimessi(**kwargs):
 '''
 def statistica_num_sedi(**kwargs):
 
-    def get_tot(current=None, before=None, estensione=None):
+    def get_tot_anno(current=None, before=None, estensione=None):
 
         current_attivo = Sede.objects.filter(
             creazione__lte=current,
@@ -410,18 +472,53 @@ def statistica_num_sedi(**kwargs):
             }
         }
 
-    current = datetime.now().replace(day=31, month=12, year=int(kwargs.get('anno_di_riferimento')))
-    before = current.replace(year=current.year - 1)
+    # def get_tot_date(current=None, before=None, estensione=None):
+    #
+    #     current_attivo = Sede.objects.filter(
+    #         creazione__lte=current,
+    #         estensione=estensione,
+    #         attiva=True
+    #     )
+    #
+    #     current_disattivo = Sede.objects.filter(
+    #         creazione__lte=current,
+    #         estensione=estensione,
+    #         attiva=False
+    #     )
+    #
+    #     return {
+    #         "nome": ESTENDIONI_DICT[estensione],
+    #         "statistiche": {
+    #             'Totale attivo dal {} al {}'.format(start, finish): current_attivo.count(),
+    #             'Totale disattivo dal {} al {}'.format(start, finish): current_disattivo.count()
+    #         }
+    #     }
 
     obj = {
-        "nome": STATISTICA[NUM_DIMESSI],
-        "tot": [
-            get_tot(current, before, NAZIONALE),
-            get_tot(current, before, REGIONALE),
-            get_tot(current, before, LOCALE),
-            get_tot(current, before, TERRITORIALE),
-        ]
+        "nome": STATISTICA[NUM_NUOVI_VOL],
+        "tot": []
     }
+
+    # tipo = kwargs.get('tipo_filtro')
+
+    # if tipo == FILTRO_ANNO:
+    start = datetime.now().date().replace(month=1, day=1, year=int(kwargs.get('anno_di_riferimento')))
+    finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
+    obj['tot'] = [
+        get_tot_anno(start, finish, NAZIONALE),
+        get_tot_anno(start, finish, REGIONALE),
+        get_tot_anno(start, finish, LOCALE),
+        get_tot_anno(start, finish, TERRITORIALE),
+    ]
+    # elif tipo == FILTRO_DATA:
+    #     start = kwargs.get('dal')
+    #     finish = kwargs.get('al')
+    #     obj['tot'] = [
+    #         get_tot_date(start, finish, NAZIONALE),
+    #         get_tot_date(start, finish, REGIONALE),
+    #         get_tot_date(start, finish, LOCALE),
+    #         get_tot_date(start, finish, TERRITORIALE),
+    #     ]
 
     return obj
 
@@ -435,7 +532,7 @@ def statistica_num_sedi(**kwargs):
 '''
 def statistiche_num_sedi_nuove(**kwargs):
 
-    def get_tot(start=None, finish=None, estensione=None):
+    def get_tot_anno(start=None, finish=None, estensione=None):
 
         current_year = start.year
         before_year = start.replace(year=current_year - 1).year
@@ -462,25 +559,54 @@ def statistiche_num_sedi_nuove(**kwargs):
             }
         }
 
-    start = datetime.now().date().replace(month=1, day=1, year=int(kwargs.get('anno_di_riferimento')))
-    finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
+    def get_tot_date(start=None, finish=None, estensione=None):
+
+        current = Sede.objects.filter(
+            creazione__gte=start,
+            creazione__lte=finish,
+            estensione=estensione,
+            attiva=True
+        )
+
+        return {
+            "nome": ESTENDIONI_DICT[estensione],
+            "statistiche": {
+                'Totale nuove sedi dal {} al {}'.format(start, finish): current.count()
+            }
+        }
 
     obj = {
-        "nome": STATISTICA[NUM_SEDI_NUOVE],
-        "tot": [
-            get_tot(start, finish, NAZIONALE),
-            get_tot(start, finish, REGIONALE),
-            get_tot(start, finish, LOCALE),
-            get_tot(start, finish, TERRITORIALE),
-        ]
+        "nome": STATISTICA[NUM_NUOVI_VOL],
+        "tot": []
     }
+
+    tipo = kwargs.get('tipo_filtro')
+
+    if tipo == FILTRO_ANNO:
+        start = datetime.now().date().replace(month=1, day=1, year=int(kwargs.get('anno_di_riferimento')))
+        finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
+        obj['tot'] = [
+            get_tot_anno(start, finish, NAZIONALE),
+            get_tot_anno(start, finish, REGIONALE),
+            get_tot_anno(start, finish, LOCALE),
+            get_tot_anno(start, finish, TERRITORIALE),
+        ]
+    elif tipo == FILTRO_DATA:
+        start = kwargs.get('dal')
+        finish = kwargs.get('al')
+        obj['tot'] = [
+            get_tot_date(start, finish, NAZIONALE),
+            get_tot_date(start, finish, REGIONALE),
+            get_tot_date(start, finish, LOCALE),
+            get_tot_date(start, finish, TERRITORIALE),
+        ]
 
     return obj
 
 
 def statistica_num_corsi(**kwargs):
 
-    def get_tot(estensione=None, **kwargs):
+    def get_tot_anno(estensione=None, **kwargs):
         livello_riferimento = kwargs.get('livello_riferimento')
         nome_corso = kwargs.get('nome_corso')
         area_riferimento = kwargs.get('area_riferimento')
@@ -523,15 +649,59 @@ def statistica_num_corsi(**kwargs):
             }
         }
 
+    def get_tot_date(start=True, finish=True, estensione=None, **kwargs):
+        livello_riferimento = kwargs.get('livello_riferimento')
+        nome_corso = kwargs.get('nome_corso')
+        area_riferimento = kwargs.get('area_riferimento')
+
+        filter_name = lambda x: nome_corso in x.nome
+
+        corsi = CorsoBase.objects.filter(
+            creazione__lte=finish,
+            creazione__gte=start,
+            sede__estensione=estensione,
+            cdf_level=livello_riferimento,
+            cdf_area=area_riferimento
+        )
+
+        corsi_attivi = corsi.filter(stato=Corso.ATTIVO)
+        corsi_disattivi = corsi.filter(stato=Corso.TERMINATO)
+
+        if nome_corso:
+            corsi_attivi = filter(filter_name, corsi_attivi)
+            corsi_disattivi = filter(filter_name, corsi_disattivi)
+
+        return {
+            "nome": ESTENDIONI_DICT[estensione],
+            "statistiche": {
+                "Corsi Attivi dal {} al {}".format(start, finish): len(list(corsi_attivi)),
+                "Corsi Disattivi dal {} al {}".format(start, finish): len(list(corsi_disattivi))
+            }
+        }
+
     obj = {
         "nome": STATISTICA[NUMERO_CORSI],
-        "tot": [
-            get_tot(NAZIONALE, **kwargs),
-            get_tot(REGIONALE, **kwargs),
-            get_tot(LOCALE, **kwargs),
-            get_tot(TERRITORIALE, **kwargs),
-        ]
+        "tot": []
     }
+
+    tipo = kwargs.get('tipo_filtro')
+
+    if tipo == FILTRO_ANNO:
+        obj['tot'] = [
+            get_tot_anno(estensione=NAZIONALE),
+            get_tot_anno(estensione=REGIONALE),
+            get_tot_anno(estensione=LOCALE),
+            get_tot_anno(estensione=TERRITORIALE),
+        ]
+    elif tipo == FILTRO_DATA:
+        start = kwargs.get('dal')
+        finish = kwargs.get('al')
+        obj['tot'] = [
+            get_tot_date(start=start, finish=finish, estensione=NAZIONALE),
+            get_tot_date(start=start, finish=finish, estensione=REGIONALE),
+            get_tot_date(start=start, finish=finish, estensione=LOCALE),
+            get_tot_date(start=start, finish=finish, estensione=TERRITORIALE),
+        ]
 
     return obj
 
@@ -592,12 +762,10 @@ def statistica_ore_servizio(**kwargs):
                 "Ore di servizio": ore_di_servizio
             }
         }
+
+
     obj = {
         "nome": STATISTICA[ORE_SERVIZIO],
-        "nazionali": None,
-        "regionali": None,
-        "locali": None,
-        "territoriali": None,
         "tot": [
             get_tot(NAZIONALE),
             get_tot(REGIONALE),
@@ -665,13 +833,13 @@ STATISTICA = {
 STATISTICHE = {
     GENERALI: (statistica_generale, ('statistiche_generali.html', )),
     NUM_VOL_M_F: (statistica_num_vol_m_f, ('statistiche_per_comitati_collapse.html', )),
-    NUM_SOCI_VOL: (statistica_num_soci_vol, ('statistiche_per_comitati.html', 'statistiche_totali.html', )),#
+    NUM_SOCI_VOL: (statistica_num_soci_vol, ('statistiche_per_comitati.html', 'statistiche_totali.html', )), # TODO da rifare completamente
     NUM_VOL_FASCIA_ETA: (statistica_num_vol_fascia_eta, ('statistiche_per_comitati_collapse.html', )),
-    NUM_NUOVI_VOL: (statistica_num_nuovi_vol, ('statistiche_totali.html', )),#
-    NUM_DIMESSI: (statistica_num_dimessi, ('statistiche_totali.html', )),#
-    NUM_SEDI: (statistica_num_sedi, ('statistiche_totali.html', )),#
-    NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', )),#
-    NUMERO_CORSI: (statistica_num_corsi, ('statistiche_totali.html', )),#
+    NUM_NUOVI_VOL: (statistica_num_nuovi_vol, ('statistiche_totali.html', )),
+    NUM_DIMESSI: (statistica_num_dimessi, ('statistiche_totali.html', )),
+    NUM_SEDI: (statistica_num_sedi, ('statistiche_totali.html', )),# TODO qua è inpensabile che di utilizzare il range di date
+    NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', )),
+    NUMERO_CORSI: (statistica_num_corsi, ('statistiche_totali.html', )),
     IIVV_CM: (statistica_iivv_cm, ('statistiche_per_comitati_collapse.html', )),
     ORE_SERVIZIO: (statistica_ore_servizio, ('statistiche_totali.html', )),
 }

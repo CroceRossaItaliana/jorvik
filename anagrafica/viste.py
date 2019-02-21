@@ -1831,8 +1831,9 @@ def admin_statistiche(request, me):
                 nome_corso=nome_corso,
                 area_riferimento=area_riferimento,
                 anno_di_riferimento=anno_di_riferimento,
+                tipo_filtro=tipo_filtro,
                 dal=dal,
-                al=al
+                al=al,
             ),
             "views": statistica[1],
             "ora": timezone.now(),
