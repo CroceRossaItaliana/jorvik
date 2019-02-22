@@ -9,7 +9,7 @@ from django import forms
 from curriculum.areas import OBBIETTIVI_STRATEGICI
 from formazione.models import Titolo
 from formazione.models import Corso
-
+from django.db.models import Q
 
 def get_statistica_collapse_ric(comitati, f, **kwargs):
     estensione = {NAZIONALE: REGIONALE, REGIONALE: LOCALE, LOCALE: TERRITORIALE, TERRITORIALE: None}
@@ -121,7 +121,7 @@ def statistica_num_vol_m_f(**kwargs):
 '''
 def statistica_num_soci_vol(**kwargs):
 
-    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
+    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
     totale_regione_soci_currente = 0
     totale_regione_volontari_current = 0
@@ -173,35 +173,6 @@ def statistica_num_soci_vol(**kwargs):
         totale_regione_volontari_current += regione_volontari_current
         totale_regione_soci_before += regione_soci_before
         totale_regione_volontari_before += regione_volontari_before
-
-    # Elimino la doppia presenza delle sede Area Metropolitana di Roma Capitale
-    metropolitana_roma = Sede.objects.filter(nome="Comitato dell'Area Metropolitana di Roma Capitale").first()
-    if metropolitana_roma:
-        regione_soci_current = int(
-            metropolitana_roma.membri_attuali(
-                figli=False, membro__in=Appartenenza.MEMBRO_SOCIO, creazione__lte=finish_current
-            ).count()
-        )
-        regione_soci_before = int(
-            metropolitana_roma.membri_attuali(
-                figli=False, membro__in=Appartenenza.MEMBRO_SOCIO, creazione__lte=finish_before
-            ).count()
-        )
-        regione_volontari_current = int(
-            metropolitana_roma.membri_attuali(
-                figli=False, membro=Appartenenza.VOLONTARIO, creazione__lte=finish_current
-            ).count()
-        )
-        regione_volontari_before = int(
-            metropolitana_roma.membri_attuali(
-                figli=False, membro=Appartenenza.VOLONTARIO, creazione__lte=finish_before
-            ).count()
-        )
-
-        totale_regione_soci_currente -= regione_soci_current
-        totale_regione_volontari_current -= regione_volontari_current
-        totale_regione_soci_before -= regione_soci_before
-        totale_regione_volontari_before -= regione_volontari_before
 
     obj = {
         "nome": STATISTICA[NUM_SOCI_VOL],
@@ -283,7 +254,7 @@ def statistica_num_nuovi_vol(**kwargs):
             terminazione=None,
             membro=Appartenenza.VOLONTARIO,
             sede__estensione=estensione,
-        )
+        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         before = Appartenenza.objects.filter(
             creazione__gte=start.replace(year=start.year - 1),
@@ -291,8 +262,7 @@ def statistica_num_nuovi_vol(**kwargs):
             terminazione=None,
             membro=Appartenenza.VOLONTARIO,
             sede__estensione=estensione,
-        )
-        print(current.count(), before.count())
+        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
@@ -310,7 +280,7 @@ def statistica_num_nuovi_vol(**kwargs):
             terminazione=None,
             membro=Appartenenza.VOLONTARIO,
             sede__estensione=estensione,
-        )
+        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
@@ -367,14 +337,14 @@ def statistica_num_dimessi(**kwargs):
             creazione__lte=finish,
             terminazione=Appartenenza.DIMISSIONE,
             sede__estensione=estensione,
-        )
+        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         before = Appartenenza.objects.filter(
             creazione__gte=start.replace(year=before_year),
             creazione__lte=finish.replace(year=before_year),
             terminazione=Appartenenza.DIMISSIONE,
             sede__estensione=estensione,
-        )
+        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
@@ -391,7 +361,7 @@ def statistica_num_dimessi(**kwargs):
             creazione__lte=finish,
             terminazione=Appartenenza.DIMISSIONE,
             sede__estensione=estensione,
-        )
+        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
@@ -442,25 +412,25 @@ def statistica_num_sedi(**kwargs):
             creazione__lte=current,
             estensione=estensione,
             attiva=True
-        )
+        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         current_disattivo = Sede.objects.filter(
             creazione__lte=current,
             estensione=estensione,
             attiva=False
-        )
+        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         before_attivo = Sede.objects.filter(
             creazione__lte=before,
             estensione=estensione,
             attiva=True
-        )
+        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         before_disattivo = Sede.objects.filter(
             creazione__lte=before,
             estensione=estensione,
             attiva=False
-        )
+        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
@@ -508,14 +478,14 @@ def statistiche_num_sedi_nuove(**kwargs):
             creazione__lte=finish,
             estensione=estensione,
             attiva=True
-        )
+        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         before = Sede.objects.filter(
             creazione__gte=start.replace(year=before_year),
             creazione__lte=finish.replace(year=before_year),
             estensione=estensione,
             attiva=True
-        )
+        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
@@ -532,7 +502,7 @@ def statistiche_num_sedi_nuove(**kwargs):
             creazione__lte=finish,
             estensione=estensione,
             attiva=True
-        )
+        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
@@ -576,19 +546,18 @@ def statistica_num_corsi(**kwargs):
         livello_riferimento = kwargs.get('livello_riferimento')
         nome_corso = kwargs.get('nome_corso')
         area_riferimento = kwargs.get('area_riferimento')
-        anno = int(kwargs.get('anno_di_riferimento'))
 
         filter_name = lambda x: nome_corso in x.nome
 
         corsi_current = CorsoBase.objects.filter(
-            anno=anno,
+            anno=kwargs.get('anno'),
             sede__estensione=estensione,
             cdf_level=livello_riferimento,
             cdf_area=area_riferimento
         )
 
         corsi_before = CorsoBase.objects.filter(
-            anno=anno-1,
+            anno=kwargs.get('anno')-1,
             sede__estensione=estensione,
             cdf_level=livello_riferimento,
             cdf_area=area_riferimento
@@ -651,13 +620,13 @@ def statistica_num_corsi(**kwargs):
     }
 
     tipo = kwargs.get('tipo_filtro')
-
+    anno = int(kwargs.get('anno_di_riferimento'))
     if tipo == FILTRO_ANNO:
         obj['tot'] = [
-            get_tot_anno(estensione=NAZIONALE),
-            get_tot_anno(estensione=REGIONALE),
-            get_tot_anno(estensione=LOCALE),
-            get_tot_anno(estensione=TERRITORIALE),
+            get_tot_anno(estensione=NAZIONALE, anno=anno),
+            get_tot_anno(estensione=REGIONALE, anno=anno),
+            get_tot_anno(estensione=LOCALE, anno=anno),
+            get_tot_anno(estensione=TERRITORIALE, anno=anno),
         ]
     elif tipo == FILTRO_DATA:
         start = kwargs.get('dal')
@@ -708,7 +677,7 @@ def statistica_ore_servizio(**kwargs):
 
     def get_tot(estensione=None, inizio=None, fine=None):
 
-        sedi = Sede.objects.filter(estensione=estensione)
+        sedi = Sede.objects.filter(estensione=estensione).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         qs_attivita = Attivita.objects.filter(
             stato=Attivita.VISIBILE,
@@ -803,7 +772,7 @@ STATISTICHE = {
     NUM_VOL_FASCIA_ETA: (statistica_num_vol_fascia_eta, ('statistiche_per_comitati_collapse.html', )),
     NUM_NUOVI_VOL: (statistica_num_nuovi_vol, ('statistiche_totali.html', )),
     NUM_DIMESSI: (statistica_num_dimessi, ('statistiche_totali.html', )),
-    NUM_SEDI: (statistica_num_sedi, ('statistiche_totali.html', )),# TODO qua è inpensabile che di utilizzare il range di date
+    NUM_SEDI: (statistica_num_sedi, ('statistiche_totali.html', )),
     NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', )),
     NUMERO_CORSI: (statistica_num_corsi, ('statistiche_totali.html', )),
     IIVV_CM: (statistica_iivv_cm, ('statistiche_per_comitati_collapse.html', )),
@@ -817,6 +786,9 @@ TIPO_CHOICES = [
     (FILTRO_ANNO, 'Anno'),
     (FILTRO_DATA, 'Data'),
 ]
+
+COMITATI_DA_EXLUDERE = ["Comitato dell'Area Metropolitana di Roma Capitale", ]
+
 
 class ModuloStatisticheBase(forms.Form):
     tipo_statistiche = forms.ChoiceField(widget=forms.Select(), choices=get_type(), required=True)
