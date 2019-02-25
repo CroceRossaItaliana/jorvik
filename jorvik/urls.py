@@ -142,6 +142,7 @@ urlpatterns = [
     url(r'^admin/import/presidenti/$', anagrafica.viste.admin_import_presidenti),
     url(r'^admin/pulisci/email/$', anagrafica.viste.admin_pulisci_email),
     url(r'^admin/statistiche/$', anagrafica.viste.admin_statistiche),
+    url(r'^admin/statistiche/download/(?P<statistica>[0-9A-Za-z_\-]+)$', anagrafica.viste.admin_statistiche_download),
     url(r'^admin/report_federazione/$', anagrafica.viste.admin_report_federazione),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^login/', include('loginas.urls')),   # Login come utente

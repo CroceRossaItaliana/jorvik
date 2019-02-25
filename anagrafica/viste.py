@@ -66,8 +66,8 @@ from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio, Q
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
-from anagrafica.statistiche import GENERALI, STATISTICHE
-from anagrafica.statistiche import ModuloStatisticheBase
+from anagrafica.statistica.stat_costanti import GENERALI
+from anagrafica.statistica.applicazione import STATISTICHE, ModuloStatisticheBase
 
 TIPO_VOLONTARIO = 'volontario'
 TIPO_ASPIRANTE = 'aspirante'
@@ -1840,6 +1840,8 @@ def admin_statistiche(request, me):
             "modulo": modulo
         }
 
+        request.session['ultima_statistica'] = contesto['obj']
+
         return 'admin_statistiche.html', contesto
 
     statistica = STATISTICHE[GENERALI]
@@ -1852,7 +1854,18 @@ def admin_statistiche(request, me):
         "modulo": modulo
     }
 
+    request.session['ultima_statistica'] = contesto['obj']
+
     return 'admin_statistiche.html', contesto
+
+
+@pagina_privata
+def admin_statistiche_download(request, me, statistica):
+    file = open('file.txt', 'w+')
+    response = HttpResponse(file, content_type='application/msword')
+    response['Content-Disposition'] = 'attachment; filename=file.txt'
+    file.close()
+    return response
 
 
 @pagina_privata

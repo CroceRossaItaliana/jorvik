@@ -5,11 +5,13 @@ import datetime
 from attivita.models import Attivita, Turno
 from django.db.models import F, Sum
 from datetime import timedelta, datetime
-from django import forms
-from curriculum.areas import OBBIETTIVI_STRATEGICI
-from formazione.models import Titolo
 from formazione.models import Corso
 from django.db.models import Q
+from .stat_costanti import (
+    STATISTICA, COMITATI_DA_EXLUDERE, NUM_VOL_M_F, NUM_SOCI_VOL, NUM_NUOVI_VOL, FILTRO_ANNO, FILTRO_DATA,
+    NUM_SEDI, NUM_DIMESSI, NUM_SEDI_NUOVE, NUMERO_CORSI, IIVV_CM, ORE_SERVIZIO
+)
+
 
 def get_statistica_collapse_ric(comitati, f, **kwargs):
     estensione = {NAZIONALE: REGIONALE, REGIONALE: LOCALE, LOCALE: TERRITORIALE, TERRITORIALE: None}
@@ -56,8 +58,9 @@ def get_statistica_collapse_ric(comitati, f, **kwargs):
     14/18 - 18/25 - 25/32 - 32/45 - 45/60 - over 60
     per Ogni comitato Nazionale/Regione/locale/territoriale
 '''
-def statistica_num_vol_fascia_eta(**kwargs):
 
+
+def statistica_num_vol_fascia_eta(**kwargs):
     def get_num_vol_per_eta(comitato=None, **kwargs):
 
         def count(query, min=0, max=9999):
@@ -93,8 +96,9 @@ def statistica_num_vol_fascia_eta(**kwargs):
     Numero di volontario divesi per sesso
     Per ogni comitato Nazionale/Regionale/Locale/Territoriale    
 '''
-def statistica_num_vol_m_f(**kwargs):
 
+
+def statistica_num_vol_m_f(**kwargs):
     def get_m_f_statistiche(comitato=None, **kwargs):
         figli = kwargs.get('figli') if kwargs.get('figli') else False
         persone = comitato.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO)
@@ -119,9 +123,11 @@ def statistica_num_vol_m_f(**kwargs):
     Per Ogni comitato Regionale
     valori visibili per anno corrente/precedente
 '''
-def statistica_num_soci_vol(**kwargs):
 
-    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
+
+def statistica_num_soci_vol(**kwargs):
+    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(
+        nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
     totale_regione_soci_currente = 0
     totale_regione_volontari_current = 0
@@ -208,6 +214,8 @@ def statistica_num_soci_vol(**kwargs):
     totale_regione_soci
     totale_regione_volontari
 '''
+
+
 def statistica_generale(**kwargs):
     import datetime
     oggi = datetime.date.today()
@@ -241,8 +249,9 @@ def statistica_generale(**kwargs):
     livello nazionale/regionale/locale/territoriale
     valori visibili per anno corrente/precedente
 '''
-def statistica_num_nuovi_vol(**kwargs):
 
+
+def statistica_num_nuovi_vol(**kwargs):
     def get_tot_anno(start=None, finish=None, estensione=None):
 
         current_year = start.year
@@ -325,8 +334,9 @@ def statistica_num_nuovi_vol(**kwargs):
     livello nazionale/regionale/locale/territoriale
     valori visibili per anno corrente/precedente
 '''
-def statistica_num_dimessi(**kwargs):
 
+
+def statistica_num_dimessi(**kwargs):
     def get_tot_anno(start=None, finish=None, estensione=None):
 
         current_year = start.year
@@ -337,14 +347,14 @@ def statistica_num_dimessi(**kwargs):
             creazione__lte=finish,
             terminazione=Appartenenza.DIMISSIONE,
             sede__estensione=estensione,
-        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
+        )
 
         before = Appartenenza.objects.filter(
             creazione__gte=start.replace(year=before_year),
             creazione__lte=finish.replace(year=before_year),
             terminazione=Appartenenza.DIMISSIONE,
             sede__estensione=estensione,
-        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
+        )
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
@@ -404,10 +414,10 @@ def statistica_num_dimessi(**kwargs):
     livello nazionale/regionale/locale/territoriale
     valori visibili per anno corrente/precedente
 '''
+
+
 def statistica_num_sedi(**kwargs):
-
     def get_tot_anno(current=None, before=None, estensione=None):
-
         current_attivo = Sede.objects.filter(
             creazione__lte=current,
             estensione=estensione,
@@ -448,7 +458,7 @@ def statistica_num_sedi(**kwargs):
     }
 
     start = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')))
-    finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento'))-1)
+    finish = datetime.now().date().replace(month=12, day=31, year=int(kwargs.get('anno_di_riferimento')) - 1)
     obj['tot'] = [
         get_tot_anno(start, finish, NAZIONALE),
         get_tot_anno(start, finish, REGIONALE),
@@ -462,12 +472,13 @@ def statistica_num_sedi(**kwargs):
 '''
     STATISTICHE NUMERO NUOVE SEDI
     numero di nuove sedi nell'anno corrente/precedente
-    
+
     livello nazionale/regionale/locale/territoriale
     valori visibili per anno corrente/precedente
 '''
-def statistiche_num_sedi_nuove(**kwargs):
 
+
+def statistiche_num_sedi_nuove(**kwargs):
     def get_tot_anno(start=None, finish=None, estensione=None):
 
         current_year = start.year
@@ -541,7 +552,6 @@ def statistiche_num_sedi_nuove(**kwargs):
 
 
 def statistica_num_corsi(**kwargs):
-
     def get_tot_anno(estensione=None, **kwargs):
         livello_riferimento = kwargs.get('livello_riferimento')
         nome_corso = kwargs.get('nome_corso')
@@ -557,7 +567,7 @@ def statistica_num_corsi(**kwargs):
         )
 
         corsi_before = CorsoBase.objects.filter(
-            anno=kwargs.get('anno')-1,
+            anno=kwargs.get('anno') - 1,
             sede__estensione=estensione,
             cdf_level=livello_riferimento,
             cdf_area=area_riferimento
@@ -579,8 +589,8 @@ def statistica_num_corsi(**kwargs):
             "statistiche": {
                 "Corsi nel {} Attivi".format(anno): len(list(corsi_current_attivi)),
                 "Corsi nel {} Disattivi".format(anno): len(list(corsi_current_disattivi)),
-                "Corsi nel {} Attivi".format(anno-1): len(list(corsi_before_attivi)),
-                "Corsi nel {} Disattivi".format(anno-1): len(list(corsi_before_disattivi)),
+                "Corsi nel {} Attivi".format(anno - 1): len(list(corsi_before_attivi)),
+                "Corsi nel {} Disattivi".format(anno - 1): len(list(corsi_before_disattivi)),
             }
         }
 
@@ -646,8 +656,9 @@ def statistica_num_corsi(**kwargs):
 
     livello nazionale/regionale/locale/territoriale
 '''
-def statistica_iivv_cm(**kwargs):
 
+
+def statistica_iivv_cm(**kwargs):
     def get_iivv_cm(comitato, **kwargs):
         figli = kwargs.get('figli') if kwargs.get('figli') else False
         membri_iv_n = comitato.membri_attuali(figli=figli).filter(iv=True)
@@ -673,11 +684,12 @@ def statistica_iivv_cm(**kwargs):
 
     livello nazionale/regionale/locale/territoriale
 '''
+
+
 def statistica_ore_servizio(**kwargs):
-
     def get_tot(estensione=None, inizio=None, fine=None):
-
-        sedi = Sede.objects.filter(estensione=estensione).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
+        sedi = Sede.objects.filter(estensione=estensione).exclude(
+            nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
         qs_attivita = Attivita.objects.filter(
             stato=Attivita.VISIBILE,
@@ -689,7 +701,8 @@ def statistica_ore_servizio(**kwargs):
             fine__gte=datetime.now().date().replace(month=12, day=31)
         )
 
-        ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))['totale_ore'] or timedelta()
+        ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))[
+                              'totale_ore'] or timedelta()
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
@@ -697,7 +710,6 @@ def statistica_ore_servizio(**kwargs):
                 "Ore di servizio": ore_di_servizio
             }
         }
-
 
     obj = {
         "nome": STATISTICA[ORE_SERVIZIO],
@@ -710,92 +722,3 @@ def statistica_ore_servizio(**kwargs):
     }
 
     return obj
-
-
-ANNI_DI_RIFERIMENTO = 10
-
-def get_years():
-    l = []
-    current_year = datetime.now().year
-    for i in range(0, ANNI_DI_RIFERIMENTO):
-        year = "{}/{}".format(current_year - i, current_year - i - 1)
-        l.append(
-            (current_year - i, year)
-        )
-    return l
-
-
-def get_type():
-    return [(k, v) for k, v in STATISTICA.items()]
-
-
-'''
-    VALORI STATISTICHE
-'''
-GENERALI = 'generali'
-NUM_SOCI_VOL = 'num_soci_vol'
-NUM_VOL_M_F = 'num_vol_m_f'
-NUM_VOL_FASCIA_ETA = 'num_vol_fascia_eta'
-NUM_NUOVI_VOL = 'num_nuovi_vol'
-NUM_DIMESSI = 'num_dimessi'
-NUM_SEDI = 'num_sedi'
-NUM_SEDI_NUOVE = 'num_sedi_nuove'
-NUMERO_CORSI = 'num_corsi'
-IIVV_CM = 'iivv_cm'
-ORE_SERVIZIO = 'ore_servizio'
-
-'''
-    NOMI VISUALIZZATI STATISTICHE
-'''
-STATISTICA = {
-    GENERALI: "Generali",
-    NUM_SOCI_VOL: "Soci e Volontari",
-    NUM_VOL_M_F: "Volontari M/F",
-    NUM_VOL_FASCIA_ETA: "Volontari per fasciati di età",
-    NUM_NUOVI_VOL: "Nuovi volontari",
-    NUM_DIMESSI: "Dimessi",
-    NUM_SEDI: "Sedi",
-    NUM_SEDI_NUOVE: "Sedi nuove",
-    NUMERO_CORSI: "Corsi",
-    IIVV_CM: "IIVV/CM",
-    ORE_SERVIZIO: "Ore di Servizio"
-}
-
-
-'''
-    FUNZIONI CHE CALCOLANO LE STATISTICHE
-'''
-STATISTICHE = {
-    GENERALI: (statistica_generale, ('statistiche_generali.html', )),
-    NUM_VOL_M_F: (statistica_num_vol_m_f, ('statistiche_per_comitati_collapse.html', )),
-    NUM_SOCI_VOL: (statistica_num_soci_vol, ('statistiche_per_comitati.html', 'statistiche_totali.html', )), # TODO da rifare completamente
-    NUM_VOL_FASCIA_ETA: (statistica_num_vol_fascia_eta, ('statistiche_per_comitati_collapse.html', )),
-    NUM_NUOVI_VOL: (statistica_num_nuovi_vol, ('statistiche_totali.html', )),
-    NUM_DIMESSI: (statistica_num_dimessi, ('statistiche_totali.html', )),
-    NUM_SEDI: (statistica_num_sedi, ('statistiche_totali.html', )),
-    NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', )),
-    NUMERO_CORSI: (statistica_num_corsi, ('statistiche_totali.html', )),
-    IIVV_CM: (statistica_iivv_cm, ('statistiche_per_comitati_collapse.html', )),
-    ORE_SERVIZIO: (statistica_ore_servizio, ('statistiche_totali.html', )),
-}
-
-FILTRO_ANNO = 'ANNO'
-FILTRO_DATA = 'DATA'
-
-TIPO_CHOICES = [
-    (FILTRO_ANNO, 'Anno'),
-    (FILTRO_DATA, 'Data'),
-]
-
-COMITATI_DA_EXLUDERE = ["Comitato dell'Area Metropolitana di Roma Capitale", ]
-
-
-class ModuloStatisticheBase(forms.Form):
-    tipo_statistiche = forms.ChoiceField(widget=forms.Select(), choices=get_type(), required=True)
-    nome_corso = forms.CharField(required=False)
-    livello_riferimento = forms.ChoiceField(widget=forms.Select(), choices=Titolo.CDF_LIVELLI, required=False)
-    area_riferimento = forms.ChoiceField(widget=forms.Select(), choices=OBBIETTIVI_STRATEGICI, required=False)
-    tipo_filtro = forms.ChoiceField(choices=TIPO_CHOICES, initial=FILTRO_ANNO, widget=forms.RadioSelect())
-    anno_di_riferimento = forms.ChoiceField(widget=forms.Select(), choices=get_years(), required=False)
-    dal = forms.DateField(required=False)
-    al = forms.DateField(required=False)
