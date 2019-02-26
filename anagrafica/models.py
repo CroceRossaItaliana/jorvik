@@ -1218,6 +1218,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return excel
 
     @property
+    def is_presidente(self):
+        return self.deleghe_attuali(tipo=PRESIDENTE).exists()
+
+    @property
     def nuovo_presidente(self):
         """
         Ritorna True se la persona e' un nuovo presidente/commissario (meno di un mese)
