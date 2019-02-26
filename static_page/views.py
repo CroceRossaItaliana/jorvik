@@ -1,8 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
 from django.core.urlresolvers import reverse
+from django.contrib.messages import get_messages
+
+from celery.result import AsyncResult
+
 from autenticazione.funzioni import pagina_privata
 from .models import Page
-from .monitoraggio import (get_responses, get_json_from_responses, TypeFormResponses)
+from .monitoraggio import TypeFormResponses
 
 
 @pagina_privata
@@ -18,37 +22,29 @@ def view_page(request, me, slug):
 
 @pagina_privata
 def monitoraggio(request, me):
-    if not hasattr(me, 'sede_riferimento'):
-        return redirect('/')
+    if not me.is_presidente: return redirect('/')
+    if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
-    btns = TypeFormResponses.form_ids
+    typeform = TypeFormResponses(request=request, me=me)
 
     # Django
     user_comitato = me.sede_riferimento().id
     context = {
-        'type_form': {k: [False, user_comitato, v] for k, v in btns.items()}
+        'type_form': typeform.context_typeform
     }
 
-    # Test request
-    if get_responses(list(btns.keys())[0]).status_code != 200:
+    # Make test request (API/connection availability, etc)
+    if not typeform.make_test_request_to_api:
         return 'monitoraggio.html', context
 
-    for _id, bottone_name in btns.items():
-        json = get_json_from_responses(_id)
-        for item in json['items']:
-            c = item.get('hidden', dict())
-            c = c.get('c')
-
-            if c and c == str(user_comitato):
-                context['type_form'][_id][0] = True
-                break  # bottone spento
+    typeform.get_responses_for_all_forms()
 
     is_done = False
     typeform_id = request.GET.get('id', False)
     if typeform_id:
-        typeform = context['type_form'][typeform_id]
-        is_done = typeform[0]
-        context['section'] = typeform
+        typeform_ctx = context['type_form'][typeform_id]
+        is_done = typeform_ctx[0]
+        context['section'] = typeform_ctx
         context['typeform_id'] = typeform_id
 
     if is_done:
@@ -57,7 +53,17 @@ def monitoraggio(request, me):
         context['user_comitato'] = user_comitato
         context['user_id'] = request.user.id
 
-    context['all_forms_are_completed'] = False if False in [v[0] for k,v in context['type_form'].items()] else True
+    context['all_forms_are_completed'] = typeform.all_forms_are_completed
+
+    # Get celery_task_id
+    # TODO: ajax polling task is ready
+    prefix = typeform.CELERY_TASK_PREFIX
+    message_storage = get_messages(request)
+    if len(message_storage) > 0:
+        for line, msg in enumerate(message_storage):
+            if msg.message.startswith(prefix):
+                context['celery_task_id'] = msg.message.replace(prefix, '').strip()
+                del message_storage._loaded_messages[line]
 
     return 'monitoraggio.html', context
 
@@ -65,15 +71,13 @@ def monitoraggio(request, me):
 @pagina_privata
 def monitoraggio_actions(request, me):
     redirect_url = redirect(reverse('pages:monitoraggio'))
-    if not hasattr(me, 'sede_riferimento'):
-        return redirect_url
 
     action = request.GET.get('action')
-    if not action:
-        return redirect_url
+    if not action: return redirect_url
+    if not hasattr(me, 'sede_riferimento'): return redirect_url
+    if not me.is_presidente: return redirect('/')
 
-    responses = TypeFormResponses(request)
-
+    responses = TypeFormResponses(request=request, me=me)
     if action == 'print':
         return responses.print()
     elif action == 'send_via_mail':

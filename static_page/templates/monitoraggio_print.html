@@ -9,8 +9,11 @@
     body {font-family: Arial, sans-serif;}
     .results-table {border-collapse: collapse; max-width: 1024px; margin: 0 auto; width: 100%;}
     .results-form-name {font-size: 24px; font-weight: bold; text-align: center; padding-top:25px; padding-bottom:12px;}
-    .results-form-name:not(:first-child) {border-top:1px solid #666;}
-    .results-item-td {padding-bottom: 25px; border-bottom:1px solid #666;}
+    .results-form-name {border-top:1px solid #666;}
+    .results-form-name:first-child {border-top:none;}
+    .results-item-tr {border-bottom:1px solid #666;}
+    .results-item-td {padding: 15px 0;}
+    .results-item-td div {max-width: 85%;}
   </style>
 </head>
 <body {% if to_print %}onload="window.print()"{% endif %}>
@@ -22,17 +25,19 @@
       </td>
     </tr>
     {% for result in results.items %}
-    <tr>
-      <td colspan="2" class="results-form-name">{{ result.1.form_name }}</td>
-    </tr>
-    <tr>
-      <td width="70%"><strong>Domanda</strong></td>
-      <td width="30%"><strong>Risposta</strong></td>
-    </tr>
-    <tr>
-      <td class="results-item-td">{{ result.1.question_title }}</td>
-      <td class="results-item-td">{{ result.1.answer }}</td>
-    </tr>
+      <tr>
+        <td colspan="2" class="results-form-name">{{ result.1.0.form_name|default:result.0 }}</td>
+      </tr>
+      <tr>
+        <td width="70%"><strong>Domanda</strong></td>
+        <td width="30%"><strong>Risposta</strong></td>
+      </tr>
+      {% for result in result.1 %}
+        <tr class="results-item-tr">
+          <td class="results-item-td"><div>{{ result.question_title }}</div></td>
+          <td class="results-item-td">{{ result.answer }}</td>
+        </tr>
+      {% endfor %}
     {% endfor %}
   </table>
 </body>

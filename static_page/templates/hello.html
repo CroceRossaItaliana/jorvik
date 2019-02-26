@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+</head>
+<body>
+
+<script>
+var generated_report = setInterval(function() {
+  var cnt = 0;
+  r = $.ajax({
+    url: "/page/hello",
+    async: false,
+    type: "GET",
+    data: {
+      task_id: "123",
+    },
+  });
+  status = r.status;
+  if (status == 200 || cnt == 20) {
+    clearInterval(generated_report);
+    if (cnt == 20) {
+
+    }
+  }
+  cnt += 1;
+}, 3000);
+</script>
+
+</body>
+</html>
