@@ -43,6 +43,12 @@ class TypeFormResponses:
 
         self.context_typeform = self._set_typeform_context()
 
+    def _set_typeform_context(self):
+        # This method generates a dict values,
+        # False as default value means that form_id is not completed yet.
+        user_comitato = self.user_comitato
+        return {k: [False, user_comitato, v] for k, v in self.form_ids.items()}
+
     @property
     def get_user_pk(self):
         if self.request is not None:
@@ -60,32 +66,6 @@ class TypeFormResponses:
             persona = Persona.objects.get(id=self.get_user_pk)
         return persona.sede_riferimento().id
 
-    def _set_typeform_context(self):
-        # This method generates a dict values,
-        # False as default value means that form_id is not completed yet.
-        user_comitato = self.user_comitato
-        return {k: [False, user_comitato, v] for k, v in self.form_ids.items()}
-
-    @classmethod
-    def make_request(cls, form_id, path='', **kwargs):
-        url = cls.ENDPOINT % form_id + path
-        if kwargs.get('completed') == True and kwargs.get('query'):
-            url += '?completed=true'
-            url += '&query=%s' % kwargs.get('query')
-
-        response = requests.get(url, headers=cls.HEADERS)
-        return response
-
-    @classmethod
-    def get_responses(cls, form_id=None):
-        return cls.make_request(form_id, path='/responses')
-
-    @property
-    def make_test_request_to_api(self):
-        first_form_id = list(self.form_ids.keys())[0]
-        response = self.get_responses(form_id=first_form_id)
-        return response.status_code == 200
-
     def get_responses_for_all_forms(self):
         for _id, bottone_name in self.form_ids.items():
             json = self.get_json_from_responses(_id)
@@ -101,15 +81,21 @@ class TypeFormResponses:
     def all_forms_are_completed(self):
         return 0 if False in [v[0] for k, v in self.context_typeform.items()] else 1
 
-    def has_answers(self, json):
-        try:
-            items = json['items'][0]
-            has_answers = 'answers' in items and len(items['answers']) > 0
-        except IndexError:
-            # print('items IndexError Exception')
-            return False
-        else:
-            return has_answers  # must return True
+    @classmethod
+    def make_request(cls, form_id, path='', **kwargs):
+        url = cls.ENDPOINT % form_id + path
+        if kwargs.get('completed') == True and kwargs.get('query'):
+            url += '?completed=true'
+            url += '&query=%s' % kwargs.get('query')
+
+        response = requests.get(url, headers=cls.HEADERS)
+        return response
+
+    @property
+    def make_test_request_to_api(self):
+        first_form_id = list(self.form_ids.keys())[0]
+        response = self.make_request(form_id=first_form_id, path='/responses')
+        return response.status_code == 200
 
     def get_json_from_responses(self, form_id=None, instance=None):
         if instance:
@@ -122,22 +108,20 @@ class TypeFormResponses:
             else:
                 raise BaseException('You must pass form_id')
 
+    def get_completed_responses(self, form_id):
+        response = self.make_request(form_id,
+                                     path='/responses',
+                                     query=self.get_user_pk,
+                                     completed=True)
+        return response
+
     def get_answers_from_json(self, json):
         items = json['items'][0]
         answers = items['answers']
         return answers
 
-    def handle_answer_by_type(self, type, answer):
-        if type == 'boolean':
-            return 'Si' if answer == True else 'No'
-        elif type == 'choices':
-            return ', '.join(answer['labels'])
-        elif type == 'choice':
-            return answer['label']
-        elif type == 'number':
-            pass
-
-        return answer
+    def get_form_questions(self, form_id):
+        return self.make_request(form_id).json()
 
     def combine_question_with_user_answer(self, **kwargs):
         question = kwargs.get('question')
@@ -160,15 +144,27 @@ class TypeFormResponses:
         else:
             return None
 
-    def get_form_questions(self, form_id):
-        return self.make_request(form_id).json()
+    def handle_answer_by_type(self, type, answer):
+        if type == 'boolean':
+            return 'Si' if answer == True else 'No'
+        elif type == 'choices':
+            return ', '.join(answer['labels'])
+        elif type == 'choice':
+            return answer['label']
+        elif type == 'number':
+            pass
 
-    def get_completed_responses(self, form_id):
-        response = self.make_request(form_id,
-                                     path='/responses',
-                                     query=self.get_user_pk,
-                                     completed=True)
-        return response
+        return answer
+
+    def has_answers(self, json):
+        try:
+            items = json['items'][0]
+            has_answers = 'answers' in items and len(items['answers']) > 0
+        except IndexError:
+            # print('items IndexError Exception')
+            return False
+        else:
+            return has_answers  # must return True
 
     def _retrieve_data(self):
         retrieved = dict()
