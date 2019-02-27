@@ -27,15 +27,13 @@ def monitoraggio(request, me):
 
     typeform = TypeFormResponses(request=request, me=me)
 
-    # Django
-    user_comitato = me.sede_riferimento().id
-    context = {
-        'type_form': typeform.context_typeform
-    }
-
     # Make test request (API/connection availability, etc)
     if not typeform.make_test_request_to_api:
         return 'monitoraggio.html', context
+
+    context = {
+        'type_form': typeform.context_typeform
+    }
 
     typeform.get_responses_for_all_forms()
 
@@ -49,10 +47,9 @@ def monitoraggio(request, me):
 
     if is_done:
         context['is_done'] = True
-    else:
-        context['user_comitato'] = user_comitato
-        context['user_id'] = request.user.id
 
+    context['user_comitato'] = typeform.user_comitato
+    context['user_id'] = typeform.get_user_pk
     context['all_forms_are_completed'] = typeform.all_forms_are_completed
 
     # Get celery_task_id
