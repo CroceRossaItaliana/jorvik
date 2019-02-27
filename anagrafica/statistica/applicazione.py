@@ -13,21 +13,22 @@ from .qs_statistiche import (
     statistica_num_corsi, statistica_iivv_cm, statistica_ore_servizio
 )
 
+
 '''
     FUNZIONI CHE CALCOLANO LE STATISTICHE
 '''
 STATISTICHE = {
-    GENERALI: (statistica_generale, ('statistiche_generali.html', )),
-    NUM_VOL_M_F: (statistica_num_vol_m_f, ('statistiche_per_comitati_collapse.html', )),
-    NUM_SOCI_VOL: (statistica_num_soci_vol, ('statistiche_per_comitati.html', 'statistiche_totali.html', )),
-    NUM_VOL_FASCIA_ETA: (statistica_num_vol_fascia_eta, ('statistiche_per_comitati_collapse.html', )),
-    NUM_NUOVI_VOL: (statistica_num_nuovi_vol, ('statistiche_totali.html', )),
-    NUM_DIMESSI: (statistica_num_dimessi, ('statistiche_totali.html', )),
-    NUM_SEDI: (statistica_num_sedi, ('statistiche_totali.html', )),
-    NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', )),
-    NUMERO_CORSI: (statistica_num_corsi, ('statistiche_totali.html', )),
-    IIVV_CM: (statistica_iivv_cm, ('statistiche_per_comitati_collapse.html', )),
-    ORE_SERVIZIO: (statistica_ore_servizio, ('statistiche_totali.html', )),
+    GENERALI: (statistica_generale, ('statistiche_generali.html', ), ),
+    NUM_VOL_M_F: (statistica_num_vol_m_f, ('statistiche_per_comitati_collapse.html', ), ),
+    NUM_SOCI_VOL: (statistica_num_soci_vol, ('statistiche_per_comitati.html', 'statistiche_totali.html', ), ),
+    NUM_VOL_FASCIA_ETA: (statistica_num_vol_fascia_eta, ('statistiche_per_comitati_collapse.html', ), ),
+    NUM_NUOVI_VOL: (statistica_num_nuovi_vol, ('statistiche_totali.html', ), ),
+    NUM_DIMESSI: (statistica_num_dimessi, ('statistiche_totali.html', ), ),
+    NUM_SEDI: (statistica_num_sedi, ('statistiche_totali.html', ), ),
+    NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', ), ),
+    NUMERO_CORSI: (statistica_num_corsi, ('statistiche_totali.html', ), ),
+    IIVV_CM: (statistica_iivv_cm, ('statistiche_per_comitati_collapse.html', ), ),
+    ORE_SERVIZIO: (statistica_ore_servizio, ('statistiche_totali.html', ), ),
 }
 
 

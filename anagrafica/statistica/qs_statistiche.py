@@ -182,10 +182,7 @@ def statistica_num_soci_vol(**kwargs):
 
     obj = {
         "nome": STATISTICA[NUM_SOCI_VOL],
-        "nazionali": None,
         "regionali": regione_soci_volontari,
-        "locali": None,
-        "territoriali": None,
         "tot": [
             {
                 "nome": "Regionale",

@@ -1861,10 +1861,22 @@ def admin_statistiche(request, me):
 
 @pagina_privata
 def admin_statistiche_download(request, me, statistica):
-    file = open('file.txt', 'w+')
+
+    if not me.utenza.is_superuser:
+        return redirect(ERRORE_PERMESSI)
+
+    stat = STATISTICHE[statistica]
+
+    ws = request.GET.get('foglio_singolo', 0)
+
+    file_name = stat[2](request.session['ultima_statistica'], ws=bool(ws))
+
+    file = open(file_name, 'rb')
+
     response = HttpResponse(file, content_type='application/msword')
-    response['Content-Disposition'] = 'attachment; filename=file.txt'
+    response['Content-Disposition'] = 'attachment; filename=File.xlsx'
     file.close()
+
     return response
 
 
