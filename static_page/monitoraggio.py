@@ -59,11 +59,15 @@ class TypeFormResponses:
             return self.user_pk
 
     @property
-    def user_comitato(self):
+    def persona(self):
         if self.user_pk is None:
-            persona = self.me
+            return self.me
         else:
-            persona = Persona.objects.get(id=self.get_user_pk)
+            return Persona.objects.get(id=self.get_user_pk)
+
+    @property
+    def user_comitato(self):
+        persona = self.persona
         return persona.sede_riferimento().id
 
     def get_responses_for_all_forms(self):
