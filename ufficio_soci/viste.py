@@ -1153,6 +1153,10 @@ def us_ricevute(request, me):
     form = ModuloElencoRicevute(request.POST or (request.GET or None))
     report = ReportRicevute(me=me, form=form)
 
+    to_download = request.POST.get('download_report_ricevute') == 'Scarica'
+    if to_download:
+        return report.download()
+
     context = {
         'modulo': form,
         'anno': report.anno,
