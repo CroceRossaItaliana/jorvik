@@ -1148,39 +1148,19 @@ def us_ricevute_nuova(request, me):
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_ricevute(request, me):
+    from .reports import ReportRicevute
 
-    modulo = ModuloElencoRicevute(request.POST or (request.GET or None))
+    form = ModuloElencoRicevute(request.POST or (request.GET or None))
+    report = ReportRicevute(me=me, form=form)
 
-    tipi = [x[0] for x in Quota.TIPO]
-    anno = Tesseramento.ultimo_anno()
-    if modulo.is_valid():
-        tipi = modulo.cleaned_data.get('tipi_ricevute')
-        anno = modulo.cleaned_data.get('anno')
-
-    dict_tipi = dict(Quota.TIPO)
-    tipi_testo = [dict_tipi[t] for t in tipi]
-
-    sedi = me.oggetti_permesso(GESTIONE_SOCI)
-    ricevute = Quota.objects.filter(
-        Q(Q(sede__in=sedi) | Q(appartenenza__sede__in=sedi)),
-        anno=anno,
-        tipo__in=tipi,
-    ).order_by('progressivo')
-
-    non_annullate = ricevute.filter(stato=Quota.REGISTRATA)
-    importo = non_annullate.aggregate(Sum('importo'))['importo__sum'] or 0.0
-    importo_extra = non_annullate.aggregate(Sum('importo_extra'))['importo_extra__sum'] or 0.0
-    importo_totale = importo + importo_extra
-
-    contesto = {
-        "modulo": modulo,
-        "anno": anno,
-        "ricevute": ricevute,
-        "tipi_testo": tipi_testo,
-        "importo_totale": importo_totale,
+    context = {
+        'modulo': form,
+        'anno': report.anno,
+        'ricevute': report.queryset,
+        'tipi_testo': report.tipi_testo,
+        'importo_totale': report.importo_totale,
     }
-
-    return 'us_ricevute.html', contesto
+    return 'us_ricevute.html', context
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
