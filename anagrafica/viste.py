@@ -22,7 +22,8 @@ from django.views.generic import ListView
 
 from anagrafica.costanti import TERRITORIALE, REGIONALE
 from anagrafica.elenchi import ElencoDelegati
-from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
+from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, \
+    ModuloStepFine, ModuloModificaAnagrafica, ModuloModificaAvatar, \
     ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
     ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
@@ -103,15 +104,13 @@ MODULI = {
     STEP_CODICE_FISCALE: ModuloStepCodiceFiscale,
     STEP_ANAGRAFICA: ModuloStepAnagrafica,
     STEP_CREDENZIALI: ModuloStepCredenziali,
-    STEP_FINE: None,
+    STEP_FINE: ModuloStepFine,
 }
 
 
 @pagina_anonima
 def registrati(request, tipo, step=None):
-    """
-    La vista per tutti gli step della registrazione.
-    """
+    """ La vista per tutti gli step della registrazione. """
 
     # Controlla che il tipo sia valido (/registrati/<tipo>/)
     if tipo not in TIPO:
@@ -149,12 +148,12 @@ def registrati(request, tipo, step=None):
         #  nome: Il nome completo dello step (es. "Selezione Comitato")
         #  slug: Il nome per il link (es. "comitato" per /registrati/<tipo>/comitato/")
         #  completato: True se lo step e' stato completato o False se futuro o attuale
-        {'nome': STEP_NOMI[x], 'slug': x,
+
+        {'nome': STEP_NOMI[x],
+         'slug': x,
          'completato': (STEP[tipo].index(x) < STEP[tipo].index(step)),
          'attuale': (STEP[tipo].index(x) == STEP[tipo].index(step)),
-         'modulo': MODULI[x](initial=sessione) if MODULI[x] else None,
-         }
-        for x in STEP[tipo]
+         'modulo': MODULI[x](initial=sessione) if MODULI[x] else None,} for x in STEP[tipo]
     ]
 
     # Controlla se e' l'ultimo step
@@ -184,7 +183,7 @@ def registrati(request, tipo, step=None):
         else:
             modulo = None
 
-    contesto = {
+    context = {
         'email': sessione.get('email'),
         'attuale_nome': STEP_NOMI[step],
         'attuale_slug': step,
@@ -200,18 +199,17 @@ def registrati(request, tipo, step=None):
             request.session['registrazione_id'] = get_random_string(length=32)
 
         if not sessione.get('email'):
-            contesto = {
+            context = {
                 'attuale_nome': STEP_NOMI[step],
                 'attuale_slug': step,
                 'lista_step': lista_step,
                 'tipo': tipo,
             }
-            return 'anagrafica_registrati_errore.html', contesto
+            return 'anagrafica_registrati_errore.html', context
 
         else:
             if uid is not None or request.session['registrazione_id'] != registration_code:
-
-                corpo = {
+                email_body = {
                     'tipo': tipo,
                     'step': step,
                     'code': request.session['registrazione_id'],
@@ -221,17 +219,18 @@ def registrati(request, tipo, step=None):
 
                 Messaggio.invia_raw(
                    oggetto="Registrazione su Gaia",
-                   corpo_html=get_template('email_conferma.html').render(corpo),
+                   corpo_html=get_template('email_conferma.html').render(email_body),
                    email_mittente=None,
                    lista_email_destinatari=[
                         sessione.get('email')
                    ]
                 )
                 link_debug = '/registrati/{tipo}/{step}/?code={code}&registration={sessione}'.format(
-                    tipo=tipo, step=step, code=request.session['registrazione_id'], sessione=request.session.session_key
+                    tipo=tipo, step=step, code=request.session['registrazione_id'],
+                    sessione=request.session.session_key
                 )
 
-                contesto = {
+                context = {
                     'attuale_nome': STEP_NOMI[step],
                     'attuale_slug': step,
                     'lista_step': lista_step,
@@ -239,9 +238,9 @@ def registrati(request, tipo, step=None):
                     'tipo': tipo,
                     'link_debug': link_debug if settings.DEBUG else ''
                 }
-                return 'anagrafica_registrati_attesa_mail.html', contesto
+                return 'anagrafica_registrati_attesa_mail.html', context
 
-    return 'anagrafica_registrati_step_' + step + '.html', contesto
+    return 'anagrafica_registrati_step_%s.html' % step, context
 
 
 @pagina_anonima
@@ -255,21 +254,32 @@ def registrati_conferma(request, tipo):
     if tipo not in TIPO:
         return redirect('/errore/')  # Altrimenti porta ad errore generico
 
+    dati = {}
+
     try:
         sessione = request.session['registrati'].copy()
     except KeyError:
         sessione = {}
-    dati = {}
+
+    form_confirm = ModuloStepFine(request.POST)
 
     # Carica tutti i moduli inviati da questo tipo di registrazione
-    for (k, modulo) in [(x, MODULI[x](data=sessione)) for x in STEP[tipo] if MODULI[x] is not None]:
+    for (k, form) in [(x, MODULI[x](data=sessione)) for x in STEP[tipo] if MODULI[x] is not None]:
+        if k == STEP_FINE:
+            """ Comportamento adeguato per la form ModuloStepFine introdotta 
+                dall'issue GAIA-49, altrimenti finiva nell'exception sotto. """
+            if form_confirm.is_valid():
+                dati.update(form_confirm.cleaned_data)
+            else:
+                return redirect('/registrati/aspirante/fine/')
+            continue
 
         # Controlla nuovamente la validita'
-        if not modulo.is_valid():
-            raise ValueError("Errore nella validazione del sub-modulo %s" % (k, ))
+        if not form.is_valid():
+            raise ValueError("Errore nella validazione del sub-modulo %s" % k)
 
         # Aggiunge tutto a "dati"
-        dati.update(modulo.cleaned_data)
+        dati.update(form.cleaned_data)
 
     # Quali di questi campi vanno nella persona?
     campi_persona = [str(x.name) for x in Persona._meta.get_fields() if not x.is_relation]

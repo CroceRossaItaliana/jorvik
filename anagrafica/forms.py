@@ -177,6 +177,13 @@ class ModuloStepCredenziali(forms.Form):
         return cleaned_data
 
 
+class ModuloStepFine(forms.Form):
+    confirm_1 = forms.BooleanField(
+        label='Accettazione del trattamento dei dati comuni')
+    confirm_2 = forms.BooleanField(
+        label='Accettazione del trattamento dei dati come dati sanitario, rilevanti origine etnica')
+
+
 class ModuloStepAnagrafica(ModelForm):
     class Meta:
         model = Persona
@@ -206,6 +213,7 @@ class ModuloStepAnagrafica(ModelForm):
                 domicilio_key = 'domicilio_%s' % f
                 residenza_value = cd['%s_residenza' % f]
                 cd[domicilio_key] = residenza_value
+
 
 class ModuloModificaAnagrafica(ModelForm):
     class Meta:
