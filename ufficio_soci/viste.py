@@ -8,6 +8,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Sum, Q
 from django.shortcuts import redirect, get_object_or_404
+from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.db import IntegrityError
 
@@ -24,16 +25,16 @@ from base.files import Excel, FoglioExcel
 from base.notifiche import NOTIFICA_INVIA
 from base.utils import poco_fa, testo_euro, oggi, mezzanotte_24_ieri
 from posta.models import Messaggio
-from posta.utils import imposta_destinatari_e_scrivi_messaggio
-from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
+
+from .elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
     ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti, ElencoDimessi, ElencoTrasferiti, \
     ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva, ElencoIVCM, ElencoTesseriniSenzaFototessera, \
     ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoTesseriniRifiutati, ElencoExSostenitori, ElencoSenzaTurni
-from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
+from .forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
     ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, \
     ModuloLavoraTesserini, ModuloScaricaTesserini, ModuloDimissioniSostenitore
-from ufficio_soci.models import Quota, Tesseramento, Tesserino, Riduzione
+from .models import Quota, Tesseramento, Tesserino, Riduzione
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
@@ -744,28 +745,32 @@ def us_elenco_download(request, me, elenco_id):
 
 @pagina_privata
 def us_elenco_messaggio(request, me, elenco_id):
-
-    try:  # Prova a ottenere l'elenco dalla sessione.
+    try:
+        # Prova a ottenere l'elenco dalla sessione.
         elenco = request.session["elenco_%s" % (elenco_id,)]
-
-    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
+    except KeyError:
+        # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
         raise ValueError("Elenco non presente in sessione.")
 
     if elenco.modulo():  # Se l'elenco richiede un modulo
+        try:
+            # Prova a recuperare il modulo riempito
+            form = elenco.modulo()(request.session['elenco_modulo_%s' % elenco_id])
+        except KeyError:
+            # Se fallisce, il modulo non e' stato ancora compilato
+            return redirect("/us/elenco/%s/modulo/" % elenco_id)
 
-        try:  # Prova a recuperare il modulo riempito
-            modulo = elenco.modulo()(request.session["elenco_modulo_%s" % (elenco_id,)])
+        if not form.is_valid():
+            # Se il modulo non e' valido, qualcosa e' andato storto
+            return redirect("/us/elenco/%s/modulo/" % elenco_id)  # Prova nuovamente?
 
-        except KeyError:  # Se fallisce, il modulo non e' stato ancora compilato
-            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
-
-        if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
-            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
-
-        elenco.modulo_riempito = modulo  # Imposta il modulo
+        # Imposta il modulo
+        elenco.modulo_riempito = form
 
     persone = elenco.ordina(elenco.risultati())
-    return imposta_destinatari_e_scrivi_messaggio(request, persone)
+    request.session["messaggio_destinatari"] = persone
+    request.session["messaggio_destinatari_timestamp"] = datetime.now()
+    return redirect(reverse('posta-scrivi'))
 
 
 @pagina_privata(permessi=(ELENCHI_SOCI,))
@@ -815,7 +820,6 @@ def us_elenchi(request, me, elenco_tipo):
             "elenco_nome": elenco_nome,
             "elenco_template": elenco_template,
         }
-
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))

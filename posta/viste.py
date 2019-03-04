@@ -1,27 +1,18 @@
-import math
 from datetime import datetime, timedelta
 
-from django.conf import settings
 from django.core.paginator import Paginator
 from django.shortcuts import redirect
-from django.utils.timezone import now
 
 from anagrafica.models import Persona
 from anagrafica.permessi.costanti import ERRORE_PERMESSI
 from autenticazione.funzioni import pagina_privata
 from base.models import Allegato
-from posta.forms import ModuloScriviMessaggioConDestinatariVisibili, \
-    ModuloScriviMessaggioConDestinatariNascosti
-from posta.models import Messaggio
+from .forms import ModuloScriviMessaggioConDestinatariVisibili, ModuloScriviMessaggioConDestinatariNascosti
+from .models import Messaggio
 
-
-__author__ = "alfioemanuele"
-
-"""
-Questo file contiene le viste relative al modulo di posta
-"""
 
 POSTA_PER_PAGINA = 7
+
 
 def posta_home(request):
     """
@@ -30,6 +21,7 @@ def posta_home(request):
     :return:
     """
     return redirect('/posta/in-arrivo/')
+
 
 @pagina_privata
 def posta(request, me, direzione="in-arrivo", pagina=1, messaggio_id=None):
@@ -88,61 +80,48 @@ def posta(request, me, direzione="in-arrivo", pagina=1, messaggio_id=None):
 
 @pagina_privata
 def posta_scrivi(request, me):
+    MAX_VISIBILI = 20
+    MAX_VISIBILI_STR = "%d destinatari selezionati"
 
-    destinatari = Persona.objects.none()
 
     # Prova a recuperare destinatari dalla sessione.
-    try:
-        timestamp = request.session["messaggio_destinatari_timestamp"]
-        if (
-            timestamp and timestamp > (now() - timedelta(seconds=settings.POSTA_MASSIVA_TIMEOUT))
-        ):
-            # max POSTA_MASSIVA_TIMEOUT secondi fa
-            destinatari = request.session["messaggio_destinatari"]
-
-    except KeyError:
-        # Nessun destinatario in sessione.
-        pass
+    destinatari_in_sessione = request.session.get('messaggio_destinatari')
+    destinatari = destinatari_in_sessione if destinatari_in_sessione else Persona.objects.none()
 
     # Svuota eventuale sessione
     request.session["messaggio_destinatari"] = None
     request.session["messaggio_destinatari_timestamp"] = None
 
-    MAX_VISIBILI = 20
-    MAX_VISIBILI_STR = "%d destinatari selezionati"
-
+    destinatari_count = destinatari.count()
+    max_visibili_count = MAX_VISIBILI_STR % destinatari_count
     if destinatari:  # Ho appena scaricato i destinatari
-
-        if destinatari.count() > MAX_VISIBILI:
-            modulo = ModuloScriviMessaggioConDestinatariNascosti(initial={
-                "destinatari": [x.pk for x in destinatari], "destinatari_selezionati": MAX_VISIBILI_STR % (destinatari.count(),)
-            })
-
+        destinatari_list = [x.pk for x in destinatari]
+        if destinatari_count > MAX_VISIBILI:
+            form = ModuloScriviMessaggioConDestinatariNascosti(initial={'destinatari': destinatari_list,
+                'destinatari_selezionati': max_visibili_count})
         else:
-            modulo = ModuloScriviMessaggioConDestinatariVisibili(initial={
-                "destinatari": [x.pk for x in destinatari],
-            })
+            form = ModuloScriviMessaggioConDestinatariVisibili(initial={'destinatari': destinatari_list,})
 
     else:  # Normale
         if len(request.POST.getlist('destinatari')) > MAX_VISIBILI:
-            modulo = ModuloScriviMessaggioConDestinatariNascosti(request.POST or None, request.FILES or None, initial={
-                "destinatari_selezionati": MAX_VISIBILI_STR % (destinatari.count(),)
-            })
-
+            form = ModuloScriviMessaggioConDestinatariNascosti(
+                request.POST or None, request.FILES or None, initial={
+                "destinatari_selezionati": max_visibili_count})
         else:
-            modulo = ModuloScriviMessaggioConDestinatariVisibili(request.POST or None,  request.FILES or None)
+            form = ModuloScriviMessaggioConDestinatariVisibili(request.POST or None, request.FILES or None)
 
-    if modulo.is_valid():
+    if form.is_valid():
+        cd = form.cleaned_data
+        allegati = list()
 
-        allegati = []
-        for a in modulo.cleaned_data['allegati']:
-            ai = Allegato(file=a, nome=a.name)
-            ai.scadenza = datetime.now() + timedelta(days=15)
-            ai.save()
-            allegati.append(ai)
+        for a in cd['allegati']:
+            allegato = Allegato(file=a, nome=a.name)
+            allegato.scadenza = datetime.now() + timedelta(days=15)
+            allegato.save()
+            allegati.append(allegato)
 
         # Invia o accoda il messaggio, a seconda del numero di destinatari.
-        if len(modulo.cleaned_data['destinatari']) > MAX_VISIBILI:
+        if len(cd['destinatari']) > MAX_VISIBILI:
             funzione = Messaggio.costruisci_e_accoda
             azione = "accodato"
         else:
@@ -150,22 +129,16 @@ def posta_scrivi(request, me):
             azione = "inviato"
 
         messaggio = funzione(
-            oggetto=modulo.cleaned_data['oggetto'],
+            oggetto=cd['oggetto'],
             modello='email_utente.html',
-            corpo={"testo": modulo.cleaned_data['testo']},
+            corpo={"testo": cd['testo']},
             allegati=allegati,
             mittente=me,
-            destinatari=[
-                el if isinstance(el, Persona) else Persona.objects.get(pk=int(el))
-                for el in modulo.cleaned_data['destinatari']
+            destinatari=[el if isinstance(el, Persona) else Persona.objects.get(pk=int(el))
+                for el in cd['destinatari']
             ],
         )
 
         # Porta alla schermata del messaggio.
         return redirect("/posta/in-uscita/1/%d/?%s" % (messaggio.pk, azione,))
-
-    contesto = {
-        "modulo": modulo,
-    }
-
-    return 'posta_scrivi.html', contesto
+    return 'posta_scrivi.html', {'modulo': form}
