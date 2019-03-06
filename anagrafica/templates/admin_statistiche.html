@@ -26,30 +26,14 @@
             Tutti i dati in questa pagina sono calcolati in tempo reale.
         </p>
 
-{#        <div class="container download">#}
-{#            <div class="btn-group"  >#}
-{#                  <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">#}
-{#                    <i class="fa fa-fw fa-download"></i>#}
-{#                    Scarica#}
-{#                  </button>#}
-{#                  <ul class="dropdown-menu" style="right: 0; left: inherit">#}
-{#                    <li>#}
-{#                        <a href="download/{{ type }}?foglio_singolo=0" data-caricamento target="_blank" download>#}
-{#                            <i class="fa fa-fw fa-file-excel-o"></i>#}
-{#                            <i class="fa fa-fw fa-files-o"></i>#}
-{#                            Excel: Un foglio per estensione#}
-{#                        </a>#}
-{#                    </li>#}
-{#                    <li>#}
-{#                        <a href="download/{{ type }}" data-caricamento target="_blank" download>#}
-{#                            <i class="fa fa-fw fa-file-excel-o"></i>#}
-{#                            <i class="fa fa-fw fa-file-o"></i>#}
-{#                            Excel: Foglio unico#}
-{#                        </a>#}
-{#                    </li>#}
-{#                  </ul>#}
-{#            </div>#}
-{#        </div>#}
+{#        {% bootstrap_formset formset %}#}
+
+        <div class="container download">
+            <button id='download' type="button" class="btn btn-primary">
+            <i class="fa fa-fw fa-download"></i>
+            Scarica
+            </button>
+        </div>
 
         <div class="panel panel-primary">
             <div class="panel-heading">
@@ -110,6 +94,10 @@
 
         $('[name=tipo_statistiche]').change(function () {
             changeForm($(this).val());
+        });
+
+        $('button[id=download]').click(function () {
+            window.location.href='download/{{ type }}'
         });
 
         function showFiltroAnno(){

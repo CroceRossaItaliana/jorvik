@@ -260,7 +260,7 @@ def statistica_num_nuovi_vol(**kwargs):
             terminazione=None,
             membro=Appartenenza.VOLONTARIO,
             sede__estensione=estensione,
-        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
+        )
 
         before = Appartenenza.objects.filter(
             creazione__gte=start.replace(year=start.year - 1),
@@ -268,7 +268,7 @@ def statistica_num_nuovi_vol(**kwargs):
             terminazione=None,
             membro=Appartenenza.VOLONTARIO,
             sede__estensione=estensione,
-        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
+        )
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
@@ -286,7 +286,7 @@ def statistica_num_nuovi_vol(**kwargs):
             terminazione=None,
             membro=Appartenenza.VOLONTARIO,
             sede__estensione=estensione,
-        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
+        )
 
         return {
             "nome": ESTENDIONI_DICT[estensione],
@@ -368,8 +368,7 @@ def statistica_num_dimessi(**kwargs):
             creazione__lte=finish,
             terminazione=Appartenenza.DIMISSIONE,
             sede__estensione=estensione,
-        ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
-
+        )
         return {
             "nome": ESTENDIONI_DICT[estensione],
             "statistiche": {

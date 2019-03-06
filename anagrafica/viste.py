@@ -1851,7 +1851,7 @@ def admin_statistiche(request, me):
         "obj": statistica[0](),
         "views": statistica[1],
         "ora": timezone.now(),
-        "modulo": modulo
+        "modulo": modulo,
     }
 
     request.session['ultima_statistica'] = contesto['obj']
@@ -1867,14 +1867,14 @@ def admin_statistiche_download(request, me, statistica):
 
     stat = STATISTICHE[statistica]
 
-    ws = request.GET.get('foglio_singolo', 0)
-
-    file_name = stat[2](request.session['ultima_statistica'], ws=bool(ws))
+    file_name = stat[2](request.session['ultima_statistica'])
 
     file = open(file_name, 'rb')
 
     response = HttpResponse(file, content_type='application/msword')
-    response['Content-Disposition'] = 'attachment; filename=File.xlsx'
+    response['Content-Disposition'] = 'attachment; filename={}_{}.xlsx'.format(
+        statistica, datetime.datetime.today().strftime('%d-%m-%Y')
+    )
     file.close()
 
     return response
