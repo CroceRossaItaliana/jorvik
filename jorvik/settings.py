@@ -33,11 +33,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+    
     # Librerie terze
     'nocaptcha_recaptcha',
     'oauth2_provider',
     'corsheaders',
     'mptt',
+    'oidc_provider',
+
     # Moduli interni
     'base',
     'autenticazione',
