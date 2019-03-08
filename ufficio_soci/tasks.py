@@ -5,6 +5,5 @@ from celery import shared_task
 def generate_elenco_soci_al_giorno(self, *args):
     from .reports import ReportElencoSoci
 
-    params = args[0]
     report = ReportElencoSoci(from_celery=True)
-    report.celery(params)
+    report.celery(args[0])

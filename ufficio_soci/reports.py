@@ -90,7 +90,7 @@ class ReportElencoSoci:
     EXCEL_FILENAME = 'Elenco.xlsx'
     DEFAULT_WORKSHEET = 'Foglio 1'
 
-    def __init__(self, request=None, elenco_id=None, from_celery=False, **kwargs):
+    def __init__(self, request=None, elenco_id=None, from_celery=False):
         self.from_celery = from_celery
         self.request = request
         self.elenco_id = elenco_id
@@ -130,15 +130,11 @@ class ReportElencoSoci:
             # Se l'elenco non è più in sessione, potrebbe essere scaduto.
             raise ValueError('Elenco non presente in sessione.')
 
-    def _get_elenco_form(self, celery_elenco_form):
+    def _get_elenco_form(self, celery_elenco_form=None):
         elenco_form_id = 'elenco_modulo_%s' % self.elenco_id
 
         # Prova a recuperare la form compilata
-        # if self.request.session is not None:
         session_elenco_form = celery_elenco_form or self.request.session.get(elenco_form_id)
-        # else:
-        #     session_elenco_form = self.celery_elenco_form
-
         if session_elenco_form:
             return self.elenco.modulo()(session_elenco_form)
 
@@ -209,9 +205,7 @@ class ReportElencoSoci:
             'elenco_form': self.request.session.get('elenco_modulo_%s' % self.elenco_id),
         }
 
-    def celery(self, *args):
-        params = args[0]
-
+    def celery(self, params):
         # Set manually some required attributes
         self.celery_multiple_worksheets = params['multiple_worksheets']
         self.elenco_id = params['elenco_id']
@@ -239,4 +233,3 @@ class ReportElencoSoci:
             # messagges.success(response, 'Attendi la generazione del report richiesto.')
 
             return response
-
