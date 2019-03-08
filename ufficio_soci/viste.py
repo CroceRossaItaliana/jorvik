@@ -434,6 +434,7 @@ def us_estensione(request, me):
 
     return 'us_estensione.html', contesto
 
+
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_trasferimento(request, me):
     """
@@ -507,6 +508,7 @@ def us_trasferimento(request, me):
 
     return 'us_trasferimento.html', contesto
 
+
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensioni(request, me):
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
@@ -517,6 +519,7 @@ def us_estensioni(request, me):
     }
 
     return 'us_estensioni.html', contesto
+
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensione_termina(request, me, pk):
@@ -532,6 +535,7 @@ def us_estensione_termina(request, me, pk):
                                                 "terminata con successo",
                                       torna_titolo="Registra nuova estensione",
                                       torna_url="/us/estensione/")
+
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_riserva_termina(request, me, pk):
@@ -571,10 +575,8 @@ def us_provvedimento(request, me):
     return "us_provvedimento.html", contesto
 
 
-
 @pagina_privata
 def us_elenco(request, me, elenco_id=None, pagina=1):
-
     pagina = int(pagina)
     if pagina < 0:
         pagina = 1
@@ -643,104 +645,37 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
 
 @pagina_privata
 def us_elenco_modulo(request, me, elenco_id):
-
-    try:  # Prova a ottenere l'elenco dalla sessione.
+    try:
+        # Prova a ottenere l'elenco dalla sessione.
         elenco = request.session["elenco_%s" % (elenco_id,)]
-
-    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
+    except KeyError:
+        # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
         raise ValueError("Elenco non presente in sessione.")
 
     if not elenco.modulo():  # No modulo? Vai all'elenco
         return redirect("/us/elenco/%s/1/" % (elenco_id,))
 
-    modulo = elenco.modulo()(request.POST or None)
+    form = elenco.modulo()(request.POST or None)
+    if request.POST and form.is_valid():  # Modulo ok
+        # Salva modulo in sessione
+        request.session["elenco_modulo_%s" % elenco_id] = request.POST
 
-    if request.POST and modulo.is_valid():  # Modulo ok
-        request.session["elenco_modulo_%s" % (elenco_id,)] = request.POST            # Salva modulo in sessione
-        return redirect("/us/elenco/%s/1/" % (elenco_id,))                           # Redirigi alla prima pagina
+        # Redirigi alla prima pagina
+        return redirect("/us/elenco/%s/1/" % elenco_id)
 
-    contesto = {
-        "modulo": modulo
+    context = {
+        "modulo": form
     }
 
-    return 'us_elenchi_inc_modulo.html', contesto
+    return 'us_elenchi_inc_modulo.html', context
 
 
 @pagina_privata
 def us_elenco_download(request, me, elenco_id):
+    from .reports import ReportElencoSoci
 
-    try:  # Prova a ottenere l'elenco dalla sessione.
-        elenco = request.session["elenco_%s" % (elenco_id,)]
-
-    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
-        raise ValueError("Elenco non presente in sessione.")
-
-    if elenco.modulo():  # Se l'elenco richiede un modulo
-
-        try:  # Prova a recuperare il modulo riempito
-            modulo = elenco.modulo()(request.session["elenco_modulo_%s" % (elenco_id,)])
-
-        except KeyError:  # Se fallisce, il modulo non e' stato ancora compilato
-            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
-
-        if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
-            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
-
-        elenco.modulo_riempito = modulo  # Imposta il modulo
-
-    FOGLIO_DEFAULT = "Foglio 1"
-
-    fogli_multipli = True
-    if 'foglio_singolo' in request.GET:
-        fogli_multipli = False
-
-    # Ottiene elenco
-    persone = elenco.ordina(elenco.risultati())
-
-    # Crea nuovo excel
-    excel = Excel(oggetto=me)
-
-    # Ottiene intestazione e funzioni colonne
-    intestazione = [x[0] for x in elenco.excel_colonne()]
-    colonne = [x[1] for x in elenco.excel_colonne()]
-    if not fogli_multipli:
-        intestazione += ["Elenco"]
-
-    fogli = {}
-
-    def __semplifica_nome(nome):
-        return nome\
-            .replace("/", "")\
-            .replace(": ", "-")\
-            .replace("Comitato ", "")\
-            .replace("Locale ", "")\
-            .replace("Provinciale ", "")\
-            .replace("Di ", "")\
-            .replace("di ", "")\
-            .replace("Della ", "")\
-            .replace("Dell'", "")\
-            .replace("Del ", "")
-
-    for persona in persone:
-        foglio = __semplifica_nome(elenco.excel_foglio(persona))[:31] if fogli_multipli else FOGLIO_DEFAULT
-        foglio_key = foglio.lower().strip()
-        if foglio_key not in [x.lower() for x in fogli.keys()]:
-            fogli.update({
-                foglio_key: FoglioExcel(foglio, intestazione)
-            })
-
-        persona_colonne = [y if y is not None else "" for y in [x(persona) for x in colonne]]
-        if not fogli_multipli:
-            persona_colonne += [elenco.excel_foglio(persona)]
-
-        fogli[foglio_key].aggiungi_riga(
-            *persona_colonne
-        )
-
-    excel.fogli = fogli.values()
-    excel.genera_e_salva("Elenco.xlsx")
-
-    return redirect(excel.download_url)
+    report = ReportElencoSoci(request, elenco_id)
+    return report.make()
 
 
 @pagina_privata
@@ -824,15 +759,14 @@ def us_elenchi(request, me, elenco_tipo):
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_elenco_soci(request, me):
-
     elenco = ElencoSociAlGiorno(me.oggetti_permesso(GESTIONE_SOCI))
 
-    contesto = {
+    context = {
         "elenco_nome": "Elenco dei Soci",
         "elenco": elenco
     }
+    return 'us_elenco_generico.html', context
 
-    return 'us_elenco_generico.html', contesto
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_riserva(request, me):
@@ -858,6 +792,7 @@ def us_riserva(request, me):
     }
 
     return "us_riserva.html", contesto
+
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_elenco_sostenitori(request, me):

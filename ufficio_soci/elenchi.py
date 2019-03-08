@@ -1,24 +1,21 @@
-import re
-from django.contrib.admin import ModelAdmin
+from datetime import date, datetime
+
 from django.db.models import Q, F
 from django.utils.encoding import force_text
 
-from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera, ProvvedimentoDisciplinare, Trasferimento, Dimissione, Estensione
-from base.models import Autorizzazione
+from anagrafica.models import (Persona, Appartenenza, Riserva, Sede,
+                               Fototessera, ProvvedimentoDisciplinare,
+                               Trasferimento, Dimissione, Estensione)
 from attivita.models import Partecipazione
 from base.utils import filtra_queryset, testo_euro, oggi
 from curriculum.models import TitoloPersonale
-from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote, ModuloElencoPerTitoli
-from datetime import date, datetime
-from django.utils.timezone import now
-
-from ufficio_soci.models import Tesseramento, Quota, Tesserino
+from .models import Tesseramento, Quota, Tesserino
+from .forms import (ModuloElencoSoci, ModuloElencoElettorato,
+                    ModuloElencoQuote, ModuloElencoPerTitoli)
 
 
 class Elenco:
-    """
-    Rappresenta un elenco semplice di persone.
-    """
+    """ Rappresenta un elenco semplice di persone. """
 
     def __init__(self, *args, **kwargs):
         self.args = args
@@ -64,15 +61,15 @@ class Elenco:
         return 'us_elenchi_inc_vuoto.html'
 
 
-
 class ElencoVistaSemplice(Elenco):
 
     def excel_colonne(self):
-        return super(ElencoVistaSemplice, self).excel_colonne() + (
+        columns = (
             ("Cognome", lambda p: p.cognome),
             ("Nome", lambda p: p.nome),
             ("Codice Fiscale", lambda p: p.codice_fiscale),
         )
+        return super().excel_colonne() + columns
 
     def ordina(self, qs):
         return qs.order_by('cognome', 'nome', 'codice_fiscale',)
@@ -161,20 +158,28 @@ class ElencoSociAlGiorno(ElencoVistaSoci):
     args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi soci
     """
 
-    def risultati(self):
+    def risultati(self, al_giorno=None):
         qs_sedi = self.args[0]
+
+        if al_giorno:
+            # Nel caso il report si genera con Celery.
+            # Passato da ReportElencoSoci._check_modulo() "celery_elenco_form" arg
+            al_giorno = al_giorno
+        else:
+            al_giorno = self.modulo_riempito.cleaned_data['al_giorno']
+
         return Persona.objects.filter(
             Appartenenza.query_attuale(
-                al_giorno=self.modulo_riempito.cleaned_data['al_giorno'],
-                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_SOCIO,
+                al_giorno=al_giorno,
+                sede__in=qs_sedi,
+                membro__in=Appartenenza.MEMBRO_SOCIO,
             ).via("appartenenze")
         ).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
                 appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related(
-            'appartenenze', 'appartenenze__sede',
-            'utenza', 'numeri_telefono'
+            'appartenenze', 'appartenenze__sede', 'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
     def modulo(self):
@@ -643,7 +648,7 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
                                             al_giorno=oggi
                                             ).via("appartenenze")))
                                             
-        print("dipendenti", dipendenti.values_list('pk', flat=True) )
+        # print("dipendenti", dipendenti.values_list('pk', flat=True) )
 
         r = Persona.objects.filter(
             Appartenenza.query_attuale(

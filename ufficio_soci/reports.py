@@ -1,10 +1,15 @@
 import xlwt
 
 from django.db.models import Sum, Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect
+from django.contrib import messages
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI
+
 from .models import Quota, Tesseramento
+from .tasks import generate_elenco_soci_al_giorno
+from .elenchi import ElencoSociAlGiorno
 
 
 class ReportRicevute:
@@ -79,3 +84,159 @@ class ReportRicevute:
         response['Content-Disposition'] = 'attachment; filename=Ricevute.xls'
         self.make_excel().save(response)
         return response
+
+
+class ReportElencoSoci:
+    EXCEL_FILENAME = 'Elenco.xlsx'
+    DEFAULT_WORKSHEET = 'Foglio 1'
+
+    def __init__(self, request=None, elenco_id=None, from_celery=False, **kwargs):
+        self.from_celery = from_celery
+        self.request = request
+        self.elenco_id = elenco_id
+
+        if not from_celery:
+            self._get_elenco()
+            self._check_modulo()
+            self._set_intestazione_e_colonne()
+
+    def _set_intestazione_e_colonne(self):
+        self.intestazione = [x[0] for x in self.excel_colonne]
+        self.colonne = [x[1] for x in self.excel_colonne]
+
+    @property
+    def excel_colonne(self):
+        return self.elenco.excel_colonne()
+
+    def _simplify_name(self, nome):
+        return nome.replace("/", '')\
+            .replace(": ", '-').replace("Comitato ", '').replace("Locale ", '')\
+            .replace("Provinciale ", '').replace("Di ", '').replace("di ", '')\
+            .replace("Della ", '').replace("Dell'", '').replace("Del ", '')
+
+    def _get_elenco(self, **kwargs):
+        elenco_id = 'elenco_%s' % self.elenco_id
+
+        if self.from_celery:
+            self.elenco = ElencoSociAlGiorno(kwargs.get('sedi'))
+
+        else:
+            # Prova a ottenere l'elenco dalla sessione.
+            session_elenco = self.request.session.get(elenco_id)
+            if session_elenco:
+                self.elenco = session_elenco
+                return session_elenco
+
+            # Se l'elenco non è più in sessione, potrebbe essere scaduto.
+            raise ValueError('Elenco non presente in sessione.')
+
+    def _get_elenco_form(self, celery_elenco_form):
+        elenco_form_id = 'elenco_modulo_%s' % self.elenco_id
+
+        # Prova a recuperare la form compilata
+        # if self.request.session is not None:
+        session_elenco_form = celery_elenco_form or self.request.session.get(elenco_form_id)
+        # else:
+        #     session_elenco_form = self.celery_elenco_form
+
+        if session_elenco_form:
+            return self.elenco.modulo()(session_elenco_form)
+
+        # La form non è stata ancora compilata
+        return redirect("/us/elenco/%s/modulo/" % self.elenco_id)
+
+    def _check_modulo(self, celery_elenco_form=None):
+        # Se l'elenco richiede un modulo
+        if self.elenco.modulo():
+            self.form = self._get_elenco_form(celery_elenco_form)
+
+            # Se il modulo non è valido, qualcosa è andato storto
+            if not self.form.is_valid():
+                return redirect('/us/elenco/%s/modulo/' % self.elenco_id)  # Prova nuovamente?
+
+            # Imposta il modulo
+            self.elenco.modulo_riempito = self.form
+
+    def persone(self):
+        return self.elenco.ordina(self.elenco.risultati())
+
+    @property
+    def _multiple_worksheets(self):
+        if self.request is not None:
+            return False if 'foglio_singolo' in self.request.GET else True
+        else:
+            return self.celery_multiple_worksheets
+
+    def _ws_name(self, person):
+        if self._multiple_worksheets:
+            return self._simplify_name(self.elenco.excel_foglio(person))[:31]
+        return self.DEFAULT_WORKSHEET
+
+    def _generate(self):
+        from base.files import Excel, FoglioExcel
+
+        worksheets = dict()
+        excel = Excel()
+
+        if not self._multiple_worksheets:
+            self.intestazione += ['Elenco']
+
+        for person in self.persone():
+            ws_name = self._ws_name(person)
+            ws_key = ws_name.lower().strip()
+
+            if ws_key not in [x.lower() for x in worksheets.keys()]:
+                worksheets.update({
+                    ws_key: FoglioExcel(ws_name, self.intestazione)
+                })
+
+            person_columns = [y if y is not None else '' for y in [x(person) for x in self.colonne]]
+            if not self._multiple_worksheets:
+                person_columns += [self.elenco.excel_foglio(person)]
+
+            worksheets[ws_key].aggiungi_riga(*person_columns)
+
+        excel.fogli = worksheets.values()
+        excel.genera_e_salva(self.EXCEL_FILENAME)
+        return excel
+
+    @property
+    def celery_params(self):
+        return {
+            'elenco_id': self.elenco_id,
+            'multiple_worksheets': self._multiple_worksheets,
+            'sedi': list(self.elenco.args[0].values_list('id', flat=True)),
+            'elenco_form': self.request.session.get('elenco_modulo_%s' % self.elenco_id),
+        }
+
+    def celery(self, *args):
+        params = args[0]
+
+        # Set manually some required attributes
+        self.celery_multiple_worksheets = params['multiple_worksheets']
+        self.elenco_id = params['elenco_id']
+        self._get_elenco(sedi=params['sedi'])
+        self._check_modulo(celery_elenco_form=params['elenco_form'])
+
+        # Call manually methods
+        self._set_intestazione_e_colonne()
+
+        # Do generate report
+        self._generate()
+
+        # Create new record in DB
+        # todo:
+
+    def make(self):
+        if self.persone().count() < 170:
+            # Genera report e restituiscilo senza far partire un celery task
+            excel = self._generate()
+            return redirect(excel.download_url)
+        else:
+            # Partire celery task e reindirizza user sulla pagina "Report Elenco"
+            task = generate_elenco_soci_al_giorno.apply_async((self.celery_params,))
+            response = HttpResponse(123)
+            # messagges.success(response, 'Attendi la generazione del report richiesto.')
+
+            return response
+
