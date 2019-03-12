@@ -41,7 +41,7 @@ STATISTICA = {
     GENERALI: "Generali",
     NUM_SOCI_VOL: "Soci e Volontari",
     NUM_VOL_M_F: "Volontari M/F",
-    NUM_VOL_FASCIA_ETA: "Volontari per fasciati di età",
+    NUM_VOL_FASCIA_ETA: "Volontari per fascia di età",
     NUM_NUOVI_VOL: "Nuovi volontari",
     NUM_DIMESSI: "Dimessi",
     NUM_SEDI: "Sedi",

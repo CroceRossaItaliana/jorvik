@@ -1,5 +1,6 @@
 import xlsxwriter
 import tempfile
+from anagrafica.costanti import REGIONALE, NAZIONALE
 
 
 def inserisci_comitati(worksheet, comitati, count):
@@ -28,12 +29,13 @@ def inserisci_tot(worksheet, statistiche, count):
     return count
 
 
-def intestazione_intestazione(workbook, ws):
+def intestazione(workbook, ws):
     worksheet = workbook.add_worksheet(ws)
     bold = workbook.add_format({'bold': True})
     worksheet.write(0, 0, str('Comitato'), bold)
-    worksheet.write(0, 1, str('Nome metrica'), bold)
-    worksheet.write(0, 2, str('Valore'), bold)
+    worksheet.write(0, 1, str('Genitore'), bold)
+    worksheet.write(0, 2, str('Nome metrica'), bold)
+    worksheet.write(0, 3, str('Valore'), bold)
     return worksheet
 
 
@@ -101,18 +103,42 @@ def xlsx_tot(obj, ws=False):
     return filename
 
 
-def inserisci_comitati_ric(worksheet, comitati, count):
+def scrivi_comitato(worksheet, count, comitato):
+    worksheet.write(count, 0, str(comitato['comitato'].nome) + '(' + comitato['comitato'].estensione + ')')
+    worksheet.write(count, 1, str(comitato['comitato'].genitore.nome))
+    for k, v in comitato['statistiche'].items():
+        worksheet.write(count, 2, str(k))
+        worksheet.write(count, 3, str(v))
+        count += 1
+    return count
+
+
+def inserisci_comitati_ric(worksheet=None, workbook=None, comitati=[], count=0):
 
     count = count
 
-    for reg in comitati:
-        worksheet.write(count, 0, str(reg['comitato'].nome) + '(' +reg['comitato'].estensione + ')')
-        for k, v in reg['statistiche'].items():
-            worksheet.write(count, 1, str(k))
-            worksheet.write(count, 2, str(v))
-            count += 1
-        if reg['figli']:
-            count = inserisci_comitati_ric(worksheet, reg['figli'], count)
+    for com in comitati:
+        if com['comitato'].estensione == NAZIONALE:
+            count = inserisci_comitati_ric(
+                workbook=workbook,
+                comitati=com['figli'],
+                count=1
+            )
+            break
+
+        if com['comitato'].estensione == REGIONALE:
+            worksheet = intestazione(workbook, com['comitato'].nome)
+            count = scrivi_comitato(worksheet, 1, com)
+        else:
+            count = scrivi_comitato(worksheet, count, com)
+
+        if com['figli']:
+            count = inserisci_comitati_ric(
+                worksheet=worksheet,
+                workbook=workbook,
+                comitati=com['figli'],
+                count=count
+            )
 
     return count
 
@@ -171,25 +197,10 @@ def xlsx_comitati_collapse(obj, ws=False):
     new_file, filename = tempfile.mkstemp()
 
     workbook = xlsxwriter.Workbook(filename)
-    bold = workbook.add_format({'bold': True})
 
-    worksheet = None
-
-    if ws:
-        worksheet = workbook.add_worksheet('Statistiche')
-    else:
-        worksheet = workbook.add_worksheet('Regionali')
-
-    worksheet.write(0, 0, str('Comitato'), bold)
-    worksheet.write(0, 1, str('Nome metrica'), bold)
-    worksheet.write(0, 2, str('Valore'), bold)
-
-    #
-    count = 1
     comitati = obj['comitati']
 
-    inserisci_comitati_ric(worksheet, comitati, count)
-    #
+    inserisci_comitati_ric(workbook=workbook, comitati=comitati, count=1)
 
     workbook.close()
 
