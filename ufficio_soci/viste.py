@@ -4,44 +4,43 @@ import re
 from datetime import datetime
 from collections import OrderedDict
 
-from django.core.paginator import Paginator
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import Sum, Q
-from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
+from django.core.paginator import Paginator
+from django.shortcuts import redirect, get_object_or_404
 from django.utils.safestring import mark_safe
-from django.db import IntegrityError
 
 from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
-from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione, Riserva, \
-    Trasferimento
-from anagrafica.permessi.applicazioni import PRESIDENTE
-from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA, EMISSIONE_TESSERINI
-from autenticazione.forms import ModuloCreazioneUtenza
+from anagrafica.models import Appartenenza, Persona, Estensione, Sede, Riserva
+from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
+                                          ERRORE_PERMESSI, MODIFICA,
+                                          EMISSIONE_TESSERINI)
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
-from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico, messaggio_avvertimento
-from base.files import Excel, FoglioExcel
-from base.notifiche import NOTIFICA_INVIA
-from base.utils import poco_fa, testo_euro, oggi, mezzanotte_24_ieri
+from base.errori import (errore_generico, errore_nessuna_appartenenza,
+                         messaggio_generico, messaggio_avvertimento)
+from base.utils import poco_fa, mezzanotte_24_ieri, testo_euro, oggi
 from posta.models import Messaggio
 
-from .elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
-    ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti, ElencoDimessi, ElencoTrasferiti, \
-    ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva, ElencoIVCM, ElencoTesseriniSenzaFototessera, \
-    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoTesseriniRifiutati, ElencoExSostenitori, ElencoSenzaTurni
-from .forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
-    ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
-    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, \
-    ModuloLavoraTesserini, ModuloScaricaTesserini, ModuloDimissioniSostenitore
 from .models import Quota, Tesseramento, Tesserino, Riduzione, ReportElenco
+from .elenchi import (ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari,
+    ElencoOrdinari, ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli,
+    ElencoDipendenti, ElencoDimessi, ElencoTrasferiti, ElencoIVCM, ElencoEstesi,
+    ElencoVolontariGiovani, ElencoInRiserva, ElencoTesseriniSenzaFototessera,
+    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoTesseriniRifiutati,
+    ElencoExSostenitori, ElencoSenzaTurni)
+from .forms import (ModuloCreazioneEstensione, ModuloAggiungiPersona,
+    ModuloReclamaAppartenenza, ModuloReclamaQuota, ModuloReclama,
+    ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute,
+    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario,
+    ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, ModuloLavoraTesserini,
+    ModuloScaricaTesserini, ModuloDimissioniSostenitore)
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us(request, me):
-    """
-    Ritorna la home page per la gestione dei soci.
-    """
+    """ Ritorna la home page per la gestione dei soci. """
 
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
 
@@ -1543,6 +1542,6 @@ def us_elenchi_richiesti_download(request, me):
     files = ReportElenco.objects.filter(user=me).order_by('-creazione', '-is_ready',)
 
     context['files'] = files
-    context['has_unfinished_tasks'] = True in files.values_list('is_ready', flat=True)
+    context['has_unfinished_tasks'] = False in files.values_list('is_ready', flat=True)
 
     return 'us_elenchi_richiesti_download.html', context
