@@ -4,28 +4,23 @@
 
 {% block registrati_azione %}/registrati/{{ tipo }}/conferma/{% endblock %}
 
+{% block step_info %}
+<p class="text-info">
+    <i class="fa fa-fw fa-check"></i> Tutti i dati sono stati raccolti &mdash;
+    La tua registrazione su Gaia &egrave; <strong>quasi</strong> completa.
+</p>
+
+<p>Clicca sul pulsante seguente per completare la tua registrazione. Nota che
+    cliccando sul pulsante "Completa registrazione come {{ tipo|title }}", acconsenti al trattamento
+    dei tuoi dati personali nel rispetto delle attuali normative vigenti ed
+    accetti i termini e le condizioni d'uso del servizio.
+
+    <a href="/informazioni/condizioni/" target="_new">Leggi i termini e le condizioni in una nuova finestra <i class="fa fa-external-link"></i></a>
+</p>
+{% endblock %}
+
 {% block step_contenuto %}
-    <p class="text-info">
-        <i class="fa fa-fw fa-check"></i>
-        Tutti i dati sono stati raccolti &mdash;
-        La tua registrazione su Gaia &egrave; <strong>quasi</strong> completa.
-    </p>
-
-
-    <p>Clicca sul pulsante seguente per completare la tua registrazione. Nota che
-        cliccando sul pulsante "Completa registrazione come {{ tipo|title }}", acconsenti al trattamento
-        dei tuoi dati personali nel rispetto delle attuali normative vigenti ed
-        accetti i termini e le condizioni d'uso del servizio.
-        <a href="/informazioni/condizioni/" target="_new">
-            Leggi i termini e le condizioni
-            in una nuova finestra
-            <i class="fa fa-external-link"></i>
-        </a>
-    </p>
-
     <button type="submit" class="btn btn-lg btn-block btn-success">
-        <i class="fa fa-check"></i>
-        Completa registrazione come {{ tipo|title }}
+        <i class="fa fa-check"></i> Completa registrazione come {{ tipo|title }}
     </button>
-
 {% endblock %}

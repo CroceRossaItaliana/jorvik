@@ -271,7 +271,9 @@ def registrati_conferma(request, tipo):
             if form_confirm.is_valid():
                 dati.update(form_confirm.cleaned_data)
             else:
-                return redirect('/registrati/aspirante/fine/')
+                response = redirect('/registrati/aspirante/fine/')
+                messages.error(request, 'Controlla tutti i campo obbligatori.')
+                return response
             continue
 
         # Controlla nuovamente la validita'
