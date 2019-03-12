@@ -34,7 +34,7 @@ from .forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloRecla
     ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
     ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, \
     ModuloLavoraTesserini, ModuloScaricaTesserini, ModuloDimissioniSostenitore
-from .models import Quota, Tesseramento, Tesserino, Riduzione
+from .models import Quota, Tesseramento, Tesserino, Riduzione, ReportElenco
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
@@ -1529,3 +1529,20 @@ def us_tesserini_emissione_scarica(request, me):
     }
 
     return "us_tesserini_emissione_scarica.html", contesto
+
+
+@pagina_privata
+def us_elenchi_richiesti_download(request, me):
+    # Download a file
+    if request.GET.get('tid'):
+        file = ReportElenco.objects.get(task_id=request.GET.get('tid'))
+        return file.download()
+
+    # List all files per user
+    context = dict()
+    files = ReportElenco.objects.filter(user=me).order_by('-creazione', '-is_ready',)
+
+    context['files'] = files
+    context['has_unfinished_tasks'] = True in files.values_list('is_ready', flat=True)
+
+    return 'us_elenchi_richiesti_download.html', context

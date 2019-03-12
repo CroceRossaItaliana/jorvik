@@ -1,13 +1,18 @@
 import xlwt
 
 from django.db.models import Sum, Q
+from django.core.files.base import ContentFile
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.contrib import messages
 
-from anagrafica.permessi.costanti import GESTIONE_SOCI
+from celery import uuid
 
-from .models import Quota, Tesseramento
+from anagrafica.permessi.costanti import GESTIONE_SOCI
+from anagrafica.models import Persona
+
+from .models import Quota, Tesseramento, ReportElenco
 from .tasks import generate_elenco_soci_al_giorno
 from .elenchi import ElencoSociAlGiorno
 
@@ -168,7 +173,7 @@ class ReportElencoSoci:
             return self._simplify_name(self.elenco.excel_foglio(person))[:31]
         return self.DEFAULT_WORKSHEET
 
-    def _generate(self):
+    def _generate(self, save_to_memory=False):
         from base.files import Excel, FoglioExcel
 
         worksheets = dict()
@@ -193,7 +198,7 @@ class ReportElencoSoci:
             worksheets[ws_key].aggiungi_riga(*person_columns)
 
         excel.fogli = worksheets.values()
-        excel.genera_e_salva(self.EXCEL_FILENAME)
+        excel.genera_e_salva(self.EXCEL_FILENAME, save_to_memory=save_to_memory)
         return excel
 
     @property
@@ -203,9 +208,10 @@ class ReportElencoSoci:
             'multiple_worksheets': self._multiple_worksheets,
             'sedi': list(self.elenco.args[0].values_list('id', flat=True)),
             'elenco_form': self.request.session.get('elenco_modulo_%s' % self.elenco_id),
+            # 'persona_id': self.request.user.persona.id,
         }
 
-    def celery(self, params):
+    def celery(self, params, report_id):
         # Set manually some required attributes
         self.celery_multiple_worksheets = params['multiple_worksheets']
         self.elenco_id = params['elenco_id']
@@ -215,21 +221,37 @@ class ReportElencoSoci:
         # Call manually methods
         self._set_intestazione_e_colonne()
 
-        # Do generate report
-        self._generate()
+        # Do generate report and get bytes-object
+        excel = self._generate(save_to_memory=True)
 
-        # Create new record in DB
-        # todo:
+        # Update db record, set status (is_ready) True
+        report_db = ReportElenco.objects.get(id=report_id)
+
+        filename = 'Report-Elenco-Soci-%s.xlsx' % report_db.creazione
+        _bytes = ContentFile(excel.output.read())
+
+        report_db.file.save(filename, _bytes, save=True)
+        report_db.is_ready = True
+        report_db.save()
 
     def make(self):
-        if self.persone().count() < 170:
+        if self.persone().count() < 0:
             # Genera report e restituiscilo senza far partire un celery task
             excel = self._generate()
             return redirect(excel.download_url)
         else:
-            # Partire celery task e reindirizza user sulla pagina "Report Elenco"
-            task = generate_elenco_soci_al_giorno.apply_async((self.celery_params,))
-            response = HttpResponse(123)
-            # messagges.success(response, 'Attendi la generazione del report richiesto.')
+            # Create new record in DB
+            task_uuid = uuid()
+            report_db = ReportElenco(report_type=ReportElenco.SOCI_AL_GIORNO,
+                                     task_id=task_uuid,
+                                     user=self.request.user.persona)
+            report_db.save()
 
+            # Partire celery task e reindirizza user sulla pagina "Report Elenco"
+            task = generate_elenco_soci_al_giorno.apply_async(
+                (self.celery_params, report_db.id),
+                task_id=task_uuid)
+
+            response = redirect(reverse('elenchi_richiesti_download'))
+            messages.success(self.request, 'Attendi la generazione del report richiesto.')
             return response

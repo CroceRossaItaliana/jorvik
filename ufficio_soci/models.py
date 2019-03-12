@@ -1,21 +1,18 @@
 import random
 from datetime import timezone, date, timedelta
-from django.utils import timezone as timezone_django
 
-import barcode
-from barcode.writer import ImageWriter
 from django.db import models
 from django.db.models import Q, Max
+from django.utils import timezone as timezone_django
 from django.utils.translation import ugettext_lazy as _
 
 from anagrafica.models import Persona, Appartenenza, Sede
 from base.files import PDF, EAN13
-from base.models import ModelloSemplice, ConAutorizzazioni, ConVecchioID
+from base.models import ModelloSemplice, ConVecchioID
 from base.tratti import ConMarcaTemporale, ConPDF
 from base.utils import concept, UpperCaseCharField, ean13_carattere_di_controllo, questo_anno, oggi
 from posta.models import Messaggio
 
-__author__ = 'alfioemanuele'
 
 
 class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
@@ -534,3 +531,30 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
             mittente=self.registrato_da,
             destinatari=[self.persona],
         )
+
+
+class ReportElenco(ConMarcaTemporale):
+    SOCI_AL_GIORNO = 'sag'
+    REPORT_TYPE = (
+        (SOCI_AL_GIORNO, 'Soci al giorno'),
+    )
+
+    user = models.ForeignKey(Persona)
+    file = models.FileField(upload_to='us_elenchi/')
+    report_type = models.CharField(max_length=5, choices=REPORT_TYPE, null=True, blank=True)
+    task_id = models.CharField(max_length=255, null=True, blank=True)
+    is_ready = models.BooleanField(default=False)
+
+    @property
+    def filename(self):
+        return self.file.name
+
+    def download(self):
+        from django.http import HttpResponse
+
+        response = HttpResponse(self.file, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        response['Content-Disposition'] = "attachment; filename=%s" % self.filename
+        return response
+
+    def __str__(self):
+        return str(self.file)

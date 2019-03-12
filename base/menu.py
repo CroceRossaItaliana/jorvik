@@ -180,6 +180,7 @@ def menu(request):
                 ("Elettorato", "fa-list", "/us/elenchi/elettorato/"),
                 ("Tesserini", "fa-list", "/us/tesserini/"),
                 ("Per Titoli", "fa-search", "/us/elenchi/titoli/"),
+                ("Scarica elenchi richiesti", "fa-download", reverse('elenchi_richiesti_download')),
             )),
             ("Aggiungi", (
                 ("Persona", "fa-plus-square", "/us/aggiungi/"),
