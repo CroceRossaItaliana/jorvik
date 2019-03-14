@@ -1,4 +1,5 @@
 import os
+import datetime
 
 import click
 import pandas as pd 
@@ -38,10 +39,13 @@ class ImportProcedure:
                 skipped.append(row['Codice Fiscale'])
                 continue
 
+            # fix values
+            data_nascita = datetime.datetime.strptime(row['Data Nascita'], '%d/%m/%Y').strftime('%Y-%m-%d') 
+
             persona_dict = {"nome": row['Nome'], 
                             "cognome": row['Cognome'], 
                             "codice_fiscale": row['Codice Fiscale'], 
-                            "data_nascita": row['Data Nascita'], 
+                            "data_nascita": data_nascita,
                             "email_contatto": row['Mail'], 
                             "note": row['note su registrazione'], 
                             "indirizzo_residenza": row['Indirizzo di Residenza'], 
@@ -53,27 +57,28 @@ class ImportProcedure:
             if self.force_default:
                 persona_dict.update(self.force_default)
 
-            sede = row['sede'] #Sede.objects.get(id=row['sede'])
+            sede = Sede.objects.get(id=row['sede'])
 
             # riga di anteprima
-            click.echo("Working on {}".format(persona_dict.get('Codice Fiscale')))
-            #click.echo(persona_dict)
+            click.echo("Working on {}".format(persona_dict.get('codice_fiscale')))
+            click.echo(persona_dict)
 
             try:
                 persona = Persona.objects.get(codice_fiscale__iexact=row['Codice Fiscale'])
             except Persona.DoesNotExist:
                 persona = Persona(**persona_dict)
                 inserted.append(row['Codice Fiscale'])
-                if self.dry_run:                    
+                if self.dryrun:                    
                     click.echo('Dry run skip creating persona')
                 else:
                     really_inserted.append(row['Codice Fiscale'])
                     persona.save()
 
-            if self.dry_run:
+            if self.dryrun:
                 click.echo('Dry run skip creating apertenenza to {}'.format(sede))                
-            if not dry_run:
-                inizio_appartenenza = None
+            if not self.dryrun:
+                #FIXME
+                inizio_appartenenza = datetime.datetime.now()
                 Appartenenza.objects.create(persona=persona, sede=sede, inizio=inizio_appartenenza,
                                             membro=Appartenenza.DIPENDENTE)
 
@@ -82,13 +87,13 @@ class ImportProcedure:
                 if not Utenza.objects.filter(email__iexact=persona.email_contatto):
                     # Non esiste, prova a creare
                     u = Utenza(persona=persona, email=persona.email_contatto)
-                    if self.dry_run:
+                    if self.dryrun:
                         click.echo('Dry run skip creating user')
-                    if not self.dry_run:
+                    if not self.dryrun:
                         u.save()
                         u.genera_credenziali()
             
-        click.echo('Finish. Evaluated {}, Skipped {}, Inserted {}'.format(evaluated, len(skipped), len(inserted)))
+        click.echo('Finish. Evaluated {}, Skipped {}, Inserted {}, Really inserted {}'.format(evaluated, len(skipped), len(inserted), len(really_inserted)))
 
 
 @click.command()
