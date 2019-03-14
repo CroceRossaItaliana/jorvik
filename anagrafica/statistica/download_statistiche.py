@@ -30,7 +30,19 @@ def inserisci_tot(worksheet, statistiche, count):
 
 
 def intestazione(workbook, ws):
-    worksheet = workbook.add_worksheet(ws)
+
+    nome = ''
+    print(type(ws))
+    if 'Comitato Regionale ' in ws:
+        nome = ws.replace('Comitato Regionale ', '')
+    elif 'Comitato dell\'Area Metropolitana di ' in ws:
+        nome = ws.replace('Comitato dell\'Area Metropolitana di ', '')
+    elif 'Comitato della Provincia Autonoma di ' in ws:
+        nome = ws.replace('Comitato della Provincia Autonoma di ', '')
+    else:
+        nome = ws
+
+    worksheet = workbook.add_worksheet(nome)
     bold = workbook.add_format({'bold': True})
     worksheet.write(0, 0, str('Comitato'), bold)
     worksheet.write(0, 1, str('Genitore'), bold)
