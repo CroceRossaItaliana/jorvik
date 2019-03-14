@@ -1540,8 +1540,9 @@ def us_elenchi_richiesti_download(request, me):
     # List all files per user
     context = dict()
     files = ReportElenco.objects.filter(user=me).order_by('-creazione', '-is_ready',)
-
     context['files'] = files
-    context['has_unfinished_tasks'] = False in files.values_list('is_ready', flat=True)
+
+    if files.exists():
+        context['has_unfinished_tasks'] = False in files.values_list('is_ready', flat=True)
 
     return 'us_elenchi_richiesti_download.html', context

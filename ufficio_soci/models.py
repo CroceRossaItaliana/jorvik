@@ -534,9 +534,37 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
 
 
 class ReportElenco(ConMarcaTemporale):
+    VOLONTARI = 'vol'
+    VOLONTARI_GIOVANI = 'vog'
+    IV_E_CM = 'ivcm'
+    DIMESSI = 'dim'
+    VOLONTARI_IN_RISERVA = 'vir'
+    TRASFERITI = 'tra'
+    DIPENDENTI = 'dip'
+    SOCI_ORDINARI = 'soc'
+    ESTESI = 'est'
     SOCI_AL_GIORNO = 'sag'
+    SOSTENITORI = 'sos'
+    EX_SOSTENITORI = 'exs'
+    SENZA_TURNI = 'stu'
+    ELETTORATO = 'ele'
+    TITOLI = 'tit'
     REPORT_TYPE = (
+        (VOLONTARI, 'Volontari'),
+        (VOLONTARI_GIOVANI, 'Volontari Giovani'),
+        (IV_E_CM, 'IV e CM'),
+        (DIMESSI, 'Dimessi'),
+        (VOLONTARI_IN_RISERVA, 'Volontari in Riserva'),
+        (TRASFERITI, 'Trasferiti'),
+        (DIPENDENTI, 'Dipendenti'),
+        (SOCI_ORDINARI, 'Soci Ordinari'),
+        (ESTESI, 'Volontari Estesi/In Estensione'),
         (SOCI_AL_GIORNO, 'Soci al giorno'),
+        (SOSTENITORI, 'Sostenitori'),
+        (EX_SOSTENITORI, 'Ex Sostenitori'),
+        (SENZA_TURNI, 'Volontari con zero turni'),
+        (ELETTORATO, 'Elettorato'),
+        (TITOLI, 'Soci per Titoli'),
     )
 
     user = models.ForeignKey(Persona)

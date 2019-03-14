@@ -1,4 +1,4 @@
-import xlwt
+from importlib import import_module
 
 from django.db.models import Sum, Q
 from django.core.files.base import ContentFile
@@ -7,14 +7,12 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.contrib import messages
 
+import xlwt
 from celery import uuid
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI
-from anagrafica.models import Persona
-
 from .models import Quota, Tesseramento, ReportElenco
 from .tasks import generate_elenco_soci_al_giorno
-from .elenchi import ElencoSociAlGiorno
 
 
 class ReportRicevute:
@@ -123,17 +121,24 @@ class ReportElencoSoci:
         elenco_id = 'elenco_%s' % self.elenco_id
 
         if self.from_celery:
-            self.elenco = ElencoSociAlGiorno(kwargs.get('sedi'))
+            elenchi = import_module('ufficio_soci.elenchi')
+            elenco = getattr(elenchi, kwargs['elenco_class'])
+            self.elenco = elenco(kwargs.get('sedi'))
 
+            return self.elenco  # class instance from ufficio_soci.elenchi
         else:
             # Prova a ottenere l'elenco dalla sessione.
             session_elenco = self.request.session.get(elenco_id)
             if session_elenco:
-                self.elenco = session_elenco
+                self.elenco = session_elenco  # class instance from ufficio_soci.elenchi
                 return session_elenco
 
             # Se l'elenco non è più in sessione, potrebbe essere scaduto.
             raise ValueError('Elenco non presente in sessione.')
+
+    @property
+    def elenco_report_type(self):
+        return self._get_elenco().REPORT_TYPE
 
     def _get_elenco_form(self, celery_elenco_form=None):
         elenco_form_id = 'elenco_modulo_%s' % self.elenco_id
@@ -159,7 +164,14 @@ class ReportElencoSoci:
             self.elenco.modulo_riempito = self.form
 
     def persone(self):
-        return self.elenco.ordina(self.elenco.risultati())
+        from django.core.paginator import Paginator
+
+        qs = self.elenco.ordina(self.elenco.risultati())
+        splitted = Paginator(qs, 10000)
+        for i in splitted.page_range:
+            current_page = splitted.page(i)
+            current_qs = current_page.object_list
+            yield current_qs
 
     @property
     def _multiple_worksheets(self):
@@ -182,20 +194,21 @@ class ReportElencoSoci:
         if not self._multiple_worksheets:
             self.intestazione += ['Elenco']
 
-        for person in self.persone():
-            ws_name = self._ws_name(person)
-            ws_key = ws_name.lower().strip()
+        for queryset in self.persone():
+            for person in queryset:
+                ws_name = self._ws_name(person)
+                ws_key = ws_name.lower().strip()
 
-            if ws_key not in [x.lower() for x in worksheets.keys()]:
-                worksheets.update({
-                    ws_key: FoglioExcel(ws_name, self.intestazione)
-                })
+                if ws_key not in [x.lower() for x in worksheets.keys()]:
+                    worksheets.update({
+                        ws_key: FoglioExcel(ws_name, self.intestazione)
+                    })
 
-            person_columns = [y if y is not None else '' for y in [x(person) for x in self.colonne]]
-            if not self._multiple_worksheets:
-                person_columns += [self.elenco.excel_foglio(person)]
+                person_columns = [y if y is not None else '' for y in [x(person) for x in self.colonne]]
+                if not self._multiple_worksheets:
+                    person_columns += [self.elenco.excel_foglio(person)]
 
-            worksheets[ws_key].aggiungi_riga(*person_columns)
+                worksheets[ws_key].aggiungi_riga(*person_columns)
 
         excel.fogli = worksheets.values()
         excel.genera_e_salva(self.EXCEL_FILENAME, save_to_memory=save_to_memory)
@@ -208,14 +221,14 @@ class ReportElencoSoci:
             'multiple_worksheets': self._multiple_worksheets,
             'sedi': list(self.elenco.args[0].values_list('id', flat=True)),
             'elenco_form': self.request.session.get('elenco_modulo_%s' % self.elenco_id),
-            # 'persona_id': self.request.user.persona.id,
+            'elenco_class': self._get_elenco().__class__.__name__,
         }
 
     def celery(self, params, report_id):
         # Set manually some required attributes
         self.celery_multiple_worksheets = params['multiple_worksheets']
         self.elenco_id = params['elenco_id']
-        self._get_elenco(sedi=params['sedi'])
+        self._get_elenco(sedi=params['sedi'], elenco_class=params['elenco_class'])
         self._check_modulo(celery_elenco_form=params['elenco_form'])
 
         # Call manually methods
@@ -227,7 +240,8 @@ class ReportElencoSoci:
         # Update db record, set status (is_ready) True
         report_db = ReportElenco.objects.get(id=report_id)
 
-        filename = 'Report-Elenco-Soci-%s.xlsx' % report_db.creazione
+        filename = 'Elenco-%s-%s.xlsx' % (report_db.get_report_type_display(),
+                                          report_db.creazione)
         _bytes = ContentFile(excel.output.read())
 
         report_db.file.save(filename, _bytes, save=True)
@@ -235,23 +249,28 @@ class ReportElencoSoci:
         report_db.save()
 
     def make(self):
-        if self.persone().count() < 0:
-            # Genera report e restituiscilo senza far partire un celery task
-            excel = self._generate()
-            return redirect(excel.download_url)
+        # Create new record in DB
+        task_uuid = uuid()
+        report_db = ReportElenco(report_type=self.elenco_report_type,
+                                 task_id=task_uuid,
+                                 user=self.request.user.persona)
+        report_db.save()
+
+        # Partire celery task e reindirizza user sulla pagina "Report Elenco"
+        task = generate_elenco_soci_al_giorno.apply_async(
+            (self.celery_params, report_db.id),
+            task_id=task_uuid)
+
+        # Can be that the report is generated immediately, wait a bit
+        # and refresh db-record to verify
+        from time import sleep
+        sleep(4)
+        report_db.refresh_from_db()
+
+        if report_db.is_ready and report_db.file:
+            # If the report is ready, download it without redirect user
+            return report_db.download()
         else:
-            # Create new record in DB
-            task_uuid = uuid()
-            report_db = ReportElenco(report_type=ReportElenco.SOCI_AL_GIORNO,
-                                     task_id=task_uuid,
-                                     user=self.request.user.persona)
-            report_db.save()
-
-            # Partire celery task e reindirizza user sulla pagina "Report Elenco"
-            task = generate_elenco_soci_al_giorno.apply_async(
-                (self.celery_params, report_db.id),
-                task_id=task_uuid)
-
             response = redirect(reverse('elenchi_richiesti_download'))
             messages.success(self.request, 'Attendi la generazione del report richiesto.')
             return response

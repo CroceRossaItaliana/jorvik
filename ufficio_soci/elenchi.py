@@ -9,7 +9,7 @@ from anagrafica.models import (Persona, Appartenenza, Riserva, Sede,
 from attivita.models import Partecipazione
 from base.utils import filtra_queryset, testo_euro, oggi
 from curriculum.models import TitoloPersonale
-from .models import Tesseramento, Quota, Tesserino
+from .models import Tesseramento, Quota, Tesserino, ReportElenco
 from .forms import (ModuloElencoSoci, ModuloElencoElettorato,
                     ModuloElencoQuote, ModuloElencoPerTitoli)
 
@@ -154,9 +154,9 @@ class ElencoVistaTesseriniRifiutati(ElencoVistaSoci):
 
 
 class ElencoSociAlGiorno(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi soci
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi soci """
+
+    REPORT_TYPE = ReportElenco.SOCI_AL_GIORNO
 
     def risultati(self, al_giorno=None):
         qs_sedi = self.args[0]
@@ -187,9 +187,9 @@ class ElencoSociAlGiorno(ElencoVistaSoci):
 
 
 class ElencoSostenitori(ElencoVistaAnagrafica):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.SOSTENITORI
 
     def template(self):
         return 'us_elenchi_inc_sostenitori.html'
@@ -207,6 +207,7 @@ class ElencoSostenitori(ElencoVistaAnagrafica):
 
 
 class ElencoExSostenitori(ElencoVistaAnagrafica):
+    REPORT_TYPE = ReportElenco.EX_SOSTENITORI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -229,9 +230,9 @@ class ElencoExSostenitori(ElencoVistaAnagrafica):
 
 
 class ElencoVolontari(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori"""
+
+    REPORT_TYPE = ReportElenco.VOLONTARI
 
     def modulo(self):
         from .forms import ModuloElencoVolontari
@@ -261,9 +262,9 @@ class ElencoVolontari(ElencoVistaSoci):
 
 
 class ElencoIVCM(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.IV_E_CM
 
     def modulo(self):
         from .forms import ModuloElencoIVCM
@@ -294,9 +295,9 @@ class ElencoIVCM(ElencoVistaSoci):
 
 
 class ElencoSenzaTurni(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare l'elenco
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.SENZA_TURNI
 
     def modulo(self):
         from .forms import ModuloSenzaTurni
@@ -326,9 +327,9 @@ class ElencoSenzaTurni(ElencoVistaSoci):
 
 
 class ElencoEstesi(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.ESTESI
 
     def modulo(self):
         from .forms import ModuloElencoEstesi
@@ -389,9 +390,9 @@ class ElencoEstesi(ElencoVistaSoci):
 
 
 class ElencoVolontariGiovani(ElencoVolontari):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.VOLONTARI_GIOVANI
 
     def risultati(self):
         oggi = date.today()
@@ -402,9 +403,9 @@ class ElencoVolontariGiovani(ElencoVolontari):
 
 
 class ElencoDimessi(ElencoVistaAnagrafica):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi """
+
+    REPORT_TYPE = ReportElenco.DIMESSI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -437,9 +438,9 @@ class ElencoDimessi(ElencoVistaAnagrafica):
 
 
 class ElencoTrasferiti(ElencoVistaAnagrafica):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi """
+
+    REPORT_TYPE = ReportElenco.TRASFERITI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -478,9 +479,9 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
 
 
 class ElencoDipendenti(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.DIPENDENTI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -558,9 +559,9 @@ class ElencoQuote(ElencoVistaSoci):
 
 
 class ElencoOrdinari(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.SOCI_ORDINARI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -579,9 +580,9 @@ class ElencoOrdinari(ElencoVistaSoci):
 
 
 class ElencoInRiserva(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi in riserva
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi in riserva """
+
+    REPORT_TYPE = ReportElenco.VOLONTARI_IN_RISERVA
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -609,9 +610,9 @@ class ElencoInRiserva(ElencoVistaSoci):
 
 
 class ElencoElettoratoAlGiorno(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi soci
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.ELETTORATO
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -683,6 +684,7 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
 
 class ElencoPerTitoli(ElencoVistaAnagrafica):
+    REPORT_TYPE = ReportElenco.TITOLI
 
     def risultati(self):
         qs_sedi = self.args[0]
