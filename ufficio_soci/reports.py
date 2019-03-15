@@ -1,4 +1,5 @@
 from importlib import import_module
+from collections import OrderedDict
 
 from django.db.models import Sum, Q
 from django.core.files.base import ContentFile
@@ -53,6 +54,10 @@ class ReportRicevute:
         ordered_columns = {i: line for line, i in enumerate(
             ['Num', 'Tipo', 'Pagante', 'CF', 'Importo', 'Data',
              'Registrazione', 'RegistrazioneData', 'Annullamento'])}
+
+        # Patch for py3.5: remember dict order
+        ordered_columns = OrderedDict(sorted(ordered_columns.items(), key=lambda x: x[1]))
+
         columns = list(ordered_columns.keys())
 
         wb = xlwt.Workbook(encoding='utf-8')
