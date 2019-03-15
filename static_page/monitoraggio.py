@@ -91,7 +91,6 @@ class TypeFormResponses:
         if kwargs.get('completed') == True and kwargs.get('query'):
             url += '?completed=true'
             url += '&query=%s' % kwargs.get('query')
-
         response = requests.get(url, headers=cls.HEADERS)
         return response
 
@@ -136,8 +135,9 @@ class TypeFormResponses:
         if question and answer:
             return {
                 'question_id': question['id'],
-                'question_ref': question['ref'],
+                # 'question_ref': question['ref'],
                 'question_title': question['title'],
+                'question_parent': question['parent'] if 'parent' in question else {},
                 'answer_field_id': answer['field']['id'],
                 'answer_field_type': answer['field']['type'],
                 'answer_field_ref': answer['field']['ref'],
@@ -170,6 +170,40 @@ class TypeFormResponses:
         else:
             return has_answers  # must return True
 
+    def collect_questions(self, form_id):
+        # requested url:  https://api.typeform.com/forms/<form_id>
+
+        questions = self.get_form_questions(form_id)
+        questions_without_hierarchy = dict()
+
+        # eh si, lo so è un bella camminata...
+        for field in questions['fields']:
+            if 'properties' in field:
+                if 'fields' in field['properties']:
+                    question_parent = {i: field[i] for i in ['id', 'title']}
+
+                    questions_without_hierarchy[field['ref']] = {i: field[i] for i in ['id', 'title']}
+
+                    for i in field['properties']['fields']:
+                        questions_without_hierarchy[i['ref']] = {_: i[_] for _ in ['id', 'title']}
+
+                        if question_parent:
+                            questions_without_hierarchy[i['ref']]['parent'] = question_parent
+                            # reset variable, to avoid displaying data in each table row (show only 1 time)
+                            question_parent = {}
+
+                        if 'properties' in i:
+                            for k, v in i['properties'].items():
+                                if 'choices' in k:
+                                    labels = [label for label in v]
+                                    questions_without_hierarchy[i['ref']]['labels'] = labels
+                else:
+                    questions_without_hierarchy[field['ref']] = {i: field[i] for i in ['id', 'title']}
+            else:
+                questions_without_hierarchy[field['ref']] = {i: field[i] for i in ['id', 'title']}
+
+        return questions_without_hierarchy
+
     def _retrieve_data(self):
         retrieved = dict()
         for form_id, form_name in self.form_ids.items():
@@ -179,14 +213,13 @@ class TypeFormResponses:
                 answers = self.get_answers_from_json(responses_for_form_id)
                 answers_refactored = {i['field']['ref']: i for i in answers}
 
-                questions = self.get_form_questions(form_id)
-                questions_fields = questions['fields']
-
-                for question in questions_fields:
-                    if question['ref'] in answers_refactored:
+                questions_fields = self.collect_questions(form_id)
+                for answer_ref, answer_data in answers_refactored.items():
+                    if answer_ref in questions_fields.keys():
+                        question = questions_fields[answer_ref]
                         combined = self.combine_question_with_user_answer(
                                 question=question,
-                                answer=answers_refactored[question['ref']],
+                                answer=answer_data,
                                 form_name=form_name
                         )
 
