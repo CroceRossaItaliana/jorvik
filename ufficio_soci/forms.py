@@ -72,9 +72,8 @@ class ModuloElencoPerTitoli(forms.Form):
         (METODO_AND, "Tutti i soci aventi TUTTI i titoli selezionati"),
     )
     metodo = forms.ChoiceField(choices=METODI, initial=METODO_OR)
-
-    titoli = autocomplete_light.ModelMultipleChoiceField("TitoloAutocompletamento", help_text="Seleziona uno o più titoli per"
-                                                                                              " la tua ricerca.")
+    titoli = autocomplete_light.ModelMultipleChoiceField('TitoloAutocompletamento',
+        help_text="Seleziona uno o più titoli per la tua ricerca.")
 
 
 class ModuloElencoQuote(forms.Form):

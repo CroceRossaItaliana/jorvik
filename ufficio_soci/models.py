@@ -1,8 +1,9 @@
 import random
-from datetime import timezone, date, timedelta
+from datetime import timedelta
 
 from django.db import models
 from django.db.models import Q, Max
+from django.http import HttpResponse
 from django.utils import timezone as timezone_django
 from django.utils.translation import ugettext_lazy as _
 
@@ -549,6 +550,7 @@ class ReportElenco(ConMarcaTemporale):
     SENZA_TURNI = 'stu'
     ELETTORATO = 'ele'
     TITOLI = 'tit'
+    GENERICO = 'gen'
     REPORT_TYPE = (
         (VOLONTARI, 'Volontari'),
         (VOLONTARI_GIOVANI, 'Volontari Giovani'),
@@ -565,6 +567,7 @@ class ReportElenco(ConMarcaTemporale):
         (SENZA_TURNI, 'Volontari con zero turni'),
         (ELETTORATO, 'Elettorato'),
         (TITOLI, 'Soci per Titoli'),
+        (GENERICO, 'Generico'),
     )
 
     user = models.ForeignKey(Persona)
@@ -578,11 +581,10 @@ class ReportElenco(ConMarcaTemporale):
         return self.file.name
 
     def download(self):
-        from django.http import HttpResponse
-
-        response = HttpResponse(self.file, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        response = HttpResponse(self.file, content_type=content_type)
         response['Content-Disposition'] = "attachment; filename=%s" % self.filename
         return response
 
     def __str__(self):
-        return str(self.file)
+        return str(self.file) if self.file else 'No File'

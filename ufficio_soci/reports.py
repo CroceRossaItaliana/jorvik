@@ -12,6 +12,7 @@ import xlwt
 from celery import uuid
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI
+from .elenchi import ElencoPerTitoli
 from .models import Quota, Tesseramento, ReportElenco
 from .tasks import generate_elenco_soci_al_giorno
 
@@ -105,7 +106,7 @@ class ReportElencoSoci:
 
         if not from_celery:
             self._get_elenco()
-            self._check_modulo()
+            self._validate_form()
             self._set_intestazione_e_colonne()
 
     def _set_intestazione_e_colonne(self):
@@ -129,44 +130,61 @@ class ReportElencoSoci:
             elenchi = import_module('ufficio_soci.elenchi')
             elenco = getattr(elenchi, kwargs['elenco_class'])
             self.elenco = elenco(kwargs.get('sedi'))
-
-            return self.elenco  # class instance from ufficio_soci.elenchi
         else:
             # Prova a ottenere l'elenco dalla sessione.
             session_elenco = self.request.session.get(elenco_id)
             if session_elenco:
                 self.elenco = session_elenco  # class instance from ufficio_soci.elenchi
-                return session_elenco
+            else:
+                # Se l'elenco non è più in sessione, potrebbe essere scaduto.
+                raise ValueError('Elenco non presente in sessione.')
 
-            # Se l'elenco non è più in sessione, potrebbe essere scaduto.
-            raise ValueError('Elenco non presente in sessione.')
+        return self.elenco  # class instance from ufficio_soci.elenchi
 
     @property
     def elenco_report_type(self):
-        return self._get_elenco().REPORT_TYPE
+        elenco = self._get_elenco()
+        if hasattr(elenco, 'REPORT_TYPE'):
+            return elenco.REPORT_TYPE
+        else:
+            return ReportElenco.GENERICO
 
-    def _get_elenco_form(self, celery_elenco_form=None):
+    def form_cleaned_data(self):
+        if self.from_celery:
+
+            form_params = self.params['elenco_form']
+            if 'ElencoPerTitoli' == self.params['elenco_class']:
+                form_params['titoli'] = self.params['elenco_titoli']
+            return form_params
+
+        return None
+
+    def _validate_form(self):
         elenco_form_id = 'elenco_modulo_%s' % self.elenco_id
 
-        # Prova a recuperare la form compilata
-        session_elenco_form = celery_elenco_form or self.request.session.get(elenco_form_id)
-        if session_elenco_form:
-            return self.elenco.modulo()(session_elenco_form)
-
-        # La form non è stata ancora compilata
-        return redirect("/us/elenco/%s/modulo/" % self.elenco_id)
-
-    def _check_modulo(self, celery_elenco_form=None):
         # Se l'elenco richiede un modulo
         if self.elenco.modulo():
-            self.form = self._get_elenco_form(celery_elenco_form)
+            # Prova a recuperare form.cleaned_data dalla sessione direttamente o dai celery_params
+            cleaned_data = self.form_cleaned_data() or \
+                           self.request.session.get(elenco_form_id)
+
+            if cleaned_data:
+                form = self.elenco.modulo()(cleaned_data)
+            else:
+                # La form non è stata ancora compilata
+                # Redirect non funzionera' con Celery task.
+                return redirect("/us/elenco/%s/modulo/" % self.elenco_id)
 
             # Se il modulo non è valido, qualcosa è andato storto
-            if not self.form.is_valid():
-                return redirect('/us/elenco/%s/modulo/' % self.elenco_id)  # Prova nuovamente?
+            if not form.is_valid():
+                # Prova nuovamente?
+                # Redirect non funzionera' con Celery task.
+                return redirect('/us/elenco/%s/modulo/' % self.elenco_id)
 
             # Imposta il modulo
-            self.elenco.modulo_riempito = self.form
+            self.elenco.modulo_riempito = form
+
+            return self.elenco.modulo_riempito
 
     def persone(self):
         from django.core.paginator import Paginator
@@ -221,7 +239,7 @@ class ReportElencoSoci:
 
     @property
     def celery_params(self):
-        return {
+        d = {
             'elenco_id': self.elenco_id,
             'multiple_worksheets': self._multiple_worksheets,
             'sedi': list(self.elenco.args[0].values_list('id', flat=True)),
@@ -229,14 +247,26 @@ class ReportElencoSoci:
             'elenco_class': self._get_elenco().__class__.__name__,
         }
 
+        """
+        Quando passo celery_params a Celery, 'elenco_form'['titoli'] prende 
+        solo l'ultimo titolo, e non tutti, quindi devo salvare i titoli con 
+        un altra chiave e poi rimpostarlo nel metodo form_cleaned_data per poi 
+        passarli a _validate_form.
+        """
+        if isinstance(self._get_elenco(), ElencoPerTitoli):
+            d['elenco_titoli'] = d['elenco_form'].getlist('titoli')
+
+        return d
+
     def celery(self, params, report_id):
-        # Set manually some required attributes
+        # Set some required attributes
         self.celery_multiple_worksheets = params['multiple_worksheets']
         self.elenco_id = params['elenco_id']
-        self._get_elenco(sedi=params['sedi'], elenco_class=params['elenco_class'])
-        self._check_modulo(celery_elenco_form=params['elenco_form'])
+        self.params = params
 
         # Call manually methods
+        self._get_elenco(sedi=params['sedi'], elenco_class=params['elenco_class'])
+        self._validate_form()
         self._set_intestazione_e_colonne()
 
         # Do generate report and get bytes-object
@@ -269,7 +299,7 @@ class ReportElencoSoci:
         # Can be that the report is generated immediately, wait a bit
         # and refresh db-record to verify
         from time import sleep
-        sleep(4)
+        sleep(2.5)
         report_db.refresh_from_db()
 
         if report_db.is_ready and report_db.file:

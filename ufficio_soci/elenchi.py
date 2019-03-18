@@ -10,8 +10,7 @@ from attivita.models import Partecipazione
 from base.utils import filtra_queryset, testo_euro, oggi
 from curriculum.models import TitoloPersonale
 from .models import Tesseramento, Quota, Tesserino, ReportElenco
-from .forms import (ModuloElencoSoci, ModuloElencoElettorato,
-                    ModuloElencoQuote, ModuloElencoPerTitoli)
+from .forms import (ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote)
 
 
 class Elenco:
@@ -158,15 +157,10 @@ class ElencoSociAlGiorno(ElencoVistaSoci):
 
     REPORT_TYPE = ReportElenco.SOCI_AL_GIORNO
 
-    def risultati(self, al_giorno=None):
+    def risultati(self):
         qs_sedi = self.args[0]
 
-        if al_giorno:
-            # Nel caso il report si genera con Celery.
-            # Passato da ReportElencoSoci._check_modulo() "celery_elenco_form" arg
-            al_giorno = al_giorno
-        else:
-            al_giorno = self.modulo_riempito.cleaned_data['al_giorno']
+        al_giorno = self.modulo_riempito.cleaned_data['al_giorno']
 
         return Persona.objects.filter(
             Appartenenza.query_attuale(
@@ -337,6 +331,7 @@ class ElencoEstesi(ElencoVistaSoci):
 
     def risultati(self):
         qs_sedi = self.args[0]
+
         from django.db.models import BooleanField, Value
         if self.modulo_riempito.cleaned_data['estesi'] == self.modulo_riempito.ESTESI_INGRESSO:
             # Estesi in ingresso
@@ -648,8 +643,6 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
             Q(Appartenenza.query_attuale(membro=Appartenenza.DIPENDENTE, sede__in=qs_sedi,
                                             al_giorno=oggi
                                             ).via("appartenenze")))
-                                            
-        # print("dipendenti", dipendenti.values_list('pk', flat=True) )
 
         r = Persona.objects.filter(
             Appartenenza.query_attuale(
@@ -689,8 +682,9 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
     def risultati(self):
         qs_sedi = self.args[0]
 
-        metodo = self.modulo_riempito.cleaned_data['metodo']
-        titoli = self.modulo_riempito.cleaned_data['titoli']
+        cd = self.modulo_riempito.cleaned_data
+        metodo = cd['metodo']
+        titoli = cd['titoli']
 
         base = Persona.objects.filter(
             Appartenenza.query_attuale(
@@ -701,26 +695,20 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
             'utenza', 'numeri_telefono'
         )
 
-        if metodo == self.modulo_riempito.METODO_OR:  # Almeno un titolo
-
+        if metodo == self.modulo_riempito.METODO_OR:
+            # Almeno un titolo
             return base.filter(titoli_personali__in=TitoloPersonale.con_esito_ok().filter(
                     titolo__in=titoli,
             )).distinct('cognome', 'nome', 'codice_fiscale')
-
-        else:  # Tutti i titoli
-
-            base = base.filter(
-                titoli_personali__in=TitoloPersonale.con_esito_ok()
-            )
-
+        else:
+            # Tutti i titoli
+            base = base.filter(titoli_personali__in=TitoloPersonale.con_esito_ok())
             for titolo in titoli:
-                base = base.filter(
-                    titoli_personali__titolo=titolo
-                )
-
+                base = base.filter(titoli_personali__titolo=titolo)
             return base.distinct('cognome', 'nome', 'codice_fiscale')
 
     def modulo(self):
+        from .forms import ModuloElencoPerTitoli
         return ModuloElencoPerTitoli
 
 

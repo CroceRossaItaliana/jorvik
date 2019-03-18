@@ -21,4 +21,4 @@ def delete_generated_elenco_soci_files():
     files_to_delete = ReportElenco.objects.filter(creazione__lt=delta)
     [file.file.delete() for file in files_to_delete]  # delete files from filesystem
 
-    files_to_delete.delete()
+    files_to_delete.delete()  # then delete records from db
