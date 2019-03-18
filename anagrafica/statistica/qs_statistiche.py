@@ -19,11 +19,11 @@ def get_statistica_collapse_ric(comitati, f, **kwargs):
     for comitato in comitati:
         if comitato.estensione == REGIONALE:
             # trattare i provinciali come i locali ricordarsi che al di sotto dei provinciali ci sono i locali
-            locali = Sede.objects.filter(estensione=LOCALE, genitore=comitato)
-            provinciali = Sede.objects.filter(estensione=PROVINCIALE, genitore=comitato)
+            locali = Sede.objects.filter(estensione=LOCALE, genitore=comitato, attiva=True)
+            provinciali = Sede.objects.filter(estensione=PROVINCIALE, genitore=comitato, attiva=True)
             locali = list(locali) + list(provinciali)
             for provinciale in provinciali:
-                locali += list(Sede.objects.filter(genitore=provinciale, estensione=LOCALE))
+                locali += list(Sede.objects.filter(genitore=provinciale, estensione=LOCALE, attiva=True))
             obj.append(
                 {
                     "comitato": comitato,
@@ -43,7 +43,7 @@ def get_statistica_collapse_ric(comitati, f, **kwargs):
                     "statistiche": f(comitato=comitato, **{'figli': True}),
                     "figli": get_statistica_collapse_ric(
                         comitati=Sede.objects.filter(
-                            genitore=comitato, estensione=estensione[comitato.estensione]
+                            genitore=comitato, estensione=estensione[comitato.estensione], attiva=True
                         ).exclude(nome__contains='Provinciale Di Roma') if estensione[comitato.estensione] else [],
                         f=f, **kwargs
                     )
@@ -72,7 +72,7 @@ def statistica_num_vol_fascia_eta(**kwargs):
 
         figli = kwargs.get('figli') if kwargs.get('figli') else False
         persone = comitato.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO)
-        return {
+        result = {
             "Da 14 a 18": count(persone, 14, 18),
             "Da 18 a 25": count(persone, 18, 25),
             "Da 25 a 32": count(persone, 25, 32),
@@ -80,6 +80,9 @@ def statistica_num_vol_fascia_eta(**kwargs):
             "Da 45 a 60": count(persone, 54, 60),
             "Over 60": count(persone, 60),
         }
+        from operator import itemgetter
+        print(sorted(result.items(), key=itemgetter(1)))
+        return dict(sorted(result.items(), key=itemgetter(1), reverse=True))
 
     obj = {
         "nome": STATISTICA[NUM_VOL_M_F],
