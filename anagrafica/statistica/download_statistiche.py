@@ -32,22 +32,28 @@ def inserisci_tot(worksheet, statistiche, count):
 def intestazione(workbook, ws):
 
     nome = ''
-    print(type(ws))
-    if 'Comitato Regionale ' in ws:
-        nome = ws.replace('Comitato Regionale ', '')
-    elif 'Comitato dell\'Area Metropolitana di ' in ws:
-        nome = ws.replace('Comitato dell\'Area Metropolitana di ', '')
-    elif 'Comitato della Provincia Autonoma di ' in ws:
-        nome = ws.replace('Comitato della Provincia Autonoma di ', '')
+    nome_nomitato = ws['comitato'].nome
+
+    if 'Comitato Regionale ' in nome_nomitato:
+        nome = nome_nomitato.replace('Comitato Regionale ', '')
+    elif 'Comitato dell\'Area Metropolitana di ' in nome_nomitato:
+        nome = nome_nomitato.replace('Comitato dell\'Area Metropolitana di ', '')
+    elif 'Comitato della Provincia Autonoma di ' in nome_nomitato:
+        nome = nome_nomitato.replace('Comitato della Provincia Autonoma di ', '')
     else:
-        nome = ws
+        nome = nome_nomitato
 
     worksheet = workbook.add_worksheet(nome)
     bold = workbook.add_format({'bold': True})
-    worksheet.write(0, 0, str('Comitato'), bold)
-    worksheet.write(0, 1, str('Genitore'), bold)
-    worksheet.write(0, 2, str('Nome metrica'), bold)
-    worksheet.write(0, 3, str('Valore'), bold)
+    c = 0
+    worksheet.write(0, c, str('Comitato'), bold)
+    c+=1
+    worksheet.write(0, c, str('Genitore'), bold)
+    c+=1
+    for k, v in ws['statistiche'].items():
+        worksheet.write(0, c, str(k), bold)
+        c += 1
+
     return worksheet
 
 
@@ -116,12 +122,15 @@ def xlsx_tot(obj, ws=False):
 
 
 def scrivi_comitato(worksheet, count, comitato):
-    worksheet.write(count, 0, str(comitato['comitato'].nome) + '(' + comitato['comitato'].estensione + ')')
-    worksheet.write(count, 1, str(comitato['comitato'].genitore.nome))
+    c = 0
+    worksheet.write(count, c, str(comitato['comitato'].nome) + '(' + comitato['comitato'].estensione + ')')
+    c += 1
+    worksheet.write(count, c, str(comitato['comitato'].genitore.nome))
+    c += 1
     for k, v in comitato['statistiche'].items():
-        worksheet.write(count, 2, str(k))
-        worksheet.write(count, 3, str(v))
-        count += 1
+        worksheet.write(count, c, str(v))
+        c += 1
+    count += 1
     return count
 
 
@@ -139,7 +148,7 @@ def inserisci_comitati_ric(worksheet=None, workbook=None, comitati=[], count=0):
             break
 
         if com['comitato'].estensione == REGIONALE:
-            worksheet = intestazione(workbook, com['comitato'].nome)
+            worksheet = intestazione(workbook, com)
             count = scrivi_comitato(worksheet, 1, com)
         else:
             count = scrivi_comitato(worksheet, count, com)
