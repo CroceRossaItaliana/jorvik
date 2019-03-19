@@ -179,9 +179,9 @@ class ModuloStepCredenziali(forms.Form):
 
 class ModuloStepFine(forms.Form):
     confirm_1 = forms.BooleanField(
-        label='Accettazione del trattamento dei dati comuni')
+        label='Accettazione del consenso al trattamento dei dati personali comuni')
     confirm_2 = forms.BooleanField(
-        label='Accettazione del trattamento dei dati come dati sanitario, rilevanti origine etnica')
+        label='Accettazione del consenso al trattamento delle categorie particolari di dati personali (dati relativi alla salute, dati biometrici...)')
 
 
 class ModuloStepAnagrafica(ModelForm):
