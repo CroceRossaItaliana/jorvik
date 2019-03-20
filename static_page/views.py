@@ -57,7 +57,8 @@ def monitoraggio(request, me):
     if is_done:
         context['is_done'] = True
 
-    context['user_comitato'] = typeform.comitato
+    context['comitato'] = typeform.comitato
+    context['user_comitato'] = typeform.comitato_id
     context['user_id'] = typeform.get_user_pk
     context['all_forms_are_completed'] = typeform.all_forms_are_completed
 

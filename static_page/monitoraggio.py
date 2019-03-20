@@ -10,7 +10,7 @@ from django.shortcuts import redirect, render
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 
-from anagrafica.models import Persona
+from anagrafica.models import Persona, Sede
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
 from static_page.tasks import send_mail
 
@@ -47,7 +47,7 @@ class TypeFormResponses:
     def _set_typeform_context(self):
         # This method generates a dict values,
         # False as default value means that form_id is not completed yet.
-        return {k: [False, self.comitato, v] for k, v in self.form_ids.items()}
+        return {k: [False, self.comitato_id, v] for k, v in self.form_ids.items()}
 
     @property
     def get_user_pk(self):
@@ -66,7 +66,7 @@ class TypeFormResponses:
             return Persona.objects.get(id=self.get_user_pk)
 
     @property
-    def comitato(self):
+    def comitato_id(self):
         deleghe = self.me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
 
         request_comitato = self.request.GET.get('comitato')
@@ -81,15 +81,22 @@ class TypeFormResponses:
                 # quindi vado sicuro a prendere <oggetto_id> dell'unico record
                 return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
 
+    @property
+    def comitato(self):
+        if self.comitato_id:
+            return Sede.objects.get(id=self.comitato_id)
+        else:
+            return Sede.objects.none()
+
     def get_responses_for_all_forms(self):
-        comitato = str(self.comitato)
+        comitato_id = str(self.comitato_id)
         for _id, bottone_name in self.form_ids.items():
             json = self.get_json_from_responses(_id)
             for item in json['items']:
                 c = item.get('hidden', dict())
                 c = c.get('c')
 
-                if c and c == comitato:
+                if c and c == comitato_id:
                     self.context_typeform[_id][0] = True
                     break  # bottone spento
 
