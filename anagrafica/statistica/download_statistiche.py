@@ -1,6 +1,7 @@
 import xlsxwriter
 import tempfile
-from anagrafica.costanti import REGIONALE, NAZIONALE
+from anagrafica.costanti import REGIONALE, NAZIONALE, LOCALE, TERRITORIALE
+from anagrafica.statistica.stat_costanti import COLORI_COMITATI
 
 
 def inserisci_comitati(worksheet, comitati, count):
@@ -53,6 +54,15 @@ def intestazione(workbook, ws):
     for k, v in ws['statistiche'].items():
         worksheet.write(0, c, str(k), bold)
         c += 1
+
+    # imposto una leggenda
+    cell_reg = workbook.add_format({'bg_color': COLORI_COMITATI[REGIONALE]})
+    cell_loc = workbook.add_format({'bg_color': COLORI_COMITATI[LOCALE]})
+    cell_ter = workbook.add_format({'bg_color': COLORI_COMITATI[TERRITORIALE]})
+
+    worksheet.write(5, 12, 'Regionale', cell_reg)
+    worksheet.write(6, 12, 'Locale', cell_loc)
+    worksheet.write(7, 12, 'Territoriale', cell_ter)
 
     return worksheet
 
@@ -121,14 +131,17 @@ def xlsx_tot(obj, ws=False):
     return filename
 
 
-def scrivi_comitato(worksheet, count, comitato):
+def scrivi_comitato(workbook, worksheet, count, comitato):
+
+    cell_color = workbook.add_format({'bg_color': COLORI_COMITATI[comitato['comitato'].estensione]})
+
     c = 0
-    worksheet.write(count, c, str(comitato['comitato'].nome) + '(' + comitato['comitato'].estensione + ')')
+    worksheet.write(count, c, str(comitato['comitato'].nome) + '(' + comitato['comitato'].estensione + ')', cell_color)
     c += 1
-    worksheet.write(count, c, str(comitato['comitato'].genitore.nome))
+    worksheet.write(count, c, str(comitato['comitato'].genitore.nome), cell_color)
     c += 1
     for k, v in comitato['statistiche'].items():
-        worksheet.write(count, c, str(v))
+        worksheet.write(count, c, str(v), cell_color)
         c += 1
     count += 1
     return count
@@ -149,9 +162,9 @@ def inserisci_comitati_ric(worksheet=None, workbook=None, comitati=[], count=0):
 
         if com['comitato'].estensione == REGIONALE:
             worksheet = intestazione(workbook, com)
-            count = scrivi_comitato(worksheet, 1, com)
+            count = scrivi_comitato(workbook, worksheet, 1, com)
         else:
-            count = scrivi_comitato(worksheet, count, com)
+            count = scrivi_comitato(workbook, worksheet, count, com)
 
         if com['figli']:
             count = inserisci_comitati_ric(

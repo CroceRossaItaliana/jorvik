@@ -1,5 +1,6 @@
 import datetime
 from datetime import datetime
+from anagrafica.costanti import TERRITORIALE, REGIONALE, LOCALE, PROVINCIALE
 
 ANNI_DI_RIFERIMENTO = 10
 
@@ -61,4 +62,11 @@ TIPO_CHOICES = [
 ]
 
 COMITATI_DA_EXLUDERE = ["Comitato dell'Area Metropolitana di Roma Capitale", ]
+
+COLORI_COMITATI = {
+    PROVINCIALE: '#FF6600',
+    REGIONALE: '#008000',
+    LOCALE: '#FF6600',
+    TERRITORIALE: '#FFFF00',
+}
 
