@@ -80,9 +80,7 @@ def statistica_num_vol_fascia_eta(**kwargs):
             "Da 45 a 60": count(persone, 54, 60),
             "Over 60": count(persone, 60),
         }
-        from operator import itemgetter
-        print(sorted(result.items(), key=itemgetter(1)))
-        return dict(sorted(result.items(), key=itemgetter(1), reverse=True))
+        return result
 
     obj = {
         "nome": STATISTICA[NUM_VOL_M_F],
