@@ -11,6 +11,7 @@ from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 
 from anagrafica.models import Persona
+from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
 from static_page.tasks import send_mail
 
 
@@ -46,8 +47,7 @@ class TypeFormResponses:
     def _set_typeform_context(self):
         # This method generates a dict values,
         # False as default value means that form_id is not completed yet.
-        user_comitato = self.user_comitato
-        return {k: [False, user_comitato, v] for k, v in self.form_ids.items()}
+        return {k: [False, self.comitato, v] for k, v in self.form_ids.items()}
 
     @property
     def get_user_pk(self):
@@ -66,18 +66,30 @@ class TypeFormResponses:
             return Persona.objects.get(id=self.get_user_pk)
 
     @property
-    def user_comitato(self):
-        persona = self.persona
-        return persona.sede_riferimento().id
+    def comitato(self):
+        deleghe = self.me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
+
+        request_comitato = self.request.GET.get('comitato')
+        if request_comitato:
+            # Check comitato_id validity
+            if int(request_comitato) not in deleghe.values_list('oggetto_id', flat=True):
+                raise ValueError("L'utenza non ha una delega con l'ID del comitato indicato.")
+            return request_comitato
+        else:
+            if self.me.is_presidente:
+                # Il ruolo presidente può avere soltanto una delega attiva,
+                # quindi vado sicuro a prendere <oggetto_id> dell'unico record
+                return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
 
     def get_responses_for_all_forms(self):
+        comitato = str(self.comitato)
         for _id, bottone_name in self.form_ids.items():
             json = self.get_json_from_responses(_id)
             for item in json['items']:
                 c = item.get('hidden', dict())
                 c = c.get('c')
 
-                if c and c == str(self.user_comitato):
+                if c and c == comitato:
                     self.context_typeform[_id][0] = True
                     break  # bottone spento
 

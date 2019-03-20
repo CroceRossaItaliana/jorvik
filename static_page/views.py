@@ -2,9 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
 from django.core.urlresolvers import reverse
 from django.contrib.messages import get_messages
 
-from celery.result import AsyncResult
-
 from autenticazione.funzioni import pagina_privata
+from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
 from .models import Page
 from .monitoraggio import TypeFormResponses
 
@@ -22,20 +21,30 @@ def view_page(request, me, slug):
 
 @pagina_privata
 def monitoraggio(request, me):
-    if not me.is_presidente: return redirect('/')
+    if True not in [me.is_comissario, me.is_presidente]: return redirect( '/')
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
+    request_comitato = request.GET.get('comitato')
+    if me.is_comissario and not request_comitato:
+        # GAIA-58: Seleziona comitato
+        if me.is_presidente:
+            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
+        else:
+            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
+
+        return 'monitoraggio_choose_comitato.html', {'deleghe': deleghe.distinct('oggetto_id')}
+
+    # Comitato selezionato, mostrare le form di typeform
+    context = dict()
     typeform = TypeFormResponses(request=request, me=me)
 
     # Make test request (API/connection availability, etc)
     if not typeform.make_test_request_to_api:
         return 'monitoraggio.html', context
 
-    context = {
-        'type_form': typeform.context_typeform
-    }
+    context['type_form'] = typeform.context_typeform
 
-    typeform.get_responses_for_all_forms()
+    typeform.get_responses_for_all_forms()  # checks for already compiled forms
 
     is_done = False
     typeform_id = request.GET.get('id', False)
@@ -48,7 +57,7 @@ def monitoraggio(request, me):
     if is_done:
         context['is_done'] = True
 
-    context['user_comitato'] = typeform.user_comitato
+    context['user_comitato'] = typeform.comitato
     context['user_id'] = typeform.get_user_pk
     context['all_forms_are_completed'] = typeform.all_forms_are_completed
 
