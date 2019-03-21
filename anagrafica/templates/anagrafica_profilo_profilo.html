@@ -1,45 +1,46 @@
 {% extends 'anagrafica_profilo.html' %}
 
-{% block profilo_corpo %}
+{% load utils %}
 
+{% block profilo_corpo %}
+    {% now "U" as ctime %}
+    <script>document.oncontextmenu = function(e){if(e.button == 2){e.preventDefault();return false;}}</script>
 
     <div class="row">
-
         <div class="col-md-3 allinea-centro">
-
-            {% if persona.avatar %}
-                <img src="{{ persona.avatar.url }}" class="img-responsive" />
-            {% endif %}
-
-
+            {% if persona.avatar %}<div class="u-img-{{ctime}}"></div>{% endif %}
         </div>
 
         <div class="col-md-9 piu-grande">
             <p>{{ persona.nome_completo }} attualmente &egrave;:</p>
-
             <ul>
                 {% for a in persona.appartenenze_attuali %}
-                    <li>{{ a.get_membro_display }} presso
-                        {{ a.sede.link|safe }};
-                    </li>
-
+                    <li>{{ a.get_membro_display }} presso {{ a.sede.link|safe }};</li>
                 {% empty %}
                     <li>{{ persona.nome }} non ha ancora un ruolo.</li>
-
                 {% endfor %}
             </ul>
 
-            <p>&nbsp;</p>
-
-            <a href="{{ persona.url_messaggio }}"
-                class="btn btn-default">
-                <i class="fa fa-fw fa-envelope-o"></i>
-                Invia un messaggio a {{ persona.nome }}
+            <a href="{{ persona.url_messaggio }}" class="btn btn-default">
+                <i class="fa fa-fw fa-envelope-o"></i> Invia un messaggio a {{ persona.nome }}
             </a>
-
         </div>
-
-
     </div>
+
+    {% if persona.avatar %}
+        <style>
+            .u-img-{{ctime}} {width:100%;}
+            .u-img-{{ctime}}::before {
+                content: '';
+                display: block;
+                width: 100%;
+                height: 0;
+                padding-top: 66.64%;
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-image: url({% image_as_base64 persona.avatar %});
+            }
+        </style>
+    {% endif %}
 
 {% endblock %}

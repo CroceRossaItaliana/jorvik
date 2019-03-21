@@ -1,10 +1,12 @@
 from __future__ import absolute_import
-
 import os
+
 from celery import Celery, current_app
 from celery.signals import after_task_publish
 
-from jorvik.settings import CELERY_CONF
+from .settings import CELERY_CONF
+
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'jorvik.settings')
 
 app = Celery('jorvik')
@@ -14,7 +16,12 @@ app.conf.update(CELERY_CONF.items('celery'))
 # - /docker-compose.yml
 app.conf.task_routes = {
     'posta.queue.rischedula_invii_falliti': {'queue': 'coda_email_rischedula'},
-    'posta.tasks.invia_mail': {'queue': 'coda_email_invio'}
+    'posta.tasks.invia_mail': {'queue': 'coda_email_invio'},
+
+    'ufficio_soci.tasks.delete_generated_elenco_soci_files': {'queue': 'periodic_ufficio_soci'},
+    'ufficio_soci.tasks.generate_elenco_soci_al_giorno': {'queue': 'shared_ufficio_soci'},
+
+    'static_page.tasks.send_mail': {'queue': 'queue_monitoraggio'},
 }
 
 # Load task modules from all registered Django app configs.

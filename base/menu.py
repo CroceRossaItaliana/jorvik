@@ -169,10 +169,10 @@ def menu(request):
                 ("Estesi", "fa-list", "/us/elenchi/estesi/"),
                 ("IV e CM", "fa-list", "/us/elenchi/ivcm/"),
                 ("In Riserva", "fa-list", "/us/elenchi/riserva/"),
-                ("Zero turni", "fa-list", "/us/elenchi/senza-turni/", '', True),
+                ("Zero turni", "fa-list", "/us/elenchi/senza-turni/"),
                 ("Soci", "fa-list", "/us/elenchi/soci/"),
                 ("Sostenitori", "fa-list", "/us/elenchi/sostenitori/"),
-                ("Ex Sostenitori", "fa-list", "/us/elenchi/ex-sostenitori/", '', True),
+                ("Ex Sostenitori", "fa-list", "/us/elenchi/ex-sostenitori/"),
                 ("Dipendenti", "fa-list", "/us/elenchi/dipendenti/"),
                 ("Dimessi", "fa-list", "/us/elenchi/dimessi/"),
                 ("Trasferiti", "fa-list", "/us/elenchi/trasferiti/"),
@@ -180,6 +180,8 @@ def menu(request):
                 ("Elettorato", "fa-list", "/us/elenchi/elettorato/"),
                 ("Tesserini", "fa-list", "/us/tesserini/"),
                 ("Per Titoli", "fa-search", "/us/elenchi/titoli/"),
+                ("Scarica elenchi richiesti", "fa-download", reverse(
+                    'elenchi_richiesti_download'), '', True),
             )),
             ("Aggiungi", (
                 ("Persona", "fa-plus-square", "/us/aggiungi/"),
@@ -217,6 +219,8 @@ def menu(request):
                     if gestione_corsi_sede else None,
                 ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-base/nuovo/")
                     if gestione_corsi_sede else None,
+                # ("Monitoraggio 2019", 'fa-user', reverse('pages:monitoraggio'))
+                #     if me and (me.is_presidente or me.is_comissario) else None,
             )),
             ("Corsi di Formazione", (
                 ("Elenco Corsi di Formazione", "fa-list", "/formazione/corsi-formazione/"),
