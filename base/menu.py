@@ -219,8 +219,8 @@ def menu(request):
                     if gestione_corsi_sede else None,
                 ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-base/nuovo/")
                     if gestione_corsi_sede else None,
-                ("Monitoraggio 2019", 'fa-user', reverse('pages:monitoraggio'))
-                    if me and (me.is_presidente or me.is_comissario) else None,
+                # ("Monitoraggio 2019", 'fa-user', reverse('pages:monitoraggio'))
+                #     if me and (me.is_presidente or me.is_comissario) else None,
             )),
             ("Corsi di Formazione", (
                 ("Elenco Corsi di Formazione", "fa-list", "/formazione/corsi-formazione/"),
