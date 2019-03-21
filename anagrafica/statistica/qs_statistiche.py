@@ -13,6 +13,10 @@ from .stat_costanti import (
 )
 
 
+def formato_data(data):
+    return data.strftime('%d-%m-%Y')
+
+
 def get_statistica_collapse_ric(comitati, f, **kwargs):
     estensione = {NAZIONALE: REGIONALE, REGIONALE: LOCALE, LOCALE: TERRITORIALE, TERRITORIALE: None}
     obj = []
@@ -289,6 +293,9 @@ def statistica_num_nuovi_vol(**kwargs):
             sede__estensione=estensione,
         )
 
+        start = formato_data(start)
+        finish = formato_data(finish)
+
         return {
             "nome": ESTENDIONI_DICT[estensione],
             "statistiche": {
@@ -370,6 +377,8 @@ def statistica_num_dimessi(**kwargs):
             terminazione=Appartenenza.DIMISSIONE,
             sede__estensione=estensione,
         )
+        start = formato_data(start)
+        finish = formato_data(finish)
         return {
             "nome": ESTENDIONI_DICT[estensione],
             "statistiche": {
@@ -511,7 +520,8 @@ def statistiche_num_sedi_nuove(**kwargs):
             estensione=estensione,
             attiva=True
         ).exclude(nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
-
+        start = formato_data(start)
+        finish = formato_data(finish)
         return {
             "nome": ESTENDIONI_DICT[estensione],
             "statistiche": {
@@ -612,7 +622,8 @@ def statistica_num_corsi(**kwargs):
         if nome_corso:
             corsi_attivi = filter(filter_name, corsi_attivi)
             corsi_disattivi = filter(filter_name, corsi_disattivi)
-
+        start = formato_data(start)
+        finish = formato_data(finish)
         return {
             "nome": ESTENDIONI_DICT[estensione],
             "statistiche": {

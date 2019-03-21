@@ -141,7 +141,7 @@ def scrivi_comitato(workbook, worksheet, count, comitato):
     worksheet.write(count, c, str(comitato['comitato'].genitore.nome), cell_color)
     c += 1
     for k, v in comitato['statistiche'].items():
-        worksheet.write(count, c, str(v), cell_color)
+        worksheet.write(count, c, v, cell_color)
         c += 1
     count += 1
     return count
@@ -194,31 +194,31 @@ def xlsx_generali(obj, ws=False):
 
     # Numero di Persone
     worksheet.write(1, 0, str('Numero di Persone'))
-    worksheet.write(1, 1, str(obj['persone_numero']))
+    worksheet.write(1, 1, obj['persone_numero'])
     worksheet.write(1, 2, str(''))
     worksheet.write(1, 3, str('Include tutti i Soggetti registrati su Gaia.'))
 
     # Numero di Soci CRI
     worksheet.write(2, 0, str('Numero di Soci CRI'))
-    worksheet.write(2, 1, str(obj['soci_numero']))
+    worksheet.write(2, 1, obj['soci_numero'])
     worksheet.write(2, 2, str(obj['soci_percentuale']) + '% ' + 'delle Persone')
     worksheet.write(2, 3, str('Persone con appartenenza attuale come Socio CRI.'))
 
     # Numero di Soci CRI Giovani
     worksheet.write(3, 0, str('Numero di Soci CRI Giovani'))
-    worksheet.write(3, 1, str(obj['soci_giovani_35_numero']))
+    worksheet.write(3, 1, obj['soci_giovani_35_numero'])
     worksheet.write(3, 2, str(obj['soci_giovani_35_percentuale']) + ' % ' + 'dei Soci CRI')
     worksheet.write(3, 3, str('Soci CRI con età inferiore ai 36 anni'))
 
     # Numero di Sedi CRI
     worksheet.write(4, 0, str('Numero di Sedi CRI'))
-    worksheet.write(4, 1, str(obj['sedi_numero']))
+    worksheet.write(4, 1, obj['sedi_numero'])
     worksheet.write(4, 2, str(''))
     worksheet.write(4, 3, str('Include Sede Nazionale, Regionali, Comitati e Unità Territoriali distaccate.'))
 
     # Numero di Comitati CRI
     worksheet.write(5, 0, str('Numero di Comitati CRI'))
-    worksheet.write(5, 1, str(obj['comitati_numero']))
+    worksheet.write(5, 1, obj['comitati_numero'])
     worksheet.write(5, 2, str(''))
     worksheet.write(5, 3, str('Include Sede Nazionale, Regionali e Comitati.'))
 
