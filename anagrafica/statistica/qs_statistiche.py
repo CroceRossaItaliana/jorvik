@@ -595,9 +595,9 @@ def statistica_num_corsi(**kwargs):
             "nome": ESTENDIONI_DICT[estensione],
             "statistiche": {
                 "Corsi nel {} Attivi".format(anno): len(list(corsi_current_attivi)),
-                "Corsi nel {} Disattivi".format(anno): len(list(corsi_current_disattivi)),
+                "Corsi nel {} Terminati".format(anno): len(list(corsi_current_disattivi)),
                 "Corsi nel {} Attivi".format(anno - 1): len(list(corsi_before_attivi)),
-                "Corsi nel {} Disattivi".format(anno - 1): len(list(corsi_before_disattivi)),
+                "Corsi nel {} Terminati".format(anno - 1): len(list(corsi_before_disattivi)),
             }
         }
 
