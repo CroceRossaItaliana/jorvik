@@ -24,11 +24,9 @@
                         </a>
                     {% else %}
                         {% if s.attuale %}
-                            <i class="fa fa-plus-square"></i>
-                            <strong>{{ s.nome }}</strong> (attuale)
+                            <i class="fa fa-plus-square"></i> <strong>{{ s.nome }}</strong> (attuale)
                         {% else %}
-                            <i class="fa fa-square-o"></i>
-                            {{ s.nome }}
+                            <i class="fa fa-square-o"></i> {{ s.nome }}
                         {% endif %}
                     {% endif %}
                 </li>
@@ -41,28 +39,27 @@
                 {% csrf_token %}
 
                 {% block step_info %}{% endblock %}
-
                 {% block step_modulo %}
                     {% if modulo %}
-                        {% bootstrap_form modulo layout='horizontal' form_group_class='form-group row' %}
+                        {% if tipo == 'aspirante' and attuale_slug == 'fine' %}
+                            {% bootstrap_form modulo %}
+                        {% else %}
+                            {% bootstrap_form modulo layout='horizontal' form_group_class='form-group row' %}
+                        {% endif %}
                     {% endif %}
                 {% endblock %}
 
-                {% block step_contenuto %}
-                    <pre>step_contenuto</pre>
-                {% endblock %}
+                {% block step_contenuto %}<pre>step_contenuto</pre>{% endblock %}
 
                 <div class="row ">
                     <div class="col-md-6 padding-verticale-20 piu-piccolo">
                         <a href="/registrati/{{ tipo }}/"><i class="fa fa-refresh"></i> Riavvia registrazione</a>
                     </div>
-
                     <div class="col-md-6 allinea-destra">
                         {% if step_successivo %}
                             <button class="btn btn-success" type="submit">Avanti <i class="fa fa-arrow-right"></i></button>
                         {% endif %}
                     </div>
-
                 </div>
             </form>
         </div>
