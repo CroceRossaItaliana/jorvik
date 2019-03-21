@@ -1,0 +1,21 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block app_contenuto %}
+  <div class="articolo single-page">
+    <h1>Monitoraggio 2019</h1>
+
+    <p>Per quale comitato vuoi compilare il monitoraggio?</p>
+
+    {% for delega in deleghe %}
+      <div><a href="{% url 'pages:monitoraggio' %}?comitato={{ delega.oggetto.id }}">{{ delega.oggetto }} ({{ delega.get_tipo_display }})</a></div>
+    {% empty %}
+      <p>L'utenza non ha deleghe attive.</p>
+    {% endfor %}
+
+  {% if has_privacy_popup %}
+    {% include "base_privacy_policy_popup.html" %}
+  {% endif %}
+
+{% endblock %}

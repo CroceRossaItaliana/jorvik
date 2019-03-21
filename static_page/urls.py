@@ -1,9 +1,11 @@
 from django.conf.urls import url
-from .views import view_page, monitoraggio
+from . import views
 
 
 app_label = 'pages'
 urlpatterns = [
-    # url(r'^monitoraggio-2019/$', monitoraggio, name='monitor-2019'),
-    url(r'^(?P<slug>[\w\-]+)/$', view_page, name='page'),
+    # url(r'^monitoraggio/$', views.monitoraggio, name='monitoraggio'),
+    # url(r'^monitoraggio/actions/$', views.monitoraggio_actions, name='monitoraggio_actions'),
+
+    url(r'^(?P<slug>[\w\-]+)/$', views.view_page, name='page'),
 ]

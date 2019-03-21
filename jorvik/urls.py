@@ -190,6 +190,7 @@ urlpatterns = [
     url(r'^us/dimissioni/(?P<pk>[0-9]+)/$', ufficio_soci.viste.us_dimissioni, name='us-dimissioni'),
     url(r'^us/dimissioni/sostenitore/(?P<pk>[0-9]+)/$', ufficio_soci.viste.us_chiudi_sostenitore, name='us-chiudi-sostenitore'),
 
+    url(r'^us/elenchi/download/$', ufficio_soci.viste.us_elenchi_richiesti_download, name='elenchi_richiesti_download'),
     url(r'^us/elenchi/(?P<elenco_tipo>.*)/$', ufficio_soci.viste.us_elenchi),
     url(r'^us/quote/$', ufficio_soci.viste.us_quote),
     url(r'^us/quote/nuova/$', ufficio_soci.viste.us_quote_nuova, name='us_quote_nuova'),

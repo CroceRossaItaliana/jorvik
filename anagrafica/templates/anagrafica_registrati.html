@@ -5,90 +5,64 @@
 {% block pagina_titolo %}Registrati come {{ tipo|title }}: {{ attuale_nome }}{% endblock %}
 
 {% block pagina_principale %}
-
 <div class="container">
-
     <div class="row allinea-centro">
-
         <h2>Registrati <span class="text-muted">come {{ tipo|title }}</span></h2>
         <h3 class="grassetto">{{ attuale_nome }}</h3>
         <hr />
-
     </div>
 
     <div class="row">
-
         <div class="col-md-3">
-
             <h4>Avanzamento registrazione</h4>
             <ol>
             {% for s in lista_step %}
                 <li>
                     {% if s.completato %}
                         <a href="/registrati/{{ tipo }}/{{ s.slug }}/" title="Torna indietro allo step: {{ s.nome }}">
-                            <i class="fa fa-check-square"></i>
-                            {{ s.nome }}
+                            <i class="fa fa-check-square"></i> {{ s.nome }}
                         </a>
                     {% else %}
                         {% if s.attuale %}
-                            <i class="fa fa-plus-square"></i>
-                            <strong>{{ s.nome }}</strong> (attuale)
+                            <i class="fa fa-plus-square"></i> <strong>{{ s.nome }}</strong> (attuale)
                         {% else %}
-                            <i class="fa fa-square-o"></i>
-                            {{ s.nome }}
+                            <i class="fa fa-square-o"></i> {{ s.nome }}
                         {% endif %}
                     {% endif %}
                 </li>
             {% endfor %}
             </ol>
-
         </div>
 
         <div class="col-md-9">
             <form action="{% block registrati_azione %}/registrati/{{ tipo }}/{{ attuale_slug }}/{% endblock %}" method="POST">
                 {% csrf_token %}
 
-                {% block step_contenuto %}
-                    <pre>step_contenuto</pre>
-                {% endblock %}
-
+                {% block step_info %}{% endblock %}
                 {% block step_modulo %}
                     {% if modulo %}
-                        {% bootstrap_form modulo layout='horizontal' form_group_class='form-group row' %}
+                        {% if tipo == 'aspirante' and attuale_slug == 'fine' %}
+                            {% bootstrap_form modulo %}
+                        {% else %}
+                            {% bootstrap_form modulo layout='horizontal' form_group_class='form-group row' %}
+                        {% endif %}
                     {% endif %}
                 {% endblock %}
 
+                {% block step_contenuto %}<pre>step_contenuto</pre>{% endblock %}
+
                 <div class="row ">
-
                     <div class="col-md-6 padding-verticale-20 piu-piccolo">
-                        <a href="/registrati/{{ tipo }}/">
-                            <i class="fa fa-refresh"></i>
-                            Riavvia registrazione
-                        </a>
+                        <a href="/registrati/{{ tipo }}/"><i class="fa fa-refresh"></i> Riavvia registrazione</a>
                     </div>
-
                     <div class="col-md-6 allinea-destra">
                         {% if step_successivo %}
-                        <button class="btn btn-success" type="submit">
-                            Avanti
-                            <i class="fa fa-arrow-right"></i>
-                        </button>
+                            <button class="btn btn-success" type="submit">Avanti <i class="fa fa-arrow-right"></i></button>
                         {% endif %}
                     </div>
-
                 </div>
             </form>
-
-
         </div>
-
     </div>
-
-
-
-
-
-
 </div>
-
 {% endblock %}
