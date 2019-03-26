@@ -64,9 +64,9 @@ TIPO_CHOICES = [
 COMITATI_DA_EXLUDERE = ["Comitato dell'Area Metropolitana di Roma Capitale", ]
 
 COLORI_COMITATI = {
-    PROVINCIALE: '#FF6600',
-    REGIONALE: '#008000',
-    LOCALE: '#FF6600',
-    TERRITORIALE: '#FFFF00',
+    PROVINCIALE: '#C0C0C0',
+    REGIONALE: '#FF0000',
+    LOCALE: '#C0C0C0',
+    TERRITORIALE: '#00FFFF',
 }
 
