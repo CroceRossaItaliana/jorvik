@@ -11,6 +11,7 @@ from .stat_costanti import (
     STATISTICA, COMITATI_DA_EXLUDERE, NUM_VOL_M_F, NUM_SOCI_VOL, NUM_NUOVI_VOL, FILTRO_ANNO, FILTRO_DATA,
     NUM_SEDI, NUM_DIMESSI, NUM_SEDI_NUOVE, NUMERO_CORSI, IIVV_CM, ORE_SERVIZIO
 )
+from collections import OrderedDict
 
 
 def formato_data(data):
@@ -76,14 +77,13 @@ def statistica_num_vol_fascia_eta(**kwargs):
 
         figli = kwargs.get('figli') if kwargs.get('figli') else False
         persone = comitato.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO)
-        result = {
-            "Da 14 a 18": count(persone, 14, 18),
-            "Da 18 a 25": count(persone, 18, 25),
-            "Da 25 a 32": count(persone, 25, 32),
-            "Da 32 a 45": count(persone, 32, 45),
-            "Da 45 a 60": count(persone, 54, 60),
-            "Over 60": count(persone, 60),
-        }
+        result = OrderedDict()
+        result["Da 14 a 18"] = count(persone, 14, 18)
+        result["Da 18 a 25"] = count(persone, 18, 25)
+        result["Da 25 a 32"] = count(persone, 25, 32)
+        result["Da 32 a 45"] = count(persone, 32, 45)
+        result["Da 45 a 60"] = count(persone, 45, 60)
+        result["Over 60"] = count(persone, 60)
         return result
 
     obj = {
@@ -320,10 +320,8 @@ def statistica_num_nuovi_vol(**kwargs):
             get_tot_anno(start, finish, TERRITORIALE),
         ]
     elif tipo == FILTRO_DATA:
-        print(tipo)
         start = kwargs.get('dal')
         finish = kwargs.get('al')
-        print(start, finish)
         obj['tot'] = [
             get_tot_date(start, finish, NAZIONALE),
             get_tot_date(start, finish, REGIONALE),
