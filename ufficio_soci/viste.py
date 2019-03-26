@@ -25,11 +25,8 @@ from posta.models import Messaggio
 
 from .models import Quota, Tesseramento, Tesserino, Riduzione, ReportElenco
 from .elenchi import (ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari,
-    ElencoOrdinari, ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli,
-    ElencoDipendenti, ElencoDimessi, ElencoTrasferiti, ElencoIVCM, ElencoEstesi,
-    ElencoVolontariGiovani, ElencoInRiserva, ElencoTesseriniSenzaFototessera,
-    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoTesseriniRifiutati,
-    ElencoExSostenitori, ElencoSenzaTurni)
+    ElencoOrdinari, ElencoElettoratoAlGiorno, ElencoQuote, ElencoTesseriniSenzaFototessera,
+    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoTesseriniRifiutati)
 from .forms import (ModuloCreazioneEstensione, ModuloAggiungiPersona,
     ModuloReclamaAppartenenza, ModuloReclamaQuota, ModuloReclama,
     ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute,
