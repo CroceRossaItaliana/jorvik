@@ -12,9 +12,28 @@ import xlwt
 from celery import uuid
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI
-from .elenchi import ElencoPerTitoli
 from .models import Quota, Tesseramento, ReportElenco
 from .tasks import generate_elenco_soci_al_giorno
+from . import elenchi
+
+
+SOCI_TIPI_ELENCHI = {
+    'volontari': (elenchi.ElencoVolontari, "Elenco dei Volontari"),
+    'giovani': (elenchi.ElencoVolontariGiovani, "Elenco dei Volontari Giovani"),
+    'ivcm': (elenchi.ElencoIVCM, "Elenco IV e CM"),
+    'dimessi': (elenchi.ElencoDimessi, "Elenco Dimessi"),
+    'riserva': (elenchi.ElencoInRiserva, "Elenco Volontari in Riserva"),
+    'trasferiti': (elenchi.ElencoTrasferiti, "Elenco Trasferiti"),
+    'dipendenti': (elenchi.ElencoDipendenti, "Elenco dei Dipendenti"),
+    'ordinari': (elenchi.ElencoOrdinari, "Elenco dei Soci Ordinari"),
+    'estesi': (elenchi.ElencoEstesi, "Elenco dei Volontari Estesi/In Estensione"),
+    'soci': (elenchi.ElencoSociAlGiorno, "Elenco dei Soci"),
+    'sostenitori': (elenchi.ElencoSostenitori, "Elenco dei Sostenitori"),
+    'ex-sostenitori': (elenchi.ElencoExSostenitori, "Elenco degli Ex Sostenitori"),
+    'senza-turni': (elenchi.ElencoSenzaTurni, "Elenco dei volontari con zero turni"),
+    'elettorato': (elenchi.ElencoElettoratoAlGiorno, "Elenco Elettorato", 'us_elenco_inc_elettorato.html'),
+    'titoli': (elenchi.ElencoPerTitoli, "Ricerca dei soci per titoli"),
+}
 
 
 class ReportRicevute:
@@ -144,6 +163,7 @@ class ReportElencoSoci:
     @property
     def elenco_report_type(self):
         elenco = self._get_elenco()
+
         if hasattr(elenco, 'REPORT_TYPE'):
             return elenco.REPORT_TYPE
         else:
@@ -253,7 +273,7 @@ class ReportElencoSoci:
         un altra chiave e poi rimpostarlo nel metodo form_cleaned_data per poi 
         passarli a _validate_form.
         """
-        if isinstance(self._get_elenco(), ElencoPerTitoli):
+        if isinstance(self._get_elenco(), elenchi.ElencoPerTitoli):
             d['elenco_titoli'] = d['elenco_form'].getlist('titoli')
 
         return d
@@ -283,7 +303,38 @@ class ReportElencoSoci:
         report_db.is_ready = True
         report_db.save()
 
+    @property
+    def may_be_downloaded_async(self):
+        """
+        Ci sono le app (attivita, formazione) che utilizzano questa classe
+        per generare elenco. Ma solo nel caso di Elenchi "Soci" dobbiamo
+        utilizzare modalita' asincrona per generare e scaricare il file.
+        """
+        elenco_senza_tesserini = [i[0] for i in SOCI_TIPI_ELENCHI.values()]
+        elenco_tesserini = [elenchi.ElencoTesseriniRichiesti,
+                            elenchi.ElencoTesseriniDaRichiedere,
+                            elenchi.ElencoTesseriniSenzaFototessera,
+                            elenchi.ElencoTesseriniRifiutati,]
+        elenchi_con_tesserini = elenco_senza_tesserini + elenco_tesserini
+
+        if type(self._get_elenco()) in elenchi_con_tesserini:
+            return True
+        return False
+
+    def download(self):
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        file = self._generate(save_to_memory=True).output.read()
+        filename = 'Elenco.xlsx'
+
+        response = HttpResponse(file, content_type=content_type)
+        response['Content-Disposition'] = "attachment; filename=%s" % filename
+        return response
+
     def make(self):
+        # Verifica appartenenza dell'elenco richiesto.
+        if not self.may_be_downloaded_async:
+            return self.download()  # scarica direttamente
+
         # Create new record in DB
         task_uuid = uuid()
         report_db = ReportElenco(report_type=self.elenco_report_type,
