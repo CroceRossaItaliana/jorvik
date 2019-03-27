@@ -14,7 +14,7 @@ def send_mail(self, user_pk):
     presidente = responses.persona.sede_riferimento().presidente()
 
     email_body = "email_body"
-    email = EmailMessage('Risposte monitoraggio 2019 di %s' % responses.persona,
+    email = EmailMessage('Risposte monitoraggio 2018 di %s' % responses.persona,
         email_body,
         DEFAULT_FROM_EMAIL,
         [presidente.email],)
