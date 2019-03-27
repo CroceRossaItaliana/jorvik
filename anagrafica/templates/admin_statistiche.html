@@ -185,6 +185,11 @@
                 case 'num_sedi_nuove':
                     showAnnoRiferimento();
                     break;
+                case 'ore_servizio':
+                    showAnnoRiferimento();
+                    showFiltroAnno();
+                    $('div[id=id_tipo_filtro]').parent().hide();
+                    break;
                 default:
                     showDefault();
                     break;
@@ -193,5 +198,3 @@
 
     </script>
 {% endblock %}
-
-

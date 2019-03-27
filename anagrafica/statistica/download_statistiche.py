@@ -86,11 +86,11 @@ def xlsx_num_soci_vol(obj):
 
     if 'tot' in obj:
         for el in obj['tot']:
-            worksheet.write(count, 0, str(el['nome']), bold)
+            worksheet.write(0, count, str(el['nome']), bold)
             count += 1
             for k, v in el['statistiche'].items():
-                worksheet.write(count, 0, str(k))
-                worksheet.write(count, 1, str(v))
+                worksheet.write(0, count, str(k))
+                worksheet.write(1, count, str(v))
                 count += 1
 
     workbook.close()
@@ -106,25 +106,26 @@ def xlsx_tot(obj, ws=False):
     bold = workbook.add_format({'bold': True})
 
     worksheet = None
-
-    count = 0
+    isIntestazione = False
+    count = 1
 
     if not ws:
         worksheet = workbook.add_worksheet('Statistiche totali')
 
     if 'tot' in obj:
+        c = 0
         for el in obj['tot']:
-            if ws:
-                worksheet = workbook.add_worksheet(el['nome'])
-                worksheet.write(0, 0, str(el['nome']), bold)
-                count = 1
-            else:
-                worksheet.write(count, 0, str(el['nome']), bold)
-                count += 1
+            worksheet.write(c+1, 0, str(el['nome']), bold)
             for k, v in el['statistiche'].items():
-                worksheet.write(count, 0, str(k))
-                worksheet.write(count, 1, str(v))
+                if not isIntestazione:
+                    worksheet.write(c, count, str(k), bold)
+                worksheet.write(c+1, count, str(v))
                 count += 1
+            isIntestazione = True
+            c += 2
+            count = 1
+
+
 
     workbook.close()
 

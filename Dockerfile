@@ -1,4 +1,6 @@
-FROM alfioemanuele/jorvik-docker-base:latest
+# FROM alfioemanuele/jorvik-docker-base:latest
+FROM python:3.5
+ENV PYTHONBUFFERED 1
 
 # Working directory
 RUN mkdir /code
