@@ -178,7 +178,7 @@ class TypeFormResponses:
         elif type == 'choices':
             return ', '.join(answer['labels'])
         elif type == 'choice':
-            return answer['label']
+            return answer.get('label') or answer.get('other')
         elif type == 'number':
             pass
 
