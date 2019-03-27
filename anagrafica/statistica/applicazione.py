@@ -1,6 +1,7 @@
 from django import forms
 from curriculum.areas import OBBIETTIVI_STRATEGICI
 from formazione.models import Titolo
+from collections import OrderedDict
 
 from .stat_costanti import (
     GENERALI, NUM_VOL_M_F, NUM_SOCI_VOL, NUM_VOL_FASCIA_ETA, NUM_NUOVI_VOL, NUM_DIMESSI, NUM_SEDI,
@@ -21,19 +22,20 @@ from .download_statistiche import (
 '''
     FUNZIONI CHE CALCOLANO LE STATISTICHE
 '''
-STATISTICHE = {
-    GENERALI: (statistica_generale, ('statistiche_generali.html', ), xlsx_generali),
-    NUM_VOL_M_F: (statistica_num_vol_m_f, ('statistiche_per_comitati_collapse.html', ), xlsx_comitati_collapse),
-    NUM_SOCI_VOL: (statistica_num_soci_vol, ('statistiche_per_comitati.html', 'statistiche_totali.html', ), xlsx_num_soci_vol),
-    NUM_VOL_FASCIA_ETA: (statistica_num_vol_fascia_eta, ('statistiche_per_comitati_collapse.html', ), xlsx_comitati_collapse),
-    NUM_NUOVI_VOL: (statistica_num_nuovi_vol, ('statistiche_totali.html', ), xlsx_tot),
-    NUM_DIMESSI: (statistica_num_dimessi, ('statistiche_totali.html', ), xlsx_tot),
-    NUM_SEDI: (statistica_num_sedi, ('statistiche_totali.html', ), xlsx_tot),
-    NUM_SEDI_NUOVE: (statistiche_num_sedi_nuove, ('statistiche_totali.html', ), xlsx_tot),
-    NUMERO_CORSI: (statistica_num_corsi, ('statistiche_totali.html', ), xlsx_tot),
-    IIVV_CM: (statistica_iivv_cm, ('statistiche_per_comitati_collapse.html', ), xlsx_comitati_collapse),
-    ORE_SERVIZIO: (statistica_ore_servizio, ('statistiche_totali.html', ), xlsx_tot),
-}
+
+
+STATISTICHE = OrderedDict()
+STATISTICHE[GENERALI] = (statistica_generale, ('statistiche_generali.html', ), xlsx_generali)
+STATISTICHE[NUM_VOL_M_F] = (statistica_num_vol_m_f, ('statistiche_per_comitati_collapse.html', ), xlsx_comitati_collapse)
+STATISTICHE[NUM_SOCI_VOL] = (statistica_num_soci_vol, ('statistiche_per_comitati.html', 'statistiche_totali.html', ), xlsx_num_soci_vol)
+STATISTICHE[NUM_VOL_FASCIA_ETA] = (statistica_num_vol_fascia_eta, ('statistiche_per_comitati_collapse.html', ), xlsx_comitati_collapse)
+STATISTICHE[NUM_NUOVI_VOL] = (statistica_num_nuovi_vol, ('statistiche_totali.html', ), xlsx_tot)
+STATISTICHE[NUM_DIMESSI] = (statistica_num_dimessi, ('statistiche_totali.html', ), xlsx_tot)
+STATISTICHE[NUM_SEDI] = (statistica_num_sedi, ('statistiche_totali.html', ), xlsx_tot)
+STATISTICHE[NUM_SEDI_NUOVE] = (statistiche_num_sedi_nuove, ('statistiche_totali.html', ), xlsx_tot)
+STATISTICHE[NUMERO_CORSI] = (statistica_num_corsi, ('statistiche_totali.html', ), xlsx_tot)
+STATISTICHE[IIVV_CM] = (statistica_iivv_cm, ('statistiche_per_comitati_collapse.html', ), xlsx_comitati_collapse)
+STATISTICHE[ORE_SERVIZIO] = (statistica_ore_servizio, ('statistiche_totali.html', ), xlsx_tot)
 
 
 class ModuloStatisticheBase(forms.Form):

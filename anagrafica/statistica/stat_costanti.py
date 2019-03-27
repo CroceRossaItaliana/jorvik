@@ -1,6 +1,7 @@
 import datetime
 from datetime import datetime
 from anagrafica.costanti import TERRITORIALE, REGIONALE, LOCALE, PROVINCIALE
+from collections import OrderedDict
 
 ANNI_DI_RIFERIMENTO = 10
 
@@ -38,19 +39,18 @@ ORE_SERVIZIO = 'ore_servizio'
 '''
     NOMI VISUALIZZATI STATISTICHE
 '''
-STATISTICA = {
-    GENERALI: "Generali",
-    NUM_SOCI_VOL: "Soci e Volontari",
-    NUM_VOL_M_F: "Volontari M/F",
-    NUM_VOL_FASCIA_ETA: "Volontari per fascia di età",
-    NUM_NUOVI_VOL: "Nuovi volontari",
-    NUM_DIMESSI: "Dimessi",
-    NUM_SEDI: "Sedi",
-    NUM_SEDI_NUOVE: "Sedi nuove",
-    NUMERO_CORSI: "Corsi",
-    IIVV_CM: "IIVV/CM",
-    ORE_SERVIZIO: "Ore di Servizio"
-}
+STATISTICA = OrderedDict()
+STATISTICA[GENERALI] = "Generali"
+STATISTICA[NUM_VOL_M_F] = "Volontari M/F"
+STATISTICA[NUM_SOCI_VOL] = "Soci e Volontari"
+STATISTICA[NUM_VOL_FASCIA_ETA] = "Volontari per fascia di età"
+STATISTICA[NUM_NUOVI_VOL] = "Nuovi volontari"
+STATISTICA[NUM_DIMESSI] = "Dimessi"
+STATISTICA[NUM_SEDI] = "Sedi"
+STATISTICA[NUM_SEDI_NUOVE] = "Sedi nuove"
+STATISTICA[NUMERO_CORSI] = "Corsi"
+STATISTICA[IIVV_CM] = "IIVV/CM"
+STATISTICA[ORE_SERVIZIO] = "Ore di Servizio"
 
 
 FILTRO_ANNO = 'ANNO'
