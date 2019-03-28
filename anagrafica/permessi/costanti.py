@@ -21,6 +21,7 @@ RUBRICA_UFFICIO_SOCI = "RUBRICA_UFFICIO_SOCI"
 RUBRICA_UFFICIO_SOCI_UNITA = "RUBRICA_UFFICIO_SOCI_UNITA"
 RUBRICA_PRESIDENTI = "RUBRICA_PRESIDENTI"
 RUBRICA_COMMISSARI = "RUBRICA_COMMISSARI"
+RUBRICA_CONSIGLIERE_GIOVANE = "RUBRICA_COMMISSARI"
 RUBRICA_DELEGATI_AREA = "RUBRICA_DELEGATI_AREA"
 RUBRICA_DELEGATI_OBIETTIVO_1 = "RUBRICA_DELEGATI_OBIETTIVO_1"
 RUBRICA_DELEGATI_OBIETTIVO_2 = "RUBRICA_DELEGATI_OBIETTIVO_2"
@@ -95,7 +96,7 @@ PERMESSI_OGGETTI = (
 DELEGHE_OGGETTI = (
     (PRESIDENTE,                ('anagrafica', 'Sede', None)),
     (CONSIGLIERE,                ('anagrafica', 'Sede', None)),
-    #(COMMISSARIO,                ('anagrafica', 'Sede', None)),
+    (COMMISSARIO,                ('anagrafica', 'Sede', None)),
     (UFFICIO_SOCI,              ('anagrafica', 'Sede', None)),
     (DELEGATO_AREA,             ('attivita', 'Area', 'sede__in')),
     (RESPONSABILE_AREA,         ('attivita', 'Area', 'sede__in')),
@@ -170,3 +171,4 @@ DELEGHE_OGGETTI_DICT = dict(DELEGHE_OGGETTI)
 # Costanti URL
 ERRORE_PERMESSI = '/errore/permessi/'
 ERRORE_ORFANO = '/errore/orfano/'
+

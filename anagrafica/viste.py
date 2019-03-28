@@ -1,6 +1,4 @@
-import codecs
-import csv
-import datetime
+import codecs, csv, datetime
 from collections import OrderedDict
 from importlib import import_module
 
@@ -10,55 +8,22 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import reverse
+from django.shortcuts import render_to_response, redirect, get_object_or_404
+from django.template.loader import get_template
 from django.utils import timezone
 from django.utils.crypto import get_random_string
-from django.template.loader import get_template
-# from django.views.generic import ListView
-from django.core.urlresolvers import reverse
-from django.shortcuts import (render_to_response, redirect, get_object_or_404, HttpResponse)
 
-from anagrafica.costanti import TERRITORIALE, REGIONALE
-from anagrafica.elenchi import ElencoDelegati
-from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
-    ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
-    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
-    ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
-    ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
-    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail, \
-    ModuloUSModificaUtenza, ModuloReportFederazione
-from anagrafica.forms import ModuloStepCodiceFiscale, ModuloStepAnagrafica
-
-# Tipi di registrazione permessi
-from anagrafica.importa import VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari
-from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento, \
-    ProvvedimentoDisciplinare, Sede, Riserva, Dimissione
-from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, COMMISSARIO, \
-    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
-    RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
-    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI, CONSIGLIERE, VICE_PRESIDENTE, CONSIGLIERE_GIOVANE
-
-from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
-    ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO, \
-    RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
-    RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1, RUBRICA_DELEGATI_OBIETTIVO_2, \
-    RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
-    RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
-    RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, GESTIONE_SOCI
-from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
-    INCARICO_GESTIONE_FOTOTESSERE
-from anagrafica.utils import _conferma_email, _richiesta_conferma_email
 from articoli.viste import get_articoli
 from attivita.forms import ModuloStatisticheAttivitaPersona
 from attivita.models import Partecipazione
 from attivita.stats import statistiche_attivita_persona
-from attivita.viste import attivita_storico_excel
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
-from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico, errore_no_volontario
+from base.errori import (errore_generico, errore_nessuna_appartenenza,
+                         messaggio_generico, errore_no_volontario)
 from base.files import Zip
 from base.models import Log
-from base.notifiche import NOTIFICA_INVIA
 from base.stringhe import genera_uuid_casuale
 from base.utils import remove_none, poco_fa, oggi
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
@@ -66,6 +31,33 @@ from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio, Q
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
+
+from .costanti import TERRITORIALE, REGIONALE
+from .elenchi import ElencoDelegati
+from .utils import _conferma_email, _richiesta_conferma_email
+from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT,
+    DELEGATO_OBIETTIVO_1, COMMISSARIO, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
+    DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE,
+    RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE,
+    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO,
+    PERMESSI_NOMI, RUBRICHE_TITOLI, CONSIGLIERE, VICE_PRESIDENTE, CONSIGLIERE_GIOVANE)
+from .permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA, GESTIONE_SEDE,
+    GESTIONE, ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO)
+from .permessi.incarichi import (INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI,
+    INCARICO_GESTIONE_FOTOTESSERE)
+from .importa import (VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari)
+from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
+    ModuloModificaAnagrafica, ModuloModificaAvatar, ModuloCreazioneDocumento,
+    ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto,
+    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento,
+    ModuloCreazioneDelega, ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera,
+    ModuloProfiloModificaAnagrafica, ModuloProfiloTitoloPersonale, ModuloUtenza,
+    ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
+    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti,
+    ModuloPulisciEmail, ModuloUSModificaUtenza, ModuloReportFederazione,
+    ModuloStepCodiceFiscale, ModuloStepAnagrafica)
+from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
+    Appartenenza, ProvvedimentoDisciplinare, Sede, Riserva, Dimissione)
 
 
 TIPO_VOLONTARIO = 'volontario'
@@ -79,7 +71,6 @@ STEP_CODICE_FISCALE = 'codice_fiscale'
 STEP_ANAGRAFICA = 'anagrafica'
 STEP_CREDENZIALI = 'credenziali'
 STEP_FINE = 'fine'
-
 STEP_NOMI = {
     STEP_COMITATO: 'Selezione Comitato',
     STEP_CODICE_FISCALE: 'Codice Fiscale',
@@ -100,15 +91,13 @@ MODULI = {
     STEP_CODICE_FISCALE: ModuloStepCodiceFiscale,
     STEP_ANAGRAFICA: ModuloStepAnagrafica,
     STEP_CREDENZIALI: ModuloStepCredenziali,
-    STEP_FINE: None,
+    STEP_FINE: ModuloStepFine,
 }
 
 
 @pagina_anonima
 def registrati(request, tipo, step=None):
-    """
-    La vista per tutti gli step della registrazione.
-    """
+    """ La vista per tutti gli step della registrazione. """
 
     # Controlla che il tipo sia valido (/registrati/<tipo>/)
     if tipo not in TIPO:
@@ -146,12 +135,12 @@ def registrati(request, tipo, step=None):
         #  nome: Il nome completo dello step (es. "Selezione Comitato")
         #  slug: Il nome per il link (es. "comitato" per /registrati/<tipo>/comitato/")
         #  completato: True se lo step e' stato completato o False se futuro o attuale
-        {'nome': STEP_NOMI[x], 'slug': x,
+
+        {'nome': STEP_NOMI[x],
+         'slug': x,
          'completato': (STEP[tipo].index(x) < STEP[tipo].index(step)),
          'attuale': (STEP[tipo].index(x) == STEP[tipo].index(step)),
-         'modulo': MODULI[x](initial=sessione) if MODULI[x] else None,
-         }
-        for x in STEP[tipo]
+         'modulo': MODULI[x](initial=sessione) if MODULI[x] else None,} for x in STEP[tipo]
     ]
 
     # Controlla se e' l'ultimo step
@@ -181,7 +170,7 @@ def registrati(request, tipo, step=None):
         else:
             modulo = None
 
-    contesto = {
+    context = {
         'email': sessione.get('email'),
         'attuale_nome': STEP_NOMI[step],
         'attuale_slug': step,
@@ -197,18 +186,17 @@ def registrati(request, tipo, step=None):
             request.session['registrazione_id'] = get_random_string(length=32)
 
         if not sessione.get('email'):
-            contesto = {
+            context = {
                 'attuale_nome': STEP_NOMI[step],
                 'attuale_slug': step,
                 'lista_step': lista_step,
                 'tipo': tipo,
             }
-            return 'anagrafica_registrati_errore.html', contesto
+            return 'anagrafica_registrati_errore.html', context
 
         else:
             if uid is not None or request.session['registrazione_id'] != registration_code:
-
-                corpo = {
+                email_body = {
                     'tipo': tipo,
                     'step': step,
                     'code': request.session['registrazione_id'],
@@ -218,17 +206,18 @@ def registrati(request, tipo, step=None):
 
                 Messaggio.invia_raw(
                    oggetto="Registrazione su Gaia",
-                   corpo_html=get_template('email_conferma.html').render(corpo),
+                   corpo_html=get_template('email_conferma.html').render(email_body),
                    email_mittente=None,
                    lista_email_destinatari=[
                         sessione.get('email')
                    ]
                 )
                 link_debug = '/registrati/{tipo}/{step}/?code={code}&registration={sessione}'.format(
-                    tipo=tipo, step=step, code=request.session['registrazione_id'], sessione=request.session.session_key
+                    tipo=tipo, step=step, code=request.session['registrazione_id'],
+                    sessione=request.session.session_key
                 )
 
-                contesto = {
+                context = {
                     'attuale_nome': STEP_NOMI[step],
                     'attuale_slug': step,
                     'lista_step': lista_step,
@@ -236,9 +225,9 @@ def registrati(request, tipo, step=None):
                     'tipo': tipo,
                     'link_debug': link_debug if settings.DEBUG else ''
                 }
-                return 'anagrafica_registrati_attesa_mail.html', contesto
+                return 'anagrafica_registrati_attesa_mail.html', context
 
-    return 'anagrafica_registrati_step_' + step + '.html', contesto
+    return 'anagrafica_registrati_step_%s.html' % step, context
 
 
 @pagina_anonima
@@ -252,21 +241,34 @@ def registrati_conferma(request, tipo):
     if tipo not in TIPO:
         return redirect('/errore/')  # Altrimenti porta ad errore generico
 
+    dati = {}
+
     try:
         sessione = request.session['registrati'].copy()
     except KeyError:
         sessione = {}
-    dati = {}
+
+    form_confirm = ModuloStepFine(request.POST)
 
     # Carica tutti i moduli inviati da questo tipo di registrazione
-    for (k, modulo) in [(x, MODULI[x](data=sessione)) for x in STEP[tipo] if MODULI[x] is not None]:
+    for (k, form) in [(x, MODULI[x](data=sessione)) for x in STEP[tipo] if MODULI[x] is not None]:
+        if k == STEP_FINE:
+            """ Comportamento adeguato per la form ModuloStepFine introdotta 
+                dall'issue GAIA-49, altrimenti finiva nell'exception sotto. """
+            if form_confirm.is_valid():
+                dati.update(form_confirm.cleaned_data)
+            else:
+                response = redirect('/registrati/aspirante/fine/')
+                messages.error(request, 'Controlla tutti i campo obbligatori.')
+                return response
+            continue
 
         # Controlla nuovamente la validita'
-        if not modulo.is_valid():
-            raise ValueError("Errore nella validazione del sub-modulo %s" % (k, ))
+        if not form.is_valid():
+            raise ValueError("Errore nella validazione del sub-modulo %s" % k)
 
         # Aggiunge tutto a "dati"
-        dati.update(modulo.cleaned_data)
+        dati.update(form.cleaned_data)
 
     # Quali di questi campi vanno nella persona?
     campi_persona = [str(x.name) for x in Persona._meta.get_fields() if not x.is_relation]
@@ -486,6 +488,7 @@ def utente_documenti_zip(request, me):
 
     return redirect(z.download_url)
 
+
 @pagina_privata
 def utente_storico(request, me):
 
@@ -651,6 +654,7 @@ def rubrica_delegati(request, me, rubrica):
         tipo=delega,
         oggetto_tipo=ContentType.objects.get_for_model(Sede),
     )
+
     sedi_delega = me.sedi_deleghe_attuali(espandi=True, deleghe=deleghe).espandi(pubblici=espandi)
 
     if request.POST:  # Ho selezionato delle sedi. Elabora elenco.
@@ -685,6 +689,7 @@ def utente_contatti_cancella_numero(request, me, pk):
     tel.delete()
     return redirect('/utente/contatti/')
 
+
 @pagina_privata
 def utente_donazioni_profilo(request, me):
 
@@ -705,6 +710,7 @@ def utente_donazioni_profilo(request, me):
     }
     return 'anagrafica_utente_donazioni_profilo.html', contesto
 
+
 @pagina_privata
 def utente_donazioni_sangue(request, me):
     modulo = ModuloDonazione(request.POST or None)
@@ -724,6 +730,7 @@ def utente_donazioni_sangue(request, me):
     }
     return 'anagrafica_utente_donazioni_sangue.html', contesto
 
+
 @pagina_privata
 def utente_donazioni_sangue_cancella(request, me, pk):
     donazione = get_object_or_404(Donazione, pk=pk)
@@ -732,6 +739,7 @@ def utente_donazioni_sangue_cancella(request, me, pk):
 
     donazione.delete()
     return redirect("/utente/donazioni/sangue/")
+
 
 def estensioni_pending(me):
 
@@ -746,6 +754,7 @@ def estensioni_pending(me):
                     )
                     persone.append(persona)
     return me.estensioni_in_attesa(), delegati
+
 
 @pagina_privata
 def utente_estensione(request, me):
@@ -811,6 +820,7 @@ def utente_estensione(request, me):
     }
     return "anagrafica_utente_estensione.html", contesto
 
+
 @pagina_privata()
 def utente_estensione_termina(request, me, pk):
     if not me.volontario:
@@ -822,6 +832,7 @@ def utente_estensione_termina(request, me, pk):
         estensione.termina()
         return redirect('/utente/')
 
+
 def utente_trasferimento_termina(request, me, pk):
     if not me.volontario:
         return errore_no_volontario(request, me)
@@ -831,6 +842,7 @@ def utente_trasferimento_termina(request, me, pk):
     else:
         trasferimento.ritira()
         return redirect('/utente/trasferimento/')
+
 
 def trasferimenti_pending(me):
 
@@ -863,6 +875,7 @@ def trasferimenti_pending(me):
         else:
             trasferimenti_manuali_pending = trasferimento
     return trasferimenti_auto_pending, trasferimenti_manuali_pending, persone
+
 
 @pagina_privata
 def utente_trasferimento(request, me):
@@ -932,6 +945,7 @@ def utente_trasferimento(request, me):
     }
     return "anagrafica_utente_trasferimento.html", contesto
 
+
 @pagina_privata
 def utente_riserva(request, me):
     if not me.volontario:
@@ -982,6 +996,7 @@ def utente_riserva_ritira(request, me, pk):
            ]
         )
     return redirect("/utente/")
+
 
 @pagina_privata
 def utente_riserva_termina(request, me, pk):
@@ -1195,6 +1210,7 @@ def utente_curriculum(request, me, tipo=None):
     }
     return 'anagrafica_utente_curriculum.html', contesto
 
+
 @pagina_privata
 def utente_curriculum_cancella(request, me, pk=None):
 
@@ -1375,6 +1391,7 @@ def _profilo_documenti(request, me, persona):
     }
     return 'anagrafica_profilo_documenti.html', contesto
 
+
 def _profilo_provvedimenti(request, me, persona):
         provvedimenti = ProvvedimentoDisciplinare.objects.filter(persona=persona)
         contesto = {
@@ -1382,6 +1399,7 @@ def _profilo_provvedimenti(request, me, persona):
         }
 
         return 'anagrafica_profilo_provvedimenti.html', contesto
+
 
 def _profilo_quote(request, me, persona):
     contesto = {}
@@ -1544,6 +1562,7 @@ def _sezioni_profilo(puo_leggere, puo_modificare):
     )
     return (x for x in r if len(x[1]) < 4 or x[1][3] == True)
 
+
 @pagina_privata
 def profilo(request, me, pk, sezione=None):
     persona = get_object_or_404(Persona, pk=pk)
@@ -1573,6 +1592,7 @@ def profilo(request, me, pk, sezione=None):
             return f_template, contesto
         except ValueError:
             return risposta
+
 
 @pagina_privata
 def presidente(request, me):

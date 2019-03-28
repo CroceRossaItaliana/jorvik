@@ -129,12 +129,14 @@ class Veicolo(ModelloSemplice, ConMarcaTemporale):
     GPL = 'P'
     METANO = 'M'
     ELETTRICA = 'E'
+    HYBRID = 'H'
     ALIMENTAZIONE = (
         (BENZINA, "Benzina"),
         (GASOLIO, "Gasolio"),
         (GPL, "GPL"),
         (METANO, "Metano"),
         (ELETTRICA, "Elettrica"),
+        (HYBRID, 'Benzina/Elettrico'),
     )
     alimentazione = models.CharField("Alimentazione (P.3)", max_length=1, choices=ALIMENTAZIONE, default=None, null=True)
 

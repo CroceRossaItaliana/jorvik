@@ -9,16 +9,12 @@ from anagrafica.models import (Persona, Appartenenza, Riserva, Sede,
 from attivita.models import Partecipazione
 from base.utils import filtra_queryset, testo_euro, oggi
 from curriculum.models import TitoloPersonale
-from .models import Tesseramento, Quota, Tesserino
-from .forms import (ModuloElencoSoci, ModuloElencoElettorato,
-                    ModuloElencoQuote, ModuloElencoPerTitoli,
-                    ModuloElencoPerTitoliCorso)
+from .models import Tesseramento, Quota, Tesserino, ReportElenco
+from .forms import (ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote)
 
 
 class Elenco:
-    """
-    Rappresenta un elenco semplice di persone.
-    """
+    """ Rappresenta un elenco semplice di persone. """
 
     def __init__(self, *args, **kwargs):
         self.args = args
@@ -67,11 +63,12 @@ class Elenco:
 class ElencoVistaSemplice(Elenco):
 
     def excel_colonne(self):
-        return super(ElencoVistaSemplice, self).excel_colonne() + (
+        columns = (
             ("Cognome", lambda p: p.cognome),
             ("Nome", lambda p: p.nome),
             ("Codice Fiscale", lambda p: p.codice_fiscale),
         )
+        return super().excel_colonne() + columns
 
     def ordina(self, qs):
         return qs.order_by('cognome', 'nome', 'codice_fiscale',)
@@ -156,24 +153,27 @@ class ElencoVistaTesseriniRifiutati(ElencoVistaSoci):
 
 
 class ElencoSociAlGiorno(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi soci
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi soci """
+
+    REPORT_TYPE = ReportElenco.SOCI_AL_GIORNO
 
     def risultati(self):
         qs_sedi = self.args[0]
+
+        al_giorno = self.modulo_riempito.cleaned_data['al_giorno']
+
         return Persona.objects.filter(
             Appartenenza.query_attuale(
-                al_giorno=self.modulo_riempito.cleaned_data['al_giorno'],
-                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_SOCIO,
+                al_giorno=al_giorno,
+                sede__in=qs_sedi,
+                membro__in=Appartenenza.MEMBRO_SOCIO,
             ).via("appartenenze")
         ).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
                 appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related(
-            'appartenenze', 'appartenenze__sede',
-            'utenza', 'numeri_telefono'
+            'appartenenze', 'appartenenze__sede', 'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
     def modulo(self):
@@ -181,9 +181,9 @@ class ElencoSociAlGiorno(ElencoVistaSoci):
 
 
 class ElencoSostenitori(ElencoVistaAnagrafica):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.SOSTENITORI
 
     def template(self):
         return 'us_elenchi_inc_sostenitori.html'
@@ -201,6 +201,7 @@ class ElencoSostenitori(ElencoVistaAnagrafica):
 
 
 class ElencoExSostenitori(ElencoVistaAnagrafica):
+    REPORT_TYPE = ReportElenco.EX_SOSTENITORI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -223,9 +224,9 @@ class ElencoExSostenitori(ElencoVistaAnagrafica):
 
 
 class ElencoVolontari(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori"""
+
+    REPORT_TYPE = ReportElenco.VOLONTARI
 
     def modulo(self):
         from .forms import ModuloElencoVolontari
@@ -255,9 +256,9 @@ class ElencoVolontari(ElencoVistaSoci):
 
 
 class ElencoIVCM(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.IV_E_CM
 
     def modulo(self):
         from .forms import ModuloElencoIVCM
@@ -288,9 +289,9 @@ class ElencoIVCM(ElencoVistaSoci):
 
 
 class ElencoSenzaTurni(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare l'elenco
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.SENZA_TURNI
 
     def modulo(self):
         from .forms import ModuloSenzaTurni
@@ -320,9 +321,9 @@ class ElencoSenzaTurni(ElencoVistaSoci):
 
 
 class ElencoEstesi(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.ESTESI
 
     def modulo(self):
         from .forms import ModuloElencoEstesi
@@ -330,6 +331,7 @@ class ElencoEstesi(ElencoVistaSoci):
 
     def risultati(self):
         qs_sedi = self.args[0]
+
         from django.db.models import BooleanField, Value
         if self.modulo_riempito.cleaned_data['estesi'] == self.modulo_riempito.ESTESI_INGRESSO:
             # Estesi in ingresso
@@ -383,9 +385,9 @@ class ElencoEstesi(ElencoVistaSoci):
 
 
 class ElencoVolontariGiovani(ElencoVolontari):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.VOLONTARI_GIOVANI
 
     def risultati(self):
         oggi = date.today()
@@ -396,9 +398,9 @@ class ElencoVolontariGiovani(ElencoVolontari):
 
 
 class ElencoDimessi(ElencoVistaAnagrafica):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi """
+
+    REPORT_TYPE = ReportElenco.DIMESSI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -417,12 +419,12 @@ class ElencoDimessi(ElencoVistaAnagrafica):
 
         def _data(p):
             dim = Dimissione.objects.filter(persona=p.pk).order_by('ultima_modifica').first()
-            return dim.creazione
+            return dim.creazione if dim else ''
 
         def _motivo(p):
             dim = Dimissione.objects.filter(persona=p.pk).order_by('ultima_modifica').first()
             motivi = dict(Dimissione.MOTIVI)
-            return motivi[dim.motivo]
+            return motivi[dim.motivo] if dim else ''
 
         return super(ElencoDimessi, self).excel_colonne() + (
             ('Data dimissioni', lambda p: _data(p)),
@@ -431,9 +433,9 @@ class ElencoDimessi(ElencoVistaAnagrafica):
 
 
 class ElencoTrasferiti(ElencoVistaAnagrafica):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi """
+
+    REPORT_TYPE = ReportElenco.TRASFERITI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -472,9 +474,9 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
 
 
 class ElencoDipendenti(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.DIPENDENTI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -552,9 +554,9 @@ class ElencoQuote(ElencoVistaSoci):
 
 
 class ElencoOrdinari(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.SOCI_ORDINARI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -573,9 +575,9 @@ class ElencoOrdinari(ElencoVistaSoci):
 
 
 class ElencoInRiserva(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi in riserva
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi in riserva """
+
+    REPORT_TYPE = ReportElenco.VOLONTARI_IN_RISERVA
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -603,9 +605,9 @@ class ElencoInRiserva(ElencoVistaSoci):
 
 
 class ElencoElettoratoAlGiorno(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi soci
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.ELETTORATO
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -677,8 +679,11 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
 
 class ElencoPerTitoli(ElencoVistaAnagrafica):
+    REPORT_TYPE = ReportElenco.TITOLI
+
     def risultati(self):
         qs_sedi = self.args[0]
+
         cd = self.modulo_riempito.cleaned_data
         metodo = cd['metodo']
         titoli = cd['titoli']
@@ -692,13 +697,13 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
             'utenza', 'numeri_telefono'
         )
 
-        # Almeno un titolo
         if metodo == self.modulo_riempito.METODO_OR:
-            base = base.filter(titoli_personali__in=TitoloPersonale.con_esito_ok().filter(
-                titolo__in=titoli))
-
-        # Tutti i titoli
+            # Almeno un titolo
+            return base.filter(titoli_personali__in=TitoloPersonale.con_esito_ok().filter(
+                    titolo__in=titoli,
+            )).distinct('cognome', 'nome', 'codice_fiscale')
         else:
+            # Tutti i titoli
             base = base.filter(titoli_personali__in=TitoloPersonale.con_esito_ok())
             for titolo in titoli:
                 base = base.filter(titoli_personali__titolo=titolo)
@@ -706,6 +711,7 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
         return base.distinct('cognome', 'nome', 'codice_fiscale')
 
     def modulo(self):
+        from .forms import ModuloElencoPerTitoli
         return ModuloElencoPerTitoli
 
 
@@ -719,6 +725,7 @@ class ElencoPerTitoliCorso(ElencoPerTitoli):
         return results.filter(titoli_personali__in=TitoloPersonale.con_esito_ok())
 
     def modulo(self):
+        from .forms import ModuloElencoPerTitoliCorso
         return ModuloElencoPerTitoliCorso
 
     def template(self):

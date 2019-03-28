@@ -21,6 +21,7 @@ from anagrafica.permessi.applicazioni import PRESIDENTE
 
 register = Library()
 
+
 @register.filter
 def select_presidente_commissario_da_persona(persona):
     return 'Presidente' if persona.deleghe_attuali(tipo=PRESIDENTE).exists() else 'Commissario'
@@ -284,3 +285,22 @@ class NodoMappa(template.Node):
 
         return output
 
+
+@register.simple_tag()
+def image_as_base64(image_file):
+    import os
+    import base64
+    import pathlib
+
+    imgage_path = image_file.path
+
+    if not os.path.isfile(imgage_path):
+        return None
+
+    encoded_string = ''
+    extension = pathlib.Path(imgage_path).suffix.split('.')[1]
+
+    with open(imgage_path, 'rb') as img:
+        encoded_string = base64.b64encode(img.read())
+
+    return 'data:image/%s;base64,%s' % (extension, encoded_string.decode("utf-8") )

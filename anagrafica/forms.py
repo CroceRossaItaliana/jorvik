@@ -178,6 +178,13 @@ class ModuloStepCredenziali(forms.Form):
         return cleaned_data
 
 
+class ModuloStepFine(forms.Form):
+    confirm_1 = forms.BooleanField(
+        label='Accettazione del consenso al trattamento dei dati personali comuni')
+    confirm_2 = forms.BooleanField(
+        label='Accettazione del consenso al trattamento delle categorie particolari di dati personali (dati relativi alla salute, dati biometrici...)')
+
+
 class ModuloStepAnagrafica(ModelForm):
     class Meta:
         model = Persona

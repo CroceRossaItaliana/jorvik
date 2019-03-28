@@ -1,21 +1,18 @@
 import os
+import urllib
+from io import BytesIO
 from datetime import datetime, date
 from zipfile import ZipFile
 
-from barcode import generate
-from barcode.writer import ImageWriter
-from django.core.files import File
-from django.template import Context
 from django.template.loader import get_template
 
-from base.models import Allegato
-from base.stringhe import domani, GeneratoreNomeFile
-from jorvik.settings import MEDIA_ROOT, DOMPDF_ENDPOINT
-from io import StringIO
-import urllib
-import xlsxwriter
+from xlsxwriter import Workbook
+from barcode import generate
+from barcode.writer import ImageWriter
 
-__author__ = 'alfioemanuele'
+from jorvik.settings import MEDIA_ROOT, DOMPDF_ENDPOINT
+from .models import Allegato
+from .stringhe import domani, GeneratoreNomeFile
 
 
 class Zip(Allegato):
@@ -193,16 +190,16 @@ class FoglioExcel:
 
 
 class Excel(Allegato):
-    """
-    Rappresenta un file Excel generato al volo.
-    """
+    """ Rappresenta un file Excel generato al volo. """
 
     class Meta:
         proxy = True
 
     def __init__(self, *args, **kwargs):
-        super(Excel, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fogli = []
+        self.output = BytesIO()
+
 
     def aggiungi_foglio(self, foglio):
         """
@@ -214,26 +211,28 @@ class Excel(Allegato):
 
         self.fogli.append(foglio)
 
-    def genera_e_salva(self, nome='File.xlsx', scadenza=None,
-                       ordina_fogli=True, **kwargs):
+    def genera_e_salva(self, nome='File.xlsx', scadenza=None, ordina_fogli=True, save_to_memory=False):
         """
         Genera il file e lo salva su database.
         :param nome: Il nome del file da allegare (opzionale, default 'File.xlsx').
         :param scadenza: Scadenza del file. Domani.
-        :param kwargs:
         :return:
         """
 
-        scadenza = scadenza or domani()
-
         generatore = GeneratoreNomeFile('allegati/')
         zname = generatore(self, nome)
+
         self.prepara_cartelle(MEDIA_ROOT + zname)
 
-        workbook = xlsxwriter.Workbook(MEDIA_ROOT + zname)
+        if save_to_memory:
+            workbook = Workbook(self.output)
+        else:
+            workbook = Workbook(MEDIA_ROOT + zname)
+
         bold = workbook.add_format({'bold': True})
 
-        for foglio in [x for x in self.fogli]:  # Per ogni foglio
+        # Per ogni foglio
+        for foglio in [x for x in self.fogli]:
 
             # Aggiunge il foglio
             worksheet = workbook.add_worksheet(foglio.nome)
@@ -256,9 +255,13 @@ class Excel(Allegato):
 
         if ordina_fogli:
             workbook.worksheets_objs.sort(key=lambda x: x.name)
+
         workbook.close()
 
-        self.file = zname
-        self.nome = nome
-        self.scadenza = scadenza
-        self.save()
+        if save_to_memory:
+            self.output.seek(0)
+        else:
+            self.file = zname
+            self.nome = nome
+            self.scadenza = scadenza or domani()
+            self.save()

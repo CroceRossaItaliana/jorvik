@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'oauth2_provider',
     'corsheaders',
     'mptt',
+    'oidc_provider',
 
     # Moduli interni
     'base',

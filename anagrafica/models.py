@@ -663,6 +663,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         )
         appartenenza.save()
 
+    def end_membership(self, membro, **kwargs):
+        self.appartenenze_attuali(membro=membro).update(**kwargs)
+
+    def end_sostenitore_membership(self):
+        self.end_membership(
+            Appartenenza.SOSTENITORE,
+            terminazione=Appartenenza.DIMISSIONE,
+            fine=datetime.now()
+        )
+
     def partecipazione_corso_base(self):
         """
         Ritorna la partecipazione confermata al corso base in corso, se esistente,
@@ -1168,6 +1178,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         # Salva file excel e scarica
         excel.genera_e_salva("Foglio di servizio.xlsx")
         return excel
+
+    @property
+    def is_presidente(self):
+        return self.deleghe_attuali(tipo=PRESIDENTE).exists()
+
+    @property
+    def is_comissario(self):
+        return self.deleghe_attuali(tipo=COMMISSARIO).exists()
 
     @property
     def nuovo_presidente(self):

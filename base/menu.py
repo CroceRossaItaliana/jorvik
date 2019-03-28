@@ -36,7 +36,7 @@ def menu(request):
         sedi_deleghe_normali = me.sedi_deleghe_attuali(deleghe=deleghe_normali) if me else Sede.objects.none()
         sedi_deleghe_normali = [sede.pk for sede in sedi_deleghe_normali if sede.comitati_sottostanti().exists() or sede.unita_sottostanti().exists()]
         presidente = me.deleghe_attuali(tipo=PRESIDENTE)
-        sedi_deleghe_presidente = me.sedi_deleghe_attuali(deleghe=presidente).exclude(estensione__in=(TERRITORIALE,)) if me else Sede.objects.none()
+        sedi_deleghe_presidente = me.sedi_deleghe_attuali(deleghe=presidente) if me else Sede.objects.none()
         sedi_presidenti_sottostanti = [sede.pk for sede in sedi_deleghe_presidente if sede.comitati_sottostanti().exists()]
         sedi_deleghe_presidente = list(sedi_deleghe_presidente.values_list('pk', flat=True))
         sedi = sedi_deleghe_normali + sedi_deleghe_presidente
@@ -59,10 +59,11 @@ def menu(request):
             if titolo not in rubriche:
                 rubriche.append(titolo)
                 if (delega in deleghe_attuali or
-                    PRESIDENTE in deleghe_attuali or
                     UFFICIO_SOCI in deleghe_attuali or
-                    COMMISSARIO in deleghe_attuali
-                ) and (delega != PRESIDENTE or (PRESIDENTE in deleghe_attuali and sedi_presidenti_sottostanti)):
+                    PRESIDENTE in deleghe_attuali or
+                    COMMISSARIO in deleghe_attuali):
+                    if UFFICIO_SOCI in deleghe_attuali and (delega == COMMISSARIO or delega == PRESIDENTE):
+                        continue
                     RUBRICA_BASE.append(
                         (titolo, "fa-book", "".join(("/utente/rubrica/", slug, '/')))
                     )
@@ -168,10 +169,10 @@ def menu(request):
                 ("Estesi", "fa-list", "/us/elenchi/estesi/"),
                 ("IV e CM", "fa-list", "/us/elenchi/ivcm/"),
                 ("In Riserva", "fa-list", "/us/elenchi/riserva/"),
-                ("Zero turni", "fa-list", "/us/elenchi/senza-turni/", '', True),
+                ("Zero turni", "fa-list", "/us/elenchi/senza-turni/"),
                 ("Soci", "fa-list", "/us/elenchi/soci/"),
                 ("Sostenitori", "fa-list", "/us/elenchi/sostenitori/"),
-                ("Ex Sostenitori", "fa-list", "/us/elenchi/ex-sostenitori/", '', True),
+                ("Ex Sostenitori", "fa-list", "/us/elenchi/ex-sostenitori/"),
                 ("Dipendenti", "fa-list", "/us/elenchi/dipendenti/"),
                 ("Dimessi", "fa-list", "/us/elenchi/dimessi/"),
                 ("Trasferiti", "fa-list", "/us/elenchi/trasferiti/"),

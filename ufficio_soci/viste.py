@@ -10,6 +10,7 @@ from django.db.models import Sum, Q
 from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
+from django.db import IntegrityError
 
 from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
@@ -64,14 +65,19 @@ def us(request, me):
 def us_aggiungi(request, me):
 
     modulo_persona = ModuloAggiungiPersona(request.POST or None)
-
+    contesto = {
+        "modulo_persona": modulo_persona,
+        "exists": False
+    }
     if modulo_persona.is_valid():
-        persona = modulo_persona.save()
+        try:
+            persona = modulo_persona.save()
+        except IntegrityError as e:
+            contesto['exists'] = True
+            return 'us_aggiungi.html', contesto
+
         return redirect("/us/reclama/%d/" % (persona.pk,))
 
-    contesto = {
-        "modulo_persona": modulo_persona
-    }
     return 'us_aggiungi.html', contesto
 
 
