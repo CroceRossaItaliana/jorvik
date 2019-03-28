@@ -1,7 +1,6 @@
 version: '3'
 
 services:
-
   db:
     image: mdillon/postgis
     ports:
@@ -11,6 +10,7 @@ services:
     build: .
     volumes:
       - .:/code
+      - /tmp/media:/tmp/media
     ports:
       - "8000:8000"
     links:
@@ -39,12 +39,13 @@ services:
     build: .
     volumes:
       - .:/code
+      - /tmp/media:/tmp/media
     depends_on:
       - broker
     environment:
       - "SKIP_DJANGO_COLLECSTATIC=1"
       - "SKIP_DJANGO_MIGRATE=1"
-    command: "celery worker -b redis://broker -A jorvik -l info -Q coda_email_rischedula,coda_email_invio -B"
+    command: "celery worker -b redis://broker -A jorvik -l info -Q coda_email_rischedula,coda_email_invio,queue_monitoraggio,periodic_ufficio_soci,shared_ufficio_soci -B"
 
   pdf:
     build: https://github.com/CroceRossaItaliana/gaia-dompdf.git#master
