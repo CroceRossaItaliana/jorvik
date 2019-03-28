@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 def formazione_menu(menu_name, gestione_corsi_sede):
     FORMAZIONE = (
         ("Corsi", (
-            ("Attiva nuovo Corso", "fa-asterisk", reverse('formazione:new_course')) if gestione_corsi_sede else None,
+            ("Attiva Corso", "fa-asterisk", reverse('formazione:new_course')) if gestione_corsi_sede else None,
             ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
             ("Domanda formativa", "fa-area-chart", reverse('formazione:domanda')) if gestione_corsi_sede else None,
             ('Catalogo Corsi', 'fa-list-alt', '/page/catalogo-corsi/'),
@@ -12,6 +12,7 @@ def formazione_menu(menu_name, gestione_corsi_sede):
             ('Albo Informatizzato', 'fa-list', reverse('formazione:albo_info')),
         )),
     )
+
     ASPIRANTE = (
         ("Aspirante", (
             ("Home page", "fa-home", reverse('aspirante:home')),
