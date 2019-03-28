@@ -26,7 +26,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
     LEVELS_CHOICES = ()
 
     level = forms.ChoiceField(choices=LEVELS_CHOICES, label='Livello', required=False)
-    area = forms.ChoiceField(choices=OBBIETTIVI_STRATEGICI, label='Area', required=False)
+    area = forms.ChoiceField(choices=OBBIETTIVI_STRATEGICI, label='Settore di riferimento', required=False)
     locazione = forms.ChoiceField(choices=LOCAZIONE, initial=PRESSO_SEDE,
         help_text="La posizione del Corso è importante per aiutare gli aspiranti "
                   "a trovare i Corsi che si svolgono vicino a loro.")
@@ -121,7 +121,10 @@ class ModuloCreazioneCorsoBase(ModelForm):
                 nome__isnull=False,
                 tipo=Titolo.TITOLO_CRI,
                 is_active=True,
-            )]
+            ).order_by('nome')]
+
+        # Sort area options 'ASC'
+        self.fields['area'].choices = sorted(self.fields['area'].choices, key=lambda x: x[1])
 
 
 class ModuloModificaLezione(ModelForm):
