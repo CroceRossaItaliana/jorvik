@@ -4,16 +4,25 @@ from anagrafica.costanti import REGIONALE, NAZIONALE, LOCALE, TERRITORIALE
 from anagrafica.statistica.stat_costanti import COLORI_COMITATI
 
 
-def inserisci_comitati(worksheet, comitati, count):
+def inserisci_comitati(worksheet, comitati, count, bold):
 
     count = count
+    isIntestazione = False
+    c = 1
+    cr = 1
 
-    for reg in comitati:
-        worksheet.write(count, 0, str(reg['comitato'].nome))
-        for k, v in reg['statistiche'].items():
-            worksheet.write(count, 1, str(k))
-            worksheet.write(count, 2, str(v))
+    for el in comitati:
+        worksheet.write(count+cr, 0, str(el['comitato'].nome), bold)
+        cr += 2
+        for k, v in el['statistiche'].items():
+            if not isIntestazione:
+                worksheet.write(c, count, str(k), bold)
+            worksheet.write(c + 1, count, str(v))
             count += 1
+        isIntestazione = True
+        c += 2
+        count = 1
+
 
     return count
 
@@ -75,21 +84,19 @@ def xlsx_num_soci_vol(obj):
     bold = workbook.add_format({'bold': True})
 
     worksheet = workbook.add_worksheet('Regionali')
-    worksheet.write(0, 0, str('Comitato'), bold)
-    worksheet.write(0, 1, str('Nome metrica'), bold)
-    worksheet.write(0, 2, str('Valore'), bold)
 
     count = 1
 
     if 'regionali' in obj:
-        count = inserisci_comitati(worksheet, obj['regionali'], count)
+        count = inserisci_comitati(worksheet, obj['regionali'], count, bold)
 
+    count += 5
     if 'tot' in obj:
         for el in obj['tot']:
-            worksheet.write(0, count, str(el['nome']), bold)
+            worksheet.write(1, count, str(el['nome']), bold)
             count += 1
             for k, v in el['statistiche'].items():
-                worksheet.write(0, count, str(k))
+                worksheet.write(0, count, str(k), bold)
                 worksheet.write(1, count, str(v))
                 count += 1
 
