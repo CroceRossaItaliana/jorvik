@@ -28,6 +28,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
     level = forms.ChoiceField(choices=LEVELS_CHOICES, label='Livello', required=False)
     area = forms.ChoiceField(choices=OBBIETTIVI_STRATEGICI, label='Settore di riferimento', required=False)
     locazione = forms.ChoiceField(choices=LOCAZIONE, initial=PRESSO_SEDE,
+        label='Sede del Corso',
         help_text="La posizione del Corso è importante per aiutare gli aspiranti "
                   "a trovare i Corsi che si svolgono vicino a loro.")
     titolo_cri = forms.ChoiceField(label='Titolo del Corso', required=False)
@@ -87,7 +88,10 @@ class ModuloCreazioneCorsoBase(ModelForm):
         fields = ['tipo', 'level', 'titolo_cri', 'data_inizio', 'data_esame',
                   'delibera_file', 'sede',]
         help_texts = {
-            # 'titolo_cri': 'Da selezionare se il tipo di corso non è Corso Base',
+            'sede': 'Inserire il Comitato CRI che organizza il Corso',
+        }
+        labels = {
+            'sede': 'Comitato CRI',
         }
 
     def __init__(self, *args, **kwargs):
