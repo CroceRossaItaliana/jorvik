@@ -36,7 +36,7 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
     CORSO_NUOVO = 'C1'
     BASE = 'BA'
     TIPO_CHOICES = (
-        (CORSO_NUOVO, 'Corso'),
+        (CORSO_NUOVO, 'Corso di formazione dei volontari della Croce Rossa italiana'),
         (BASE, 'Corso Base'),
     )
 
