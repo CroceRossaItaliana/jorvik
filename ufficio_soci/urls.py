@@ -16,6 +16,7 @@ urlpatterns = [
     url(r'^dimissioni/(?P<pk>[0-9]+)/$', viste.us_dimissioni, name='us-dimissioni'),
     url(r'^dimissioni/sostenitore/(?P<pk>[0-9]+)/$', viste.us_chiudi_sostenitore, name='us-chiudi-sostenitore'),
 
+    url(r'^elenchi/download/$', viste.us_elenchi_richiesti_download, name='elenchi_richiesti_download'),
     url(r'^elenchi/(?P<elenco_tipo>.*)/$', viste.us_elenchi),
     url(r'^quote/$', viste.us_quote),
     url(r'^quote/nuova/$', viste.us_quote_nuova, name='us_quote_nuova'),
