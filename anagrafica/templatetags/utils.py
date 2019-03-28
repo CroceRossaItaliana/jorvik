@@ -292,15 +292,15 @@ def image_as_base64(image_file):
     import base64
     import pathlib
 
-    imgage_path = image_file.path
+    image_path = image_file.path
 
-    if not os.path.isfile(imgage_path):
+    if not os.path.isfile(image_path):
         return None
 
     encoded_string = ''
-    extension = pathlib.Path(imgage_path).suffix.split('.')[1]
+    extension = pathlib.Path(image_path).suffix
 
-    with open(imgage_path, 'rb') as img:
+    with open(image_path, 'rb') as img:
         encoded_string = base64.b64encode(img.read())
 
-    return 'data:image/%s;base64,%s' % (extension, encoded_string.decode("utf-8") )
+    return 'data:image/%s;base64,%s' % (extension, encoded_string.decode("utf-8"))

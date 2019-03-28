@@ -26,15 +26,17 @@ from base.notifiche import NOTIFICA_INVIA
 from base.utils import poco_fa, testo_euro, oggi, mezzanotte_24_ieri
 from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
-from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
-    ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti, ElencoDimessi, ElencoTrasferiti, \
-    ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva, ElencoIVCM, ElencoTesseriniSenzaFototessera, \
-    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoTesseriniRifiutati, ElencoExSostenitori, ElencoSenzaTurni
-from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
-    ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
-    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, \
-    ModuloLavoraTesserini, ModuloScaricaTesserini, ModuloDimissioniSostenitore
-from ufficio_soci.models import Quota, Tesseramento, Tesserino, Riduzione
+
+from .models import Quota, Tesseramento, Tesserino, Riduzione, ReportElenco
+from .elenchi import (ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari,
+    ElencoOrdinari, ElencoElettoratoAlGiorno, ElencoQuote, ElencoTesseriniSenzaFototessera,
+    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoTesseriniRifiutati)
+from .forms import (ModuloCreazioneEstensione, ModuloAggiungiPersona,
+    ModuloReclamaAppartenenza, ModuloReclamaQuota, ModuloReclama,
+    ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute,
+    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario,
+    ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, ModuloLavoraTesserini,
+    ModuloScaricaTesserini, ModuloDimissioniSostenitore)
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
@@ -775,46 +777,27 @@ def us_elenco_messaggio(request, me, elenco_id):
 
 @pagina_privata(permessi=(ELENCHI_SOCI,))
 def us_elenchi(request, me, elenco_tipo):
+    from .reports import SOCI_TIPI_ELENCHI
 
-    tipi_elenco = {
-        "volontari": (ElencoVolontari, "Elenco dei Volontari"),
-        "giovani": (ElencoVolontariGiovani, "Elenco dei Volontari Giovani"),
-        "ivcm": (ElencoIVCM, "Elenco IV e CM"),
-        "dimessi": (ElencoDimessi, "Elenco Dimessi"),
-        "riserva": (ElencoInRiserva, "Elenco Volontari in Riserva"),
-        "trasferiti": (ElencoTrasferiti, "Elenco Trasferiti"),
-        "dipendenti": (ElencoDipendenti, "Elenco dei Dipendenti"),
-        "ordinari": (ElencoOrdinari, "Elenco dei Soci Ordinari"),
-        "estesi": (ElencoEstesi, "Elenco dei Volontari Estesi/In Estensione"),
-        "soci": (ElencoSociAlGiorno, "Elenco dei Soci"),
-        "sostenitori": (ElencoSostenitori, "Elenco dei Sostenitori"),
-        "ex-sostenitori": (ElencoExSostenitori, "Elenco degli Ex Sostenitori"),
-        "senza-turni": (ElencoSenzaTurni, "Elenco dei volontari con zero turni"),
-        "elettorato": (ElencoElettoratoAlGiorno, "Elenco Elettorato", "us_elenco_inc_elettorato.html"),
-        "titoli": (ElencoPerTitoli, "Ricerca dei soci per titoli"),
-    }
-
-    if elenco_tipo not in tipi_elenco:
+    if elenco_tipo not in SOCI_TIPI_ELENCHI:
         return redirect("/us/")
 
-    elenco_nome = tipi_elenco[elenco_tipo][1]
-    elenco_template = tipi_elenco[elenco_tipo][2] if len(tipi_elenco[elenco_tipo]) > 2 else None
+    elenco_nome = SOCI_TIPI_ELENCHI[elenco_tipo][1]
+    elenco_template = SOCI_TIPI_ELENCHI[elenco_tipo][2] if len(SOCI_TIPI_ELENCHI[elenco_tipo]) > 2 else None
 
-    if request.POST:  # Ho selezionato delle sedi. Elabora elenco.
-
+    if request.POST:
+        # Ho selezionato delle sedi. Elabora elenco.
         sedi = me.oggetti_permesso(ELENCHI_SOCI).filter(pk__in=request.POST.getlist('sedi'))
-        elenco = tipi_elenco[elenco_tipo][0](sedi)
+        elenco = SOCI_TIPI_ELENCHI[elenco_tipo][0](sedi)
 
         return 'us_elenco_generico.html', {
             "elenco": elenco,
             "elenco_nome": elenco_nome,
             "elenco_template": elenco_template,
         }
-
-    else:  # Devo selezionare delle Sedi.
-
+    else:
+        # Devo selezionare delle Sedi.
         sedi = me.oggetti_permesso(ELENCHI_SOCI)
-
         return 'us_elenco_sede.html', {
             "sedi": sedi,
             "elenco_nome": elenco_nome,
