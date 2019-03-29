@@ -719,11 +719,11 @@ def statistica_ore_servizio(**kwargs):
 
         statistica = OrderedDict([
             ("Uguale a 0h di servizio al {}".format(date), c_0),
-            ("Da 0 a 10h di servizio al {}".format(date), c_0_10),
+            ("Da 0h a 10h di servizio al {}".format(date), c_0_10),
             ("Da 10h a 20h di servizio al {}".format(date), c_10_20),
             ("Da 20h a 30h di servizio al {}".format(date), c_20_30),
             ("Maggiore di 30h di servizio al {}".format(date), c_30),
-            ('', ''),
+            ('', ''),# per mantenere un spazio tra gli anni di riferimento
         ])
 
         return statistica
