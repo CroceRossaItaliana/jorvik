@@ -113,15 +113,16 @@ def formazione_corsi_base_direttori(request, me, pk):
     continua_url = corso.url
 
     if 'corso_base_creato' in request.session and int(request.session['corso_base_creato']) == int(pk):
-        continua_url = "/formazione/corsi-base/%d/fine/" % (int(pk),)
+        continua_url = "/formazione/corsi-base/%d/fine/" % int(pk)
         del request.session['corso_base_creato']
 
-    contesto = {
+    context = {
         "delega": DIRETTORE_CORSO,
         "corso": corso,
-        "continua_url": continua_url
+        "continua_url": continua_url,
+        'puo_modificare': me and me.permessi_almeno(corso, MODIFICA)
     }
-    return 'formazione_corsi_base_direttori.html', contesto
+    return 'formazione_corsi_base_direttori.html', context
 
 
 @pagina_privata

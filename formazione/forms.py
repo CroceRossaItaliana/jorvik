@@ -27,10 +27,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
 
     level = forms.ChoiceField(choices=LEVELS_CHOICES, label='Livello', required=False)
     area = forms.ChoiceField(choices=OBBIETTIVI_STRATEGICI, label='Settore di riferimento', required=False)
-    locazione = forms.ChoiceField(choices=LOCAZIONE, initial=PRESSO_SEDE,
-        label='Sede del Corso',
-        help_text="La posizione del Corso è importante per aiutare gli aspiranti "
-                  "a trovare i Corsi che si svolgono vicino a loro.")
+    locazione = forms.ChoiceField(choices=LOCAZIONE, initial=PRESSO_SEDE, label='Sede del Corso',)
     titolo_cri = forms.ChoiceField(label='Titolo del Corso', required=False)
 
     def clean_tipo(self):
@@ -170,8 +167,7 @@ class ModuloModificaCorsoBase(ModelForm):
         fields = ['data_inizio', 'data_esame',
                   'min_participants', 'max_participants',
                   'descrizione',
-                  'data_attivazione', 'data_convocazione',
-                  'op_attivazione', 'op_convocazione',]
+                  'data_attivazione', 'data_convocazione',]
         widgets = {
             "descrizione": WYSIWYGSemplice(),
         }
