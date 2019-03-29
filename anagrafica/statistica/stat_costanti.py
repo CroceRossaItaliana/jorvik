@@ -70,3 +70,43 @@ COLORI_COMITATI = {
     TERRITORIALE: '#00FFFF',
 }
 
+
+QUERY_NUM_ORE = '''
+            SELECT DISTINCT APP.id,B.n_person,
+                CASE WHEN B.n_totale is null THEN 0
+                    ELSE B.n_totale
+                END AS n_totale,
+                B.anno,
+                APP.estensione
+            FROM (
+            SELECT DISTINCT A.id,B.persona_id,B.sede_id,C.estensione
+            FROM anagrafica_persona A, anagrafica_appartenenza B, anagrafica_sede C
+            WHERE A.id = B.persona_id
+            AND B.sede_id = C.id
+            AND B.confermata = true
+            AND B.fine is null
+            AND C.estensione = '{}'
+            ) APP
+                LEFT JOIN (
+                SELECT DISTINCT A.*,H.estensione
+                FROM (
+                         SELECT E.persona_id, count(E.persona_id) as n_person, SUM(E.n_ore_lavorate) as n_totale, E.anno
+                         FROM (
+                                  SELECT C.*,
+                                         (EXTRACT(HOURS FROM D.fine) - EXTRACT(HOURS FROM D.inizio)) AS n_ore_lavorate,
+                                         EXTRACT(YEAR FROM D.inizio)                                 as anno
+                                  FROM attivita_partecipazione C,
+                                       attivita_turno D
+                                  WHERE C.turno_id = D.id
+                              ) E
+                         GROUP BY E.persona_id, E.anno
+                     )A, attivita_partecipazione B, attivita_turno F, attivita_attivita G, anagrafica_sede H
+                WHERE A.persona_id = B.persona_id
+                  AND B.turno_id = F.id
+                  AND F.attivita_id = G.id
+                  AND G.sede_id = H.id
+                  AND B.confermata = true
+                  AND A.anno = '{}'
+            )B
+            ON APP.id = B.persona_id
+        '''

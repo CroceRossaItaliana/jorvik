@@ -2,16 +2,15 @@ from anagrafica.models import Appartenenza, Persona, Sede
 from formazione.models import CorsoBase
 from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE, LOCALE, ESTENDIONI_DICT, PROVINCIALE
 import datetime
-from attivita.models import Attivita, Turno
-from django.db.models import F, Sum
-from datetime import timedelta, datetime
+from datetime import datetime
 from formazione.models import Corso
 from django.db.models import Q
 from .stat_costanti import (
     STATISTICA, COMITATI_DA_EXLUDERE, NUM_VOL_M_F, NUM_SOCI_VOL, NUM_NUOVI_VOL, FILTRO_ANNO, FILTRO_DATA,
-    NUM_SEDI, NUM_DIMESSI, NUM_SEDI_NUOVE, NUMERO_CORSI, IIVV_CM, ORE_SERVIZIO
+    NUM_SEDI, NUM_DIMESSI, NUM_SEDI_NUOVE, NUMERO_CORSI, IIVV_CM, ORE_SERVIZIO, QUERY_NUM_ORE
 )
 from collections import OrderedDict
+from django.db import connection
 
 
 def formato_data(data):
@@ -693,37 +692,65 @@ def statistica_iivv_cm(**kwargs):
 
 
 def statistica_ore_servizio(**kwargs):
-    def get_tot(estensione=None, inizio=None, fine=None):
-        sedi = Sede.objects.filter(estensione=estensione).exclude(
-            nome__contains=(Q(nome__contains=x) for x in COMITATI_DA_EXLUDERE))
 
-        qs_attivita = Attivita.objects.filter(
-            stato=Attivita.VISIBILE,
-            sede__in=sedi
-        )
-        qs_turni = Turno.objects.filter(
-            attivita__in=qs_attivita,
-            inizio__lte=datetime.now().date().replace(month=1, day=1),
-            fine__gte=datetime.now().date().replace(month=12, day=31)
-        )
+    def calcolo_per_anno(estensione, cursor, date):
+        c_0 = 0
+        c_0_10 = 0
+        c_10_20 = 0
+        c_20_30 = 0
+        c_30 = 0
+        for est in estensione:
+            cursor.execute(QUERY_NUM_ORE.format(
+                str(est), date
+            ))
+            row = cursor.fetchall()
 
-        ore_di_servizio = qs_turni.annotate(durata=F('fine') - F('inizio')).aggregate(totale_ore=Sum('durata'))[
-                              'totale_ore'] or timedelta()
+            for el in row:
+                if el[2] == 0:
+                    c_0 += 1
+                elif el[2] > 0 <= 10:
+                    c_0_10 += 1
+                elif el[2] > 10 <= 20:
+                    c_10_20 += 1
+                elif el[2] > 20 <= 30:
+                    c_20_30 += 1
+                elif el[2] > 30:
+                    c_30 += 1
+
+        statistica = OrderedDict([
+            ("Uguale a 0h di servizio al {}".format(date), c_0),
+            ("Da 0 a 10h di servizio al {}".format(date), c_0_10),
+            ("Da 10h a 20h di servizio al {}".format(date), c_10_20),
+            ("Da 20h a 30h di servizio al {}".format(date), c_20_30),
+            ("Maggiore di 30h di servizio al {}".format(date), c_30),
+            ('', ''),
+        ])
+
+        return statistica
+
+    def get_tot(estensione=[], inizio=None, fine=None):
+
+        with connection.cursor() as cursor:
+            after = calcolo_per_anno(estensione, cursor, inizio)
+            before = calcolo_per_anno(estensione, cursor, fine)
 
         return {
-            "nome": ESTENDIONI_DICT[estensione],
-            "statistiche": {
-                "Ore di servizio": ore_di_servizio
-            }
+            "nome": ESTENDIONI_DICT[estensione[0]],
+            "statistiche": OrderedDict(list(after.items()) + list(before.items()))
         }
+
+    start = int(kwargs.get('anno_di_riferimento'))
+    finish = int(kwargs.get('anno_di_riferimento'))-1
+
+    print('DATE', start, finish)
 
     obj = {
         "nome": STATISTICA[ORE_SERVIZIO],
         "tot": [
-            get_tot(NAZIONALE),
-            get_tot(REGIONALE),
-            get_tot(LOCALE),
-            get_tot(TERRITORIALE),
+            get_tot(estensione=[NAZIONALE], inizio=start, fine=finish),
+            get_tot(estensione=[REGIONALE], inizio=start, fine=finish),
+            get_tot(estensione=[LOCALE, PROVINCIALE], inizio=start, fine=finish),
+            get_tot(estensione=[TERRITORIALE], inizio=start, fine=finish),
         ]
     }
 
