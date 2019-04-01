@@ -66,6 +66,8 @@ class Question(models.Model):
     survey = models.ForeignKey(Survey)
     is_active = models.BooleanField(default=True)
     required = models.BooleanField(default=True, verbose_name='Obbligatorio')
+    question_group = models.ForeignKey('QuestionGroup', null=True, blank=True)
+
     # question_type = models.CharField(max_length=100, choices=QUESTION_TYPES,
     #                                  default=TEXT, null=True, blank=True)
 
@@ -125,3 +127,10 @@ class SurveyResult(models.Model):
 
     def __str__(self):
         return "%s = %s" % (self.survey, self.user)
+
+
+class QuestionGroup(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return str(self.name)
