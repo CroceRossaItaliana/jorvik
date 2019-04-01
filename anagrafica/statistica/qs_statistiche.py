@@ -70,7 +70,7 @@ def statistica_num_vol_fascia_eta(**kwargs):
         def count(query, min=0, max=9999):
             i = 0
             for el in query:
-                if el.eta >= min and el.eta <= max:
+                if el.eta > min and el.eta <= max:
                     i += 1
             return i
 
@@ -107,9 +107,20 @@ def statistica_num_vol_m_f(**kwargs):
         figli = kwargs.get('figli') if kwargs.get('figli') else False
         persone = comitato.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO)
 
+        c_m = 0
+        c_f = 0
+        for persona in persone:
+            cf = int(persona.codice_fiscale[9:11])
+            # Maschio
+            if 1 <= cf <= 31:
+                c_m += 1
+            # Femmina
+            if 41 <= cf <= 71:
+                c_f += 1
+
         return {
-            "M": persone.filter(genere=Persona.MASCHIO).count(),
-            "F": persone.filter(genere=Persona.FEMMINA).count()
+            "M": c_m,
+            "F": c_f
         }
 
     obj = {
@@ -556,6 +567,7 @@ def statistiche_num_sedi_nuove(**kwargs):
 
 
 def statistica_num_corsi(**kwargs):
+    #TODO: il totale si trova con django
     def get_tot_anno(estensione=None, **kwargs):
         livello_riferimento = kwargs.get('livello_riferimento')
         nome_corso = kwargs.get('nome_corso')
@@ -664,7 +676,7 @@ def statistica_num_corsi(**kwargs):
 
 
 def statistica_iivv_cm(**kwargs):
-    def get_iivv_cm(comitato, **kwargs):
+    def get_iivv_cm(comitato, **kwargs): #TODO: credo che non si tira giu tutti perche prima gestita diversamente
         figli = kwargs.get('figli') if kwargs.get('figli') else False
         membri_iv_n = comitato.membri_attuali(figli=figli).filter(iv=True)
         membri_cm_n = comitato.membri_attuali(figli=figli).filter(cm=True)
