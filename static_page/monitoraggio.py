@@ -177,7 +177,10 @@ class TypeFormResponses:
         if type == 'boolean':
             return 'Si' if answer == True else 'No'
         elif type == 'choices':
-            return ', '.join(answer['labels'])
+            if 'labels' in answer:
+                return ', '.join(answer['labels'])
+            elif 'other' in answer:
+                return answer.get('other')
         elif type == 'choice':
             return answer.get('label') or answer.get('other')
         elif type == 'number':
