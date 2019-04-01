@@ -1,4 +1,4 @@
-from anagrafica.models import Appartenenza, Persona, Sede
+from anagrafica.models import Appartenenza, Persona, Sede, Partecipazione, Appartenenza
 from formazione.models import CorsoBase
 from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE, LOCALE, ESTENDIONI_DICT, PROVINCIALE
 import datetime
@@ -714,50 +714,64 @@ def statistica_iivv_cm(**kwargs):
 
 def statistica_ore_servizio(**kwargs):
 
-    def calcolo_per_anno(estensione, cursor, date):
-        c_0 = 0
-        c_0_10 = 0
-        c_10_20 = 0
-        c_20_30 = 0
-        c_30 = 0
-        for est in estensione:
-            cursor.execute(QUERY_NUM_ORE.format(
-                str(est), date
-            ))
-            row = cursor.fetchall()
-
-            for el in row:
-                if el[2] == 0:
-                    c_0 += 1
-                elif el[2] > 0 <= 10:
-                    c_0_10 += 1
-                elif el[2] > 10 <= 20:
-                    c_10_20 += 1
-                elif el[2] > 20 <= 30:
-                    c_20_30 += 1
-                elif el[2] > 30:
-                    c_30 += 1
-
-        statistica = OrderedDict([
-            ("Uguale a 0h di servizio al {}".format(date), c_0),
-            ("Da 0h a 10h di servizio al {}".format(date), c_0_10),
-            ("Da 10h a 20h di servizio al {}".format(date), c_10_20),
-            ("Da 20h a 30h di servizio al {}".format(date), c_20_30),
-            ("Maggiore di 30h di servizio al {}".format(date), c_30),
-            ('', ''),# per mantenere un spazio tra gli anni di riferimento
-        ])
-
-        return statistica
+    # def calcolo_per_anno(estensione, cursor, date):
+    #     c_0 = 0
+    #     c_0_10 = 0
+    #     c_10_20 = 0
+    #     c_20_30 = 0
+    #     c_30 = 0
+    #     for est in estensione:
+    #         cursor.execute(QUERY_NUM_ORE.format(
+    #             str(est), date
+    #         ))
+    #         row = cursor.fetchall()
+    #
+    #         for el in row:
+    #             if el[2] == 0:
+    #                 c_0 += 1
+    #             elif el[2] > 0 <= 10:
+    #                 c_0_10 += 1
+    #             elif el[2] > 10 <= 20:
+    #                 c_10_20 += 1
+    #             elif el[2] > 20 <= 30:
+    #                 c_20_30 += 1
+    #             elif el[2] > 30:
+    #                 c_30 += 1
+    #
+    #     statistica = OrderedDict([
+    #         ("Uguale a 0h di servizio al {}".format(date), c_0),
+    #         ("Da 0h a 10h di servizio al {}".format(date), c_0_10),
+    #         ("Da 10h a 20h di servizio al {}".format(date), c_10_20),
+    #         ("Da 20h a 30h di servizio al {}".format(date), c_20_30),
+    #         ("Maggiore di 30h di servizio al {}".format(date), c_30),
+    #         ('', ''),# per mantenere un spazio tra gli anni di riferimento
+    #     ])
+    #
+    #     return statistica
 
     def get_tot(estensione=[], inizio=None, fine=None):
 
-        with connection.cursor() as cursor:
-            after = calcolo_per_anno(estensione, cursor, inizio)
-            before = calcolo_per_anno(estensione, cursor, fine)
+        # with connection.cursor() as cursor:
+        #     after = calcolo_per_anno(estensione, cursor, inizio)
+        #     before = calcolo_per_anno(estensione, cursor, fine)
+
+        appartenenze = Appartenenza.objects.filter(sede__estensione__in=estensione, fine=None)
+
+        start = datetime.now().date().replace(month=1, day=1, year=int(inizio))
+        finish = datetime.now().date().replace(month=12, day=31, year=int(inizio))
+
+        for appartenenza in appartenenze:
+            storico = Partecipazione.objects.filter(
+                persona=appartenenza.persona,
+                turno__fine__lte=finish,
+                turno__inizio__gte=start
+            ).order_by('-turno__inizio')
+
+            print(storico)
 
         return {
             "nome": ESTENDIONI_DICT[estensione[0]],
-            "statistiche": OrderedDict(list(after.items()) + list(before.items()))
+            "statistiche": None, #OrderedDict(list(after.items()) + list(before.items()))
         }
 
     start = int(kwargs.get('anno_di_riferimento'))
