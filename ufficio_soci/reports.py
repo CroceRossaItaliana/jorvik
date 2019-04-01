@@ -306,6 +306,6 @@ class ReportElencoSoci:
             # If the report is ready, download it without redirect user
             return report_db.download()
         else:
-            response = redirect(reverse('elenchi_richiesti_download'))
+            response = None #redirect(reverse('elenchi_richiesti_download'))
             messages.success(self.request, 'Attendi la generazione del report richiesto.')
             return response
