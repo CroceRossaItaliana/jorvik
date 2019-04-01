@@ -4,19 +4,8 @@
 
 {% block app_contenuto %}
   <div class="articolo single-page">
-    <h1>Monitoraggio 2019 <span style="color:#555; font-size:24px;">- {{ comitato }}</span></h1>
+    <h1>Monitoraggio 2019 (dati 2018) <span style="color:#555; font-size:24px;">- {{ comitato }}</span></h1>
     <h3>{{ section.2 }}</h3>
-
-    <style>
-      .typeform_widget {display:flex;justify-content:space-around;margin:25px 0 25px;padding:0;list-style:none;}
-      .typeform_widget li {}
-      .typeform_widget li a {background-color: #c00; color: #fff; padding: 7px 9px; border-radius: 3px;}
-      .typeform_widget li a.done {background-color: #309f30;}
-      .typeform_widget__wrapper {margin-bottom:25px;}
-      .typeform_widget-tools {display: flex; justify-content: end;}
-      .typeform_widget-tools ul {list-style:none; margin:0;
-      .typeform_widget-tools li {padding: 0 15px;}
-    </style>
 
     <ul class="typeform_widget">
       <li><a href="?comitato={{user_comitato}}&id=by6gIZ" class="{%if type_form.by6gIZ.0 %}done{%endif%} typeform_widget__btn">Sezione A</a></li>
@@ -47,15 +36,17 @@
 
     <div>
       <p>Prima di iniziare il questionario, puoi consultare le istruzioni per la compilazione e il glossario ai link di seguito:
-        <a href="/page/m-glossario/">glossario</a>, <a href="/page/m-istruzioni/">istruzioni</a></p>
+        <a href="/page/m-glossario/" target="_blank">glossario</a>, <a href="/page/m-istruzioni/" target="_blank">istruzioni</a></p>
     </div>
 
+    {% if all_forms_are_completed %}
     <div class="typeform_widget-tools">
       <ul class="typeform_widget-tools__list">
-        <li><a class="monitoraggio_action_btn" href="{% if all_forms_are_completed %}{% url 'pages:monitoraggio_actions' %}?action=print{% else %}#{% endif %}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
-        <li><a class="monitoraggio_action_btn" href="{% if all_forms_are_completed %}{% url 'pages:monitoraggio_actions' %}?action=send_via_mail{% else %}#{% endif %}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail</a></li>
+        <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
+        <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail</a></li>
       </ul>
     </div>
+    {% endif %}
 
     <script>
       {% if celery_task_id %}var celery_task_id = "{{ celery_task_id }}";{% endif %}
@@ -64,6 +55,8 @@
         if ($(this).hasClass('done')) {
           e.preventDefault();
           alert("Hai già compilato questa form.");
+        } else {
+          $('body').prepend('<div class="typeform_widget-loading"><div class="text">Caricamento ...</div></div>');
         }
       });
 
