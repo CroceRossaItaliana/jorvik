@@ -23,12 +23,19 @@
     </h4>
 
     <ul class="nav nav-tabs dynamic-tabs-links">
-        <li role="presentation"><a data-tab-id="#tabAttivazione" href="#" class="tabSelectorLink"><i class="fa fa-fw fa-calendar"></i> Attivazione</a></li>
         {% if puo_modificare %}
-            <li role="presentation"><a data-tab-id="#tabDettagliCorso" href="#" class="tabSelectorLink"><i class="fa fa-fw fa-info"></i> Dettagli corso ed iscrizione</a></li>
+            <li role="presentation"><a data-tab-id="#tabAttivazione" href="#" class="tabSelectorLink"><i class="fa fa-fw fa-calendar"></i> Attivazione</a></li>
+        {% endif %}
+
+        <li role="presentation"><a data-tab-id="#tabDettagliCorso" href="#" class="tabSelectorLink"><i class="fa fa-fw fa-info"></i> Dettagli corso ed iscrizione</a></li>
+
+        {% if puo_modificare %}
             <li role="presentation"><a data-tab-id="#tabLezioni" href="#" class="tabSelectorLink"><i class="fa fa-fw fa-calendar"></i> Lezioni</a></li>
             {% if today == corso.data_esame %}<li role="presentation"><a data-tab-id="#tabEsami" href="#" class="tabSelectorLink"><i class="fa fa-fw fa-file-excel-o"></i> Documentazione Esame</a></li>{% endif %}
-            {% if corso.concluso %}<li role="presentation"><a data-tab-id="#tabQuestionario" href="#" class="tabSelectorLink"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</a></li>{% endif %}
+        {% endif %}
+
+        {% if corso.concluso %}
+            <li role="presentation"><a data-tab-id="#tabQuestionario" href="#" class="tabSelectorLink"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</a></li>
         {% endif %}
     </ul>
 
@@ -59,19 +66,19 @@
         </ul>
 
         {% if puo_modificare %}
-        <ul id="tabLezioni" class="nav nav-tabs">
-             <li {% if corso.url_lezioni in request.path %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_lezioni }}"><i class="fa fa-fw fa-calendar"></i> Lezioni</a></li>
-             <li role="presentation"><a href="{{ corso.url_firme }}"><i class="fa fa-fw fa-file-pdf-o"></i> Scarica foglio firme</a></li>
-        </ul>
+            <ul id="tabLezioni" class="nav nav-tabs">
+                 <li {% if corso.url_lezioni in request.path %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_lezioni }}"><i class="fa fa-fw fa-calendar"></i> Lezioni</a></li>
+                 <li role="presentation"><a href="{{ corso.url_firme }}"><i class="fa fa-fw fa-file-pdf-o"></i> Scarica foglio firme</a></li>
+            </ul>
 
-        <ul id="tabEsami" class="nav nav-tabs">
-             <li {% if corso.url_report in request.path %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_report }}"><i class="fa fa-fw fa-file-excel-o"></i> Scarica report</a></li>
-        </ul>
+            <ul id="tabEsami" class="nav nav-tabs">
+                 <li {% if corso.url_report in request.path %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_report }}"><i class="fa fa-fw fa-file-excel-o"></i> Scarica report</a></li>
+            </ul>
+        {% endif %}
 
         <ul id="tabQuestionario" class="nav nav-tabs">
              <li role="presentation"><a href="{% url 'survey:course' corso.pk %}"><i class="fa fa-fw fa-thumbs-up"></i> Compila il Questionario di gradimento</a></li>
         </ul>
-        {% endif %}
     </div>
 
     {% if puo_modificare and corso.stato == corso.PREPARAZIONE and corso.prossimo and not corso.is_nuovo_corso %}
