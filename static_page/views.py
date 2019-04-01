@@ -64,13 +64,13 @@ def monitoraggio(request, me):
 
     # Get celery_task_id
     # TODO: ajax polling task is ready
-    prefix = typeform.CELERY_TASK_PREFIX
-    message_storage = get_messages(request)
-    if len(message_storage) > 0:
-        for line, msg in enumerate(message_storage):
-            if msg.message.startswith(prefix):
-                context['celery_task_id'] = msg.message.replace(prefix, '').strip()
-                del message_storage._loaded_messages[line]
+    # prefix = typeform.CELERY_TASK_PREFIX
+    # message_storage = get_messages(request)
+    # if len(message_storage) > 0:
+    #     for line, msg in enumerate(message_storage):
+    #         if msg.message.startswith(prefix):
+    #             context['celery_task_id'] = msg.message.replace(prefix, '').strip()
+    #             del message_storage._loaded_messages[line]
 
     return 'monitoraggio.html', context
 
