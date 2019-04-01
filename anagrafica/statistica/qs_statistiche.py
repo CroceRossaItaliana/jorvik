@@ -114,20 +114,9 @@ def statistica_num_vol_m_f(**kwargs):
         figli = kwargs.get('figli') if kwargs.get('figli') else False
         persone = comitato.membri_attuali(figli=figli, membro=Appartenenza.VOLONTARIO)
 
-        c_m = 0
-        c_f = 0
-        for persona in persone:
-            cf = int(persona.codice_fiscale[9:11])
-            # Maschio
-            if 1 <= cf <= 31:
-                c_m += 1
-            # Femmina
-            if 41 <= cf <= 71:
-                c_f += 1
-
         return {
-            "M": c_m,
-            "F": c_f
+            "M": persone.filter(genere=Persona.MASCHIO).count(),
+            "F": persone.filter(genere=Persona.FEMMINA).count()
         }
 
     obj = {
@@ -683,7 +672,7 @@ def statistica_num_corsi(**kwargs):
 
 
 def statistica_iivv_cm(**kwargs):
-    def get_iivv_cm(comitato, **kwargs): #TODO: credo che non si tira giu tutti perche prima gestita diversamente
+    def get_iivv_cm(comitato, **kwargs):
         figli = kwargs.get('figli') if kwargs.get('figli') else False
         membri_iv_n = comitato.membri_attuali(figli=figli).filter(iv=True)
         membri_cm_n = comitato.membri_attuali(figli=figli).filter(cm=True)
@@ -755,7 +744,11 @@ def statistica_ore_servizio(**kwargs):
         #     after = calcolo_per_anno(estensione, cursor, inizio)
         #     before = calcolo_per_anno(estensione, cursor, fine)
 
-        appartenenze = Appartenenza.objects.filter(sede__estensione__in=estensione, fine=None)
+        appartenenze = Appartenenza.objects.filter(
+            sede__estensione__in=estensione,
+            fine=None,
+            membro=Appartenenza.VOLONTARIO
+        )
 
         start = datetime.now().date().replace(month=1, day=1, year=int(inizio))
         finish = datetime.now().date().replace(month=12, day=31, year=int(inizio))
@@ -767,7 +760,7 @@ def statistica_ore_servizio(**kwargs):
                 turno__inizio__gte=start
             ).order_by('-turno__inizio')
 
-            print(storico)
+
 
         return {
             "nome": ESTENDIONI_DICT[estensione[0]],
