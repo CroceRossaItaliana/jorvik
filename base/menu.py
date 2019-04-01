@@ -114,7 +114,10 @@ def menu(request):
                 ("Cambia password", "fa-key", "/utente/cambia-password/"),
                 ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
             )),
-            VOCE_LINKS
+            VOCE_LINKS,
+            ("Monitoraggio", (
+                ("Monitoraggio 2019 (dati 2018)", 'fa-user', reverse('pages:monitoraggio')),
+            )) if me and (me.is_presidente or me.is_comissario) else None,
         )) if me and not hasattr(me, 'aspirante') else None,
         "posta": (
             ("Posta", (
