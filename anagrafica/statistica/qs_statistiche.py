@@ -18,28 +18,35 @@ def formato_data(data):
 
 
 def get_statistica_collapse_ric(comitati, f, **kwargs):
-    estensione = {NAZIONALE: REGIONALE, REGIONALE: LOCALE, LOCALE: TERRITORIALE, TERRITORIALE: None}
+    estensione = {NAZIONALE: REGIONALE, REGIONALE: LOCALE, PROVINCIALE: False, LOCALE: TERRITORIALE, TERRITORIALE: None}
     obj = []
     for comitato in comitati:
         if comitato.estensione == REGIONALE:
             # trattare i provinciali come i locali ricordarsi che al di sotto dei provinciali ci sono i locali
             locali = Sede.objects.filter(estensione=LOCALE, genitore=comitato, attiva=True)
             provinciali = Sede.objects.filter(estensione=PROVINCIALE, genitore=comitato, attiva=True)
+
+            print('PROVINCIALI', provinciali)
             locali = list(locali) + list(provinciali)
+
+            print('LISTA TOT', locali)
             for provinciale in provinciali:
                 locali += list(Sede.objects.filter(genitore=provinciale, estensione=LOCALE, attiva=True))
+
+            print('LOCALI TOT PIU SOTTO', locali)
             obj.append(
                 {
                     "comitato": comitato,
-                    "statistiche": f(comitato=comitato, **{'figli': True}),
+                    "statistiche": f(comitato=comitato, **{'figli': True}) if comitato.estensione != PROVINCIALE else f(comitato=comitato, **{'figli': False}) ,
                     "figli": get_statistica_collapse_ric(
                         comitati=locali, f=f, **kwargs
                     )
                 }
             )
             continue
-        elif comitato.estensione == PROVINCIALE:
-            continue
+        # elif comitato.estensione == PROVINCIALE:
+        #     print('PROVINCIALE ', comitato)
+        #     continue
         else:
             obj.append(
                 {
@@ -70,7 +77,7 @@ def statistica_num_vol_fascia_eta(**kwargs):
         def count(query, min=0, max=9999):
             i = 0
             for el in query:
-                if el.eta > min and el.eta <= max:
+                if min <= el.eta <= max:
                     i += 1
             return i
 
@@ -692,6 +699,8 @@ def statistica_iivv_cm(**kwargs):
             comitati=Sede.objects.filter(estensione=NAZIONALE), f=get_iivv_cm
         )
     }
+
+    print(obj)
 
     return obj
 
