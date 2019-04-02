@@ -26,32 +26,26 @@ def get_statistica_collapse_ric(comitati, f, **kwargs):
             locali = Sede.objects.filter(estensione=LOCALE, genitore=comitato, attiva=True)
             provinciali = Sede.objects.filter(estensione=PROVINCIALE, genitore=comitato, attiva=True)
 
-            print('PROVINCIALI', provinciali)
             locali = list(locali) + list(provinciali)
 
-            print('LISTA TOT', locali)
             for provinciale in provinciali:
                 locali += list(Sede.objects.filter(genitore=provinciale, estensione=LOCALE, attiva=True))
 
-            print('LOCALI TOT PIU SOTTO', locali)
             obj.append(
                 {
                     "comitato": comitato,
-                    "statistiche": f(comitato=comitato, **{'figli': True}) if comitato.estensione != PROVINCIALE else f(comitato=comitato, **{'figli': False}) ,
+                    "statistiche": f(comitato=comitato, **{'figli': True}) if comitato.estensione != PROVINCIALE else f(comitato=comitato, **{'figli': False}),
                     "figli": get_statistica_collapse_ric(
                         comitati=locali, f=f, **kwargs
                     )
                 }
             )
             continue
-        # elif comitato.estensione == PROVINCIALE:
-        #     print('PROVINCIALE ', comitato)
-        #     continue
         else:
             obj.append(
                 {
                     "comitato": comitato,
-                    "statistiche": f(comitato=comitato, **{'figli': True}),
+                    "statistiche": f(comitato=comitato, **{'figli': True}) if comitato.estensione != PROVINCIALE else f(comitato=comitato, **{'figli': False}),
                     "figli": get_statistica_collapse_ric(
                         comitati=Sede.objects.filter(
                             genitore=comitato, estensione=estensione[comitato.estensione], attiva=True
@@ -673,9 +667,13 @@ def statistica_num_corsi(**kwargs):
 
 def statistica_iivv_cm(**kwargs):
     def get_iivv_cm(comitato, **kwargs):
+        print(comitato.nome, kwargs.get('figli'))
         figli = kwargs.get('figli') if kwargs.get('figli') else False
         membri_iv_n = comitato.membri_attuali(figli=figli).filter(iv=True)
         membri_cm_n = comitato.membri_attuali(figli=figli).filter(cm=True)
+
+        # print('Infermieri', membri_iv_n)
+        # print('Militari', membri_cm_n)
 
         return {
             "IIVV": membri_iv_n.count(),

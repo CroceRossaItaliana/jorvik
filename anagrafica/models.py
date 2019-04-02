@@ -1864,8 +1864,8 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         else:
             kwargs.update({'sede': self.pk})
 
-        return Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, **kwargs).via("appartenenze"))\
-                .distinct('nome', 'cognome', 'codice_fiscale')
+        return Persona.objects.filter(Appartenenza.query_attuale(al_giorno=al_giorno, **kwargs).via("appartenenze"))
+                #.distinct('nome', 'cognome', 'codice_fiscale')
 
     def appartenenze_persona(self, persona, membro=None, figli=False, **kwargs):
         """
