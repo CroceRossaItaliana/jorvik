@@ -22,6 +22,7 @@ from base.files import Zip
 from base.models import Log
 from base.utils import poco_fa
 from posta.models import Messaggio
+from survey.models import Survey
 from .elenchi import ElencoPartecipantiCorsiBase
 from .decorators import can_access_to_course
 from .models import (Corso, CorsoBase, CorsoEstensione, AssenzaCorsoBase,
@@ -80,6 +81,7 @@ def formazione_corsi_base_nuovo(request, me):
             kwargs['titolo_cri'] = cd['titolo_cri']
             kwargs['cdf_level'] = cd['level']
             kwargs['cdf_area'] = cd['area']
+            kwargs['survey'] = Survey.survey_for_corso()
 
         course = CorsoBase.nuovo(
             anno=data_inizio.year,
