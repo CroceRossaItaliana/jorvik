@@ -107,9 +107,13 @@ def menu(request):
     VOCE_LINKS = ("Links", tuple((link.name, link.icon_class, link.url)
         for link in Menu.objects.filter(is_active=True).order_by('order')))
 
+    VOCE_MONITORAGGIO = ("Monitoraggio", (
+        ("Monitoraggio 2019 (dati 2018)", 'fa-user', reverse('pages:monitoraggio')),
+    ))
+
     elementi = {
         "utente": (VOCE_PERSONA, VOCE_VOLONTARIO, VOCE_RUBRICA, VOCE_CV,
-                   VOCE_DONATORE, VOCE_SICUREZZA, VOCE_LINKS) \
+                   VOCE_DONATORE, VOCE_SICUREZZA, VOCE_LINKS, VOCE_MONITORAGGIO) \
                     if me and not hasattr(me, 'aspirante') else None,
         "posta": (
             ("Posta", (
@@ -207,8 +211,8 @@ def menu(request):
             )),
         ),
         'formazione': formazione_menu('formazione', gestione_corsi_sede),
-        'aspirante': formazione_menu('aspirante', gestione_corsi_sede) if me
-            and hasattr(me, 'aspirante') else (
+        'aspirante': formazione_menu('aspirante', gestione_corsi_sede) \
+            if me and hasattr(me, 'aspirante') else (
             ("Gestione Corsi", (
                 ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
             )),

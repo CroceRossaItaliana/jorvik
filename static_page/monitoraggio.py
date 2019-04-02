@@ -1,5 +1,6 @@
 import requests
 from io import BytesIO
+from collections import OrderedDict
 from celery import uuid
 from xhtml2pdf import pisa
 
@@ -25,22 +26,24 @@ class TypeFormResponses:
         'Content-Type': 'application/json'
     }
 
-    form_ids = {
-        'by6gIZ': 'Sezione A – servizi di carattere sociale',
-        'AX0Rjm': 'Sezione B – telefonia sociale, telesoccorso, teleassistenza e telemedicina',
-        'FZlCpn': 'Sezione C – salute',
-        'artG8g': 'Sezione D – ''''"ambiente", "sviluppo economico e coesione sociale", 
-            "cultura, sport e ricreazione", "cooperazione e solidarietà internazionale",
-            "protezione civile"''',
-        'r3IRy8': 'Sezione E – relazioni',
-        'DhH3Mk': 'Sezione F – organizzazione',
-        'W6G6cD': 'Sezione G – risorse economiche e finanziarie',
-    }
+    # python 3.5
+    form_ids = OrderedDict([
+        ('by6gIZ', 'Sezione A – servizi di carattere sociale'),
+        ('AX0Rjm',
+         'Sezione B – telefonia sociale, telesoccorso, teleassistenza e telemedicina'),
+        ('FZlCpn', 'Sezione C – salute'),
+        ('artG8g', 'Sezione D – ''''"ambiente", "sviluppo economico e coesione sociale",
+                "cultura, sport e ricreazione", "cooperazione e solidarietà internazionale",
+                "protezione civile"'''),
+        ('r3IRy8', 'Sezione E – relazioni'),
+        ('DhH3Mk', 'Sezione F – organizzazione'),
+        ('W6G6cD', 'Sezione G – risorse economiche e finanziarie'),
+    ])
 
     def __init__(self, request=None, me=None, user_pk=None):
         self.request = request
         self.me = me
-        self.user_pk = user_pk
+        self.user_pk = user_pk  # Celery
 
         self.context_typeform = self._set_typeform_context()
 
@@ -60,23 +63,24 @@ class TypeFormResponses:
 
     @property
     def persona(self):
-        if self.user_pk is None:
+        if self.me is not None:
             return self.me
-        else:
+        if self.user_pk is not None:
             return Persona.objects.get(id=self.get_user_pk)
 
     @property
     def comitato_id(self):
-        deleghe = self.me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
+        persona = self.persona
+        deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
 
-        request_comitato = self.request.GET.get('comitato')
+        request_comitato = self.request.GET.get('comitato') if self.request else None
         if request_comitato:
             # Check comitato_id validity
             if int(request_comitato) not in deleghe.values_list('oggetto_id', flat=True):
                 raise ValueError("L'utenza non ha una delega con l'ID del comitato indicato.")
             return request_comitato
         else:
-            if self.me.is_presidente:
+            if persona.is_presidente:
                 # Il ruolo presidente può avere soltanto una delega attiva,
                 # quindi vado sicuro a prendere <oggetto_id> dell'unico record
                 return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
@@ -93,7 +97,7 @@ class TypeFormResponses:
         for _id, bottone_name in self.form_ids.items():
             json = self.get_json_from_responses(_id)
             for item in json['items']:
-                c = item.get('hidden', dict())
+                c = item.get('hidden', OrderedDict())
                 c = c.get('c')
 
                 if c and c == comitato_id:
@@ -126,7 +130,7 @@ class TypeFormResponses:
             if form_id is not None:
                 # Make complete request
                 # return self.get_responses(form_id).json()
-                return self.get_completed_responses(form_id).json()
+                return self.get_completed_responses(form_id)
             else:
                 raise BaseException('You must pass form_id')
 
@@ -135,7 +139,7 @@ class TypeFormResponses:
                                      path='/responses',
                                      query=self.get_user_pk,
                                      completed=True)
-        return response
+        return response.json()
 
     def get_answers_from_json(self, json):
         items = json['items'][0]
@@ -143,11 +147,13 @@ class TypeFormResponses:
         return answers
 
     def get_form_questions(self, form_id):
-        return self.make_request(form_id).json()
+        response = self.make_request(form_id)
+        return response.json()
 
     def combine_question_with_user_answer(self, **kwargs):
         question = kwargs.get('question')
         answer = kwargs.get('answer')
+        answer = answer[0] if len(answer) > 0 else None
 
         type = answer['type']
 
@@ -156,7 +162,7 @@ class TypeFormResponses:
                 'question_id': question['id'],
                 # 'question_ref': question['ref'],
                 'question_title': question['title'],
-                'question_parent': question['parent'] if 'parent' in question else {},
+                'question_parent': question['parent'] if 'parent' in question else dict(),
                 'answer_field_id': answer['field']['id'],
                 'answer_field_type': answer['field']['type'],
                 'answer_field_ref': answer['field']['ref'],
@@ -171,13 +177,14 @@ class TypeFormResponses:
         if type == 'boolean':
             return 'Si' if answer == True else 'No'
         elif type == 'choices':
-            return ', '.join(answer['labels'])
+            if 'labels' in answer:
+                return ', '.join(answer['labels'])
+            elif 'other' in answer:
+                return answer.get('other')
         elif type == 'choice':
-            return answer['label']
-        elif type == 'number':
-            pass
-
-        return answer
+            return answer.get('label') or answer.get('other')
+        elif type in ['text', 'number', 'email', 'url', 'file_url', 'date', 'payment']:
+            return answer
 
     def has_answers(self, json):
         try:
@@ -193,7 +200,7 @@ class TypeFormResponses:
         # requested url:  https://api.typeform.com/forms/<form_id>
 
         questions = self.get_form_questions(form_id)
-        questions_without_hierarchy = dict()
+        questions_without_hierarchy = OrderedDict()
 
         # eh si, lo so è un bella camminata...
         for field in questions['fields']:
@@ -209,7 +216,7 @@ class TypeFormResponses:
                         if question_parent:
                             questions_without_hierarchy[i['ref']]['parent'] = question_parent
                             # reset variable, to avoid displaying data in each table row (show only 1 time)
-                            question_parent = {}
+                            question_parent = OrderedDict()
 
                         if 'properties' in i:
                             for k, v in i['properties'].items():
@@ -224,13 +231,13 @@ class TypeFormResponses:
         return questions_without_hierarchy
 
     def _retrieve_data(self):
-        retrieved = dict()
+        retrieved = OrderedDict()
         for form_id, form_name in self.form_ids.items():
-            responses_for_form_id = self.get_completed_responses(form_id).json()
+            responses_for_form_id = self.get_completed_responses(form_id)
 
             if self.has_answers(responses_for_form_id):
                 answers = self.get_answers_from_json(responses_for_form_id)
-                answers_refactored = {i['field']['ref']: i for i in answers}
+                answers_refactored = OrderedDict([(i['field']['ref'], [i]) for i in answers])
 
                 questions_fields = self.collect_questions(form_id)
                 for answer_ref, answer_data in answers_refactored.items():
@@ -252,8 +259,18 @@ class TypeFormResponses:
 
         return retrieved
 
+    @property
+    def user_details(self):
+        if self.request is not None:
+            # Not celery
+            return self.request.user.persona
+        else:
+            # Called within celery task
+            return self.persona
+
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print.html', {
+            'user_details': self.user_details,
             'request': self.request,
             'results': self._retrieve_data(),
             'to_print': to_print,
@@ -285,5 +302,5 @@ class TypeFormResponses:
     def send_via_mail(self):
         task = send_mail.apply_async(args=(self.get_user_pk,), task_id=uuid())
 
-        messages.add_message(self.request, messages.INFO, self.CELERY_TASK_PREFIX+task.id)
+        # messages.add_message(self.request, messages.INFO, self.CELERY_TASK_PREFIX+task.id)
         return redirect(reverse('pages:monitoraggio'))
