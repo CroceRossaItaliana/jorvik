@@ -563,6 +563,8 @@ def statistica_num_corsi(**kwargs):
         nome_corso = kwargs.get('nome_corso')
         area_riferimento = kwargs.get('area_riferimento')
 
+        print(livello_riferimento, nome_corso, area_riferimento, kwargs.get('anno'))
+
         filter_name = lambda x: nome_corso in x.nome
 
         corsi_current = CorsoBase.objects.filter(
@@ -640,19 +642,19 @@ def statistica_num_corsi(**kwargs):
     anno = int(kwargs.get('anno_di_riferimento'))
     if tipo == FILTRO_ANNO:
         obj['tot'] = [
-            get_tot_anno(estensione=NAZIONALE, anno=anno),
-            get_tot_anno(estensione=REGIONALE, anno=anno),
-            get_tot_anno(estensione=LOCALE, anno=anno),
-            get_tot_anno(estensione=TERRITORIALE, anno=anno),
+            get_tot_anno(estensione=NAZIONALE, anno=anno, **kwargs),
+            get_tot_anno(estensione=REGIONALE, anno=anno, **kwargs),
+            get_tot_anno(estensione=LOCALE, anno=anno, **kwargs),
+            get_tot_anno(estensione=TERRITORIALE, anno=anno, **kwargs),
         ]
     elif tipo == FILTRO_DATA:
         start = kwargs.get('dal')
         finish = kwargs.get('al')
         obj['tot'] = [
-            get_tot_date(start=start, finish=finish, estensione=NAZIONALE),
-            get_tot_date(start=start, finish=finish, estensione=REGIONALE),
-            get_tot_date(start=start, finish=finish, estensione=LOCALE),
-            get_tot_date(start=start, finish=finish, estensione=TERRITORIALE),
+            get_tot_date(start=start, finish=finish, estensione=NAZIONALE, **kwargs),
+            get_tot_date(start=start, finish=finish, estensione=REGIONALE, **kwargs),
+            get_tot_date(start=start, finish=finish, estensione=LOCALE, **kwargs),
+            get_tot_date(start=start, finish=finish, estensione=TERRITORIALE, **kwargs),
         ]
 
     return obj
