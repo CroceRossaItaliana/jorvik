@@ -44,6 +44,10 @@
         <ul id="tabAttivazione" class="nav nav-tabs">
             <li role="presentation"><a href="{% url 'formazione:new_course' %}"><i class="fa fa-fw fa-info"></i> Nuovo</a></li>
             <li {% if request.path == corso.url_direttori %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_direttori }}"><i class="fa fa-fw fa-group"></i> Direttori ({{ corso.deleghe.count }})</a></li>
+
+            {% if corso.tipo == 'C1' %}
+                <li role="presentation" {% if request.path == corso.url_estensioni %}class="active_link"{% endif %}><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Estensioni</a></li>
+            {% endif %}
         </ul>
         {% endif %}
 
@@ -58,9 +62,6 @@
                     </a>
                 </li>
 
-                {% if corso.tipo == 'C1' %}
-                    <li role="presentation" {% if request.path == corso.url_estensioni %}class="active"{% endif %}><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Estensioni</a></li>
-                {% endif %}
                 <li {% if 'informa' in request.path %}class="active_link"{% endif %} role="presentation"><a href="{% url 'aspirante:informa' corso.pk %}"><i class="fa fa-fw fa-envelope"></i> Informa persone</a></li>
             {% endif %}
         </ul>
