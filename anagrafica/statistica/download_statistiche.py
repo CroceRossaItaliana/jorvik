@@ -23,7 +23,6 @@ def inserisci_comitati(worksheet, comitati, count, bold):
         c += 2
         count = 1
 
-
     return count
 
 
@@ -68,10 +67,10 @@ def intestazione(workbook, ws):
     cell_reg = workbook.add_format({'bg_color': COLORI_COMITATI[REGIONALE]})
     cell_loc = workbook.add_format({'bg_color': COLORI_COMITATI[LOCALE]})
     cell_ter = workbook.add_format({'bg_color': COLORI_COMITATI[TERRITORIALE]})
-
-    worksheet.write(5, 12, 'Regionale', cell_reg)
-    worksheet.write(6, 12, 'Locale', cell_loc)
-    worksheet.write(7, 12, 'Territoriale', cell_ter)
+    c += 1
+    worksheet.write(5, c, 'Regionale', cell_reg)
+    worksheet.write(6, c, 'Locale', cell_loc)
+    worksheet.write(7, c, 'Territoriale', cell_ter)
 
     return worksheet
 
