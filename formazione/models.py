@@ -36,7 +36,7 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
     CORSO_NUOVO = 'C1'
     BASE = 'BA'
     TIPO_CHOICES = (
-        (CORSO_NUOVO, 'Corso'),
+        (CORSO_NUOVO, 'Corso di formazione dei volontari della Croce Rossa italiana'),
         (BASE, 'Corso Base'),
     )
 
@@ -195,9 +195,14 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         if not persona.personal_identity_documents():
             return self.NON_HAI_CARICATO_DOCUMENTI_PERSONALI
 
-        if persona.personal_identity_documents().filter(
-                expires__lt=datetime.datetime.now().date()):
-            return self.NON_HAI_DOCUMENTO_PERSONALE_VALIDO
+        if persona.personal_identity_documents():
+            today = datetime.datetime.now().date()
+            documents = persona.personal_identity_documents()
+            gt_exists = documents.filter(expires__gt=today).exists()
+            lt_exists = documents.filter(expires__lt=today).exists()
+
+            if lt_exists and not gt_exists:
+                return self.NON_HAI_DOCUMENTO_PERSONALE_VALIDO
 
         return self.PUOI_ISCRIVERTI_OK
 

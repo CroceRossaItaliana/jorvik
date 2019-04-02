@@ -13,13 +13,16 @@ from anagrafica.models import Persona, Documento
 from anagrafica.forms import ModuloCreazioneDocumento
 from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
-    GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA)
+    GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, ELENCHI_SOCI)
+from curriculum.models import TitoloPersonale
+from ufficio_soci.elenchi import ElencoPerTitoliCorso
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, messaggio_generico # ci_siamo_quasi
 from base.files import Zip
 from base.models import Log
 from base.utils import poco_fa
 from posta.models import Messaggio
+from survey.models import Survey
 from .elenchi import ElencoPartecipantiCorsiBase
 from .decorators import can_access_to_course
 from .models import (Corso, CorsoBase, CorsoEstensione, AssenzaCorsoBase,
@@ -78,6 +81,7 @@ def formazione_corsi_base_nuovo(request, me):
             kwargs['titolo_cri'] = cd['titolo_cri']
             kwargs['cdf_level'] = cd['level']
             kwargs['cdf_area'] = cd['area']
+            kwargs['survey'] = Survey.survey_for_corso()
 
         course = CorsoBase.nuovo(
             anno=data_inizio.year,
@@ -111,15 +115,16 @@ def formazione_corsi_base_direttori(request, me, pk):
     continua_url = corso.url
 
     if 'corso_base_creato' in request.session and int(request.session['corso_base_creato']) == int(pk):
-        continua_url = "/formazione/corsi-base/%d/fine/" % (int(pk),)
+        continua_url = "/formazione/corsi-base/%d/fine/" % int(pk)
         del request.session['corso_base_creato']
 
-    contesto = {
+    context = {
         "delega": DIRETTORE_CORSO,
         "corso": corso,
-        "continua_url": continua_url
+        "continua_url": continua_url,
+        'puo_modificare': me and me.permessi_almeno(corso, MODIFICA)
     }
-    return 'formazione_corsi_base_direttori.html', contesto
+    return 'formazione_corsi_base_direttori.html', context
 
 
 @pagina_privata
@@ -926,3 +931,35 @@ def aspirante_corso_estensioni_informa(request, me, pk):
         'puo_modificare': True,
     }
     return 'aspirante_corso_informa_persone.html', context
+
+
+@pagina_privata
+def formazione_albo_informatizzato(request, me):
+    sedi = me.oggetti_permesso(ELENCHI_SOCI)
+    context = {
+        'elenco_nome': 'Albo Informatizzato',
+        'elenco_template': None,
+    }
+
+    # Step 2: Elaborare elenco per le sedi selezionate
+    if request.method == 'POST':
+        elenco = ElencoPerTitoliCorso(sedi.filter(pk__in=request.POST.getlist('sedi')))
+        context['elenco'] = elenco
+        return 'formazione_albo_elenco_generico.html', context
+
+    # Step 1: Selezione sedi
+    context['sedi'] = sedi
+    return 'formazione_albo_informatizzato.html', context
+
+
+@pagina_privata
+def formazione_albo_titoli_corso_full_list(request, me):
+    context = {}
+    if 'persona_id' in request.GET:
+        persona = Persona.objects.get(id=request.GET['persona_id'])
+        titles = TitoloPersonale.objects.filter(persona=persona,
+                                                is_course_title=True)
+        context['titles'] = titles.order_by('titolo__nome', '-data_scadenza')
+        context['person'] = persona
+
+    return 'formazione_albo_titoli_corso_full_list.html', context

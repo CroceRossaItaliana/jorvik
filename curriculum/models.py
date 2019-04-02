@@ -140,7 +140,10 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     @property
     def attuale(self):
-        return self.data_scadenza is None or timezone.now() >= self.data_scadenza
+        now = timezone.now()
+        today = date(now.year, now.month, now.day)
+        return self.data_scadenza is None or \
+               today >= self.data_scadenza
 
     def autorizzazione_negata(self, modulo=None, notifiche_attive=True, data=None):
         # Alla negazione, cancella titolo personale.

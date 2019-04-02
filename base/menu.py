@@ -6,13 +6,8 @@ La costante MENU è accessibile attraverso "menu" nei template.
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 
-from anagrafica.costanti import REGIONALE, TERRITORIALE #, LOCALE
-from anagrafica.permessi.applicazioni import (DELEGATO_OBIETTIVO_1,
-    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4,
-    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, PRESIDENTE, UFFICIO_SOCI,
-    UFFICIO_SOCI_UNITA, DELEGATO_AREA, RESPONSABILE_AREA, REFERENTE,
-    RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, DELEGATO_CO,
-    REFERENTE_GRUPPO, RUBRICHE_TITOLI, COMMISSARIO)
+from anagrafica.costanti import REGIONALE  #TERRITORIALE, LOCALE
+from anagrafica.permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI, RUBRICHE_TITOLI, COMMISSARIO)
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA,
     GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE,
     EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE)
@@ -36,7 +31,7 @@ def menu(request):
         sedi_deleghe_normali = me.sedi_deleghe_attuali(deleghe=deleghe_normali) if me else Sede.objects.none()
         sedi_deleghe_normali = [sede.pk for sede in sedi_deleghe_normali if sede.comitati_sottostanti().exists() or sede.unita_sottostanti().exists()]
         presidente = me.deleghe_attuali(tipo=PRESIDENTE)
-        sedi_deleghe_presidente = me.sedi_deleghe_attuali(deleghe=presidente).exclude(estensione__in=(TERRITORIALE,)) if me else Sede.objects.none()
+        sedi_deleghe_presidente = me.sedi_deleghe_attuali(deleghe=presidente) if me else Sede.objects.none()
         sedi_presidenti_sottostanti = [sede.pk for sede in sedi_deleghe_presidente if sede.comitati_sottostanti().exists()]
         sedi_deleghe_presidente = list(sedi_deleghe_presidente.values_list('pk', flat=True))
         sedi = sedi_deleghe_normali + sedi_deleghe_presidente
@@ -59,10 +54,11 @@ def menu(request):
             if titolo not in rubriche:
                 rubriche.append(titolo)
                 if (delega in deleghe_attuali or
-                    PRESIDENTE in deleghe_attuali or
                     UFFICIO_SOCI in deleghe_attuali or
-                    COMMISSARIO in deleghe_attuali
-                ) and (delega != PRESIDENTE or (PRESIDENTE in deleghe_attuali and sedi_presidenti_sottostanti)):
+                    PRESIDENTE in deleghe_attuali or
+                    COMMISSARIO in deleghe_attuali):
+                    if UFFICIO_SOCI in deleghe_attuali and (delega == COMMISSARIO or delega == PRESIDENTE):
+                        continue
                     RUBRICA_BASE.append(
                         (titolo, "fa-book", "".join(("/utente/rubrica/", slug, '/')))
                     )
@@ -111,9 +107,13 @@ def menu(request):
     VOCE_LINKS = ("Links", tuple((link.name, link.icon_class, link.url)
         for link in Menu.objects.filter(is_active=True).order_by('order')))
 
+    VOCE_MONITORAGGIO = ("Monitoraggio", (
+        ("Monitoraggio 2019 (dati 2018)", 'fa-user', reverse('pages:monitoraggio')),
+    ))
+
     elementi = {
         "utente": (VOCE_PERSONA, VOCE_VOLONTARIO, VOCE_RUBRICA, VOCE_CV,
-                   VOCE_DONATORE, VOCE_SICUREZZA, VOCE_LINKS) \
+                   VOCE_DONATORE, VOCE_SICUREZZA, VOCE_LINKS, VOCE_MONITORAGGIO) \
                     if me and not hasattr(me, 'aspirante') else None,
         "posta": (
             ("Posta", (
@@ -168,10 +168,10 @@ def menu(request):
                 ("Estesi", "fa-list", "/us/elenchi/estesi/"),
                 ("IV e CM", "fa-list", "/us/elenchi/ivcm/"),
                 ("In Riserva", "fa-list", "/us/elenchi/riserva/"),
-                ("Zero turni", "fa-list", "/us/elenchi/senza-turni/", '', True),
+                ("Zero turni", "fa-list", "/us/elenchi/senza-turni/"),
                 ("Soci", "fa-list", "/us/elenchi/soci/"),
                 ("Sostenitori", "fa-list", "/us/elenchi/sostenitori/"),
-                ("Ex Sostenitori", "fa-list", "/us/elenchi/ex-sostenitori/", '', True),
+                ("Ex Sostenitori", "fa-list", "/us/elenchi/ex-sostenitori/"),
                 ("Dipendenti", "fa-list", "/us/elenchi/dipendenti/"),
                 ("Dimessi", "fa-list", "/us/elenchi/dimessi/"),
                 ("Trasferiti", "fa-list", "/us/elenchi/trasferiti/"),
@@ -179,6 +179,7 @@ def menu(request):
                 ("Elettorato", "fa-list", "/us/elenchi/elettorato/"),
                 ("Tesserini", "fa-list", "/us/tesserini/"),
                 ("Per Titoli", "fa-search", "/us/elenchi/titoli/"),
+                ("Scarica elenchi richiesti", "fa-download", reverse('ufficio_soci:elenchi_richiesti_download'), '', True),
             )),
             ("Aggiungi", (
                 ("Persona", "fa-plus-square", "/us/aggiungi/"),
@@ -210,8 +211,8 @@ def menu(request):
             )),
         ),
         'formazione': formazione_menu('formazione', gestione_corsi_sede),
-        'aspirante': formazione_menu('aspirante', gestione_corsi_sede) if me
-            and hasattr(me, 'aspirante') else (
+        'aspirante': formazione_menu('aspirante', gestione_corsi_sede) \
+            if me and hasattr(me, 'aspirante') else (
             ("Gestione Corsi", (
                 ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
             )),

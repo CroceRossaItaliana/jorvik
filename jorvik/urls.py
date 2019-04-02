@@ -160,6 +160,7 @@ urlpatterns = [
     url(r'^o/authorize/$', oauth2_provider_views.AuthorizationView.as_view(), name="authorize"),
     url(r'^o/token/$', oauth2_provider_views.TokenView.as_view(), name="token"),
     url(r'^o/revoke_token/$', oauth2_provider_views.RevokeTokenView.as_view(), name="revoke-token"),
+    url(r'^openid/', include('oidc_provider.urls', namespace='oidc_provider')),
 
     # REST api
     url(r'^api/', include('api.urls', namespace='api')),

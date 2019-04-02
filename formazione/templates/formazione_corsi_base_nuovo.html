@@ -7,44 +7,59 @@
 
 {% block app_contenuto %}
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-8">
             <div class="panel panel-primary">
                 <div class="panel-heading">
-                    <h2 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Attivazione nuovo Corso</h2>
+                    <h2 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Attivazione Corso</h2>
                 </div>
                 <div class="panel-body">
                     <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         {% bootstrap_form modulo %}
                         <button type="submit" class="btn btn-block btn-primary" data-conferma="Confermi di voler pianificare il corso?">
-                            <i class="fa fa-fw fa-asterisk"></i> Pianifica il Corso
+                            <i class="fa fa-fw fa-asterisk"></i> Attiva il Corso
                         </button>
                     </form>
                 </div>
             </div>
+            <div class="panel panel-default panels-inactive" style="border: none;">
+                <div class="panel-heading" style="margin-bottom:6px;">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-info"></i> Dettagli corso ed iscrizioni</h2>
+                </div>
+                <div class="panel-heading" style="margin-bottom:6px;">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Lezioni</h2>
+                </div>
+                <div class="panel-heading" style="margin-bottom:6px;">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-file-excel-o"></i> Esami e verbale</h2>
+                </div>
+                <div class="panel-heading">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</h2>
+                </div>
+            </div>
+            <script>$('.panels-inactive div').on('click', function(){ alert('Il corso non è ancora creato.'); });</script>
         </div>
-        <div class="col-md-6">
-            <div class="alert alert-info">
-                <i class="fa fa-fw fa-calendar"></i> <strong>Data ed ora di inizio</strong>:
-                Ti consigliamo di inserire in questo campo la data e l'ora nella quale sar&agrave;
-                effettuata la presentazione del Corso. Questa data sar&agrave; comunicata
-                agli aspiranti nella tua zona come data di inziio del Corso.
-            </div>
-            <div class="alert alert-info">
-                <i class="fa fa-fw fa-info-circle"></i> <strong>Nota bene</strong>:
-                Dopo questo step potrai nominare uno o pi&ugrave; direttori del corso.
-                Questi potranno inserire gli ulteriori dettagli sul corso,
-                come le date delle lezioni, la descrizione, nonch&eacute; gestire
-                interamente il corso per te.
-            </div>
-            <div class="alert alert-info">
-                <i class="fa fa-fw fa-info-circle"></i> <strong>Nota bene</strong>:
-                Nella delibera che dispone l’attivazione devono essere necessariamente indicati:<br>
-                a. data di inizio e di conclusione del corso;<br>
-                b. nome e qualifica del Direttore del corso;<br>
-                c. termine di scadenza fissato per le domande di ammissione;<br>
-                d. rinvio ai regolamenti vigenti per quanto concerne requisiti di partecipazione, programma e qualifiche dei docenti.
-            </div>
+        <div class="col-md-4">
+            <!--<div class="alert alert-info">-->
+                <!--<i class="fa fa-fw fa-calendar"></i> <strong>Data ed ora di inizio</strong>:-->
+                <!--Ti consigliamo di inserire in questo campo la data e l'ora nella quale sar&agrave;-->
+                <!--effettuata la presentazione del Corso. Questa data sar&agrave; comunicata-->
+                <!--agli aspiranti nella tua zona come data di inziio del Corso.-->
+            <!--</div>-->
+            <!--<div class="alert alert-info">-->
+                <!--<i class="fa fa-fw fa-info-circle"></i> <strong>Nota bene</strong>:-->
+                <!--Dopo questo step potrai nominare uno o pi&ugrave; direttori del corso.-->
+                <!--Questi potranno inserire gli ulteriori dettagli sul corso,-->
+                <!--come le date delle lezioni, la descrizione, nonch&eacute; gestire-->
+                <!--interamente il corso per te.-->
+            <!--</div>-->
+            <!--<div class="alert alert-info">-->
+                <!--<i class="fa fa-fw fa-info-circle"></i> <strong>Nota bene</strong>:-->
+                <!--Nella delibera che dispone l’attivazione devono essere necessariamente indicati:<br>-->
+                <!--a. data di inizio e di conclusione del corso;<br>-->
+                <!--b. nome e qualifica del Direttore del corso;<br>-->
+                <!--c. termine di scadenza fissato per le domande di ammissione;<br>-->
+                <!--d. rinvio ai regolamenti vigenti per quanto concerne requisiti di partecipazione, programma e qualifiche dei docenti.-->
+            <!--</div>-->
         </div>
     </div>
 

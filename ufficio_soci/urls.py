@@ -16,6 +16,7 @@ urlpatterns = [
     url(r'^dimissioni/(?P<pk>[0-9]+)/$', viste.us_dimissioni, name='us-dimissioni'),
     url(r'^dimissioni/sostenitore/(?P<pk>[0-9]+)/$', viste.us_chiudi_sostenitore, name='us-chiudi-sostenitore'),
 
+    url(r'^elenchi/download/$', viste.us_elenchi_richiesti_download, name='elenchi_richiesti_download'),
     url(r'^elenchi/(?P<elenco_tipo>.*)/$', viste.us_elenchi),
     url(r'^quote/$', viste.us_quote),
     url(r'^quote/nuova/$', viste.us_quote_nuova, name='us_quote_nuova'),
@@ -33,7 +34,7 @@ urlpatterns = [
     url(r'^tesserini/emissione/processa/$', viste.us_tesserini_emissione_processa),
     url(r'^tesserini/emissione/scarica/$', viste.us_tesserini_emissione_scarica),
 
-    url(r'^elenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', viste.us_elenco),
+    url(r'^elenco/(?P<elenco_id>.*)/(?P<pagina>[0-9]+)/$', viste.us_elenco, name='elenco_page'),
     url(r'^elenco/(?P<elenco_id>.*)/download/$', viste.us_elenco_download),
     url(r'^elenco/(?P<elenco_id>.*)/messaggio/$', viste.us_elenco_messaggio, name='us-elenco-messaggio'),
     url(r'^elenco/(?P<elenco_id>.*)/modulo/$', viste.us_elenco_modulo),

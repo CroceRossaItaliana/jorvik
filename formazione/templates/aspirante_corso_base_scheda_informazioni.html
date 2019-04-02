@@ -82,6 +82,11 @@
                 Sei gi&agrave; iscritt{{ me.genere_o_a }} a un altro corso, quindi non puoi iscriverti a questo.
         {% elif puoi_partecipare == corso.NON_PUOI_SEI_ASPIRANTE %}
                 Non puoi iscriverti a questo corso.
+        {% elif puoi_partecipare == corso.NON_HAI_DOCUMENTO_PERSONALE_VALIDO %}
+            Per iscriverti a questo corso devi <a href="{% url 'utente:documenti' %}" target="_blank">aggiornare il documento di riconoscimento</a> in corso di validità.
+        {% elif puoi_partecipare == corso.NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI %}
+            Non puoi partecipare perchè non hai titoli necessari.
+
         {% elif puoi_partecipare == corso.NON_HAI_CARICATO_DOCUMENTI_PERSONALI %}
             Per iscriverti a questo corso inserisci la copia di un documento di riconoscimento in corso di validità (CDI o Patente Civile).
 
@@ -92,9 +97,6 @@
                 {% csrf_token %}
                 <input type="submit" class="btn btn-primary" value="Carica">
             </form>
-
-        {% elif puoi_partecipare == corso.NON_HAI_DOCUMENTO_PERSONALE_VALIDO %}
-            Per iscriverti a questo corso devi <a href="{% url 'utente:documenti' %}">aggiornare il documento di riconoscimento</a> in corso di validità.
         {% else %}
             Non puoi partecipare a questo corso.
         {% endif %}

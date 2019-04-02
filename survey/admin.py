@@ -13,6 +13,11 @@ class AdminQuestion(admin.ModelAdmin):
     list_filter = ['is_active', ]
 
 
+@admin.register(QuestionGroup)
+class AdminQuestionGroup(admin.ModelAdmin):
+    list_display = ['name',]
+
+
 @admin.register(Survey)
 class AdminSurvey(admin.ModelAdmin):
     inlines = [QuestionInline, ]

@@ -26,10 +26,8 @@ class ModuloCreazioneCorsoBase(ModelForm):
     LEVELS_CHOICES = ()
 
     level = forms.ChoiceField(choices=LEVELS_CHOICES, label='Livello', required=False)
-    area = forms.ChoiceField(choices=OBBIETTIVI_STRATEGICI, label='Area', required=False)
-    locazione = forms.ChoiceField(choices=LOCAZIONE, initial=PRESSO_SEDE,
-        help_text="La posizione del Corso è importante per aiutare gli aspiranti "
-                  "a trovare i Corsi che si svolgono vicino a loro.")
+    area = forms.ChoiceField(choices=OBBIETTIVI_STRATEGICI, label='Settore di riferimento', required=False)
+    locazione = forms.ChoiceField(choices=LOCAZIONE, initial=PRESSO_SEDE, label='Sede del Corso',)
     titolo_cri = forms.ChoiceField(label='Titolo del Corso', required=False)
 
     def clean_tipo(self):
@@ -87,7 +85,10 @@ class ModuloCreazioneCorsoBase(ModelForm):
         fields = ['tipo', 'level', 'titolo_cri', 'data_inizio', 'data_esame',
                   'delibera_file', 'sede',]
         help_texts = {
-            # 'titolo_cri': 'Da selezionare se il tipo di corso non è Corso Base',
+            'sede': 'Inserire il Comitato CRI che organizza il Corso',
+        }
+        labels = {
+            'sede': 'Comitato CRI',
         }
 
     def __init__(self, *args, **kwargs):
@@ -121,7 +122,10 @@ class ModuloCreazioneCorsoBase(ModelForm):
                 nome__isnull=False,
                 tipo=Titolo.TITOLO_CRI,
                 is_active=True,
-            )]
+            ).order_by('nome')]
+
+        # Sort area options 'ASC'
+        self.fields['area'].choices = sorted(self.fields['area'].choices, key=lambda x: x[1])
 
 
 class ModuloModificaLezione(ModelForm):
@@ -163,8 +167,7 @@ class ModuloModificaCorsoBase(ModelForm):
         fields = ['data_inizio', 'data_esame',
                   'min_participants', 'max_participants',
                   'descrizione',
-                  'data_attivazione', 'data_convocazione',
-                  'op_attivazione', 'op_convocazione',]
+                  'data_attivazione', 'data_convocazione',]
         widgets = {
             "descrizione": WYSIWYGSemplice(),
         }

@@ -3,8 +3,15 @@ from anagrafica.models import Persona
 
 
 class Survey(models.Model):
+    FORMAZIONE = 'f'
+    SURVEY_TYPE_CHOICES = (
+        (FORMAZIONE, 'Formazione'),
+    )
+
     is_active = models.BooleanField(default=True)
     text = models.CharField(max_length=255)
+    survey_type = models.CharField(max_length=3, choices=SURVEY_TYPE_CHOICES,
+                                   null=True, blank=True)
 
     def get_questions(self):
         return self.question_set.all()
@@ -39,6 +46,14 @@ class Survey(models.Model):
     def has_user_responses(self, course):
         return SurveyResult.get_responses_for_course(course).exists()
 
+    @classmethod
+    def survey_for_corso(cls):
+        try:
+            return cls.objects.get(id=2)
+        except Survey.DoesNotExist:
+            s = cls.objects.filter(survey_type=cls.FORMAZIONE, is_active=True)
+            return s.last() if s.exists() else None
+
     class Meta:
         verbose_name = 'Questionario di gradimento'
         verbose_name_plural = 'Questionari di gradimento'
@@ -66,6 +81,8 @@ class Question(models.Model):
     survey = models.ForeignKey(Survey)
     is_active = models.BooleanField(default=True)
     required = models.BooleanField(default=True, verbose_name='Obbligatorio')
+    question_group = models.ForeignKey('QuestionGroup', null=True, blank=True)
+
     # question_type = models.CharField(max_length=100, choices=QUESTION_TYPES,
     #                                  default=TEXT, null=True, blank=True)
 
@@ -125,3 +142,10 @@ class SurveyResult(models.Model):
 
     def __str__(self):
         return "%s = %s" % (self.survey, self.user)
+
+
+class QuestionGroup(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return str(self.name)
