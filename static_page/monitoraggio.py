@@ -175,11 +175,9 @@ class TypeFormResponses:
         elif type == 'choices':
             return ', '.join(answer['labels'])
         elif type == 'choice':
-            return answer['label']
-        elif type == 'number':
-            pass
-
-        return answer
+            return answer.get('label') or answer.get('other')
+        elif type in ['text', 'number', 'email', 'url', 'file_url', 'date', 'payment']:
+            return answer
 
     def has_answers(self, json):
         try:
@@ -254,8 +252,18 @@ class TypeFormResponses:
 
         return retrieved
 
+    @property
+    def user_details(self):
+        if self.request is not None:
+            # Not celery
+            return self.request.user.persona
+        else:
+            # Called within celery task
+            return self.persona
+
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print.html', {
+            'user_details': self.user_details,
             'request': self.request,
             'results': self._retrieve_data(),
             'to_print': to_print,
