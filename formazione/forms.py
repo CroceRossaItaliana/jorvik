@@ -275,13 +275,22 @@ class CorsoExtensionForm(ModelForm):
         model = CorsoEstensione
         fields = ['segmento', 'titolo', 'sede', 'sedi_sottostanti',]
 
+    def clean(self):
+        cd = self.cleaned_data
+
+        if self.corso:
+            if self.corso.titolo_cri in cd['titolo']:
+                self.add_error('titolo', "Non è possibile selezionare lo stesso titolo del Corso.")
+
+        return cd
+
     def __init__(self, *args, **kwargs):
         self.corso = kwargs.pop('corso')
         super().__init__(*args, **kwargs)
 
-        if self.corso.is_nuovo_corso and self.corso.titolo_cri:
-            self.fields['titolo'].initial = Titolo.objects.filter(id__in=[
-                self.corso.titolo_cri.pk])
+        # if self.corso.is_nuovo_corso and self.corso.titolo_cri:
+        #     self.fields['titolo'].initial = Titolo.objects.filter(id__in=[
+        #         self.corso.titolo_cri.pk])
 
 
 CorsoSelectExtensionFormSet = modelformset_factory(CorsoEstensione, extra=1,
