@@ -703,41 +703,6 @@ def statistica_iivv_cm(**kwargs):
 
 def statistica_ore_servizio(**kwargs):
 
-    # def calcolo_per_anno(estensione, cursor, date):
-    #     c_0 = 0
-    #     c_0_10 = 0
-    #     c_10_20 = 0
-    #     c_20_30 = 0
-    #     c_30 = 0
-    #     for est in estensione:
-    #         cursor.execute(QUERY_NUM_ORE.format(
-    #             str(est), date
-    #         ))
-    #         row = cursor.fetchall()
-    #
-    #         for el in row:
-    #             if el[2] == 0:
-    #                 c_0 += 1
-    #             elif el[2] > 0 <= 10:
-    #                 c_0_10 += 1
-    #             elif el[2] > 10 <= 20:
-    #                 c_10_20 += 1
-    #             elif el[2] > 20 <= 30:
-    #                 c_20_30 += 1
-    #             elif el[2] > 30:
-    #                 c_30 += 1
-    #
-    #     statistica = OrderedDict([
-    #         ("Uguale a 0h di servizio al {}".format(date), c_0),
-    #         ("Da 0h a 10h di servizio al {}".format(date), c_0_10),
-    #         ("Da 10h a 20h di servizio al {}".format(date), c_10_20),
-    #         ("Da 20h a 30h di servizio al {}".format(date), c_20_30),
-    #         ("Maggiore di 30h di servizio al {}".format(date), c_30),
-    #         ('', ''),# per mantenere un spazio tra gli anni di riferimento
-    #     ])
-    #
-    #     return statistica
-
     def get_tot(estensione=[], inizio=None, fine=None):
 
         start = datetime.now().date().replace(month=1, day=1, year=int(inizio))
@@ -753,14 +718,57 @@ def statistica_ore_servizio(**kwargs):
             turno__inizio__gte=start
         ).annotate(durata=F('turno__fine') - F('turno__inizio'))
 
-        # persone = storico.distinct('persona')
-        from pprint import pprint
-        pprint(storico[0].persona)
-        # print(persone)
+        print(len(storico))
+
+        cfs = []
+        cf = None
+        c_0 = 0
+        c_0_10 = 0
+        c_10_20 = 0
+        c_20_30 = 0
+        c_30 = 0
+
+        for part in storico:
+            somma = 0
+            # entra solo se il cf è il primo
+            if not cf:
+                cf = part.persona.codice_fiscale
+                cfs.append(cfs)
+
+            if part.persona.codice_fiscale not in cfs:
+                cfs.append(part.persona.codice_fiscale)
+
+            if part.persona.codice_fiscale == cf:
+                somma += part.durata.seconds // 3600
+
+            print('somma', somma)
+            # Controllo in che tipologia si trova
+            if somma == 0:
+                c_0 += 1
+            elif somma > 0 <= 10:
+                c_0_10 += 1
+            elif somma > 10 <= 20:
+                c_10_20 += 1
+            elif somma > 20 <= 30:
+                c_20_30 += 1
+            elif somma > 30:
+                c_30 += 1
+
+            cfs.remove(cf)
+            cf = cfs[0] if cfs else None
+
+        statistica = OrderedDict([
+            ("Uguale a 0h di servizio al {}".format(''), c_0),
+            ("Da 0h a 10h di servizio al {}".format(''), c_0_10),
+            ("Da 10h a 20h di servizio al {}".format(''), c_10_20),
+            ("Da 20h a 30h di servizio al {}".format(''), c_20_30),
+            ("Maggiore di 30h di servizio al {}".format(''), c_30),
+            ('', ''),# per mantenere un spazio tra gli anni di riferimento
+        ])
 
         return {
             "nome": ESTENDIONI_DICT[estensione[0]],
-            "statistiche": None,
+            "statistiche": statistica,
         }
 
     start = int(kwargs.get('anno_di_riferimento'))
