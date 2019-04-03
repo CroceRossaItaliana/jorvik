@@ -1,3 +1,5 @@
+from xlrd import open_workbook
+
 from django.contrib import admin
 from django.conf.urls import url
 from django.shortcuts import HttpResponse, redirect, render
@@ -24,9 +26,6 @@ class StaticPageAdmin(admin.ModelAdmin):
         return urls
 
     def _process_imported_file(self, file, type):
-        import csv
-        from io import StringIO
-
         columns = {
             ImportAndGenerateStaticPage.CATALOGO_CORSI:
                 ('Sigla Corso', 'Nome del Corso',
@@ -40,13 +39,19 @@ class StaticPageAdmin(admin.ModelAdmin):
         tr = "<tr>\n\t%s</tr>\n" % td
         html = table[0] + tr % (columns[type])
 
-        for line in csv.reader(StringIO(file.read().decode()), delimiter=';'):
-            if type == ImportAndGenerateStaticPage.GLOSSARIO_CORSI:
-                html += tr % tuple(i.strip() for i in line[0].split('-'))
+        xls = open_workbook(file_contents=file.read())
+        sheet = xls.sheet_by_index(0)
 
-            elif type == ImportAndGenerateStaticPage.CATALOGO_CORSI:
-                # TODO: ...
-                pass
+        if type == ImportAndGenerateStaticPage.GLOSSARIO_CORSI:
+            for i in range(0, sheet.nrows):
+                row = sheet.row_slice(i)
+                sigla = row[0].value.strip()
+                text = row[1].value.strip()
+                html += tr % (sigla, text)
+
+        elif type == ImportAndGenerateStaticPage.CATALOGO_CORSI:
+            # TODO: ...
+            pass
 
         html += table[1]
         return html
