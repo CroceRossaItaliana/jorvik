@@ -4,7 +4,7 @@ from anagrafica.costanti import TERRITORIALE, REGIONALE, NAZIONALE, LOCALE, ESTE
 import datetime
 from datetime import datetime
 from formazione.models import Corso
-from django.db.models import Q
+from django.db.models import Q, F, Sum
 from .stat_costanti import (
     STATISTICA, COMITATI_DA_EXLUDERE, NUM_VOL_M_F, NUM_SOCI_VOL, NUM_NUOVI_VOL, FILTRO_ANNO, FILTRO_DATA,
     NUM_SEDI, NUM_DIMESSI, NUM_SEDI_NUOVE, NUMERO_CORSI, IIVV_CM, ORE_SERVIZIO, QUERY_NUM_ORE
@@ -740,31 +740,27 @@ def statistica_ore_servizio(**kwargs):
 
     def get_tot(estensione=[], inizio=None, fine=None):
 
-        # with connection.cursor() as cursor:
-        #     after = calcolo_per_anno(estensione, cursor, inizio)
-        #     before = calcolo_per_anno(estensione, cursor, fine)
-
-        appartenenze = Appartenenza.objects.filter(
-            sede__estensione__in=estensione,
-            fine=None,
-            membro=Appartenenza.VOLONTARIO
-        )
-
         start = datetime.now().date().replace(month=1, day=1, year=int(inizio))
         finish = datetime.now().date().replace(month=12, day=31, year=int(inizio))
 
-        for appartenenza in appartenenze:
-            storico = Partecipazione.objects.filter(
-                persona=appartenenza.persona,
-                turno__fine__lte=finish,
-                turno__inizio__gte=start
-            ).order_by('-turno__inizio')
+        storico = Partecipazione.objects.filter(
+            persona__in=Persona.objects.filter(Appartenenza.query_attuale(
+                al_giorno=None,
+                sede__estensione__in=estensione,
+                fine=None,
+            ).via("appartenenze")),
+            turno__fine__lte=finish,
+            turno__inizio__gte=start
+        ).annotate(durata=F('turno__fine') - F('turno__inizio'))
 
-
+        # persone = storico.distinct('persona')
+        from pprint import pprint
+        pprint(storico[0].persona)
+        # print(persone)
 
         return {
             "nome": ESTENDIONI_DICT[estensione[0]],
-            "statistiche": None, #OrderedDict(list(after.items()) + list(before.items()))
+            "statistiche": None,
         }
 
     start = int(kwargs.get('anno_di_riferimento'))
@@ -775,10 +771,10 @@ def statistica_ore_servizio(**kwargs):
     obj = {
         "nome": STATISTICA[ORE_SERVIZIO],
         "tot": [
-            get_tot(estensione=[NAZIONALE], inizio=start, fine=finish),
-            get_tot(estensione=[REGIONALE], inizio=start, fine=finish),
+            # get_tot(estensione=[NAZIONALE], inizio=start, fine=finish),
+            # get_tot(estensione=[REGIONALE], inizio=start, fine=finish),
             get_tot(estensione=[LOCALE, PROVINCIALE], inizio=start, fine=finish),
-            get_tot(estensione=[TERRITORIALE], inizio=start, fine=finish),
+            # get_tot(estensione=[TERRITORIALE], inizio=start, fine=finish),
         ]
     }
 
