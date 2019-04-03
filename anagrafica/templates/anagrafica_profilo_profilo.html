@@ -28,6 +28,7 @@
     </div>
 
     {% if persona.avatar %}
+        {% image_as_base64 persona.avatar as base64_persona_avatar %}
         <style>
             .u-img-{{ctime}} {width:100%;}
             .u-img-{{ctime}}::before {
@@ -38,7 +39,9 @@
                 padding-top: 66.64%;
                 background-size: contain;
                 background-repeat: no-repeat;
-                background-image: url({% image_as_base64 persona.avatar %});
+                {% if base64_persona_avatar %}
+                    background-image: url( {{base64_persona_avatar}} );
+                {% endif %}
             }
         </style>
     {% endif %}
