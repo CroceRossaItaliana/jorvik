@@ -12,8 +12,6 @@
 
 
 {% block app_contenuto %}
-    {% now "d/m/Y" as today %}
-
     <h2 class="allinea-centro grassetto text-success" style="max-width:650px; margin: 0 auto; padding-bottom: 10px; font-size: 26px; ">{{ corso.titolo_cri|default:"" }}</h2>
     <h4 style="margin: 0 0 20px;padding:0 0 10px;border-bottom: 1px solid #e6e6e6;text-align:center; font-size:16px;">{{ corso.nome }}</h4>
 
@@ -30,8 +28,9 @@
         <li role="presentation"><a data-tab-id="#tabDettagliCorso" href="#" class="tabSelectorLink"><i class="fa fa-fw fa-info"></i> Dettagli corso ed iscrizione</a></li>
 
         {% if puo_modificare %}
+            {% now "U" as today_ts %}
             <li role="presentation"><a data-tab-id="#tabLezioni" href="#" class="tabSelectorLink"><i class="fa fa-fw fa-calendar"></i> Lezioni</a></li>
-            {% if today == corso.data_esame %}<li role="presentation"><a data-tab-id="#tabEsami" href="#" class="tabSelectorLink"><i class="fa fa-fw fa-file-excel-o"></i> Documentazione Esame</a></li>{% endif %}
+            {% if today_ts >= corso.data_esame|date:"U" %}<li role="presentation"><a data-tab-id="#tabEsami" href="#" class="tabSelectorLink"><i class="fa fa-fw fa-file-excel-o"></i> Documentazione Esame</a></li>{% endif %}
         {% endif %}
 
         {% if corso.concluso %}
