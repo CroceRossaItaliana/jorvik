@@ -12,10 +12,9 @@ from django.utils.timezone import now
 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE, REGIONALE, NAZIONALE
-from anagrafica.validators import (valida_dimensione_file_5mb,
-   valida_dimensione_file_8mb, ValidateFileSize)
-from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE,
-    INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
+from anagrafica.validators import (valida_dimensione_file_8mb, ValidateFileSize)
+from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
+from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE, INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
 from base.files import PDF, Zip
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.utils import concept, poco_fa
@@ -714,13 +713,21 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             # Corso in una sede Regionale/Nazionale. - Informa sulla mail
             email_to = 'formazione@cri.it'
 
-        email = Messaggio.invia_raw(
+        Messaggio.invia_raw(
             oggetto="Delibera nuovo corso: %s" % self,
             corpo_html=email_body,
             email_mittente=Messaggio.NOREPLY_EMAIL,
             lista_email_destinatari=[email_to,],
             allegati=self.delibera_file
         )
+
+    def direttori_corso(self):
+        oggetto_tipo = ContentType.objects.get_for_model(self)
+        query = Delega.objects.filter(tipo=DIRETTORE_CORSO,
+                                      oggetto_tipo=oggetto_tipo.pk,
+                                      oggetto_id=self.pk)
+        persone = Persona.objects.filter(id__in=query.values_list('id', flat=True))
+        return persone
 
     class Meta:
         verbose_name = "Corso"
