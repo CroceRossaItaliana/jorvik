@@ -97,11 +97,15 @@ def formazione_corsi_base_nuovo(request, me):
             course.locazione = course.sede.locazione
             course.save()
 
+        # Il corso è creato. Informa presidenza allegando delibera_file
+        course.inform_presidency_with_delibera_file()
+
+        # Rindirizza sulla pagina selezione direttori del corso
         request.session['corso_base_creato'] = course.pk
         return redirect(course.url_direttori)
 
     context = {
-        'modulo': form
+        'modulo': form,
     }
     return 'formazione_corsi_base_nuovo.html', context
 

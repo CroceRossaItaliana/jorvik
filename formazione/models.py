@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.utils.timezone import now
 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
-from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE
+from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE, REGIONALE, NAZIONALE
 from anagrafica.validators import (valida_dimensione_file_5mb,
    valida_dimensione_file_8mb, ValidateFileSize)
 from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE,
@@ -702,6 +702,25 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def get_course_files(self):
         return self.corsofile_set.filter(is_enabled=True)
+
+    def inform_presidency_with_delibera_file(self):
+        sede = self.sede.estensione
+        email_body = """<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>"""
+
+        if sede == LOCALE:
+            # Corso in una sede Locale. - Informa presidenta della Sede
+            email_to = self.sede.presidente().email
+        elif sede in [REGIONALE, NAZIONALE]:
+            # Corso in una sede Regionale/Nazionale. - Informa sulla mail
+            email_to = 'formazione@cri.it'
+
+        email = Messaggio.invia_raw(
+            oggetto="Delibera nuovo corso: %s" % self,
+            corpo_html=email_body,
+            email_mittente=Messaggio.NOREPLY_EMAIL,
+            lista_email_destinatari=[email_to,],
+            allegati=self.delibera_file
+        )
 
     class Meta:
         verbose_name = "Corso"

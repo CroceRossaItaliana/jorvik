@@ -1,9 +1,10 @@
+import os
 import logging
 from smtplib import SMTPException, SMTPRecipientsRefused, SMTPResponseException, SMTPAuthenticationError
 from lxml import html
 from celery import uuid
 
-from django.core.mail import EmailMultiAlternatives, get_connection
+from django.core.mail import EmailMessage, EmailMultiAlternatives, get_connection
 from django.db import transaction, DatabaseError
 from django.template.loader import get_template
 from django.utils.html import strip_tags
@@ -301,20 +302,29 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         plain_text = strip_tags(corpo_html)
         lista_reply_to = [reply_to] if reply_to else []
         lista_email_destinatari = lista_email_destinatari or []
-        allegati = allegati or []
+        attachments = allegati or []
 
-        msg = EmailMultiAlternatives(
+        send_email_class = EmailMultiAlternatives if len(lista_email_destinatari) > 1 else EmailMessage
+        msg = send_email_class(
             subject=oggetto,
             body=plain_text,
             from_email=email_mittente,
             reply_to=lista_reply_to,
             to=lista_email_destinatari,
-            **kwargs
-        )
-        msg.attach_alternative(corpo_html, "text/html")
+            **kwargs)
 
-        for allegato in allegati:
-            msg.attach_file(allegato.file.path)
+        try:
+            msg.attach_alternative(corpo_html, "text/html")
+        except AttributeError:
+            msg.content_subtype = "html"
+
+        if type(attachments) == list:
+            for attachment in attachments:
+                if hasattr(attachment, 'file'):
+                    msg.attach_file(attachment.file.path)
+        else:
+            filename = os.path.basename(attachments.name)
+            msg.attach(filename, attachments.read())
 
         return msg.send(fail_silently=fallisci_silenziosamente)
 
