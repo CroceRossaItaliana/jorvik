@@ -20,6 +20,7 @@ from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.utils import concept, poco_fa
 from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico, ConPDF
 from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione, ModelloSemplice
+from base.errori import messaggio_generico
 from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
 from posta.models import Messaggio
@@ -427,12 +428,29 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def partecipazioni_ritirate(self):
         return PartecipazioneCorsoBase.con_esito_ritirata(corso=self)
 
-    def attiva(self, rispondi_a=None):
+    def attiva(self, request=None, rispondi_a=None):
+        from .tasks import task_invia_email_agli_aspiranti
+
         if not self.attivabile():
             raise ValueError("Questo corso non è attivabile.")
-        self._invia_email_agli_aspiranti(rispondi_a=rispondi_a)
+
+        if self.is_nuovo_corso:
+            messaggio = "A breve tutti i volontari dei segmenti selezionati "\
+                        "verranno informati dell'attivazione di questo corso."
+        else:
+            messaggio = "A breve tutti gli aspiranti nelle vicinanze verranno "\
+                        "informati dell'attivazione di questo corso base."
+
         self.stato = self.ATTIVO
         self.save()
+
+        task_invia_email_agli_aspiranti.apply_async(args=(self.pk, rispondi_a.pk),)
+
+        return messaggio_generico(request, rispondi_a,
+            titolo="Corso attivato con successo",
+            messaggio=messaggio,
+            torna_titolo="Torna al Corso",
+            torna_url=self.url)
 
     def _corso_activation_recipients_for_email(self):
         if self.is_nuovo_corso:

@@ -434,20 +434,8 @@ def aspirante_corso_base_attiva(request, me, pk):
         email_body)
 
     if request.POST:
-        corso.attiva(rispondi_a=me)
-        if corso.is_nuovo_corso:
-            messaggio = "A breve tutti i volontari dei segmenti selezionati "\
-                        "verranno informati dell'attivazione di questo corso."
-        else:
-            messaggio = "A breve tutti gli aspiranti nelle vicinanze verranno "\
-                        "informati dell'attivazione di questo corso base."
-        return messaggio_generico(
-            request, me,
-            titolo="Corso attivato con successo",
-            messaggio=messaggio,
-            torna_titolo="Torna al Corso",
-            torna_url=corso.url
-        )
+        activation = corso.attiva(request=request, rispondi_a=me)
+        return activation
 
     context = {
         "corso": corso,
