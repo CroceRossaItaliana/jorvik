@@ -31,6 +31,10 @@ def stato_riserva(riserva):
 
     oggi = timezone.now()
 
+    # La riserva no ha una fine è in stato indeterminato
+    if not riserva.fine:
+        return ATTUALE
+
     # se il giorno odierno e compreso tra inizio e fine delle riserve, questa è attuale
     if riserva.inizio <= oggi <= riserva.fine:
         return ATTUALE
