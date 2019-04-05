@@ -114,7 +114,11 @@ def menu(request):
                 ("Cambia password", "fa-key", "/utente/cambia-password/"),
                 ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
             )),
-            VOCE_LINKS
+            VOCE_LINKS,
+            ("Monitoraggio", (
+                ("Monitoraggio 2019 (dati 2018)", 'fa-user', reverse('pages:monitoraggio')),
+            )) if me and (me.is_presidente or me.is_comissario) else None,
+
         )) if me and not hasattr(me, 'aspirante') else None,
         "posta": (
             ("Posta", (
@@ -169,10 +173,10 @@ def menu(request):
                 ("Estesi", "fa-list", "/us/elenchi/estesi/"),
                 ("IV e CM", "fa-list", "/us/elenchi/ivcm/"),
                 ("In Riserva", "fa-list", "/us/elenchi/riserva/"),
-                ("Zero turni", "fa-list", "/us/elenchi/senza-turni/", '', True),
+                ("Zero turni", "fa-list", "/us/elenchi/senza-turni/"),
                 ("Soci", "fa-list", "/us/elenchi/soci/"),
                 ("Sostenitori", "fa-list", "/us/elenchi/sostenitori/"),
-                ("Ex Sostenitori", "fa-list", "/us/elenchi/ex-sostenitori/", '', True),
+                ("Ex Sostenitori", "fa-list", "/us/elenchi/ex-sostenitori/"),
                 ("Dipendenti", "fa-list", "/us/elenchi/dipendenti/"),
                 ("Dimessi", "fa-list", "/us/elenchi/dimessi/"),
                 ("Trasferiti", "fa-list", "/us/elenchi/trasferiti/"),

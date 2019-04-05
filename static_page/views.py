@@ -1,6 +1,11 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
+from django.core.urlresolvers import reverse
+from django.contrib.messages import get_messages
+
 from autenticazione.funzioni import pagina_privata
+from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
 from .models import Page
+from .monitoraggio import TypeFormResponses
 
 
 @pagina_privata
@@ -16,61 +21,71 @@ def view_page(request, me, slug):
 
 @pagina_privata
 def monitoraggio(request, me):
-    import requests
-    from random import randint
-    from django.conf import settings
+    if True not in [me.is_comissario, me.is_presidente]: return redirect( '/')
+    if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
-    btns = {
-        'Sezione A – servizi di carattere sociale': 'by6gIZ',
-        'Sezione B – telefonia sociale, telesoccorso,  teleassistenza e telemedicina': 'AX0Rjm',
-        'Sezione C – salute': 'FZlCpn',
-        'Sezione D – ''''"ambiente", "sviluppo economico e coesione sociale", 
-            "cultura, sport e ricreazione", "cooperazione e solidarietà internazionale",
-            "protezione civile"
-        "''': "artG8g",
-        'Sezione E – relazioni': 'r3IRy8',
-        'Sezione F – organizzazione': 'DhH3Mk',
-        'Sezione G – risorse economiche e finanziarie': 'W6G6cD',
-    }
+    request_comitato = request.GET.get('comitato')
+    if me.is_comissario and not request_comitato:
+        # GAIA-58: Seleziona comitato
+        if me.is_presidente:
+            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
+        else:
+            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
 
-    if not hasattr(me, 'sede_riferimento'):
-        return redirect('/')
+        return 'monitoraggio_choose_comitato.html', {'deleghe': deleghe.distinct('oggetto_id')}
 
-    # Django
-    context = {'type_form': dict()}
-    user_comitato = me.sede_riferimento().id
+    # Comitato selezionato, mostrare le form di typeform
+    context = dict()
+    typeform = TypeFormResponses(request=request, me=me)
 
-    # Typeform API
-    TYPEFORM_TOKEN = settings.DEBUG_CONF.get('typeform', 'token')
-    HEADERS = {
-        'Authorization': "Bearer %s" % TYPEFORM_TOKEN,
-        'Content-Type': 'application/json'
-    }
-    endpoint = "https://api.typeform.com/forms/%s/responses"
-    btn_values = btns.values()
-    test_request = requests.get(
-        endpoint % list(btn_values)[randint(0, len(btn_values))],
-        headers=HEADERS
-    )
-
-    if test_request.status_code != 200:
+    # Make test request (API/connection availability, etc)
+    if not typeform.make_test_request_to_api:
         return 'monitoraggio.html', context
 
-    for bottone_name, _id in btns.items():
-        r = requests.get(endpoint % _id, headers=HEADERS)
-        js = r.json()
+    context['type_form'] = typeform.context_typeform
 
-        type_form_dict = context['type_form']
+    typeform.get_responses_for_all_forms()  # checks for already compiled forms
 
-        for item in js['items']:
-            c = item.get('hidden', dict())
-            c = c.get('c')
+    is_done = False
+    typeform_id = request.GET.get('id', False)
+    if typeform_id:
+        typeform_ctx = context['type_form'][typeform_id]
+        is_done = typeform_ctx[0]
+        context['section'] = typeform_ctx
+        context['typeform_id'] = typeform_id
 
-            if c and c == str(user_comitato):
-                type_form_dict[_id] = [False, user_comitato, bottone_name]
-                break  # bottone spento
+    if is_done:
+        context['is_done'] = True
 
-        if not _id in type_form_dict:
-            type_form_dict[_id] = [True, user_comitato, bottone_name]
+    context['comitato'] = typeform.comitato
+    context['user_comitato'] = typeform.comitato_id
+    context['user_id'] = typeform.get_user_pk
+    context['all_forms_are_completed'] = typeform.all_forms_are_completed
+
+    # Get celery_task_id
+    # TODO: ajax polling task is ready
+    # prefix = typeform.CELERY_TASK_PREFIX
+    # message_storage = get_messages(request)
+    # if len(message_storage) > 0:
+    #     for line, msg in enumerate(message_storage):
+    #         if msg.message.startswith(prefix):
+    #             context['celery_task_id'] = msg.message.replace(prefix, '').strip()
+    #             del message_storage._loaded_messages[line]
 
     return 'monitoraggio.html', context
+
+
+@pagina_privata
+def monitoraggio_actions(request, me):
+    redirect_url = redirect(reverse('pages:monitoraggio'))
+
+    action = request.GET.get('action')
+    if not action: return redirect_url
+    if not hasattr(me, 'sede_riferimento'): return redirect_url
+    if not me.is_presidente: return redirect('/')
+
+    responses = TypeFormResponses(request=request, me=me)
+    if action == 'print':
+        return responses.print()
+    elif action == 'send_via_mail':
+        return responses.send_via_mail()

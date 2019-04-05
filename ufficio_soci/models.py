@@ -1,21 +1,19 @@
 import random
-from datetime import timezone, date, timedelta
-from django.utils import timezone as timezone_django
+from datetime import timedelta
 
-import barcode
-from barcode.writer import ImageWriter
 from django.db import models
 from django.db.models import Q, Max
+from django.http import HttpResponse
+from django.utils import timezone as timezone_django
 from django.utils.translation import ugettext_lazy as _
 
 from anagrafica.models import Persona, Appartenenza, Sede
 from base.files import PDF, EAN13
-from base.models import ModelloSemplice, ConAutorizzazioni, ConVecchioID
+from base.models import ModelloSemplice, ConVecchioID
 from base.tratti import ConMarcaTemporale, ConPDF
 from base.utils import concept, UpperCaseCharField, ean13_carattere_di_controllo, questo_anno, oggi
 from posta.models import Messaggio
 
-__author__ = 'alfioemanuele'
 
 
 class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
@@ -534,3 +532,59 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
             mittente=self.registrato_da,
             destinatari=[self.persona],
         )
+
+
+class ReportElenco(ConMarcaTemporale):
+    VOLONTARI = 'vol'
+    VOLONTARI_GIOVANI = 'vog'
+    IV_E_CM = 'ivcm'
+    DIMESSI = 'dim'
+    VOLONTARI_IN_RISERVA = 'vir'
+    TRASFERITI = 'tra'
+    DIPENDENTI = 'dip'
+    SOCI_ORDINARI = 'soc'
+    ESTESI = 'est'
+    SOCI_AL_GIORNO = 'sag'
+    SOSTENITORI = 'sos'
+    EX_SOSTENITORI = 'exs'
+    SENZA_TURNI = 'stu'
+    ELETTORATO = 'ele'
+    TITOLI = 'tit'
+    GENERICO = 'gen'
+    REPORT_TYPE = (
+        (VOLONTARI, 'Volontari'),
+        (VOLONTARI_GIOVANI, 'Volontari Giovani'),
+        (IV_E_CM, 'IV e CM'),
+        (DIMESSI, 'Dimessi'),
+        (VOLONTARI_IN_RISERVA, 'Volontari in Riserva'),
+        (TRASFERITI, 'Trasferiti'),
+        (DIPENDENTI, 'Dipendenti'),
+        (SOCI_ORDINARI, 'Soci Ordinari'),
+        (ESTESI, 'Volontari Estesi/In Estensione'),
+        (SOCI_AL_GIORNO, 'Soci al giorno'),
+        (SOSTENITORI, 'Sostenitori'),
+        (EX_SOSTENITORI, 'Ex Sostenitori'),
+        (SENZA_TURNI, 'Volontari con zero turni'),
+        (ELETTORATO, 'Elettorato'),
+        (TITOLI, 'Soci per Titoli'),
+        (GENERICO, 'Generico'),
+    )
+
+    user = models.ForeignKey(Persona)
+    file = models.FileField(upload_to='us_elenchi/')
+    report_type = models.CharField(max_length=5, choices=REPORT_TYPE, null=True, blank=True)
+    task_id = models.CharField(max_length=255, null=True, blank=True)
+    is_ready = models.BooleanField(default=False)
+
+    @property
+    def filename(self):
+        return self.file.name
+
+    def download(self):
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        response = HttpResponse(self.file, content_type=content_type)
+        response['Content-Disposition'] = "attachment; filename=%s" % self.filename
+        return response
+
+    def __str__(self):
+        return str(self.file) if self.file else 'No File'
