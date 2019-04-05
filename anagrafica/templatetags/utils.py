@@ -16,8 +16,30 @@ from base.tratti import ConDelegati
 from base.utils import testo_euro
 from ufficio_soci.elenchi import Elenco
 from anagrafica.permessi.applicazioni import PRESIDENTE
+from datetime import timezone
+from django.utils import timezone
 
 register = Library()
+
+
+@register.filter
+def stato_riserva(riserva):
+    ATTUALE = 'Attuale'
+    PASSATA = 'Passata'
+    # Se la riserva non è iniziata ne passata allora non mostriamo niente fino alla sua attivazione
+    NON_ATTIVA = ''
+
+    oggi = timezone.now()
+
+    # se il giorno odierno e compreso tra inizio e fine delle riserve, questa è attuale
+    if riserva.inizio <= oggi <= riserva.fine:
+        return ATTUALE
+    # se il giorno odierno è maggiore della fine riserva, questa è passata
+    elif oggi > riserva.fine:
+        return PASSATA
+    # se il giorno di inizio della riserva è maggiore del giorno odierno, questa non è ancora attiva
+    elif riserva.inizio > oggi:
+        return NON_ATTIVA
 
 
 @register.filter

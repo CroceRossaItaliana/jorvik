@@ -586,7 +586,7 @@ class ElencoInRiserva(ElencoVistaSoci):
                 Riserva.con_esito_ok().q,
                 Appartenenza.query_attuale(
                     sede__in=qs_sedi
-                ).via("appartenenza")
+                ).via("appartenenza"),
             ).via("riserve")
         ).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
@@ -598,9 +598,9 @@ class ElencoInRiserva(ElencoVistaSoci):
 
     def excel_colonne(self):
         return super(ElencoInRiserva, self).excel_colonne() + (
-            ("Data inizio", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().inizio),
-            ("Data fine", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().fine),
-            ("Motivazioni", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().motivo)
+            ("Data inizio", lambda p: Riserva.objects.filter(persona=p.id).order_by('-creazione').first().inizio),
+            ("Data fine", lambda p: Riserva.objects.filter(persona=p.id).order_by('-creazione').first().fine),
+            ("Motivazioni", lambda p: Riserva.objects.filter(persona=p.id).order_by('-creazione').first().motivo)
         )
 
 
