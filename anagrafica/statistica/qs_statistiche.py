@@ -703,86 +703,74 @@ def statistica_iivv_cm(**kwargs):
 
 def statistica_ore_servizio(**kwargs):
 
-    def get_tot(estensione=[], inizio=None, fine=None):
+    def get_tot(estensioni=[], inizio=None, fine=None, row=[]):
 
-        start = datetime.now().date().replace(month=1, day=1, year=int(inizio))
-        finish = datetime.now().date().replace(month=12, day=31, year=int(inizio))
+        c_0, c_0_10, c_10_20, c_20_30, c_30, count = 0, 0, 0, 0, 0, 0
+        c_0_b, c_0_10_b, c_10_20_b, c_20_30_b, c_30_b, count_b = 0, 0, 0, 0, 0, 0
 
-        storico = Partecipazione.objects.filter(
-            persona__in=Persona.objects.filter(Appartenenza.query_attuale(
-                al_giorno=None,
-                sede__estensione__in=estensione,
-                fine=None,
-            ).via("appartenenze")),
-            turno__fine__lte=finish,
-            turno__inizio__gte=start
-        ).annotate(durata=F('turno__fine') - F('turno__inizio'))
+        for el in row:
+            for est in estensioni:
+                if int(el[1]) == inizio:
+                    if el[2] == est:
+                        count += 1
+                        if 0 < el[3] <= 10:
+                            c_0_10 += 1
+                        elif 10 < el[3] <= 20:
+                            c_10_20 += 1
+                        elif 20 < el[3] <= 30:
+                            c_20_30 += 1
+                        elif el[3] > 30:
+                            c_30 += 1
+                elif int(el[1]) == fine:
+                    if el[2] == est:
+                        count_b += 1
+                        if 0 < el[3] <= 10:
+                            c_0_10_b += 1
+                        elif 10 < el[3] <= 20:
+                            c_10_20_b += 1
+                        elif 20 < el[3] <= 30:
+                            c_20_30_b += 1
+                        elif el[3] > 30:
+                            c_30_b += 1
 
-        print(len(storico))
-
-        cfs = []
-        cf = None
-        c_0 = 0
-        c_0_10 = 0
-        c_10_20 = 0
-        c_20_30 = 0
-        c_30 = 0
-
-        for part in storico:
-            somma = 0
-            # entra solo se il cf è il primo
-            if not cf:
-                cf = part.persona.codice_fiscale
-                cfs.append(cfs)
-
-            if part.persona.codice_fiscale not in cfs:
-                cfs.append(part.persona.codice_fiscale)
-
-            if part.persona.codice_fiscale == cf:
-                somma += part.durata.seconds // 3600
-
-            print('somma', somma)
-            # Controllo in che tipologia si trova
-            if somma == 0:
-                c_0 += 1
-            elif somma > 0 <= 10:
-                c_0_10 += 1
-            elif somma > 10 <= 20:
-                c_10_20 += 1
-            elif somma > 20 <= 30:
-                c_20_30 += 1
-            elif somma > 30:
-                c_30 += 1
-
-            cfs.remove(cf)
-            cf = cfs[0] if cfs else None
+        persone = Persona.objects.filter(
+            Appartenenza.query_attuale(sede__estensione__in=estensioni).via("appartenenze")
+        ).count()
 
         statistica = OrderedDict([
-            ("Uguale a 0h di servizio al {}".format(''), c_0),
-            ("Da 0h a 10h di servizio al {}".format(''), c_0_10),
-            ("Da 10h a 20h di servizio al {}".format(''), c_10_20),
-            ("Da 20h a 30h di servizio al {}".format(''), c_20_30),
-            ("Maggiore di 30h di servizio al {}".format(''), c_30),
+            ("Uguale a 0h di servizio al {}".format(inizio), persone-count),
+            ("Da 0h a 10h di servizio al {}".format(inizio), c_0_10),
+            ("Da 10h a 20h di servizio al {}".format(inizio), c_10_20),
+            ("Da 20h a 30h di servizio al {}".format(inizio), c_20_30),
+            ("Maggiore di 30h di servizio al {}".format(inizio), c_30),
             ('', ''),# per mantenere un spazio tra gli anni di riferimento
+            ("Uguale a 0h di servizio al {}".format(fine), persone-count_b),
+            ("Da 0h a 10h di servizio al {}".format(fine), c_0_10_b),
+            ("Da 10h a 20h di servizio al {}".format(fine), c_10_20_b),
+            ("Da 20h a 30h di servizio al {}".format(fine), c_20_30_b),
+            ("Maggiore di 30h di servizio al {}".format(fine), c_30_b),
         ])
 
         return {
-            "nome": ESTENDIONI_DICT[estensione[0]],
+            "nome": ESTENDIONI_DICT[estensioni[0]],
             "statistiche": statistica,
         }
 
-    start = int(kwargs.get('anno_di_riferimento'))
-    finish = int(kwargs.get('anno_di_riferimento'))-1
+    inizio = int(kwargs.get('anno_di_riferimento'))
+    fine = int(kwargs.get('anno_di_riferimento'))-1
 
-    print('DATE', start, finish)
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute(QUERY_NUM_ORE.format(inizio, fine))
+        row = cursor.fetchall()
 
     obj = {
         "nome": STATISTICA[ORE_SERVIZIO],
         "tot": [
-            # get_tot(estensione=[NAZIONALE], inizio=start, fine=finish),
-            # get_tot(estensione=[REGIONALE], inizio=start, fine=finish),
-            get_tot(estensione=[LOCALE, PROVINCIALE], inizio=start, fine=finish),
-            # get_tot(estensione=[TERRITORIALE], inizio=start, fine=finish),
+            get_tot([NAZIONALE], inizio, fine, row),
+            get_tot([REGIONALE], inizio, fine, row),
+            get_tot([LOCALE], inizio, fine, row),
+            get_tot([PROVINCIALE], inizio, fine, row)
         ]
     }
 
