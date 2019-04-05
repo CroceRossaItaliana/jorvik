@@ -669,13 +669,9 @@ def statistica_num_corsi(**kwargs):
 
 def statistica_iivv_cm(**kwargs):
     def get_iivv_cm(comitato, **kwargs):
-        print(comitato.nome, kwargs.get('figli'))
         figli = kwargs.get('figli') if kwargs.get('figli') else False
         membri_iv_n = comitato.membri_attuali(figli=figli).filter(iv=True)
         membri_cm_n = comitato.membri_attuali(figli=figli).filter(cm=True)
-
-        # print('Infermieri', membri_iv_n)
-        # print('Militari', membri_cm_n)
 
         return {
             "IIVV": membri_iv_n.count(),
@@ -767,10 +763,18 @@ def statistica_ore_servizio(**kwargs):
     obj = {
         "nome": STATISTICA[ORE_SERVIZIO],
         "tot": [
-            get_tot([NAZIONALE], inizio, fine, row),
-            get_tot([REGIONALE], inizio, fine, row),
-            get_tot([LOCALE], inizio, fine, row),
-            get_tot([PROVINCIALE], inizio, fine, row)
+            get_tot(
+                [NAZIONALE], inizio, fine, row
+            ),
+            get_tot(
+                [REGIONALE], inizio, fine, row
+            ),
+            get_tot(
+                [LOCALE, PROVINCIALE], inizio, fine, row
+            ),
+            get_tot(
+                [TERRITORIALE], inizio, fine, row
+            )
         ]
     }
 
