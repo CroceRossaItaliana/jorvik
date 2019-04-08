@@ -274,6 +274,9 @@ class CorsoExtensionForm(ModelForm):
     class Meta:
         model = CorsoEstensione
         fields = ['segmento', 'titolo', 'sede', 'sedi_sottostanti',]
+        labels = {
+            'segmento': "Destinatari del Corso",
+        }
 
     def clean(self):
         cd = self.cleaned_data
