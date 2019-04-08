@@ -55,7 +55,7 @@
             {% if puo_modificare %}
                 <li {% if request.path == corso.url_modifica %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_modifica }}"><i class="fa fa-fw fa-pencil"></i> Pubblicizza il corso</a></li>
                 <li {% if request.path == corso.url_iscritti %}class="active_link"{% endif %} role="presentation">
-                    <a href="{{ corso.url_iscritti }}"><i class="fa fa-fw fa-group"></i> Iscritti
+                    <a href="{{ corso.url_iscritti }}"><i class="fa fa-fw fa-group"></i> Iscrizioni
                         <i class="fa fa-fw fa-check"></i> {{ corso.partecipazioni_confermate.count }}
                         <i class="fa fa-fw fa-clock-o"></i> {{ corso.numero_partecipazioni_in_attesa_e_inviti }}
                     </a>
