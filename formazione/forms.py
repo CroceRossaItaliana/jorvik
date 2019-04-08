@@ -166,8 +166,7 @@ class ModuloModificaCorsoBase(ModelForm):
         model = CorsoBase
         fields = ['data_inizio', 'data_esame',
                   'min_participants', 'max_participants',
-                  'descrizione',
-                  'data_attivazione', 'data_convocazione',]
+                  'descrizione',]
         widgets = {
             "descrizione": WYSIWYGSemplice(),
         }

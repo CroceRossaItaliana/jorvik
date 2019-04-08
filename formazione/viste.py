@@ -453,11 +453,11 @@ def aspirante_corso_base_termina(request, me, pk):
 
     torna = {"torna_url": corso.url_modifica, "torna_titolo": "Modifica corso"}
 
-    if (not corso.op_attivazione) or (not corso.data_attivazione):
-        return errore_generico(request, me, titolo="Necessari dati attivazione",
-                               messaggio="Per generare il verbale, sono necessari i dati (O.P. e data) "
-                                         "dell'attivazione del corso.",
-                               **torna)
+    # if (not corso.op_attivazione) or (not corso.data_attivazione):
+    #     return errore_generico(request, me,
+    #         titolo="Necessari dati attivazione",
+    #         messaggio="Per generare il verbale, sono necessari i dati (O.P. e data) dell'attivazione del corso.",
+    #         **torna)
 
     if not corso.partecipazioni_confermate().exists():
         return errore_generico(request, me, titolo="Impossibile terminare questo corso",
