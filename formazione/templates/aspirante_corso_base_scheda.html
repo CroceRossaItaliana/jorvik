@@ -53,7 +53,7 @@
         <ul id="tabDettagliCorso" class="nav nav-tabs">
             <li {% if request.path == corso.url %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url }}"><i class="fa fa-fw fa-info"></i> Informazioni</a></li>
             {% if puo_modificare %}
-                <li {% if request.path == corso.url_modifica %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_modifica }}"><i class="fa fa-fw fa-pencil"></i> Modifica</a></li>
+                <li {% if request.path == corso.url_modifica %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_modifica }}"><i class="fa fa-fw fa-pencil"></i> Pubblicizza il corso</a></li>
                 <li {% if request.path == corso.url_iscritti %}class="active_link"{% endif %} role="presentation">
                     <a href="{{ corso.url_iscritti }}"><i class="fa fa-fw fa-group"></i> Iscritti
                         <i class="fa fa-fw fa-check"></i> {{ corso.partecipazioni_confermate.count }}
