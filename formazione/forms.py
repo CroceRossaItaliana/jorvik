@@ -159,6 +159,10 @@ class ModuloModificaLezione(ModelForm):
     class Meta:
         model = LezioneCorsoBase
         fields = ['nome', 'docente', 'inizio', 'fine', 'obiettivo', 'luogo']
+        labels = {
+            'nome': 'Lezione',
+            'obiettivo': 'Argomento',
+        }
 
 
 class ModuloModificaCorsoBase(ModelForm):
