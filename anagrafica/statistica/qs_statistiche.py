@@ -708,7 +708,7 @@ def statistica_ore_servizio(**kwargs):
             for est in estensioni:
                 if int(el[1]) == inizio:
                     if el[2] == est:
-                        count += 1
+                        # count += 1
                         if 0 < el[3] <= 10:
                             c_0_10 += 1
                         elif 10 < el[3] <= 20:
@@ -719,7 +719,7 @@ def statistica_ore_servizio(**kwargs):
                             c_30 += 1
                 elif int(el[1]) == fine:
                     if el[2] == est:
-                        count_b += 1
+                        # count_b += 1
                         if 0 < el[3] <= 10:
                             c_0_10_b += 1
                         elif 10 < el[3] <= 20:
@@ -729,18 +729,59 @@ def statistica_ore_servizio(**kwargs):
                         elif el[3] > 30:
                             c_30_b += 1
 
+        # persone = Persona.objects.filter(
+        #     Appartenenza.query_attuale(sede__estensione__in=estensioni, fine__isnull=True).via("appartenenze")
+        # ).count()
+
+        attivi = Partecipazione.objects.filter(
+            turno__attivita__sede__estensione__in=estensioni,
+            confermata=True,
+        )
+
+        attivi_s = attivi.filter(
+            turno__fine__gte=datetime.now().date().replace(month=1, day=1, year=inizio),
+            turno__inizio__lte=datetime.now().date().replace(month=12, day=31, year=inizio),
+        ).values_list('persona_id', flat=True)
+
+        attivi_f = attivi.filter(
+            turno__fine__gte=datetime.now().date().replace(month=1, day=1, year=fine),
+            turno__inizio__lte=datetime.now().date().replace(month=12, day=31, year=fine),
+        ).values_list('persona_id', flat=True)
+
         persone = Persona.objects.filter(
-            Appartenenza.query_attuale(sede__estensione__in=estensioni).via("appartenenze")
-        ).count()
+            Appartenenza.query_attuale(
+                sede__estensione__in=estensioni,
+                membro__in=Appartenenza.MEMBRO_ATTIVITA,
+            ).via("appartenenze")
+        )
+
+        persone_s = persone.exclude(pk__in=attivi_s).annotate(
+            appartenenza_tipo=F('appartenenze__membro'),
+            appartenenza_inizio=F('appartenenze__inizio'),
+            appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+        persone_f = persone.exclude(pk__in=attivi_f).annotate(
+            appartenenza_tipo=F('appartenenze__membro'),
+            appartenenza_inizio=F('appartenenze__inizio'),
+            appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
 
         statistica = OrderedDict([
-            ("Uguale a 0h di servizio al {}".format(inizio), persone-count),
+            ("Uguale a 0h di servizio al {}".format(inizio), persone_s.count()),
             ("Da 0h a 10h di servizio al {}".format(inizio), c_0_10),
             ("Da 10h a 20h di servizio al {}".format(inizio), c_10_20),
             ("Da 20h a 30h di servizio al {}".format(inizio), c_20_30),
             ("Maggiore di 30h di servizio al {}".format(inizio), c_30),
             ('', ''),# per mantenere un spazio tra gli anni di riferimento
-            ("Uguale a 0h di servizio al {}".format(fine), persone-count_b),
+            ("Uguale a 0h di servizio al {}".format(fine), persone_f.count()),
             ("Da 0h a 10h di servizio al {}".format(fine), c_0_10_b),
             ("Da 10h a 20h di servizio al {}".format(fine), c_10_20_b),
             ("Da 20h a 30h di servizio al {}".format(fine), c_20_30_b),
