@@ -267,9 +267,9 @@ class CorsoSelectExtensionTypeForm(ModelForm):
 
 class CorsoExtensionForm(ModelForm):
     titolo = autocomplete_light.ModelMultipleChoiceField(
-        "EstensioneLivelloRegionaleTitolo", required=False)
+        "EstensioneLivelloRegionaleTitolo", required=False, label='Requisiti necessari')
     sede = autocomplete_light.ModelMultipleChoiceField(
-        "EstensioneLivelloRegionaleSede", required=False)
+        "EstensioneLivelloRegionaleSede", required=False, label='Selezionare Sede/Sedi')
 
     class Meta:
         model = CorsoEstensione
