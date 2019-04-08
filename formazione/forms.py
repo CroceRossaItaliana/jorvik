@@ -433,9 +433,9 @@ class InformCourseParticipantsForm(forms.Form):
         self.instance = kwargs.pop('instance')
 
         CHOICES = [
-            (self.ALL, "A tutti (già iscritti + chi ha fatto richiesta)"),
-            (self.UNCONFIRMED_REQUESTS, 'Solo a chi ha fatto richieste'),
-            (self.CONFIRMED_REQUESTS, 'Partecipanti confermati'),
+            (self.ALL, "A tutti (Preiscritti + Partecipanti confermati)"),
+            (self.UNCONFIRMED_REQUESTS, "Preiscritti"),
+            (self.CONFIRMED_REQUESTS, "Partecipanti confermati (ok così come è ora)"),
         ]
 
         if self.instance.concluso:

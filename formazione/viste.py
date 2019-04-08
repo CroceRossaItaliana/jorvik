@@ -898,8 +898,9 @@ def aspirante_corso_estensioni_informa(request, me, pk):
             )
 
         if recipients and recipient_type == form.INVIA_QUESTIONARIO:
+            titolo = 'per %s' % course.titolo_cri if course.titolo_cri else ''
             sent_with_success = Messaggio.costruisci_e_invia(
-                oggetto="Questionario di gradimento del %s per %s" % (course.nome, course.titolo_cri),
+                oggetto="Questionario di gradimento del %s %s" % (course.nome, titolo),
                 modello="email_corso_questionario_gradimento.html",
                 corpo={
                     'corso': course,

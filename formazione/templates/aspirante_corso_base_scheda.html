@@ -61,7 +61,7 @@
                     </a>
                 </li>
 
-                <li {% if 'informa' in request.path %}class="active_link"{% endif %} role="presentation"><a href="{% url 'aspirante:informa' corso.pk %}"><i class="fa fa-fw fa-envelope"></i> Informa persone</a></li>
+                <li {% if 'informa' in request.path %}class="active_link"{% endif %} role="presentation"><a href="{% url 'aspirante:informa' corso.pk %}"><i class="fa fa-fw fa-envelope"></i> Invia messaggio</a></li>
             {% endif %}
         </ul>
 
