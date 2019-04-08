@@ -94,7 +94,7 @@
         </div>
     {% endif %}
 
-    {% if puo_modificare and corso.stato == corso.PREPARAZIONE %}
+    {% if puo_modificare and corso.stato == corso.PREPARAZIONE and can_activate %}
         <div class="alert alert-warning alert-block">
             <h4><i class="fa fa-fw fa-warning"></i> Il corso non &egrave; ancora attivo</h4>
             <p>Questo corso &egrave; ancora una bozza ("In Preparazione").

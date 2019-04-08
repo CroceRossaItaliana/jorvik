@@ -15,6 +15,7 @@ from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE, REGIONALE, NA
 from anagrafica.validators import (valida_dimensione_file_8mb, ValidateFileSize)
 from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
 from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE, INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
+from anagrafica.permessi.costanti import MODIFICA
 from base.files import PDF, Zip
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.utils import concept, poco_fa
@@ -746,6 +747,32 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                                       oggetto_id=self.pk)
         persone = Persona.objects.filter(id__in=query.values_list('id', flat=True))
         return persone
+
+    def can_modify(self, me):
+        if me and me.permessi_almeno(self, MODIFICA):
+            return True
+        return False
+
+    def can_activate(self, me):
+        if me.is_presidente:
+            """ All'presidente deve sparire la sezione dell'attivazione corso se:
+            - ha caricato delibera
+            - ha impostato estensioni (/aspirante/corso-base/<id>/estensioni/)
+            - ha nominato almeno un direttore
+            """
+            has_delibera = self.delibera_file is not None
+            has_extension = self.has_extensions()
+            has_directors = self.direttori_corso().count() > 0
+            is_all_true = has_delibera, has_extension, has_directors
+
+            # Deve riapparire se: il direttore ha inserito la descrizione
+            if self.descrizione:
+                return True
+            else:
+                return True if False in is_all_true else False
+        else:
+            """ Direttori del corso vedono sempre la sezione invece """
+            return True
 
     class Meta:
         verbose_name = "Corso"

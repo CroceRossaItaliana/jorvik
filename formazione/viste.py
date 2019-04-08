@@ -151,7 +151,6 @@ def formazione_corsi_base_fine(request, me, pk):
 def aspirante_corso_base_informazioni(request, me=None, pk=None):
     context = dict()
     corso = get_object_or_404(CorsoBase, pk=pk)
-    puo_modificare = me and me.permessi_almeno(corso, MODIFICA)
     puoi_partecipare = corso.persona(me) if me else None
 
     if puoi_partecipare == CorsoBase.NON_HAI_CARICATO_DOCUMENTI_PERSONALI:
@@ -169,7 +168,8 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
         context['load_personal_document'] = load_personal_document_form
 
     context['corso'] = corso
-    context['puo_modificare'] = puo_modificare
+    context['puo_modificare'] = corso.can_modify(me)
+    context['can_activate'] = corso.can_activate(me)
     context['puoi_partecipare'] = puoi_partecipare
 
     return 'aspirante_corso_base_scheda_informazioni.html', context
