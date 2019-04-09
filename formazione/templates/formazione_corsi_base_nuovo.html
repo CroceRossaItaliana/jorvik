@@ -8,37 +8,25 @@
 {% block app_contenuto %}
     <div class="row">
         <div class="col-md-12">
-            <style>
-                .panels-inactive {border: none; display: flex; justify-content: space-between;}
-                .panels-inactive .heading {padding: 10px 15px; color: #fff; margin:0 2.5px; border-bottom: 1px solid transparent; border-top-left-radius: 3px; border-top-right-radius: 3px;}
-                .panels-inactive .heading h2 {font-size:15px; cursor:pointer;}
-                .panels-inactive .heading:first-child {margin-left:0;}
-                .panels-inactive .heading:last-child {margin-right:0;}
-                .panels-inactive .attivazione {}
-                .panels-inactive .dettagli {}
-                .panels-inactive .lezioni {}
-                .panels-inactive .esami {}
-                .panels-inactive .questionario {}
-            </style>
-            <div class="panel panel-default panels-inactive">
-                <div class="heading attivazione" style="background-color: #52b733 !important;">
+            <div class="panel panel-default course-panels">
+                <div class="heading attivazione">
                     <h2 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Creazione Corso</h2>
                 </div>
-                <div class="heading dettagli" style="background-color: #337ab7;">
+                <div class="heading dettagli">
                     <h2 class="panel-title"><i class="fa fa-fw fa-info"></i> Dettagli corso ed iscrizioni</h2>
                 </div>
-                <div class="heading lezioni" style="background-color: #e2c62b;">
+                <div class="heading lezioni">
                     <h2 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Lezioni</h2>
                 </div>
-                <div class="heading esami" style="background-color: #c00;">
+                <div class="heading esami">
                     <h2 class="panel-title"><i class="fa fa-fw fa-file-excel-o"></i> Esami e verbale</h2>
                 </div>
-                <div class="heading questionario" style="background-color: #972be2;">
+                <div class="heading questionario">
                     <h2 class="panel-title"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</h2>
                 </div>
             </div>
             <script>
-            $('.panels-inactive div').on('click', function(){
+            $('.course-panels div').on('click', function(){
                 if ($(this).hasClass('attivazione')) {
                        $('.attivazionePanelWithForm').slideToggle();
                     return;
@@ -84,10 +72,6 @@
             <!--</div>-->
         <!--</div>-->
     </div>
-
-<style>
-    #titleDescription {padding:10px 0; font-style: italic; text-align:center;}
-</style>
 
 <script>
     // Select: Tipo -> Show "Tipo del Corso" field
