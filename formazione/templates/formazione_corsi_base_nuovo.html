@@ -85,12 +85,17 @@
         <!--</div>-->
     </div>
 
+<style>
+    #titleDescription {padding:10px 0; font-style: italic; text-align:center;}
+</style>
+
 <script>
     // Select: Tipo -> Show "Tipo del Corso" field
     var titolo_form_group = $('#id_titolo_cri').closest('.form-group');
     var level_form_group = $('#id_level').closest('.form-group');
     var area_form_group = $('#id_area').closest('.form-group');
     var course_value = 'C1';
+    var titolo_options_ajax_data = {};
 
     if ($('#id_tipo option:selected').val() != course_value) {
         titolo_form_group.hide();
@@ -155,12 +160,15 @@
                     let select_titolo_cri = $('#id_titolo_cri');
                     select_titolo_cri.find('option').not(':first').remove();
 
-                    $.each(data, function(value, text) {
+                    titolo_options_ajax_data = data;
+
+                    $.each(data, function(id, text) {
                         select_titolo_cri.append($('<option>', {
-                            value: value,
-                            text: text
+                            value: id,
+                            text: text['nome'],
                         }));
                     });
+
                     return data;
                 },
                 error: function(jqXHR, textStatus) {
@@ -171,6 +179,30 @@
         } else {
             titolo_form_group.hide();
             $('#id_titolo_cri').find('option').not(':first').remove();
+        }
+    });
+
+    /* GAIA-89
+    Add titles' description under the <select> element
+    */
+    function resetDescriptionDiv(){
+        let description_div = $('#titleDescription');
+        if (description_div.length) {
+            description_div.remove();
+        }
+    };
+
+    $('#id_tipo, #id_level, #id_area').on('change', function(e){
+        resetDescriptionDiv();
+    });
+
+    $('#id_titolo_cri').on('change', function(e) {
+        resetDescriptionDiv();
+
+        let selected_option_id = $(this).val();
+        let title = titolo_options_ajax_data[selected_option_id];
+        if ('description' in title && title['description'] !== null) {
+            $(this).parent().append('<p id="titleDescription">'+ title['description'] +'</p>');
         }
     });
 </script>
