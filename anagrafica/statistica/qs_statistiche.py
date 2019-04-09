@@ -801,6 +801,15 @@ def statistica_ore_servizio(**kwargs):
         cursor.execute(QUERY_NUM_ORE.format(inizio, fine))
         row = cursor.fetchall()
 
+    # TODO: QUERY ORM DJANGO modificare get_tot per questo input
+    # p = Partecipazione.objects.select_related('turno').filter(
+    #     Q(turno__inizio__year=fine) | Q(turno__inizio__year=inizio),
+    # ).extra({'anno': "Extract(year from attivita_turno.inizio)"}).values(
+    #     'persona', 'turno__attivita__sede__estensione', 'anno'
+    # ).annotate(durata=Sum(F('turno__fine') - F('turno__inizio')))
+    #
+    # [print(el['persona'], el['turno__attivita__sede__estensione'], el['durata'].seconds//3600, el['anno']) for el in p]
+
     obj = {
         "nome": STATISTICA[ORE_SERVIZIO],
         "tot": [
