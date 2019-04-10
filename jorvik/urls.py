@@ -120,6 +120,7 @@ urlpatterns = [
     # Formazione
     url(r'^aspirante/', include(formazione_urls_aspirante, namespace='aspirante')),
     url(r'^formazione/', include('formazione.urls', namespace='formazione')),
+    url(r'^courses/', include('formazione.urls_courses', namespace='courses')),
     url(r'^survey/', include('survey.urls', namespace='survey')),
 
     # Static pages

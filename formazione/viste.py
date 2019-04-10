@@ -888,7 +888,8 @@ def aspirante_corso_estensioni_informa(request, me, pk):
         elif recipient_type == form.CONFIRMED_REQUESTS:
             recipients = course.partecipazioni_confermate()
         elif recipient_type == form.INVIA_QUESTIONARIO:
-            recipients = course.partecipazioni_confermate()
+            # recipients = course.partecipazioni_confermate()
+            return redirect(reverse('courses:send_questionnaire_to_participants', args=[course.pk]))
         else:
             # todo: something went wrong ...
             pass
@@ -905,21 +906,8 @@ def aspirante_corso_estensioni_informa(request, me, pk):
                 destinatari=[r.persona for r in recipients]
             )
 
-        if recipients and recipient_type == form.INVIA_QUESTIONARIO:
-            titolo = 'per %s' % course.titolo_cri if course.titolo_cri else ''
-            sent_with_success = Messaggio.costruisci_e_invia(
-                oggetto="Questionario di gradimento del %s %s" % (course.nome, titolo),
-                modello="email_corso_questionario_gradimento.html",
-                corpo={
-                    'corso': course,
-                    'message': cd['message']
-                },
-                mittente=me,
-                destinatari=[r.persona for r in recipients]
-            )
-
         if sent_with_success:
-            messages.success(request, "Il messaggio ai volontari è stato inviato con successo. ")
+            messages.success(request, "Il messaggio ai volontari è stato inviato con successo.")
             return redirect(reverse('aspirante:informa', args=[pk]))
 
         if not recipients:
@@ -988,3 +976,41 @@ def formazione_corso_position_change(request, me, pk):
     return 'formazione_corso_position_change.html', {'corso': course,
                                                      'template': template,
                                                      'puo_modificare': puo_modificare}
+
+
+@pagina_privata
+def course_send_questionnaire_to_participants(request, me, pk):
+    context = dict()
+    course = get_object_or_404(CorsoBase, pk=pk)
+
+    if not course.can_modify(me):
+        return redirect(ERRORE_PERMESSI)
+
+    if request.method == 'POST':
+        send_with_success = False
+
+        recipients = request.POST.getlist('persona')
+        recipients = Persona.objects.filter(id__in=[int(r) for r in recipients])
+        if recipients:
+            titolo = 'per %s' % course.titolo_cri if course.titolo_cri else ''
+            sent_with_success = Messaggio.costruisci_e_invia(
+                oggetto="Questionario di gradimento del %s %s" % (course.nome, titolo),
+                modello="email_corso_questionario_gradimento.html",
+                corpo={
+                    'corso': course,
+                },
+                mittente=me,
+                destinatari=recipients,
+            )
+
+            if sent_with_success:
+                msg = "Il questionario è stato inviato con successo a %s partecipanti selezionati" % recipients.count()
+                messages.success(request, msg)
+                return redirect(reverse('courses:send_questionnaire_to_participants', args=[course.pk]))
+        else:
+            messages.error(request, 'Non hai selezionato persone.')
+
+    context['puo_modificare'] = course.can_modify(me)
+    context['corso'] = course
+
+    return 'course_send_questionnaire_to_participants.html', context
