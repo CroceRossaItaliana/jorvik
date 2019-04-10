@@ -1,52 +1,35 @@
 {% extends 'base_bootstrap.html' %}
 
 {% block pagina_titolo %}Localizza oggetto{% endblock %}
-
 {% load bootstrap3 %}
 
 {% block pagina_corpo %}
-
     <div class="container-fluid">
-
         <div class="row">
             {% if locazione %}
                 <div class="alert alert-block alert-success">
                     {% if continua_url %}
-                        <a href="{{ continua_url }}" target="_top" class="btn btn-lg btn-success pull-right">
-                            <i class="fa fa-fw fa-check-circle"></i>
-                            Continua
-                        </a>
+                        <a href="{{ continua_url }}" target="_top" class="btn btn-lg btn-success pull-right"><i class="fa fa-fw fa-check-circle"></i> Continua</a>
                     {% endif %}
                     <h4><i class="fa fa-fw fa-map-marker"></i> {{ locazione.indirizzo }}</h4>
                     <p>Per cambiare la posizione per '{{ oggetto }}', cerca un altro indirizzo.</p>
-
                     {% if continua_url %}
                         <p>Altrimenti, per continuare, clicca sul pulsante 'Continua'.</p>
                     {% endif %}
                 </div>
             {% endif %}
 
-
             <div class="col-sm-6">
-
                 <h2>1. <i class="fa fa-fw fa-search"></i> Cerca l'indirizzo</h2>
-
                 <form method="POST">
                     {% csrf_token %}
                     {% bootstrap_form modulo size='sm' %}
-
-                    <button type="submit" class="btn btn-block btn-primary btn-lg">
-                        <i class="fa fa-fw fa-search"></i>
-                        Cerca indirizzo
-                    </button>
+                    <button type="submit" class="btn btn-block btn-primary btn-lg"><i class="fa fa-fw fa-search"></i> Cerca indirizzo</button>
                 </form>
-
             </div>
 
             <div class="col-sm-6">
-
                 {% if ricerca %}
-
                     <h2>2. <i class="fa fa-fw fa-list"></i> Seleziona l'indirizzo</h2>
 
                     <p>Conferma l'indirizzo da selezionare tra i n. {{ risultati.length }} risultati.</p>
@@ -54,60 +37,49 @@
                     {% csrf_token %}
                         {% for risultato in risultati %}
                             {% if risultato.1 %}
-                                <button type="submit" name="indirizzo" value="{{ risultato.0 }}"
-                                        class="btn btn-block btn-success">
+                                <button type="submit" name="indirizzo" value="{{ risultato.0 }}" class="btn btn-block btn-success">
                                     <i class="fa fa-fw fa-map-marker"></i> {{ risultato.0 }}
                                 </button>
                             {% else %}
-                                <button type="button" disabled name="indirizzo" value="{{ risultato.0 }}"
-                                        class="btn btn-block btn-warning">
+                                <button type="button" disabled name="indirizzo" value="{{ risultato.0 }}" class="btn btn-block btn-warning">
                                     <i class="fa fa-fw fa-map-marker"></i> {{ risultato.0 }}<br>
                                 </button>
                                 <div class="alert alert-warning alert-block text-center">
-                                    <i class="fa fa-fw fa-warning"></i> Google Maps non conosce
-                                    le coordinate per questo indirizzo.
+                                    <i class="fa fa-fw fa-warning"></i> Google Maps non conosce le coordinate per questo indirizzo.
                                 </div>
                             {% endif %}
 
                         {% empty %}
                             <div class="alert alert-warning alert-block">
-                                <h4>
-                                    <i class="fa fa-fw fa-warning"></i>
-                                     Indirizzo non trovato.
-                                </h4>
-                                <p>Nessun indirizzo &egrave; stato trovato. Prova a
-                                    modificare l'indirizzo di ricerca, rendendolo pi&ugrave;
-                                    generico.</p>
-                                <p>Se non riesci comunque a trovare l'indirizzo desiderato,
-                                    prova a controllare se ti &egrave; possibile trovare
-                                    l'indirizzo su <a href="http://maps.google.com" target="_new">
-                                        Google Maps
-                                    </a>. Altrimenti, devi prima aggiungere l'indirizzo
-                                    a Google Maps.</p>
-
+                                <h4><i class="fa fa-fw fa-warning"></i>Indirizzo non trovato.</h4>
+                                <p>Nessun indirizzo &egrave; stato trovato. Prova a modificare l'indirizzo di ricerca, rendendolo pi&ugrave; generico.</p>
+                                <p>Se non riesci comunque a trovare l'indirizzo desiderato, prova a controllare se ti &egrave; possibile trovare l'indirizzo su
+                                  <a href="http://maps.google.com" target="_new">Google Maps</a>. Altrimenti, devi prima aggiungere l'indirizzo a Google Maps.</p>
                             </div>
-
                         {% endfor %}
                     </form>
-
                 {% else %}
-
                     <div class="alert alert-info alert-block">
-
                         <h4><i class="fa fa-info-circle"></i> Cerca un indirizzo</h4>
-                        <p>Utilizza il modulo sulla sinistra per cercare un indirizzo
-                            da impostare per: {{ oggetto }}.</p>
+                        <p>Utilizza il modulo sulla sinistra per cercare un indirizzo da impostare per: {{ oggetto }}.</p>
                     </div>
-
                 {% endif %}
 
-                <p>&nbsp;</p>
-
+                <script>
+                /*
+                    Se l'oggetto per geo-localizzazione è un CorsoBase questo template riceverà nel contesto la variabile <is_corsobase> (da base.viste.geo_localizzatore).
+                    Se la locazione è stata impostata, il codice sotto aggiorna la finestra parent, con paramentro norefresh per non entrare in loop.
+                    Il reload serve per aggiornare la pagina del Corso, perchè con la locazione impostata vengono scoperti delle voci nascosti del menu.
+                */
+                var is_corsobase = {{ is_corsobase }}; // 0 or 1
+                if (is_corsobase) {
+                    var course_has_locazione = "{{ oggetto.locazione }}";
+                    if (course_has_locazione != 'None' && parent.location.href.indexOf('norefresh') == -1) {
+                        parent.location.href = "{% url 'aspirante:position_change' pk=oggetto.pk %}?norefresh";
+                    }
+                }
+                </script>
             </div>
-
-
         </div>
-
     </div>
-
 {% endblock %}

@@ -1,13 +1,10 @@
 from datetime import datetime, timedelta
 
-# from django.conf import settings
-# from django.core.exceptions import ObjectDoesNotExist
-# from django.db.transaction import atomic
-# from django.template import Context
 from django.utils import timezone
 from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.template.loader import get_template
+from django.contrib import messages
 
 from anagrafica.models import Persona, Documento
 from anagrafica.forms import ModuloCreazioneDocumento
@@ -93,16 +90,21 @@ def formazione_corsi_base_nuovo(request, me):
             **kwargs
         )
 
-        if cd['locazione'] == form.PRESSO_SEDE:
+        same_sede = cd['locazione'] == form.PRESSO_SEDE
+        if same_sede:
             course.locazione = course.sede.locazione
             course.save()
 
         # Il corso è creato. Informa presidenza allegando delibera_file
         course.inform_presidency_with_delibera_file()
-
-        # Rindirizza sulla pagina selezione direttori del corso
         request.session['corso_base_creato'] = course.pk
-        return redirect(course.url_direttori)
+
+        if same_sede:
+            # Rindirizza sulla pagina: selezione direttori
+            return redirect(course.url_direttori)
+        else:
+            # Rindirizza sulla pagina: impostazione geolocalizzazione
+            return redirect(reverse('aspirante:position_change', args=[course.pk]))
 
     context = {
         'modulo': form,
@@ -152,6 +154,13 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
     context = dict()
     corso = get_object_or_404(CorsoBase, pk=pk)
     puoi_partecipare = corso.persona(me) if me else None
+
+    if corso.locazione is None:
+        # Il corso non ha una locazione (è stata selezionata la voce °Sede presso Altrove"
+        messages.error(request, "Imposta una locazione per procedere la navigazione del Corso.")
+
+        # Rindirizzo utente sulla pagina di impostazione della locazione
+        return redirect(reverse('aspirante:position_change', args=[corso.pk]))
 
     if puoi_partecipare == CorsoBase.NON_HAI_CARICATO_DOCUMENTI_PERSONALI:
         if request.method == 'POST':
@@ -855,7 +864,6 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
 @pagina_privata
 def aspirante_corso_estensioni_informa(request, me, pk):
     from .forms import InformCourseParticipantsForm
-    from django.contrib import messages
 
     course = get_object_or_404(CorsoBase, pk=pk)
 
@@ -956,3 +964,27 @@ def formazione_albo_titoli_corso_full_list(request, me):
         context['person'] = persona
 
     return 'formazione_albo_titoli_corso_full_list.html', context
+
+
+@pagina_privata
+def formazione_corso_position_change(request, me, pk):
+    course = get_object_or_404(CorsoBase, pk=pk)
+
+    if not course.can_modify(me):
+        return redirect(ERRORE_PERMESSI)
+
+    template = 'formazione_vuota.html'
+    puo_modificare = False  # non mostrare i tab se la locazione non è impostata
+
+    # Locazione impostata...
+    if course.locazione:
+        template = 'aspirante_corso_base_scheda.html'
+        puo_modificare = course.can_modify(me)
+        # Se il corso non ha ancora un direttore...
+        if not course.direttori_corso:
+            # Rindirizza sulla pagina selezione direttori del corso.
+            return redirect(course.url_direttori)
+
+    return 'formazione_corso_position_change.html', {'corso': course,
+                                                     'template': template,
+                                                     'puo_modificare': puo_modificare}

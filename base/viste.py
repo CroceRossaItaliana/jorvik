@@ -493,7 +493,6 @@ def geo_localizzatore(request, me):
     app_label = request.session['app_label']
     model = request.session['model']
     pk = int(request.session['pk'])
-    continua_url = request.session['continua_url']
     oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
 
@@ -501,35 +500,37 @@ def geo_localizzatore(request, me):
     ricerca = False
 
     if request.GET.get('italia', False):
-        modulo = ModuloLocalizzatoreItalia(request.POST or None,)
+        form = ModuloLocalizzatoreItalia(request.POST or None,)
     else:
-        modulo = ModuloLocalizzatore(request.POST or None,)
-    if modulo.is_valid():
-        comune = modulo.cleaned_data['comune'] if not modulo.cleaned_data['comune'] \
-                    else "%s, Province of %s" % (modulo.cleaned_data['comune'], modulo.cleaned_data['provincia'])
-        stringa = "%s, %s, %s" % (modulo.cleaned_data['indirizzo'],
-                                  comune,
-                                  modulo.cleaned_data['stato'],)
+        form = ModuloLocalizzatore(request.POST or None,)
+
+    if form.is_valid():
+        cd = form.cleaned_data
+        comune = cd['comune'] if not cd['comune'] else "%s, Province of %s" % (cd['comune'], cd['provincia'])
+        stringa = "%s, %s, %s" % (cd['indirizzo'], comune, cd['stato'])
         risultati = Locazione.cerca(stringa)
         ricerca = True
 
-    contesto = {
+    context = {
         "locazione": oggetto.locazione,
-        "continua_url": continua_url,
-        "modulo": modulo,
+        "continua_url": request.session['continua_url'],
+        "modulo": form,
         "ricerca": ricerca,
         "risultati": risultati,
         "oggetto": oggetto,
     }
 
-    return 'base_geo_localizzatore.html', contesto
+    if app_label == 'formazione' and model == 'corsobase':
+        context['is_corsobase'] = 1  # instead of True
+
+    return 'base_geo_localizzatore.html', context
 
 
 @pagina_privata
 def geo_localizzatore_imposta(request, me):
-    app_label = request.session['app_label']
-    model = request.session['model']
-    pk = int(request.session['pk'])
+    session = request.session
+    app_label, model, pk = session['app_label'], session['model'], int(session['pk'])
+
     oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
 

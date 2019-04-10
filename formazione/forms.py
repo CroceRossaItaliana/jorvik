@@ -18,8 +18,8 @@ class ModuloCreazioneCorsoBase(ModelForm):
     PRESSO_SEDE = "PS"
     ALTROVE = "AL"
     LOCAZIONE = (
-        (PRESSO_SEDE, "Il corso si svolgerà presso la Sede."),
-        (ALTROVE, "Il corso si svolgerà altrove (specifica dopo).")
+        (PRESSO_SEDE, "Il corso si svolgerà presso la Sede"),
+        (ALTROVE, "Il corso si svolgerà altrove")
     )
 
     DEFAULT_BLANK_LEVEL = ('', '---------'),
