@@ -699,89 +699,47 @@ def statistica_iivv_cm(**kwargs):
 
 def statistica_ore_servizio(**kwargs):
 
-    def get_tot(estensioni=[], inizio=None, fine=None, row=[]):
+    def get_tot(estensioni=[], inizio=None, fine=None, row=[], no_turni=0):
 
         c_0, c_0_10, c_10_20, c_20_30, c_30, count = 0, 0, 0, 0, 0, 0
         c_0_b, c_0_10_b, c_10_20_b, c_20_30_b, c_30_b, count_b = 0, 0, 0, 0, 0, 0
 
         for el in row:
             for est in estensioni:
-                if int(el[1]) == inizio:
-                    if el[2] == est:
-                        # count += 1
-                        if 0 < el[3] <= 10:
+                if int(el['anno']) == inizio:
+                    if el['estensione'] == est:
+                        durata = el['durata'].seconds//3600
+                        count += 1
+                        if 0 < durata <= 10:
                             c_0_10 += 1
-                        elif 10 < el[3] <= 20:
+                        elif 10 < durata <= 20:
                             c_10_20 += 1
-                        elif 20 < el[3] <= 30:
+                        elif 20 < durata <= 30:
                             c_20_30 += 1
-                        elif el[3] > 30:
+                        elif durata > 30:
                             c_30 += 1
-                elif int(el[1]) == fine:
-                    if el[2] == est:
-                        # count_b += 1
-                        if 0 < el[3] <= 10:
+                elif int(el['anno']) == fine:
+                    if el['estensione'] == est:
+                        durata = el['durata'].seconds//3600
+                        count_b += 1
+                        if 0 < durata <= 10:
                             c_0_10_b += 1
-                        elif 10 < el[3] <= 20:
+                        elif 10 < durata <= 20:
                             c_10_20_b += 1
-                        elif 20 < el[3] <= 30:
+                        elif 20 < durata <= 30:
                             c_20_30_b += 1
-                        elif el[3] > 30:
+                        elif durata > 30:
                             c_30_b += 1
-
-        # persone = Persona.objects.filter(
-        #     Appartenenza.query_attuale(sede__estensione__in=estensioni, fine__isnull=True).via("appartenenze")
-        # ).count()
-
-        attivi = Partecipazione.objects.filter(
-            turno__attivita__sede__estensione__in=estensioni,
-            confermata=True,
-        )
-
-        attivi_s = attivi.filter(
-            turno__fine__gte=datetime.now().date().replace(month=1, day=1, year=inizio),
-            turno__inizio__lte=datetime.now().date().replace(month=12, day=31, year=inizio),
-        ).values_list('persona_id', flat=True)
-
-        attivi_f = attivi.filter(
-            turno__fine__gte=datetime.now().date().replace(month=1, day=1, year=fine),
-            turno__inizio__lte=datetime.now().date().replace(month=12, day=31, year=fine),
-        ).values_list('persona_id', flat=True)
-
-        persone = Persona.objects.filter(
-            Appartenenza.query_attuale(
-                sede__estensione__in=estensioni,
-                membro__in=Appartenenza.MEMBRO_ATTIVITA,
-            ).via("appartenenze")
-        )
-
-        persone_s = persone.exclude(pk__in=attivi_s).annotate(
-            appartenenza_tipo=F('appartenenze__membro'),
-            appartenenza_inizio=F('appartenenze__inizio'),
-            appartenenza_sede=F('appartenenze__sede'),
-        ).prefetch_related(
-            'appartenenze', 'appartenenze__sede',
-            'utenza', 'numeri_telefono'
-        ).distinct('cognome', 'nome', 'codice_fiscale')
-
-        persone_f = persone.exclude(pk__in=attivi_f).annotate(
-            appartenenza_tipo=F('appartenenze__membro'),
-            appartenenza_inizio=F('appartenenze__inizio'),
-            appartenenza_sede=F('appartenenze__sede'),
-        ).prefetch_related(
-            'appartenenze', 'appartenenze__sede',
-            'utenza', 'numeri_telefono'
-        ).distinct('cognome', 'nome', 'codice_fiscale')
 
 
         statistica = OrderedDict([
-            ("Uguale a 0h di servizio al {}".format(inizio), persone_s.count()),
+            ("Uguale a 0h di servizio al {}".format(inizio), no_turni-count),
             ("Da 0h a 10h di servizio al {}".format(inizio), c_0_10),
             ("Da 10h a 20h di servizio al {}".format(inizio), c_10_20),
             ("Da 20h a 30h di servizio al {}".format(inizio), c_20_30),
             ("Maggiore di 30h di servizio al {}".format(inizio), c_30),
             ('', ''),# per mantenere un spazio tra gli anni di riferimento
-            ("Uguale a 0h di servizio al {}".format(fine), persone_f.count()),
+            ("Uguale a 0h di servizio al {}".format(fine), no_turni-count_b),
             ("Da 0h a 10h di servizio al {}".format(fine), c_0_10_b),
             ("Da 10h a 20h di servizio al {}".format(fine), c_10_20_b),
             ("Da 20h a 30h di servizio al {}".format(fine), c_20_30_b),
@@ -796,34 +754,31 @@ def statistica_ore_servizio(**kwargs):
     inizio = int(kwargs.get('anno_di_riferimento'))
     fine = int(kwargs.get('anno_di_riferimento'))-1
 
-    from django.db import connection
-    with connection.cursor() as cursor:
-        cursor.execute(QUERY_NUM_ORE.format(inizio, fine))
-        row = cursor.fetchall()
+    p = Partecipazione.objects.select_related('turno').filter(
+        Q(turno__inizio__year=fine) | Q(turno__inizio__year=inizio),
+    ).extra({'anno': "Extract(year from attivita_turno.inizio)"}).values(
+        'persona', 'turno__attivita__sede__estensione', 'anno'
+    ).annotate(estensione=F('turno__attivita__sede__estensione'), durata=Sum(F('turno__fine') - F('turno__inizio')))
 
-    # TODO: QUERY ORM DJANGO modificare get_tot per questo input
-    # p = Partecipazione.objects.select_related('turno').filter(
-    #     Q(turno__inizio__year=fine) | Q(turno__inizio__year=inizio),
-    # ).extra({'anno': "Extract(year from attivita_turno.inizio)"}).values(
-    #     'persona', 'turno__attivita__sede__estensione', 'anno'
-    # ).annotate(durata=Sum(F('turno__fine') - F('turno__inizio')))
-    #
-    # [print(el['persona'], el['turno__attivita__sede__estensione'], el['durata'].seconds//3600, el['anno']) for el in p]
+    def calcola_no_turni(estensioni=[]):
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(sede__estensione__in=estensioni, fine__isnull=True).via("appartenenze")
+        ).count()
 
     obj = {
         "nome": STATISTICA[ORE_SERVIZIO],
         "tot": [
             get_tot(
-                [NAZIONALE], inizio, fine, row
+                [NAZIONALE], inizio, fine, p, calcola_no_turni([NAZIONALE])
             ),
             get_tot(
-                [REGIONALE], inizio, fine, row
+                [REGIONALE], inizio, fine, p, calcola_no_turni([REGIONALE])
             ),
             get_tot(
-                [LOCALE, PROVINCIALE], inizio, fine, row
+                [LOCALE, PROVINCIALE], inizio, fine, p, calcola_no_turni([LOCALE, PROVINCIALE])
             ),
             get_tot(
-                [TERRITORIALE], inizio, fine, row
+                [TERRITORIALE], inizio, fine, p, calcola_no_turni([TERRITORIALE])
             )
         ]
     }
