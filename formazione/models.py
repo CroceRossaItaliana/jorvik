@@ -11,16 +11,17 @@ from django.utils import timezone
 from django.utils.timezone import now
 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
-from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE
-from anagrafica.validators import (valida_dimensione_file_5mb,
-   valida_dimensione_file_8mb, ValidateFileSize)
-from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE,
-    INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
+from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE, REGIONALE, NAZIONALE
+from anagrafica.validators import (valida_dimensione_file_8mb, ValidateFileSize)
+from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
+from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE, INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
+from anagrafica.permessi.costanti import MODIFICA
 from base.files import PDF, Zip
 from base.geo import ConGeolocalizzazione, ConGeolocalizzazioneRaggio
 from base.utils import concept, poco_fa
 from base.tratti import ConMarcaTemporale, ConDelegati, ConStorico, ConPDF
 from base.models import ConAutorizzazioni, ConVecchioID, Autorizzazione, ModelloSemplice
+from base.errori import messaggio_generico
 from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
 from posta.models import Messaggio
@@ -36,8 +37,8 @@ class Corso(ModelloSemplice, ConDelegati, ConMarcaTemporale,
     CORSO_NUOVO = 'C1'
     BASE = 'BA'
     TIPO_CHOICES = (
-        (CORSO_NUOVO, 'Corso di formazione dei volontari della Croce Rossa italiana'),
-        (BASE, 'Corso Base'),
+        (BASE, 'Corso di Formazione per Volontari CRI'),
+        (CORSO_NUOVO, 'Altri Corsi'),
     )
 
     # Stato del corso
@@ -428,12 +429,29 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def partecipazioni_ritirate(self):
         return PartecipazioneCorsoBase.con_esito_ritirata(corso=self)
 
-    def attiva(self, rispondi_a=None):
+    def attiva(self, request=None, rispondi_a=None):
+        from .tasks import task_invia_email_agli_aspiranti
+
         if not self.attivabile():
             raise ValueError("Questo corso non è attivabile.")
-        self._invia_email_agli_aspiranti(rispondi_a=rispondi_a)
+
+        if self.is_nuovo_corso:
+            messaggio = "A breve tutti i volontari dei segmenti selezionati "\
+                        "verranno informati dell'attivazione di questo corso."
+        else:
+            messaggio = "A breve tutti gli aspiranti nelle vicinanze verranno "\
+                        "informati dell'attivazione di questo corso base."
+
         self.stato = self.ATTIVO
         self.save()
+
+        task_invia_email_agli_aspiranti.apply_async(args=(self.pk, rispondi_a.pk),)
+
+        return messaggio_generico(request, rispondi_a,
+            titolo="Corso attivato con successo",
+            messaggio=messaggio,
+            torna_titolo="Torna al Corso",
+            torna_url=self.url)
 
     def _corso_activation_recipients_for_email(self):
         if self.is_nuovo_corso:
@@ -702,6 +720,59 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def get_course_files(self):
         return self.corsofile_set.filter(is_enabled=True)
+
+    def inform_presidency_with_delibera_file(self):
+        sede = self.sede.estensione
+        email_body = """<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>"""
+
+        if sede == LOCALE:
+            # Corso in una sede Locale. - Informa presidenta della Sede
+            email_to = self.sede.presidente().email
+        elif sede in [REGIONALE, NAZIONALE]:
+            # Corso in una sede Regionale/Nazionale. - Informa sulla mail
+            email_to = 'formazione@cri.it'
+
+        Messaggio.invia_raw(
+            oggetto="Delibera nuovo corso: %s" % self,
+            corpo_html=email_body,
+            email_mittente=Messaggio.NOREPLY_EMAIL,
+            lista_email_destinatari=[email_to,],
+            allegati=self.delibera_file
+        )
+
+    def direttori_corso(self):
+        oggetto_tipo = ContentType.objects.get_for_model(self)
+        query = Delega.objects.filter(tipo=DIRETTORE_CORSO,
+                                      oggetto_tipo=oggetto_tipo.pk,
+                                      oggetto_id=self.pk)
+        persone = Persona.objects.filter(id__in=query.values_list('id', flat=True))
+        return persone
+
+    def can_modify(self, me):
+        if me and me.permessi_almeno(self, MODIFICA):
+            return True
+        return False
+
+    def can_activate(self, me):
+        if me.is_presidente:
+            """ All'presidente deve sparire la sezione dell'attivazione corso se:
+            - ha caricato delibera
+            - ha impostato estensioni (/aspirante/corso-base/<id>/estensioni/)
+            - ha nominato almeno un direttore
+            """
+            has_delibera = self.delibera_file is not None
+            has_extension = self.has_extensions()
+            has_directors = self.direttori_corso().count() > 0
+            is_all_true = has_delibera, has_extension, has_directors
+
+            # Deve riapparire se: il direttore ha inserito la descrizione
+            if self.descrizione:
+                return True
+            else:
+                return True if False in is_all_true else False
+        else:
+            """ Direttori del corso vedono sempre la sezione invece """
+            return True
 
     class Meta:
         verbose_name = "Corso"

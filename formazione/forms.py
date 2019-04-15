@@ -18,8 +18,8 @@ class ModuloCreazioneCorsoBase(ModelForm):
     PRESSO_SEDE = "PS"
     ALTROVE = "AL"
     LOCAZIONE = (
-        (PRESSO_SEDE, "Il corso si svolgerà presso la Sede."),
-        (ALTROVE, "Il corso si svolgerà altrove (specifica dopo).")
+        (PRESSO_SEDE, "Il corso si svolgerà presso la Sede"),
+        (ALTROVE, "Il corso si svolgerà altrove")
     )
 
     DEFAULT_BLANK_LEVEL = ('', '---------'),
@@ -159,6 +159,10 @@ class ModuloModificaLezione(ModelForm):
     class Meta:
         model = LezioneCorsoBase
         fields = ['nome', 'docente', 'inizio', 'fine', 'obiettivo', 'luogo']
+        labels = {
+            'nome': 'Lezione',
+            'obiettivo': 'Argomento',
+        }
 
 
 class ModuloModificaCorsoBase(ModelForm):
@@ -166,8 +170,7 @@ class ModuloModificaCorsoBase(ModelForm):
         model = CorsoBase
         fields = ['data_inizio', 'data_esame',
                   'min_participants', 'max_participants',
-                  'descrizione',
-                  'data_attivazione', 'data_convocazione',]
+                  'descrizione',]
         widgets = {
             "descrizione": WYSIWYGSemplice(),
         }
@@ -267,21 +270,33 @@ class CorsoSelectExtensionTypeForm(ModelForm):
 
 class CorsoExtensionForm(ModelForm):
     titolo = autocomplete_light.ModelMultipleChoiceField(
-        "EstensioneLivelloRegionaleTitolo", required=False)
+        "EstensioneLivelloRegionaleTitolo", required=False, label='Requisiti necessari')
     sede = autocomplete_light.ModelMultipleChoiceField(
-        "EstensioneLivelloRegionaleSede", required=False)
+        "EstensioneLivelloRegionaleSede", required=False, label='Selezionare Sede/Sedi')
 
     class Meta:
         model = CorsoEstensione
         fields = ['segmento', 'titolo', 'sede', 'sedi_sottostanti',]
+        labels = {
+            'segmento': "Destinatari del Corso",
+        }
+
+    def clean(self):
+        cd = self.cleaned_data
+
+        if self.corso:
+            if self.corso.titolo_cri in cd['titolo']:
+                self.add_error('titolo', "Non è possibile selezionare lo stesso titolo del Corso.")
+
+        return cd
 
     def __init__(self, *args, **kwargs):
         self.corso = kwargs.pop('corso')
         super().__init__(*args, **kwargs)
 
-        if self.corso.is_nuovo_corso and self.corso.titolo_cri:
-            self.fields['titolo'].initial = Titolo.objects.filter(id__in=[
-                self.corso.titolo_cri.pk])
+        # if self.corso.is_nuovo_corso and self.corso.titolo_cri:
+        #     self.fields['titolo'].initial = Titolo.objects.filter(id__in=[
+        #         self.corso.titolo_cri.pk])
 
 
 CorsoSelectExtensionFormSet = modelformset_factory(CorsoEstensione, extra=1,
@@ -418,9 +433,9 @@ class InformCourseParticipantsForm(forms.Form):
         self.instance = kwargs.pop('instance')
 
         CHOICES = [
-            (self.ALL, "A tutti (già iscritti + chi ha fatto richiesta)"),
-            (self.UNCONFIRMED_REQUESTS, 'Solo a chi ha fatto richieste'),
-            (self.CONFIRMED_REQUESTS, 'Partecipanti confermati'),
+            (self.ALL, "A tutti (Preiscritti + Partecipanti confermati)"),
+            (self.UNCONFIRMED_REQUESTS, "Preiscritti"),
+            (self.CONFIRMED_REQUESTS, "Partecipanti confermati (ok così come è ora)"),
         ]
 
         if self.instance.concluso:

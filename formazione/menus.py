@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 def formazione_menu(menu_name, gestione_corsi_sede):
     FORMAZIONE = (
         ("Corsi", (
-            ("Attiva Corso", "fa-asterisk", reverse('formazione:new_course')) if gestione_corsi_sede else None,
+            ("Crea Corso", "fa-asterisk", reverse('formazione:new_course')) if gestione_corsi_sede else None,
             ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
             ("Domanda formativa", "fa-area-chart", reverse('formazione:domanda')) if gestione_corsi_sede else None,
             ('Catalogo Corsi', 'fa-list-alt', '/page/catalogo-corsi/'),

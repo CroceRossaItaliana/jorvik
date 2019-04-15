@@ -3,104 +3,45 @@
 {% load static %}
 
 {% block corpo %}
+  <style>
+    .main-div {font-family:'Georgia', serif; padding: 0.2cm 0.3cm 0.3cm 0.3cm; background: transparent; border: 3.00pt solid #cc0000; color:#555;}
+    .cri-logo {display: block; margin: 30px auto 0 auto; max-width: 300px;}
+    .comitato-title {text-align: center; color: #c00; font-family: Arial; font-weight: bold; font-size: 22px;}
+    .heading-section {text-align: center; margin-top:60px;}
+    .heading-h1 {text-transform: uppercase; font-size: 37px;}
+    .heading-h2 {font-size: 26px; font-weight: normal;}
+    .details {font-size: 18px; max-width: 70%; margin: 0 auto;}
+  </style>
+  <div class="main-div" lang="it-IT" text="#000000" dir="ltr">
+    <div>
+      <img class="cri-logo" src="{% static 'img/Emblema_CRI.png' %}" alt="Emblema CRI">
+      <div class="comitato-title">Comitato Nazionale <!--{{corso.sede.comitato}}--></div>
+    </div>
+    <div class="heading-section">
+      <h1 class="heading-h1">Attestato di<br> partecipazione</h1>
+      <h2 class="heading-h2">{{ persona.nome_completo }}</h2>
+    </div>
+    <div class="details">
+      <p>Nome del corso <span>{{ corso.titolo_cri }}</span></p>
+      <p>Data inizio <span>{{ corso.data_inizio|date:"DATE_FORMAT" }}</span></p>
+      <p>Data fine <span>{{ corso.data_esame|date:"DATE_FORMAT" }}</span></p>
+      <p>Sede di svolgimento <span>{{ corso.sede.nome }}</span></p>
+      <p>Presidente <span>{{ corso.sede.presidente.nome_completo }}</span></p>
 
-<div lang="it-IT" text="#000000" dir="ltr" style="padding: 10px 10px 10px 10px; background: transparent; border: 3.00pt solid #cc0000; padding-top: 0.2cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
-    <!-- Logo CRI -->
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
-        <img src="{% static "img/Emblema_CRI.png" %}" name="LogoCri" align="middle" width="300" height="270">
-        <br/>
-        <font face="Arial, sans-serif" style="font-size: 9pt" color="#cc0000">
-            {{corso.sede.comitato}}
-        </font><
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0.25cm; line-height: 115%">
-    </p>
-    <p class="western" style="margin-bottom: 0cm; line-height: 100%">
-        <br/>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        <font face="Arial, sans-serif" size="7" style="font-size: 36pt">
-            <i><b>ATTESTATO</b></i>
-        </font>
-    </p>
-    <p class="western" style="margin-bottom: 0cm; line-height: 100%">
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        <font face="Arial, sans-serif">
-            Visto il verbale della Commissione d’Esame
-        </font>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        <font face="Arial, sans-serif">
-            In data
-        </font>
-        <font face="Arial, sans-serif">
-            <b>{{ corso.data_esame|date:"DATE_FORMAT" }}</b>
-        </font>
-        <font face="Arial, sans-serif">
-            si attesta che
-        </font>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        <br/>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        <font face="Arial, sans-serif" size="5" style="font-size: 18pt">
-            <b><i> {{ persona.nome_completo }}</i></b>
-        </font>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        <br/>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        C.F. <b>{{ persona.codice_fiscale }}</b>
-    </p>
-    <p class="western" style="margin-bottom: 0cm; line-height: 100%">
-        <br/>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        <font face="Arial, sans-serif">
-            Avendo sostenuto con profitto l’esame finale del
-        </font>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        <font face="Arial, sans-serif">
-            <b>Corso di Formazione per Volontari della Croce Rossa Italiana,</b>
-        </font>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        <font face="Arial, sans-serif">
-            ai sensi dell’ O.C. 0592/11 del 7 dicembre 2011 della Croce Rossa Italiana è
-        </font>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        <br/>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        <font face="Arial, sans-serif" size="5" style="font-size: 20pt">
-            <b>Volontari{{ persona.genere_o_a }} della C.R.I.</b>
-        </font>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-    </p>
-    <p class="western" style="margin-bottom: 0cm; line-height: 100%">
-        <br/>
-    </p>
-    <table width="100%">
-        <tr>
-            <td align="center">
-                Il Direttore del Corso
-            </td>
-            <td align="center">
-                Il Presidente del Comitato
-            </td>
-        </tr>
-    </table>
-    <br/>
-    <p class="western" style="margin-bottom: 0cm; line-height: 100%">
-        <font face="Arial, sans-serif">
-            {{ corso.locazione.comune }}, li {{ corso.data_esame }}
-        </font>
-    </p>
-</div>
+      <p style="margin-bottom: 80px;">
+        {% if corso.direttori_corsi.length > 1 %}Direttori del corso{% else %}Direttore del corso{% endif %}
+        <span>
+          {% for persona in corso.direttori_corso %}
+            {{ persona.nome_completo }}<br>
+          {% endfor %}
+        </span>
+      </p>
+      <p>Codice identificativo: {{ corso.nome }}</p>
+
+      <!--<p>Obiettivi formativi <span>{{ corso. }}</span></p>-->
+      <!--<p>Contenuti <span>{{ corso. }}</span></p>-->
+      <!--<p>Livello del Quadro Europeo delle Qualifiche <span>{{ corso. }}</span></p>-->
+      <!--<p>Tipologia verifica finale <span>{{ corso. }}</span></p>-->
+    </div>
+  </div>
 {% endblock %}

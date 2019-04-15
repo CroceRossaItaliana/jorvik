@@ -22,6 +22,8 @@ app.conf.task_routes = {
     'ufficio_soci.tasks.generate_elenco_soci_al_giorno': {'queue': 'shared_ufficio_soci'},
 
     'static_page.tasks.send_mail': {'queue': 'queue_monitoraggio'},
+
+    'formazione.tasks.task_invia_email_agli_aspiranti': {'queue': 'queue_formazione'},
 }
 
 # Load task modules from all registered Django app configs.

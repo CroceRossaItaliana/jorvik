@@ -14,6 +14,8 @@ urlpatterns = [
         name='info'),
     url(r'^%s/mappa/$' % url_shortcut, v.aspirante_corso_base_mappa,
         name='map'),
+    url(r'^%s/position/change' % url_shortcut, v.formazione_corso_position_change,
+        name='position_change'),
     url(r'^%s/firme/$' % url_shortcut, v.aspirante_corso_base_firme,
         name='firme'),
     url(r'^%s/ritirati/$' % url_shortcut, v.aspirante_corso_base_ritirati,

@@ -7,12 +7,37 @@
 
 {% block app_contenuto %}
     <div class="row">
-        <div class="col-md-8">
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h2 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Attivazione Corso</h2>
+        <div class="col-md-12">
+            <div class="panel panel-default course-panels">
+                <div class="heading attivazione">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Creazione Corso</h2>
                 </div>
+                <div class="heading dettagli">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-info"></i> Dettagli corso ed iscrizioni</h2>
+                </div>
+                <div class="heading lezioni">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Lezioni</h2>
+                </div>
+                <div class="heading esami">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-file-excel-o"></i> Esami e verbale</h2>
+                </div>
+                <div class="heading questionario">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</h2>
+                </div>
+            </div>
+            <script>
+            $('.course-panels div').on('click', function(){
+                if ($(this).hasClass('attivazione')) {
+                       $('.attivazionePanelWithForm').slideToggle();
+                    return;
+                }
+                alert('Il corso non è ancora creato.');
+            });
+            </script>
+
+            <div style="display:none;" class="panel panel-primary attivazionePanelWithForm">
                 <div class="panel-body">
+                    <h3 style="margin:0 0 15px;">Creazione Corso</h3>
                     <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         {% bootstrap_form modulo %}
@@ -22,23 +47,8 @@
                     </form>
                 </div>
             </div>
-            <div class="panel panel-default panels-inactive" style="border: none;">
-                <div class="panel-heading" style="margin-bottom:6px;">
-                    <h2 class="panel-title"><i class="fa fa-fw fa-info"></i> Dettagli corso ed iscrizioni</h2>
-                </div>
-                <div class="panel-heading" style="margin-bottom:6px;">
-                    <h2 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Lezioni</h2>
-                </div>
-                <div class="panel-heading" style="margin-bottom:6px;">
-                    <h2 class="panel-title"><i class="fa fa-fw fa-file-excel-o"></i> Esami e verbale</h2>
-                </div>
-                <div class="panel-heading">
-                    <h2 class="panel-title"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</h2>
-                </div>
-            </div>
-            <script>$('.panels-inactive div').on('click', function(){ alert('Il corso non è ancora creato.'); });</script>
         </div>
-        <div class="col-md-4">
+        <!--<div class="col-md-2">-->
             <!--<div class="alert alert-info">-->
                 <!--<i class="fa fa-fw fa-calendar"></i> <strong>Data ed ora di inizio</strong>:-->
                 <!--Ti consigliamo di inserire in questo campo la data e l'ora nella quale sar&agrave;-->
@@ -60,7 +70,7 @@
                 <!--c. termine di scadenza fissato per le domande di ammissione;<br>-->
                 <!--d. rinvio ai regolamenti vigenti per quanto concerne requisiti di partecipazione, programma e qualifiche dei docenti.-->
             <!--</div>-->
-        </div>
+        <!--</div>-->
     </div>
 
 <script>
@@ -69,6 +79,7 @@
     var level_form_group = $('#id_level').closest('.form-group');
     var area_form_group = $('#id_area').closest('.form-group');
     var course_value = 'C1';
+    var titolo_options_ajax_data = {};
 
     if ($('#id_tipo option:selected').val() != course_value) {
         titolo_form_group.hide();
@@ -133,12 +144,15 @@
                     let select_titolo_cri = $('#id_titolo_cri');
                     select_titolo_cri.find('option').not(':first').remove();
 
-                    $.each(data, function(value, text) {
+                    titolo_options_ajax_data = data;
+
+                    $.each(data, function(id, text) {
                         select_titolo_cri.append($('<option>', {
-                            value: value,
-                            text: text
+                            value: id,
+                            text: text['nome'],
                         }));
                     });
+
                     return data;
                 },
                 error: function(jqXHR, textStatus) {
@@ -149,6 +163,30 @@
         } else {
             titolo_form_group.hide();
             $('#id_titolo_cri').find('option').not(':first').remove();
+        }
+    });
+
+    /* GAIA-89
+    Add titles' description under the <select> element
+    */
+    function resetDescriptionDiv(){
+        let description_div = $('#titleDescription');
+        if (description_div.length) {
+            description_div.remove();
+        }
+    };
+
+    $('#id_tipo, #id_level, #id_area').on('change', function(e){
+        resetDescriptionDiv();
+    });
+
+    $('#id_titolo_cri').on('change', function(e) {
+        resetDescriptionDiv();
+
+        let selected_option_id = $(this).val();
+        let title = titolo_options_ajax_data[selected_option_id];
+        if ('description' in title && title['description'] !== null) {
+            $(this).parent().append('<p id="titleDescription">'+ title['description'] +'</p>');
         }
     });
 </script>

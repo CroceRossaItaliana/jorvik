@@ -163,7 +163,7 @@
 <div class="row">
     <div class="col-md-6">
         <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
-        {{ corso.descrizione|default:"Ancora non disponibili"|safe }}
+        {{ corso.descrizione|default:"<p>Ancora non disponibili</p>"|safe }}
 
         {% if puoi_partecipare == corso.SEI_ISCRITTO_NON_PUOI_RITIRARTI or puo_modificare %}
             {% if corso.get_course_links or corso.get_course_files %}<h3>Materiale didattico</h3>{%endif%}
@@ -183,6 +183,14 @@
                 {% endfor %}
             {% endif %}
         {% endif %}
+
+        <p>
+            <strong>Regolamenti:</strong>
+            <ul>
+                <li><a href="https://datafiles.gaia.cri.it/media/filer_public/94/12/94127b9a-b049-45bc-ae82-b326707528bf/statuto_dell__associazione_della_croce_rossa_italiana_odv_versione_grafica.pdf" target="_blank">Lo Statuto</a></li>
+                <li><a href="https://datafiles.gaia.cri.it/media/filer_public/5b/4b/5b4ba0cb-239f-40e7-a414-a49023e5eb36/codice_etico_provvedimenti_disciplinari_e_collegi_disciplinari.pdf" target="_blank">Il Codice Etico</a></li>
+            </ul>
+        </p>
 
         {% if corso.tipo == corso.CORSO_NUOVO and corso.get_extensions_titles %}
             <p>

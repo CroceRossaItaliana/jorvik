@@ -46,5 +46,6 @@ djangorestframework==3.6
 xhtml2pdf
 xlwt==1.3.0
 django-oidc-provider==0.6.2
+xlrd
 https://github.com/emfcamp/python-barcode/archive/0.7.zip # pyBarcode==0.7
 https://github.com/nephila/django-filer/archive/296fa6170a3749532b85ceb033eeae0fb839e9a6.zip

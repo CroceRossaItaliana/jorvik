@@ -1,3 +1,5 @@
+from xlrd import open_workbook
+
 from django.contrib import admin
 from django.conf.urls import url
 from django.shortcuts import HttpResponse, redirect, render
@@ -23,30 +25,39 @@ class StaticPageAdmin(admin.ModelAdmin):
         urls = custom_urls + urls
         return urls
 
-    def _process_imported_file(self, file, type):
-        import csv
-        from io import StringIO
-
+    def _process_imported_file(self, file, imported_type):
         columns = {
             ImportAndGenerateStaticPage.CATALOGO_CORSI:
-                ('Sigla Corso', 'Nome del Corso',
-                 'Qualifica che si ottiene', 'Spiegazione del corso'),
+                ('Sigla Corso', 'Nome del Corso'),  #'Qualifica che si ottiene', 'Spiegazione del corso'),
             ImportAndGenerateStaticPage.GLOSSARIO_CORSI:
                 ('Acronimo/termine', 'Significato')
         }
 
         table = ['<table width="100%">\n', '</table>']
-        td = "<td>%s</td>\n\t" * len(columns[type])
+        td = "<td>%s</td>\n\t" * len(columns[imported_type])
         tr = "<tr>\n\t%s</tr>\n" % td
-        html = table[0] + tr % (columns[type])
+        html = table[0] + tr % (columns[imported_type])
 
-        for line in csv.reader(StringIO(file.read().decode()), delimiter=';'):
-            if type == ImportAndGenerateStaticPage.GLOSSARIO_CORSI:
-                html += tr % tuple(i.strip() for i in line[0].split('-'))
+        xls = open_workbook(file_contents=file.read())
+        sheet = xls.sheet_by_index(0)
 
-            elif type == ImportAndGenerateStaticPage.CATALOGO_CORSI:
-                # TODO: ...
-                pass
+        if imported_type == ImportAndGenerateStaticPage.GLOSSARIO_CORSI:
+            for i in range(0, sheet.nrows):
+                row = sheet.row_slice(i)
+                sigla = row[0].value.strip()
+                text = row[1].value.strip()
+                html += tr % (sigla, text)
+
+        elif imported_type == ImportAndGenerateStaticPage.CATALOGO_CORSI:
+            for i in range(0, sheet.nrows):
+                row = sheet.row_slice(i)
+
+                if i == 0 or row[0].value == 'N.':
+                    continue
+
+                sigla = row[1].value.strip()
+                text = row[2].value.strip()
+                html += tr % (sigla, text)
 
         html += table[1]
         return html

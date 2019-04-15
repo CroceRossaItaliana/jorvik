@@ -1,13 +1,10 @@
 from datetime import datetime, timedelta
 
-# from django.conf import settings
-# from django.core.exceptions import ObjectDoesNotExist
-# from django.db.transaction import atomic
-# from django.template import Context
 from django.utils import timezone
 from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.template.loader import get_template
+from django.contrib import messages
 
 from anagrafica.models import Persona, Documento
 from anagrafica.forms import ModuloCreazioneDocumento
@@ -93,15 +90,24 @@ def formazione_corsi_base_nuovo(request, me):
             **kwargs
         )
 
-        if cd['locazione'] == form.PRESSO_SEDE:
+        same_sede = cd['locazione'] == form.PRESSO_SEDE
+        if same_sede:
             course.locazione = course.sede.locazione
             course.save()
 
+        # Il corso è creato. Informa presidenza allegando delibera_file
+        course.inform_presidency_with_delibera_file()
         request.session['corso_base_creato'] = course.pk
-        return redirect(course.url_direttori)
+
+        if same_sede:
+            # Rindirizza sulla pagina: selezione direttori
+            return redirect(course.url_direttori)
+        else:
+            # Rindirizza sulla pagina: impostazione geolocalizzazione
+            return redirect(reverse('aspirante:position_change', args=[course.pk]))
 
     context = {
-        'modulo': form
+        'modulo': form,
     }
     return 'formazione_corsi_base_nuovo.html', context
 
@@ -147,8 +153,14 @@ def formazione_corsi_base_fine(request, me, pk):
 def aspirante_corso_base_informazioni(request, me=None, pk=None):
     context = dict()
     corso = get_object_or_404(CorsoBase, pk=pk)
-    puo_modificare = me and me.permessi_almeno(corso, MODIFICA)
     puoi_partecipare = corso.persona(me) if me else None
+
+    if corso.locazione is None:
+        # Il corso non ha una locazione (è stata selezionata la voce °Sede presso Altrove"
+        messages.error(request, "Imposta una locazione per procedere la navigazione del Corso.")
+
+        # Rindirizzo utente sulla pagina di impostazione della locazione
+        return redirect(reverse('aspirante:position_change', args=[corso.pk]))
 
     if puoi_partecipare == CorsoBase.NON_HAI_CARICATO_DOCUMENTI_PERSONALI:
         if request.method == 'POST':
@@ -165,7 +177,8 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
         context['load_personal_document'] = load_personal_document_form
 
     context['corso'] = corso
-    context['puo_modificare'] = puo_modificare
+    context['puo_modificare'] = corso.can_modify(me)
+    context['can_activate'] = corso.can_activate(me)
     context['puoi_partecipare'] = puoi_partecipare
 
     return 'aspirante_corso_base_scheda_informazioni.html', context
@@ -430,20 +443,8 @@ def aspirante_corso_base_attiva(request, me, pk):
         email_body)
 
     if request.POST:
-        corso.attiva(rispondi_a=me)
-        if corso.is_nuovo_corso:
-            messaggio = "A breve tutti i volontari dei segmenti selezionati "\
-                        "verranno informati dell'attivazione di questo corso."
-        else:
-            messaggio = "A breve tutti gli aspiranti nelle vicinanze verranno "\
-                        "informati dell'attivazione di questo corso base."
-        return messaggio_generico(
-            request, me,
-            titolo="Corso attivato con successo",
-            messaggio=messaggio,
-            torna_titolo="Torna al Corso",
-            torna_url=corso.url
-        )
+        activation = corso.attiva(request=request, rispondi_a=me)
+        return activation
 
     context = {
         "corso": corso,
@@ -461,11 +462,11 @@ def aspirante_corso_base_termina(request, me, pk):
 
     torna = {"torna_url": corso.url_modifica, "torna_titolo": "Modifica corso"}
 
-    if (not corso.op_attivazione) or (not corso.data_attivazione):
-        return errore_generico(request, me, titolo="Necessari dati attivazione",
-                               messaggio="Per generare il verbale, sono necessari i dati (O.P. e data) "
-                                         "dell'attivazione del corso.",
-                               **torna)
+    # if (not corso.op_attivazione) or (not corso.data_attivazione):
+    #     return errore_generico(request, me,
+    #         titolo="Necessari dati attivazione",
+    #         messaggio="Per generare il verbale, sono necessari i dati (O.P. e data) dell'attivazione del corso.",
+    #         **torna)
 
     if not corso.partecipazioni_confermate().exists():
         return errore_generico(request, me, titolo="Impossibile terminare questo corso",
@@ -863,7 +864,6 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
 @pagina_privata
 def aspirante_corso_estensioni_informa(request, me, pk):
     from .forms import InformCourseParticipantsForm
-    from django.contrib import messages
 
     course = get_object_or_404(CorsoBase, pk=pk)
 
@@ -888,7 +888,8 @@ def aspirante_corso_estensioni_informa(request, me, pk):
         elif recipient_type == form.CONFIRMED_REQUESTS:
             recipients = course.partecipazioni_confermate()
         elif recipient_type == form.INVIA_QUESTIONARIO:
-            recipients = course.partecipazioni_confermate()
+            # recipients = course.partecipazioni_confermate()
+            return redirect(reverse('courses:send_questionnaire_to_participants', args=[course.pk]))
         else:
             # todo: something went wrong ...
             pass
@@ -905,20 +906,8 @@ def aspirante_corso_estensioni_informa(request, me, pk):
                 destinatari=[r.persona for r in recipients]
             )
 
-        if recipients and recipient_type == form.INVIA_QUESTIONARIO:
-            sent_with_success = Messaggio.costruisci_e_invia(
-                oggetto="Questionario di gradimento del %s per %s" % (course.nome, course.titolo_cri),
-                modello="email_corso_questionario_gradimento.html",
-                corpo={
-                    'corso': course,
-                    'message': cd['message']
-                },
-                mittente=me,
-                destinatari=[r.persona for r in recipients]
-            )
-
         if sent_with_success:
-            messages.success(request, "Il messaggio ai volontari è stato inviato con successo. ")
+            messages.success(request, "Il messaggio ai volontari è stato inviato con successo.")
             return redirect(reverse('aspirante:informa', args=[pk]))
 
         if not recipients:
@@ -963,3 +952,65 @@ def formazione_albo_titoli_corso_full_list(request, me):
         context['person'] = persona
 
     return 'formazione_albo_titoli_corso_full_list.html', context
+
+
+@pagina_privata
+def formazione_corso_position_change(request, me, pk):
+    course = get_object_or_404(CorsoBase, pk=pk)
+
+    if not course.can_modify(me):
+        return redirect(ERRORE_PERMESSI)
+
+    template = 'formazione_vuota.html'
+    puo_modificare = False  # non mostrare i tab se la locazione non è impostata
+
+    # Locazione impostata...
+    if course.locazione:
+        template = 'aspirante_corso_base_scheda.html'
+        puo_modificare = course.can_modify(me)
+        # Se il corso non ha ancora un direttore...
+        if not course.direttori_corso:
+            # Rindirizza sulla pagina selezione direttori del corso.
+            return redirect(course.url_direttori)
+
+    return 'formazione_corso_position_change.html', {'corso': course,
+                                                     'template': template,
+                                                     'puo_modificare': puo_modificare}
+
+
+@pagina_privata
+def course_send_questionnaire_to_participants(request, me, pk):
+    context = dict()
+    course = get_object_or_404(CorsoBase, pk=pk)
+
+    if not course.can_modify(me):
+        return redirect(ERRORE_PERMESSI)
+
+    if request.method == 'POST':
+        send_with_success = False
+
+        recipients = request.POST.getlist('persona')
+        recipients = Persona.objects.filter(id__in=[int(r) for r in recipients])
+        if recipients:
+            titolo = 'per %s' % course.titolo_cri if course.titolo_cri else ''
+            sent_with_success = Messaggio.costruisci_e_invia(
+                oggetto="Questionario di gradimento del %s %s" % (course.nome, titolo),
+                modello="email_corso_questionario_gradimento.html",
+                corpo={
+                    'corso': course,
+                },
+                mittente=me,
+                destinatari=recipients,
+            )
+
+            if sent_with_success:
+                msg = "Il questionario è stato inviato con successo a %s partecipanti selezionati" % recipients.count()
+                messages.success(request, msg)
+                return redirect(reverse('courses:send_questionnaire_to_participants', args=[course.pk]))
+        else:
+            messages.error(request, 'Non hai selezionato persone.')
+
+    context['puo_modificare'] = course.can_modify(me)
+    context['corso'] = course
+
+    return 'course_send_questionnaire_to_participants.html', context
