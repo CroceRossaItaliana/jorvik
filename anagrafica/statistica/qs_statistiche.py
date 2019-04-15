@@ -557,7 +557,6 @@ def statistiche_num_sedi_nuove(**kwargs):
 
 
 def statistica_num_corsi(**kwargs):
-    #TODO: il totale si trova con django
     def get_tot_anno(estensione=None, **kwargs):
         livello_riferimento = kwargs.get('livello_riferimento')
         nome_corso = kwargs.get('nome_corso')
@@ -699,7 +698,7 @@ def statistica_iivv_cm(**kwargs):
 
 def statistica_ore_servizio(**kwargs):
 
-    def get_tot(estensioni=[], inizio=None, fine=None, row=[], no_turni=0):
+    def get_tot(estensioni=[], inizio=None, fine=None, row=[], no_turni=[]):
 
         c_0, c_0_10, c_10_20, c_20_30, c_30, count = 0, 0, 0, 0, 0, 0
         c_0_b, c_0_10_b, c_10_20_b, c_20_30_b, c_30_b, count_b = 0, 0, 0, 0, 0, 0
@@ -733,13 +732,13 @@ def statistica_ore_servizio(**kwargs):
 
 
         statistica = OrderedDict([
-            ("Uguale a 0h di servizio al {}".format(inizio), no_turni-count),
+            ("Uguale a 0h di servizio al {}".format(inizio), no_turni[0]-count),
             ("Da 0h a 10h di servizio al {}".format(inizio), c_0_10),
             ("Da 10h a 20h di servizio al {}".format(inizio), c_10_20),
             ("Da 20h a 30h di servizio al {}".format(inizio), c_20_30),
             ("Maggiore di 30h di servizio al {}".format(inizio), c_30),
             ('', ''),# per mantenere un spazio tra gli anni di riferimento
-            ("Uguale a 0h di servizio al {}".format(fine), no_turni-count_b),
+            ("Uguale a 0h di servizio al {}".format(fine), no_turni[0]-count_b),
             ("Da 0h a 10h di servizio al {}".format(fine), c_0_10_b),
             ("Da 10h a 20h di servizio al {}".format(fine), c_10_20_b),
             ("Da 20h a 30h di servizio al {}".format(fine), c_20_30_b),
@@ -760,25 +759,58 @@ def statistica_ore_servizio(**kwargs):
         'persona', 'turno__attivita__sede__estensione', 'anno'
     ).annotate(estensione=F('turno__attivita__sede__estensione'), durata=Sum(F('turno__fine') - F('turno__inizio')))
 
-    def calcola_no_turni(estensioni=[]):
-        return Persona.objects.filter(
-            Appartenenza.query_attuale(sede__estensione__in=estensioni, fine__isnull=True).via("appartenenze")
-        ).count()
+    storico_all = Partecipazione.objects.filter(
+        turno__fine__gte=datetime.now().date().replace(month=1, day=1, year=fine),
+        turno__inizio__lte=datetime.now().date().replace(month=12, day=12, year=inizio),
+        confermata=True,
+    )#.values_list('persona_id', flat=True)
+
+    persone_all = Persona.objects.filter(
+        Appartenenza.query_attuale(
+            membro__in=Appartenenza.MEMBRO_ATTIVITA,
+        ).via("appartenenze")
+    )
+
+    def calcola_no_turni(estensioni=[], storico_all=[], persone_all=[], inizio=None, fine=None):
+        persone_all = persone_all.filter(
+            Appartenenza.query_attuale(
+                sede__estensione__in=estensioni
+            ).via("appartenenze")
+        )
+        inizio = persone_all.exclude(pk__in=storico_all.filter(
+            turno__fine__gte=datetime.now().date().replace(month=1, day=1, year=inizio),
+            turno__inizio__lte=datetime.now().date().replace(month=12, day=12, year=inizio),
+        ).values_list('persona_id', flat=True)).count()
+
+        fine = persone_all.exclude(pk__in=storico_all.filter(
+            turno__fine__gte=datetime.now().date().replace(month=1, day=1, year=fine),
+            turno__inizio__lte=datetime.now().date().replace(month=12, day=12, year=fine),
+        ).values_list('persona_id', flat=True)).count()
+
+        return [inizio, fine]
 
     obj = {
         "nome": STATISTICA[ORE_SERVIZIO],
         "tot": [
             get_tot(
-                [NAZIONALE], inizio, fine, p, calcola_no_turni([NAZIONALE])
+                [NAZIONALE], inizio, fine, p, calcola_no_turni(
+                    [NAZIONALE], storico_all, persone_all, inizio, fine
+                )
             ),
             get_tot(
-                [REGIONALE], inizio, fine, p, calcola_no_turni([REGIONALE])
+                [REGIONALE], inizio, fine, p, calcola_no_turni(
+                    [REGIONALE], storico_all, persone_all, inizio, fine
+                )
             ),
             get_tot(
-                [LOCALE, PROVINCIALE], inizio, fine, p, calcola_no_turni([LOCALE, PROVINCIALE])
+                [LOCALE, PROVINCIALE], inizio, fine, p, calcola_no_turni(
+                    [LOCALE, PROVINCIALE], storico_all, persone_all, inizio, fine
+                )
             ),
             get_tot(
-                [TERRITORIALE], inizio, fine, p, calcola_no_turni([TERRITORIALE])
+                [TERRITORIALE], inizio, fine, p, calcola_no_turni(
+                    [TERRITORIALE], storico_all, persone_all, inizio, fine
+                )
             )
         ]
     }
