@@ -1,5 +1,5 @@
 from datetime import date, datetime
-
+from django.utils import timezone
 from django.db.models import Q, F
 from django.utils.encoding import force_text
 
@@ -597,10 +597,20 @@ class ElencoInRiserva(ElencoVistaSoci):
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
     def excel_colonne(self):
+        def riserva(p, att):
+            oggi = timezone.now()
+            ris = Riserva.objects.filter(
+                Q(fine__lte=oggi, inizio__gte=oggi) | Q(fine__isnull=True),
+                persona=p.id,
+            ).order_by('-creazione')
+            if ris:
+                return getattr(ris.first(), att)
+            return ''
+
         return super(ElencoInRiserva, self).excel_colonne() + (
-            ("Data inizio", lambda p: Riserva.objects.filter(persona=p.id).order_by('-creazione').first().inizio),
-            ("Data fine", lambda p: Riserva.objects.filter(persona=p.id).order_by('-creazione').first().fine),
-            ("Motivazioni", lambda p: Riserva.objects.filter(persona=p.id).order_by('-creazione').first().motivo)
+            ("Data inizio", lambda p: riserva(p, 'inizio')),
+            ("Data fine", lambda p: riserva(p, 'fine')),
+            ("Motivazioni", lambda p: riserva(p, 'motivo'))
         )
 
 
