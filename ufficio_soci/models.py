@@ -1,5 +1,5 @@
 import random
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from django.db import models
 from django.db.models import Q, Max
@@ -13,7 +13,6 @@ from base.models import ModelloSemplice, ConVecchioID
 from base.tratti import ConMarcaTemporale, ConPDF
 from base.utils import concept, UpperCaseCharField, ean13_carattere_di_controllo, questo_anno, oggi
 from posta.models import Messaggio
-
 
 
 class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
@@ -550,6 +549,10 @@ class ReportElenco(ConMarcaTemporale):
     SENZA_TURNI = 'stu'
     ELETTORATO = 'ele'
     TITOLI = 'tit'
+    TESSERINI_RICHIESTI = 'trc'
+    TESSERINI_DA_RICHIEDERE = 'tdr'
+    TESSERINI_SENZA_FOTOTESSERA = 'tsf'
+    TESSERINI_RIFIUTATI = 'trf'
     GENERICO = 'gen'
     REPORT_TYPE = (
         (VOLONTARI, 'Volontari'),
@@ -567,6 +570,10 @@ class ReportElenco(ConMarcaTemporale):
         (SENZA_TURNI, 'Volontari con zero turni'),
         (ELETTORATO, 'Elettorato'),
         (TITOLI, 'Soci per Titoli'),
+        (TESSERINI_RICHIESTI, 'Tesserini richiesti'),
+        (TESSERINI_DA_RICHIEDERE, 'Tesserini da richiedere'),
+        (TESSERINI_SENZA_FOTOTESSERA, 'Tesserini senza fototessera'),
+        (TESSERINI_RIFIUTATI, 'Tesserini Rifiutati'),
         (GENERICO, 'Generico'),
     )
 
@@ -578,7 +585,7 @@ class ReportElenco(ConMarcaTemporale):
 
     @property
     def filename(self):
-        return self.file.name
+        return "Elenco %s - %s.xlsx" % (self.get_report_type_display(), str(datetime.now()))
 
     def download(self):
         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

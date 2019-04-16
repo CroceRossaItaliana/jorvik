@@ -458,13 +458,16 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
     def excel_colonne(self):
 
         def _data(p):
-            return Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione').first().protocollo_data
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            return d.first().protocollo_data if d else ''
 
         def _motivo(p):
-            return Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione').first().motivo
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            return d.first().motivo if d else ''
 
         def _destinazione(p):
-            return Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione').first().destinazione
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            return d.first().destinazione if d else ''
 
         return super(ElencoTrasferiti, self).excel_colonne() + (
             ('Data del trasferimento', lambda p: _data(p)),
@@ -495,9 +498,9 @@ class ElencoDipendenti(ElencoVistaSoci):
 
 
 class ElencoQuote(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede> Sedi per le quali compilare gli elenchi quote associative
-    """
+    """ args: QuerySet<Sede> Sedi per le quali compilare gli elenchi quote associative """
+    NAME = 'Quote'
+
     def modulo(self):
         return ModuloElencoQuote
 
@@ -713,6 +716,7 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
 
 
 class ElencoTesseriniRichiesti(ElencoVistaSoci):
+    REPORT_TYPE = ReportElenco.TESSERINI_RICHIESTI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -738,6 +742,7 @@ class ElencoTesseriniRichiesti(ElencoVistaSoci):
 
 
 class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
+    REPORT_TYPE = ReportElenco.TESSERINI_DA_RICHIEDERE
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -770,6 +775,7 @@ class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
 
 
 class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
+    REPORT_TYPE = ReportElenco.TESSERINI_SENZA_FOTOTESSERA
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -799,6 +805,7 @@ class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
 
 
 class ElencoTesseriniRifiutati(ElencoVistaTesseriniRifiutati, ElencoTesseriniRichiesti):
+    REPORT_TYPE = ReportElenco.TESSERINI_RIFIUTATI
 
     def risultati(self):
         qs_sedi = self.args[0]

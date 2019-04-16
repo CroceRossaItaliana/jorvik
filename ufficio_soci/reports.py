@@ -1,5 +1,6 @@
 from importlib import import_module
 from collections import OrderedDict
+from datetime import datetime
 
 from django.db.models import Sum, Q
 from django.core.files.base import ContentFile
@@ -295,7 +296,7 @@ class ReportElencoSoci:
         # Update db record, set status (is_ready) True
         report_db = ReportElenco.objects.get(id=report_id)
 
-        filename = 'Elenco-%s-%s.xlsx' % (report_db.get_report_type_display(),
+        filename = 'Elenco %s %s.xlsx' % (report_db.get_report_type_display(),
                                           report_db.creazione)
         _bytes = ContentFile(excel.output.read())
 
@@ -321,13 +322,18 @@ class ReportElencoSoci:
             return True
         return False
 
+    @property
+    def filename(self):
+        if hasattr(self.elenco, 'NAME'):
+            return "%s - %s.xlsx" % (self.elenco.NAME, str(datetime.now().date()))
+        return self.EXCEL_FILENAME
+
     def download(self):
         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         file = self._generate(save_to_memory=True).output.read()
-        filename = 'Elenco.xlsx'
 
         response = HttpResponse(file, content_type=content_type)
-        response['Content-Disposition'] = "attachment; filename=%s" % filename
+        response['Content-Disposition'] = "attachment; filename=%s" % self.filename
         return response
 
     def make(self):

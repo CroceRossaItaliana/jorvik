@@ -1,11 +1,12 @@
 from django.db.models import F
 
 from anagrafica.models import Persona
-from attivita.models import Partecipazione
 from ufficio_soci.elenchi import ElencoVistaAnagrafica
+from .models import Partecipazione
 
 
 class ElencoPartecipantiTurno(ElencoVistaAnagrafica):
+    NAME = 'Partecipanti Turno'
 
     def risultati(self):
         qs_turni = self.args[0]
@@ -18,6 +19,7 @@ class ElencoPartecipantiTurno(ElencoVistaAnagrafica):
 
 
 class ElencoPartecipantiAttivita(ElencoVistaAnagrafica):
+    NAME = 'Partecipanti Attivita'
 
     def risultati(self):
         qs_attivita = self.args[0]
