@@ -37,7 +37,7 @@ class TypeFormResponses:
                 "protezione civile"'''),
         ('r3IRy8', 'Sezione E – relazioni'),
         ('DhH3Mk', 'Sezione F – organizzazione'),
-        ('W6G6cD', 'Sezione G – risorse economiche e finanziarie')
+        ('W6G6cD', 'Sezione G – risorse economiche e finanziarie'),
     ])
 
     def __init__(self, request=None, me=None, user_pk=None):
@@ -96,7 +96,7 @@ class TypeFormResponses:
         for _id, bottone_name in self.form_ids.items():
             json = self.get_json_from_responses(_id)
             for item in json['items']:
-                c = item.get('hidden', dict())
+                c = item.get('hidden', OrderedDict())
                 c = c.get('c')
 
                 if c and c == comitato_id:
@@ -129,7 +129,7 @@ class TypeFormResponses:
             if form_id is not None:
                 # Make complete request
                 # return self.get_responses(form_id).json()
-                return self.get_completed_responses(form_id).json()
+                return self.get_completed_responses(form_id)
             else:
                 raise BaseException('You must pass form_id')
 
@@ -138,7 +138,7 @@ class TypeFormResponses:
                                      path='/responses',
                                      query=self.get_user_pk,
                                      completed=True)
-        return response
+        return response.json()
 
     def get_answers_from_json(self, json):
         items = json['items'][0]
@@ -146,11 +146,13 @@ class TypeFormResponses:
         return answers
 
     def get_form_questions(self, form_id):
-        return self.make_request(form_id).json()
+        response = self.make_request(form_id)
+        return response.json()
 
     def combine_question_with_user_answer(self, **kwargs):
         question = kwargs.get('question')
         answer = kwargs.get('answer')
+        answer = answer[0] if len(answer) > 0 else None
 
         type = answer['type']
 
@@ -159,7 +161,7 @@ class TypeFormResponses:
                 'question_id': question['id'],
                 # 'question_ref': question['ref'],
                 'question_title': question['title'],
-                'question_parent': question['parent'] if 'parent' in question else {},
+                'question_parent': question['parent'] if 'parent' in question else dict(),
                 'answer_field_id': answer['field']['id'],
                 'answer_field_type': answer['field']['type'],
                 'answer_field_ref': answer['field']['ref'],
@@ -197,7 +199,7 @@ class TypeFormResponses:
         # requested url:  https://api.typeform.com/forms/<form_id>
 
         questions = self.get_form_questions(form_id)
-        questions_without_hierarchy = dict()
+        questions_without_hierarchy = OrderedDict()
 
         # eh si, lo so è un bella camminata...
         for field in questions['fields']:
@@ -213,7 +215,7 @@ class TypeFormResponses:
                         if question_parent:
                             questions_without_hierarchy[i['ref']]['parent'] = question_parent
                             # reset variable, to avoid displaying data in each table row (show only 1 time)
-                            question_parent = {}
+                            question_parent = OrderedDict()
 
                         if 'properties' in i:
                             for k, v in i['properties'].items():
@@ -228,13 +230,13 @@ class TypeFormResponses:
         return questions_without_hierarchy
 
     def _retrieve_data(self):
-        retrieved = dict()
+        retrieved = OrderedDict()
         for form_id, form_name in self.form_ids.items():
-            responses_for_form_id = self.get_completed_responses(form_id).json()
+            responses_for_form_id = self.get_completed_responses(form_id)
 
             if self.has_answers(responses_for_form_id):
                 answers = self.get_answers_from_json(responses_for_form_id)
-                answers_refactored = {i['field']['ref']: i for i in answers}
+                answers_refactored = OrderedDict([(i['field']['ref'], [i]) for i in answers])
 
                 questions_fields = self.collect_questions(form_id)
                 for answer_ref, answer_data in answers_refactored.items():
