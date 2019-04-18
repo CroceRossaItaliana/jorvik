@@ -1,5 +1,6 @@
 import requests
 from io import BytesIO
+from collections import OrderedDict
 from celery import uuid
 from xhtml2pdf import pisa
 
@@ -25,17 +26,19 @@ class TypeFormResponses:
         'Content-Type': 'application/json'
     }
 
-    form_ids = {
-        'by6gIZ': 'Sezione A – servizi di carattere sociale',
-        'AX0Rjm': 'Sezione B – telefonia sociale, telesoccorso, teleassistenza e telemedicina',
-        'FZlCpn': 'Sezione C – salute',
-        'artG8g': 'Sezione D – ''''"ambiente", "sviluppo economico e coesione sociale", 
-            "cultura, sport e ricreazione", "cooperazione e solidarietà internazionale",
-            "protezione civile"''',
-        'r3IRy8': 'Sezione E – relazioni',
-        'DhH3Mk': 'Sezione F – organizzazione',
-        'W6G6cD': 'Sezione G – risorse economiche e finanziarie',
-    }
+    # python 3.5
+    form_ids = OrderedDict([
+        ('by6gIZ', 'Sezione A – servizi di carattere sociale'),
+        ('AX0Rjm',
+         'Sezione B – telefonia sociale, telesoccorso, teleassistenza e telemedicina'),
+        ('FZlCpn', 'Sezione C – salute'),
+        ('artG8g', 'Sezione D – ''''"ambiente", "sviluppo economico e coesione sociale",
+                "cultura, sport e ricreazione", "cooperazione e solidarietà internazionale",
+                "protezione civile"'''),
+        ('r3IRy8', 'Sezione E – relazioni'),
+        ('DhH3Mk', 'Sezione F – organizzazione'),
+        ('W6G6cD', 'Sezione G – risorse economiche e finanziarie')
+    ])
 
     def __init__(self, request=None, me=None, user_pk=None):
         self.request = request
@@ -171,13 +174,14 @@ class TypeFormResponses:
         if type == 'boolean':
             return 'Si' if answer == True else 'No'
         elif type == 'choices':
-            return ', '.join(answer['labels'])
+            if 'labels' in answer:
+                return ', '.join(answer['labels'])
+            elif 'other' in answer:
+                return answer.get('other')
         elif type == 'choice':
-            return answer['label']
-        elif type == 'number':
-            pass
-
-        return answer
+            return answer.get('label') or answer.get('other')
+        elif type in ['text', 'number', 'email', 'url', 'file_url', 'date', 'payment']:
+            return answer
 
     def has_answers(self, json):
         try:
@@ -252,8 +256,18 @@ class TypeFormResponses:
 
         return retrieved
 
+    @property
+    def user_details(self):
+        if self.request is not None:
+            # Not celery
+            return self.request.user.persona
+        else:
+            # Called within celery task
+            return self.persona
+
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print.html', {
+            'user_details': self.user_details,
             'request': self.request,
             'results': self._retrieve_data(),
             'to_print': to_print,

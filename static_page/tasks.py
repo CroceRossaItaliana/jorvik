@@ -13,10 +13,15 @@ def send_mail(self, user_pk):
     pdf = responses.convert_html_to_pdf()
     presidente = responses.persona.sede_riferimento().presidente()
 
-    email_body = "email_body"
-    email = EmailMessage('Risposte monitoraggio 2019 di %s' % responses.persona,
-        email_body,
-        DEFAULT_FROM_EMAIL,
-        [presidente.email],)
+    email_body = """Grazie per aver completato il Monitoraggio 2019 (dati 2018).\n
+    Nell'apprezzare la collaborazione prestata, a breve restituiremo i dati 
+    aggregati a livello nazionale e regionale per i seguiti di competenza.\n
+    Per qualsiasi informazione contattare l'area sociale all'indirizzo mail: sociale@cri.it"""
+
+    email = EmailMessage('Risposte monitoraggio 2019 (dati 2018) di %s' %
+                         responses.persona,
+                         email_body,
+                         DEFAULT_FROM_EMAIL,
+                         [presidente.email],)
     email.attach('file.pdf', pdf)
     email.send()
