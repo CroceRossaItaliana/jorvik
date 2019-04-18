@@ -128,7 +128,7 @@ class ElencoVistaSoci(ElencoVistaAnagrafica):
     def excel_colonne(self):
 
         def _tipo_socio(p):
-            scelte = dict(Appartenenza._meta.get_field_by_name('membro')[0].flatchoices)
+            scelte = dict(Appartenenza._meta.get_field('membro').flatchoices)
             return force_text(scelte[p.appartenenza_tipo], strings_only=True)
 
         return super(ElencoVistaSoci, self).excel_colonne() + (
@@ -498,9 +498,9 @@ class ElencoDipendenti(ElencoVistaSoci):
 
 
 class ElencoQuote(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede> Sedi per le quali compilare gli elenchi quote associative
-    """
+    """ args: QuerySet<Sede> Sedi per le quali compilare gli elenchi quote associative """
+    NAME = 'Quote'
+
     def modulo(self):
         return ModuloElencoQuote
 
@@ -716,6 +716,7 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
 
 
 class ElencoTesseriniRichiesti(ElencoVistaSoci):
+    REPORT_TYPE = ReportElenco.TESSERINI_RICHIESTI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -741,6 +742,7 @@ class ElencoTesseriniRichiesti(ElencoVistaSoci):
 
 
 class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
+    REPORT_TYPE = ReportElenco.TESSERINI_DA_RICHIEDERE
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -773,6 +775,7 @@ class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
 
 
 class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
+    REPORT_TYPE = ReportElenco.TESSERINI_SENZA_FOTOTESSERA
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -802,6 +805,7 @@ class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
 
 
 class ElencoTesseriniRifiutati(ElencoVistaTesseriniRifiutati, ElencoTesseriniRichiesti):
+    REPORT_TYPE = ReportElenco.TESSERINI_RIFIUTATI
 
     def risultati(self):
         qs_sedi = self.args[0]

@@ -4,43 +4,40 @@ import re
 from datetime import datetime
 from collections import OrderedDict
 
-from django.core.paginator import Paginator
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import Sum, Q
+from django.core.urlresolvers import reverse
+from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
 from django.utils.safestring import mark_safe
-from django.db import IntegrityError
 
 from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
-from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione, Riserva, \
-    Trasferimento
-from anagrafica.permessi.applicazioni import PRESIDENTE
-from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA, EMISSIONE_TESSERINI
-from autenticazione.forms import ModuloCreazioneUtenza
+from anagrafica.models import Appartenenza, Persona, Estensione, Sede, Riserva
+from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
+                                          ERRORE_PERMESSI, MODIFICA,
+                                          EMISSIONE_TESSERINI)
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
-from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico, messaggio_avvertimento
-from base.files import Excel, FoglioExcel
-from base.notifiche import NOTIFICA_INVIA
-from base.utils import poco_fa, testo_euro, oggi, mezzanotte_24_ieri
+from base.errori import (errore_generico, errore_nessuna_appartenenza,
+                         messaggio_generico, messaggio_avvertimento)
+from base.utils import poco_fa, mezzanotte_24_ieri, testo_euro, oggi
 from posta.models import Messaggio
-from posta.utils import imposta_destinatari_e_scrivi_messaggio
-from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
-    ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti, ElencoDimessi, ElencoTrasferiti, \
-    ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva, ElencoIVCM, ElencoTesseriniSenzaFototessera, \
-    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoTesseriniRifiutati, ElencoExSostenitori, ElencoSenzaTurni
-from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
-    ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
-    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, \
-    ModuloLavoraTesserini, ModuloScaricaTesserini, ModuloDimissioniSostenitore
-from ufficio_soci.models import Quota, Tesseramento, Tesserino, Riduzione
+
+from .models import Quota, Tesseramento, Tesserino, Riduzione, ReportElenco
+from .elenchi import (ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari,
+    ElencoOrdinari, ElencoElettoratoAlGiorno, ElencoQuote, ElencoTesseriniSenzaFototessera,
+    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoTesseriniRifiutati)
+from .forms import (ModuloCreazioneEstensione, ModuloAggiungiPersona,
+    ModuloReclamaAppartenenza, ModuloReclamaQuota, ModuloReclama,
+    ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute,
+    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario,
+    ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, ModuloLavoraTesserini,
+    ModuloScaricaTesserini, ModuloDimissioniSostenitore)
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us(request, me):
-    """
-    Ritorna la home page per la gestione dei soci.
-    """
+    """ Ritorna la home page per la gestione dei soci. """
 
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
 
@@ -433,6 +430,7 @@ def us_estensione(request, me):
 
     return 'us_estensione.html', contesto
 
+
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_trasferimento(request, me):
     """
@@ -506,6 +504,7 @@ def us_trasferimento(request, me):
 
     return 'us_trasferimento.html', contesto
 
+
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensioni(request, me):
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
@@ -516,6 +515,7 @@ def us_estensioni(request, me):
     }
 
     return 'us_estensioni.html', contesto
+
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensione_termina(request, me, pk):
@@ -531,6 +531,7 @@ def us_estensione_termina(request, me, pk):
                                                 "terminata con successo",
                                       torna_titolo="Registra nuova estensione",
                                       torna_url="/us/estensione/")
+
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_riserva_termina(request, me, pk):
@@ -570,10 +571,8 @@ def us_provvedimento(request, me):
     return "us_provvedimento.html", contesto
 
 
-
 @pagina_privata
 def us_elenco(request, me, elenco_id=None, pagina=1):
-
     pagina = int(pagina)
     if pagina < 0:
         pagina = 1
@@ -642,174 +641,92 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
 
 @pagina_privata
 def us_elenco_modulo(request, me, elenco_id):
-
-    try:  # Prova a ottenere l'elenco dalla sessione.
+    try:
+        # Prova a ottenere l'elenco dalla sessione.
         elenco = request.session["elenco_%s" % (elenco_id,)]
-
-    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
+    except KeyError:
+        # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
         raise ValueError("Elenco non presente in sessione.")
 
     if not elenco.modulo():  # No modulo? Vai all'elenco
         return redirect("/us/elenco/%s/1/" % (elenco_id,))
 
-    modulo = elenco.modulo()(request.POST or None)
+    form = elenco.modulo()(request.POST or None)
+    if request.POST and form.is_valid():  # Modulo ok
+        # Salva modulo in sessione
+        request.session["elenco_modulo_%s" % elenco_id] = request.POST
 
-    if request.POST and modulo.is_valid():  # Modulo ok
-        request.session["elenco_modulo_%s" % (elenco_id,)] = request.POST            # Salva modulo in sessione
-        return redirect("/us/elenco/%s/1/" % (elenco_id,))                           # Redirigi alla prima pagina
+        # Redirigi alla prima pagina
+        return redirect("/us/elenco/%s/1/" % elenco_id)
 
-    contesto = {
-        "modulo": modulo
+    context = {
+        "modulo": form
     }
 
-    return 'us_elenchi_inc_modulo.html', contesto
+    return 'us_elenchi_inc_modulo.html', context
 
 
 @pagina_privata
 def us_elenco_download(request, me, elenco_id):
+    from .reports import ReportElencoSoci
 
-    try:  # Prova a ottenere l'elenco dalla sessione.
-        elenco = request.session["elenco_%s" % (elenco_id,)]
-
-    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
-        raise ValueError("Elenco non presente in sessione.")
-
-    if elenco.modulo():  # Se l'elenco richiede un modulo
-
-        try:  # Prova a recuperare il modulo riempito
-            modulo = elenco.modulo()(request.session["elenco_modulo_%s" % (elenco_id,)])
-
-        except KeyError:  # Se fallisce, il modulo non e' stato ancora compilato
-            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
-
-        if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
-            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
-
-        elenco.modulo_riempito = modulo  # Imposta il modulo
-
-    FOGLIO_DEFAULT = "Foglio 1"
-
-    fogli_multipli = True
-    if 'foglio_singolo' in request.GET:
-        fogli_multipli = False
-
-    # Ottiene elenco
-    persone = elenco.ordina(elenco.risultati())
-
-    # Crea nuovo excel
-    excel = Excel(oggetto=me)
-
-    # Ottiene intestazione e funzioni colonne
-    intestazione = [x[0] for x in elenco.excel_colonne()]
-    colonne = [x[1] for x in elenco.excel_colonne()]
-    if not fogli_multipli:
-        intestazione += ["Elenco"]
-
-    fogli = {}
-
-    def __semplifica_nome(nome):
-        return nome\
-            .replace("/", "")\
-            .replace(": ", "-")\
-            .replace("Comitato ", "")\
-            .replace("Locale ", "")\
-            .replace("Provinciale ", "")\
-            .replace("Di ", "")\
-            .replace("di ", "")\
-            .replace("Della ", "")\
-            .replace("Dell'", "")\
-            .replace("Del ", "")
-
-    for persona in persone:
-        foglio = __semplifica_nome(elenco.excel_foglio(persona))[:31] if fogli_multipli else FOGLIO_DEFAULT
-        foglio_key = foglio.lower().strip()
-        if foglio_key not in [x.lower() for x in fogli.keys()]:
-            fogli.update({
-                foglio_key: FoglioExcel(foglio, intestazione)
-            })
-
-        persona_colonne = [y if y is not None else "" for y in [x(persona) for x in colonne]]
-        if not fogli_multipli:
-            persona_colonne += [elenco.excel_foglio(persona)]
-
-        fogli[foglio_key].aggiungi_riga(
-            *persona_colonne
-        )
-
-    excel.fogli = fogli.values()
-    excel.genera_e_salva("Elenco.xlsx")
-
-    return redirect(excel.download_url)
+    report = ReportElencoSoci(request, elenco_id)
+    return report.make()
 
 
 @pagina_privata
 def us_elenco_messaggio(request, me, elenco_id):
-
-    try:  # Prova a ottenere l'elenco dalla sessione.
+    try:
+        # Prova a ottenere l'elenco dalla sessione.
         elenco = request.session["elenco_%s" % (elenco_id,)]
-
-    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
+    except KeyError:
+        # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
         raise ValueError("Elenco non presente in sessione.")
 
     if elenco.modulo():  # Se l'elenco richiede un modulo
+        try:
+            # Prova a recuperare il modulo riempito
+            form = elenco.modulo()(request.session['elenco_modulo_%s' % elenco_id])
+        except KeyError:
+            # Se fallisce, il modulo non e' stato ancora compilato
+            return redirect("/us/elenco/%s/modulo/" % elenco_id)
 
-        try:  # Prova a recuperare il modulo riempito
-            modulo = elenco.modulo()(request.session["elenco_modulo_%s" % (elenco_id,)])
+        if not form.is_valid():
+            # Se il modulo non e' valido, qualcosa e' andato storto
+            return redirect("/us/elenco/%s/modulo/" % elenco_id)  # Prova nuovamente?
 
-        except KeyError:  # Se fallisce, il modulo non e' stato ancora compilato
-            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
-
-        if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
-            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
-
-        elenco.modulo_riempito = modulo  # Imposta il modulo
+        # Imposta il modulo
+        elenco.modulo_riempito = form
 
     persone = elenco.ordina(elenco.risultati())
-    return imposta_destinatari_e_scrivi_messaggio(request, persone)
+    request.session["messaggio_destinatari"] = persone
+    request.session["messaggio_destinatari_timestamp"] = datetime.now()
+    return redirect(reverse('posta-scrivi'))
 
 
 @pagina_privata(permessi=(ELENCHI_SOCI,))
 def us_elenchi(request, me, elenco_tipo):
+    from .reports import SOCI_TIPI_ELENCHI
 
-    tipi_elenco = {
-        "volontari": (ElencoVolontari, "Elenco dei Volontari"),
-        "giovani": (ElencoVolontariGiovani, "Elenco dei Volontari Giovani"),
-        "ivcm": (ElencoIVCM, "Elenco IV e CM"),
-        "dimessi": (ElencoDimessi, "Elenco Dimessi"),
-        "riserva": (ElencoInRiserva, "Elenco Volontari in Riserva"),
-        "trasferiti": (ElencoTrasferiti, "Elenco Trasferiti"),
-        "dipendenti": (ElencoDipendenti, "Elenco dei Dipendenti"),
-        "ordinari": (ElencoOrdinari, "Elenco dei Soci Ordinari"),
-        "estesi": (ElencoEstesi, "Elenco dei Volontari Estesi/In Estensione"),
-        "soci": (ElencoSociAlGiorno, "Elenco dei Soci"),
-        "sostenitori": (ElencoSostenitori, "Elenco dei Sostenitori"),
-        "ex-sostenitori": (ElencoExSostenitori, "Elenco degli Ex Sostenitori"),
-        "senza-turni": (ElencoSenzaTurni, "Elenco dei volontari con zero turni"),
-        "elettorato": (ElencoElettoratoAlGiorno, "Elenco Elettorato", "us_elenco_inc_elettorato.html"),
-        "titoli": (ElencoPerTitoli, "Ricerca dei soci per titoli"),
-    }
-
-    if elenco_tipo not in tipi_elenco:
+    if elenco_tipo not in SOCI_TIPI_ELENCHI:
         return redirect("/us/")
 
-    elenco_nome = tipi_elenco[elenco_tipo][1]
-    elenco_template = tipi_elenco[elenco_tipo][2] if len(tipi_elenco[elenco_tipo]) > 2 else None
+    elenco_nome = SOCI_TIPI_ELENCHI[elenco_tipo][1]
+    elenco_template = SOCI_TIPI_ELENCHI[elenco_tipo][2] if len(SOCI_TIPI_ELENCHI[elenco_tipo]) > 2 else None
 
-    if request.POST:  # Ho selezionato delle sedi. Elabora elenco.
-
+    if request.POST:
+        # Ho selezionato delle sedi. Elabora elenco.
         sedi = me.oggetti_permesso(ELENCHI_SOCI).filter(pk__in=request.POST.getlist('sedi'))
-        elenco = tipi_elenco[elenco_tipo][0](sedi)
+        elenco = SOCI_TIPI_ELENCHI[elenco_tipo][0](sedi)
 
         return 'us_elenco_generico.html', {
             "elenco": elenco,
             "elenco_nome": elenco_nome,
             "elenco_template": elenco_template,
         }
-
-    else:  # Devo selezionare delle Sedi.
-
+    else:
+        # Devo selezionare delle Sedi.
         sedi = me.oggetti_permesso(ELENCHI_SOCI)
-
         return 'us_elenco_sede.html', {
             "sedi": sedi,
             "elenco_nome": elenco_nome,
@@ -817,18 +734,16 @@ def us_elenchi(request, me, elenco_tipo):
         }
 
 
-
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_elenco_soci(request, me):
-
     elenco = ElencoSociAlGiorno(me.oggetti_permesso(GESTIONE_SOCI))
 
-    contesto = {
+    context = {
         "elenco_nome": "Elenco dei Soci",
         "elenco": elenco
     }
+    return 'us_elenco_generico.html', context
 
-    return 'us_elenco_generico.html', contesto
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_riserva(request, me):
@@ -854,6 +769,7 @@ def us_riserva(request, me):
     }
 
     return "us_riserva.html", contesto
+
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_elenco_sostenitori(request, me):
@@ -1148,39 +1064,23 @@ def us_ricevute_nuova(request, me):
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_ricevute(request, me):
+    from .reports import ReportRicevute
 
-    modulo = ModuloElencoRicevute(request.POST or (request.GET or None))
+    form = ModuloElencoRicevute(request.POST or (request.GET or None))
+    report = ReportRicevute(me=me, form=form)
 
-    tipi = [x[0] for x in Quota.TIPO]
-    anno = Tesseramento.ultimo_anno()
-    if modulo.is_valid():
-        tipi = modulo.cleaned_data.get('tipi_ricevute')
-        anno = modulo.cleaned_data.get('anno')
+    to_download = request.POST.get('download_report_ricevute') == 'Scarica'
+    if to_download:
+        return report.download()
 
-    dict_tipi = dict(Quota.TIPO)
-    tipi_testo = [dict_tipi[t] for t in tipi]
-
-    sedi = me.oggetti_permesso(GESTIONE_SOCI)
-    ricevute = Quota.objects.filter(
-        Q(Q(sede__in=sedi) | Q(appartenenza__sede__in=sedi)),
-        anno=anno,
-        tipo__in=tipi,
-    ).order_by('progressivo')
-
-    non_annullate = ricevute.filter(stato=Quota.REGISTRATA)
-    importo = non_annullate.aggregate(Sum('importo'))['importo__sum'] or 0.0
-    importo_extra = non_annullate.aggregate(Sum('importo_extra'))['importo_extra__sum'] or 0.0
-    importo_totale = importo + importo_extra
-
-    contesto = {
-        "modulo": modulo,
-        "anno": anno,
-        "ricevute": ricevute,
-        "tipi_testo": tipi_testo,
-        "importo_totale": importo_totale,
+    context = {
+        'modulo': form,
+        'anno': report.anno,
+        'ricevute': report.queryset,
+        'tipi_testo': report.tipi_testo,
+        'importo_totale': report.importo_totale,
     }
-
-    return 'us_ricevute.html', contesto
+    return 'us_ricevute.html', context
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
@@ -1606,3 +1506,21 @@ def us_tesserini_emissione_scarica(request, me):
     }
 
     return "us_tesserini_emissione_scarica.html", contesto
+
+
+@pagina_privata
+def us_elenchi_richiesti_download(request, me):
+    # Download a file
+    if request.GET.get('tid'):
+        file = ReportElenco.objects.get(task_id=request.GET.get('tid'))
+        return file.download()
+
+    # List all files per user
+    context = dict()
+    files = ReportElenco.objects.filter(user=me).order_by('-creazione', '-is_ready',)
+    context['files'] = files
+
+    if files.exists():
+        context['has_unfinished_tasks'] = False in files.values_list('is_ready', flat=True)
+
+    return 'us_elenchi_richiesti_download.html', context
