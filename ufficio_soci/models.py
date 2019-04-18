@@ -585,7 +585,8 @@ class ReportElenco(ConMarcaTemporale):
 
     @property
     def filename(self):
-        return "Elenco %s - %s.xlsx" % (self.get_report_type_display(), str(datetime.now()))
+        s = "Elenco %s - %s.xlsx" % (self.get_report_type_display(), str(datetime.now()))
+        return '_'.join(s.split(' '))
 
     def download(self):
         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

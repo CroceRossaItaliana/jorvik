@@ -325,7 +325,8 @@ class ReportElencoSoci:
     @property
     def filename(self):
         if hasattr(self.elenco, 'NAME'):
-            return "%s - %s.xlsx" % (self.elenco.NAME, str(datetime.now().date()))
+            s = "%s - %s.xlsx" % (self.elenco.NAME, str(datetime.now().date()))
+            return '_'.join(s.split(' '))
         return self.EXCEL_FILENAME
 
     def download(self):
