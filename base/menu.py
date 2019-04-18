@@ -13,7 +13,7 @@ from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA,
 from .utils import remove_none
 from .models import Menu
 
-__author__ = 'alfioemanuele'
+# __author__ = 'alfioemanuele'
 
 """
 Questa pagina contiene i vari menu che vengono mostrati nella barra laterale dei template.

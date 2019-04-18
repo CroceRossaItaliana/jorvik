@@ -37,7 +37,7 @@ class TypeFormResponses:
                 "protezione civile"'''),
         ('r3IRy8', 'Sezione E – relazioni'),
         ('DhH3Mk', 'Sezione F – organizzazione'),
-        ('W6G6cD', 'Sezione G – risorse economiche e finanziarie'),
+        ('W6G6cD', 'Sezione G – risorse economiche e finanziarie')
     ])
 
     def __init__(self, request=None, me=None, user_pk=None):
