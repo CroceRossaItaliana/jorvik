@@ -128,7 +128,7 @@ class ElencoVistaSoci(ElencoVistaAnagrafica):
     def excel_colonne(self):
 
         def _tipo_socio(p):
-            scelte = dict(Appartenenza._meta.get_field('membro')[0].flatchoices)
+            scelte = dict(Appartenenza._meta.get_field('membro').flatchoices)
             return force_text(scelte[p.appartenenza_tipo], strings_only=True)
 
         return super(ElencoVistaSoci, self).excel_colonne() + (
