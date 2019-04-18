@@ -598,9 +598,7 @@ class ElencoInRiserva(ElencoVistaSoci):
 
     def excel_colonne(self):
         def riserva(p, att):
-            oggi = timezone.now()
             ris = Riserva.objects.filter(
-                Q(fine__lte=oggi, inizio__gte=oggi) | Q(fine__isnull=True),
                 persona=p.id,
             ).order_by('-creazione')
             if ris:
