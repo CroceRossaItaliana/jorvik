@@ -114,11 +114,7 @@ def menu(request):
                 ("Cambia password", "fa-key", "/utente/cambia-password/"),
                 ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
             )),
-            VOCE_LINKS,
-            ("Monitoraggio", (
-                ("Monitoraggio 2019 (dati 2018)", 'fa-user', reverse('pages:monitoraggio')),
-            )) if me and (me.is_presidente or me.is_comissario) else None,
-
+            VOCE_LINKS
         )) if me and not hasattr(me, 'aspirante') else None,
         "posta": (
             ("Posta", (
@@ -184,6 +180,8 @@ def menu(request):
                 ("Elettorato", "fa-list", "/us/elenchi/elettorato/"),
                 ("Tesserini", "fa-list", "/us/tesserini/"),
                 ("Per Titoli", "fa-search", "/us/elenchi/titoli/"),
+                ("Scarica elenchi richiesti", "fa-download", reverse(
+                    'elenchi_richiesti_download'), '', True),
             )),
             ("Aggiungi", (
                 ("Persona", "fa-plus-square", "/us/aggiungi/"),
@@ -221,6 +219,8 @@ def menu(request):
                     if gestione_corsi_sede else None,
                 ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-base/nuovo/")
                     if gestione_corsi_sede else None,
+                # ("Monitoraggio 2019", 'fa-user', reverse('pages:monitoraggio'))
+                #     if me and (me.is_presidente or me.is_comissario) else None,
             )),
             ("Corsi di Formazione", (
                 ("Elenco Corsi di Formazione", "fa-list", "/formazione/corsi-formazione/"),

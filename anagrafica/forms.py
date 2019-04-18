@@ -437,7 +437,7 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
 
         # Queries for possible cases
         persona_appartenenze = persona.appartenenze_attuali(
-            membro__in=Appartenenza.MEMBRO_ATTIVITA)
+            membro__in=Appartenenza.MEMBRO_DIRETTO)
         persona_estesa = persona_appartenenze.filter(sede=me_sede).count()
         persona_volontario = persona_appartenenze.filter(membro=Appartenenza.VOLONTARIO)
         stesse_sedi = me_sede == persona.sede_riferimento()
@@ -455,9 +455,10 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
             persona_estesa,
             stesse_sedi,
             stesse_sedi and persona_estesa,
-            any([a.appartiene_a(me_sede) for a in persona_volontario]),
-            any([a for a in persona_volontario if a.sede.presidente() == self.me])
+            any([a.appartiene_a(me_sede) for a in persona_appartenenze]),
+            any([a for a in persona_appartenenze if a.sede.presidente() == self.me])
         )
+
         if not any(CASES):
             # All CASES return False, so the form returns validation error.
             raise forms.ValidationError(

@@ -1069,6 +1069,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             ))
             return a
 
+    def sede_riferimento_precedente(self, membro=None, **kwargs):
+        membro = membro or Appartenenza.MEMBRO_DIRETTO
+        return Appartenenza.objects.filter(
+            membro__in=membro, persona=self, fine__isnull=False
+        ).order_by('-fine').first().sede
+
     def sede_riferimento(self, membro=None, **kwargs):
         membro = membro or Appartenenza.MEMBRO_DIRETTO
         return self.sedi_attuali(membro__in=membro, **kwargs).\
@@ -2354,7 +2360,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
           nome="Trasferimento %s.pdf" % (self.persona.nome_completo, ),
           corpo={
             "trasferimento": self,
-            "sede_attuale": self.persona.sede_riferimento(),
+            "sede_attuale": self.persona.sede_riferimento() if not self.appartenenza else self.persona.sede_riferimento_precedente(),
           },
           modello="pdf_trasferimento.html",
         )
