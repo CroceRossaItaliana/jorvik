@@ -1,5 +1,5 @@
 from datetime import date, datetime
-
+from django.utils import timezone
 from django.db.models import Q, F
 from django.utils.encoding import force_text
 
@@ -128,7 +128,7 @@ class ElencoVistaSoci(ElencoVistaAnagrafica):
     def excel_colonne(self):
 
         def _tipo_socio(p):
-            scelte = dict(Appartenenza._meta.get_field_by_name('membro')[0].flatchoices)
+            scelte = dict(Appartenenza._meta.get_field('membro').flatchoices)
             return force_text(scelte[p.appartenenza_tipo], strings_only=True)
 
         return super(ElencoVistaSoci, self).excel_colonne() + (
@@ -458,13 +458,16 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
     def excel_colonne(self):
 
         def _data(p):
-            return Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione').first().protocollo_data
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            return d.first().protocollo_data if d else ''
 
         def _motivo(p):
-            return Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione').first().motivo
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            return d.first().motivo if d else ''
 
         def _destinazione(p):
-            return Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione').first().destinazione
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            return d.first().destinazione if d else ''
 
         return super(ElencoTrasferiti, self).excel_colonne() + (
             ('Data del trasferimento', lambda p: _data(p)),
@@ -495,9 +498,9 @@ class ElencoDipendenti(ElencoVistaSoci):
 
 
 class ElencoQuote(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede> Sedi per le quali compilare gli elenchi quote associative
-    """
+    """ args: QuerySet<Sede> Sedi per le quali compilare gli elenchi quote associative """
+    NAME = 'Quote'
+
     def modulo(self):
         return ModuloElencoQuote
 
@@ -586,7 +589,7 @@ class ElencoInRiserva(ElencoVistaSoci):
                 Riserva.con_esito_ok().q,
                 Appartenenza.query_attuale(
                     sede__in=qs_sedi
-                ).via("appartenenza")
+                ).via("appartenenza"),
             ).via("riserve")
         ).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
@@ -597,10 +600,20 @@ class ElencoInRiserva(ElencoVistaSoci):
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
     def excel_colonne(self):
+        def riserva(p, att):
+            oggi = timezone.now()
+            ris = Riserva.objects.filter(
+                Q(fine__lte=oggi, inizio__gte=oggi) | Q(fine__isnull=True),
+                persona=p.id,
+            ).order_by('-creazione')
+            if ris:
+                return getattr(ris.first(), att)
+            return ''
+
         return super(ElencoInRiserva, self).excel_colonne() + (
-            ("Data inizio", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().inizio),
-            ("Data fine", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().fine),
-            ("Motivazioni", lambda p: Riserva.objects.filter(persona=p.id).order_by('creazione').first().motivo)
+            ("Data inizio", lambda p: riserva(p, 'inizio')),
+            ("Data fine", lambda p: riserva(p, 'fine')),
+            ("Motivazioni", lambda p: riserva(p, 'motivo'))
         )
 
 
@@ -713,6 +726,7 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
 
 
 class ElencoTesseriniRichiesti(ElencoVistaSoci):
+    REPORT_TYPE = ReportElenco.TESSERINI_RICHIESTI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -738,6 +752,7 @@ class ElencoTesseriniRichiesti(ElencoVistaSoci):
 
 
 class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
+    REPORT_TYPE = ReportElenco.TESSERINI_DA_RICHIEDERE
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -770,6 +785,7 @@ class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
 
 
 class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
+    REPORT_TYPE = ReportElenco.TESSERINI_SENZA_FOTOTESSERA
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -799,6 +815,7 @@ class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
 
 
 class ElencoTesseriniRifiutati(ElencoVistaTesseriniRifiutati, ElencoTesseriniRichiesti):
+    REPORT_TYPE = ReportElenco.TESSERINI_RIFIUTATI
 
     def risultati(self):
         qs_sedi = self.args[0]
