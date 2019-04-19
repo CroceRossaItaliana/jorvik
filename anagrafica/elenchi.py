@@ -1,14 +1,15 @@
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 
-from anagrafica.models import Persona, Delega, Sede
-from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_5
-from anagrafica.permessi.costanti import DELEGHE_OGGETTI_DICT
-from anagrafica.templatetags.utils import sede_delega
+from .models import Persona, Delega, Sede
+from .permessi.applicazioni import DELEGATO_OBIETTIVO_5
+from .permessi.costanti import DELEGHE_OGGETTI_DICT
+from .templatetags.utils import sede_delega
 from ufficio_soci.elenchi import ElencoVistaAnagrafica, ElencoVolontariGiovani
 
 
 class ElencoDelegati(ElencoVistaAnagrafica):
+    NAME = 'Delegati'
     deleghe = None
 
     def template(self):
