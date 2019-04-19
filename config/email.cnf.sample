@@ -9,6 +9,9 @@ backend = django.core.mail.backends.filebased.EmailBackend
 ##  SMTP: Invia tramite server SMTP.
 ;backend = django.core.mail.backends.smtp.EmailBackend
 
+##  Senza SMTP server. Scrive tutto in console
+;backend = django.core.mail.backends.console.EmailBackend
+
 # Configurazione
 
 # Attivare il log di debug
