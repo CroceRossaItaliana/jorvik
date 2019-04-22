@@ -4,15 +4,10 @@
 {% load thumbnail %}
 
 {% block fotografia_corpo %}
-
     {% if me.fototessere.all.exists %}
         <div class="panel panel-info">
             <div class="panel-heading">
-                <h4 class="panel-title">
-                    <i class="fa fa-fw fa-list"></i>
-                    Storico richieste fototessere
-                </h4>
-
+                <h4 class="panel-title"><i class="fa fa-fw fa-list"></i> Storico richieste fototessere</h4>
             </div>
 
             <div class="panel-body">
@@ -25,16 +20,13 @@
                         <th>Inviata il</th>
                     </thead>
                     <tbody>
-
                         {% for t in me.fototessere.all %}
-
                             <tr class="
                                 {% if t == me.fototessera_attuale %}
                                     success
                                 {% elif t.esito == t.ESITO_PENDING %}
                                     warning
-                                {% endif %}
-                            ">
+                                {% endif %} ">
 
                                 <td class="grassetto">{{ t.esito }}</td>
                                 <td>
@@ -46,62 +38,34 @@
                                     </a>
                                 </td>
                                 <td>{{ t.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
-
-
-
                             </tr>
-
                         {% endfor %}
 
                     </tbody>
                 </table>
-
-
             </div>
         </div>
-
     {% endif %}
 
 
     <div class="panel panel-primary">
-
         <div class="panel-heading">
-            <h4 class="panel-title">
-                <i class="fa fa-fw fa-user"></i>
-                Fototessera
-            </h4>
+            <h4 class="panel-title"><i class="fa fa-fw fa-user"></i> Fototessera</h4>
         </div>
 
         <div class="panel-body">
-
             <form method="POST" enctype="multipart/form-data">
             {% csrf_token %}
-
-
                 {% bootstrap_form modulo_fototessera %}
-
                 <p class="text-warning">
                     <i class="fa fa-fw fa-warning"></i>
-                    La fototessera verr&agrave; sottoposta al tuo
-                    Ufficio Soci o Presidente per la verifica.
-                    Assicurati che rispetti le norme per le
-                    fototessere riportate <a target="_new"
-                        href="http://wiki.gaia.cri.it/index.php?title=Manuale_del_Volontario#Norme_generali">
-                    in questa pagina</a>.
+                    La fototessera verr&agrave; sottoposta al tuo Ufficio Soci o Presidente per la verifica. Assicurati che rispetti le norme per le fototessere riportate
+                    <a target="_new" href="https://wiki.gaia.cri.it/display/GAIA/Norme+da+rispettare+per+la+fototessera">in questa pagina</a>.
                 </p>
 
-                <button type="submit" class="btn btn-block btn-primary">
-                    <i class="fa fa-fw fa-save"></i>
-                    Salva fototessera
+                <button type="submit" class="btn btn-block btn-primary"><i class="fa fa-fw fa-save"></i>Salva fototessera
                 </button>
-
             </form>
-
         </div>
-
-
-
-
     </div>
-
 {% endblock %}
