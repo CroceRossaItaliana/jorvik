@@ -2,7 +2,7 @@ from django.contrib import admin
 from attivita.models import Partecipazione, Turno, Area, Attivita
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
-
+from attivita.models import NonSonoUnBersaglio
 
 __author__ = 'alfioemanuele'
 
@@ -36,3 +36,9 @@ class AdminPartecipazione(ReadonlyAdminMixin, admin.ModelAdmin):
     list_filter = ('creazione', 'stato', 'confermata',)
     raw_id_fields = ('persona', 'turno', )
     inlines = [InlineAutorizzazione]
+
+
+@admin.register(NonSonoUnBersaglio)
+class AdminNonSonoUnBersaglio(ReadonlyAdminMixin, admin.ModelAdmin):
+    list_display = ('persona', 'crentro_formazione')
+    raw_id_fields = ('persona', )

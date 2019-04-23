@@ -691,3 +691,11 @@ class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
     @property
     def codice_obiettivo(self):
         return OBIETTIVI[self.obiettivo]
+
+
+class NonSonoUnBersaglio(ModelloSemplice):
+    persona = models.ForeignKey("anagrafica.Persona", related_name='nonSonoUnBersaglio', on_delete=models.CASCADE)
+    crentro_formazione = models.CharField(max_length=50)
+
+    class Meta:
+        verbose_name_plural = "Referenti non sono un bersaglio"

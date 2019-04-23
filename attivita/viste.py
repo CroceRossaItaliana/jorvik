@@ -156,9 +156,28 @@ def attivita_organizza(request, me):
                                             "almeno un'area di intervento. ",
                                   torna_titolo="Gestisci le Aree di intervento",
                                   torna_url="/attivita/aree/")
+
     modulo_referente = ModuloOrganizzaAttivitaReferente(request.POST or None)
     modulo = ModuloOrganizzaAttivita(request.POST or None)
     modulo.fields['area'].queryset = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
+    # modulo_referente.fields['scelta'].choices = (
+    #     (None,  "-- Scegli un'opzione --"),
+    #     ("", "Sarò io il referente per questa attività"),
+    #     ("", "Fammi scegliere uno o più referenti che gestiranno "
+    #                        "quest'attività"),
+    # )
+    from attivita.models import NonSonoUnBersaglio
+    bersaglio = NonSonoUnBersaglio.objects.all()
+    choices = [
+        (None,  "-- Scegli un'opzione --"),
+        ("", "Sarò io il referente per questa attività"),
+        ("", "Fammi scegliere uno o più referenti che gestiranno "
+                           "quest'attività"),
+    ]
+    for b in bersaglio:
+        choices.append((b.persona.id, b.persona))
+
+    modulo_referente.fields['scelta'].choices = set(choices)
     if modulo_referente.is_valid() and modulo.is_valid():
         attivita = modulo.save(commit=False)
         attivita.sede = attivita.area.sede
@@ -179,9 +198,13 @@ def attivita_organizza(request, me):
             # Io sono il referente.
             attivita.aggiungi_delegato(REFERENTE, me, firmatario=me, inizio=poco_fa())
             return redirect(attivita.url_modifica)
-
-        else:  # Il referente e' qualcun altro.
+        elif modulo_referente.cleaned_data['scelta'] == modulo_referente.SCEGLI_REFERENTI:  # Il referente e' qualcun altro.
             return redirect("/attivita/organizza/%d/referenti/" % (attivita.pk,))
+        else:
+            from anagrafica.models import Persona
+            persona = Persona.objects.get(pk=modulo_referente.cleaned_data['scelta'])
+            attivita.aggiungi_delegato(REFERENTE, persona, firmatario=me, inizio=poco_fa())
+            return redirect(attivita.url_modifica)
 
     contesto = {
         "modulo": modulo,
