@@ -139,22 +139,16 @@ def attivita_gestisci(request, me, stato="aperte"):
 def attivita_organizza(request, me):
     aree = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
     sedi = Sede.objects.filter(aree__in=aree)
-    # Presidente/Commissario/Delegato ob.IV
-
     deleghe = me.deleghe_attuali()
-    print('DELEGHE', deleghe)
     from anagrafica.permessi.applicazioni import DELEGATI_NON_SONO_UN_BERSAGLIO
     deleghe_bersaglio = deleghe.filter(tipo__in=DELEGATI_NON_SONO_UN_BERSAGLIO)
+
     if deleghe_bersaglio:
-        print('sono delegato')
         if not aree.filter(obiettivo=4, nome__icontains='non sono un bersaglio'):
-            print('Area non esistente')
-            sede_riferimento = None
-            area = Area(nome='Non sono un bersaglio', obiettivo=4, sede=sede_riferimento)
-            area.save()
-            # TODO: inserisco l'area
-        else:
-            print('Area esistente')
+            for delega in deleghe.filter(tipo__in=DELEGATI_NON_SONO_UN_BERSAGLIO):
+                area = Area(nome='Non sono un bersaglio', obiettivo=4, sede=delega.oggetto)
+                area.save()
+
     if not aree:
         return messaggio_generico(request, me, titolo="Crea un'area di intervento, prima!",
                                   messaggio="Le aree di intervento fungono da 'contenitori' per le "
@@ -164,7 +158,7 @@ def attivita_organizza(request, me):
                                   torna_url="/attivita/aree/")
     modulo_referente = ModuloOrganizzaAttivitaReferente(request.POST or None)
     modulo = ModuloOrganizzaAttivita(request.POST or None)
-    modulo.fields['area'].queryset = aree
+    modulo.fields['area'].queryset = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
     if modulo_referente.is_valid() and modulo.is_valid():
         attivita = modulo.save(commit=False)
         attivita.sede = attivita.area.sede
