@@ -14,7 +14,7 @@ from celery import uuid
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI
 from .models import Quota, Tesseramento, ReportElenco
-from .tasks import generate_elenco_soci_al_giorno
+from .tasks import generate_elenco
 from . import elenchi
 
 
@@ -350,7 +350,7 @@ class ReportElencoSoci:
         report_db.save()
 
         # Partire celery task e reindirizza user sulla pagina "Report Elenco"
-        task = generate_elenco_soci_al_giorno.apply_async(
+        task = generate_elenco.apply_async(
             (self.celery_params, report_db.id),
             task_id=task_uuid)
 
