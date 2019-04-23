@@ -40,5 +40,6 @@ class AdminPartecipazione(ReadonlyAdminMixin, admin.ModelAdmin):
 
 @admin.register(NonSonoUnBersaglio)
 class AdminNonSonoUnBersaglio(ReadonlyAdminMixin, admin.ModelAdmin):
-    list_display = ('persona', 'crentro_formazione')
+    search_fields = ['persona__codice_fiscale', 'persona__cognome', 'persona__nome', ]
+    list_display = ('persona', 'centro_formazione', )
     raw_id_fields = ('persona', )

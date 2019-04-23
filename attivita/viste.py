@@ -160,24 +160,7 @@ def attivita_organizza(request, me):
     modulo_referente = ModuloOrganizzaAttivitaReferente(request.POST or None)
     modulo = ModuloOrganizzaAttivita(request.POST or None)
     modulo.fields['area'].queryset = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
-    # modulo_referente.fields['scelta'].choices = (
-    #     (None,  "-- Scegli un'opzione --"),
-    #     ("", "Sarò io il referente per questa attività"),
-    #     ("", "Fammi scegliere uno o più referenti che gestiranno "
-    #                        "quest'attività"),
-    # )
-    from attivita.models import NonSonoUnBersaglio
-    bersaglio = NonSonoUnBersaglio.objects.all()
-    choices = [
-        (None,  "-- Scegli un'opzione --"),
-        ("", "Sarò io il referente per questa attività"),
-        ("", "Fammi scegliere uno o più referenti che gestiranno "
-                           "quest'attività"),
-    ]
-    for b in bersaglio:
-        choices.append((b.persona.id, b.persona))
-
-    modulo_referente.fields['scelta'].choices = set(choices)
+    modulo_referente.fields['scelta'].choices = ModuloOrganizzaAttivitaReferente.popola_scelta()
     if modulo_referente.is_valid() and modulo.is_valid():
         attivita = modulo.save(commit=False)
         attivita.sede = attivita.area.sede
