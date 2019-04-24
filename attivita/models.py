@@ -557,8 +557,6 @@ class Turno(ModelloSemplice, ConMarcaTemporale, ConGiudizio):
         return p
 
 
-
-
 class Partecipazione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     class Meta:
@@ -699,3 +697,6 @@ class NonSonoUnBersaglio(ModelloSemplice):
 
     class Meta:
         verbose_name_plural = "Referenti non sono un bersaglio"
+        permissions = (
+            ("view_nonSonoUnBersaglio", "Can view non sono un bersaglio"),
+        )

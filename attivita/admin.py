@@ -1,45 +1,1 @@
-from django.contrib import admin
-from attivita.models import Partecipazione, Turno, Area, Attivita
-from base.admin import InlineAutorizzazione
-from gruppi.readonly_admin import ReadonlyAdminMixin
-from attivita.models import NonSonoUnBersaglio
-
-__author__ = 'alfioemanuele'
-
-@admin.register(Attivita)
-class AdminAttivita(ReadonlyAdminMixin, admin.ModelAdmin):
-    search_fields = ['nome', 'sede__nome', 'estensione__nome', 'area__nome']
-    list_display = ('nome', 'sede', 'area', 'estensione', 'stato', 'apertura')
-    list_filter = ('creazione', 'stato', 'apertura')
-    raw_id_fields = ('locazione', 'sede', 'estensione', 'area', )
-
-@admin.register(Area)
-class AdminArea(ReadonlyAdminMixin, admin.ModelAdmin):
-    search_fields = ['nome', 'sede__nome', 'obiettivo']
-    list_display = ('nome', 'sede', 'obiettivo', 'creazione')
-    list_filter = ('creazione', 'obiettivo')
-    raw_id_fields = ('sede',)
-
-
-@admin.register(Turno)
-class AdminTurno(ReadonlyAdminMixin, admin.ModelAdmin):
-    search_fields = ['nome', 'attivita__nome', 'attivita__sede__nome',]
-    list_display = ('nome', 'attivita', 'inizio', 'fine', 'creazione', )
-    list_filter = ('inizio', 'fine', 'creazione',)
-    raw_id_fields = ('attivita',)
-
-
-@admin.register(Partecipazione)
-class AdminPartecipazione(ReadonlyAdminMixin, admin.ModelAdmin):
-    search_fields = ['persona__codice_fiscale', 'persona__cognome', 'persona__nome', 'turno__nome', 'turno__attivita__nome',]
-    list_display = ('turno', 'persona', 'creazione', 'esito',)
-    list_filter = ('creazione', 'stato', 'confermata',)
-    raw_id_fields = ('persona', 'turno', )
-    inlines = [InlineAutorizzazione]
-
-
-@admin.register(NonSonoUnBersaglio)
-class AdminNonSonoUnBersaglio(ReadonlyAdminMixin, admin.ModelAdmin):
-    search_fields = ['persona__codice_fiscale', 'persona__cognome', 'persona__nome', ]
-    list_display = ('persona', 'centro_formazione', )
-    raw_id_fields = ('persona', )
+from django.contrib import adminfrom attivita.models import Partecipazione, Turno, Area, Attivitafrom base.admin import InlineAutorizzazionefrom gruppi.readonly_admin import ReadonlyAdminMixinfrom attivita.models import NonSonoUnBersagliofrom django.contrib import messages__author__ = 'alfioemanuele'@admin.register(Attivita)class AdminAttivita(ReadonlyAdminMixin, admin.ModelAdmin):    search_fields = ['nome', 'sede__nome', 'estensione__nome', 'area__nome']    list_display = ('nome', 'sede', 'area', 'estensione', 'stato', 'apertura')    list_filter = ('creazione', 'stato', 'apertura')    raw_id_fields = ('locazione', 'sede', 'estensione', 'area', )@admin.register(Area)class AdminArea(ReadonlyAdminMixin, admin.ModelAdmin):    search_fields = ['nome', 'sede__nome', 'obiettivo']    list_display = ('nome', 'sede', 'obiettivo', 'creazione')    list_filter = ('creazione', 'obiettivo')    raw_id_fields = ('sede',)@admin.register(Turno)class AdminTurno(ReadonlyAdminMixin, admin.ModelAdmin):    search_fields = ['nome', 'attivita__nome', 'attivita__sede__nome',]    list_display = ('nome', 'attivita', 'inizio', 'fine', 'creazione', )    list_filter = ('inizio', 'fine', 'creazione',)    raw_id_fields = ('attivita',)@admin.register(Partecipazione)class AdminPartecipazione(ReadonlyAdminMixin, admin.ModelAdmin):    search_fields = ['persona__codice_fiscale', 'persona__cognome', 'persona__nome', 'turno__nome', 'turno__attivita__nome',]    list_display = ('turno', 'persona', 'creazione', 'esito',)    list_filter = ('creazione', 'stato', 'confermata',)    raw_id_fields = ('persona', 'turno', )    inlines = [InlineAutorizzazione]@admin.register(NonSonoUnBersaglio)class AdminNonSonoUnBersaglio(ReadonlyAdminMixin, admin.ModelAdmin):    search_fields = ['persona__codice_fiscale', 'persona__cognome', 'persona__nome', ]    list_display = ('persona', 'centro_formazione', )    raw_id_fields = ('persona', )    def carica_referenti(self, request, files):        messages.success(request, "File caricato correttamente {}".format(files))    def changelist_view(self, request, extra_context=None):        if request.POST:            files = request.FILES.getlist('file')            for file in files:                if not file.name.split('.')[1] == 'csv':                    messages.error(request, "Il file deve avere un fomato .csv")                    return super(AdminNonSonoUnBersaglio, self).changelist_view(request, extra_context=extra_context)            self.carica_referenti(request, files)        return super(AdminNonSonoUnBersaglio, self).changelist_view(request, extra_context=extra_context)
