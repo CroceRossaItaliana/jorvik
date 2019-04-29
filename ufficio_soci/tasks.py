@@ -7,7 +7,7 @@ from ufficio_soci.models import ReportElenco
 
 
 @shared_task(bind=True)
-def generate_elenco_soci_al_giorno(self, *args):
+def generate_elenco(self, *args):
     from .reports import ReportElencoSoci
 
     report = ReportElencoSoci(from_celery=True)
@@ -15,7 +15,7 @@ def generate_elenco_soci_al_giorno(self, *args):
 
 
 @periodic_task(run_every=timedelta(seconds=86400))  # 24h
-def delete_generated_elenco_soci_files():
+def delete_generated_elenco_files():
     delta = datetime.today() - timedelta(hours=24)
 
     files_to_delete = ReportElenco.objects.filter(creazione__lt=delta)

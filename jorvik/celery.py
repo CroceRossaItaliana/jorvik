@@ -18,8 +18,8 @@ app.conf.task_routes = {
     'posta.queue.rischedula_invii_falliti': {'queue': 'coda_email_rischedula'},
     'posta.tasks.invia_mail': {'queue': 'coda_email_invio'},
 
-    'ufficio_soci.tasks.delete_generated_elenco_soci_files': {'queue': 'periodic_ufficio_soci'},
-    'ufficio_soci.tasks.generate_elenco_soci_al_giorno': {'queue': 'shared_ufficio_soci'},
+    'ufficio_soci.tasks.delete_generated_elenco_files': {'queue': 'periodic_ufficio_soci'},
+    'ufficio_soci.tasks.generate_elenco': {'queue': 'shared_ufficio_soci'},
 
     'static_page.tasks.send_mail': {'queue': 'queue_monitoraggio'},
 }
