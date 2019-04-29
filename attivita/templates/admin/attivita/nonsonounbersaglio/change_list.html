@@ -7,7 +7,8 @@
         {% csrf_token %}
         <label>Carica Referenti Non sono un bersaglio</label>
         <input type="file" accept=".csv,text/csv" name="file" required/>
-        <input type="submit" style="padding: 5px 8px 5px 8px">
+{#        <input type="submit" style="padding: 5px 8px 5px 8px">#}
+        <input type="submit" style="padding: 5px 8px 5px 8px" data-toggle="tooltip" data-placement="top" title='Assicurarsi che i campi del file csv siano separati dal carattere ","' value="Carica">
     </form>
     {{ block.super }}
 {% endblock %}
