@@ -600,15 +600,15 @@ class ElencoInRiserva(ElencoVistaSoci):
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
     def excel_colonne(self):
-        def riserva(p, att):
-            ris = Riserva.objects.filter(
-                persona=p.id,
-            ).order_by('-creazione')
-            if ris:
-                return getattr(ris.first(), att)
+        def riserva(p, attr):
+            query = Riserva.objects.filter(
+                Q(fine__gte=timezone.now()) | Q(fine__isnull=True),
+                persona=p.id)
+            if query:
+                return getattr(query.last(), attr)
             return ''
 
-        return super(ElencoInRiserva, self).excel_colonne() + (
+        return super().excel_colonne() + (
             ("Data inizio", lambda p: riserva(p, 'inizio')),
             ("Data fine", lambda p: riserva(p, 'fine')),
             ("Motivazioni", lambda p: riserva(p, 'motivo'))

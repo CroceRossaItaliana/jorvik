@@ -43,7 +43,7 @@ class TypeFormResponses:
     def __init__(self, request=None, me=None, user_pk=None):
         self.request = request
         self.me = me
-        self.user_pk = user_pk
+        self.user_pk = user_pk  # Celery
 
         self.context_typeform = self._set_typeform_context()
 
@@ -63,23 +63,24 @@ class TypeFormResponses:
 
     @property
     def persona(self):
-        if self.user_pk is None:
+        if self.me is not None:
             return self.me
-        else:
+        if self.user_pk is not None:
             return Persona.objects.get(id=self.get_user_pk)
 
     @property
     def comitato_id(self):
-        deleghe = self.me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
+        persona = self.persona
+        deleghe = persona.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
 
-        request_comitato = self.request.GET.get('comitato')
+        request_comitato = self.request.GET.get('comitato') if self.request else None
         if request_comitato:
             # Check comitato_id validity
             if int(request_comitato) not in deleghe.values_list('oggetto_id', flat=True):
                 raise ValueError("L'utenza non ha una delega con l'ID del comitato indicato.")
             return request_comitato
         else:
-            if self.me.is_presidente:
+            if persona.is_presidente:
                 # Il ruolo presidente può avere soltanto una delega attiva,
                 # quindi vado sicuro a prendere <oggetto_id> dell'unico record
                 return deleghe.filter(tipo=PRESIDENTE).last().oggetto_id
@@ -301,5 +302,5 @@ class TypeFormResponses:
     def send_via_mail(self):
         task = send_mail.apply_async(args=(self.get_user_pk,), task_id=uuid())
 
-        messages.add_message(self.request, messages.INFO, self.CELERY_TASK_PREFIX+task.id)
+        # messages.add_message(self.request, messages.INFO, self.CELERY_TASK_PREFIX+task.id)
         return redirect(reverse('pages:monitoraggio'))
