@@ -1,19 +1,24 @@
 import os
 import logging
-from smtplib import SMTPException, SMTPRecipientsRefused, SMTPResponseException, SMTPAuthenticationError
 from lxml import html
 from celery import uuid
+from smtplib import (SMTPException, SMTPRecipientsRefused,
+                     SMTPResponseException, SMTPAuthenticationError)
 
 from django.core.mail import EmailMessage, EmailMultiAlternatives, get_connection
 from django.db import transaction, DatabaseError
+from django.db import models
 from django.template.loader import get_template
 from django.utils.html import strip_tags
 from django.utils.text import Truncator
+from django.utils import timezone
 
-from base.models import *
-from base.tratti import *
+from jorvik import settings
+from base.models import ModelloSemplice, ConAllegati
+from base.tratti import ConMarcaTemporale
 from social.models import ConGiudizio
 from .tasks import invia_mail
+
 
 logger = logging.getLogger('posta')
 

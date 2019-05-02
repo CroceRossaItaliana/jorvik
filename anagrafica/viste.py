@@ -3,6 +3,7 @@ from collections import OrderedDict
 from importlib import import_module
 
 from django.db import transaction
+from django.db.models import Q
 from django.apps import apps
 from django.conf import settings
 from django.contrib import messages
@@ -28,7 +29,7 @@ from base.stringhe import genera_uuid_casuale
 from base.utils import remove_none, poco_fa, oggi
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
-from posta.models import Messaggio, Q
+from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
 
