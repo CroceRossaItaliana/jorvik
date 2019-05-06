@@ -13,7 +13,7 @@ from .models import (CorsoBase, CorsoFile, CorsoEstensione, CorsoLink,
 RAW_ID_FIELDS_CORSOBASE = ['sede', 'locazione',]
 RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE = ['persona', 'corso', 'destinazione',]
 RAW_ID_FIELDS_INVITOCORSOBASE = ['persona', 'corso', 'invitante',]
-RAW_ID_FIELDS_LEZIONECORSOBASE = ['corso',]
+RAW_ID_FIELDS_LEZIONECORSOBASE = ['corso', 'docente',]
 RAW_ID_FIELDS_ASSENZACORSOBASE = ['lezione', 'persona', 'registrata_da',]
 RAW_ID_FIELDS_ASPIRANTE = ['persona', 'locazione',]
 RAW_ID_FIELDS_ESTENSIONE = ['sede', 'titolo',]
