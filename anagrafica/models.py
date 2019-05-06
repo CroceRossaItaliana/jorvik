@@ -2591,6 +2591,9 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
         )
         return pdf
 
+    def __str__(self):
+        return '%s (%s - %s)' % (self.persona, self.inizio, self.fine)
+
 
 class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocollo, ConStorico):
     AMMONIZIONE = "A"
