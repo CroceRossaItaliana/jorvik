@@ -396,6 +396,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         if self.is_nuovo_corso and self.extension_type != CorsoBase.EXT_LVL_REGIONALE:
             return False
 
+        if self.direttori_corso().count() == 0:
+            return False
+
         return True
 
     def aspiranti_nelle_vicinanze(self):
