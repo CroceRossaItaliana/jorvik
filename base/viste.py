@@ -310,17 +310,19 @@ ORDINE_DEFAULT = ORDINE_DISCENDENTE
 
 @pagina_privata
 def autorizzazioni(request, me, content_type_pk=None):
-    """
-    Mostra elenco delle autorizzazioni in attesa.
-    """
+    """ Mostra elenco delle autorizzazioni in attesa. """
+
     richieste_bloccate = dict()
     richieste = me._autorizzazioni_in_attesa().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
-    richieste_bloccate['corsi'] = PartecipazioneCorsoBase.richieste_non_processabili(richieste)
+
+    # richieste_bloccate['corsi'] = PartecipazioneCorsoBase.richieste_non_processabili(richieste)
+
     if 'ordine' in request.GET:
         if request.GET['ordine'] == 'ASC':
             request.session['autorizzazioni_ordine'] = ORDINE_ASCENDENTE
         else:
             request.session['autorizzazioni_ordine'] = ORDINE_DISCENDENTE
+
     ordine = request.session.get('autorizzazioni_ordine', default=ORDINE_DEFAULT)
 
     sezioni = ()  # Ottiene le sezioni
@@ -363,11 +365,9 @@ def autorizzazioni(request, me, content_type_pk=None):
 
 @pagina_privata
 def autorizzazione_concedi(request, me, pk=None):
-    """
-    Mostra il modulo da compilare per il consenso, ed eventualmente registra l'accettazione.
-    """
-    richiesta = get_object_or_404(Autorizzazione, pk=pk)
+    """ Mostra il modulo da compilare per il consenso, ed eventualmente registra l'accettazione. """
 
+    richiesta = get_object_or_404(Autorizzazione, pk=pk)
     torna_url = request.session.get('autorizzazioni_torna_url', default="/autorizzazioni/")
 
     # Controlla che io possa firmare questa autorizzazione
@@ -378,39 +378,39 @@ def autorizzazione_concedi(request, me, pk=None):
             torna_titolo="Richieste in attesa",
             torna_url=torna_url,
         )
-    if not PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta):
-        return errore_generico(request, me,
-            titolo="Richiesta non processabile",
-            messaggio="Questa richiesta non può essere processata.",
-            torna_titolo="Richieste in attesa",
-            torna_url=torna_url,
-        )
 
-    modulo = None
+    # if not PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta):
+    #     return errore_generico(request, me,
+    #         titolo="Richiesta non processabile",
+    #         messaggio="Questa richiesta non può essere processata.",
+    #         torna_titolo="Richieste in attesa",
+    #         torna_url=torna_url,
+    #     )
+
+    form = None
 
     # Se la richiesta ha un modulo di consenso
     if richiesta.oggetto.autorizzazione_concedi_modulo():
         if request.POST:
-            modulo = richiesta.oggetto.autorizzazione_concedi_modulo()(request.POST)
-
-            if modulo.is_valid():
+            form = richiesta.oggetto.autorizzazione_concedi_modulo()(request.POST)
+            if form.is_valid():
                 # Accetta la richiesta con modulo
-                richiesta.concedi(me, modulo=modulo)
+                richiesta.concedi(me, modulo=form)
 
         else:
-            modulo = richiesta.oggetto.autorizzazione_concedi_modulo()()
+            form = richiesta.oggetto.autorizzazione_concedi_modulo()()
 
     else:
         # Accetta la richiesta senza modulo
         richiesta.concedi(me)
 
-    contesto = {
-        "modulo": modulo,
+    context = {
+        "modulo": form,
         "richiesta": richiesta,
         "torna_url": torna_url,
     }
 
-    return 'base_autorizzazioni_concedi.html', contesto
+    return 'base_autorizzazioni_concedi.html', context
 
 
 @pagina_privata

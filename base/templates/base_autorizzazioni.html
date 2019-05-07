@@ -1,16 +1,12 @@
 {% extends 'base_autorizzazioni_vuota.html' %}
 
-{% block pagina_titolo %}
-    ({{ richieste.count }}) Richieste
-{% endblock %}
+{% block pagina_titolo %}({{ richieste.count }}) Richieste{% endblock %}
 
 {% block app_contenuto %}
-
     <div class="alert alert-info piu-piccolo">
-        <i class="fa fa-fw fa-info-circle"></i>
-        Suggerimento &mdash; Cliccando su 'Conferma' o 'Nega' con il tasto centrale del mouse,
-            aprir&agrave; la pagina in una nuova finestra.
+        <i class="fa fa-fw fa-info-circle"></i> Suggerimento &mdash; Cliccando su 'Conferma' o 'Nega' con il tasto centrale del mouse, aprir&agrave; la pagina in una nuova finestra.
     </div>
+
     {% for richiesta in richieste %}
         <div class="panel panel-default">
             <div class="panel-body">
@@ -19,81 +15,43 @@
                         {% include richiesta.template_path %}
                     </div>
                     <div class="col-md-3">
-                        {% if richiesta.pk in richieste_bloccate.corsi %}
-                            <span class="text-warning grassetto">
-                            <i class="fa fa-fw fa-warning"></i>
-                            Corso non ancora iniziato, impossibile processare la richiesta.
-                        {% else %}
                         <div class=" btn-group-vertical btn-group-sm btn-block">
-                            <a class="btn btn-success" href="/autorizzazioni/{{ richiesta.pk }}/concedi/">
-                                <i class="fa fa-fw fa-check"></i>
-                                Conferma
-                            </a>
-                            <a class="btn btn-danger" href="/autorizzazioni/{{ richiesta.pk }}/nega/">
-                                <i class="fa fa-fw fa-times"></i>
-                                Nega
-
-                            </a>
-
+                            <a class="btn btn-success" href="/autorizzazioni/{{ richiesta.pk }}/concedi/"><i class="fa fa-fw fa-check"></i> Conferma</a>
+                            <a class="btn btn-danger" href="/autorizzazioni/{{ richiesta.pk }}/nega/"><i class="fa fa-fw fa-times"></i> Nega</a>
                         </div>
-                        {% endif %}
                     </div>
                 </div>
-
             </div>
-            <div class="panel-footer piu-piccolo">
 
+            <div class="panel-footer piu-piccolo">
                 <div class="row">
                     <div class="col-md-7">
-                        <i class="fa fa-fw fa-clock-o"></i>
-                        Richiesta inoltrata {{ richiesta.creazione }}
-                        da {{ richiesta.richiedente.nome_completo }}.
+                        <i class="fa fa-fw fa-clock-o"></i> Richiesta inoltrata {{ richiesta.creazione }} da {{ richiesta.richiedente.nome_completo }}.
                     </div>
 
                     <div class="col-md-5 allinea-destra">
                         In dubbio?
-                        <a href="{{ richiesta.richiedente.messaggio_url }}" target="_new">
-                            Scrivi un messaggio a {{ richiesta.richiedente.nome }}
-                            <i class="fa fa-fw fa-envelope-o"></i>
-                        </a>
+                        <a href="{{ richiesta.richiedente.messaggio_url }}" target="_new">Scrivi un messaggio a {{ richiesta.richiedente.nome }} <i class="fa fa-fw fa-envelope-o"></i></a>
                     </div>
                 </div>
 
                 {% if richiesta.scadenza %}
                     <span class="text-warning grassetto">
-                        <i class="fa fa-fw fa-warning"></i>
-                        La richiesta
-
-                        {% if richiesta.tipo_gestione == richiesta.NG_AUTO %}
-                            scadrà
-
-                        {% elif richiesta.tipo_gestione == richiesta.AP_AUTO %}
-                            verrà automaticamente approvata
-
-                        {% endif %}
+                        <i class="fa fa-fw fa-warning"></i> La richiesta
+                            {% if richiesta.tipo_gestione == richiesta.NG_AUTO %} scadrà
+                            {% elif richiesta.tipo_gestione == richiesta.AP_AUTO %} verrà automaticamente approvata
+                            {% endif %}
 
                         {{ richiesta.scadenza|date:"DATETIME_FORMAT" }}.
                     </span>
                 {% endif %}
-
-
-
-
             </div>
-
         </div>
 
     {% empty %}
-
         <div class="alert alert-block alert-success">
-            <h4>
-                <i class="fa fa-fw fa-check-circle"></i>
-                Ben fatto!
-            </h4>
-            <p>
-                Non ci sono richieste in attesa.
-            </p>
-
+            <h4><i class="fa fa-fw fa-check-circle"></i> Ben fatto!</h4>
+            <p>Non ci sono richieste in attesa.</p>
         </div>
     {% endfor %}
 
