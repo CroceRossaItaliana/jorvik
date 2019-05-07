@@ -346,6 +346,7 @@ def attivita_scheda_informazioni(request, me=None, pk=None):
     contesto = {
         "attivita": attivita,
         "puo_modificare": puo_modificare,
+        "me": me,
     }
 
     return 'attivita_scheda_informazioni.html', contesto
