@@ -31,30 +31,30 @@ from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
 
 @pagina_privata
 def formazione(request, me):
-    contesto = {
+    context = {
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
         "corsi": me.oggetti_permesso(GESTIONE_CORSO),
     }
-    return 'formazione.html', contesto
+    return 'formazione.html', context
 
 
 @pagina_privata
 def formazione_corsi_base_elenco(request, me):
-    contesto = {
+    context = {
         "corsi": me.oggetti_permesso(GESTIONE_CORSO),
         "puo_pianificare": me.ha_permesso(GESTIONE_CORSI_SEDE),
     }
-    return 'formazione_corsi_base_elenco.html', contesto
+    return 'formazione_corsi_base_elenco.html', context
 
 
 @pagina_privata
 def formazione_corsi_base_domanda(request, me):
-    contesto = {
+    context = {
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
         "min_sedi": Aspirante.MINIMO_COMITATI,
         "max_km": Aspirante.MASSIMO_RAGGIO,
     }
-    return 'formazione_corsi_base_domanda.html', contesto
+    return 'formazione_corsi_base_domanda.html', context
 
 
 @pagina_privata
@@ -142,10 +142,10 @@ def formazione_corsi_base_fine(request, me, pk):
     if me in corso.delegati_attuali():  # Se sono direttore, continuo.
         redirect(corso.url)
 
-    contesto = {
+    context = {
         "corso": corso,
     }
-    return 'formazione_corsi_base_fine.html', contesto
+    return 'formazione_corsi_base_fine.html', context
 
 
 @pagina_pubblica
