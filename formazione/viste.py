@@ -388,8 +388,13 @@ def aspirante_corso_base_modifica(request, me, pk):
                 instance.corso = course
             link_formset.save()
 
-        if course_form.is_valid() and file_formset.is_valid() and \
-                link_formset.is_valid():
+        if course_form.is_valid() and file_formset.is_valid() and link_formset.is_valid():
+
+            if course_form.has_changed():
+                messages.success(request, 'I dati della pianificazione corso sono stati salvati. '
+                                          'Procedi con il prossimo step')
+                return redirect(reverse('aspirante:lessons', args=[pk]))
+
             return redirect(reverse('aspirante:modify', args=[pk]))
     else:
         course_form = ModuloModificaCorsoBase(instance=course)
@@ -794,8 +799,7 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
                                     prefix=SELECT_EXTENSIONS_FORMSET_PREFIX,
                                     form_kwargs={'corso': course})
 
-        if select_extension_type_form.is_valid() and \
-            select_extensions_formset.is_valid():
+        if select_extension_type_form.is_valid() and select_extensions_formset.is_valid():
             select_extensions_formset.save(commit=False)
 
             for form in select_extensions_formset:
@@ -838,6 +842,12 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
                 if not corso_has_extensions and not new_objects:
                     reset_corso_ext.extension_type = CorsoBase.EXT_MIA_SEDE
                     reset_corso_ext.save()
+
+                # Reindirizzare l'utente al prossimo step da compilare (utile
+                # solo in fase di primo compilamento delle form del corso).
+                if corso_has_extensions or new_objects:
+                    messages.success(request, 'Le estensioni sono state salvate. Procedi con il prossimo step')
+                    return redirect(reverse('aspirante:modify', args=[pk]))
 
                 return redirect(reverse('aspirante:estensioni_modifica', args=[pk]))
 

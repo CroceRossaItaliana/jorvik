@@ -2,18 +2,13 @@
 
 {% load bootstrap3 %}
 
-{% block scheda_titolo %}
-    Lezioni
-{% endblock %}
+{% block scheda_titolo %}Lezioni{% endblock %}
 
 {% block scheda_contenuto %}
-
 <div class="row">
     <form method="POST">
-    {% csrf_token %}
-
+        {% csrf_token %}
         <div class="col-md-9">
-
             <div class="panel panel-info">
                 <div class="panel-heading">
                     <h2 class="panel-title">
@@ -23,8 +18,6 @@
                 </div>
 
                 <div class="panel-body">
-
-
                     <table class="table table-striped">
                        <thead>
                         <tr>
@@ -34,19 +27,12 @@
                        </thead>
 
                         {% for lezione, modulo, partecipanti_lezione in lezioni %}
-
                             <tr id="{{ lezione.pk }}">
                                 <td style="width: 40%">
                                     {% bootstrap_form modulo %}
-                                    <button type="submit" name="azione" value="salva"
-                                            class="btn btn-primary btn-block">
-                                        <i class="fa fa-fw fa-save"></i>
-                                        Salva informazioni
-                                    </button>
-                                    <a href="{{ lezione.url_cancella }}" class="btn btn-sm btn-danger btn-block"
-                                        data-conferma="Cancellare questa lezione? Questo eliminerà anche le assenze registrate.">
-                                        <i class="fa fa-fw fa-trash"></i>
-                                        Cancella lezione
+                                    <button type="submit" name="azione" value="salva" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva informazioni</button>
+                                    <a href="{{ lezione.url_cancella }}" class="btn btn-sm btn-danger btn-block" data-conferma="Cancellare questa lezione? Questo eliminerà anche le assenze registrate.">
+                                        <i class="fa fa-fw fa-trash"></i> Cancella lezione
                                     </a>
                                 </td>
                                 <td>
@@ -62,10 +48,8 @@
                                                 <tr>
                                                     <td>
                                                         <label style="margin-bottom: -1px;">
-                                                            <input type="checkbox" name="presenze-{{ lezione.pk }}"
-                                                                   value="{{ partecipante.pk }}"
-                                                                   {% if partecipante in partecipanti_lezione %}checked="checked"{% endif %} />
-                                                            S&igrave;
+                                                            <input type="checkbox" name="presenze-{{ lezione.pk }}" value="{{ partecipante.pk }}" {% if partecipante in partecipanti_lezione %}checked="checked"{% endif %} />
+                                                             S&igrave;
                                                         </label>
                                                     </td>
                                                     <td>
@@ -77,72 +61,40 @@
                                                     <td colspan="2">Nessun iscritto confermato.</td>
                                                 </tr>
                                             {% endfor %}
-
                                         </tbody>
                                     </table>
-                                    <button type="submit" name="azione" value="salva"
-                                            class="btn btn-primary btn-block">
-                                        <i class="fa fa-fw fa-save"></i>
-                                        Salva presenze
-                                    </button>
-
+                                    <button type="submit" name="azione" value="salva" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i>Salva presenze</button>
                                 </td>
                             </tr>
-
-
-
 
                         {% empty %}
-
                             <tr class="warning">
                                 <td colspan="2">
-                                    <i class="fa fa-fw fa-warning"></i>
-                                    Ancora nessuna lezione inserita.
-                                    Inserisci una lezione col modulo in questa pagina.
+                                    <i class="fa fa-fw fa-warning"></i> Ancora nessuna lezione inserita. Inserisci una lezione col modulo in questa pagina.
                                 </td>
                             </tr>
-
                         {% endfor %}
-
-
-
-
                     </table>
-
                 </div>
-
             </div>
-
         </div>
+    </form>
 
-        </form>
-
-        <form method="POST">
-            {% csrf_token %}
+    <form method="POST">
+        {% csrf_token %}
         <div class="col-md-3">
-
             <div class="panel panel-primary">
                 <div class="panel-heading">
-                    <h2 class="panel-title">
-                        <i class="fa fa-fw fa-plus-circle"></i>
-                        Aggiungi lezione
-                    </h2>
+                    <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Completa Lezioni</h2>
                 </div>
                 <div class="panel-body">
                     {% bootstrap_form modulo_nuova_lezione %}
-                    <button type="submit" name="azione" value="nuova"
-                            class="btn btn-primary btn-block">
-                        <i class="fa fa-fw fa-check-circle"></i>
-                        Aggiungi lezione
+                    <button type="submit" name="azione" value="nuova" class="btn btn-primary btn-block">
+                        <i class="fa fa-fw fa-check-circle"></i> Aggiungi lezione
                     </button>
-
                 </div>
             </div>
-
         </div>
-        </form>
-
-
+    </form>
 </div>
-
 {% endblock %}
