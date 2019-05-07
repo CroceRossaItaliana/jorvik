@@ -173,22 +173,26 @@
         {{ corso.descrizione|default:"<p>Ancora non disponibili</p>"|safe }}
 
         {% if puoi_partecipare == corso.SEI_ISCRITTO_NON_PUOI_RITIRARTI or puo_modificare %}
-            {% if corso.get_course_links or corso.get_course_files %}<h3>Materiale didattico</h3>{%endif%}
-            {% if corso.get_course_links %}
-                <strong>Link:</strong><br>
-                {% for link in corso.get_course_links %}
-                    <a href="{{link.link}}" target="_blank">{{link.link}}</a><br>
-                {% endfor %}
-            {% endif %}
+            {% if corso.get_course_links or corso.get_course_files %}
+                <div style="margin:0 0 20px;">
+                    <h3>Materiale didattico</h3>
+                    {% if corso.get_course_links %}
+                        <strong>Link:</strong><br>
+                        {% for link in corso.get_course_links %}
+                            <a href="{{link.link}}" target="_blank">{{link.link}}</a><br>
+                        {% endfor %}
+                    {% endif %}
 
-            <br>
+                    <br>
 
-            {% if corso.get_course_links %}
-                <strong>File:</strong><br>
-                {% for file in corso.get_course_files %}
-                    <a href="{{file.file.url}}" target="_blank">{{file.filename}}</a><br>
-                {% endfor %}
-            {% endif %}
+                    {% if corso.get_course_links %}
+                        <strong>File:</strong><br>
+                        {% for file in corso.get_course_files %}
+                            <a href="{{file.file.url}}" target="_blank">{{file.filename}}</a><br>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            {%endif%}
         {% endif %}
 
         <p>
