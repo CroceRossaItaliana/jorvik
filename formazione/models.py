@@ -160,7 +160,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     NON_HAI_DOCUMENTO_PERSONALE_VALIDO = 'NHDPV'
     NON_PUOI_ISCRIVERTI = (NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO,
                            NON_PUOI_ISCRIVERTI_TROPPO_TARDI,
-                           NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO,
+                           # NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO,
                            NON_PUOI_SEI_ASPIRANTE,
                            NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI,
                            NON_HAI_CARICATO_DOCUMENTI_PERSONALI,
@@ -180,10 +180,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         # if (not Aspirante.objects.filter(persona=persona).exists()) and persona.volontario:
         #     return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
 
-        if PartecipazioneCorsoBase.con_esito_ok(persona=persona,
-                                                corso__tipo=self.BASE,
-                                                corso__stato=self.ATTIVO).exclude(corso=self).exists():
-            return self.NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO
+        # UPDATE: (GAIA-93) togliere blocco che non può iscriversi a più corsi
+        # if PartecipazioneCorsoBase.con_esito_ok(persona=persona,
+        #                                         corso__tipo=self.BASE,
+        #                                         corso__stato=self.ATTIVO).exclude(corso=self).exists():
+        #     return self.NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO
 
         # Controlla se già iscritto.
         if PartecipazioneCorsoBase.con_esito_ok(persona=persona, corso=self).exists():
