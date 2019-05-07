@@ -662,7 +662,6 @@ def attivita_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_p
     ))
 
 
-
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def attivita_scheda_informazioni_modifica(request, me, pk=None):
     """
