@@ -71,11 +71,17 @@
                 </p>
             </div>
 
-        {% elif puoi_partecipare == corso.SEI_ISCRITTO_NON_PUOI_RITIRARTI %}
+        {% elif puoi_partecipare == corso.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI %}
             <div class="alert alert-info alert-block">
                 <h4><i class="fa fa-check-circle"></i> Sei iscritt{{ me.genere_o_a }} a questo corso!</h4>
                 <p>Meraviglioso! Presentati alle lezioni del corso secondo il programma indicato sotto.</p>
                 <p>Per qualsiasi domanda, contatta uno dei direttori del corso, cliccando sul suo nome.</p>
+
+                <p>
+                     <a href="{% url 'aspirante:retired' corso.pk %}" data-conferma="Sei sicur{{ me.genere_o_a }} di voler rinunciare a questo corso?" class="btn btn-block btn-warning">
+                        <i class="fa fa-fw fa-times"></i> Non posso pi&ugrave; partecipare &mdash; voglio ritirarmi
+                    </a>
+                </p>
             </div>
         {% endif %}
 
@@ -148,19 +154,14 @@
             <div class="panel-heading">
                 <h3 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Data di inizio</h3>
             </div>
-            <div class="panel-body">
-                {{ corso.data_inizio }}
-            </div>
+            <div class="panel-body">{{ corso.data_inizio }}</div>
         </div>
     </div>
 
     <div class="col-md-3">
         <div class="panel panel-info">
             <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-calendar"></i>
-                    Data di esame
-                </h3>
+                <h3 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Data di esame</h3>
             </div>
             <div class="panel-body">{{ corso.data_esame }}</div>
         </div>
@@ -172,7 +173,7 @@
         <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
         {{ corso.descrizione|default:"<p>Ancora non disponibili</p>"|safe }}
 
-        {% if puoi_partecipare == corso.SEI_ISCRITTO_NON_PUOI_RITIRARTI or puo_modificare %}
+        {% if puoi_partecipare == corso.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI or puo_modificare %}
             {% if corso.get_course_links or corso.get_course_files %}
                 <div style="margin:0 0 20px;">
                     <h3>Materiale didattico</h3>

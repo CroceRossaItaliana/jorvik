@@ -146,8 +146,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     PUOI_ISCRIVERTI = (PUOI_ISCRIVERTI_OK,)
 
     SEI_ISCRITTO_PUOI_RITIRARTI = "GIA"
+    SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI = "IPC"
     SEI_ISCRITTO_NON_PUOI_RITIRARTI = "NP"
-    SEI_ISCRITTO = (SEI_ISCRITTO_PUOI_RITIRARTI, SEI_ISCRITTO_NON_PUOI_RITIRARTI,)
+    SEI_ISCRITTO = (SEI_ISCRITTO_PUOI_RITIRARTI,
+                    SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI,)
 
     NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO = "VOL"
     NON_PUOI_ISCRIVERTI_TROPPO_TARDI = "TAR"
@@ -183,9 +185,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                                                 corso__stato=self.ATTIVO).exclude(corso=self).exists():
             return self.NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO
 
-        # Controlla se gia' iscritto.
+        # Controlla se già iscritto.
         if PartecipazioneCorsoBase.con_esito_ok(persona=persona, corso=self).exists():
-            return self.SEI_ISCRITTO_NON_PUOI_RITIRARTI
+            # UPDATE: (GAIA-93) utente può ritirarsi dal corso in qualsiasi momento.
+            return self.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI
 
         if PartecipazioneCorsoBase.con_esito_pending(persona=persona, corso=self).exists():
             return self.SEI_ISCRITTO_PUOI_RITIRARTI
@@ -276,7 +279,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def troppo_tardi_per_iscriverti(self):
-        return timezone.now() > (self.data_inizio + datetime.timedelta(days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI))
+        case_1 = timezone.now() > (self.data_inizio + datetime.timedelta(days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI))
+        case_2 = self.stato == CorsoBase.ATTIVO
+        return case_1 or case_2
 
     @property
     def possibile_aggiungere_iscritti(self):
@@ -1000,14 +1005,6 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
                                      help_text="La Sede presso la quale verrà registrato come Volontario l'aspirante "
                                                "nel caso di superamento dell'esame.")
 
-    class Meta:
-        verbose_name = "Richiesta di partecipazione"
-        verbose_name_plural = "Richieste di partecipazione"
-        ordering = ('persona__cognome', 'persona__nome', 'persona__codice_fiscale',)
-        permissions = (
-            ("view_partecipazionecorsobarse", "Can view corso Richiesta di partecipazione"),
-        )
-
     RICHIESTA_NOME = "Iscrizione Corso"
 
     def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
@@ -1089,11 +1086,6 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
             destinatari=[mittente],
         )
 
-    def __str__(self):
-        return "Richiesta di part. di %s a %s" % (
-            self.persona, self.corso
-        )
-
     def autorizzazione_concedi_modulo(self):
         from formazione.forms import (ModuloConfermaIscrizioneCorsoBase,
                                       ModuloConfermaIscrizioneCorso)
@@ -1158,6 +1150,16 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
             oggetto_tipo=tipo, oggetto_id__in=partecipazioni_da_bloccare
         ).values_list('pk', flat=True)
 
+    class Meta:
+        verbose_name = "Richiesta di partecipazione"
+        verbose_name_plural = "Richieste di partecipazione"
+        ordering = ('persona__cognome', 'persona__nome', 'persona__codice_fiscale',)
+        permissions = (
+            ("view_partecipazionecorsobarse", "Can view corso Richiesta di partecipazione"),
+        )
+
+    def __str__(self):
+        return "Richiesta di part. di %s a %s" % (self.persona, self.corso)
 
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
     corso = models.ForeignKey(CorsoBase, related_name='lezioni', on_delete=models.PROTECT)

@@ -225,25 +225,35 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
 
 @pagina_privata
 def aspirante_corso_base_ritirati(request, me=None, pk=None):
-
     corso = get_object_or_404(CorsoBase, pk=pk)
-    puoi_partecipare = corso.persona(me)
-    if not puoi_partecipare == corso.SEI_ISCRITTO_PUOI_RITIRARTI:
-        return errore_generico(request, me, titolo="Non puoi ritirarti da questo corso",
-                               messaggio="Siamo spiacenti, ma non sembra che tu possa ritirarti "
-                                         "da questo corso per qualche motivo. ",
-                               torna_titolo="Torna al corso",
-                               torna_url=corso.url)
+    partecipazione = PartecipazioneCorsoBase.objects.none()
 
-    p = PartecipazioneCorsoBase.con_esito_pending(corso=corso, persona=me).first()
-    p.ritira()
+    kwargs = dict(corso=corso, persona=me)
+    if corso.persona(me) == CorsoBase.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI:
+        partecipazione = PartecipazioneCorsoBase.con_esito_ok(kwargs).last()
+    else:
+        partecipazione = PartecipazioneCorsoBase.con_esito_pending(kwargs).first()
 
-    return messaggio_generico(request, me, titolo="Ti sei ritirato dal corso",
-                              messaggio="Siamo spiacenti che hai deciso di ritirarti da questo corso. "
-                                        "La tua partecipazione è stata ritirata correttamente. "
-                                        "Non esitare a iscriverti a questo o un altro corso, nel caso cambiassi idea.",
-                              torna_titolo="Torna alla pagina del corso",
-                              torna_url=corso.url)
+    if partecipazione:
+        # Caso: vuole ritirasi quando la richiesta non è stata ancora confermata
+        partecipazione.ritira()
+
+        # Caso: vuole ritirasi quando la richiesta è stata confermata
+        if partecipazione.confermata:
+            partecipazione.confermata = False
+            partecipazione.save()  # second save() call
+
+        return messaggio_generico(request, me, titolo="Ti sei ritirato dal corso",
+            messaggio="Siamo spiacenti che hai deciso di ritirarti da questo corso. "
+                "La tua partecipazione è stata ritirata correttamente. "
+                "Non esitare a iscriverti a questo o un altro corso, nel caso cambiassi idea.",
+            torna_titolo="Torna alla pagina del corso",
+            torna_url=corso.url)
+
+    return messaggio_generico(request, me, titolo="Non puoi ritirarti da questo corso",
+        messaggio="Siamo spiacenti, ma non sembra che tu possa ritirarti da questo corso per qualche motivo. ",
+        torna_titolo="Torna alla pagina del corso",
+        torna_url=corso.url)
 
 
 @pagina_privata
