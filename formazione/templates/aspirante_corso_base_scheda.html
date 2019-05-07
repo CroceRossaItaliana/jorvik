@@ -44,7 +44,7 @@
             <li {% if request.path == corso.url_direttori %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_direttori }}"><i class="fa fa-fw fa-group"></i> Direttori ({{ corso.deleghe.count }})</a></li>
 
             {% if corso.tipo == 'C1' %}
-                <li role="presentation" {% if request.path == corso.url_estensioni %}class="active_link"{% endif %}><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Estensioni</a></li>
+                <li role="presentation" {% if request.path == corso.url_estensioni %}class="active_link"{% endif %}><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Area geografica interessata</a></li>
             {% endif %}
         </ul>
         {% endif %}
@@ -120,7 +120,7 @@
                     {% else %}
                         <i class="fa fa-fw text-success fa-check-square"></i> <span class="text-success">FATTO</span>:
                     {% endif %}
-                    Conferma l'estensione a chi vuoi aprire il Corso dalla scheda "Attivazione - Estensioni"
+                    Conferma l'estensione a chi vuoi aprire il Corso dalla scheda "Attivazione - Area geografica interessata"
                 </p>
             {% endif %}
 
