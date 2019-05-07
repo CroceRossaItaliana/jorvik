@@ -765,11 +765,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             has_directors = self.direttori_corso().count() > 0
             is_all_true = has_delibera, has_extension, has_directors
 
-            # Deve riapparire se: il direttore ha inserito la descrizione
-            if self.descrizione:
-                return True
-            else:
-                return True if False in is_all_true else False
+            # # Deve riapparire se: il direttore ha inserito la descrizione
+            # if self.descrizione:
+            #     return True
+            # else:
+            return True if False in is_all_true else False
         else:
             """ Direttori del corso vedono sempre la sezione invece """
             return True
