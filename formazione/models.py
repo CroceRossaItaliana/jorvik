@@ -787,8 +787,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def relazione_direttore(self):
         # Non creare record in db per un corso ancora in preparazione
         if self.stato != CorsoBase.PREPARAZIONE:
-            relazione, created = RelazioneCorso.objects.get_or_create(corso=self)
-            return relazione
+            if self.terminabile:
+                relazione, created = RelazioneCorso.objects.get_or_create(corso=self)
+                return relazione
 
         return RelazioneCorso.objects.none()
 
