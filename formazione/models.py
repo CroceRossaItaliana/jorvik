@@ -785,8 +785,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def relazione_direttore(self):
-        relazione, created = RelazioneCorso.objects.get_or_create(corso=self)
-        return relazione
+        # Non creare record in db per un corso ancora in preparazione
+        if self.stato != CorsoBase.PREPARAZIONE:
+            relazione, created = RelazioneCorso.objects.get_or_create(corso=self)
+            return relazione
+
+        return RelazioneCorso.objects.none()
 
     class Meta:
         verbose_name = "Corso"
