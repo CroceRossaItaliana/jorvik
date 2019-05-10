@@ -354,7 +354,7 @@ def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
 @pagina_privata
 def aspirante_corso_base_modifica(request, me, pk):
     from .models import CorsoFile, CorsoLink
-    from .forms import CorsoFileFormSet, CorsoLinkFormSet
+    from .formsets import CorsoFileFormSet, CorsoLinkFormSet
 
     course = get_object_or_404(CorsoBase, pk=pk)
     course_files = CorsoFile.objects.filter(corso=course)
@@ -815,7 +815,8 @@ def aspirante_impostazioni_cancella(request, me):
 
 @pagina_privata
 def aspirante_corso_estensioni_modifica(request, me, pk):
-    from .forms import CorsoSelectExtensionTypeForm, CorsoSelectExtensionFormSet
+    from .forms import CorsoSelectExtensionTypeForm
+    from .formsets import CorsoSelectExtensionFormSet
 
     SELECT_EXTENSION_TYPE_FORM_PREFIX = 'extension_type'
     SELECT_EXTENSIONS_FORMSET_PREFIX = 'extensions'

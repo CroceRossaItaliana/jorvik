@@ -227,14 +227,6 @@ class CorsoLinkForm(ModelForm):
             acceptable_extensions)}
 
 
-CorsoFileFormSet = modelformset_factory(CorsoFile, form=CorsoLinkForm, extra=1,
-                                        max_num=2)
-
-
-CorsoLinkFormSet = modelformset_factory(CorsoLink, fields=('link',), extra=1,
-                                        max_num=2)
-
-
 class ModuloIscrittiCorsoBaseAggiungi(forms.Form):
     persone = autocomplete_light.ModelMultipleChoiceField(
         "IscrivibiliCorsiAutocompletamento",
@@ -297,10 +289,6 @@ class CorsoExtensionForm(ModelForm):
         # if self.corso.is_nuovo_corso and self.corso.titolo_cri:
         #     self.fields['titolo'].initial = Titolo.objects.filter(id__in=[
         #         self.corso.titolo_cri.pk])
-
-
-CorsoSelectExtensionFormSet = modelformset_factory(CorsoEstensione, extra=1,
-    max_num=3, form=CorsoExtensionForm, can_delete=True)
 
 
 class ModuloConfermaIscrizioneCorso(forms.Form):
