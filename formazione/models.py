@@ -1162,6 +1162,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
     def __str__(self):
         return "Richiesta di part. di %s a %s" % (self.persona, self.corso)
 
+
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
     corso = models.ForeignKey(CorsoBase, related_name='lezioni', on_delete=models.PROTECT)
     nome = models.CharField(max_length=128)
@@ -1173,14 +1174,6 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                              verbose_name="il luogo di dove si svolgeranno le lezioni",
                              help_text="Compilare nel caso il luogo è diverso "
                                        "dal comitato che ha organizzato il corso.")
-
-    class Meta:
-        verbose_name = "Lezione di Corso"
-        verbose_name_plural = "Lezioni di Corsi"
-        ordering = ['inizio']
-        permissions = (
-            ("view_lezionecorsobase", "Can view corso Lezione di Corso Base"),
-        )
 
     @property
     def url_cancella(self):
@@ -1198,8 +1191,16 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
             destinatari=[self.docente]
         )
 
+    class Meta:
+        verbose_name = "Lezione di Corso"
+        verbose_name_plural = "Lezioni di Corsi"
+        ordering = ['inizio']
+        permissions = (
+            ("view_lezionecorsobase", "Can view corso Lezione di Corso Base"),
+        )
+
     def __str__(self):
-        return "Lezione: %s" % (self.nome,)
+        return "Lezione: %s" % self.nome
 
 
 class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
@@ -1356,3 +1357,42 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
         volontari = cls._anche_volontari()
         cls._chiudi_partecipazioni(volontari)
         volontari.delete()
+
+
+class RelazioneCorso(ModelloSemplice, ConMarcaTemporale):
+    corso = models.ForeignKey(CorsoBase)
+    note_esplicative = models.TextField(
+        verbose_name='Note esplicative',
+        help_text="note esplicative in relazione ai cambiamenti effettuati rispetto "
+                  "alla programmazione approvata in fase di pianificazione iniziale del corso.")
+    raggiungimento_obiettivi = models.TextField(
+        verbose_name='Raggiungimento degli obiettivi del corso',
+        help_text="Analisi sul raggiungimento degli obiettivi del corso "
+                  "(generali rispetto all'evento e specifici di apprendimento).")
+    annotazioni_corsisti = models.TextField(
+        verbose_name="Annotazioni relative alla partecipazione dei corsisti")
+    annotazioni_risorse = models.TextField(
+        help_text="Annotazioni relative a risorse e competenze di particolare "
+                  "rilevanza emerse durante il percorso formativo")
+    annotazioni_organizzazione_struttura = models.TextField(
+        help_text="Annotazioni e segnalazioni sull'organizzazione e "
+                  "la logistica e della struttura ospitante il corso")
+    descrizione_attivita = models.TextField(
+        help_text="Descrizione delle eventuali attività di "
+                  "tirocinio/affiancamento con indicazione dei Tutor")
+
+    @property
+    def is_completed(self):
+        model_fields = self._meta.get_fields()
+        super_class_fields_to_exclude = ['id', 'creazione', 'ultima_modifica', 'corso']
+        fields = [i.name for i in model_fields if i.name not in super_class_fields_to_exclude]
+        if '' in [getattr(self, i) for i in fields]:
+            return False
+        return True
+
+    def __str__(self):
+        return 'Relazione Corso <%s>' % self.corso.nome
+
+    class Meta:
+        verbose_name = 'Relazione del Direttore'
+        verbose_name_plural = 'Relazioni dei Direttori'

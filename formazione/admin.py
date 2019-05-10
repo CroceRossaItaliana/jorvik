@@ -7,7 +7,7 @@ from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
 from .models import (CorsoBase, CorsoFile, CorsoEstensione, CorsoLink,
     Aspirante, PartecipazioneCorsoBase, AssenzaCorsoBase, LezioneCorsoBase,
-    InvitoCorsoBase)
+    InvitoCorsoBase, RelazioneCorso)
 
 
 RAW_ID_FIELDS_CORSOBASE = ['sede', 'locazione',]
@@ -139,9 +139,16 @@ def ricalcola_raggio(modeladmin, request, queryset):
         a.calcola_raggio()
 ricalcola_raggio.short_description = "Ricalcola il raggio per gli aspiranti selezionati"
 
+
 @admin.register(Aspirante)
 class AdminAspirante(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['persona__nome', 'persona__cognome', 'persona__codice_fiscale']
     list_display = ['persona', 'creazione', ]
     raw_id_fields = RAW_ID_FIELDS_ASPIRANTE
     actions = [ricalcola_raggio,]
+
+
+@admin.register(RelazioneCorso)
+class AdminRelazioneCorso(ReadonlyAdminMixin, admin.ModelAdmin):
+    list_display = ['corso', 'is_completed',]
+    raw_id_fields = ['corso',]
