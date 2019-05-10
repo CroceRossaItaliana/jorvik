@@ -313,10 +313,15 @@ class FormRelazioneDelDirettoreCorso(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        is_stato_terminato = self.instance.corso.stato == CorsoBase.TERMINATO
+
         for f in self.fields:
             self.fields[f].label = self.fields[f].help_text
             self.fields[f].widget.attrs['placeholder'] = ''
             self.fields[f].help_text = ''
+
+            if is_stato_terminato:
+                self.fields[f].widget.attrs['disabled'] = 'disabled'
 
 
 class ModuloVerbaleAspiranteCorsoBase(ModelForm):

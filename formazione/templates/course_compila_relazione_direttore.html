@@ -14,7 +14,9 @@
             {% csrf_token %}
             {% bootstrap_form form_relazione %}
 
-            <input class="btn btn-primary btn-block" type="submit" value="Salva">
+            {% if corso.stato != corso.TERMINATO %}
+              <input class="btn btn-primary btn-block" type="submit" value="Salva">
+            {% endif %}
           </form>
         </div>
     </div>
