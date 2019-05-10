@@ -555,6 +555,10 @@ def corso_compila_relazione_direttore(request, me, pk):
     if not puo_modificare:
         return redirect(ERRORE_PERMESSI)
 
+    if not course.terminabile:
+        messages.warning(request, 'Il corso non è terminabile.')
+        return redirect(reverse('aspirante:info', args=[pk,]))
+
     relazione, created = RelazioneCorso.objects.get_or_create(corso=course)
     if request.method == 'POST':
         form_relazione = FormRelazioneDelDirettoreCorso(request.POST, instance=relazione)
