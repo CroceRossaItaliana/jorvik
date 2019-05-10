@@ -23,10 +23,10 @@ from survey.models import Survey
 from .elenchi import ElencoPartecipantiCorsiBase
 from .decorators import can_access_to_course
 from .models import (Corso, CorsoBase, CorsoEstensione, AssenzaCorsoBase,
-    LezioneCorsoBase, PartecipazioneCorsoBase, Aspirante, InvitoCorsoBase)
+    LezioneCorsoBase, PartecipazioneCorsoBase, Aspirante, InvitoCorsoBase, RelazioneCorso)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi,
-    ModuloVerbaleAspiranteCorsoBase)
+    ModuloVerbaleAspiranteCorsoBase, FormRelazioneDelDirettoreCorso)
 
 
 @pagina_privata
@@ -546,6 +546,29 @@ def aspirante_corso_base_termina(request, me, pk):
         "azione_salva_solamente": ModuloVerbaleAspiranteCorsoBase.SALVA_SOLAMENTE,
     }
     return 'aspirante_corso_base_scheda_termina.html', context
+
+
+@pagina_privata
+def corso_compila_relazione_direttore(request, me, pk):
+    course = get_object_or_404(CorsoBase, pk=pk)
+    puo_modificare = course.can_modify(me)
+    if not puo_modificare:
+        return redirect(ERRORE_PERMESSI)
+
+    relazione, created = RelazioneCorso.objects.get_or_create(corso=course)
+    if request.method == 'POST':
+        form_relazione = FormRelazioneDelDirettoreCorso(request.POST, instance=relazione)
+        if form_relazione.is_valid():
+            form_relazione.save()
+    else:
+        form_relazione = FormRelazioneDelDirettoreCorso(instance=relazione)
+
+    context = {
+        "corso": course,
+        "puo_modificare": puo_modificare,
+        "form_relazione": form_relazione,
+    }
+    return 'course_compila_relazione_direttore.html', context
 
 
 @pagina_privata

@@ -11,7 +11,7 @@ from anagrafica.models import Delega, Persona
 from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
 from .models import (Corso, CorsoBase, CorsoLink, CorsoFile, CorsoEstensione,
-                     LezioneCorsoBase, PartecipazioneCorsoBase)
+                     LezioneCorsoBase, PartecipazioneCorsoBase, RelazioneCorso)
 
 
 class ModuloCreazioneCorsoBase(ModelForm):
@@ -315,6 +315,20 @@ class ModuloConfermaIscrizioneCorsoBase(forms.Form):
               "questa azione non sarà facilmente reversibile. Sarà comunque possibile "
               "non ammettere l'aspirante all'esame, qualora dovesse non presentarsi "
               "al resto delle lezioni (questo sarà verbalizzato).")
+
+
+class FormRelazioneDelDirettoreCorso(ModelForm):
+    class Meta:
+        model = RelazioneCorso
+        exclude = ['corso', 'creazione', 'ultima_modifica',]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for f in self.fields:
+            self.fields[f].label = self.fields[f].help_text
+            self.fields[f].widget.attrs['placeholder'] = ''
+            self.fields[f].help_text = ''
 
 
 class ModuloVerbaleAspiranteCorsoBase(ModelForm):

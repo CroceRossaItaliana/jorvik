@@ -1,0 +1,21 @@
+{% extends 'aspirante_corso_base_scheda.html' %}
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block scheda_titolo %}Inserimento relazione del Corso{% endblock %}
+
+{% block scheda_contenuto %}
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h2 class="panel-title"><i class="fa fa-fw fa-pencil"></i> Inserire relazione del Corso</h2>
+        </div>
+        <div class="panel-body">
+          <form method="POST">
+            {% csrf_token %}
+            {% bootstrap_form form_relazione %}
+
+            <input class="btn btn-primary btn-block" type="submit" value="Salva">
+          </form>
+        </div>
+    </div>
+{% endblock %}

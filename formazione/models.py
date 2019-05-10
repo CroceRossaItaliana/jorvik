@@ -783,6 +783,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             """ Direttori del corso vedono sempre la sezione invece """
             return True
 
+    @property
+    def relazione_direttore(self):
+        relazione, created = RelazioneCorso.objects.get_or_create(corso=self)
+        return relazione
+
     class Meta:
         verbose_name = "Corso"
         verbose_name_plural = "Corsi"
@@ -1360,17 +1365,18 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
 
 
 class RelazioneCorso(ModelloSemplice, ConMarcaTemporale):
-    corso = models.ForeignKey(CorsoBase)
+    corso = models.ForeignKey(CorsoBase, related_name='relazione_corso')
     note_esplicative = models.TextField(
         verbose_name='Note esplicative',
-        help_text="note esplicative in relazione ai cambiamenti effettuati rispetto "
+        help_text="Note esplicative in relazione ai cambiamenti effettuati rispetto "
                   "alla programmazione approvata in fase di pianificazione iniziale del corso.")
     raggiungimento_obiettivi = models.TextField(
         verbose_name='Raggiungimento degli obiettivi del corso',
         help_text="Analisi sul raggiungimento degli obiettivi del corso "
                   "(generali rispetto all'evento e specifici di apprendimento).")
     annotazioni_corsisti = models.TextField(
-        verbose_name="Annotazioni relative alla partecipazione dei corsisti")
+        verbose_name="Annotazioni relative alla partecipazione dei corsisti",
+        help_text="Annotazioni relative alla partecipazione dei corsisti ")
     annotazioni_risorse = models.TextField(
         help_text="Annotazioni relative a risorse e competenze di particolare "
                   "rilevanza emerse durante il percorso formativo")
