@@ -475,6 +475,10 @@ def aspirante_corso_base_termina(request, me, pk):
     if not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
+    if not corso.terminabile:
+        messages.warning(request, "Il corso non è terminabile.")
+        return redirect(reverse('aspirante:info', args=(pk,)))
+
     torna = {"torna_url": corso.url_modifica, "torna_titolo": "Modifica corso"}
 
     # if (not corso.op_attivazione) or (not corso.data_attivazione):
