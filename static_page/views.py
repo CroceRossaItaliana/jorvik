@@ -103,7 +103,7 @@ def monitoraggio_nonsonounbersaglio(request, me):
     typeform = TypeFormNonSonoUnBersaglio(request=request, me=me)
 
     request_comitato = request.GET.get('comitato')
-    if me.is_comissario:
+    if me.is_comissario and not request_comitato:
         if me.is_presidente:
             deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
         else:
