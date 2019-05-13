@@ -100,6 +100,8 @@ def monitoraggio_nonsonounbersaglio(request, me):
     if True not in [me.is_comissario, me.is_presidente]: return redirect('/')
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
+    typeform = TypeFormNonSonoUnBersaglio(request=request, me=me)
+
     request_comitato = request.GET.get('comitato')
     if me.is_comissario and not request_comitato:
         if me.is_presidente:
@@ -111,12 +113,10 @@ def monitoraggio_nonsonounbersaglio(request, me):
             'deleghe': deleghe.distinct('oggetto_id'),
             'url': 'monitoraggio-nonsonounbersaglio',
             'titolo': 'Monitoraggio Non Sono Un Bersaglio',
-            'idtypeform': '&id=by6gIZ',
+            'idtypeform': '&id={}'.format(typeform.get_first_typeform()),
         }
 
     context = dict()
-
-    typeform = TypeFormNonSonoUnBersaglio(request=request, me=me)
 
     if not typeform.make_test_request_to_api:
         return 'monitoraggio_nonsonounbersaglio.html', context
@@ -137,7 +137,7 @@ def monitoraggio_nonsonounbersaglio(request, me):
         context['is_done'] = True
 
     context['comitato'] = typeform.comitato
-    context['idtypeform'] = '&id=by6gIZ'
+    context['idtypeform'] = '&id={}'.format(typeform.get_first_typeform())
     context['user_comitato'] = typeform.comitato_id
     context['user_id'] = typeform.get_user_pk
     context['all_forms_are_completed'] = typeform.all_forms_are_completed

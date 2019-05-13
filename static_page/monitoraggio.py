@@ -315,5 +315,8 @@ class TypeFormResponses(TypeForm):
 
 class TypeFormNonSonoUnBersaglio(TypeForm):
     form_ids = OrderedDict([
-        ('by6gIZ', 'Sezione A – servizi di carattere sociale'),
+        ('KLyNcY', 'Sezione A – servizi di carattere sociale'),
     ])
+
+    def get_first_typeform(self):
+        return list(self.form_ids.items())[0][0]
