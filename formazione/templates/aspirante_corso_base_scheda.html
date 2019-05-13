@@ -11,8 +11,13 @@
 
 
 {% block app_contenuto %}
-    <h2 class="course__title-cri">{{ corso.titolo_cri|default:"" }}</h2>
-    <h4 class="course__name">{{ corso.nome }}</h4>
+    <style>
+        .course__name-without-title-cri {font-weight: bold; font-size:22px; color: #3c763d;}
+    </style>
+
+    {% if corso.titolo_cri %}<h2 class="course__title-cri">{{ corso.titolo_cri|default:"" }}</h2>{% endif %}
+
+    <h4 class="course__name {% if not corso.titolo_cri %}course__name-without-title-cri{%endif%}">{{ corso.nome }}</h4>
 
     <h4 class="allinea-centro">
         <i class="fa fa-fw fa-map-marker"></i> {% if corso.locazione %}<a href="{{ corso.url_mappa }}">{{ corso.locazione }}</a>{% else %} Posizione non impostata{% endif %} &mdash;
