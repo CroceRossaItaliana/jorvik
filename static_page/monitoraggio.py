@@ -105,8 +105,6 @@ class TypeForm:
             return self.persona
 
     def _set_typeform_context(self):
-        raise NotImplementedError
-    def _set_typeform_context(self):
         # This method generates a dict values,
         # False as default value means that form_id is not completed yet.
         return {k: [False, self.comitato_id, v] for k, v in self.form_ids.items()}
@@ -315,7 +313,7 @@ class TypeFormResponses(TypeForm):
 
 class TypeFormNonSonoUnBersaglio(TypeForm):
     form_ids = OrderedDict([
-        ('KLyNcY', 'Sezione A – servizi di carattere sociale'),
+        ('KLyNcY', ''),
     ])
 
     def get_first_typeform(self):
