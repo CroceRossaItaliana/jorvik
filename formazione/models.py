@@ -787,9 +787,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def relazione_direttore(self):
         # Non creare record in db per un corso ancora in preparazione
         if self.stato != CorsoBase.PREPARAZIONE:
-            if self.terminabile:
-                relazione, created = RelazioneCorso.objects.get_or_create(corso=self)
-                return relazione
+            relazione, created = RelazioneCorso.objects.get_or_create(corso=self)
+            return relazione
 
         return RelazioneCorso.objects.none()
 
@@ -1370,25 +1369,33 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
 
 
 class RelazioneCorso(ModelloSemplice, ConMarcaTemporale):
+    SENZA_VALORE = "Non ci sono segnalazioni e/o annotazioni"
+
     corso = models.ForeignKey(CorsoBase, related_name='relazione_corso')
     note_esplicative = models.TextField(
+        blank=True, null=True,
         verbose_name='Note esplicative',
         help_text="Note esplicative in relazione ai cambiamenti effettuati rispetto "
                   "alla programmazione approvata in fase di pianificazione iniziale del corso.")
     raggiungimento_obiettivi = models.TextField(
+        blank=True, null=True,
         verbose_name='Raggiungimento degli obiettivi del corso',
         help_text="Analisi sul raggiungimento degli obiettivi del corso "
                   "(generali rispetto all'evento e specifici di apprendimento).")
     annotazioni_corsisti = models.TextField(
+        blank=True, null=True,
         verbose_name="Annotazioni relative alla partecipazione dei corsisti",
         help_text="Annotazioni relative alla partecipazione dei corsisti ")
     annotazioni_risorse = models.TextField(
+        blank=True, null=True,
         help_text="Annotazioni relative a risorse e competenze di particolare "
                   "rilevanza emerse durante il percorso formativo")
     annotazioni_organizzazione_struttura = models.TextField(
+        blank=True, null=True,
         help_text="Annotazioni e segnalazioni sull'organizzazione e "
                   "la logistica e della struttura ospitante il corso")
     descrizione_attivita = models.TextField(
+        blank=True, null=True,
         help_text="Descrizione delle eventuali attività di "
                   "tirocinio/affiancamento con indicazione dei Tutor")
 
@@ -1397,7 +1404,7 @@ class RelazioneCorso(ModelloSemplice, ConMarcaTemporale):
         model_fields = self._meta.get_fields()
         super_class_fields_to_exclude = ['id', 'creazione', 'ultima_modifica', 'corso']
         fields = [i.name for i in model_fields if i.name not in super_class_fields_to_exclude]
-        if '' in [getattr(self, i) for i in fields]:
+        if list(filter(lambda x: x in ['', None], [getattr(self, i) for i in fields])):
             return False
         return True
 

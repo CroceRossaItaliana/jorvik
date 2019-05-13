@@ -520,7 +520,14 @@ def aspirante_corso_base_termina(request, me, pk):
 
         partecipanti_moduli += [(partecipante, form)]
 
-    if termina_corso:  # Se il corso può essere terminato.
+    if termina_corso:  # Se premuto pulsante "Genera verbale e termina corso"
+        # Verifica se la relazione è compilata
+        if not corso.relazione_direttore.is_completed:
+            messages.error(request, "Il corso non può essere terminato perchè "
+                                    "la relazione del direttore non è completata.")
+            return redirect(reverse('aspirante:terminate', args=(pk,)))
+
+        # Tutto ok, posso procedere
         corso.termina(mittente=me)
 
         if corso.is_nuovo_corso:
@@ -563,7 +570,18 @@ def corso_compila_relazione_direttore(request, me, pk):
     if request.method == 'POST':
         form_relazione = FormRelazioneDelDirettoreCorso(request.POST, instance=relazione)
         if form_relazione.is_valid():
-            form_relazione.save()
+            cd = form_relazione.cleaned_data
+            instance = form_relazione.save(commit=False)
+
+            # Se nei vari il Direttore non ha nulla da inserire valorizzarlo con un valore di default
+            no_value_fields = [k for k,v in cd.items() if not v]
+            if no_value_fields:
+                for k in no_value_fields:
+                    setattr(instance, k, RelazioneCorso.SENZA_VALORE)
+            instance.save()
+
+            messages.success(request, 'La relazione è stata salvata.')
+            return redirect(reverse('courses:compila_relazione_direttore', args=(pk,)))
     else:
         form_relazione = FormRelazioneDelDirettoreCorso(instance=relazione)
 
