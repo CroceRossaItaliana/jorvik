@@ -2,7 +2,7 @@ import datetime
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from django.db.transaction import atomic
 from django.contrib.contenttypes.models import ContentType
@@ -280,9 +280,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def troppo_tardi_per_iscriverti(self):
-        case_1 = timezone.now() > (self.data_inizio + datetime.timedelta(days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI))
-        case_2 = self.stato == CorsoBase.ATTIVO
-        return case_1 or case_2
+        return  timezone.now() > (self.data_inizio + datetime.timedelta(days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI))
 
     @property
     def possibile_aggiungere_iscritti(self):
@@ -597,34 +595,33 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def termina(self, mittente=None):
         """ Termina il corso base, genera il verbale e volontarizza. """
-        from django.db import transaction
 
         with transaction.atomic():
-            # Per maggiore sicurezza, questa cosa viene eseguita in una transazione.
+            # Per maggiore sicurezza, questa cosa viene eseguita in una transazione
 
             for partecipante in self.partecipazioni_confermate():
-
                 # Calcola e salva l'esito dell'esame.
-                esito_esame = partecipante.IDONEO if partecipante.idoneo else partecipante.NON_IDONEO
+                esito_esame = partecipante.IDONEO if partecipante.idoneo \
+                                                else partecipante.NON_IDONEO
                 partecipante.esito_esame = esito_esame
                 partecipante.save()
 
-                # Comunica il risultato all'aspirante/volontario.
+                # Comunica il risultato all'aspirante/volontario
                 partecipante.notifica_esito_esame(mittente=mittente)
 
                 # Actions required only for CorsoBase (Aspirante as participant)
                 if not self.is_nuovo_corso:
-                    # Se idoneo, volontarizza
-                    if partecipante.idoneo:
+                    if partecipante.idoneo:  # Se idoneo, volontarizza
                         partecipante.persona.da_aspirante_a_volontario(
+                            inizio=self.data_esame,
                             sede=partecipante.destinazione,
-                            mittente=mittente)
+                            mittente=mittente
+                        )
 
-
-            # Cancella tutte le eventuali partecipazioni in attesa.
+            # Cancella tutte le eventuali partecipazioni in attesa
             PartecipazioneCorsoBase.con_esito_pending(corso=self).delete()
 
-            # Salva lo stato del corso come terminato.
+            # Salva lo stato del corso come terminato
             self.stato = Corso.TERMINATO
             self.save()
 
@@ -1053,7 +1050,10 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
         """ Invia una e-mail al partecipante con l'esito del proprio esame. """
 
         template = "email_%s_corso_esito.html"
-        template = template % 'volontario' if self.corso.is_nuovo_corso else 'aspirante'
+        if self.corso.is_nuovo_corso:
+            template = template % 'volontario'
+        else:
+            template = template % 'aspirante'
 
         Messaggio.costruisci_e_accoda(
             oggetto="Esito del Corso: %s" % self.corso,
