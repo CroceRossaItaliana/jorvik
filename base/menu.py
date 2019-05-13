@@ -117,6 +117,7 @@ def menu(request):
             VOCE_LINKS,
             ("Monitoraggio", (
                 ("Monitoraggio 2019 (dati 2018)", 'fa-user', reverse('pages:monitoraggio')),
+                ("Monitoraggio non sono un bersaglio", 'fa-user', reverse('pages:monitoraggio-nonsonounbersaglio')),
             )) if me and (me.is_presidente or me.is_comissario) else None,
         )) if me and not hasattr(me, 'aspirante') else None,
         "posta": (

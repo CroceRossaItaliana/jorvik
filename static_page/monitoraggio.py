@@ -16,7 +16,7 @@ from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
 from static_page.tasks import send_mail
 
 
-class TypeFormResponses:
+class TypeForm:
     CELERY_TASK_PREFIX = 'CELERY_TASK_MSG_'
     TYPEFORM_DOMAIN = "https://api.typeform.com"
     TYPEFORM_TOKEN = settings.DEBUG_CONF.get('typeform', 'token')
@@ -26,20 +26,6 @@ class TypeFormResponses:
         'Content-Type': 'application/json'
     }
 
-    # python 3.5
-    form_ids = OrderedDict([
-        ('by6gIZ', 'Sezione A – servizi di carattere sociale'),
-        ('AX0Rjm',
-         'Sezione B – telefonia sociale, telesoccorso, teleassistenza e telemedicina'),
-        ('FZlCpn', 'Sezione C – salute'),
-        ('artG8g', 'Sezione D – ''''"ambiente", "sviluppo economico e coesione sociale",
-                "cultura, sport e ricreazione", "cooperazione e solidarietà internazionale",
-                "protezione civile"'''),
-        ('r3IRy8', 'Sezione E – relazioni'),
-        ('DhH3Mk', 'Sezione F – organizzazione'),
-        ('W6G6cD', 'Sezione G – risorse economiche e finanziarie'),
-    ])
-
     def __init__(self, request=None, me=None, user_pk=None):
         self.request = request
         self.me = me
@@ -47,10 +33,8 @@ class TypeFormResponses:
 
         self.context_typeform = self._set_typeform_context()
 
-    def _set_typeform_context(self):
-        # This method generates a dict values,
-        # False as default value means that form_id is not completed yet.
-        return {k: [False, self.comitato_id, v] for k, v in self.form_ids.items()}
+    # python 3.5
+    form_ids = OrderedDict([])
 
     @property
     def get_user_pk(self):
@@ -92,18 +76,6 @@ class TypeFormResponses:
         else:
             return Sede.objects.none()
 
-    def get_responses_for_all_forms(self):
-        comitato_id = str(self.comitato_id)
-        for _id, bottone_name in self.form_ids.items():
-            json = self.get_json_from_responses(_id)
-            for item in json['items']:
-                c = item.get('hidden', OrderedDict())
-                c = c.get('c')
-
-                if c and c == comitato_id:
-                    self.context_typeform[_id][0] = True
-                    break  # bottone spento
-
     @property
     def all_forms_are_completed(self):
         return 0 if False in [v[0] for k, v in self.context_typeform.items()] else 1
@@ -122,6 +94,34 @@ class TypeFormResponses:
         first_form_id = list(self.form_ids.keys())[0]
         response = self.make_request(form_id=first_form_id, path='/responses')
         return response.status_code == 200
+
+    @property
+    def user_details(self):
+        if self.request is not None:
+            # Not celery
+            return self.request.user.persona
+        else:
+            # Called within celery task
+            return self.persona
+
+    def _set_typeform_context(self):
+        raise NotImplementedError
+    def _set_typeform_context(self):
+        # This method generates a dict values,
+        # False as default value means that form_id is not completed yet.
+        return {k: [False, self.comitato_id, v] for k, v in self.form_ids.items()}
+
+    def get_responses_for_all_forms(self):
+        comitato_id = str(self.comitato_id)
+        for _id, bottone_name in self.form_ids.items():
+            json = self.get_json_from_responses(_id)
+            for item in json['items']:
+                c = item.get('hidden', OrderedDict())
+                c = c.get('c')
+
+                if c and c == comitato_id:
+                    self.context_typeform[_id][0] = True
+                    break  # bottone spento
 
     def get_json_from_responses(self, form_id=None, instance=None):
         if instance:
@@ -259,14 +259,21 @@ class TypeFormResponses:
 
         return retrieved
 
-    @property
-    def user_details(self):
-        if self.request is not None:
-            # Not celery
-            return self.request.user.persona
-        else:
-            # Called within celery task
-            return self.persona
+
+class TypeFormResponses(TypeForm):
+
+    form_ids = OrderedDict([
+        ('by6gIZ', 'Sezione A – servizi di carattere sociale'),
+        ('AX0Rjm',
+         'Sezione B – telefonia sociale, telesoccorso, teleassistenza e telemedicina'),
+        ('FZlCpn', 'Sezione C – salute'),
+        ('artG8g', 'Sezione D – ''''"ambiente", "sviluppo economico e coesione sociale",
+                "cultura, sport e ricreazione", "cooperazione e solidarietà internazionale",
+                "protezione civile"'''),
+        ('r3IRy8', 'Sezione E – relazioni'),
+        ('DhH3Mk', 'Sezione F – organizzazione'),
+        ('W6G6cD', 'Sezione G – risorse economiche e finanziarie'),
+    ])
 
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print.html', {
@@ -304,3 +311,9 @@ class TypeFormResponses:
 
         # messages.add_message(self.request, messages.INFO, self.CELERY_TASK_PREFIX+task.id)
         return redirect(reverse('pages:monitoraggio'))
+
+
+class TypeFormNonSonoUnBersaglio(TypeForm):
+    form_ids = OrderedDict([
+        ('by6gIZ', 'Sezione A – servizi di carattere sociale'),
+    ])

@@ -5,7 +5,7 @@ from django.contrib.messages import get_messages
 from autenticazione.funzioni import pagina_privata
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
 from .models import Page
-from .monitoraggio import TypeFormResponses
+from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio
 
 
 @pagina_privata
@@ -21,7 +21,7 @@ def view_page(request, me, slug):
 
 @pagina_privata
 def monitoraggio(request, me):
-    if True not in [me.is_comissario, me.is_presidente]: return redirect( '/')
+    if True not in [me.is_comissario, me.is_presidente]: return redirect('/')
     if not hasattr(me, 'sede_riferimento'): return redirect('/')
 
     request_comitato = request.GET.get('comitato')
@@ -32,7 +32,11 @@ def monitoraggio(request, me):
         else:
             deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
 
-        return 'monitoraggio_choose_comitato.html', {'deleghe': deleghe.distinct('oggetto_id')}
+        return 'monitoraggio_choose_comitato.html', {
+            'deleghe': deleghe.distinct('oggetto_id'),
+            'url': 'monitoraggio',
+            'titolo': 'Monitoraggio 2019 (dati 2018)'
+        }
 
     # Comitato selezionato, mostrare le form di typeform
     context = dict()
@@ -89,3 +93,53 @@ def monitoraggio_actions(request, me):
         return responses.print()
     elif action == 'send_via_mail':
         return responses.send_via_mail()
+
+
+@pagina_privata
+def monitoraggio_nonsonounbersaglio(request, me):
+    if True not in [me.is_comissario, me.is_presidente]: return redirect('/')
+    if not hasattr(me, 'sede_riferimento'): return redirect('/')
+
+    request_comitato = request.GET.get('comitato')
+    if me.is_comissario and not request_comitato:
+        if me.is_presidente:
+            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
+        else:
+            deleghe = me.deleghe_attuali(tipo__in=[COMMISSARIO])
+
+        return 'monitoraggio_choose_comitato.html', {
+            'deleghe': deleghe.distinct('oggetto_id'),
+            'url': 'monitoraggio-nonsonounbersaglio',
+            'titolo': 'Monitoraggio Non Sono Un Bersaglio',
+            'idtypeform': '&id=by6gIZ',
+        }
+
+    context = dict()
+
+    typeform = TypeFormNonSonoUnBersaglio(request=request, me=me)
+
+    if not typeform.make_test_request_to_api:
+        return 'monitoraggio_nonsonounbersaglio.html', context
+
+    context['type_form'] = typeform.context_typeform
+
+    typeform.get_responses_for_all_forms()
+
+    is_done = False
+    typeform_id = request.GET.get('id', False)
+    if typeform_id:
+        typeform_ctx = context['type_form'][typeform_id]
+        is_done = typeform_ctx[0]
+        # context['section'] = typeform_ctx
+        context['typeform_id'] = typeform_id
+
+    if is_done:
+        context['is_done'] = True
+
+    context['comitato'] = typeform.comitato
+    context['idtypeform'] = '&id=by6gIZ'
+    context['user_comitato'] = typeform.comitato_id
+    context['user_id'] = typeform.get_user_pk
+    context['all_forms_are_completed'] = typeform.all_forms_are_completed
+
+    return 'monitoraggio_nonsonounbersaglio.html', context
