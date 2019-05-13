@@ -12,7 +12,7 @@ from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA,
     GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
 from .utils import remove_none
 from .models import Menu
-
+from static_page.monitoraggio import TypeFormNonSonoUnBersaglio
 # __author__ = 'alfioemanuele'
 
 """
@@ -117,7 +117,10 @@ def menu(request):
             VOCE_LINKS,
             ("Monitoraggio", (
                 ("Monitoraggio 2019 (dati 2018)", 'fa-user', reverse('pages:monitoraggio')),
-                ("Monitoraggio non sono un bersaglio", 'fa-user', reverse('pages:monitoraggio-nonsonounbersaglio')),
+                ("Monitoraggio non sono un bersaglio", 'fa-user', '{}?comitato={}&id={}'.format(
+                    reverse('pages:monitoraggio-nonsonounbersaglio'),
+                    me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE]).last().oggetto_id,
+                    TypeFormNonSonoUnBersaglio(None, me).get_first_typeform())),
             )) if me and (me.is_presidente or me.is_comissario) else None,
         )) if me and not hasattr(me, 'aspirante') else None,
         "posta": (
