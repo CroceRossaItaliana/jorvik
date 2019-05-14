@@ -5,7 +5,7 @@ from django.contrib.messages import get_messages
 from autenticazione.funzioni import pagina_privata
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
 from .models import Page
-from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio
+from .monitoraggio import TypeFormResponses, TypeFormNonSonoUnBersaglio, NONSONOUNBERSAGLIO, MONITORAGGIO ,MONITORAGGIOTYPE
 
 
 @pagina_privata
@@ -35,7 +35,8 @@ def monitoraggio(request, me):
         return 'monitoraggio_choose_comitato.html', {
             'deleghe': deleghe.distinct('oggetto_id'),
             'url': 'monitoraggio',
-            'titolo': 'Monitoraggio 2019 (dati 2018)'
+            'titolo': 'Monitoraggio 2019 (dati 2018)',
+            'target': MONITORAGGIO
         }
 
     # Comitato selezionato, mostrare le form di typeform
@@ -65,7 +66,7 @@ def monitoraggio(request, me):
     context['user_comitato'] = typeform.comitato_id
     context['user_id'] = typeform.get_user_pk
     context['all_forms_are_completed'] = typeform.all_forms_are_completed
-
+    context['target'] = MONITORAGGIO
     # # Get celery_task_id
     # # TODO: ajax polling task is ready
     # prefix = typeform.CELERY_TASK_PREFIX
@@ -81,14 +82,15 @@ def monitoraggio(request, me):
 
 @pagina_privata
 def monitoraggio_actions(request, me):
-    redirect_url = redirect(reverse('pages:monitoraggio'))
-
     action = request.GET.get('action')
+    target = request.GET.get('target')
+    redirect_url = redirect(reverse(MONITORAGGIOTYPE[target][1]))
+
     if not action: return redirect_url
     if not hasattr(me, 'sede_riferimento'): return redirect_url
     if not me.is_presidente: return redirect('/')
 
-    responses = TypeFormResponses(request=request, me=me)
+    responses = MONITORAGGIOTYPE[target][0](request=request, me=me)
     if action == 'print':
         return responses.print()
     elif action == 'send_via_mail':
@@ -114,6 +116,7 @@ def monitoraggio_nonsonounbersaglio(request, me):
             'url': 'monitoraggio-nonsonounbersaglio',
             'titolo': 'Monitoraggio Non Sono Un Bersaglio',
             'idtypeform': '&id={}'.format(typeform.get_first_typeform()),
+            'target': NONSONOUNBERSAGLIO
         }
 
     context = dict()
@@ -130,7 +133,6 @@ def monitoraggio_nonsonounbersaglio(request, me):
     if typeform_id:
         typeform_ctx = context['type_form'][typeform_id]
         is_done = typeform_ctx[0]
-        # context['section'] = typeform_ctx
         context['typeform_id'] = typeform_id
 
     if is_done:
@@ -141,5 +143,6 @@ def monitoraggio_nonsonounbersaglio(request, me):
     context['user_comitato'] = typeform.comitato_id
     context['user_id'] = typeform.get_user_pk
     context['all_forms_are_completed'] = typeform.all_forms_are_completed
+    context['target'] = NONSONOUNBERSAGLIO
 
     return 'monitoraggio_nonsonounbersaglio.html', context

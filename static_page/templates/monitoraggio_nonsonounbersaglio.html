@@ -24,4 +24,13 @@
       </strong></p>
     </div>
 
+    {% if all_forms_are_completed %}
+        <div class="typeform_widget-tools">
+          <ul class="typeform_widget-tools__list">
+            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=print&target={{target}}" target="_blank"><i class="fa fa-print fa-fw"></i> Stampa le risposte</a></li>
+            <li><a class="monitoraggio_action_btn" href="{% url 'pages:monitoraggio_actions' %}?action=send_via_mail&target={{target}}" target="_blank"><i class="fa fa-envelope fa-fw"></i> Invia via e-mail</a></li>
+          </ul>
+        </div>
+    {% endif %}
+
 {% endblock %}

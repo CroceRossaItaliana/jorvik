@@ -8,8 +8,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
-from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
+from django.core.urlresolvers import reverse
 
 from anagrafica.models import Persona, Sede
 from anagrafica.permessi.applicazioni import COMMISSARIO, PRESIDENTE
@@ -257,22 +257,6 @@ class TypeForm:
 
         return retrieved
 
-
-class TypeFormResponses(TypeForm):
-
-    form_ids = OrderedDict([
-        ('by6gIZ', 'Sezione A – servizi di carattere sociale'),
-        ('AX0Rjm',
-         'Sezione B – telefonia sociale, telesoccorso, teleassistenza e telemedicina'),
-        ('FZlCpn', 'Sezione C – salute'),
-        ('artG8g', 'Sezione D – ''''"ambiente", "sviluppo economico e coesione sociale",
-                "cultura, sport e ricreazione", "cooperazione e solidarietà internazionale",
-                "protezione civile"'''),
-        ('r3IRy8', 'Sezione E – relazioni'),
-        ('DhH3Mk', 'Sezione F – organizzazione'),
-        ('W6G6cD', 'Sezione G – risorse economiche e finanziarie'),
-    ])
-
     def _render_to_string(self, to_print=False):
         return render_to_string('monitoraggio_print.html', {
             'user_details': self.user_details,
@@ -311,6 +295,22 @@ class TypeFormResponses(TypeForm):
         return redirect(reverse('pages:monitoraggio'))
 
 
+class TypeFormResponses(TypeForm):
+
+    form_ids = OrderedDict([
+        ('by6gIZ', 'Sezione A – servizi di carattere sociale'),
+        ('AX0Rjm',
+         'Sezione B – telefonia sociale, telesoccorso, teleassistenza e telemedicina'),
+        ('FZlCpn', 'Sezione C – salute'),
+        ('artG8g', 'Sezione D – ''''"ambiente", "sviluppo economico e coesione sociale",
+                "cultura, sport e ricreazione", "cooperazione e solidarietà internazionale",
+                "protezione civile"'''),
+        ('r3IRy8', 'Sezione E – relazioni'),
+        ('DhH3Mk', 'Sezione F – organizzazione'),
+        ('W6G6cD', 'Sezione G – risorse economiche e finanziarie'),
+    ])
+
+
 class TypeFormNonSonoUnBersaglio(TypeForm):
     form_ids = OrderedDict([
         ('KLyNcY', ''),
@@ -318,3 +318,12 @@ class TypeFormNonSonoUnBersaglio(TypeForm):
 
     def get_first_typeform(self):
         return list(self.form_ids.items())[0][0]
+
+
+MONITORAGGIO = 'monitoraggio'
+NONSONOUNBERSAGLIO = 'nonsonounbersaglio'
+
+MONITORAGGIOTYPE = {
+    MONITORAGGIO: (TypeFormResponses, 'pages:monitoraggio'),
+    NONSONOUNBERSAGLIO: (TypeFormNonSonoUnBersaglio, 'pages:monitoraggio-nonsonounbersaglio')
+}
