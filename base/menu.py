@@ -81,9 +81,7 @@ def menu(request):
     VOCE_LINKS = ("Links", tuple((link.name, link.icon_class, link.url)
             for link in Menu.objects.filter(is_active=True).order_by('order')))
 
-    deleghe_monitoraggio = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE])
-
-    print(len(deleghe_monitoraggio))
+    deleghe_monitoraggio = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE]) if me else None
 
     elementi = {
         "utente": (
