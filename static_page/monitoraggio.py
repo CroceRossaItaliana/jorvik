@@ -288,11 +288,11 @@ class TypeForm:
         response.write(self.convert_html_to_pdf())
         return response
 
-    def send_via_mail(self):
+    def send_via_mail(self, redirect_url):
         task = send_mail.apply_async(args=(self.get_user_pk,), task_id=uuid())
 
         # messages.add_message(self.request, messages.INFO, self.CELERY_TASK_PREFIX+task.id)
-        return redirect(reverse('pages:monitoraggio'))
+        return redirect_url
 
 
 class TypeFormResponses(TypeForm):
