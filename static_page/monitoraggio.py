@@ -313,7 +313,7 @@ class TypeFormResponses(TypeForm):
 
 class TypeFormNonSonoUnBersaglio(TypeForm):
     form_ids = OrderedDict([
-        ('KLyNcY', ''),
+        ('KLyNcY', 'HCID'),
     ])
 
     def get_first_typeform(self):
