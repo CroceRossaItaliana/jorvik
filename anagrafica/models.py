@@ -20,9 +20,8 @@ from django_countries.fields import CountryField
 
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
-    crea_validatore_dimensione_file, valida_dimensione_file_8mb,
-    valida_dimensione_file_5mb, valida_almeno_14_anni, valida_partita_iva,
-    valida_iban, valida_email_personale)
+    valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
+    valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
 from attivita.models import Turno, Partecipazione
 from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazione
