@@ -276,24 +276,27 @@ def aspirante_corso_base_lezioni(request, me, pk):
 
     partecipanti = Persona.objects.filter(partecipazioni_corsi__in=corso.partecipazioni_confermate())
     lezioni = corso.lezioni.all()
-    moduli = []
-    partecipanti_lezioni = []
+
+    moduli = list()
+    partecipanti_lezioni = list()
+
+    AZIONE_SALVA = request.POST and request.POST['azione'] == 'salva'
+    AZIONE_NUOVA = request.POST and request.POST['azione'] == 'nuova'
+
     for lezione in lezioni:
-        form = ModuloModificaLezione(
-            request.POST if request.POST and request.POST['azione'] == 'salva' else None,
-            instance=lezione,
-            corso=corso,
-            prefix="%s" % (lezione.pk,)
-        )
-        if request.POST and request.POST['azione'] == 'salva' and form.is_valid():
+        form = ModuloModificaLezione(request.POST if AZIONE_SALVA else None,
+            instance=lezione, corso=corso, prefix="%s" % lezione.pk)
+
+        if AZIONE_SALVA and form.is_valid():
             form.save()
 
+        # Presenze/assenze
         moduli += [form]
         partecipanti_lezione = partecipanti.exclude(assenze_corsi_base__lezione=lezione).order_by('nome', 'cognome')
 
-        if request.POST and request.POST['azione'] == 'salva':
+        if AZIONE_SALVA:
             for partecipante in partecipanti:
-                if ("%s" % (partecipante.pk,)) in request.POST.getlist('presenze-%s' % (lezione.pk,)):
+                if ("%s" % partecipante.pk) in request.POST.getlist('presenze-%s' % lezione.pk):
                     # Se presente, rimuovi ogni assenza.
                     AssenzaCorsoBase.objects.filter(lezione=lezione, persona=partecipante).delete()
                 else:
@@ -304,12 +307,10 @@ def aspirante_corso_base_lezioni(request, me, pk):
 
         partecipanti_lezioni += [partecipanti_lezione]
 
-    if request.POST and request.POST['azione'] == 'nuova':
-        modulo_nuova_lezione = ModuloModificaLezione(request.POST,
-                                                     prefix="nuova",
-                                                     corso=corso)
-        if modulo_nuova_lezione.is_valid():
-            lezione = modulo_nuova_lezione.save(commit=False)
+    if AZIONE_NUOVA:
+        form_nuova_lezione = ModuloModificaLezione(request.POST, prefix="nuova", corso=corso)
+        if form_nuova_lezione.is_valid():
+            lezione = form_nuova_lezione.save(commit=False)
             lezione.corso = corso
             lezione.save()
 
@@ -317,12 +318,18 @@ def aspirante_corso_base_lezioni(request, me, pk):
                 # Informa docente della lezione
                 lezione.send_messagge_to_docente(me)
 
-            return redirect("%s#%d" % (corso.url_lezioni, lezione.pk,))
+            return redirect("%s#%d" % (corso.url_lezioni, lezione.pk))
     else:
-        modulo_nuova_lezione = ModuloModificaLezione(prefix="nuova", initial={
+        form_nuova_lezione = ModuloModificaLezione(prefix="nuova", initial={
             "inizio": timezone.now(),
             "fine": timezone.now() + timedelta(hours=2)
         }, corso=corso)
+
+    try:
+        if not form.is_valid():
+            messages.error(request, 'Verifica tutti i moduli sulla presenza degli errori.')
+    except:
+        pass
 
     lezioni = zip(lezioni, moduli, partecipanti_lezioni)
 
@@ -331,7 +338,7 @@ def aspirante_corso_base_lezioni(request, me, pk):
         "puo_modificare": True,
         "lezioni": lezioni,
         "partecipanti": partecipanti,
-        "modulo_nuova_lezione": modulo_nuova_lezione,
+        "modulo_nuova_lezione": form_nuova_lezione,
     }
     return 'aspirante_corso_base_scheda_lezioni.html', context
 

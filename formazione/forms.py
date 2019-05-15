@@ -131,6 +131,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
 class ModuloModificaLezione(ModelForm):
     docente = autocomplete_light.ModelChoiceField("DocenteLezioniCorso")
     fine = forms.DateTimeField()
+    obiettivo = forms.CharField(required=False)
 
     def clean(self):
         cd = self.cleaned_data
@@ -151,10 +152,6 @@ class ModuloModificaLezione(ModelForm):
             self.add_error('fine', err_data_lt_inizio_corso)
 
         return cd
-    
-    def __init__(self, *args, **kwargs):
-        self.corso = kwargs.pop('corso')
-        super().__init__(*args, **kwargs)
 
     class Meta:
         model = LezioneCorsoBase
@@ -163,6 +160,10 @@ class ModuloModificaLezione(ModelForm):
             'nome': 'Lezione',
             'obiettivo': 'Argomento',
         }
+
+    def __init__(self, *args, **kwargs):
+        self.corso = kwargs.pop('corso')
+        super().__init__(*args, **kwargs)
 
 
 class ModuloModificaCorsoBase(ModelForm):
