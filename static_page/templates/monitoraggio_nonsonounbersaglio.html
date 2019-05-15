@@ -19,9 +19,9 @@
     </div>
 
     {% if all_forms_are_completed %}
-        <p style="text-align:center;"><strong>
+        <p id="typeform_message" style="text-align:center;"><strong>
             {% if all_forms_are_completed %}
-              Complimenti! Hai compilato il monitoraggio.
+              Questionatio completato! Ora puoi:
             {% endif %}
         </strong></p>
         <div id="typeform_widget" class="typeform_widget-tools">
@@ -31,10 +31,8 @@
           </ul>
         </div>
     {% else %}
-        <p style="text-align:center; display: none;"><strong>
-            {% if all_forms_are_completed %}
-              Complimenti! Hai compilato il monitoraggio.
-            {% endif %}
+        <p id="typeform_message" style="text-align:center; display: none;"><strong>
+             Questionatio completato! Ora puoi:
         </strong></p>
         <div id="typeform_widget" class="typeform_widget-tools" style="display: none">
           <ul class="typeform_widget-tools__list">
@@ -63,8 +61,10 @@
         function submit() {
             let typeform = document.getElementById("my-embedded-typeform");
             let complete = document.getElementById("typeform_widget");
+            let message = document.getElementById("typeform_message");
             typeform.style.display = "none";
             complete.style.display = "block";
+            message.style.display = "block";
         }
     </script>
 {% endblock %}

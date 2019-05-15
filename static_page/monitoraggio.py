@@ -265,7 +265,7 @@ class TypeForm:
             'to_print': to_print,
         })
 
-    def print(self):
+    def print(self, redirect_url):
         html = self._render_to_string(to_print=True)
 
         if hasattr(self, '_no_data_retrieved'):

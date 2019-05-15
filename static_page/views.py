@@ -92,7 +92,7 @@ def monitoraggio_actions(request, me):
 
     responses = MONITORAGGIOTYPE[target][0](request=request, me=me)
     if action == 'print':
-        return responses.print()
+        return responses.print(redirect_url)
     elif action == 'send_via_mail':
         return responses.send_via_mail(redirect_url)
 
