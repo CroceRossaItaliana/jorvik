@@ -5,7 +5,7 @@ from .models import CorsoFile, CorsoLink, CorsoEstensione
 
 
 CorsoFileFormSet = modelformset_factory(CorsoFile,
-    form=CorsoLinkForm, extra=1, max_num=2)
+    form=CorsoLinkForm, extra=1, max_num=4)
 
 CorsoLinkFormSet = modelformset_factory(CorsoLink,
     fields=('link',), extra=1, max_num=2)
