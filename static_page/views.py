@@ -94,7 +94,7 @@ def monitoraggio_actions(request, me):
     if action == 'print':
         return responses.print(redirect_url)
     elif action == 'send_via_mail':
-        return responses.send_via_mail(redirect_url)
+        return responses.send_via_mail(redirect_url, target)
 
 
 @pagina_privata

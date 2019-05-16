@@ -288,8 +288,8 @@ class TypeForm:
         response.write(self.convert_html_to_pdf())
         return response
 
-    def send_via_mail(self, redirect_url):
-        task = send_mail.apply_async(args=(self.get_user_pk,), task_id=uuid())
+    def send_via_mail(self, redirect_url, target):
+        task = send_mail.apply_async(args=(self.get_user_pk, target), task_id=uuid())
 
         # messages.add_message(self.request, messages.INFO, self.CELERY_TASK_PREFIX+task.id)
         return redirect_url
@@ -309,12 +309,24 @@ class TypeFormResponses(TypeForm):
         ('DhH3Mk', 'Sezione F – organizzazione'),
         ('W6G6cD', 'Sezione G – risorse economiche e finanziarie'),
     ])
+    email_body = """Grazie per aver completato il Monitoraggio 2019 (dati 2018).\n
+        Nell'apprezzare la collaborazione prestata, a breve restituiremo i dati 
+        aggregati a livello nazionale e regionale per i seguiti di competenza.\n
+        Per qualsiasi informazione contattare l'area sociale all'indirizzo mail: sociale@cri.it"""
+
+    email_object = 'Risposte monitoraggio 2019 (dati 2018) di %s'
 
 
 class TypeFormNonSonoUnBersaglio(TypeForm):
     form_ids = OrderedDict([
         ('KLyNcY', 'HCID'),
     ])
+
+    email_body = '''Grazie per aver completato il Monitoraggio Campagna NON SONO UN BERSAGLIO.\n
+    Nell'apprezzare la collaborazione prestata, vi confermiamo la corretta ricezione del modulo compilato.\n'''
+
+    email_object = 'Risposte monitoraggio NON SONO UN BERSAGLIO%s'
+
 
     def get_first_typeform(self):
         return list(self.form_ids.items())[0][0]
