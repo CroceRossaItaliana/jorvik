@@ -1213,21 +1213,50 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
 
 
 class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
+    """
+    NB: valorizzati i campi "is_esonero" e "esonero_motivazione" significa
+    "Presenza", quindi per ottenere in una queryset solo le persone assenti
+    bisogna escludere i risultati con questi 2 campi valorizzati.
+    """
 
     lezione = models.ForeignKey(LezioneCorsoBase, related_name='assenze', on_delete=models.CASCADE)
     persona = models.ForeignKey(Persona, related_name='assenze_corsi_base', on_delete=models.CASCADE)
     registrata_da = models.ForeignKey(Persona, related_name='assenze_corsi_base_registrate', null=True, on_delete=models.SET_NULL)
+
+    # Se questi 2 campi hanno un valore, Persona sarà considerata "Presente" alla lezione (GAIA-96)
+    esonero = models.NullBooleanField(default=False)
+    esonero_motivazione = models.CharField(max_length=255, null=True, blank=True,
+                                           verbose_name="Motivazione dell'esonero")
+
+    @classmethod
+    def create_assenza(cls, lezione, persona, registrata_da, esonero=None):
+        assenza, created = cls.objects.get_or_create(lezione=lezione,
+                                                     persona=persona,
+                                                     registrata_da=registrata_da)
+        if esonero:
+            # Scrivi nell'oggetto <Assenza> la motivazione dell'esonero
+            assenza.esonero = True
+            assenza.esonero_motivazione = esonero
+            assenza.save()
+
+        return assenza
+
+    @property
+    def is_esonero(self): # , lezione, persona
+        if self.esonero and self.esonero_motivazione:
+            return True
+        if self.esonero or self.esonero_motivazione:
+            return True
+        return False
+
+    def __str__(self):
+        return 'Assenza di %s a %s' % (self.persona.codice_fiscale, self.lezione)
 
     class Meta:
         verbose_name = "Assenza a Corso"
         verbose_name_plural = "Assenze ai Corsi"
         permissions = (
             ("view_assenzacorsobase", "Can view corso Assenza a Corso Base"),
-        )
-
-    def __str__(self):
-        return "Assenza di %s a %s" % (
-            self.persona.codice_fiscale, self.lezione
         )
 
 

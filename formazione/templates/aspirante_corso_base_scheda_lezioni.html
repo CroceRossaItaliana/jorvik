@@ -1,10 +1,17 @@
 {% extends 'aspirante_corso_base_scheda.html' %}
 
 {% load bootstrap3 %}
+{% load formazione_templatetags %}
 
 {% block scheda_titolo %}Lezioni{% endblock %}
 
 {% block scheda_contenuto %}
+<style>
+  .esonero-text {
+    font-size: 12px;
+    padding: 4px 6px;
+  }
+</style>
 <div class="row">
     <form method="POST">
         {% csrf_token %}
@@ -43,11 +50,30 @@
                                         <tbody>
                                             {% for partecipante in partecipanti %}
                                                 <tr>
-                                                    <td>
-                                                        <label style="margin-bottom: -1px;">
-                                                            <input type="checkbox" name="presenze-{{ lezione.pk }}" value="{{ partecipante.pk }}" {% if partecipante in partecipanti_lezione %}checked="checked"{% endif %} />
-                                                             S&igrave;
+                                                    <td id="actions-{{partecipante.pk}}">
+                                                        {% lezione_esonero lezione partecipante as assenza_lezione_esonero %}
+
+                                                        <label style="margin-bottom: -1px;"><input type="checkbox"
+                                                             id="presenza-{{lezione.pk}}-{{partecipante.pk}}"
+                                                             name="presenze-{{ lezione.pk }}"
+                                                             value="{{ partecipante.pk }}"
+                                                             {% if partecipante in partecipanti_lezione %}checked="checked"{% endif %} /> S&igrave;
                                                         </label>
+
+                                                        <label style="margin: 0 0 0 8px;"><input type="checkbox"
+                                                             class="esoneroCheckbox"
+                                                             name="esonero-checkbox-{{lezione.pk}}-{{partecipante.pk}}"
+                                                             data-esonero="#esonero-{{lezione.pk}}-{{partecipante.pk}}"
+                                                             data-lezione-partecipante="{{lezione.pk}}-{{partecipante.pk}}"
+                                                             {% if assenza_lezione_esonero %}checked="checked"{% endif %}> Esonero
+                                                        </label>
+
+                                                        <input type="text" style="{% if not assenza_lezione_esonero %}display:none;{% endif %}"
+                                                             class="esonero-text"
+                                                             id="esonero-{{lezione.pk}}-{{partecipante.pk}}"
+                                                             name="esonero-{{lezione.pk}}-{{partecipante.pk}}"
+                                                             placeholder="Motivazione dell'esonero"
+                                                             value='{{ assenza_lezione_esonero.esonero_motivazione|default:"" }}'>
                                                     </td>
                                                     <td>
                                                         {{ partecipante.link|safe }}
@@ -71,6 +97,32 @@
                                 </td>
                             </tr>
                         {% endfor %}
+
+                        <script>
+                          $('.esoneroCheckbox').on('click', function(e){
+                            let esonero_id = $(this).data('esonero');
+                            $(esonero_id).toggle();
+
+                            if ($(this).is(":checked")) {
+                              $(this).prop('checked', 'checked');
+                            } else {
+                              $(this).prop('checked', '');
+                            };
+
+
+                            // checkbox "Presenza"
+                            let presenza_lezione_partecipante = $(this).data('lezione-partecipante')
+                            let checkbox_presenza = $('#presenza-' +presenza_lezione_partecipante);
+
+                            if (checkbox_presenza.prop('checked')) {
+                              // if ($(this).prop('checked') === false) {
+                              //  checkbox_presenza.prop('checked', '');
+                              // }
+                            } else {
+                              checkbox_presenza.prop('checked', 'checked');
+                            }
+                          });
+                        </script>
                     </table>
                 </div>
             </div>

@@ -27,6 +27,7 @@ from .models import (Corso, CorsoBase, CorsoEstensione, AssenzaCorsoBase,
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi,
     ModuloVerbaleAspiranteCorsoBase, FormRelazioneDelDirettoreCorso)
+from .classes import GestioneAssenza
 
 
 @pagina_privata
@@ -283,6 +284,7 @@ def aspirante_corso_base_lezioni(request, me, pk):
     AZIONE_SALVA = request.POST and request.POST['azione'] == 'salva'
     AZIONE_NUOVA = request.POST and request.POST['azione'] == 'nuova'
 
+    # Presenze/assenze
     for lezione in lezioni:
         form = ModuloModificaLezione(request.POST if AZIONE_SALVA else None,
             instance=lezione, corso=corso, prefix="%s" % lezione.pk)
@@ -290,20 +292,16 @@ def aspirante_corso_base_lezioni(request, me, pk):
         if AZIONE_SALVA and form.is_valid():
             form.save()
 
-        # Presenze/assenze
         moduli += [form]
-        partecipanti_lezione = partecipanti.exclude(assenze_corsi_base__lezione=lezione).order_by('nome', 'cognome')
+
+        # Excludi assenze con esonero
+        partecipanti_lezione = partecipanti.exclude(
+            Q(assenze_corsi_base__esonero=False),
+            assenze_corsi_base__lezione=lezione
+        ).order_by('nome', 'cognome')
 
         if AZIONE_SALVA:
-            for partecipante in partecipanti:
-                if ("%s" % partecipante.pk) in request.POST.getlist('presenze-%s' % lezione.pk):
-                    # Se presente, rimuovi ogni assenza.
-                    AssenzaCorsoBase.objects.filter(lezione=lezione, persona=partecipante).delete()
-                else:
-                    # Assicurati che sia segnato come assente.
-                    if not AssenzaCorsoBase.objects.filter(lezione=lezione, persona=partecipante).exists():
-                        a = AssenzaCorsoBase(lezione=lezione, persona=partecipante, registrata_da=me)
-                        a.save()
+            gestione_assenze = GestioneAssenza(request, lezione, me, partecipanti)
 
         partecipanti_lezioni += [partecipanti_lezione]
 
@@ -326,8 +324,9 @@ def aspirante_corso_base_lezioni(request, me, pk):
         }, corso=corso)
 
     try:
-        if not form.is_valid():
-            messages.error(request, 'Verifica tutti i moduli sulla presenza degli errori.')
+        if AZIONE_SALVA or AZIONE_NUOVA:
+            if not form.is_valid():
+                messages.error(request, 'Verifica tutti i moduli sulla presenza degli errori.')
     except:
         pass
 

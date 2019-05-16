@@ -17,3 +17,13 @@ def titoli_del_corso(persona, cd):
         'lista': lista.order_by('-data_scadenza'),
         'num_of_titles': init_query.count()
     }
+
+@register.simple_tag
+def lezione_esonero(lezione, partecipante):
+    from ..models import AssenzaCorsoBase
+
+    try:
+        a = AssenzaCorsoBase.objects.get(lezione=lezione, persona=partecipante)
+        return a if a.is_esonero else None
+    except AssenzaCorsoBase.DoesNotExist:
+        return None
