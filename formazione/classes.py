@@ -1,7 +1,7 @@
 from .models import AssenzaCorsoBase
 
 
-class GestioneAssenza:
+class GestionePresenza:
     def __init__(self, request, lezione, me, partecipanti):
         self.request = request
         self.lezione = lezione

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from django.db.models import Q
 from django.utils import timezone
 from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
@@ -27,7 +28,7 @@ from .models import (Corso, CorsoBase, CorsoEstensione, AssenzaCorsoBase,
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi,
     ModuloVerbaleAspiranteCorsoBase, FormRelazioneDelDirettoreCorso)
-from .classes import GestioneAssenza
+from .classes import GestionePresenza
 
 
 @pagina_privata
@@ -301,7 +302,7 @@ def aspirante_corso_base_lezioni(request, me, pk):
         ).order_by('nome', 'cognome')
 
         if AZIONE_SALVA:
-            gestione_assenze = GestioneAssenza(request, lezione, me, partecipanti)
+            gestione_presenze = GestionePresenza(request, lezione, me, partecipanti)
 
         partecipanti_lezioni += [partecipanti_lezione]
 
