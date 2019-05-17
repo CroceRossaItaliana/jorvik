@@ -174,8 +174,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             if persona.ha_aspirante:
                 return self.NON_PUOI_SEI_ASPIRANTE
 
-            if not persona.has_required_titles_for_course(course=self):
-                return self.NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI
+            # if not persona.has_required_titles_for_course(course=self):
+            #     return self.NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI
 
         # if (not Aspirante.objects.filter(persona=persona).exists()) and persona.volontario:
         #     return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
