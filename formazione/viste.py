@@ -232,9 +232,9 @@ def aspirante_corso_base_ritirati(request, me=None, pk=None):
 
     kwargs = dict(corso=corso, persona=me)
     if corso.persona(me) == CorsoBase.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI:
-        partecipazione = PartecipazioneCorsoBase.con_esito_ok(kwargs).last()
+        partecipazione = PartecipazioneCorsoBase.con_esito_ok(**kwargs).last()
     else:
-        partecipazione = PartecipazioneCorsoBase.con_esito_pending(kwargs).first()
+        partecipazione = PartecipazioneCorsoBase.con_esito_pending(**kwargs).first()
 
     if partecipazione:
         # Caso: vuole ritirasi quando la richiesta non è stata ancora confermata
