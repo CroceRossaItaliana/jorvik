@@ -27,3 +27,7 @@ def lezione_esonero(lezione, partecipante):
         return a if a.is_esonero else None
     except AssenzaCorsoBase.DoesNotExist:
         return None
+
+@register.simple_tag
+def lezione_partecipante_pk_shortcut(lezione, partecipante):
+    return "%s-%s" % (lezione.pk, partecipante.pk)

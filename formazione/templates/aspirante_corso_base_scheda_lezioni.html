@@ -49,12 +49,13 @@
                                         </thead>
                                         <tbody>
                                             {% for partecipante in partecipanti %}
+                                                {% lezione_partecipante_pk_shortcut lezione partecipante as lezione_partecipante_pk %}
+                                                {% lezione_esonero lezione partecipante as assenza_lezione_esonero %}
+
                                                 <tr>
                                                     <td id="actions-{{partecipante.pk}}">
-                                                        {% lezione_esonero lezione partecipante as assenza_lezione_esonero %}
-
                                                         <label style="margin-bottom: -1px;"><input type="checkbox"
-                                                             id="presenza-{{lezione.pk}}-{{partecipante.pk}}"
+                                                             id="presenza-{{ lezione_partecipante_pk }}"
                                                              name="presenze-{{ lezione.pk }}"
                                                              value="{{ partecipante.pk }}"
                                                              {% if partecipante in partecipanti_lezione %}checked="checked"{% endif %} /> S&igrave;
@@ -62,16 +63,16 @@
 
                                                         <label style="margin: 0 0 0 8px;"><input type="checkbox"
                                                              class="esoneroCheckbox"
-                                                             name="esonero-checkbox-{{lezione.pk}}-{{partecipante.pk}}"
-                                                             data-esonero="#esonero-{{lezione.pk}}-{{partecipante.pk}}"
-                                                             data-lezione-partecipante="{{lezione.pk}}-{{partecipante.pk}}"
+                                                             name="esonero-checkbox-{{ lezione_partecipante_pk }}"
+                                                             data-esonero="#esonero-{{ lezione_partecipante_pk }}"
+                                                             data-lezione-partecipante="{{ lezione_partecipante_pk }}"
                                                              {% if assenza_lezione_esonero %}checked="checked"{% endif %}> Esonero
                                                         </label>
 
                                                         <input type="text" style="{% if not assenza_lezione_esonero %}display:none;{% endif %}"
                                                              class="esonero-text"
-                                                             id="esonero-{{lezione.pk}}-{{partecipante.pk}}"
-                                                             name="esonero-{{lezione.pk}}-{{partecipante.pk}}"
+                                                             id="esonero-{{ lezione_partecipante_pk }}"
+                                                             name="esonero-{{ lezione_partecipante_pk }}"
                                                              placeholder="Motivazione dell'esonero"
                                                              value='{{ assenza_lezione_esonero.esonero_motivazione|default:"" }}'>
                                                     </td>
