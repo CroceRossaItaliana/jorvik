@@ -75,7 +75,7 @@
                 if (is_corsobase) {
                     var course_has_locazione = "{{ oggetto.locazione }}";
                     if (course_has_locazione != 'None' && parent.location.href.indexOf('norefresh') == -1) {
-                        parent.location.href = "{% url 'aspirante:position_change' pk=oggetto.pk %}?norefresh";
+                        parent.location.href = "{% url 'formazione:director' pk=oggetto.pk %}?norefresh";
                     }
                 }
                 </script>
