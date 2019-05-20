@@ -33,9 +33,22 @@ from .classes import GestionePresenza
 
 @pagina_privata
 def formazione(request, me):
+    corsi = me.oggetti_permesso(GESTIONE_CORSO)
+
+    # Filtra corsi by stato
+    if request.GET.get('stato'):
+        stato = request.GET.get('stato')
+        # Verifica che modello ha lo stato impostato in get-request
+        if stato in [i[0] for i in Corso.STATO]:
+            filtered = corsi.filter(stato=stato)
+            if not filtered.exists():  # queryset vuoto
+                # Rindirizza sulla pagina con tutti i corsi disponibili
+                return redirect('formazione:index')
+            corsi = filtered
+
     context = {
+        "corsi": corsi,
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
-        "corsi": me.oggetti_permesso(GESTIONE_CORSO),
         "puo_pianificare": me.ha_permesso(GESTIONE_CORSI_SEDE),
     }
     return 'formazione.html', context
