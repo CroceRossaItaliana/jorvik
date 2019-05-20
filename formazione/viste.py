@@ -36,6 +36,7 @@ def formazione(request, me):
     context = {
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
         "corsi": me.oggetti_permesso(GESTIONE_CORSO),
+        "puo_pianificare": me.ha_permesso(GESTIONE_CORSI_SEDE),
     }
     return 'formazione.html', context
 
