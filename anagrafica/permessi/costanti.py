@@ -1,18 +1,17 @@
-# coding=utf-8
-
+from ..permessi.applicazioni import (PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA,
+    REFERENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO,
+    CONSIGLIERE, UFFICIO_SOCI)
 
 """
-Questo file gestisce i permessi in Gaia.
- ============================================================================================
- |                                    ! HEEEEY, TU !                                        |
- ============================================================================================
-  Prima di avventurarti da queste parti, assicurati di leggere la documentazione a:
-   https://github.com/CroceRossaItaliana/jorvik/wiki/Deleghe,-Permessi-e-Livelli-di-Accesso
- ============================================================================================
+                       Questo file gestisce i permessi in Gaia.
+ ===============================================================================
+ |                                   ! HEEEEY, TU !                            |
+ ===============================================================================
+ Prima di avventurarti da queste parti, assicurati di leggere la documentazione:
+ https://github.com/CroceRossaItaliana/jorvik/wiki/Deleghe,-Permessi-e-Livelli-di-Accesso
+ ===============================================================================
 """
-from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA, REFERENTE, DIRETTORE_CORSO, \
-    RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO, CONSIGLIERE
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+
 
 GESTIONE_SEDE = "GESTIONE_SEDE"
 GESTIONE_SOCI = "GESTIONE_SOCI"
@@ -171,4 +170,3 @@ DELEGHE_OGGETTI_DICT = dict(DELEGHE_OGGETTI)
 # Costanti URL
 ERRORE_PERMESSI = '/errore/permessi/'
 ERRORE_ORFANO = '/errore/orfano/'
-

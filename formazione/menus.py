@@ -1,7 +1,15 @@
 from django.core.urlresolvers import reverse
 
+from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE
 
-def formazione_menu(menu_name, gestione_corsi_sede):
+
+def to_show(me, permission):
+    if me.ha_permesso(permission):
+        return True
+    return False
+
+
+def formazione_menu(menu_name, gestione_corsi_sede, me=None):
     FORMAZIONE = (
         ("Corsi", (
             ("Attiva Corso", "fa-asterisk", reverse('formazione:new_course')) if gestione_corsi_sede else None,
@@ -9,7 +17,7 @@ def formazione_menu(menu_name, gestione_corsi_sede):
             ("Domanda formativa", "fa-area-chart", reverse('formazione:domanda')) if gestione_corsi_sede else None,
             ('Catalogo Corsi', 'fa-list-alt', '/page/catalogo-corsi/'),
             ('Glossario Corsi', 'fa-book', '/page/glossario-corsi/'),
-            ('Albo Informatizzato', 'fa-list', reverse('formazione:albo_info')),
+            ('Albo Informatizzato', 'fa-list', reverse('formazione:albo_info')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
         )),
     )
 

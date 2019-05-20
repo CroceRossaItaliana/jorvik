@@ -210,7 +210,7 @@ def menu(request):
                 if me and me.oggetti_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE).exists() else None,
             )),
         ),
-        'formazione': formazione_menu('formazione', gestione_corsi_sede),
+        'formazione': formazione_menu('formazione', gestione_corsi_sede, me),
         'aspirante': formazione_menu('aspirante', gestione_corsi_sede) \
             if me and hasattr(me, 'aspirante') else (
             ("Gestione Corsi", (
