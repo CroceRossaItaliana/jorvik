@@ -101,7 +101,8 @@ class ModuloCreazioneCorsoBase(ModelForm):
             'data_esame', 'delibera_file', 'sede', 'locazione'))
 
         # GAIA-16
-        delega = me.deleghe_attuali().filter(tipo__in=[permessi.PRESIDENTE,
+        delega = me.deleghe_attuali().filter(tipo__in=[permessi.COMMISSARIO,
+                                                       permessi.PRESIDENTE,
                                                        permessi.RESPONSABILE_FORMAZIONE]).last()
         if delega:
             estensione_sede = delega.sede.all().first().estensione

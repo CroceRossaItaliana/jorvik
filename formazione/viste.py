@@ -61,6 +61,9 @@ def formazione_corsi_base_domanda(request, me):
 
 @pagina_privata
 def formazione_corsi_base_nuovo(request, me):
+    if not me.ha_permesso(GESTIONE_CORSI_SEDE):
+        return redirect(ERRORE_PERMESSI)
+
     now = datetime.now() + timedelta(days=14)
     form = ModuloCreazioneCorsoBase(
         request.POST or None,
