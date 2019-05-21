@@ -1,14 +1,15 @@
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 
-from base.geo import Locazione
-from base.models import Autorizzazione, Token, Allegato, Menu
 from gruppi.readonly_admin import ReadonlyAdminMixin
+from .geo import Locazione
+from .models import Autorizzazione, Token, Allegato, Menu
 
 
 @admin.register(Token)
 class TokenAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
     pass
+
 
 @admin.register(Menu)
 class MenuAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
