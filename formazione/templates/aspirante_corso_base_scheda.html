@@ -37,7 +37,7 @@
             {% if today_ts >= corso.data_esame|date:"U" %}<li role="presentation"><a data-tab-id="#tabEsami" href="#" class="esami tabSelectorLink"><i class="fa fa-fw fa-file-excel-o"></i> Documentazione Esame</a></li>{% endif %}
         {% endif %}
 
-        {% if corso.concluso %}
+        {% if corso.is_nuovo_corso and corso.concluso %}
             <li role="presentation"><a data-tab-id="#tabQuestionario" href="#" class="questionario tabSelectorLink"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</a></li>
         {% endif %}
     </ul>

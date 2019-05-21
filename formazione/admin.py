@@ -116,6 +116,7 @@ class AdminPartecipazioneCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     list_filter = ['confermata',]
     raw_id_fields = RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE
     inlines = [InlineAutorizzazione]
+    ordering = ['-creazione',]
 
 
 @admin.register(LezioneCorsoBase)
