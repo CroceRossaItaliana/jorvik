@@ -1073,8 +1073,8 @@ def strumenti_delegati(request, me):
     }
     form = ModuloCreazioneDelega(request.POST or None, **form_data)
     if model == 'corsobase':
-        if oggetto.is_nuovo_corso:
-            form = FormCreateDirettoreDelega(request.POST or None, **form_data)
+        # if oggetto.is_nuovo_corso:
+        form = FormCreateDirettoreDelega(request.POST or None, **form_data)
 
     # Check form is valid
     if form.is_valid():
