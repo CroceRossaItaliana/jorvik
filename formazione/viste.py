@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from django.db.models import Q
 from django.utils import timezone
@@ -688,11 +688,25 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
            torna_url=corso.url_iscritti
         )
 
-    risultati = []
+    risultati = list()
+    persone_con_esito_negativo = dict()
+
     form = ModuloIscrittiCorsoBaseAggiungi(request.POST or None, corso=corso)
     if form.is_valid():
         for persona in form.cleaned_data['persone']:
+            # esito_negative_message = None
             esito = corso.persona(persona)
+            if esito in [CorsoBase.NON_HAI_CARICATO_DOCUMENTI_PERSONALI, CorsoBase.NON_HAI_DOCUMENTO_PERSONALE_VALIDO]:
+                persone_con_esito_negativo[persona] = esito
+
+            #     esito_negative_message = "Questo utente non ha caricato un documento d'identità"
+            # elif esito == CorsoBase.NON_HAI_DOCUMENTO_PERSONALE_VALIDO:
+            #     esito_negative_message = "Questo utente non ha un documento di riconoscimento valido/rinnovato"
+
+            # # Persone da avvisare via posta della problematica
+            # if esito_negative_message:
+            #     persone_con_esito_negativo[persona] = esito #, esito_negative_message
+
             ok = PartecipazioneCorsoBase.NON_ISCRITTO
             partecipazione = None
 
@@ -738,6 +752,31 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                 "esito": esito,
                 "ok": ok,
             }]
+
+        # Invia avvisi agli utenti con esito negativo
+        for persona, esito in persone_con_esito_negativo.items():
+            already_sent_today = Messaggio.objects.filter(
+                mittente=me,
+                oggetti_destinatario__persona=persona,
+                oggetto__istartswith="Impossibilità di iscriversi a",
+                creazione__date=date.today(),
+            ).count()
+
+            # Per evitare che invii lo stesso messaggio più di una volta al di
+            if not already_sent_today:
+                posta = Messaggio.costruisci_e_accoda(
+                    oggetto="Impossibilità di iscriversi a %s" % corso.nome,
+                    modello="email_corso_iscritti_aggiungi_esito_negativo.html",
+                    corpo={
+                        'corso': corso,
+                        'esito': esito,
+                    },
+                    mittente=me,
+                    destinatari=[persona])
+        else:
+            if persone_con_esito_negativo:
+                utente = 'utenti' if len(persone_con_esito_negativo) > 1 else 'utente'
+                messages.error(request, "Abbiamo avvisato %s della problematica." % utente)
 
     context = {
         "corso": corso,
@@ -1067,9 +1106,10 @@ def formazione_corso_position_change(request, me, pk):
             # Rindirizza sulla pagina selezione direttori del corso.
             return redirect(course.url_direttori)
 
-    return 'formazione_corso_position_change.html', {'corso': course,
-                                                     'template': template,
-                                                     'puo_modificare': puo_modificare}
+    context = {'corso': course,
+               'template': template,
+               'puo_modificare': puo_modificare,}
+    return 'formazione_corso_position_change.html', context
 
 
 @pagina_privata
