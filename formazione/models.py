@@ -748,11 +748,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def direttori_corso(self):
         oggetto_tipo = ContentType.objects.get_for_model(self)
-        query = Delega.objects.filter(tipo=DIRETTORE_CORSO,
-                                      oggetto_tipo=oggetto_tipo.pk,
-                                      oggetto_id=self.pk)
-        persone = Persona.objects.filter(id__in=query.values_list('id', flat=True))
-        return persone
+        deleghe = Delega.objects.filter(tipo=DIRETTORE_CORSO,
+                                        oggetto_tipo=oggetto_tipo.pk,
+                                        oggetto_id=self.pk)
+        deleghe_persone_id = deleghe.values_list('persona__id', flat=True)
+        persone_qs = Persona.objects.filter(id__in=deleghe_persone_id)
+        return persone_qs
 
     def can_modify(self, me):
         if me and me.permessi_almeno(self, MODIFICA):

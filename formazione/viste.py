@@ -262,6 +262,19 @@ def aspirante_corso_base_ritirati(request, me=None, pk=None):
             partecipazione.confermata = False
             partecipazione.save()  # second save() call
 
+        # Informa direttore corso
+        posta = Messaggio.costruisci_e_accoda(
+            oggetto="Ritiro richiesta di iscrizione a %s da %s" % (corso.nome, partecipazione.persona),
+            modello="email_corso_utente_ritirato_iscrizione.html",
+            corpo={
+                'corso': corso,
+                'partecipante': partecipazione.persona,
+            },
+            destinatari=corso.direttori_corso())
+
+        if posta:
+            messages.success(request, "Il direttore del corso è stato avvisato.")
+
         return messaggio_generico(request, me, titolo="Ti sei ritirato dal corso",
             messaggio="Siamo spiacenti che hai deciso di ritirarti da questo corso. "
                 "La tua partecipazione è stata ritirata correttamente. "
