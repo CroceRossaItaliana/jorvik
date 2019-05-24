@@ -24,7 +24,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, UFFICIO_SOCI_TEMPORANEO, UFFICIO_SOCI_UNITA
-from anagrafica.permessi.costanti import ERRORE_PERMESSI, LETTURA, GESTIONE_SEDE
+from anagrafica.permessi.costanti import ERRORE_PERMESSI, GESTIONE_SEDE
 from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base import errori
@@ -33,7 +33,7 @@ from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLoca
 from base.forms_extra import ModuloRichiestaSupportoPersone
 from base.geo import Locazione
 from base.models import Autorizzazione, Token
-from base.tratti import ConPDF
+
 from base.utils import get_drive_file, rimuovi_scelte
 from formazione.models import PartecipazioneCorsoBase, Aspirante
 from jorvik import settings
@@ -538,50 +538,13 @@ def geo_localizzatore_imposta(request, me):
 
     return redirect("/geo/localizzatore/")
 
+
 @pagina_privata
 def pdf(request, me, app_label, model, pk):
-    oggetto = apps.get_model(app_label, model)
-    oggetto = oggetto.objects.get(pk=pk)
-    if not isinstance(oggetto, ConPDF):
-        return errore_generico(request, None,
-                               messaggio="Impossibile generare un PDF per il tipo specificato.")
+    from .classes.pdf import BaseGeneraPDF
 
-    if 'token' in request.GET:
-        if not oggetto.token_valida(request.GET['token']):
-            return errore_generico(request, me, titolo="Token scaduta",
-                                   messaggio="Il link usato è scaduto.")
-
-    elif not me.permessi_almeno(oggetto, LETTURA):
-        return redirect(ERRORE_PERMESSI)
-
-    pdf = oggetto.genera_pdf()
-
-    # Se sto scaricando un tesserino, forza lo scaricamento.
-    if 'tesserini' in pdf.file.path:
-        return pdf_forza_scaricamento(request, pdf)
-
-    return redirect(pdf.download_url)
-
-
-def pdf_forza_scaricamento(request, pdf):
-    """
-    Forza lo scaricamento di un file pdf.
-    Da usare con cautela, perche' carica il file in memoria
-    e blocca il thread fino al completamento della richiesta.
-    :param request:
-    :param pdf:
-    :return:
-    """
-
-    percorso_completo = pdf.file.path
-
-    with open(percorso_completo, 'rb') as f:
-        data = f.read()
-
-    response = HttpResponse(data, content_type=mimetypes.guess_type(percorso_completo)[0])
-    response['Content-Disposition'] = "attachment; filename={0}".format(pdf.nome)
-    response['Content-Length'] = os.path.getsize(percorso_completo)
-    return response
+    pdf = BaseGeneraPDF(request, me, app_label, model, pk)
+    return pdf.make()
 
 
 @pagina_pubblica
