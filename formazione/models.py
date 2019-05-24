@@ -187,12 +187,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         #     return self.NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO
 
         # Controlla se già iscritto.
+        if PartecipazioneCorsoBase.con_esito_pending(persona=persona, corso=self).exists():
+            return self.SEI_ISCRITTO_PUOI_RITIRARTI
+
         if PartecipazioneCorsoBase.con_esito_ok(persona=persona, corso=self).exists():
             # UPDATE: (GAIA-93) utente può ritirarsi dal corso in qualsiasi momento.
             return self.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI
-
-        if PartecipazioneCorsoBase.con_esito_pending(persona=persona, corso=self).exists():
-            return self.SEI_ISCRITTO_PUOI_RITIRARTI
 
         if self.troppo_tardi_per_iscriverti:
             return self.NON_PUOI_ISCRIVERTI_TROPPO_TARDI
@@ -237,42 +237,90 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @classmethod
     def find_courses_for_volunteer(cls, volunteer):
+        today = datetime.date.today()
         sede = volunteer.sedi_attuali(membro=Appartenenza.VOLONTARIO)
-        if sede:
-            sede = sede.last()
-        else:
-            return cls.objects.none()
+        if not sede:
+            return cls.objects.none()  # corsi non trovati perchè utente non ha sede
 
-        titoli = volunteer.titoli_personali_confermati().filter(
-                                                titolo__tipo=Titolo.TITOLO_CRI)
-        courses_list = list()
-        courses = cls.pubblici().filter(tipo=Corso.CORSO_NUOVO)
-        for course in courses:
-            # Course has extensions.
-            # Filter courses by titles and sede comparsion
-            if course.has_extensions():
-                volunteer_titolo = titoli.values_list('titolo', flat=True)
-                t = course.get_extensions_titles()
-                s = course.get_extensions_sede()
-                ext_t_list = t.values_list('id', flat=True)
+        ###
+        # Trova corsi che hanno <sede> uguale alla <sede del volontario>
+        ###
+        qs_estensioni_1 = CorsoEstensione.objects.filter(sede__in=sede,
+                                                         corso__tipo=Corso.CORSO_NUOVO,
+                                                         corso__stato=Corso.ATTIVO,
+                                                         corso__data_inizio__gt=today)
+        courses_1 = cls.objects.filter(id__in=qs_estensioni_1.values_list('corso__id'))
 
-                # Course has required titles but volunteer has not at least one
-                if t and not volunteer.has_required_titles_for_course(course):
-                    continue
+        ###
+        # Trova corsi dove la <sede del volontario> si verifica come sede sottostante
+        ###
+        four_weeks_delta = today + datetime.timedelta(weeks=4)
+        qs_estensioni_2 = CorsoEstensione.objects.filter(
+            corso__tipo=Corso.CORSO_NUOVO,
+            corso__stato=Corso.ATTIVO,
+            corso__data_inizio__gt=today,
+            corso__data_esame__lt=four_weeks_delta).exclude(
+            corso__id__in=courses_1.values_list('id', flat=True))
 
-                if s and (sede in s):
-                    courses_list.append(course.pk)
-                else:
-                    # Extensions have sede but volunteer's sede is not in the list
-                    continue
-            else:
-                # Course has no extensions.
-                # Filter by firmatario sede if sede of volunteer is the same
-                firmatario = course.get_firmatario_sede
-                if firmatario and (sede in [firmatario]):
-                    courses_list.append(course.pk)
+        courses_2 = list()
+        for estensione in qs_estensioni_2:
+            for s in estensione.sede.all():
+                sedi_sottostanti = s.esplora()
+                for _ in sede:
+                    if _ in sedi_sottostanti:
+                        _corso = estensione.corso
+                        if _corso not in courses_2:
+                                courses_2.append(_corso.pk)
 
-        return CorsoBase.objects.filter(id__in=courses_list)
+        courses_2 = cls.objects.filter(id__in=courses_2)
+
+        return courses_1 | courses_2
+
+    # @classmethod
+    # def find_courses_for_volunteer(cls, volunteer):
+    #     """
+    #     Questo metodo è stato commentato perchè nel task GAIA-97 è stato
+    #     chiesto di togliere i requisiti necessari per partecipare ai corsi
+    #     (quindi anche per rendere i corsi trovabili/visualizzabili in ricerca).
+    #     Il metodo sostituitivo è descritto sopra.
+    #     """
+    #
+    #     sede = volunteer.sedi_attuali(membro=Appartenenza.VOLONTARIO)
+    #     if sede:
+    #         sede = sede.last()
+    #     else:
+    #         return cls.objects.none()
+    #
+    #     titoli = volunteer.titoli_personali_confermati().filter(
+    #                                             titolo__tipo=Titolo.TITOLO_CRI)
+    #     courses_list = list()
+    #     courses = cls.pubblici().filter(tipo=Corso.CORSO_NUOVO)
+    #     for course in courses:
+    #         # Course has extensions.
+    #         # Filter courses by titles and sede comparsion
+    #         if course.has_extensions():
+    #             volunteer_titolo = titoli.values_list('titolo', flat=True)
+    #             t = course.get_extensions_titles()
+    #             s = course.get_extensions_sede()
+    #             ext_t_list = t.values_list('id', flat=True)
+    #
+    #             # Course has required titles but volunteer has not at least one
+    #             if t and not volunteer.has_required_titles_for_course(course):
+    #                 continue
+    #
+    #             if s and (sede in s):
+    #                 courses_list.append(course.pk)
+    #             else:
+    #                 # Extensions have sede but volunteer's sede is not in the list
+    #                 continue
+    #         else:
+    #             # Course has no extensions.
+    #             # Filter by firmatario sede if sede of volunteer is the same
+    #             firmatario = course.get_firmatario_sede
+    #             if firmatario and (sede in [firmatario]):
+    #                 courses_list.append(course.pk)
+    #
+    #     return CorsoBase.objects.filter(id__in=courses_list)
 
     @property
     def iniziato(self):
@@ -369,22 +417,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         """
 
         anno = anno or datetime.date.today().year
-
         try:  # Per il progressivo, cerca ultimo corso
-            ultimo = CorsoBase.objects.filter(anno=anno).latest('progressivo')
+            ultimo = cls.objects.filter(anno=anno).latest('progressivo')
             progressivo = ultimo.progressivo + 1
+        except:
+            progressivo = 1  # Se non esiste, inizia da 1
 
-        except:  # Se non esiste, inizia da 1
-            progressivo = 1
-
-        c = CorsoBase(
-            anno=anno,
-            progressivo=progressivo,
-            **kwargs
-        )
-        # if c.tipo == Corso.CORSO_NUOVO and c.titolo_cri:
-
-
+        c = CorsoBase(anno=anno, progressivo=progressivo, **kwargs)
         c.save()
         return c
 

@@ -23,8 +23,8 @@ from posta.models import Messaggio
 from survey.models import Survey
 from .elenchi import ElencoPartecipantiCorsiBase
 from .decorators import can_access_to_course
-from .models import (Corso, CorsoBase, CorsoEstensione, AssenzaCorsoBase,
-    LezioneCorsoBase, PartecipazioneCorsoBase, Aspirante, InvitoCorsoBase, RelazioneCorso)
+from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoBase,
+                     PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi,
     ModuloVerbaleAspiranteCorsoBase, FormRelazioneDelDirettoreCorso)
@@ -862,7 +862,15 @@ def aspirante_corsi(request, me):
     if me.ha_aspirante:
         corsi = me.aspirante.corsi(tipo=Corso.BASE)
     elif me.volontario:
-        corsi = CorsoBase.find_courses_for_volunteer(volunteer=me)
+        # Trova corsi dove l'utente ha già partecipato
+        partecipazione = PartecipazioneCorsoBase.objects.filter(confermata=True, persona=me)
+        corsi_confermati = CorsoBase.objects.filter(id__in=partecipazione.values_list('corso', flat=True))
+
+        # Trova corsi da partecipare
+        corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me)
+
+        # Unisci 2 categorie di corsi
+        corsi = corsi_confermati | corsi_da_partecipare
 
     context = {
         'corsi':  corsi
