@@ -1,8 +1,7 @@
-import mimetypes
+import json
 from datetime import date, timedelta, datetime, time
 
-import os
-
+from django.apps import apps
 from django.conf import settings as django_settings
 from django.contrib.auth import get_user_model, load_backend, login
 from django.contrib.auth.tokens import default_token_generator
@@ -13,32 +12,34 @@ from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, render_to_response, get_object_or_404, redirect
 from django.template.response import TemplateResponse
-from django.utils import timezone
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-# Le viste base vanno qui.
-from django.views.decorators.cache import cache_page
-from django.apps import apps
 from django.views.decorators.clickjacking import xframe_options_exempt
 
+from jorvik import settings
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, UFFICIO_SOCI_TEMPORANEO, UFFICIO_SOCI_UNITA
 from anagrafica.permessi.costanti import ERRORE_PERMESSI, GESTIONE_SEDE
 from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
-from base import errori
-from base.errori import errore_generico, messaggio_generico
-from base.forms import ModuloRecuperaPassword, ModuloMotivoNegazione, ModuloLocalizzatore, ModuloLocalizzatoreItalia
-from base.forms_extra import ModuloRichiestaSupportoPersone
-from base.geo import Locazione
-from base.models import Autorizzazione, Token
-
-from base.utils import get_drive_file, rimuovi_scelte
 from formazione.models import PartecipazioneCorsoBase, Aspirante
-from jorvik import settings
 from posta.models import Messaggio
-import json
+from .errori import errore_generico, messaggio_generico
+from .forms import ModuloRecuperaPassword, ModuloLocalizzatore, ModuloLocalizzatoreItalia
+from .forms_extra import ModuloRichiestaSupportoPersone
+from .geo import Locazione
+from .models import Autorizzazione, Token
+from .utils import get_drive_file, rimuovi_scelte
+
+
+IGNORA_AUTORIZZAZIONI = [
+    # ContentType.objects.get_for_model(PartecipazioneCorsoBase).pk
+]
+
+ORDINE_ASCENDENTE = 'creazione'
+ORDINE_DISCENDENTE = '-creazione'
+ORDINE_DEFAULT = ORDINE_DISCENDENTE
 
 
 @pagina_pubblica
@@ -211,12 +212,14 @@ def informazioni(request, me):
     """
     return 'base_informazioni.html'
 
+
 @pagina_pubblica
 def informazioni_aggiornamenti(request, me):
     """
     Mostra semplicemente la pagina degli aggiornamenti ed esce.
     """
     return 'base_informazioni_aggiornamenti.html'
+
 
 @pagina_pubblica
 def informazioni_sicurezza(request, me):
@@ -225,6 +228,7 @@ def informazioni_sicurezza(request, me):
     """
     return 'base_informazioni_sicurezza.html'
 
+
 @pagina_pubblica
 def informazioni_condizioni(request, me):
     """
@@ -232,12 +236,14 @@ def informazioni_condizioni(request, me):
     """
     return 'base_informazioni_condizioni.html'
 
+
 @pagina_pubblica
 def informazioni_cookie(request, me):
     """
     Mostra semplicemente la pagina dei cookie.
     """
     return 'base_informazioni_cookie.html'
+
 
 @pagina_pubblica
 def imposta_cookie(request, me):
@@ -289,11 +295,6 @@ def informazioni_sede(request, me, slug):
     return 'base_informazioni_sede.html', contesto
 
 
-IGNORA_AUTORIZZAZIONI = [
-    # ContentType.objects.get_for_model(PartecipazioneCorsoBase).pk
-]
-
-
 def pulisci_autorizzazioni(richieste):
     pulite = False
     for richiesta in richieste:
@@ -301,11 +302,6 @@ def pulisci_autorizzazioni(richieste):
             richiesta.delete()
             pulite = True
     return pulite
-
-
-ORDINE_ASCENDENTE = 'creazione'
-ORDINE_DISCENDENTE = '-creazione'
-ORDINE_DEFAULT = ORDINE_DISCENDENTE
 
 
 @pagina_privata
