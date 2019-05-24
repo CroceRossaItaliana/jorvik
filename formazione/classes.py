@@ -1,3 +1,8 @@
+from django.shortcuts import redirect, HttpResponse
+from django.core.urlresolvers import reverse
+from django.contrib import messages
+
+from base.files import Zip
 from .models import AssenzaCorsoBase
 
 
@@ -65,3 +70,73 @@ class GestionePresenza:
 
             if self.esonero:  # Campo "Esonero" Valorizzato (impostata una motivazione)
                 self._process_esonero()
+
+
+class GeneraReport:
+    ATTESTATO_FILENAME = "%s - Attestato.pdf"
+    SCHEDA_FILENAME = "%s - Scheda di Valutazione.pdf"
+
+    def __init__(self, request, corso, single_attestato=False):
+        self.request = request
+        self.corso = corso
+
+    def download(self):
+        """ Returns a HTTP response """
+
+        self.archive = Zip(oggetto=self.corso)
+
+        if self.request.GET.get('download_single_attestato'):
+            return self._download_single_attestato()
+        else:
+            self._generate()
+            self.archive.comprimi_e_salva(nome="Corso %d-%d.zip" % (self.corso.progressivo,
+                                                                    self.corso.anno))
+            return redirect(self.archive.download_url)
+
+    def _download_single_attestato(self):
+        from .models import PartecipazioneCorsoBase
+        from curriculum.models import Titolo
+
+        try:
+            partecipazione = self.corso.partecipazioni_confermate().get(
+            titolo_ottenuto__pk=self.request.GET.get('download_single_attestato'),
+            persona=self.request.user.persona)
+        except PartecipazioneCorsoBase.DoesNotExist:
+            messages.error(self.request, "Questo attestato non esiste.")
+            return redirect(reverse('utente:cv_tipo', args=[Titolo.TITOLO_CRI,]))
+
+        attestato = self._attestato(partecipazione)
+        filename = self.ATTESTATO_FILENAME % partecipazione.titolo_ottenuto.last()
+
+        with open(attestato.file.path, 'rb') as f:
+            pdf = f.read()
+
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename=%s' % '-'.join(filename.split())
+        response.write(pdf)
+        return response
+
+    def _generate(self):
+        for partecipante in self.corso.partecipazioni_confermate():
+            self._schede(partecipante)
+
+            if partecipante.idoneo:  # Se idoneo, genera l'attestato
+                self._attestato(partecipante)
+
+    def _schede(self, partecipante):
+        """ Genera la scheda di valutazione """
+
+        scheda = partecipante.genera_scheda_valutazione()
+        self.archive.aggiungi_file(
+            scheda.file.path,
+            self.SCHEDA_FILENAME % partecipante.persona.nome_completo
+        )
+        return scheda
+
+    def _attestato(self, partecipante):
+        attestato = partecipante.genera_attestato()
+        self.archive.aggiungi_file(
+            attestato.file.path,
+            self.ATTESTATO_FILENAME % partecipante.persona.nome_completo
+        )
+        return attestato

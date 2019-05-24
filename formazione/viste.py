@@ -16,7 +16,6 @@ from curriculum.models import TitoloPersonale
 from ufficio_soci.elenchi import ElencoPerTitoliCorso
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, messaggio_generico # ci_siamo_quasi
-from base.files import Zip
 from base.models import Log
 from base.utils import poco_fa
 from posta.models import Messaggio
@@ -28,7 +27,7 @@ from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoB
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi,
     ModuloVerbaleAspiranteCorsoBase, FormRelazioneDelDirettoreCorso)
-from .classes import GestionePresenza
+from .classes import GestionePresenza, GeneraReport
 
 
 @pagina_privata
@@ -826,23 +825,16 @@ def aspirante_corso_base_report(request, me, pk):
 @pagina_privata
 def aspirante_corso_base_report_schede(request, me, pk):
     corso = get_object_or_404(CorsoBase, pk=pk)
-    if not me.permessi_almeno(corso, MODIFICA):
+
+    can_download = False
+    if request.GET.get('download_single_attestato') and corso.partecipazioni_confermate().get(persona=me):
+        can_download = True
+
+    if not can_download and not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    archivio = Zip(oggetto=corso)
-    for p in corso.partecipazioni_confermate():
-
-        # Genera la scheda di valutazione.
-        scheda = p.genera_scheda_valutazione()
-        archivio.aggiungi_file(scheda.file.path, "%s - Scheda di Valutazione.pdf" % p.persona.nome_completo)
-
-        # Se idoneo, genera l'attestato.
-        if p.idoneo:
-            attestato = p.genera_attestato()
-            archivio.aggiungi_file(attestato.file.path, "%s - Attestato.pdf" % p.persona.nome_completo)
-
-    archivio.comprimi_e_salva(nome="Corso %d-%d.zip" % (corso.progressivo, corso.anno))
-    return redirect(archivio.download_url)
+    report = GeneraReport(request, corso)
+    return report.download()
 
 
 @pagina_privata

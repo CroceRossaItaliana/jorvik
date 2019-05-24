@@ -669,6 +669,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def set_titolo_cri_to_participants(self):
         """ Sets <titolo_cri> in Persona's Curriculum (TitoloPersonale) """
+
         from curriculum.models import TitoloPersonale
 
         objs = [
@@ -679,6 +680,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 certificato_da=self.get_firmatario,
                 data_scadenza=timezone.now() + self.titolo_cri.expires_after_timedelta,
                 is_course_title=True,
+                corso_partecipazione=p,
 
                 # todo: attending details
                 # data_ottenimento='',
