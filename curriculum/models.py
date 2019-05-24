@@ -122,8 +122,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     codice = models.CharField(max_length=128, null=True, blank=True, db_index=True,
         help_text="Codice/Numero identificativo del Titolo o Patente. "
                     "Presente sul certificato o sulla Patente.")
-    codice_corso = models.CharField(max_length=128, null=True,
-                                    blank=True, db_index=True)
+    codice_corso = models.CharField(max_length=128, null=True, blank=True, db_index=True)
     
     certificato = models.BooleanField(default=False,)
     certificato_da = models.ForeignKey("anagrafica.Persona",
@@ -131,6 +130,16 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                                        related_name="titoli_da_me_certificati",
                                        on_delete=models.SET_NULL)
     is_course_title = models.BooleanField(default=False)
+
+
+    # ValueError: Related model u'app.model' cannot be resolved
+    # https://stackoverflow.com/questions/33496333
+    # curriculum.migrations.0015 was added: " ('formazione', '__first__'),"
+    corso_partecipazione = models.ForeignKey('formazione.PartecipazioneCorsoBase',
+                                             null=True,
+                                             blank=True,
+                                             on_delete=models.SET_NULL,
+                                             related_name='titolo_ottenuto')
 
     class Meta:
         verbose_name = "Titolo personale"
