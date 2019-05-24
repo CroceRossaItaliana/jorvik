@@ -51,12 +51,14 @@ class BaseGeneraPDF:
         :return:
         """
 
+        from mimetypes import guess_type
+
         percorso_completo = pdf.file.path
 
         with open(percorso_completo, 'rb') as f:
             data = f.read()
 
-        response = HttpResponse(data, content_type=mimetypes.guess_type(percorso_completo)[0])
-        response['Content-Disposition'] = "attachment; filename={0}".format(pdf.nome)
+        response = HttpResponse(data, content_type=guess_type(percorso_completo)[0])
+        response['Content-Disposition'] = "attachment; filename=%s" % pdf.nome
         response['Content-Length'] = os.path.getsize(percorso_completo)
         return response
