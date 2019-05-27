@@ -105,6 +105,12 @@ DELEGHE_OGGETTI = (
     (REFERENTE_GRUPPO,          ('anagrafica', 'Gruppo', 'sede__in')),
 )
 
+RUBRICA_DELEGATI_OBIETTIVO_ALL = [RUBRICA_DELEGATI_OBIETTIVO_1,
+                                  RUBRICA_DELEGATI_OBIETTIVO_2,
+                                  RUBRICA_DELEGATI_OBIETTIVO_3,
+                                  RUBRICA_DELEGATI_OBIETTIVO_4,
+                                  RUBRICA_DELEGATI_OBIETTIVO_6,]
+
 
 # Livelli di permesso
 # IMPORTANTE: Tenere in ordine, sia numerico che di linea.

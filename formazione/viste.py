@@ -7,11 +7,11 @@ from django.core.urlresolvers import reverse
 from django.template.loader import get_template
 from django.contrib import messages
 
-from anagrafica.models import Persona, Documento
+from anagrafica.models import Persona, Documento, Sede
 from anagrafica.forms import ModuloCreazioneDocumento
 from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
-    GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, ELENCHI_SOCI)
+    GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, RUBRICA_DELEGATI_OBIETTIVO_ALL)
 from curriculum.models import TitoloPersonale
 from ufficio_soci.elenchi import ElencoPerTitoliCorso
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
@@ -1070,12 +1070,9 @@ def aspirante_corso_estensioni_informa(request, me, pk):
 
 @pagina_privata
 def formazione_albo_informatizzato(request, me):
-    from anagrafica.models import Sede
-
     sedi_set = set()
 
-    DELEGATO_OBIETTIVO_ALL = ['RUBRICA_DELEGATI_OBIETTIVO_%s' % i for i in range(1,7) if i != 5]
-    ALL_PERMESSI_TO_CHECK = DELEGATO_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]
+    ALL_PERMESSI_TO_CHECK = RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]
     for permesso in ALL_PERMESSI_TO_CHECK:
         ids = me.oggetti_permesso(permesso).values_list('pk', flat=True)
         sedi_set.update(ids)
