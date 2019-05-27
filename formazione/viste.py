@@ -1070,7 +1070,21 @@ def aspirante_corso_estensioni_informa(request, me, pk):
 
 @pagina_privata
 def formazione_albo_informatizzato(request, me):
-    sedi = me.oggetti_permesso(ELENCHI_SOCI)
+    from anagrafica.models import Sede
+
+    sedi_set = set()
+
+    DELEGATO_OBIETTIVO_ALL = ['RUBRICA_DELEGATI_OBIETTIVO_%s' % i for i in range(1,7) if i != 5]
+    ALL_PERMESSI_TO_CHECK = DELEGATO_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]
+    for permesso in ALL_PERMESSI_TO_CHECK:
+        ids = me.oggetti_permesso(permesso).values_list('pk', flat=True)
+        sedi_set.update(ids)
+
+    sedi = Sede.objects.filter(pk__in=sedi_set)
+
+    if not sedi:
+        return redirect(ERRORE_PERMESSI)
+
     context = {
         'elenco_nome': 'Albo Informatizzato',
         'elenco_template': None,
