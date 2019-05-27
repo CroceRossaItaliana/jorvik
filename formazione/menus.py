@@ -9,12 +9,12 @@ def to_show(me, permission):
     return False
 
 
-def formazione_menu(menu_name, gestione_corsi_sede, me=None):
+def formazione_menu(menu_name, me=None):
     FORMAZIONE = (
         ("Corsi", (
-            ("Attiva Corso", "fa-asterisk", reverse('formazione:new_course')) if gestione_corsi_sede else None,
+            ("Attiva Corso", "fa-asterisk", reverse('formazione:new_course')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
             # ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
-            ("Domanda formativa", "fa-area-chart", reverse('formazione:domanda')) if gestione_corsi_sede else None,
+            ("Domanda formativa", "fa-area-chart", reverse('formazione:domanda')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
             ('Catalogo Corsi', 'fa-list-alt', '/page/catalogo-corsi/'),
             ('Glossario Corsi', 'fa-book', '/page/glossario-corsi/'),
             ('Albo Informatizzato', 'fa-list', reverse('formazione:albo_info')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
