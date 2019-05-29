@@ -1,8 +1,9 @@
+import os
 from datetime import datetime, timedelta, date
 
-from django.db.models import Q
+from django.db.models import Q, F
 from django.utils import timezone
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, Http404, HttpResponse
 from django.core.urlresolvers import reverse
 from django.template.loader import get_template
 from django.contrib import messages
@@ -1179,3 +1180,38 @@ def course_send_questionnaire_to_participants(request, me, pk):
     context['corso'] = course
 
     return 'course_send_questionnaire_to_participants.html', context
+
+
+@pagina_privata
+def course_materiale_didattico_download(request, me, pk):
+    from .models import CorsoFile
+
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    partecipante = corso.persona(me) if me else None
+
+    if partecipante in CorsoBase.SEI_ISCRITTO or me.permessi_almeno(corso, MODIFICA):
+        try:
+            file_id = request.GET.get('id')
+            if not file_id:
+                raise Http404
+
+            materiale = CorsoFile.objects.get(pk=int(file_id))  # fallisce se si passa non un number
+            file_path = materiale.file.path
+            if not os.path.exists(file_path):
+                return HttpResponse('Il file non si trova.')
+
+            with open(file_path, 'rb') as f:
+                response = HttpResponse(content=f.read(),
+                                        content_type='application/force-download')
+
+            filename = '_'.join(materiale.filename().split())
+            response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+            materiale.download_count = F('download_count') + 1
+            materiale.save()
+
+            return response
+        except:
+            pass
+
+    return HttpResponse('Non hai accesso a questo file.')

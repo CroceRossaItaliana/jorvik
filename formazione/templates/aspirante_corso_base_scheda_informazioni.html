@@ -185,7 +185,7 @@
                     {% if corso.get_course_links %}
                         <strong>File:</strong><br>
                         {% for file in corso.get_course_files %}
-                            <a href="{{file.file.url}}" target="_blank">{{file.filename}}</a><br>
+                            <a href="{{ file.download_url }}" target="_blank">{{file.filename}}</a> <small>({{file.download_count}})</small><br>
                         {% endfor %}
                     {% endif %}
                 </div>

@@ -17,4 +17,7 @@ urlpatterns = [
     url(r'^%s/relazione-direttore/$' % pk,
         viste.corso_compila_relazione_direttore,
         name='compila_relazione_direttore'),
+    url(r'^%s/file/$' % pk,
+        viste.course_materiale_didattico_download,
+        name='materiale_didattico_download'),
 ]

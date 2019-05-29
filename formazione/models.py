@@ -73,6 +73,11 @@ class CorsoFile(models.Model):
         # help_text="Formati dei file supportati: doc, xls, pdf, zip, "
         #     "jpg (max 8mb))",
     )
+    download_count = models.PositiveIntegerField(default=0)
+
+    def download_url(self):
+        reverse_url = reverse('courses:materiale_didattico_download', args=[self.corso.pk])
+        return reverse_url + "?id=%s" % self.pk
 
     def filename(self):
         import os
