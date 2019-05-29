@@ -11,8 +11,13 @@
 
 
 {% block app_contenuto %}
-    <h2 class="course__title-cri">{{ corso.titolo_cri|default:"" }}</h2>
-    <h4 class="course__name">{{ corso.nome }}</h4>
+    <style>
+        .course__name-without-title-cri {font-weight: bold; font-size:22px; color: #3c763d;}
+    </style>
+
+    {% if corso.titolo_cri %}<h2 class="course__title-cri">{{ corso.titolo_cri|default:"" }}</h2>{% endif %}
+
+    <h4 class="course__name {% if not corso.titolo_cri %}course__name-without-title-cri{%endif%}">{{ corso.nome }}</h4>
 
     <h4 class="allinea-centro">
         <i class="fa fa-fw fa-map-marker"></i> {% if corso.locazione %}<a href="{{ corso.url_mappa }}">{{ corso.locazione }}</a>{% else %} Posizione non impostata{% endif %} &mdash;
@@ -20,7 +25,7 @@
     </h4>
 
     <ul class="nav nav-tabs dynamic-tabs-links">
-        {% if puo_modificare %}
+        {% if puo_modificare and me.is_presidente %}
             <li role="presentation"><a data-tab-id="#tabAttivazione" href="#" class="attivazione tabSelectorLink"><i class="fa fa-fw fa-calendar"></i> Attivazione</a></li>
         {% endif %}
 
@@ -32,7 +37,7 @@
             {% if today_ts >= corso.data_esame|date:"U" %}<li role="presentation"><a data-tab-id="#tabEsami" href="#" class="esami tabSelectorLink"><i class="fa fa-fw fa-file-excel-o"></i> Documentazione Esame</a></li>{% endif %}
         {% endif %}
 
-        {% if corso.concluso %}
+        {% if corso.is_nuovo_corso and corso.concluso %}
             <li role="presentation"><a data-tab-id="#tabQuestionario" href="#" class="questionario tabSelectorLink"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</a></li>
         {% endif %}
     </ul>
@@ -43,8 +48,8 @@
             <li role="presentation"><a href="{% url 'formazione:new_course' %}"><i class="fa fa-fw fa-info"></i> Nuovo</a></li>
             <li {% if request.path == corso.url_direttori %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_direttori }}"><i class="fa fa-fw fa-group"></i> Direttori ({{ corso.deleghe.count }})</a></li>
 
-            {% if corso.tipo == 'C1' %}
-                <li role="presentation" {% if request.path == corso.url_estensioni %}class="active_link"{% endif %}><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Estensioni</a></li>
+            {% if corso.tipo == 'C1' and me.is_presidente %}
+                <li {% if request.path == corso.url_estensioni %}class="active_link"{% endif %} role="presentation"><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Area geografica interessata</a></li>
             {% endif %}
         </ul>
         {% endif %}
@@ -53,6 +58,12 @@
             <li {% if request.path == corso.url %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url }}"><i class="fa fa-fw fa-info"></i> Informazioni</a></li>
             {% if puo_modificare %}
                 <li {% if request.path == corso.url_modifica %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_modifica }}"><i class="fa fa-fw fa-pencil"></i> Pubblicizza il corso</a></li>
+
+                {# link doppione per visualizzarlo solo ai direttore che non vedono la sezione "Attivazione" #}
+                {% if corso.tipo == 'C1' and not me.is_presidente %}
+                    <li {% if request.path == corso.url_estensioni %}class="active_link"{% endif %} role="presentation"><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-globe"></i> Area geografica</a></li>
+                {% endif %}
+
                 <li {% if request.path == corso.url_iscritti %}class="active_link"{% endif %} role="presentation">
                     <a href="{{ corso.url_iscritti }}"><i class="fa fa-fw fa-group"></i> Iscrizioni
                         <i class="fa fa-fw fa-check"></i> {{ corso.partecipazioni_confermate.count }}
@@ -104,6 +115,15 @@
                 Completa i passi necessari e clicca sul pulsante per attivare il corso:
             </p>
 
+            <p>
+                {% if corso.direttori_corso.count == 0 %}
+                    <i class="fa fa-fw text-danger fa-square"></i> <span class="text-danger">DA FARE</span>:
+                {% else %}
+                    <i class="fa fa-fw text-success fa-check-square"></i> <span class="text-success">FATTO</span>:
+                {% endif %}
+                Selezionare almeno un direttore del Corso dalla scheda "Attivazione - Direttori"
+            </p>
+
             {% if corso.is_nuovo_corso %}
                 <p>
                     {% if corso.extension_type == corso.EXT_MIA_SEDE %}
@@ -111,17 +131,17 @@
                     {% else %}
                         <i class="fa fa-fw text-success fa-check-square"></i> <span class="text-success">FATTO</span>:
                     {% endif %}
-                    Conferma l'estensione a chi vuoi aprire il Corso dalla scheda "Estensioni"
+                    Indica l'area geografica. Seleziona i Comitati ai quali è destinata la formazione
                 </p>
             {% endif %}
 
-            <p>{% checkbox corso.descrizione %}: Inserisci una descrizione del Corso per i Corsisti dalla scheda "Gestione corso"</p>
-            <p>{% checkbox corso.locazione %}: Inserisci l'indirizzo del Corso dalla scheda "Gestione corso"</p>
+            <p>{% checkbox corso.descrizione %}: Inserisci una descrizione del Corso per i Corsisti dalla scheda "Dettagli - Pubblicizza corso"</p>
+            <!--<p>{% checkbox corso.locazione %}: Inserisci l'indirizzo del Corso dalla scheda "Dettagli - Pubblicizza corso"</p>-->
 
             <p style="text-align: center;margin-top: 20px;">
-                <a class="btn btn-warning {% if not corso.attivabile %}disabled{% endif %}"
-                    {% if corso.attivabile %}href="{{ corso.url_attiva }}"{% endif %}>
+                <a class="btn btn-warning {% if not corso.attivabile %}disabled{% endif %}" {% if corso.attivabile %}href="{{ corso.url_attiva }}"{% endif %}>
                     <i class="fa fa-fw fa-check-circle"></i>
+
                     {% if corso.is_nuovo_corso %}
                         {% if corso.extension_type == corso.EXT_MIA_SEDE %}
                             Attiva il corso e informa i volontari della mia sede
@@ -140,22 +160,22 @@
 
     {% if puo_modificare and corso.terminabile %}
         <div class="alert alert-success alert-block">
-            <h4><i class="fa fa-fw fa-warning"></i> Genera il verbale e termina il corso</h4>
-            <p>
-                Il corso si &egrave; concluso, ma &egrave; ancora necessario generare il verbale
-                del corso.
-            </p>
-            <p>
-                Una volta generato il verbale, tutti i partecipanti verranno informati dell'esito
-                e, coloro che saranno stati promossi, verranno trasformati automaticamente in
-                volontari.
-            </p>
-            <p>
-                <a class="btn btn-success" href="{{ corso.url_termina }}">
-                    <i class="fa fa-fw fa-check-circle"></i>
-                    Completa i dati per generare il verbale e terminare il corso
-                </a>
-            </p>
+            <h4><i class="fa fa-fw fa-warning"></i> Terminazione corso</h4>
+            <p>Il corso si &egrave; concluso, ma &egrave; ancora necessario generare il verbale del corso e compilare la relazione.</p>
+            <p>Una volta generato il verbale e compilata la relazione, tutti i partecipanti verranno informati dell'esito e,
+                coloro che saranno stati promossi, verranno trasformati automaticamente in volontari.</p>
+
+            <table style="text-align:center; width:100%; margin-top:20px;">
+                <tr>
+                    <td><a class="btn btn-default" href="{{ corso.url_termina }}"><i class="fa fa-fw fa-check-circle"></i>
+                Generare il verbale</a></td>
+                    <td><a class="btn {% if corso.relazione_direttore.is_completed %}btn-success{%else%}btn-default{%endif%}" href="{% url 'courses:compila_relazione_direttore' corso.pk %}"><i class="fa fa-fw fa-pencil"></i>
+                Inserire la relazione</a></td>
+                    {% if corso.relazione_direttore and corso.relazione_direttore.is_completed %}
+                    <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course"><i class="fa fa-fw fa-times-circle"></i> Terminare il corso</a></td>
+                    {% endif %}
+                </tr>
+            </table>
         </div>
     {% endif %}
 

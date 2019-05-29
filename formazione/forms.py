@@ -11,7 +11,7 @@ from anagrafica.models import Delega, Persona
 from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
 from .models import (Corso, CorsoBase, CorsoLink, CorsoFile, CorsoEstensione,
-                     LezioneCorsoBase, PartecipazioneCorsoBase)
+                     LezioneCorsoBase, PartecipazioneCorsoBase, RelazioneCorso)
 
 
 class ModuloCreazioneCorsoBase(ModelForm):
@@ -101,7 +101,8 @@ class ModuloCreazioneCorsoBase(ModelForm):
             'data_esame', 'delibera_file', 'sede', 'locazione'))
 
         # GAIA-16
-        delega = me.deleghe_attuali().filter(tipo__in=[permessi.PRESIDENTE,
+        delega = me.deleghe_attuali().filter(tipo__in=[permessi.COMMISSARIO,
+                                                       permessi.PRESIDENTE,
                                                        permessi.RESPONSABILE_FORMAZIONE]).last()
         if delega:
             estensione_sede = delega.sede.all().first().estensione
@@ -131,6 +132,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
 class ModuloModificaLezione(ModelForm):
     docente = autocomplete_light.ModelChoiceField("DocenteLezioniCorso")
     fine = forms.DateTimeField()
+    obiettivo = forms.CharField(required=False)
 
     def clean(self):
         cd = self.cleaned_data
@@ -151,10 +153,6 @@ class ModuloModificaLezione(ModelForm):
             self.add_error('fine', err_data_lt_inizio_corso)
 
         return cd
-    
-    def __init__(self, *args, **kwargs):
-        self.corso = kwargs.pop('corso')
-        super().__init__(*args, **kwargs)
 
     class Meta:
         model = LezioneCorsoBase
@@ -163,6 +161,10 @@ class ModuloModificaLezione(ModelForm):
             'nome': 'Lezione',
             'obiettivo': 'Argomento',
         }
+
+    def __init__(self, *args, **kwargs):
+        self.corso = kwargs.pop('corso')
+        super().__init__(*args, **kwargs)
 
 
 class ModuloModificaCorsoBase(ModelForm):
@@ -225,14 +227,6 @@ class CorsoLinkForm(ModelForm):
         ]
         self.fields['file'].widget.attrs = {'accept': ", ".join(
             acceptable_extensions)}
-
-
-CorsoFileFormSet = modelformset_factory(CorsoFile, form=CorsoLinkForm, extra=1,
-                                        max_num=2)
-
-
-CorsoLinkFormSet = modelformset_factory(CorsoLink, fields=('link',), extra=1,
-                                        max_num=2)
 
 
 class ModuloIscrittiCorsoBaseAggiungi(forms.Form):
@@ -299,10 +293,6 @@ class CorsoExtensionForm(ModelForm):
         #         self.corso.titolo_cri.pk])
 
 
-CorsoSelectExtensionFormSet = modelformset_factory(CorsoEstensione, extra=1,
-    max_num=3, form=CorsoExtensionForm, can_delete=True)
-
-
 class ModuloConfermaIscrizioneCorso(forms.Form):
     IS_CORSO_NUOVO = True
 
@@ -315,6 +305,25 @@ class ModuloConfermaIscrizioneCorsoBase(forms.Form):
               "questa azione non sarà facilmente reversibile. Sarà comunque possibile "
               "non ammettere l'aspirante all'esame, qualora dovesse non presentarsi "
               "al resto delle lezioni (questo sarà verbalizzato).")
+
+
+class FormRelazioneDelDirettoreCorso(ModelForm):
+    class Meta:
+        model = RelazioneCorso
+        exclude = ['corso', 'creazione', 'ultima_modifica',]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        is_stato_terminato = self.instance.corso.stato == CorsoBase.TERMINATO
+
+        for f in self.fields:
+            self.fields[f].label = self.fields[f].help_text
+            self.fields[f].widget.attrs['placeholder'] = ''
+            self.fields[f].help_text = ''
+
+            if is_stato_terminato:
+                self.fields[f].widget.attrs['disabled'] = 'disabled'
 
 
 class ModuloVerbaleAspiranteCorsoBase(ModelForm):

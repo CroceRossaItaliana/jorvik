@@ -6,8 +6,7 @@ logger = get_task_logger(__name__)
 
 @shared_task(bind=True)
 def invia_mail(self, pk):
-
-    from posta.models import Messaggio
+    from .models import Messaggio
 
     messaggio = Messaggio.objects.get(pk=pk)
     logger.info("messaggio id=%d" % pk)

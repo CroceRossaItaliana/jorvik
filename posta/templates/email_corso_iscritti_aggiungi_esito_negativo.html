@@ -1,0 +1,14 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p>Ciao, perché il Direttore del {{ corso.nome }} ti inviti è necessario che
+      {% if esito == corso.NON_HAI_CARICATO_DOCUMENTI_PERSONALI %} carichi
+      {% elif esito == corso.NON_HAI_DOCUMENTO_PERSONALE_VALIDO %} aggiorni il tuo profilo allegando
+      {% endif %}
+      un documento di identità in corso di validità, proseguendo su <a href="{% url 'utente:documenti' %}">questo link</a>.
+    </p>
+
+    <hr>
+
+    <p><strong><a href="{{ corso.url }}">Clicca qui per aprire la pagina del Corso con maggiori informazioni.</a></strong></p>
+{% endblock %}

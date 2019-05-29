@@ -6,6 +6,7 @@ from ufficio_soci.elenchi import ElencoVistaAnagrafica
 
 
 class ElencoPartecipantiCorsiBase(ElencoVistaAnagrafica):
+    NAME = 'Partecipanti Corso'
 
     def template(self):
         return 'formazione_elenchi_inc_iscritti.html'

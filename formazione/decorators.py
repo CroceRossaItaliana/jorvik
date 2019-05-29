@@ -6,10 +6,17 @@ from anagrafica.permessi.costanti import ERRORE_PERMESSI
 def can_access_to_course(function):
     def wrapper(request, *args, **kwargs):
         me = request.me
+        proceed = True
         REDIRECT_ERR = redirect(ERRORE_PERMESSI)
-        if not hasattr(me, 'ha_aspirante'):
-            return REDIRECT_ERR
-        if not me.ha_aspirante and not me.volontario:
+
+        if me.dipendente:
+            pass
+        elif not hasattr(me, 'ha_aspirante'):
+            proceed = False
+        elif not me.ha_aspirante and not me.volontario:
+            proceed = False
+
+        if not proceed:
             return REDIRECT_ERR
 
         r = function(request, *args, **kwargs)

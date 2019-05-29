@@ -3,6 +3,7 @@ from collections import OrderedDict
 from importlib import import_module
 
 from django.db import transaction
+from django.db.models import Q
 from django.apps import apps
 from django.conf import settings
 from django.contrib import messages
@@ -32,7 +33,7 @@ from base.stringhe import genera_uuid_casuale
 from base.utils import remove_none, poco_fa, oggi
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
-from posta.models import Messaggio, Q
+from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
 from anagrafica.statistica.stat_costanti import GENERALI
@@ -1079,8 +1080,8 @@ def strumenti_delegati(request, me):
     }
     form = ModuloCreazioneDelega(request.POST or None, **form_data)
     if model == 'corsobase':
-        if oggetto.is_nuovo_corso:
-            form = FormCreateDirettoreDelega(request.POST or None, **form_data)
+        # if oggetto.is_nuovo_corso:
+        form = FormCreateDirettoreDelega(request.POST or None, **form_data)
 
     # Check form is valid
     if form.is_valid():
@@ -1202,10 +1203,9 @@ def utente_curriculum(request, me, tipo=None):
                 tp.autorizzazione_richiedi_sede_riferimento(
                     me, INCARICO_GESTIONE_TITOLI
                 )
-
             return redirect("/utente/curriculum/%s/?inserimento=ok" % (tipo,))
 
-    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo)
+    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo).order_by('-data_scadenza')
 
     contesto = {
         "tipo": tipo,

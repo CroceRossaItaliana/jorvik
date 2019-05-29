@@ -7,13 +7,13 @@ from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
 from .models import (CorsoBase, CorsoFile, CorsoEstensione, CorsoLink,
     Aspirante, PartecipazioneCorsoBase, AssenzaCorsoBase, LezioneCorsoBase,
-    InvitoCorsoBase)
+    InvitoCorsoBase, RelazioneCorso)
 
 
 RAW_ID_FIELDS_CORSOBASE = ['sede', 'locazione',]
 RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE = ['persona', 'corso', 'destinazione',]
 RAW_ID_FIELDS_INVITOCORSOBASE = ['persona', 'corso', 'invitante',]
-RAW_ID_FIELDS_LEZIONECORSOBASE = ['corso',]
+RAW_ID_FIELDS_LEZIONECORSOBASE = ['corso', 'docente',]
 RAW_ID_FIELDS_ASSENZACORSOBASE = ['lezione', 'persona', 'registrata_da',]
 RAW_ID_FIELDS_ASPIRANTE = ['persona', 'locazione',]
 RAW_ID_FIELDS_ESTENSIONE = ['sede', 'titolo',]
@@ -116,6 +116,7 @@ class AdminPartecipazioneCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     list_filter = ['confermata',]
     raw_id_fields = RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE
     inlines = [InlineAutorizzazione]
+    ordering = ['-creazione',]
 
 
 @admin.register(LezioneCorsoBase)
@@ -130,7 +131,9 @@ class AdminLezioneCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
 class AdminAssenzaCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['persona__nome', 'persona__cognome', 'persona__codice_fiscale', 'lezione__corso__progressivo',
                      'lezione__corso__sede__nome']
-    list_display = ['persona', 'lezione', 'creazione', ]
+    list_display = ['persona', 'lezione', 'creazione', 'esonero',
+                    'esonero_motivazione',]
+    list_filter = ['esonero',]
     raw_id_fields = RAW_ID_FIELDS_ASSENZACORSOBASE
 
 
@@ -139,9 +142,16 @@ def ricalcola_raggio(modeladmin, request, queryset):
         a.calcola_raggio()
 ricalcola_raggio.short_description = "Ricalcola il raggio per gli aspiranti selezionati"
 
+
 @admin.register(Aspirante)
 class AdminAspirante(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['persona__nome', 'persona__cognome', 'persona__codice_fiscale']
     list_display = ['persona', 'creazione', ]
     raw_id_fields = RAW_ID_FIELDS_ASPIRANTE
     actions = [ricalcola_raggio,]
+
+
+@admin.register(RelazioneCorso)
+class AdminRelazioneCorso(ReadonlyAdminMixin, admin.ModelAdmin):
+    list_display = ['corso', 'is_completed',]
+    raw_id_fields = ['corso',]

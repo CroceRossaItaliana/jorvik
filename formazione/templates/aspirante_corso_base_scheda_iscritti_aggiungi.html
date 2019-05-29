@@ -82,6 +82,12 @@
                                     {% elif r.esito == corso.NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO %}
                                         Già iscritt{{ r.persona.genere_o_a }} a un altro corso
 
+                                    {% elif r.esito == corso.NON_HAI_DOCUMENTO_PERSONALE_VALIDO %}
+                                        Questo utente non ha un documento di riconoscimento valido/rinnovato
+
+                                    {% elif r.esito == corso.NON_HAI_CARICATO_DOCUMENTI_PERSONALI %}
+                                        Questo utente non ha caricato un documento d'identità
+
                                     {% endif %}
                                 {% endif %}
                             </td>

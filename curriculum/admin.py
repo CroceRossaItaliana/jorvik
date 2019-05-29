@@ -42,8 +42,14 @@ class AdminTitoloPersonale(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["titolo__nome", "persona__nome", "persona__cognome",
                      "persona__codice_fiscale",]
     list_display = ("titolo", "persona", 'is_course_title',
-                    "data_ottenimento", 'data_scadenza', "certificato", "creazione",)
+                    "data_ottenimento", 'data_scadenza', "certificato",
+                    "creazione", 'corso_partecipazione__corso')
     list_filter = ("titolo__tipo", "creazione", "data_ottenimento",
                    'is_course_title')
-    raw_id_fields = ("persona", "certificato_da", "titolo",)
+    raw_id_fields = ("persona", "certificato_da", "titolo", 'corso_partecipazione',)
     inlines = [InlineAutorizzazione]
+
+    def corso_partecipazione__corso(self, obj):
+        return obj.corso_partecipazione.corso \
+            if hasattr(obj.corso_partecipazione, 'corso') else ''
+    corso_partecipazione__corso.short_description = 'Corso Partecipazione'

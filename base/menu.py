@@ -8,9 +8,9 @@ from django.core.urlresolvers import reverse
 
 from anagrafica.costanti import REGIONALE  #TERRITORIALE, LOCALE
 from anagrafica.permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI, RUBRICHE_TITOLI, COMMISSARIO)
-from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA,
-    GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE,
-    EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE)
+from anagrafica.permessi.costanti import (GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA,
+    ELENCHI_SOCI, GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI,
+    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE)
 from anagrafica.models import Sede
 
 from .utils import remove_none
@@ -39,8 +39,6 @@ def menu(request):
             oggetto_tipo=ContentType.objects.get_for_model(Sede),
             oggetto_id__in=sedi
         ).distinct().values_list('tipo', flat=True)
-
-    gestione_corsi_sede = me.ha_permesso(GESTIONE_CORSI_SEDE) if me else False
 
     RUBRICA_BASE = [
         ("Referenti", "fa-book", "/utente/rubrica/referenti/"),
@@ -210,9 +208,8 @@ def menu(request):
                 if me and me.oggetti_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE).exists() else None,
             )),
         ),
-        'formazione': formazione_menu('formazione', gestione_corsi_sede),
-        'aspirante': formazione_menu('aspirante', gestione_corsi_sede) \
-            if me and hasattr(me, 'aspirante') else (
+        'formazione': formazione_menu('formazione', me),
+        'aspirante': formazione_menu('aspirante') if me and hasattr(me, 'aspirante') else (
             ("Gestione Corsi", (
                 ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
             )),

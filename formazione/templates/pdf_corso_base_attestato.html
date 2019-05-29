@@ -22,7 +22,9 @@
       <h2 class="heading-h2">{{ persona.nome_completo }}</h2>
     </div>
     <div class="details">
-      <p>Nome del corso <span>{{ corso.titolo_cri }}</span></p>
+      {% if corso.titolo_cri %}
+        <p>Nome del corso <span>{{ corso.titolo_cri }}</span></p>
+      {% endif %}
       <p>Data inizio <span>{{ corso.data_inizio|date:"DATE_FORMAT" }}</span></p>
       <p>Data fine <span>{{ corso.data_esame|date:"DATE_FORMAT" }}</span></p>
       <p>Sede di svolgimento <span>{{ corso.sede.nome }}</span></p>

@@ -1,0 +1,5 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p>Buongiorno direttore, {{ partecipante }} ha ritirato la sua iscrizione dal <a href="{{ corso.url }}">Corso</a></p>
+{% endblock %}

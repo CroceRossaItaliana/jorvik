@@ -20,9 +20,10 @@ from django_countries.fields import CountryField
 
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
-    crea_validatore_dimensione_file, valida_dimensione_file_8mb,
-    valida_dimensione_file_5mb, valida_almeno_14_anni, valida_partita_iva,
-    valida_iban, valida_email_personale)
+    valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
+    valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
+from .permessi.shortcuts import *
+from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL
 from attivita.models import Turno, Partecipazione
 from base.files import PDF, Excel, FoglioExcel
 from base.geo import ConGeolocalizzazione
@@ -34,7 +35,6 @@ from base.utils import (is_list, sede_slugify, UpperCaseCharField, concept, oggi
     TitleCharField, poco_fa, mezzanotte_24_ieri, mezzanotte_00, mezzanotte_24)
 from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio
-from .permessi.shortcuts import *
 
 
 class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
@@ -524,7 +524,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         if self.ha_permesso(GESTIONE_CENTRALE_OPERATIVA_SEDE):
             lista += [('/centrale-operativa/', "CO", "fa-compass")]
 
-        if self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE):
+        if self.ha_permesso(GESTIONE_CORSO) or \
+                self.ha_permesso(GESTIONE_CORSI_SEDE) or \
+                True in [self.ha_permesso(i) for i in RUBRICA_DELEGATI_OBIETTIVO_ALL]:
             lista += [('/formazione/', 'Formazione', 'fa-graduation-cap')]
 
         tipi = []
@@ -533,6 +535,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 continue
             tipi.append(d.tipo)
             #lista += [(APPLICAZIONI_SLUG_DICT[d.tipo], PERMESSI_NOMI_DICT[d.tipo])]
+
         lista += [('/articoli/', 'Articoli', 'fa-newspaper-o')]
         lista += [('/documenti/', 'Documenti', 'fa-folder')]
         return lista
@@ -1030,6 +1033,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 self.stato_residenza
             ))
             return a
+
+    def sede_riferimento_precedente(self, membro=None, **kwargs):
+        membro = membro or Appartenenza.MEMBRO_DIRETTO
+        return Appartenenza.objects.filter(
+            membro__in=membro, persona=self, fine__isnull=False
+        ).order_by('-fine').first().sede
 
     def sede_riferimento(self, membro=None, **kwargs):
         membro = membro or Appartenenza.MEMBRO_DIRETTO
@@ -2393,7 +2402,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
           nome="Trasferimento %s.pdf" % (self.persona.nome_completo, ),
           corpo={
             "trasferimento": self,
-            "sede_attuale": self.persona.sede_riferimento(),
+            "sede_attuale": self.persona.sede_riferimento() if not self.appartenenza else self.persona.sede_riferimento_precedente(),
           },
           modello="pdf_trasferimento.html",
         )
@@ -2584,6 +2593,9 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
           modello="pdf_riserva.html",
         )
         return pdf
+
+    def __str__(self):
+        return '%s (%s - %s)' % (self.persona, self.inizio, self.fine)
 
 
 class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocollo, ConStorico):

@@ -25,13 +25,15 @@
                 <p>Se sei interessat{{ me.genere_o_a }} a iscriverti a questo corso, clicca sul pulsante seguente.
                     Notificheremo il tuo interesse al direttore del corso, che ti contatterà
 
-                    <label for="autocert_assenza_condanne_penali">
-                        <input type="checkbox" id="autocert_assenza_condanne_penali" style="display: inline-block;">
-                        Autocertificare l’assenza di condanne penali, con sentenza passata in giudicato, per uno dei reati comportanti la destituzione di diritto dal pubblico impiego
-                    </label>
+                    {% if not corso.is_nuovo_corso %}
+                        <label for="autocert_assenza_condanne_penali">
+                            <input type="checkbox" id="autocert_assenza_condanne_penali" style="display: inline-block;">
+                            Autocertificare l’assenza di condanne penali, con sentenza passata in giudicato, per uno dei reati comportanti la destituzione di diritto dal pubblico impiego
+                        </label>
+                    {% endif %}
                 </p>
                 <p>
-                    <a href="{% url 'aspirante:subscribe' corso.pk %}" class="btn btn-block btn-success" id="VO_want_to_participate_to_this_course">
+                    <a id="VO_want_to_participate_to_this_course" href="{% url 'aspirante:subscribe' corso.pk %}" class="btn btn-block btn-success">
                         <i class="fa fa-fw fa-check-circle"></i> Voglio iscrivermi a questo corso
                     </a>
                 </p>
@@ -40,10 +42,15 @@
 
         <script>
             $('#VO_want_to_participate_to_this_course').on('click', function(e) {
-                let autocert_assenza_condanne_penali = $('#autocert_assenza_condanne_penali');
-                if (!autocert_assenza_condanne_penali.is(':checked')) {
-                    e.preventDefault();
-                    autocert_assenza_condanne_penali.parent().css({'color': 'red'});
+                var is_nuovo_corso = {% if corso.is_nuovo_corso %}true{% else %} false{% endif %};
+                if (is_nuovo_corso) {
+                    //
+                } else {
+                    let autocert_assenza_condanne_penali = $('#autocert_assenza_condanne_penali');
+                    if (!autocert_assenza_condanne_penali.is(':checked')) {
+                        e.preventDefault();
+                        autocert_assenza_condanne_penali.parent().css({'color': 'red'});
+                    }
                 }
             });
         </script>
@@ -64,11 +71,17 @@
                 </p>
             </div>
 
-        {% elif puoi_partecipare == corso.SEI_ISCRITTO_NON_PUOI_RITIRARTI %}
+        {% elif puoi_partecipare == corso.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI and corso.stato != corso.TERMINATO %}
             <div class="alert alert-info alert-block">
                 <h4><i class="fa fa-check-circle"></i> Sei iscritt{{ me.genere_o_a }} a questo corso!</h4>
                 <p>Meraviglioso! Presentati alle lezioni del corso secondo il programma indicato sotto.</p>
                 <p>Per qualsiasi domanda, contatta uno dei direttori del corso, cliccando sul suo nome.</p>
+
+                <p>
+                     <a href="{% url 'aspirante:retired' corso.pk %}" data-conferma="Sei sicur{{ me.genere_o_a }} di voler rinunciare a questo corso?" class="btn btn-block btn-warning">
+                        <i class="fa fa-fw fa-times"></i> Non posso pi&ugrave; partecipare &mdash; voglio ritirarmi
+                    </a>
+                </p>
             </div>
         {% endif %}
 
@@ -141,19 +154,14 @@
             <div class="panel-heading">
                 <h3 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Data di inizio</h3>
             </div>
-            <div class="panel-body">
-                {{ corso.data_inizio }}
-            </div>
+            <div class="panel-body">{{ corso.data_inizio }}</div>
         </div>
     </div>
 
     <div class="col-md-3">
         <div class="panel panel-info">
             <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-calendar"></i>
-                    Data di esame
-                </h3>
+                <h3 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Data di esame</h3>
             </div>
             <div class="panel-body">{{ corso.data_esame }}</div>
         </div>
@@ -165,23 +173,27 @@
         <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
         {{ corso.descrizione|default:"<p>Ancora non disponibili</p>"|safe }}
 
-        {% if puoi_partecipare == corso.SEI_ISCRITTO_NON_PUOI_RITIRARTI or puo_modificare %}
-            {% if corso.get_course_links or corso.get_course_files %}<h3>Materiale didattico</h3>{%endif%}
-            {% if corso.get_course_links %}
-                <strong>Link:</strong><br>
-                {% for link in corso.get_course_links %}
-                    <a href="{{link.link}}" target="_blank">{{link.link}}</a><br>
-                {% endfor %}
-            {% endif %}
+        {% if puoi_partecipare == corso.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI or puo_modificare %}
+            {% if corso.get_course_links or corso.get_course_files %}
+                <div style="margin:0 0 20px;">
+                    <h3>Materiale didattico</h3>
+                    {% if corso.get_course_links %}
+                        <strong>Link:</strong><br>
+                        {% for link in corso.get_course_links %}
+                            <a href="{{link.link}}" target="_blank">{{link.link}}</a><br>
+                        {% endfor %}
+                    {% endif %}
 
-            <br>
+                    <br>
 
-            {% if corso.get_course_links %}
-                <strong>File:</strong><br>
-                {% for file in corso.get_course_files %}
-                    <a href="{{file.file.url}}" target="_blank">{{file.filename}}</a><br>
-                {% endfor %}
-            {% endif %}
+                    {% if corso.get_course_links %}
+                        <strong>File:</strong><br>
+                        {% for file in corso.get_course_files %}
+                            <a href="{{file.file.url}}" target="_blank">{{file.filename}}</a><br>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            {%endif%}
         {% endif %}
 
         <p>

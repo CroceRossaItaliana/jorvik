@@ -1,5 +1,6 @@
 from importlib import import_module
 from collections import OrderedDict
+from datetime import datetime
 
 from django.db.models import Sum, Q
 from django.core.files.base import ContentFile
@@ -13,7 +14,7 @@ from celery import uuid
 
 from anagrafica.permessi.costanti import GESTIONE_SOCI
 from .models import Quota, Tesseramento, ReportElenco
-from .tasks import generate_elenco_soci_al_giorno
+from .tasks import generate_elenco
 from . import elenchi
 
 
@@ -295,7 +296,7 @@ class ReportElencoSoci:
         # Update db record, set status (is_ready) True
         report_db = ReportElenco.objects.get(id=report_id)
 
-        filename = 'Elenco-%s-%s.xlsx' % (report_db.get_report_type_display(),
+        filename = 'Elenco %s %s.xlsx' % (report_db.get_report_type_display(),
                                           report_db.creazione)
         _bytes = ContentFile(excel.output.read())
 
@@ -321,13 +322,19 @@ class ReportElencoSoci:
             return True
         return False
 
+    @property
+    def filename(self):
+        if hasattr(self.elenco, 'NAME'):
+            s = "%s - %s.xlsx" % (self.elenco.NAME, str(datetime.now().date()))
+            return '_'.join(s.split(' '))
+        return self.EXCEL_FILENAME
+
     def download(self):
         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         file = self._generate(save_to_memory=True).output.read()
-        filename = 'Elenco.xlsx'
 
         response = HttpResponse(file, content_type=content_type)
-        response['Content-Disposition'] = "attachment; filename=%s" % filename
+        response['Content-Disposition'] = "attachment; filename=%s" % self.filename
         return response
 
     def make(self):
@@ -343,7 +350,7 @@ class ReportElencoSoci:
         report_db.save()
 
         # Partire celery task e reindirizza user sulla pagina "Report Elenco"
-        task = generate_elenco_soci_al_giorno.apply_async(
+        task = generate_elenco.apply_async(
             (self.celery_params, report_db.id),
             task_id=task_uuid)
 

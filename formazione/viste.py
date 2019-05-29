@@ -1,64 +1,82 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
+from django.db.models import Q
 from django.utils import timezone
 from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.template.loader import get_template
 from django.contrib import messages
 
-from anagrafica.models import Persona, Documento
+from anagrafica.models import Persona, Documento, Sede
 from anagrafica.forms import ModuloCreazioneDocumento
 from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
-    GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, ELENCHI_SOCI)
+    GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, RUBRICA_DELEGATI_OBIETTIVO_ALL)
 from curriculum.models import TitoloPersonale
 from ufficio_soci.elenchi import ElencoPerTitoliCorso
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, messaggio_generico # ci_siamo_quasi
-from base.files import Zip
 from base.models import Log
 from base.utils import poco_fa
 from posta.models import Messaggio
 from survey.models import Survey
 from .elenchi import ElencoPartecipantiCorsiBase
 from .decorators import can_access_to_course
-from .models import (Corso, CorsoBase, CorsoEstensione, AssenzaCorsoBase,
-    LezioneCorsoBase, PartecipazioneCorsoBase, Aspirante, InvitoCorsoBase)
+from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoBase,
+                     PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi,
-    ModuloVerbaleAspiranteCorsoBase)
+    ModuloVerbaleAspiranteCorsoBase, FormRelazioneDelDirettoreCorso)
+from .classes import GestionePresenza, GeneraReport
 
 
 @pagina_privata
 def formazione(request, me):
-    contesto = {
+    corsi = me.oggetti_permesso(GESTIONE_CORSO)
+
+    # Filtra corsi by stato
+    if request.GET.get('stato'):
+        stato = request.GET.get('stato')
+        # Verifica che modello ha lo stato impostato in get-request
+        if stato in [i[0] for i in Corso.STATO]:
+            filtered = corsi.filter(stato=stato)
+            if not filtered.exists():  # queryset vuoto
+                # Rindirizza sulla pagina con tutti i corsi disponibili
+                return redirect('formazione:index')
+            corsi = filtered
+
+    context = {
+        "corsi": corsi,
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
-        "corsi": me.oggetti_permesso(GESTIONE_CORSO),
+        "puo_pianificare": me.ha_permesso(GESTIONE_CORSI_SEDE),
     }
-    return 'formazione.html', contesto
+    return 'formazione.html', context
 
 
 @pagina_privata
 def formazione_corsi_base_elenco(request, me):
-    contesto = {
+    context = {
         "corsi": me.oggetti_permesso(GESTIONE_CORSO),
         "puo_pianificare": me.ha_permesso(GESTIONE_CORSI_SEDE),
     }
-    return 'formazione_corsi_base_elenco.html', contesto
+    return 'formazione_corsi_base_elenco.html', context
 
 
 @pagina_privata
 def formazione_corsi_base_domanda(request, me):
-    contesto = {
+    context = {
         "sedi": me.oggetti_permesso(GESTIONE_CORSI_SEDE),
         "min_sedi": Aspirante.MINIMO_COMITATI,
         "max_km": Aspirante.MASSIMO_RAGGIO,
     }
-    return 'formazione_corsi_base_domanda.html', contesto
+    return 'formazione_corsi_base_domanda.html', context
 
 
 @pagina_privata
 def formazione_corsi_base_nuovo(request, me):
+    if not me.ha_permesso(GESTIONE_CORSI_SEDE):
+        return redirect(ERRORE_PERMESSI)
+
     now = datetime.now() + timedelta(days=14)
     form = ModuloCreazioneCorsoBase(
         request.POST or None,
@@ -142,10 +160,10 @@ def formazione_corsi_base_fine(request, me, pk):
     if me in corso.delegati_attuali():  # Se sono direttore, continuo.
         redirect(corso.url)
 
-    contesto = {
+    context = {
         "corso": corso,
     }
-    return 'formazione_corsi_base_fine.html', contesto
+    return 'formazione_corsi_base_fine.html', context
 
 
 @pagina_pubblica
@@ -225,25 +243,48 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
 
 @pagina_privata
 def aspirante_corso_base_ritirati(request, me=None, pk=None):
-
     corso = get_object_or_404(CorsoBase, pk=pk)
-    puoi_partecipare = corso.persona(me)
-    if not puoi_partecipare == corso.SEI_ISCRITTO_PUOI_RITIRARTI:
-        return errore_generico(request, me, titolo="Non puoi ritirarti da questo corso",
-                               messaggio="Siamo spiacenti, ma non sembra che tu possa ritirarti "
-                                         "da questo corso per qualche motivo. ",
-                               torna_titolo="Torna al corso",
-                               torna_url=corso.url)
+    partecipazione = PartecipazioneCorsoBase.objects.none()
 
-    p = PartecipazioneCorsoBase.con_esito_pending(corso=corso, persona=me).first()
-    p.ritira()
+    kwargs = dict(corso=corso, persona=me)
+    if corso.persona(me) == CorsoBase.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI:
+        partecipazione = PartecipazioneCorsoBase.con_esito_ok(**kwargs).last()
+    else:
+        partecipazione = PartecipazioneCorsoBase.con_esito_pending(**kwargs).first()
 
-    return messaggio_generico(request, me, titolo="Ti sei ritirato dal corso",
-                              messaggio="Siamo spiacenti che hai deciso di ritirarti da questo corso. "
-                                        "La tua partecipazione è stata ritirata correttamente. "
-                                        "Non esitare a iscriverti a questo o un altro corso, nel caso cambiassi idea.",
-                              torna_titolo="Torna alla pagina del corso",
-                              torna_url=corso.url)
+    if partecipazione:
+        # Caso: vuole ritirasi quando la richiesta non è stata ancora confermata
+        partecipazione.ritira()
+
+        # Caso: vuole ritirasi quando la richiesta è stata confermata
+        if partecipazione.confermata:
+            partecipazione.confermata = False
+            partecipazione.save()  # second save() call
+
+        # Informa direttore corso
+        posta = Messaggio.costruisci_e_accoda(
+            oggetto="Ritiro richiesta di iscrizione a %s da %s" % (corso.nome, partecipazione.persona),
+            modello="email_corso_utente_ritirato_iscrizione.html",
+            corpo={
+                'corso': corso,
+                'partecipante': partecipazione.persona,
+            },
+            destinatari=corso.direttori_corso())
+
+        if posta:
+            messages.success(request, "Il direttore del corso è stato avvisato.")
+
+        return messaggio_generico(request, me, titolo="Ti sei ritirato dal corso",
+            messaggio="Siamo spiacenti che hai deciso di ritirarti da questo corso. "
+                "La tua partecipazione è stata ritirata correttamente. "
+                "Non esitare a iscriverti a questo o un altro corso, nel caso cambiassi idea.",
+            torna_titolo="Torna alla pagina del corso",
+            torna_url=corso.url)
+
+    return messaggio_generico(request, me, titolo="Non puoi ritirarti da questo corso",
+        messaggio="Siamo spiacenti, ma non sembra che tu possa ritirarti da questo corso per qualche motivo. ",
+        torna_titolo="Torna alla pagina del corso",
+        torna_url=corso.url)
 
 
 @pagina_privata
@@ -266,40 +307,38 @@ def aspirante_corso_base_lezioni(request, me, pk):
 
     partecipanti = Persona.objects.filter(partecipazioni_corsi__in=corso.partecipazioni_confermate())
     lezioni = corso.lezioni.all()
-    moduli = []
-    partecipanti_lezioni = []
+
+    moduli = list()
+    partecipanti_lezioni = list()
+
+    AZIONE_SALVA = request.POST and request.POST['azione'] == 'salva'
+    AZIONE_NUOVA = request.POST and request.POST['azione'] == 'nuova'
+
+    # Presenze/assenze
     for lezione in lezioni:
-        form = ModuloModificaLezione(
-            request.POST if request.POST and request.POST['azione'] == 'salva' else None,
-            instance=lezione,
-            corso=corso,
-            prefix="%s" % (lezione.pk,)
-        )
-        if request.POST and request.POST['azione'] == 'salva' and form.is_valid():
+        form = ModuloModificaLezione(request.POST if AZIONE_SALVA else None,
+            instance=lezione, corso=corso, prefix="%s" % lezione.pk)
+
+        if AZIONE_SALVA and form.is_valid():
             form.save()
 
         moduli += [form]
-        partecipanti_lezione = partecipanti.exclude(assenze_corsi_base__lezione=lezione).order_by('nome', 'cognome')
 
-        if request.POST and request.POST['azione'] == 'salva':
-            for partecipante in partecipanti:
-                if ("%s" % (partecipante.pk,)) in request.POST.getlist('presenze-%s' % (lezione.pk,)):
-                    # Se presente, rimuovi ogni assenza.
-                    AssenzaCorsoBase.objects.filter(lezione=lezione, persona=partecipante).delete()
-                else:
-                    # Assicurati che sia segnato come assente.
-                    if not AssenzaCorsoBase.objects.filter(lezione=lezione, persona=partecipante).exists():
-                        a = AssenzaCorsoBase(lezione=lezione, persona=partecipante, registrata_da=me)
-                        a.save()
+        # Excludi assenze con esonero
+        partecipanti_lezione = partecipanti.exclude(
+            Q(assenze_corsi_base__esonero=False),
+            assenze_corsi_base__lezione=lezione
+        ).order_by('nome', 'cognome')
+
+        if AZIONE_SALVA:
+            gestione_presenze = GestionePresenza(request, lezione, me, partecipanti)
 
         partecipanti_lezioni += [partecipanti_lezione]
 
-    if request.POST and request.POST['azione'] == 'nuova':
-        modulo_nuova_lezione = ModuloModificaLezione(request.POST,
-                                                     prefix="nuova",
-                                                     corso=corso)
-        if modulo_nuova_lezione.is_valid():
-            lezione = modulo_nuova_lezione.save(commit=False)
+    if AZIONE_NUOVA:
+        form_nuova_lezione = ModuloModificaLezione(request.POST, prefix="nuova", corso=corso)
+        if form_nuova_lezione.is_valid():
+            lezione = form_nuova_lezione.save(commit=False)
             lezione.corso = corso
             lezione.save()
 
@@ -307,12 +346,19 @@ def aspirante_corso_base_lezioni(request, me, pk):
                 # Informa docente della lezione
                 lezione.send_messagge_to_docente(me)
 
-            return redirect("%s#%d" % (corso.url_lezioni, lezione.pk,))
+            return redirect("%s#%d" % (corso.url_lezioni, lezione.pk))
     else:
-        modulo_nuova_lezione = ModuloModificaLezione(prefix="nuova", initial={
+        form_nuova_lezione = ModuloModificaLezione(prefix="nuova", initial={
             "inizio": timezone.now(),
             "fine": timezone.now() + timedelta(hours=2)
         }, corso=corso)
+
+    try:
+        if AZIONE_SALVA or AZIONE_NUOVA:
+            if not form.is_valid():
+                messages.error(request, 'Verifica tutti i moduli sulla presenza degli errori.')
+    except:
+        pass
 
     lezioni = zip(lezioni, moduli, partecipanti_lezioni)
 
@@ -321,7 +367,7 @@ def aspirante_corso_base_lezioni(request, me, pk):
         "puo_modificare": True,
         "lezioni": lezioni,
         "partecipanti": partecipanti,
-        "modulo_nuova_lezione": modulo_nuova_lezione,
+        "modulo_nuova_lezione": form_nuova_lezione,
     }
     return 'aspirante_corso_base_scheda_lezioni.html', context
 
@@ -344,7 +390,7 @@ def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
 @pagina_privata
 def aspirante_corso_base_modifica(request, me, pk):
     from .models import CorsoFile, CorsoLink
-    from .forms import CorsoFileFormSet, CorsoLinkFormSet
+    from .formsets import CorsoFileFormSet, CorsoLinkFormSet
 
     course = get_object_or_404(CorsoBase, pk=pk)
     course_files = CorsoFile.objects.filter(corso=course)
@@ -388,8 +434,13 @@ def aspirante_corso_base_modifica(request, me, pk):
                 instance.corso = course
             link_formset.save()
 
-        if course_form.is_valid() and file_formset.is_valid() and \
-                link_formset.is_valid():
+        if course_form.is_valid() and file_formset.is_valid() and link_formset.is_valid():
+
+            if course_form.has_changed():
+                messages.success(request, 'I dati della pianificazione corso sono stati salvati. '
+                                          'Procedi con il prossimo step')
+                return redirect(reverse('aspirante:lessons', args=[pk]))
+
             return redirect(reverse('aspirante:modify', args=[pk]))
     else:
         course_form = ModuloModificaCorsoBase(instance=course)
@@ -460,6 +511,10 @@ def aspirante_corso_base_termina(request, me, pk):
     if not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
+    if not corso.terminabile:
+        messages.warning(request, "Il corso non è terminabile.")
+        return redirect(reverse('aspirante:info', args=(pk,)))
+
     torna = {"torna_url": corso.url_modifica, "torna_titolo": "Modifica corso"}
 
     # if (not corso.op_attivazione) or (not corso.data_attivazione):
@@ -505,7 +560,14 @@ def aspirante_corso_base_termina(request, me, pk):
 
         partecipanti_moduli += [(partecipante, form)]
 
-    if termina_corso:  # Se il corso può essere terminato.
+    if termina_corso:  # Se premuto pulsante "Genera verbale e termina corso"
+        # Verifica se la relazione è compilata
+        if not corso.relazione_direttore.is_completed:
+            messages.error(request, "Il corso non può essere terminato perchè "
+                                    "la relazione del direttore non è completata.")
+            return redirect(reverse('aspirante:terminate', args=(pk,)))
+
+        # Tutto ok, posso procedere
         corso.termina(mittente=me)
 
         if corso.is_nuovo_corso:
@@ -531,6 +593,44 @@ def aspirante_corso_base_termina(request, me, pk):
         "azione_salva_solamente": ModuloVerbaleAspiranteCorsoBase.SALVA_SOLAMENTE,
     }
     return 'aspirante_corso_base_scheda_termina.html', context
+
+
+@pagina_privata
+def corso_compila_relazione_direttore(request, me, pk):
+    course = get_object_or_404(CorsoBase, pk=pk)
+    puo_modificare = course.can_modify(me)
+    if not puo_modificare:
+        return redirect(ERRORE_PERMESSI)
+
+    if not course.terminabile:
+        messages.warning(request, 'Il corso non è terminabile.')
+        return redirect(reverse('aspirante:info', args=[pk,]))
+
+    relazione, created = RelazioneCorso.objects.get_or_create(corso=course)
+    if request.method == 'POST':
+        form_relazione = FormRelazioneDelDirettoreCorso(request.POST, instance=relazione)
+        if form_relazione.is_valid():
+            cd = form_relazione.cleaned_data
+            instance = form_relazione.save(commit=False)
+
+            # Se nei vari il Direttore non ha nulla da inserire valorizzarlo con un valore di default
+            no_value_fields = [k for k,v in cd.items() if not v]
+            if no_value_fields:
+                for k in no_value_fields:
+                    setattr(instance, k, RelazioneCorso.SENZA_VALORE)
+            instance.save()
+
+            messages.success(request, 'La relazione è stata salvata.')
+            return redirect(reverse('courses:compila_relazione_direttore', args=(pk,)))
+    else:
+        form_relazione = FormRelazioneDelDirettoreCorso(instance=relazione)
+
+    context = {
+        "corso": course,
+        "puo_modificare": puo_modificare,
+        "form_relazione": form_relazione,
+    }
+    return 'course_compila_relazione_direttore.html', context
 
 
 @pagina_privata
@@ -600,11 +700,25 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
            torna_url=corso.url_iscritti
         )
 
-    risultati = []
+    risultati = list()
+    persone_con_esito_negativo = dict()
+
     form = ModuloIscrittiCorsoBaseAggiungi(request.POST or None, corso=corso)
     if form.is_valid():
         for persona in form.cleaned_data['persone']:
+            # esito_negative_message = None
             esito = corso.persona(persona)
+            if esito in [CorsoBase.NON_HAI_CARICATO_DOCUMENTI_PERSONALI, CorsoBase.NON_HAI_DOCUMENTO_PERSONALE_VALIDO]:
+                persone_con_esito_negativo[persona] = esito
+
+            #     esito_negative_message = "Questo utente non ha caricato un documento d'identità"
+            # elif esito == CorsoBase.NON_HAI_DOCUMENTO_PERSONALE_VALIDO:
+            #     esito_negative_message = "Questo utente non ha un documento di riconoscimento valido/rinnovato"
+
+            # # Persone da avvisare via posta della problematica
+            # if esito_negative_message:
+            #     persone_con_esito_negativo[persona] = esito #, esito_negative_message
+
             ok = PartecipazioneCorsoBase.NON_ISCRITTO
             partecipazione = None
 
@@ -651,6 +765,31 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                 "ok": ok,
             }]
 
+        # Invia avvisi agli utenti con esito negativo
+        for persona, esito in persone_con_esito_negativo.items():
+            already_sent_today = Messaggio.objects.filter(
+                mittente=me,
+                oggetti_destinatario__persona=persona,
+                oggetto__istartswith="Impossibilità di iscriversi a",
+                creazione__date=date.today(),
+            ).count()
+
+            # Per evitare che invii lo stesso messaggio più di una volta al di
+            if not already_sent_today:
+                posta = Messaggio.costruisci_e_accoda(
+                    oggetto="Impossibilità di iscriversi a %s" % corso.nome,
+                    modello="email_corso_iscritti_aggiungi_esito_negativo.html",
+                    corpo={
+                        'corso': corso,
+                        'esito': esito,
+                    },
+                    mittente=me,
+                    destinatari=[persona])
+        else:
+            if persone_con_esito_negativo:
+                utente = 'utenti' if len(persone_con_esito_negativo) > 1 else 'utente'
+                messages.error(request, "Abbiamo avvisato %s della problematica." % utente)
+
     context = {
         "corso": corso,
         "puo_modificare": True,
@@ -686,23 +825,16 @@ def aspirante_corso_base_report(request, me, pk):
 @pagina_privata
 def aspirante_corso_base_report_schede(request, me, pk):
     corso = get_object_or_404(CorsoBase, pk=pk)
-    if not me.permessi_almeno(corso, MODIFICA):
+
+    can_download = False
+    if request.GET.get('download_single_attestato') and corso.partecipazioni_confermate().get(persona=me):
+        can_download = True
+
+    if not can_download and not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    archivio = Zip(oggetto=corso)
-    for p in corso.partecipazioni_confermate():
-
-        # Genera la scheda di valutazione.
-        scheda = p.genera_scheda_valutazione()
-        archivio.aggiungi_file(scheda.file.path, "%s - Scheda di Valutazione.pdf" % p.persona.nome_completo)
-
-        # Se idoneo, genera l'attestato.
-        if p.idoneo:
-            attestato = p.genera_attestato()
-            archivio.aggiungi_file(attestato.file.path, "%s - Attestato.pdf" % p.persona.nome_completo)
-
-    archivio.comprimi_e_salva(nome="Corso %d-%d.zip" % (corso.progressivo, corso.anno))
-    return redirect(archivio.download_url)
+    report = GeneraReport(request, corso)
+    return report.download()
 
 
 @pagina_privata
@@ -722,7 +854,15 @@ def aspirante_corsi(request, me):
     if me.ha_aspirante:
         corsi = me.aspirante.corsi(tipo=Corso.BASE)
     elif me.volontario:
-        corsi = CorsoBase.find_courses_for_volunteer(volunteer=me)
+        # Trova corsi dove l'utente ha già partecipato
+        partecipazione = PartecipazioneCorsoBase.objects.filter(confermata=True, persona=me)
+        corsi_confermati = CorsoBase.objects.filter(id__in=partecipazione.values_list('corso', flat=True))
+
+        # Trova corsi da partecipare
+        corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me)
+
+        # Unisci 2 categorie di corsi
+        corsi = corsi_confermati | corsi_da_partecipare
 
     context = {
         'corsi':  corsi
@@ -773,7 +913,8 @@ def aspirante_impostazioni_cancella(request, me):
 
 @pagina_privata
 def aspirante_corso_estensioni_modifica(request, me, pk):
-    from .forms import CorsoSelectExtensionTypeForm, CorsoSelectExtensionFormSet
+    from .forms import CorsoSelectExtensionTypeForm
+    from .formsets import CorsoSelectExtensionFormSet
 
     SELECT_EXTENSION_TYPE_FORM_PREFIX = 'extension_type'
     SELECT_EXTENSIONS_FORMSET_PREFIX = 'extensions'
@@ -794,8 +935,7 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
                                     prefix=SELECT_EXTENSIONS_FORMSET_PREFIX,
                                     form_kwargs={'corso': course})
 
-        if select_extension_type_form.is_valid() and \
-            select_extensions_formset.is_valid():
+        if select_extension_type_form.is_valid() and select_extensions_formset.is_valid():
             select_extensions_formset.save(commit=False)
 
             for form in select_extensions_formset:
@@ -838,6 +978,12 @@ def aspirante_corso_estensioni_modifica(request, me, pk):
                 if not corso_has_extensions and not new_objects:
                     reset_corso_ext.extension_type = CorsoBase.EXT_MIA_SEDE
                     reset_corso_ext.save()
+
+                # Reindirizzare l'utente al prossimo step da compilare (utile
+                # solo in fase di primo compilamento delle form del corso).
+                if corso_has_extensions or new_objects:
+                    messages.success(request, 'Le estensioni sono state salvate. Procedi con il prossimo step')
+                    return redirect(reverse('aspirante:modify', args=[pk]))
 
                 return redirect(reverse('aspirante:estensioni_modifica', args=[pk]))
 
@@ -924,7 +1070,18 @@ def aspirante_corso_estensioni_informa(request, me, pk):
 
 @pagina_privata
 def formazione_albo_informatizzato(request, me):
-    sedi = me.oggetti_permesso(ELENCHI_SOCI)
+    sedi_set = set()
+
+    ALL_PERMESSI_TO_CHECK = RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]
+    for permesso in ALL_PERMESSI_TO_CHECK:
+        ids = me.oggetti_permesso(permesso).values_list('pk', flat=True)
+        sedi_set.update(ids)
+
+    sedi = Sede.objects.filter(pk__in=sedi_set)
+
+    if not sedi:
+        return redirect(ERRORE_PERMESSI)
+
     context = {
         'elenco_nome': 'Albo Informatizzato',
         'elenco_template': None,
@@ -973,9 +1130,10 @@ def formazione_corso_position_change(request, me, pk):
             # Rindirizza sulla pagina selezione direttori del corso.
             return redirect(course.url_direttori)
 
-    return 'formazione_corso_position_change.html', {'corso': course,
-                                                     'template': template,
-                                                     'puo_modificare': puo_modificare}
+    context = {'corso': course,
+               'template': template,
+               'puo_modificare': puo_modificare,}
+    return 'formazione_corso_position_change.html', context
 
 
 @pagina_privata

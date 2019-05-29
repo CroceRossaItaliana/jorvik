@@ -121,13 +121,11 @@ class SurveyResult(models.Model):
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
 
         writer = csv.writer(response, delimiter=';')
-        writer.writerow(['Corso', 'Utente', 'Domanda', 'Risposta', 'Creato',
-                         'Modificato'])
+        writer.writerow(['Corso', 'Domanda', 'Risposta', 'Creato', 'Modificato'])
 
         for result in cls.get_responses_for_course(course):
             writer.writerow([
                 course.nome,
-                result.user,
                 result.question,
                 result.response,
                 result.created_at,
