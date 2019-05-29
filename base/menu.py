@@ -72,7 +72,7 @@ def menu(request):
     ))
 
     VOCE_VOLONTARIO = ("Volontario", (
-        ("Corsi", "fa-list", reverse('aspirante:corsi_base')),
+        ("Corsi di formazione", "fa-list", reverse('aspirante:corsi_base')),
         ("Estensione", "fa-random", "/utente/estensione/"),
         ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
         ("Riserva", "fa-pause", "/utente/riserva/"),
@@ -210,7 +210,7 @@ def menu(request):
         ),
         'formazione': formazione_menu('formazione', me),
         'aspirante': formazione_menu('aspirante') if me and hasattr(me, 'aspirante') else (
-            ("Gestione Corsi", (
+            ("Corsi di formazione", (
                 ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
             )),
         ),
