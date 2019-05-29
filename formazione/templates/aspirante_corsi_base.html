@@ -20,7 +20,7 @@
         <thead>
             <th>Corso e Sede</th>
             <th>Informazioni</th>
-            <th>Azioni</th>
+            <th>Richieste di iscrizioni</th>
         </thead>
 
         {% for corso in corsi %}
@@ -42,10 +42,8 @@
                             <span class="bg-danger">Iniziato: {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}</span>
                         {% endif %}
                         <br />
-                    <i class="fa fa-fw fa-calendar"></i>
-                        Esami: {{ corso.data_esame|date:"SHORT_DATETIME_FORMAT" }}<br />
-                    <i class="fa fa-fw fa-user"></i>
-                        Direttore ({{ corso.deleghe.count }}):
+                    <i class="fa fa-fw fa-calendar"></i> Esami: {{ corso.data_esame|date:"SHORT_DATETIME_FORMAT" }}<br />
+                    <i class="fa fa-fw fa-user"></i> Direttore ({{ corso.deleghe.count }}):
                         {% for d in corso.deleghe.all %}
                             {{ d.persona.link|safe }}
                         {% endfor %}
@@ -55,8 +53,12 @@
         {% empty %}
             <tr class="info">
                 <td colspan="4">
-                    <h4><i class="fa fa-fw fa-info-circle"></i> Ancora nessun corso pianificato.</h4>
-                    <p>Puoi controllare la domanda formativa della zona e valutare l'attivazione di un nuovo corso.</p>
+                    <h4><i class="fa fa-fw fa-info-circle"></i> Ancora nessun corso {% if puo_creare %}pianificato{%endif%}</h4>
+                    {% if puo_creare %}
+                        <p>Puoi controllare la domanda formativa della zona e valutare l'attivazione di un nuovo corso.</p>
+                    {% else %}
+                        <p>Elenco dei corsi ai quali si è inviata la richiesta di iscrizione, elenco dei corsi che si è frequentato e ottenuto la qualifica.</p>
+                    {% endif %}
                 </td>
             </tr>
         {% endfor %}
