@@ -55,9 +55,13 @@ def formazione(request, me):
 
 @pagina_privata
 def formazione_corsi_base_elenco(request, me):
+    puo_modificare = me.ha_permesso(GESTIONE_CORSI_SEDE)
+    if not puo_modificare:
+        return redirect(reverse('aspirante:corsi_base'))
+
     context = {
         "corsi": me.oggetti_permesso(GESTIONE_CORSO),
-        "puo_pianificare": me.ha_permesso(GESTIONE_CORSI_SEDE),
+        "puo_pianificare": puo_modificare,
     }
     return 'formazione_corsi_base_elenco.html', context
 
@@ -233,9 +237,9 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
     p.richiedi()
 
     return messaggio_generico(request, me,
-        titolo="Sei iscritto al corso",
-        messaggio="Complimenti! Abbiamo inoltrato la tua richiesta al direttore "
-                "del corso, che ti contatterà appena possibile.",
+        titolo="Sei iscritt%s al corso" % me.genere_o_a,
+        messaggio="Complimenti! La tua richiesta di iscrizione è stata registrata ed inviata al Direttore di Corso. "
+                  "Nei prossimi giorni riceverai una e-mail di conferma o di respingimento della tua iscrizione.",
         torna_titolo="Torna al corso",
         torna_url=corso.url
     )
@@ -274,12 +278,12 @@ def aspirante_corso_base_ritirati(request, me=None, pk=None):
         if posta:
             messages.success(request, "Il direttore del corso è stato avvisato.")
 
-        return messaggio_generico(request, me, titolo="Ti sei ritirato dal corso",
-            messaggio="Siamo spiacenti che hai deciso di ritirarti da questo corso. "
-                "La tua partecipazione è stata ritirata correttamente. "
-                "Non esitare a iscriverti a questo o un altro corso, nel caso cambiassi idea.",
-            torna_titolo="Torna alla pagina del corso",
-            torna_url=corso.url)
+        return messaggio_generico(request, me,
+            titolo="Ti sei ritirato dal corso",
+            messaggio="La tua partecipazione al corso è stata annullata. "
+                      "Ti ricordiamo che fino alla data di scadenza delle iscrizioni puoi iscriverti nuovamente a questo corso.",
+            torna_titolo="Vai alla pagina dei corsi",
+            torna_url=reverse('aspirante:corsi_base'))
 
     return messaggio_generico(request, me, titolo="Non puoi ritirarti da questo corso",
         messaggio="Siamo spiacenti, ma non sembra che tu possa ritirarti da questo corso per qualche motivo. ",
@@ -856,7 +860,9 @@ def aspirante_corsi(request, me):
     elif me.volontario:
         # Trova corsi dove l'utente ha già partecipato
         partecipazione = PartecipazioneCorsoBase.objects.filter(confermata=True, persona=me)
-        corsi_confermati = CorsoBase.objects.filter(id__in=partecipazione.values_list('corso', flat=True))
+        corsi_confermati = CorsoBase.objects.filter(
+            stato__in=[CorsoBase.ATTIVO, CorsoBase.TERMINATO],
+            id__in=partecipazione.values_list('corso', flat=True))
 
         # Trova corsi da partecipare
         corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me)
@@ -865,7 +871,8 @@ def aspirante_corsi(request, me):
         corsi = corsi_confermati | corsi_da_partecipare
 
     context = {
-        'corsi':  corsi
+        'corsi':  corsi,
+        'puo_creare': True if me.ha_permesso(GESTIONE_CORSI_SEDE) else False
     }
     return 'aspirante_corsi_base.html', context
 
