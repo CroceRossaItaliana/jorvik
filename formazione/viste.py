@@ -1191,22 +1191,26 @@ def course_materiale_didattico_download(request, me, pk):
 
     if partecipante in CorsoBase.SEI_ISCRITTO or me.permessi_almeno(corso, MODIFICA):
         try:
+            # Identificatore nella richiesta
             file_id = request.GET.get('id')
             if not file_id:
                 raise Http404
 
+            # File esiste
             materiale = CorsoFile.objects.get(pk=int(file_id))  # fallisce se si passa non un number
             file_path = materiale.file.path
-            if not os.path.exists(file_path):
+
+            if not materiale.file.storage.exists(materiale.file):
                 return HttpResponse('Il file non si trova.')
 
+            # Preparare la risposta
             with open(file_path, 'rb') as f:
                 response = HttpResponse(content=f.read(),
                                         content_type='application/force-download')
-
             filename = '_'.join(materiale.filename().split())
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
 
+            # Incrementare il contatore
             materiale.download_count = F('download_count') + 1
             materiale.save()
 
