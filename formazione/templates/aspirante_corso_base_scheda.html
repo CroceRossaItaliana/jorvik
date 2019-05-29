@@ -25,7 +25,7 @@
     </h4>
 
     <ul class="nav nav-tabs dynamic-tabs-links">
-        {% if puo_modificare %}
+        {% if puo_modificare and me.is_presidente %}
             <li role="presentation"><a data-tab-id="#tabAttivazione" href="#" class="attivazione tabSelectorLink"><i class="fa fa-fw fa-calendar"></i> Attivazione</a></li>
         {% endif %}
 
@@ -48,8 +48,8 @@
             <li role="presentation"><a href="{% url 'formazione:new_course' %}"><i class="fa fa-fw fa-info"></i> Nuovo</a></li>
             <li {% if request.path == corso.url_direttori %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_direttori }}"><i class="fa fa-fw fa-group"></i> Direttori ({{ corso.deleghe.count }})</a></li>
 
-            {% if corso.tipo == 'C1' %}
-                <li role="presentation" {% if request.path == corso.url_estensioni %}class="active_link"{% endif %}><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Area geografica interessata</a></li>
+            {% if corso.tipo == 'C1' and me.is_presidente %}
+                <li {% if request.path == corso.url_estensioni %}class="active_link"{% endif %} role="presentation"><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Area geografica interessata</a></li>
             {% endif %}
         </ul>
         {% endif %}
@@ -58,6 +58,12 @@
             <li {% if request.path == corso.url %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url }}"><i class="fa fa-fw fa-info"></i> Informazioni</a></li>
             {% if puo_modificare %}
                 <li {% if request.path == corso.url_modifica %}class="active_link"{% endif %} role="presentation"><a href="{{ corso.url_modifica }}"><i class="fa fa-fw fa-pencil"></i> Pubblicizza il corso</a></li>
+
+                {# link doppione per visualizzarlo solo ai direttore che non vedono la sezione "Attivazione" #}
+                {% if corso.tipo == 'C1' and not me.is_presidente %}
+                    <li {% if request.path == corso.url_estensioni %}class="active_link"{% endif %} role="presentation"><a href="{% url 'aspirante:estensioni_modifica' corso.pk %}"><i class="fa fa-fw fa-globe"></i> Area geografica</a></li>
+                {% endif %}
+
                 <li {% if request.path == corso.url_iscritti %}class="active_link"{% endif %} role="presentation">
                     <a href="{{ corso.url_iscritti }}"><i class="fa fa-fw fa-group"></i> Iscrizioni
                         <i class="fa fa-fw fa-check"></i> {{ corso.partecipazioni_confermate.count }}
@@ -125,7 +131,7 @@
                     {% else %}
                         <i class="fa fa-fw text-success fa-check-square"></i> <span class="text-success">FATTO</span>:
                     {% endif %}
-                    Conferma l'estensione a chi vuoi aprire il Corso dalla scheda "Attivazione - Area geografica interessata"
+                    Indica l'area geografica. Seleziona i Comitati ai quali è destinata la formazione
                 </p>
             {% endif %}
 
