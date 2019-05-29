@@ -654,6 +654,8 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
             Q(Appartenenza.query_attuale(membro=Appartenenza.DIPENDENTE, sede__in=qs_sedi,
                                             al_giorno=oggi
                                             ).via("appartenenze")))
+                                            
+        # print("dipendenti", dipendenti.values_list('pk', flat=True) )
 
         r = Persona.objects.filter(
             Appartenenza.query_attuale(
@@ -716,11 +718,29 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
             base = base.filter(titoli_personali__in=TitoloPersonale.con_esito_ok())
             for titolo in titoli:
                 base = base.filter(titoli_personali__titolo=titolo)
-            return base.distinct('cognome', 'nome', 'codice_fiscale')
+
+        return base.distinct('cognome', 'nome', 'codice_fiscale')
 
     def modulo(self):
         from .forms import ModuloElencoPerTitoli
         return ModuloElencoPerTitoli
+
+
+class ElencoPerTitoliCorso(ElencoPerTitoli):
+    def risultati(self):
+        cd = self.modulo_riempito.cleaned_data
+        self.kwargs['cleaned_data'] = cd
+
+        # Mostra persone con titoli scaduti/non scaduti
+        results = super().risultati()
+        return results.filter(titoli_personali__in=TitoloPersonale.con_esito_ok())
+
+    def modulo(self):
+        from .forms import ModuloElencoPerTitoliCorso
+        return ModuloElencoPerTitoliCorso
+
+    def template(self):
+        return 'formazione_albo_inc_elenchi_persone_titoli.html'
 
 
 class ElencoTesseriniRichiesti(ElencoVistaSoci):

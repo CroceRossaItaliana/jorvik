@@ -64,7 +64,13 @@
 
 <script>
     $('#id_area').on('change', function(e) {
-        let data = $('#id_titolo-autocomplete').yourlabsAutocomplete().data;
+        let data = $('#id_titolo-autocomplete');
+        if (data.length) {
+            data = data.yourlabsAutocomplete().data;
+        } else {
+            return;
+        }
+
         let area_id = $(this).val();
 
         // default select option has '' value

@@ -5,68 +5,39 @@
 {% load utils %}
 
 {% block app_contenuto %}
-
-
-
     <h2><i class="fa fa-fw fa-home"></i> Sedi CRI nelle tue vicinanze</h2>
-
     <div class="alert alert-info">
-        <i class="fa fa-fw fa-info-circle"></i>
-        Questo &egrave; un elenco delle Sedi CRI nel raggio di {{ me.aspirante.raggio }} km
-        da {{ me.aspirante.locazione }}. Puoi modificare la posizione
-        dal menu "Aspirante" > "Impostazioni".
+        <i class="fa fa-fw fa-info-circle"></i> Questo &egrave; un elenco delle Sedi CRI nel raggio di {{ me.aspirante.raggio }} km
+        da {{ me.aspirante.locazione }}. Puoi modificare la posizione dal menu "Aspirante" > "Impostazioni".
     </div>
 
     <div class="row">
-
         <div class="col-md-7">
             <table class="table table-striped table-condensed">
                 <thead>
                     <th>Sede</th>
                 </thead>
-
                 <tbody>
                     {% for sede in sedi %}
-                        <tr>
-                            <td>
-                                <i class="fa fa-fw fa-home"></i>
-                                    <strong>{{ sede.link|safe }}</strong><br />
-                                {% if sede.locazione %}
-                                    <i class="fa fa-fw fa-map-marker"></i>
-                                        {{ sede.locazione }}<br />
-                                {% endif %}
-                                {% if sede.email %}
-                                    <i class="fa fa-fw fa-envelope-o"></i>
-                                        {{ sede.email }}<br />
-                                {% endif %}
-                                {% if sede.telefono %}
-                                    <i class="fa fa-fw fa-phone"></i>
-                                        {{ sede.telefono }}<br />
-                                {% endif %}
-                            </td>
-                        </tr>
-
+                    <tr>
+                        <td>
+                            <i class="fa fa-fw fa-home"></i> <strong>{{ sede.link|safe }}</strong><br />
+                            {% if sede.locazione %}<i class="fa fa-fw fa-map-marker"></i> {{ sede.locazione }}<br>{% endif %}
+                            {% if sede.email %}<i class="fa fa-fw fa-envelope-o"></i> {{ sede.email }}<br>{% endif %}
+                            {% if sede.telefono %}<i class="fa fa-fw fa-phone"></i> {{ sede.telefono }}<br>{% endif %}
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
-
         </div>
 
         <div class="col-md-5">
-
             {% mappa sedi %}
                 <strong>{{ elemento.link|safe }}</strong><br />
                 {{ elemento.locazione }}
 
-            {% icona_colore %}
-                red
-            {% endmappa %}
-
+            {% icona_colore %} red {% endmappa %}
         </div>
-
-
     </div>
-
-
-
 {% endblock %}

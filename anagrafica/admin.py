@@ -15,9 +15,10 @@ from mptt.admin import MPTTModelAdmin
 from autenticazione.models import Utenza
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
-from .models import Persona, Sede, Appartenenza, Delega, Documento,\
-    Fototessera, Estensione, Trasferimento, Riserva, Dimissione, Telefono, \
-    ProvvedimentoDisciplinare
+from formazione.models import PartecipazioneCorsoBase
+from .models import (Persona, Sede, Appartenenza, Delega, Documento,
+    Fototessera, Estensione, Trasferimento, Riserva, Dimissione, Telefono,
+    ProvvedimentoDisciplinare)
 
 
 
@@ -72,6 +73,14 @@ class InlineTelefonoPersona(ReadonlyAdminMixin, admin.StackedInline):
     extra = 0
 
 
+class InlinePartecipazioneCorsoBase(ReadonlyAdminMixin, admin.TabularInline):
+    from formazione.admin import RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE
+
+    model = PartecipazioneCorsoBase
+    raw_id_fields = RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE
+    extra = 0
+
+
 @admin.register(Persona)
 class AdminPersona(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['nome', 'cognome', 'codice_fiscale', 'utenza__email', 'email_contatto', '=id',]
@@ -79,7 +88,9 @@ class AdminPersona(ReadonlyAdminMixin, admin.ModelAdmin):
                     'ultima_modifica', )
     list_filter = ('stato', )
     list_display_links = ('nome', 'cognome', 'codice_fiscale',)
-    inlines = [InlineUtenzaPersona, InlineAppartenenzaPersona, InlineDelegaPersona, InlineDocumentoPersona, InlineTelefonoPersona]
+    inlines = [InlineUtenzaPersona, InlineAppartenenzaPersona,
+               InlineDelegaPersona, InlineDocumentoPersona,
+               InlinePartecipazioneCorsoBase, InlineTelefonoPersona,]
     actions = ['sposta_persone',]
 
     messaggio_spostamento = ungettext_lazy(
@@ -271,7 +282,7 @@ class AdminAppartenenza(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["membro", "persona__nome", "persona__cognome", "persona__codice_fiscale",
                      "persona__utenza__email", "sede__nome"]
     list_display = ("persona", "sede", "attuale", "inizio", "fine", "creazione")
-    list_filter = ("membro", "inizio", "fine")
+    list_filter = ('confermata', "membro", "inizio", "fine")
     raw_id_fields = RAW_ID_FIELDS_APPARTENENZA
     inlines = [InlineAutorizzazione]
 

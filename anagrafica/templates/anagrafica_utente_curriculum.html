@@ -90,27 +90,34 @@
                 </div>
 
                 <div class="panel-body">
-
                     <table class="table table-striped">
                         <thead>
                             <th>Nome e Stato</th>
                             <th>Dettagli</th>
                             <th><i class="fa fa-trash"></i></th>
                         </thead>
-
                         <tbody>
                             {% for t in titoli %}
                                 <tr>
                                     <td>
-
                                         <p class="grassetto">
                                             {{ t.titolo.nome }}
+
+                                            {% if t.is_course_title and not t.is_expired_course_title %}
+                                                <br><a href="{% url 'aspirante:report_schede' t.corso_partecipazione.corso.pk %}?download_single_attestato={{t.pk}}">Scarica attestato</a>
+                                            {% endif %}
                                         </p>
 
                                         {% if t.certificato %}
                                             <span class="text-success">
                                                 <i class="fa fa-fw fa-asterisk"></i>
                                                 Certificato
+                                            </span>
+
+                                        {% elif t.is_expired_course_title %}
+                                            <span class="text-danger">
+                                                <i class="fa fa-fw fa-clock-o"></i>
+                                                Scaduto titolo del corso
                                             </span>
 
                                         {% elif t.esito == t.ESITO_OK %}
@@ -126,10 +133,7 @@
                                             </span>
 
                                         {% else %}
-                                            <span class="text-danger">
-                                                {{ t.esito }}
-                                            </span>
-
+                                            <span class="text-danger">{{ t.esito }}</span>
                                         {% endif %}
 
                                     </td>

@@ -27,9 +27,10 @@ class TitoloAutocompletamento(autocomplete_light.AutocompleteModelBase):
         # Filter by <area>
         area_id = r.GET.get('area', None)
         if area_id not in ['', None]:
+
             # Titoli CRI (TC)
             if titoli_tipo == Titolo.TITOLO_CRI:
-                self.choices = self.choices.filter(area=area_id)
+                self.choices = self.choices.filter(goal__unit_reference=area_id)
             
             # Titoli di studio (TS)
             elif titoli_tipo == Titolo.TITOLO_STUDIO:
@@ -43,4 +44,26 @@ class TitoloAutocompletamento(autocomplete_light.AutocompleteModelBase):
     
         return super().choices_for_request()
 
+
+class TitoloCRIAutocompletamento(autocomplete_light.AutocompleteModelBase):
+    model = Titolo
+    split_words = True
+    search_fields = ['nome',]
+    attrs = {
+        'data-autocomplete-minimum-characters': 0,
+    }
+
+    def choices_for_request(self):
+        self.choices = self.choices.filter(
+            is_active=True,
+            inseribile_in_autonomia=True,
+            area__isnull=False,
+            nome__isnull=False,
+            tipo=Titolo.TITOLO_CRI,
+        ).order_by('nome').distinct('nome')
+
+        return super().choices_for_request()
+
+
 autocomplete_light.register(TitoloAutocompletamento)
+autocomplete_light.register(TitoloCRIAutocompletamento)

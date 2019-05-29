@@ -1,6 +1,7 @@
 import os
+from datetime import datetime, timedelta
 
-from collections import defaultdict
+from jorvik import settings
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core import urlresolvers
@@ -9,28 +10,19 @@ from django.db import models
 from django.db.models import Q
 from django.utils.timezone import now
 from django.utils.functional import cached_property
-from django.forms import forms
 from mptt.models import MPTTModel, TreeForeignKey
 
-from anagrafica.permessi.applicazioni import PERMESSI_NOMI
-from anagrafica.permessi.costanti import MODIFICA
 from anagrafica.permessi.incarichi import INCARICHI, INCARICHI_TIPO_DICT
-from anagrafica.validators import crea_validatore_dimensione_file, valida_dimensione_file_10mb
-from base.forms import ModuloMotivoNegazione
-from base.notifiche import NOTIFICA_NON_INVIARE, NOTIFICA_INVIA
-from base.stringhe import GeneratoreNomeFile, genera_uuid_casuale
-from base.tratti import ConMarcaTemporale
-from datetime import datetime, timezone, timedelta
+from anagrafica.validators import valida_dimensione_file_10mb
 
-from base.utils import calcola_scadenza ,concept, iterabile
-
-from jorvik import settings
+from .utils import calcola_scadenza, concept, iterabile
+from .forms import ModuloMotivoNegazione
+from .stringhe import GeneratoreNomeFile, genera_uuid_casuale
+from .tratti import ConMarcaTemporale
 
 
 class ModelloSemplice(models.Model):
-    """
-    Questa classe astratta rappresenta un Modello generico.
-    """
+    """ Questa classe astratta rappresenta un Modello generico. """
 
     class Meta:
         abstract = True
@@ -127,23 +119,6 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
     )
 
     PROTOCOLLO_AUTO = "AUTO"  # Applicato a protocollo_numero se approvazione automatica
-
-    class Meta:
-        verbose_name_plural = "Autorizzazioni"
-        app_label = "base"
-        index_together = [
-            ['necessaria', 'progressivo'],
-            ['necessaria', 'concessa'],
-            ['destinatario_ruolo', 'destinatario_oggetto_tipo',],
-            ['necessaria', 'destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
-            ['destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
-            ['destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
-            ['necessaria', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
-            ['necessaria', 'destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
-        ]
-        permissions = (
-            ("view_autorizzazione", "Can view autorizzazione"),
-        )
 
     richiedente = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="autorizzazioni_richieste", on_delete=models.CASCADE)
     firmatario = models.ForeignKey("anagrafica.Persona", db_index=True, blank=True, null=True, default=None,
@@ -274,9 +249,9 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
     def notifica_sede_autorizzazione_concessa(self, sede, testo_extra=''):
         """
-        Notifica presidente e ufficio soci del comitato di origine dell'avvenuta approvazione della richiesta
+        Notifica presidente e ufficio soci del comitato
+        di origine dell'avvenuta approvazione della richiesta.
         """
-        from posta.models import Messaggio
 
         notifiche = self.espandi_notifiche(sede, [], True, True)
         modello = "email_autorizzazione_concessa_notifica_origine.html"
@@ -417,6 +392,23 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                 corpo=corpo,
                 destinatari=[persona['persona']]
             )
+
+    class Meta:
+        verbose_name_plural = "Autorizzazioni"
+        app_label = "base"
+        index_together = [
+            ['necessaria', 'progressivo'],
+            ['necessaria', 'concessa'],
+            ['destinatario_ruolo', 'destinatario_oggetto_tipo',],
+            ['necessaria', 'destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+            ['destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+            ['destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+            ['necessaria', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+            ['necessaria', 'destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+        ]
+        permissions = (
+            ("view_autorizzazione", "Can view autorizzazione"),
+        )
 
 
 class Log(ModelloSemplice, ConMarcaTemporale):
@@ -808,6 +800,7 @@ class ConAutorizzazioni(models.Model):
         """
         return ModuloMotivoNegazione
 
+
 class ConScadenzaPulizia(models.Model):
     """
     Aggiunge un attributo DateTimeField scadenza.
@@ -900,6 +893,7 @@ class Token(ModelloSemplice, ConMarcaTemporale):
         permissions = (
             ("view_token", "Can view token"),
         )
+
 
 class Allegato(ConMarcaTemporale, ConScadenzaPulizia, ModelloSemplice):
     """

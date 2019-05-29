@@ -2,9 +2,10 @@ import codecs, csv, datetime
 from collections import OrderedDict
 from importlib import import_module
 
+from django.db import transaction
+from django.db.models import Q
 from django.apps import apps
 from django.conf import settings
-from django.db import transaction
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.contenttypes.models import ContentType
@@ -13,6 +14,10 @@ from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template.loader import get_template
 from django.utils import timezone
 from django.utils.crypto import get_random_string
+from django.template.loader import get_template
+# from django.views.generic import ListView
+from django.core.urlresolvers import reverse
+from django.shortcuts import (render_to_response, redirect, get_object_or_404, HttpResponse)
 
 from articoli.viste import get_articoli
 from attivita.forms import ModuloStatisticheAttivitaPersona
@@ -28,9 +33,12 @@ from base.stringhe import genera_uuid_casuale
 from base.utils import remove_none, poco_fa, oggi
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
-from posta.models import Messaggio, Q
+from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
+from anagrafica.statistica.stat_costanti import GENERALI
+from anagrafica.statistica.applicazione import STATISTICHE, ModuloStatisticheBase
+
 
 from .costanti import TERRITORIALE, REGIONALE
 from .elenchi import ElencoDelegati
@@ -443,37 +451,36 @@ def utente_documenti(request, me):
     if not me.volontario and not me.dipendente:
         return errore_no_volontario(request, me)
 
-    contesto = {
-        "documenti": me.documenti.all()
+    context = {
+        'documenti': me.documenti.all()
     }
 
-    if request.method == "POST":
-
-        nuovo_doc = Documento(persona=me)
-        modulo_aggiunta = ModuloCreazioneDocumento(request.POST, request.FILES, instance=nuovo_doc)
-
-        if modulo_aggiunta.is_valid():
-            modulo_aggiunta.save()
-
+    if request.method == 'POST':
+        doc = Documento(persona=me)
+        form = ModuloCreazioneDocumento(request.POST, request.FILES, instance=doc)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('utente:documenti'))
     else:
+        form = ModuloCreazioneDocumento()
 
-        modulo_aggiunta = ModuloCreazioneDocumento()
-
-    contesto.update({"modulo_aggiunta": modulo_aggiunta})
-
-    return 'anagrafica_utente_documenti.html', contesto
+    context.update({'modulo_aggiunta': form})
+    return 'anagrafica_utente_documenti.html', context
 
 
 @pagina_privata
 def utente_documenti_cancella(request, me, pk):
-
     doc = get_object_or_404(Documento, pk=pk)
 
     if not doc.persona == me:
         return redirect('/errore/permessi/')
 
-    doc.delete()
-    return redirect('/utente/documenti/')
+    if doc.can_be_deleted:
+        doc.delete()
+    else:
+        messages.error(request, 'Questo documento non può essere cancellato')
+
+    return redirect(reverse('utente:documenti'))
 
 
 @pagina_privata
@@ -1051,21 +1058,34 @@ def profilo_turni_foglio(request, me, pk=None):
 
 @pagina_privata
 def strumenti_delegati(request, me):
-    app_label = request.session['app_label']
-    model = request.session['model']
-    pk = int(request.session['pk'])
-    continua_url = request.session['continua_url']
-    almeno = request.session['almeno']
-    delega = request.session['delega']
-    oggetto = apps.get_model(app_label, model)
-    oggetto = oggetto.objects.get(pk=pk)
+    from formazione.forms import FormCreateDirettoreDelega
+    session = request.session
 
-    modulo = ModuloCreazioneDelega(request.POST or None, initial={
-        "inizio": datetime.date.today(),
-    }, me=me)
+    # Get values stored in the session
+    app_label = session['app_label']
+    model = session['model']
+    pk = int(session['pk'])
+    continua_url = session['continua_url']
+    almeno = session['almeno']
+    delega = session['delega']
 
-    if modulo.is_valid():
-        d = modulo.save(commit=False)
+    # Get object
+    oggetto = apps.get_model(app_label, model).objects.get(pk=pk)
+
+    # Instantiate a new form
+    form_data = {
+        'course': oggetto,
+        'me': me,
+        'initial': {'inizio': datetime.date.today()},
+    }
+    form = ModuloCreazioneDelega(request.POST or None, **form_data)
+    if model == 'corsobase':
+        # if oggetto.is_nuovo_corso:
+        form = FormCreateDirettoreDelega(request.POST or None, **form_data)
+
+    # Check form is valid
+    if form.is_valid():
+        d = form.save(commit=False)
 
         if oggetto.deleghe.all().filter(Delega.query_attuale().q, tipo=delega, persona=d.persona).exists():
             return errore_generico(
@@ -1073,7 +1093,7 @@ def strumenti_delegati(request, me):
                 titolo="%s è già delegato" % (d.persona.nome_completo,),
                 messaggio="%s ha già una delega attuale come %s per %s" % (d.persona.nome_completo, PERMESSI_NOMI_DICT[delega], oggetto),
                 torna_titolo="Torna indietro",
-                torna_url="/strumenti/delegati/",
+                torna_url=reverse('strumenti_delegati'),
             )
 
         d.inizio = poco_fa()
@@ -1086,17 +1106,17 @@ def strumenti_delegati(request, me):
     deleghe = oggetto.deleghe.filter(tipo=delega)
     deleghe_attuali = oggetto.deleghe_attuali(tipo=delega)
 
-    contesto = {
+    context = {
         "continua_url": continua_url,
         "almeno": almeno,
         "delega": PERMESSI_NOMI_DICT[delega],
-        "modulo": modulo,
+        "modulo": form,
         "oggetto": oggetto,
         "deleghe": deleghe,
         "deleghe_attuali": deleghe_attuali,
     }
 
-    return 'anagrafica_strumenti_delegati.html', contesto
+    return 'anagrafica_strumenti_delegati.html', context
 
 
 @pagina_privata
@@ -1114,9 +1134,8 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
     if not me.permessi_almeno(delega.oggetto, GESTIONE):
         return redirect(ERRORE_PERMESSI)
 
-    delega.termina(mittente=me,
-                   termina_at=poco_fa())
-    return redirect("/strumenti/delegati/")
+    delega.termina(mittente=me, termina_at=poco_fa())
+    return redirect(reverse('strumenti_delegati'))
 
 
 @pagina_privata
@@ -1184,10 +1203,9 @@ def utente_curriculum(request, me, tipo=None):
                 tp.autorizzazione_richiedi_sede_riferimento(
                     me, INCARICO_GESTIONE_TITOLI
                 )
-
             return redirect("/utente/curriculum/%s/?inserimento=ok" % (tipo,))
 
-    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo)
+    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo).order_by('-data_scadenza')
 
     contesto = {
         "tipo": tipo,
@@ -1782,7 +1800,6 @@ def admin_import_volontari(request, me):
 
     if modulo.is_valid():
 
-
         nome_file = handle_uploaded_file(request.FILES['file_csv'])
         with codecs.open(nome_file, encoding="utf-8") as csvfile:
             riga = unicode_csv_reader(csvfile, delimiter=modulo.cleaned_data['delimitatore'])
@@ -1819,50 +1836,74 @@ def admin_statistiche(request, me):
     if not me.utenza.is_staff:
         return redirect(ERRORE_PERMESSI)
 
-    oggi = datetime.date.today()
-    nascita_minima_35 = datetime.date(oggi.year - 36, oggi.month, oggi.day)
-    persone = Persona.objects.all()
-    soci = Persona.objects.filter(
-        Appartenenza.query_attuale(membro__in=Appartenenza.MEMBRO_SOCIO).via("appartenenze")
-    ).distinct('nome', 'cognome', 'codice_fiscale')
-    soci_giovani_35 = soci.filter(
-        data_nascita__gt=nascita_minima_35,
-    )
-    sedi = Sede.objects.filter(attiva=True)
-    comitati = sedi.comitati()
-    regionali = Sede.objects.filter(estensione=REGIONALE).exclude(nome__contains='Provinciale Di Roma')
+    modulo = ModuloStatisticheBase(request.POST or None)
 
-    totale_regione_soci = 0
-    totale_regione_volontari = 0
+    if request.POST and modulo.is_valid():
+        tipo = modulo.cleaned_data['tipo_statistiche']
+        livello_riferimento = modulo.cleaned_data['livello_riferimento']
+        nome_corso = modulo.cleaned_data['nome_corso']
+        area_riferimento = modulo.cleaned_data['area_riferimento']
+        tipo_filtro = modulo.cleaned_data['tipo_filtro']
+        anno_di_riferimento = modulo.cleaned_data['anno_di_riferimento']
+        dal = modulo.cleaned_data['dal']
+        al = modulo.cleaned_data['al']
 
-    regione_soci_volontari = []
-    for regione in regionali:
-        regione_soci = int(regione.membri_attuali(figli=True, membro__in=Appartenenza.MEMBRO_SOCIO).count())
-        regione_volontari = int(regione.membri_attuali(figli=True, membro=Appartenenza.VOLONTARIO).count())
-        regione_soci_volontari += [
-            (
-                regione,
-                regione_soci,
-                regione_volontari,
+        statistica = STATISTICHE[tipo]
+
+        contesto = {
+            "type": tipo,
+            "obj": statistica[0](
+                livello_riferimento=livello_riferimento,
+                nome_corso=nome_corso,
+                area_riferimento=area_riferimento,
+                anno_di_riferimento=anno_di_riferimento,
+                tipo_filtro=tipo_filtro,
+                dal=dal,
+                al=al,
             ),
-        ]
-        totale_regione_soci += regione_soci
-        totale_regione_volontari += regione_volontari
+            "views": statistica[1],
+            "ora": timezone.now(),
+            "modulo": modulo
+        }
+
+        request.session['ultima_statistica'] = contesto['obj']
+
+        return 'admin_statistiche.html', contesto
+
+    statistica = STATISTICHE[GENERALI]
 
     contesto = {
-        "persone_numero": persone.count(),
-        "soci_numero": soci.count(),
-        "soci_percentuale": soci.count() / persone.count() * 100,
-        "soci_giovani_35_numero": soci_giovani_35.count(),
-        "soci_giovani_35_percentuale": soci_giovani_35.count() / soci.count() * 100,
-        "sedi_numero": sedi.count(),
-        "comitati_numero": comitati.count(),
+        "type": GENERALI,
+        "obj": statistica[0](),
+        "views": statistica[1],
         "ora": timezone.now(),
-        "regione_soci_volontari": regione_soci_volontari,
-        "totale_regione_soci": totale_regione_soci,
-        "totale_regione_volontari": totale_regione_volontari,
+        "modulo": modulo,
     }
+
+    request.session['ultima_statistica'] = contesto['obj']
+
     return 'admin_statistiche.html', contesto
+
+
+@pagina_privata
+def admin_statistiche_download(request, me, statistica):
+
+    if not me.utenza.is_superuser:
+        return redirect(ERRORE_PERMESSI)
+
+    stat = STATISTICHE[statistica]
+
+    file_name = stat[2](request.session['ultima_statistica'])
+
+    file = open(file_name, 'rb')
+
+    response = HttpResponse(file, content_type='application/msword')
+    response['Content-Disposition'] = 'attachment; filename={}_{}.xlsx'.format(
+        statistica, datetime.datetime.today().strftime('%d-%m-%Y')
+    )
+    file.close()
+
+    return response
 
 
 @pagina_privata

@@ -1,11 +1,9 @@
-from datetime import datetime
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+
 from base.models import ModelloSemplice
 from base.tratti import ConMarcaTemporale
-
-__author__ = 'alfioemanuele'
 
 
 class Giudizio(ModelloSemplice, ConMarcaTemporale):

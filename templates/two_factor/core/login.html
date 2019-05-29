@@ -3,31 +3,20 @@
 {% load bootstrap3 two_factor %}
 
 {% block pagina_titolo %}Accedi a Gaia{% endblock %}
-
-{% block avviso_titolo_classe %}text-success{% endblock %}
-
-{% block avviso_titolo %}
-    <i class="fa fa-key"></i>
-    Accedi a Gaia
-{% endblock %}
-
+{% block avviso_titolo_classe %}{% endblock %}
+{% block avviso_titolo %}<i class="fa fa-key"></i> Accedi a Gaia{% endblock %}
 {% block avviso_corpo %}
-
     <hr />
 
     <div class="row">
         <div class="col-md-6">
-
             <form method="post">
             {% csrf_token %}
 
             {{ wizard.management_form }}
             {% bootstrap_form wizard.form %}
 
-            <button type="submit" class="btn btn-block btn-primary">
-                <i class="fa fa-send"></i>
-                Accedi ora
-            </button>
+            <button type="submit" class="btn btn-block with-bg-cri"><i class="fa fa-send"></i> Accedi ora</button>
             <div style="margin-left: -9999px"><input type="submit" value=""/></div>
 
             <input type="hidden" name="next" value="{{ next }}" />
@@ -35,35 +24,26 @@
               <p>O, in alternativa, usa uno dei dispositivi di backup</p>
               <p>
                 {% for other in other_devices %}
-                <button name="challenge_device" value="{{ other.persistent_id }}"
-                        class="btn btn-default btn-block" type="submit">
-                  {{ other|device_action }}
-                </button>
+                <button name="challenge_device" value="{{ other.persistent_id }}" class="btn btn-default btn-block" type="submit">{{ other|device_action }}</button>
               {% endfor %}</p>
             {% endif %}
+
             {% if backup_tokens %}
               <p>Come ultima opzione, usa uno dei codici di backup</p>
               <p>
-                <button name="wizard_goto_step" type="submit" value="backup"
-                        class="btn btn-default btn-block">Usa codice di backup</button>
+                <button name="wizard_goto_step" type="submit" value="backup" class="btn btn-block without-bg-cri">Usa codice di backup</button>
               </p>
             {% endif %}
-
             </form>
-
-            <p>&nbsp;</p>
-
         </div>
+
         <div class="col-md-6">
             {% if wizard.steps.current == 'auth' %}
                 <p>Inserisci la tua email e la password che hai fornito alla registrazione.</p>
                 <hr/>
                 <h3><i class="fa fa-key"></i> Recupera password</h3>
                 <p>Se non ricordi la tua password, puoi richiederne una nuova.</p>
-                <a href="/recupera_password/" class="btn btn-block btn-primary">
-                    <i class="fa fa-send"></i>
-                    Recupera Password
-                </a>
+                <a href="/recupera_password/" class="btn btn-block without-bg-cri"><i class="fa fa-send"></i> Recupera Password</a>
             {% elif wizard.steps.current == 'token' %}
                 {% if device.method == 'call' %}
                   <p>Stiamo chiamando il tuo telefono in questo momento, inserisci il codice che senti al telefono.</p>
@@ -76,7 +56,6 @@
                 <p>Inserisci uno dei codici di backup.<br>
                   Dovresti aver generato questi codici, stampati e tenuti al sicuro.</p>
               {% endif %}
-
         </div>
     </div>
 

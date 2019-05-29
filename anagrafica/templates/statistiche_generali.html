@@ -1,0 +1,46 @@
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Nome metrica</th>
+            <th>Valore metrica</th>
+            <th>Rapporti</th>
+            <th>Descrizione</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="nome">Numero di Persone</td>
+            <td class="metrica">{{ obj.persone_numero }}</td>
+            <td class="parziale">&nbsp;</td>
+            <td class="descrizione">Include tutti i Soggetti registrati su Gaia.</td>
+        </tr>
+        <tr>
+            <td class="nome">Numero di Soci CRI</td>
+            <td class="metrica">{{ obj.soci_numero }}</td>
+            <td class="parziale">{{ obj.soci_percentuale }}% delle Persone</td>
+            <td class="descrizione">Persone con appartenenza attuale come Socio CRI.</td>
+        </tr>
+        <tr>
+            <td class="nome">Numero di Soci CRI Giovani</td>
+            <td class="metrica">{{ obj.soci_giovani_35_numero }}</td>
+            <td class="parziale">{{ obj.soci_giovani_35_percentuale }}% dei Soci CRI</td>
+            <td class="descrizione">
+                Soci CRI con et&agrave; inferiore ai 36 anni
+            </td>
+        </tr>
+        <tr>
+            <td class="nome">Numero di Sedi CRI</td>
+            <td class="metrica">{{ obj.sedi_numero }}</td>
+            <td class="parziale">&nbsp;</td>
+            <td class="descrizione">Include Sede Nazionale, Regionali, Comitati e
+                Unit&agrave; Territoriali distaccate.</td>
+        </tr>
+
+        <tr>
+            <td class="nome">Numero di Comitati CRI</td>
+            <td class="metrica">{{ obj.comitati_numero }}</td>
+            <td class="parziale">&nbsp;</td>
+            <td class="descrizione">Include Sede Nazionale, Regionali e Comitati.</td>
+        </tr>
+    </tbody>
+</table>

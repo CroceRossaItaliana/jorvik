@@ -242,30 +242,30 @@ class TestCorsi(TestCase):
         # Test del controllo di cancellazione nei 4 stati del corso
         corso.stato = CorsoBase.TERMINATO
         corso.save()
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "stadio della vita del corso base")
 
         corso.stato = CorsoBase.ANNULLATO
         corso.save()
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "stadio della vita del corso base")
 
         corso.stato = CorsoBase.PREPARAZIONE
         corso.save()
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "Conferma cancellazione")
 
         corso.stato = CorsoBase.ATTIVO
         corso.save()
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "Conferma cancellazione")
 
         # GET chiede conferma
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "Conferma cancellazione")
         self.assertContains(response, force_text(sostenitore))
         # POST cancella
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 2)
@@ -285,12 +285,12 @@ class TestCorsi(TestCase):
         mail.outbox = []
 
         # Cancellare utente non esistente ritorna errore
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, altro.pk + 10000)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, altro.pk + 10000)))
         self.assertContains(response, "La persona cercata non è iscritta")
 
         # Cancellare utente non associato al corso non ritorna errore -per evitare information leak- ma non cambia
         # i dati
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, altro.pk)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, altro.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 2)
@@ -299,7 +299,7 @@ class TestCorsi(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
         # Cancellare invitato confermato
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, aspirante1.pk)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, aspirante1.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 1)
@@ -319,7 +319,7 @@ class TestCorsi(TestCase):
         mail.outbox = []
 
         # Cancellare invitato in attesa
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, aspirante2.pk)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, aspirante2.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 1)
@@ -333,7 +333,9 @@ class TestCorsi(TestCase):
         mail.outbox = []
 
         # Cancellare partecipante in attesa
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, aspirante3.pk)))
+        response = self.client.post(reverse(
+            'aspirante:formazione_iscritti_cancella', args=(corso.pk,
+                                                        aspirante3.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 0)

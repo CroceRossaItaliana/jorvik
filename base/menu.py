@@ -1,34 +1,29 @@
+"""
+Questa pagina contiene i vari menu che vengono mostrati nella barra laterale dei template.
+La costante MENU è accessibile attraverso "menu" nei template.
+"""
+
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 
-from anagrafica.costanti import REGIONALE, TERRITORIALE, LOCALE
+from anagrafica.costanti import REGIONALE  #TERRITORIALE, LOCALE
+from anagrafica.permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI, RUBRICHE_TITOLI, COMMISSARIO)
+from anagrafica.permessi.costanti import (GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA,
+    ELENCHI_SOCI, GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI,
+    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE)
 from anagrafica.models import Sede
-from anagrafica.permessi.applicazioni import DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, \
-    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, PRESIDENTE, \
-    UFFICIO_SOCI, UFFICIO_SOCI_UNITA, DELEGATO_AREA, RESPONSABILE_AREA, \
-    REFERENTE, RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO, \
-    RESPONSABILE_AUTOPARCO, DELEGATO_CO, REFERENTE_GRUPPO, RUBRICHE_TITOLI, COMMISSARIO
-from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, ELENCHI_SOCI, \
-    GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
+
 from .utils import remove_none
 from .models import Menu
-
-# __author__ = 'alfioemanuele'
-
-"""
-Questa pagina contiene i vari menu che vengono mostrati nella barra laterale dei template.
-La costante MENU e' accessibile attraverso "menu" nei template.
-"""
+from formazione.menus import formazione_menu
 
 
 def menu(request):
-    """
-    Ottiene il menu per una data richiesta.
-    """
-    from base.viste import ORDINE_ASCENDENTE, ORDINE_DISCENDENTE, ORDINE_DEFAULT
+    """ Ottiene il menu per una data richiesta. """
+
+    # from base.viste import ORDINE_ASCENDENTE, ORDINE_DISCENDENTE, ORDINE_DEFAULT
 
     me = request.me if hasattr(request, 'me') else None
-
     deleghe_attuali = None
 
     if me:
@@ -44,8 +39,6 @@ def menu(request):
             oggetto_tipo=ContentType.objects.get_for_model(Sede),
             oggetto_id__in=sedi
         ).distinct().values_list('tipo', flat=True)
-
-    gestione_corsi_sede = me.ha_permesso(GESTIONE_CORSI_SEDE) if me else False
 
     RUBRICA_BASE = [
         ("Referenti", "fa-book", "/utente/rubrica/referenti/"),
@@ -68,57 +61,58 @@ def menu(request):
                         (titolo, "fa-book", "".join(("/utente/rubrica/", slug, '/')))
                     )
 
+    ME_VOLONTARIO = me and (me.volontario or me.dipendente)
+    VOCE_PERSONA = ("Persona", (
+        ("Benvenuto", "fa-bolt", "/utente/"),
+        ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
+        ("Storico", "fa-clock-o", "/utente/storico/"),
+        ("Documenti", "fa-folder", "/utente/documenti/") if ME_VOLONTARIO else None,
+        ("Contatti", "fa-envelope", "/utente/contatti/"),
+        ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
+    ))
 
-    # if UFFICIO_SOCI in deleghe_attuali:
-    #     for rubrica in RUBRICA_BASE:
-    #         if rubrica[0] == 'Commissari' or rubrica[0] == 'Presidenti':
-    #             RUBRICA_BASE.remove(rubrica)
+    VOCE_VOLONTARIO = ("Volontario", (
+        ("Corsi", "fa-list", reverse('aspirante:corsi_base')),
+        ("Estensione", "fa-random", "/utente/estensione/"),
+        ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
+        ("Riserva", "fa-pause", "/utente/riserva/"),
+    )) if me and me.volontario else None
 
     VOCE_RUBRICA = ("Rubrica", (
         RUBRICA_BASE
     ))
 
+    VOCE_CV = ("Curriculum", (
+        # Competenze personali commentate per non visuallizarle
+        #("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
+        ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
+        ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if ME_VOLONTARIO else None,
+        ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
+        ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/") if ME_VOLONTARIO else None,
+    ))
+
+    VOCE_DONATORE = ("Donatore", (
+        ("Profilo Donatore", "fa-user", "/utente/donazioni/profilo/"),
+        ("Donazioni di Sangue", "fa-flask", "/utente/donazioni/sangue/")
+            if hasattr(me, 'donatore') else None,
+    )) if me and me.volontario else None
+
+    VOCE_SICUREZZA = ("Sicurezza", (
+        ("Cambia password", "fa-key", "/utente/cambia-password/"),
+        ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
+    ))
+
     VOCE_LINKS = ("Links", tuple((link.name, link.icon_class, link.url)
-            for link in Menu.objects.filter(is_active=True).order_by('order')))
+        for link in Menu.objects.filter(is_active=True).order_by('order')))
+
+    VOCE_MONITORAGGIO = ("Monitoraggio", (
+        ("Monitoraggio 2019 (dati 2018)", 'fa-user', reverse('pages:monitoraggio')),
+    ))
 
     elementi = {
-        "utente": (
-            (("Persona", (
-                ("Benvenuto", "fa-bolt", "/utente/"),
-                ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
-                ("Storico", "fa-clock-o", "/utente/storico/"),
-                ("Documenti", "fa-folder", "/utente/documenti/") if me and (me.volontario or me.dipendente) else None,
-                ("Contatti", "fa-envelope", "/utente/contatti/"),
-                ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
-            )),
-            ("Volontario", (
-                ("Estensione", "fa-random", "/utente/estensione/"),
-                ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
-                ("Riserva", "fa-pause", "/utente/riserva/"),
-            )) if me and me.volontario else None,
-            VOCE_RUBRICA,
-            ("Curriculum", (
-                # Competenze personali commentate per non visuallizarle
-                #("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
-                ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
-                ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if me and (me.volontario or me.dipendente) else None,
-                ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
-                ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente) else None,
-            )),
-            ("Donatore", (
-                ("Profilo Donatore", "fa-user", "/utente/donazioni/profilo/"),
-                ("Donazioni di Sangue", "fa-flask", "/utente/donazioni/sangue/")
-                    if hasattr(me, 'donatore') else None,
-            )) if me and me.volontario else None,
-            ("Sicurezza", (
-                ("Cambia password", "fa-key", "/utente/cambia-password/"),
-                ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
-            )),
-            VOCE_LINKS,
-            ("Monitoraggio", (
-                ("Monitoraggio 2019 (dati 2018)", 'fa-user', reverse('pages:monitoraggio')),
-            )) if me and (me.is_presidente or me.is_comissario) else None,
-        )) if me and not hasattr(me, 'aspirante') else None,
+        "utente": (VOCE_PERSONA, VOCE_VOLONTARIO, VOCE_RUBRICA, VOCE_CV,
+                   VOCE_DONATORE, VOCE_SICUREZZA, VOCE_LINKS, VOCE_MONITORAGGIO) \
+                    if me and not hasattr(me, 'aspirante') else None,
         "posta": (
             ("Posta", (
                 ("Scrivi", "fa-pencil", "/posta/scrivi/"),
@@ -183,8 +177,7 @@ def menu(request):
                 ("Elettorato", "fa-list", "/us/elenchi/elettorato/"),
                 ("Tesserini", "fa-list", "/us/tesserini/"),
                 ("Per Titoli", "fa-search", "/us/elenchi/titoli/"),
-                ("Scarica elenchi richiesti", "fa-download", reverse(
-                    'elenchi_richiesti_download'), '', True),
+                ("Scarica elenchi richiesti", "fa-download", reverse('ufficio_soci:elenchi_richiesti_download'), '', True),
             )),
             ("Aggiungi", (
                 ("Persona", "fa-plus-square", "/us/aggiungi/"),
@@ -215,45 +208,10 @@ def menu(request):
                 if me and me.oggetti_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE).exists() else None,
             )),
         ),
-        "formazione": (
-            ("Corsi Base", (
-                ("Elenco Corsi Base", "fa-list", "/formazione/corsi-base/elenco/"),
-                ("Domanda formativa", "fa-area-chart", "/formazione/corsi-base/domanda/")
-                    if gestione_corsi_sede else None,
-                ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-base/nuovo/")
-                    if gestione_corsi_sede else None,
-                # ("Monitoraggio 2019", 'fa-user', reverse('pages:monitoraggio'))
-                #     if me and (me.is_presidente or me.is_comissario) else None,
-            )),
-            ("Corsi di Formazione", (
-                ("Elenco Corsi di Formazione", "fa-list", "/formazione/corsi-formazione/"),
-                ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-formazione/nuovo/"),
-            )) if False else None,
-        ),
-        "aspirante": (
-            ("Aspirante", (
-                ("Home page", "fa-home", "/aspirante/"),
-                ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
-                ("Storico", "fa-clock-o", "/utente/storico/"),
-                ("Contatti", "fa-envelope", "/utente/contatti/"),
-                ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
-                ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
-                ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
-                ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
-            )),
-            ("Nelle vicinanze", (
-                ("Impostazioni", "fa-gears", "/aspirante/impostazioni/"),
-                ("Corsi Base", "fa-list", "/aspirante/corsi-base/"),
-                ("Sedi CRI", "fa-list", "/aspirante/sedi/"),
-            )),
-            ("Sicurezza", (
-                ("Cambia password", "fa-key", "/utente/cambia-password/"),
-                ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
-            ),
-            ),
-        ) if me and hasattr(me, 'aspirante') else (
+        'formazione': formazione_menu('formazione', me),
+        'aspirante': formazione_menu('aspirante') if me and hasattr(me, 'aspirante') else (
             ("Gestione Corsi", (
-                ("Elenco Corsi Base", "fa-list", "/formazione/corsi-base/elenco/"),
+                ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
             )),
         ),
     }

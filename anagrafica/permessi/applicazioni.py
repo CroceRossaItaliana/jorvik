@@ -1,10 +1,7 @@
-# coding=utf-8
 from collections import OrderedDict
 
-__author__ = 'alfioemanuele'
 
 # Tipologie di applicativi esistenti
-
 PRESIDENTE = 'PR'
 VICE_PRESIDENTE = 'VP'
 COMMISSARIO = 'CM'
@@ -96,4 +93,3 @@ RUBRICHE_TITOLI = OrderedDict((
     ('direttori_corsi', (DIRETTORE_CORSO, 'Direttori Corsi', True)),
     ('responsabili_autoparco', (RESPONSABILE_AUTOPARCO, 'Responsabili Autoparco', True)),
 ))
-
