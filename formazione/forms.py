@@ -203,6 +203,22 @@ class ModuloModificaCorsoBase(ModelForm):
         #     self.fields['titolo_cri'].widget.attrs['disabled'] = 'disabled'
 
 
+class FormModificaCorsoSede(ModelForm):
+    locazione = forms.ChoiceField(choices=ModuloCreazioneCorsoBase.LOCAZIONE,
+                                  initial=ModuloCreazioneCorsoBase.PRESSO_SEDE,
+                                  label='Sede del Corso',)
+    class Meta:
+        model = CorsoBase
+        fields = ['locazione',]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        corso = self.instance
+        if corso.locazione != corso.sede.locazione:
+            self.initial['locazione'] = ModuloCreazioneCorsoBase.ALTROVE
+
+
 class CorsoLinkForm(ModelForm):
     class Meta:
         model = CorsoFile

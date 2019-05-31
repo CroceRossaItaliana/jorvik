@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, timedelta, date
 
 from django.db.models import Q, F
@@ -10,7 +9,7 @@ from django.contrib import messages
 
 from anagrafica.models import Persona, Documento, Sede
 from anagrafica.forms import ModuloCreazioneDocumento
-from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
+from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE, PRESIDENTE)
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
     GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, RUBRICA_DELEGATI_OBIETTIVO_ALL)
 from curriculum.models import TitoloPersonale
@@ -395,6 +394,7 @@ def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
 @pagina_privata
 def aspirante_corso_base_modifica(request, me, pk):
     from .models import CorsoFile, CorsoLink
+    from .forms import FormModificaCorsoSede
     from .formsets import CorsoFileFormSet, CorsoLinkFormSet
 
     course = get_object_or_404(CorsoBase, pk=pk)
@@ -403,6 +403,8 @@ def aspirante_corso_base_modifica(request, me, pk):
 
     FILEFORM_PREFIX = 'files'
     LINKFORM_PREFIX = 'links'
+
+    context = dict()
 
     if not me.permessi_almeno(course, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -452,13 +454,18 @@ def aspirante_corso_base_modifica(request, me, pk):
         file_formset = CorsoFileFormSet(queryset=course_files, prefix=FILEFORM_PREFIX)
         link_formset = CorsoLinkFormSet(queryset=course_links, prefix=LINKFORM_PREFIX)
 
-    context = {
+        # Aggiungi form modifica sede se utente ha una delega per la sede del corso
+        if me.deleghe_attuali(tipo__in=[RESPONSABILE_FORMAZIONE, PRESIDENTE],
+                              oggetto_id=course.sede.comitato.id):
+            context['sede_modifica_form'] = FormModificaCorsoSede(instance=course)
+
+    context.update({
         'corso': course,
         'puo_modificare': True,
         'modulo': course_form,
         'file_formset': file_formset,
         'link_formset': link_formset,
-    }
+    })
     return 'aspirante_corso_base_scheda_modifica.html', context
 
 
@@ -1121,7 +1128,18 @@ def formazione_albo_titoli_corso_full_list(request, me):
 
 @pagina_privata
 def formazione_corso_position_change(request, me, pk):
+    """
+    La pagina renderizzata viene aggiornata con redirect sulla pagina direttore corso.
+    Per non avere refresh aggiungere ?norefresh alla url a questa view.
+    """
     course = get_object_or_404(CorsoBase, pk=pk)
+
+    if request.POST and request.POST.get('modifica_sede_dopo_attivazione') and \
+        request.POST.get('locazione') == ModuloCreazioneCorsoBase.PRESSO_SEDE:
+        course.locazione = course.sede.locazione
+        course.save()
+        messages.success(request, 'La sede del corso è stata modificata.')
+        return redirect(reverse('aspirante:modify', args=[pk]))
 
     if not course.can_modify(me):
         return redirect(ERRORE_PERMESSI)
@@ -1141,6 +1159,7 @@ def formazione_corso_position_change(request, me, pk):
     context = {'corso': course,
                'template': template,
                'puo_modificare': puo_modificare,}
+
     return 'formazione_corso_position_change.html', context
 
 

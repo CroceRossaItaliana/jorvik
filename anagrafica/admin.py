@@ -276,7 +276,6 @@ class AdminSede(ReadonlyAdminMixin, MPTTModelAdmin):
     inlines = [InlineDelegaSede,]
 
 
-# admin.site.register(Appartenenza)
 @admin.register(Appartenenza)
 class AdminAppartenenza(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["membro", "persona__nome", "persona__cognome", "persona__codice_fiscale",
@@ -286,7 +285,7 @@ class AdminAppartenenza(ReadonlyAdminMixin, admin.ModelAdmin):
     raw_id_fields = RAW_ID_FIELDS_APPARTENENZA
     inlines = [InlineAutorizzazione]
 
-# admin.site.register(Delega)
+
 @admin.register(Delega)
 class AdminDelega(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["tipo", "persona__nome", "persona__cognome", "persona__codice_fiscale", "tipo", "oggetto_id"]
@@ -295,7 +294,6 @@ class AdminDelega(ReadonlyAdminMixin, admin.ModelAdmin):
     raw_id_fields = RAW_ID_FIELDS_DELEGA
 
 
-# admin.site.register(Documento)
 @admin.register(Documento)
 class AdminDocumento(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["tipo", "persona__nome", "persona__cognome", "persona__codice_fiscale"]
@@ -304,7 +302,6 @@ class AdminDocumento(ReadonlyAdminMixin, admin.ModelAdmin):
     raw_id_fields = RAW_ID_FIELDS_DOCUMENTO
 
 
-# admin.site.register(Fototessera)
 @admin.register(Fototessera)
 class AdminFototessera(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale"]
@@ -315,7 +312,6 @@ class AdminFototessera(ReadonlyAdminMixin, admin.ModelAdmin):
 
 
 
-# admin.site.register(Estensione)
 @admin.register(Estensione)
 class AdminEstensione(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale", "destinazione__nome"]
@@ -325,7 +321,6 @@ class AdminEstensione(ReadonlyAdminMixin, admin.ModelAdmin):
     inlines = [InlineAutorizzazione]
 
 
-# admin.site.register(Trasferimento)
 @admin.register(Trasferimento)
 class AdminTrasferimento(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome",  "persona__codice_fiscale", "destinazione__nome"]
@@ -335,7 +330,6 @@ class AdminTrasferimento(ReadonlyAdminMixin, admin.ModelAdmin):
     inlines = [InlineAutorizzazione]
 
 
-# admin.site.register(Riserva)
 @admin.register(Riserva)
 class AdminRiserva(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale"]
@@ -345,7 +339,6 @@ class AdminRiserva(ReadonlyAdminMixin, admin.ModelAdmin):
     inlines = [InlineAutorizzazione]
 
 
-# admin.site.register(Riserva)
 @admin.register(Dimissione)
 class AdminDimissione(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale"]

@@ -18,6 +18,17 @@
 
                 <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva modifiche</button>
             </form>
+
+            {% if sede_modifica_form %}
+                <hr>
+
+                <form method="POST" action="{% url 'aspirante:position_change' corso.pk %}?norefresh">
+                    {% csrf_token %}
+                    {% bootstrap_form sede_modifica_form %}
+                    <input type="hidden" name="modifica_sede_dopo_attivazione" value="1">
+                    <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Modifica sede</button>
+                </form>
+            {% endif %}
         </div>
     </div>
 {% endblock %}
