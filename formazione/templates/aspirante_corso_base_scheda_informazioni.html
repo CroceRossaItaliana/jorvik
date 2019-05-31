@@ -170,26 +170,26 @@
         {{ corso.descrizione|default:"<p>Ancora non disponibili</p>"|safe }}
 
         {% if puoi_partecipare == corso.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI or puo_modificare %}
-            {% if corso.get_course_links or corso.get_course_files %}
+            <h3>Materiale didattico</h3>
+
+            {% if corso.get_course_links %}
                 <div style="margin:0 0 20px;">
-                    <h3>Materiale didattico</h3>
-                    {% if corso.get_course_links %}
-                        <strong>Link:</strong><br>
-                        {% for link in corso.get_course_links %}
-                            <a href="{{link.link}}" target="_blank">{{link.link}}</a><br>
-                        {% endfor %}
-                    {% endif %}
-
-                    <br>
-
-                    {% if corso.get_course_links %}
-                        <strong>File:</strong><br>
-                        {% for file in corso.get_course_files %}
-                            <a href="{{ file.download_url }}" target="_blank">{{file.filename}}</a> <small>({{file.download_count}})</small><br>
-                        {% endfor %}
-                    {% endif %}
+                    <strong>Link:</strong><br>
+                    {% for link in corso.get_course_links %}
+                        <a href="{{link.link}}" target="_blank">{{link.link}}</a><br>
+                    {% endfor %}
                 </div>
             {%endif%}
+
+            {% if corso.get_course_files %}
+                <div style="margin:0 0 20px;">
+                    <strong>File:</strong><br>
+                    {% for file in corso.get_course_files %}
+                        <a href="{{ file.download_url }}" target="_blank">{{file.filename}}</a> <small>({{file.download_count}})</small><br>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
         {% endif %}
 
         <p>
