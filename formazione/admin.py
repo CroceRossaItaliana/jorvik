@@ -50,6 +50,7 @@ class InlineAssenzaCorsoBase(ReadonlyAdminMixin, admin.TabularInline):
     raw_id_fields = RAW_ID_FIELDS_ASSENZACORSOBASE
     extra = 0
 
+
 class InlineEstensioneCorso(ReadonlyAdminMixin, admin.TabularInline):
     model = CorsoEstensione
     raw_id_fields = RAW_ID_FIELDS_ESTENSIONE
@@ -85,8 +86,9 @@ class AdminCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
 
 @admin.register(InvitoCorsoBase)
 class AdminInvitoCorsoBase(admin.ModelAdmin):
-    list_display = ['persona', 'corso', 'invitante',]
+    list_display = ['persona', 'corso', 'invitante', 'creazione',]
     list_filter = ['ritirata', 'confermata', 'automatica']
+    ordering = ['-creazione', ]
 
 
 @admin.register(CorsoFile)

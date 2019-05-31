@@ -60,11 +60,11 @@ class EstensioneLivelloRegionaleSede(AutocompletamentoBase):
 
 class InvitaCorsoNuovoAutocompletamento(AutocompletamentoBasePersonaModelMixin):
     model = Persona
-    search_fields = ['codice_fiscale',]
+    search_fields = ['codice_fiscale', 'email_contatto',]
     attrs = {
         'required': False,
-        'placeholder': 'Inserisci il codice fiscale',
-        'data-autocomplete-minimum-characters': 16,
+        'placeholder': 'Inserisci il codice fiscale o e-mail',
+        'data-autocomplete-minimum-characters': 6,
     }
 
     def choices_for_request(self):
