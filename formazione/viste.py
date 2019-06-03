@@ -378,7 +378,6 @@ def aspirante_corso_base_lezioni(request, me, pk):
 
 @pagina_privata
 def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
-
     corso = get_object_or_404(CorsoBase, pk=pk)
     if not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -387,7 +386,26 @@ def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
     if lezione.corso != corso:
         return redirect(ERRORE_PERMESSI)
 
-    lezione.delete()
+    deleted = lezione.delete()
+
+    if deleted[0] > 0:
+        # Avvisa tutti i partecipanti che la lezione è stata rimossa
+        partecipanti = Persona.objects.filter(partecipazioni_corsi__in=corso.partecipazioni_confermate())
+
+        sent_with_success = Messaggio.costruisci_e_accoda(
+            oggetto="La lezione %s del %s è stata cancellata" % (lezione.nome,
+                                                                 corso.nome),
+            modello="email_corso_lezione_cancella_avviso_partecipante.html",
+            corpo={
+                'corso': corso,
+            },
+            destinatari=partecipanti,
+        )
+
+        if sent_with_success:
+            msg = "La lezione è stata cancellata. Sono stati avvisati %s partecipanti del corso." % partecipanti.count()
+            messages.success(request, msg)
+
     return redirect(corso.url_lezioni)
 
 
