@@ -168,10 +168,10 @@
                     <td><a class="btn {% if corso.relazione_direttore.is_completed %}btn-success{%else%}btn-default{%endif%}" href="{% url 'courses:compila_relazione_direttore' corso.pk %}"><i class="fa fa-fw fa-pencil"></i>
                 Inserire la relazione</a></td>
                     {% if corso.relazione_direttore.is_completed %}
-                        <td><a class="btn btn-default" href="{{ corso.url_termina }}"><i class="fa fa-fw fa-check-circle"></i> Generare il verbale</a></td>
+                        <td><a class="btn btn-default" href="{{ corso.url_termina }}"><i class="fa fa-fw fa-check-circle"></i> Compila il verbale</a></td>
                     {% endif %}
                     {% if corso.relazione_direttore and corso.relazione_direttore.is_completed %}
-                        <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course"><i class="fa fa-fw fa-times-circle"></i> Terminare il corso</a></td>
+                        <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course"><i class="fa fa-fw fa-times-circle"></i> Genera il verbale</a></td>
                     {% endif %}
                 </tr>
             </table>

@@ -290,6 +290,11 @@ class CorsoExtensionForm(ModelForm):
         labels = {
             'segmento': "Destinatari del Corso",
         }
+        widgets = {
+            'segmento': forms.CheckboxSelectMultiple(
+                attrs={'class': 'required checkbox form-control'},
+            ),
+        }
 
     def clean(self):
         cd = self.cleaned_data
@@ -301,8 +306,18 @@ class CorsoExtensionForm(ModelForm):
         return cd
 
     def __init__(self, *args, **kwargs):
+        from collections import OrderedDict
+        from segmenti.segmenti import NOMI_SEGMENTI
+
         self.corso = kwargs.pop('corso')
         super().__init__(*args, **kwargs)
+
+        choices = [(k,v) for k,v in OrderedDict(NOMI_SEGMENTI).items() if k in [
+            'B',  # Volontari
+            'E',  # Volontari con meno di 33 anni
+            'AB',  # Dipendenti
+        ]]
+        self.fields['segmento'].choices = choices
 
         # if self.corso.is_nuovo_corso and self.corso.titolo_cri:
         #     self.fields['titolo'].initial = Titolo.objects.filter(id__in=[
