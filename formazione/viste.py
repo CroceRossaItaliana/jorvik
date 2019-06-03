@@ -759,7 +759,7 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
 
                     Messaggio.costruisci_e_invia(
                         oggetto=subject,
-                        modello="email_corso_base_iscritto.html",
+                        modello="email_corso_invito_con_conferma.html",
                         corpo={
                             "persona": persona,
                             "corso": corso,

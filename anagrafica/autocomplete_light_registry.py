@@ -128,12 +128,12 @@ class VolontarioSedeAutocompletamento(PersonaAutocompletamento):
 
 
 class IscrivibiliCorsiAutocompletamento(PersonaAutocompletamento):
-    search_fields = ['codice_fiscale',]
+    search_fields = ['codice_fiscale', 'email_contatto',]
 
     attrs = {
-        'placeholder': 'Inserisci il codice fiscale',
         'required': False,
-        'data-autocomplete-minimum-characters': 8,
+        'placeholder': 'Inserisci il codice fiscale o e-mail',
+        'data-autocomplete-minimum-characters': 6,
     }
 
     def choices_for_request(self):
