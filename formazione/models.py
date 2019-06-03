@@ -1237,7 +1237,7 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
 
     def send_messagge_to_docente(self, me):
         Messaggio.costruisci_e_invia(
-            oggetto='Lezione al %s' % self.corso.nome,
+            oggetto='Docente al %s' % self.corso.nome,
             modello="email_docente_assegnato_a_corso.html",
             corpo={
                 "persona": self.docente,
