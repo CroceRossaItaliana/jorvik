@@ -1,16 +1,13 @@
-import datetime
-import operator
-
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Count
 from django.utils.timezone import now
-from django.db.models import Q
 
-from anagrafica.costanti import LOCALE, REGIONALE, LIMITE_ETA, LIMITE_ANNI_ATTIVITA
 from anagrafica.models import Appartenenza, Delega, Sede, Persona
-from anagrafica.permessi.applicazioni import PRESIDENTE, COMMISSARIO, UFFICIO_SOCI, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, REFERENTE, RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE
+from anagrafica.costanti import LOCALE, REGIONALE, LIMITE_ETA, LIMITE_ANNI_ATTIVITA
+from anagrafica.permessi.applicazioni import (PRESIDENTE, COMMISSARIO, UFFICIO_SOCI,
+    DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
+    DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, REFERENTE,
+    RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE)
 from attivita.models import Attivita, Partecipazione
-
 
 
 # Utils
@@ -220,6 +217,11 @@ def volontari_con_titolo(queryset):
     return volontari(queryset).filter(titoli_personali__confermata=True)
 
 
+def dipendenti(queryset):
+    return queryset.filter(
+        appartenenze__membro=Appartenenza.DIPENDENTE)
+
+
 NOMI_SEGMENTI = (
     ('A', 'Tutti gli utenti di Gaia'),
     ('B', 'Volontari'),
@@ -251,6 +253,7 @@ NOMI_SEGMENTI = (
     ('Y', 'Delegati Autoparco'),
     ('Z', 'Delegati Formazione'),
     ('AA', 'Volontari aventi un dato titolo'),
+    ('AB', 'Dipendenti'),
 )
 
 
@@ -287,4 +290,5 @@ SEGMENTI = {
     'Y':              delegati_autoparco,
     'Z':              delegati_formazione,
     'AA':             volontari_con_titolo,
+    'AB':             dipendenti,
 }
