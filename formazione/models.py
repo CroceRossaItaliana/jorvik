@@ -849,12 +849,36 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
 
 class CorsoEstensione(ConMarcaTemporale):
+    from multiselectfield import MultiSelectField
+
     from segmenti.segmenti import NOMI_SEGMENTI
     from curriculum.models import Titolo
 
+    PRESIDENTI_COMMISSARI = 'pr'
+    DELEGATI_TECNICI = 'dc'
+    VOLONTARI_MAGGIORENNI = 'vm'
+    VOLONTARI_GIOVANI = 'vg'
+    VOLONTARIO_RUOLI = [
+        (PRESIDENTI_COMMISSARI, "Presidenti / Commissari"),
+        (DELEGATI_TECNICI, "Delegati Tecnici"),
+        (VOLONTARI_MAGGIORENNI, "Volontari maggiorenni"),
+        (VOLONTARI_GIOVANI, "Volontari Giovani"),
+    ]
+
+    AREA_COMITATO = 'a1'
+    AREA_PIU_COMITATI = 'a2'
+    AREA_COMITATO_REGIONALE = 'a3'
+    AREA_LIVELLO_NAZIONALE = 'ac'
+    AREA_GEOGRAFICA_INTERESSATA = [
+        (AREA_COMITATO, 'Comitato CRI'),
+        (AREA_PIU_COMITATI, 'Più comitati CRI'),
+        (AREA_COMITATO_REGIONALE, 'Comitato Regionale CRI'),
+        (AREA_LIVELLO_NAZIONALE, 'A livello nazionale'),
+    ]
+
     corso = models.ForeignKey(CorsoBase, db_index=True)
     is_active = models.BooleanField(default=True, db_index=True)
-    segmento = models.CharField(max_length=9, choices=NOMI_SEGMENTI, blank=True)
+    segmento = MultiSelectField(max_length=9, choices=NOMI_SEGMENTI, blank=True)
     titolo = models.ManyToManyField(Titolo, blank=True)
     sede = models.ManyToManyField(Sede)
     sedi_sottostanti = models.BooleanField(default=False, db_index=True)

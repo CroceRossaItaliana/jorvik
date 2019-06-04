@@ -50,6 +50,47 @@ $(function(){
     else select_extensions_section.hide();
 });
 
+// ******************************************************
+// url: /aspirante/corso-base/<corso_pk>/estensioni *****
+// ******************************************************
+$(function(){
+    const VOLONTARI = "B"; // segmenti.segmenti.NOMI_SEGMENTI
+
+    let labelControlDestinatari = $('.form-group .control-label:contains("Destinatari del Corso")');
+    let segmenti = labelControlDestinatari.next('div').val('id');
+
+    for (var i=0; i<segmenti.length; i++) {
+        let checkboxes = $(segmenti[i]).find('label input');
+
+        // (caricamento della pagina)
+        // Mostra/nascondi <select> per le estensioni dove segmento non ha selezionata la voce "Volontario"
+        let hasSelectedVolontario = false;
+        checkboxes.each(function(k,v){
+            let checkbox = $(v);
+            if (checkbox.val() === VOLONTARI && checkbox.prop('checked')) {
+                hasSelectedVolontario = true;
+            }
+        });
+        if (hasSelectedVolontario == false) {
+            $(segmenti[i]).parent().next('div').hide();
+        }
+    }
+
+    // Mostra/nascondi ruoli volontario con la selezione option "Volontario"
+    segmenti.find('input').on('change', function(e) {
+        let segmento = $(this).val();
+        switch (segmento) {
+            case VOLONTARI:
+                let segmentoVolontario = $(this).closest('.form-group').next('.form-group');
+                if (segmentoVolontario.is(':visible')) { segmentoVolontario.hide() } else { segmentoVolontario.show() }
+                break;
+            case "E": // Volontari giovani
+            case "AB": // Dipendenti
+                break;
+        }
+    });
+});
+
 </script>
 
 {% endblock %}

@@ -283,18 +283,26 @@ class CorsoExtensionForm(ModelForm):
         "EstensioneLivelloRegionaleTitolo", required=False, label='Requisiti necessari')
     sede = autocomplete_light.ModelMultipleChoiceField(
         "EstensioneLivelloRegionaleSede", required=False, label='Selezionare Sede/Sedi')
+    segmento_volontario = forms.ChoiceField(choices=CorsoEstensione.VOLONTARIO_RUOLI,
+                                            label='Tipo del Volontario')
+    area_geografica = forms.ChoiceField(choices=CorsoEstensione.AREA_GEOGRAFICA_INTERESSATA,
+                                        label='Area geografica')
 
     class Meta:
         model = CorsoEstensione
-        fields = ['segmento', 'titolo', 'sede', 'sedi_sottostanti',]
+
+        # dall'ordine di questi campi divente il funzionamento di JavaScript
+        # in questo template: aspirante_corso_estensioni_modifica.html
+        fields = ['segmento', 'segmento_volontario', 'area_geografica',
+                  'titolo', 'sede', 'sedi_sottostanti',]
         labels = {
             'segmento': "Destinatari del Corso",
         }
-        widgets = {
-            'segmento': forms.CheckboxSelectMultiple(
-                attrs={'class': 'required checkbox form-control'},
-            ),
-        }
+        # widgets = {
+        #     'segmento': forms.CheckboxSelectMultiple(
+        #         attrs={'class': 'required checkbox form-control'},
+        #     ),
+        # }
 
     def clean(self):
         cd = self.cleaned_data
@@ -318,6 +326,8 @@ class CorsoExtensionForm(ModelForm):
             'AB',  # Dipendenti
         ]]
         self.fields['segmento'].choices = choices
+
+
 
         # if self.corso.is_nuovo_corso and self.corso.titolo_cri:
         #     self.fields['titolo'].initial = Titolo.objects.filter(id__in=[
