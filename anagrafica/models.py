@@ -500,6 +500,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.membro(Appartenenza.VOLONTARIO, **kwargs)
 
     @property
+    def sevizio_civile(self, **kwargs):
+        """
+        Controlla se membro Servizio civile universale
+        """
+        return self.membro(Appartenenza.SEVIZIO_CIVILE_UNIVERSALE, **kwargs)
+
+    @property
     def ordinario(self, **kwargs):
         """
         Controlla se membro ordinario
@@ -1442,21 +1449,23 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     MILITARE = 'MI'
     DONATORE = 'DO'
     SOSTENITORE = 'SO'
+    SEVIZIO_CIVILE_UNIVERSALE = 'SC'
 
     # Quale tipo di membro puo' partecipare alle attivita'?
-    MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO,)
+    MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO, SEVIZIO_CIVILE_UNIVERSALE)
 
     # Membri sotto il diretto controllo della Sede
-    MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE)
+    MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE, SEVIZIO_CIVILE_UNIVERSALE,)
 
     # Membro che puo' essere reclamato da una Sede
-    MEMBRO_RECLAMABILE = (VOLONTARIO, ORDINARIO, DIPENDENTE, SOSTENITORE,)
+    MEMBRO_RECLAMABILE = (VOLONTARIO, ORDINARIO, DIPENDENTE, SOSTENITORE, SEVIZIO_CIVILE_UNIVERSALE,)
 
     # Membro che puo' accedere alla rubrica di una Sede
-    MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE,)
+    MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE, SEVIZIO_CIVILE_UNIVERSALE,)
 
+    #TODO: SEVIZIO_CIVILE_UNIVERSALE il tesserino puo essere pagato dal presidentte
     # Membri che possono richiedere il tesserino
-    MEMBRO_TESSERINO = (VOLONTARIO,)
+    MEMBRO_TESSERINO = (VOLONTARIO, SEVIZIO_CIVILE_UNIVERSALE)
 
     # Membri soci
     MEMBRO_SOCIO = (VOLONTARIO, ORDINARIO,)
@@ -1473,10 +1482,12 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         (ORDINARIO, 'Socio Ordinario'),
         (SOSTENITORE, 'Sostenitore'),
         (DIPENDENTE, 'Dipendente'),
+        (SEVIZIO_CIVILE_UNIVERSALE, 'Volontario in servizio civile universale'),
         #(INFERMIERA, 'Infermiera Volontaria'),
         #(MILITARE, 'Membro Militare'),
         #(DONATORE, 'Donatore Finanziario'),
     )
+
     PRECEDENZE_MODIFICABILI = (ESTESO,)
     NON_MODIFICABILE = (ESTESO,)
     membro = models.CharField("Tipo membro", max_length=2, choices=MEMBRO, default=VOLONTARIO, db_index=True)
