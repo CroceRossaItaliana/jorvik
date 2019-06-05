@@ -13,7 +13,7 @@ from django.utils.safestring import mark_safe
 
 from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
-from anagrafica.models import Appartenenza, Persona, Estensione, Sede, Riserva
+from anagrafica.models import Appartenenza, Persona, Estensione, Sede, Riserva, Dimissione
 from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
                                           ERRORE_PERMESSI, MODIFICA,
                                           EMISSIONE_TESSERINI)
@@ -231,6 +231,18 @@ def us_reclama_persona(request, me, persona_pk):
             modulo_appartenenza.add_error('membro', "I soci di questo tipo devono avere almeno "
                                                     "%d anni. " % Persona.ETA_MINIMA_SOCIO)
             continua = False
+
+        app = persona.appartenenze_attuali().filter(membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE)
+        if membro == Appartenenza.DIPENDENTE and app.exists():
+            for ap in app:
+                dim = Dimissione(
+                    richiedente=me,
+                    persona=persona,
+                    appartenenza=ap,
+                    sede=ap.sede
+                )
+                dim.applica(applicante=me)
+                dim.save()
 
         if continua:
             with transaction.atomic():
