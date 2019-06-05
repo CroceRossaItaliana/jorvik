@@ -2642,6 +2642,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     TRASFORMAZIONE = 'TRA'
     SCADENZA = 'SCA'
     ALTRO = 'ALT'
+    FINE_SERVIZIO_CIVILE = 'FSC'
 
     MOTIVI_VOLONTARI = (
         (VOLONTARIE, 'Dimissioni Volontarie'),
@@ -2651,6 +2652,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         (RADIAZIONE, 'Radiazione da Croce Rossa Italiana'),
         (SCADENZA, 'Scadenza contratto o altro'),
         (DECEDUTO, 'Decesso'),
+        (FINE_SERVIZIO_CIVILE, 'Fine progetto/Interruzione servizio civile'),
     )
 
     MOTIVI_ALTRI = (
