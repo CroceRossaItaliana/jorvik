@@ -87,29 +87,29 @@ def menu(request):
                 ("Benvenuto", "fa-bolt", "/utente/"),
                 ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
                 ("Storico", "fa-clock-o", "/utente/storico/"),
-                ("Documenti", "fa-folder", "/utente/documenti/") if me and (me.volontario or me.dipendente or me.sevizio_civile) else None,
+                ("Documenti", "fa-folder", "/utente/documenti/") if me and (me.volontario or me.dipendente or me.servizio_civile) else None,
                 ("Contatti", "fa-envelope", "/utente/contatti/"),
                 ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
             )),
             ("Volontario", (
                 ("Estensione", "fa-random", "/utente/estensione/"),
-                ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
+                ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/") if me and not me.servizio_civile else None,
                 ("Riserva", "fa-pause", "/utente/riserva/"),
-            )) if me and (me.volontario or me.sevizio_civile) else None,
+            )) if me and (me.volontario or me.servizio_civile) else None,
             VOCE_RUBRICA,
             ("Curriculum", (
                 # Competenze personali commentate per non visuallizarle
                 #("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
                 ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
-                ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if me and (me.volontario or me.dipendente or me.sevizio_civile) else None,
+                ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if me and (me.volontario or me.dipendente or me.servizio_civile) else None,
                 ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
-                ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente or me.sevizio_civile) else None,
+                ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente or me.servizio_civile) else None,
             )),
             ("Donatore", (
                 ("Profilo Donatore", "fa-user", "/utente/donazioni/profilo/"),
                 ("Donazioni di Sangue", "fa-flask", "/utente/donazioni/sangue/")
                     if hasattr(me, 'donatore') else None,
-            )) if me and (me.volontario or me.sevizio_civile) else None,
+            )) if me and (me.volontario or me.servizio_civile) else None,
             ("Sicurezza", (
                 ("Cambia password", "fa-key", "/utente/cambia-password/"),
                 ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
@@ -147,7 +147,7 @@ def menu(request):
                 ("Aree di intervento", "fa-list", "/attivita/aree/") if me and me.oggetti_permesso(GESTIONE_AREE_SEDE).exists() else None,
                 ("Statistiche", "fa-bar-chart", "/attivita/statistiche/") if me and me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE).exists() else None,
             ))
-        ) if me and (me.volontario or me.sevizio_civile) else None,
+        ) if me and (me.volontario or me.servizio_civile) else None,
         "autorizzazioni": (
             ("Richieste", (
                 ("In attesa", "fa-user-plus", "/autorizzazioni/"),

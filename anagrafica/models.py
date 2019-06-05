@@ -500,7 +500,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.membro(Appartenenza.VOLONTARIO, **kwargs)
 
     @property
-    def sevizio_civile(self, **kwargs):
+    def servizio_civile(self, **kwargs):
         """
         Controlla se membro Servizio civile universale
         """
@@ -1190,6 +1190,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         ).exists():
             return True
 
+        if self.appartenenze_attuali().filter(
+                membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE
+        ).exists() and not self.appartenenze_attuali().exclude(
+            membro__in=[Appartenenza.ESTESO,Appartenenza.SEVIZIO_CIVILE_UNIVERSALE]
+        ).exists():
+            return True
+
+
         return False
 
     def genera_foglio_di_servizio(self):
@@ -1553,6 +1561,8 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             return 'Donatore, '+self.sede.nome_completo
         elif self.membro == self.SOSTENITORE:
             return 'Sostenitore, '+self.sede.nome_completo
+        elif self.membro == self.SEVIZIO_CIVILE_UNIVERSALE:
+            return 'Servizio civile universale, ' + self.sede.nome_completo
 
     def richiedi(self, notifiche_attive=True):
         """
