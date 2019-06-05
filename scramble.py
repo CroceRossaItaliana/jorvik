@@ -1,42 +1,32 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 import os
 import random
+import math
+import argparse
 from datetime import timedelta
 
-import math
-from django.db import transaction
-
-from base.comuni import COMUNI
+from django.db import transaction, IntegrityError
+from django.db.models import Count
+from django.core.wsgi import get_wsgi_application
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
-
-from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
+from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Estensione
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2
-
-from django.db import IntegrityError
-from django.db.models import Count
-
 from anagrafica.costanti import NAZIONALE, TERRITORIALE, REGIONALE, LOCALE, PROVINCIALE
 from autenticazione.models import Utenza
+from attivita.models import Attivita, Area
+from base.comuni import COMUNI
 from base.utils import poco_fa
 from base.utils_tests import crea_persona, email_fittizzia, codice_fiscale_persona
-from veicoli.models import Autoparco, Collocazione
 from base.geo import Locazione
-
-from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Estensione
-from attivita.models import Attivita, Area
 from posta.models import Messaggio
-import argparse
+from veicoli.models import Autoparco, Collocazione
 
-
-__author__ = 'alfioemanuele'
 
 parser = argparse.ArgumentParser(description='Mischia i dati anagrafici.')
-
 parser.add_argument('--membri-sede', dest='membri_sedi', action='append',
                    help='dato pk di una sede, mischia i dati degli appartenenti passati e attuali')
 parser.add_argument('--dati-di-esempio', dest='esempio', action='store_const',
@@ -49,9 +39,7 @@ parser.add_argument('--reset', dest='reset', action='store_true',
 parser.add_argument('--aggiorna-province', dest='province', action='store_const',
                     default=False, const=True,
                     help='aggiorna le province')
-
 args = parser.parse_args()
-
 
 
 def ottieni_random():  # Ottiene una persona a caso.
@@ -172,14 +160,21 @@ if args.esempio:
     print(" - Creo persone...")
     sedi = [c, s1, s2, s3, c2, c3, regionale, metropolitano, altra_regione, cm1, cm2]
     nuove = []
+
+    tests_volontario = None
+    tests_presidente = None
+
+
     for sede in sedi:  # Per ogni Sede
         locazione = Locazione.oggetto(indirizzo=random.sample(COMUNI.keys(), 1)[0])
         sede.locazione = locazione
         sede.save()
+
         if sede.estensione == REGIONALE:
             tipi = [Appartenenza.VOLONTARIO, Appartenenza.SOSTENITORE, Appartenenza.ORDINARIO]
         else:
             tipi = [Appartenenza.VOLONTARIO, Appartenenza.SOSTENITORE]
+
         for membro in tipi:
             for i in range(0, 25):  # Creo 20 volontari
                 p = crea_persona()
@@ -194,7 +189,11 @@ if args.esempio:
                 nuove.append(p)
                 data = poco_fa() - timedelta(days=random.randint(10, 5000))
                 a = Appartenenza.objects.create(persona=p, sede=sede, inizio=data, membro=membro)
+
                 if membro == Appartenenza.VOLONTARIO:
+                    if membro == Appartenenza.VOLONTARIO and tests_volontario is None:
+                        tests_volontario = p
+
                     if i % 5 == 0:
                         # Dimesso e riammesso
                         data_precedente = data - timedelta(days=random.randint(10, 500))
@@ -275,17 +274,25 @@ if args.esempio:
                             persona=p, sede=altra, inizio=data_precedente, fine=data_fine, membro=membro,
                             terminazione=Appartenenza.ESPULSIONE
                         )
+
         for i in range(0, 15):  # Creo 15 aspiranti
-            p = crea_persona()
-            p.comune_nascita = random.sample(COMUNI.keys(), 1)[0]
-            p.codice_fiscale = codice_fiscale_persona(p)
-            p.save()
-            p.ottieni_o_genera_aspirante()
-            email = email_fittizzia()
-            utenza = Utenza.objects.create_user(
-                persona=p, email=email,
-                password=email
-            )
+            try:
+                p = crea_persona()
+                p.comune_nascita = random.sample(COMUNI.keys(), 1)[0]
+                p.codice_fiscale = codice_fiscale_persona(p)  # puo failire qui
+                p.save()
+                p.ottieni_o_genera_aspirante()
+                email = email_fittizzia()
+                utenza = Utenza.objects.create_user(
+                    persona=p, email=email,
+                    password=email
+                )
+            except KeyError:
+                """ chiamata codice_fiscale_persona() fallisce con: KeyError: '.' 
+                Non creare aspirante/utente.
+                """
+                print("--- Errore creazione aspirante e utenza. Iterazione %s" % i)
+
         if sede.estensione in (LOCALE, REGIONALE, PROVINCIALE):
             print(" - Assegno deleghe...")
             persone = [a.persona for a in Appartenenza.objects.filter(sede=sede, membro=Appartenenza.VOLONTARIO).order_by('?')[:4]]
@@ -305,6 +312,21 @@ if args.esempio:
                                 persona=persona, email="supporto@gaia.cri.it",
                                 password='pbkdf2_sha256$24000$vuuP6g3dJTyz$55k2PL/NCVk2j4T+cvA9pGeIkFRT2lxKMbjFLZeYR3Y='
                             )
+
+                        ###
+                        # Rinomina utenza del presidente per fare i test (di Andrea)
+                        ###
+                        pr_nome = 'presidente_%s' % indice
+                        pr_email = "%s@cri.it" % pr_nome
+                        utenza.email = pr_email
+                        utenza.set_password(pr_email)
+                        utenza.save()
+
+                        persona.nome = pr_nome
+                        persona.cognome = pr_nome
+                        persona.save()
+                        ###
+
                 elif indice == 1:
                     d = Delega.objects.create(persona=persona, tipo=UFFICIO_SOCI, oggetto=sede, inizio=poco_fa())
                 elif indice == 2:
@@ -313,13 +335,29 @@ if args.esempio:
                     d = Delega.objects.create(persona=persona, tipo=DELEGATO_OBIETTIVO_2, oggetto=sede, inizio=poco_fa())
 
     print(" - Creo utenze di accesso...")
-    for persona in nuove:
+    for idx, persona in enumerate(nuove):
         try:
             email = email_fittizzia()
-            utenza = Utenza.objects.create_user(
-                persona=persona, email=email,
-                password=email
-            )
+            utenza = Utenza.objects.create_user(persona=persona, email=email, password=email)
+
+            # Creazione utenze per tests (di Andrea)
+            if persona == tests_volontario:
+                vo_nome ='volontario_%s' % idx
+                vo_email = vo_nome + "@cri.it"
+
+                utenza.email = vo_email
+                utenza.set_password(vo_email)
+                utenza.save()
+
+                persona.nome = vo_nome
+                persona.cognome = vo_nome
+                persona.save()
+                persona.refresh_from_db()
+
+            if persona == tests_presidente:
+                pass
+                # print(2, persona)
+
         except IntegrityError:
             print('  --- Errore creazione utenza per {}'.format(persona))
 

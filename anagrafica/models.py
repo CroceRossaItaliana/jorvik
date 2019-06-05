@@ -366,7 +366,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return [(appartenenza.pk, appartenenza.membro_a_stringa()) for appartenenza in self.appartenenze_attuali() \
                 if presidente in appartenenza.sede.delegati_attuali() \
-                or presidente in appartenenza.sede.genitore.delegati_attuali()]
+                or (appartenenza.sede.genitore.deleghe_attuali() if appartenenza.sede.genitore else True)]
 
     def ingresso(self, **kwargs):
         """
