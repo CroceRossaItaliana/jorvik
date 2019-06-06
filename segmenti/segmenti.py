@@ -217,11 +217,6 @@ def volontari_con_titolo(queryset):
     return volontari(queryset).filter(titoli_personali__confermata=True)
 
 
-def dipendenti(queryset):
-    return queryset.filter(
-        appartenenze__membro=Appartenenza.DIPENDENTE)
-
-
 NOMI_SEGMENTI = (
     ('A', 'Tutti gli utenti di Gaia'),
     ('B', 'Volontari'),
@@ -253,7 +248,6 @@ NOMI_SEGMENTI = (
     ('Y', 'Delegati Autoparco'),
     ('Z', 'Delegati Formazione'),
     ('AA', 'Volontari aventi un dato titolo'),
-    ('AB', 'Dipendenti'),
 )
 
 
@@ -290,5 +284,4 @@ SEGMENTI = {
     'Y':              delegati_autoparco,
     'Z':              delegati_formazione,
     'AA':             volontari_con_titolo,
-    'AB':             dipendenti,
 }
