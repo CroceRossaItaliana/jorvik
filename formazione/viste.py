@@ -881,6 +881,8 @@ def aspirante_home(request, me):
 def aspirante_corsi(request, me):
     """ url: /aspirante/corsi/ """
 
+    corsi = CorsoBase.objects.none()
+
     if me.ha_aspirante:
         corsi = me.aspirante.corsi(tipo=Corso.BASE)
     elif me.volontario:

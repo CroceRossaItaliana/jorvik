@@ -7,7 +7,7 @@ from base.wysiwyg import WYSIWYGSemplice
 
 from anagrafica.permessi import applicazioni as permessi
 from anagrafica.costanti import LOCALE, REGIONALE, NAZIONALE
-from anagrafica.models import Delega, Persona
+from anagrafica.models import Delega, Appartenenza
 from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
 from .models import (Corso, CorsoBase, CorsoLink, CorsoFile, CorsoEstensione,
@@ -283,18 +283,16 @@ class CorsoExtensionForm(ModelForm):
         "EstensioneLivelloRegionaleTitolo", required=False, label='Requisiti necessari')
     sede = autocomplete_light.ModelMultipleChoiceField(
         "EstensioneLivelloRegionaleSede", required=False, label='Selezionare Sede/Sedi')
-    segmento_volontario = forms.ChoiceField(choices=CorsoEstensione.VOLONTARIO_RUOLI,
-                                            label='Tipo del Volontario')
-    area_geografica = forms.ChoiceField(choices=CorsoEstensione.AREA_GEOGRAFICA_INTERESSATA,
-                                        label='Area geografica')
+    # segmento_volontario = forms.ChoiceField(label='Tipo del Volontario')
 
     class Meta:
         model = CorsoEstensione
 
         # dall'ordine di questi campi divente il funzionamento di JavaScript
         # in questo template: aspirante_corso_estensioni_modifica.html
-        fields = ['segmento', 'segmento_volontario', 'area_geografica',
-                  'titolo', 'sede', 'sedi_sottostanti',]
+        # fields = ['segmento', 'segmento_volontario', 'titolo', 'sede', 'sedi_sottostanti',]
+        fields = ['segmento', 'titolo', 'sede', 'sedi_sottostanti',]  # segmento_volontario disattivato
+
         labels = {
             'segmento': "Destinatari del Corso",
         }
@@ -314,20 +312,13 @@ class CorsoExtensionForm(ModelForm):
         return cd
 
     def __init__(self, *args, **kwargs):
-        from collections import OrderedDict
-        from segmenti.segmenti import NOMI_SEGMENTI
-
         self.corso = kwargs.pop('corso')
         super().__init__(*args, **kwargs)
 
-        choices = [(k,v) for k,v in OrderedDict(NOMI_SEGMENTI).items() if k in [
-            'B',  # Volontari
-            'E',  # Volontari con meno di 33 anni
-            'AB',  # Dipendenti
-        ]]
-        self.fields['segmento'].choices = choices
-
-
+        self.fields['segmento'].choices = [
+            (Appartenenza.VOLONTARIO, "Volontari"),
+            (Appartenenza.DIPENDENTE, "Dipendenti"),
+        ]
 
         # if self.corso.is_nuovo_corso and self.corso.titolo_cri:
         #     self.fields['titolo'].initial = Titolo.objects.filter(id__in=[

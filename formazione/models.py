@@ -1,4 +1,5 @@
 import datetime
+from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -13,7 +14,7 @@ from django.utils.timezone import now
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE, REGIONALE, NAZIONALE
 from anagrafica.validators import (valida_dimensione_file_8mb, ValidateFileSize)
-from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
+from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, OBIETTIVI, PRESIDENTE, COMMISSARIO)
 from anagrafica.permessi.incarichi import (INCARICO_ASPIRANTE, INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI)
 from anagrafica.permessi.costanti import MODIFICA
 from base.files import PDF, Zip
@@ -243,7 +244,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     @classmethod
     def find_courses_for_volunteer(cls, volunteer):
         today = datetime.date.today()
-        sede = volunteer.sedi_attuali(membro=Appartenenza.VOLONTARIO)
+        sede = volunteer.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO,
+                                                  Appartenenza.DIPENDENTE])
         if not sede:
             return cls.objects.none()  # corsi non trovati perchè utente non ha sede
 
@@ -279,7 +281,55 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         courses_2 = cls.objects.filter(id__in=courses_2)
 
-        return courses_1 | courses_2
+        ###
+        # Filtra corsi per: segmento e le <Appartenenza> dell'utente
+        ###
+        q_segmento_objects = Q()
+        appartenenze = volunteer.appartenenze_attuali().values_list('membro', flat=True)
+        for appartenenza in appartenenze:
+            q_segmento_objects.add(Q(segmento__icontains=appartenenza), Q.OR)
+
+        ###
+        # Filtra corsi per: segmento_volontario e le <Delega> dell'utente
+        # TODO: per il momento non serve (GAIA-116/32)
+        ###
+        # q_segmento_volontario_objects = Q()
+        # deleghe = volunteer.deleghe_attuali().filter(tipo__in=[PRESIDENTE, COMMISSARIO] + list(OBIETTIVI.values())).values_list('tipo', flat=True)
+        # for delega in deleghe:
+        #     replaced_value = None
+        #     if delega in [PRESIDENTE, COMMISSARIO]:
+        #         replaced_value = CorsoEstensione.PRESIDENTI_COMMISSARI
+        #     elif delega in OBIETTIVI.values():
+        #         replaced_value = CorsoEstensione.DELEGATI_TECNICI
+        #
+        #     if replaced_value:
+        #         q_segmento_volontario_objects.add(Q(segmento_volontario__icontains=replaced_value), Q.OR)
+
+        ###
+        # Prepara condizioni per filtrare estensioni per segmenti per volontari maggiorenni/giovani
+        # TODO: per il momento non serve (GAIA-116/32)
+        ###
+        # q_volontario_years = None
+        # years_today = datetime.datetime.now() - relativedelta(years=volunteer.data_nascita.year)
+        # years_today = years_today.year
+        # if years_today > 18:
+        #     q_volontario_years = CorsoEstensione.VOLONTARI_MAGGIORENNI
+        # elif years_today <= 33:
+        #     q_volontario_years = CorsoEstensione.VOLONTARI_GIOVANI
+
+        ###
+        # Filtra estensioni (finalmente)
+        ###
+        collected_estensioni = qs_estensioni_1 | qs_estensioni_2
+        collected_estensioni = collected_estensioni.filter(q_segmento_objects)
+
+        ###
+        # Ricerca corsi per estensioni filtrate
+        ###
+        collected_courses_by_sede = courses_1 | courses_2
+
+        return collected_courses_by_sede.filter(id__in=collected_estensioni.values_list('corso', flat=True))
+
 
     # @classmethod
     # def find_courses_for_volunteer(cls, volunteer):
@@ -850,38 +900,40 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
 class CorsoEstensione(ConMarcaTemporale):
     from multiselectfield import MultiSelectField
-
-    from segmenti.segmenti import NOMI_SEGMENTI
     from curriculum.models import Titolo
 
-    PRESIDENTI_COMMISSARI = 'pr'
-    DELEGATI_TECNICI = 'dc'
-    VOLONTARI_MAGGIORENNI = 'vm'
-    VOLONTARI_GIOVANI = 'vg'
-    VOLONTARIO_RUOLI = [
-        (PRESIDENTI_COMMISSARI, "Presidenti / Commissari"),
-        (DELEGATI_TECNICI, "Delegati Tecnici"),
-        (VOLONTARI_MAGGIORENNI, "Volontari maggiorenni"),
-        (VOLONTARI_GIOVANI, "Volontari Giovani"),
-    ]
 
-    AREA_COMITATO = 'a1'
-    AREA_PIU_COMITATI = 'a2'
-    AREA_COMITATO_REGIONALE = 'a3'
-    AREA_LIVELLO_NAZIONALE = 'ac'
-    AREA_GEOGRAFICA_INTERESSATA = [
-        (AREA_COMITATO, 'Comitato CRI'),
-        (AREA_PIU_COMITATI, 'Più comitati CRI'),
-        (AREA_COMITATO_REGIONALE, 'Comitato Regionale CRI'),
-        (AREA_LIVELLO_NAZIONALE, 'A livello nazionale'),
-    ]
+    # todo: sospeso (GAIA-116/32)
+    # PRESIDENTI_COMMISSARI = 'pr'
+    # DELEGATI_TECNICI = 'dc'
+    # VOLONTARI_GIOVANI = 'vg'
+    # VOLONTARI_MAGGIORENNI = 'vm'
+    # VOLONTARIO_RUOLI = [
+    #     (DELEGATI_TECNICI, "Delegati Tecnici"),
+    #     (VOLONTARI_GIOVANI, "Volontari Giovani"),
+    #     (VOLONTARI_MAGGIORENNI, "Volontari Maggiorenni"),
+    #     (PRESIDENTI_COMMISSARI, "Presidenti / Commissari"),
+    # ]
+    # segmento_volontario = MultiSelectField(max_length=100, choices=VOLONTARIO_RUOLI, blank=True)
 
     corso = models.ForeignKey(CorsoBase, db_index=True)
     is_active = models.BooleanField(default=True, db_index=True)
-    segmento = MultiSelectField(max_length=9, choices=NOMI_SEGMENTI, blank=True)
+    segmento = MultiSelectField(max_length=100, choices=Appartenenza.MEMBRO, blank=True)
     titolo = models.ManyToManyField(Titolo, blank=True)
     sede = models.ManyToManyField(Sede)
     sedi_sottostanti = models.BooleanField(default=False, db_index=True)
+
+    # AREA_COMITATO = 'a1'
+    # AREA_PIU_COMITATI = 'a2'
+    # AREA_COMITATO_REGIONALE = 'a3'
+    # AREA_LIVELLO_NAZIONALE = 'ac'
+    # AREA_GEOGRAFICA_INTERESSATA = [
+    #     (AREA_COMITATO, 'Comitato CRI'),
+    #     (AREA_PIU_COMITATI, 'Più comitati CRI'),
+    #     (AREA_COMITATO_REGIONALE, 'Comitato Regionale CRI'),
+    #     (AREA_LIVELLO_NAZIONALE, 'A livello nazionale'),
+    # ]
+    # area_geografica = models.CharField(max_length=3, choices=AREA_GEOGRAFICA_INTERESSATA, blank=True)
 
     def visible_by_extension_type(self):
         type = self.corso.extension_type
