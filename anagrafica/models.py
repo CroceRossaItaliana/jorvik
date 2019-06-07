@@ -17,7 +17,6 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 
-
 from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
 from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
     valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
@@ -796,23 +795,20 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 INCARICO_ASPIRANTE in dict(self.incarichi()))
 
     def incarichi(self):
-
         if hasattr(self, 'aspirante'):
             incarichi_persona = {INCARICO_ASPIRANTE: [(self.__class__.objects.filter(pk=self.pk),
                                                        self.creazione)]}
-
         else:
             incarichi_persona = {}
 
         for delega in self.deleghe_attuali():
-            incarichi_delega = delega.espandi_incarichi()
+            for incarico in delega.espandi_incarichi():
+                nome_del_incarico, oggetto_del_incarico = incarico
 
-            for incarico in incarichi_delega:
-                if not incarico[0] in incarichi_persona:
-                    incarichi_persona.update({incarico[0]: [(incarico[1], delega.inizio)]})
-
+                if not nome_del_incarico in incarichi_persona:
+                    incarichi_persona.update({nome_del_incarico: [(oggetto_del_incarico, delega.inizio)]})
                 else:
-                    incarichi_persona[incarico[0]].append((incarico[1], delega.inizio))
+                    incarichi_persona[nome_del_incarico].append((oggetto_del_incarico, delega.inizio))
 
         return incarichi_persona.items()
 
@@ -824,38 +820,34 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         a = Autorizzazione.objects.none()
         for incarico in self.incarichi():
             for potere in incarico[1]:
+                oggetto_del_incarico, delega_data_inizio = potere
 
-                if isinstance(potere[0], QuerySet):
-                    q_id = Q(destinatario_oggetto_id__in=potere[0].values_list('id', flat=True),
-                             destinatario_oggetto_tipo=ContentType.objects.get_for_model(potere[0].model))
+                if not oggetto_del_incarico:
+                    continue  # Salta potere senza oggetto
 
+                if isinstance(oggetto_del_incarico, QuerySet):
+                    q_kwargs = {
+                        "destinatario_oggetto_id__in": oggetto_del_incarico.values_list('id', flat=True),
+                        "destinatario_oggetto_tipo": ContentType.objects.get_for_model(oggetto_del_incarico.model)}
                 else:  # Se modello instanziato
-                    q_id = Q(destinatario_oggetto_id=potere[0].pk,
-                             destinatario_oggetto_tipo=ContentType.objects.get_for_model(potere[0]))
+                    q_kwargs = {
+                        "destinatario_oggetto_id": oggetto_del_incarico.pk,
+                        "destinatario_oggetto_tipo": ContentType.objects.get_for_model(oggetto_del_incarico)}
 
                 a |= Autorizzazione.objects.filter(
-                    q_id,
-                    destinatario_ruolo=incarico[0], creazione__gte=potere[1],
-                )
+                    Q(**q_kwargs),
+                    destinatario_ruolo=incarico[0],
+                    creazione__gte=delega_data_inizio)
 
-        a = a.distinct('progressivo', 'oggetto_tipo_id', 'oggetto_id',)
-        return Autorizzazione.objects.filter(
-            pk__in=a.values_list('id', flat=True)
-        )
-
-    def _autorizzazioni_in_attesa(self):
-        """
-        Ritorna tutte le autorizzazioni firmabili da qesto utente e in attesa di firma.
-        :return: QuerySet<Autorizzazione>
-        """
-        return self.autorizzazioni().filter(necessaria=True)
+        a = a.distinct('progressivo', 'oggetto_tipo_id', 'oggetto_id')
+        return Autorizzazione.objects.filter(pk__in=a.values_list('id', flat=True))
 
     def autorizzazioni_in_attesa(self):
         """
         Ritorna tutte le autorizzazioni firmabili da qesto utente e in attesa di firma.
         :return: QuerySet<Autorizzazione>
         """
-        return self._autorizzazioni_in_attesa().order_by('creazione')
+        return self.autorizzazioni().filter(necessaria=True).order_by('creazione')
 
     @cached_property
     def trasferimenti_in_attesa(self):
