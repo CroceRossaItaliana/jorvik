@@ -1265,9 +1265,12 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
 
     @classmethod
     def controlla_richiesta_processabile(cls, richiesta):
+        # Caso: autorizzazzione non è del tipo del Corso
         tipo = ContentType.objects.get_for_model(cls)
         if richiesta.oggetto_tipo != tipo:
             return True
+
+        # Caso: non è il giorno dell'inizio del Corso (quando si può processare le richieste)
         richiesta_partecipazione = get_object_or_404(cls, pk=richiesta.oggetto_id)
         if richiesta_partecipazione.corso.data_inizio > timezone.now():
             return False

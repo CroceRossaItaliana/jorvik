@@ -31,6 +31,7 @@ from .forms_extra import ModuloRichiestaSupportoPersone
 from .geo import Locazione
 from .models import Autorizzazione, Token
 from .utils import get_drive_file, rimuovi_scelte
+from .classes.autorizzazione import AutorizzazioneProcess
 
 
 IGNORA_AUTORIZZAZIONI = [
@@ -361,104 +362,14 @@ def autorizzazioni(request, me, content_type_pk=None):
 
 @pagina_privata
 def autorizzazione_concedi(request, me, pk=None):
-    """ Mostra il modulo da compilare per il consenso, ed eventualmente registra l'accettazione. """
-
-    richiesta = get_object_or_404(Autorizzazione, pk=pk)
-    torna_url = request.session.get('autorizzazioni_torna_url', default="/autorizzazioni/")
-
-    # Controlla che io possa firmare questa autorizzazione
-    if not me.autorizzazioni_in_attesa().filter(pk=richiesta.pk).exists():
-        return errore_generico(request, me,
-            titolo="Richiesta non trovata",
-            messaggio="E' possibile che la richiesta sia stata già approvata o respinta da qualcun altro.",
-            torna_titolo="Richieste in attesa",
-            torna_url=torna_url,
-        )
-
-    # if not PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta):
-    #     return errore_generico(request, me,
-    #         titolo="Richiesta non processabile",
-    #         messaggio="Questa richiesta non può essere processata.",
-    #         torna_titolo="Richieste in attesa",
-    #         torna_url=torna_url,
-    #     )
-
-    form = None
-
-    # Se la richiesta ha un modulo di consenso
-    if richiesta.oggetto.autorizzazione_concedi_modulo():
-        if request.POST:
-            form = richiesta.oggetto.autorizzazione_concedi_modulo()(request.POST)
-            if form.is_valid():
-                # Accetta la richiesta con modulo
-                richiesta.concedi(me, modulo=form)
-
-        else:
-            form = richiesta.oggetto.autorizzazione_concedi_modulo()()
-
-    else:
-        # Accetta la richiesta senza modulo
-        richiesta.concedi(me)
-
-    context = {
-        "modulo": form,
-        "richiesta": richiesta,
-        "torna_url": torna_url,
-    }
-
-    return 'base_autorizzazioni_concedi.html', context
+    auth = AutorizzazioneProcess(request, me, pk)
+    return auth.concedi()
 
 
 @pagina_privata
 def autorizzazione_nega(request, me, pk=None):
-    """
-    Mostra il modulo da compilare per la negazione, ed eventualmente registra la negazione.
-    """
-    richiesta = get_object_or_404(Autorizzazione, pk=pk)
-
-    torna_url = request.session['autorizzazioni_torna_url']
-
-    # Controlla che io possa firmare questa autorizzazione
-    if not me.autorizzazioni_in_attesa().filter(pk=richiesta.pk).exists():
-        return errore_generico(request, me,
-            titolo="Richiesta non trovata",
-            messaggio="E' possibile che la richiesta sia stata già approvata o respinta da qualcun altro.",
-            torna_titolo="Richieste in attesa",
-            torna_url=torna_url,
-        )
-
-    if not PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta):
-        return errore_generico(request, me,
-            titolo="Richiesta non processabile",
-            messaggio="Questa richiesta non può essere processata.",
-            torna_titolo="Richieste in attesa",
-            torna_url=torna_url,
-        )
-
-    modulo = None
-
-    # Se la richiesta richiede motivazione
-    if richiesta.oggetto.autorizzazione_nega_modulo():
-        if request.POST:
-            modulo = richiesta.oggetto.autorizzazione_nega_modulo()(request.POST)
-            if modulo.is_valid():
-                # Accetta la richiesta con modulo
-                richiesta.nega(me, modulo=modulo)
-
-        else:
-            modulo = richiesta.oggetto.autorizzazione_nega_modulo()()
-
-    else:
-        # Nega senza modulo
-        richiesta.nega(me)
-
-    contesto = {
-        "modulo": modulo,
-        "richiesta": richiesta,
-        "torna_url": request.session['autorizzazioni_torna_url'],
-    }
-
-    return 'base_autorizzazioni_nega.html', contesto
+    auth = AutorizzazioneProcess(request, me, pk)
+    return auth.nega()
 
 
 @pagina_privata
