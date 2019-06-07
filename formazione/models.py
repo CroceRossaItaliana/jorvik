@@ -158,6 +158,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                     SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI,)
 
     NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO = "VOL"
+    NON_PUOI_ISCRIVERTI_ESTENSIONI_NON_COINCIDONO = "ENC"
     NON_PUOI_ISCRIVERTI_TROPPO_TARDI = "TAR"
     NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO = "ALT"
     NON_PUOI_SEI_ASPIRANTE = 'ASP'
@@ -167,6 +168,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     NON_PUOI_ISCRIVERTI = (NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO,
                            NON_PUOI_ISCRIVERTI_TROPPO_TARDI,
                            # NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO,
+                           NON_PUOI_ISCRIVERTI_ESTENSIONI_NON_COINCIDONO,
                            NON_PUOI_SEI_ASPIRANTE,
                            NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI,
                            NON_HAI_CARICATO_DOCUMENTI_PERSONALI,
@@ -175,10 +177,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     NON_PUOI_ISCRIVERTI_SOLO_SE_IN_AUTONOMIA = (NON_PUOI_ISCRIVERTI_TROPPO_TARDI,)
 
     def persona(self, persona):
-        # Checks related to tipo.CORSO_NUOVO (not old CorsoBase)
         if Corso.CORSO_NUOVO == self.tipo:
+            # Aspirante non può iscriversi a corso nuovo
             if persona.ha_aspirante:
                 return self.NON_PUOI_SEI_ASPIRANTE
+
+            # Controllo estensioni
+            if self.get_extensions():
+                if not self.persona_verifica_estensioni(persona):
+                    return self.NON_PUOI_ISCRIVERTI_ESTENSIONI_NON_COINCIDONO
 
             # if not persona.has_required_titles_for_course(course=self):
             #     return self.NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI
@@ -217,10 +224,39 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         return self.PUOI_ISCRIVERTI_OK
 
+    def persona_verifica_estensioni(self, persona):
+        # Prendere le appartenenze | sede dell'utente
+        persona_appartenenze = persona.appartenenze_attuali()
+
+        # Prendere le estensioni del corso
+        estensioni_dict = dict()
+        for idx, estensione in enumerate(self.get_extensions(), 1):
+            for sede in estensione.sede.all():
+                con_sottosedi = sede.esplora()
+                estensioni_dict[idx] = {
+                    'sede_sottosedi': con_sottosedi.values_list('id', flat=True),
+                    'segmenti': estensione.segmento,
+                    'estensione': estensione
+                }
+
+        # estensioni_che_coincidono = []
+        appartenenze_che_coincidono = Appartenenza.objects.none()
+        for k,v in estensioni_dict.items():
+            segmenti, sedi = v['segmenti'], v['sede_sottosedi']
+            appartenenze_che_coincidono |= persona_appartenenze.filter(membro__in=segmenti,
+                                                                       sede__in=sedi)
+            # if appartenenze_che_coincidono:
+            #     estensioni_che_coincidono.append([k, segmenti])
+
+        # print('Appartenenze che coincidono:', appartenenze_che_coincidono)
+        # print('Estensioni che coincidono:', estensioni_che_coincidono)
+
+        if appartenenze_che_coincidono.exists():
+            return True
+        return False
+
     def possibili_destinazioni(self):
-        """
-        Ritorna le possibili destinazioni per l'iscrizione dei Volontari.
-        """
+        """ Ritorna le possibili destinazioni per l'iscrizione dei Volontari."""
         return self.sede.comitato.espandi(includi_me=True)
 
     @property
@@ -269,15 +305,20 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             corso__data_esame__lt=four_weeks_delta).exclude(
             corso__id__in=courses_1.values_list('id', flat=True))
 
+        ###
+        # Questo loop cerca coincidenza della sede dell'utente fra le sedi/sottosedi
+        # delle estensioni selezionati sopra.
+        ###
         courses_2 = list()
         for estensione in qs_estensioni_2:
             for s in estensione.sede.all():
                 sedi_sottostanti = s.esplora()
                 for _ in sede:
                     if _ in sedi_sottostanti:
+                        # Prendo il corso di ogni estensione dove si è verificata la sede
                         _corso = estensione.corso
                         if _corso not in courses_2:
-                                courses_2.append(_corso.pk)
+                            courses_2.append(_corso.pk)
 
         courses_2 = cls.objects.filter(id__in=courses_2)
 
@@ -329,7 +370,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         collected_courses_by_sede = courses_1 | courses_2
 
         return collected_courses_by_sede.filter(id__in=collected_estensioni.values_list('corso', flat=True))
-
 
     # @classmethod
     # def find_courses_for_volunteer(cls, volunteer):
@@ -597,13 +637,21 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return self.corsoestensione_set.filter(**kwargs)
 
     def get_extensions_sede(self, with_expanded=True, **kwargs):
-        """ Returns SedeQuerySet """
+        """
+        :return: Sede<QuerySet>
+        """
         if with_expanded:
+            # Restituisce le sedi _CON_ sedi sottostanti
             return self.expand_extensions_sedi_sottostanti()
         else:
+            # Restituisce le sedi _SENZA_ sedi sottostanti
             return CorsoEstensione.get_sede(course=self, **kwargs)
 
     def expand_extensions_sedi_sottostanti(self):
+        """
+        Restituisce le sedei CON sedi sottostanti di tutte le estensioni del corso.
+        :return: Sede<QuerySet>
+        """
         expanded = Sede.objects.none()
 
         for e in self.get_extensions():
@@ -902,6 +950,12 @@ class CorsoEstensione(ConMarcaTemporale):
     from multiselectfield import MultiSelectField
     from curriculum.models import Titolo
 
+    corso = models.ForeignKey(CorsoBase, db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    segmento = MultiSelectField(max_length=100, choices=Appartenenza.MEMBRO, blank=True)
+    titolo = models.ManyToManyField(Titolo, blank=True)
+    sede = models.ManyToManyField(Sede)
+    sedi_sottostanti = models.BooleanField(default=False, db_index=True)
 
     # todo: sospeso (GAIA-116/32)
     # PRESIDENTI_COMMISSARI = 'pr'
@@ -915,13 +969,6 @@ class CorsoEstensione(ConMarcaTemporale):
     #     (PRESIDENTI_COMMISSARI, "Presidenti / Commissari"),
     # ]
     # segmento_volontario = MultiSelectField(max_length=100, choices=VOLONTARIO_RUOLI, blank=True)
-
-    corso = models.ForeignKey(CorsoBase, db_index=True)
-    is_active = models.BooleanField(default=True, db_index=True)
-    segmento = MultiSelectField(max_length=100, choices=Appartenenza.MEMBRO, blank=True)
-    titolo = models.ManyToManyField(Titolo, blank=True)
-    sede = models.ManyToManyField(Sede)
-    sedi_sottostanti = models.BooleanField(default=False, db_index=True)
 
     # AREA_COMITATO = 'a1'
     # AREA_PIU_COMITATI = 'a2'
@@ -951,6 +998,15 @@ class CorsoEstensione(ConMarcaTemporale):
     def get_titles(cls, course, **kwargs):
         titles = cls._get_related_objects_to_course(course, 'titolo', **kwargs)
         return titles if titles else Titolo.objects.none()
+
+    def get_segmenti(self, sede=None):
+        """
+        :return: <Appartenenza>QuerySet
+        """
+        appartenenze = Appartenenza.objects.filter(membro__in=[self.segmento])
+        if sede:
+            appartenenze = appartenenze.filter(sede=sede)
+        return appartenenze.distinct('membro')
 
     @classmethod
     def _get_related_objects_to_course(cls, course, field, **kwargs):
