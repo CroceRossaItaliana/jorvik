@@ -14,7 +14,6 @@ import base.viste, base.errori
 import gestione_file.viste
 import posta.viste
 import social.viste
-import ufficio_soci.viste
 
 
 handler404 = base.errori.non_trovato
@@ -24,7 +23,7 @@ js_info_dict = {
 }
 
 urlpatterns = [
-    url(r'^$', base.viste.index), # Home page
+    url(r'^$', base.viste.index),  # Home page
 
     # Moduli di registrazione
     url(r'^registrati/(?P<tipo>\w+)/conferma/$', anagrafica.viste.registrati_conferma),
@@ -51,31 +50,6 @@ urlpatterns = [
     url(r'^reimposta_password/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
         base.viste.recupera_password_conferma, name='recupera_password_conferma'),
     url(r'^recupera_password_completo/$', base.viste.recupero_password_completo, name='recupero_password_completo'),
-
-    # Informazioni
-    url(r'^informazioni/$', base.viste.informazioni, name='informazioni'),
-    url(r'^informazioni/statistiche/$', base.viste.informazioni_statistiche),
-    url(r'^informazioni/aggiornamenti/$', base.viste.informazioni_aggiornamenti),
-    url(r'^informazioni/sicurezza/$', base.viste.informazioni_sicurezza),
-    url(r'^informazioni/condizioni/$', base.viste.informazioni_condizioni, name='informazioni_condizioni'),
-    url(r'^informazioni/cookie/$', base.viste.informazioni_cookie, name='informazioni_cookie'),
-    url(r'^informazioni/cookie/imposta/$', base.viste.imposta_cookie, name='imposta_cookie'),
-    url(r'^informazioni/verifica-tesserino/$',
-        ufficio_soci.viste.verifica_tesserino,
-        name='informazioni_verifica_tesserino'),
-    url(r'^informazioni/sedi/$', base.viste.informazioni_sedi),
-    url(r'^informazioni/sedi/(?P<slug>.*)/$', base.viste.informazioni_sede),
-    url(r'^informazioni/formazione/$', base.viste.formazione),
-    url(r'^informazioni/browser-supportati/$', base.viste.browser_supportati, name='browser_supportati'),
-
-    url(r'^profilo/(?P<pk>[0-9]+)/messaggio/$', anagrafica.viste.profilo_messaggio),
-    url(r'^profilo/(?P<pk>[0-9]+)/turni/foglio/$', anagrafica.viste.profilo_turni_foglio),
-    url(r'^profilo/(?P<pk>[0-9]+)/telefono/(?P<tel_pk>[0-9]+)/cancella/$', anagrafica.viste.profilo_telefono_cancella),
-    url(r'^profilo/(?P<pk>[0-9]+)/documenti/(?P<documento_pk>[0-9]+)/cancella/$', anagrafica.viste.profilo_documenti_cancella),
-    url(r'^profilo/(?P<pk>[0-9]+)/curriculum/(?P<tp_pk>[0-9]+)/cancella/$', anagrafica.viste.profilo_curriculum_cancella),
-    url(r'^profilo/(?P<pk>[0-9]+)/sangue/(?P<donazione_pk>[0-9]+)/cancella/$', anagrafica.viste.profilo_sangue_cancella),
-    url(r'^profilo/(?P<pk>[0-9]+)/(?P<sezione>.*)/$', anagrafica.viste.profilo, name='profilo'),
-    url(r'^profilo/(?P<pk>[0-9]+)/$', anagrafica.viste.profilo),
 
     url(r'^autorizzazioni/$', base.viste.autorizzazioni, name='autorizzazioni-aperte'),
     url(r'^autorizzazioni/storico/$', base.viste.autorizzazioni_storico, name='autorizzazioni-storico'),
@@ -110,10 +84,12 @@ urlpatterns = [
 
     # Applicazioni
     url(r'^centrale-operativa/', include('centrale_operativa.urls', namespace='centrale_operativa')),
+    url(r'^informazioni/', include('base.urls_informazioni', namespace='informazioni')),
     url(r'^autoparco/', include('veicoli.urls_autoparco', namespace='autoparco')),
     url(r'^attivita/', include('attivita.urls', namespace='attivita')),
     url(r'^veicoli/', include('veicoli.urls', namespace='veicoli')),
     url(r'^utente/', include('anagrafica.urls_utente', namespace='utente')),
+    url(r'^profilo/', include('anagrafica.urls_profilo', namespace='profilo')),
     url(r'^us/', include('ufficio_soci.urls', namespace='ufficio_soci')),
     url(r'^cv/', include('curriculum.urls', namespace='cv')),
 
