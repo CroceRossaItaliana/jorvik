@@ -114,15 +114,15 @@
 <div class="container">
     <div class="row allinea-centro">
         <div class="alert alert-info col-md-12">
-            <form method="get" action="{% url 'imposta_cookie' %}" ><button type="submit" class="close">Nascondi &times;</button></form>
+            <form method="get" action="{% url 'informazioni:imposta_cookie' %}" ><button type="submit" class="close">Nascondi &times;</button></form>
             <br clear="all">
             <i class="icon-info-sign"></i>
             <strong>Gaia utilizza i <i>cookies</i> per offrirti le sue funzionalit&agrave; e per scopi statistici.</strong><br />
             Continuando a navigare su gaia.cri.it, acconsenti all'uso dei cookie su questo sito web.<br />
-            <a href="{% url 'informazioni_cookie' %}" target="_new">
+            <a href="{% url 'informazioni:cookie' %}" target="_new">
                 Clicca qui per le informazioni sull'uso dei Cookie in Gaia
             </a> oppure
-            <a href="{% url 'informazioni_condizioni' %}" target="_new">
+            <a href="{% url 'informazioni:condizioni' %}" target="_new">
                 clicca qui per leggere l'informativa sulla Privacy.
             </a>
         </div>

@@ -12,7 +12,7 @@ urlpatterns = [
     url(r'^sicurezza/$', viste.informazioni_sicurezza),
     url(r'^condizioni/$', viste.informazioni_condizioni, name='condizioni'),
     url(r'^cookie/$', viste.informazioni_cookie, name='cookie'),
-    url(r'^cookie/imposta/$', viste.imposta_cookie, name='cookie'),
+    url(r'^cookie/imposta/$', viste.imposta_cookie, name='imposta_cookie'),
     url(r'^sedi/$', viste.informazioni_sedi),
     url(r'^sedi/(?P<slug>.*)/$', viste.informazioni_sede),
     url(r'^formazione/$', viste.formazione),

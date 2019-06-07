@@ -7,6 +7,7 @@ from mptt.querysets import TreeQuerySet
 from autoslug import AutoSlugField
 
 from django.apps import apps
+from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Q, QuerySet, Avg
 from django.db.transaction import atomic
@@ -710,7 +711,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def url(self):
-        return "/profilo/%d/" % (self.pk,)
+        return reverse('profilo:main', args=[self.pk])
 
     @property
     def url_profilo_anagrafica(self):
@@ -762,7 +763,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def link(self):
-        return "<a href='" + str(self.url) + "'>" + str(self.nome_completo) + "</a>"
+        return '<a href="%s">%s</a>' % (self.url, self.nome_completo)
 
     def calendario_turni(self, inizio, fine):
         """
