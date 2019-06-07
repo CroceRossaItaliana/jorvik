@@ -309,9 +309,10 @@ def pulisci_autorizzazioni(richieste):
 def autorizzazioni(request, me, content_type_pk=None):
     """ Mostra elenco delle autorizzazioni in attesa. """
 
-    richieste_bloccate = dict()
-    richieste = me._autorizzazioni_in_attesa().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
+    autorizzazioni_in_attesa = me.autorizzazioni().filter(necessaria=True)
+    richieste = autorizzazioni_in_attesa.exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
 
+    richieste_bloccate = dict()
     # richieste_bloccate['corsi'] = PartecipazioneCorsoBase.richieste_non_processabili(richieste)
 
     if 'ordine' in request.GET:
@@ -348,7 +349,7 @@ def autorizzazioni(request, me, content_type_pk=None):
 
     request.session['autorizzazioni_torna_url'] = "/autorizzazioni/"
     if sezioni and content_type_pk:
-        request.session['autorizzazioni_torna_url'] = "/autorizzazioni/%d/" % (int(content_type_pk),)
+        request.session['autorizzazioni_torna_url'] = "/autorizzazioni/%d/" % int(content_type_pk)
 
     contesto = {
         "richieste": richieste,
