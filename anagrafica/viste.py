@@ -441,7 +441,9 @@ def utente_fotografia_fototessera(request, me):
 
 @pagina_privata
 def utente_documenti(request, me):
-    if not me.volontario and not me.dipendente:
+    if me.volontario or me.dipendente or me.ha_aspirante:
+        pass
+    else:
         return errore_no_volontario(request, me)
 
     context = {

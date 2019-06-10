@@ -83,8 +83,6 @@ def menu(request):
     ))
 
     VOCE_CV = ("Curriculum", (
-        # Competenze personali commentate per non visuallizarle
-        #("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
         ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
         ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if ME_VOLONTARIO else None,
         ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),

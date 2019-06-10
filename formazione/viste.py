@@ -184,6 +184,7 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
         # Rindirizzo utente sulla pagina di impostazione della locazione
         return redirect(reverse('aspirante:position_change', args=[corso.pk]))
 
+    # Elaborazione del aggiornamento del documenti personali caricati
     if puoi_partecipare == CorsoBase.NON_HAI_CARICATO_DOCUMENTI_PERSONALI:
         if request.method == 'POST':
             doc = Documento(persona=me)

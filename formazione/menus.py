@@ -18,6 +18,9 @@ def to_show(me, permissions):
 
 
 def formazione_menu(menu_name, me=None):
+    from curriculum.models import Titolo
+
+
     FORMAZIONE = (
         ("Corsi", (
             ("Attiva Corso", "fa-asterisk", reverse('formazione:new_course')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
@@ -37,13 +40,14 @@ def formazione_menu(menu_name, me=None):
             ("Storico", "fa-clock-o", reverse('utente:storico')),
             ("Contatti", "fa-envelope", reverse('utente:contatti')),
             ("Fotografie", "fa-credit-card", reverse('utente:foto')),
-            ("Competenze personali", "fa-suitcase", reverse('utente:cv_tipo', args=['CP'])),
-            ("Patenti Civili", "fa-car", reverse('utente:cv_tipo', args=['PP'])),
-            ("Titoli di Studio", "fa-graduation-cap", reverse('utente:cv_tipo', args=['TS'])),
+            # ("Competenze personali", "fa-suitcase", reverse('utente:cv_tipo', args=[Titolo.COMPETENZA_PERSONALE])),
+            ("Patenti Civili", "fa-car", reverse('utente:cv_tipo', args=[Titolo.PATENTE_CIVILE])),
+            ("Titoli di Studio", "fa-graduation-cap", reverse('utente:cv_tipo', args=[Titolo.TITOLO_STUDIO])),
+            ("Documenti Personali", "fa-graduation-cap", reverse('utente:documenti')),
         )),
 
         ("Nelle vicinanze", (
-            ("Corsi", "fa-list", reverse('aspirante:corsi_base')),
+            ("Corsi di formazione", "fa-list", reverse('aspirante:corsi_base')),
             ("Sedi CRI", "fa-list", reverse('aspirante:sedi')),
             ("Impostazioni", "fa-gears", reverse('aspirante:settings')),
         )),
