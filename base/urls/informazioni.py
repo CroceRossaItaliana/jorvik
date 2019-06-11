@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
 from ufficio_soci.viste import verifica_tesserino
-from . import viste
+from base import viste
 
 
 app_label = 'informazioni'
