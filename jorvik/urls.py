@@ -11,8 +11,6 @@ import anagrafica.viste
 import articoli.viste
 import autenticazione.viste
 import base.viste, base.errori
-import gestione_file.viste
-import posta.viste
 import social.viste
 
 
@@ -51,23 +49,10 @@ urlpatterns = [
         base.viste.recupera_password_conferma, name='recupera_password_conferma'),
     url(r'^recupera_password_completo/$', base.viste.recupero_password_completo, name='recupero_password_completo'),
 
-    url(r'^posta/scrivi/', posta.viste.posta_scrivi, name='posta-scrivi'),
-    url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/(?P<messaggio_id>\d+)/', posta.viste.posta),
-    url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/', posta.viste.posta),
-    url(r'^posta/(?P<direzione>[\w\-]+)/', posta.viste.posta),
-    url(r'^posta/', posta.viste.posta_home),
-
     url(r'^articoli/$', articoli.viste.ListaArticoli.as_view(), name='lista_articoli'),
     url(r'^articoli/(?P<anno>\d{4})/$', articoli.viste.ListaArticoli.as_view(), name='lista_articoli-per-anno'),
     url(r'^articoli/(?P<anno>\d{4})/(?P<mese>\d{1,2})/$', articoli.viste.ListaArticoli.as_view(), name='lista_articoli-per-mese'),
     url(r'^articoli/(?P<articolo_slug>[\w\-]+)/$', articoli.viste.DettaglioArticolo.as_view(), name='dettaglio_articolo'),
-
-    url(r'^documenti/$', gestione_file.viste.ListaDocumenti.as_view(), name='lista_documenti'),
-    url(r'^documenti/(?P<cartella>[0-9\-]+)/$', gestione_file.viste.ListaDocumenti.as_view(), name='lista_documenti'),
-    url(r'^documenti/scarica/(?P<pk>[0-9\-]+)/$', gestione_file.viste.serve_protected_file, name='scarica_file'),
-    url(r'documenti/immagine/(?P<image_id>\d+)/$', gestione_file.viste.serve_image, name='scarica_immagine'),
-    url(r'documenti/immagine/(?P<image_id>\d+)/(?P<thumb_options>\d+)/$', gestione_file.viste.serve_image, name='scarica_immagine'),
-    url(r'documenti/immagine/(?P<image_id>\d+)/(?P<width>\d+)/(?P<height>\d+)/$', gestione_file.viste.serve_image, name='scarica_immagine'),
 
     url(r'^presidente/$', anagrafica.viste.presidente),
     url(r'^presidente/sedi/(?P<sede_pk>[0-9]+)/$', anagrafica.viste.presidente_sede),
@@ -79,12 +64,14 @@ urlpatterns = [
     # Applicazioni
     url(r'^centrale-operativa/', include('centrale_operativa.urls', namespace='centrale_operativa')),
     url(r'^autorizzazioni/', include('base.urls.autorizzazioni', namespace='autorizzazioni')),
+    url(r'^documenti/', include('gestione_file.urls', namespace='documenti')),
     url(r'^informazioni/', include('base.urls_informazioni', namespace='informazioni')),
     url(r'^autoparco/', include('veicoli.urls_autoparco', namespace='autoparco')),
     url(r'^attivita/', include('attivita.urls', namespace='attivita')),
     url(r'^veicoli/', include('veicoli.urls', namespace='veicoli')),
     url(r'^utente/', include('anagrafica.urls_utente', namespace='utente')),
     url(r'^profilo/', include('anagrafica.urls_profilo', namespace='profilo')),
+    url(r'^posta/', include('posta.urls', namespace='posta')),
     url(r'^us/', include('ufficio_soci.urls', namespace='ufficio_soci')),
     url(r'^cv/', include('curriculum.urls', namespace='cv')),
 

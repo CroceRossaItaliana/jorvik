@@ -701,7 +701,7 @@ def us_elenco_messaggio(request, me, elenco_id):
     persone = elenco.ordina(elenco.risultati())
     request.session["messaggio_destinatari"] = persone
     request.session["messaggio_destinatari_timestamp"] = datetime.now()
-    return redirect(reverse('posta-scrivi'))
+    return redirect(reverse('posta:scrivi'))
 
 
 @pagina_privata(permessi=(ELENCHI_SOCI,))
