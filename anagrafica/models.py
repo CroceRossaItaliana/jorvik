@@ -1035,13 +1035,11 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     def sede_riferimento(self, membro=None, **kwargs):
         membro = membro or Appartenenza.MEMBRO_DIRETTO
-        return self.sedi_attuali(membro__in=membro, **kwargs).\
-            order_by('-appartenenze__inizio').first()
+        return self.sedi_attuali(membro__in=membro, **kwargs).order_by('-appartenenze__inizio').first()
 
     def sedi_riferimento(self, membro=None, **kwargs):
         membro = membro or Appartenenza.MEMBRO_DIRETTO
-        return self.sedi_attuali(membro__in=membro, **kwargs). \
-            order_by('-appartenenze__inizio')
+        return self.sedi_attuali(membro__in=membro, **kwargs).order_by('-appartenenze__inizio')
 
     def comitati_riferimento(self, **kwargs):
         sedi = self.sede_riferimento(**kwargs)
@@ -1690,27 +1688,6 @@ class SedeQuerySet(TreeQuerySet):
 
 
 class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID, ConDelegati):
-
-    class Meta:
-        verbose_name = "Sede CRI"
-        verbose_name_plural = "Sedi CRI"
-        app_label = 'anagrafica'
-        index_together = [
-            ['estensione', 'tipo'],
-            ['genitore', 'estensione'],
-            ['attiva', 'estensione'],
-            ['attiva', 'tipo'],
-            ['lft', 'rght'],
-            ['lft', 'rght', 'attiva'],
-            ['lft', 'rght', 'attiva', 'estensione'],
-            ['lft', 'rght', 'tree_id'],
-        ]
-        permissions = (
-            ("view_sede", "Can view Sede CRI"),
-        )
-
-    # Nome gia' presente in Modello Albero
-
     # Tipologia della sede
     COMITATO = 'C'
     MILITARE = 'M'
@@ -1744,18 +1721,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     attiva = models.BooleanField("Attiva", default=True, db_index=True)
     __attiva_default = None
-
-    def __init__(self, *args, **kwargs):
-        super(Sede, self).__init__(*args, **kwargs)
-        # Questo attributo a runtime ci serve per verificare durante il save se il flag "attiva" è stato modficato
-        self.__attiva_default = self.attiva
-
-    def save(self, *args, **kwargs):
-        super(Sede, self).save(*args, **kwargs)
-        if self.__attiva_default is not None and not self.attiva and self.__attiva_default != self.attiva:
-            for sottosede in self.ottieni_figli(solo_attivi=False):
-                sottosede.attiva = False
-                sottosede.save()
 
     def sorgente_slug(self):
         if self.estensione == PROVINCIALE:
@@ -1890,23 +1855,13 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                 .distinct('nome', 'cognome', 'codice_fiscale')
 
     def appartenenze_persona(self, persona, membro=None, figli=False, **kwargs):
-        """
-        Ottiene le appartenenze attuali di una data persona, o None se la persona non appartiene al sede.
-        """
-        self.appartenenze_attuali(membro=membro, figli=figli, persona=persona, **kwargs)
+        """ Ottiene le appartenenze attuali di una data persona,
+        o None se la persona non appartiene al sede """
+        return self.appartenenze_attuali(membro=membro, figli=figli, persona=persona, **kwargs)
 
     def ha_membro(self, persona, membro=None, figli=False, **kwargs):
-        """
-        Controlla se una persona e' membro del sede o meno.
-        """
+        """ Controlla se una persona è membro del sede o meno. """
         return self.appartenenze_persona(persona, membro=membro, figli=figli, **kwargs).exists()
-
-    def __str__(self):
-        if self.estensione == TERRITORIALE and self.genitore is not None:
-            return "%s: %s" % (self.genitore.nome, self.nome,)
-
-        else:
-            return "%s" % (self.nome,)
 
     def presidente(self):
         delega_presidenziale = self.comitato.delegati_attuali(tipo=PRESIDENTE, solo_deleghe_attive=True).first()
@@ -1944,7 +1899,8 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     @property
     def nome_completo(self):
-        return str(self)
+        # ho corretto il bug, non so cosa intendeva lo sviluppatore precedente per il "nome completo"
+        return self.nome
 
     def esplora(self, includi_me=True):
         """
@@ -2024,7 +1980,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         else:
             queryset = self.__class__.objects.none()
 
-
         # Cosa fare con le sedi disattive?
         if ignora_disattive:
             return queryset.filter(attiva=True)
@@ -2041,6 +1996,41 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     def unita_sottostanti(self):
         return self.ottieni_figli().filter(estensione=TERRITORIALE)
+
+    def __init__(self, *args, **kwargs):
+        super(Sede, self).__init__(*args, **kwargs)
+        # Questo attributo a runtime ci serve per verificare durante il save se il flag "attiva" è stato modficato
+        self.__attiva_default = self.attiva
+
+    def __str__(self):
+        if self.estensione == TERRITORIALE and self.genitore is not None:
+            return "%s: %s" % (self.genitore.nome, self.nome,)
+        return "%s" % self.nome
+
+    class Meta:
+        verbose_name = "Sede CRI"
+        verbose_name_plural = "Sedi CRI"
+        app_label = 'anagrafica'
+        index_together = [
+            ['estensione', 'tipo'],
+            ['genitore', 'estensione'],
+            ['attiva', 'estensione'],
+            ['attiva', 'tipo'],
+            ['lft', 'rght'],
+            ['lft', 'rght', 'attiva'],
+            ['lft', 'rght', 'attiva', 'estensione'],
+            ['lft', 'rght', 'tree_id'],
+        ]
+        permissions = (
+            ("view_sede", "Can view Sede CRI"),
+        )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.__attiva_default is not None and not self.attiva and self.__attiva_default != self.attiva:
+            for sottosede in self.ottieni_figli(solo_attivi=False):
+                sottosede.attiva = False
+                sottosede.save()
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
@@ -2121,15 +2111,42 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
                                              destinatario_oggetto_tipo__pk=oggetto_tipo.pk,
                                              destinatario_oggetto_id=self.oggetto.pk)
 
-    def invia_notifica_creazione(self):
+    @property
+    def is_delega_formazione(self):
+        """ Il metodo restituisce tuple() per comodità con:
+        0 (idx) - True se l'oggetto della delega è Formazione
+        1 (idx) - True se il Corso è nuovo, False "Corso Base"
+        """
+        if hasattr(self.oggetto, 'is_nuovo_corso'):
+            return (True, self.oggetto.is_nuovo_corso)
+        return (False, False)
+
+    def invia_notifica_creazione_check_list(self):
+        _email_oggetto = 'Presidente' if self.tipo == PRESIDENTE else 'Commissario'
+
+        return [Messaggio.costruisci_e_invia(
+                oggetto="IMPORTANTE: Check-list nuovo %s" % _email_oggetto,
+                modello="email_delega_notifica_nuova_nomina_presidenziale.html",
+                corpo={
+                    "delega": self,
+                },
+                mittente=self.firmatario,
+                destinatari=[self.persona],
+            )
+        ]
+
+    def invia_notifica_creazione_per_delega_formazione(self):
         delega_tipo = self.get_tipo_display()
-        obj = self.oggetto
+        corso = self.oggetto
 
-        msg_subject = "%s per %s" % (delega_tipo, obj)
-        if hasattr(obj, 'is_nuovo_corso') and obj.is_nuovo_corso:
-            msg_subject = '%s per %s (%s)' % (delega_tipo, obj, obj.titolo_cri)
+        msg_subject = "%s per %s" % (delega_tipo, corso)
+        if self.is_delega_formazione[1]:
+            # Modificare la mail apposta per l'app <formazione>
+            msg_subject = '%s per %s (%s)' % (delega_tipo, corso, corso.titolo_cri)
 
-        messaggi = []
+        messaggi = list()
+
+        # Una mail al "nominato"
         messaggi += [Messaggio.costruisci_e_invia(
             oggetto=msg_subject,
             modello="email_delega_notifica_creazione.html",
@@ -2140,19 +2157,48 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             destinatari=[self.persona],
         )]
 
+        # (GAIA-120): Mandare una mail quando il direttore del corso non è
+        # appartenente al comitato che organizza il corso (non inviare di default)
+        for sede in self.persona.sedi_attuali():
+            esito = corso.sede.ha_membro(self.persona, membro=Appartenenza.VOLONTARIO)
+            if not esito:
+                # Un'altra mail per avvertire il presidente del comitato del nominato
+                messaggi += [Messaggio.costruisci_e_invia(
+                    oggetto="%s è nominato come direttore di %s" % (self.persona.nome_completo, corso),
+                    modello="email_delega_notifica_creazione_per_formazione.html",
+                    corpo={
+                        "delega": self,
+                        "persona": self.persona,
+                        'corso': corso,
+                    },
+                    destinatari=[sede.presidente()],
+                )]
+
+        return messaggi
+
+    def invia_notifica_creazione(self):
+        delega_tipo = self.get_tipo_display()
+        obj = self.oggetto
+
+        # Elaborare l'invio nel metodo dedicato per la formazione, esci qui.
+        if self.is_delega_formazione[0]:
+            return self.invia_notifica_creazione_per_delega_formazione()
+
+        # Elaborere tutti gli altri tipi di Delega
+        messaggi = list()
+        messaggi += [Messaggio.costruisci_e_invia(
+            oggetto="%s per %s" % (delega_tipo, obj),
+            modello="email_delega_notifica_creazione.html",
+            corpo={
+                "delega": self,
+            },
+            mittente=self.firmatario,
+            destinatari=[self.persona],
+        )]
+
         # Se presidente, invia check-list.
         if self.tipo == PRESIDENTE or self.tipo == COMMISSARIO:
-            messaggi += [
-                 Messaggio.costruisci_e_invia(
-                     oggetto="IMPORTANTE: Check-list nuovo {}".format('Presidente' if self.tipo == PRESIDENTE else 'Commissario'),
-                     modello="email_delega_notifica_nuova_nomina_presidenziale.html",
-                     corpo={
-                         "delega": self,
-                     },
-                     mittente=self.firmatario,
-                     destinatari=[self.persona],
-                 )
-            ]
+            messaggi += self.invia_notifica_creazione_check_list()
 
         return messaggi
 
