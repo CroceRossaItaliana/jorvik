@@ -91,7 +91,25 @@ class ModuloOrganizzaAttivitaReferente(forms.Form):
                            "quest'attività")
     )
 
-    scelta = forms.ChoiceField(choices=SCELTA, help_text="Scegli l'opzione appropriata.")
+    @staticmethod
+    def popola_scelta():
+        from attivita.models import NonSonoUnBersaglio
+        bersaglio = NonSonoUnBersaglio.objects.all()
+        choices = [
+            (None,  "-- Scegli un'opzione --"),
+            ("", "Sarò io il referente per questa attività"),
+            ("", "Fammi scegliere uno o più referenti che gestiranno "
+                               "quest'attività"),
+        ]
+        for b in bersaglio:
+            choices.append((b.persona.id, b.persona))
+
+        return choices
+
+    scelta = forms.ChoiceField(
+        choices=SCELTA,
+        help_text="Scegli l'opzione appropriata."
+    )
 
 
 class ModuloStatisticheAttivita(forms.Form):
