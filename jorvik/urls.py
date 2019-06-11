@@ -8,7 +8,6 @@ from oauth2_provider import views as oauth2_provider_views
 from autenticazione.two_factor.urls import urlpatterns as tf_urls
 from formazione import urls_aspirante as formazione_urls_aspirante
 import anagrafica.viste
-import articoli.viste
 import autenticazione.viste
 import base.viste, base.errori
 import social.viste
@@ -49,13 +48,9 @@ urlpatterns = [
         base.viste.recupera_password_conferma, name='recupera_password_conferma'),
     url(r'^recupera_password_completo/$', base.viste.recupero_password_completo, name='recupero_password_completo'),
 
-    url(r'^articoli/$', articoli.viste.ListaArticoli.as_view(), name='lista_articoli'),
-    url(r'^articoli/(?P<anno>\d{4})/$', articoli.viste.ListaArticoli.as_view(), name='lista_articoli-per-anno'),
-    url(r'^articoli/(?P<anno>\d{4})/(?P<mese>\d{1,2})/$', articoli.viste.ListaArticoli.as_view(), name='lista_articoli-per-mese'),
-    url(r'^articoli/(?P<articolo_slug>[\w\-]+)/$', articoli.viste.DettaglioArticolo.as_view(), name='dettaglio_articolo'),
-
     # Applicazioni
     url(r'^centrale-operativa/', include('centrale_operativa.urls', namespace='centrale_operativa')),
+    url(r'^articoli/', include('articoli.urls', namespace='articoli')),
     url(r'^autorizzazioni/', include('base.urls.autorizzazioni', namespace='autorizzazioni')),
     url(r'^documenti/', include('gestione_file.urls', namespace='documenti')),
     url(r'^informazioni/', include('base.urls.informazioni', namespace='informazioni')),
