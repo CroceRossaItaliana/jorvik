@@ -1,5 +1,5 @@
 from django.conf.urls import url
-from . import viste
+from anagrafica import viste
 
 
 app_label = 'profilo'

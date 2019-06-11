@@ -2,9 +2,9 @@ from django.conf.urls import url
 from django.contrib.auth.views import password_change, password_change_done
 
 from autenticazione.funzioni import pagina_privata, pagina_privata_no_cambio_firma
-from .forms import ModuloModificaPassword
+from anagrafica.forms import ModuloModificaPassword
 
-from . import viste as views
+from anagrafica import viste as views
 
 
 app_label = 'utente'
