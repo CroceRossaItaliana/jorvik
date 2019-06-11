@@ -51,12 +51,6 @@ urlpatterns = [
         base.viste.recupera_password_conferma, name='recupera_password_conferma'),
     url(r'^recupera_password_completo/$', base.viste.recupero_password_completo, name='recupero_password_completo'),
 
-    url(r'^autorizzazioni/$', base.viste.autorizzazioni, name='autorizzazioni-aperte'),
-    url(r'^autorizzazioni/storico/$', base.viste.autorizzazioni_storico, name='autorizzazioni-storico'),
-    url(r'^autorizzazioni/(?P<content_type_pk>[0-9]+)/$', base.viste.autorizzazioni, name='autorizzazioni-dettaglio'),
-    url(r'^autorizzazioni/(?P<pk>[0-9]+)/concedi/$', base.viste.autorizzazione_concedi, name='autorizzazioni-concedi'),
-    url(r'^autorizzazioni/(?P<pk>[0-9]+)/nega/$', base.viste.autorizzazione_nega, name='autorizzazioni-nega'),
-
     url(r'^posta/scrivi/', posta.viste.posta_scrivi, name='posta-scrivi'),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/(?P<messaggio_id>\d+)/', posta.viste.posta),
     url(r'^posta/(?P<direzione>[\w\-]+)/(?P<pagina>\d+)/', posta.viste.posta),
@@ -84,6 +78,7 @@ urlpatterns = [
 
     # Applicazioni
     url(r'^centrale-operativa/', include('centrale_operativa.urls', namespace='centrale_operativa')),
+    url(r'^autorizzazioni/', include('base.urls.autorizzazioni', namespace='autorizzazioni')),
     url(r'^informazioni/', include('base.urls_informazioni', namespace='informazioni')),
     url(r'^autoparco/', include('veicoli.urls_autoparco', namespace='autoparco')),
     url(r'^attivita/', include('attivita.urls', namespace='attivita')),

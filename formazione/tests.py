@@ -760,8 +760,8 @@ class TestCorsi(TestCase):
         richieste_non_processabili = partecipazione1.autorizzazioni.all()
         for richiesta in richieste_non_processabili:
             self.assertFalse(PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta))
-            url_assenti.append(reverse('autorizzazioni-concedi', args=(richiesta.pk,)))
-            url_assenti.append(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+            url_assenti.append(reverse('autorizzazioni:concedi', args=(richiesta.pk,)))
+            url_assenti.append(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
 
         non_processabili = PartecipazioneCorsoBase.richieste_non_processabili(Autorizzazione.objects.all())
         self.assertEqual(list(non_processabili), [richiesta.pk for richiesta in richieste_non_processabili])
@@ -769,15 +769,15 @@ class TestCorsi(TestCase):
         richieste_processabili = partecipazione2.autorizzazioni.all() | partecipazione3.autorizzazioni.all()
         for richiesta in richieste_processabili:
             self.assertTrue(PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta))
-            url_presenti.append(reverse('autorizzazioni-concedi', args=(richiesta.pk,)))
-            url_presenti.append(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+            url_presenti.append(reverse('autorizzazioni:concedi', args=(richiesta.pk,)))
+            url_presenti.append(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
 
         # Mettendo nel mezzo anche autorizzazioni diverse si verifica che il meccanismo non interferisca
         richieste_estensioni = est.autorizzazioni.all()
         for richiesta in richieste_estensioni:
             pass
-            url_presenti.append(reverse('autorizzazioni-concedi', args=(richiesta.pk,)))
-            url_presenti.append(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+            url_presenti.append(reverse('autorizzazioni:concedi', args=(richiesta.pk,)))
+            url_presenti.append(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
 
         self.client.login(email=presidente.email_contatto, password='prova')
         response = self.client.get(reverse('autorizzazioni-aperte'))
@@ -792,15 +792,15 @@ class TestCorsi(TestCase):
             self.assertContains(response, 'Richiesta non processabile')
 
         for richiesta in partecipazione2.autorizzazioni.all():
-            response = self.client.get(reverse('autorizzazioni-concedi', args=(richiesta.pk,)))
+            response = self.client.get(reverse('autorizzazioni:concedi', args=(richiesta.pk,)))
             self.assertContains(response, 'Per dare consenso a questa richiesta')
 
         for richiesta in partecipazione3.autorizzazioni.all():
-            response = self.client.get(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+            response = self.client.get(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
             self.assertContains(response, 'Per negare questa richiesta')
 
         for richiesta in est.autorizzazioni.all():
-            response = self.client.get(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+            response = self.client.get(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
             self.assertContains(response, 'Per negare questa richiesta')
 
 
