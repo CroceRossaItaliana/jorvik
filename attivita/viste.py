@@ -139,6 +139,16 @@ def attivita_gestisci(request, me, stato="aperte"):
 def attivita_organizza(request, me):
     aree = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
     sedi = Sede.objects.filter(aree__in=aree)
+    deleghe = me.deleghe_attuali()
+    from anagrafica.permessi.applicazioni import DELEGATI_NON_SONO_UN_BERSAGLIO
+    deleghe_bersaglio = deleghe.filter(tipo__in=DELEGATI_NON_SONO_UN_BERSAGLIO)
+
+    if deleghe_bersaglio:
+        if not aree.filter(obiettivo=4, nome__icontains='non sono un bersaglio'):
+            for delega in deleghe.filter(tipo__in=DELEGATI_NON_SONO_UN_BERSAGLIO):
+                area = Area(nome='Non sono un bersaglio', obiettivo=4, sede=delega.oggetto)
+                area.save()
+
     if not aree:
         return messaggio_generico(request, me, titolo="Crea un'area di intervento, prima!",
                                   messaggio="Le aree di intervento fungono da 'contenitori' per le "
@@ -146,9 +156,11 @@ def attivita_organizza(request, me):
                                             "almeno un'area di intervento. ",
                                   torna_titolo="Gestisci le Aree di intervento",
                                   torna_url="/attivita/aree/")
+
     modulo_referente = ModuloOrganizzaAttivitaReferente(request.POST or None)
     modulo = ModuloOrganizzaAttivita(request.POST or None)
-    modulo.fields['area'].queryset = aree
+    modulo.fields['area'].queryset = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
+    modulo_referente.fields['scelta'].choices = ModuloOrganizzaAttivitaReferente.popola_scelta()
     if modulo_referente.is_valid() and modulo.is_valid():
         attivita = modulo.save(commit=False)
         attivita.sede = attivita.area.sede
@@ -169,9 +181,13 @@ def attivita_organizza(request, me):
             # Io sono il referente.
             attivita.aggiungi_delegato(REFERENTE, me, firmatario=me, inizio=poco_fa())
             return redirect(attivita.url_modifica)
-
-        else:  # Il referente e' qualcun altro.
+        elif modulo_referente.cleaned_data['scelta'] == modulo_referente.SCEGLI_REFERENTI:  # Il referente e' qualcun altro.
             return redirect("/attivita/organizza/%d/referenti/" % (attivita.pk,))
+        else:
+            from anagrafica.models import Persona
+            persona = Persona.objects.get(pk=modulo_referente.cleaned_data['scelta'])
+            attivita.aggiungi_delegato(REFERENTE, persona, firmatario=me, inizio=poco_fa())
+            return redirect(attivita.url_modifica)
 
     contesto = {
         "modulo": modulo,
@@ -330,6 +346,7 @@ def attivita_scheda_informazioni(request, me=None, pk=None):
     contesto = {
         "attivita": attivita,
         "puo_modificare": puo_modificare,
+        "me": me,
     }
 
     return 'attivita_scheda_informazioni.html', contesto
@@ -644,7 +661,6 @@ def attivita_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_p
     return redirect("/attivita/scheda/%d/turni/modifica/%d/?evidenzia_turno=%d#turno-%d" % (
         attivita.pk, pagina, turno.pk, turno.pk
     ))
-
 
 
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))

@@ -15,6 +15,7 @@ def bool(value):
     else:
         return 'false'
 
+
 @register.simple_tag(takes_context=True)
 def show_test_users_with_credentials(context):
     from anagrafica.models import Persona
@@ -38,6 +39,8 @@ def show_test_users_with_credentials(context):
     except:
         # per escludere qualsiasi exception
         pass
+
+    return ""
 
 
 @register.filter('startswith')

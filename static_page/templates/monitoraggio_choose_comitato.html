@@ -4,12 +4,14 @@
 
 {% block app_contenuto %}
   <div class="articolo single-page">
-    <h1>Monitoraggio 2019 (dati 2018)</h1>
+    <h1>{{ titolo }}</h1>
 
     <p>Per quale comitato vuoi compilare il monitoraggio?</p>
 
     {% for delega in deleghe %}
-      <div><a href="{% url 'pages:monitoraggio' %}?comitato={{ delega.oggetto.id }}">{{ delega.oggetto }} ({{ delega.get_tipo_display }})</a></div>
+      <div>
+          <a href="{% url 'pages:'|add:url %}?comitato={{ delega.oggetto.id }}{% if idtypeform %}{{ idtypeform }}{% endif %}">{{ delega.oggetto }} ({{ delega.get_tipo_display }})</a>
+      </div>
     {% empty %}
       <p>L'utenza non ha deleghe attive.</p>
     {% endfor %}
