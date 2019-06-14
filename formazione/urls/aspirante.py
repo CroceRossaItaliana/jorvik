@@ -1,5 +1,5 @@
 from django.conf.urls import url
-from . import viste as v
+from .. import viste as v
 
 
 url_shortcut = 'corso-base/(?P<pk>[0-9]+)'

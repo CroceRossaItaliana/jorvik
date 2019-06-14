@@ -6,7 +6,6 @@ import django.contrib.auth.views
 
 from oauth2_provider import views as oauth2_provider_views
 from autenticazione.two_factor.urls import urlpatterns as tf_urls
-from formazione import urls_aspirante as formazione_urls_aspirante
 import anagrafica.viste
 import autenticazione.viste
 import base.viste, base.errori
@@ -65,9 +64,9 @@ urlpatterns = [
     url(r'^cv/', include('curriculum.urls', namespace='cv')),
 
     # Formazione
-    url(r'^aspirante/', include(formazione_urls_aspirante, namespace='aspirante')),
-    url(r'^formazione/', include('formazione.urls', namespace='formazione')),
-    url(r'^courses/', include('formazione.urls_courses', namespace='courses')),
+    url(r'^formazione/', include('formazione.urls.formazione', namespace='formazione')),
+    url(r'^aspirante/', include('formazione.urls.aspirante', namespace='aspirante')),
+    url(r'^courses/', include('formazione.urls.courses', namespace='courses')),
     url(r'^survey/', include('survey.urls', namespace='survey')),
 
     # Static pages
