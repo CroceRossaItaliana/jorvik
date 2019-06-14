@@ -12,7 +12,7 @@ from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE, GESTIONE_ATTIVITA,
     GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
 from .utils import remove_none
 from .models import Menu
-
+from static_page.monitoraggio import TypeFormNonSonoUnBersaglio
 # __author__ = 'alfioemanuele'
 
 """
@@ -81,6 +81,8 @@ def menu(request):
     VOCE_LINKS = ("Links", tuple((link.name, link.icon_class, link.url)
             for link in Menu.objects.filter(is_active=True).order_by('order')))
 
+    deleghe_monitoraggio = me.deleghe_attuali(tipo__in=[COMMISSARIO, PRESIDENTE]) if me else None
+
     elementi = {
         "utente": (
             (("Persona", (
@@ -117,6 +119,9 @@ def menu(request):
             VOCE_LINKS,
             ("Monitoraggio", (
                 ("Monitoraggio 2019 (dati 2018)", 'fa-user', reverse('pages:monitoraggio')),
+                ("Monitoraggio NON SONO UN BERSAGLIO", 'fa-user', '{}{}'.format(
+                    reverse('pages:monitoraggio-nonsonounbersaglio'),
+                    '?comitato={}&id={}'.format(deleghe_monitoraggio.last().oggetto_id, TypeFormNonSonoUnBersaglio(None, me).get_first_typeform()) if len(deleghe_monitoraggio) == 1 else '')),
             )) if me and (me.is_presidente or me.is_comissario) else None,
         )) if me and not hasattr(me, 'aspirante') else None,
         "posta": (
