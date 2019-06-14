@@ -595,6 +595,3 @@ class ModuloUSModificaUtenza(ModuloUtenza):
                                   "richiesta dall'utente, oppure hai già avvisato l'utente della "
                                   "modifica e della nuova e-mail per accedere.")
 
-
-class ImportServizioCivile(forms.Form):
-    file = forms.FileField()

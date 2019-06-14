@@ -12,16 +12,16 @@
 {% endblock %}
 
 {% block content %}
-    <p>
-        Le persone che rientrano in almeno uno de seguenti criteri non saranno soggette a trasferimento:
-        <ul>
-            <li>Non sono volontari (ma solo dimessi, espulsi, sostenitori, aspiranti, ...)</li>
-            <li>Non sono associati ad alcun comitato</li>
-            <li>Sono associati allo stesso comitato verso cui viene effettuato il trasferimento</li>
-        </ul>
-    </p>
-    <form>
-        <input type="file" value="hello">
-        <input type="submit">
+    <h1>
+        Import Massivo Servizio Civile Universale
+    </h1>
+    <h2>Formato file</h2>
+    <pre>
+        <br/>Cognome<br/>Nome<br/>Mail<br/>Comitato o Unità Territoriale titolare del Progetto di SCU<br/>Sesso<br/>CodiceFiscale<br/>ComuneNascita<br/>Data Nascita<br/>ComuneResidenza<br/>Provincia Residenza<br/>Titolo Progetto<br/>Provincia Sede Progetto<br/>Regione Sede Progetto
+    </pre>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" accept=".csv, text/csv" name="file" required/>
+        <input type="submit" style="padding: 5px 8px 5px 8px" data-toggle="tooltip" data-placement="top" title='Assicurarsi che i campi del file csv siano separati dal carattere ","' value="Carica">
     </form>
 {% endblock %}
