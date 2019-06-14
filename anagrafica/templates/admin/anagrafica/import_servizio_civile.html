@@ -1,0 +1,27 @@
+{% extends "admin/base_custom.html" %}
+{% load i18n admin_urls l10n %}
+{% load bootstrap3 %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; Import Servizio Civile
+</div>
+{% endblock %}
+
+{% block content %}
+    <p>
+        Le persone che rientrano in almeno uno de seguenti criteri non saranno soggette a trasferimento:
+        <ul>
+            <li>Non sono volontari (ma solo dimessi, espulsi, sostenitori, aspiranti, ...)</li>
+            <li>Non sono associati ad alcun comitato</li>
+            <li>Sono associati allo stesso comitato verso cui viene effettuato il trasferimento</li>
+        </ul>
+    </p>
+    <form>
+        <input type="file" value="hello">
+        <input type="submit">
+    </form>
+{% endblock %}

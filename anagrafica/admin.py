@@ -105,13 +105,23 @@ class AdminPersona(ReadonlyAdminMixin, admin.ModelAdmin):
             url(r'^trasferisci_azione/$',
                 self.admin_site.admin_view(self.sposta_persone_post),
                 name='anagrafica_persona_trasferisci_post'),
+            url(r'^serviziocivile/$',
+                self.admin_site.admin_view(self.import_servizio_civile),
+                name='anagrafica_persona_import_servizio_civile'),
             url(r'^report/conoscenza/$',
                 self.admin_site.admin_view(self.conoscneza_report),
                 name='anagrafica_persona_report_conoscneza'),
         ]
 
-
         return custom_urls + urls
+
+    def import_servizio_civile(self, request):
+        from anagrafica.forms import ImportServizioCivile
+        contesto = {
+            'opts': self.model._meta,
+            'modulo': ImportServizioCivile()
+        }
+        return render(request, 'admin/anagrafica/import_servizio_civile.html', contesto)
 
     def conoscneza_report(self, request):
         import csv

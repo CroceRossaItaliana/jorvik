@@ -594,3 +594,7 @@ class ModuloUSModificaUtenza(ModuloUtenza):
             raise ValidationError("Puoi solo cambiare l'e-mail di accesso se questa è stata "
                                   "richiesta dall'utente, oppure hai già avvisato l'utente della "
                                   "modifica e della nuova e-mail per accedere.")
+
+
+class ImportServizioCivile(forms.Form):
+    file = forms.FileField()
