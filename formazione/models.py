@@ -1326,6 +1326,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
                 "persona": self.persona,
             },
             modello="pdf_corso_base_attestato.html",
+            orientamento=PDF.ORIENTAMENTO_ORIZZONTALE,
         )
         return pdf
 
