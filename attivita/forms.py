@@ -97,8 +97,8 @@ class ModuloOrganizzaAttivitaReferente(forms.Form):
         bersaglio = NonSonoUnBersaglio.objects.all()
         choices = [
             (None,  "-- Scegli un'opzione --"),
-            ("", "Sarò io il referente per questa attività"),
-            ("", "Fammi scegliere uno o più referenti che gestiranno "
+            (ModuloOrganizzaAttivitaReferente.SONO_IO, "Sarò io il referente per questa attività"),
+            (ModuloOrganizzaAttivitaReferente.SCEGLI_REFERENTI, "Fammi scegliere uno o più referenti che gestiranno "
                                "quest'attività"),
         ]
         for b in bersaglio:
