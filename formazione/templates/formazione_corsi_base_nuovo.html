@@ -2,6 +2,7 @@
 
 {% load bootstrap3 %}
 {% load mptt_tags %}
+{% load staticfiles %}
 
 {% block pagina_titolo %}Pianifica un corso{% endblock %}
 
@@ -25,20 +26,10 @@
                     <h2 class="panel-title"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</h2>
                 </div>
             </div>
-            <script>
-            $('.course-panels div').on('click', function(){
-                if ($(this).hasClass('attivazione')) {
-                       $('.attivazionePanelWithForm').slideToggle();
-                    return;
-                }
-                alert('Il corso non è ancora creato.');
-            });
-            </script>
-
             <div style="display:none;" class="panel panel-primary attivazionePanelWithForm">
                 <div class="panel-body">
                     <h3 style="margin:0 0 15px;">Attivazione Corso</h3>
-                    <form method="POST" enctype="multipart/form-data">
+                    <form id="formazioneCorsoNuovoForm" method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         {% bootstrap_form modulo %}
                         <button type="submit" class="btn btn-block btn-primary" data-conferma="Confermi di voler pianificare il corso?">
@@ -48,147 +39,12 @@
                 </div>
             </div>
         </div>
-        <!--<div class="col-md-2">-->
-            <!--<div class="alert alert-info">-->
-                <!--<i class="fa fa-fw fa-calendar"></i> <strong>Data ed ora di inizio</strong>:-->
-                <!--Ti consigliamo di inserire in questo campo la data e l'ora nella quale sar&agrave;-->
-                <!--effettuata la presentazione del Corso. Questa data sar&agrave; comunicata-->
-                <!--agli aspiranti nella tua zona come data di inziio del Corso.-->
-            <!--</div>-->
-            <!--<div class="alert alert-info">-->
-                <!--<i class="fa fa-fw fa-info-circle"></i> <strong>Nota bene</strong>:-->
-                <!--Dopo questo step potrai nominare uno o pi&ugrave; direttori del corso.-->
-                <!--Questi potranno inserire gli ulteriori dettagli sul corso,-->
-                <!--come le date delle lezioni, la descrizione, nonch&eacute; gestire-->
-                <!--interamente il corso per te.-->
-            <!--</div>-->
-            <!--<div class="alert alert-info">-->
-                <!--<i class="fa fa-fw fa-info-circle"></i> <strong>Nota bene</strong>:-->
-                <!--Nella delibera che dispone l’attivazione devono essere necessariamente indicati:<br>-->
-                <!--a. data di inizio e di conclusione del corso;<br>-->
-                <!--b. nome e qualifica del Direttore del corso;<br>-->
-                <!--c. termine di scadenza fissato per le domande di ammissione;<br>-->
-                <!--d. rinvio ai regolamenti vigenti per quanto concerne requisiti di partecipazione, programma e qualifiche dei docenti.-->
-            <!--</div>-->
-        <!--</div>-->
     </div>
 
 <script>
-    // Select: Tipo -> Show "Tipo del Corso" field
-    var titolo_form_group = $('#id_titolo_cri').closest('.form-group');
-    var level_form_group = $('#id_level').closest('.form-group');
-    var area_form_group = $('#id_area').closest('.form-group');
-    var course_value = 'C1';
-    var titolo_options_ajax_data = {};
-
-    if ($('#id_tipo option:selected').val() != course_value) {
-        titolo_form_group.hide();
-        level_form_group.hide();
-        area_form_group.hide();
-    }
-
-    $('#id_tipo').on('change', function(e){
-        let value = $(this).find('option:selected').val();
-        if (value && value == course_value) {
-            level_form_group.show();
-            area_form_group.show();
-        }
-        else {
-            titolo_form_group.hide();
-            level_form_group.hide();
-            area_form_group.hide();
-        }
-    });
-
-    $('#id_area').on('change', function(e){
-        let value = $(this).find('option:selected').val();
-        if (value) {
-            titolo_form_group.show();
-        } else {
-            titolo_form_group.hide();
-        }
-    });
-
-    // Select: Livello
-    var level_select = $('#id_level');
-    level_select.on('change', function(e){
-        // Reset area's selected option and hide its section
-        $('#id_area').prop('selectedIndex',0);
-        titolo_form_group.hide();
-
-        if ($(this).val()) {
-            area_form_group.show();
-        }
-    });
-
-    // Select: Area
-    var select_area = $('#id_area');
-    if (!select_area.prop('selectedIndex')) {
-      select_area.prop('selectedIndex',0);
-    }
-
-    $('#id_titolo_cri').find('option').not(':first').remove();
-    $('#id_area').on('change', function(e) {
-        let area_id = $(this).val();
-        let id_level_val = $('#id_level').val(); // default select option has '' value
-        if (area_id !== '') {
-            $.ajax({
-                type: "POST",
-                url: "{% url 'cv:cdf_titolo_json' %}",
-                data: {
-                    area: area_id,
-                    cdf_livello: id_level_val,
-                    csrf_token: "{{ csrf_token }}",
-                },
-                success: function(data) {
-                    let select_titolo_cri = $('#id_titolo_cri');
-                    select_titolo_cri.find('option').not(':first').remove();
-
-                    titolo_options_ajax_data = data;
-
-                    $.each(data, function(id, text) {
-                        select_titolo_cri.append($('<option>', {
-                            value: id,
-                            text: text['nome'],
-                        }));
-                    });
-
-                    return data;
-                },
-                error: function(jqXHR, textStatus) {
-                    <!--console.log(textStatus);-->
-                },
-            });
-
-        } else {
-            titolo_form_group.hide();
-            $('#id_titolo_cri').find('option').not(':first').remove();
-        }
-    });
-
-    /* GAIA-89
-    Add titles' description under the <select> element
-    */
-    function resetDescriptionDiv(){
-        let description_div = $('#titleDescription');
-        if (description_div.length) {
-            description_div.remove();
-        }
-    };
-
-    $('#id_tipo, #id_level, #id_area').on('change', function(e){
-        resetDescriptionDiv();
-    });
-
-    $('#id_titolo_cri').on('change', function(e) {
-        resetDescriptionDiv();
-
-        let selected_option_id = $(this).val();
-        let title = titolo_options_ajax_data[selected_option_id];
-        if ('description' in title && title['description'] !== null) {
-            $(this).parent().append('<p id="titleDescription">'+ title['description'] +'</p>');
-        }
-    });
+    const url_cv_cdf_titolo_json = "{% url 'cv:cdf_titolo_json' %}";
+    const _csrf_token = "{{ csrf_token }}";
 </script>
+<script src="{% static 'js/formazione/formazione.js' %}"></script>
 
 {% endblock %}
