@@ -536,6 +536,7 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
 class ReportElenco(ConMarcaTemporale):
     VOLONTARI = 'vol'
     VOLONTARI_GIOVANI = 'vog'
+    SERVIZIO_CIVILE = 'civ'
     IV_E_CM = 'ivcm'
     DIMESSI = 'dim'
     VOLONTARI_IN_RISERVA = 'vir'

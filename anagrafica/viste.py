@@ -643,18 +643,14 @@ def utente_rubrica_volontari(request, me):
 @pagina_privata
 def utente_rubrica_servizio_civile(request, me):
     sedi_servizio_civile = Sede.objects.filter(pk__in=me.sedi_attuali().values_list("id", flat=True))
-    print('sedi', sedi_servizio_civile)
     servizio_civile = Persona.objects.filter(
         Appartenenza.query_attuale(membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE, sede__in=sedi_servizio_civile).via("appartenenze")
     )
-    print('persone', servizio_civile)
 
     servizio_civile = servizio_civile \
         .prefetch_related('appartenenze', 'fototessere') \
         .order_by('nome', 'cognome', 'codice_fiscale') \
         .distinct('nome', 'cognome', 'codice_fiscale')
-
-    print('persone', servizio_civile)
     contesto = {
         "servizio_civile": servizio_civile,
     }

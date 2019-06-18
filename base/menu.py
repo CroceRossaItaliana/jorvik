@@ -176,6 +176,7 @@ def menu(request):
             ("Elenchi", (
                 ("Volontari", "fa-list", "/us/elenchi/volontari/"),
                 ("Vol. giovani", "fa-list", "/us/elenchi/giovani/"),
+                ("Servizio Civile", "fa-list", "/us/elenchi/servizio-civile/"),
                 ("Estesi", "fa-list", "/us/elenchi/estesi/"),
                 ("IV e CM", "fa-list", "/us/elenchi/ivcm/"),
                 ("In Riserva", "fa-list", "/us/elenchi/riserva/"),
