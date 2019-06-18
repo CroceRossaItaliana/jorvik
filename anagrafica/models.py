@@ -1469,7 +1469,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     MEMBRO_RECLAMABILE = (VOLONTARIO, ORDINARIO, DIPENDENTE, SOSTENITORE, SEVIZIO_CIVILE_UNIVERSALE,)
 
     # Membro che puo' accedere alla rubrica di una Sede
-    MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE, SEVIZIO_CIVILE_UNIVERSALE,)
+    MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE)
 
     #TODO: SEVIZIO_CIVILE_UNIVERSALE il tesserino puo essere pagato dal presidentte
     # Membri che possono richiedere il tesserino

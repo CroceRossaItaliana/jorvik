@@ -50,6 +50,8 @@ def menu(request):
     RUBRICA_BASE = [
         ("Referenti", "fa-book", "/utente/rubrica/referenti/"),
         ("Volontari", "fa-book", "/utente/rubrica/volontari/"),
+        ("Servizio Civile", "fa-book", "/utente/rubrica/servizio-civile/") if (PRESIDENTE in deleghe_attuali) or
+        (COMMISSARIO in deleghe_attuali) or (UFFICIO_SOCI in deleghe_attuali)else None
     ]
 
     if deleghe_attuali:

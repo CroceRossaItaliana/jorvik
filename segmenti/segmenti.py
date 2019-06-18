@@ -251,6 +251,7 @@ NOMI_SEGMENTI = (
     ('Y', 'Delegati Autoparco'),
     ('Z', 'Delegati Formazione'),
     ('AA', 'Volontari aventi un dato titolo'),
+    ('SC', 'Servizio civile universale')
 )
 
 
