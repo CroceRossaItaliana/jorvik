@@ -14,16 +14,24 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'jorvik.settings'
 application = get_wsgi_application()
 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega, Trasferimento, Estensione
-from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2
+from anagrafica.permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI,
+    DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO)
 from anagrafica.costanti import NAZIONALE, TERRITORIALE, REGIONALE, LOCALE, PROVINCIALE
 from autenticazione.models import Utenza
 from attivita.models import Attivita, Area
 from base.comuni import COMUNI
-from base.utils import poco_fa
+from base.utils import poco_fa, oggi
 from base.utils_tests import crea_persona, email_fittizzia, codice_fiscale_persona
 from base.geo import Locazione
 from posta.models import Messaggio
 from veicoli.models import Autoparco, Collocazione
+
+
+t_deleted = Trasferimento.objects.filter().delete()
+a_deleted = Appartenenza.objects.filter().delete()
+p_deleted = Persona.objects.filter().delete()
+
+print("Eliminati seguenti records dal db: Trasferimento: %s - Appartenenza: %s - Persona: %s" % (t_deleted[0], a_deleted[0], p_deleted[0]))
 
 
 parser = argparse.ArgumentParser(description='Mischia i dati anagrafici.')
@@ -57,6 +65,28 @@ def oscura(stringa, percentuale):
     for r in range(len(stringa)):
         out += stringa[r] if stringa[r] in ['@', '.'] or random.randint(0,100) > percentuale else chr(random.randint(64,90))
     return out
+
+def provami_rename_test_user(persona, indice, delega_tipo):
+    from anagrafica.permessi.applicazioni import PERMESSI_NOMI
+
+    permesso_full_name = dict(PERMESSI_NOMI)[locals()['delega_tipo']]
+
+    pr_nome = "%s_%s" % ('_'.join(permesso_full_name.split()).lower(), indice)
+    for _char in ['(', ')']:
+        pr_nome = pr_nome.replace(_char, '').strip()
+
+    pr_email = "%s@cri.it" % pr_nome
+
+    utenza = persona.utenza
+    utenza.email = pr_email
+    utenza.set_password(pr_email)
+    utenza.save()
+
+    persona.nome = pr_nome
+    persona.cognome = pr_nome
+    persona.save()
+
+    return utenza, persona
 
 if args.membri_sedi:
     print("Avvio miscelatore anagrafico.")
@@ -161,9 +191,11 @@ if args.esempio:
     sedi = [c, s1, s2, s3, c2, c3, regionale, metropolitano, altra_regione, cm1, cm2]
     nuove = []
 
-    tests_volontario = None
-    tests_presidente = None
-
+    test_volontario = None
+    test_presidente = None
+    test_resp_formazione = None
+    test_direttore_corso = None
+    test_delegato_obiettivo = None
 
     for sede in sedi:  # Per ogni Sede
         locazione = Locazione.oggetto(indirizzo=random.sample(COMUNI.keys(), 1)[0])
@@ -191,8 +223,8 @@ if args.esempio:
                 a = Appartenenza.objects.create(persona=p, sede=sede, inizio=data, membro=membro)
 
                 if membro == Appartenenza.VOLONTARIO:
-                    if membro == Appartenenza.VOLONTARIO and tests_volontario is None:
-                        tests_volontario = p
+                    if membro == Appartenenza.VOLONTARIO and test_volontario is None:
+                        test_volontario = p
 
                     if i % 5 == 0:
                         # Dimesso e riammesso
@@ -295,7 +327,7 @@ if args.esempio:
 
         if sede.estensione in (LOCALE, REGIONALE, PROVINCIALE):
             print(" - Assegno deleghe...")
-            persone = [a.persona for a in Appartenenza.objects.filter(sede=sede, membro=Appartenenza.VOLONTARIO).order_by('?')[:4]]
+            persone = [a.persona for a in Appartenenza.objects.filter(sede=sede, membro=Appartenenza.VOLONTARIO).order_by('?')[:6]]
             for indice, persona in enumerate(persone):
                 if indice == 0:
                     d = Delega.objects.create(persona=persona, tipo=PRESIDENTE, oggetto=sede, inizio=poco_fa())
@@ -306,6 +338,7 @@ if args.esempio:
                         persona.codice_fiscale = codice_fiscale_persona(persona)
                         persona.save()
                         presidente = persona
+
                         # Assegno una utenza
                         if not Utenza.objects.filter(email="supporto@gaia.cri.it").exists():
                             utenza = Utenza.objects.create(
@@ -313,26 +346,31 @@ if args.esempio:
                                 password='pbkdf2_sha256$24000$vuuP6g3dJTyz$55k2PL/NCVk2j4T+cvA9pGeIkFRT2lxKMbjFLZeYR3Y='
                             )
 
-                        ###
-                        # Rinomina utenza del presidente per fare i test (di Andrea)
-                        ###
-                        pr_nome = 'presidente_%s' % indice
-                        pr_email = "%s@cri.it" % pr_nome
-                        utenza.email = pr_email
-                        utenza.set_password(pr_email)
-                        utenza.save()
-
-                        persona.nome = pr_nome
-                        persona.cognome = pr_nome
-                        persona.save()
-                        ###
+                        provami_rename_test_user(persona, indice, delega_tipo=PRESIDENTE)
 
                 elif indice == 1:
                     d = Delega.objects.create(persona=persona, tipo=UFFICIO_SOCI, oggetto=sede, inizio=poco_fa())
+
                 elif indice == 2:
                     d = Delega.objects.create(persona=persona, tipo=DELEGATO_OBIETTIVO_1, oggetto=sede, inizio=poco_fa())
+                    if test_delegato_obiettivo is None:
+                        test_delegato_obiettivo = persona
+
                 elif indice == 3:
                     d = Delega.objects.create(persona=persona, tipo=DELEGATO_OBIETTIVO_2, oggetto=sede, inizio=poco_fa())
+
+                elif indice == 4:
+                    if test_resp_formazione is None:
+                        test_resp_formazione = persona
+                        d = Delega.objects.create(persona=persona, tipo=RESPONSABILE_FORMAZIONE, oggetto=sede, inizio=poco_fa())
+
+                elif indice == 5:
+                    if test_direttore_corso is None:
+                        from formazione.models import CorsoBase
+
+                        test_direttore_corso = persona
+                        corso = CorsoBase.nuovo(sede=sede, data_inizio=poco_fa(), data_esame=poco_fa())
+                        d = Delega.objects.create(persona=persona, tipo=DIRETTORE_CORSO, oggetto=corso, inizio=poco_fa())
 
     print(" - Creo utenze di accesso...")
     for idx, persona in enumerate(nuove):
@@ -340,8 +378,10 @@ if args.esempio:
             email = email_fittizzia()
             utenza = Utenza.objects.create_user(persona=persona, email=email, password=email)
 
+            ###
             # Creazione utenze per tests (di Andrea)
-            if persona == tests_volontario:
+            ###
+            if persona == test_volontario:
                 vo_nome ='volontario_%s' % idx
                 vo_email = vo_nome + "@cri.it"
 
@@ -354,9 +394,14 @@ if args.esempio:
                 persona.save()
                 persona.refresh_from_db()
 
-            if persona == tests_presidente:
-                pass
-                # print(2, persona)
+            elif persona == test_resp_formazione:
+                provami_rename_test_user(persona, idx, delega_tipo=RESPONSABILE_FORMAZIONE)
+
+            elif persona == test_direttore_corso:
+                provami_rename_test_user(persona, idx, delega_tipo=DIRETTORE_CORSO)
+
+            elif persona == test_delegato_obiettivo:
+                provami_rename_test_user(persona, idx, delega_tipo=DELEGATO_OBIETTIVO_1)
 
         except IntegrityError:
             print('  --- Errore creazione utenza per {}'.format(persona))
