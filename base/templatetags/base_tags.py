@@ -26,14 +26,15 @@ def show_test_users_with_credentials(context):
         host = request.build_absolute_uri()
 
         if "provami.gaia.cri.it" in host or "127.0.0.1" in host:
-            vo = Persona.objects.filter(nome__istartswith='volontario_').last()
-            pr = Persona.objects.filter(nome__istartswith='presidente_').last()
-
             html = ''
-            if vo:
-                html = "<div>%s : %s</div>" % (vo.utenza, vo.utenza.check_password(vo.utenza.email))
-            if pr:
-                html += "<div>%s : %s</div>" % (pr.utenza, pr.utenza.check_password(pr.utenza.email))
+
+            for delega_tipo in ['volontario_', 'presidente_',
+                                'responsabile_formazione_',
+                                'direttore_corso_', 'delegato_obiettivo_']:
+                persona = Persona.objects.filter(nome__istartswith=delega_tipo).last()
+                if persona:
+                    html += "<div>%s : %s</div>" % (persona.utenza,
+                                                    persona.utenza.check_password(persona.utenza.email))
 
             return mark_safe(html)
     except:
