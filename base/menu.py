@@ -2,7 +2,6 @@ class Menu:
     def __init__(self, request):
         self.me = request.me if hasattr(request, 'me') else None
         self.request = request
-        # self.section = request.POST['section']
 
     @property
     def is_volontario(self):
@@ -25,7 +24,8 @@ class Menu:
     def utente(self):
         from .menus import utente
 
-        return utente.MenuUtente(self.me)()
+        menu_utente = utente.MenuUtente(self.me)
+        return menu_utente()
 
     @property
     def attivita(self):
@@ -55,9 +55,18 @@ class Menu:
 
     @property
     def autorizzazioni(self):
-        from .menus import autorizzazioni
-
-        return autorizzazioni.menu_autorizzazioni(self.request, self.me)
+        return (
+            ("Richieste", (
+                ("In attesa", "fa-user-plus", "/autorizzazioni/"),
+                ("Storico", "fa-clock-o", "/autorizzazioni/storico/"),
+            )),
+            ("Ordina", (
+                ("Dalla più recente", "fa-sort-numeric-desc", "?ordine=DESC",
+                 self.request.GET.get('ordine', default="DESC") == "DESC"),
+                ("Dalla più vecchia", "fa-sort-numeric-asc", "?ordine=ASC",
+                 self.request.GET.get('ordine', default="DESC") == "ASC"),
+            )),
+        )
 
     @property
     def presidente(self):
@@ -79,90 +88,125 @@ class Menu:
 
         return centrale_operativa.menu_co(self.me)
 
+    @property
+    def formazione(self):
+        return (
+            ("Corsi Base", (
+                ("Elenco Corsi Base", "fa-list", "/formazione/corsi-base/elenco/"),
+                ("Domanda formativa", "fa-area-chart", "/formazione/corsi-base/domanda/")
+                    if self.gestione_corsi_sede else None,
+                ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-base/nuovo/")
+                    if self.gestione_corsi_sede else None,
+            )),
+            ("Corsi di Formazione", (
+                ("Elenco Corsi di Formazione", "fa-list", "/formazione/corsi-formazione/"),
+                ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-formazione/nuovo/"),
+            )) if False else None,
+        )
+
+    @property
+    def aspirante(self):
+        return (
+            ("Aspirante", (
+                ("Home page", "fa-home", "/aspirante/"),
+                ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
+                ("Storico", "fa-clock-o", "/utente/storico/"),
+                ("Contatti", "fa-envelope", "/utente/contatti/"),
+                ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
+                ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
+                ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
+                ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
+            )),
+            ("Nelle vicinanze", (
+                ("Impostazioni", "fa-gears", "/aspirante/impostazioni/"),
+                ("Corsi Base", "fa-list", "/aspirante/corsi-base/"),
+                ("Sedi CRI", "fa-list", "/aspirante/sedi/"),
+            )),
+            ("Sicurezza", (
+                ("Cambia password", "fa-key", "/utente/cambia-password/"),
+                ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
+            ),
+            ),
+        ) if self.me and hasattr(self.me, 'aspirante') else (
+            ("Gestione Corsi", (
+                ("Elenco Corsi Base", "fa-list", "/formazione/corsi-base/elenco/"),
+            )),
+        )
+
+    def mapping(self):
+        return (
+            ({
+                'urls': ['/utente/', '/profilo/', '/page/'],
+                'method': 'elementi_anagrafica',
+                'name_for_template': 'elementi_anagrafica',
+            }),
+            ({
+                'urls': ['/informazioni/', '/attivita/'],
+                'method': 'attivita',
+                'name_for_template': 'attivita',
+            }),
+            ({
+                'urls': ['/centrale-operativa/'],
+                'method': 'co',
+                'name_for_template': 'co',
+            }),
+            ({
+                'urls': ['/us/'],
+                'method': 'us',
+                'name_for_template': 'us',
+            }),
+            ({
+                'urls': ['/posta/'],
+                'method': 'posta',
+                'name_for_template': 'posta',
+            }),
+            ({
+                'urls': ['/autorizzazioni/'],
+                'method': 'autorizzazioni',
+                'name_for_template': 'autorizzazioni',
+            }),
+            ({
+                'urls': ['/presidente/', '/strumenti/delegati/'],
+                'method': 'presidente',
+                'name_for_template': 'presidente',
+            }),
+            ({
+                'urls': ['/articoli/'],
+                'method': 'articoli',
+                'name_for_template': 'articoli',
+            }),
+            ({
+                'urls': ['/documenti/'],
+                'method': 'documenti',
+                'name_for_template': 'documenti',
+            }),
+            ({
+                'urls': ['/veicoli/', '/veicolo/', '/autoparco/'],
+                'method': 'veicoli',
+                'name_for_template': 'veicoli',
+            }),
+            ({
+                'urls': ['/formazione/', '/courses/'],
+                'method': 'formazione',
+                'name_for_template': 'formazione',
+            }),
+            ({
+                'urls': ['/aspirante/',],
+                'method': 'aspirante',
+                'name_for_template': 'aspirante',
+            }),
+        )
+
     def get_menu(self):
         from .utils import remove_none
 
-        # Map request to class-methods
-        mapping = {
-            'utente': self.elementi_anagrafica,
-            'centrale-operativa': self.centrale_operativa,
-        }
+        path = self.request.path
 
-        section_name = ''.join(self.request.path.split('/'))
+        for i in self.mapping():
+            for url in i['urls']:
+                if path.startswith(url):
+                    menu = remove_none(getattr(self, i['method']))
+                    name_for_template = i['name_for_template']
+                    return {name_for_template: menu}
 
-        if not hasattr(self, section_name):
-            get_elements_for_section = mapping[section_name]
-        else:
-            get_elements_for_section = getattr(self, section_name)
-
-        return {section_name: remove_none(get_elements_for_section)}
-
-
-
-
-
-# def menu(request):
-#     me = request.me if hasattr(request, 'me') else None
-#     section = request.POST['section']
-#     gestione_corsi_sede = me.ha_permesso(GESTIONE_CORSI_SEDE) if me else False
-
-    # elementi = {    #
-    #     "utente": utente.MenuUtente(me)(),
-    #     "posta": posta.menu_posta(me),
-    #     "veicoli": veicoli.menu_veicoli(me),
-    #     "attivita": attivita.menu_attivita(me) if me and me.volontario else None,
-    #     "autorizzazioni": autorizzazioni.menu_autorizzazioni(request, me),
-    #     "presidente": presidente.menu_presidente(me),
-    #     "us": ufficio_soci.menu_us(me),
-    #     "co": centrale_operativa.menu_co(me),
-    #
-    #     "formazione": (
-    #         ("Corsi Base", (
-    #             ("Elenco Corsi Base", "fa-list", "/formazione/corsi-base/elenco/"),
-    #             ("Domanda formativa", "fa-area-chart", "/formazione/corsi-base/domanda/")
-    #                 if gestione_corsi_sede else None,
-    #             ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-base/nuovo/")
-    #                 if gestione_corsi_sede else None,
-    #             # ("Monitoraggio 2019", 'fa-user', reverse('pages:monitoraggio'))
-    #             #     if me and (me.is_presidente or me.is_comissario) else None,
-    #         )),
-    #         ("Corsi di Formazione", (
-    #             ("Elenco Corsi di Formazione", "fa-list", "/formazione/corsi-formazione/"),
-    #             ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-formazione/nuovo/"),
-    #         )) if False else None,
-    #     ),
-    #     "aspirante": (
-    #         ("Aspirante", (
-    #             ("Home page", "fa-home", "/aspirante/"),
-    #             ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
-    #             ("Storico", "fa-clock-o", "/utente/storico/"),
-    #             ("Contatti", "fa-envelope", "/utente/contatti/"),
-    #             ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
-    #             ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
-    #             ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
-    #             ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
-    #         )),
-    #         ("Nelle vicinanze", (
-    #             ("Impostazioni", "fa-gears", "/aspirante/impostazioni/"),
-    #             ("Corsi Base", "fa-list", "/aspirante/corsi-base/"),
-    #             ("Sedi CRI", "fa-list", "/aspirante/sedi/"),
-    #         )),
-    #         ("Sicurezza", (
-    #             ("Cambia password", "fa-key", "/utente/cambia-password/"),
-    #             ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
-    #         ),
-    #         ),
-    #     ) if me and hasattr(me, 'aspirante') else (
-    #         ("Gestione Corsi", (
-    #             ("Elenco Corsi Base", "fa-list", "/formazione/corsi-base/elenco/"),
-    #         )),
-    #     ),
-    # }
-    # if me and hasattr(me, 'aspirante'):
-    #     elementi['elementi_anagrafica'] = elementi.get('aspirante')
-    # else:
-    #     elementi['elementi_anagrafica'] = elementi.get('utente')
-    #
-    # elementi = elementi.get(section)
-
-    # return remove_none(elementi)
+        return {None: []}
