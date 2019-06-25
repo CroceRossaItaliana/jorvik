@@ -151,19 +151,9 @@ class Menu:
                 'name_for_template': 'elementi_anagrafica',
             }),
             ({
-                'urls': ['/informazioni/', '/attivita/'],
+                'urls': ['/attivita/', '/informazioni/',],
                 'method': 'attivita',
                 'name_for_template': 'attivita',
-            }),
-            ({
-                'urls': ['/centrale-operativa/'],
-                'method': 'co',
-                'name_for_template': 'co',
-            }),
-            ({
-                'urls': ['/us/'],
-                'method': 'us',
-                'name_for_template': 'us',
             }),
             ({
                 'urls': ['/posta/'],
@@ -181,19 +171,19 @@ class Menu:
                 'name_for_template': 'presidente',
             }),
             ({
-                'urls': ['/articoli/'],
-                'method': 'articoli',
-                'name_for_template': 'articoli',
-            }),
-            ({
-                'urls': ['/documenti/'],
-                'method': 'documenti',
-                'name_for_template': 'documenti',
+                'urls': ['/us/'],
+                'method': 'us',
+                'name_for_template': 'us',
             }),
             ({
                 'urls': ['/veicoli/', '/veicolo/', '/autoparco/'],
                 'method': 'veicoli',
                 'name_for_template': 'veicoli',
+            }),
+            ({
+                'urls': ['/centrale-operativa/'],
+                'method': 'co',
+                'name_for_template': 'co',
             }),
             ({
                 'urls': ['/formazione/', '/courses/'],
@@ -204,6 +194,16 @@ class Menu:
                 'urls': ['/aspirante/',],
                 'method': 'aspirante',
                 'name_for_template': 'aspirante',
+            }),
+            ({
+                'urls': ['/articoli/'],
+                'method': 'articoli',
+                'name_for_template': 'articoli',
+            }),
+            ({
+                'urls': ['/documenti/'],
+                'method': 'documenti',
+                'name_for_template': 'documenti',
             }),
         )
 
