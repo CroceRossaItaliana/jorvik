@@ -134,6 +134,16 @@ class Menu:
         )
 
     def mapping(self):
+        """
+        Il mapping serve a trovare il metodo che restituisce il menu laterale per ogni sezione.
+
+        Con il mapping è facile restituire un menu (metodo) personalizzato per ogni request.path.
+
+        urls - sono inizio del request.path che chiama utente per il quale si cerca un metodo
+        method - metodo che restituisce il menu
+        name_for_template - ogni template <***_vuoto.html> chiama una sua chiave del dizionario
+        """
+
         return (
             ({
                 'urls': ['/utente/', '/profilo/', '/page/'],
@@ -202,6 +212,7 @@ class Menu:
 
         path = self.request.path
 
+        # La ricerca del menu viene per inizio del url che chiama utente
         for i in self.mapping():
             for url in i['urls']:
                 if path.startswith(url):
@@ -209,4 +220,5 @@ class Menu:
                     name_for_template = i['name_for_template']
                     return {name_for_template: menu}
 
+        # Non restituisce nulla. Il menu sarè vuoto.
         return {None: []}
