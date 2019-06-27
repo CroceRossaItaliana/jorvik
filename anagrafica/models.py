@@ -543,52 +543,35 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def applicazioni_disponibili(self):
-        lista = []
+        # Personalizzare il menu "Utente" secondo il suo ruolo
+        utente_url, utente_label, utente_count = ('/utente/', 'Volontario', None)
 
-        if self.volontario:
-            lista += [('/utente/', 'Volontario', 'fa-user')]
-        elif not hasattr(self, 'aspirante'):
-            lista += [('/utente/', 'Utente', 'fa-user')]
+        if not self.volontario:
+            utente_label = 'Utente'
 
         if hasattr(self, 'aspirante'):
             if self.dipendente:
-                lista += [('/utente/', 'Utente', 'fa-user')]
+                utente_label = 'Utente'
             else:
-                lista += [('/aspirante/', 'Aspirante', 'fa-user', self.aspirante.corsi().count())]
+                utente_url, utente_label, utente_count = ('/aspirante/', 'Aspirante', self.aspirante.corsi().count())
 
-        if self.volontario:
-            lista += [('/attivita/', 'Attività', 'fa-calendar')]
+        all_menus = [
+            [(utente_url, utente_label, 'fa-user', utente_count), True],
+            [('/attivita/', 'Attività', 'fa-calendar'), self.volontario],
+            [('/posta/in-arrivo/', 'Posta', 'fa-envelope'), True],
+            [('/autorizzazioni/', 'Richieste', 'fa-user-plus', self.autorizzazioni_in_attesa().count()), self.ha_pannello_autorizzazioni],
+            [('/presidente/', 'Sedi', 'fa-home'), self.ha_permesso(GESTIONE_SEDE)],
+            [('/us/', 'Soci', 'fa-users'), self.ha_permesso(GESTIONE_SOCI)],
+            [('/veicoli/', "Veicoli", "fa-car"), self.ha_permesso(GESTIONE_AUTOPARCHI_SEDE)],
+            [('/centrale-operativa/', "CO", "fa-compass"), self.ha_permesso(GESTIONE_CENTRALE_OPERATIVA_SEDE)],
+            [('/formazione/', 'Formazione', 'fa-graduation-cap'), self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE)],
+            [('/articoli/', 'Articoli', 'fa-newspaper-o'), True],
+            [('/documenti/', 'Documenti', 'fa-folder'), True],
+        ]
 
-        lista += [('/posta/', 'Posta', 'fa-envelope')]
-
-        if self.ha_pannello_autorizzazioni:
-            lista += [('/autorizzazioni/', 'Richieste', 'fa-user-plus', self.autorizzazioni_in_attesa().count())]
-
-        if self.ha_permesso(GESTIONE_SEDE):
-            lista += [('/presidente/', 'Sedi', 'fa-home')]
-
-        if self.ha_permesso(GESTIONE_SOCI):
-            lista += [('/us/', 'Soci', 'fa-users')]
-
-        if self.ha_permesso(GESTIONE_AUTOPARCHI_SEDE):
-            lista += [('/veicoli/', "Veicoli", "fa-car")]
-
-        if self.ha_permesso(GESTIONE_CENTRALE_OPERATIVA_SEDE):
-            lista += [('/centrale-operativa/', "CO", "fa-compass")]
-
-        if self.ha_permesso(GESTIONE_CORSO) or self.ha_permesso(GESTIONE_CORSI_SEDE):
-            lista += [('/formazione/', 'Formazione', 'fa-graduation-cap')]
-
-        tipi = []
-        for d in self.deleghe_attuali():
-            if d.tipo in tipi:
-                continue
-            tipi.append(d.tipo)
-            #lista += [(APPLICAZIONI_SLUG_DICT[d.tipo], PERMESSI_NOMI_DICT[d.tipo])]
-        lista += [('/articoli/', 'Articoli', 'fa-newspaper-o')]
-        lista += [('/documenti/', 'Documenti', 'fa-folder')]
-        return lista
-
+        filter_items_to_display = filter(lambda x: x[1] == True, all_menus)
+        items_to_display = [item[0] for item in filter_items_to_display]
+        return items_to_display
 
     def oggetti_permesso(self, permesso, al_giorno=None,
                          solo_deleghe_attive=True):
