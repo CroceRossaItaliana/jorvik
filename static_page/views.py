@@ -88,7 +88,7 @@ def monitoraggio_actions(request, me):
 
     if not action: return redirect_url
     if not hasattr(me, 'sede_riferimento'): return redirect_url
-    if not me.is_presidente: return redirect('/')
+    if True not in [me.is_comissario, me.is_presidente]: return redirect('/')
 
     responses = MONITORAGGIOTYPE[target][0](request=request, me=me)
     if action == 'print':

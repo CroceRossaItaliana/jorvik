@@ -23,7 +23,7 @@ urlpatterns = [
     url(r'^contatti/$', views.utente_contatti),
     url(r'^rubrica/referenti/$', views.utente_rubrica_referenti),
     url(r'^rubrica/volontari/$', views.utente_rubrica_volontari),
-    url(r'^rubrica/(?P<rubrica>.*)/$', views.rubrica_delegati),
+    url(r'^rubrica/(?P<rubrica>.*)/$', views.rubrica_delegati, name='rubrica'),
     url(r'^curriculum/$', views.utente_curriculum),
     url(r'^curriculum/(?P<pk>.*)/cancella/$', views.utente_curriculum_cancella),
     url(r'^curriculum/(?P<tipo>.*)/$', views.utente_curriculum),
