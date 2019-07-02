@@ -24,24 +24,26 @@ class MenuUtente:
         ))
 
     def menu_persona(self):
+        me = self.me
         return ("Persona", (
             ("Benvenuto", "fa-bolt", "/utente/"),
             ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
             ("Storico", "fa-clock-o", "/utente/storico/"),
-            ("Documenti", "fa-folder", "/utente/documenti/") if self.me and (self.me.volontario or self.me.dipendente) else None,
+            ("Documenti", "fa-folder", "/utente/documenti/") if me and (me.volontario or me.dipendente) else None,
             ("Contatti", "fa-envelope", "/utente/contatti/"),
             ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
         ))
 
     def menu_curriculum(self):
+        me = self.me
         return ("Curriculum", (
             ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
             ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
+            ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if me and (me.volontario or me.dipendente) else None,
+            ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente) else None,
 
             # Competenze personali commentate per non visuallizarle
             # ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
-            # ("Patenti CRI", "fa-ambulance", "/utente/curriculum/PC/") if me and (me.volontario or me.dipendente) else None,
-            # ("Titoli CRI", "fa-plus-square-o", "/utente/curriculum/TC/") if me and (me.volontario or me.dipendente) else None,
         ))
 
     def menu_donatore(self):
