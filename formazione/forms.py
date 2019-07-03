@@ -449,10 +449,11 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
 
 class FormCreateDirettoreDelega(ModelForm):
     persona = autocomplete_light.ModelChoiceField('CreateDirettoreDelegaAutocompletamento')
+    has_nulla_osta = forms.BooleanField(label='Responsabilità di aver ricevuto nulla osta dal presidente del comitato di appartenenza')
 
     class Meta:
         model = Delega
-        fields = ['persona',]
+        fields = ['persona', 'has_nulla_osta',]
 
     def __init__(self, *args, **kwargs):
         # These attrs are passed in anagrafica.viste.strumenti_delegati()

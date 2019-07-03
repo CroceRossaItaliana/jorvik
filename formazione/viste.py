@@ -136,6 +136,13 @@ def formazione_corsi_base_nuovo(request, me):
 
 @pagina_privata
 def formazione_corsi_base_direttori(request, me, pk):
+    """
+    La form con l'input di persone da nominare si trova carica con iframe da:
+    url: /strumenti/delegati/
+    view: anagrafica.viste.strumenti_delegati
+    form: formazione.forms.FormCreateDirettoreDelega
+    """
+
     corso = get_object_or_404(CorsoBase, pk=pk)
     if not me.permessi_almeno(corso, COMPLETO):
         return redirect(ERRORE_PERMESSI)
