@@ -77,7 +77,7 @@
                                                              value='{{ assenza_lezione_esonero.esonero_motivazione|default:"" }}'>
                                                     </td>
                                                     <td>
-                                                        {{ partecipante.link|safe }}
+                                                        <a href="{% url 'profilo:main' partecipante.pk %}">{{partecipante.cognome}} {{partecipante.nome}}</a>
                                                     </td>
                                                 </tr>
                                             {% empty %}

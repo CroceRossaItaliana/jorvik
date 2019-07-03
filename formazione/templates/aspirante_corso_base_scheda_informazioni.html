@@ -237,7 +237,7 @@
                             &mdash;{{ lezione.fine.time|date:"TIME_FORMAT" }}
                         </td>
                         <th>{{ lezione.nome }}</th>
-                        <td>{{ lezione.docente }}</td>
+                        <td>{{ lezione.docente.cognome }} {{ lezione.docente.nome }}</td>
                     </tr>
                 {% empty %}
                     <tr class="warning">

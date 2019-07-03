@@ -317,7 +317,9 @@ def aspirante_corso_base_lezioni(request, me, pk):
     if not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    partecipanti = Persona.objects.filter(partecipazioni_corsi__in=corso.partecipazioni_confermate())
+    partecipanti = Persona.objects.filter(
+        partecipazioni_corsi__in=corso.partecipazioni_confermate()
+    ).order_by('cognome')
     lezioni = corso.lezioni.all()
 
     moduli = list()
