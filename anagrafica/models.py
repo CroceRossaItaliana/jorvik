@@ -1188,6 +1188,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=COMMISSARIO).exists()
 
     @property
+    def is_direttore(self):
+        return self.deleghe_attuali(tipo=DIRETTORE_CORSO).exists()
+
+    @property
     def nuovo_presidente(self):
         """
         Ritorna True se la persona e' un nuovo presidente/commissario (meno di un mese)
