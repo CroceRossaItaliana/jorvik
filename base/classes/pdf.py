@@ -17,7 +17,7 @@ class BaseGeneraPDF:
         self.model = model
         self.pk = pk
 
-    def make(self):
+    def make(self, **kwargs):
         oggetto = apps.get_model(self.app_label, self.model).objects.get(pk=self.pk)
 
         if not isinstance(oggetto, ConPDF):
@@ -33,7 +33,7 @@ class BaseGeneraPDF:
         elif not self.me.permessi_almeno(oggetto, LETTURA):
             return redirect(ERRORE_PERMESSI)
 
-        pdf = oggetto.genera_pdf()
+        pdf = oggetto.genera_pdf(self.request, **kwargs)
 
         # Se sto scaricando un tesserino, forza lo scaricamento.
         if 'tesserini' in pdf.file.path:

@@ -2445,7 +2445,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
     def url(self):
         return "#"
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva(
           nome="Trasferimento %s.pdf" % (self.persona.nome_completo, ),
@@ -2550,7 +2550,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         self.appartenenza.terminazione = Appartenenza.FINE_ESTENSIONE
         self.appartenenza.save()
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         pdf = PDF(oggetto=self)
         appartenenza = Appartenenza.objects.filter(Appartenenza.query_attuale(al_giorno=self.creazione).q,
                                                    membro=Appartenenza.VOLONTARIO, persona=self.persona).first()
@@ -2631,7 +2631,7 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
            ]
         )
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva(
           nome="Riserva %s.pdf" % (self.persona.nome_completo, ),

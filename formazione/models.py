@@ -849,15 +849,19 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         return archivio
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         """
         Genera il verbale del corso.
         """
+
+        anteprima = True if 'anteprima' in request.GET else False
+
         def key_cognome(elem):
             return elem.persona.cognome
 
         if not self.ha_verbale:
-            raise ValueError("Questo corso non ha un verbale.")
+            if not anteprima:
+                raise ValueError("Questo corso non ha un verbale.")
 
         partecipazioni = self.partecipazioni_confermate()
         pdf = PDF(oggetto=self)
@@ -865,6 +869,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             nome="Verbale Esame del Corso Base %d-%d.pdf" % (self.progressivo, self.anno),
             corpo={
                 "corso": self,
+                'titolo': "Anteprima " if anteprima else "",
                 "partecipazioni": sorted(partecipazioni, key=key_cognome),
                 "numero_idonei": self.idonei().count(),
                 "numero_non_idonei": self.non_idonei().count(),
@@ -1330,7 +1335,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
         )
         return pdf
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         z = Zip(oggetto=self)
         z.aggiungi_file(self.genera_scheda_valutazione().file.path)
         if self.idoneo:
