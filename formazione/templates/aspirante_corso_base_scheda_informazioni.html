@@ -100,7 +100,7 @@
 
 
         {% elif puoi_partecipare == corso.NON_HAI_CARICATO_DOCUMENTI_PERSONALI %}
-            Per iscriverti a questo corso inserisci la copia di un documento di riconoscimento in corso di validità (CDI o Patente Civile).
+            Per iscriverti a questo corso inserisci la copia di un documento di riconoscimento in corso di validità (CDI, Passaporto o Patente Civile).
 
             <form action="{% url 'aspirante:info' corso.pk %}" method="post" enctype="multipart/form-data">
                 <div style="display: flex;justify-content: space-between; margin-top:10px;">

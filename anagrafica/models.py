@@ -706,8 +706,12 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             return r.exists()
 
     def personal_identity_documents(self):
+        """
+        Restituisce un queryset di documenti che valgono come documenti d'identitè della persona.
+        """
         return self.documenti.filter(tipo__in=[Documento.CARTA_IDENTITA,
-                                               Documento.PATENTE_CIVILE])
+                                               Documento.PATENTE_CIVILE,
+                                               Documento.PASSAPORTO,])
 
     @property
     def url(self):
@@ -1390,12 +1394,14 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
 
     # Tipologie di documento caricabili
     CARTA_IDENTITA = 'I'
+    PASSAPORTO = 'B'
     PATENTE_CIVILE = 'P'
     PATENTE_CRI = 'S'
     CODICE_FISCALE = 'C'
     ALTRO = 'A'
     TIPO = (
-        (CARTA_IDENTITA, 'Carta d\'identità'),
+        (CARTA_IDENTITA, "Carta d'identità"),
+        (PASSAPORTO, "Passaporto"),
         (PATENTE_CIVILE, 'Patente Civile'),
         (PATENTE_CRI, 'Patente CRI'),
         (CODICE_FISCALE, 'Codice Fiscale'),
