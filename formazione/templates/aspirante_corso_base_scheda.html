@@ -176,7 +176,7 @@
                     {% endif %}
 
                     {% if corso.relazione_direttore and corso.relazione_direttore.is_completed %}
-                        <td><a class="btn btn-info" href="{{ corso.url_pdf }}?anteprima" target="_blank"><i class="fa fa-fw fa-times-circle"></i> Anteprima verbale</a></td>
+                        <td><a class="btn btn-info" href="{{ corso.url_pdf }}?anteprima&seconda_data_esame" target="_blank"><i class="fa fa-fw fa-times-circle"></i> Anteprima verbale</a></td>
                         <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course"><i class="fa fa-fw fa-times-circle"></i> Genera il verbale</a></td>
                     {% endif %}
                 </tr>

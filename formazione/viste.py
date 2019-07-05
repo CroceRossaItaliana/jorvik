@@ -574,19 +574,18 @@ def aspirante_corso_base_termina(request, me, pk):
                                messaggio="Il corso non è attivo e non può essere terminato.",
                                **torna)
 
-    partecipanti_moduli = []
+    partecipanti_moduli = list()
 
     azione = request.POST.get('azione', default=ModuloVerbaleAspiranteCorsoBase.SALVA_SOLAMENTE)
     generazione_verbale = azione == ModuloVerbaleAspiranteCorsoBase.GENERA_VERBALE
     termina_corso = generazione_verbale
 
     for partecipante in corso.partecipazioni_confermate():
-
         form = ModuloVerbaleAspiranteCorsoBase(
             request.POST or None, prefix="part_%d" % partecipante.pk,
             instance=partecipante,
-            generazione_verbale=generazione_verbale
-        )
+            generazione_verbale=generazione_verbale)
+
         if corso.is_nuovo_corso:
             pass
         else:
@@ -605,6 +604,13 @@ def aspirante_corso_base_termina(request, me, pk):
         if not corso.relazione_direttore.is_completed:
             messages.error(request, "Il corso non può essere terminato perchè "
                                     "la relazione del direttore non è completata.")
+            return redirect(reverse('aspirante:terminate', args=(pk,)))
+
+        # Verifica se nella form del verbale (sopra) sono stati salvati
+        # partecipanti ammessi con motivo assente
+        if corso.partecipazioni_confermate_motivo_assente(solo=True).exists():
+            messages.error(request, "Non puoi terminare il corso con le persone assenti. "
+                                    "Imposta una seconda data e compila il secondo verbale")
             return redirect(reverse('aspirante:terminate', args=(pk,)))
 
         # Tutto ok, posso procedere

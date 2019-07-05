@@ -10,6 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.timezone import now
+from django.utils.translation import ugettext_lazy as _
 
 from anagrafica.models import Sede, Persona, Appartenenza, Delega
 from anagrafica.costanti import PROVINCIALE, TERRITORIALE, LOCALE, REGIONALE, NAZIONALE
@@ -117,6 +118,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         help_text="La data di inizio del corso. "
                   "Utilizzata per la gestione delle iscrizioni.")
     data_esame = models.DateTimeField(blank=False, null=False)
+    data_esame_2 = models.DateTimeField(_('Seconda data esame'), blank=True, null=True)
     progressivo = models.SmallIntegerField(blank=False, null=False, db_index=True)
     anno = models.SmallIntegerField(blank=False, null=False, db_index=True)
     descrizione = models.TextField(blank=True, null=True)
@@ -567,6 +569,20 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def partecipazioni_confermate(self):
         return PartecipazioneCorsoBase.con_esito_ok(corso=self)
 
+    def partecipazioni_confermate_motivo_assente(self, solo=False):
+        """ solo:
+        False (default):
+            - Restituisce partecipazioni confermate SENZA motivo assente
+        True:
+            - Restituisce SOLO partecipazioni confermate CON assenti per motivo giustificato.
+        """
+
+        condition = {'ammissione': PartecipazioneCorsoBase.ASSENTE_MOTIVO}
+        if solo:
+            return self.partecipazioni_confermate().filter(**condition)
+        else:
+            return self.partecipazioni_confermate().exclude(**condition)
+
     def partecipazioni_in_attesa(self):
         return PartecipazioneCorsoBase.con_esito_pending(corso=self)
 
@@ -747,7 +763,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def terminabile(self):
-        return self.stato == self.ATTIVO and self.concluso and self.partecipazioni_confermate().exists()
+        return self.stato == self.ATTIVO \
+           and self.concluso \
+           and self.partecipazioni_confermate().exists()
 
     @property
     def ha_verbale(self):
@@ -760,6 +778,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             # Per maggiore sicurezza, questa cosa viene eseguita in una transazione
 
             for partecipante in self.partecipazioni_confermate():
+                if partecipante.ammissione == PartecipazioneCorsoBase.ASSENTE_MOTIVO:
+                    # Partecipante con questo motivo non va nel verbale_1
+                    # Non fare niente.
+                    continue
+
                 # Calcola e salva l'esito dell'esame.
                 esito_esame = partecipante.IDONEO if partecipante.idoneo \
                                                 else partecipante.NON_IDONEO
@@ -827,6 +850,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         def key_cognome(elem):
            return elem.cognome
 
+
+
         iscritti = [partecipazione.persona for partecipazione in self.partecipazioni_confermate()]
 
         archivio = Zip(oggetto=self)
@@ -863,7 +888,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             if not anteprima:
                 raise ValueError("Questo corso non ha un verbale.")
 
-        partecipazioni = self.partecipazioni_confermate()
+        verbale_per_seconda_data_esame = True if 'seconda_data_esame' in request.GET else False
+        partecipazioni = self.partecipazioni_confermate_motivo_assente(solo=verbale_per_seconda_data_esame)
+
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva(
             nome="Verbale Esame del Corso Base %d-%d.pdf" % (self.progressivo, self.anno),
@@ -1156,9 +1183,7 @@ class InvitoCorsoBase(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale, mod
         return "Invito di part. di <%s> a <%s>" % (self.persona, self.corso)
 
 
-class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
-                              ConAutorizzazioni, ConPDF):
-
+class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
     persona = models.ForeignKey(Persona, related_name='partecipazioni_corsi', on_delete=models.CASCADE)
     corso = models.ForeignKey(CorsoBase, related_name='partecipazioni', on_delete=models.PROTECT)
 
@@ -1188,10 +1213,12 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale,
     AMMESSO = "AM"
     NON_AMMESSO = "NA"
     ASSENTE = "AS"
+    ASSENTE_MOTIVO = "MO"
     AMMISSIONE = (
         (AMMESSO, "Ammesso"),
         (NON_AMMESSO, "Non Ammesso"),
         (ASSENTE, "Assente"),
+        (ASSENTE_MOTIVO, "Assente per motivo giustificato"),
     )
 
     ammissione = models.CharField(max_length=2, choices=AMMISSIONE, default=None, blank=True, null=True, db_index=True)

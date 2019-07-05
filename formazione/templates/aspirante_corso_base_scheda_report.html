@@ -29,7 +29,7 @@
                             <td>{{ p.creazione|date:"SHORT_DATE_FORMAT" }}</td>
                             {% if corso.ha_verbale %}
                                 <td>{{ p.get_ammissione_display|default:"N/D" }}</td>
-                                <td class="grassetto">{{ p.get_esito_esame_display }}</td>
+                                <td class="grassetto">{{ p.get_esito_esame_display|default:"N/D" }}</td>
                                 <td><a href="{{ p.url_pdf }}">Scheda {% if p.idoneo %}e Attestato{% endif %}</a></td>
                             {% endif %}
                         </tr>
@@ -53,7 +53,8 @@
             <div class="panel-body">
                 {% if corso.ha_verbale %}
                     <p>Da qui puoi scaricare il verbale del corso in formato PDF.</p>
-                    <p><a href="{{ corso.url_pdf }}"><i class="fa fa-fw fa-download"></i> Scarica il verbale</a></p>
+                    <p><a href="{{ corso.url_pdf }}" target="_blank"><i class="fa fa-fw fa-download"></i> Scarica il verbale</a></p>
+                    <p><a href="{{ corso.url_pdf }}?seconda_data_esame" target="_blank"><i class="fa fa-fw fa-download"></i> Scarica il verbale (seconda data esame)</a></p>
                 {% else %}
                     <p>Il verbale del corso non &egrave; ancora disponibile per questo corso.</p>
                     <p>Sar&agrave; scaricabile una volta generato. La generazione sar&agrave; effettuabile non appena finiti gli esami.</p>

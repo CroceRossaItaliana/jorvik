@@ -118,7 +118,7 @@
             <td>{{ p.persona.comune_nascita }}</td>
             <td>{{ p.persona.data_nascita|date:"SHORT_DATE_FORMAT" }}</td>
             <td>{{ p.persona.codice_fiscale }}</td>
-            <td><b>{{ p.get_esito_esame_display }}</b></td>
+            <td><b>{{ p.get_esito_esame_display|default:"N/D" }}</b></td>
         </tr>
     {% endfor %}
     </tbody>

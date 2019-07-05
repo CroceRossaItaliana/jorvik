@@ -171,7 +171,7 @@ class ModuloModificaLezione(ModelForm):
 class ModuloModificaCorsoBase(ModelForm):
     class Meta:
         model = CorsoBase
-        fields = ['data_inizio', 'data_esame',
+        fields = ['data_inizio', 'data_esame', 'data_esame_2',
                   'min_participants', 'max_participants',
                   'descrizione',]
         widgets = {
@@ -400,10 +400,11 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
         destinazione = cd.get('destinazione')
 
         # Controlla che non ci siano conflitti (incoerenze) nei dati.
-        if ammissione != PartecipazioneCorsoBase.NON_AMMESSO:
+        if ammissione not in [PartecipazioneCorsoBase.NON_AMMESSO,
+                              PartecipazioneCorsoBase.ASSENTE_MOTIVO,]:
             if motivo_non_ammissione:
-                self.add_error('motivo_non_ammissione', "Questo campo deve essere compilato solo "
-                                                        "nel caso di NON AMMISSIONE.")
+                self.add_error('motivo_non_ammissione',
+                    "Questo campo deve essere compilato solo nel caso di NON AMMISSIONE.")
 
         # Se non è stato ammesso, un bel gruppo di campi NON devono essere compilati.
         if ammissione != PartecipazioneCorsoBase.AMMESSO:
@@ -433,10 +434,11 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
                                                 "selezionare l'opzione per specificare che l'esame "
                                                 "non includeva questa parte.")
 
-        if ammissione == PartecipazioneCorsoBase.NON_AMMESSO:
+        if ammissione in [PartecipazioneCorsoBase.NON_AMMESSO,
+                          PartecipazioneCorsoBase.ASSENTE_MOTIVO,]:
             if not motivo_non_ammissione:
-                self.add_error('motivo_non_ammissione', "Devi specificare la motivazione di non "
-                                                        "ammissione all'esame.")
+                self.add_error('motivo_non_ammissione',
+                    "Devi specificare la motivazione di non ammissione all'esame.")
 
 
         # Se sto generando il verbale, controlla che tutti i campi obbligatori siano stati riempiti.
