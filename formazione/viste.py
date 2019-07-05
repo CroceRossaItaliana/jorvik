@@ -580,7 +580,12 @@ def aspirante_corso_base_termina(request, me, pk):
     generazione_verbale = azione == ModuloVerbaleAspiranteCorsoBase.GENERA_VERBALE
     termina_corso = generazione_verbale
 
-    for partecipante in corso.partecipazioni_confermate():
+    if 'seconda_data_esame' in request.GET:
+        partecipanti_qs = corso.partecipazioni_confermate_assente_motivo(solo=True)
+    else:
+        partecipanti_qs = corso.partecipazioni_confermate_assente_motivo()
+
+    for partecipante in partecipanti_qs:
         form = ModuloVerbaleAspiranteCorsoBase(
             request.POST or None, prefix="part_%d" % partecipante.pk,
             instance=partecipante,
@@ -608,7 +613,7 @@ def aspirante_corso_base_termina(request, me, pk):
 
         # Verifica se nella form del verbale (sopra) sono stati salvati
         # partecipanti ammessi con motivo assente
-        if corso.partecipazioni_confermate_motivo_assente(solo=True).exists():
+        if corso.has_partecipazioni_confermate_con_motivo_assente:
             messages.error(request, "Non puoi terminare il corso con le persone assenti. "
                                     "Imposta una seconda data e compila il secondo verbale")
             return redirect(reverse('aspirante:terminate', args=(pk,)))

@@ -23,7 +23,6 @@
 
                     <div class="alert alert-info">
                         <i class="fa fa-fw fa-save"></i> <strong>Ricorda di salvare!</strong>
-                        <sup class="text-danger">Nuova funzionalit&agrave;</sup>
                         Puoi salvare le tue modifiche cliccando sul pulsante Salva, e continuare in un secondo momento la compilazione del verbale.
                     </div>
 
@@ -67,6 +66,8 @@
                             <div class="col-md-8">{% bootstrap_form modulo %}</div>
                         </div>
                         <hr />
+                    {% empty %}
+                        <p style="text-align:center;">Il corso non ha partecipanti.</p>
                     {% endfor %}
 
                     <button type="submit" class="btn btn-block btn-primary" name="azione" value="{{ azione_salva_solamente }}">
@@ -74,7 +75,7 @@
                     </button>
                 </div>
 
-                {% if corso.relazione_direttore.is_completed %}
+                {% if corso.relazione_direttore.is_completed and not corso.has_partecipazioni_confermate_con_motivo_assente %}
                     <button style="margin:5px 0 0;" type="submit" class="btn btn-block btn-lg btn-danger" name="azione" value="{{ azione_genera_verbale }}">
                         <i class="fa fa-fw fa-check"></i> Genera il verbale e termina il corso
                     </button>

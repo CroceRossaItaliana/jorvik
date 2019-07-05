@@ -569,7 +569,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def partecipazioni_confermate(self):
         return PartecipazioneCorsoBase.con_esito_ok(corso=self)
 
-    def partecipazioni_confermate_motivo_assente(self, solo=False):
+    def partecipazioni_confermate_assente_motivo(self, solo=False):
         """ solo:
         False (default):
             - Restituisce partecipazioni confermate SENZA motivo assente
@@ -582,6 +582,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             return self.partecipazioni_confermate().filter(**condition)
         else:
             return self.partecipazioni_confermate().exclude(**condition)
+
+    @property
+    def has_partecipazioni_confermate_con_motivo_assente(self):
+        return self.partecipazioni_confermate_assente_motivo(solo=True).exists()
 
     def partecipazioni_in_attesa(self):
         return PartecipazioneCorsoBase.con_esito_pending(corso=self)
@@ -889,7 +893,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 raise ValueError("Questo corso non ha un verbale.")
 
         verbale_per_seconda_data_esame = True if 'seconda_data_esame' in request.GET else False
-        partecipazioni = self.partecipazioni_confermate_motivo_assente(solo=verbale_per_seconda_data_esame)
+        partecipazioni = self.partecipazioni_confermate_assente_motivo(solo=verbale_per_seconda_data_esame)
 
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva(

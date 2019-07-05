@@ -13,6 +13,8 @@
 {% block app_contenuto %}
     <style>
         .course__name-without-title-cri {font-weight: bold; font-size:22px; color: #3c763d;}
+        .verbale__table {width:100%; text-align:center; margin: 20px auto 0;}
+        .verbale__seconda-data-esame {text-align:center;}
     </style>
 
     {% if corso.titolo_cri %}<h2 class="course__title-cri">{{ corso.titolo_cri|default:"" }}</h2>{% endif %}
@@ -167,7 +169,7 @@
             <p>Una volta generato il verbale e compilata la relazione, tutti i partecipanti verranno informati dell'esito e,
                 coloro che saranno stati promossi, verranno trasformati automaticamente in volontari.</p>
 
-            <table style="text-align:center; width:100%; margin-top:20px;">
+            <table class="verbale__table">
                 <tr>
                     <td><a class="btn {% if corso.relazione_direttore.is_completed %}btn-success{%else%}btn-default{%endif%}" href="{% url 'courses:compila_relazione_direttore' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Inserire la relazione</a></td>
 
@@ -176,11 +178,25 @@
                     {% endif %}
 
                     {% if corso.relazione_direttore and corso.relazione_direttore.is_completed %}
-                        <td><a class="btn btn-info" href="{{ corso.url_pdf }}?anteprima&seconda_data_esame" target="_blank"><i class="fa fa-fw fa-times-circle"></i> Anteprima verbale</a></td>
-                        <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course"><i class="fa fa-fw fa-times-circle"></i> Genera il verbale</a></td>
+                        <td><a class="btn btn-info" href="{{ corso.url_pdf }}?anteprima" target="_blank"><i class="fa fa-fw fa-times-circle"></i> Anteprima verbale</a></td>
+                        {% if not corso.has_partecipazioni_confermate_con_motivo_assente %}
+                            <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course"><i class="fa fa-fw fa-times-circle"></i> Genera il verbale</a></td>
+                        {% endif %}
                     {% endif %}
                 </tr>
             </table>
+
+            {% if corso.has_partecipazioni_confermate_con_motivo_assente %}
+                <hr>
+                <h3 class="verbale__seconda-data-esame">Seconda data esame:</h3>
+                <table class="verbale__table">
+                    <tr>
+                        <td><a class="btn btn-default" href="{{ corso.url_termina }}?seconda_data_esame"><i class="fa fa-fw fa-check-circle"></i> Compila il verbale</a></td>
+                        <td><a class="btn btn-info" href="{{ corso.url_pdf }}?anteprima&seconda_data_esame" target="_blank"><i class="fa fa-fw fa-times-circle"></i> Anteprima verbale</a></td>
+                        <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course"><i class="fa fa-fw fa-times-circle"></i> Genera il verbale</a></td>
+                    </tr>
+                </table>
+            {% endif %}
         </div>
     {% endif %}
 
