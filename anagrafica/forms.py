@@ -452,7 +452,7 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
         fields = ['persona',]
 
     def __init__(self, *args, **kwargs):
-        # These attrs are passed in anagrafica.viste.strumenti_delegati()
+        # These attrs are passed in anagrafica.viste.strumenti_delegati
         for attr in ['me', 'course']:
             if attr in kwargs:
                 setattr(self, attr, kwargs.pop(attr))
@@ -509,10 +509,13 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
             membro=Appartenenza.VOLONTARIO)
         self.stesse_sedi = me_sede == persona.sede_riferimento()
 
-        if self.course.tipo == Corso.CORSO_NUOVO:
-            return self._validate_delega_per_corso(persona)
-        else:
-            return self._validate_delega(me_sede, persona)
+        # Logica di validazione per modulo formazione
+        if isinstance(self.course.__class__, Corso):
+            if self.course.tipo == Corso.CORSO_NUOVO:
+                return self._validate_delega_per_corso(persona)
+
+        # Per tutti gli altri moduli che usano questa form
+        return self._validate_delega(me_sede, persona)
     
     def clean_inizio(self):
         """ Impedisce inizio passato """
