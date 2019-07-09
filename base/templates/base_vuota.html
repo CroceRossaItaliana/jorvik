@@ -41,7 +41,7 @@
                                     Amministrazione
                                 </a>
                             {% endif %}
-                            <a class="btn btn-sm btn-info" href="{% url 'logout' %}">
+                            <a class="btn btn-sm btn-danger" href="{% url 'logout' %}">
                                 <i class="fa fa-sign-out"></i>
                                 Logout
                             </a>
@@ -50,7 +50,7 @@
                         <p class="navbar-btn btn-group">
 
                             {% if not site_url %}
-                                <a class="btn btn-sm btn-danger" href="/login/">
+                                <a class="btn btn-sm btn-success" href="/login/">
                                 <i class="fa fa-key"></i> Accedi
                             </a>
                             {% endif %}

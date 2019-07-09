@@ -67,7 +67,7 @@
                                     <tbody>
                                         {% for p in turno.partecipazioni_confermate %}
                                             <tr {% if p.stato == p.NON_PRESENTATO %}class="danger"{% endif %}>
-                                                <td class="warning">
+                                                <td class="alert alert-warning">
                                                     <input type="hidden" name="presenza-{{ p.pk }}" value="0" />
                                                     <label>
                                                         <input
@@ -101,7 +101,7 @@
 
                                         {% if turno.partecipazioni_confermate %}
                                             <tr>
-                                                <td class="warning">
+                                                <td class="alert alert-warning">
                                                     <button type="submit" class="btn btn-xs btn-warning">
                                                         <i class="fa fa-fw fa-save"></i>
                                                     </button>
@@ -248,7 +248,7 @@
                 </tr>
             {% empty %}
 
-                <tr class="warning allinea-centro">
+                <tr class="alert alert-warning allinea-centro">
                     <td colspan="3">
                         <p>
                             <i class="fa fa-fw fa-info-circle"></i>
