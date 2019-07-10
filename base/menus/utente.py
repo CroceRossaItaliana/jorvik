@@ -76,5 +76,5 @@ class MenuUtente:
             self.menu_donatore() if self.is_volontario else None,
             self.menu_sicurezza(),
             self.menu_links(),
-            menu_monitoraggio(self.me),
+            # menu_monitoraggio(self.me),
         ))

@@ -41,10 +41,11 @@ class AdminLocazione(ReadonlyAdminMixin, admin.ModelAdmin):
 class AdminAutorizzazione(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["richiedente__nome", "richiedente__cognome", "richiedente__codice_fiscale",
                      "firmatario__nome", "firmatario__cognome", "firmatario__codice_fiscale", ]
-    list_display = ("richiedente", "firmatario", "concessa", "necessaria", "progressivo",
-                    "oggetto_tipo", "oggetto_id",
-                    "destinatario_ruolo", "destinatario_oggetto_tipo", "destinatario_oggetto_id")
-    list_filter = ("necessaria", "concessa", "destinatario_oggetto_tipo",)
+    list_display = ("richiedente", "firmatario", "concessa", 'automatica',
+                    "necessaria", "progressivo", "oggetto_tipo", "oggetto_id",
+                    "destinatario_ruolo",
+                    "destinatario_oggetto_tipo", "destinatario_oggetto_id")
+    list_filter = ("necessaria", "concessa", 'automatica', "destinatario_oggetto_tipo",)
     raw_id_fields = ("richiedente", "firmatario", )
 
 

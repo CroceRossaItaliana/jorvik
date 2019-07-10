@@ -1,7 +1,7 @@
 from django_cron import CronJobBase, Schedule
 
-from base.models import Allegato, Autorizzazione
 from formazione.models import Aspirante
+from .models import Allegato, Autorizzazione
 
 
 class CronCancellaFileScaduti(CronJobBase):
