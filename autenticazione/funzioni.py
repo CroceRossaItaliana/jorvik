@@ -1,14 +1,14 @@
-import newrelic.agent
-from django.contrib.auth.models import AnonymousUser
-from django.shortcuts import render_to_response, redirect
-from django.template import RequestContext
-from django.utils.http import urlencode
 import functools
-from anagrafica.permessi.costanti import ERRORE_ORFANO, ERRORE_PERMESSI
-from base.menu import menu
-from jorvik.settings import LOGIN_URL, DEBUG
 
-__author__ = 'alfioemanuele'
+from django.contrib.auth.models import AnonymousUser
+from django.shortcuts import render, redirect
+from django.utils.http import urlencode
+
+import newrelic.agent
+
+from anagrafica.permessi.costanti import ERRORE_ORFANO, ERRORE_PERMESSI
+from base.menu import Menu
+from jorvik.settings import LOGIN_URL, DEBUG
 
 
 def _spacchetta(pacchetto):
@@ -46,13 +46,14 @@ def pagina_pubblica(funzione=None, permetti_embed=False):
 
         request_embed = request.GET.get('embed', default='False')
         embed = permetti_embed and request_embed.lower() in ('true', '1')
+        menu_laterale = Menu(request)
 
         contesto.update({"me": request.me})
         contesto.update({"embed": embed})
         contesto.update({"debug": DEBUG and request.META['SERVER_NAME'] != "testserver"})
         contesto.update({"request": request})
-        contesto.update({"menu": menu(request)})
-        return render_to_response(template, RequestContext(request, contesto))
+        contesto.update({"menu": menu_laterale.get_menu()})  # menu laterale
+        return render(request, template, contesto)
 
     return _pagina_pubblica
 
@@ -67,10 +68,10 @@ def pagina_anonima(funzione, pagina='/utente/'):
     """
 
     def _pagina_anonima(request, *args, **kwargs):
-
         if request.user.is_authenticated():
             return redirect(pagina)
 
+        menu_laterale = Menu(request)
         (template, contesto, richiesta) = _spacchetta(funzione(request, *args, **kwargs))
 
         if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
@@ -79,8 +80,9 @@ def pagina_anonima(funzione, pagina='/utente/'):
         contesto.update({"me": None})
         contesto.update({"debug": DEBUG and request.META['SERVER_NAME'] != "testserver"})
         contesto.update({"request": request})
-        contesto.update({"menu": menu(request)})
-        return render_to_response(template, RequestContext(request, contesto))
+        contesto.update({"menu": menu_laterale.get_menu()})  # menu laterale
+
+        return render(request, template, contesto)
 
     return _pagina_anonima
 
@@ -101,31 +103,37 @@ def pagina_privata(funzione=None, pagina=LOGIN_URL, permessi=[]):
         return functools.partial(pagina_privata, pagina=pagina, permessi=permessi)
 
     def _pagina_privata(request, *args, **kwargs):
-
         newrelic.agent.set_transaction_name(funzione.__name__, "privata")
 
+        # Verifica
         if isinstance(request.user, AnonymousUser):
             return redirect(LOGIN_URL + "?" + urlencode({"next": request.path}))
 
-        if not request.user or request.user.applicazioni_disponibili is None:
+        # Verifica
+        menu_applicazioni = request.user.applicazioni_disponibili
+        if not request.user or menu_applicazioni is None:
             return redirect(ERRORE_ORFANO)
 
         request.me = request.user.persona
-        newrelic.agent.add_custom_parameter("persona_id", "%d" % (request.me.pk,))
+        newrelic.agent.add_custom_parameter("persona_id", "%d" % request.me.pk)
 
         if not request.me.ha_permessi(permessi):  # Controlla che io lo abbia
             return redirect(ERRORE_PERMESSI)  # Altrimenti, buttami fuori
 
-        (template, contesto, richiesta) = _spacchetta(funzione(request, request.me, *args, **kwargs))
+        (template, context, richiesta) = _spacchetta(funzione(request, request.me, *args, **kwargs))
 
         if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
             return richiesta  # Passa attraverso.
 
-        contesto.update({"me": request.me})
-        contesto.update({"debug": DEBUG and request.META['SERVER_NAME'] != "testserver"})
-        contesto.update({"request": request})
-        contesto.update({"menu": menu(request)})
-        return render_to_response(template, RequestContext(request, contesto))
+        menu_laterale = Menu(request)
+
+        context.update({"me": request.me})
+        context.update({"debug": DEBUG and request.META['SERVER_NAME'] != "testserver"})
+        context.update({"request": request})
+        context.update({"menu": menu_laterale.get_menu()})  # menu laterale
+        context.update({"menu_applicazioni": menu_applicazioni})
+
+        return render(request, template, context)
 
     return _pagina_privata
 
@@ -156,7 +164,8 @@ def pagina_privata_no_cambio_firma(funzione=None, pagina=LOGIN_URL, permessi=[])
         if isinstance(request.user, AnonymousUser):
             return redirect(LOGIN_URL)
 
-        if not request.user or request.user.applicazioni_disponibili is None:
+        menu_applicazioni = request.user.applicazioni_disponibili
+        if not request.user or menu_applicazioni is None:
             return redirect(ERRORE_ORFANO)
 
         request.me = request.user.persona
@@ -164,22 +173,27 @@ def pagina_privata_no_cambio_firma(funzione=None, pagina=LOGIN_URL, permessi=[])
         if not request.me.ha_permessi(permessi):  # Controlla che io lo abbia
             return redirect(ERRORE_PERMESSI)  # Altrimenti, buttami fuori
 
+        menu_laterale = Menu(request)
+
         extra = {}
         extra.update({"me": request.me})
         extra.update({"debug": DEBUG and request.META['SERVER_NAME'] != "testserver"})
         extra.update({"request": request})
-        extra.update({"menu": menu(request)})
+        extra.update({"menu": menu_laterale.get_menu()})  # menu laterale
+        extra.update({"menu_applicazioni": menu_applicazioni})
 
-        (template, contesto, richiesta) = _spacchetta(funzione(request, *args, extra_context=extra, **kwargs))
+        (template, context, richiesta) = _spacchetta(funzione(request, *args, extra_context=extra, **kwargs))
 
         if template is None:  # Se ritorna risposta particolare (ie. Stream o Redirect)
             return richiesta  # Passa attraverso.
 
-        contesto.update({"me": request.me})
-        contesto.update({"debug": DEBUG and request.META['SERVER_NAME'] != "testserver"})
-        contesto.update({"request": request})
-        contesto.update({"menu": menu(request)})
-        return render_to_response(template, RequestContext(request, contesto))
+        context.update({"me": request.me})
+        context.update({"debug": DEBUG and request.META['SERVER_NAME'] != "testserver"})
+        context.update({"request": request})
+        context.update({"menu": menu_laterale.get_menu()})  # menu laterale
+        context.update({"menu_applicazioni": menu_applicazioni})
+
+        return render(request, template, context)
 
     return _pagina_privata
 
@@ -201,13 +215,14 @@ class VistaDecorata(object):
 
     def contesto(self, contesto):
         embed = self.permetti_embed and self.request.GET.get('embed', default='false') == 'true'
+        menu_laterale = Menu(self.request)
 
         try:
             contesto.update({'me': self.request.me})
         except AttributeError:
             pass
         try:
-            contesto.update({'menu': menu(self.request)})
+            contesto.update({'menu': menu_laterale.get_menu()})
         except AttributeError:
             pass
         contesto.update({'embed': embed})

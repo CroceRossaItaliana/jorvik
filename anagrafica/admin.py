@@ -328,7 +328,7 @@ class AdminTrasferimento(ReadonlyAdminMixin, admin.ModelAdmin):
 @admin.register(Riserva)
 class AdminRiserva(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["persona__nome", "persona__cognome", "persona__codice_fiscale"]
-    list_display = ("persona",)
+    list_display = ("persona", 'inizio', 'fine', 'motivo',)
     list_filter = ("confermata", "ritirata", "creazione",)
     raw_id_fields = RAW_ID_FIELDS_RISERVA
     inlines = [InlineAutorizzazione]
