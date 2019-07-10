@@ -1,4 +1,5 @@
 import os
+from dateutil.relativedelta import relativedelta
 
 from collections import defaultdict
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
@@ -188,7 +189,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             raise ValueError("Il modulo richiesto per l'accettazione non e' stato completato correttamente.")
 
         if not self.oggetto:
-            print('L\'autorizzazione {} risulta non avere oggetti collegati'.format(self.pk))
+            print("L'autorizzazione %s risulta non avere oggetti collegati" % self.pk)
             return
 
         self.concessa = concedi
@@ -336,31 +337,46 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         }
         self._invia_notifica(modello, oggetto, auto, aggiunte_corpo=aggiunte_corpo)
 
+    @property
+    def is_valid_per_approvazione_automatica(self):
+        if self.oggetto is None:
+            return False  # Saltare Autorizzazione senza <oggetto>
+        else:
+            return self.scadenza \
+                   and self.concessa is None \
+                   and self.scadenza < now() \
+                   and not self.oggetto.ritirata
+
     def controlla_concedi_automatico(self):
-        if self.scadenza and self.concessa is None and self.scadenza < now() and not self.oggetto.ritirata:
+        if self.is_valid_per_approvazione_automatica:
             self.concedi(auto=True)
 
     def controlla_nega_automatico(self):
-        if self.scadenza and self.concessa is None and self.scadenza < now() and not self.oggetto.ritirata:
+        if self.is_valid_per_approvazione_automatica:
             self.nega(auto=True)
-
-    def automatizza(self, concedi=None, scadenza=None):
-        if concedi and not self.oggetto.ritirata:
-            self.tipo_gestione = concedi
-            self.scadenza = calcola_scadenza(scadenza)
-            self.save()
 
     @classmethod
     def gestisci_automatiche(cls):
-        base = cls.objects.filter(
-            concessa__isnull=True, scadenza__isnull=False, scadenza__lte=now()
-        )
-        da_negare = base.filter(tipo_gestione=cls.NG_AUTO)
-        da_approvare = base.filter(tipo_gestione=cls.AP_AUTO)
+        delta = now() - relativedelta(months=1)
+        qs = cls.objects.filter(concessa__isnull=True, scadenza__isnull=False,
+                                scadenza__gte=delta, scadenza__lte=now())
+        da_negare = qs.filter(tipo_gestione=cls.NG_AUTO)
+        da_approvare = qs.filter(tipo_gestione=cls.AP_AUTO)
+
         for autorizzazione in da_negare:
             autorizzazione.controlla_nega_automatico()
         for autorizzazione in da_approvare:
             autorizzazione.controlla_concedi_automatico()
+
+    def automatizza(self, concedi=None, scadenza=None):
+        if not self.oggetto:
+            print('Autorizzazione %s non ha oggetto collegato' % autorizzazione.pk)
+            return
+
+        if concedi and not self.oggetto.ritirata:
+            self.tipo_gestione = concedi
+            self.scadenza = calcola_scadenza(scadenza)
+            self.save()
 
     @classmethod
     def notifiche_richieste_in_attesa(cls):
@@ -370,9 +386,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         oggetto = "Richieste in attesa di approvazione"
         modello = "email_richieste_pending.html"
 
-        in_attesa = cls.objects.filter(
-            concessa__isnull=True
-        )
+        in_attesa = cls.objects.filter(concessa__isnull=True)
         trasferimenti = in_attesa.filter(oggetto_tipo=ContentType.objects.get_for_model(Trasferimento))
         estensioni = in_attesa.filter(oggetto_tipo=ContentType.objects.get_for_model(Estensione))
         trasferimenti_manuali = trasferimenti.filter(scadenza__isnull=True, tipo_gestione=Autorizzazione.MANUALE)
@@ -385,7 +399,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         persone = dict()
         for autorizzazione in autorizzazioni:
             if not autorizzazione.oggetto:
-                print('autorizzazione {} non ha oggetto collegato'.format(autorizzazione.pk))
+                print('Autorizzazione %s non ha oggetto collegato' % autorizzazione.pk)
                 continue
             if autorizzazione.oggetto and not autorizzazione.oggetto.ritirata and not autorizzazione.oggetto.confermata:
                 destinatari = cls.espandi_notifiche(autorizzazione.destinatario_oggetto, [], True, True)
@@ -417,6 +431,12 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                 corpo=corpo,
                 destinatari=[persona['persona']]
             )
+
+    def __str__(self):
+        if self.oggetto:
+            return str(self.oggetto)
+        else:
+            return super().__str__()
 
 
 class Log(ModelloSemplice, ConMarcaTemporale):
@@ -808,6 +828,7 @@ class ConAutorizzazioni(models.Model):
         """
         return ModuloMotivoNegazione
 
+
 class ConScadenzaPulizia(models.Model):
     """
     Aggiunge un attributo DateTimeField scadenza.
@@ -900,6 +921,7 @@ class Token(ModelloSemplice, ConMarcaTemporale):
         permissions = (
             ("view_token", "Can view token"),
         )
+
 
 class Allegato(ConMarcaTemporale, ConScadenzaPulizia, ModelloSemplice):
     """
