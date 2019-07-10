@@ -328,11 +328,19 @@ def image_as_base64(image_file):
 
 @register.simple_tag(takes_context=True)
 def get_top_navbar(context):
+    from django.contrib.auth.models import AnonymousUser
+
     # menu_applicazioni passato nel context nei deocratori in: autenticazione.funzioni
+
+    request = context['request']
+    user = request.user
 
     menu = context.get('menu_applicazioni')
     if menu:
         return menu
 
-    # restituisci il menu chiamando il metodo direttamente
-    return context['request'].user.applicazioni_disponibili
+    if user and not isinstance(user, AnonymousUser):
+        # restituisci il menu chiamando il metodo direttamente
+        return user.applicazioni_disponibili
+
+    return ""
