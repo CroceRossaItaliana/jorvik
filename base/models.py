@@ -1,4 +1,5 @@
 import os
+from dateutil.relativedelta import relativedelta
 
 from collections import defaultdict
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
@@ -356,7 +357,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
     @classmethod
     def gestisci_automatiche(cls):
-        delta = now() - relativedelta(months=6)
+        delta = now() - relativedelta(months=1)
         qs = cls.objects.filter(concessa__isnull=True, scadenza__isnull=False,
                                 scadenza__gte=delta, scadenza__lte=now())
         da_negare = qs.filter(tipo_gestione=cls.NG_AUTO)
