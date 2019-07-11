@@ -778,10 +778,22 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def termina(self, mittente=None):
         """ Termina il corso base, genera il verbale e volontarizza. """
 
+        partecipazioni = self.partecipazioni_confermate()
+
+        oggi = timezone.now().today()
+        data_ottenimento = self.data_esame
+        if self.data_esame_2 >= oggi >= self.data_esame:
+            partecipanti_qs = partecipazioni.filter(esaminato_seconda_data=False)
+        elif oggi >= self.data_esame_2:
+            partecipanti_qs = partecipazioni.filter(esaminato_seconda_data=True)
+            data_ottenimento = self.data_esame_2
+        else:
+            partecipanti_qs = partecipazioni
+
         with transaction.atomic():
             # Per maggiore sicurezza, questa cosa viene eseguita in una transazione
 
-            for partecipante in self.partecipazioni_confermate():
+            for partecipante in partecipanti_qs:
                 if partecipante.ammissione == PartecipazioneCorsoBase.ASSENTE_MOTIVO:
                     # Partecipante con questo motivo non va nel verbale_1
                     # Non fare niente.
@@ -813,9 +825,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             self.save()
 
         if self.is_nuovo_corso:
-            self.set_titolo_cri_to_participants()
+            self.set_titolo_cri_to_participants(partecipanti_qs, data_ottenimento=data_ottenimento)
 
-    def set_titolo_cri_to_participants(self):
+    def set_titolo_cri_to_participants(self, partecipanti, **kwargs):
         """ Sets <titolo_cri> in Persona's Curriculum (TitoloPersonale) """
 
         from curriculum.models import TitoloPersonale
@@ -826,18 +838,18 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 titolo=self.titolo_cri,
                 persona=p.persona,
                 certificato_da=self.get_firmatario,
+                data_ottenimento=kwargs.get('data_ottenimento'),
                 data_scadenza=timezone.now() + self.titolo_cri.expires_after_timedelta,
                 is_course_title=True,
                 corso_partecipazione=p,
 
                 # todo: attending details
-                # data_ottenimento='',
                 # luogo_ottenimento='',
                 # codice='',
                 # codice_corso='',
                 # certificato='',
             )
-            for p in self.partecipazioni_confermate()
+            for p in partecipanti
         ]
         TitoloPersonale.objects.bulk_create(objs)
 
@@ -1213,6 +1225,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         (NON_IDONEO, "Non Idoneo")
     )
     esito_esame = models.CharField(max_length=2, choices=ESITO_IDONEO, default=None, blank=True, null=True, db_index=True)
+    esaminato_seconda_data = models.BooleanField(default=False)
 
     AMMESSO = "AM"
     NON_AMMESSO = "NA"

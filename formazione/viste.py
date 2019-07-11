@@ -547,21 +547,19 @@ def aspirante_corso_base_attiva(request, me, pk):
 
 @pagina_privata
 def aspirante_corso_base_termina(request, me, pk):
+    seconda_data_esame = '?seconda_data_esame' if 'seconda_data_esame' in request.GET else ""
+    reverse_termina = reverse('aspirante:terminate', args=[pk])
+    redirect_termina = redirect(reverse_termina + seconda_data_esame)
+
     corso = get_object_or_404(CorsoBase, pk=pk)
     if not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
     if not corso.terminabile:
         messages.warning(request, "Il corso non è terminabile.")
-        return redirect(reverse('aspirante:info', args=(pk,)))
+        return redirect(reverse('aspirante:info', args=[pk]))
 
     torna = {"torna_url": corso.url_modifica, "torna_titolo": "Modifica corso"}
-
-    # if (not corso.op_attivazione) or (not corso.data_attivazione):
-    #     return errore_generico(request, me,
-    #         titolo="Necessari dati attivazione",
-    #         messaggio="Per generare il verbale, sono necessari i dati (O.P. e data) dell'attivazione del corso.",
-    #         **torna)
 
     if not corso.partecipazioni_confermate().exists():
         return errore_generico(request, me, titolo="Impossibile terminare questo corso",
@@ -580,14 +578,19 @@ def aspirante_corso_base_termina(request, me, pk):
     generazione_verbale = azione == ModuloVerbaleAspiranteCorsoBase.GENERA_VERBALE
     termina_corso = generazione_verbale
 
-    if 'seconda_data_esame' in request.GET:
+    if not termina_corso and seconda_data_esame:
         partecipanti_qs = corso.partecipazioni_confermate_assente_motivo(solo=True)
     else:
         partecipanti_qs = corso.partecipazioni_confermate_assente_motivo()
 
+    if seconda_data_esame and not partecipanti_qs:
+        # rindirizza sulla pagina del primo verbale se non ci sono
+        # partecipanti da visualizzare nel secondo verbale
+        return redirect(reverse_termina)
+
     for partecipante in partecipanti_qs:
-        form = ModuloVerbaleAspiranteCorsoBase(
-            request.POST or None, prefix="part_%d" % partecipante.pk,
+        form = ModuloVerbaleAspiranteCorsoBase(request.POST or None,
+            prefix="part_%d" % partecipante.pk,
             instance=partecipante,
             generazione_verbale=generazione_verbale)
 
@@ -598,7 +601,28 @@ def aspirante_corso_base_termina(request, me, pk):
             form.fields['destinazione'].initial = corso.sede
 
         if form.is_valid():
-            form.save()
+            instance = form.save(commit=False)
+            if instance.ammissione == PartecipazioneCorsoBase.ASSENTE_MOTIVO:
+                # Serve per distinguere partecipanti per la generazione
+                # dell'attestato e impostazione titolo cv.
+                instance.esaminato_seconda_data = True
+            else:
+                # Se partecipante è stato segnato assente con motivazione nel
+                # primo verbale, e poi per qualche ragione modificato con
+                # ammesso/non ammesso bisogna togliere <esaminato_seconda_data>
+                # se la data di oggi è maggiore di <data_esame> e minore di <data_esame_2>
+                if instance.esaminato_seconda_data and (corso.data_esame_2 >
+                                                        timezone.now() >=
+                                                        corso.data_esame):
+                    instance.esaminato_seconda_data = False
+            instance.save()
+
+            if not termina_corso:
+                # Non fare redirect se si vuole terminare il corso, per poter
+                # eseguire il codice sottostante
+                messages.success(request, 'Il verbale è stato salvato.')
+                return redirect_termina
+
         elif generazione_verbale:
             termina_corso = False
 
@@ -609,14 +633,14 @@ def aspirante_corso_base_termina(request, me, pk):
         if not corso.relazione_direttore.is_completed:
             messages.error(request, "Il corso non può essere terminato perchè "
                                     "la relazione del direttore non è completata.")
-            return redirect(reverse('aspirante:terminate', args=(pk,)))
+            return redirect_termina
 
         # Verifica se nella form del verbale (sopra) sono stati salvati
         # partecipanti ammessi con motivo assente
         if corso.has_partecipazioni_confermate_con_motivo_assente:
             messages.error(request, "Non puoi terminare il corso con le persone assenti. "
                                     "Imposta una seconda data e compila il secondo verbale")
-            return redirect(reverse('aspirante:terminate', args=(pk,)))
+            return redirect_termina
 
         # Tutto ok, posso procedere
         corso.termina(mittente=me)
@@ -633,8 +657,7 @@ def aspirante_corso_base_termina(request, me, pk):
           messaggio="Il verbale è stato generato con successo. Tutti gli idonei "
                     "sono stati resi volontari delle rispettive sedi.",
           torna_titolo=return_title,
-          torna_url=corso.url_report
-        )
+          torna_url=corso.url_report)
 
     context = {
         "corso": corso,
