@@ -8,9 +8,9 @@
     <hr />
 
     <p class="grassetto">Azioni disponibili:
-        <a href="{% url 'autorizzazioni-concedi' richiesta.id %}">CONCEDI</a> o
-        <a href="{% url 'autorizzazioni-nega' richiesta.id %}">NEGA</a> l'autorizzazione.
+        <a href="{% url 'autorizzazioni:concedi' richiesta.id %}">CONCEDI</a> o
+        <a href="{% url 'autorizzazioni:nega' richiesta.id %}">NEGA</a> l'autorizzazione.
     </p>
 
-    <p>Alla <a href="{% url 'autorizzazioni-aperte' %}">pagina "Richieste"</a> su Gaia trovi l'elenco completo delle richieste di autorizzazione in attesa della tua firma.</p>
+    <p>Alla <a href="{% url 'autorizzazioni:aperte' %}">pagina "Richieste"</a> su Gaia trovi l'elenco completo delle richieste di autorizzazione in attesa della tua firma.</p>
 {% endblock %}
