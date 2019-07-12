@@ -230,10 +230,11 @@ def espandi_gestione_attivita_sede(qs_sedi, al_giorno=None):
 
 
 def espandi_gestione_aree_sede(qs_sedi, al_giorno=None):
-    from attivita.models import Area
+    from attivita.models import Area, Progetto
     try:
         return [
             (COMPLETO, Area.objects.filter(sede__in=qs_sedi)),
+            (COMPLETO, Progetto.objects.filter(sede__in=qs_sedi)),
         ]
     except (AttributeError, ValueError, KeyError, TypeError):
         return []

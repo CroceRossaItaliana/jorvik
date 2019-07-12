@@ -67,6 +67,13 @@ class ModuloAggiungiPartecipanti(forms.Form):
 
 
 class ModuloCreazioneArea(ModelForm):
+
+    progetto = forms.BooleanField(
+        initial=False,
+        label='Se spunti questo flag a questo Progetto potrai collegare i servizi offerti alla Popolazione.',
+        required=False
+    )
+
     class Meta:
         model = Area
         fields = ['nome', 'obiettivo',]

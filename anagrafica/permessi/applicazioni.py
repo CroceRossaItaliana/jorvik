@@ -14,6 +14,7 @@ UFFICIO_SOCI = 'US'
 UFFICIO_SOCI_UNITA = 'UU'
 UFFICIO_SOCI_TEMPORANEO = 'UT'
 DELEGATO_AREA = 'DA'
+DELEGATO_PROGETTO = 'DP'
 DELEGATO_OBIETTIVO_1 = 'O1'
 DELEGATO_OBIETTIVO_2 = 'O2'
 DELEGATO_OBIETTIVO_3 = 'O3'
@@ -49,6 +50,7 @@ PERMESSI_NOMI = (
     (UFFICIO_SOCI,              "Ufficio Soci"),
     (UFFICIO_SOCI_UNITA,        "Ufficio Soci Unità territoriali"),
     (DELEGATO_AREA,             "Delegato d'Area"),
+    (DELEGATO_PROGETTO,         "Delegato del progetto"),
     (DELEGATO_OBIETTIVO_1,      "Delegato Obiettivo I (Salute)"),
     (DELEGATO_OBIETTIVO_2,      "Delegato Obiettivo II (Sociale)"),
     (DELEGATO_OBIETTIVO_3,      "Delegato Obiettivo III (Emergenze)"),

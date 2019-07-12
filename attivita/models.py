@@ -663,6 +663,24 @@ def valida_numero_obiettivo(numero):
         raise ValidationError("Inserisci un numero di obiettivo (1, 2, 3, 4, 5 o 6).")
 
 
+class Progetto(ModelloSemplice, ConMarcaTemporale, ConDelegati):
+
+    sede = models.ForeignKey('anagrafica.Sede', related_name='progetti', on_delete=models.PROTECT)
+    nome = models.CharField(max_length=256, db_index=True, default='Generale', blank=False)
+    obiettivo = models.SmallIntegerField(null=False, blank=False, default=1, db_index=True,
+                                         validators=[valida_numero_obiettivo])
+
+    class Meta:
+        verbose_name_plural = "Progetti"
+        ordering = ['sede', 'obiettivo', 'nome',]
+        index_together = [
+            ['sede', 'obiettivo'],
+        ]
+        permissions = (
+            ("view_progetto", "Can view progetto"),
+        )
+
+
 class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
 
     sede = models.ForeignKey('anagrafica.Sede', related_name='aree', on_delete=models.PROTECT)

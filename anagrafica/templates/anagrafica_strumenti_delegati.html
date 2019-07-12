@@ -18,7 +18,7 @@
                         </a>
                     {% endif %}
 
-                    <p>Puoi aggiungere o rimuovere delegati come {{ delega }} per {{ oggetto }}.</p>
+                    <p>Puoi aggiungere o rimuovere delegati come {{ delega }}/Progetto per {{ oggetto }}.</p>
 
                     {% if continua_url %}
                         <p>Altrimenti, per continuare, clicca sul pulsante 'Continua'.</p>
@@ -28,7 +28,7 @@
             {% elif almeno > 0 %}
                 <div class="alert alert-warning grassetto">
                     <i class="fa fa-warning"></i> Per proseguire, aggiungi
-                    almeno n. {{ almeno }} persone come {{ delega }} per {{ oggetto }}.
+                    almeno n. {{ almeno }} persone come {{ delega }}/Progetto per {{ oggetto }}.
                 </div>
 
             {% endif %}
@@ -41,7 +41,7 @@
                     <div class="panel-heading">
                         <h3 class="panel-title">
                             <i class="fa fa-fw fa-plus-circle"></i>
-                            Aggiungi un nuovo {{ delega }} per {{ oggetto }}
+                            Aggiungi un nuovo {{ delega }}/Progetto per {{ oggetto }}
                         </h3>
                     </div>
                     <div class="panel-body">
@@ -51,7 +51,7 @@
 
                             <button class="btn btn-block btn-primary" type="submit">
                                 <i class="fa fa-fw fa-check"></i>
-                                Aggiungi come {{ delega }} per {{ oggetto }}
+                                Aggiungi come {{ delega }}/Progetto per {{ oggetto }}
                             </button>
                         </form>
                     </div>
@@ -62,7 +62,7 @@
                     <div class="panel-heading">
                         <h3 class="panel-title">
                             <i class="fa fa-fw fa-list"></i>
-                            Elenco delegati come {{ delega }} per {{ oggetto }}
+                            Elenco delegati come {{ delega }}/Progetto per {{ oggetto }}
                         </h3>
                     </div>
                     <div class="panel-body">
@@ -111,7 +111,7 @@
                                     <tr class="warning">
                                         <td colspan="3">
                                             <h4><i class="fa fa-fw fa-warning"></i> Nessuna persona selezionata</h4>
-                                            <p>Nessuna persona ricopre il ruolo di <strong>{{ delega }}</strong> per <strong>{{ oggetto }}</strong>.</p>
+                                            <p>Nessuna persona ricopre il ruolo di <strong>{{ delega }}/Progetto</strong> per <strong>{{ oggetto }}</strong>.</p>
                                         </td>
                                     </tr>
 

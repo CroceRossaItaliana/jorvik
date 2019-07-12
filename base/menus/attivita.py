@@ -13,10 +13,15 @@ def menu_attivita(me):
                 ("Reperibilità", "fa-thumb-tack", "/attivita/reperibilita/"),
             )),
             ("Gestione", (
-                ("Gruppi di lavoro", "fa-pencil", "/attivita/gruppo/") if attivita_area_exists else None,
+                ("Aree di intervento/Progetti", "fa-list", "/attivita/aree/") if me.oggetti_permesso(GESTIONE_AREE_SEDE).exists() else None,
+
                 ("Organizza attività", "fa-asterisk", "/attivita/organizza/") if attivita_area_exists else None,
                 ("Elenco attività", "fa-list", "/attivita/gestisci/") if me.oggetti_permesso(GESTIONE_ATTIVITA).exists() else None,
-                ("Aree di intervento", "fa-list", "/attivita/aree/") if me.oggetti_permesso(GESTIONE_AREE_SEDE).exists() else None,
+
+                ("Organizza progetto", "fa-asterisk", "/attivita/organizza/") if attivita_area_exists else None,
+                ("Elenco progetti", "fa-list", "/attivita/gestisci/") if me.oggetti_permesso(GESTIONE_ATTIVITA).exists() else None,
+
+                ("Gruppi di lavoro", "fa-pencil", "/attivita/gruppo/") if attivita_area_exists else None,
                 ("Statistiche", "fa-bar-chart", "/attivita/statistiche/") if me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE).exists() else None,
             ))
         )

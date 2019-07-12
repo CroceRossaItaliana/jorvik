@@ -12,7 +12,7 @@ from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.costanti import NAZIONALE
 from anagrafica.models import Sede
-from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE, REFERENTE_GRUPPO
+from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE, REFERENTE_GRUPPO, DELEGATO_PROGETTO
 from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO, \
     GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE, \
     GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
@@ -49,13 +49,27 @@ def attivita_aree_sede(request, me, sede_pk=None):
         return redirect(ERRORE_PERMESSI)
     aree = sede.aree.all()
     modulo = ModuloCreazioneArea(request.POST or None)
+    area = None
     if modulo.is_valid():
-        area = modulo.save(commit=False)
-        area.sede = sede
-        area.save()
-        return redirect("/attivita/aree/%d/%d/responsabili/" % (
-            sede.pk, area.pk,
-        ))
+        if not modulo.cleaned_data['progetto']:
+            area = modulo.save(commit=False)
+            area.sede = sede
+            area.save()
+            return redirect("/attivita/aree/%d/%d/responsabili/" % (
+                sede.pk, area.pk,
+            ))
+        else:
+            from attivita.models import Progetto
+            progetto = Progetto(
+                sede=sede,
+                obiettivo=modulo.cleaned_data['obiettivo'],
+                nome=modulo.cleaned_data['nome']
+            )
+            progetto.save()
+            return redirect("/attivita/aree/%d/%d/responsabili/?progetto=true" % (
+                sede.pk, progetto.pk,
+            ))
+
     contesto = {
         "sede": sede,
         "aree": aree,
@@ -64,15 +78,22 @@ def attivita_aree_sede(request, me, sede_pk=None):
     return 'attivita_aree_sede.html', contesto
 
 
+from attivita.models import Progetto
 @pagina_privata
 def attivita_aree_sede_area_responsabili(request, me, sede_pk=None, area_pk=None):
-    area = get_object_or_404(Area, pk=area_pk)
-    if not me.permessi_almeno(area, COMPLETO):
+    isProgetto = request.GET.get('progetto', False)
+    area = None
+    progetto = None
+    if isProgetto:
+        progetto = get_object_or_404(Progetto, pk=area_pk)
+    else:
+        area = get_object_or_404(Area, pk=area_pk)
+    if not me.permessi_almeno(area if area else progetto, COMPLETO):
         return redirect(ERRORE_PERMESSI)
-    sede = area.sede
-    delega = DELEGATO_AREA
+    sede = area.sede if area else progetto.sede
+    delega = DELEGATO_AREA if area else DELEGATO_PROGETTO
     contesto = {
-        "area": area,
+        "area": area if area else progetto,
         "delega": delega,
         "continua_url": "/attivita/aree/%d/" % (sede.pk,)
     }
