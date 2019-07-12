@@ -1,4 +1,5 @@
 from django.shortcuts import redirect
+from django.contrib.auth.models import AnonymousUser
 from .models import Corso
 from anagrafica.permessi.costanti import ERRORE_PERMESSI
 
@@ -9,7 +10,7 @@ def can_access_to_course(function):
         proceed = True
         REDIRECT_ERR = redirect(ERRORE_PERMESSI)
 
-        if me.dipendente:
+        if hasattr(me, 'dipendente') and me.dipendente:
             pass
         elif not hasattr(me, 'ha_aspirante'):
             proceed = False
