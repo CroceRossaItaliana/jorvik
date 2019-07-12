@@ -578,6 +578,7 @@ def aspirante_corso_base_termina(request, me, pk):
     generazione_verbale = azione == ModuloVerbaleAspiranteCorsoBase.GENERA_VERBALE
     termina_corso = generazione_verbale
 
+    # Mostra partecipanti con motivo assente se l'azione è salvataggio form
     if not termina_corso and seconda_data_esame:
         partecipanti_qs = corso.partecipazioni_confermate_assente_motivo(solo=True)
     else:
@@ -588,6 +589,7 @@ def aspirante_corso_base_termina(request, me, pk):
         # partecipanti da visualizzare nel secondo verbale
         return redirect(reverse_termina)
 
+    has_invalid_form = False
     for partecipante in partecipanti_qs:
         form = ModuloVerbaleAspiranteCorsoBase(request.POST or None,
             prefix="part_%d" % partecipante.pk,
@@ -617,16 +619,20 @@ def aspirante_corso_base_termina(request, me, pk):
                     instance.esaminato_seconda_data = False
             instance.save()
 
-            if not termina_corso:
-                # Non fare redirect se si vuole terminare il corso, per poter
-                # eseguire il codice sottostante
-                messages.success(request, 'Il verbale è stato salvato.')
-                return redirect_termina
-
         elif generazione_verbale:
             termina_corso = False
+        else:
+            has_invalid_form = True
 
+        # Aggiungi la form nella lista che verra' inviata nel context
         partecipanti_moduli += [(partecipante, form)]
+
+    if request.method == 'POST' and not has_invalid_form and not termina_corso:
+        # Fai redirect (per aggiornare le form) solo ne caso non ci sono form
+        # invalide (per visualizzare errori) e l'invio era per salvare (per
+        # poter eseguire il codice sottostante)
+        messages.success(request, 'Il verbale è stato salvato.')
+        return redirect_termina
 
     if termina_corso:  # Se premuto pulsante "Genera verbale e termina corso"
         # Verifica se la relazione è compilata
