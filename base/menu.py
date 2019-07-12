@@ -151,7 +151,7 @@ class Menu:
                 'name_for_template': 'elementi_anagrafica',
             }),
             ({
-                'urls': ['/attivita/', '/informazioni/',],
+                'urls': ['/attivita/', '/informazioni/', '/servizi/'],
                 'method': 'attivita',
                 'name_for_template': 'attivita',
             }),
