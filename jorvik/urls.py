@@ -125,7 +125,7 @@ urlpatterns = [
     url(r'^attivita/organizza/(?P<pk>[0-9\-]+)/fatto/$', attivita.viste.attivita_organizza_fatto),
 
     #TODO: path servizi
-    url(r'^servizi/organizza/$', attivita.viste.attivita_organizza),
+    url(r'^servizi/organizza/$', attivita.viste.servizio_organizza),
 
     url(r'^attivita/statistiche/$', attivita.viste.attivita_statistiche),
     url(r'^attivita/gestisci/$', attivita.viste.attivita_gestisci, {"stato": "aperte"}),

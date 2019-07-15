@@ -187,6 +187,18 @@ def attivita_gestisci(request, me, stato="aperte"):
     }
     return 'attivita_gestisci.html', contesto
 
+@pagina_privata()
+def servizio_organizza(request, me):
+    from attivita.forms import ModuloOrganizzaServizio
+
+    modulo = ModuloOrganizzaServizio(request.POST or None)
+    modulo.fields['servizi'].choices = ModuloOrganizzaServizio.popola_scelta()
+    contesto = {
+        "modulo": modulo,
+        # "modulo_referente": None,
+    }
+    return 'servizio_organizza.html', contesto
+
 
 @pagina_privata
 def attivita_organizza(request, me):

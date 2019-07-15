@@ -1,0 +1,69 @@
+{% extends 'attivita_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Organizza nuova Servizio
+{% endblock %}
+
+{% block app_contenuto %}
+    <form method="POST">
+        {% csrf_token %}
+        <div class="alert alert-info alert-block">
+            <p>
+                <i class="fa fa-fw fa-info-circle"></i>
+                Per iniziare l'organizzazione di un nuovo progetto,
+                completa i moduli in questa pagina.
+            </p>
+        </div>
+        <div class="row">
+            <div class="col-md-8">
+
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">
+                            1. Informazioni sul Servizio
+                        </h2>
+                    </div>
+                    <div class="panel-body">
+                        {% bootstrap_form modulo %}
+                    </div>
+                </div>
+
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">
+                            2. Referenti Servizi
+                        </h2>
+                    </div>
+                    <div class="panel-body">
+                      <p><strong>Chi è il referente del Servizio?</strong>
+                      <ul>
+                          <li>Punto di riferimento per i volontari che vogliono partecipare al servizio</li>
+                          <li>I suoi contatti verranno divulgati coi volontari interessati al servizio</li>
+                          <li>Generalmente è presente sul posto del servizio e/o conosce chi vi ci si reca;</li>
+                          <li>Potr&agrave; confermare o rifiutare le richieste di partecipazione del servizio</li>
+                        </ul>
+{#                        {% bootstrap_form modulo_referente %}#}
+                   </div>
+                </div>
+
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">
+                            3. Continua
+                        </h2>
+                    </div>
+                    <div class="panel-body">
+                        <p>Controlla che le informazioni che hai inserito sopra siano corrette.</p>
+                        <button type="submit" class="btn btn-primary btn-block btn-lg">
+                            <i class="fa fa-fw fa-check-circle"></i>
+                            Crea Servizio
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </form>
+{% endblock %}
