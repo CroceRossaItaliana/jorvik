@@ -53,3 +53,12 @@ def select_nomina_presidenziale(sede):
     # Caso in cui non ci sono delegati
     else:
         return ''
+
+
+@register.simple_tag(takes_context=True)
+def current_domain(context):
+    request = context.get('request')
+    if request:
+        uri = request.build_absolute_uri('/')
+        return uri[:-1] if uri.endswith('/') else uri
+    return ""

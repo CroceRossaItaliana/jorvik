@@ -577,7 +577,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             - Restituisce SOLO partecipazioni confermate CON assenti per motivo giustificato.
         """
 
-        condition = {'ammissione': PartecipazioneCorsoBase.ASSENTE_MOTIVO}
+        condition = {'esaminato_seconda_data': True}
         if solo:
             return self.partecipazioni_confermate().filter(**condition)
         else:
@@ -1352,7 +1352,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 
     def genera_scheda_valutazione(self):
         pdf = PDF(oggetto=self)
-        pdf.genera_e_salva(
+        pdf.genera_e_salva_con_python(
             nome="Scheda Valutazione %s.pdf" % self.persona.codice_fiscale,
             corpo={
                 "partecipazione": self,
@@ -1363,28 +1363,34 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         )
         return pdf
 
-    def genera_attestato(self):
+    def genera_attestato(self, request=None):
         if not self.idoneo:
             return None
         pdf = PDF(oggetto=self)
-        pdf.genera_e_salva(
+        pdf.genera_e_salva_con_python(
             nome="Attestato %s.pdf" % self.persona.codice_fiscale,
             corpo={
                 "partecipazione": self,
                 "corso": self.corso,
                 "persona": self.persona,
+                "request": request,
             },
             modello="pdf_corso_base_attestato.html",
-            orientamento=PDF.ORIENTAMENTO_ORIZZONTALE,
         )
         return pdf
 
     def genera_pdf(self, request=None, **kwargs):
+        scheda_valutazione = self.genera_scheda_valutazione()
+        attestato = self.genera_attestato(request)
+
         z = Zip(oggetto=self)
-        z.aggiungi_file(self.genera_scheda_valutazione().file.path)
+        z.aggiungi_file(scheda_valutazione.file.path)
+
         if self.idoneo:
-            z.aggiungi_file(self.genera_attestato().file.path)
+            z.aggiungi_file(attestato.file.path)
+
         z.comprimi_e_salva("%s.zip" % self.persona.codice_fiscale)
+
         return z
 
     @classmethod
