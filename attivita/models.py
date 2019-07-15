@@ -680,6 +680,15 @@ class Progetto(ModelloSemplice, ConMarcaTemporale, ConDelegati):
             ("view_progetto", "Can view progetto"),
         )
 
+    def __str__(self):
+        return "%s, Ob. %d: %s" % (
+            self.sede.nome_completo, self.obiettivo,
+            self.nome,
+        )
+
+    @property
+    def codice_obiettivo(self):
+        return OBIETTIVI[self.obiettivo]
 
 class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
 

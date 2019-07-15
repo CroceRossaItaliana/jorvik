@@ -23,18 +23,30 @@
                 <div class="panel-heading">
                     <h2 class="panel-title">
                         <i class="fa fa-fw fa-list"></i>
-                        Elenco Aree {{ sede.nome_completo }}
+                        Elenco Aree/Progetti {{ sede.nome_completo }}
                     </h2>
                 </div>
                 <div class="panel-body">
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% bootstrap_form filtro layout='inline'%}
+                        <button type="submit" class="btn btn-block btn-primary">
+                            <i class="fa fa-fw fa-search"></i>
+                            Filtra
+                        </button>
+                    </form>
+
+                    <br><br>
+
                    <table class="table table-striped">
 
                         <thead>
                             <tr>
                                 <th>Ob.#</th>
-                                <th>Nome Area</th>
+                                <th>Nome Area/Progetto</th>
                                 <th>Responsabili</th>
-                                <th>Attivit&agrave;</th>
+                                <th>Attivit&agrave;/Progetto</th>
                                 <th>Azioni</th>
                             </tr>
                         </thead>
@@ -80,24 +92,47 @@
 
                                     </th>
                                 </tr>
-
-                            {% empty %}
-
-                                <tr class="warning">
-                                    <td colspan="5">
-                                        <p>
-                                            <i class="fa fa-fw fa-warning"></i>
-                                            Nessuna area di intervento creata.
-                                        </p>
-                                        <p>
-                                            Crea la prima area di intervento per poter
-                                            inserire delle attivit&agrave;
-                                        </p>
-                                    </td>
-                                </tr>
-
                             {% endfor %}
+                            {% for progetti in progetti %}
+                                <tr>
+                                    <td class="piu-grande">
+                                        {{ progetti.obiettivo }}
+                                    </td>
+                                    <td class="grassetto">
+                                        {{ progetti.nome }}
+                                    </td>
+                                    <td class="piu-piccolo">
+                                        {% for r in progetti.delegati_attuali %}
+                                            {{ r.link|safe }}<br />
+                                        {% empty %}
+                                            Nessun responsabile
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+{#                                        {{ progetti.attivita.count }} attivit&agrave;#}
+                                        X progetti
+                                    </td>
+                                    <th>
+                                        <div class="btn-group-vertical btn-block">
+                                            <a href="/attivita/aree/{{ sede.pk }}/{{ progetti.pk }}/responsabili/?progetto=true"
+                                               class="btn btn-sm btn-default">
+                                                <i class="fa fa-fw fa-users"></i>
+                                                Responsabili
+                                            </a>
+                                            {% if not area.attivita.exists %}
+                                               <a href="/attivita/aree/{{ sede.pk }}/{{ progetti.pk }}/cancella/?progetto=true"
+                                                   class="btn btn-xs btn-danger"
+                                                   data-conferma="Sei sicuro di voler cancellare questo progetto?">
+                                                    <i class="fa fa-fw fa-trash"></i>
+                                                    Cancella
+                                                </a>
+                                            {% endif %}
 
+                                        </div>
+
+                                    </th>
+                                </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
 
@@ -125,45 +160,11 @@
                             <i class="fa fa-fw fa-check"></i>
                             Crea area/progetti
                         </button>
-
-
                     </form>
 
                 </div>
-
-
-
-
             </div>
-
-{#            <div class="panel panel-success">#}
-{#                <div class="panel-heading">#}
-{#                    <h2 class="panel-title">#}
-{#                        <i class="fa fa-fw fa-question-circle"></i>#}
-{#                        Vuoi creare un'attivit&agrave;?#}
-{#                    </h2>#}
-{#                </div>#}
-{#                <div class="panel-body">#}
-{##}
-{#                    <p>#}
-{#                        Prima, assicurati di aver creato un'area di intervento#}
-{#                        correlata all'attivit&agrave; che vuoi creare.#}
-{#                    </p>#}
-{#                    <p>#}
-{#                        Quando hai fatto, clicca sul pulsante seguente.#}
-{#                    </p>#}
-{#                    <a href="/attivita/organizza/" class="btn btn-block btn-success">#}
-{#                        <i class="fa fa-fw fa-asterisk"></i>#}
-{#                        Nuova attivit&agrave;#}
-{#                    </a>#}
-{##}
-{#                </div>#}
-{#            </div>#}
-
-
         </div>
-
-
     </div>
 
 

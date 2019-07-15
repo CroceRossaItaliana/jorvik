@@ -66,6 +66,17 @@ class ModuloAggiungiPartecipanti(forms.Form):
                                                                           "aggiungere come partecipanti.")
 
 
+class FiltroAreaProgetto(forms.Form):
+
+    SCELTE = (
+        ('T', 'Tutto'),
+        ('A', 'Aree'),
+        ('P', 'Progetti')
+    )
+
+    scelta = forms.ChoiceField(choices=SCELTE, required=True)
+
+
 class ModuloCreazioneArea(ModelForm):
 
     progetto = forms.BooleanField(

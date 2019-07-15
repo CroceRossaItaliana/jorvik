@@ -44,10 +44,30 @@ def attivita_aree(request, me):
 
 @pagina_privata
 def attivita_aree_sede(request, me, sede_pk=None):
+
+    from attivita.forms import FiltroAreaProgetto
+
     sede = get_object_or_404(Sede, pk=sede_pk)
     if not sede in me.oggetti_permesso(GESTIONE_AREE_SEDE):
         return redirect(ERRORE_PERMESSI)
-    aree = sede.aree.all()
+
+    modulo_filtro = FiltroAreaProgetto(request.POST or None)
+    aree = []
+    progetti = []
+    if modulo_filtro.is_valid():
+        scelta = modulo_filtro.cleaned_data['scelta']
+        if scelta == 'T':
+            aree = sede.aree.all()
+            progetti = sede.progetti.all()
+        elif scelta == 'A':
+            aree = sede.aree.all()
+        else:
+            progetti = sede.progetti.all()
+    else:
+        aree = sede.aree.all()
+        progetti = sede.progetti.all()
+
+
     modulo = ModuloCreazioneArea(request.POST or None)
     area = None
     if modulo.is_valid():
@@ -71,8 +91,10 @@ def attivita_aree_sede(request, me, sede_pk=None):
             ))
 
     contesto = {
+        "filtro": modulo_filtro,
         "sede": sede,
         "aree": aree,
+        "progetti": progetti,
         "modulo": modulo,
     }
     return 'attivita_aree_sede.html', contesto
@@ -102,17 +124,27 @@ def attivita_aree_sede_area_responsabili(request, me, sede_pk=None, area_pk=None
 
 @pagina_privata
 def attivita_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
-    area = get_object_or_404(Area, pk=area_pk)
-    if not me.permessi_almeno(area, COMPLETO):
-        return redirect(ERRORE_PERMESSI)
-    sede = area.sede
-    if area.attivita.exists():
-        return errore_generico(request, me, titolo="L'area ha delle attività associate",
-                               messaggio="Non è possibile cancellare delle aree che hanno delle "
-                                         "attività associate.",
-                               torna_titolo="Torna indietro",
-                               torna_url="/attivita/aree/%d/" % (sede.pk,))
-    area.delete()
+    isProgetto = request.GET.get('progetto', False)
+    area = None
+    progetto = None
+    if isProgetto:
+        progetto = get_object_or_404(Progetto, pk=area_pk)
+    else:
+        area = get_object_or_404(Area, pk=area_pk)
+    # if not me.permessi_almeno(area, COMPLETO):
+    #     return redirect(ERRORE_PERMESSI)
+    sede = area.sede if area else progetto.sede
+    if area:
+        if area.attivita.exists():
+            return errore_generico(request, me, titolo="L'area ha delle attività associate",
+                                   messaggio="Non è possibile cancellare delle aree che hanno delle "
+                                             "attività associate.",
+                                   torna_titolo="Torna indietro",
+                                   torna_url="/attivita/aree/%d/" % (sede.pk,))
+        area.delete()
+    else:
+        #TODO: controlo servizi associati
+        progetto.delete()
     return redirect("/attivita/aree/%d/" % (sede.pk,))
 
 
