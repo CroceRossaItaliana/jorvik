@@ -210,6 +210,8 @@ def menu(request):
         'aspirante': formazione_menu('aspirante') if me and hasattr(me, 'aspirante') else (
             ("Corsi di formazione", (
                 ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
+                ('Catalogo Corsi', 'fa-list-alt', '/page/catalogo-corsi/'),
+                ('Acronimi', 'fa-book', '/page/glossario-corsi/'),
             )),
         ),
     }
