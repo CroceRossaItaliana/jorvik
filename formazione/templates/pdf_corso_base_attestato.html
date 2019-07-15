@@ -28,8 +28,8 @@
 		.front-page-logo {width: 100%; max-width: 125px;}
 		.front-page-heading {font-size: 39pt; font-weight: bold; text-transform: uppercase;}
 		.front-page-heading span {display:block; font-size: 19pt; margin-top: 14px;}
-		.front-page-text {margin: 20pt 0 40pt; font-size: 14pt; line-height: 24pt;}
-		.front-page-qualifica {margin: 0 0 20pt; text-transform: uppercase; font-size: 16pt; font-weight:bold; color: #cc0000;}
+		.front-page-text {margin: 20pt 0 25pt; font-size: 14pt; line-height: 24pt;}
+		.front-page-qualifica {margin: 0 0 35pt; text-transform: uppercase; font-size: 16pt; font-weight:bold; color: #cc0000;}
 		.front-page-labels {margin-bottom: 15pt; font-size: 0;}
 		.front-page-labels > div {display: inline-block; vertical-align:top; font-size: 12pt; line-height: 24pt;}
 
@@ -41,6 +41,8 @@
 		.first-aid-img-wrap {width:30%; display: inline-block; vertical-align: top; margin-right: 10px;}
 		.first-aid-img {width: 100%;}
 		.first-aid-descr {width: 67%; display: inline-block; vertical-align: top; font-size: 10pt; line-height: 14pt;}
+
+		.persona__nome-completo {font-size: 15pt; text-transform: uppercase;}
 	</style>
 </head>
 <body>
@@ -54,14 +56,21 @@
 						<div class="front-page-logo-wrap"><img class="front-page-logo" src="{{SITE_URL}}{% static 'img/attestato/cri-logo-transparent-small.png' %}" alt="Croce Rossa Italiana"></div>
 						<div class="front-page-heading">Attestato <span>di qualifica di volontario CRI</span></div>
 						<div class="front-page-text">
-							Si attesta che <strong style="font-size: 15pt; text-transform: uppercase;">{{ persona.nome_completo }}</strong> CF {{ persona.codice_fiscale }} ha frequentato il<br>
+							Si attesta che <strong class="persona__nome-completo">{{ persona.nome_completo }}</strong> CF {{ persona.codice_fiscale }} ha frequentato il<br>
 							<span style="display:block; text-transform: uppercase;">Corso di formazione per volontari della Croce Rossa Italiana</span>
-							dal {{ corso.data_inizio|date:"SHORT_DATE_FORMAT" }} al {{ corso.data_esame|date:"SHORT_DATE_FORMAT" }} presso il {{ corso.sede.nome }}<br>
-							e ottenuto la qualifica di
+
+							dal {{ corso.data_inizio|date:"SHORT_DATE_FORMAT" }} al
+							{% if not partecipazione.esaminato_seconda_data %}
+								{{ corso.data_esame|date:"SHORT_DATE_FORMAT" }}
+							{% else %}
+								{{ corso.data_esame_2|date:"SHORT_DATE_FORMAT" }}
+							{% endif %}
+
+							presso il {{ corso.sede.nome }}<br> e ottenuto la qualifica di
 						</div>
 						<div class="front-page-qualifica">Volontario CRI</div>
 						<div class="front-page-labels">
-							<div style="width: 44%; padding-left: 6%; box-sizing: border-box; text-align: left;">Luogo, Data<br>-, 00/00/0000</div>
+							<div style="width: 44%; padding-left: 6%; box-sizing: border-box; text-align: left;">{{ corso.locazione }}<br>{{ corso.data_esame|date:"d/m/Y" }}</div>
 							<div style="width: 25%;">Il Direttore del Corso<br>
 							{% for persona in corso.direttori_corso %}
 									{{ persona.nome_completo }}<br>
