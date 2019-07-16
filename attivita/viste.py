@@ -124,14 +124,13 @@ def attivita_aree_sede_area_responsabili(request, me, sede_pk=None, area_pk=None
 
 @pagina_privata
 def attivita_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
-    isProgetto = request.GET.get('progetto', False)
     area = None
     progetto = None
-    if isProgetto:
+    if request.GET.get('progetto', False):
         progetto = get_object_or_404(Progetto, pk=area_pk)
     else:
         area = get_object_or_404(Area, pk=area_pk)
-    if not me.permessi_almeno(area, COMPLETO):
+    if not me.permessi_almeno(area if area else progetto, COMPLETO):
         return redirect(ERRORE_PERMESSI)
     sede = area.sede if area else progetto.sede
     if area:
