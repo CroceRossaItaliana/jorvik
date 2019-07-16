@@ -20,7 +20,7 @@ from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, ModuloModificaTurno, \
     ModuloAggiungiPartecipanti, ModuloCreazioneTurno, ModuloCreazioneArea, ModuloOrganizzaAttivita, \
     ModuloOrganizzaAttivitaReferente, ModuloStatisticheAttivita, ModuloRipetiTurno, ModuloStatisticheAttivitaPersona
-from attivita.models import Partecipazione, Attivita, Turno, Area
+from attivita.models import Partecipazione, Attivita, Turno, Area, Servizio
 from attivita.utils import turni_raggruppa_giorno
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, errore_no_volontario
@@ -195,9 +195,17 @@ def servizio_organizza(request, me):
     modulo_referente = ModuloOrganizzaAttivitaReferente(request.POST or None)
     modulo.fields['servizi'].choices = ModuloOrganizzaServizio.popola_scelta()
     modulo.fields['progetto'].queryset = me.oggetti_permesso(GESTIONE_SERVIZI_PROGETTO)
-    if request.POST and modulo.is_valid():
-        print('progetto', modulo.cleaned_data['progetto'])
-        print('servizi', modulo.cleaned_data['servizi'])
+    if request.POST and modulo.is_valid() and modulo_referente.is_valid():
+        servizio = Servizio()
+        servizio.progetto = modulo.cleaned_data['progetto']
+        servizio.sede = servizio.progetto.sede
+        servizio.save()
+        if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
+            pass
+            # attivita.aggiungi_delegato(REFERENTE, me, firmatario=me, inizio=poco_fa())
+            # return redirect(attivita.url_modifica)
+        elif modulo_referente.cleaned_data['scelta'] == modulo_referente.SCEGLI_REFERENTI:
+            return redirect("/attivita/organizza/%d/referenti/?servizio=true" % (servizio.pk,))
 
     contesto = {
         "modulo": modulo,
@@ -285,20 +293,25 @@ def attivita_organizza_fatto(request, me, pk=None):
 
 @pagina_privata
 def attivita_referenti(request, me, pk=None, nuova=False):
-    attivita = get_object_or_404(Attivita, pk=pk)
-    if not me.permessi_almeno(attivita, MODIFICA):
+    attivita = None
+    servizio = None
+    if request.GET.get('servizio', False):
+        servizio = get_object_or_404(Servizio, pk=pk)
+    else:
+        attivita = get_object_or_404(Attivita, pk=pk)
+    if not me.permessi_almeno(attivita if attivita else servizio, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
     delega = REFERENTE
 
     if nuova:
-        continua_url = "/attivita/organizza/%d/fatto/" % (attivita.pk,)
+        continua_url = "/attivita/organizza/%d/fatto/" % (attivita.pk if attivita else servizio.pk,)
     else:
         continua_url = "/attivita/gestisci/"
 
     contesto = {
         "delega": delega,
-        "attivita": attivita,
+        "attivita": attivita if attivita else servizio,
         "continua_url": continua_url
     }
     return 'attivita_referenti.html', contesto

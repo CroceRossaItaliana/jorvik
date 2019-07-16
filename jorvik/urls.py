@@ -125,14 +125,14 @@ urlpatterns = [
     url(r'^attivita/organizza/(?P<pk>[0-9\-]+)/fatto/$', attivita.viste.attivita_organizza_fatto),
 
     #TODO: path servizi
-    url(r'^servizi/organizza/$', attivita.viste.servizio_organizza),
+    url(r'^servizio/organizza/$', attivita.viste.servizio_organizza),
 
     url(r'^attivita/statistiche/$', attivita.viste.attivita_statistiche),
     url(r'^attivita/gestisci/$', attivita.viste.attivita_gestisci, {"stato": "aperte"}),
     url(r'^attivita/gestisci/chiuse/$', attivita.viste.attivita_gestisci, {"stato": "chiuse"}),
 
     #TODO: path servizi
-    url(r'^servizi/gestisci/$', attivita.viste.attivita_gestisci),
+    url(r'^servizio/gestisci/$', attivita.viste.attivita_gestisci),
 
     url(r'^attivita/calendario/$', attivita.viste.attivita_calendario),
     url(r'^attivita/calendario/(?P<inizio>[0-9\-]+)/(?P<fine>[0-9\-]+)/$', attivita.viste.attivita_calendario),
