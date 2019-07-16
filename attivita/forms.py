@@ -3,7 +3,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.forms.extras import SelectDateWidget
-
+from attivita.cri_persone import CRIPersone
 from anagrafica.models import Sede
 from attivita.models import Attivita, Turno, Area, Servizio
 from base.wysiwyg import WYSIWYGSemplice
@@ -76,11 +76,8 @@ class FiltroAreaProgetto(forms.Form):
 
     scelta = forms.ChoiceField(choices=SCELTE, required=True)
 
-
-from attivita.cri_persone import CRIPersone
-
 class ModuloOrganizzaServizio(ModelForm):
-    select = []
+    # select = ()
 
     @staticmethod
     def popola_scelta():
@@ -89,11 +86,10 @@ class ModuloOrganizzaServizio(ModelForm):
             select.append(
                 (s['key'], s['summary'])
             )
-        return select
+        return tuple(select)
 
-    servizi = forms.ModelMultipleChoiceField(
-        queryset=select,
-        required=False,
+    servizi = forms.MultipleChoiceField(
+        choices=(),
         widget=forms.SelectMultiple,
         label="Scelta servizi standard"
     )

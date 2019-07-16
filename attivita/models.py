@@ -714,6 +714,7 @@ class Progetto(ModelloSemplice, ConMarcaTemporale, ConDelegati):
     def codice_obiettivo(self):
         return OBIETTIVI[self.obiettivo]
 
+
 class Area(ModelloSemplice, ConMarcaTemporale, ConDelegati):
 
     sede = models.ForeignKey('anagrafica.Sede', related_name='aree', on_delete=models.PROTECT)

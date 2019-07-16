@@ -13,7 +13,7 @@ from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_A
     RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
     RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
     RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI, RUBRICA_CONSIGLIERE_GIOVANE
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI, RUBRICA_CONSIGLIERE_GIOVANE, GESTIONE_SERVIZI_PROGETTO
 
 """
 Questo file gestisce la espansione dei permessi in Gaia.
@@ -251,6 +251,17 @@ def espandi_gestione_attivita_area(qs_aree, al_giorno=None):
         return []
 
 
+def espandi_gestione_servizi_progetti(qs_progetti, al_giorno=None):
+    from attivita.models import Servizio
+    try:
+        return [
+                   (COMPLETO, Servizio.objects.filter(progetto__in=qs_progetti)),
+               ] \
+               + espandi_gestione_attivita(Servizio.objects.filter(progetto__in=qs_progetti))
+    except (AttributeError, ValueError, KeyError, TypeError):
+        return []
+
+
 def espandi_gestione_attivita(qs_attivita, al_giorno=None):
     from anagrafica.models import Persona
     try:
@@ -395,5 +406,6 @@ ESPANDI_PERMESSI = {
     RUBRICA_RESPONSABILI_FORMAZIONE: espandi_rubrica_responsabili_formazione,
     RUBRICA_DIRETTORI_CORSI: espandi_rubrica_direttori_corsi,
     RUBRICA_RESPONSABILI_AUTOPARCO: espandi_rubrica_responsabili_autoparco,
+    GESTIONE_SERVIZI_PROGETTO: espandi_gestione_servizi_progetti
 }
 

@@ -15,7 +15,7 @@ from anagrafica.models import Sede
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE, REFERENTE_GRUPPO, DELEGATO_PROGETTO
 from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO, \
     GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE, \
-    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
+    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, GESTIONE_SEDE
 from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, ModuloModificaTurno, \
     ModuloAggiungiPartecipanti, ModuloCreazioneTurno, ModuloCreazioneArea, ModuloOrganizzaAttivita, \
@@ -190,12 +190,18 @@ def attivita_gestisci(request, me, stato="aperte"):
 @pagina_privata()
 def servizio_organizza(request, me):
     from attivita.forms import ModuloOrganizzaServizio
-
+    from anagrafica.permessi.costanti import GESTIONE_SERVIZI_PROGETTO
     modulo = ModuloOrganizzaServizio(request.POST or None)
+    modulo_referente = ModuloOrganizzaAttivitaReferente(request.POST or None)
     modulo.fields['servizi'].choices = ModuloOrganizzaServizio.popola_scelta()
+    modulo.fields['progetto'].queryset = me.oggetti_permesso(GESTIONE_SERVIZI_PROGETTO)
+    if request.POST and modulo.is_valid():
+        print('progetto', modulo.cleaned_data['progetto'])
+        print('servizi', modulo.cleaned_data['servizi'])
+
     contesto = {
         "modulo": modulo,
-        # "modulo_referente": None,
+        "modulo_referente": modulo_referente,
     }
     return 'servizio_organizza.html', contesto
 

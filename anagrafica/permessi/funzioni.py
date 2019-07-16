@@ -8,7 +8,8 @@ from django.db.models import QuerySet, Q
 
 from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO,\
     UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, \
-    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE
+    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, CONSIGLIERE, CONSIGLIERE_GIOVANE, \
+    VICE_PRESIDENTE
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.applicazioni import DELEGATO_AREA
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
@@ -23,7 +24,7 @@ from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_A
     RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
     RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
     RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI, GESTIONE_SERVIZI_PROGETTO
 
 
 def permessi_persona(persona):
@@ -266,7 +267,7 @@ def permessi_delegato_area(area):
     :return: Lista di permessi.
     """
     from anagrafica.models import Sede
-    from attivita.models import Area, Attivita
+    from attivita.models import Area, Attivita, Progetto
     from gruppi.models import Gruppo
     if isinstance(area, QuerySet):
         qs_area = area
@@ -275,12 +276,14 @@ def permessi_delegato_area(area):
     sede = Sede.objects.filter(aree__in=qs_area)
     attivita = Attivita.objects.filter(area__in=qs_area)
     gruppi = Gruppo.objects.filter(area__in=qs_area)
+    progetti = Progetto.objects.filter(sede__in=sede)
     return [
         (RUBRICA_DELEGATI_AREA,         sede),
         (GESTIONE_ATTIVITA_AREA,        qs_area),
         (GESTIONE_ATTIVITA,             attivita),
         (GESTIONE_REFERENTI_ATTIVITA,   attivita),
-        (GESTIONE_GRUPPI,               gruppi)
+        (GESTIONE_GRUPPI,               gruppi),
+        (GESTIONE_SERVIZI_PROGETTO,     progetti)
     ]
 
 
