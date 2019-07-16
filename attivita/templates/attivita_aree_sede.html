@@ -46,7 +46,7 @@
                                 <th>Ob.#</th>
                                 <th>Nome Area/Progetto</th>
                                 <th>Responsabili</th>
-                                <th>Attivit&agrave;/Progetto</th>
+                                <th>Attivit&agrave;/Servizi</th>
                                 <th>Azioni</th>
                             </tr>
                         </thead>
@@ -93,13 +93,13 @@
                                     </th>
                                 </tr>
                             {% endfor %}
-                            {% for progetti in progetti %}
+                            {% for progetto in progetti %}
                                 <tr>
                                     <td class="piu-grande">
-                                        {{ progetti.obiettivo }}
+                                        {{ progetto.obiettivo }}
                                     </td>
                                     <td class="grassetto">
-                                        {{ progetti.nome }}
+                                        {{ progetto.nome }}
                                     </td>
                                     <td class="piu-piccolo">
                                         {% for r in progetti.delegati_attuali %}
@@ -109,8 +109,7 @@
                                         {% endfor %}
                                     </td>
                                     <td>
-{#                                        {{ progetti.attivita.count }} attivit&agrave;#}
-                                        X progetti
+{#                                        {{ progetto.attivita.count }} servizi#} X servizi
                                     </td>
                                     <th>
                                         <div class="btn-group-vertical btn-block">

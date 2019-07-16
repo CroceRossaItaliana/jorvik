@@ -131,8 +131,8 @@ def attivita_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
         progetto = get_object_or_404(Progetto, pk=area_pk)
     else:
         area = get_object_or_404(Area, pk=area_pk)
-    # if not me.permessi_almeno(area, COMPLETO):
-    #     return redirect(ERRORE_PERMESSI)
+    if not me.permessi_almeno(area, COMPLETO):
+        return redirect(ERRORE_PERMESSI)
     sede = area.sede if area else progetto.sede
     if area:
         if area.attivita.exists():

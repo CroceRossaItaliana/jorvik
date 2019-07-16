@@ -1089,7 +1089,7 @@ def strumenti_delegati(request, me):
     contesto = {
         "continua_url": continua_url,
         "almeno": almeno,
-        "delega": PERMESSI_NOMI_DICT[delega],
+        "delega": PERMESSI_NOMI_DICT[delega] if delega in PERMESSI_NOMI_DICT else delega,
         "modulo": modulo,
         "oggetto": oggetto,
         "deleghe": deleghe,
