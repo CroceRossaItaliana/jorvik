@@ -116,6 +116,10 @@ urlpatterns = [
     url(r'documenti/immagine/(?P<image_id>\d+)/(?P<thumb_options>\d+)/$', gestione_file.viste.serve_image, name='scarica_immagine'),
     url(r'documenti/immagine/(?P<image_id>\d+)/(?P<width>\d+)/(?P<height>\d+)/$', gestione_file.viste.serve_image, name='scarica_immagine'),
     url(r'^attivita/$', attivita.viste.attivita),
+    #TODO: path servizi
+    url(r'^attivita/servizio/organizza/$', attivita.viste.servizio_organizza),
+    url(r'^attivita/servizio/gestisci/$', attivita.viste.attivita_gestisci, {"stato": "aperte"}),
+
     url(r'^attivita/aree/$', attivita.viste.attivita_aree),
     url(r'^attivita/aree/(?P<sede_pk>[0-9\-]+)/$', attivita.viste.attivita_aree_sede),
     url(r'^attivita/aree/(?P<sede_pk>[0-9\-]+)/(?P<area_pk>[0-9\-]+)/cancella/$', attivita.viste.attivita_aree_sede_area_cancella),
@@ -124,15 +128,15 @@ urlpatterns = [
     url(r'^attivita/organizza/(?P<pk>[0-9\-]+)/referenti/$', attivita.viste.attivita_referenti, {"nuova": True}),
     url(r'^attivita/organizza/(?P<pk>[0-9\-]+)/fatto/$', attivita.viste.attivita_organizza_fatto),
 
-    #TODO: path servizi
-    url(r'^servizio/organizza/$', attivita.viste.servizio_organizza),
+
+
+
 
     url(r'^attivita/statistiche/$', attivita.viste.attivita_statistiche),
     url(r'^attivita/gestisci/$', attivita.viste.attivita_gestisci, {"stato": "aperte"}),
     url(r'^attivita/gestisci/chiuse/$', attivita.viste.attivita_gestisci, {"stato": "chiuse"}),
 
-    #TODO: path servizi
-    url(r'^servizio/gestisci/$', attivita.viste.attivita_gestisci),
+
 
     url(r'^attivita/calendario/$', attivita.viste.attivita_calendario),
     url(r'^attivita/calendario/(?P<inizio>[0-9\-]+)/(?P<fine>[0-9\-]+)/$', attivita.viste.attivita_calendario),

@@ -102,7 +102,7 @@
                                         {{ progetto.nome }}
                                     </td>
                                     <td class="piu-piccolo">
-                                        {% for r in progetti.delegati_attuali %}
+                                        {% for r in progetto.delegati_attuali %}
                                             {{ r.link|safe }}<br />
                                         {% empty %}
                                             Nessun responsabile
@@ -118,14 +118,14 @@
                                                 <i class="fa fa-fw fa-users"></i>
                                                 Responsabili
                                             </a>
-                                            {% if not area.attivita.exists %}
+{#                                            {% if not area.attivita.exists %}#}
                                                <a href="/attivita/aree/{{ sede.pk }}/{{ progetto.pk }}/cancella/?progetto=true"
                                                    class="btn btn-xs btn-danger"
                                                    data-conferma="Sei sicuro di voler cancellare questo progetto?">
                                                     <i class="fa fa-fw fa-trash"></i>
                                                     Cancella
                                                 </a>
-                                            {% endif %}
+{#                                            {% endif %}#}
 
                                         </div>
 

@@ -18,8 +18,8 @@ def menu_attivita(me):
                 ("Organizza attività", "fa-asterisk", "/attivita/organizza/") if attivita_area_exists else None,
                 ("Elenco attività", "fa-list", "/attivita/gestisci/") if me.oggetti_permesso(GESTIONE_ATTIVITA).exists() else None,
 
-                ("Organizza servizio", "fa-asterisk", "/servizio/organizza/") if attivita_area_exists else None,
-                ("Elenco servizio", "fa-list", "/servizio/gestisci/") if me.oggetti_permesso(GESTIONE_ATTIVITA).exists() else None,
+                ("Organizza servizio", "fa-asterisk", "/attivita/servizio/organizza/") if attivita_area_exists else None,
+                ("Elenco servizio", "fa-list", "/attivita/servizio/gestisci/") if me.oggetti_permesso(GESTIONE_ATTIVITA).exists() else None,
 
                 ("Gruppi di lavoro", "fa-pencil", "/attivita/gruppo/") if attivita_area_exists else None,
                 ("Statistiche", "fa-bar-chart", "/attivita/statistiche/") if me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE).exists() else None,

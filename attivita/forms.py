@@ -3,7 +3,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.forms.extras import SelectDateWidget
-from attivita.cri_persone import CRIPersone
+from attivita.cri_persone import getServiziStandard
 from anagrafica.models import Sede
 from attivita.models import Attivita, Turno, Area, Servizio
 from base.wysiwyg import WYSIWYGSemplice
@@ -82,7 +82,7 @@ class ModuloOrganizzaServizio(ModelForm):
     @staticmethod
     def popola_scelta():
         select = []
-        for s in CRIPersone.getServiziStandard()['data']['services']:
+        for s in getServiziStandard()['data']['services']:
             select.append(
                 (s['key'], s['summary'])
             )

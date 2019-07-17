@@ -146,6 +146,12 @@ def attivita_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
         progetto.delete()
     return redirect("/attivita/aree/%d/" % (sede.pk,))
 
+@pagina_privata
+def servizio_gestisci(request, me, stato="aperte"):
+
+    contesto = {}
+
+    return 'attivita_gestisci.html', contesto
 
 @pagina_privata
 def attivita_gestisci(request, me, stato="aperte"):
@@ -186,7 +192,7 @@ def attivita_gestisci(request, me, stato="aperte"):
     }
     return 'attivita_gestisci.html', contesto
 
-@pagina_privata()
+@pagina_privata
 def servizio_organizza(request, me):
     from attivita.forms import ModuloOrganizzaServizio
     from anagrafica.permessi.costanti import GESTIONE_SERVIZI_PROGETTO
@@ -200,6 +206,7 @@ def servizio_organizza(request, me):
         servizio.sede = servizio.progetto.sede
         servizio.save()
         if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
+            #TODO: crea con referente me stesso
             pass
             # attivita.aggiungi_delegato(REFERENTE, me, firmatario=me, inizio=poco_fa())
             # return redirect(attivita.url_modifica)
