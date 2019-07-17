@@ -5,7 +5,7 @@ from django.forms import ModelForm
 from django.forms.extras import SelectDateWidget
 from attivita.cri_persone import getServiziStandard
 from anagrafica.models import Sede
-from attivita.models import Attivita, Turno, Area, Servizio
+from attivita.models import Attivita, Turno, Area
 from base.wysiwyg import WYSIWYGSemplice
 
 
@@ -76,8 +76,8 @@ class FiltroAreaProgetto(forms.Form):
 
     scelta = forms.ChoiceField(choices=SCELTE, required=True)
 
-class ModuloOrganizzaServizio(ModelForm):
-    # select = ()
+
+class ModuloOrganizzaServizio(forms.Form):
 
     @staticmethod
     def popola_scelta():
@@ -88,15 +88,27 @@ class ModuloOrganizzaServizio(ModelForm):
             )
         return tuple(select)
 
+    @staticmethod
+    def popola_progetto(me):
+        from attivita.models import Progetto
+        from anagrafica.permessi.costanti import GESTIONE_ATTIVITA_SEDE
+        select = [('', 'Seleziona un progetto')]
+        qs = Progetto.objects.filter(
+            sede__in=me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE, solo_deleghe_attive=True)
+        )
+        for p in qs:
+            select.append(
+                (p.nome, p.nome)
+        )
+        return tuple(select)
+
+    progetto = forms.ChoiceField()
     servizi = forms.MultipleChoiceField(
         choices=(),
         widget=forms.SelectMultiple,
         label="Scelta servizi standard"
     )
 
-    class Meta:
-        model = Servizio
-        fields = ['progetto', ]
 
 
 class ModuloCreazioneArea(ModelForm):

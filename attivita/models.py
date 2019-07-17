@@ -24,33 +24,6 @@ from base.tratti import ConMarcaTemporale, ConDelegati
 from base.geo import ConGeolocalizzazione
 
 
-class Servizio(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiudizio, ConCommenti,
-               ConAllegati, ConDelegati, ConVecchioID):
-
-    class Meta:
-        verbose_name = "Servizio"
-        verbose_name_plural = "Servizi"
-        ordering = ['-creazione',]
-        permissions = (
-            ("view_servizio", "Can view servizio"),
-        )
-
-    BOZZA = 'B'
-    VISIBILE = 'V'
-    STATO = (
-        (BOZZA, "Bozza"),
-        (VISIBILE, "Visibile")
-    )
-    # nome = models.CharField(max_length=255, default="Nuova servizio", db_index=True,
-    #                         help_text="es. Aggiungi un posto a tavola")
-    sede = models.ForeignKey('anagrafica.Sede', related_name='servizio', on_delete=models.PROTECT)
-    progetto = models.ForeignKey("attivita.Progetto", related_name='progetto', on_delete=models.SET_NULL, null=True)
-    stato = models.CharField(choices=STATO, default=BOZZA, max_length=1, db_index=True)
-
-    # def __str__(self):
-    #     return self.nome
-
-
 class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiudizio, ConCommenti,
                ConAllegati, ConDelegati, ConVecchioID):
 

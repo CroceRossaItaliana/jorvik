@@ -118,7 +118,8 @@ urlpatterns = [
     url(r'^attivita/$', attivita.viste.attivita),
     #TODO: path servizi
     url(r'^attivita/servizio/organizza/$', attivita.viste.servizio_organizza),
-    url(r'^attivita/servizio/gestisci/$', attivita.viste.attivita_gestisci, {"stato": "aperte"}),
+    url(r'^attivita/servizio/gestisci/$', attivita.viste.servizio_gestisci, {"stato": "aperte"}),
+    url(r'^attivita/servizio/gestisci/chiuse/$', attivita.viste.servizio_gestisci, {"stato": "chiuse"}),
 
     url(r'^attivita/aree/$', attivita.viste.attivita_aree),
     url(r'^attivita/aree/(?P<sede_pk>[0-9\-]+)/$', attivita.viste.attivita_aree_sede),
@@ -127,9 +128,6 @@ urlpatterns = [
     url(r'^attivita/organizza/$', attivita.viste.attivita_organizza),
     url(r'^attivita/organizza/(?P<pk>[0-9\-]+)/referenti/$', attivita.viste.attivita_referenti, {"nuova": True}),
     url(r'^attivita/organizza/(?P<pk>[0-9\-]+)/fatto/$', attivita.viste.attivita_organizza_fatto),
-
-
-
 
 
     url(r'^attivita/statistiche/$', attivita.viste.attivita_statistiche),
