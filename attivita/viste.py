@@ -196,17 +196,20 @@ def attivita_gestisci(request, me, stato="aperte"):
 @pagina_privata
 def servizio_organizza(request, me):
     from attivita.forms import ModuloOrganizzaServizio
-    from anagrafica.permessi.costanti import GESTIONE_SERVIZI_PROGETTO
+
     modulo = ModuloOrganizzaServizio(request.POST or None)
     modulo_referente = ModuloOrganizzaAttivitaReferente(request.POST or None)
     modulo.fields['servizi'].choices = ModuloOrganizzaServizio.popola_scelta()
     modulo.fields['progetto'].choices = ModuloOrganizzaServizio.popola_progetto(me)
 
     if request.POST and modulo.is_valid() and modulo_referente.is_valid():
+        print(modulo.cleaned_data['servizi'])
+        print(modulo.cleaned_data['progetto'])
         if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
             pass
         elif modulo_referente.cleaned_data['scelta'] == modulo_referente.SCEGLI_REFERENTI:
             pass
+            # return redirect("/attivita/servizio/organizza/%d/referenti/")
 
     contesto = {
         "modulo": modulo,

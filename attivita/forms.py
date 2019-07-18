@@ -82,10 +82,12 @@ class ModuloOrganizzaServizio(forms.Form):
     @staticmethod
     def popola_scelta():
         select = []
-        for s in getServiziStandard()['data']['services']:
-            select.append(
-                (s['key'], s['summary'])
-            )
+        serviziStandard = getServiziStandard()
+        if 'data' in serviziStandard and 'service' in serviziStandard['data']:
+            for s in getServiziStandard()['data']['services']:
+                select.append(
+                    (s['key'], s['summary'])
+                )
         return tuple(select)
 
     @staticmethod
@@ -108,7 +110,6 @@ class ModuloOrganizzaServizio(forms.Form):
         widget=forms.SelectMultiple,
         label="Scelta servizi standard"
     )
-
 
 
 class ModuloCreazioneArea(ModelForm):

@@ -24,7 +24,7 @@ from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_A
     RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
     RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
     RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI, GESTIONE_SERVIZI_PROGETTO
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI
 
 
 def permessi_persona(persona):
@@ -276,14 +276,12 @@ def permessi_delegato_area(area):
     sede = Sede.objects.filter(aree__in=qs_area)
     attivita = Attivita.objects.filter(area__in=qs_area)
     gruppi = Gruppo.objects.filter(area__in=qs_area)
-    progetti = Progetto.objects.filter(sede__in=sede)
     return [
         (RUBRICA_DELEGATI_AREA,         sede),
         (GESTIONE_ATTIVITA_AREA,        qs_area),
         (GESTIONE_ATTIVITA,             attivita),
         (GESTIONE_REFERENTI_ATTIVITA,   attivita),
-        (GESTIONE_GRUPPI,               gruppi),
-        (GESTIONE_SERVIZI_PROGETTO,     progetti)
+        (GESTIONE_GRUPPI,               gruppi)
     ]
 
 
