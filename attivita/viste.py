@@ -54,8 +54,10 @@ def attivita_aree_sede(request, me, sede_pk=None):
     modulo_filtro = FiltroAreaProgetto(request.POST or None)
     aree = []
     progetti = []
+    isFiltro = 0
     if modulo_filtro.is_valid():
         scelta = modulo_filtro.cleaned_data['scelta']
+        isFiltro = 1
         if scelta == 'T':
             aree = sede.aree.all()
             progetti = sede.progetti.all()
@@ -92,6 +94,7 @@ def attivita_aree_sede(request, me, sede_pk=None):
 
     contesto = {
         "filtro": modulo_filtro,
+        "isFiltro": isFiltro,
         "sede": sede,
         "aree": aree,
         "progetti": progetti,

@@ -1,6 +1,7 @@
 {% extends 'attivita_vuota.html' %}
 
 {% load bootstrap3 %}
+{% load static %}
 
 {% block pagina_titolo %}
     Aree di Intervento
@@ -46,7 +47,7 @@
                                 <th>Ob.#</th>
                                 <th>Nome Area/Progetto</th>
                                 <th>Responsabili</th>
-                                <th>Attivit&agrave;/Servizi</th>
+                                <th>Attivit&agrave;</th>
                                 <th>Azioni</th>
                             </tr>
                         </thead>
@@ -109,7 +110,7 @@
                                         {% endfor %}
                                     </td>
                                     <td>
-{#                                        {{ progetto.attivita.count }} servizi#} X servizi
+{#                                        {{ progetto.attivita.count }} servizi#}
                                     </td>
                                     <th>
                                         <div class="btn-group-vertical btn-block">
@@ -166,6 +167,18 @@
         </div>
     </div>
 
+<script>
 
+   let isFiltro =  parseInt("{{isFiltro}}");
+
+   if (isFiltro) {
+        jQuery('#id_nome').parent().removeClass('has-error');
+        jQuery('#id_obiettivo').parent().removeClass('has-error');
+        jQuery('#id_progetto').parent().parent().parent().removeClass('has-success');
+   }
+
+</script>
 
 {% endblock %}
+
+
