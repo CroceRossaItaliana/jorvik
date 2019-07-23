@@ -1366,7 +1366,7 @@ a.text-warning:focus {
   color: #e6e6e6;
 }
 .text-danger {
-  color: #ffffff;
+  color: #cc0000;
 }
 a.text-danger:hover,
 a.text-danger:focus {
@@ -5072,7 +5072,7 @@ a.thumbnail.active {
   color: #e6e6e6;
 }
 .alert-danger {
-  color: #ffffff;
+  color: #cc0000;
   background-color: #ffffff;
   border-color: #f2f2f2;
 }
