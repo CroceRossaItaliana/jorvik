@@ -1103,7 +1103,7 @@ a {
 }
 a:hover,
 a:focus {
-  color: #ffffff;
+  color: #a90000;
   text-decoration: underline;
 }
 a:focus {
@@ -3543,14 +3543,14 @@ tbody.collapse.in {
 }
 .dropdown-menu > li > a:hover,
 .dropdown-menu > li > a:focus {
-  color: #ffffff;
+  color: #fff;
   text-decoration: none;
   background-color: #cc0000;
 }
 .dropdown-menu > .active > a,
 .dropdown-menu > .active > a:hover,
 .dropdown-menu > .active > a:focus {
-  color: #ffffff;
+  color: #fff;
   text-decoration: none;
   background-color: #212529;
   outline: 0;
@@ -3972,6 +3972,7 @@ select[multiple].input-group-sm > .input-group-btn > .btn {
 .nav > li > a:focus {
   text-decoration: none;
   background-color: #cc0000;
+  color: #fff;
 }
 .nav > li.disabled > a {
   color: #212529;
