@@ -27,7 +27,7 @@ from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, err
 from base.files import Excel, FoglioExcel
 from base.utils import poco_fa, timedelta_ore
 from gruppi.models import Gruppo
-
+from attivita.cri_persone import createServizio
 
 def attivita(request):
     return redirect('/attivita/calendario/')
@@ -209,7 +209,18 @@ def servizio_organizza(request, me):
         print(modulo.cleaned_data['servizi'])
         print(modulo.cleaned_data['progetto'])
         if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
-            pass
+            # TODO: crea servizio
+
+            print(modulo.cleaned_data['servizi'])
+
+            result = createServizio(
+                comitato=646,
+                nome_progetto=modulo.cleaned_data['progetto'],
+                servizi=modulo.cleaned_data['servizi']
+            )
+
+            return redirect("/attivita/servizio/scheda/{}/modifica/".format('a'))
+
         elif modulo_referente.cleaned_data['scelta'] == modulo_referente.SCEGLI_REFERENTI:
             pass
             # return redirect("/attivita/servizio/organizza/%d/referenti/")
@@ -748,6 +759,19 @@ def attivita_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_p
     return redirect("/attivita/scheda/%d/turni/modifica/%d/?evidenzia_turno=%d#turno-%d" % (
         attivita.pk, pagina, turno.pk, turno.pk
     ))
+
+
+@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+def servizio_scheda_informazioni_modifica(request, me, pk=None):
+    from attivita.forms import ModuloServizioModifica
+
+    modulo = ModuloServizioModifica(request.POST or None)
+
+    contesto = {
+        "modulo": modulo
+    }
+
+    return 'servizio_scheda_infomazioni_modifica.html', contesto
 
 
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))

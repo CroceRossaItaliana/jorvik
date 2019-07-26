@@ -1,0 +1,31 @@
+{% extends 'attivita_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}{% endblock %}
+    Servizio
+{% endblock %}
+
+{% block app_contenuto %}
+    <h2 class="allinea-centro grassetto text-success">
+        Nome Servizio 1
+    </h2>
+
+    <ul class="nav nav-tabs">
+        <li role="presentation">
+            <a href="/attivita/servizio/scheda/id/modifica/">
+                <i class="fa fa-fw fa-pencil"></i>
+                Gestione Servizio
+            </a>
+        </li>
+    </ul>
+
+    <p>&nbsp;</p>
+    {% block scheda_contenuto %}
+    {% endblock %}
+
+{% endblock %}
+
+
+

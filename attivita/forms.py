@@ -25,6 +25,22 @@ class ModuloAttivitaInformazioni(ModelForm):
         }
 
 
+class ModuloServizioModifica(forms.Form):
+    BOZZA = 'B'
+    APERTA = 'A'
+    CHIUSA = 'C'
+    choise = (
+        (BOZZA, 'Bozza'),
+        (APERTA, 'Aperta'),
+        (CHIUSA, 'Chiusa')
+    )
+    stato = forms.ChoiceField(
+        choices=choise, required=True, initial=BOZZA
+    )
+
+    testo = forms.CharField(required=False, max_length=100000, widget=WYSIWYGSemplice())
+
+
 class ModuloModificaTurno(ModelForm):
     class Meta:
         model = Turno
@@ -83,7 +99,7 @@ class ModuloOrganizzaServizio(forms.Form):
     def popola_scelta():
         select = []
         serviziStandard = getServiziStandard()
-        if 'data' in serviziStandard and 'service' in serviziStandard['data']:
+        if 'data' in serviziStandard and 'services' in serviziStandard['data']:
             for s in getServiziStandard()['data']['services']:
                 select.append(
                     (s['key'], s['summary'])

@@ -10,7 +10,7 @@ def getServiziStandard(max_result=200):
 
 def createServizio(comitato, nome_progetto, servizi=[]):
     r = requests.post(
-        'https://mscriperlepersone.cri.it/offeredservice',
+        'https://mscriperlepersone.cri.it/offeredservice/',
         json={
             "committee": comitato,
             "project": nome_progetto,
@@ -18,4 +18,6 @@ def createServizio(comitato, nome_progetto, servizi=[]):
             "summary": nome_progetto
         }
     )
-    return r.json() if r.status_code == 200 else {}
+    resp = r.json()
+    print('risposta', resp)
+    return resp if 'data' in resp and resp['data'] else {}
