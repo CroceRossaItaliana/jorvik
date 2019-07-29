@@ -98,7 +98,7 @@
 
             {% for ricevuta in ricevute %}
 
-                <tr {% if ricevuta.stato == ricevuta.ANNULLATA %}class="warning"{% endif %}>
+                <tr {% if ricevuta.stato == ricevuta.ANNULLATA %}class="alert-warning"{% endif %}>
                     <td class="grassetto">
                         {{ ricevuta.anno }}/{{ ricevuta.progressivo }}
                         {% if ricevuta.stato == ricevuta.ANNULLATA %}<br />
