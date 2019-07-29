@@ -9,6 +9,7 @@
 {% block app_contenuto %}
     <form method="POST">
         {% csrf_token %}
+
         <div class="alert alert-info alert-block">
             <p>
                 <i class="fa fa-fw fa-info-circle"></i>
@@ -16,6 +17,16 @@
                 completa i moduli in questa pagina.
             </p>
         </div>
+
+        {% if errore %}
+            <div class="alert alert-danger alert-block">
+                <p>
+                    <i class="fa fa-fw fa-exclamation-triangle"></i>
+                    Ci sono stati problemi nella creazione del Servizio. Riprova piu tardi:
+                </p>
+            </div>
+        {% endif %}
+
         <div class="row">
             <div class="col-md-8">
 

@@ -9,7 +9,9 @@
 
 {% block app_contenuto %}
     <h2 class="allinea-centro grassetto text-success">
-        Nome Servizio 1
+        {% if nome %}
+            {{ nome }}
+        {% endif %}
     </h2>
 
     <ul class="nav nav-tabs">

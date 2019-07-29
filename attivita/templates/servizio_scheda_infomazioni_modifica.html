@@ -4,7 +4,11 @@
 {% load bootstrap3 %}
 
 {% block pagina_titolo %}
-    {% block scheda_titolo %}Gestione Servizio{% endblock %}
+    {% block scheda_titolo %}
+        {% if nome %}
+            {{ nome }}
+        {% endif %}
+    {% endblock %}
 {% endblock %}
 
 {% block scheda_contenuto %}

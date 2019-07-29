@@ -12,11 +12,29 @@ def createServizio(comitato, nome_progetto, servizi=[]):
     r = requests.post(
         'https://mscriperlepersone.cri.it/offeredservice/',
         json={
-            "committee": comitato,
-            "project": nome_progetto,
+            "committee": str(comitato),
+            "project": "XXX" + nome_progetto + "XXX",
             "service": servizi,
-            "summary": nome_progetto
+            "summary": "XXX" + nome_progetto + "XXX"
         }
+    )
+    resp = r.json()
+    print('risposta', resp)
+    return resp if 'data' in resp and resp['data'] else {}
+
+
+def getServizio(key=''):
+    r = requests.get(
+        'https://mscriperlepersone.cri.it/offeredserviceextended/{}'.format(key)
+    )
+    resp = r.json()
+    print('risposta', resp)
+    return resp if 'data' in resp and resp['data'] else {}
+
+
+def getListService(comitato):
+    r = requests.get(
+        'https://mscriperlepersone.cri.it/offeredservice/?committee={}'.format(comitato)
     )
     resp = r.json()
     print('risposta', resp)

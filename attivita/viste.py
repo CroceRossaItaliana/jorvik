@@ -147,13 +147,18 @@ def attivita_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
 
 @pagina_privata
 def servizio_gestisci(request, me, stato="aperte"):
-    # servizi_tutte = Servizio.objects.filter(
-    #     sede__in=me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE, solo_deleghe_attive=True)
-    # )
-    #
-    # print('servizi_tutte', servizi_tutte)
+    from attivita.cri_persone import getListService
+    sedi = me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE, solo_deleghe_attive=True)
+
+    print('SEDI', sedi)
+
+    result = getListService(646)
 
     contesto = {}
+
+    if 'result' in result:
+        if result['result']['code'] == 200:
+            contesto['servizi'] = result['data']['offered_services']
 
     return 'servizio_gestisci.html', contesto
 
@@ -205,6 +210,11 @@ def servizio_organizza(request, me):
     modulo.fields['servizi'].choices = ModuloOrganizzaServizio.popola_scelta()
     modulo.fields['progetto'].choices = ModuloOrganizzaServizio.popola_progetto(me)
 
+    contesto = {
+        "modulo": modulo,
+        "modulo_referente": modulo_referente,
+    }
+
     if request.POST and modulo.is_valid() and modulo_referente.is_valid():
         print(modulo.cleaned_data['servizi'])
         print(modulo.cleaned_data['progetto'])
@@ -219,16 +229,20 @@ def servizio_organizza(request, me):
                 servizi=modulo.cleaned_data['servizi']
             )
 
-            return redirect("/attivita/servizio/scheda/{}/modifica/".format('a'))
+            if 'result' in result:
+                if result['result']['code'] == 201:
+                    return redirect(
+                        "/attivita/servizio/scheda/{}/modifica/".format(result["data"]["key"])
+                    )
+                else:
+                    contesto['errore'] = True
+            else:
+                contesto['errore'] = True
 
         elif modulo_referente.cleaned_data['scelta'] == modulo_referente.SCEGLI_REFERENTI:
             pass
             # return redirect("/attivita/servizio/organizza/%d/referenti/")
 
-    contesto = {
-        "modulo": modulo,
-        "modulo_referente": modulo_referente,
-    }
     return 'servizio_organizza.html', contesto
 
 
@@ -764,12 +778,18 @@ def attivita_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_p
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def servizio_scheda_informazioni_modifica(request, me, pk=None):
     from attivita.forms import ModuloServizioModifica
-
+    from attivita.cri_persone import getServizio
     modulo = ModuloServizioModifica(request.POST or None)
 
     contesto = {
         "modulo": modulo
     }
+
+    result = getServizio(pk)
+
+    if 'result' in result:
+        if result['result']['code'] == 200:
+            contesto['nome'] = result['data']['summary']
 
     return 'servizio_scheda_infomazioni_modifica.html', contesto
 
