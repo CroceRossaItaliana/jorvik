@@ -20,7 +20,7 @@
                     </div>
                     <div class="col-md-3">
                         {% if richiesta.pk in richieste_bloccate.corsi %}
-                            <span class="text-warning grassetto">
+                            <span class="alert-warning grassetto">
                             <i class="fa fa-fw fa-warning"></i>
                             Corso non ancora iniziato, impossibile processare la richiesta.
                         {% else %}
@@ -60,7 +60,7 @@
                 </div>
 
                 {% if richiesta.scadenza %}
-                    <span class="text-warning grassetto">
+                    <span class="alert-warning grassetto">
                         <i class="fa fa-fw fa-warning"></i>
                         La richiesta
 
