@@ -83,7 +83,7 @@
                         {% for trasferimento in storico %}
                         <tr
                             {% if trasferimento.esito == trasferimento.ESITO_PENDING %}
-                                class="warning"
+                                class="alert alert-warning"
                             {% endif %}
                         >
                             <td>{{ trasferimento.richiedente }}</td>
@@ -107,7 +107,7 @@
                         {% empty %}
                             <tr>
                                 <td colspan="5" class="bg-warning">
-                                    <i class="fa fa-info"></i> Nessun trasferimento passato.
+                                    <i class="fa fa-info-circle"></i> Nessun trasferimento passato.
                                 </td>
                             </tr>
                         {% endfor %}
