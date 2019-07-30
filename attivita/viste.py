@@ -158,6 +158,8 @@ def servizio_gestisci(request, me, stato="aperte"):
 
     if 'result' in result:
         if result['result']['code'] == 200:
+            for sevizio in result['data']['offered_services']:
+                sevizio['project'] = Progetto.objects.filter(nome=sevizio['project'].replace('X', '')).first()
             contesto['servizi'] = result['data']['offered_services']
 
     return 'servizio_gestisci.html', contesto
