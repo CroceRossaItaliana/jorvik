@@ -489,3 +489,22 @@ class InformCourseParticipantsForm(forms.Form):
 
         super().__init__(*args, **kwargs)
         self.fields['recipient_type'] = forms.ChoiceField(choices=CHOICES, label='Destinatari')
+
+
+class FormCommissioneEsame(ModelForm):
+    class Meta:
+        model = CorsoBase
+        fields = ['commissione_esame_file', ]
+
+    def __init__(self, *args, **kwargs):
+        instance = kwargs.get('instance')
+        esame_nominativi = instance.commissione_esame_names.split(', ')
+
+        super().__init__(*args, **kwargs)
+
+        for i in range(5):
+            self.fields['nominativo_%s' % i] = forms.CharField(required=False, label='Nominativo')
+            try:
+                self.fields['nominativo_%s' % i].initial = esame_nominativi[i]
+            except IndexError:
+                pass

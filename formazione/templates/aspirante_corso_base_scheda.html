@@ -197,6 +197,12 @@
                     </tr>
                 </table>
             {% endif %}
+
+            {% if me.is_presidente %}
+                <hr>
+                <p>Per generare il verbale è necessario <strong><a href="{% url 'courses:commissione_esame' corso.pk %}">compilare i nominativi e caricare delibera</a></strong> della commissione esame.</p>
+            {% endif %}
+
         </div>
     {% endif %}
 

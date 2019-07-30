@@ -141,6 +141,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         upload_to=delibera_file_upload_path,
         validators=[ValidateFileSize(3), validate_file_extension]
     )
+    commissione_esame_file = models.FileField('Commissione esame delibera',
+        null=True, blank=True, upload_to='courses/commissione_esame')
+    commissione_esame_names = models.CharField(_('Commissione esame nomi'),
+        max_length=255, null=True, blank=True)
     titolo_cri = models.ForeignKey(Titolo, blank=True, null=True,
                                    verbose_name="Titolo CRI")
     cdf_level = models.CharField(max_length=3, choices=Titolo.CDF_LIVELLI,
@@ -582,6 +586,16 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             return self.partecipazioni_confermate().filter(**condition)
         else:
             return self.partecipazioni_confermate().exclude(**condition)
+
+    @property
+    def terminabile_con_assenti_motivazione(self):
+        ha_assenti = self.has_partecipazioni_confermate_con_motivo_assente
+        if self.relazione_direttore.is_completed:
+            if ha_assenti and self.data_esame_2 > timezone.now() >= self.data_esame:
+                return True
+            if not ha_assenti and timezone.now() > self.data_esame_2:
+                return True
+        return False
 
     @property
     def has_partecipazioni_confermate_con_motivo_assente(self):

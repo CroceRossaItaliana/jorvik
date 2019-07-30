@@ -1,0 +1,22 @@
+{% extends 'aspirante_corso_base_scheda.html' %}
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block scheda_titolo %}Modifica{% endblock %}
+
+{% block scheda_contenuto %}
+    <div class="panel panel-primary">
+        <div class="panel-heading"><h2 class="panel-title"><i class="fa fa-fw fa-pencil"></i> Commissione esame</h2></div>
+        <div class="panel-body">
+          {% if me.is_presidente %}
+            <form action="{% url 'courses:commissione_esame' corso.pk %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% bootstrap_form commissione_esame_form %}
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva</button>
+            </form>
+            <hr>
+            <p>Per generare il verbale è necessario <strong>compilare i nominativi e caricare delibera</strong> della commissione esame.</p>
+          {% endif %}
+        </div>
+    </div>
+{% endblock %}

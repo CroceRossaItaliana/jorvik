@@ -21,4 +21,7 @@ urlpatterns = [
     url(r'^%s/file/$' % pk,
         views.course_materiale_didattico_download,
         name='materiale_didattico_download'),
+    url(r'^%s/commissione-esame/$' % pk,
+        views.course_commissione_esame,
+        name='commissione_esame'),
 ]

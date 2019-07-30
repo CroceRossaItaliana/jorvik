@@ -25,7 +25,7 @@ from .decorators import can_access_to_course
 from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoBase,
                      PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
-    ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi,
+    ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
     ModuloVerbaleAspiranteCorsoBase, FormRelazioneDelDirettoreCorso)
 from .classes import GestionePresenza, GeneraReport
 
@@ -1308,3 +1308,28 @@ def course_materiale_didattico_download(request, me, pk):
             pass
 
     return HttpResponse('Non hai accesso a questo file.')
+
+
+@pagina_privata
+def course_commissione_esame(request, me, pk):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+
+    if request.method == 'POST':
+        form = FormCommissioneEsame(request.POST, request.FILES, instance=corso)
+        if form.is_valid():
+            cd = form.cleaned_data
+            nominativi = [v for k,v in cd.items() if k.startswith('nominativo_') and v]
+            esame_names = ', '.join(sorted(nominativi))
+
+            instance = form.save(commit=False)
+            instance.commissione_esame_names = esame_names
+            instance.save()
+            return redirect(reverse('courses:commissione_esame', args=[pk]))
+    else:
+        form = FormCommissioneEsame(instance=corso)
+
+    context = {
+        'corso': corso,
+        'commissione_esame_form': form,
+    }
+    return 'course_commissione_esame.html', context
