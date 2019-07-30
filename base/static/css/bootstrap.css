@@ -2605,7 +2605,7 @@ output {
 .form-control[disabled],
 .form-control[readonly],
 fieldset[disabled] .form-control {
-  background-color: #777777;
+  background-color: #bbb;
   opacity: 1;
 }
 .form-control[disabled],

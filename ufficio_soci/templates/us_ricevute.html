@@ -105,11 +105,8 @@
                             <span class="text-danger">ANNULLATA</span>
                         {% endif %}
                     </td>
-
-                    <td class="text-info">
-                        <acronym title="{{ ricevuta.get_tipo_display }}">
-                            {{ ricevuta.tipo }}
-                        </acronym>
+                    <td class="grassetto">
+                        <span class="text-danger" title="{{ ricevuta.get_tipo_display }}">{{ ricevuta.tipo }}</span>
                     </td>
                     <td>
                         {{ ricevuta.persona.link|safe }}<br />
