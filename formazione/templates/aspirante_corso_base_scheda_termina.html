@@ -75,13 +75,19 @@
                     </button>
                 </div>
 
-                {% if corso.relazione_direttore.is_completed and not corso.has_partecipazioni_confermate_con_motivo_assente %}
+                {% if corso.relazione_direttore.is_completed and not corso.has_partecipazioni_confermate_con_assente_motivo %}
                     <button style="margin:5px 0 0;" type="submit" class="btn btn-block btn-lg btn-danger" name="azione" value="{{ azione_genera_verbale }}">
                         <i class="fa fa-fw fa-check"></i> Genera il verbale e termina il corso
                     </button>
                 {% else %}
                     {% if 'terminate_course' in request.GET.urlencode %}
-                        <p style="text-align:center; padding:20px 0; font-size:18px;">Non è ancora possibile terminare il corso.<br>Controllare la compilazione dei verbali.</p>
+                        <p style="text-align:center; padding:20px 0; font-size:18px;">
+                            Non è ancora possibile terminare il corso.<br>
+                            Controllare la compilazione dei verbali.
+                            {% if not corso.ha_compilato_commissione_esame %}
+                                 <br>Controllare i dati della commissione esami (rivolgersi al presidente del comitato).
+                            {% endif %}
+                        </p>
                     {% endif %}
                 {% endif %}
             </div>

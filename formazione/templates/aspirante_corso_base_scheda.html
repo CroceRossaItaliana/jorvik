@@ -168,6 +168,7 @@
             <p>Il corso si &egrave; concluso, ma &egrave; ancora necessario generare il verbale del corso e compilare la relazione.</p>
             <p>Una volta generato il verbale e compilata la relazione, tutti i partecipanti verranno informati dell'esito e,
                 coloro che saranno stati promossi, verranno trasformati automaticamente in volontari.</p>
+            <p style="margin-top:25px; text-align:center; font-weight:bold;">Il presente verbale è da chiudere immediatamente dopo la sessione d’esame</p>
 
             <table class="verbale__table">
                 <tr>
@@ -179,14 +180,14 @@
 
                     {% if corso.relazione_direttore and corso.relazione_direttore.is_completed %}
                         <td><a class="btn btn-info" href="{{ corso.url_pdf }}?anteprima" target="_blank"><i class="fa fa-fw fa-times-circle"></i> Anteprima verbale</a></td>
-                        {% if not corso.has_partecipazioni_confermate_con_motivo_assente %}
-                            <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course"><i class="fa fa-fw fa-times-circle"></i> Genera il verbale</a></td>
-                        {% endif %}
+
+                        {% if not corso.has_partecipazioni_confermate_con_motivo_assente %}{% endif %}
+                        <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course"><i class="fa fa-fw fa-times-circle"></i> Genera il verbale</a></td>
                     {% endif %}
                 </tr>
             </table>
 
-            {% if corso.has_partecipazioni_confermate_con_motivo_assente %}
+            {% if corso.has_partecipazioni_confermate_esame_seconda_data or corso.has_partecipazioni_confermate_con_assente_motivo %}
                 <hr>
                 <h3 class="verbale__seconda-data-esame">Seconda data esame:</h3>
                 <table class="verbale__table">
@@ -198,11 +199,13 @@
                 </table>
             {% endif %}
 
-            {% if me.is_presidente %}
-                <hr>
-                <p>Per generare il verbale è necessario <strong><a href="{% url 'courses:commissione_esame' corso.pk %}">compilare i nominativi e caricare delibera</a></strong> della commissione esame.</p>
+            {% if me.is_presidente and not me.is_direttore %}
+                <hr><p>Per generare il verbale è necessario <strong><a href="{% url 'courses:commissione_esame' corso.pk %}">compilare i nominativi e caricare delibera</a></strong> della commissione esame.</p>
+            {% elif not me.is_presidente and me.is_direttore %}
+                {% if not corso.ha_compilato_commissione_esame %}
+                    <hr><p>Per generare il verbale è necessario che il presidente <strong>compila i nominativi e carica delibera</strong> della commissione esame.</p>
+                {% endif %}
             {% endif %}
-
         </div>
     {% endif %}
 

@@ -643,9 +643,14 @@ def aspirante_corso_base_termina(request, me, pk):
 
         # Verifica se nella form del verbale (sopra) sono stati salvati
         # partecipanti ammessi con motivo assente
-        if corso.has_partecipazioni_confermate_con_motivo_assente:
+        if corso.has_partecipazioni_confermate_con_assente_motivo:
             messages.error(request, "Non puoi terminare il corso con le persone assenti. "
                                     "Imposta una seconda data e compila il secondo verbale")
+            return redirect_termina
+
+        if not corso.ha_compilato_commissione_esame:
+            messages.error(request, "Impossibile terminare questo corso"
+                "Per generare il verbale è neccessario che il presidente compila i dati della commissione esame")
             return redirect_termina
 
         # Tutto ok, posso procedere

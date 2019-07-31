@@ -589,7 +589,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def terminabile_con_assenti_motivazione(self):
-        ha_assenti = self.has_partecipazioni_confermate_con_motivo_assente
+        ha_assenti = self.has_partecipazioni_confermate_con_assente_motivo
         if self.relazione_direttore.is_completed:
             if ha_assenti and self.data_esame_2 > timezone.now() >= self.data_esame:
                 return True
@@ -598,8 +598,20 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return False
 
     @property
-    def has_partecipazioni_confermate_con_motivo_assente(self):
-        return self.partecipazioni_confermate_assente_motivo(solo=True).exists()
+    def has_partecipazioni_confermate_esame_seconda_data(self):
+        return self.partecipazioni_confermate().filter(
+            esaminato_seconda_data=True).exists()
+
+    @property
+    def has_partecipazioni_confermate_con_assente_motivo(self):
+        return self.partecipazioni_confermate().filter(
+            ammissione=PartecipazioneCorsoBase.ASSENTE_MOTIVO).exists()
+
+    @property
+    def ha_compilato_commissione_esame(self):
+        if self.commissione_esame_file and self.commissione_esame_names:
+            return True
+        return False
 
     def partecipazioni_in_attesa(self):
         return PartecipazioneCorsoBase.con_esito_pending(corso=self)
