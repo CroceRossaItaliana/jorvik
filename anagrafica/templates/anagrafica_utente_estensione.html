@@ -77,7 +77,7 @@
                             <tbody>
                                 {% for estensione in storico %}
                                 <tr {% if estensione.attuale %}class="success"
-                                    {% elif estensione.esito == estensione.ESITO_PENDING %}class="warning"
+                                    {% elif estensione.esito == estensione.ESITO_PENDING %}class="alert alert-warning"
                                     {% endif %}>
                                     <td>
                                         {% if estensione.esito == estensione.ESITO_OK %}
@@ -123,8 +123,8 @@
                                 </tr>
                                 {% empty %}
                                     <tr>
-                                        <td colspan="5" class="bg-warning">
-                                            <i class="fa fa-info"></i> Nessuna estensione passata.
+                                        <td colspan="5" class="alert-warning">
+                                            <i class="fa fa-info-circle"></i> Nessuna estensione passata.
                                         </td>
                                     </tr>
                                 {% endfor %}

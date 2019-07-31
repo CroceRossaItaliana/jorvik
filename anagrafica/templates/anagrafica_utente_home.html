@@ -19,7 +19,67 @@
         </div>
     {% endif %}
 
-    <div
+        <div class="row" style="margin-bottom:3em;">
+        <!--<div class="col col-md-4">
+            <div class="alert alert-danger" role="alert" style="text-align: center; margin:0; display: grid;">
+                <span class="glyphicon glyphicon-phone-alt" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://telefonia.cri.it" class="alert-link">Gestionale Telefonia</a>
+            </div>
+        </div>-->
+        {% if me.dipendente %}
+            <div class="col col-md-4">
+                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                    <span class="glyphicon glyphicon-check" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                    <a target="_blank" href="https://criwiki.cri.it:8443/pages/viewpage.action?spaceKey=DA&title=Minute+di+Riunione" class="alert-link">Minute di riunione</a>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if me.dipendente or me.volontario %}
+        <div class="col col-md-4">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                <span class="glyphicon glyphicon-road" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://roadmap.cri.it" class="alert-link">Roadmap</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if me.dipendente %}
+            <div class="col col-md-4">
+                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                    <span class="glyphicon glyphicon-folder-open" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                    <a target="_blank" href="https://sites.google.com/a/cri.it/manuale-processi/home?pli=1" class="alert-link">Manuale dei processi</a>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="col col-md-4">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
+                <span class="glyphicon glyphicon-cloud" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://redcloud.cri.it/?auto_login=true" class="alert-link">Redcloud</a>
+            </div>
+        </div>
+
+        <div class="col col-md-4">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
+                <span class="glyphicon glyphicon-link" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://gaia.cri.it/page/portale-convenzioni/" class="alert-link">Portale Convenzioni</a>
+            </div>
+        </div>
+        <!--<div class="col col-md-4">
+            <div class="alert alert-danger" role="alert" style="text-align: center; margin:0; display: grid; ">
+                <span class="glyphicon glyphicon-inbox" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://gestionale.cri.it" class="alert-link">Gestionale SG</a>
+            </div>
+        </div>-->
+        <div class="col col-md-4">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
+                <span class="glyphicon glyphicon-home" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://cri.it" class="alert-link">CRI.IT</a>
+            </div>
+        </div>
+    </div>
+    <!--<div
             id="benvenuto"
             class="well well-lg allinea-centro" style="
             background-image: url('{% static 'img/welcome_img1.jpg' %}');
@@ -38,7 +98,7 @@
         </p>
         <p>&nbsp;</p>
         <p>&nbsp;</p>
-    </div>
+    </div>-->
 
     {% if me.trasferimento and not me.trasferimento.con_scadenza %}
         <div class="alert alert-warning">
@@ -67,7 +127,7 @@
 
     {% endif %}
 
-    {% if not me.numeri_telefono.exists %}
+    {% if not me.numeri_telefono.exists and False %}
         <div class="alert alert-warning">
             <h4>
                 <i class="fa fa-fw fa-warning"></i>
@@ -85,7 +145,7 @@
         </div>
     {% endif %}
 
-    {% if me.titoli_personali.all.count < 3 %}
+    {% if me.titoli_personali.all.count < 3 and False %}
         <div class="alert alert-info">
             <h4>
                 <i class="fa fa-fw fa-info-circle"></i>

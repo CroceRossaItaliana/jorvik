@@ -223,7 +223,7 @@
                                 </thead>
                                 <tbody>
                                     {% for oggetto_destinatario in messaggio.primi_oggetti_destinatario %}
-                                        <tr {% if oggetto_destinatario.inviato %}class="success"{% else %}class="warning"{% endif %}>
+                                        <tr {% if oggetto_destinatario.inviato %}class="alert-success"{% else %}class="alert-warning"{% endif %}>
                                             <td>{{ oggetto_destinatario.persona.link|safe }}</td>
                                             <td>
                                                 {% if oggetto_destinatario.inviato %}
