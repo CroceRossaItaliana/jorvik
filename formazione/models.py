@@ -608,6 +608,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             ammissione=PartecipazioneCorsoBase.ASSENTE_MOTIVO).exists()
 
     @property
+    def commissione_nomi_as_list(self):
+        return [i.strip() for i in self.commissione_esame_names.split(',')]
+
+    @property
     def ha_compilato_commissione_esame(self):
         if self.commissione_esame_file and self.commissione_esame_names:
             return True
@@ -801,20 +805,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def ha_verbale(self):
         return self.stato == self.TERMINATO and self.partecipazioni_confermate().exists()
 
-    def termina(self, mittente=None):
-        """ Termina il corso base, genera il verbale e volontarizza. """
+    def termina(self, mittente=None, partecipanti_qs=None, **kwargs):
+        """ Termina il corso, genera il verbale e
+        volontarizza/aggiunge titolo al cv dell'utente """
 
-        partecipazioni = self.partecipazioni_confermate()
-
-        oggi = timezone.now().today()
-        data_ottenimento = self.data_esame
-        if self.data_esame_2 >= oggi >= self.data_esame:
-            partecipanti_qs = partecipazioni.filter(esaminato_seconda_data=False)
-        elif oggi >= self.data_esame_2:
-            partecipanti_qs = partecipazioni.filter(esaminato_seconda_data=True)
-            data_ottenimento = self.data_esame_2
-        else:
-            partecipanti_qs = partecipazioni
+        data_ottenimento = kwargs.get('data_ottenimento', self.data_esame)
 
         with transaction.atomic():
             # Per maggiore sicurezza, questa cosa viene eseguita in una transazione
@@ -846,8 +841,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             # Cancella tutte le eventuali partecipazioni in attesa
             PartecipazioneCorsoBase.con_esito_pending(corso=self).delete()
 
-            # Salva lo stato del corso come terminato
-            self.stato = Corso.TERMINATO
+            # Cambia stato solo se i verbali sono stati completati correttamente
+            if not self.has_partecipazioni_confermate_con_assente_motivo:
+                # Salva lo stato del corso come terminato
+                self.stato = Corso.TERMINATO
+
             self.save()
 
         if self.is_nuovo_corso:

@@ -404,7 +404,8 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
                               PartecipazioneCorsoBase.ASSENTE_MOTIVO,]:
             if motivo_non_ammissione:
                 self.add_error('motivo_non_ammissione',
-                    "Questo campo deve essere compilato solo nel caso di NON AMMISSIONE.")
+                    "Questo campo deve essere compilato solo nel caso di "
+                    "Non Ammesso o Assente per motivo giustificato")
 
         # Se non è stato ammesso, un bel gruppo di campi NON devono essere compilati.
         if ammissione != PartecipazioneCorsoBase.AMMESSO:

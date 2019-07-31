@@ -579,17 +579,22 @@ def aspirante_corso_base_termina(request, me, pk):
     termina_corso = generazione_verbale
 
     # Mostra partecipanti con motivo assente se l'azione è salvataggio form
-    if not termina_corso and seconda_data_esame:
+    if seconda_data_esame:
         partecipanti_qs = corso.partecipazioni_confermate_assente_motivo(solo=True)
+        data_ottenimento = corso.data_esame_2
     else:
         partecipanti_qs = corso.partecipazioni_confermate_assente_motivo()
+        data_ottenimento = corso.data_esame
 
     if seconda_data_esame and not partecipanti_qs:
         # rindirizza sulla pagina del primo verbale se non ci sono
         # partecipanti da visualizzare nel secondo verbale
         return redirect(reverse_termina)
 
+    # Variabili condizionali
     has_invalid_form = False
+
+    # Validazione delle form
     for partecipante in partecipanti_qs:
         form = ModuloVerbaleAspiranteCorsoBase(request.POST or None,
             prefix="part_%d" % partecipante.pk,
@@ -643,7 +648,7 @@ def aspirante_corso_base_termina(request, me, pk):
 
         # Verifica se nella form del verbale (sopra) sono stati salvati
         # partecipanti ammessi con motivo assente
-        if corso.has_partecipazioni_confermate_con_assente_motivo:
+        if seconda_data_esame and corso.has_partecipazioni_confermate_con_assente_motivo:
             messages.error(request, "Non puoi terminare il corso con le persone assenti. "
                                     "Imposta una seconda data e compila il secondo verbale")
             return redirect_termina
@@ -654,17 +659,17 @@ def aspirante_corso_base_termina(request, me, pk):
             return redirect_termina
 
         # Tutto ok, posso procedere
-        corso.termina(mittente=me)
+        corso.termina(mittente=me,
+                      partecipanti_qs=partecipanti_qs,
+                      data_ottenimento=data_ottenimento)
 
         if corso.is_nuovo_corso:
-            email_title = "Corso terminato."
             return_title = "Vai al Report del Corso"
         else:
-            email_title = "Corso base terminato"
             return_title = "Vai al Report del Corso Base"
 
         return messaggio_generico(request, me,
-          titolo=email_title,
+          titolo="Generazione verbale",
           messaggio="Il verbale è stato generato con successo. Tutti gli idonei "
                     "sono stati resi volontari delle rispettive sedi.",
           torna_titolo=return_title,

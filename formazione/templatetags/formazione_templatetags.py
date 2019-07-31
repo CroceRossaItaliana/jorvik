@@ -42,3 +42,17 @@ def corsi_filter():
 
     href = """<a href="?stato=%s">%s</a>"""
     return mark_safe(' '.join([href % (i[0], i[1]) for i in Corso.STATO]))
+
+
+@register.simple_tag(takes_context=True)
+def can_show_button_genera_verbale(context, corso):
+    request = context['request']
+    num_verbale_da_generare = 2 if 'seconda_data_esame' in request.GET else 1
+
+    if corso.relazione_direttore.is_completed:
+        if num_verbale_da_generare == 1:
+            return True
+        elif num_verbale_da_generare == 2:
+            if not corso.has_partecipazioni_confermate_con_assente_motivo:
+                return True
+    return False

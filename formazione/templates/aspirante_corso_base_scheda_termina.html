@@ -3,8 +3,13 @@
 {% block scheda_titolo %}Termina Corso Base{% endblock %}
 
 {% load bootstrap3 %}
+{% load formazione_templatetags %}
 
 {% block scheda_contenuto %}
+<style>
+    .corso-non-terminabile-msg {text-align:center; padding:20px 0; font-size:18px;}
+</style>
+
 <div class="row">
 <form method="POST">
     {% csrf_token %}
@@ -75,19 +80,20 @@
                     </button>
                 </div>
 
-                {% if corso.relazione_direttore.is_completed and not corso.has_partecipazioni_confermate_con_assente_motivo %}
+                {% can_show_button_genera_verbale corso as show_button_genera_verbale %}
+                {% if show_button_genera_verbale %}
                     <button style="margin:5px 0 0;" type="submit" class="btn btn-block btn-lg btn-danger" name="azione" value="{{ azione_genera_verbale }}">
                         <i class="fa fa-fw fa-check"></i> Genera il verbale e termina il corso
                     </button>
-                {% else %}
-                    {% if 'terminate_course' in request.GET.urlencode %}
-                        <p style="text-align:center; padding:20px 0; font-size:18px;">
-                            Non è ancora possibile terminare il corso.<br>
-                            Controllare la compilazione dei verbali.
-                            {% if not corso.ha_compilato_commissione_esame %}
-                                 <br>Controllare i dati della commissione esami (rivolgersi al presidente del comitato).
-                            {% endif %}
-                        </p>
+                {% endif %}
+
+                {% if 'terminate_course' in request.GET.urlencode and 'seconda_data_esame' in request.GET.urlencode %}
+                    {% if corso.has_partecipazioni_confermate_con_assente_motivo %}
+                        <p class="corso-non-terminabile-msg">Non è ancora possibile terminare il corso.<br>Controllare la compilazione dei verbali.</p>
+                    {% endif %}
+
+                    {% if not corso.ha_compilato_commissione_esame %}
+                        <p class="corso-non-terminabile-msg">Controllare i dati della commissione esami (rivolgersi al presidente del comitato).</p>
                     {% endif %}
                 {% endif %}
             </div>

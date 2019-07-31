@@ -101,31 +101,10 @@
         </font>
     </p>
     <table style="font-size: 10pt">
-        <tr>
-            <td>
-                _____________________________________
-            </td>
-            <td>
-                Docente del Corso/Direttore
-            </td>
-        </tr>
-        <tr>
-            <td>
-                _____________________________________
-            </td>
-            <td>
-                Docente del Corso
-            </td>
-        </tr>
-        <tr>
-            <td>
-                _____________________________________
-            </td>
-            <td>
-                Docente del Corso
-            </td>
-        </tr>
+        <tr><td>_____________________________________</td><td>Docente del Corso/Direttore</td></tr>
+        {% for nome in corso.commissione_nomi_as_list %}
+            <tr><td>_____________________________________</td><td>{{ nome }}</td></tr>
+        {% endfor %}
     </table>
 </div>
-
 {% endblock %}

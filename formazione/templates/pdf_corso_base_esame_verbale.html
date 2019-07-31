@@ -15,6 +15,13 @@
         border: 1px solid;
         padding: 6px 4px;
     }
+
+    .commissione-nome-row {
+        margin-left: 1.25cm;
+        text-indent: 1.25cm;
+        margin-bottom: 0.35cm;
+        line-height: 140%;
+    }
 {% endblock %}
 
 {% block corpo %}
@@ -96,13 +103,6 @@
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
         <br/>
     </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
-        <font size="4" style="font-size: 14pt"><b>Commissione esame</b></font>
-        {{ corso.commissione_esame_names }}
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
-        <br/>
-    </p>
     <p class="western" align="center" style="margin-bottom: 0.35cm; line-height: 150%">
         <font size="4" style="font-size: 16pt">
             <b>ELENCO CANDIDATI IDONEI/NON IDONEI/ASSENTI</b>
@@ -130,21 +130,15 @@
     {% endfor %}
     </tbody>
     </table>
-    <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
-        <br/>
-        <br/>
-    </p>
-    <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
-        Letto approvato e sottoscritto
-    </p>
-    <p class="western" style="margin-left: 1.25cm; text-indent: 1.25cm; margin-bottom: 0.35cm; line-height: 150%">
-        ______________________________________Docente/Direttore
-    </p>
-    <p class="western" style="margin-left: 1.25cm; text-indent: 1.25cm; margin-bottom: 0.35cm; line-height: 150%">
-        ______________________________________Docente
-    </p>
-    <p class="western" style="margin-left: 1.25cm; text-indent: 1.25cm; margin-bottom: 0.35cm; line-height: 150%">
-        ______________________________________Docente
-    </p>
+
+    <p class="western commissione-nome-row"><br/><br/></p>
+    <p class="western commissione-nome-row">Letto approvato e sottoscritto</p>
+    <p class="western commissione-nome-row">______________________________________ Presidente</p>
+    <p class="western commissione-nome-row">______________________________________ Direttore</p>
+
+    {% for nome in corso.commissione_nomi_as_list %}
+        <p class="western commissione-nome-row">______________________________________ {{ nome }}</p>
+    {% endfor %}
+
 </div>
 {% endblock %}
