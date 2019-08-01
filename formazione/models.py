@@ -1369,12 +1369,13 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         )
 
     def autorizzazione_concedi_modulo(self):
-        from formazione.forms import (ModuloConfermaIscrizioneCorsoBase,
-                                      ModuloConfermaIscrizioneCorso)
-        if self.corso.is_nuovo_corso:
-            return ModuloConfermaIscrizioneCorso
-        else:
-            return ModuloConfermaIscrizioneCorsoBase
+        from formazione.forms import ModuloConfermaIscrizioneCorso
+        return ModuloConfermaIscrizioneCorso  # GAIA-124
+
+        # if self.corso.is_nuovo_corso:
+        #     return ModuloConfermaIscrizioneCorso
+        # else:
+        #     return ModuloConfermaIscrizioneCorsoBase
 
     def genera_scheda_valutazione(self):
         pdf = PDF(oggetto=self)
