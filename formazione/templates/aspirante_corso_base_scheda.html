@@ -3,6 +3,7 @@
 {% load bootstrap3 %}
 {% load static %}
 {% load utils %}
+{% load formazione_templatetags %}
 
 {% block pagina_titolo %}
     {% block scheda_titolo %}{% endblock %}
@@ -43,7 +44,8 @@
             {% if today_ts >= corso.data_esame|date:"U" %}<li role="presentation"><a data-tab-id="#tabEsami" href="{{ corso.url_report }}" class="esami tabSelectorLink"><i class="fa fa-fw fa-file-excel-o"></i> Documentazione Esame</a></li>{% endif %}
         {% endif %}
 
-        {% if corso.is_nuovo_corso and corso.concluso %}
+        {% can_show_tab_questionario as show_tab_questionario %}
+        {% if show_tab_questionario %}
             <li role="presentation"><a data-tab-id="#tabQuestionario" href="{% url 'survey:course' corso.pk %}" class="questionario tabSelectorLink"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</a></li>
         {% endif %}
     </ul>
