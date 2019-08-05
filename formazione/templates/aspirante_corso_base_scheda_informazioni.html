@@ -229,6 +229,10 @@
                 </tr>
             </thead>
             <tbody>
+                {% if puo_modificare and corso.ha_lezioni_non_revisionate %}
+                    <p style="color:red; font-size:16px; text-align:center;">Controllare la compilazione delle lezione pre-caricate dalla scheda.</p>
+                {% endif %}
+
                 {% for lezione in corso.lezioni.all %}
                     <tr class="piu-piccolo">
                         <td>

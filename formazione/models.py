@@ -546,6 +546,53 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         c.save()
         return c
 
+    @property
+    def has_scheda_lezioni(self):
+        return True if self.titolo_cri and self.titolo_cri.scheda_lezioni else False
+
+    def get_lezioni_precaricate(self):
+        if self.has_scheda_lezioni:
+            return LezioneCorsoBase.objects.filter(corso=self,
+                                                   scheda_lezione_num__isnull=False)
+        return LezioneCorsoBase.objects.none()
+
+    def create_lezioni_precaricate(self):
+        if self.has_scheda_lezioni:
+            scheda = self.titolo_cri.scheda_lezioni
+            lezioni_nums = scheda.keys()
+
+            existing = LezioneCorsoBase.objects.filter(
+                corso=self, scheda_lezione_num__in=list(lezioni_nums)
+            ).values_list('scheda_lezione_num', flat=True)
+            existing = list(map(str, existing))
+
+            lezioni_nums_to_create = set(existing) ^ set(lezioni_nums)
+
+            lezioni_corso = [
+                LezioneCorsoBase(
+                    corso=self,
+                    inizio=self.data_inizio.replace(hour=0, minute=0, second=0),
+                    nome=lezione['lezione'],
+                    scheda_lezione_num=lezione_num,
+                ) for lezione_num, lezione in self.titolo_cri.scheda_lezioni.items()
+                if lezione_num in lezioni_nums_to_create
+            ]
+            lezioni_created = LezioneCorsoBase.objects.bulk_create(lezioni_corso)
+            return lezioni_created
+        else:
+            print('Il corso non ha <scheda_lezioni>')
+
+    def get_or_create_lezioni_precompilate(self):
+        if self.has_scheda_lezioni and \
+                len(self.titolo_cri.scheda_lezioni.keys()) != len(self.get_lezioni_precaricate()):
+            return self.create_lezioni_precaricate()
+        return self.get_lezioni_precaricate()
+
+    @property
+    def ha_lezioni_non_revisionate(self):
+        lezioni = self.get_lezioni_precaricate()
+        return True in [lezione.non_revisionata for lezione in lezioni]
+
     def attivabile(self):
         """Controlla se il corso base e' attivabile."""
 
@@ -1461,11 +1508,12 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
     docente = models.ForeignKey(Persona, null=True, default='',
                                 verbose_name='Docente della lezione',)
     obiettivo = models.CharField('Obiettivo formativo della lezione',
-                                 max_length=128, null=True, default='')
+                                 max_length=255, null=True, blank=True)
     luogo = models.CharField(max_length=255, null=True, blank=True,
                              verbose_name="il luogo di dove si svolgeranno le lezioni",
                              help_text="Compilare nel caso il luogo è diverso "
                                        "dal comitato che ha organizzato il corso.")
+    scheda_lezione_num = models.SmallIntegerField(null=True, blank=True)
 
     @property
     def url_cancella(self):
@@ -1483,10 +1531,44 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
             destinatari=[self.docente]
         )
 
+    def get_full_scheda_lezioni(self):
+        return self.corso.titolo_cri.scheda_lezioni
+
+    def get_scheda_lezione(self):
+        lezione = self.get_full_scheda_lezioni().get(str(self.scheda_lezione_num))
+        return lezione if lezione else dict()
+
+    @property
+    def lezione_argomento(self, only_split=False):
+        argomento = self.get_scheda_lezione().get('argomento')
+        if argomento:
+            splitted = argomento.split('|')
+            # if only_split:
+            #     return splitted
+            return '; '.join(splitted)
+        return ""
+
+    @property
+    def lezione_ore(self):
+        ore = self.get_scheda_lezione().get('ore')
+        return ore
+
+    @property
+    def precaricata(self):
+        if self.scheda_lezione_num:
+            return True
+        return self.scheda_lezione_num is not None
+
+    @property
+    def non_revisionata(self):
+        """ Se la data è rimasta minore della data di inizio corso vuol dire
+        che il reponsabile non ha corretto il valore automatico. """
+        return self.inizio < self.corso.data_inizio
+
     class Meta:
         verbose_name = "Lezione di Corso"
         verbose_name_plural = "Lezioni di Corsi"
-        ordering = ['inizio']
+        ordering = ['inizio', 'scheda_lezione_num']
         permissions = (
             ("view_lezionecorsobase", "Can view corso Lezione di Corso Base"),
         )

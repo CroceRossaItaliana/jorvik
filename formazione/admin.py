@@ -10,7 +10,7 @@ from .models import (CorsoBase, CorsoFile, CorsoEstensione, CorsoLink,
     InvitoCorsoBase, RelazioneCorso)
 
 
-RAW_ID_FIELDS_CORSOBASE = ['sede', 'locazione',]
+RAW_ID_FIELDS_CORSOBASE = ['sede', 'locazione', 'titolo_cri',]
 RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE = ['persona', 'corso', 'destinazione',]
 RAW_ID_FIELDS_INVITOCORSOBASE = ['persona', 'corso', 'invitante',]
 RAW_ID_FIELDS_LEZIONECORSOBASE = ['corso', 'docente',]

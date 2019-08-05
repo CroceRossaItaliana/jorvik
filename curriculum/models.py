@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 
@@ -44,6 +45,9 @@ class Titolo(ModelloSemplice, ConVecchioID):
     is_active = models.BooleanField(default=True)
     expires_after = models.IntegerField(null=True, blank=True, verbose_name="Scadenza",
         help_text='Indicare in giorni (es: per 1 anno indicare 365)')
+    scheda_lezioni = JSONField(null=True, blank=True)
+    scheda_obiettivi = models.TextField('Obiettivi formativi', null=True, blank=True)
+    scheda_competenze_in_uscita = models.TextField('Competenze_in_uscita', null=True, blank=True)
     cdf_livello = models.CharField(max_length=3, choices=CDF_LIVELLI,
                                    null=True, blank=True)
     cdf_durata_corso = models.CharField(max_length=255, null=True, blank=True)

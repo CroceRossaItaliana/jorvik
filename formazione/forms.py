@@ -10,7 +10,7 @@ from anagrafica.costanti import LOCALE, REGIONALE, NAZIONALE
 from anagrafica.models import Delega, Appartenenza
 from curriculum.models import Titolo
 from curriculum.areas import OBBIETTIVI_STRATEGICI
-from .models import (Corso, CorsoBase, CorsoLink, CorsoFile, CorsoEstensione,
+from .models import (Corso, CorsoBase, CorsoFile, CorsoEstensione,
                      LezioneCorsoBase, PartecipazioneCorsoBase, RelazioneCorso)
 
 
@@ -133,7 +133,11 @@ class ModuloModificaLezione(ModelForm):
     docente = autocomplete_light.ModelChoiceField("DocenteLezioniCorso")
     has_nulla_osta = forms.BooleanField(label='Responsabilità di aver ricevuto nulla osta dal presidente del comitato di appartenenza')
     fine = forms.DateTimeField()
-    obiettivo = forms.CharField(required=False)
+    obiettivo = forms.CharField(required=False, label='Argomento')
+
+    @property
+    def has_instance(self):
+        return hasattr(self, 'instance')
 
     def clean(self):
         cd = self.cleaned_data
@@ -155,6 +159,12 @@ class ModuloModificaLezione(ModelForm):
 
         return cd
 
+    def clean_obiettivo(self):
+        if self.has_instance:
+            if self.instance.precaricata:  # non salvare il testo valorizzato nel __init__
+                return None
+        return self.cleaned_data['obiettivo']
+
     class Meta:
         model = LezioneCorsoBase
         fields = ['nome', 'docente', 'has_nulla_osta', 'inizio', 'fine', 'obiettivo', 'luogo',]
@@ -166,6 +176,14 @@ class ModuloModificaLezione(ModelForm):
     def __init__(self, *args, **kwargs):
         self.corso = kwargs.pop('corso')
         super().__init__(*args, **kwargs)
+
+        if self.has_instance:
+            if self.instance.precaricata:
+                self.initial['obiettivo'] = self.instance.corso.titolo_cri.scheda_obiettivi
+
+                readonly_fields = ['nome', 'obiettivo']
+                for field in readonly_fields:
+                    self.fields[field].widget.attrs['readonly'] = True
 
 
 class ModuloModificaCorsoBase(ModelForm):

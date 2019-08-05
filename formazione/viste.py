@@ -111,6 +111,7 @@ def formazione_corsi_base_nuovo(request, me):
             delibera_file=cd['delibera_file'],
             **kwargs
         )
+        course.get_or_create_lezioni_precompilate()
 
         same_sede = cd['locazione'] == form.PRESSO_SEDE
         if same_sede:
@@ -395,6 +396,9 @@ def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
     lezione = get_object_or_404(LezioneCorsoBase, pk=lezione_pk)
     if lezione.corso != corso:
         return redirect(ERRORE_PERMESSI)
+    elif lezione.precaricata:
+        messages.error(request, "Non si può cancellare lezione pre-precaricata.")
+        return redirect(corso.url_lezioni)
 
     deleted = lezione.delete()
 
