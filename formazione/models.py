@@ -588,6 +588,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             return self.create_lezioni_precaricate()
         return self.get_lezioni_precaricate()
 
+    def get_lezione_sicurezza_salute_volontario(self):
+        for lezione in self.get_lezioni_precaricate():
+            if lezione.is_lezione_salute_e_sicurezza:
+                return lezione
+        return LezioneCorsoBase.objects.none()
+
     @property
     def ha_lezioni_non_revisionate(self):
         lezioni = self.get_lezioni_precaricate()
@@ -1493,6 +1499,16 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
             oggetto_tipo=tipo, oggetto_id__in=partecipazioni_da_bloccare
         ).values_list('pk', flat=True)
 
+    @property
+    def assente_lezione_salute_e_sicurezza(self):
+        lezione = self.corso.get_lezione_sicurezza_salute_volontario()
+        if lezione:
+            return AssenzaCorsoBase.objects.filter(
+                persona=self.persona,
+                lezione=lezione,
+            ).exists()
+        return False
+
     class Meta:
         verbose_name = "Richiesta di partecipazione"
         verbose_name_plural = "Richieste di partecipazione"
@@ -1548,22 +1564,28 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         lezione = self.get_full_scheda_lezioni().get(str(self.scheda_lezione_num))
         return lezione if lezione else dict()
 
+    def get_from_scheda(self, key, default=None):
+        return self.get_scheda_lezione().get(key, default)
+
     @property
-    def lezione_argomento(self, only_split=False):
-        argomento = self.get_scheda_lezione().get('argomento')
-        if argomento:
-            splitted = argomento.split('|')
-            # if only_split:
-            #     return splitted
-            return '; '.join(splitted)
-        return ""
+    def lezione_argomento_splitted(self):
+        argomento = self.get_from_scheda('argomento', '')
+        return argomento.split('|')
+
+    @property
+    def lezione_argomento(self):
+        return '; '.join(self.lezione_argomento_splitted)
 
     @property
     def lezione_ore(self):
-        ore = self.get_scheda_lezione().get('ore')
+        ore = self.get_from_scheda('ore')
         if ore:
             return int(ore)
         return ore
+
+    @property
+    def lezione_id_univoco(self):
+        return self.get_from_scheda('id')
 
     @property
     def precaricata(self):
@@ -1600,6 +1622,16 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
             docente=self.docente,
             luogo=self.luogo,
         )
+
+    @property
+    def is_lezione_salute_e_sicurezza(self):
+        """ GAIA-130: Questa lezione è obbligatoria peri Volontari e senza di essa
+        non possono essere ammessi all' esame. """
+
+        id = "8SESDV"
+        if self.precaricata and id == self.lezione_id_univoco:
+            return True
+        return False
 
     class Meta:
         verbose_name = "Lezione di Corso"

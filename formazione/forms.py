@@ -407,6 +407,11 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
         self.generazione_verbale = generazione_verbale
         super().__init__(*args, **kwargs)
 
+        if self.instance.assente_lezione_salute_e_sicurezza:
+            self.fields['ammissione'].choices = [(PartecipazioneCorsoBase.NON_AMMESSO, "Non Ammesso"),]
+            self.fields['ammissione'].help_text = "Come da regolamento la lezione Salute e Sicurezza è obbligatoria, " \
+                                                  "pertanto non può essere all'esame essendo stato assente."
+
         if self.instance.corso.is_nuovo_corso:
             # This field is not required if Corso Nuovo
             self.fields.pop('destinazione')
