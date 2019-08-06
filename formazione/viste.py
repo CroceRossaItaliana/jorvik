@@ -12,7 +12,7 @@ from anagrafica.forms import ModuloCreazioneDocumento
 from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE, PRESIDENTE)
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
     GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, RUBRICA_DELEGATI_OBIETTIVO_ALL)
-from curriculum.models import TitoloPersonale
+from curriculum.models import Titolo, TitoloPersonale
 from ufficio_soci.elenchi import ElencoPerTitoliCorso
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import errore_generico, messaggio_generico
@@ -95,6 +95,16 @@ def formazione_corsi_base_nuovo(request, me):
         cd = form.cleaned_data
         tipo, data_inizio, data_esame = cd['tipo'], cd['data_inizio'], cd['data_esame']
         data_esame = data_esame if tipo == Corso.CORSO_NUOVO else data_inizio
+
+        if tipo == Corso.BASE:
+            # Impostare titolo per "Corso Base"
+            query_kwargs = {'nome__icontains': "corso di formazione per volontari cri"}
+            try:
+                query_titolo = Titolo.objects.get(**query_kwargs)
+            except Titolo.MultipleObjectsReturned:
+                # Per sicurezza faccio catch anche di questo exception
+                query_titolo = Titolo.objects.filter(**query_kwargs).last()
+            kwargs['titolo_cri'] = query_titolo
 
         if tipo == Corso.CORSO_NUOVO:
             kwargs['titolo_cri'] = cd['titolo_cri']
