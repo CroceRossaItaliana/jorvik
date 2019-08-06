@@ -106,12 +106,9 @@
         <div class="alert alert-danger">
             <h4><i class="fa fa-warning"></i> Non c'è tempo da perdere!</h4>
             <p>Questo corso inizier&agrave; a breve, ma non hai ancora attivato il Corso su Gaia.</p>
-            <p>Questo vuol dire che il corso non pu&ograve; ancora essere raggiunto da
-                <strong>nessuno dei {{ corso.aspiranti_nelle_vicinanze.count }} aspiranti</strong>
-                che aspettano un corso nelle vicinanze su Gaia. Ti consigliamo di completare con
-                quanti pi&ugrave; dettagli possibile la scheda
-                di questo corso e procedere all'attivazione: raggiungerai cos&igrave; tutti
-                gli aspiranti nelle vicinanze.</p>
+            <p>Questo vuol dire che il corso non pu&ograve; ancora essere raggiunto da <strong>nessuno dei {{ corso.aspiranti_nelle_vicinanze.count }} aspiranti</strong>
+                che aspettano un corso nelle vicinanze su Gaia. Ti consigliamo di completare con quanti pi&ugrave; dettagli possibile la scheda di questo corso e procedere all'attivazione:
+                raggiungerai cos&igrave; tutti gli aspiranti nelle vicinanze.</p>
         </div>
     {% endif %}
 
@@ -123,21 +120,20 @@
                 Completa i passi necessari e clicca sul pulsante per attivare il corso.
             </p>
 
-            <p>
-                {% if corso.direttori_corso.count == 0 %}
-                    <i class="fa fa-fw text-danger fa-square"></i> <span class="text-danger">DA FARE</span>:
-                    Selezionare almeno un direttore del Corso dalla scheda "Attivazione - Direttore"
-                {% endif %}
-            </p>
+            {% if corso.get_lezioni_precaricate.count and corso.ha_lezioni_non_revisionate %}
+            <p><i class="fa fa-fw text-danger fa-square"></i> <span class="text-danger">DA FARE</span>:
+                Assicurati che le date e gli orari delle lezioni siano correttamente inseriti
+            </p>{% endif %}
 
-            {% if corso.is_nuovo_corso %}
-                <p>
-                    {% if corso.extension_type == corso.EXT_MIA_SEDE %}
-                        <i class="fa fa-fw text-danger fa-square"></i> <span class="text-danger">DA FARE</span>:
-                        Indica l'area geografica. Seleziona i Comitati ai quali è destinata la formazione
-                    {% endif %}
-                </p>
-            {% endif %}
+            {% if corso.direttori_corso.count == 0 %}
+            <p><i class="fa fa-fw text-danger fa-square"></i> <span class="text-danger">DA FARE</span>:
+                Selezionare almeno un direttore del Corso dalla scheda "Attivazione - Direttore"
+            </p>{% endif %}
+
+            {% if corso.is_nuovo_corso and corso.extension_type == corso.EXT_MIA_SEDE %}
+            <p><i class="fa fa-fw text-danger fa-square"></i> <span class="text-danger">DA FARE</span>:
+                Indica l'area geografica. Seleziona i Comitati ai quali è destinata la formazione
+            </p>{% endif %}
 
             {% if not corso.descrizione %}
                 <p>{% checkbox corso.descrizione %}: Inserisci una descrizione del Corso per i Corsisti dalla scheda "Dettagli - Pubblicizza corso"</p>

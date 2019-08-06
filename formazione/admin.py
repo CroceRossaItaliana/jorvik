@@ -13,7 +13,7 @@ from .models import (CorsoBase, CorsoFile, CorsoEstensione, CorsoLink,
 RAW_ID_FIELDS_CORSOBASE = ['sede', 'locazione', 'titolo_cri',]
 RAW_ID_FIELDS_PARTECIPAZIONECORSOBASE = ['persona', 'corso', 'destinazione',]
 RAW_ID_FIELDS_INVITOCORSOBASE = ['persona', 'corso', 'invitante',]
-RAW_ID_FIELDS_LEZIONECORSOBASE = ['corso', 'docente',]
+RAW_ID_FIELDS_LEZIONECORSOBASE = ['corso', 'docente', 'lezione_divisa_parent',]
 RAW_ID_FIELDS_ASSENZACORSOBASE = ['lezione', 'persona', 'registrata_da',]
 RAW_ID_FIELDS_ASPIRANTE = ['persona', 'locazione',]
 RAW_ID_FIELDS_ESTENSIONE = ['sede', 'titolo',]
@@ -124,7 +124,8 @@ class AdminPartecipazioneCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
 @admin.register(LezioneCorsoBase)
 class AdminLezioneCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['nome', 'corso__progressivo', 'corso__sede__nome', ]
-    list_display = ['corso', 'nome', 'inizio', 'fine', ]
+    list_display = ['corso', 'nome', 'scheda_lezione_num', 'lezione_divisa_parent', 'inizio',
+                    'fine',]
     raw_id_fields = RAW_ID_FIELDS_LEZIONECORSOBASE
     inlines = [InlineAssenzaCorsoBase,]
 

@@ -15,7 +15,7 @@ from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
 from curriculum.models import TitoloPersonale
 from ufficio_soci.elenchi import ElencoPerTitoliCorso
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
-from base.errori import errore_generico, messaggio_generico # ci_siamo_quasi
+from base.errori import errore_generico, messaggio_generico
 from base.models import Log
 from base.utils import poco_fa
 from posta.models import Messaggio
@@ -396,7 +396,7 @@ def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
     lezione = get_object_or_404(LezioneCorsoBase, pk=lezione_pk)
     if lezione.corso != corso:
         return redirect(ERRORE_PERMESSI)
-    elif lezione.precaricata:
+    elif lezione.precaricata and not lezione.divisa:
         messages.error(request, "Non si può cancellare lezione pre-precaricata.")
         return redirect(corso.url_lezioni)
 
@@ -422,6 +422,21 @@ def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
 
     return redirect(corso.url_lezioni)
 
+
+@pagina_privata
+def course_lezione_dividi(request, me, pk, lezione_pk):
+    corso = get_object_or_404(CorsoBase, pk=pk)
+    if not me.permessi_almeno(corso, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    lezione = get_object_or_404(LezioneCorsoBase, pk=lezione_pk)
+    if not lezione.puo_dividere:
+        messages.error(request, "Non si può più dividere questa lezione.")
+        return redirect(corso.url_lezioni)
+
+    lezione.dividi()
+    messages.success(request, "La lezione è stata divisa. Modifica le date di inizio/fine della nuova lezione")
+    return redirect(corso.url_lezioni)
 
 @pagina_privata
 def aspirante_corso_base_modifica(request, me, pk):

@@ -24,4 +24,7 @@ urlpatterns = [
     url(r'^%s/commissione-esame/$' % pk,
         views.course_commissione_esame,
         name='commissione_esame'),
+    url(r'^%s/lezione/dividi/(?P<lezione_pk>[0-9]+)/$' % pk,
+        views.course_lezione_dividi,
+        name='lezione_dividi'),
 ]

@@ -605,6 +605,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         if self.is_nuovo_corso and self.extension_type != CorsoBase.EXT_LVL_REGIONALE:
             return False
 
+        if self.has_scheda_lezioni and self.get_lezioni_precaricate().count() and self.ha_lezioni_non_revisionate:
+            return False
+
         if self.direttori_corso().count() == 0:
             return False
 
@@ -1514,10 +1517,15 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                              help_text="Compilare nel caso il luogo è diverso "
                                        "dal comitato che ha organizzato il corso.")
     scheda_lezione_num = models.SmallIntegerField(null=True, blank=True)
+    lezione_divisa_parent = models.ForeignKey('LezioneCorsoBase', null=True, blank=True)
 
     @property
     def url_cancella(self):
         return "%s%d/cancella/" % (self.corso.url_lezioni, self.pk)
+
+    @property
+    def url_dividi(self):
+        return reverse('courses:lezione_dividi', args=[self.corso.pk, self.pk])
 
     def send_messagge_to_docente(self, me):
         Messaggio.costruisci_e_invia(
@@ -1532,7 +1540,9 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         )
 
     def get_full_scheda_lezioni(self):
-        return self.corso.titolo_cri.scheda_lezioni
+        if hasattr(self, 'corso') and self.corso.titolo_cri:
+            return self.corso.titolo_cri.scheda_lezioni
+        return dict()
 
     def get_scheda_lezione(self):
         lezione = self.get_full_scheda_lezioni().get(str(self.scheda_lezione_num))
@@ -1551,6 +1561,8 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
     @property
     def lezione_ore(self):
         ore = self.get_scheda_lezione().get('ore')
+        if ore:
+            return int(ore)
         return ore
 
     @property
@@ -1565,10 +1577,34 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         che il reponsabile non ha corretto il valore automatico. """
         return self.inizio < self.corso.data_inizio
 
+    @property
+    def divisa(self):
+        return True if self.lezione_divisa_parent else False
+
+    @property
+    def puo_dividere(self):
+        lezioni_divise = LezioneCorsoBase.objects.filter(lezione_divisa_parent=self)
+        if not lezioni_divise:
+            return True
+        elif lezioni_divise.count() < 4:
+            return True
+        return False
+
+    def dividi(self):
+        return LezioneCorsoBase.objects.create(
+            corso=self.corso,
+            lezione_divisa_parent=self,
+            scheda_lezione_num=self.scheda_lezione_num,
+            inizio=self.inizio + datetime.timedelta(minutes=60),
+            nome=self.nome,
+            docente=self.docente,
+            luogo=self.luogo,
+        )
+
     class Meta:
         verbose_name = "Lezione di Corso"
         verbose_name_plural = "Lezioni di Corsi"
-        ordering = ['inizio', 'scheda_lezione_num']
+        ordering = ['scheda_lezione_num', 'inizio',]
         permissions = (
             ("view_lezionecorsobase", "Can view corso Lezione di Corso Base"),
         )

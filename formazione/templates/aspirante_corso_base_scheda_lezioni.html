@@ -8,11 +8,13 @@
 {% block scheda_contenuto %}
 <style>
   .esonero-text {font-size: 12px; padding: 4px 6px;}
-  .lezione-precompilata-text {margin-bottom:15px; text-align:center; color:red; font-weight:bold;}
+  .lezione-scheda-text {display:block; margin-bottom:15px; text-align:center; color:red; font-weight:bold;}
 </style>
+
 <div class="row">
     <form method="POST">
         {% csrf_token %}
+
         <div class="col-md-9">
             <div class="panel panel-info">
                 <div class="panel-heading">
@@ -31,12 +33,18 @@
                         {% for lezione, modulo, partecipanti_lezione in lezioni %}
                             <tr id="{{ lezione.pk }}">
                                 <td style="width: 40%">
-                                    {% if lezione.precaricata %}<p class="lezione-precompilata-text">Lezione precompilata come da scheda corso</p>{% endif %}
+                                    {% if lezione.precaricata %}<p class="lezione-scheda-text">Lezione precompilata come da scheda corso</p>{% endif %}
+                                    {% if lezione.divisa %}<span class="lezione-scheda-text" style="color:blue;">Lezione divisa</span>{% endif %}
 
                                     {% bootstrap_form modulo %}
+
                                     <button type="submit" name="azione" value="salva" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva informazioni</button>
 
-                                    {% if not lezione.precaricata %}
+                                    {% if lezione.precaricata and not lezione.divisa and lezione.puo_dividere %}
+                                        <a href="{{ lezione.url_dividi }}" class="btn btn-block"><i class="fa fa-fw fa-columns"></i> Dividi lezione</a>
+                                    {% endif %}
+
+                                    {% if not lezione.precaricata or lezione.precaricata and lezione.divisa %}
                                         <a href="{{ lezione.url_cancella }}" class="btn btn-sm btn-danger btn-block" data-conferma="Cancellare questa lezione? Questo eliminerà anche le assenze registrate.">
                                             <i class="fa fa-fw fa-trash"></i> Cancella lezione
                                         </a>

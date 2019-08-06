@@ -223,9 +223,7 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Data</th>
-                    <th>Argomento</th>
-                    <th>Docente</th>
+                    <th>Data e Argomento, Docente</th>
                 </tr>
             </thead>
             <tbody>
@@ -236,12 +234,17 @@
                 {% for lezione in corso.lezioni.all %}
                     <tr class="piu-piccolo">
                         <td>
-                            {{ lezione.inizio.date|naturalday:"DATE_FORMAT" }}<br />
-                            {{ lezione.inizio.time|date:"TIME_FORMAT" }}
-                            &mdash;{{ lezione.fine.time|date:"TIME_FORMAT" }}
+                            <strong style="display:block; margin:0 0 7px 0; font-size:14px;">
+                                {% if lezione.precaricata %}<i class="fa fa-fw fa-list"></i>{% endif %}
+                                {% if lezione.divisa %}<i class="fa fa-fw fa-columns"></i>{% endif %}
+                                {% if lezione.precaricata %}#{{ lezione.scheda_lezione_num }} - {% endif %} {{ lezione.nome }}
+                            </strong>
+
+                            {{ lezione.inizio.date|naturalday:"DATE_FORMAT" }}, {{ lezione.inizio.time|date:"TIME_FORMAT" }}
+                            {% if lezione.fine %} &mdash; {{ lezione.fine.time|date:"TIME_FORMAT" }}{% endif %}
+                            {% if lezione.lezione_ore and not lezione.divisa %}(<strong>{{ lezione.lezione_ore }}</strong> ore){% endif %}
+                            {% if lezione.docente %}<br>{{ lezione.docente.cognome }} {{ lezione.docente.nome }}{% endif %}
                         </td>
-                        <th>{{ lezione.nome }}</th>
-                        <td>{{ lezione.docente.cognome }} {{ lezione.docente.nome }}</td>
                     </tr>
                 {% empty %}
                     <tr class="warning">

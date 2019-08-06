@@ -141,6 +141,7 @@ class ModuloModificaLezione(ModelForm):
 
     def clean(self):
         cd = self.cleaned_data
+
         try:
             inizio = cd['inizio']
             fine = cd['fine']
@@ -156,6 +157,17 @@ class ModuloModificaLezione(ModelForm):
             self.add_error('inizio', err_data_lt_inizio_corso)
         if fine < data_inizio_corso:
             self.add_error('fine', err_data_lt_inizio_corso)
+
+        # Validazione divisione lezioni e orari impostati
+        if self.has_instance:
+            lezione_ore = self.instance.lezione_ore
+            if lezione_ore:
+                duration = fine-inizio
+                days, seconds = duration.days, duration.seconds
+                hours = days * 24 + seconds // 3600
+                if hours > lezione_ore:
+                    self.add_error('fine', 'La durata della lezione non può essere '
+                       'maggiore della durata impostata nella scheda per questa lezione (%s ore).' % lezione_ore)
 
         return cd
 
