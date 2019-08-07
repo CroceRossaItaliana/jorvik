@@ -665,7 +665,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def commissione_nomi_as_list(self):
-        return [i.strip() for i in self.commissione_esame_names.split(',')]
+        if self.commissione_esame_names:
+            return [i.strip() for i in self.commissione_esame_names.split(',')]
+        return list()
 
     @property
     def ha_compilato_commissione_esame(self):

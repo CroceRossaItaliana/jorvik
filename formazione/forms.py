@@ -516,7 +516,7 @@ class InformCourseParticipantsForm(forms.Form):
         CHOICES = [
             (self.ALL, "A tutti"),
             (self.UNCONFIRMED_REQUESTS, "Preiscritti"),
-            (self.CONFIRMED_REQUESTS, "Partecipanti confermati (ok così come è ora)"),
+            (self.CONFIRMED_REQUESTS, "Partecipanti confermati"),
         ]
 
         if self.instance.concluso:
