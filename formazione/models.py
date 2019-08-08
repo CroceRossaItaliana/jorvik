@@ -462,12 +462,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return "/aspirante/corso-base/%d/" % self.pk
 
     @property
+    def sigla_corso(self):
+        return "%s/%s/%s" % (self.sede.sede_regionale_sigla, self.anno, self.progressivo)
+
+    @property
     def nome(self):
         course_type = 'Corso Base' if self.tipo == Corso.BASE else 'Corso'
         titolo_cri = self.titolo_cri if self.titolo_cri else course_type
 
-        return "%s %s/%s/%s" % (titolo_cri, self.sede.sede_regionale_sigla,
-                                self.anno, self.progressivo)
+        return "%s %s" % (titolo_cri, self.sigla_corso)
 
     @property
     def link(self):

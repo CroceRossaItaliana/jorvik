@@ -54,10 +54,17 @@
 				<div class="front-page">
 					<div style="text-align: center;">
 						<div class="front-page-logo-wrap"><img class="front-page-logo" src="{{SITE_URL}}{% static 'img/attestato/cri-logo-transparent-small.png' %}" alt="Croce Rossa Italiana"></div>
-						<div class="front-page-heading">Attestato <span>di qualifica di volontario CRI</span></div>
+						<div class="front-page-heading">Attestato <span>di qualifica {% if not corso.is_nuovo_corso %}di volontario CRI{% endif %}</span></div>
 						<div class="front-page-text">
 							Si attesta che <strong class="persona__nome-completo">{{ persona.nome_completo }}</strong> CF {{ persona.codice_fiscale }} ha frequentato il<br>
-							<span style="display:block; text-transform: uppercase;">Corso di formazione per volontari della Croce Rossa Italiana</span>
+
+							<span style="display:block; text-transform: uppercase;">
+								{% if corso.titolo_cri %}
+									{{ corso.titolo_cri }}
+								{% eise %}
+									Corso di formazione per volontari della Croce Rossa Italiana
+								{% endif %}
+							</span>
 
 							dal {{ corso.data_inizio|date:"SHORT_DATE_FORMAT" }} al
 							{% if not partecipazione.esaminato_seconda_data %}
@@ -68,7 +75,9 @@
 
 							presso il {{ corso.sede.nome }}<br> e ottenuto la qualifica di
 						</div>
-						<div class="front-page-qualifica">Volontario CRI</div>
+						<div class="front-page-qualifica">
+							{% if corso.is_nuovo_corso %} {{ corso.titolo_cri }} {% else %} Volontario CRI {% endif %}
+						</div>
 						<div class="front-page-labels">
 							<div style="width: 44%; padding-left: 6%; box-sizing: border-box; text-align: left;">{{ corso.locazione }}<br>{{ corso.data_esame|date:"d/m/Y" }}</div>
 							<div style="width: 25%;">Il Direttore del Corso<br>
@@ -79,7 +88,7 @@
 							<div style="width: 25%;">Il Presidente<br>{{ corso.sede.presidente.nome_completo }}</div>
 						</div>
 					</div>
-					<div style="font-size:12pt; text-align: left;">{{ corso.nome }}</div>
+					<div style="font-size:12pt; text-align: left;">{{ corso.sigla_corso }}</div>
 				</div>
 			</div>
 		</div>
@@ -90,7 +99,7 @@
 				<div class="page-splitter left">
 					<div class="page-content-section">
 						<h3>Obiettivi Formativi:</h3>
-						<p>Il Corso ha lo scopo di:<br> Formare una figura che sia in grado di facilitare il processo di acquisizione di competenze, intese come conoscenze, capacità personali e abilità acquisite e comportamenti; Formare una figura che sia specializzata nella didattica relativa alla attività di competenza e nella progettazione e direzione di corsi per operatori (in ambito generale e in campi di azione specialistici); Formare una figura che sia elemento fondante nella costruzione dell’identità valoriale (Education) e del bagaglio operativo specialistico del volontario (Learning/Training) durante tutto il suo percorso di attività all’interno dell’Associazione; Formare una figura che contribuisca a rafforzare la capacità di risposta della Società Nazionale promuovendo la formazione come strumento per accrescere la qualità e l’efficacia delle azioni.</p>
+						<p>{{ corso.titolo_cri.scheda_obiettivi }}</p>
 					</div>
 					<div class="page-content-section" style="padding-top:50px">
 						<h3>Contenuti:</h3>
