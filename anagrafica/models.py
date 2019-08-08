@@ -2007,6 +2007,35 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     def unita_sottostanti(self):
         return self.ottieni_figli().filter(estensione=TERRITORIALE)
 
+    @property
+    def sede_regionale(self):
+        return self.superiore(REGIONALE)
+
+    @property
+    def sede_regionale_sigla(self):
+        from .costanti import REGIONI_CON_SIGLE
+
+        regione_sigla = None
+        sede_area_metro_roma = 1638
+
+        if self.id == 1:
+            regione_sigla = REGIONI_CON_SIGLE.get(1)  # Comitato Nazionale
+
+        # Comitati Regionali > Comitato dell'Area Metropolitana di Roma Capitale
+        elif self.sede_regionale and self.sede_regionale.id == sede_area_metro_roma:
+            regione_sigla = REGIONI_CON_SIGLE.get(524)  # Lazio
+
+        elif self.estensione == REGIONALE:
+            regione_sigla = REGIONI_CON_SIGLE.get(self.id)  # Comitati Regionali
+
+        else:
+            sede_regionale_id = self.sede_regionale.id if self.sede_regionale else None
+            if sede_regionale_id:
+                regione_sigla = REGIONI_CON_SIGLE.get(sede_regionale_id, "")
+
+        return regione_sigla['sigla'] if regione_sigla else None
+
+
     def __init__(self, *args, **kwargs):
         super(Sede, self).__init__(*args, **kwargs)
         # Questo attributo a runtime ci serve per verificare durante il save se il flag "attiva" è stato modficato
