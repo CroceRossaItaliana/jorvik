@@ -27,7 +27,7 @@ from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, err
 from base.files import Excel, FoglioExcel
 from base.utils import poco_fa, timedelta_ore
 from gruppi.models import Gruppo
-from attivita.cri_persone import createServizio
+from attivita.cri_persone import createServizio, updateServizio
 
 def attivita(request):
     return redirect('/attivita/calendario/')
@@ -218,21 +218,16 @@ def servizio_organizza(request, me):
     }
 
     if request.POST and modulo.is_valid() and modulo_referente.is_valid():
-        print(modulo.cleaned_data['servizi'])
-        print(modulo.cleaned_data['progetto'])
         if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
-            # TODO: crea servizio
-
-            print(modulo.cleaned_data['servizi'])
-
             result = createServizio(
                 comitato=646,
                 nome_progetto=modulo.cleaned_data['progetto'],
-                servizi=modulo.cleaned_data['servizi']
+                servizi=modulo.cleaned_data['servizi'],
             )
 
             if 'result' in result:
                 if result['result']['code'] == 201:
+                    updateServizio(key=result["data"]["key"], referenti=[me])
                     return redirect(
                         "/attivita/servizio/scheda/{}/modifica/".format(result["data"]["key"])
                     )
@@ -243,7 +238,7 @@ def servizio_organizza(request, me):
 
         elif modulo_referente.cleaned_data['scelta'] == modulo_referente.SCEGLI_REFERENTI:
             pass
-            # return redirect("/attivita/servizio/organizza/%d/referenti/")
+            return redirect("/attivita/servizio/organizza/{}/referenti/".format('KEY'))
 
     return 'servizio_organizza.html', contesto
 
@@ -324,6 +319,18 @@ def attivita_organizza_fatto(request, me, pk=None):
                               torna_titolo="Torna a Gestione Attività",
                               torna_url="/attivita/gestisci/")
 
+
+@pagina_privata
+def servizi_referenti(request, me, pk=None, nuova=False):
+    from anagrafica.forms import ModuloCreazioneDelega
+    form = ModuloCreazioneDelega(request.POST or None, initial={
+        "inizio": datetime.today(),
+    }, me=me)
+    contesto = {
+        "modulo": form
+    }
+
+    return 'servizi_referenti.html', contesto
 
 @pagina_privata
 def attivita_referenti(request, me, pk=None, nuova=False):

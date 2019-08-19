@@ -10,3 +10,7 @@
 [dompdf]
 
 endpoint = http://pdf/www/render.php
+
+[crip]
+
+endpoint = https://mscriperlepersone.cri.it
