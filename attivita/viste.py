@@ -329,7 +329,7 @@ def servizi_referenti(request, me, pk=None, nuova=False):
     contesto = {
         "modulo": form
     }
-
+    print(form)
     return 'servizi_referenti.html', contesto
 
 @pagina_privata
