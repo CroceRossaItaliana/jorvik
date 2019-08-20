@@ -14,8 +14,12 @@ def getServiziStandard(max_result=200):
 def updateServizio(key, **kwargs):
     data = {}
     if kwargs.get('referenti'):
-        # data['accountables'] = [{'name': '{}.{}'.format(ref.nome, ref.cognome)} for ref in kwargs.get('referenti')]
-        data['accountables'] = [{'name': 'gianluca.silvestri'}]
+        data['accountables'] = [{'name': '{}.{}'.format(ref.nome, ref.cognome)} for ref in kwargs.get('referenti')]
+        # data['accountables'] = [{'name': 'gianluca.silvestri'}]
+
+    if kwargs.get('precedenti'):
+        data['accountables'].extend(kwargs.get('precedenti'))
+
     r = requests.put(
         '{}/offeredserviceextended/{}/'.format(end_point, key),
         json=data

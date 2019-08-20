@@ -27,7 +27,7 @@ from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, err
 from base.files import Excel, FoglioExcel
 from base.utils import poco_fa, timedelta_ore
 from gruppi.models import Gruppo
-from attivita.cri_persone import createServizio, updateServizio
+from attivita.cri_persone import createServizio, updateServizio, getServizio
 
 def attivita(request):
     return redirect('/attivita/calendario/')
@@ -218,27 +218,34 @@ def servizio_organizza(request, me):
     }
 
     if request.POST and modulo.is_valid() and modulo_referente.is_valid():
+        result = createServizio(
+            comitato=646,
+            nome_progetto=modulo.cleaned_data['progetto'],
+            servizi=modulo.cleaned_data['servizi'],
+        )
         if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
-            result = createServizio(
-                comitato=646,
-                nome_progetto=modulo.cleaned_data['progetto'],
-                servizi=modulo.cleaned_data['servizi'],
-            )
-
             if 'result' in result:
                 if result['result']['code'] == 201:
                     updateServizio(key=result["data"]["key"], referenti=[me])
                     return redirect(
-                        "/attivita/servizio/scheda/{}/modifica/".format(result["data"]["key"])
+                        "/attivita/servizio/scheda/{}/modifica/".format(
+                            result["data"]["key"]
+                        )
                     )
                 else:
                     contesto['errore'] = True
             else:
                 contesto['errore'] = True
-
         elif modulo_referente.cleaned_data['scelta'] == modulo_referente.SCEGLI_REFERENTI:
-            pass
-            return redirect("/attivita/servizio/organizza/{}/referenti/".format('KEY'))
+            if 'result' in result:
+                if result['result']['code'] == 201:
+                    return redirect("/attivita/servizio/organizza/{}/referenti/".format(
+                        result["data"]["key"])
+                    )
+                else:
+                    contesto['errore'] = True
+            else:
+                contesto['errore'] = True
 
     return 'servizio_organizza.html', contesto
 
@@ -326,11 +333,21 @@ def servizi_referenti(request, me, pk=None, nuova=False):
     form = ModuloCreazioneDelega(request.POST or None, initial={
         "inizio": datetime.today(),
     }, me=me)
+
     contesto = {
-        "modulo": form
+        "modulo": form,
     }
-    print(form)
+
+    if request.POST:
+        if form.is_valid():
+            persona = form.cleaned_data['persona']
+            result = getServizio(pk)
+            if 'result' in result and 'code' in result['result'] and result['result']['code'] == 200:
+                referenti = [r['name'] for r in result['data']['accountables']]
+                updateServizio(pk, referenti=[persona], precedenti=referenti)
+
     return 'servizi_referenti.html', contesto
+
 
 @pagina_privata
 def attivita_referenti(request, me, pk=None, nuova=False):

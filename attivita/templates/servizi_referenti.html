@@ -54,42 +54,17 @@
                             <thead>
                                 <th>Persona</th>
                                 <th>Validità</th>
-                                <th>Azioni</th>
+{#                                <th>Azioni</th>#}
                             </thead>
 
                             <tbody>
-                                {% for del in deleghe %}
-{#                                    <tr class="{% if del.attuale %}success{% endif %}">#}
-{#                                        <td class="grassetto">#}
-{#                                            <a target="_new" href="{{ del.persona.url }}">{{ del.persona.nome_completo }}</a>#}
-{#                                        </td>#}
-{##}
-{#                                        <td class="piu-piccolo">#}
-{#                                            <i class="fa fa-fw fa-calendar"></i> Inizio:#}
-{#                                                {{ del.inizio }}<br />#}
-{#                                            <i class="fa fa-fw fa-clock-o"></i> Fine:#}
-{#                                                {% if del.fine %}{{ del.fine }}#}
-{#                                                {% else %}Indeterminata{% endif %}#}
-{#                                        </td>#}
-{##}
-{#                                        <td>#}
-{#                                            {% if del.attuale %}#}
-{#                                                <a href="/strumenti/delegati/{{ del.pk }}/termina/" class="btn btn-sm btn-danger"#}
-{#                                                    data-conferma="Terminare ora la delega di {{ del.persona.nome_completo }} come {{ delega }} per {{ oggetto }}?">#}
-{#                                                    <i class="fa fa-fw fa-times"></i>#}
-{#                                                    Termina ora#}
-{#                                                </a>#}
-{##}
-{#                                            {% else %}#}
-{#                                                N/A#}
-{##}
-{#                                            {% endif %}#}
-{##}
-{#                                        </td>#}
-{##}
-{##}
-{#                                    </tr>#}
+                                {% for p in persone %}
 
+                                    <tr>
+                                        <td class="grassetto">
+                                            <a target="_new" href="{{ p.url }}">{{ p.nome_completo }}</a>
+                                        </td>
+                                    </tr>
 
                                 {% empty %}
                                     <tr class="alert alert-warning">
