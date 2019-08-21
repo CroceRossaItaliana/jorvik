@@ -11,7 +11,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.costanti import NAZIONALE
-from anagrafica.models import Sede
+from anagrafica.models import Sede, Persona
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE, REFERENTE_GRUPPO, DELEGATO_PROGETTO
 from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO, \
     GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE, \
@@ -345,6 +345,9 @@ def servizi_referenti(request, me, pk=None, nuova=False):
             if 'result' in result and 'code' in result['result'] and result['result']['code'] == 200:
                 referenti = [r['name'] for r in result['data']['accountables']]
                 updateServizio(pk, referenti=[persona], precedenti=referenti)
+                contesto.update({'referenti': [
+                    Persona.objects.filter(**{'nome': r.split('.')[0], 'cognome': r.split('.')[1]}) for r in referenti]}
+                )
 
     return 'servizi_referenti.html', contesto
 
