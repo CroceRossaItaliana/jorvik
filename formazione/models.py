@@ -1027,24 +1027,33 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def inform_presidency_with_delibera_file(self):
         sede = self.sede.estensione
-        email_body = """<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>"""
+        email_to = self.sede.sede_regionale.presidente()
+        oggetto = "Delibera nuovo corso: %s" % self
 
-        email_to = None
         if sede == LOCALE:
-            # Informa presidenta della Sede via mail
-            email_to = self.sede.presidente().email
-        elif sede in [REGIONALE, NAZIONALE, PROVINCIALE, TERRITORIALE]:
-            # Informa sulla mail
-            email_to = 'formazione@cri.it'
+            pass
 
-        if email_to:
-            Messaggio.invia_raw(
-                oggetto="Delibera nuovo corso: %s" % self,
-                corpo_html=email_body,
+        elif sede == TERRITORIALE:
+            pass
+
+        elif sede in [REGIONALE, NAZIONALE, PROVINCIALE,]:
+            maila = Messaggio.invia_raw(
+                oggetto=oggetto,
+                corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
                 email_mittente=Messaggio.NOREPLY_EMAIL,
-                lista_email_destinatari=[email_to,],
+                lista_email_destinatari=['formazione@cri.it',],
                 allegati=self.delibera_file
             )
+
+        Messaggio.costruisci_e_accoda(
+            oggetto=oggetto,
+            modello='email_corso_invia_delibera_al_presidente.html',
+            corpo={
+                'corso': self,
+            },
+            destinatari=[email_to,],
+            allegati=[self.delibera_file,]
+        )
 
     def direttori_corso(self):
         oggetto_tipo = ContentType.objects.get_for_model(self)

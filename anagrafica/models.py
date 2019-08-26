@@ -2009,6 +2009,8 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     @property
     def sede_regionale(self):
+        if self.estensione == REGIONALE:
+            return self
         return self.superiore(REGIONALE)
 
     @property

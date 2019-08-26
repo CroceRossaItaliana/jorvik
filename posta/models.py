@@ -14,7 +14,7 @@ from django.utils.text import Truncator
 from django.utils import timezone
 
 from jorvik import settings
-from base.models import ModelloSemplice, ConAllegati
+from base.models import Allegato, ModelloSemplice, ConAllegati
 from base.tratti import ConMarcaTemporale
 from social.models import ConGiudizio
 from .tasks import invia_mail
@@ -374,7 +374,6 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         corpo = corpo or {}
         corpo.update({
             'mittente': mittente,
-            'allegati': allegati,
         })
 
         oggetto = Truncator(oggetto).chars(Messaggio.LUNGHEZZA_MASSIMA_OGGETTO)
@@ -382,17 +381,23 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         with transaction.atomic():
             m = Messaggio(oggetto=oggetto,
                           mittente=mittente,
-                          corpo=get_template(modello).render(corpo),
                           **kwargs)
+
+            allegati_objects = list()
+            for a in allegati:
+                allegato = Allegato(file=a, nome=a.name)
+                allegato.oggetto = m
+                allegato.save()
+                allegati_objects.append(allegato)
+
+            corpo['allegati'] = allegati_objects
+
+            m.corpo = get_template(modello).render(corpo)
             m.processa_link()
             m.save()
 
             for d in destinatari:
                 m.oggetti_destinatario.create(persona=d)
-
-            for a in allegati:
-                a.oggetto = m
-                a.save()
 
             return m
 

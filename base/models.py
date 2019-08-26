@@ -947,6 +947,10 @@ class Allegato(ConMarcaTemporale, ConScadenzaPulizia, ModelloSemplice):
         self.file.delete()
         super(Allegato, self).delete(*args, **kwargs)
 
+    @property
+    def filename(self):
+        return os.path.basename(self.file.name)
+
 
 class ConAllegati(models.Model):
     """
