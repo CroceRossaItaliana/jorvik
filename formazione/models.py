@@ -996,7 +996,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         partecipazioni = self.partecipazioni_confermate_assente_motivo(solo=verbale_per_seconda_data_esame)
 
         pdf = PDF(oggetto=self)
-        pdf.genera_e_salva(
+        pdf.genera_e_salva_con_python(
             nome="Verbale Esame del Corso Base %d-%d.pdf" % (self.progressivo, self.anno),
             corpo={
                 "corso": self,

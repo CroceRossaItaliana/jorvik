@@ -61,6 +61,6 @@ def can_show_button_genera_verbale(context, corso):
 @register.simple_tag(takes_context=True)
 def can_show_tab_questionario(context):
     corso, me = context['corso'], context['me']
-    if corso.survey and corso.is_nuovo_corso and corso.concluso:
+    if corso.survey and corso.concluso:  # corso.is_nuovo_corso
         return corso.survey.can_vote(me, corso)
     return False

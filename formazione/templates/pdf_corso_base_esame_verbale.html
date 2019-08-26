@@ -21,26 +21,20 @@
         text-indent: 1.25cm;
         margin-bottom: 0.35cm;
         line-height: 140%;
+        font-size: 14px;
     }
 {% endblock %}
 
 {% block corpo %}
 
 <div lang="it-IT" text="#000000" dir="ltr" style=" line-height: 150%; background: transparent; padding-top: 0.3cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
-    <!-- Logo CRI -->
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
-        <img src="{% static "img/Emblema_CRI.png" %}" name="LogoCri" align="middle" width="300" height="270">
-        <br/>
-        <font face="Arial, sans-serif" style="font-size: 9pt" color="#cc0000">
-            {{ corso.sede.comitato }}
-        </font><
+        <img src='{% static "img/Emblema_CRI.png" %}' name="Logo CRI" align="middle" width="300" height="270">
+        <br>
+        <font face="Arial, sans-serif" style="font-size: 9pt" color="#cc0000">{{ corso.sede.comitato }}</font>
     </p>
-    <p class="western" align="center" style="margin-bottom: 0.20cm; line-height: 150%">
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
-        <font size="4" style="font-size: 14pt">
-            <b>CORSO DI FORMAZIONE PER VOLONTARI DELLA C.R.I. </b>
-        </font>
+    <p style="margin: 0.20cm 0 0cm; line-height: 150%; text-align:center;" class="western">
+        <span style="text-transform:uppercase; font-weight:bold; font-size:14pt;">Corso di formazione per volontari della C.R.I.</span>
     </p>
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
         <font size="4" style="font-size: 14pt">
@@ -133,11 +127,11 @@
 
     <p class="western commissione-nome-row"><br/><br/></p>
     <p class="western commissione-nome-row">Letto approvato e sottoscritto</p>
-    <p class="western commissione-nome-row">______________________________________ Presidente</p>
-    <p class="western commissione-nome-row">______________________________________ Direttore</p>
+    <p class="western commissione-nome-row">___________________________________ Presidente</p>
+    <p class="western commissione-nome-row">___________________________________ Direttore</p>
 
     {% for nome in corso.commissione_nomi_as_list %}
-        <p class="western commissione-nome-row">______________________________________ {{ nome }}</p>
+        <p class="western commissione-nome-row">___________________________________ {{ nome|title }}</p>
     {% endfor %}
 
 </div>
