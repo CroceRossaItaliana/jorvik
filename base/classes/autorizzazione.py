@@ -11,6 +11,7 @@ class AutorizzazioneProcess:
         self.pk = pk
 
         self.richiesta = get_object_or_404(Autorizzazione, pk=self.pk)
+        self.form = None
         self._autorizzazione_form = None
 
     def concedi(self):
@@ -53,8 +54,6 @@ class AutorizzazioneProcess:
         return self._template, context
 
     def _process_form(self, concedi):
-        self.form = None
-
         if self.request.POST:
             self.form = self._autorizzazione_form(self.request.POST)
             if self.form.is_valid():

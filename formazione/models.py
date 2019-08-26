@@ -912,8 +912,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
             self.save()
 
-        if self.is_nuovo_corso:
-            self.set_titolo_cri_to_participants(partecipanti_qs, data_ottenimento=data_ottenimento)
+        # if self.is_nuovo_corso:
+        self.set_titolo_cri_to_participants(partecipanti_qs, data_ottenimento=data_ottenimento)
 
     def set_titolo_cri_to_participants(self, partecipanti, **kwargs):
         """ Sets <titolo_cri> in Persona's Curriculum (TitoloPersonale) """
@@ -1400,7 +1400,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         else:
             template = template % 'aspirante'
 
-        Messaggio.costruisci_e_accoda(
+        Messaggio.costruisci_e_invia(
             oggetto="Esito del Corso: %s" % self.corso,
             modello=template,
             corpo={

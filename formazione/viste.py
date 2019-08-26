@@ -110,7 +110,6 @@ def formazione_corsi_base_nuovo(request, me):
             kwargs['titolo_cri'] = cd['titolo_cri']
             kwargs['cdf_level'] = cd['level']
             kwargs['cdf_area'] = cd['area']
-            kwargs['survey'] = Survey.survey_for_corso()
 
         course = CorsoBase.nuovo(
             anno=data_inizio.year,
@@ -119,6 +118,7 @@ def formazione_corsi_base_nuovo(request, me):
             data_esame=data_esame,
             tipo=tipo,
             delibera_file=cd['delibera_file'],
+            survey=Survey.survey_for_corso(),
             **kwargs
         )
         course.get_or_create_lezioni_precompilate()
