@@ -1362,6 +1362,35 @@ def course_commissione_esame(request, me, pk):
             instance = form.save(commit=False)
             instance.commissione_esame_names = esame_names
             instance.save()
+
+            # Avvisa il presidente del comitato del corso
+            nuovo_avviso = False
+
+            oggetto = 'Inserimento della commissione di esame del corso %s' % corso.nome
+            modello = 'email_corso_avvisa_presidente_inserimento_commissione_esame.html'
+            corpo = {'corso': corso}
+
+            # Verifica se stesso messaggio non è stato ancora inviato
+            avvisi = Messaggio.objects.filter(oggetto=oggetto)
+            if not avvisi:
+                nuovo_avviso = True
+            else:
+                email_body = get_template(modello).render(corpo)
+                ultimo_avviso_corpo = avvisi.last().corpo
+                ultimo_avviso_corpo = ultimo_avviso_corpo[ultimo_avviso_corpo.find('|||') + 3:ultimo_avviso_corpo.find('===')]
+
+                if len(ultimo_avviso_corpo) != len(esame_names):
+                    nuovo_avviso = True
+
+            if nuovo_avviso and me != corso.sede.presidente():
+                Messaggio.costruisci_e_accoda(
+                    oggetto=oggetto,
+                    modello=modello,
+                    corpo=corpo,
+                    destinatari=[corso.sede.presidente()]
+                )
+                messages.success(request, 'Il presidente del comitato è stato avvisato del inserimento della commissione esame.')
+
             return redirect(reverse('courses:commissione_esame', args=[pk]))
     else:
         form = FormCommissioneEsame(instance=corso)
