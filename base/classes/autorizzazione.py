@@ -11,6 +11,7 @@ class AutorizzazioneProcess:
         self.pk = pk
 
         self.richiesta = get_object_or_404(Autorizzazione, pk=self.pk)
+        self._autorizzazione_form = None
 
     def concedi(self):
         """ Mostra il modulo da compilare per il consenso,
@@ -34,7 +35,7 @@ class AutorizzazioneProcess:
         if self._validate() is not None:
             return self._validate()
 
-        if self._autorizzazione_form():
+        if self._autorizzazione_form is not None:
             self._process_form(concedi)  # Se la richiesta ha un modulo di consenso
         else:
             # Accetta la richiesta senza modulo
