@@ -367,9 +367,8 @@ def aspirante_corso_base_lezioni(request, me, pk):
             lezione.corso = corso
             lezione.save()
 
-            if corso.is_nuovo_corso:
-                # Informa docente della lezione
-                lezione.send_messagge_to_docente(me)
+            lezione.avvisa_docente_nominato_al_corso(me)  # Avvisa docente e il suo presidente della nomina
+            lezione.avvisa_presidente_docente_nominato()  # Se non è del comitato che organizza il corso
 
             return redirect("%s#%d" % (corso.url_lezioni, lezione.pk))
     else:

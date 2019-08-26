@@ -1560,8 +1560,8 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
     def url_dividi(self):
         return reverse('courses:lezione_dividi', args=[self.corso.pk, self.pk])
 
-    def send_messagge_to_docente(self, me):
-        Messaggio.costruisci_e_invia(
+    def avvisa_docente_nominato_al_corso(self, me):
+        Messaggio.costruisci_e_accoda(
             oggetto='Docente al %s' % self.corso.nome,
             modello="email_docente_assegnato_a_corso.html",
             corpo={
@@ -1571,6 +1571,30 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
             mittente=me,
             destinatari=[self.docente]
         )
+
+    def avvisa_presidente_docente_nominato(self):
+        """Avvisa presidente del comitato della persona che è stato nominato
+        come docente di questa lezione."""
+
+        docente = self.docente
+        esito = self.corso.sede.ha_membro(docente, membro=Appartenenza.VOLONTARIO)
+        if not esito:
+            destinatari = list()
+            for sede in docente.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO,
+                                                              Appartenenza.DIPENDENTE]):
+                destinatari.append(sede.presidente())
+
+            if destinatari:
+                Messaggio.costruisci_e_accoda(
+                    oggetto="%s è nominato come docente di lezione %s" % (self.docente, self.nome),
+                    modello="email_corso_avvisa_presidente_docente_nominato_a_lezione.html",
+                    corpo={
+                        "persona": self.docente,
+                        "corso": self.corso,
+                        'lezione': self,
+                    },
+                    destinatari=destinatari,
+                )
 
     def get_full_scheda_lezioni(self):
         if hasattr(self, 'corso') and self.corso.titolo_cri:

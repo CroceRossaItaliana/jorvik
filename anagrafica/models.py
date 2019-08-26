@@ -354,9 +354,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.membro_di(self, sede, includi_figli=True, **kwargs)
 
     def sedi_attuali(self, **kwargs):
-        """
-        Ottiene queryset di Sede di cui fa parte
-        """
+        """ Ottiene queryset di Sede di cui fa parte. """
         return Sede.objects.filter(pk__in=[x.sede.pk for x in self.appartenenze_attuali(**kwargs)])
 
     def titoli_personali_confermati(self):
