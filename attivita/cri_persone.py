@@ -20,6 +20,12 @@ def updateServizio(key, **kwargs):
     if kwargs.get('precedenti'):
         data['accountables'].extend(kwargs.get('precedenti'))
 
+    if kwargs.get('stato'):
+        data['status'] = kwargs.get('stato')
+
+    if kwargs.get('testo'):
+        data['description'] = kwargs.get('testo')
+
     r = requests.put(
         '{}/offeredserviceextended/{}/'.format(end_point, key),
         json=data

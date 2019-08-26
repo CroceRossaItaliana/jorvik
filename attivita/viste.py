@@ -150,8 +150,6 @@ def servizio_gestisci(request, me, stato="aperte"):
     from attivita.cri_persone import getListService
     sedi = me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE, solo_deleghe_attive=True)
 
-    print('SEDI', sedi)
-
     result = getListService(646)
 
     contesto = {}
@@ -808,17 +806,29 @@ def attivita_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_p
 def servizio_scheda_informazioni_modifica(request, me, pk=None):
     from attivita.forms import ModuloServizioModifica
     from attivita.cri_persone import getServizio
-    modulo = ModuloServizioModifica(request.POST or None)
-
-    contesto = {
-        "modulo": modulo
-    }
+    modulo = None
 
     result = getServizio(pk)
+    contesto = {}
+    init = {}
 
     if 'result' in result:
         if result['result']['code'] == 200:
-            contesto['nome'] = result['data']['summary']
+            contesto.update({'nome': result['data']['summary']})
+            if result['data']['status']:
+                init.update({'stato': result['data']['status']})
+            if result['data']['description']:
+                init.update({'testo': result['data']['description']})
+        modulo = ModuloServizioModifica(request.POST or None, initial=init)
+    else:
+        modulo = ModuloServizioModifica(request.POST or None)
+
+    contesto.update({'modulo': modulo})
+
+    if modulo.is_valid():
+        testo = modulo.cleaned_data['testo']
+        stato = modulo.cleaned_data['stato']
+        updateServizio(pk, **{'stato': stato, 'testo': testo})
 
     return 'servizio_scheda_infomazioni_modifica.html', contesto
 

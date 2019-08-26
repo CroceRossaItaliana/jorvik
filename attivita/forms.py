@@ -26,9 +26,9 @@ class ModuloAttivitaInformazioni(ModelForm):
 
 
 class ModuloServizioModifica(forms.Form):
-    BOZZA = 'B'
-    APERTA = 'A'
-    CHIUSA = 'C'
+    BOZZA = "11301"
+    APERTA = "10413"
+    CHIUSA = "6"
     choise = (
         (BOZZA, 'Bozza'),
         (APERTA, 'Aperta'),
@@ -38,7 +38,7 @@ class ModuloServizioModifica(forms.Form):
         choices=choise, required=True, initial=BOZZA
     )
 
-    testo = forms.CharField(required=False, max_length=100000, widget=WYSIWYGSemplice())
+    testo = forms.CharField(required=False, max_length=100000, widget=forms.Textarea())
 
 
 class ModuloModificaTurno(ModelForm):
