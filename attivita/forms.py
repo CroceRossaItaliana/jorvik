@@ -41,6 +41,26 @@ class ModuloServizioModifica(forms.Form):
     testo = forms.CharField(required=False, max_length=100000, widget=forms.Textarea())
 
 
+class ModuloServiziModificaStandard(forms.Form):
+
+    @staticmethod
+    def popola_scelta():
+        select = []
+        serviziStandard = getServiziStandard()
+        if 'data' in serviziStandard and 'services' in serviziStandard['data']:
+            for s in getServiziStandard()['data']['services']:
+                select.append(
+                    (s['key'], s['summary'])
+                )
+        return tuple(select)
+
+    servizi = forms.MultipleChoiceField(
+        choices=(),
+        widget=forms.SelectMultiple,
+        label="Scelta servizi standard"
+    )
+
+
 class ModuloModificaTurno(ModelForm):
     class Meta:
         model = Turno

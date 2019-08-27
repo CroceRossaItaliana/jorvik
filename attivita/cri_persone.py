@@ -20,6 +20,12 @@ def updateServizio(key, **kwargs):
     if kwargs.get('precedenti'):
         data['accountables'].extend(kwargs.get('precedenti'))
 
+    if kwargs.get('servizi'):
+        ss = ""
+        for s in kwargs.get('servizi'):
+            ss += "{},".format(s)
+        data['service'] = [ss[:-1] if ss else ""]
+
     if kwargs.get('stato'):
         data['status'] = kwargs.get('stato')
 

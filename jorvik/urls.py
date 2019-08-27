@@ -123,6 +123,7 @@ urlpatterns = [
     url(r'^attivita/servizio/gestisci/chiuse/$', attivita.viste.servizio_gestisci, {"stato": "chiuse"}),
     url(r'^attivita/servizio/organizza/(?P<pk>[a-zA-Z0-9\-]+)/referenti/$', attivita.viste.servizi_referenti, {"nuova": True}),
     url(r'^attivita/servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica/$', attivita.viste.servizio_scheda_informazioni_modifica),
+    url(r'^attivita/servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica/servizi$', attivita.viste.servizio_modifica_servizi_standard),
 
     url(r'^attivita/aree/$', attivita.viste.attivita_aree),
     url(r'^attivita/aree/(?P<sede_pk>[0-9\-]+)/$', attivita.viste.attivita_aree_sede),

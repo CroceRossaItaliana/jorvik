@@ -803,6 +803,39 @@ def attivita_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_p
 
 
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+def servizio_modifica_servizi_standard(request, me, pk=None):
+    from attivita.forms import ModuloServiziModificaStandard
+    modulo = ModuloServiziModificaStandard(request.POST or None)
+
+    result = getServizio(pk)
+    modulo.fields['servizi'].choices = ModuloServiziModificaStandard.popola_scelta()
+    contesto = {
+        "modulo": modulo
+    }
+    service_delete = request.GET.get('key', None)
+    services = []
+
+    if 'result' in result and 'code' in result['result'] and result['result']['code'] == 200:
+        for s in result['data']['service']:
+            if s['key'] == service_delete: continue
+            services.append(s['key'])
+
+    if request.POST:
+        if modulo.is_valid():
+            services.extend(modulo.cleaned_data['servizi'])
+
+    if services and service_delete:
+        updateServizio(pk, servizi=services)
+        result = getServizio(pk)
+
+    if 'result' in result and 'code' in result['result'] and result['result']['code'] == 200:
+        contesto.update({'nome': result['data']['project']})
+        contesto.update({"servizi": result['data']['service']})
+
+    return 'servizi_standard_modifica.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def servizio_scheda_informazioni_modifica(request, me, pk=None):
     from attivita.forms import ModuloServizioModifica
     from attivita.cri_persone import getServizio
@@ -815,8 +848,8 @@ def servizio_scheda_informazioni_modifica(request, me, pk=None):
     if 'result' in result:
         if result['result']['code'] == 200:
             contesto.update({'nome': result['data']['summary']})
-            if result['data']['status']:
-                init.update({'stato': result['data']['status']})
+            # if result['data']['status']:
+            #     init.update({'stato': result['data']['status']})
             if result['data']['description']:
                 init.update({'testo': result['data']['description']})
         modulo = ModuloServizioModifica(request.POST or None, initial=init)
@@ -827,8 +860,9 @@ def servizio_scheda_informazioni_modifica(request, me, pk=None):
 
     if modulo.is_valid():
         testo = modulo.cleaned_data['testo']
-        stato = modulo.cleaned_data['stato']
-        updateServizio(pk, **{'stato': stato, 'testo': testo})
+        # stato = modulo.cleaned_data['stato']
+        # updateServizio(pk, **{'stato': stato, 'testo': testo})
+        updateServizio(pk, **{'testo': testo})
 
     return 'servizio_scheda_infomazioni_modifica.html', contesto
 
