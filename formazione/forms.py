@@ -131,7 +131,8 @@ class ModuloCreazioneCorsoBase(ModelForm):
 
 class ModuloModificaLezione(ModelForm):
     docente = autocomplete_light.ModelChoiceField("DocenteLezioniCorso")
-    has_nulla_osta = forms.BooleanField(label='Responsabilità di aver ricevuto nulla osta dal presidente del comitato di appartenenza')
+    has_nulla_osta = forms.BooleanField(label='Responsabilità di aver ricevuto nulla osta dal presidente del comitato di appartenenza',
+                                        initial=True)
     fine = forms.DateTimeField()
     obiettivo = forms.CharField(required=False, label='Argomento')
 
@@ -426,12 +427,9 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
 
         ammissione = cd['ammissione']
         motivo_non_ammissione = cd['motivo_non_ammissione']
-        esito_parte_1 = cd['esito_parte_1']
-        argomento_parte_1 = cd['argomento_parte_1']
-        esito_parte_2 = cd['esito_parte_2']
-        argomento_parte_2 = cd['argomento_parte_2']
-        extra_1 = cd['extra_1']
-        extra_2 = cd['extra_2']
+        esito_parte_1, esito_parte_2 = cd['esito_parte_1'], cd['esito_parte_2']
+        argomento_parte_1, argomento_parte_2 = cd['argomento_parte_1'], cd['argomento_parte_2']
+        extra_1, extra_2 = cd['extra_1'], cd['extra_2']
         destinazione = cd.get('destinazione')
 
         # Controlla che non ci siano conflitti (incoerenze) nei dati.
@@ -470,12 +468,8 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
                                                 "selezionare l'opzione per specificare che l'esame "
                                                 "non includeva questa parte.")
 
-        if ammissione in [PartecipazioneCorsoBase.NON_AMMESSO,
-                          PartecipazioneCorsoBase.ASSENTE_MOTIVO,]:
-            if not motivo_non_ammissione:
-                self.add_error('motivo_non_ammissione',
-                    "Devi specificare la motivazione di non ammissione all'esame.")
-
+        if ammissione in [PartecipazioneCorsoBase.NON_AMMESSO,]:
+            self.add_error('motivo_non_ammissione', "Devi specificare la motivazione di non ammissione all'esame.")
 
         # Se sto generando il verbale, controlla che tutti i campi obbligatori siano stati riempiti.
         if self.generazione_verbale:
@@ -488,7 +482,8 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
 
 class FormCreateDirettoreDelega(ModelForm):
     persona = autocomplete_light.ModelChoiceField('CreateDirettoreDelegaAutocompletamento')
-    has_nulla_osta = forms.BooleanField(label='Responsabilità di aver ricevuto nulla osta dal presidente del comitato di appartenenza')
+    has_nulla_osta = forms.BooleanField(label='Responsabilità di aver ricevuto nulla osta dal presidente del comitato di appartenenza',
+                                        initial=True)
 
     class Meta:
         model = Delega

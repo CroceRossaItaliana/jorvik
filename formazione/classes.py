@@ -134,7 +134,8 @@ class GeneraReport:
         return scheda
 
     def _attestato(self, partecipante):
-        attestato = partecipante.genera_attestato()
+        attestato = partecipante.genera_attestato(request=self.request)
+
         self.archive.aggiungi_file(
             attestato.file.path,
             self.ATTESTATO_FILENAME % partecipante.persona.nome_completo

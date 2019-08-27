@@ -874,6 +874,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         volontarizza/aggiunge titolo al cv dell'utente """
 
         data_ottenimento = kwargs.get('data_ottenimento', self.data_esame)
+        partecipazioni_idonei_list = list()
 
         with transaction.atomic():
             # Per maggiore sicurezza, questa cosa viene eseguita in una transazione
@@ -889,6 +890,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                                                 else partecipante.NON_IDONEO
                 partecipante.esito_esame = esito_esame
                 partecipante.save()
+
+                if partecipante.idoneo:
+                    partecipazioni_idonei_list.append(partecipante.id)
 
                 # Comunica il risultato all'aspirante/volontario
                 partecipante.notifica_esito_esame(mittente=mittente)
@@ -912,8 +916,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
             self.save()
 
-        # if self.is_nuovo_corso:
-        self.set_titolo_cri_to_participants(partecipanti_qs, data_ottenimento=data_ottenimento)
+        partecipanti_a_chi_dare_titolo_cri = partecipanti_qs.filter(id__in=partecipazioni_idonei_list)
+        self.set_titolo_cri_to_participants(partecipanti_a_chi_dare_titolo_cri,
+                                            data_ottenimento=data_ottenimento)
 
     def set_titolo_cri_to_participants(self, partecipanti, **kwargs):
         """ Sets <titolo_cri> in Persona's Curriculum (TitoloPersonale) """
@@ -1598,7 +1603,7 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                 )
 
     def get_full_scheda_lezioni(self):
-        if hasattr(self, 'corso') and self.corso.titolo_cri:
+        if hasattr(self, 'corso') and self.corso.titolo_cri and self.corso.titolo_cri.scheda_lezioni:
             return self.corso.titolo_cri.scheda_lezioni
         return dict()
 

@@ -3,18 +3,22 @@
 {% load static %}
 {% load base_tags %}
 
+{% block css_extra %}
+    .heading-main {text-align: center; margin: 0 0 20px 0; line-height: 115%;}
+    .heading-logo-cri {display:block; margin:0 auto 10px; width:150px;}
+    .heading-comitato-name {font-family: Arial, sans-serif; font-size: 9pt; color:#cc0000;}
+{% endblock %}
+
 {% block corpo %}
 
 {% current_domain as SITE_URL %}
 
 <div style="font-family: 'Arial, sans-serif', 'Tahoma'; padding: 8px 10px 8px 10px; color: #000; font-size: 12pt">
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
-        <img src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI" align="middle" width="150">
-        <br>
-        <font face="Arial, sans-serif" style="font-size: 9pt" color="#cc0000">{{ corso.sede.comitato }}</font>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0.25cm; line-height: 115%">
-    </p>
+    <div class="western heading-main">
+        <img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">
+        <span class="heading-comitato-name">{{ corso.sede.comitato }}</span>
+    </div>
+    <p class="western" align="center" style="margin-bottom: 0.25cm; line-height: 115%"></p>
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
         <font face="Arial, sans-serif" size="4" style="font-size: 14pt">
             <b>CORSO DI FORMAZIONE PER VOLONTARI CROCE ROSSA ITALIANA</b>

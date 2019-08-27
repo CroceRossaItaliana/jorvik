@@ -94,7 +94,7 @@ def formazione_corsi_base_nuovo(request, me):
         kwargs = {}
         cd = form.cleaned_data
         tipo, data_inizio, data_esame = cd['tipo'], cd['data_inizio'], cd['data_esame']
-        data_esame = data_esame if tipo == Corso.CORSO_NUOVO else data_inizio
+        # data_esame = data_esame if tipo == Corso.CORSO_NUOVO else data_inizio
 
         if tipo == Corso.BASE:
             # Impostare titolo per "Corso Base"
@@ -682,8 +682,14 @@ def aspirante_corso_base_termina(request, me, pk):
             return redirect_termina
 
         if not corso.ha_compilato_commissione_esame:
-            messages.error(request, "Impossibile terminare questo corso"
-                "Per generare il verbale è neccessario che il presidente compila i dati della commissione esame")
+            messages.error(request, "Impossibile terminare questo corso. "
+                                    "Per generare il verbale è neccessario che il presidente compila i dati della commissione esame")
+            Messaggio.costruisci_e_invia(
+                oggetto='Inserimento commissione di esame del corso %s' %corso.nome,
+                modello='email_corso_avvisa_presidente_da_compilare_commissione_esame.html',
+                corpo={'corso': corso},
+                destinatari=[corso.sede.presidente()]
+            )
             return redirect_termina
 
         # Tutto ok, posso procedere
