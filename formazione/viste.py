@@ -682,8 +682,8 @@ def aspirante_corso_base_termina(request, me, pk):
             return redirect_termina
 
         if not corso.ha_compilato_commissione_esame:
-            messages.error(request, "Impossibile terminare questo corso. "
-                                    "Per generare il verbale è neccessario che il presidente compila i dati della commissione esame")
+            messages.error(request, "Impossibile terminare questo corso. Per generare il verbale è neccessario "
+                                    "che il presidente compili i dati della commissione esame ed inserisca la delibera.")
             Messaggio.costruisci_e_invia(
                 oggetto='Inserimento commissione di esame del corso %s' %corso.nome,
                 modello='email_corso_avvisa_presidente_da_compilare_commissione_esame.html',

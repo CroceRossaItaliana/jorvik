@@ -249,6 +249,7 @@
                             </span>
                             {% if lezione.fine %} &mdash; {{ lezione.fine.time|date:"TIME_FORMAT" }}{% endif %}
                             {% if lezione.lezione_ore and not lezione.divisa %}(<strong>{{ lezione.lezione_ore }}</strong> ore){% endif %}
+                            {% if lezione.luogo %}<br>{{ lezione.luogo }}{% endif %}
                             {% if lezione.docente %}<br>{{ lezione.docente.cognome }} {{ lezione.docente.nome }}{% endif %}
                         </td>
                     </tr>
