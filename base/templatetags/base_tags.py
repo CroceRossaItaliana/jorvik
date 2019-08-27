@@ -59,6 +59,9 @@ def select_nomina_presidenziale(sede):
 def current_domain(context):
     request = context.get('request')
     if request:
-        uri = request.build_absolute_uri('/')
-        return uri[:-1] if uri.endswith('/') else uri
+        protocol = "http" if request.is_secure else 'https'
+        return "%s://%s" % (protocol, request.get_host())
+
+        # uri = request.build_absolute_uri('/')
+        # return uri[:-1] if uri.endswith('/') else uri
     return ""

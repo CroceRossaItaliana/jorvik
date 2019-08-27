@@ -1005,6 +1005,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 "numero_idonei": self.idonei().count(),
                 "numero_non_idonei": self.non_idonei().count(),
                 "numero_aspiranti": self.partecipazioni_confermate().count(),
+                'request': request,
             },
             modello="pdf_corso_base_esame_verbale.html",
         )

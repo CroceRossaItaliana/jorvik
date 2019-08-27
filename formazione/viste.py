@@ -1389,7 +1389,7 @@ def course_commissione_esame(request, me, pk):
                     nuovo_avviso = True
 
             if nuovo_avviso and me != corso.sede.presidente():
-                Messaggio.costruisci_e_accoda(
+                Messaggio.costruisci_e_invia(
                     oggetto=oggetto,
                     modello=modello,
                     corpo=corpo,

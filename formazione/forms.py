@@ -536,7 +536,7 @@ class FormCommissioneEsame(ModelForm):
         instance = kwargs.get('instance')
 
         esame_nominativi = instance.commissione_esame_names if instance.commissione_esame_names else ''
-        esame_nominativi = esame_nominativi.split()
+        esame_nominativi = esame_nominativi.split(', ')
 
         super().__init__(*args, **kwargs)
 

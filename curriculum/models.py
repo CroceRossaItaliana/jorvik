@@ -75,9 +75,16 @@ class Titolo(ModelloSemplice, ConVecchioID):
         return is_titolo_cri and bool(has_goal) and bool(has_goal.obbiettivo_stragetico)
 
     @property
+    def is_titolo_corso_base(self):
+        """ todo: criteri (sigla, ... """
+        return self.nome.lower() == 'corso di formazione per volontari cri'
+
+    @property
     def expires_after_timedelta(self):
         from datetime import timedelta
         days = self.expires_after if self.expires_after else 0
+        if self.is_titolo_corso_base:
+            days = 10 * 365
         return timedelta(days=days)
 
     def __str__(self):
@@ -167,7 +174,9 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     def is_expired_course_title(self):
         now = timezone.now()
         today = date(now.year, now.month, now.day)
-        if self.is_course_title and today > self.data_scadenza:
+        if self.titolo.is_titolo_corso_base:
+            return False
+        elif self.is_course_title and today > self.data_scadenza:
             return True
         return False
 
