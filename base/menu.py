@@ -73,6 +73,7 @@ def menu(request):
 
     VOCE_VOLONTARIO = ("Volontario", (
         ("Corsi di formazione", "fa-list", reverse('aspirante:corsi_base')),
+        ('Catalogo Corsi', 'fa-list-alt', reverse('courses:catalog')),
         ("Estensione", "fa-random", "/utente/estensione/"),
         ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
         ("Riserva", "fa-pause", "/utente/riserva/"),

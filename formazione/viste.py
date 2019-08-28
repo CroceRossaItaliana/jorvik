@@ -1414,3 +1414,10 @@ def course_commissione_esame(request, me, pk):
         'commissione_esame_form': form,
     }
     return 'course_commissione_esame.html', context
+
+
+@pagina_privata
+def catalogo_corsi(request, me):
+    qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
+
+    return 'catalogo_corsi.html', {'corsi': qs}

@@ -26,7 +26,7 @@ def formazione_menu(menu_name, me=None):
             ("Attiva Corso", "fa-asterisk", reverse('formazione:new_course')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
             ("Elenco Corsi", "fa-list", reverse('aspirante:corsi_base')),
             ("Domanda formativa", "fa-area-chart", reverse('formazione:domanda')) if to_show(me, GESTIONE_CORSI_SEDE) else None,
-            ('Catalogo Corsi', 'fa-list-alt', '/page/catalogo-corsi/'),
+            ('Catalogo Corsi', 'fa-list-alt', reverse('courses:catalog')),
             ('Acronimi', 'fa-book', '/page/glossario-corsi/'),
             ('Albo Informatizzato', 'fa-list', reverse(
                 'formazione:albo_info')) if to_show(me, RUBRICA_DELEGATI_OBIETTIVO_ALL + [GESTIONE_CORSI_SEDE]) else None,
