@@ -55,6 +55,11 @@ function cleanDeliberaFileLink() {
     }
 }
 
+// Mostra tutta (non nascondi come di default) la sezione con la form di attivazione se
+// la form ha dei dati inseriti e c'è qualche errore di validazione da mostrare.
+if ($('#id_tipo option:selected').val()) {
+    $('.attivazionePanelWithForm').show();
+}
 
 if ($('#id_tipo option:selected').val() != corso_nuovo_tipo_value) {
     titolo_form_group.hide();
