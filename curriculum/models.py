@@ -41,6 +41,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
     area = models.CharField(max_length=5, null=True, blank=True, db_index=True,
         choices=OBBIETTIVI_STRATEGICI)
     tipo = models.CharField(max_length=2, choices=TIPO, db_index=True)
+    sigla = models.CharField(max_length=50, null=True, blank=True)
     description = models.CharField(max_length=255, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     expires_after = models.IntegerField(null=True, blank=True, verbose_name="Scadenza",
