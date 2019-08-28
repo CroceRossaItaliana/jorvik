@@ -463,7 +463,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def sigla_corso(self):
-        return "%s/%s/%s" % (self.sede.sede_regionale_sigla, self.anno, self.progressivo)
+        titolo_cri = self.titolo_cri
+        sigla_titolo = '%s/' % titolo_cri.sigla if hasattr(titolo_cri, 'sigla') and titolo_cri.sigla else ''
+        return "%s/%s/%s%s" % (self.sede.sede_regionale_sigla, self.anno, sigla_titolo, self.progressivo)
 
     @property
     def nome(self):
