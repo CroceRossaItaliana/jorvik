@@ -77,8 +77,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
 
     @property
     def is_titolo_corso_base(self):
-        """ todo: criteri (sigla, ... """
-        return self.nome.lower() == 'corso di formazione per volontari cri'
+        return self.sigla == 'CRI'
 
     @property
     def expires_after_timedelta(self):
@@ -173,12 +172,15 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
 
     @property
     def is_expired_course_title(self):
+        """
         now = timezone.now()
         today = date(now.year, now.month, now.day)
         if self.titolo.is_titolo_corso_base:
             return False
         elif self.is_course_title and today > self.data_scadenza:
             return True
+        return False
+        """
         return False
 
     @classmethod

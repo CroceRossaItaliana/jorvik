@@ -589,6 +589,10 @@ def aspirante_corso_base_termina(request, me, pk):
         messages.warning(request, "Il corso non è terminabile.")
         return redirect(reverse('aspirante:info', args=[pk]))
 
+    if seconda_data_esame and not corso.data_esame_2:
+        messages.error(request, "Impossibile generare il secondo verbale perchè non è impostata la seconda data di esame.")
+        return redirect(corso.url)
+
     torna = {"torna_url": corso.url_modifica, "torna_titolo": "Modifica corso"}
 
     if not corso.partecipazioni_confermate().exists():
