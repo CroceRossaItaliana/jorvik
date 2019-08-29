@@ -98,13 +98,7 @@ class Menu:
 
     @property
     def aspirante(self):
-        return formazione_menu('aspirante') if self.me and hasattr(self.me, 'aspirante') else (
-            ("Corsi di formazione", (
-                ("Elenco Corsi", "fa-list", reverse('formazione:list_courses')),
-                ('Catalogo Corsi', 'fa-list-alt', reverse('courses:catalog')),
-                ('Acronimi', 'fa-book', '/page/glossario-corsi/'),
-            )),
-        )
+        return formazione_menu('aspirante') if self.me and hasattr(self.me, 'aspirante') else self.formazione
 
     def mapping(self):
         """
