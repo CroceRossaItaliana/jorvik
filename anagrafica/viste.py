@@ -2158,7 +2158,7 @@ def admin_pulisci_email(request, me):
 
                     if not delegati.exists():
                         risultati += [
-                            (indirizzo, 'text-warning', "La persona trovata (%s) non ha delegati a cui notificare la "
+                            (indirizzo, 'alert-warning', "La persona trovata (%s) non ha delegati a cui notificare la "
                                                         "disattivazione." % persona.codice_fiscale)
                         ]
                         continue

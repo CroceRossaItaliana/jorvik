@@ -93,3 +93,5 @@ RUBRICHE_TITOLI = OrderedDict((
     ('direttori_corsi', (DIRETTORE_CORSO, 'Direttori Corsi', True)),
     ('responsabili_autoparco', (RESPONSABILE_AUTOPARCO, 'Responsabili Autoparco', True)),
 ))
+
+DELEGATI_NON_SONO_UN_BERSAGLIO = [PRESIDENTE, COMMISSARIO, DELEGATO_OBIETTIVO_4]

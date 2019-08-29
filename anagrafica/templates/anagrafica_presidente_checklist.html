@@ -55,7 +55,7 @@
             </div>
             <div class="panel-body">
                 <div class="progress">
-                    <div class="progress-bar progress-bar-success" style="width: {{ progresso }}%">
+                    <div class="progress-bar progress-bar-primary" style="width: {{ progresso }}%">
                         {{ progresso }}% &mdash; {{ progresso_si }} su {{ deleghe|length }}
                     </div>
                 </div>
@@ -87,7 +87,7 @@
             {% for tipo, oggetto, delegati, link in deleghe %}
 
 
-                <tr class="{% if delegati %}success{% else %}warning{% endif %}">
+                <tr class="{% if delegati %}alert-success{% else %}alert-warning{% endif %}">
 
                     <td>
                         {% if delegati %}

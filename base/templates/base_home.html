@@ -4,32 +4,23 @@
 {% block pagina_titolo %}Home page{% endblock %}
 {% block pagina_principale %}
 
-<div class="container-fluid" style="width: 100%; background-image: url('{% static 'img/home_img1.jpg' %}'); margin-top: -20px;">
-    <div class="row allinea-centro testo-bianco testo-ombra-nera padding-verticale-60">
-        <h2>Prendi parte alla Rivoluzione</h2>
-        <p>Facciamo una Croce Rossa Italiana nuova.</p>
-        <p><a href="/informazioni/" class="btn btn-lg topnavbar-r__login-btn testo-ombra-nulla">Cosa &egrave; Gaia</a></p>
-    </div>
+<div style="background-image: url('{% static 'img/croce_mani.jpg' %}'); margin-top: -20px; margin-left: -0px; margin-right: -0px; padding-top:256px; padding-bottom:256px; background-position: center center; background-repeat: no-repeat; background-size: cover;" class="row allinea-centro testo-bianco testo-ombra-nera">
+    <h2>Vuoi entrare in Croce Rossa?</h2>
+    <p>Clicca sul pulsante qui sotto per registrarti e trovare il prossimo corso base a te vicino.</p>
+    <p>&nbsp;</p>
+    <p><a href="/registrati/aspirante/" class="btn btn-lg btn-danger ">Registrati</a></p>
 </div>
 
 <div class="container">
     <div class="row allinea-centro ">
         <div class="col-md-6">
-            <h2>Vuoi entrare in Croce Rossa?</h2>
+            <p>&nbsp</p>
             <div class="well">
-                <a href="/registrati/aspirante/" class="btn btn-lg btn-primary btn-block">
-                    <i class="fa fa-hand-o-right"></i>
-                    Iscriviti al prossimo corso base
-                </a>
+                <a href="/informazioni/" class="btn btn-lg btn-block btn-primary testo-ombra-nulla"><i class="fa fa-hand-o-right"></i> Cosa &egrave; Gaia</a>
             </div>
-
             <p>Organizziamo continuamente corsi base per gli aspiranti volontari.</p>
             <p>Il volontariato in Croce Rossa ti cambierà la vita, <a href="http://www.cri.it/diventavolontario" target="_new" ><i class="icon-link"></i> scopri perché</a>.</p>
-            <p>Clicca sul pulsante qui sopra per registrarti e trovare il prossimo corso base a te vicino.</p>
-            <p>&nbsp;</p>
-
         </div>
-
 
         <div class="col-md-6">
             <p>&nbsp</p>
@@ -63,52 +54,8 @@
     </div>
 </div>
 
-<div class="container-fluid" style="width: 100%; margin-bottom:35px; background-image: url('{% static 'img/home_img2.jpg' %}');">
-    <div class="row allinea-centro testo-bianco testo-ombra-nera padding-verticale-60">
-        <div class="col-md-offset-3 col-md-6">
-            <h3>{{ numero_comitati }} sedi CRI sono gi&agrave; su Gaia.</h3>
-            <p>
-                <a href="/informazioni/sedi/" class="btn btn-lg btn-default testo-ombra-nulla">
-                    <i class="fa fa-globe"></i> Mappa completa delle Sedi con recapiti
-                </a>
-            </p>
-        </div>
-    </div>
-</div>
-
-<div class="container" style="margin-bottom:65px;">
-    <div class="row allinea-centro">
-        <div class="col-md-4">
-            <h1 style="font-size: 4em;">
-                <span style="transform: rotate(10deg); -webkit-transform: rotate(10deg);" class="text-info">
-                    -
-                        <i class="fa fa-clock-o"></i>
-                        <i class="fa fa-file-o"></i>
-                </span>
-
-                <br />
-
-                <span class="text-success">
-                    +
-                        <i class="fa fa-group"></i>
-                        <i class="fa fa-bolt"></i>
-                </span>
-            </h1>
-
-        </div>
-        <div class="col-md-4 well well-sm sf2">
-            <h3 class="text-muted"><i class="fa fa-minus-circle"></i> Carte</h3>
-            <h2 style="color:#cc0000;"><i class="fa fa-plus-circle"></i> Volontariato</h2>
-        </div>
-
-        <div class="col-md-4">
-            <p>&nbsp;</p>
-            <p>Gaia nasce per <strong>eliminare carte e tempi morti</strong>.</p>
-            <p>Via il superfluo, <big>resta il volontariato</big>.</p>
-            <p>Trasparente ed efficiente.</p>
-        </div>
-    </div>
-</div>
+<!--<div style="background-image: url('{% static 'img/footer.jpg' %}');background-position: center center; background-repeat: no-repeat; background-size: cover;" class="row allinea-centro testo-bianco testo-ombra-nera padding-verticale-60"></div>-->
+<p>&nbsp;</p>
 
 {% if not request.COOKIES.cookie_approvati %}
 <div class="container">

@@ -25,13 +25,21 @@ def codice_fiscale_persona(persona):
         codice_comune = COMUNI[persona.comune_nascita.lower()]
     except KeyError:
         codice_comune = 'D000'
-    return build(persona.cognome, persona.nome, persona.data_nascita, persona.genere, codice_comune)
+
+    try:
+        return build(persona.cognome, persona.nome, persona.data_nascita, persona.genere, codice_comune)
+    except:
+        # Dati personali imcompatibili per creare un codice fiscale corretto.
+        return build(names.get_last_name(), names.get_first_name(), persona.data_nascita,
+                     persona.genere, codice_comune)
 
 
-def crea_persona():
+def crea_persona(nome=None, cognome=None):
+    nome = names.get_first_name() if not nome else nome
+    cognome = names.get_last_name() if not cognome else cognome
     p = Persona.objects.create(
-        nome=names.get_first_name(),
-        cognome=names.get_last_name(),
+        nome=nome,
+        cognome=cognome,
         codice_fiscale=codice_fiscale(),
         data_nascita="{}-{}-{}".format(random.randint(1960, 1990), random.randint(1, 12), random.randint(1, 28))
     )

@@ -43,7 +43,7 @@ def formazione_menu(menu_name, me=None):
             # ("Competenze personali", "fa-suitcase", reverse('utente:cv_tipo', args=[Titolo.COMPETENZA_PERSONALE])),
             ("Patenti Civili", "fa-car", reverse('utente:cv_tipo', args=[Titolo.PATENTE_CIVILE])),
             ("Titoli di Studio", "fa-graduation-cap", reverse('utente:cv_tipo', args=[Titolo.TITOLO_STUDIO])),
-            ("Documenti Personali", "fa-graduation-cap", reverse('utente:documenti')),
+            # ("Documenti Personali", "fa-graduation-cap", reverse('utente:documenti')),
         )),
 
         ("Nelle vicinanze", (

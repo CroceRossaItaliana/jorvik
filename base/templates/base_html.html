@@ -1,3 +1,4 @@
+{% load base_tags %}
 <!DOCTYPE html>
 <html>
 {% block base_admin_head_pre %}{% endblock %}
@@ -10,6 +11,12 @@
 {% block base_admin_head_post %}{% endblock %}
 {% block base_admin_body_pre %}{% endblock %}
 <body class="{% block base_body_classe %}{% endblock %} {% block base_admin_body_class %}{% endblock %} body-flexbox">
+
+    {# *** ROBA TEMPORANEA *** DA RIMUOVERE APPENA NON SERVE *** #}
+    {#   base.templatetags.show_test_users_with_credentials ***  #}
+    <div style="text-align:center;">{% show_test_users_with_credentials %}</div>
+    {# *** ROBA TEMPORANEA *** DA RIMUOVERE APPENA NON SERVE *** #}
+
     {% block base_body %}{% endblock %}
     {% block base_admin_body %}{% endblock %}
 </body>

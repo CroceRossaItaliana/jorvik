@@ -43,7 +43,10 @@
                 <hr/>
                 <h3><i class="fa fa-key"></i> Recupera password</h3>
                 <p>Se non ricordi la tua password, puoi richiederne una nuova.</p>
-                <a href="/recupera_password/" class="btn btn-block without-bg-cri"><i class="fa fa-send"></i> Recupera Password</a>
+                <a href="/recupera_password/" class="btn btn-block btn-info">
+                    <i class="fa fa-send"></i>
+                    Recupera Password
+                </a>
             {% elif wizard.steps.current == 'token' %}
                 {% if device.method == 'call' %}
                   <p>Stiamo chiamando il tuo telefono in questo momento, inserisci il codice che senti al telefono.</p>

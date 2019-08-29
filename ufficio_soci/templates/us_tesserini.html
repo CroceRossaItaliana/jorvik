@@ -12,7 +12,7 @@
 <ul class="nav nav-tabs grassetto">
 
   <li role="presentation" {% if "da-richiedere" in request.path %}class="active"{% endif %}>
-      <a class="text-warning" href="/us/tesserini/da-richiedere/">
+      <a class="text-danger" href="/us/tesserini/da-richiedere/">
           <i class="fa fa-fw fa-warning"></i>
           Da Richiedere
       </a>
@@ -26,14 +26,14 @@
   </li>
 
   <li role="presentation" {% if "richiesti" in request.path %}class="active"{% endif %}>
-      <a class="text-success" href="/us/tesserini/richiesti/">
+      <a class="text-danger" href="/us/tesserini/richiesti/">
           <i class="fa fa-fw fa-clock-o"></i>
           Richiesta effettuata
       </a>
   </li>
 
   <li role="presentation" {% if "rifiutati" in request.path %}class="active"{% endif %}>
-      <a class="text-warning" href="/us/tesserini/rifiutati/">
+      <a class="text-danger" href="/us/tesserini/rifiutati/">
           <i class="fa fa-fw fa-stop"></i>
           Richieste rifiutate
       </a>

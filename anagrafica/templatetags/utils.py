@@ -330,3 +330,23 @@ def image_as_base64(image_file):
         encoded_string = base64.b64encode(img.read())
 
     return 'data:image/%s;base64,%s' % (extension, encoded_string.decode("utf-8"))
+
+
+@register.simple_tag(takes_context=True)
+def get_top_navbar(context):
+    from django.contrib.auth.models import AnonymousUser
+
+    # menu_applicazioni passato nel context nei deocratori in: autenticazione.funzioni
+
+    request = context['request']
+    user = request.user
+
+    menu = context.get('menu_applicazioni')
+    if menu:
+        return menu
+
+    if user and not isinstance(user, AnonymousUser):
+        # restituisci il menu chiamando il metodo direttamente
+        return user.applicazioni_disponibili
+
+    return ""

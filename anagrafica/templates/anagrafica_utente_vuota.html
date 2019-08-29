@@ -1,35 +1,34 @@
 {% extends "base_vuota.html" %}
-{% load bootstrap3 base_tags %}
+
+{% load bootstrap3  %}
+{% load base_tags %} {# base.templatetsgs #}
+{% load utils %} {# anagrafica.templatetsgs #}
+
 {% block pagina_titolo %}Benvenuto in Gaia{% endblock %}
 
 {% block pagina_principale %}
 <div class="container">
-
-    <div class="row allinea-centro gaia-topnav" role="navigation" id="menu-applicazione">
+    <div id="menu-applicazione" class="row allinea-centro gaia-topnav" role="navigation" style="margin-bottom:20px;">
         <ul class="nav nav-tabs nav-justified">
-            {% for app_slug, app_nome, app_icona, app_num in user.applicazioni_disponibili %}
+            {% get_top_navbar as menu_applicazioni %} {# anagrafica.templatetsgs #}
+
+            {% for app_slug, app_nome, app_icona, app_num in menu_applicazioni %}
                 <li role="presentation" class="{% if request.path|startswith:app_slug %}active{% endif %}{% if app_slug == '/aspirante/' and '/utente/' in request.path %}active{% endif %}">
                     <a href="{{ app_slug }}" class="grassetto">
-                        <i class="fa fa-fw {{ app_icona }}"></i>
-                        {{ app_nome }}
+                        <i class="fa fa-fw {{ app_icona }}"></i> {{ app_nome }}
                         {% if app_num %}
-                            <span class="badge badge-danger">
-                                {{ app_num }}
-                            </span>
+                            <span class="badge badge-danger">{{ app_num }}</span>
                         {% endif %}
                     </a>
                 </li>
             {% endfor %}
         </ul>
-        <p>&nbsp;</p>
     </div>
 
     <div class="row">
         <div class="navbar-toggle collapsed" aria-expanded="false" aria-controls="navbar"  style="float: none;">
-            <button type="button" class="btn btn-block btn-default" data-toggle="collapse"
-                    data-target="#sezione">
-                <i class="fa fa-fw fa-bars"></i>
-                Mostra navigazione
+            <button type="button" class="btn btn-block btn-default" data-toggle="collapse" data-target="#sezione">
+                <i class="fa fa-fw fa-bars"></i> Mostra navigazione
             </button>
         </div>
 
