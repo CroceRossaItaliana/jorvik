@@ -2,7 +2,7 @@
 
 {% block corpo %}
     <p class="grassetto">Ciao {{ persona.nome }}!</p>
-    <p>Ricevi questo messaggio perch&eacute; sei stat{{ persona.genere_o_a }} invitat{{ persona.genere_o_a }} ad un Corso {{ corso.titolo_cri }}</p>
+    <p>Ricevi questo messaggio perch&eacute; sei stat{{ persona.genere_o_a }} iscritt{{ persona.genere_o_a }} ad {{ corso.titolo_cri }}</p>
     <p>Il corso &egrave; organizzato dal {{ corso.sede.link|safe }} e avr&agrave; inizio il {{ corso.data_inizio }}.</p>
     <p>Se <strong>NON puoi partecipare</strong> a questo corso - clicca su <a href="{% url 'aspirante:retired' corso.pk %}">questo link per annullare l'iscrizione</a>.</p>
 {% endblock %}

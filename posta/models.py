@@ -382,15 +382,22 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             m = Messaggio(oggetto=oggetto,
                           mittente=mittente,
                           **kwargs)
+            for a in allegati:
+                a.oggetto = m
+                a.save()
 
             allegati_objects = list()
             for a in allegati:
-                allegato = Allegato(file=a, nome=a.name)
-                allegato.oggetto = m
-                allegato.save()
-                allegati_objects.append(allegato)
+                if isinstance(a, Allegato):
+                    a.oggetto = m
+                    a.save()
+                else:
+                    allegato = Allegato(file=a, nome=a.name)
+                    allegato.oggetto = m
+                    allegato.save()
+                    allegati_objects.append(allegato)
 
-            corpo['allegati'] = allegati_objects
+            corpo['allegati'] = allegati_objects if allegati_objects else allegati
 
             m.corpo = get_template(modello).render(corpo)
             m.processa_link()
