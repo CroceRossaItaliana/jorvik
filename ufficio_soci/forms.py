@@ -72,7 +72,7 @@ class ModuloElencoPerTitoli(forms.Form):
         (METODO_AND, "Tutti i soci aventi TUTTI i titoli selezionati"),
     )
     metodo = forms.ChoiceField(choices=METODI, initial=METODO_OR)
-    titoli = autocomplete_light.ModelMultipleChoiceField('TitoloAutocompletamento')
+    titoli = autocomplete_light.ModelMultipleChoiceField('TitoloCRIAutocompletamento')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
