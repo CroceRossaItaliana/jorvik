@@ -280,8 +280,7 @@ class CorsoLinkForm(ModelForm):
 class ModuloIscrittiCorsoBaseAggiungi(forms.Form):
     persone = autocomplete_light.ModelMultipleChoiceField(
         "IscrivibiliCorsiAutocompletamento",
-        help_text="Ricerca per Codice Fiscale i Sostenitori o gli Aspiranti CRI "
-                  "da iscrivere a questo Corso.")
+        help_text="Ricerca per Codice Fiscale discenti da iscrivere a questo Corso.")
 
     def __init__(self, *args, **kwargs):
         self.corso = kwargs.pop('corso')
@@ -468,7 +467,7 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
                                                 "selezionare l'opzione per specificare che l'esame "
                                                 "non includeva questa parte.")
 
-        if ammissione in [PartecipazioneCorsoBase.NON_AMMESSO,]:
+        if not motivo_non_ammissione and ammissione in [PartecipazioneCorsoBase.NON_AMMESSO,]:
             self.add_error('motivo_non_ammissione', "Devi specificare la motivazione di non ammissione all'esame.")
 
         # Se sto generando il verbale, controlla che tutti i campi obbligatori siano stati riempiti.
