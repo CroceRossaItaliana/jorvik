@@ -153,7 +153,7 @@ class Menu:
                 'name_for_template': 'co',
             }),
             ({
-                'urls': ['/formazione/', '/courses/'],
+                'urls': ['/formazione/', '/courses/', '/survey/course/'],
                 'method': 'formazione',
                 'name_for_template': 'formazione',
             }),

@@ -961,15 +961,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         def key_cognome(elem):
            return elem.cognome
 
-
-
         iscritti = [partecipazione.persona for partecipazione in self.partecipazioni_confermate()]
 
         archivio = Zip(oggetto=self)
         for lezione in self.lezioni.all():
 
             pdf = PDF(oggetto=self)
-            pdf.genera_e_salva(
+            pdf.genera_e_salva_con_python(
                 nome="Firme lezione %s.pdf" % lezione.nome,
                 corpo={
                     "corso": self,
@@ -1035,7 +1033,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     def inform_presidency_with_delibera_file(self):
         sede = self.sede.estensione
-        email_to = self.sede.sede_regionale.presidente()
         oggetto = "Delibera nuovo corso: %s" % self
 
         if sede == LOCALE:
@@ -1045,7 +1042,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             pass
 
         elif sede in [REGIONALE, NAZIONALE, PROVINCIALE,]:
-            maila = Messaggio.invia_raw(
+            Messaggio.invia_raw(
                 oggetto=oggetto,
                 corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
                 email_mittente=Messaggio.NOREPLY_EMAIL,
@@ -1053,15 +1050,17 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 allegati=self.delibera_file
             )
 
-        Messaggio.costruisci_e_accoda(
-            oggetto=oggetto,
-            modello='email_corso_invia_delibera_al_presidente.html',
-            corpo={
-                'corso': self,
-            },
-            destinatari=[email_to,],
-            allegati=[self.delibera_file,]
-        )
+        if not sede == NAZIONALE:
+            email_to = self.sede.sede_regionale.presidente()
+            Messaggio.costruisci_e_accoda(
+                oggetto=oggetto,
+                modello='email_corso_invia_delibera_al_presidente.html',
+                corpo={
+                    'corso': self,
+                },
+                destinatari=[email_to,],
+                allegati=[self.delibera_file,]
+            )
 
     def direttori_corso(self):
         oggetto_tipo = ContentType.objects.get_for_model(self)

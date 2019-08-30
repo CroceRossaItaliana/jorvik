@@ -871,7 +871,7 @@ def aspirante_corso_base_iscritti_aggiungi(request, me, pk):
                     ok = PartecipazioneCorsoBase.ISCRITTO
 
                     if corso.is_nuovo_corso:
-                        subject = "Iscrizione a Corso %s" % corso.titolo_cri
+                        subject = "Iscrizione a %s" % corso.titolo_cri
                     else:
                         subject = "Iscrizione a Corso Base"
 
