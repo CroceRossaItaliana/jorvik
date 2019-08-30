@@ -67,6 +67,11 @@ class Titolo(ModelloSemplice, ConVecchioID):
         )
 
     @property
+    def scheda_lezioni_sorted(self):
+        from collections import OrderedDict
+        return OrderedDict(sorted(self.scheda_lezioni.items(), key=lambda x: int(x[0])))
+
+    @property
     def is_titolo_cri(self):
         return self.tipo == self.TITOLO_CRI
 

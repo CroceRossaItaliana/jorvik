@@ -192,7 +192,8 @@ class ModuloModificaLezione(ModelForm):
 
         if self.has_instance:
             if self.instance.precaricata:
-                self.initial['obiettivo'] = self.instance.corso.titolo_cri.scheda_obiettivi
+                lezione = self.instance
+                self.initial['obiettivo'] = lezione.get_from_scheda('argomento')
 
                 readonly_fields = ['nome', 'obiettivo']
                 for field in readonly_fields:
