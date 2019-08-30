@@ -552,12 +552,13 @@ def aspirante_corso_base_attiva(request, me, pk):
 
     if corso.data_inizio < poco_fa():
         return errore_generico(request, me,
-                               titolo="Impossibile attivare un corso già iniziato",
-                               messaggio="Siamo spiacenti, ma non possiamo attivare il corso e inviare "
-                                         "le e-mail a tutti gli aspiranti nella zona se il corso è "
-                                         "già iniziato. Ti inviato a verificare i dati del corso.",
-                               torna_titolo="Torna al Corso",
-                               torna_url=corso.url)
+            titolo="Impossibile attivare un corso già iniziato",
+            messaggio="Siamo spiacenti, ma non possiamo attivare il corso e inviare "
+                "le e-mail a tutti gli interessati nella zona se il corso è già iniziato. "
+                "Ti inviato a verificare i dati del corso.",
+            torna_titolo="Torna al Corso",
+            torna_url=corso.url
+        )
 
     email_body = {"corso": corso, "persona": me}
     text = get_template("email_aspirante_corso_inc_testo.html").render(
@@ -935,7 +936,7 @@ def aspirante_corso_base_firme(request, me, pk):
     if not me.permessi_almeno(corso, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    archivio = corso.genera_pdf_firme()
+    archivio = corso.genera_pdf_firme(request=request)
     return redirect(archivio.download_url)
 
 

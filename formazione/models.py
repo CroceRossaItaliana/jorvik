@@ -954,10 +954,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def idonei(self):
         return self.partecipazioni_confermate().filter(esito_esame=PartecipazioneCorsoBase.IDONEO)
 
-    def genera_pdf_firme(self):
-        """
-        Genera il fogli firme delle lezioni del corso.
-        """
+    def genera_pdf_firme(self, request=None):
+        """ Genera il fogli firme delle lezioni del corso. """
+
         def key_cognome(elem):
            return elem.cognome
 
@@ -965,7 +964,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         archivio = Zip(oggetto=self)
         for lezione in self.lezioni.all():
-
             pdf = PDF(oggetto=self)
             pdf.genera_e_salva_con_python(
                 nome="Firme lezione %s.pdf" % lezione.nome,
@@ -974,6 +972,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                     "iscritti": sorted(iscritti, key=key_cognome),
                     "lezione": lezione,
                     "data": lezione.inizio,
+                    'request': request,
                 },
                 modello="pdf_firme_lezione.html",
             )
