@@ -80,12 +80,12 @@ class ModuloElencoPerTitoli(forms.Form):
 
 
 class ModuloElencoPerTitoliCorso(ModuloElencoPerTitoli):
-    titoli = autocomplete_light.ModelMultipleChoiceField(
-        'TitoloCRIAutocompletamento', required=False)
+    titoli = autocomplete_light.ModelMultipleChoiceField('TitoloCRIAutocompletamento',
+         help_text="Seleziona uno o più titoli per la tua ricerca.", required=False)
     show_only_active = forms.BooleanField(label='Seleziona solo i titoli attivi',
                                           required=False)
-    titoli = autocomplete_light.ModelMultipleChoiceField('TitoloAutocompletamento',
-        help_text="Seleziona uno o più titoli per la tua ricerca.")
+    # titoli = autocomplete_light.ModelMultipleChoiceField('TitoloAutocompletamento',
+    #     help_text="Seleziona uno o più titoli per la tua ricerca.")
 
 
 class ModuloElencoQuote(forms.Form):

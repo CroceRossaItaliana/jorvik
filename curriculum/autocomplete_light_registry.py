@@ -10,8 +10,7 @@ class TitoloAutocompletamento(autocomplete_light.AutocompleteModelBase):
     model = Titolo
     attrs = {
         'data-autocomplete-minimum-characters': 0,
-        # Placeholder is overridden in forms.py
-        # 'placeholder':
+        # 'placeholder':  # Placeholder is overridden in forms.py
     }
 
     def choices_for_request(self):
@@ -48,18 +47,19 @@ class TitoloAutocompletamento(autocomplete_light.AutocompleteModelBase):
 class TitoloCRIAutocompletamento(autocomplete_light.AutocompleteModelBase):
     model = Titolo
     split_words = True
-    search_fields = ['nome',]
+    search_fields = ['nome', 'sigla',]
     attrs = {
         'data-autocomplete-minimum-characters': 0,
     }
 
     def choices_for_request(self):
         self.choices = self.choices.filter(
+            tipo=Titolo.TITOLO_CRI,
             is_active=True,
-            inseribile_in_autonomia=True,
+            inseribile_in_autonomia=False,
             area__isnull=False,
             nome__isnull=False,
-            tipo=Titolo.TITOLO_CRI,
+            cdf_livello__isnull=False,
         ).order_by('nome').distinct('nome')
 
         return super().choices_for_request()
