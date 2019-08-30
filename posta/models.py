@@ -382,9 +382,6 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             m = Messaggio(oggetto=oggetto,
                           mittente=mittente,
                           **kwargs)
-            for a in allegati:
-                a.oggetto = m
-                a.save()
 
             allegati_objects = list()
             for a in allegati:

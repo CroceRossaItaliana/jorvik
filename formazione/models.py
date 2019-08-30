@@ -1676,8 +1676,8 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         """ GAIA-130: Questa lezione è obbligatoria peri Volontari e senza di essa
         non possono essere ammessi all' esame. """
 
-        id = "8SESDV"
-        if self.precaricata and id == self.lezione_id_univoco:
+        if self.precaricata and self.corso.titolo_cri.sigla == 'CRI' and \
+                self.lezione_id_univoco.endswith("SESDV"):
             return True
         return False
 
