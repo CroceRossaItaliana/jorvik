@@ -29,6 +29,10 @@
     <section style="margin-bottom:15px;">
       <div class="corso-nome" data-titolo-id="#scheda_{{titolo.id}}">{{ titolo.nome }} (<strong>{{ titolo.sigla }}</strong>)</div>
       <div id="scheda_{{titolo.id}}" class="corso-scheda" style="display:none">
+        {% if not titolo.is_active %}
+          <p class="corso-scheda-completa">La scheda di questo corso è attualmente in revisione e verrà pubblicata prossimamente.</p>
+        {% endif %}
+
         {% if titolo.scheda_obiettivi %}
           <div>
             <strong>Obiettivi formativi:</strong>
