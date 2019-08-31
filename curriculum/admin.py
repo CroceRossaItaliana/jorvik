@@ -8,11 +8,10 @@ from .models import (Titolo, TitleGoal, TitoloPersonale)
 @admin.register(Titolo)
 class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['nome',]
-    list_display = ('nome', 'tipo', 'cdf_livello', 'goal_obbiettivo_stragetico',
-        'goal_propedeuticita', 'goal_unit_reference', 'inseribile_in_autonomia',
-        'expires_after', 'area',)
+    list_display = ('nome', 'tipo', 'is_active', 'sigla', 'cdf_livello', 'area',
+        'inseribile_in_autonomia', 'expires_after', 'scheda_prevede_esame',)
     list_filter = ('is_active', 'cdf_livello', 'area', "tipo", "richiede_conferma",
-        "inseribile_in_autonomia", 'goal__unit_reference',)
+        "inseribile_in_autonomia", 'goal__unit_reference', 'scheda_prevede_esame',)
 
     def goal_obbiettivo_stragetico(self, obj):
         return obj.goal.unit_reference if hasattr(obj.goal,

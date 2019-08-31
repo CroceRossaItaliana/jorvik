@@ -104,8 +104,8 @@ class CorsoLink(models.Model):
 class CorsoBase(Corso, ConVecchioID, ConPDF):
     from django.core.validators import MinValueValidator
 
-    MIN_PARTECIPANTI = 20
-    MAX_PARTECIPANTI = 50
+    MIN_PARTECIPANTI = 10
+    MAX_PARTECIPANTI = 30
 
     EXT_MIA_SEDE        = '1'
     EXT_LVL_REGIONALE   = '2'
@@ -605,7 +605,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     @property
     def ha_lezioni_non_revisionate(self):
         lezioni = self.get_lezioni_precaricate()
-        return True in [lezione.non_revisionata for lezione in lezioni]
+        if lezioni:
+            return True in [lezione.non_revisionata for lezione in lezioni]
+        return False
 
     def attivabile(self):
         """Controlla se il corso base e' attivabile."""
@@ -616,11 +618,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         if not self.descrizione:
             return False
 
-        if self.is_nuovo_corso and self.extension_type != CorsoBase.EXT_LVL_REGIONALE:
-            return False
+        # if self.is_nuovo_corso and self.extension_type !=
+        #     CorsoBase.EXT_LVL_REGIONALE:
+        #     return False
 
-        if self.has_scheda_lezioni and self.get_lezioni_precaricate().count() and self.ha_lezioni_non_revisionate:
-            return False
+        # if self.has_scheda_lezioni and self.ha_lezioni_non_revisionate:
+        #     return False
 
         if self.direttori_corso().count() == 0:
             return False
@@ -1627,12 +1630,15 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
     def lezione_ore(self):
         ore = self.get_from_scheda('ore')
         if ore:
-            return int(ore)
+            try:
+                return int(ore)
+            except ValueError:
+                return 1
         return ore
 
     @property
     def lezione_id_univoco(self):
-        return self.get_from_scheda('id')
+        return self.get_from_scheda('id', "")
 
     @property
     def precaricata(self):
