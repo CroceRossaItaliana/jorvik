@@ -1,3 +1,7 @@
+from django.core.urlresolvers import reverse
+from formazione.menus import formazione_menu
+
+
 class Menu:
     def __init__(self, request):
         self.me = request.me if hasattr(request, 'me') else None
@@ -90,48 +94,11 @@ class Menu:
 
     @property
     def formazione(self):
-        return (
-            ("Corsi Base", (
-                ("Elenco Corsi Base", "fa-list", "/formazione/corsi-base/elenco/"),
-                ("Domanda formativa", "fa-area-chart", "/formazione/corsi-base/domanda/")
-                    if self.gestione_corsi_sede else None,
-                ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-base/nuovo/")
-                    if self.gestione_corsi_sede else None,
-            )),
-            ("Corsi di Formazione", (
-                ("Elenco Corsi di Formazione", "fa-list", "/formazione/corsi-formazione/"),
-                ("Pianifica nuovo", "fa-asterisk", "/formazione/corsi-formazione/nuovo/"),
-            )) if False else None,
-        )
+        return formazione_menu('formazione', self.me)
 
     @property
     def aspirante(self):
-        return (
-            ("Aspirante", (
-                ("Home page", "fa-home", "/aspirante/"),
-                ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
-                ("Storico", "fa-clock-o", "/utente/storico/"),
-                ("Contatti", "fa-envelope", "/utente/contatti/"),
-                ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
-                ("Competenze personali", "fa-suitcase", "/utente/curriculum/CP/"),
-                ("Patenti Civili", "fa-car", "/utente/curriculum/PP/"),
-                ("Titoli di Studio", "fa-graduation-cap", "/utente/curriculum/TS/"),
-            )),
-            ("Nelle vicinanze", (
-                ("Impostazioni", "fa-gears", "/aspirante/impostazioni/"),
-                ("Corsi Base", "fa-list", "/aspirante/corsi-base/"),
-                ("Sedi CRI", "fa-list", "/aspirante/sedi/"),
-            )),
-            ("Sicurezza", (
-                ("Cambia password", "fa-key", "/utente/cambia-password/"),
-                ("Impostazioni Privacy", "fa-cogs", "/utente/privacy/"),
-            ),
-            ),
-        ) if self.me and hasattr(self.me, 'aspirante') else (
-            ("Gestione Corsi", (
-                ("Elenco Corsi Base", "fa-list", "/formazione/corsi-base/elenco/"),
-            )),
-        )
+        return formazione_menu('aspirante') if self.me and hasattr(self.me, 'aspirante') else self.formazione
 
     def mapping(self):
         """
@@ -186,7 +153,7 @@ class Menu:
                 'name_for_template': 'co',
             }),
             ({
-                'urls': ['/formazione/', '/courses/'],
+                'urls': ['/formazione/', '/courses/', '/survey/course/'],
                 'method': 'formazione',
                 'name_for_template': 'formazione',
             }),

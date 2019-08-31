@@ -146,3 +146,121 @@
     color: #fff;
     border-radius: 3px;
 }
+
+
+// Variables
+@attivazione_hex: #52b733;
+@dettagli_hex: #337ab7;
+@lezioni_hex: #e2c62b;
+@esami_hex:  #c00;
+@questionario_hex: #972be2;
+
+
+.dynamic-tabs {
+    margin: 3px 0 25px;
+    
+    .nav {display:none;}
+    .displayed {display:block;}
+    
+    #tabAttivazione {
+        .active_link a {border-bottom: 3px solid @attivazione_hex !important;}
+    }
+    #tabDettagliCorso {
+        .active_link a {border-bottom: 3px solid @dettagli_hex !important;}
+    }
+    #tabLezioni {
+        .active_link a {border-bottom: 3px solid @lezioni_hex !important;}
+    }
+    #tabEsami {
+        .active_link a {border-bottom: 3px solid @esami_hex !important;}
+    }
+    #tabQuestionario {
+        .active_link a {border-bottom: 3px solid @questionario_hex !important;}
+    }
+    
+    .active_link {
+        a {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+    }
+}
+
+.dynamic-tabs-links {
+    li {
+        a, .active a {
+            color: #fff !important;
+        }
+        .attivazione {background-color: @attivazione_hex !important;}
+        .dettagli {background-color: @dettagli_hex !important;}
+        .lezioni {background-color: @lezioni_hex !important;}
+        .esami {background-color: @esami_hex !important;}
+        .questionario {background-color: @questionario_hex !important;}
+    }
+}
+
+.course-panels {
+    border: none;
+    display: flex;
+    justify-content: space-between;
+
+    .heading {
+        padding: 10px 15px;
+        color: #fff;
+        margin:0 2.5px;
+        border-bottom: 1px solid transparent;
+        border-top-left-radius: 3px;
+        border-top-right-radius: 3px;
+        &:first-child {margin-left:0;}
+        &:last-child {margin-right:0;}
+        h2 {
+            font-size:15px;
+            cursor:pointer;
+        }
+        a {
+            color: #fff !important;
+        }
+    }
+    .attivazione {background-color: @attivazione_hex !important;}
+    .dettagli {background-color: @dettagli_hex !important;}
+    .lezioni {background-color: @lezioni_hex !important;}
+    .esami {background-color: @esami_hex !important;}
+    .questionario {background-color: @questionario_hex !important;}
+}
+
+#titleDescription {
+    padding:10px 0;
+    font-style: italic;
+    text-align:center;
+}
+
+.course {
+    &__title-cri {
+        max-width:650px; 
+        margin: 0 auto; 
+        padding-bottom: 10px; 
+        font-size: 22px; 
+        text-align: center;
+        font-weight: bold;
+        color: #3c763d;
+    }
+    &__name {
+        margin: 0 0 20px;
+        padding:0 0 10px;
+        border-bottom: 1px solid #e6e6e6;
+        text-align:center; 
+        font-size:16px;
+    }
+}
+
+.formazione-courses {
+    &__table {}
+    &__th {
+        vertical-align: middle !important;
+
+        .filter-tag {
+            font-weight: normal;
+            font-size: 10px;
+        }
+    }
+}

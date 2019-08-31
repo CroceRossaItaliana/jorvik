@@ -2,9 +2,10 @@ import codecs, csv, datetime
 from collections import OrderedDict
 from importlib import import_module
 
+from django.db import transaction
+from django.db.models import Q
 from django.apps import apps
 from django.conf import settings
-from django.db import transaction
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.contenttypes.models import ContentType
@@ -28,7 +29,7 @@ from base.stringhe import genera_uuid_casuale
 from base.utils import remove_none, poco_fa, oggi
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
-from posta.models import Messaggio, Q
+from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
 from sangue.models import Donatore, Donazione
 
@@ -440,40 +441,41 @@ def utente_fotografia_fototessera(request, me):
 
 @pagina_privata
 def utente_documenti(request, me):
-    if not me.volontario and not me.dipendente:
+    if me.volontario or me.dipendente or me.ha_aspirante:
+        pass
+    else:
         return errore_no_volontario(request, me)
 
-    contesto = {
-        "documenti": me.documenti.all()
+    context = {
+        'documenti': me.documenti.all()
     }
 
-    if request.method == "POST":
-
-        nuovo_doc = Documento(persona=me)
-        modulo_aggiunta = ModuloCreazioneDocumento(request.POST, request.FILES, instance=nuovo_doc)
-
-        if modulo_aggiunta.is_valid():
-            modulo_aggiunta.save()
-
+    if request.method == 'POST':
+        doc = Documento(persona=me)
+        form = ModuloCreazioneDocumento(request.POST, request.FILES, instance=doc)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('utente:documenti'))
     else:
+        form = ModuloCreazioneDocumento()
 
-        modulo_aggiunta = ModuloCreazioneDocumento()
-
-    contesto.update({"modulo_aggiunta": modulo_aggiunta})
-
-    return 'anagrafica_utente_documenti.html', contesto
+    context.update({'modulo_aggiunta': form})
+    return 'anagrafica_utente_documenti.html', context
 
 
 @pagina_privata
 def utente_documenti_cancella(request, me, pk):
-
     doc = get_object_or_404(Documento, pk=pk)
 
     if not doc.persona == me:
         return redirect('/errore/permessi/')
 
-    doc.delete()
-    return redirect('/utente/documenti/')
+    if doc.can_be_deleted:
+        doc.delete()
+    else:
+        messages.error(request, 'Questo documento non può essere cancellato')
+
+    return redirect(reverse('utente:documenti'))
 
 
 @pagina_privata
@@ -1051,21 +1053,34 @@ def profilo_turni_foglio(request, me, pk=None):
 
 @pagina_privata
 def strumenti_delegati(request, me):
-    app_label = request.session['app_label']
-    model = request.session['model']
-    pk = int(request.session['pk'])
-    continua_url = request.session['continua_url']
-    almeno = request.session['almeno']
-    delega = request.session['delega']
-    oggetto = apps.get_model(app_label, model)
-    oggetto = oggetto.objects.get(pk=pk)
+    from formazione.forms import FormCreateDirettoreDelega
+    session = request.session
 
-    modulo = ModuloCreazioneDelega(request.POST or None, initial={
-        "inizio": datetime.date.today(),
-    }, me=me)
+    # Get values stored in the session
+    app_label = session['app_label']
+    model = session['model']
+    pk = int(session['pk'])
+    continua_url = session['continua_url']
+    almeno = session['almeno']
+    delega = session['delega']
 
-    if modulo.is_valid():
-        d = modulo.save(commit=False)
+    # Get object
+    oggetto = apps.get_model(app_label, model).objects.get(pk=pk)
+
+    # Instantiate a new form
+    form_data = {
+        'course': oggetto,
+        'me': me,
+        'initial': {'inizio': datetime.date.today()},
+    }
+    form = ModuloCreazioneDelega(request.POST or None, **form_data)
+    if model == 'corsobase':
+        # if oggetto.is_nuovo_corso:
+        form = FormCreateDirettoreDelega(request.POST or None, **form_data)
+
+    # Check form is valid
+    if form.is_valid():
+        d = form.save(commit=False)
 
         if oggetto.deleghe.all().filter(Delega.query_attuale().q, tipo=delega, persona=d.persona).exists():
             return errore_generico(
@@ -1073,7 +1088,7 @@ def strumenti_delegati(request, me):
                 titolo="%s è già delegato" % (d.persona.nome_completo,),
                 messaggio="%s ha già una delega attuale come %s per %s" % (d.persona.nome_completo, PERMESSI_NOMI_DICT[delega], oggetto),
                 torna_titolo="Torna indietro",
-                torna_url="/strumenti/delegati/",
+                torna_url=reverse('strumenti_delegati'),
             )
 
         d.inizio = poco_fa()
@@ -1086,17 +1101,17 @@ def strumenti_delegati(request, me):
     deleghe = oggetto.deleghe.filter(tipo=delega)
     deleghe_attuali = oggetto.deleghe_attuali(tipo=delega)
 
-    contesto = {
+    context = {
         "continua_url": continua_url,
         "almeno": almeno,
         "delega": PERMESSI_NOMI_DICT[delega],
-        "modulo": modulo,
+        "modulo": form,
         "oggetto": oggetto,
         "deleghe": deleghe,
         "deleghe_attuali": deleghe_attuali,
     }
 
-    return 'anagrafica_strumenti_delegati.html', contesto
+    return 'anagrafica_strumenti_delegati.html', context
 
 
 @pagina_privata
@@ -1114,9 +1129,8 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
     if not me.permessi_almeno(delega.oggetto, GESTIONE):
         return redirect(ERRORE_PERMESSI)
 
-    delega.termina(mittente=me,
-                   termina_at=poco_fa())
-    return redirect("/strumenti/delegati/")
+    delega.termina(mittente=me, termina_at=poco_fa())
+    return redirect(reverse('strumenti_delegati'))
 
 
 @pagina_privata
@@ -1184,10 +1198,9 @@ def utente_curriculum(request, me, tipo=None):
                 tp.autorizzazione_richiedi_sede_riferimento(
                     me, INCARICO_GESTIONE_TITOLI
                 )
-
             return redirect("/utente/curriculum/%s/?inserimento=ok" % (tipo,))
 
-    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo)
+    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo).order_by('-data_scadenza')
 
     contesto = {
         "tipo": tipo,

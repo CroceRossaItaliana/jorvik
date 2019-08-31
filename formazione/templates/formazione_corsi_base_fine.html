@@ -4,17 +4,10 @@
 {% load mptt_tags %}
 {% load utils %}
 
-{% block pagina_titolo %}
-    Seleziona Direttore/i Corso Base
-{% endblock %}
+{% block pagina_titolo %}Seleziona Direttore/i Corso{% endblock %}
 
 {% block app_contenuto %}
-
-    <h2 class="text-success">
-        <i class="fa fa-fw fa-check-circle"></i>
-        Corso Base pianificato!
-    </h2>
-
+    <h2 class="text-success"><i class="fa fa-fw fa-check-circle"></i> Corso pianificato!</h2>
     <div class="alert alert-block ">
         <h4><i class="fa fa-fw fa-question-circle"></i> Che succeder&agrave; ora?</h4>
         <ul>
@@ -29,30 +22,18 @@
               <ul>
                 <li><i class="fa fa-fw fa-clock-o"></i> Lezioni;</li>
                 <li><i class="fa fa-fw fa-globe"></i> Luogo di svolgimento del corso;</li>
-                <li><i class="fa fa-fw fa-pencil"></i> Informazioni per gli aspiranti volontari.</li>
+                <li><i class="fa fa-fw fa-pencil"></i> Informazioni per {% if not corso.is_nuovo_corso %}gli aspiranti{%else%}i{%endif%} volontari.</li>
               </ul>
             </li><br />
-        <li class="text-info"><i class="fa fa-fw fa-warning"></i> Se preferisci, puoi
-          inserire tu stesso i dettagli mancanti del corso cliccando sul link sotto.</li>
+          <li class="text-info"><i class="fa fa-fw fa-warning"></i> Se preferisci, puoi inserire tu stesso i dettagli mancanti del corso cliccando sul link sotto.</li>
         </ul>
     </div>
 
     <p>
-        <a href="/formazione/corsi-base/elenco/" class="btn btn-primary">
-            <i class="fa fa-fw fa-mail-reply"></i>
-            Torna all'elenco dei Corsi Base
-        </a>
+        <a href="{% url 'formazione:list_courses' %}" class="btn btn-primary"><i class="fa fa-fw fa-mail-reply"></i> Torna all'elenco dei Corsi</a>
     </p>
-
 
     <p>
-        <a href="{{ corso.url }}" class="btn btn-default">
-            <i class="fa fa-fw fa-pencil"></i>
-            Aggiungi dettagli al nuovo corso
-        </a>
+        <a href="{{ corso.url }}" class="btn btn-default"><i class="fa fa-fw fa-pencil"></i> Aggiungi dettagli al nuovo corso</a>
     </p>
-
-
-
-
 {% endblock %}

@@ -1,8 +1,13 @@
 {% extends 'pdf_standard.html' %}
 
 {% load static %}
+{% load base_tags %}
 
 {% block css_extra %}
+    .heading-main {text-align: center; margin: 0 0 20px 0; line-height: 115%;}
+    .heading-logo-cri {display:block; margin:0 auto 10px; width:150px;}
+    .heading-comitato-name {font-family: Arial, sans-serif; font-size: 9pt; color:#cc0000;}
+
     table.elenco {
         border: 1px solid #bbb;
         width: 100%;
@@ -15,34 +20,32 @@
         border: 1px solid;
         padding: 6px 4px;
     }
+
+    .commissione-nome-row {
+        margin-left: 1.25cm;
+        text-indent: 1.25cm;
+        margin-bottom: 0.35cm;
+        line-height: 140%;
+        font-size: 14px;
+    }
 {% endblock %}
 
 {% block corpo %}
 
+{% current_domain as SITE_URL %}
+
 <div lang="it-IT" text="#000000" dir="ltr" style=" line-height: 150%; background: transparent; padding-top: 0.3cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
-    <!-- Logo CRI -->
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
-        <img src="{% static "img/Emblema_CRI.png" %}" name="LogoCri" align="middle" width="300" height="270">
-        <br/>
-        <font face="Arial, sans-serif" style="font-size: 9pt" color="#cc0000">
-            {{ corso.sede.comitato }}
-        </font><
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0.20cm; line-height: 150%">
-    </p>
+    <div class="western heading-main">
+        <img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">
+        <span class="heading-comitato-name">{{ corso.sede.comitato }}</span>
+    </div>
+    <p style="margin: 0.20cm 0 0cm; line-height: 150%; text-align:center;" class="western"><span style="text-transform:uppercase; font-weight:bold; font-size:14pt;">Corso di formazione per volontari della C.R.I.</span></p>
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
         <font size="4" style="font-size: 14pt">
-            <b>CORSO DI FORMAZIONE PER VOLONTARI DELLA C.R.I. </b>
+            <b>{{ titolo }} Verbale di Esame Finale</b>
         </font>
     </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
-        <font size="4" style="font-size: 14pt">
-            <b>Verbale di Esame Finale</b>
-        </font>
-    </p>
-    <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
-        <br/>
-    </p>
+    <p class="western" style="margin-bottom: 0.35cm; line-height: 150%"><br/></p>
     <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
         Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell'anno {{ corso.data_esame|date:"Y" }},
         nei locali del {{ corso.sede }}, siti in {{ corso.locazione.comune }},
@@ -118,26 +121,20 @@
             <td>{{ p.persona.comune_nascita }}</td>
             <td>{{ p.persona.data_nascita|date:"SHORT_DATE_FORMAT" }}</td>
             <td>{{ p.persona.codice_fiscale }}</td>
-            <td><b>{{ p.get_esito_esame_display }}</b></td>
+            <td><b>{{ p.get_esito_esame_display|default:"N/D" }}</b></td>
         </tr>
     {% endfor %}
     </tbody>
     </table>
-    <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
-        <br/>
-        <br/>
-    </p>
-    <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
-        Letto approvato e sottoscritto
-    </p>
-    <p class="western" style="margin-left: 1.25cm; text-indent: 1.25cm; margin-bottom: 0.35cm; line-height: 150%">
-        ______________________________________Docente/Direttore
-    </p>
-    <p class="western" style="margin-left: 1.25cm; text-indent: 1.25cm; margin-bottom: 0.35cm; line-height: 150%">
-        ______________________________________Docente
-    </p>
-    <p class="western" style="margin-left: 1.25cm; text-indent: 1.25cm; margin-bottom: 0.35cm; line-height: 150%">
-        ______________________________________Docente
-    </p>
+
+    <p class="western commissione-nome-row"><br/><br/></p>
+    <p class="western commissione-nome-row">Letto approvato e sottoscritto</p>
+    <p class="western commissione-nome-row">___________________________________ Presidente</p>
+    <p class="western commissione-nome-row">___________________________________ Direttore</p>
+
+    {% for nome in corso.commissione_nomi_as_list %}
+        <p class="western commissione-nome-row">___________________________________ {{ nome|title }}</p>
+    {% endfor %}
+
 </div>
 {% endblock %}

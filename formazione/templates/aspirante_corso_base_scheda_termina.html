@@ -1,12 +1,14 @@
 {% extends 'aspirante_corso_base_scheda.html' %}
 
-{% block scheda_titolo %}
-    Termina Corso Base
-{% endblock %}
+{% block scheda_titolo %}Termina Corso Base{% endblock %}
 
 {% load bootstrap3 %}
+{% load formazione_templatetags %}
 
 {% block scheda_contenuto %}
+<style>
+    .corso-non-terminabile-msg {text-align:center; padding:20px 0; font-size:18px;}
+</style>
 
 <div class="row">
 <form method="POST">
@@ -15,108 +17,86 @@
     <div class="col-md-12">
         <div class="panel panel-primary">
             <div class="panel-heading">
-                <h2 class="panel-title">
-                    <i class="fa fa-fw fa-file"></i>
-                    Compilazione del verbale del corso
-                </h2>
+                <h2 class="panel-title"><i class="fa fa-fw fa-file"></i> Compilazione del verbale del corso</h2>
             </div>
             <div class="panel-body">
-
-                <div class="alert alert-info">
-                    <i class="fa fa-fw fa-info-circle"></i>
-                    Per terminare il corso, completa le informazioni
-                    necessarie per ogni partecipante, che serviranno a generare
-                    il verbale del corso e finalizzarlo. Invieremo una e-mail
-                    con l'esito a tutti i partecipanti.
-                </div>
-
-                <div class="alert alert-info">
-                    <i class="fa fa-fw fa-save"></i>
-                    <strong>Ricorda di salvare!</strong>
-                    <sup class="text-danger">
-                        Nuova funzionalit&agrave;
-                    </sup>
-
-
-                    Puoi salvare le tue modifiche cliccando sul pulsante Salva, e continuare
-                    in un secondo momento la compilazione del verbale.
-                </div>
-
-                <hr />
-
-                {% for partecipante, modulo in partecipanti_moduli %}
-
-                <div class="row">
-                    <div class="col-md-4">
-                        <h4>{{ partecipante.persona.nome_completo }}</h4>
-
-                        <p>&nbsp;</p>
-
-                        <table class="table table-striped table-condensed piu-piccolo">
-                            <tbody>
-                            <tr>
-                                <td>Iscrizione</td>
-                                <td>{{ partecipante.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
-                            </tr>
-                            <tr>
-                                <td>Codice Fiscale</td>
-                                <td class="monospace">{{ partecipante.persona.codice_fiscale }}</td>
-                            </tr>
-                            <tr>
-                                <td>Data di Nascita</td>
-                                <td>{{ partecipante.persona.data_nascita }}</td>
-                            </tr>
-                            <tr>
-                                <td>Luogo di Nascita</td>
-                                <td>
-                                    {{ partecipante.persona.comune_nascita }}
-                                    {{ partecipante.persona.provincia_nascita }}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Scheda</td>
-                                <td>
-                                    <a href="{{ partecipante.persona.url }}" target="_blank">
-                                        <i class="fa fa-fw fa-external-link"></i>
-                                        Apri (nuova scheda)
-                                    </a>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
+                <div style="{% if 'terminate_course' in request.GET %}display:none;{%endif%}">
+                    <div class="alert alert-info">
+                        <i class="fa fa-fw fa-info-circle"></i> Per terminare il corso, completa le informazioni necessarie per ogni partecipante,
+                        che serviranno a generare il verbale del corso e finalizzarlo. Invieremo una e-mail con l'esito a tutti i partecipanti.
                     </div>
-                    <div class="col-md-8">
-                        {% bootstrap_form modulo %}
+
+                    <div class="alert alert-info">
+                        <i class="fa fa-fw fa-save"></i> <strong>Ricorda di salvare!</strong>
+                        Puoi salvare le tue modifiche cliccando sul pulsante Salva, e continuare in un secondo momento la compilazione del verbale.
                     </div>
+
+                    <hr />
+
+                    {% for partecipante, modulo in partecipanti_moduli %}
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h4>{{ partecipante.persona.cognome }} {{ partecipante.persona.nome }}</h4>
+
+                                <table class="table table-striped table-condensed piu-piccolo">
+                                    <tbody>
+                                    <tr>
+                                        <td>Iscrizione</td>
+                                        <td>{{ partecipante.creazione|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Codice Fiscale</td>
+                                        <td class="monospace">{{ partecipante.persona.codice_fiscale }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Data di Nascita</td>
+                                        <td>{{ partecipante.persona.data_nascita }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Luogo di Nascita</td>
+                                        <td>
+                                            {{ partecipante.persona.comune_nascita }}
+                                            {{ partecipante.persona.provincia_nascita }}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Scheda</td>
+                                        <td><a href="{{ partecipante.persona.url }}" target="_blank"><i class="fa fa-fw fa-external-link"></i> Apri (nuova scheda)</a></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-8">{% bootstrap_form modulo %}</div>
+                        </div>
+                        <hr />
+                    {% empty %}
+                        <p style="text-align:center; padding-bottom:25px; font-size:18px;">Non ci sono partecipanti da visualizzare</p>
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-block btn-primary" name="azione" value="{{ azione_salva_solamente }}">
+                        <i class="fa fa-fw fa-save"></i> Salva e continua
+                    </button>
                 </div>
 
+                {% can_show_button_genera_verbale corso as show_button_genera_verbale %}
+                {% if show_button_genera_verbale %}
+                    <button style="margin:5px 0 0;" type="submit" class="btn btn-block btn-lg btn-danger" name="azione" value="{{ azione_genera_verbale }}">
+                        <i class="fa fa-fw fa-check"></i> Genera il verbale e termina il corso
+                    </button>
+                {% endif %}
 
-                <hr />
+                {% if 'terminate_course' in request.GET.urlencode and 'seconda_data_esame' in request.GET.urlencode %}
+                    {% if corso.has_partecipazioni_confermate_con_assente_motivo %}
+                        <p class="corso-non-terminabile-msg">Non è ancora possibile terminare il corso.<br>Controllare la compilazione dei verbali.</p>
+                    {% endif %}
 
-                {% endfor %}
-
-                <button type="submit" class="btn btn-block btn-primary"
-                    name="azione" value="{{ azione_salva_solamente }}">
-                    <i class="fa fa-fw fa-save"></i>
-                    Salva e continua
-                </button>
-
-                <button type="submit" class="btn btn-block btn-lg btn-danger"
-                    name="azione" value="{{ azione_genera_verbale }}">
-                    <i class="fa fa-fw fa-check"></i>
-                    Genera il verbale e termina il corso
-                </button>
-
+                    {% if not corso.ha_compilato_commissione_esame %}
+                        <p class="corso-non-terminabile-msg">Controllare i dati della commissione esami (rivolgersi al presidente del comitato).</p>
+                    {% endif %}
+                {% endif %}
             </div>
-
-
         </div>
-
-
-
     </div>
-
 </form>
 </div>
-
 {% endblock %}

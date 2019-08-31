@@ -1,46 +1,34 @@
 {% extends 'aspirante_corso_base_scheda.html' %}
-
-{% block scheda_titolo %}
-    Modifica
-{% endblock %}
-
 {% load utils %}
 {% load bootstrap3 %}
 
-{% block scheda_contenuto %}
+{% block scheda_titolo %}Modifica{% endblock %}
 
+{% block scheda_contenuto %}
     <div class="panel panel-primary">
-        <div class="panel-heading">
-            <h2 class="panel-title">
-                <i class="fa fa-fw fa-pencil"></i>
-                Modifica corso
-            </h2>
-        </div>
+        <div class="panel-heading"><h2 class="panel-title"><i class="fa fa-fw fa-pencil"></i> Modifica corso</h2></div>
         <div class="panel-body">
-            <form method="POST">
+            <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% bootstrap_form modulo %}
 
-                <button type="submit" class="btn btn-primary btn-block">
-                    <i class="fa fa-fw fa-save"></i>
-                    Salva modifiche
-                </button>
+                <h4>Condividi il materiale didattico</h4>
+                {{ file_formset.as_p }}
+                {{ link_formset.as_p }}
+
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva modifiche</button>
             </form>
 
+            {% if sede_modifica_form %}
+                <hr>
+
+                <form method="POST" action="{% url 'aspirante:position_change' corso.pk %}?norefresh">
+                    {% csrf_token %}
+                    {% bootstrap_form sede_modifica_form %}
+                    <input type="hidden" name="modifica_sede_dopo_attivazione" value="1">
+                    <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Modifica sede</button>
+                </form>
+            {% endif %}
         </div>
     </div>
-
-    <div class="panel panel-info">
-        <div class="panel-heading">
-            <h2 class="panel-title">
-                <i class="fa fa-fw fa-globe"></i>
-                Modifica posizione
-            </h2>
-        </div>
-        <div class="panel-body">
-            {% localizzatore corso solo_italia=1 %}
-
-        </div>
-    </div>
-
 {% endblock %}

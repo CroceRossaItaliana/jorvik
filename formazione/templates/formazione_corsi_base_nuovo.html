@@ -2,67 +2,49 @@
 
 {% load bootstrap3 %}
 {% load mptt_tags %}
+{% load staticfiles %}
 
-{% block pagina_titolo %}
-    Pianifica un Corso Base
-{% endblock %}
+{% block pagina_titolo %}Pianifica un corso{% endblock %}
 
 {% block app_contenuto %}
-
     <div class="row">
-
-        <div class="col-md-6">
-
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h2 class="panel-title">
-                        <i class="fa fa-fw fa-calendar"></i>
-                        Pianifica un Corso Base
-                    </h2>
+        <div class="col-md-12">
+            <div class="panel panel-default course-panels">
+                <div class="heading attivazione">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Attivazione Corso</h2>
                 </div>
-
+                <div class="heading dettagli">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-info"></i> Dettagli corso ed iscrizioni</h2>
+                </div>
+                <div class="heading lezioni">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Lezioni</h2>
+                </div>
+                <div class="heading esami">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-file-excel-o"></i> Esami e verbale</h2>
+                </div>
+                <div class="heading questionario">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</h2>
+                </div>
+            </div>
+            <div style="display:none;" class="panel panel-primary attivazionePanelWithForm">
                 <div class="panel-body">
-                    <form method="POST">
+                    <h3 style="margin:0 0 15px;">Attivazione Corso</h3>
+                    <form id="formazioneCorsoNuovoForm" method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         {% bootstrap_form modulo %}
-                        <button type="submit" class="btn btn-block btn-primary"
-                            data-conferma="Confermi di voler pianificare il corso?">
-                            <i class="fa fa-fw fa-asterisk"></i>
-                            Pianifica il Corso
+                        <button type="submit" class="btn btn-block btn-primary" data-conferma="Confermi di voler pianificare il corso?">
+                            <i class="fa fa-fw fa-asterisk"></i> Attiva il Corso
                         </button>
                     </form>
-
-
                 </div>
-
-
             </div>
-
         </div>
-
-        <div class="col-md-6">
-            <div class="alert alert-info">
-                <i class="fa fa-fw fa-calendar"></i> <strong>Data ed ora di inizio</strong>:
-                Ti consigliamo di inserire in questo campo la data e l'ora nella quale sar&agrave;
-                effettuata la presentazione del Corso. Questa data sar&agrave; comunicata
-                agli aspiranti nella tua zona come data di inziio del Corso.
-            </div>
-
-            <div class="alert alert-info">
-                <i class="fa fa-fw fa-info-circle"></i> <strong>Nota bene</strong>:
-                Dopo questo step potrai nominare uno o pi&ugrave; direttori del corso.
-                Questi potranno inserire gli ulteriori dettagli sul corso,
-                come le date delle lezioni, la descrizione, nonch&eacute; gestire
-                interamente il corso per te.
-            </div>
-
-
-        </div>
-
-
     </div>
 
-
-
+<script>
+    const url_cv_cdf_titolo_json = "{% url 'cv:cdf_titolo_json' %}";
+    const _csrf_token = "{{ csrf_token }}";
+</script>
+<script src="{% static 'js/formazione/formazione.js' %}"></script>
 
 {% endblock %}

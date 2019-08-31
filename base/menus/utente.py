@@ -17,7 +17,11 @@ class MenuUtente:
         return hasattr(self.me, 'donatore')
 
     def menu_volontario(self):
+        from django.core.urlresolvers import reverse
+
         return ("Volontario", (
+            ("Corsi di formazione", "fa-list", reverse('aspirante:corsi_base')),
+            ('Catalogo Corsi', 'fa-list-alt', reverse('courses:catalog')),
             ("Estensione", "fa-random", "/utente/estensione/"),
             ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
             ("Riserva", "fa-pause", "/utente/riserva/"),

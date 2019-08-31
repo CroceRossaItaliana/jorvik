@@ -1,6 +1,4 @@
-import os
 import json
-import mimetypes
 from datetime import date, timedelta, datetime, time
 
 from django.apps import apps
@@ -15,7 +13,6 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, render_to_response, get_object_or_404, redirect
 from django.template import Context, Template, RequestContext
 from django.template.response import TemplateResponse
-from django.template.loader import render_to_string, get_template
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.decorators.clickjacking import xframe_options_exempt
@@ -24,19 +21,27 @@ from jorvik import settings
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE
 from anagrafica.models import Sede, Persona
 from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, UFFICIO_SOCI_TEMPORANEO, UFFICIO_SOCI_UNITA
-from anagrafica.permessi.costanti import ERRORE_PERMESSI, LETTURA, GESTIONE_SEDE
+from anagrafica.permessi.costanti import ERRORE_PERMESSI, GESTIONE_SEDE
 from autenticazione.funzioni import pagina_pubblica, pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from formazione.models import PartecipazioneCorsoBase, Aspirante
 from posta.models import Messaggio
 from .errori import errore_generico, messaggio_generico
-from .geo import Locazione
-from .tratti import ConPDF
-from .utils import get_drive_file, rimuovi_scelte
+from .forms import ModuloRecuperaPassword, ModuloLocalizzatore, ModuloLocalizzatoreItalia
 from .forms_extra import ModuloRichiestaSupportoPersone
-from .forms import (ModuloRecuperaPassword, ModuloMotivoNegazione,
-                    ModuloLocalizzatore, ModuloLocalizzatoreItalia)
+from .geo import Locazione
 from .models import Autorizzazione, Token
+from .utils import get_drive_file, rimuovi_scelte
+from .classes.autorizzazione import AutorizzazioneProcess
+
+
+IGNORA_AUTORIZZAZIONI = [
+    # ContentType.objects.get_for_model(PartecipazioneCorsoBase).pk
+]
+
+ORDINE_ASCENDENTE = 'creazione'
+ORDINE_DISCENDENTE = '-creazione'
+ORDINE_DEFAULT = ORDINE_DISCENDENTE
 
 
 @pagina_pubblica
@@ -209,12 +214,14 @@ def informazioni(request, me):
     """
     return 'base_informazioni.html'
 
+
 @pagina_pubblica
 def informazioni_aggiornamenti(request, me):
     """
     Mostra semplicemente la pagina degli aggiornamenti ed esce.
     """
     return 'base_informazioni_aggiornamenti.html'
+
 
 @pagina_pubblica
 def informazioni_sicurezza(request, me):
@@ -223,6 +230,7 @@ def informazioni_sicurezza(request, me):
     """
     return 'base_informazioni_sicurezza.html'
 
+
 @pagina_pubblica
 def informazioni_condizioni(request, me):
     """
@@ -230,12 +238,14 @@ def informazioni_condizioni(request, me):
     """
     return 'base_informazioni_condizioni.html'
 
+
 @pagina_pubblica
 def informazioni_cookie(request, me):
     """
     Mostra semplicemente la pagina dei cookie.
     """
     return 'base_informazioni_cookie.html'
+
 
 @pagina_pubblica
 def imposta_cookie(request, me):
@@ -287,11 +297,6 @@ def informazioni_sede(request, me, slug):
     return 'base_informazioni_sede.html', contesto
 
 
-IGNORA_AUTORIZZAZIONI = [
-    # ContentType.objects.get_for_model(PartecipazioneCorsoBase).pk
-]
-
-
 def pulisci_autorizzazioni(richieste):
     pulite = False
     for richiesta in richieste:
@@ -301,24 +306,22 @@ def pulisci_autorizzazioni(richieste):
     return pulite
 
 
-ORDINE_ASCENDENTE = 'creazione'
-ORDINE_DISCENDENTE = '-creazione'
-ORDINE_DEFAULT = ORDINE_DISCENDENTE
-
-
 @pagina_privata
 def autorizzazioni(request, me, content_type_pk=None):
-    """
-    Mostra elenco delle autorizzazioni in attesa.
-    """
+    """ Mostra elenco delle autorizzazioni in attesa. """
+
+    autorizzazioni_in_attesa = me.autorizzazioni().filter(necessaria=True)
+    richieste = autorizzazioni_in_attesa.exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
+
     richieste_bloccate = dict()
-    richieste = me._autorizzazioni_in_attesa().exclude(oggetto_tipo_id__in=IGNORA_AUTORIZZAZIONI)
-    richieste_bloccate['corsi'] = PartecipazioneCorsoBase.richieste_non_processabili(richieste)
+    # richieste_bloccate['corsi'] = PartecipazioneCorsoBase.richieste_non_processabili(richieste)
+
     if 'ordine' in request.GET:
         if request.GET['ordine'] == 'ASC':
             request.session['autorizzazioni_ordine'] = ORDINE_ASCENDENTE
         else:
             request.session['autorizzazioni_ordine'] = ORDINE_DISCENDENTE
+
     ordine = request.session.get('autorizzazioni_ordine', default=ORDINE_DEFAULT)
 
     sezioni = ()  # Ottiene le sezioni
@@ -347,7 +350,7 @@ def autorizzazioni(request, me, content_type_pk=None):
 
     request.session['autorizzazioni_torna_url'] = "/autorizzazioni/"
     if sezioni and content_type_pk:
-        request.session['autorizzazioni_torna_url'] = "/autorizzazioni/%d/" % (int(content_type_pk),)
+        request.session['autorizzazioni_torna_url'] = "/autorizzazioni/%d/" % int(content_type_pk)
 
     contesto = {
         "richieste": richieste,
@@ -361,106 +364,14 @@ def autorizzazioni(request, me, content_type_pk=None):
 
 @pagina_privata
 def autorizzazione_concedi(request, me, pk=None):
-    """
-    Mostra il modulo da compilare per il consenso, ed eventualmente registra l'accettazione.
-    """
-    richiesta = get_object_or_404(Autorizzazione, pk=pk)
-
-    torna_url = request.session.get('autorizzazioni_torna_url', default="/autorizzazioni/")
-
-    # Controlla che io possa firmare questa autorizzazione
-    if not me.autorizzazioni_in_attesa().filter(pk=richiesta.pk).exists():
-        return errore_generico(request, me,
-            titolo="Richiesta non trovata",
-            messaggio="E' possibile che la richiesta sia stata già approvata o respinta da qualcun altro.",
-            torna_titolo="Richieste in attesa",
-            torna_url=torna_url,
-        )
-    if not PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta):
-        return errore_generico(request, me,
-            titolo="Richiesta non processabile",
-            messaggio="Questa richiesta non può essere processata.",
-            torna_titolo="Richieste in attesa",
-            torna_url=torna_url,
-        )
-
-    modulo = None
-
-    # Se la richiesta ha un modulo di consenso
-    if richiesta.oggetto.autorizzazione_concedi_modulo():
-        if request.POST:
-            modulo = richiesta.oggetto.autorizzazione_concedi_modulo()(request.POST)
-
-            if modulo.is_valid():
-                # Accetta la richiesta con modulo
-                richiesta.concedi(me, modulo=modulo)
-
-        else:
-            modulo = richiesta.oggetto.autorizzazione_concedi_modulo()()
-
-    else:
-        # Accetta la richiesta senza modulo
-        richiesta.concedi(me)
-
-    contesto = {
-        "modulo": modulo,
-        "richiesta": richiesta,
-        "torna_url": torna_url,
-    }
-
-    return 'base_autorizzazioni_concedi.html', contesto
+    auth = AutorizzazioneProcess(request, me, pk)
+    return auth.concedi()
 
 
 @pagina_privata
 def autorizzazione_nega(request, me, pk=None):
-    """
-    Mostra il modulo da compilare per la negazione, ed eventualmente registra la negazione.
-    """
-    richiesta = get_object_or_404(Autorizzazione, pk=pk)
-
-    torna_url = request.session['autorizzazioni_torna_url']
-
-    # Controlla che io possa firmare questa autorizzazione
-    if not me.autorizzazioni_in_attesa().filter(pk=richiesta.pk).exists():
-        return errore_generico(request, me,
-            titolo="Richiesta non trovata",
-            messaggio="E' possibile che la richiesta sia stata già approvata o respinta da qualcun altro.",
-            torna_titolo="Richieste in attesa",
-            torna_url=torna_url,
-        )
-
-    if not PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta):
-        return errore_generico(request, me,
-            titolo="Richiesta non processabile",
-            messaggio="Questa richiesta non può essere processata.",
-            torna_titolo="Richieste in attesa",
-            torna_url=torna_url,
-        )
-
-    modulo = None
-
-    # Se la richiesta richiede motivazione
-    if richiesta.oggetto.autorizzazione_nega_modulo():
-        if request.POST:
-            modulo = richiesta.oggetto.autorizzazione_nega_modulo()(request.POST)
-            if modulo.is_valid():
-                # Accetta la richiesta con modulo
-                richiesta.nega(me, modulo=modulo)
-
-        else:
-            modulo = richiesta.oggetto.autorizzazione_nega_modulo()()
-
-    else:
-        # Nega senza modulo
-        richiesta.nega(me)
-
-    contesto = {
-        "modulo": modulo,
-        "richiesta": richiesta,
-        "torna_url": request.session['autorizzazioni_torna_url'],
-    }
-
-    return 'base_autorizzazioni_nega.html', contesto
+    auth = AutorizzazioneProcess(request, me, pk)
+    return auth.nega()
 
 
 @pagina_privata
@@ -491,7 +402,6 @@ def geo_localizzatore(request, me):
     app_label = request.session['app_label']
     model = request.session['model']
     pk = int(request.session['pk'])
-    continua_url = request.session['continua_url']
     oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
 
@@ -499,35 +409,37 @@ def geo_localizzatore(request, me):
     ricerca = False
 
     if request.GET.get('italia', False):
-        modulo = ModuloLocalizzatoreItalia(request.POST or None,)
+        form = ModuloLocalizzatoreItalia(request.POST or None,)
     else:
-        modulo = ModuloLocalizzatore(request.POST or None,)
-    if modulo.is_valid():
-        comune = modulo.cleaned_data['comune'] if not modulo.cleaned_data['comune'] \
-                    else "%s, Province of %s" % (modulo.cleaned_data['comune'], modulo.cleaned_data['provincia'])
-        stringa = "%s, %s, %s" % (modulo.cleaned_data['indirizzo'],
-                                  comune,
-                                  modulo.cleaned_data['stato'],)
+        form = ModuloLocalizzatore(request.POST or None,)
+
+    if form.is_valid():
+        cd = form.cleaned_data
+        comune = cd['comune'] if not cd['comune'] else "%s, Province of %s" % (cd['comune'], cd['provincia'])
+        stringa = "%s, %s, %s" % (cd['indirizzo'], comune, cd['stato'])
         risultati = Locazione.cerca(stringa)
         ricerca = True
 
-    contesto = {
+    context = {
         "locazione": oggetto.locazione,
-        "continua_url": continua_url,
-        "modulo": modulo,
+        "continua_url": request.session['continua_url'],
+        "modulo": form,
         "ricerca": ricerca,
         "risultati": risultati,
         "oggetto": oggetto,
     }
 
-    return 'base_geo_localizzatore.html', contesto
+    if app_label == 'formazione' and model == 'corsobase':
+        context['is_corsobase'] = 1  # instead of True
+
+    return 'base_geo_localizzatore.html', context
 
 
 @pagina_privata
 def geo_localizzatore_imposta(request, me):
-    app_label = request.session['app_label']
-    model = request.session['model']
-    pk = int(request.session['pk'])
+    session = request.session
+    app_label, model, pk = session['app_label'], session['model'], int(session['pk'])
+
     oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
 
@@ -535,50 +447,13 @@ def geo_localizzatore_imposta(request, me):
 
     return redirect("/geo/localizzatore/")
 
+
 @pagina_privata
 def pdf(request, me, app_label, model, pk):
-    oggetto = apps.get_model(app_label, model)
-    oggetto = oggetto.objects.get(pk=pk)
-    if not isinstance(oggetto, ConPDF):
-        return errore_generico(request, None,
-                               messaggio="Impossibile generare un PDF per il tipo specificato.")
+    from .classes.pdf import BaseGeneraPDF
 
-    if 'token' in request.GET:
-        if not oggetto.token_valida(request.GET['token']):
-            return errore_generico(request, me, titolo="Token scaduta",
-                                   messaggio="Il link usato è scaduto.")
-
-    elif not me.permessi_almeno(oggetto, LETTURA):
-        return redirect(ERRORE_PERMESSI)
-
-    pdf = oggetto.genera_pdf()
-
-    # Se sto scaricando un tesserino, forza lo scaricamento.
-    if 'tesserini' in pdf.file.path:
-        return pdf_forza_scaricamento(request, pdf)
-
-    return redirect(pdf.download_url)
-
-
-def pdf_forza_scaricamento(request, pdf):
-    """
-    Forza lo scaricamento di un file pdf.
-    Da usare con cautela, perche' carica il file in memoria
-    e blocca il thread fino al completamento della richiesta.
-    :param request:
-    :param pdf:
-    :return:
-    """
-
-    percorso_completo = pdf.file.path
-
-    with open(percorso_completo, 'rb') as f:
-        data = f.read()
-
-    response = HttpResponse(data, content_type=mimetypes.guess_type(percorso_completo)[0])
-    response['Content-Disposition'] = "attachment; filename={0}".format(pdf.nome)
-    response['Content-Length'] = os.path.getsize(percorso_completo)
-    return response
+    pdf = BaseGeneraPDF(request, me, app_label, model, pk)
+    return pdf.make()
 
 
 @pagina_pubblica

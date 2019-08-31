@@ -5,17 +5,10 @@
 {% load utils %}
 
 {% block app_contenuto %}
-
     {% if me.aspirante %}
         <div class="alert alert-success">
-            <h4>
-                <i class="fa fa-fw fa-info-circle"></i>
-                Vuoi trovare Corsi Base vicino a te?
-            </h4>
-            <p>
-                Clicca su "Aspirante" in alto a questa pagina per vedere i Corsi Base
-                e le Sedi CRI nelle tue vicinanze.
-            </p>
+            <h4><i class="fa fa-fw fa-info-circle"></i> Vuoi trovare Corsi Base vicino a te?</h4>
+            <p>Clicca su "Aspirante" in alto a questa pagina per vedere i Corsi Base e le Sedi CRI nelle tue vicinanze.</p>
         </div>
     {% endif %}
 
@@ -102,29 +95,22 @@
 
     {% if me.trasferimento and not me.trasferimento.con_scadenza %}
         <div class="alert alert-warning">
-            <h4>
-                <i class="fa fa-fw fa-warning"></i>
-                Hai attualmente un trasferimento in attesa di approvazione
-            </h4>
+            <h4><i class="fa fa-fw fa-warning"></i> Hai attualmente un trasferimento in attesa di approvazione</h4>
             <p>
                 Per ragioni tecniche -risolte a partire dal {{ SETTINGS.DATA_AVVIO_TRASFERIMENTI_AUTO|date:"SHORT_DATE_FORMAT" }}- non è stato possibile approvare in automatico il trasferimento.<br>
                 Vai alla <a href="/utente/trasferimenti/">sezione Trasferimenti</a> per maggiori informazioni.
             </p>
         </div>
-
     {% endif %}
 
     {% if me.nuovo_presidente %}
-        <div class="alert alert-success">
+        <div class="alert" style="border: 1px solid #f1f1f1;">
             <p class="grassetto">
                 <i class="fa fa-fw fa-smile-o"></i>
                 Ciao neo {{ me | select_presidente_commissario_da_persona }}!
-                <a href="/presidente/">
-                    Hai gi&agrave; completato la check-list per il tuo Comitato?
-                </a>
+                <a href="/presidente/">Hai gi&agrave; completato la check-list per il tuo Comitato?</a>
             </p>
         </div>
-
     {% endif %}
 
     {% if not me.numeri_telefono.exists and False %}

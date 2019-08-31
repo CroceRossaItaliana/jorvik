@@ -1,9 +1,7 @@
 {% extends "base_vuota.html" %}
 
 {% load staticfiles %}
-
 {% block pagina_titolo %}Home page{% endblock %}
-
 {% block pagina_principale %}
 
 <div style="background-image: url('{% static 'img/croce_mani.jpg' %}'); margin-top: -20px; margin-left: -0px; margin-right: -0px; padding-top:256px; padding-bottom:256px; background-position: center center; background-repeat: no-repeat; background-size: cover;" class="row allinea-centro testo-bianco testo-ombra-nera">
@@ -18,17 +16,11 @@
         <div class="col-md-6">
             <p>&nbsp</p>
             <div class="well">
-                <a href="/informazioni/" class="btn btn-lg btn-block btn-primary testo-ombra-nulla">
-                    <i class="fa fa-hand-o-right"></i>
-                    Cosa &egrave; Gaia
-                </a>
+                <a href="/informazioni/" class="btn btn-lg btn-block btn-primary testo-ombra-nulla"><i class="fa fa-hand-o-right"></i> Cosa &egrave; Gaia</a>
             </div>
             <p>Organizziamo continuamente corsi base per gli aspiranti volontari.</p>
             <p>Il volontariato in Croce Rossa ti cambierà la vita, <a href="http://www.cri.it/diventavolontario" target="_new" ><i class="icon-link"></i> scopri perché</a>.</p>
-
-
         </div>
-
 
         <div class="col-md-6">
             <p>&nbsp</p>
@@ -62,26 +54,22 @@
     </div>
 </div>
 
-
-<!--<div style="background-image: url('{% static 'img/footer.jpg' %}');background-position: center center; background-repeat: no-repeat; background-size: cover;" class="row allinea-centro testo-bianco testo-ombra-nera padding-verticale-60">
-
-</div>-->
-
+<!--<div style="background-image: url('{% static 'img/footer.jpg' %}');background-position: center center; background-repeat: no-repeat; background-size: cover;" class="row allinea-centro testo-bianco testo-ombra-nera padding-verticale-60"></div>-->
 <p>&nbsp;</p>
 
 {% if not request.COOKIES.cookie_approvati %}
 <div class="container">
     <div class="row allinea-centro">
         <div class="alert alert-info col-md-12">
-            <form method="get" action="{% url 'imposta_cookie' %}" ><button type="submit" class="close">Nascondi &times;</button></form>
+            <form method="get" action="{% url 'informazioni:imposta_cookie' %}" ><button type="submit" class="close">Nascondi &times;</button></form>
             <br clear="all">
             <i class="icon-info-sign"></i>
             <strong>Gaia utilizza i <i>cookies</i> per offrirti le sue funzionalit&agrave; e per scopi statistici.</strong><br />
             Continuando a navigare su gaia.cri.it, acconsenti all'uso dei cookie su questo sito web.<br />
-            <a href="{% url 'informazioni_cookie' %}" target="_new">
+            <a href="{% url 'informazioni:cookie' %}" target="_new">
                 Clicca qui per le informazioni sull'uso dei Cookie in Gaia
             </a> oppure
-            <a href="{% url 'informazioni_condizioni' %}" target="_new">
+            <a href="{% url 'informazioni:condizioni' %}" target="_new">
                 clicca qui per leggere l'informativa sulla Privacy.
             </a>
         </div>

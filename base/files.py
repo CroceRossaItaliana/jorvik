@@ -3,12 +3,13 @@ import urllib
 from io import BytesIO
 from datetime import datetime, date
 from zipfile import ZipFile
-
-from django.template.loader import get_template
+from weasyprint import HTML
 
 from xlsxwriter import Workbook
 from barcode import generate
 from barcode.writer import ImageWriter
+
+from django.template.loader import render_to_string, get_template
 
 from jorvik.settings import MEDIA_ROOT, DOMPDF_ENDPOINT
 from .models import Allegato
@@ -103,18 +104,41 @@ class EAN13(Allegato):
 
 
 class PDF(Allegato):
-    """
-    Rappresenta un file PDF generato al volo.
-    """
-
-    class Meta:
-        proxy = True
+    """ Rappresenta un file PDF generato al volo. """
 
     ORIENTAMENTO_ORIZZONTALE = 'landscape'
     ORIENTAMENTO_VERTICALE = 'portrait'
 
     FORMATO_A4 = 'a4'
     FORMATO_CR80 = 'cr80'
+
+    def salva(self, posizione, nome, response, scadenza):
+        generatore = GeneratoreNomeFile(posizione)
+        zname = generatore(self, nome)
+
+        self.prepara_cartelle(MEDIA_ROOT + zname)
+
+        pdffile = open(MEDIA_ROOT + zname, 'wb')
+        response_read = response.read() if hasattr(response, 'read') else response
+        pdffile.write(response_read)
+        pdffile.close()
+
+        self.file = zname
+        self.nome = nome
+        self.scadenza = scadenza
+        self.save()
+
+    def genera_e_salva_con_python(self, nome='File.pdf', scadenza=None, corpo={},
+        modello='pdf_vuoto.html', posizione='allegati/', **kwargs):
+
+        scadenza = scadenza or domani()
+        corpo.update({"timestamp": datetime.now()})
+
+        html_string = render_to_string(modello, corpo).encode('utf-8')
+        html = HTML(string=html_string)
+        result = html.write_pdf()
+
+        self.salva(posizione, nome, result, scadenza)
 
     def genera_e_salva(self, nome='File.pdf', scadenza=None, corpo={}, modello='pdf_vuoto.html',
                        orientamento=ORIENTAMENTO_VERTICALE, formato=FORMATO_A4,
@@ -147,17 +171,10 @@ class PDF(Allegato):
         req = urllib.request.Request(url, data)
         response = urllib.request.urlopen(req)
 
-        generatore = GeneratoreNomeFile(posizione)
-        zname = generatore(self, nome)
-        self.prepara_cartelle(MEDIA_ROOT + zname)
-        pdffile = open(MEDIA_ROOT + zname, 'wb')
-        pdffile.write(response.read())
-        pdffile.close()
+        self.salva(posizione, nome, response, scadenza)
 
-        self.file = zname
-        self.nome = nome
-        self.scadenza = scadenza
-        self.save()
+    class Meta:
+        proxy = True
 
 
 class FoglioExcel:

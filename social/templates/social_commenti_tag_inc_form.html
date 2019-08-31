@@ -1,14 +1,18 @@
 <div class="panel panel-primary">
     <div class="panel-heading">
-        <h3 class="panel-title">
-            <i class="fa fa-fw fa-edit"></i> Scrivi un commento
+        <h3 class="panel-title"><i class="fa fa-fw fa-edit"></i>
+            {% if comments_section_title %}
+                {# si imposta in social.templatetags.social #}
+                Chiedi informazioni al Direttore del corso
+            {% else %}
+                Scrivi un commento
+            {% endif %}
         </h3>
     </div>
 
     <div class="panel-body">
-
+        {{ qq }}
         {% if me %}
-
             <form action="/social/commenti/nuovo/" method="POST">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ social_next }}" />
@@ -18,15 +22,11 @@
                 <input type="hidden" name="oggetto_pk" value="{{ social_oggetto.pk }}" />
                 <div class="row">
                     <div class="col-md-8">
-                        <textarea name="commento" class="form-control" required maxlength="{{ social_lunghezza_massima }}"
-                                  rows="2" placeholder="Scrivi il tuo commento..."></textarea>
+                        <textarea name="commento" class="form-control" required maxlength="{{ social_lunghezza_massima }}" rows="2" placeholder="Scrivi il tuo commento..."></textarea>
                     </div>
                     <div class="col-md-4">
-                        <button type="submit" class="btn btn-block btn-primary">
-                            <i class="fa fa-fw fa-send"></i> Scrivi
-                        </button>
+                        <button type="submit" class="btn btn-block btn-primary"><i class="fa fa-fw fa-send"></i> Scrivi</button>
                     </div>
-
                 </div>
             </form>
 
@@ -34,16 +34,12 @@
             <div class="alert alert-info">
                 <i class="fa fa-fw fa-key"></i> Accedi a Gaia per aggiungere un commento.
             </div>
-
         {% endif %}
-
-
     </div>
 
     {% if social_num_avvisati %}
         <div class="panel-footer piu-piccolo">
-            <i class="fa fa-fw fa-bullhorn"></i> Il tuo commento ver&agrave; notificato per
-                e-mail a {{ social_num_avvisati }} persone interessate.
+            <i class="fa fa-fw fa-bullhorn"></i> Il tuo commento ver&agrave; notificato per e-mail a {{ social_num_avvisati }} persone interessate.
         </div>
     {% endif %}
 </div>
