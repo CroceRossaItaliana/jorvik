@@ -13,7 +13,7 @@ def cdf_titolo_json(request, me):
         if cdf_livello and area_id:
             query = Titolo.objects.filter(is_active=True,
                                           area=area_id[0],
-                                          cdf_livello=cdf_livello[0])
+                                          cdf_livello=cdf_livello[0]).exclude(sigla__in=['CRI',])
             options_for_select = {option['id']: {
                     'nome': option['nome'],
                     'description': option['description']}
