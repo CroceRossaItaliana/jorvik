@@ -49,7 +49,7 @@ class TitoloCRIAutocompletamento(autocomplete_light.AutocompleteModelBase):
     split_words = True
     search_fields = ['nome', 'sigla',]
     attrs = {
-        'data-autocomplete-minimum-characters': 0,
+        'data-autocomplete-minimum-characters': 1,
     }
 
     def choices_for_request(self):
