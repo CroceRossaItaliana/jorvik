@@ -50,6 +50,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
     scheda_obiettivi = models.TextField('Obiettivi formativi', null=True, blank=True)
     scheda_competenze_in_uscita = models.TextField('Competenze_in_uscita', null=True, blank=True)
     scheda_prevede_esame = models.NullBooleanField(default=True, null=True, blank=True)
+    scheda_url = models.URLField('Scheda originale', null=True, blank=True)
     cdf_livello = models.CharField(max_length=3, choices=CDF_LIVELLI,
                                    null=True, blank=True)
     cdf_durata_corso = models.CharField(max_length=255, null=True, blank=True)
