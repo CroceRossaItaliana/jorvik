@@ -66,9 +66,10 @@ def monitoraggio(request, me):
     context['user_comitato'] = typeform.comitato_id
     context['user_id'] = typeform.get_user_pk
     context['all_forms_are_completed'] = typeform.all_forms_are_completed
+
     context['target'] = MONITORAGGIO
-    # # Get celery_task_id
-    # # TODO: ajax polling task is ready
+    # Get celery_task_id
+    # TODO: ajax polling task is ready
     # prefix = typeform.CELERY_TASK_PREFIX
     # message_storage = get_messages(request)
     # if len(message_storage) > 0:

@@ -1,30 +1,27 @@
 {% extends 'aspirante_corso_base_scheda.html' %}
 
 {% load bootstrap3 %}
+{% load formazione_templatetags %}
 
-{% block scheda_titolo %}
-    Lezioni
-{% endblock %}
+{% block scheda_titolo %}Lezioni{% endblock %}
 
 {% block scheda_contenuto %}
+<style>
+  .esonero-text {font-size: 12px; padding: 4px 6px;}
+  .lezione-scheda-text {display:block; margin-bottom:15px; text-align:center; color:red; font-weight:bold;}
+</style>
 
 <div class="row">
     <form method="POST">
-    {% csrf_token %}
+        {% csrf_token %}
 
         <div class="col-md-9">
-
             <div class="panel panel-info">
                 <div class="panel-heading">
-                    <h2 class="panel-title">
-                        <i class="fa fa-fw fa-list"></i>
-                        Lezioni
-                    </h2>
+                    <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Lezioni</h2>
                 </div>
 
                 <div class="panel-body">
-
-
                     <table class="table table-striped">
                        <thead>
                         <tr>
@@ -34,20 +31,24 @@
                        </thead>
 
                         {% for lezione, modulo, partecipanti_lezione in lezioni %}
-
                             <tr id="{{ lezione.pk }}">
                                 <td style="width: 40%">
+                                    {% if lezione.precaricata %}<p class="lezione-scheda-text">Lezione precompilata come da scheda corso</p>{% endif %}
+                                    {% if lezione.divisa %}<span class="lezione-scheda-text" style="color:blue;">Lezione divisa</span>{% endif %}
+
                                     {% bootstrap_form modulo %}
-                                    <button type="submit" name="azione" value="salva"
-                                            class="btn btn-primary btn-block">
-                                        <i class="fa fa-fw fa-save"></i>
-                                        Salva informazioni
-                                    </button>
-                                    <a href="{{ lezione.url_cancella }}" class="btn btn-sm btn-danger btn-block"
-                                        data-conferma="Cancellare questa lezione? Questo eliminerà anche le assenze registrate.">
-                                        <i class="fa fa-fw fa-trash"></i>
-                                        Cancella lezione
-                                    </a>
+
+                                    <button type="submit" name="azione" value="salva" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva informazioni</button>
+
+                                    {% if lezione.precaricata and not lezione.divisa and lezione.puo_dividere %}
+                                        <a href="{{ lezione.url_dividi }}" class="btn btn-block"><i class="fa fa-fw fa-columns"></i> Dividi lezione</a>
+                                    {% endif %}
+
+                                    {% if not lezione.precaricata or lezione.precaricata and lezione.divisa %}
+                                        <a href="{{ lezione.url_cancella }}" class="btn btn-sm btn-danger btn-block" data-conferma="Cancellare questa lezione? Questo eliminerà anche le assenze registrate.">
+                                            <i class="fa fa-fw fa-trash"></i> Cancella lezione
+                                        </a>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     <table class="table table-striped table-condensed">
@@ -59,17 +60,35 @@
                                         </thead>
                                         <tbody>
                                             {% for partecipante in partecipanti %}
+                                                {% lezione_partecipante_pk_shortcut lezione partecipante as lezione_partecipante_pk %}
+                                                {% lezione_esonero lezione partecipante as assenza_lezione_esonero %}
+
                                                 <tr>
-                                                    <td>
-                                                        <label style="margin-bottom: -1px;">
-                                                            <input type="checkbox" name="presenze-{{ lezione.pk }}"
-                                                                   value="{{ partecipante.pk }}"
-                                                                   {% if partecipante in partecipanti_lezione %}checked="checked"{% endif %} />
-                                                            S&igrave;
+                                                    <td id="actions-{{partecipante.pk}}" style="min-width: 125px;">
+                                                        <label style="margin-bottom: -1px;"><input type="checkbox"
+                                                             id="presenza-{{ lezione_partecipante_pk }}"
+                                                             name="presenze-{{ lezione.pk }}"
+                                                             value="{{ partecipante.pk }}"
+                                                             {% if partecipante in partecipanti_lezione %}checked="checked"{% endif %} /> S&igrave;
                                                         </label>
+
+                                                        <label style="margin: 0 0 0 8px;"><input type="checkbox"
+                                                             class="esoneroCheckbox"
+                                                             name="esonero-checkbox-{{ lezione_partecipante_pk }}"
+                                                             data-esonero="#esonero-{{ lezione_partecipante_pk }}"
+                                                             data-lezione-partecipante="{{ lezione_partecipante_pk }}"
+                                                             {% if assenza_lezione_esonero %}checked="checked"{% endif %}> Esonero
+                                                        </label>
+
+                                                        <input type="text" style="{% if not assenza_lezione_esonero %}display:none;{% endif %}"
+                                                             class="esonero-text"
+                                                             id="esonero-{{ lezione_partecipante_pk }}"
+                                                             name="esonero-{{ lezione_partecipante_pk }}"
+                                                             placeholder="Motivazione dell'esonero"
+                                                             value='{{ assenza_lezione_esonero.esonero_motivazione|default:"" }}'>
                                                     </td>
                                                     <td>
-                                                        {{ partecipante.link|safe }}
+                                                        <a href="{% url 'profilo:main' partecipante.pk %}">{{partecipante.cognome}} {{partecipante.nome}}</a>
                                                     </td>
                                                 </tr>
                                             {% empty %}
@@ -77,72 +96,66 @@
                                                     <td colspan="2">Nessun iscritto confermato.</td>
                                                 </tr>
                                             {% endfor %}
-
                                         </tbody>
                                     </table>
-                                    <button type="submit" name="azione" value="salva"
-                                            class="btn btn-primary btn-block">
-                                        <i class="fa fa-fw fa-save"></i>
-                                        Salva presenze
-                                    </button>
-
+                                    <button type="submit" name="azione" value="salva" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva presenze</button>
                                 </td>
                             </tr>
-
-
-
 
                         {% empty %}
-
                             <tr class="alert alert-warning">
                                 <td colspan="2">
-                                    <i class="fa fa-fw fa-warning"></i>
-                                    Ancora nessuna lezione inserita.
-                                    Inserisci una lezione col modulo in questa pagina.
+                                    <i class="fa fa-fw fa-warning"></i> Ancora nessuna lezione inserita. Inserisci una lezione col modulo in questa pagina.
                                 </td>
                             </tr>
-
                         {% endfor %}
 
+                        <script>
+                          $('.esoneroCheckbox').on('click', function(e){
+                            let esonero_id = $(this).data('esonero');
+                            $(esonero_id).toggle();
+
+                            if ($(this).is(":checked")) {
+                              $(this).prop('checked', 'checked');
+                            } else {
+                              $(this).prop('checked', '');
+                            };
 
 
+                            // checkbox "Presenza"
+                            let presenza_lezione_partecipante = $(this).data('lezione-partecipante')
+                            let checkbox_presenza = $('#presenza-' +presenza_lezione_partecipante);
 
+                            if (checkbox_presenza.prop('checked')) {
+                              // if ($(this).prop('checked') === false) {
+                              //  checkbox_presenza.prop('checked', '');
+                              // }
+                            } else {
+                              checkbox_presenza.prop('checked', 'checked');
+                            }
+                          });
+                        </script>
                     </table>
-
                 </div>
-
             </div>
-
         </div>
+    </form>
 
-        </form>
-
-        <form method="POST">
-            {% csrf_token %}
+    <form method="POST">
+        {% csrf_token %}
         <div class="col-md-3">
-
             <div class="panel panel-primary">
                 <div class="panel-heading">
-                    <h2 class="panel-title">
-                        <i class="fa fa-fw fa-plus-circle"></i>
-                        Aggiungi lezione
-                    </h2>
+                    <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Completa Lezioni</h2>
                 </div>
                 <div class="panel-body">
                     {% bootstrap_form modulo_nuova_lezione %}
-                    <button type="submit" name="azione" value="nuova"
-                            class="btn btn-primary btn-block">
-                        <i class="fa fa-fw fa-check-circle"></i>
-                        Aggiungi lezione
+                    <button type="submit" name="azione" value="nuova" class="btn btn-primary btn-block">
+                        <i class="fa fa-fw fa-check-circle"></i> Aggiungi lezione
                     </button>
-
                 </div>
             </div>
-
         </div>
-        </form>
-
-
+    </form>
 </div>
-
 {% endblock %}

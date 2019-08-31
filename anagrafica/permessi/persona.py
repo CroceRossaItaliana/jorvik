@@ -1,11 +1,6 @@
-from datetime import date
-from anagrafica.permessi.costanti import permesso_minimo, LETTURA
-from anagrafica.permessi.espansioni import ESPANDI_PERMESSI, espandi_persona
-from django.utils import timezone
-
-from anagrafica.permessi.funzioni import permessi_persona
-
-__author__ = 'alfioemanuele'
+from ..permessi.costanti import permesso_minimo, LETTURA
+from ..permessi.espansioni import ESPANDI_PERMESSI, espandi_persona
+from ..permessi.funzioni import permessi_persona
 
 
 def persona_oggetti_permesso(persona, permesso, al_giorno=None, solo_deleghe_attive=True):
@@ -48,8 +43,7 @@ def persona_oggetti_permesso(persona, permesso, al_giorno=None, solo_deleghe_att
         return qs
 
 
-def persona_permessi(persona, oggetto, al_giorno=None,
-                     solo_deleghe_attive=True):
+def persona_permessi(persona, oggetto, al_giorno=None, solo_deleghe_attive=True):
     """
     Ritorna il livello di permessi che si ha su un qualunque oggetto.
 
@@ -140,8 +134,7 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=None,
     return False
 
 
-def persona_ha_permesso(persona, permesso, al_giorno=None,
-                        solo_deleghe_attive=True):
+def persona_ha_permesso(persona, permesso, al_giorno=None, solo_deleghe_attive=True):
     """
     Dato un permesso, ritorna true se il permesso e' posseduto.
     :param permesso: Permesso singolo.

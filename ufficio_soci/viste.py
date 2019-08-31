@@ -9,6 +9,7 @@ from django.db.models import Sum, Q
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
+from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 
 from anagrafica.costanti import NAZIONALE, REGIONALE
@@ -643,19 +644,18 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
 def us_elenco_modulo(request, me, elenco_id):
     try:
         # Prova a ottenere l'elenco dalla sessione.
-        elenco = request.session["elenco_%s" % (elenco_id,)]
+        elenco = request.session["elenco_%s" % elenco_id]
     except KeyError:
         # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
         raise ValueError("Elenco non presente in sessione.")
 
     if not elenco.modulo():  # No modulo? Vai all'elenco
-        return redirect("/us/elenco/%s/1/" % (elenco_id,))
+        return redirect("/us/elenco/%s/1/" % elenco_id)
 
     form = elenco.modulo()(request.POST or None)
     if request.POST and form.is_valid():  # Modulo ok
         # Salva modulo in sessione
         request.session["elenco_modulo_%s" % elenco_id] = request.POST
-
         # Redirigi alla prima pagina
         return redirect("/us/elenco/%s/1/" % elenco_id)
 
@@ -701,7 +701,7 @@ def us_elenco_messaggio(request, me, elenco_id):
     persone = elenco.ordina(elenco.risultati())
     request.session["messaggio_destinatari"] = persone
     request.session["messaggio_destinatari_timestamp"] = datetime.now()
-    return redirect(reverse('posta-scrivi'))
+    return redirect(reverse('posta:scrivi'))
 
 
 @pagina_privata(permessi=(ELENCHI_SOCI,))

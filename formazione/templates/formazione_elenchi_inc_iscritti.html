@@ -1,11 +1,18 @@
 {% extends 'us_elenchi_inc_persone.html' %}
 
 {% block elenco_intestazione_extra %}
-    <th>Iscrizione</th>
+    <!--formazione_elenchi_inc_iscritti-->
+    <th>Stato</th>
 {% endblock %}
 
 {% block elenco_riga_extra %}
-    <td>{% if not persona.aspirante or elenco.args.0.0.pk not in persona.aspirante.inviti_attivi %}Iscritto{% else %}Invitato{% endif %}</td>
+    <td>
+        {% if not persona.aspirante or elenco.args.0.0.pk not in persona.aspirante.inviti_attivi %}
+            Iscritto
+        {% else %}
+            Invitato
+        {% endif %}
+    </td>
 {% endblock %}
 
 {% block elenco_riga_azioni %}
@@ -14,7 +21,7 @@
     {% permessi_almeno persona "modifica" as puo_modificare %}
     {% permessi_almeno persona "lettura" as puo_leggere %}
 
-    <a href="{% url 'formazione-iscritti-cancella' pk=elenco.args.0.0.pk iscritto=persona.pk %}" class="btn btn-default" target="_new">
+    <a href="{% url 'aspirante:formazione_iscritti_cancella' pk=elenco.args.0.0.pk iscritto=persona.pk %}" class="btn btn-default" target="_new">
         <i class="fa fa-fw fa-remove"></i> Cancella
     </a>
 {% endblock %}

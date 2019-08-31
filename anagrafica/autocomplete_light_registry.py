@@ -1,11 +1,11 @@
-from autocomplete_light import shortcuts as autocomplete_light
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 
-from anagrafica.costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
-from anagrafica.models import Persona, Sede, Appartenenza
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI_UNITA, UFFICIO_SOCI
-from anagrafica.permessi.costanti import GESTIONE_CORSI_SEDE
+from autocomplete_light import shortcuts as autocomplete_light
+
+from .costanti import NAZIONALE, REGIONALE, PROVINCIALE, LOCALE, TERRITORIALE
+from .permessi.applicazioni import UFFICIO_SOCI_UNITA, UFFICIO_SOCI
+from .permessi.costanti import GESTIONE_CORSI_SEDE
+from .models import Persona, Sede, Appartenenza
 from formazione.models import PartecipazioneCorsoBase
 
 
@@ -128,12 +128,12 @@ class VolontarioSedeAutocompletamento(PersonaAutocompletamento):
 
 
 class IscrivibiliCorsiAutocompletamento(PersonaAutocompletamento):
-    search_fields = ['codice_fiscale',]
+    search_fields = ['codice_fiscale', 'email_contatto',]
 
     attrs = {
-        'placeholder': 'Inserisci il codice fiscale',
         'required': False,
-        'data-autocomplete-minimum-characters': 8,
+        'placeholder': 'Inserisci il codice fiscale o e-mail',
+        'data-autocomplete-minimum-characters': 6,
     }
 
     def choices_for_request(self):

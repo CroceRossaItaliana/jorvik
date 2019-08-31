@@ -1,7 +1,5 @@
-from anagrafica.permessi.funzioni import PERMESSI_FUNZIONI_DICT
-from anagrafica.permessi.incarichi import ESPANSIONE_DELEGHE
-
-__author__ = 'alfioemanuele'
+from ..permessi.funzioni import PERMESSI_FUNZIONI_DICT
+from ..permessi.incarichi import ESPANSIONE_DELEGHE
 
 
 def delega_permessi(delega, solo_deleghe_attive=True):

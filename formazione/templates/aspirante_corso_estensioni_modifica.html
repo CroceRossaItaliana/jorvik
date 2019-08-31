@@ -1,0 +1,99 @@
+{% extends 'aspirante_corso_base_scheda.html' %}
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block scheda_titolo %}Modifica{% endblock %}
+
+{% block scheda_contenuto %}
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h2 class="panel-title"><i class="fa fa-fw fa-pencil"></i> Destinatari e sede</h2>
+        </div>
+        <div class="panel-body">
+            <form method="POST">
+                {% csrf_token %}
+
+                {% bootstrap_form select_extension_type_form %}
+                <section id="select_extensions_section">
+                    {% bootstrap_formset select_extensions_formset %}
+                </section>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa fa-fw fa-save"></i> Salva modifiche
+                </button>
+            </form>
+        </div>
+    </div>
+
+<script>
+$(function(){
+    let estensione = $('#id_extension_type-extension_type');
+    let estensioneType = estensione.val();
+    let select_extensions_section = $('#select_extensions_section');
+
+    estensione.on('change', function(e) {
+        let lastSelected = estensione.find("option:selected");
+        if (estensione.val() == '2') {
+            $('#select_extensions_section').show();
+        } else {
+            if (!confirm("Sei sicuro di voler modificare l'estensione del corso?")) {
+                e.preventDefault();
+                $('#id_extension_type-extension_type option').prop("selected", true);
+                estensioneType = '2';
+            } else {
+                estensioneType = $(this).prop('value');
+                select_extensions_section.hide();
+            }
+        }
+    });
+    if (estensioneType == '2') select_extensions_section.show(); // A livello regionale
+    else select_extensions_section.hide();
+});
+
+// ******************************************************
+// url: /aspirante/corso-base/<corso_pk>/estensioni *****
+// ******************************************************
+
+/* ******************************************************
+    $(function(){
+        const VOLONTARI = "VO"; // segmenti.segmenti.NOMI_SEGMENTI
+
+        let labelControlDestinatari = $('.form-group .control-label:contains("Destinatari del Corso")');
+        let segmenti = labelControlDestinatari.next('div').val('id');
+
+        for (var i=0; i<segmenti.length; i++) {
+            let checkboxes = $(segmenti[i]).find('label input');
+
+            // (caricamento della pagina)
+            // Mostra/nascondi <select> per le estensioni dove segmento non ha selezionata la voce "Volontario"
+            let hasSelectedVolontario = false;
+            checkboxes.each(function(k,v){
+                let checkbox = $(v);
+                if (checkbox.val() === VOLONTARI && checkbox.prop('checked')) {
+                    hasSelectedVolontario = true;
+                }
+            });
+            if (hasSelectedVolontario == false) {
+                $(segmenti[i]).parent().next('div').hide();
+            }
+        }
+
+        // Mostra/nascondi ruoli volontario con la selezione option "Volontario"
+        segmenti.find('input').on('change', function(e) {
+            let segmento = $(this).val();
+            switch (segmento) {
+                case VOLONTARI:
+                    let segmentoVolontario = $(this).closest('.form-group').next('.form-group');
+                    if (segmentoVolontario.is(':visible')) { segmentoVolontario.hide() } else { segmentoVolontario.show() }
+                    break;
+                case "E": // Volontari giovani
+                case "AB": // Dipendenti
+                    break;
+            }
+        });
+    });
+****************************************************** */
+
+</script>
+
+{% endblock %}

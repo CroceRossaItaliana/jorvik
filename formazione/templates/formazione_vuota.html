@@ -2,38 +2,24 @@
 
 {% load bootstrap3 %}
 
-{% block pagina_titolo %}
-    Benvenuto in Gaia
-{% endblock %}
-
+{% block pagina_titolo %}Benvenuto in Gaia{% endblock %}
 
 {% block menu_laterale %}
 <div class="col-md-3 well well-sm">
-
-
     <ul id="sezione" class="nav nav-pills nav-stacked navbar-collapse collapse">
-
         {% for sezione_nome, sezione_pagine in menu.formazione %}
-
             <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
-
             {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
-
                 <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
                     <a href="{{ link_url|urlencode }}">
                         <i class="fa {{ link_icona }} fa-fw"></i>
                         {{ link_nome }}
                     </a>
                 </li>
-
             {% endfor %}
-
             <hr />
-
         {% endfor %}
-
     </ul>
-
 </div>
 {% endblock %}
 

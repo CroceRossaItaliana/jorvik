@@ -1,0 +1,6 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p class="grassetto">Gentile presidente,</p>
+    <p>la informiamo che {{ persona.nome_completo }}, è stato nominato Docente della lezione {{ lezione.nome }} del corso <a href="{{ corso.url }}">{{ corso.nome }}</a></p>
+{% endblock %}

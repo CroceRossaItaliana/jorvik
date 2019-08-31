@@ -6,27 +6,25 @@
 {% load social %}
 
 {% block app_contenuto %}
+    <h2><i class="fa fa-fw fa-home"></i> Corsi {% if me.volontario %}attivi{%else%}nelle tue vicinanze{%endif%}</h2>
 
-    <h2><i class="fa fa-fw fa-home"></i> Corsi Base nelle tue vicinanze</h2>
-
+    {% if me.aspirante %}
     <div class="alert alert-info">
         <i class="fa fa-fw fa-info-circle"></i>
-        Questo &egrave; un elenco dei Corsi Base nel raggio di {{ me.aspirante.raggio }} km
-        da {{ me.aspirante.locazione }}. Puoi modificare la posizione
-        dal menu "Aspirante" > "Impostazioni".
+        Questo &egrave; un elenco dei Corsi nel raggio di {{ me.aspirante.raggio|default:"0" }} km
+        da {{ me.aspirante.locazione|default:"n/a" }}. Puoi modificare la posizione dal menu "Aspirante" > "Impostazioni".
     </div>
+    {%endif%}
 
     <table class="table table-striped table-bordered">
         <thead>
             <th>Corso e Sede</th>
             <th>Informazioni</th>
-            <th>Azioni</th>
+            <th>Richieste di iscrizioni</th>
         </thead>
 
         {% for corso in corsi %}
-
             <tr>
-
                 <td>
                     <strong>{{ corso.link|safe }}</strong><br />
                     <i class="fa fa-fw fa-home"></i>
@@ -35,9 +33,7 @@
                         <i class="fa fa-fw fa-map-marker"></i>
                         {{ corso.locazione }}
                     {% endif %}
-
                 </td>
-
                 <td>
                     <i class="fa fa-fw fa-calendar"></i>
                         {% if not corso.iniziato %}
@@ -46,32 +42,25 @@
                             <span class="bg-danger">Iniziato: {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}</span>
                         {% endif %}
                         <br />
-                    <i class="fa fa-fw fa-calendar"></i>
-                        Esami: {{ corso.data_esame|date:"SHORT_DATETIME_FORMAT" }}<br />
-                    <i class="fa fa-fw fa-user"></i>
-                        Direttore ({{ corso.deleghe.count }}):
+                    <i class="fa fa-fw fa-calendar"></i> Esami: {{ corso.data_esame|date:"SHORT_DATETIME_FORMAT" }}<br />
+                    <i class="fa fa-fw fa-user"></i> Direttore ({{ corso.deleghe.count }}):
                         {% for d in corso.deleghe.all %}
                             {{ d.persona.link|safe }}
                         {% endfor %}
                 </td>
-
-                <td>
-                    {{ corso.partecipazioni.count }} richieste
-                </td>
-
+                <td>{{ corso.partecipazioni.count }} richieste</td>
             </tr>
-
         {% empty %}
             <tr class="info">
                 <td colspan="4">
-                    <h4><i class="fa fa-fw fa-info-circle"></i> Ancora nessun corso pianificato.</h4>
-                    <p>Puoi controllare la domanda formativa della zona e valutare l'attivazione di un
-                    nuovo corso base.</p>
+                    <h4><i class="fa fa-fw fa-info-circle"></i> Ancora nessun corso {% if puo_creare %}pianificato{%endif%}</h4>
+                    {% if puo_creare %}
+                        <p>Puoi controllare la domanda formativa della zona e valutare l'attivazione di un nuovo corso.</p>
+                    {% else %}
+                        <p>Elenco dei corsi ai quali si è inviata la richiesta di iscrizione, elenco dei corsi che si è frequentato e ottenuto la qualifica.</p>
+                    {% endif %}
                 </td>
             </tr>
-
         {% endfor %}
-
     </table>
-
 {% endblock %}
