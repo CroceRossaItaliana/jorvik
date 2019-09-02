@@ -7,7 +7,7 @@ from .models import (Titolo, TitleGoal, TitoloPersonale)
 
 @admin.register(Titolo)
 class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
-    search_fields = ['nome',]
+    search_fields = ['nome', 'sigla',]
     list_display = ('nome', 'tipo', 'is_active', 'sigla', 'cdf_livello', 'area',
         'inseribile_in_autonomia', 'expires_after', 'scheda_prevede_esame',)
     list_filter = ('is_active', 'cdf_livello', 'area', "tipo", "richiede_conferma",

@@ -98,12 +98,6 @@ def formazione_corsi_base_nuovo(request, me):
 
         if tipo == Corso.BASE:
             # Impostare titolo per "Corso Base"
-            # query_kwargs = {'nome__icontains': "corso di formazione per volontari cri"}
-            # try:
-            #     query_titolo =
-            # except Titolo.MultipleObjectsReturned:
-            #     # Per sicurezza faccio catch anche di questo exception
-            #     query_titolo = Titolo.objects.filter(**query_kwargs).last()
             kwargs['titolo_cri'] = Titolo.objects.get(sigla='CRI',
                                                       tipo=Titolo.TITOLO_CRI,
                                                       is_active=True)
