@@ -37,8 +37,11 @@
           <div>
             <strong>Obiettivi formativi:</strong>
             <p>{{ titolo.scheda_obiettivi }}</p>
-            {% if titolo.scheda_url %}<div class="corso-scheda-completa"><a href="{{ titolo.scheda_url }}" target="_blank">Vedi scheda completa (pdf)</a></div>{% endif %}
           </div>
+        {% endif %}
+
+        {% if titolo.scheda_url %}
+          <div class="corso-scheda-completa"><a href="{{ titolo.scheda_url }}" target="_blank">Vedi scheda completa (pdf)</a></div>
         {% endif %}
 
         {% if titolo.scheda_lezioni %}

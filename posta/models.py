@@ -309,8 +309,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         lista_email_destinatari = lista_email_destinatari or []
         attachments = allegati or []
 
-        send_email_class = EmailMultiAlternatives if len(lista_email_destinatari) > 1 else EmailMessage
-        msg = send_email_class(
+        msg = EmailMultiAlternatives(
             subject=oggetto,
             body=plain_text,
             from_email=email_mittente,
@@ -318,10 +317,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             to=lista_email_destinatari,
             **kwargs)
 
-        try:
-            msg.attach_alternative(corpo_html, "text/html")
-        except AttributeError:
-            msg.content_subtype = "html"
+        msg.attach_alternative(corpo_html, "text/html")
 
         if type(attachments) == list:
             for attachment in attachments:
