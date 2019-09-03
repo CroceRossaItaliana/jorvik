@@ -64,3 +64,8 @@ def can_show_tab_questionario(context):
     if corso.survey and corso.concluso:  # corso.is_nuovo_corso
         return corso.survey.can_vote(me, corso)
     return False
+
+@register.simple_tag
+def generate_area_id_selector(area_nome):
+    area_id = area_nome.lower().replace(' ', "_")
+    return area_id

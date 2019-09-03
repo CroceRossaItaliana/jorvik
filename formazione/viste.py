@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, date
+from collections import OrderedDict
 
 from django.db.models import Q, F
 from django.utils import timezone
@@ -1417,6 +1418,23 @@ def course_commissione_esame(request, me, pk):
 
 @pagina_privata
 def catalogo_corsi(request, me):
-    qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
+    from curriculum.areas import OBBIETTIVI_STRATEGICI
 
-    return 'catalogo_corsi.html', {'corsi': qs}
+    context = {'titoli': OrderedDict()}
+
+    qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
+    for i in OBBIETTIVI_STRATEGICI:
+        area_id, area_nome = i
+        areas = qs.filter(area=i[0])
+
+        context['titoli'][area_nome] = OrderedDict()
+
+        for k in Titolo.CDF_LIVELLI:
+            level_id = k[0]
+            levels = areas.filter(cdf_livello=level_id)
+
+            context['titoli'][area_nome]['level_%s' % level_id] = levels
+
+    context['titoli_total'] = qs.count()
+
+    return 'catalogo_corsi.html', context
