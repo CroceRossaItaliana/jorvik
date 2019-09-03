@@ -14,8 +14,8 @@ def getServiziStandard(max_result=200):
 def updateServizio(key, **kwargs):
     data = {}
     if kwargs.get('referenti'):
-        data['accountables'] = [{'name': '{}.{}'.format(ref.nome, ref.cognome)} for ref in kwargs.get('referenti')]
-        # data['accountables'] = [{'name': 'gianluca.silvestri'}]
+        # data['accountables'] = [{'name': '{}.{}'.format(ref.nome, ref.cognome)} for ref in kwargs.get('referenti')]
+        data['accountables'] = [{'name': 'gianluca.silvestri'}]
 
     if kwargs.get('precedenti'):
         data['accountables'].extend(kwargs.get('precedenti'))
@@ -37,7 +37,7 @@ def updateServizio(key, **kwargs):
         json=data
     )
     resp = r.json()
-    print('updateServizio', resp)
+    print('update', resp)
     return resp if 'result' in resp and resp['result']['code'] == 204 else {}
 
 
@@ -58,7 +58,7 @@ def createServizio(comitato, nome_progetto, servizi=[]):
         json=data
     )
     resp = r.json()
-    print('createServizio', resp)
+    print('create', resp)
     return resp if 'data' in resp and resp['data'] else {}
 
 
@@ -67,7 +67,7 @@ def getServizio(key=''):
         '{}/offeredserviceextended/{}'.format(end_point, key)
     )
     resp = r.json()
-    print('getServizio', resp)
+    print('get', resp)
     return resp if 'data' in resp and resp['data'] else {}
 
 
@@ -76,5 +76,14 @@ def getListService(comitato):
         '{}/offeredservice/?committee={}'.format(end_point, comitato)
     )
     resp = r.json()
-    print('risposta', resp)
+    print('list', resp)
     return resp if 'data' in resp and resp['data'] else {}
+
+
+def deleteService(key=''):
+    r = requests.delete(
+        '{}/offeredservice/{}'.format(end_point, key)
+    )
+    resp = r.json()
+    print('delete', resp)
+    return resp if 'result' in resp and resp['result']['code'] == 204 else {}

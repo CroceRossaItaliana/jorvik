@@ -147,8 +147,12 @@ def attivita_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
 
 @pagina_privata
 def servizio_gestisci(request, me, stato="aperte"):
-    from attivita.cri_persone import getListService
+    from attivita.cri_persone import getListService, deleteService
     sedi = me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE, solo_deleghe_attive=True)
+
+    delServizio = request.GET.get('del', None)
+    if delServizio:
+        deleteService(delServizio)
 
     result = getListService(646)
 
@@ -824,7 +828,7 @@ def servizio_modifica_servizi_standard(request, me, pk=None):
         if modulo.is_valid():
             services.extend(modulo.cleaned_data['servizi'])
 
-    if services and service_delete:
+    if services or service_delete:
         updateServizio(pk, servizi=services)
         result = getServizio(pk)
 
