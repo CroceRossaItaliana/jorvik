@@ -27,7 +27,7 @@ from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, err
 from base.files import Excel, FoglioExcel
 from base.utils import poco_fa, timedelta_ore
 from gruppi.models import Gruppo
-from attivita.cri_persone import createServizio, updateServizio, getServizio
+from attivita.cri_persone import createServizio, updateServizio, getServizio, changeState
 
 def attivita(request):
     return redirect('/attivita/calendario/')
@@ -852,8 +852,8 @@ def servizio_scheda_informazioni_modifica(request, me, pk=None):
     if 'result' in result:
         if result['result']['code'] == 200:
             contesto.update({'nome': result['data']['summary']})
-            # if result['data']['status']:
-            #     init.update({'stato': result['data']['status']})
+            if result['data']['status']:
+                init.update({'stato': result['data']['status']})
             if result['data']['description']:
                 init.update({'testo': result['data']['description']})
         modulo = ModuloServizioModifica(request.POST or None, initial=init)
@@ -864,8 +864,9 @@ def servizio_scheda_informazioni_modifica(request, me, pk=None):
 
     if modulo.is_valid():
         testo = modulo.cleaned_data['testo']
-        # stato = modulo.cleaned_data['stato']
-        # updateServizio(pk, **{'stato': stato, 'testo': testo})
+        stato = modulo.cleaned_data['stato']
+        if stato:
+            changeState(pk, stato)
         updateServizio(pk, **{'testo': testo})
 
     return 'servizio_scheda_infomazioni_modifica.html', contesto

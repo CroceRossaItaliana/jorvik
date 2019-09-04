@@ -26,9 +26,6 @@ def updateServizio(key, **kwargs):
             ss += "{},".format(s)
         data['service'] = [ss[:-1] if ss else ""]
 
-    if kwargs.get('stato'):
-        data['status'] = kwargs.get('stato')
-
     if kwargs.get('testo'):
         data['description'] = kwargs.get('testo')
 
@@ -38,6 +35,22 @@ def updateServizio(key, **kwargs):
     )
     resp = r.json()
     print('update', resp)
+    return resp if 'result' in resp and resp['result']['code'] == 204 else {}
+
+
+def changeState(key='', state=''):
+
+    STATE_TO_CODE = {
+        "11301": "11",
+        "10413": "31",
+        "6": "21"
+    }
+
+    r = requests.post(
+        '{}/offeredservice/{}/transition/{}/'.format(end_point, key, STATE_TO_CODE[state])
+    )
+    resp = r.json()
+    print('change state', resp)
     return resp if 'result' in resp and resp['result']['code'] == 204 else {}
 
 

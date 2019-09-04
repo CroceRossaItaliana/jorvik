@@ -26,6 +26,7 @@ class ModuloAttivitaInformazioni(ModelForm):
 
 
 class ModuloServizioModifica(forms.Form):
+
     BOZZA = "11301"
     APERTA = "10413"
     CHIUSA = "6"

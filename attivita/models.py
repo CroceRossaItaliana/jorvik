@@ -673,9 +673,6 @@ class Progetto(ModelloSemplice, ConMarcaTemporale, ConDelegati):
     class Meta:
         verbose_name_plural = "Progetti"
         ordering = ['sede', 'obiettivo', 'nome',]
-        index_together = [
-            ['sede', 'obiettivo'],
-        ]
         permissions = (
             ("view_progetto", "Can view progetto"),
         )
