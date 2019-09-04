@@ -591,9 +591,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             print('Il corso non ha <scheda_lezioni>')
 
     def get_or_create_lezioni_precompilate(self):
-        if self.has_scheda_lezioni and \
-                len(self.titolo_cri.scheda_lezioni.keys()) != len(self.get_lezioni_precaricate()):
-            return self.create_lezioni_precaricate()
+        if self.has_scheda_lezioni:
+            if len(self.titolo_cri.scheda_lezioni.keys()) != len(self.get_lezioni_precaricate()):
+                return self.create_lezioni_precaricate()
         return self.get_lezioni_precaricate()
 
     def get_lezione_sicurezza_salute_volontario(self):
