@@ -1549,7 +1549,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
     corso = models.ForeignKey(CorsoBase, related_name='lezioni', on_delete=models.PROTECT)
-    nome = models.CharField(max_length=128)
+    nome = models.TextField()
     docente = models.ForeignKey(Persona, null=True, default='',
                                 verbose_name='Docente della lezione',)
     obiettivo = models.CharField('Obiettivo formativo della lezione',
