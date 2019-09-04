@@ -24,11 +24,24 @@ def titoli_del_corso(persona, cd):
 def lezione_esonero(lezione, partecipante):
     from ..models import AssenzaCorsoBase
 
+    kwargs = {
+        'lezione': lezione,
+        'persona': partecipante,
+    }
+
+    a = None
+
     try:
-        a = AssenzaCorsoBase.objects.get(lezione=lezione, persona=partecipante)
-        return a if a.is_esonero else None
+        a = AssenzaCorsoBase.objects.get(**kwargs)
+
     except AssenzaCorsoBase.DoesNotExist:
         return None
+    except AssenzaCorsoBase.MultipleObjectsReturned:
+        a = AssenzaCorsoBase.objects.filter(**kwargs).last()
+
+    if a:
+        return a if a.is_esonero else None
+    return None
 
 
 @register.simple_tag

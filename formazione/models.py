@@ -1716,9 +1716,25 @@ class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
 
     @classmethod
     def create_assenza(cls, lezione, persona, registrata_da, esonero=None):
-        assenza, created = cls.objects.get_or_create(lezione=lezione,
-                                                     persona=persona,
-                                                     registrata_da=registrata_da)
+        queryset_kwargs = {
+            'lezione': lezione,
+            'persona': persona,
+        }
+
+        try:
+            # Trova un assenza con i parametri
+            assenza, created = cls.objects.get_or_create(**queryset_kwargs)
+        except cls.MultipleObjectsReturned:
+            # Trovate più di una assenza, al massimo può esserci una assenza
+            # Prendi quella ultima e cancella tutte le altre
+            assenza = cls.objects.filter(**queryset_kwargs).last()
+            cls.objects.filter(**queryset_kwargs).exclude(id__in=[assenza.id]).delete()
+
+        # Se l'assenza è stata creata da un'altra persona - modificala
+        if assenza.registrata_da != registrata_da:
+            assenza.registrata_da = registrata_da
+            assenza.save()
+
         if esonero:
             # Scrivi nell'oggetto <Assenza> la motivazione dell'esonero
             assenza.esonero = True

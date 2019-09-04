@@ -55,7 +55,9 @@ class GestionePresenza:
 
     def _process_esonero(self):
         assenza = AssenzaCorsoBase.create_assenza(self.lezione,
-            self.partecipante, self.me, esonero=self.esonero)
+                                                  self.partecipante,
+                                                  self.me,
+                                                  esonero=self.esonero)
         return assenza
 
     def _verifica_presenze(self, partecipanti):
