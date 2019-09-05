@@ -1033,27 +1033,39 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def get_course_files(self):
         return self.corsofile_set.filter(is_enabled=True)
 
+    @property
+    def livello(self):
+        if self.titolo_cri:
+            return self.titolo_cri.cdf_livello
+
     def inform_presidency_with_delibera_file(self):
         sede = self.sede.estensione
         oggetto = "Delibera nuovo corso: %s" % self
+        email_destinatari = ['formazione@cri.it',]
 
-        if sede == LOCALE:
+        if self.livello in [Titolo.CDF_LIVELLO_I, Titolo.CDF_LIVELLO_II]:
+            # Se indicato, l'indirizzo invia una copia sulla mail della sede regionale
+            sede_regionale = self.sede.sede_regionale
+            sede_regionale_email = sede_regionale.email if hasattr(sede_regionale, 'email') else None
+            if sede_regionale_email:
+                email_destinatari.append(sede_regionale_email)
+
+        elif self.livello in [Titolo.CDF_LIVELLO_III, Titolo.CDF_LIVELLO_IV]:
             pass
 
-        elif sede == TERRITORIALE:
-            pass
-
-        elif sede in [REGIONALE, NAZIONALE, PROVINCIALE,]:
-            Messaggio.invia_raw(
-                oggetto=oggetto,
-                corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
-                email_mittente=Messaggio.NOREPLY_EMAIL,
-                lista_email_destinatari=['formazione@cri.it',],
-                allegati=self.delibera_file
-            )
+        # Invia e-mail
+        Messaggio.invia_raw(
+            oggetto=oggetto,
+            corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
+            email_mittente=Messaggio.NOREPLY_EMAIL,
+            lista_email_destinatari=email_destinatari,
+            allegati=self.delibera_file
+        )
 
         if not sede == NAZIONALE:
             email_to = self.sede.sede_regionale.presidente()
+
+            # Invia posta
             Messaggio.costruisci_e_accoda(
                 oggetto=oggetto,
                 modello='email_corso_invia_delibera_al_presidente.html',
