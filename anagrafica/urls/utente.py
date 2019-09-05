@@ -27,7 +27,7 @@ urlpatterns = [
     url(r'^curriculum/$', views.utente_curriculum),
     url(r'^curriculum/(?P<pk>.*)/cancella/$', views.utente_curriculum_cancella),
     url(r'^curriculum/(?P<tipo>.*)/$', views.utente_curriculum, name='cv_tipo'),
-    url(r'^riserva/$', views.utente_riserva),
+    url(r'^riserva/$', views.utente_riserva, name='riserva'),
     url(r'^riserva/(?P<pk>.*)/termina/$', views.utente_riserva_termina),
     url(r'^riserva/(?P<pk>.*)/ritira/$', views.utente_riserva_ritira),
     url(r'^contatti/cancella-numero/(?P<pk>.*)/$', views.utente_contatti_cancella_numero),

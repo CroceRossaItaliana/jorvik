@@ -331,7 +331,7 @@ class ModuloCreazioneDocumento(ModelForm):
 
         if type in [Documento.CARTA_IDENTITA, Documento.PATENTE_CIVILE]:
             expires_error = None
-            expires = cd['expires']
+            expires = cd.get('expires')
 
             if not expires:
                 expires_error = 'Indicare la data di scadenza del documento'

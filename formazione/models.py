@@ -591,9 +591,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             print('Il corso non ha <scheda_lezioni>')
 
     def get_or_create_lezioni_precompilate(self):
-        if self.has_scheda_lezioni and \
-                len(self.titolo_cri.scheda_lezioni.keys()) != len(self.get_lezioni_precaricate()):
-            return self.create_lezioni_precaricate()
+        if self.has_scheda_lezioni:
+            if len(self.titolo_cri.scheda_lezioni.keys()) != len(self.get_lezioni_precaricate()):
+                return self.create_lezioni_precaricate()
         return self.get_lezioni_precaricate()
 
     def get_lezione_sicurezza_salute_volontario(self):
@@ -1549,7 +1549,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
     corso = models.ForeignKey(CorsoBase, related_name='lezioni', on_delete=models.PROTECT)
-    nome = models.CharField(max_length=128)
+    nome = models.TextField()
     docente = models.ForeignKey(Persona, null=True, default='',
                                 verbose_name='Docente della lezione',)
     obiettivo = models.CharField('Obiettivo formativo della lezione',
@@ -1716,9 +1716,25 @@ class AssenzaCorsoBase(ModelloSemplice, ConMarcaTemporale):
 
     @classmethod
     def create_assenza(cls, lezione, persona, registrata_da, esonero=None):
-        assenza, created = cls.objects.get_or_create(lezione=lezione,
-                                                     persona=persona,
-                                                     registrata_da=registrata_da)
+        queryset_kwargs = {
+            'lezione': lezione,
+            'persona': persona,
+        }
+
+        try:
+            # Trova un assenza con i parametri
+            assenza, created = cls.objects.get_or_create(**queryset_kwargs)
+        except cls.MultipleObjectsReturned:
+            # Trovate più di una assenza, al massimo può esserci una assenza
+            # Prendi quella ultima e cancella tutte le altre
+            assenza = cls.objects.filter(**queryset_kwargs).last()
+            cls.objects.filter(**queryset_kwargs).exclude(id__in=[assenza.id]).delete()
+
+        # Se l'assenza è stata creata da un'altra persona - modificala
+        if assenza.registrata_da != registrata_da:
+            assenza.registrata_da = registrata_da
+            assenza.save()
+
         if esonero:
             # Scrivi nell'oggetto <Assenza> la motivazione dell'esonero
             assenza.esonero = True

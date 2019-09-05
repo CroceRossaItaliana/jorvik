@@ -134,8 +134,7 @@ class AdminLezioneCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
 class AdminAssenzaCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['persona__nome', 'persona__cognome', 'persona__codice_fiscale', 'lezione__corso__progressivo',
                      'lezione__corso__sede__nome']
-    list_display = ['persona', 'lezione', 'creazione', 'esonero',
-                    'esonero_motivazione',]
+    list_display = ['persona', 'lezione', 'creazione', 'esonero', 'registrata_da',]
     list_filter = ['esonero',]
     raw_id_fields = RAW_ID_FIELDS_ASSENZACORSOBASE
 

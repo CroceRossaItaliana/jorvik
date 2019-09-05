@@ -24,11 +24,24 @@ def titoli_del_corso(persona, cd):
 def lezione_esonero(lezione, partecipante):
     from ..models import AssenzaCorsoBase
 
+    kwargs = {
+        'lezione': lezione,
+        'persona': partecipante,
+    }
+
+    a = None
+
     try:
-        a = AssenzaCorsoBase.objects.get(lezione=lezione, persona=partecipante)
-        return a if a.is_esonero else None
+        a = AssenzaCorsoBase.objects.get(**kwargs)
+
     except AssenzaCorsoBase.DoesNotExist:
         return None
+    except AssenzaCorsoBase.MultipleObjectsReturned:
+        a = AssenzaCorsoBase.objects.filter(**kwargs).last()
+
+    if a:
+        return a if a.is_esonero else None
+    return None
 
 
 @register.simple_tag
@@ -64,3 +77,8 @@ def can_show_tab_questionario(context):
     if corso.survey and corso.concluso:  # corso.is_nuovo_corso
         return corso.survey.can_vote(me, corso)
     return False
+
+@register.simple_tag
+def generate_area_id_selector(area_nome):
+    area_id = area_nome.lower().replace(' ', "_")
+    return area_id
