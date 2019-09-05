@@ -332,17 +332,21 @@ def aspirante_corso_base_lezioni(request, me, pk):
 
     moduli = list()
     partecipanti_lezioni = list()
+    invalid_forms = list()
 
     AZIONE_SALVA = request.POST and request.POST['azione'] == 'salva'
     AZIONE_NUOVA = request.POST and request.POST['azione'] == 'nuova'
 
     # Presenze/assenze
     for lezione in lezioni:
+        prefix_lezione = "%s" % lezione.pk
         form = ModuloModificaLezione(request.POST if AZIONE_SALVA else None,
-            instance=lezione, corso=corso, prefix="%s" % lezione.pk)
+            instance=lezione, corso=corso, prefix=prefix_lezione)
 
         if AZIONE_SALVA and form.is_valid():
             form.save()
+        else:
+            invalid_forms.append(int(prefix_lezione))
 
         moduli += [form]
 
@@ -389,6 +393,7 @@ def aspirante_corso_base_lezioni(request, me, pk):
         "lezioni": lezioni,
         "partecipanti": partecipanti,
         "modulo_nuova_lezione": form_nuova_lezione,
+        'invalid_forms': invalid_forms,
     }
     return 'aspirante_corso_base_scheda_lezioni.html', context
 
