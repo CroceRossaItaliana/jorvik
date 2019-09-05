@@ -38,6 +38,10 @@
 
                                     {% bootstrap_form modulo %}
 
+                                    {% if invalid_forms and lezione.pk in invalid_forms  %}
+                                        <div style="margin:15px 0; color:red; font-size:16px; text-align:center; font-weight:bold;">Verificare i dati inseriti per questa lezione.</div>
+                                    {% endif %}
+
                                     <button type="submit" name="azione" value="salva" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva informazioni</button>
 
                                     {% if lezione.precaricata and not lezione.divisa and lezione.puo_dividere %}
@@ -109,6 +113,14 @@
                                 </td>
                             </tr>
                         {% endfor %}
+
+                        {% if invalid_forms %}
+                            <script>
+                                document.getElementById("{{ invalid_forms.0 }}").scrollIntoView({
+                                  behavior: 'smooth'
+                                });
+                            </script>
+                        {% endif %}
 
                         <script>
                           $('.esoneroCheckbox').on('click', function(e){
