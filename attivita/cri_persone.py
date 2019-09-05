@@ -1,8 +1,8 @@
 import requests
 from django.conf import settings
+import logging
 
 end_point = settings.APIS_CONF['crip']['endpoint']
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,9 @@ def getServiziStandard(max_result=200):
 def updateServizio(key, **kwargs):
     data = {}
     if kwargs.get('referenti'):
-        data['accountables'] = [{'name': '{}.{}'.format(ref.nome, ref.cognome)} for ref in kwargs.get('referenti')]
+        data['accountables'] = [{'name': '{}.{}'.format(
+            ref.nome.lower(), ref.cognome.lower()
+        )} for ref in kwargs.get('referenti')]
         logger.debug(data['accountables'])
 
     if kwargs.get('precedenti'):
@@ -36,7 +38,7 @@ def updateServizio(key, **kwargs):
         json=data
     )
     resp = r.json()
-    print('update', resp)
+    logger.debug('- updateServizio {} {}'.format(resp['result']['code'], resp['result']['description']))
     return resp if 'result' in resp and resp['result']['code'] == 204 else {}
 
 
@@ -52,7 +54,7 @@ def changeState(key='', state=''):
         '{}/offeredservice/{}/transition/{}/'.format(end_point, key, STATE_TO_CODE[state])
     )
     resp = r.json()
-    print('change state', resp)
+    logger.debug('- changeState {} {}'.format(resp['result']['code'], resp['result']['description']))
     return resp if 'result' in resp and resp['result']['code'] == 204 else {}
 
 
@@ -73,7 +75,7 @@ def createServizio(comitato, nome_progetto, servizi=[]):
         json=data
     )
     resp = r.json()
-    print('create', resp)
+    logger.debug('- createServizio {} {}'.format(resp['result']['code'], resp['result']['description']))
     return resp if 'data' in resp and resp['data'] else {}
 
 
@@ -82,7 +84,7 @@ def getServizio(key=''):
         '{}/offeredserviceextended/{}'.format(end_point, key)
     )
     resp = r.json()
-    print('get', resp)
+    logger.debug('- getServizio {} {}'.format(resp['result']['code'], resp['result']['description']))
     return resp if 'data' in resp and resp['data'] else {}
 
 
@@ -91,7 +93,7 @@ def getListService(comitato):
         '{}/offeredservice/?committee={}'.format(end_point, comitato)
     )
     resp = r.json()
-    print('list', resp)
+    logger.debug('- getListService {} {}'.format(resp['result']['code'], resp['result']['description']))
     return resp if 'data' in resp and resp['data'] else {}
 
 
@@ -100,5 +102,5 @@ def deleteService(key=''):
         '{}/offeredservice/{}'.format(end_point, key)
     )
     resp = r.json()
-    print('delete', resp)
+    logger.debug('- deleteService {} {}'.format(resp['result']['code'], resp['result']['description']))
     return resp if 'result' in resp and resp['result']['code'] == 204 else {}
