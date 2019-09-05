@@ -2,7 +2,9 @@ import requests
 from django.conf import settings
 
 end_point = settings.APIS_CONF['crip']['endpoint']
+import logging
 
+logger = logging.getLogger(__name__)
 
 def getServiziStandard(max_result=200):
     r = requests.get(
@@ -15,7 +17,7 @@ def updateServizio(key, **kwargs):
     data = {}
     if kwargs.get('referenti'):
         data['accountables'] = [{'name': '{}.{}'.format(ref.nome, ref.cognome)} for ref in kwargs.get('referenti')]
-        # data['accountables'] = [{'name': 'gianluca.silvestri'}]
+        logger.debug(data['accountables'])
 
     if kwargs.get('precedenti'):
         data['accountables'].extend(kwargs.get('precedenti'))

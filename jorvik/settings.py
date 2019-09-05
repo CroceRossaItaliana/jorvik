@@ -299,6 +299,11 @@ LOGGING = {
         'two_factor': {
             'handlers': ['console'],
             'level': 'INFO',
+        },
+        'attivita': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
         }
     }
 }
