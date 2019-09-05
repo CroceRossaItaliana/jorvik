@@ -173,10 +173,13 @@ def permessi_almeno(context, oggetto, minimo="lettura", deleghe="solo_attive"):
     if not hasattr(context.request, 'me'):
         return False
 
-    solo_deleghe_attive = deleghe == "solo_attive"
-    almeno = context.request.me.permessi_almeno(oggetto, minimo_int,
-                                                solo_deleghe_attive=solo_deleghe_attive)
+    me = context.request.me
 
+    if not me:
+        return False
+
+    solo_deleghe_attive = deleghe == "solo_attive"
+    almeno = me.permessi_almeno(oggetto, minimo_int, solo_deleghe_attive=solo_deleghe_attive)
     return almeno
 
 

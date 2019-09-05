@@ -174,6 +174,20 @@ class Menu:
             }),
         )
 
+    def articoli(self):
+        return (
+            ("Articoli", (
+                ("Elenco", "fa-newspaper-o", reverse('articoli:lista')),
+            )),
+        )
+
+    def documenti(self):
+        return (
+            ("Documenti", (
+                ("Elenco", "fa-newspaper-o", reverse('documenti:lista_documenti')),
+            )),
+        )
+
     def get_menu(self):
         from .utils import remove_none
 

@@ -52,10 +52,16 @@ class ModuloCreazioneCorsoBase(ModelForm):
     def clean(self):
         cd = self.cleaned_data
         tipo = cd['tipo']
+        data_esame, data_inizio = cd.get('data_esame'), cd.get('data_inizio')
 
-        if cd['data_esame'] < cd['data_inizio']:
-            self.add_error('data_esame', "La data deve essere successiva "
-                                         "alla data di inizio.")
+        if not data_esame:
+            self.add_error('data_esame', 'Controllare la data di esame')
+
+        if not data_inizio:
+            self.add_error('data_inizio', 'Controllare la data di inizio')
+
+        if data_esame < data_inizio:
+            self.add_error('data_esame', "La data deve essere successiva alla data di inizio.")
 
         if tipo == Corso.BASE:
             # cd non può/deve avere valori per questi campi se corso è BASE
