@@ -414,22 +414,25 @@ def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
     deleted = lezione.delete()
 
     if deleted[0] > 0:
-        # Avvisa tutti i partecipanti che la lezione è stata rimossa
-        partecipanti = Persona.objects.filter(partecipazioni_corsi__in=corso.partecipazioni_confermate())
+        pass
 
-        sent_with_success = Messaggio.costruisci_e_accoda(
-            oggetto="La lezione %s del %s è stata cancellata" % (lezione.nome,
-                                                                 corso.nome),
-            modello="email_corso_lezione_cancella_avviso_partecipante.html",
-            corpo={
-                'corso': corso,
-            },
-            destinatari=partecipanti,
-        )
 
-        if sent_with_success:
-            msg = "La lezione è stata cancellata. Sono stati avvisati %s partecipanti del corso." % partecipanti.count()
-            messages.success(request, msg)
+        # # Avvisa tutti i partecipanti che la lezione è stata rimossa
+        # partecipanti = Persona.objects.filter(partecipazioni_corsi__in=corso.partecipazioni_confermate())
+        #
+        # sent_with_success = Messaggio.costruisci_e_accoda(
+        #     oggetto="La lezione %s del %s è stata cancellata" % (lezione.nome,
+        #                                                          corso.nome),
+        #     modello="email_corso_lezione_cancella_avviso_partecipante.html",
+        #     corpo={
+        #         'corso': corso,
+        #     },
+        #     destinatari=partecipanti,
+        # )
+        #
+        # if sent_with_success:
+        #     msg = "La lezione è stata cancellata. Sono stati avvisati %s partecipanti del corso." % partecipanti.count()
+        #     messages.success(request, msg)
 
     return redirect(corso.url_lezioni)
 
