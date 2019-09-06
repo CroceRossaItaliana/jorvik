@@ -1491,6 +1491,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         #(MILITARE, 'Membro Militare'),
         #(DONATORE, 'Donatore Finanziario'),
     )
+
+    MENBRO_DICT = dict(MEMBRO)
+
     PRECEDENZE_MODIFICABILI = (ESTESO,)
     NON_MODIFICABILE = (ESTESO,)
     membro = models.CharField("Tipo membro", max_length=2, choices=MEMBRO, default=VOLONTARIO, db_index=True)
@@ -2760,6 +2763,8 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         else:
             template = "email_dimissioni.html"
 
+        corpo = {}
+
         da_dipendente = False
         if precedente_appartenenza.membro == Appartenenza.DIPENDENTE:
             if self.persona.appartenenze_attuali(membro__in=(Appartenenza.VOLONTARIO, Appartenenza.SOSTENITORE)).exists():
@@ -2775,9 +2780,12 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
                 [x.autorizzazioni_ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
                 for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
             ]
+
         Appartenenza.query_attuale(
             al_giorno=self.creazione, persona=self.persona, membro=precedente_appartenenza.membro
         ).update(fine=mezzanotte_24_ieri(data), terminazione=Appartenenza.DIMISSIONE)
+
+        corpo['membro'] = dict(Appartenenza.MEMBRO)[precedente_appartenenza.membro]
 
         self.persona.chiudi_tutto(mezzanotte_24_ieri(data), mittente_mail=applicante, da_dipendente=da_dipendente)
 
@@ -2806,15 +2814,12 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
                     )
 
             else:
-
+                corpo["dimissione"] = self
                 Messaggio.costruisci_e_invia(
                     oggetto="Dimissioni",
                     modello=template,
-                    corpo={
-                        "dimissione": self,
-                    },
+                    corpo=corpo,
                     mittente=self.richiedente,
-
                     destinatari=[
                         self.persona
                     ]
