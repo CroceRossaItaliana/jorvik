@@ -742,7 +742,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         for recipient in self._corso_activation_recipients_for_email():
             if self.is_nuovo_corso:
                 persona = recipient
-                subject = "Nuovo Corso %s per Volontari CRI" % self.titolo_cri
+                subject = "Nuovo Corso: %s per Volontari CRI" % self.titolo_cri
             else:
                 persona = recipient.persona
                 subject = "Nuovo Corso per Volontari CRI"
@@ -1008,13 +1008,14 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             corpo={
                 "corso": self,
                 'titolo': "Anteprima " if anteprima else "",
+                'secondo_verbale': verbale_per_seconda_data_esame,
                 "partecipazioni": sorted(partecipazioni, key=key_cognome),
                 "numero_idonei": self.idonei().count(),
                 "numero_non_idonei": self.non_idonei().count(),
                 "numero_aspiranti": self.partecipazioni_confermate().count(),
                 'request': request,
             },
-            modello="pdf_corso_base_esame_verbale.html",
+            modello="pdf_corso_esame_verbale.html",
         )
         return pdf
 
