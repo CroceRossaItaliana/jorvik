@@ -1368,11 +1368,11 @@ def course_materiale_didattico_download(request, me, pk):
 def course_commissione_esame(request, me, pk):
     corso = get_object_or_404(CorsoBase, pk=pk)
 
-    if me in corso.direttori_corso() and me == corso.sede.presidente():
-        messages.error(request, "Non c'è possibilità di inserire la commissione di esame e "
-                                "non si può procedere alla chiusura del corso "
-                                "se il presidente e il direttore del corso sono la stessa persona")
-        return redirect(corso.url)
+    # if me in corso.direttori_corso() and me == corso.sede.presidente():
+    #     messages.error(request, "Non c'è possibilità di inserire la commissione di esame e "
+    #                             "non si può procedere alla chiusura del corso "
+    #                             "se il presidente e il direttore del corso sono la stessa persona")
+    #     return redirect(corso.url)
 
     if request.method == 'POST':
         form = FormCommissioneEsame(request.POST, request.FILES, instance=corso)
