@@ -184,6 +184,12 @@ class ModuloModificaLezione(ModelForm):
                 return None
         return self.cleaned_data['obiettivo']
 
+    def clean_nome(self):
+        nome = self.cleaned_data['nome']
+        if len(nome) > 200:
+            raise forms.ValidationError("La lunghezza del nome di questa lezione non può superare 200 caratteri.")
+        return nome
+
     class Meta:
         model = LezioneCorsoBase
         fields = ['nome', 'docente', 'has_nulla_osta', 'inizio', 'fine', 'obiettivo', 'luogo',]
