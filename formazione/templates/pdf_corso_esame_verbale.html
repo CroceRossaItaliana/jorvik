@@ -17,13 +17,14 @@
     .document-text p {font-size:13px; line-height:150%; margin-bottom:12px;}
     .commissione-nome-row {margin-left: 1.25cm; text-indent: 1.25cm; margin-bottom: 0.35cm; line-height: 140%; font-size: 14px;}
 
-    table.elenco {border: 1px solid #bbb; width: 100%; text-align: left; font-size: 11pt; border-collapse: collapse;}
-    table.elenco td, th {border: 1px solid; padding: 6px 4px;}
+    .table-elenco {border: 1px solid #bbb; width: 100%; text-align: left; font-size: 11pt; border-collapse: collapse;}
+    .table-elenco td, .table-elenco th {border: 1px solid; padding: 6px 4px;}
+    .table-elenco-col-name {font-size:11px; font-weight:bold; text-align:center;}
 {% endblock %}
 
 {% block corpo %}
     {% current_domain as SITE_URL %}
-    <div>
+    <div style="page-break-after: always;">
         <div class="western heading-main">
             <img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">
             <span class="heading-comitato-name">{{ corso.sede.comitato }}</span>
@@ -177,14 +178,14 @@
         </div>
 
         <div style="margin-bottom:15px; font-weight:bold; font-size:13px; text-align:center;">ELENCO CANDIDATI IDONEI/NON IDONEI/ASSENTI</div>
-        <table class="elenco" style="margin-bottom:30px;">
+        <table class="table-elenco" style="margin-bottom:30px;">
             <thead>
                 <tr>
-                    <td style="font-size:11px; font-weight:bold; text-align:center;">Cognome e Nome</td>
-                    <td style="font-size:11px; font-weight:bold; text-align:center;">Luogo di Nascita</td>
-                    <td style="font-size:11px; font-weight:bold; text-align:center;">Data di Nasciata</td>
-                    <td style="font-size:11px; font-weight:bold; text-align:center;">Codice Fiscale</td>
-                    <td style="font-size:11px; font-weight:bold; text-align:center;">Esito</td>
+                    <td class="table-elenco-col-name">Cognome e Nome</td>
+                    <td class="table-elenco-col-name">Luogo di Nascita</td>
+                    <td class="table-elenco-col-name">Data di Nasciata</td>
+                    <td class="table-elenco-col-name">Codice Fiscale</td>
+                    <td class="table-elenco-col-name">Esito</td>
                 </tr>
             </thead>
             {% for p in partecipazioni %}
