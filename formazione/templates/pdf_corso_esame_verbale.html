@@ -73,13 +73,19 @@
             {% endif %}
 
             <p>&mdash; Presidente del Comitato CRI o suo delegato:<br>
-                &nbsp;&nbsp;&nbsp; _________________________________________</p>
-            <p>&mdash; Direttore del Corso<br>
-                &nbsp;&nbsp;&nbsp; _________________________________________</p>
-            <p>&mdash; Docente/i del corso<br>
-                &nbsp;&nbsp;&nbsp; _________________________________________<br>
-                &nbsp;&nbsp;&nbsp; _________________________________________<br>
-                &nbsp;&nbsp;&nbsp; _________________________________________</p>
+                &nbsp;&nbsp;&nbsp; {{ corso.sede.presidente }}</p>
+            <p>
+                &mdash; Direttore del Corso<br>
+                {% for direttore in corso.direttori_corso %}
+                    &nbsp;&nbsp;&nbsp; {{ direttore }}<br>
+                {% endfor %}
+            </p>
+            <p>
+                &mdash; Docente/i del corso<br>
+                {% for docente in corso.docenti_corso %}
+                    &nbsp;&nbsp;&nbsp; {{ docente }}<br>
+                {% endfor %}
+            </p>
 
             {% if corso.tipo == corso.BASE %}
 
@@ -192,22 +198,25 @@
             {% endfor %}
         </table>
         <div style="font-size:12px;">
-            Luogo e data <br>
-            Letto approvato e sottoscritto <br><br>
+            Luogo e data<br>
+            Letto approvato e sottoscritto<br><br>
 
             &ndash;	Presidente del Comitato CRI o suo delegato:<br>
-            &nbsp;&nbsp; ___________________________________<br><br>
-            &ndash;	Direttore del Corso<br>
-            &nbsp;&nbsp; ___________________________________<br><br>
-            &ndash;	Docente/i del corso<br>
+            &nbsp;&nbsp;&nbsp; {{ corso.sede.presidente }}<br><br>
 
-            {% for i in '012'|make_list %}
-                &nbsp;&nbsp; ___________________________________<br><br>
+            &ndash;	Direttore del Corso<br>
+            {% for direttore in corso.direttori_corso %}
+                &nbsp;&nbsp;&nbsp; {{ direttore }}<br><br>
+            {% endfor %}
+
+            &ndash;	Docente/i del corso<br>
+            {% for docente in corso.docenti_corso %}
+                &nbsp;&nbsp;&nbsp; {{ docente }}<br><br>
             {% endfor %}
 
             {% for nome in corso.commissione_nomi_as_list %}
                 &ndash; {{ nome|title }}<br>
-                &nbsp;&nbsp; ___________________________________<br><br>
+                &nbsp;&nbsp;&nbsp; ___________________________________<br><br>
             {% endfor %}
         </div>
     </div>

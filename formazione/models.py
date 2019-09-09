@@ -1086,6 +1086,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         persone_qs = Persona.objects.filter(id__in=deleghe_persone_id)
         return persone_qs
 
+    def docenti_corso(self):
+        docenti_ids = self.lezioni.all().values_list('docente', flat=True)
+        return Persona.objects.filter(id__in=docenti_ids)
+
     def can_modify(self, me):
         if me and me.permessi_almeno(self, MODIFICA):
             return True
