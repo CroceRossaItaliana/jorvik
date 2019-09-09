@@ -742,7 +742,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         for recipient in self._corso_activation_recipients_for_email():
             if self.is_nuovo_corso:
                 persona = recipient
-                subject = "Nuovo Corso %s per Volontari CRI" % self.titolo_cri
+                subject = "Nuovo Corso: %s per Volontari CRI" % self.titolo_cri
             else:
                 persona = recipient.persona
                 subject = "Nuovo Corso per Volontari CRI"
@@ -1008,13 +1008,14 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             corpo={
                 "corso": self,
                 'titolo': "Anteprima " if anteprima else "",
+                'secondo_verbale': verbale_per_seconda_data_esame,
                 "partecipazioni": sorted(partecipazioni, key=key_cognome),
                 "numero_idonei": self.idonei().count(),
                 "numero_non_idonei": self.non_idonei().count(),
                 "numero_aspiranti": self.partecipazioni_confermate().count(),
                 'request': request,
             },
-            modello="pdf_corso_base_esame_verbale.html",
+            modello="pdf_corso_esame_verbale.html",
         )
         return pdf
 
@@ -1033,27 +1034,39 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def get_course_files(self):
         return self.corsofile_set.filter(is_enabled=True)
 
+    @property
+    def livello(self):
+        if self.titolo_cri:
+            return self.titolo_cri.cdf_livello
+
     def inform_presidency_with_delibera_file(self):
         sede = self.sede.estensione
         oggetto = "Delibera nuovo corso: %s" % self
+        email_destinatari = ['formazione@cri.it',]
 
-        if sede == LOCALE:
+        if self.livello in [Titolo.CDF_LIVELLO_I, Titolo.CDF_LIVELLO_II]:
+            # Se indicato, l'indirizzo invia una copia sulla mail della sede regionale
+            sede_regionale = self.sede.sede_regionale
+            sede_regionale_email = sede_regionale.email if hasattr(sede_regionale, 'email') else None
+            if sede_regionale_email:
+                email_destinatari.append(sede_regionale_email)
+
+        elif self.livello in [Titolo.CDF_LIVELLO_III, Titolo.CDF_LIVELLO_IV]:
             pass
 
-        elif sede == TERRITORIALE:
-            pass
-
-        elif sede in [REGIONALE, NAZIONALE, PROVINCIALE,]:
-            Messaggio.invia_raw(
-                oggetto=oggetto,
-                corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
-                email_mittente=Messaggio.NOREPLY_EMAIL,
-                lista_email_destinatari=['formazione@cri.it',],
-                allegati=self.delibera_file
-            )
+        # Invia e-mail
+        Messaggio.invia_raw(
+            oggetto=oggetto,
+            corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
+            email_mittente=Messaggio.NOREPLY_EMAIL,
+            lista_email_destinatari=email_destinatari,
+            allegati=self.delibera_file
+        )
 
         if not sede == NAZIONALE:
             email_to = self.sede.sede_regionale.presidente()
+
+            # Invia posta
             Messaggio.costruisci_e_accoda(
                 oggetto=oggetto,
                 modello='email_corso_invia_delibera_al_presidente.html',
@@ -1072,6 +1085,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         deleghe_persone_id = deleghe.values_list('persona__id', flat=True)
         persone_qs = Persona.objects.filter(id__in=deleghe_persone_id)
         return persone_qs
+
+    def docenti_corso(self):
+        docenti_ids = self.lezioni.all().values_list('docente', flat=True)
+        return Persona.objects.filter(id__in=docenti_ids)
 
     def can_modify(self, me):
         if me and me.permessi_almeno(self, MODIFICA):

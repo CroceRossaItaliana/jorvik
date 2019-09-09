@@ -184,6 +184,12 @@ class ModuloModificaLezione(ModelForm):
                 return None
         return self.cleaned_data['obiettivo']
 
+    def clean_nome(self):
+        nome = self.cleaned_data['nome']
+        if len(nome) > 200:
+            raise forms.ValidationError("La lunghezza del nome di questa lezione non può superare 200 caratteri.")
+        return nome
+
     class Meta:
         model = LezioneCorsoBase
         fields = ['nome', 'docente', 'has_nulla_osta', 'inizio', 'fine', 'obiettivo', 'luogo',]
@@ -317,8 +323,11 @@ class CorsoSelectExtensionTypeForm(ModelForm):
 
 
 class CorsoExtensionForm(ModelForm):
-    titolo = autocomplete_light.ModelMultipleChoiceField(
-        "EstensioneLivelloRegionaleTitolo", required=False, label='Requisiti necessari')
+    titolo = autocomplete_light.ModelMultipleChoiceField("EstensioneLivelloRegionaleTitolo",
+        required=False,
+        label='Requisiti necessari',
+        help_text="Si prega di non compilare questa voce in quanto, qualora il/la Volontario/a non avesse caricato tutte le sue qualifiche su GAIA, "
+                  "verrebbe automaticamente escluso dalla possibilità di partecipare al corso, in quanto non riceverebbe alcuna notifica di attivazione del corso")
     sede = autocomplete_light.ModelMultipleChoiceField(
         "EstensioneLivelloRegionaleSede", required=False, label='Selezionare Sede/Sedi')
     # segmento_volontario = forms.ChoiceField(label='Tipo del Volontario')
