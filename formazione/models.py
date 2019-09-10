@@ -257,11 +257,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         for idx, estensione in enumerate(self.get_extensions(), 1):
             for sede in estensione.sede.all():
                 con_sottosedi = sede.esplora()
-                estensioni_dict[idx] = {
-                    'sede_sottosedi': con_sottosedi.values_list('id', flat=True),
-                    'segmenti': estensione.segmento,
-                    'estensione': estensione
-                }
+                sede_sottosedi = list(con_sottosedi.values_list('id', flat=True))
+                if idx not in estensioni_dict:
+                    estensioni_dict[idx] = {
+                        'sede_sottosedi': sede_sottosedi,
+                        'segmenti': estensione.segmento,
+                        'estensione': estensione
+                    }
+                else:
+                    estensioni_dict[idx]['sede_sottosedi'].extend(sede_sottosedi)
 
         # estensioni_che_coincidono = []
         appartenenze_che_coincidono = Appartenenza.objects.none()
