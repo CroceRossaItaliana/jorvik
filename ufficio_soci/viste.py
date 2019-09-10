@@ -615,8 +615,8 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
 
     risultati = elenco.ordina(elenco.risultati())
     if filtra:  # Se keyword specificata, filtra i risultati
-        risultati = elenco.ordina(elenco.filtra(risultati, filtra))
-        request.session["messaggio_destinatari"] = risultati
+        risultati = elenco.filtra(risultati, filtra)
+
     request.session["messaggio_destinatari"] = risultati
 
     p = Paginator(risultati, 15)  # Pagina (num risultati per pagina)
@@ -700,8 +700,6 @@ def us_elenco_messaggio(request, me, elenco_id):
         # Imposta il modulo
         elenco.modulo_riempito = form
 
-    # persone = elenco.ordina(elenco.risultati())
-    # request.session["messaggio_destinatari"] = persone
     request.session["messaggio_destinatari_timestamp"] = datetime.now()
     return redirect(reverse('posta:scrivi'))
 
