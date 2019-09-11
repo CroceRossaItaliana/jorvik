@@ -527,22 +527,24 @@ class ElencoQuote(ElencoVistaSoci):
         giorno_appartenenza = min(date(day=31, month=12, year=anno), oggi())
 
         if modulo.cleaned_data['tipo'] == modulo.VERSATE:
-            origine = tesseramento.paganti(attivi=attivi, ordinari=ordinari)  # Persone con quote pagate
+            origine = tesseramento.paganti(attivi=attivi, ordinari=ordinari).defer('quote')  # Persone con quote pagate
 
         else:
-            origine = tesseramento.non_paganti(attivi=attivi, ordinari=ordinari)  # Persone con quote NON pagate
+            origine = tesseramento.non_paganti(attivi=attivi, ordinari=ordinari).defer('quote')  # Persone con quote NON pagate
 
         # Ora filtra per Sede
-        q = Appartenenza.query_attuale(al_giorno=giorno_appartenenza,
-                                       membro=Appartenenza.VOLONTARIO).filter(sede__in=qs_sedi)
+        q = Appartenenza.query_attuale(
+            al_giorno=giorno_appartenenza,
+            membro=Appartenenza.VOLONTARIO
+        ).filter(sede__in=qs_sedi).defer('membro', 'inizio', 'sede')
 
-        ris = origine.filter(appartenenze__in=q).annotate(
+        return origine.filter(appartenenze__in=q).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
                 appartenenza_sede=F('appartenenze__sede'),
-        ).prefetch_related('quote').distinct('cognome', 'nome', 'codice_fiscale')
-
-        return ris
+        ).prefetch_related('quote').distinct('cognome', 'nome', 'codice_fiscale').only(
+           'cognome', 'nome', 'codice_fiscale'
+        )
 
     def excel_colonne(self):
         anno = self.modulo_riempito.cleaned_data['anno']
