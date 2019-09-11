@@ -657,6 +657,8 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
     if filtra:  # Se keyword specificata, filtra i risultati
         risultati = elenco.filtra(risultati, filtra)
 
+    request.session['messaggio_destinatari'] = risultati
+
     temp_path = tempfile.gettempdir()
     pickle.dump(
         risultati, open(
@@ -745,8 +747,6 @@ def us_elenco_messaggio(request, me, elenco_id):
 
         # Imposta il modulo
         elenco.modulo_riempito = form
-
-    request.session['messaggio_destinatari_tmp'] = 'elenco_risultati_%s' % (elenco_id)
 
     request.session["messaggio_destinatari_timestamp"] = datetime.now()
 

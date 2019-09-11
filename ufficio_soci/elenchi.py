@@ -534,14 +534,15 @@ class ElencoQuote(ElencoVistaSoci):
 
         # Ora filtra per Sede
         q = Appartenenza.query_attuale(al_giorno=giorno_appartenenza,
-                                       membro=Appartenenza.VOLONTARIO)
+                                       membro=Appartenenza.VOLONTARIO).filter(sede__in=qs_sedi)
 
-        app = Appartenenza.objects.filter(pk__in=q).filter(sede__in=qs_sedi)
-        return origine.filter(appartenenze__in=app).annotate(
+        ris = origine.filter(appartenenze__in=q).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
                 appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related('quote').distinct('cognome', 'nome', 'codice_fiscale')
+
+        return ris
 
     def excel_colonne(self):
         anno = self.modulo_riempito.cleaned_data['anno']
