@@ -1701,7 +1701,7 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         lezioni_divise = LezioneCorsoBase.objects.filter(lezione_divisa_parent=self)
         if not lezioni_divise:
             return True
-        elif lezioni_divise.count() < 4:
+        elif lezioni_divise.count() < 7:
             return True
         return False
 
