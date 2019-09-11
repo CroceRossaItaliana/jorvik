@@ -215,6 +215,7 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
         context['load_personal_document'] = load_personal_document_form
 
     context['corso'] = corso
+    context['lezioni'] = corso.lezioni.all().order_by('inizio', 'fine')
     context['puo_modificare'] = corso.can_modify(me)
     context['can_activate'] = corso.can_activate(me)
     context['puoi_partecipare'] = puoi_partecipare
@@ -328,7 +329,7 @@ def aspirante_corso_base_lezioni(request, me, pk):
     partecipanti = Persona.objects.filter(
         partecipazioni_corsi__in=corso.partecipazioni_confermate()
     ).order_by('cognome')
-    lezioni = corso.lezioni.all()
+    lezioni = corso.lezioni.all().order_by('inizio', 'fine')
 
     moduli = list()
     partecipanti_lezioni = list()
