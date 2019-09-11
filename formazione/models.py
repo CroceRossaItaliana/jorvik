@@ -1498,6 +1498,13 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     def genera_attestato(self, request=None):
         if not self.idoneo:
             return None
+
+        pdf_template = "pdf_corso_attestato.html"
+
+        # Usare il vecchio attestato per i corsi senza titolo (creati prima del 01/09/2019)
+        if not self.corso.titolo_cri:
+            pdf_template = "pdf_corso_base_attestato.html"
+
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva_con_python(
             nome="Attestato %s.pdf" % self.persona.codice_fiscale,
@@ -1507,7 +1514,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
                 "persona": self.persona,
                 "request": request,
             },
-            modello="pdf_corso_base_attestato.html",
+            modello=pdf_template,
         )
         return pdf
 
