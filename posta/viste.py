@@ -1,7 +1,3 @@
-import os
-import pickle
-import tempfile
-
 from datetime import datetime, timedelta
 
 from django.core.paginator import Paginator
@@ -88,17 +84,7 @@ def posta_scrivi(request, me):
     MAX_VISIBILI = 20
     MAX_VISIBILI_STR = "%d destinatari selezionati"
 
-    # Gli elenchi troppo grandi non vengono salvati in sessione ma in file temporanei
-    if 'messaggio_destinatari_tmp' in request.session:
-        path_tmp = tempfile.gettempdir()
-        destinatari = pickle.load(
-            open(
-                os.path.join(path_tmp, request.session.get('messaggio_destinatari_tmp')),
-                "rb"
-            )
-        )
-    else:# Prova a recuperare destinatari dalla sessione.
-        destinatari = request.session.get('messaggio_destinatari')
+    destinatari = request.session.get('messaggio_destinatari')
 
     destinatari = destinatari if destinatari else Persona.objects.none()
 
