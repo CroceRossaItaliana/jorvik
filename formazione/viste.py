@@ -27,7 +27,7 @@ from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoB
                      PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
-    ModuloVerbaleAspiranteCorsoBase, FormRelazioneDelDirettoreCorso)
+    FormVerbaleCorso, FormRelazioneDelDirettoreCorso)
 from .classes import GestionePresenza, GeneraReport
 
 
@@ -612,8 +612,8 @@ def aspirante_corso_base_termina(request, me, pk):
 
     partecipanti_moduli = list()
 
-    azione = request.POST.get('azione', default=ModuloVerbaleAspiranteCorsoBase.SALVA_SOLAMENTE)
-    generazione_verbale = azione == ModuloVerbaleAspiranteCorsoBase.GENERA_VERBALE
+    azione = request.POST.get('azione', default=FormVerbaleCorso.SALVA_SOLAMENTE)
+    generazione_verbale = azione == FormVerbaleCorso.GENERA_VERBALE
     termina_corso = generazione_verbale
 
     # Mostra partecipanti con motivo assente se l'azione è salvataggio form
@@ -634,16 +634,17 @@ def aspirante_corso_base_termina(request, me, pk):
 
     # Validazione delle form
     for partecipante in partecipanti_qs:
-        form = ModuloVerbaleAspiranteCorsoBase(request.POST or None,
+        form = FormVerbaleCorso(request.POST or None,
             prefix="part_%d" % partecipante.pk,
             instance=partecipante,
             generazione_verbale=generazione_verbale)
 
-        if corso.is_nuovo_corso:
-            pass
-        else:
-            form.fields['destinazione'].queryset = corso.possibili_destinazioni()
-            form.fields['destinazione'].initial = corso.sede
+        if corso.tipo == Corso.BASE:
+            if corso.titolo_cri.scheda_prevede_esame:
+                # GAIA-175 Campo destinazione prevede solo nel caso di esame
+                # (come da scheda di valutazione personale
+                form.fields['destinazione'].queryset = corso.possibili_destinazioni()
+                form.fields['destinazione'].initial = corso.sede
 
         if form.is_valid():
             instance = form.save(commit=False)
@@ -723,8 +724,8 @@ def aspirante_corso_base_termina(request, me, pk):
         "corso": corso,
         "puo_modificare": True,
         "partecipanti_moduli": partecipanti_moduli,
-        "azione_genera_verbale": ModuloVerbaleAspiranteCorsoBase.GENERA_VERBALE,
-        "azione_salva_solamente": ModuloVerbaleAspiranteCorsoBase.SALVA_SOLAMENTE,
+        "azione_genera_verbale": FormVerbaleCorso.GENERA_VERBALE,
+        "azione_salva_solamente": FormVerbaleCorso.SALVA_SOLAMENTE,
     }
     return 'aspirante_corso_base_scheda_termina.html', context
 

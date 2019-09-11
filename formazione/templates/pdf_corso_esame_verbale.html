@@ -194,7 +194,13 @@
                     <td>{{ p.persona.comune_nascita }}</td>
                     <td>{{ p.persona.data_nascita|date:"SHORT_DATE_FORMAT" }}</td>
                     <td>{{ p.persona.codice_fiscale }}</td>
-                    <td><b>{{ p.get_esito_esame_display|default:"N/D" }}</b></td>
+                    <td><b>
+                        {% if corso.titolo_cri.scheda_prevede_esame %}
+                            {{ p.get_esito_esame_display|default:"N/D" }}
+                        {% else %}
+                            {{ p.get_ammissione_display|default:"Esame non previsto" }}
+                        {% endif %}
+                    </b></td>
                 </tr>
             {% endfor %}
         </table>

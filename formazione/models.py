@@ -1360,32 +1360,34 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     NON_AMMESSO = "NA"
     ASSENTE = "AS"
     ASSENTE_MOTIVO = "MO"
+    ESAME_NON_PREVISTO = "EN"
     AMMISSIONE = (
         (AMMESSO, "Ammesso"),
         (NON_AMMESSO, "Non Ammesso"),
         (ASSENTE, "Assente"),
         (ASSENTE_MOTIVO, "Assente per motivo giustificato"),
+        (ESAME_NON_PREVISTO, "Esame non previsto"),
     )
 
     ammissione = models.CharField(max_length=2, choices=AMMISSIONE, default=None, blank=True, null=True, db_index=True)
     motivo_non_ammissione = models.CharField(max_length=1025, blank=True, null=True)
 
-    esito_parte_1 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True,
-                                     help_text="La Croce Rossa.")
+    # Campi per scheda valutazione del corso base
+    esito_parte_1 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True, help_text="La Croce Rossa.")
     argomento_parte_1 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. Storia della CRI, DIU.")
-
-    esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True,
-                                     help_text="Gesti e manovre salvavita.")
+    esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True, help_text="Gesti e manovre salvavita.")
     argomento_parte_2 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. BLS, colpo di calore.")
-
     extra_1 = models.BooleanField(verbose_name="Prova pratica su Parte 2 sostituita da colloquio.", default=False)
-    extra_2 = models.BooleanField(verbose_name="Verifica effettuata solo sulla Parte 1 del programma del corso.",
-                                  default=False)
-
-    destinazione = models.ForeignKey("anagrafica.Sede", verbose_name="Sede di destinazione",
-                                     related_name="aspiranti_destinati", default=None, null=True, blank=True,
-                                     help_text="La Sede presso la quale verrà registrato come Volontario l'aspirante "
+    extra_2 = models.BooleanField(verbose_name="Verifica effettuata solo sulla Parte 1 del programma del corso.", default=False)
+    destinazione = models.ForeignKey("anagrafica.Sede", verbose_name="Sede di destinazione", related_name="aspiranti_destinati", default=None, null=True, blank=True, help_text="La Sede presso la quale verrà registrato come Volontario l'aspirante "
                                                "nel caso di superamento dell'esame.")
+
+    # Campi per scheda valutazione individuale dei corsi nuovi (altri corsi)
+    valutazione_parte_teorica = models.CharField(_("Parte Teorica"), max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True)
+    valutazione_parte_pratica = models.CharField(_("Parte Pratica"), max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True)
+    eventuale_tirocinio = models.CharField(_("Eventuale tirocinio/affiancamento"), max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True)
+    valutazione_complessiva = models.CharField(_("Valutazione complessiva del Direttore del Corso"), max_length=255, null=True, blank=True)
+    eventuali_note = models.CharField(_("Eventuali Note/Osservazioni"), max_length=255, null=True, blank=True)
 
     RICHIESTA_NOME = "Iscrizione Corso"
 

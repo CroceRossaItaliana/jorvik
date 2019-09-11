@@ -165,7 +165,13 @@
             <h4><i class="fa fa-fw fa-warning"></i> Terminazione corso</h4>
             <p>Il corso si &egrave; concluso, ma &egrave; ancora necessario generare il verbale del corso e compilare la relazione.</p>
             <p>Una volta generato il verbale e compilata la relazione, tutti i partecipanti verranno informati dell'esito e,
-                coloro che saranno stati promossi, verranno trasformati automaticamente in volontari.</p>
+                coloro che saranno stati promossi,
+                {% if corso.is_nuovo_corso %}
+                    otterranno la qualifica prevista dal corso.
+                {% else %}
+                    verranno trasformati automaticamente in volontari.
+                {% endif %}
+            </p>
             <p style="margin-top:25px; text-align:center; font-weight:bold;">Il presente verbale è da chiudere immediatamente dopo la sessione d’esame</p>
 
             <table class="verbale__table">
