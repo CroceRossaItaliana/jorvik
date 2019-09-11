@@ -762,11 +762,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 rispondi_a=rispondi_a
             )
 
-            if self.is_nuovo_corso:
-                # If course tipo is CORSO_NUOVO to send to volunteers only
+            if self.tipo == Corso.BASE and not recipient.persona.volontario:
+                # Informa solo aspiranti di zona
                 Messaggio.costruisci_e_accoda(**email_data)
-            elif not self.is_nuovo_corso and not recipient.persona.volontario:
-                # to send to <Aspirante> only
+
+            if self.is_nuovo_corso:
+                # Informa volontari secondo le estensioni impostate (sedi, segmenti, titoli)
                 Messaggio.costruisci_e_accoda(**email_data)
 
     def has_extensions(self, is_active=True, **kwargs):
@@ -808,23 +809,23 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return CorsoEstensione.get_titles(course=self, **kwargs)
 
     def get_volunteers_by_course_requirements(self, **kwargs):
-        persons = None
+        persone_da_informare = None
 
         if self.is_nuovo_corso:
             corso_extension = self.extension_type
             if CorsoBase.EXT_MIA_SEDE == corso_extension:
-                persons = self.get_volunteers_by_only_sede()
+                persone_da_informare = self.get_volunteers_by_only_sede()
 
             if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
                 by_ext_sede = self.get_volunteers_by_ext_sede()
                 by_ext_titles = self.get_volunteers_by_ext_titles()
-                persons = by_ext_sede | by_ext_titles
+                persone_da_informare = by_ext_sede | by_ext_titles
 
-        if persons is None:
-            # Sede of course (was set in the first step of course creation)
-            persons = Persona.objects.filter(sede=self.sede)
+        if persone_da_informare is None:
+            # persons = Persona.objects.filter(sede=self.sede)
+            persone_da_informare = Persona.objects.none()
 
-        return persons.filter(**kwargs).distinct()
+        return persone_da_informare.filter(**kwargs).distinct()
 
     @property
     def get_firmatario(self):
@@ -847,7 +848,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return self._query_get_volunteers_by_sede(app)
 
     def get_volunteers_by_ext_sede(self):
-        app_attuali = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).q
+        segmenti = self.get_segmenti_list()
+
+        app_attuali = Appartenenza.query_attuale(membro__in=segmenti).q
         app = Appartenenza.objects.filter(app_attuali,
                                           sede__in=self.get_extensions_sede(),
                                           confermata=True)
@@ -863,6 +866,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         titles = self.get_extensions_titles().values_list('id', flat=True)
         return Persona.objects.filter(sede__in=sede,
                                       titoli_personali__in=titles)
+
+    def get_segmenti_list(self):
+        """ Estrarre segmenti dalle estensioni  """
+        segmenti = list()
+        for estensione in self.get_extensions():
+            segmenti.extend(estensione.segmento)
+        return segmenti
 
     @property
     def concluso(self):
