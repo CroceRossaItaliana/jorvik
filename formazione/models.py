@@ -1508,6 +1508,17 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 
     def genera_scheda_valutazione(self, request=None):
         pdf = PDF(oggetto=self)
+
+        # Decidi sul template sulla base del tipo e della versione del modulo <formazione>
+        pdf_template = "pdf_corso_%sscheda_valutazione.html"
+        if self.corso.corso_vecchio:
+            pdf_template = pdf_template % "base_"
+        else:
+            if self.corso.is_nuovo_corso:
+                pdf_template = pdf_template % ""
+            else:
+                pdf_template = "pdf_corso_base_scheda_valutazione_nuova.html"
+
         pdf.genera_e_salva_con_python(
             nome="Scheda Valutazione %s.pdf" % self.persona.codice_fiscale,
             corpo={
@@ -1516,7 +1527,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
                 "persona": self.persona,
                 'request': request,
             },
-            modello="pdf_corso_base_scheda_valutazione.html",
+            modello=pdf_template,
         )
         return pdf
 
