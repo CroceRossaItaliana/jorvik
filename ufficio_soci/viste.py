@@ -302,7 +302,7 @@ def us_reclama_persona(request, me, persona_pk):
                         riduzione=riduzione,
                     )
 
-                oggetto = 'Reclama {}'.format(
+                oggetto = 'Inserimento come {}'.format(
                     Appartenenza.MENBRO_DICT[modulo_appartenenza.cleaned_data.get('membro')]
                 )
                 Messaggio.costruisci_e_accoda(
