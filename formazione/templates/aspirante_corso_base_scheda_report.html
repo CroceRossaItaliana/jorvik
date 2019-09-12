@@ -29,7 +29,17 @@
                             <td>{{ p.creazione|date:"SHORT_DATE_FORMAT" }}</td>
                             {% if corso.ha_verbale %}
                                 <td>{{ p.get_ammissione_display|default:"N/D" }}</td>
-                                <td class="grassetto">{{ p.get_esito_esame_display|default:"N/D" }}</td>
+                                <td class="grassetto">
+                                    {% if corso.titolo_cri %}
+                                        {% if not corso.titolo_cri.scheda_prevede_esame %}
+                                            Idoneo
+                                        {% else %}
+                                            {{ p.get_esito_esame_display|default:"N/D" }}
+                                        {% endif %}
+                                    {% else %}
+                                        {{ p.get_esito_esame_display|default:"N/D" }}
+                                    {% endif %}
+                                </td>
                                 <td><a href="{{ p.url_pdf }}">Scheda {% if p.idoneo %}e Attestato{% endif %}</a></td>
                             {% endif %}
                         </tr>

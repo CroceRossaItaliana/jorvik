@@ -905,8 +905,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                     continue
 
                 # Calcola e salva l'esito dell'esame.
-                esito_esame = partecipante.IDONEO if partecipante.idoneo \
-                                                else partecipante.NON_IDONEO
+                if self.is_nuovo_corso and self.titolo_cri and not self.titolo_cri.scheda_prevede_esame:
+                    esito_esame = partecipante.IDONEO
+                else:
+                    esito_esame = partecipante.IDONEO if partecipante.idoneo \
+                                                    else partecipante.NON_IDONEO
+
                 partecipante.esito_esame = esito_esame
                 partecipante.save()
 
@@ -1436,16 +1440,20 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 
     @property
     def idoneo(self):
-        """
-        Regole per l'idoneita'.
-        """
-        return (
+        """ Regole per l'idoneita' """
+
+        case_1 = (
             self.esito_parte_1 == self.POSITIVO and (
-                self.esito_parte_2 == self.POSITIVO or (
-                        self.extra_2 and not self.esito_parte_2
-                    )
+                self.esito_parte_2 == self.POSITIVO or (self.extra_2 and not self.esito_parte_2)
             )
         )
+
+        case_2 = (
+                self.ammissione == self.ESAME_NON_PREVISTO and
+                self.corso.is_nuovo_corso and
+                not self.corso.titolo_cri.scheda_prevede_esame
+        )
+        return case_1 or case_2
 
     def notifica_esito_esame(self, mittente=None):
         """ Invia una e-mail al partecipante con l'esito del proprio esame. """
