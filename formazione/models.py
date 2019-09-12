@@ -829,21 +829,21 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def get_firmatario(self):
-        last = self.deleghe.last()
-        return last.firmatario if hasattr(last, 'firmatario') else last
+        return self.sede.presidente()
+        # last = self.deleghe.last()
+        # return last.firmatario if hasattr(last, 'firmatario') else last
 
     @property
     def get_firmatario_sede(self):
         course_created_by = self.get_firmatario
         if course_created_by is not None:
             return course_created_by.sede_riferimento()
-        else:
-            return course_created_by # returns None
+        return course_created_by  # returns None
 
     def get_volunteers_by_only_sede(self):
         app_attuali = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).q
         app = Appartenenza.objects.filter(app_attuali,
-                                          sede=self.get_firmatario_sede,
+                                          sede=self.sede,
                                           confermata=True)
         return self._query_get_volunteers_by_sede(app)
 

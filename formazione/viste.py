@@ -570,6 +570,14 @@ def aspirante_corso_base_attiva(request, me, pk):
 
     if request.POST:
         activation = corso.attiva(request=request, rispondi_a=me)
+
+        volontari_da_informare = corso._corso_activation_recipients_for_email().count()
+
+        if corso.extension_type == CorsoBase.EXT_MIA_SEDE:
+            messages.success(request, "Saranno avvisati %s volontari del %s" % (volontari_da_informare, corso.sede))
+        else:
+            messages.success(request, "Saranno avvisati %s volontari dei comitati secondo le impostazioni delle estensioni." % volontari_da_informare)
+
         return activation
 
     context = {
