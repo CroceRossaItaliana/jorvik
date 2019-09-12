@@ -1144,10 +1144,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def corso_vecchio(self):
+        """ Verifica se il corso appartiene al "vecchio" modulo formazione (
+        prima dell'aggiornamento del 31/08/2019) """
+
         if not self.titolo_cri:
             return True
-        elif self.creazione < timezone.datetime(2019, 9, 1):
-            return True
+        # elif self.creazione < timezone.datetime(2019, 9, 1):
+        #     return True
         return False
 
     class Meta:
@@ -1406,8 +1409,6 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
                                                "nel caso di superamento dell'esame.")
 
     # Campi per scheda valutazione individuale dei corsi nuovi (altri corsi)
-    valutazione_parte_teorica = models.CharField(_("Parte Teorica"), max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True)
-    valutazione_parte_pratica = models.CharField(_("Parte Pratica"), max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True)
     eventuale_tirocinio = models.CharField(_("Eventuale tirocinio/affiancamento"), max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True)
     valutazione_complessiva = models.CharField(_("Valutazione complessiva del Direttore del Corso"), max_length=255, null=True, blank=True)
     eventuali_note = models.CharField(_("Eventuali Note/Osservazioni"), max_length=255, null=True, blank=True)

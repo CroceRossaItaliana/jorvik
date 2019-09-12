@@ -416,8 +416,8 @@ class FormVerbaleCorso(ModelForm):
                                                 'argomento_parte_2',
                                                 'extra_1', 'extra_2',
                                                 'destinazione',]
-        SCHEDA_VALUTAZIONE_CORSO_NUOVO_FIELDS = ['valutazione_parte_teorica',
-                                                 'valutazione_parte_pratica',
+        SCHEDA_VALUTAZIONE_CORSO_NUOVO_FIELDS = ['esito_parte_1',
+                                                 'esito_parte_2',
                                                  'eventuale_tirocinio',
                                                  'valutazione_complessiva',
                                                  'eventuali_note',]
@@ -437,6 +437,12 @@ class FormVerbaleCorso(ModelForm):
         if corso.is_nuovo_corso:
             form_fields = self.Meta.SCHEDA_VALUTAZIONE_CORSO_NUOVO_FIELDS
             self.fields.pop('destinazione')
+
+            self.fields['esito_parte_1'].label = "Parte Teorica"
+            self.fields['esito_parte_2'].label = "Parte Pratica"
+
+            for f in ['esito_parte_1', 'esito_parte_2']:
+                self.fields[f].help_text = ''
         else:
             form_fields = self.Meta.SCHEDA_VALUTAZIONE_CORSO_BASE_FIELDS
 
@@ -516,9 +522,9 @@ class FormVerbaleCorso(ModelForm):
         ammissione = cd['ammissione']
 
         if ammissione == PartecipazioneCorsoBase.AMMESSO:
-            for i in ['valutazione_parte_teorica', 'valutazione_parte_pratica', 'eventuale_tirocinio']:
+            for i in ['esito_parte_1', 'esito_parte_2', 'eventuale_tirocinio']:
                 if not cd[i]:
-                    self.add_error(i, "Questo campo deve essere valorizzato")
+                    self.add_error(i, "Devi specificare l'esito di questa parte.")
 
     def clean(self):
         """
