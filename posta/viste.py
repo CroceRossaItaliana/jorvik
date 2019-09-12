@@ -84,7 +84,16 @@ def posta_scrivi(request, me):
     MAX_VISIBILI = 20
     MAX_VISIBILI_STR = "%d destinatari selezionati"
 
-    destinatari = request.session.get('messaggio_destinatari')
+    if 'id' in request.GET:
+        elenco_id = request.GET.get('id')
+        elenco = request.session["elenco_%s" % (elenco_id,)]
+        filtra = request.session.get("elenco_filtra_%s" % (elenco_id,), default="")
+        print(filtra)
+        destinatari = elenco.ordina(elenco.risultati())
+        if filtra:  # Se keyword specificata, filtra i risultati
+            destinatari = elenco.filtra(destinatari, filtra)
+    else:
+        destinatari = request.session.get('messaggio_destinatari')
 
     destinatari = destinatari if destinatari else Persona.objects.none()
 
