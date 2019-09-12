@@ -620,16 +620,6 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
     if filtra:  # Se keyword specificata, filtra i risultati
         risultati = elenco.filtra(risultati, filtra)
 
-    request.session['messaggio_destinatari'] = risultati
-
-    temp_path = tempfile.gettempdir()
-    pickle.dump(
-        risultati, open(
-            os.path.join(temp_path, 'elenco_risultati_%s' % (elenco_id)),
-            "wb"
-        )
-    )
-
     p = Paginator(risultati, 15)  # Pagina (num risultati per pagina)
     pg = p.page(pagina)
 
@@ -713,7 +703,7 @@ def us_elenco_messaggio(request, me, elenco_id):
 
     request.session["messaggio_destinatari_timestamp"] = datetime.now()
 
-    return redirect(reverse('posta:scrivi'))
+    return redirect(reverse('posta:scrivi') + '?id={}'.format(elenco_id))
 
 
 @pagina_privata(permessi=(ELENCHI_SOCI,))
