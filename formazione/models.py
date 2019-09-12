@@ -1016,6 +1016,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         verbale_per_seconda_data_esame = True if 'seconda_data_esame' in request.GET else False
         partecipazioni = self.partecipazioni_confermate_assente_motivo(solo=verbale_per_seconda_data_esame)
 
+        pdf_template = "pdf_corso_%sesame_verbale.html"
+        pdf_template = pdf_template % "base_" if self.corso_vecchio else pdf_template % ""
+
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva_con_python(
             nome="Verbale Esame del Corso Base %d-%d.pdf" % (self.progressivo, self.anno),
@@ -1029,7 +1032,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 "numero_aspiranti": self.partecipazioni_confermate().count(),
                 'request': request,
             },
-            modello="pdf_corso_esame_verbale.html",
+            modello=pdf_template,
         )
         return pdf
 
@@ -1138,6 +1141,14 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             return relazione
 
         return RelazioneCorso.objects.none()
+
+    @property
+    def corso_vecchio(self):
+        if not self.titolo_cri:
+            return True
+        elif self.creazione < timezone.datetime(2019, 9, 1):
+            return True
+        return False
 
     class Meta:
         verbose_name = "Corso"
@@ -1492,7 +1503,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         # else:
         #     return ModuloConfermaIscrizioneCorsoBase
 
-    def genera_scheda_valutazione(self):
+    def genera_scheda_valutazione(self, request=None):
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva_con_python(
             nome="Scheda Valutazione %s.pdf" % self.persona.codice_fiscale,
@@ -1500,6 +1511,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
                 "partecipazione": self,
                 "corso": self.corso,
                 "persona": self.persona,
+                'request': request,
             },
             modello="pdf_corso_base_scheda_valutazione.html",
         )
@@ -1529,7 +1541,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         return pdf
 
     def genera_pdf(self, request=None, **kwargs):
-        scheda_valutazione = self.genera_scheda_valutazione()
+        scheda_valutazione = self.genera_scheda_valutazione(request)
         attestato = self.genera_attestato(request)
 
         z = Zip(oggetto=self)

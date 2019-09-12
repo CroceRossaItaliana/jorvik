@@ -8,12 +8,12 @@
 <style>
     body {padding: 0; margin: 0; }
     *, html, body {font-family: "Arial", sans-serif;}
-    .front-page-logo {display:block; width: 100%; max-width: 125px;}
+    .front-page-logo {display:block; margin:0 auto; width: 100%; max-width: 125px;}
 </style>
 
 {% current_domain as SITE_URL %}
 
-<div lang="it-IT" text="#000000" dir="ltr" style="padding: 10px 10px 10px 10px; background: transparent; border: 3.00pt solid #cc0000; padding-top: 0.2cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
+<div lang="it-IT" text="#000000" dir="ltr" style="text-align:center; padding: 10px 10px 10px 10px; background: transparent; border: 3.00pt solid #cc0000; padding-top: 0.2cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
         <img class="front-page-logo" src="{{SITE_URL}}{% static 'img/attestato/cri-logo-transparent-small.png' %}" alt="Croce Rossa Italiana">
         <span style="display:block; margin:10px 0; font-size: 9ptl color: #cc0000">{{ corso.sede.comitato }}</span>
