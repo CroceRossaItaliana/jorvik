@@ -526,6 +526,10 @@ class FormVerbaleCorso(ModelForm):
                 if not cd[i]:
                     self.add_error(i, "Devi specificare l'esito di questa parte.")
 
+        if ammissione != PartecipazioneCorsoBase.AMMESSO:
+            for i in self.Meta.SCHEDA_VALUTAZIONE_CORSO_NUOVO_FIELDS:
+                self.add_error(i, "Questo campo deve essere compilato solo nel caso di AMMISSIONE.")
+
     def clean(self):
         """
         Qui va tutta la logica di validazione del modulo di generazione
