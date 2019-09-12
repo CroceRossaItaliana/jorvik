@@ -189,7 +189,9 @@
                         {% if not corso.has_partecipazioni_confermate_con_motivo_assente %}
 
                         {% endif %}
-                        <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course&v1"><i class="fa fa-fw fa-times-circle"></i> Genera il verbale</a></td>
+                        <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course&v1"><i class="fa fa-fw fa-times-circle"></i>
+                            {% if corso.titolo_cri.scheda_prevede_esame %}Genera il verbale{% else %}Termina il corso{% endif %}
+                        </a></td>
                     {% endif %}
                 </tr>
             </table>
