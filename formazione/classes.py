@@ -128,7 +128,7 @@ class GeneraReport:
     def _schede(self, partecipante):
         """ Genera la scheda di valutazione """
 
-        scheda = partecipante.genera_scheda_valutazione()
+        scheda = partecipante.genera_scheda_valutazione(request=self.request)
         self.archive.aggiungi_file(
             scheda.file.path,
             self.SCHEDA_FILENAME % partecipante.persona.nome_completo

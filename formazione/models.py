@@ -257,11 +257,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         for idx, estensione in enumerate(self.get_extensions(), 1):
             for sede in estensione.sede.all():
                 con_sottosedi = sede.esplora()
-                estensioni_dict[idx] = {
-                    'sede_sottosedi': con_sottosedi.values_list('id', flat=True),
-                    'segmenti': estensione.segmento,
-                    'estensione': estensione
-                }
+                sede_sottosedi = list(con_sottosedi.values_list('id', flat=True))
+                if idx not in estensioni_dict:
+                    estensioni_dict[idx] = {
+                        'sede_sottosedi': sede_sottosedi,
+                        'segmenti': estensione.segmento,
+                        'estensione': estensione
+                    }
+                else:
+                    estensioni_dict[idx]['sede_sottosedi'].extend(sede_sottosedi)
 
         # estensioni_che_coincidono = []
         appartenenze_che_coincidono = Appartenenza.objects.none()
@@ -758,11 +762,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 rispondi_a=rispondi_a
             )
 
-            if self.is_nuovo_corso:
-                # If course tipo is CORSO_NUOVO to send to volunteers only
+            if self.tipo == Corso.BASE and not recipient.persona.volontario:
+                # Informa solo aspiranti di zona
                 Messaggio.costruisci_e_accoda(**email_data)
-            elif not self.is_nuovo_corso and not recipient.persona.volontario:
-                # to send to <Aspirante> only
+
+            if self.is_nuovo_corso:
+                # Informa volontari secondo le estensioni impostate (sedi, segmenti, titoli)
                 Messaggio.costruisci_e_accoda(**email_data)
 
     def has_extensions(self, is_active=True, **kwargs):
@@ -804,46 +809,48 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return CorsoEstensione.get_titles(course=self, **kwargs)
 
     def get_volunteers_by_course_requirements(self, **kwargs):
-        persons = None
+        persone_da_informare = None
 
         if self.is_nuovo_corso:
             corso_extension = self.extension_type
             if CorsoBase.EXT_MIA_SEDE == corso_extension:
-                persons = self.get_volunteers_by_only_sede()
+                persone_da_informare = self.get_volunteers_by_only_sede()
 
             if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
                 by_ext_sede = self.get_volunteers_by_ext_sede()
                 by_ext_titles = self.get_volunteers_by_ext_titles()
-                persons = by_ext_sede | by_ext_titles
+                persone_da_informare = by_ext_sede | by_ext_titles
 
-        if persons is None:
-            # Sede of course (was set in the first step of course creation)
-            persons = Persona.objects.filter(sede=self.sede)
+        if persone_da_informare is None:
+            # persons = Persona.objects.filter(sede=self.sede)
+            persone_da_informare = Persona.objects.none()
 
-        return persons.filter(**kwargs).distinct()
+        return persone_da_informare.filter(**kwargs).distinct()
 
     @property
     def get_firmatario(self):
-        last = self.deleghe.last()
-        return last.firmatario if hasattr(last, 'firmatario') else last
+        return self.sede.presidente()
+        # last = self.deleghe.last()
+        # return last.firmatario if hasattr(last, 'firmatario') else last
 
     @property
     def get_firmatario_sede(self):
         course_created_by = self.get_firmatario
         if course_created_by is not None:
             return course_created_by.sede_riferimento()
-        else:
-            return course_created_by # returns None
+        return course_created_by  # returns None
 
     def get_volunteers_by_only_sede(self):
         app_attuali = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).q
         app = Appartenenza.objects.filter(app_attuali,
-                                          sede=self.get_firmatario_sede,
+                                          sede=self.sede,
                                           confermata=True)
         return self._query_get_volunteers_by_sede(app)
 
     def get_volunteers_by_ext_sede(self):
-        app_attuali = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).q
+        segmenti = self.get_segmenti_list()
+
+        app_attuali = Appartenenza.query_attuale(membro__in=segmenti).q
         app = Appartenenza.objects.filter(app_attuali,
                                           sede__in=self.get_extensions_sede(),
                                           confermata=True)
@@ -859,6 +866,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         titles = self.get_extensions_titles().values_list('id', flat=True)
         return Persona.objects.filter(sede__in=sede,
                                       titoli_personali__in=titles)
+
+    def get_segmenti_list(self):
+        """ Estrarre segmenti dalle estensioni  """
+        segmenti = list()
+        for estensione in self.get_extensions():
+            segmenti.extend(estensione.segmento)
+        return segmenti
 
     @property
     def concluso(self):
@@ -891,8 +905,12 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                     continue
 
                 # Calcola e salva l'esito dell'esame.
-                esito_esame = partecipante.IDONEO if partecipante.idoneo \
-                                                else partecipante.NON_IDONEO
+                if self.is_nuovo_corso and self.titolo_cri and not self.titolo_cri.scheda_prevede_esame:
+                    esito_esame = partecipante.IDONEO
+                else:
+                    esito_esame = partecipante.IDONEO if partecipante.idoneo \
+                                                    else partecipante.NON_IDONEO
+
                 partecipante.esito_esame = esito_esame
                 partecipante.save()
 
@@ -1002,6 +1020,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         verbale_per_seconda_data_esame = True if 'seconda_data_esame' in request.GET else False
         partecipazioni = self.partecipazioni_confermate_assente_motivo(solo=verbale_per_seconda_data_esame)
 
+        pdf_template = "pdf_corso_%sesame_verbale.html"
+        pdf_template = pdf_template % "base_" if self.corso_vecchio else pdf_template % ""
+
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva_con_python(
             nome="Verbale Esame del Corso Base %d-%d.pdf" % (self.progressivo, self.anno),
@@ -1015,7 +1036,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 "numero_aspiranti": self.partecipazioni_confermate().count(),
                 'request': request,
             },
-            modello="pdf_corso_esame_verbale.html",
+            modello=pdf_template,
         )
         return pdf
 
@@ -1124,6 +1145,17 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             return relazione
 
         return RelazioneCorso.objects.none()
+
+    @property
+    def corso_vecchio(self):
+        """ Verifica se il corso appartiene al "vecchio" modulo formazione (
+        prima dell'aggiornamento del 31/08/2019) """
+
+        if not self.titolo_cri:
+            return True
+        # elif self.creazione < timezone.datetime(2019, 9, 1):
+        #     return True
+        return False
 
     class Meta:
         verbose_name = "Corso"
@@ -1338,9 +1370,11 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     # Dati per la generazione del verbale (esito)
     POSITIVO = "P"
     NEGATIVO = "N"
+    NON_PREVISTO = "O"
     ESITO = (
         (POSITIVO, "Positivo"),
-        (NEGATIVO, "Negativo")
+        (NEGATIVO, "Negativo"),
+        (NON_PREVISTO, "Non Previsto"),
     )
 
     IDONEO = "OK"
@@ -1356,32 +1390,32 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     NON_AMMESSO = "NA"
     ASSENTE = "AS"
     ASSENTE_MOTIVO = "MO"
+    ESAME_NON_PREVISTO = "EN"
     AMMISSIONE = (
         (AMMESSO, "Ammesso"),
         (NON_AMMESSO, "Non Ammesso"),
         (ASSENTE, "Assente"),
         (ASSENTE_MOTIVO, "Assente per motivo giustificato"),
+        (ESAME_NON_PREVISTO, "Esame non previsto"),
     )
 
     ammissione = models.CharField(max_length=2, choices=AMMISSIONE, default=None, blank=True, null=True, db_index=True)
     motivo_non_ammissione = models.CharField(max_length=1025, blank=True, null=True)
 
-    esito_parte_1 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True,
-                                     help_text="La Croce Rossa.")
+    # Campi per scheda valutazione del corso base
+    esito_parte_1 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True, help_text="La Croce Rossa.")
     argomento_parte_1 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. Storia della CRI, DIU.")
-
-    esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True,
-                                     help_text="Gesti e manovre salvavita.")
+    esito_parte_2 = models.CharField(max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True, help_text="Gesti e manovre salvavita.")
     argomento_parte_2 = models.CharField(max_length=1024, blank=True, null=True, help_text="es. BLS, colpo di calore.")
-
     extra_1 = models.BooleanField(verbose_name="Prova pratica su Parte 2 sostituita da colloquio.", default=False)
-    extra_2 = models.BooleanField(verbose_name="Verifica effettuata solo sulla Parte 1 del programma del corso.",
-                                  default=False)
-
-    destinazione = models.ForeignKey("anagrafica.Sede", verbose_name="Sede di destinazione",
-                                     related_name="aspiranti_destinati", default=None, null=True, blank=True,
-                                     help_text="La Sede presso la quale verrà registrato come Volontario l'aspirante "
+    extra_2 = models.BooleanField(verbose_name="Verifica effettuata solo sulla Parte 1 del programma del corso.", default=False)
+    destinazione = models.ForeignKey("anagrafica.Sede", verbose_name="Sede di destinazione", related_name="aspiranti_destinati", default=None, null=True, blank=True, help_text="La Sede presso la quale verrà registrato come Volontario l'aspirante "
                                                "nel caso di superamento dell'esame.")
+
+    # Campi per scheda valutazione individuale dei corsi nuovi (altri corsi)
+    eventuale_tirocinio = models.CharField(_("Eventuale tirocinio/affiancamento"), max_length=1, choices=ESITO, default=None, blank=True, null=True, db_index=True)
+    valutazione_complessiva = models.CharField(_("Valutazione complessiva del Direttore del Corso"), max_length=255, null=True, blank=True)
+    eventuali_note = models.CharField(_("Eventuali Note/Osservazioni"), max_length=255, null=True, blank=True)
 
     RICHIESTA_NOME = "Iscrizione Corso"
 
@@ -1406,16 +1440,20 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 
     @property
     def idoneo(self):
-        """
-        Regole per l'idoneita'.
-        """
-        return (
+        """ Regole per l'idoneita' """
+
+        case_1 = (
             self.esito_parte_1 == self.POSITIVO and (
-                self.esito_parte_2 == self.POSITIVO or (
-                        self.extra_2 and not self.esito_parte_2
-                    )
+                self.esito_parte_2 == self.POSITIVO or (self.extra_2 and not self.esito_parte_2)
             )
         )
+
+        case_2 = (
+                self.ammissione == self.ESAME_NON_PREVISTO and
+                self.corso.is_nuovo_corso and
+                not self.corso.titolo_cri.scheda_prevede_esame
+        )
+        return case_1 or case_2
 
     def notifica_esito_esame(self, mittente=None):
         """ Invia una e-mail al partecipante con l'esito del proprio esame. """
@@ -1476,22 +1514,41 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         # else:
         #     return ModuloConfermaIscrizioneCorsoBase
 
-    def genera_scheda_valutazione(self):
+    def genera_scheda_valutazione(self, request=None):
         pdf = PDF(oggetto=self)
+
+        # Decidi sul template sulla base del tipo e della versione del modulo <formazione>
+        pdf_template = "pdf_corso_%sscheda_valutazione.html"
+        if self.corso.corso_vecchio:
+            pdf_template = pdf_template % "base_"
+        else:
+            if self.corso.is_nuovo_corso:
+                pdf_template = pdf_template % ""
+            else:
+                pdf_template = "pdf_corso_base_scheda_valutazione_nuova.html"
+
         pdf.genera_e_salva_con_python(
             nome="Scheda Valutazione %s.pdf" % self.persona.codice_fiscale,
             corpo={
                 "partecipazione": self,
                 "corso": self.corso,
                 "persona": self.persona,
+                'request': request,
             },
-            modello="pdf_corso_base_scheda_valutazione.html",
+            modello=pdf_template,
         )
         return pdf
 
     def genera_attestato(self, request=None):
         if not self.idoneo:
             return None
+
+        pdf_template = "pdf_corso_attestato.html"
+
+        # Usare il vecchio attestato per i corsi senza titolo (creati prima del 01/09/2019)
+        if not self.corso.titolo_cri:
+            pdf_template = "pdf_corso_base_attestato.html"
+
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva_con_python(
             nome="Attestato %s.pdf" % self.persona.codice_fiscale,
@@ -1501,12 +1558,12 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
                 "persona": self.persona,
                 "request": request,
             },
-            modello="pdf_corso_base_attestato.html",
+            modello=pdf_template,
         )
         return pdf
 
     def genera_pdf(self, request=None, **kwargs):
-        scheda_valutazione = self.genera_scheda_valutazione()
+        scheda_valutazione = self.genera_scheda_valutazione(request)
         attestato = self.genera_attestato(request)
 
         z = Zip(oggetto=self)
@@ -1678,7 +1735,7 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         lezioni_divise = LezioneCorsoBase.objects.filter(lezione_divisa_parent=self)
         if not lezioni_divise:
             return True
-        elif lezioni_divise.count() < 4:
+        elif lezioni_divise.count() < 7:
             return True
         return False
 

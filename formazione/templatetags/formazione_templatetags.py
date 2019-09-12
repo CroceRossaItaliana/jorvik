@@ -78,7 +78,44 @@ def can_show_tab_questionario(context):
         return corso.survey.can_vote(me, corso)
     return False
 
+
 @register.simple_tag
 def generate_area_id_selector(area_nome):
     area_id = area_nome.lower().replace(' ', "_")
     return area_id
+
+
+@register.simple_tag
+def attestato_titolo(corso):
+    from curriculum.models import Titolo
+
+    if corso.tipo == corso.BASE:
+        return " di qualifica volontario CRI"
+    else:
+        if corso.cdf_level in [Titolo.CDF_LIVELLO_I]:
+            return " di partecipazione"
+        else:
+            return " di qualifica"
+    return ''
+
+
+@register.simple_tag
+def attestato_obiettivi_formativi(corso):
+    text = corso.titolo_cri.scheda_obiettivi
+    if not text:
+        return ''
+
+    phrases = ['Nello specifico il corso mira', 'Nello specifico, il corso mira']
+    for phrase in phrases:
+        if phrase.lower() in text.lower():
+            new_text = text[:text.find(phrase)]
+            return new_text.strip()
+    return text
+
+
+@register.simple_tag
+def attestato_contenuti(corso):
+    if corso.titolo_cri:
+        if corso.titolo_cri.scheda_lezioni:
+            return [i['lezione'] for i in corso.titolo_cri.scheda_lezioni_sorted.values()]
+    return list()
