@@ -22,7 +22,7 @@ from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia, codice_fiscale, crea_utenza, \
     crea_sede, crea_appartenenza
 from base.viste import autorizzazione_nega, autorizzazione_concedi
-from formazione.forms import ModuloVerbaleAspiranteCorsoBase
+from formazione.forms import FormVerbaleCorso
 from jorvik.settings import GOOGLE_KEY
 from .models import CorsoBase, Aspirante, InvitoCorsoBase, PartecipazioneCorsoBase
 
@@ -666,7 +666,7 @@ class TestCorsi(TestCase):
             'extra_2': False,
             'destinazione': sede.pk,
         }
-        modulo = ModuloVerbaleAspiranteCorsoBase(
+        modulo = FormVerbaleCorso(
             data=dati, generazione_verbale=True, instance=partecipazione1,
         )
         modulo.fields['destinazione'].queryset = corso.possibili_destinazioni()

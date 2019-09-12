@@ -146,14 +146,14 @@
 
                     {% if corso.is_nuovo_corso %}
                         {% if corso.extension_type == corso.EXT_MIA_SEDE %}
-                            Attiva il corso e informa i volontari della mia sede
+                            Avvia il corso e informa i volontari della mia sede
                         {% elif corso.extension_type == corso.EXT_LVL_REGIONALE %}
-                            Attiva il corso e informa i volontari dei segmenti selezionati.
+                            Avvia il corso e informa i volontari dei segmenti selezionati.
                         {% else %}
-                            Attiva il corso
+                            Avvia il corso
                         {% endif %}
                     {% else %}
-                        Attiva il corso e informa gli aspiranti in zona (più di {{ corso.aspiranti_nelle_vicinanze.count }})
+                        Avvia il corso e informa gli aspiranti in zona (più di {{ corso.aspiranti_nelle_vicinanze.count }})
                     {% endif %}
                 </a>
             </p>
@@ -165,7 +165,13 @@
             <h4><i class="fa fa-fw fa-warning"></i> Terminazione corso</h4>
             <p>Il corso si &egrave; concluso, ma &egrave; ancora necessario generare il verbale del corso e compilare la relazione.</p>
             <p>Una volta generato il verbale e compilata la relazione, tutti i partecipanti verranno informati dell'esito e,
-                coloro che saranno stati promossi, verranno trasformati automaticamente in volontari.</p>
+                coloro che saranno stati promossi,
+                {% if corso.is_nuovo_corso %}
+                    otterranno la qualifica prevista dal corso.
+                {% else %}
+                    verranno trasformati automaticamente in volontari.
+                {% endif %}
+            </p>
             <p style="margin-top:25px; text-align:center; font-weight:bold;">Il presente verbale è da chiudere immediatamente dopo la sessione d’esame</p>
 
             <table class="verbale__table">
@@ -173,14 +179,19 @@
                     <td><a class="btn {% if corso.relazione_direttore.is_completed %}btn-success{%else%}btn-default{%endif%}" href="{% url 'courses:compila_relazione_direttore' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Inserire la relazione</a></td>
 
                     {% if corso.relazione_direttore.is_completed %}
-                        <td><a class="btn btn-default" href="{{ corso.url_termina }}?v1"><i class="fa fa-fw fa-check-circle"></i> Compila il verbale</a></td>
+                        {% if corso.titolo_cri.scheda_prevede_esame %}
+                            <td><a class="btn btn-default" href="{{ corso.url_termina }}?v1"><i class="fa fa-fw fa-check-circle"></i> Compila il verbale</a></td>
+                        {% endif %}
                     {% endif %}
 
                     {% if corso.relazione_direttore and corso.relazione_direttore.is_completed %}
                         <td><a class="btn btn-info" href="{{ corso.url_pdf }}?anteprima" target="_blank"><i class="fa fa-fw fa-times-circle"></i> Anteprima verbale</a></td>
+                        {% if not corso.has_partecipazioni_confermate_con_motivo_assente %}
 
-                        {% if not corso.has_partecipazioni_confermate_con_motivo_assente %}{% endif %}
-                        <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course&v1"><i class="fa fa-fw fa-times-circle"></i> Genera il verbale</a></td>
+                        {% endif %}
+                        <td><a class="btn btn-danger" href="{{ corso.url_termina }}?terminate_course&v1"><i class="fa fa-fw fa-times-circle"></i>
+                            {% if corso.titolo_cri.scheda_prevede_esame %}Genera il verbale{% else %}Termina il corso{% endif %}
+                        </a></td>
                     {% endif %}
                 </tr>
             </table>

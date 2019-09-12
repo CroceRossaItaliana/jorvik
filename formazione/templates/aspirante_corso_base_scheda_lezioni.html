@@ -125,6 +125,7 @@
 
                         {% if invalid_forms %}
                             <script>
+                                $('#{{ invalid_forms.0 }}').show();
                                 document.getElementById("{{ invalid_forms.0 }}").scrollIntoView({
                                   behavior: 'smooth'
                                 });

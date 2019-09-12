@@ -49,8 +49,7 @@
                     Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell'anno {{ corso.data_esame|date:"Y" }},
                     nei locali del {{ corso.sede }}, siti in {{ corso.locazione.comune|default:"____________________" }},
                     {{ corso.locazione.via }}, n. {{ corso.locazione.civico }}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
-                    della Croce Rossa Italiana</em> attualmente vigente, si è riunita la Commissione d’Esame convocata con
-                    protocollo n° _______ del _____________ 20__ e composta da:
+                    della Croce Rossa Italiana</em> attualmente vigente, si è riunita la Commissione d’Esame convocata e composta da:
                 </p>
             {% else %}
                 {% if corso.tipo == corso.BASE %}
@@ -58,8 +57,7 @@
                         Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell'anno {{ corso.data_esame|date:"Y" }},
                         nei locali del {{ corso.sede }}, siti in {{ corso.locazione.comune|default:"____________________" }},
                         {{ corso.locazione.via }}, n. {{ corso.locazione.civico }}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
-                        della Croce Rossa Italiana</em> attualmente vigente, la Commissione d’Esame convocata per la seconda volta con protocollo n° _______
-                        del _____________ 20__ e composta da:
+                        della Croce Rossa Italiana</em> attualmente vigente, la Commissione d’Esame convocata per la seconda volta composta da:
                     </p>
                 {% elif corso.tipo == corso.CORSO_NUOVO %}
                     <p>
@@ -92,8 +90,7 @@
 
 
                 {% if not secondo_verbale %}
-                    <p>per sottoporre ad esame finale i candidati del Corso di Formazione per Volontari della Croce Rossa Italiana
-                        attivato con protocollo n° ____________del___________.
+                    <p>per sottoporre ad esame finale i candidati del Corso di Formazione per Volontari della Croce Rossa Italiana.
                         L’elenco dei candidati, allegato   alla presente, è parte integrante del presente verbale.</p>
                     <p>
                         Gli esaminandi vengono sottoposti ad un esame teorico-pratico inerente gli argomenti trattati nonché le capacità e
@@ -108,7 +105,7 @@
                 {% else %}
                     <p>
                         per sottoporre ad esame finale i n._____ candidati, del Corso di Formazione per Volontari della Croce Rossa Italiana
-                        attivato con delibera n° ____________del___________, che per giustificati e comprovati motivi di impedimento
+                        attivato con delibera inserita a sistema, che per giustificati e comprovati motivi di impedimento
                         (art.13.8 del “Regolamento dei Corsi di Formazione per Volontari e Dipendenti della Croce Rossa Italiana”)
                         non hanno potuto svolgere l’esame nel giorno _______________.
                     </p>
@@ -131,9 +128,8 @@
 
 
                 {% if not secondo_verbale %}
-                    <p>per sottoporre ad esame finale i candidati del Corso di Formazione ({{ corso.titolo_cri }})
-                        ______________________ attivato con delibera n° ____________del___________. L’elenco dei
-                        candidati, allegato alla presente, è parte integrante del presente verbale.</p>
+                    <p>per sottoporre ad esame finale i candidati del Corso di Formazione ({{ corso.titolo_cri }}) attivato con delibera inserita a sistema.
+                        L’elenco dei candidati, allegato alla presente, è parte integrante del presente verbale.</p>
                     <p>Gli esaminandi vengono sottoposti ad un esame teorico-pratico inerente gli argomenti trattati nonché le capacità e competenze acquisite.</p>
                     <p>
                         Sono stati esaminati n. {{ numero_aspiranti }}, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione d’Esame,
@@ -141,8 +137,7 @@
                 {% else %}
                     <p>
                         La Commissione si riunisce in data odierna per sottoporre ad esame finale n._____ candidato/i, del Corso di Formazione ({{ corso.titolo_cri }})
-                        ______________________ attivato con delibera n° ____________del___________.
-                        L’elenco dei candidati, allegato alla presente, è parte integrante del presente verbale.
+                        attivato con delibera inserita a sistema. L’elenco dei candidati, allegato alla presente, è parte integrante del presente verbale.
                     </p>
                     <p>
                         L’esaminando/ gli esaminandi vengono sottoposti ad un esame teorico-pratico inerente gli argomenti trattati nonché le capacità e competenze acquisite.
@@ -194,7 +189,13 @@
                     <td>{{ p.persona.comune_nascita }}</td>
                     <td>{{ p.persona.data_nascita|date:"SHORT_DATE_FORMAT" }}</td>
                     <td>{{ p.persona.codice_fiscale }}</td>
-                    <td><b>{{ p.get_esito_esame_display|default:"N/D" }}</b></td>
+                    <td><b>
+                        {% if corso.titolo_cri.scheda_prevede_esame %}
+                            {{ p.get_esito_esame_display|default:"N/D" }}
+                        {% else %}
+                            {{ p.get_ammissione_display|default:"Esame non previsto" }}
+                        {% endif %}
+                    </b></td>
                 </tr>
             {% endfor %}
         </table>
@@ -217,7 +218,6 @@
 
             {% for nome in corso.commissione_nomi_as_list %}
                 &ndash; {{ nome|title }}<br>
-                &nbsp;&nbsp;&nbsp; ___________________________________<br><br>
             {% endfor %}
         </div>
     </div>

@@ -405,68 +405,101 @@ class FormRelazioneDelDirettoreCorso(ModelForm):
                 self.fields[f].widget.attrs['disabled'] = 'disabled'
 
 
-class ModuloVerbaleAspiranteCorsoBase(ModelForm):
+class FormVerbaleCorso(ModelForm):
     GENERA_VERBALE = 'genera_verbale'
     SALVA_SOLAMENTE = 'salva'
 
     class Meta:
+        SCHEDA_VALUTAZIONE_CORSO_BASE_FIELDS = ['esito_parte_1',
+                                                'argomento_parte_1',
+                                                'esito_parte_2',
+                                                'argomento_parte_2',
+                                                'extra_1', 'extra_2',
+                                                'destinazione',]
+        SCHEDA_VALUTAZIONE_CORSO_NUOVO_FIELDS = ['esito_parte_1',
+                                                 'esito_parte_2',
+                                                 'eventuale_tirocinio',
+                                                 'valutazione_complessiva',
+                                                 'eventuali_note',]
+
         model = PartecipazioneCorsoBase
-        fields = [
-            'ammissione', 'motivo_non_ammissione',
-            'esito_parte_1', 'argomento_parte_1',
-            'esito_parte_2', 'argomento_parte_2',
-            'extra_1', 'extra_2',
-            'destinazione',
-        ]
+        fields = ['ammissione', 'motivo_non_ammissione',]
+        fields.extend(SCHEDA_VALUTAZIONE_CORSO_BASE_FIELDS)
+        fields.extend(SCHEDA_VALUTAZIONE_CORSO_NUOVO_FIELDS)
 
     def __init__(self, *args, generazione_verbale=False, **kwargs):
         self.generazione_verbale = generazione_verbale
         super().__init__(*args, **kwargs)
 
-        if self.instance.assente_lezione_salute_e_sicurezza:
+        instance = self.instance
+        corso = instance.corso
+
+        if corso.is_nuovo_corso:
+            form_fields = self.Meta.SCHEDA_VALUTAZIONE_CORSO_NUOVO_FIELDS
+            self.fields.pop('destinazione')
+
+            self.fields['esito_parte_1'].label = "Parte Teorica"
+            self.fields['esito_parte_2'].label = "Parte Pratica"
+
+            for f in ['esito_parte_1', 'esito_parte_2']:
+                self.fields[f].help_text = ''
+        else:
+            form_fields = self.Meta.SCHEDA_VALUTAZIONE_CORSO_BASE_FIELDS
+
+            CHOICES_SENZA_NON_PREVISTO = [ch for ch in self.fields['esito_parte_1'].choices
+                                          if ch[0] != PartecipazioneCorsoBase.NON_PREVISTO]
+            self.fields['esito_parte_1'].choices = CHOICES_SENZA_NON_PREVISTO
+            self.fields['esito_parte_2'].choices = CHOICES_SENZA_NON_PREVISTO
+
+        # Escludi quei campi che non stanno nella lista di sopra
+        for field in self.fields.copy():
+            fields_list = ['ammissione', 'motivo_non_ammissione'] + form_fields
+            if field not in fields_list:
+                self.fields.pop(field)
+
+        # Partecipante non amesso se era assente su questa lezione
+        if instance.assente_lezione_salute_e_sicurezza:
             self.fields['ammissione'].choices = [(PartecipazioneCorsoBase.NON_AMMESSO, "Non Ammesso"),]
             self.fields['ammissione'].help_text = "Come da regolamento la lezione Salute e Sicurezza è obbligatoria, " \
                                                   "pertanto non può essere all'esame essendo stato assente."
 
-        if self.instance.corso.is_nuovo_corso:
-            # This field is not required if Corso Nuovo
-            self.fields.pop('destinazione')
+        if corso.titolo_cri.scheda_prevede_esame:
+            choices = self.fields['ammissione'].choices
+            self.fields['ammissione'].choices = [ch for ch in choices if ch[0] != PartecipazioneCorsoBase.ESAME_NON_PREVISTO]
+        else:
+            # Per i corsi senza esami nascondi i campi non necessari e mostra solo una voce nel campo Ammissione
 
-    def clean(self):
-        """
-        Qui va tutta la logica di validazione del modulo di generazione
-         del verbale del corso base.
-        """
+            # Mostra solo una voca
+            self.fields['ammissione'].choices = [(PartecipazioneCorsoBase.ESAME_NON_PREVISTO, "Esame non previsto"),]
 
-        cd = super().clean()
+            # Nascondi campi che non servono quando il corso non prevede esame
+            for field in self.fields.copy():
+                if field not in ['ammissione',]:
+                    self.fields[field] = forms.CharField(required=False, widget=forms.HiddenInput())
+                if field == 'destinazione':
+                    self.fields.pop('destinazione')
+
+    def clean_scheda_valutazione_corso_base(self):
+        cd = self.cleaned_data
 
         ammissione = cd['ammissione']
-        motivo_non_ammissione = cd['motivo_non_ammissione']
-        esito_parte_1, esito_parte_2 = cd['esito_parte_1'], cd['esito_parte_2']
-        argomento_parte_1, argomento_parte_2 = cd['argomento_parte_1'], cd['argomento_parte_2']
-        extra_1, extra_2 = cd['extra_1'], cd['extra_2']
-        destinazione = cd.get('destinazione')
-
-        # Controlla che non ci siano conflitti (incoerenze) nei dati.
-        if ammissione not in [PartecipazioneCorsoBase.NON_AMMESSO,
-                              PartecipazioneCorsoBase.ASSENTE_MOTIVO,]:
-            if motivo_non_ammissione:
-                self.add_error('motivo_non_ammissione',
-                    "Questo campo deve essere compilato solo nel caso di "
-                    "Non Ammesso o Assente per motivo giustificato")
+        esito_parte_1, esito_parte_2 = cd.get('esito_parte_1'), cd.get('esito_parte_2')
+        argomento_parte_1, argomento_parte_2 = cd.get('argomento_parte_1'), cd.get('argomento_parte_2')
+        extra_1, extra_2 = cd.get('extra_1'), cd.get('extra_2')
 
         # Se non è stato ammesso, un bel gruppo di campi NON devono essere compilati.
         if ammissione != PartecipazioneCorsoBase.AMMESSO:
-            da_non_compilare = ['esito_parte_1', 'argomento_parte_1', 'esito_parte_2',
-                                'extra_1', 'extra_2',]
-            for campo in da_non_compilare:
-                if self.cleaned_data[campo]:
+            non_da_compilare = ['esito_parte_1', 'argomento_parte_1',
+                                'esito_parte_2', 'extra_1', 'extra_2',]
+            for campo in non_da_compilare:
+                if self.cleaned_data.get(campo):
                     self.add_error(campo, "Questo campo deve essere compilato solo nel caso di AMMISSIONE.")
 
         # Controllo sulla parte 2 del corso
         if esito_parte_2 and extra_2:
-            self.add_error('extra_2', "Hai specificato l'esito per la parte 2. Rimuovi l'esito "
-                                      "della parte due, oppure rimuovi questa opzione.")
+            self.add_error('extra_2',
+                           "Hai specificato l'esito per la parte 2. Rimuovi l'esito "
+                           "della parte due, oppure rimuovi questa opzione.")
 
         if esito_parte_2 and not argomento_parte_2:
             self.add_error('argomento_parte_2', "Devi specificare l'argomento della seconda parte.")
@@ -479,20 +512,58 @@ class ModuloVerbaleAspiranteCorsoBase(ModelForm):
                 self.add_error('argomento_parte_1', "Devi specificare l'argomento della prima parte.")
 
             if (not esito_parte_2) and (not extra_2):
-                self.add_error('esito_parte_2', "Devi specificare l'esito di questa parte oppure "
-                                                "selezionare l'opzione per specificare che l'esame "
-                                                "non includeva questa parte.")
+                self.add_error('esito_parte_2',
+                               "Devi specificare l'esito di questa parte oppure "
+                               "selezionare l'opzione per specificare che l'esame "
+                               "non includeva questa parte.")
 
-        if not motivo_non_ammissione and ammissione in [PartecipazioneCorsoBase.NON_AMMESSO,]:
-            self.add_error('motivo_non_ammissione', "Devi specificare la motivazione di non ammissione all'esame.")
+    def clean_scheda_valutazione_corso_nuovo(self):
+        cd = self.cleaned_data
+        ammissione = cd['ammissione']
 
-        # Se sto generando il verbale, controlla che tutti i campi obbligatori siano stati riempiti.
-        if self.generazione_verbale:
-            if not destinazione and not self.instance.corso.is_nuovo_corso:
-                self.add_error('destinazione',
-                   "È necessario selezionare la Sede presso la quale il Volontario "
-                   "diventerà Volontario (nel solo caso di superamento dell'esame)."
-                )
+        if ammissione == PartecipazioneCorsoBase.AMMESSO:
+            for i in ['esito_parte_1', 'esito_parte_2', 'eventuale_tirocinio']:
+                if not cd[i]:
+                    self.add_error(i, "Devi specificare l'esito di questa parte.")
+
+        if ammissione != PartecipazioneCorsoBase.AMMESSO:
+            for i in self.Meta.SCHEDA_VALUTAZIONE_CORSO_NUOVO_FIELDS:
+                self.add_error(i, "Questo campo deve essere compilato solo nel caso di AMMISSIONE.")
+
+    def clean(self):
+        """
+        Qui va tutta la logica di validazione del modulo di generazione
+         del verbale del corso base.
+        """
+
+        cd = super().clean()
+        ammissione = cd['ammissione']
+        motivo_non_ammissione = cd['motivo_non_ammissione']
+        destinazione = cd.get('destinazione')
+
+        # Alcuni campi se esame non previsto non vengono mostrati, non validare
+        esame_previsto = True == self.instance.corso.titolo_cri.scheda_prevede_esame
+        if esame_previsto:
+            # Controlla che non ci siano conflitti (incoerenze) nei dati.
+            if ammissione not in [PartecipazioneCorsoBase.NON_AMMESSO,
+                                  PartecipazioneCorsoBase.ASSENTE_MOTIVO,]:
+                if motivo_non_ammissione:
+                    self.add_error('motivo_non_ammissione',
+                                   "Questo campo deve essere compilato solo nel caso di "
+                                   "Non Ammesso o Assente per motivo giustificato")
+
+            if self.instance.corso.is_nuovo_corso:
+                self.clean_scheda_valutazione_corso_nuovo()
+            else:
+                self.clean_scheda_valutazione_corso_base()
+
+                if not destinazione:
+                    self.add_error('destinazione',
+                           "È necessario selezionare la Sede presso la quale il Volontario "
+                           "diventerà Volontario (nel solo caso di superamento dell'esame).")
+
+            if not motivo_non_ammissione and ammissione in [PartecipazioneCorsoBase.NON_AMMESSO,]:
+                self.add_error('motivo_non_ammissione', "Devi specificare la motivazione di non ammissione all'esame.")
 
 
 class FormCreateDirettoreDelega(ModelForm):

@@ -27,7 +27,7 @@ from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoB
                      PartecipazioneCorsoBase, InvitoCorsoBase, RelazioneCorso)
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
-    ModuloVerbaleAspiranteCorsoBase, FormRelazioneDelDirettoreCorso)
+    FormVerbaleCorso, FormRelazioneDelDirettoreCorso)
 from .classes import GestionePresenza, GeneraReport
 
 
@@ -215,6 +215,7 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
         context['load_personal_document'] = load_personal_document_form
 
     context['corso'] = corso
+    context['lezioni'] = corso.lezioni.all().order_by('inizio', 'fine')
     context['puo_modificare'] = corso.can_modify(me)
     context['can_activate'] = corso.can_activate(me)
     context['puoi_partecipare'] = puoi_partecipare
@@ -328,7 +329,7 @@ def aspirante_corso_base_lezioni(request, me, pk):
     partecipanti = Persona.objects.filter(
         partecipazioni_corsi__in=corso.partecipazioni_confermate()
     ).order_by('cognome')
-    lezioni = corso.lezioni.all()
+    lezioni = corso.lezioni.all().order_by('inizio', 'fine')
 
     moduli = list()
     partecipanti_lezioni = list()
@@ -569,6 +570,14 @@ def aspirante_corso_base_attiva(request, me, pk):
 
     if request.POST:
         activation = corso.attiva(request=request, rispondi_a=me)
+
+        volontari_da_informare = corso._corso_activation_recipients_for_email().count()
+
+        if corso.extension_type == CorsoBase.EXT_MIA_SEDE:
+            messages.success(request, "Saranno avvisati %s volontari del %s" % (volontari_da_informare, corso.sede))
+        else:
+            messages.success(request, "Saranno avvisati %s volontari dei comitati secondo le impostazioni delle estensioni." % volontari_da_informare)
+
         return activation
 
     context = {
@@ -612,8 +621,8 @@ def aspirante_corso_base_termina(request, me, pk):
 
     partecipanti_moduli = list()
 
-    azione = request.POST.get('azione', default=ModuloVerbaleAspiranteCorsoBase.SALVA_SOLAMENTE)
-    generazione_verbale = azione == ModuloVerbaleAspiranteCorsoBase.GENERA_VERBALE
+    azione = request.POST.get('azione', default=FormVerbaleCorso.SALVA_SOLAMENTE)
+    generazione_verbale = azione == FormVerbaleCorso.GENERA_VERBALE
     termina_corso = generazione_verbale
 
     # Mostra partecipanti con motivo assente se l'azione è salvataggio form
@@ -634,16 +643,17 @@ def aspirante_corso_base_termina(request, me, pk):
 
     # Validazione delle form
     for partecipante in partecipanti_qs:
-        form = ModuloVerbaleAspiranteCorsoBase(request.POST or None,
+        form = FormVerbaleCorso(request.POST or None,
             prefix="part_%d" % partecipante.pk,
             instance=partecipante,
             generazione_verbale=generazione_verbale)
 
-        if corso.is_nuovo_corso:
-            pass
-        else:
-            form.fields['destinazione'].queryset = corso.possibili_destinazioni()
-            form.fields['destinazione'].initial = corso.sede
+        if corso.tipo == Corso.BASE:
+            if corso.titolo_cri.scheda_prevede_esame:
+                # GAIA-175 Campo destinazione prevede solo nel caso di esame
+                # (come da scheda di valutazione personale
+                form.fields['destinazione'].queryset = corso.possibili_destinazioni()
+                form.fields['destinazione'].initial = corso.sede
 
         if form.is_valid():
             instance = form.save(commit=False)
@@ -723,8 +733,8 @@ def aspirante_corso_base_termina(request, me, pk):
         "corso": corso,
         "puo_modificare": True,
         "partecipanti_moduli": partecipanti_moduli,
-        "azione_genera_verbale": ModuloVerbaleAspiranteCorsoBase.GENERA_VERBALE,
-        "azione_salva_solamente": ModuloVerbaleAspiranteCorsoBase.SALVA_SOLAMENTE,
+        "azione_genera_verbale": FormVerbaleCorso.GENERA_VERBALE,
+        "azione_salva_solamente": FormVerbaleCorso.SALVA_SOLAMENTE,
     }
     return 'aspirante_corso_base_scheda_termina.html', context
 
