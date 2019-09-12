@@ -1,5 +1,6 @@
 {% load staticfiles %}
 {% load base_tags %}
+{% load formazione_templatetags %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -54,7 +55,7 @@
 				<div class="front-page">
 					<div style="text-align: center;">
 						<div class="front-page-logo-wrap"><img class="front-page-logo" src="{{SITE_URL}}{% static 'img/attestato/cri-logo-transparent-small.png' %}" alt="Croce Rossa Italiana"></div>
-						<div class="front-page-heading">Attestato <span>di qualifica {% if not corso.is_nuovo_corso %}di volontario CRI{% endif %}</span></div>
+						<div class="front-page-heading">Attestato <span>{% attestato_titolo corso %}</span></div>
 						<div class="front-page-text">
 							Si attesta che <strong class="persona__nome-completo">{{ persona.nome_completo }}</strong> CF {{ persona.codice_fiscale }} ha frequentato il<br>
 
