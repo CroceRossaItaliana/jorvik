@@ -440,6 +440,11 @@ class FormVerbaleCorso(ModelForm):
         else:
             form_fields = self.Meta.SCHEDA_VALUTAZIONE_CORSO_BASE_FIELDS
 
+            CHOICES_SENZA_NON_PREVISTO = [ch for ch in self.fields['esito_parte_1'].choices
+                                          if ch[0] != PartecipazioneCorsoBase.NON_PREVISTO]
+            self.fields['esito_parte_1'].choices = CHOICES_SENZA_NON_PREVISTO
+            self.fields['esito_parte_2'].choices = CHOICES_SENZA_NON_PREVISTO
+
         # Escludi quei campi che non stanno nella lista di sopra
         for field in self.fields.copy():
             fields_list = ['ammissione', 'motivo_non_ammissione'] + form_fields

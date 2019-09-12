@@ -1363,9 +1363,11 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     # Dati per la generazione del verbale (esito)
     POSITIVO = "P"
     NEGATIVO = "N"
+    NON_PREVISTO = "O"
     ESITO = (
         (POSITIVO, "Positivo"),
-        (NEGATIVO, "Negativo")
+        (NEGATIVO, "Negativo"),
+        (NON_PREVISTO, "Non Previsto"),
     )
 
     IDONEO = "OK"
