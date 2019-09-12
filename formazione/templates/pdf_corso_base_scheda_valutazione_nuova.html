@@ -16,7 +16,7 @@
   {% current_domain as SITE_URL %}
 
   <div>
-    <div style="text-align:right;">
+    <div>
       <img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">
     </div>
   </div>
@@ -24,15 +24,15 @@
   <div style="margin-bottom:50px; text-align:center; text-transform:uppercase;font-weight:bold;">Corso DI FORMAZIONE PER VOLONTARI CRI<br>SCHEDA DI VALUTAZIONE INDIVIDUALE</div>
 
   <div style="padding-bottom:15px;">
-    <span>Nome ___________________</span> <span>Cognome _______________________</span>
+    <span>{{ persona.nome }}</span> <span>{{ persona.cognome }}</span>
   </div>
 
   <div style="padding-bottom:15px;">
-    Luogo e data di<br>nascita _________________________________________________
+    Luogo e data di<br>nascita {{ persona.luogo_nascita }}, {{ persona.data_nascita|date:"DATE_FORMAT" }}
   </div>
 
   <div>
-    Comitato CRI e Regione ___________________________________________________
+    Comitato CRI e Regione {{ corso.sede.comitato }}
   </div>
 
   <div>
