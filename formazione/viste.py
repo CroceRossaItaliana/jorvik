@@ -328,10 +328,22 @@ def aspirante_corso_base_lezioni(request, me, pk):
         return redirect(ERRORE_PERMESSI)
 
     gestione_lezioni.presenze_assenze()
-    gestione_lezioni.get_or_create()
-    context = gestione_lezioni.get_context()
 
-    return 'aspirante_corso_base_scheda_lezioni.html', context
+    return gestione_lezioni.get_http_response()
+
+
+@pagina_privata
+def course_lezione_save(request, me, pk, lezione_pk):
+    gestione_lezioni = GestioneLezioni(request, me, pk, lezione_pk)
+
+    if not gestione_lezioni.ho_permesso:
+        return redirect(ERRORE_PERMESSI)
+
+    saved = gestione_lezioni.save()
+    if saved:
+        return saved  # redirect to pagina lezioni
+
+    return gestione_lezioni.get_http_response()
 
 
 @pagina_privata
@@ -387,6 +399,7 @@ def course_lezione_dividi(request, me, pk, lezione_pk):
     lezione.dividi()
     messages.success(request, "La lezione è stata divisa. Modifica le date di inizio/fine della nuova lezione")
     return redirect(corso.url_lezioni)
+
 
 @pagina_privata
 def aspirante_corso_base_modifica(request, me, pk):

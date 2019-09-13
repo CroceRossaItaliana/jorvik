@@ -1640,6 +1640,10 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         return "%s%d/cancella/" % (self.corso.url_lezioni, self.pk)
 
     @property
+    def url_save(self):
+        return reverse('courses:lezione_save', args=[self.corso.pk, self.pk])
+
+    @property
     def url_dividi(self):
         return reverse('courses:lezione_dividi', args=[self.corso.pk, self.pk])
 
