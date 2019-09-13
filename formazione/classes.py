@@ -1,9 +1,17 @@
+from datetime import datetime, timedelta, date
+
+from django.db.models import Q
 from django.shortcuts import redirect, HttpResponse
 from django.core.urlresolvers import reverse
+from django.utils import timezone
+from django.shortcuts import get_object_or_404
 from django.contrib import messages
 
+from anagrafica.models import Persona
+from anagrafica.permessi.costanti import MODIFICA
 from base.files import Zip
-from .models import AssenzaCorsoBase
+from .models import AssenzaCorsoBase, CorsoBase
+from .forms import ModuloModificaLezione
 
 
 class GestionePresenza:
@@ -143,3 +151,93 @@ class GeneraReport:
             self.ATTESTATO_FILENAME % partecipante.persona.nome_completo
         )
         return attestato
+
+
+class GestioneLezioni:
+    def __init__(self, request, me, pk, lezione_pk=None):
+        self.request = request
+        self.me = me
+        self.lezione_pk = lezione_pk
+
+        self.moduli = list()
+        self.partecipanti_lezioni = list()
+        self.invalid_forms = list()
+
+        self.AZIONE_SALVA = request.POST and request.POST['azione'] == 'salva'
+        self.AZIONE_NUOVA = request.POST and request.POST['azione'] == 'nuova'
+        self.AZIONE_DIVIDI = request.POST and request.POST['azione'] == 'dividi'
+
+        self.corso = get_object_or_404(CorsoBase, pk=pk)
+        self.lezioni = self.corso.lezioni.all().order_by('inizio', 'fine')
+        self.partecipanti = Persona.objects.filter(
+            partecipazioni_corsi__in=self.corso.partecipazioni_confermate()
+        ).order_by('cognome')
+
+    @property
+    def ho_permesso(self):
+        if not self.me.permessi_almeno(self.corso, MODIFICA):
+            return False
+        return True
+
+    def presenze_assenze(self):
+        for lezione in self.lezioni:
+            prefix_lezione = "%s" % lezione.pk
+            form = ModuloModificaLezione(self.request.POST if self.AZIONE_SALVA else None,
+                                         instance=lezione, corso=self.corso,
+                                         prefix=prefix_lezione)
+
+            if self.AZIONE_SALVA and form.is_valid():
+                form.save()
+            else:
+                self.invalid_forms.append(int(prefix_lezione))
+
+            self.moduli += [form]
+
+            # Excludi assenze con esonero
+            partecipanti_lezione = self.partecipanti.exclude(
+                Q(assenze_corsi_base__esonero=False),
+                assenze_corsi_base__lezione=lezione
+            ).order_by('nome', 'cognome')
+
+            if self.AZIONE_SALVA:
+                gestione_presenze = GestionePresenza(self.request, lezione, self.me, self.partecipanti)
+
+            self.partecipanti_lezioni += [partecipanti_lezione]
+
+    def get_or_create(self):
+        if self.AZIONE_NUOVA:
+            self.form_nuova_lezione = ModuloModificaLezione(self.request.POST,
+                                                            prefix='nuova',
+                                                            corso=self.corso)
+            if self.form_nuova_lezione.is_valid():
+                lezione = self.form_nuova_lezione.save(commit=False)
+                lezione.corso = self.corso
+                lezione.save()
+
+                lezione.avvisa_docente_nominato_al_corso(self.me)  # Avvisa docente e il suo presidente della nomina
+                lezione.avvisa_presidente_docente_nominato()  # Se non è del comitato che organizza il corso
+
+                return redirect("%s#%d" % (self.corso.url_lezioni, self.lezione.pk))
+        else:
+            self.form_nuova_lezione = ModuloModificaLezione(prefix="nuova",
+                                                            initial={
+                                                                "inizio": timezone.now(),
+                                                                "fine": timezone.now() + timedelta(hours=2)
+                                                            },
+                                                            corso=self.corso)
+
+    def save(self):
+        pass
+
+    def dividi(self):
+        pass
+
+    def get_context(self):
+        return {
+            "puo_modificare": True,
+            "corso": self.corso,
+            "lezioni": zip(self.lezioni, self.moduli, self.partecipanti_lezioni),
+            "partecipanti": self.partecipanti,
+            "modulo_nuova_lezione": self.form_nuova_lezione,
+            'invalid_forms': self.invalid_forms,
+        }
