@@ -61,7 +61,7 @@
 
 							{% if corso.cdf_level == corso.titolo_cri.CDF_LIVELLO_I %}
 
-								<span style="display:block; text-transform: uppercase;">Corso {{ corso.titolo_cri }}</span>
+								<span style="display:block; text-transform: uppercase;">{{ corso.titolo_cri }}</span>
 								il {{ corso.data_inizio|date:"SHORT_DATE_FORMAT" }} presso il {{ corso.sede.nome }}
 
 							{% else %}
@@ -80,7 +80,8 @@
 									{{ corso.data_esame_2|date:"SHORT_DATE_FORMAT" }}
 								{% endif %}
 
-								presso il {{ corso.sede.nome }}<br> e ottenuto la qualifica di
+								presso il {{ corso.sede.nome }}<br>
+								e ottenuto la qualifica di
 							{% endif %}
 						</div>
 
