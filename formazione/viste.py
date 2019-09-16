@@ -1369,10 +1369,21 @@ def course_commissione_esame(request, me, pk):
 @pagina_privata
 def catalogo_corsi(request, me):
     from curriculum.areas import OBBIETTIVI_STRATEGICI
+    from .forms import CatalogoCorsiSearchForm
 
-    context = {'titoli': OrderedDict()}
+    context = {
+        'titoli': OrderedDict(),
+        'form': CatalogoCorsiSearchForm,
+    }
 
-    qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
+    search_query = 'q' in request.GET and request.GET.get('q')
+    if search_query:
+        qs = Titolo.objects.filter(
+            Q(Q(sigla__icontains=search_query) | Q(nome__icontains=search_query)),
+            tipo=Titolo.TITOLO_CRI)
+    else:
+        qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
+
     for i in OBBIETTIVI_STRATEGICI:
         area_id, area_nome = i
         areas = qs.filter(area=i[0])
@@ -1382,8 +1393,16 @@ def catalogo_corsi(request, me):
         for k in Titolo.CDF_LIVELLI:
             level_id = k[0]
             levels = areas.filter(cdf_livello=level_id)
-
             context['titoli'][area_nome]['level_%s' % level_id] = levels
+
+        if search_query:
+            # Fare pulizia dei settori che non hanno un risultato (solo nel caso di ricerca)
+            settore_in_dict = context['titoli'][area_nome]
+            cleaned = OrderedDict((a,t) for a,t in dict(settore_in_dict).items() if t)
+            if not len(cleaned):
+                del context['titoli'][area_nome]
+            else:
+                context['titoli'][area_nome] = cleaned
 
     context['titoli_total'] = qs.count()
 

@@ -633,3 +633,7 @@ class FormCommissioneEsame(ModelForm):
                 self.fields['nominativo_%s' % i].initial = esame_nominativi[i]
             except IndexError:
                 pass
+
+
+class CatalogoCorsiSearchForm(forms.Form):
+    q = forms.CharField(label='')
