@@ -1639,8 +1639,10 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
     corso = models.ForeignKey(CorsoBase, related_name='lezioni', on_delete=models.PROTECT)
     nome = models.TextField()
-    docente = models.ForeignKey(Persona, null=True, default='',
-                                verbose_name='Docente della lezione',)
+    docente = models.ManyToManyField(Persona, verbose_name='Docente della lezione',)
+    docente_esterno = models.CharField('Docente esterno della lezione',
+                                       max_length=255, null=True, blank=True,
+                                        help_text="Da compilare solo per i docenti esterni")
     obiettivo = models.CharField('Obiettivo formativo della lezione',
                                  max_length=255, null=True, blank=True)
     luogo = models.CharField(max_length=255, null=True, blank=True,

@@ -136,7 +136,7 @@ class ModuloCreazioneCorsoBase(ModelForm):
 
 
 class ModuloModificaLezione(ModelForm):
-    docente = autocomplete_light.ModelChoiceField("DocenteLezioniCorso")
+    docente = autocomplete_light.ModelMultipleChoiceField("DocenteLezioniCorso")
     has_nulla_osta = forms.BooleanField(label='Responsabilità di aver ricevuto nulla osta dal presidente del comitato di appartenenza',
                                         initial=True)
     fine = forms.DateTimeField()
@@ -192,7 +192,8 @@ class ModuloModificaLezione(ModelForm):
 
     class Meta:
         model = LezioneCorsoBase
-        fields = ['nome', 'docente', 'has_nulla_osta', 'inizio', 'fine', 'obiettivo', 'luogo',]
+        fields = ['nome', 'docente', 'docente_esterno', 'has_nulla_osta',
+                  'inizio', 'fine', 'obiettivo', 'luogo',]
         labels = {
             'nome': 'Lezione',
             'obiettivo': 'Argomento',
