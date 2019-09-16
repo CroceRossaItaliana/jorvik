@@ -5,7 +5,8 @@
 
 {% block css_extra %}
     body {font-family: 'Arial'; padding:0; margin:0;}
-    .heading-logo-cri {width:150px;}
+    .heading-logo-cri {display:block; margin:0 auto 20px; width:150px;}
+    .heading-scheda-title {margin-bottom:50px; text-align:center; text-transform:uppercase;font-weight:bold;}
     .table-elenco {border: 1px solid #bbb; width: 100%; text-align: left; font-size: 11pt; border-collapse: collapse;}
     .table-elenco td, .table-elenco th {border: 1px solid; padding: 6px 4px;}
     .table-elenco-col-name {font-size:11px; font-weight:bold; text-align:center;}
@@ -21,7 +22,7 @@
     </div>
   </div>
 
-  <div style="margin-bottom:50px; text-align:center; text-transform:uppercase;font-weight:bold;">Corso {{ corso.titolo_cri }}<br>SCHEDA DI VALUTAZIONE INDIVIDUALE</div>
+  <div class="heading-scheda-title">{{ corso.titolo_cri }}<br>SCHEDA DI VALUTAZIONE INDIVIDUALE</div>
 
   <div style="padding-bottom:15px;">
     <span>{{ persona.nome }}</span> <span>{{ persona.cognome }}</span>

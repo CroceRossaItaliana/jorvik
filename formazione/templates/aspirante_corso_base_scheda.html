@@ -176,10 +176,14 @@
 
             <table class="verbale__table">
                 <tr>
-                    <td><a class="btn {% if corso.relazione_direttore.is_completed %}btn-success{%else%}btn-default{%endif%}" href="{% url 'courses:compila_relazione_direttore' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Inserire la relazione</a></td>
+                    {% if corso.esame_previsto %}
+                        <td>
+                            <a class="btn {% if corso.relazione_direttore.is_completed %}btn-success{%else%}btn-default{%endif%}" href="{% url 'courses:compila_relazione_direttore' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Inserire la relazione</a>
+                        </td>
+                    {% endif %}
 
-                    {% if corso.relazione_direttore.is_completed %}
-                        {% if corso.titolo_cri.scheda_prevede_esame %}
+                    {% if corso.esame_previsto and corso.relazione_direttore.is_completed %}
+                        {% if corso.corso_vecchio or corso.titolo_cri.scheda_prevede_esame %}
                             <td><a class="btn btn-default" href="{{ corso.url_termina }}?v1"><i class="fa fa-fw fa-check-circle"></i> Compila il verbale</a></td>
                         {% endif %}
                     {% endif %}
@@ -208,11 +212,13 @@
                 </table>
             {% endif %}
 
-            {% if me == corso.sede.presidente or corso.sede.presidente in corso.direttori_corso  %}
-                <hr><p>Per generare il verbale è necessario <strong><a href="{% url 'courses:commissione_esame' corso.pk %}">compilare i nominativi e caricare delibera</a></strong> della commissione esame.</p>
-            {% elif not me.is_presidente and me.is_direttore %}
-                {% if not corso.ha_compilato_commissione_esame %}
-                    <hr><p>Per generare il verbale è necessario che il presidente <strong>compila i nominativi e carica delibera</strong> della commissione esame.</p>
+            {% if corso.esame_previsto %}
+                {% if me == corso.sede.presidente or corso.sede.presidente in corso.direttori_corso  %}
+                    <hr><p>Per generare il verbale è necessario <strong><a href="{% url 'courses:commissione_esame' corso.pk %}">compilare i nominativi e caricare delibera</a></strong> della commissione esame.</p>
+                {% elif not me.is_presidente and me.is_direttore %}
+                    {% if not corso.ha_compilato_commissione_esame %}
+                        <hr><p>Per generare il verbale è necessario che il presidente <strong>compila i nominativi e carica delibera</strong> della commissione esame.</p>
+                    {% endif %}
                 {% endif %}
             {% endif %}
         </div>

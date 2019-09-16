@@ -463,21 +463,22 @@ class FormVerbaleCorso(ModelForm):
             self.fields['ammissione'].help_text = "Come da regolamento la lezione Salute e Sicurezza è obbligatoria, " \
                                                   "pertanto non può essere all'esame essendo stato assente."
 
-        if corso.titolo_cri.scheda_prevede_esame:
-            choices = self.fields['ammissione'].choices
-            self.fields['ammissione'].choices = [ch for ch in choices if ch[0] != PartecipazioneCorsoBase.ESAME_NON_PREVISTO]
-        else:
-            # Per i corsi senza esami nascondi i campi non necessari e mostra solo una voce nel campo Ammissione
+        if not corso.corso_vecchio:
+            if corso.titolo_cri and corso.titolo_cri.scheda_prevede_esame:
+                choices = self.fields['ammissione'].choices
+                self.fields['ammissione'].choices = [ch for ch in choices if ch[0] != PartecipazioneCorsoBase.ESAME_NON_PREVISTO]
+            else:
+                # Per i corsi senza esami nascondi i campi non necessari e mostra solo una voce nel campo Ammissione
 
-            # Mostra solo una voca
-            self.fields['ammissione'].choices = [(PartecipazioneCorsoBase.ESAME_NON_PREVISTO, "Esame non previsto"),]
+                # Mostra solo una voca
+                self.fields['ammissione'].choices = [(PartecipazioneCorsoBase.ESAME_NON_PREVISTO, "Esame non previsto"),]
 
-            # Nascondi campi che non servono quando il corso non prevede esame
-            for field in self.fields.copy():
-                if field not in ['ammissione',]:
-                    self.fields[field] = forms.CharField(required=False, widget=forms.HiddenInput())
-                if field == 'destinazione':
-                    self.fields.pop('destinazione')
+                # Nascondi campi che non servono quando il corso non prevede esame
+                for field in self.fields.copy():
+                    if field not in ['ammissione',]:
+                        self.fields[field] = forms.CharField(required=False, widget=forms.HiddenInput())
+                    if field == 'destinazione':
+                        self.fields.pop('destinazione')
 
     def clean_scheda_valutazione_corso_base(self):
         cd = self.cleaned_data
@@ -528,7 +529,8 @@ class FormVerbaleCorso(ModelForm):
 
         if ammissione != PartecipazioneCorsoBase.AMMESSO:
             for i in self.Meta.SCHEDA_VALUTAZIONE_CORSO_NUOVO_FIELDS:
-                self.add_error(i, "Questo campo deve essere compilato solo nel caso di AMMISSIONE.")
+                if cd[i]:
+                    self.add_error(i, "Questo campo deve essere compilato solo nel caso di AMMISSIONE.")
 
     def clean(self):
         """
@@ -542,7 +544,10 @@ class FormVerbaleCorso(ModelForm):
         destinazione = cd.get('destinazione')
 
         # Alcuni campi se esame non previsto non vengono mostrati, non validare
-        esame_previsto = True == self.instance.corso.titolo_cri.scheda_prevede_esame
+
+        corso = self.instance.corso
+
+        esame_previsto = True == (corso.titolo_cri and corso.titolo_cri.scheda_prevede_esame)
         if esame_previsto:
             # Controlla che non ci siano conflitti (incoerenze) nei dati.
             if ammissione not in [PartecipazioneCorsoBase.NON_AMMESSO,

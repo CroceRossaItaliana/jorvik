@@ -28,7 +28,7 @@ from .models import (Aspirante, Corso, CorsoBase, CorsoEstensione, LezioneCorsoB
 from .forms import (ModuloCreazioneCorsoBase, ModuloModificaLezione,
     ModuloModificaCorsoBase, ModuloIscrittiCorsoBaseAggiungi, FormCommissioneEsame,
     FormVerbaleCorso, FormRelazioneDelDirettoreCorso)
-from .classes import GestionePresenza, GeneraReport
+from .classes import GeneraReport, GestioneLezioni
 
 
 @pagina_privata
@@ -322,81 +322,28 @@ def aspirante_corso_base_mappa(request, me, pk):
 
 @pagina_privata
 def aspirante_corso_base_lezioni(request, me, pk):
-    corso = get_object_or_404(CorsoBase, pk=pk)
-    if not me.permessi_almeno(corso, MODIFICA):
+    gestione_lezioni = GestioneLezioni(request, me, pk)
+
+    if not gestione_lezioni.ho_permesso:
         return redirect(ERRORE_PERMESSI)
 
-    partecipanti = Persona.objects.filter(
-        partecipazioni_corsi__in=corso.partecipazioni_confermate()
-    ).order_by('cognome')
-    lezioni = corso.lezioni.all().order_by('inizio', 'fine')
+    gestione_lezioni.presenze_assenze()
 
-    moduli = list()
-    partecipanti_lezioni = list()
-    invalid_forms = list()
+    return gestione_lezioni.get_http_response()
 
-    AZIONE_SALVA = request.POST and request.POST['azione'] == 'salva'
-    AZIONE_NUOVA = request.POST and request.POST['azione'] == 'nuova'
 
-    # Presenze/assenze
-    for lezione in lezioni:
-        prefix_lezione = "%s" % lezione.pk
-        form = ModuloModificaLezione(request.POST if AZIONE_SALVA else None,
-            instance=lezione, corso=corso, prefix=prefix_lezione)
+@pagina_privata
+def course_lezione_save(request, me, pk, lezione_pk):
+    gestione_lezioni = GestioneLezioni(request, me, pk, lezione_pk)
 
-        if AZIONE_SALVA and form.is_valid():
-            form.save()
-        else:
-            invalid_forms.append(int(prefix_lezione))
+    if not gestione_lezioni.ho_permesso:
+        return redirect(ERRORE_PERMESSI)
 
-        moduli += [form]
+    saved = gestione_lezioni.save()
+    if saved:
+        return saved  # redirect to pagina lezioni
 
-        # Excludi assenze con esonero
-        partecipanti_lezione = partecipanti.exclude(
-            Q(assenze_corsi_base__esonero=False),
-            assenze_corsi_base__lezione=lezione
-        ).order_by('nome', 'cognome')
-
-        if AZIONE_SALVA:
-            gestione_presenze = GestionePresenza(request, lezione, me, partecipanti)
-
-        partecipanti_lezioni += [partecipanti_lezione]
-
-    if AZIONE_NUOVA:
-        form_nuova_lezione = ModuloModificaLezione(request.POST, prefix="nuova", corso=corso)
-        if form_nuova_lezione.is_valid():
-            lezione = form_nuova_lezione.save(commit=False)
-            lezione.corso = corso
-            lezione.save()
-
-            lezione.avvisa_docente_nominato_al_corso(me)  # Avvisa docente e il suo presidente della nomina
-            lezione.avvisa_presidente_docente_nominato()  # Se non è del comitato che organizza il corso
-
-            return redirect("%s#%d" % (corso.url_lezioni, lezione.pk))
-    else:
-        form_nuova_lezione = ModuloModificaLezione(prefix="nuova", initial={
-            "inizio": timezone.now(),
-            "fine": timezone.now() + timedelta(hours=2)
-        }, corso=corso)
-
-    try:
-        if AZIONE_SALVA or AZIONE_NUOVA:
-            if not form.is_valid():
-                messages.error(request, 'Verifica tutti i moduli sulla presenza degli errori.')
-    except:
-        pass
-
-    lezioni = zip(lezioni, moduli, partecipanti_lezioni)
-
-    context = {
-        "corso": corso,
-        "puo_modificare": True,
-        "lezioni": lezioni,
-        "partecipanti": partecipanti,
-        "modulo_nuova_lezione": form_nuova_lezione,
-        'invalid_forms': invalid_forms,
-    }
-    return 'aspirante_corso_base_scheda_lezioni.html', context
+    return gestione_lezioni.get_http_response()
 
 
 @pagina_privata
@@ -437,21 +384,6 @@ def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
 
     return redirect(corso.url_lezioni)
 
-
-@pagina_privata
-def course_lezione_dividi(request, me, pk, lezione_pk):
-    corso = get_object_or_404(CorsoBase, pk=pk)
-    if not me.permessi_almeno(corso, MODIFICA):
-        return redirect(ERRORE_PERMESSI)
-
-    lezione = get_object_or_404(LezioneCorsoBase, pk=lezione_pk)
-    if not lezione.puo_dividere:
-        messages.error(request, "Non si può più dividere questa lezione.")
-        return redirect(corso.url_lezioni)
-
-    lezione.dividi()
-    messages.success(request, "La lezione è stata divisa. Modifica le date di inizio/fine della nuova lezione")
-    return redirect(corso.url_lezioni)
 
 @pagina_privata
 def aspirante_corso_base_modifica(request, me, pk):
@@ -649,7 +581,7 @@ def aspirante_corso_base_termina(request, me, pk):
             generazione_verbale=generazione_verbale)
 
         if corso.tipo == Corso.BASE:
-            if corso.titolo_cri.scheda_prevede_esame:
+            if corso.titolo_cri and corso.titolo_cri.scheda_prevede_esame:
                 # GAIA-175 Campo destinazione prevede solo nel caso di esame
                 # (come da scheda di valutazione personale
                 form.fields['destinazione'].queryset = corso.possibili_destinazioni()
