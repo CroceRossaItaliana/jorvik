@@ -686,9 +686,24 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def ha_compilato_commissione_esame(self):
+        if self.titolo_cri and not self.titolo_cri.scheda_prevede_esame:
+            return True  # Considera compilato se corso non prevede esame
+
         if self.commissione_esame_file and self.commissione_esame_names:
             return True
         return False
+
+    @property
+    def esame_previsto(self):
+        if self.corso_vecchio:
+            return True
+
+        if self.titolo_cri:
+            if not self.titolo_cri.scheda_prevede_esame:
+                return False
+            if self.titolo_cri.scheda_esame_facoltativo == True:
+                return False
+        return True
 
     def partecipazioni_in_attesa(self):
         return PartecipazioneCorsoBase.con_esito_pending(corso=self)
@@ -1451,7 +1466,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         case_2 = (
                 self.ammissione == self.ESAME_NON_PREVISTO and
                 self.corso.is_nuovo_corso and
-                not self.corso.titolo_cri.scheda_prevede_esame
+                self.corso.titolo_cri and not self.corso.titolo_cri.scheda_prevede_esame
         )
         return case_1 or case_2
 
@@ -1640,8 +1655,8 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         return "%s%d/cancella/" % (self.corso.url_lezioni, self.pk)
 
     @property
-    def url_dividi(self):
-        return reverse('courses:lezione_dividi', args=[self.corso.pk, self.pk])
+    def url_save(self):
+        return reverse('courses:lezione_save', args=[self.corso.pk, self.pk])
 
     def avvisa_docente_nominato_al_corso(self, me):
         Messaggio.costruisci_e_accoda(
@@ -1746,8 +1761,8 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
             scheda_lezione_num=self.scheda_lezione_num,
             inizio=self.inizio + datetime.timedelta(minutes=60),
             nome=self.nome,
-            docente=self.docente,
-            luogo=self.luogo,
+            # docente=self.docente,
+            # luogo=self.luogo,
         )
 
     @property
@@ -2006,6 +2021,9 @@ class RelazioneCorso(ModelloSemplice, ConMarcaTemporale):
 
     @property
     def is_completed(self):
+        if self.corso.esame_previsto == False:
+            return True
+
         model_fields = self._meta.get_fields()
         super_class_fields_to_exclude = ['id', 'creazione', 'ultima_modifica', 'corso']
         fields = [i.name for i in model_fields if i.name not in super_class_fields_to_exclude]
