@@ -27,8 +27,5 @@ urlpatterns = [
     url(r'^%s/lezione/(?P<lezione_pk>[0-9]+)/save/$' % pk,
         views.course_lezione_save,
         name='lezione_save'),
-    url(r'^%s/lezione/dividi/(?P<lezione_pk>[0-9]+)/$' % pk,
-        views.course_lezione_dividi,
-        name='lezione_dividi'),
     url(r'catalog/$', views.catalogo_corsi, name='catalog')
 ]

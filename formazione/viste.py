@@ -386,22 +386,6 @@ def aspirante_corso_base_lezioni_cancella(request, me, pk, lezione_pk):
 
 
 @pagina_privata
-def course_lezione_dividi(request, me, pk, lezione_pk):
-    corso = get_object_or_404(CorsoBase, pk=pk)
-    if not me.permessi_almeno(corso, MODIFICA):
-        return redirect(ERRORE_PERMESSI)
-
-    lezione = get_object_or_404(LezioneCorsoBase, pk=lezione_pk)
-    if not lezione.puo_dividere:
-        messages.error(request, "Non si può più dividere questa lezione.")
-        return redirect(corso.url_lezioni)
-
-    lezione.dividi()
-    messages.success(request, "La lezione è stata divisa. Modifica le date di inizio/fine della nuova lezione")
-    return redirect(corso.url_lezioni)
-
-
-@pagina_privata
 def aspirante_corso_base_modifica(request, me, pk):
     from .models import CorsoFile, CorsoLink
     from .forms import FormModificaCorsoSede

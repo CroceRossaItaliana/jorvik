@@ -1643,10 +1643,6 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
     def url_save(self):
         return reverse('courses:lezione_save', args=[self.corso.pk, self.pk])
 
-    @property
-    def url_dividi(self):
-        return reverse('courses:lezione_dividi', args=[self.corso.pk, self.pk])
-
     def avvisa_docente_nominato_al_corso(self, me):
         Messaggio.costruisci_e_accoda(
             oggetto='Docente al %s' % self.corso.nome,
