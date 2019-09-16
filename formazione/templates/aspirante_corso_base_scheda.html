@@ -176,13 +176,13 @@
 
             <table class="verbale__table">
                 <tr>
-                    {% if corso.corso_vecchio or corso.titolo_cri.scheda_prevede_esame %}
+                    {% if corso.esame_previsto %}
                         <td>
                             <a class="btn {% if corso.relazione_direttore.is_completed %}btn-success{%else%}btn-default{%endif%}" href="{% url 'courses:compila_relazione_direttore' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Inserire la relazione</a>
                         </td>
                     {% endif %}
 
-                    {% if corso.relazione_direttore.is_completed %}
+                    {% if corso.esame_previsto and corso.relazione_direttore.is_completed %}
                         {% if corso.corso_vecchio or corso.titolo_cri.scheda_prevede_esame %}
                             <td><a class="btn btn-default" href="{{ corso.url_termina }}?v1"><i class="fa fa-fw fa-check-circle"></i> Compila il verbale</a></td>
                         {% endif %}
@@ -212,7 +212,7 @@
                 </table>
             {% endif %}
 
-            {% if corso.corso_vecchio or corso.titolo_cri and corso.titolo_cri.scheda_prevede_esame %}
+            {% if corso.esame_previsto %}
                 {% if me == corso.sede.presidente or corso.sede.presidente in corso.direttori_corso  %}
                     <hr><p>Per generare il verbale è necessario <strong><a href="{% url 'courses:commissione_esame' corso.pk %}">compilare i nominativi e caricare delibera</a></strong> della commissione esame.</p>
                 {% elif not me.is_presidente and me.is_direttore %}
