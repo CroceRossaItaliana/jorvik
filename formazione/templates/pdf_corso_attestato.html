@@ -59,26 +59,37 @@
 						<div class="front-page-text">
 							Si attesta che <strong class="persona__nome-completo">{{ persona.nome_completo }}</strong> CF {{ persona.codice_fiscale }} ha frequentato il<br>
 
-							<span style="display:block; text-transform: uppercase;">
-								{% if corso.titolo_cri %}
-									{{ corso.titolo_cri }}
-								{% else %}
-									Corso di formazione per volontari della Croce Rossa Italiana
-								{% endif %}
-							</span>
+							{% if corso.cdf_level == corso.titolo_cri.CDF_LIVELLO_I %}
 
-							dal {{ corso.data_inizio|date:"SHORT_DATE_FORMAT" }} al
-							{% if not partecipazione.esaminato_seconda_data %}
-								{{ corso.data_esame|date:"SHORT_DATE_FORMAT" }}
+								<span style="display:block; text-transform: uppercase;">Corso {{ corso.titolo_cri }}</span>
+								il {{ corso.data_inizio|date:"SHORT_DATE_FORMAT" }} presso il {{ corso.sede.nome }}
+
 							{% else %}
-								{{ corso.data_esame_2|date:"SHORT_DATE_FORMAT" }}
-							{% endif %}
+								<span style="display:block; text-transform: uppercase;">
+									{% if corso.titolo_cri %}
+										{{ corso.titolo_cri }}
+									{% else %}
+										Corso di formazione per volontari della Croce Rossa Italiana
+									{% endif %}
+								</span>
 
-							presso il {{ corso.sede.nome }}<br> e ottenuto la qualifica di
+								dal {{ corso.data_inizio|date:"SHORT_DATE_FORMAT" }} al
+								{% if not partecipazione.esaminato_seconda_data %}
+									{{ corso.data_esame|date:"SHORT_DATE_FORMAT" }}
+								{% else %}
+									{{ corso.data_esame_2|date:"SHORT_DATE_FORMAT" }}
+								{% endif %}
+
+								presso il {{ corso.sede.nome }}<br> e ottenuto la qualifica di
+							{% endif %}
 						</div>
-						<div class="front-page-qualifica">
-							{% if corso.is_nuovo_corso %} {{ corso.titolo_cri }} {% else %} Volontario CRI {% endif %}
-						</div>
+
+						{% if corso.cdf_level != corso.titolo_cri.CDF_LIVELLO_I %}
+							<div class="front-page-qualifica">
+								{% if corso.is_nuovo_corso %} {{ corso.titolo_cri }} {% else %} Volontario CRI {% endif %}
+							</div>
+						{% endif %}
+
 						<div class="front-page-labels">
 							<div style="width: 44%; padding-left: 6%; box-sizing: border-box; text-align: left;">{{ corso.locazione }}<br>{{ corso.data_esame|date:"d/m/Y" }}</div>
 							<div style="width: 25%;">Il Direttore del Corso<br>

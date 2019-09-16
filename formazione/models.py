@@ -1466,7 +1466,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         case_2 = (
                 self.ammissione == self.ESAME_NON_PREVISTO and
                 self.corso.is_nuovo_corso and
-                not self.corso.titolo_cri.scheda_prevede_esame
+                self.corso.titolo_cri and not self.corso.titolo_cri.scheda_prevede_esame
         )
         return case_1 or case_2
 
