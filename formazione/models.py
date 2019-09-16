@@ -686,6 +686,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def ha_compilato_commissione_esame(self):
+        if self.titolo_cri and not self.titolo_cri.scheda_prevede_esame:
+            return True  # Considera compilito se corso non prevede esame
+
         if self.commissione_esame_file and self.commissione_esame_names:
             return True
         return False
@@ -2006,6 +2009,10 @@ class RelazioneCorso(ModelloSemplice, ConMarcaTemporale):
 
     @property
     def is_completed(self):
+        if not self.corso.corso_vecchio:
+            if self.corso.titolo_cri and not self.corso.titolo_cri.scheda_prevede_esame:
+                return True
+
         model_fields = self._meta.get_fields()
         super_class_fields_to_exclude = ['id', 'creazione', 'ultima_modifica', 'corso']
         fields = [i.name for i in model_fields if i.name not in super_class_fields_to_exclude]
