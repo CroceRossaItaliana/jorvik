@@ -11,6 +11,7 @@
   .esonero-text {font-size: 12px; padding: 4px 6px;}
   .lezione-scheda-text {display:block; margin-bottom:15px; text-align:center; color:red; font-weight:bold;}
   .toggle-bg {background-color: #c00 !important; color: #fff;}
+  .lezione-validation-msg {margin:15px 0; color:red; font-size:16px; text-align:center; font-weight:bold;}
 </style>
 
 <div class="row">
@@ -28,9 +29,9 @@
               <div class="toggleLezione" data-lezione-id="#{{ lezione.pk }}" style="cursor:pointer; font-size:22px;">
                 <strong>{{ lezione.nome }}</strong>
                 <div style="margin:0 0 7px 0; font-size:14px;">
-                                            <span {% if puo_modificare and lezione.non_revisionata %}class="scheda-lezione-non-revisionata"{% endif %}>
-                                                {{ lezione.inizio.date|naturalday:"DATE_FORMAT" }}, {{ lezione.inizio.time|date:"TIME_FORMAT" }}
-                                            </span>
+                  <span {% if puo_modificare and lezione.non_revisionata %}class="scheda-lezione-non-revisionata"{% endif %}>
+                      {{ lezione.inizio.date|naturalday:"DATE_FORMAT" }}, {{ lezione.inizio.time|date:"TIME_FORMAT" }}
+                  </span>
                   {% if lezione.fine %} &mdash; {{ lezione.fine.time|date:"TIME_FORMAT" }}{% endif %}
                   {% if lezione.lezione_ore and not lezione.divisa %}(<strong>{{ lezione.lezione_ore }}</strong> ore){% endif %}
                 </div>
@@ -48,19 +49,19 @@
                 {% bootstrap_form modulo %}
 
                 {% if invalid_forms and lezione.pk in invalid_forms  %}
-                <div style="margin:15px 0; color:red; font-size:16px; text-align:center; font-weight:bold;">Verificare i dati inseriti per questa lezione.</div>
+                  <div class="lezione-validation-msg">Verificare i dati inseriti per questa lezione.</div>
                 {% endif %}
 
                 <button type="submit" name="azione" value="salva" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva informazioni</button>
 
                 {% if lezione.precaricata and not lezione.divisa and lezione.puo_dividere %}
-                <a href="{{ lezione.url_dividi }}" class="btn btn-block"><i class="fa fa-fw fa-columns"></i> Dividi lezione</a>
+                  <button type="submit" name="azione" value="dividi" class="btn btn-block"><i class="fa fa-fw fa-columns"></i> Dividi lezione</button>
                 {% endif %}
 
                 {% if not lezione.precaricata or lezione.precaricata and lezione.divisa %}
-                <a href="{{ lezione.url_cancella }}" class="btn btn-sm btn-danger btn-block" data-conferma="Cancellare questa lezione? Questo eliminerà anche le assenze registrate.">
-                  <i class="fa fa-fw fa-trash"></i> Cancella lezione
-                </a>
+                  <a href="{{ lezione.url_cancella }}" class="btn btn-sm btn-danger btn-block" data-conferma="Cancellare questa lezione? Questo eliminerà anche le assenze registrate.">
+                    <i class="fa fa-fw fa-trash"></i> Cancella lezione
+                  </a>
                 {% endif %}
               </form>
             </td>

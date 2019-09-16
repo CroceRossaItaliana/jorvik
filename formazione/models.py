@@ -1750,8 +1750,8 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
             scheda_lezione_num=self.scheda_lezione_num,
             inizio=self.inizio + datetime.timedelta(minutes=60),
             nome=self.nome,
-            docente=self.docente,
-            luogo=self.luogo,
+            # docente=self.docente,
+            # luogo=self.luogo,
         )
 
     @property

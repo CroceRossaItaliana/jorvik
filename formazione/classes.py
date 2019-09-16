@@ -202,8 +202,10 @@ class GestioneLezioni:
         ).order_by('nome', 'cognome')
 
     def _lezione_form(self, lezione):
+        request_data = self.request.POST if (self.AZIONE_SALVA or
+                                             self.AZIONE_DIVIDI) else None
         return ModuloModificaLezione(
-            self.request.POST if self.AZIONE_SALVA else None,
+            request_data,
             instance=lezione,
             prefix="%s" % lezione.pk,
             corso=self.corso
@@ -267,6 +269,14 @@ class GestioneLezioni:
             self.created = lezione
 
     def save(self):
+        """
+        Chiamata dalla view <course_lezione_save>
+
+        :return: Se la form è validata - http response object.
+        Altrimento non restituisce nulla, saranno restituiti i dati del metodo
+        get_http_response() (segui la logica della vista)
+        """
+
         lezione = self.lezioni.get(pk=self.lezione_pk, corso=self.corso)
         form = self._lezione_form(lezione)
 
@@ -276,8 +286,13 @@ class GestioneLezioni:
             messages.success(self.request, "La presenze sono state salvate.")
             return redirect("%s" % self.corso.url_lezioni)
 
-        if self.AZIONE_SALVA and form.is_valid():
+        if form.is_valid() and (self.AZIONE_SALVA or self.AZIONE_DIVIDI):
             form.save()
+
+            if self.AZIONE_DIVIDI:
+                # A questo punto la lezione parente ha salvato i dati inseriti
+                # nella form e ha creato una nuova lezione figlio
+                return self.dividi(lezione)
 
             messages.success(self.request, "La lezione è stata salvata correttamente.")
             return redirect("%s#%d" % (self.corso.url_lezioni, lezione.pk))
@@ -286,13 +301,20 @@ class GestioneLezioni:
 
         self.moduli += [form]
 
-        # Excludi assenze con esonero
+        # Escludi assenze con esonero
         partecipanti_lezione = self.get_partecipanti_senza_esonero(lezione)
 
         self.partecipanti_lezioni += [partecipanti_lezione]
 
-    def dividi(self):
-        pass
+    def dividi(self, lezione):
+        if not lezione.puo_dividere:
+            messages.error(self.request, "Non si può più dividere questa lezione.")
+            return redirect(self.corso.url_lezioni)
+
+        lezione.dividi()
+
+        messages.success(self.request, "La lezione è stata divisa. Modifica le date di inizio/fine della nuova lezione")
+        return redirect(self.corso.url_lezioni)
 
     def get_context(self):
         return 'aspirante_corso_base_scheda_lezioni.html', {
