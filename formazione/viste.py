@@ -1380,7 +1380,7 @@ def catalogo_corsi(request, me):
     if search_query:
         qs = Titolo.objects.filter(
             Q(Q(sigla__icontains=search_query) | Q(nome__icontains=search_query)),
-            tipo=Titolo.TITOLO_CRI)
+            tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
     else:
         qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
 
