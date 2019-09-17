@@ -307,9 +307,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @classmethod
     def find_courses_for_volunteer(cls, volunteer):
-        today = datetime.date.today()
+        today = now().today()
         sede = volunteer.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO,
-                                                  Appartenenza.DIPENDENTE])
+                                                  Appartenenza.ESTESO,
+                                                  Appartenenza.ORDINARIO,
+                                                  Appartenenza.SOSTENITORE,
+                                                  Appartenenza.DIPENDENTE,])
+
         if not sede:
             return cls.objects.none()  # corsi non trovati perchè utente non ha sede
 
@@ -317,20 +321,20 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         # Trova corsi che hanno <sede> uguale alla <sede del volontario>
         ###
         qs_estensioni_1 = CorsoEstensione.objects.filter(sede__in=sede,
-                                                         corso__tipo=Corso.CORSO_NUOVO,
+                                                         corso__tipo__in=[Corso.CORSO_NUOVO, Corso.BASE],
                                                          corso__stato=Corso.ATTIVO,
-                                                         corso__data_inizio__gt=today)
+                                                         corso__data_attivazione__gte=today)
         courses_1 = cls.objects.filter(id__in=qs_estensioni_1.values_list('corso__id'))
 
         ###
         # Trova corsi dove la <sede del volontario> si verifica come sede sottostante
         ###
-        four_weeks_delta = today + datetime.timedelta(weeks=4)
+        # four_weeks_delta = today + datetime.timedelta(weeks=4)
         qs_estensioni_2 = CorsoEstensione.objects.filter(
-            corso__tipo=Corso.CORSO_NUOVO,
+            corso__tipo__in=[Corso.CORSO_NUOVO, Corso.BASE],
             corso__stato=Corso.ATTIVO,
-            corso__data_inizio__gt=today,
-            corso__data_esame__lt=four_weeks_delta).exclude(
+            corso__data_attivazione__gte=today,
+        ).exclude(
             corso__id__in=courses_1.values_list('id', flat=True))
 
         ###
@@ -739,6 +743,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             messaggio = "A breve tutti gli aspiranti nelle vicinanze verranno "\
                         "informati dell'attivazione di questo corso base."
 
+        self.data_attivazione = now()
         self.stato = self.ATTIVO
         self.save()
 
