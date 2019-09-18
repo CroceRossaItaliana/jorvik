@@ -753,11 +753,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             torna_url=self.url)
 
     def _corso_activation_recipients_for_email(self):
-        if self.is_nuovo_corso:
-            recipients = self.get_volunteers_by_course_requirements()
+        if self.corso_vecchio or not self.is_nuovo_corso:
+            return self.aspiranti_nelle_vicinanze()
         else:
-            recipients = self.aspiranti_nelle_vicinanze()
-        return recipients
+            return self.get_volunteers_by_course_requirements()
 
     def _invia_email_agli_aspiranti(self, rispondi_a=None):
         for recipient in self._corso_activation_recipients_for_email():
@@ -826,20 +825,21 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return CorsoEstensione.get_titles(course=self, **kwargs)
 
     def get_volunteers_by_course_requirements(self, **kwargs):
+        """ Da utilizzare solo per i corsi che hanno estensione (nuovi corsi) """
+
         persone_da_informare = None
 
-        if self.is_nuovo_corso:
-            corso_extension = self.extension_type
-            if CorsoBase.EXT_MIA_SEDE == corso_extension:
-                persone_da_informare = self.get_volunteers_by_only_sede()
+        corso_extension = self.extension_type
 
-            if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
-                by_ext_sede = self.get_volunteers_by_ext_sede()
-                by_ext_titles = self.get_volunteers_by_ext_titles()
-                persone_da_informare = by_ext_sede | by_ext_titles
+        if CorsoBase.EXT_MIA_SEDE == corso_extension:
+            persone_da_informare = self.get_volunteers_by_only_sede()
+
+        if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
+            by_ext_sede = self.get_volunteers_by_ext_sede()
+            by_ext_titles = self.get_volunteers_by_ext_titles()
+            persone_da_informare = by_ext_sede | by_ext_titles
 
         if persone_da_informare is None:
-            # persons = Persona.objects.filter(sede=self.sede)
             persone_da_informare = Persona.objects.none()
 
         return persone_da_informare.filter(**kwargs).distinct()
@@ -856,10 +856,16 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return course_created_by  # returns None
 
     def get_volunteers_by_only_sede(self):
-        app_attuali = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).q
-        app = Appartenenza.objects.filter(app_attuali,
-                                          sede=self.sede,
-                                          confermata=True)
+        app_attuali = Appartenenza.query_attuale(membro__in=[Appartenenza.VOLONTARIO,
+                                                             Appartenenza.DIPENDENTE]).q
+
+        sede = self.sede
+        if LOCALE == sede.estensione:
+            sede = sede.esplora()
+        else:
+            sede = [sede]
+
+        app = Appartenenza.objects.filter(app_attuali, sede__in=sede, confermata=True)
         return self._query_get_volunteers_by_sede(app)
 
     def get_volunteers_by_ext_sede(self):

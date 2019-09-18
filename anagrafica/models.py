@@ -1260,16 +1260,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     @classmethod
     @concept
     def to_contact_for_courses(cls, corso, membro='VO', *args, **kwargs):
-        from formazione.models import Corso, PartecipazioneCorsoBase
+        from formazione.models import PartecipazioneCorsoBase
 
-        if membro == Appartenenza.VOLONTARIO:
-            # Exclude persons that have already made participation request
-            # to <corso> as <VOLONTARIO> and the request has been <confirmed>
-
+        if membro in [Appartenenza.VOLONTARIO, Appartenenza.DIPENDENTE,]:
             to_exclude = cls.objects.filter(
                 PartecipazioneCorsoBase.con_esito(
                     PartecipazioneCorsoBase.ESITO_OK,
-                    corso__tipo=Corso.CORSO_NUOVO,
+                    corso__tipo__isnull=False,
                     corso=corso
                 ).via("partecipazioni_corsi")
             )
