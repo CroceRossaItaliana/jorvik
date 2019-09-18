@@ -16,11 +16,7 @@
 {% block corpo %}
   {% current_domain as SITE_URL %}
 
-  <div>
-    <div>
-      <img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">
-    </div>
-  </div>
+  <img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">
 
   <div class="heading-scheda-title">{{ corso.titolo_cri }}<br>SCHEDA DI VALUTAZIONE INDIVIDUALE</div>
 
@@ -29,7 +25,7 @@
   </div>
 
   <div style="padding-bottom:15px;">
-    Luogo e data di<br>nascita {{ persona.luogo_nascita }}, {{ persona.data_nascita|date:"DATE_FORMAT" }}
+    Luogo e data di<br>nascita {{ persona.luogo_nascita|default:"______________" }}, {{ persona.data_nascita|date:"DATE_FORMAT" }}
   </div>
 
   <div>
@@ -85,17 +81,17 @@
   </div>
 
   <div>
-    <div style="margin-bottom:10px; text-align:right;"></div>Luogo e data della valutazione:</div>
+    <div style="margin-bottom:10px; text-align:right;">Luogo e data della valutazione:</div>
     <table>
       <tr>
-        <td>
-          <div style="margin-right:50px;">Il Direttore del Corso</div>
+        <td style="width:50%; vertical-align: top;">
+          <div style="margin-bottom:10px;">Il Direttore del Corso</div>
           {% for direttore in corso.direttori_corso %}
-            &nbsp;&nbsp;&nbsp; {{ direttore }}<br><br>
+            {{ direttore }}<br>
           {% endfor %}
         </td>
-        <td>
-          <div>Il Presidente della Commissione<br>{{ corso.sede.presidente }}</div>
+        <td style="width:50%; vertical-align: top;">
+          <div style="margin-bottom:10px;">Il Presidente della Commissione</div> {{ corso.sede.presidente }}
         </td>
       </tr>
     </table>
