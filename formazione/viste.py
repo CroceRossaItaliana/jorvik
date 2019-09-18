@@ -958,7 +958,7 @@ def aspirante_corsi(request, me):
         corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze
 
     context = {
-        'corsi':  corsi,
+        'corsi':  corsi.order_by('data_inizio',),
         'puo_creare': True if me.ha_permesso(GESTIONE_CORSI_SEDE) else False
     }
     return 'aspirante_corsi_base.html', context

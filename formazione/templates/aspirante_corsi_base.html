@@ -6,6 +6,12 @@
 {% load social %}
 
 {% block app_contenuto %}
+    <style>
+        .aspirante-corsi-table {}
+        .aspirante-corsi-table thead tr th {vertical-align:top;}
+    </style>
+
+
     <h2><i class="fa fa-fw fa-home"></i> Corsi {% if me.volontario %}attivi{%else%}nelle tue vicinanze{%endif%}</h2>
 
     {% if me.aspirante %}
@@ -16,11 +22,13 @@
     </div>
     {%endif%}
 
-    <table class="table table-striped table-bordered">
+    <table class="aspirante-corsi-table table table-striped table-bordered">
         <thead>
-            <th>Corso e Sede</th>
-            <th>Informazioni</th>
-            <th>Richieste di iscrizioni</th>
+            <tr>
+                <th style="width:55%;">Corso e Sede</th>
+                <th style="width:25%;">Informazioni</th>
+                <th style="width:15%;">Richieste di iscrizioni</th>
+            </tr>
         </thead>
 
         {% for corso in corsi %}
