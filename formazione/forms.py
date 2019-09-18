@@ -167,7 +167,7 @@ class ModuloModificaLezione(ModelForm):
             self.add_error('fine', err_data_lt_inizio_corso)
 
         # Validazione divisione lezioni e orari impostati
-        if self.has_instance:
+        if self.has_instance and not self.instance.divisa:
             lezione_ore = self.instance.lezione_ore
             if lezione_ore:
                 duration = fine-inizio
