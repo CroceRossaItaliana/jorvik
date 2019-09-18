@@ -935,17 +935,27 @@ def aspirante_corsi(request, me):
     if me.ha_aspirante:
         corsi = me.aspirante.corsi(tipo=Corso.BASE)
     elif me.volontario or me.dipendente:
+        mie_sedi = me.sedi_appartenenze_corsi
+
         # Trova corsi dove l'utente ha già partecipato
         partecipazione = PartecipazioneCorsoBase.objects.filter(confermata=True, persona=me)
         corsi_confermati = CorsoBase.objects.filter(
             stato__in=[CorsoBase.ATTIVO, CorsoBase.TERMINATO],
             id__in=partecipazione.values_list('corso', flat=True))
 
+        # Trova corsi con estensione sede di mia appartenenze
+        corsi_estensione_mia_appartenenze = CorsoBase.objects.filter(
+            tipo__isnull=False,
+            stato=CorsoBase.ATTIVO,
+            extension_type=CorsoBase.EXT_MIA_SEDE,
+            sede__in=mie_sedi,
+            titolo_cri__isnull=False,)
+
         # Trova corsi da partecipare
-        corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me)
+        corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me, sede=mie_sedi)
 
         # Unisci 2 categorie di corsi
-        corsi = corsi_confermati | corsi_da_partecipare
+        corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze
 
     context = {
         'corsi':  corsi,

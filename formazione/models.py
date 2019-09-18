@@ -305,14 +305,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI
             ))
 
+
     @classmethod
-    def find_courses_for_volunteer(cls, volunteer):
+    def find_courses_for_volunteer(cls, volunteer, sede):
         today = now().today()
-        sede = volunteer.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO,
-                                                  Appartenenza.ESTESO,
-                                                  Appartenenza.ORDINARIO,
-                                                  Appartenenza.SOSTENITORE,
-                                                  Appartenenza.DIPENDENTE,])
 
         if not sede:
             return cls.objects.none()  # corsi non trovati perchè utente non ha sede
