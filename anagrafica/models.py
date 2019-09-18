@@ -357,6 +357,16 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """ Ottiene queryset di Sede di cui fa parte. """
         return Sede.objects.filter(pk__in=[x.sede.pk for x in self.appartenenze_attuali(**kwargs)])
 
+
+
+    @property
+    def sedi_appartenenze_corsi(self):
+        return self.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO,
+                                             Appartenenza.ESTESO,
+                                             Appartenenza.ORDINARIO,
+                                             Appartenenza.SOSTENITORE,
+                                             Appartenenza.DIPENDENTE,])
+
     def titoli_personali_confermati(self):
         """ Ottiene queryset per TitoloPersonale con conferma approvata. """
         return self.titoli_personali.filter(confermata=True).select_related('titolo')
@@ -1250,16 +1260,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     @classmethod
     @concept
     def to_contact_for_courses(cls, corso, membro='VO', *args, **kwargs):
-        from formazione.models import Corso, PartecipazioneCorsoBase
+        from formazione.models import PartecipazioneCorsoBase
 
-        if membro == Appartenenza.VOLONTARIO:
-            # Exclude persons that have already made participation request
-            # to <corso> as <VOLONTARIO> and the request has been <confirmed>
-
+        if membro in [Appartenenza.VOLONTARIO, Appartenenza.DIPENDENTE,]:
             to_exclude = cls.objects.filter(
                 PartecipazioneCorsoBase.con_esito(
                     PartecipazioneCorsoBase.ESITO_OK,
-                    corso__tipo=Corso.CORSO_NUOVO,
+                    corso__tipo__isnull=False,
                     corso=corso
                 ).via("partecipazioni_corsi")
             )

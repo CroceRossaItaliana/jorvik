@@ -136,7 +136,8 @@ class ModuloCreazioneCorsoBase(ModelForm):
 
 
 class ModuloModificaLezione(ModelForm):
-    docente = autocomplete_light.ModelChoiceField("DocenteLezioniCorso")
+    docente = autocomplete_light.ModelMultipleChoiceField("DocenteLezioniCorso", required=False)
+    show_docente_esterno = forms.BooleanField(label="Hai docenti esterni?", initial=False, required=False)
     has_nulla_osta = forms.BooleanField(label='Responsabilità di aver ricevuto nulla osta dal presidente del comitato di appartenenza',
                                         initial=True)
     fine = forms.DateTimeField()
@@ -166,7 +167,7 @@ class ModuloModificaLezione(ModelForm):
             self.add_error('fine', err_data_lt_inizio_corso)
 
         # Validazione divisione lezioni e orari impostati
-        if self.has_instance:
+        if self.has_instance and not self.instance.divisa:
             lezione_ore = self.instance.lezione_ore
             if lezione_ore:
                 duration = fine-inizio
@@ -176,7 +177,16 @@ class ModuloModificaLezione(ModelForm):
                     self.add_error('fine', 'La durata della lezione non può essere '
                        'maggiore della durata impostata nella scheda per questa lezione (%s ore).' % lezione_ore)
 
+        self.clean_docente_fields()
+
         return cd
+
+    def clean_docente_fields(self):
+        cd = self.cleaned_data
+        docente, docente_esterno = cd['docente'], cd['docente_esterno']
+
+        if not docente and not docente_esterno:
+            self.add_error('docente', 'Devi inserire almeno un docente')
 
     def clean_obiettivo(self):
         if self.has_instance:
@@ -192,7 +202,8 @@ class ModuloModificaLezione(ModelForm):
 
     class Meta:
         model = LezioneCorsoBase
-        fields = ['nome', 'docente', 'has_nulla_osta', 'inizio', 'fine', 'obiettivo', 'luogo',]
+        fields = ['nome', 'docente', 'docente_esterno', 'has_nulla_osta',
+                  'inizio', 'fine', 'obiettivo', 'luogo',]
         labels = {
             'nome': 'Lezione',
             'obiettivo': 'Argomento',
@@ -200,7 +211,23 @@ class ModuloModificaLezione(ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.corso = kwargs.pop('corso')
+        self.prefix = kwargs.pop('prefix')
+
         super().__init__(*args, **kwargs)
+
+        self.order_fields(('nome', 'docente', 'show_docente_esterno', 'docente_esterno',
+                           'has_nulla_osta', 'inizio', 'fine', 'obiettivo', 'luogo'))
+
+        # Comportamento campo <docente_esterno>
+        show_docente_esterno = self.fields['show_docente_esterno']
+        show_docente_esterno.widget.attrs['class'] = 'show_docente_esterno'
+        show_docente_esterno.widget.attrs['data-id'] = self.prefix
+
+        if self.has_instance:
+            if self.instance.docente_esterno:
+                show_docente_esterno.widget.attrs['checked'] = True
+            else:
+                self.fields['docente_esterno'].widget.attrs['class'] = "docente_esterno_hidden"
 
         if self.has_instance:
             if self.instance.precaricata:
@@ -632,3 +659,7 @@ class FormCommissioneEsame(ModelForm):
                 self.fields['nominativo_%s' % i].initial = esame_nominativi[i]
             except IndexError:
                 pass
+
+
+class CatalogoCorsiSearchForm(forms.Form):
+    q = forms.CharField(label='')

@@ -642,6 +642,9 @@ def aspirante_corso_base_termina(request, me, pk):
                 corpo={'corso': corso},
                 destinatari=[corso.sede.presidente()]
             )
+
+            if me == corso.get_firmatario:
+                return redirect(corso.url_commissione_esame)
             return redirect_termina
 
         # Tutto ok, posso procedere
@@ -931,21 +934,31 @@ def aspirante_corsi(request, me):
 
     if me.ha_aspirante:
         corsi = me.aspirante.corsi(tipo=Corso.BASE)
-    elif me.volontario:
+    elif me.volontario or me.dipendente:
+        mie_sedi = me.sedi_appartenenze_corsi
+
         # Trova corsi dove l'utente ha già partecipato
         partecipazione = PartecipazioneCorsoBase.objects.filter(confermata=True, persona=me)
         corsi_confermati = CorsoBase.objects.filter(
             stato__in=[CorsoBase.ATTIVO, CorsoBase.TERMINATO],
             id__in=partecipazione.values_list('corso', flat=True))
 
+        # Trova corsi con estensione sede di mia appartenenze
+        corsi_estensione_mia_appartenenze = CorsoBase.objects.filter(
+            tipo__isnull=False,
+            stato=CorsoBase.ATTIVO,
+            extension_type=CorsoBase.EXT_MIA_SEDE,
+            sede__in=mie_sedi,
+            titolo_cri__isnull=False,)
+
         # Trova corsi da partecipare
-        corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me)
+        corsi_da_partecipare = CorsoBase.find_courses_for_volunteer(volunteer=me, sede=mie_sedi)
 
         # Unisci 2 categorie di corsi
-        corsi = corsi_confermati | corsi_da_partecipare
+        corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze
 
     context = {
-        'corsi':  corsi,
+        'corsi':  corsi.order_by('data_inizio',),
         'puo_creare': True if me.ha_permesso(GESTIONE_CORSI_SEDE) else False
     }
     return 'aspirante_corsi_base.html', context
@@ -1369,10 +1382,21 @@ def course_commissione_esame(request, me, pk):
 @pagina_privata
 def catalogo_corsi(request, me):
     from curriculum.areas import OBBIETTIVI_STRATEGICI
+    from .forms import CatalogoCorsiSearchForm
 
-    context = {'titoli': OrderedDict()}
+    context = {
+        'titoli': OrderedDict(),
+        'form': CatalogoCorsiSearchForm,
+    }
 
-    qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
+    search_query = 'q' in request.GET and request.GET.get('q')
+    if search_query:
+        qs = Titolo.objects.filter(
+            Q(Q(sigla__icontains=search_query) | Q(nome__icontains=search_query)),
+            tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
+    else:
+        qs = Titolo.objects.filter(tipo=Titolo.TITOLO_CRI, sigla__isnull=False)
+
     for i in OBBIETTIVI_STRATEGICI:
         area_id, area_nome = i
         areas = qs.filter(area=i[0])
@@ -1382,8 +1406,16 @@ def catalogo_corsi(request, me):
         for k in Titolo.CDF_LIVELLI:
             level_id = k[0]
             levels = areas.filter(cdf_livello=level_id)
-
             context['titoli'][area_nome]['level_%s' % level_id] = levels
+
+        if search_query:
+            # Fare pulizia dei settori che non hanno un risultato (solo nel caso di ricerca)
+            settore_in_dict = context['titoli'][area_nome]
+            cleaned = OrderedDict((a,t) for a,t in dict(settore_in_dict).items() if t)
+            if not len(cleaned):
+                del context['titoli'][area_nome]
+            else:
+                context['titoli'][area_nome] = cleaned
 
     context['titoli_total'] = qs.count()
 

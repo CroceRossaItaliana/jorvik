@@ -305,11 +305,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI
             ))
 
+
     @classmethod
-    def find_courses_for_volunteer(cls, volunteer):
-        today = datetime.date.today()
-        sede = volunteer.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO,
-                                                  Appartenenza.DIPENDENTE])
+    def find_courses_for_volunteer(cls, volunteer, sede):
+        today = now().today()
+
         if not sede:
             return cls.objects.none()  # corsi non trovati perchè utente non ha sede
 
@@ -317,21 +317,18 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         # Trova corsi che hanno <sede> uguale alla <sede del volontario>
         ###
         qs_estensioni_1 = CorsoEstensione.objects.filter(sede__in=sede,
-                                                         corso__tipo=Corso.CORSO_NUOVO,
-                                                         corso__stato=Corso.ATTIVO,
-                                                         corso__data_inizio__gt=today)
+                                                         corso__tipo__in=[Corso.CORSO_NUOVO, Corso.BASE],
+                                                         corso__stato=Corso.ATTIVO,)
         courses_1 = cls.objects.filter(id__in=qs_estensioni_1.values_list('corso__id'))
 
         ###
         # Trova corsi dove la <sede del volontario> si verifica come sede sottostante
         ###
-        four_weeks_delta = today + datetime.timedelta(weeks=4)
+        # four_weeks_delta = today + datetime.timedelta(weeks=4)
         qs_estensioni_2 = CorsoEstensione.objects.filter(
-            corso__tipo=Corso.CORSO_NUOVO,
+            corso__tipo__in=[Corso.CORSO_NUOVO, Corso.BASE],
             corso__stato=Corso.ATTIVO,
-            corso__data_inizio__gt=today,
-            corso__data_esame__lt=four_weeks_delta).exclude(
-            corso__id__in=courses_1.values_list('id', flat=True))
+        ).exclude(corso__id__in=courses_1.values_list('id', flat=True))
 
         ###
         # Questo loop cerca coincidenza della sede dell'utente fra le sedi/sottosedi
@@ -485,6 +482,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     @property
     def url_direttori(self):
         return "/formazione/corsi-base/%d/direttori/" % (self.pk,)
+
+    @property
+    def url_commissione_esame(self):
+        return reverse('courses:commissione_esame', args=[self.pk])
 
     @property
     def url_modifica(self):
@@ -739,6 +740,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             messaggio = "A breve tutti gli aspiranti nelle vicinanze verranno "\
                         "informati dell'attivazione di questo corso base."
 
+        self.data_attivazione = now()
         self.stato = self.ATTIVO
         self.save()
 
@@ -751,11 +753,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             torna_url=self.url)
 
     def _corso_activation_recipients_for_email(self):
-        if self.is_nuovo_corso:
-            recipients = self.get_volunteers_by_course_requirements()
+        if self.corso_vecchio or not self.is_nuovo_corso:
+            return self.aspiranti_nelle_vicinanze()
         else:
-            recipients = self.aspiranti_nelle_vicinanze()
-        return recipients
+            return self.get_volunteers_by_course_requirements()
 
     def _invia_email_agli_aspiranti(self, rispondi_a=None):
         for recipient in self._corso_activation_recipients_for_email():
@@ -824,20 +825,21 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return CorsoEstensione.get_titles(course=self, **kwargs)
 
     def get_volunteers_by_course_requirements(self, **kwargs):
+        """ Da utilizzare solo per i corsi che hanno estensione (nuovi corsi) """
+
         persone_da_informare = None
 
-        if self.is_nuovo_corso:
-            corso_extension = self.extension_type
-            if CorsoBase.EXT_MIA_SEDE == corso_extension:
-                persone_da_informare = self.get_volunteers_by_only_sede()
+        corso_extension = self.extension_type
 
-            if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
-                by_ext_sede = self.get_volunteers_by_ext_sede()
-                by_ext_titles = self.get_volunteers_by_ext_titles()
-                persone_da_informare = by_ext_sede | by_ext_titles
+        if CorsoBase.EXT_MIA_SEDE == corso_extension:
+            persone_da_informare = self.get_volunteers_by_only_sede()
+
+        if CorsoBase.EXT_LVL_REGIONALE == corso_extension:
+            by_ext_sede = self.get_volunteers_by_ext_sede()
+            by_ext_titles = self.get_volunteers_by_ext_titles()
+            persone_da_informare = by_ext_sede | by_ext_titles
 
         if persone_da_informare is None:
-            # persons = Persona.objects.filter(sede=self.sede)
             persone_da_informare = Persona.objects.none()
 
         return persone_da_informare.filter(**kwargs).distinct()
@@ -845,8 +847,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     @property
     def get_firmatario(self):
         return self.sede.presidente()
-        # last = self.deleghe.last()
-        # return last.firmatario if hasattr(last, 'firmatario') else last
 
     @property
     def get_firmatario_sede(self):
@@ -856,10 +856,16 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return course_created_by  # returns None
 
     def get_volunteers_by_only_sede(self):
-        app_attuali = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO).q
-        app = Appartenenza.objects.filter(app_attuali,
-                                          sede=self.sede,
-                                          confermata=True)
+        app_attuali = Appartenenza.query_attuale(membro__in=[Appartenenza.VOLONTARIO,
+                                                             Appartenenza.DIPENDENTE]).q
+
+        sede = self.sede
+        if LOCALE == sede.estensione:
+            sede = sede.esplora()
+        else:
+            sede = [sede]
+
+        app = Appartenenza.objects.filter(app_attuali, sede__in=sede, confermata=True)
         return self._query_get_volunteers_by_sede(app)
 
     def get_volunteers_by_ext_sede(self):
@@ -910,21 +916,16 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         data_ottenimento = kwargs.get('data_ottenimento', self.data_esame)
         partecipazioni_idonei_list = list()
 
+        # Per maggiore sicurezza, questa cosa viene eseguita in una transazione
         with transaction.atomic():
-            # Per maggiore sicurezza, questa cosa viene eseguita in una transazione
-
             for partecipante in partecipanti_qs:
                 if partecipante.ammissione == PartecipazioneCorsoBase.ASSENTE_MOTIVO:
                     # Partecipante con questo motivo non va nel verbale_1
-                    # Non fare niente.
-                    continue
+                    continue  # Non fare niente
 
-                # Calcola e salva l'esito dell'esame.
-                if self.is_nuovo_corso and self.titolo_cri and not self.titolo_cri.scheda_prevede_esame:
-                    esito_esame = partecipante.IDONEO
-                else:
-                    esito_esame = partecipante.IDONEO if partecipante.idoneo \
-                                                    else partecipante.NON_IDONEO
+                # Calcola e salva l'esito dell'esame
+                esito_esame = partecipante.IDONEO if partecipante.idoneo \
+                                                else partecipante.NON_IDONEO
 
                 partecipante.esito_esame = esito_esame
                 partecipante.save()
@@ -963,6 +964,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         from curriculum.models import TitoloPersonale
 
+        if self.corso_vecchio:
+            data_scadenza = None
+        else:
+            data_scadenza = timezone.now() + self.titolo_cri.expires_after_timedelta
+
         objs = [
             TitoloPersonale(
                 confermata=True,
@@ -970,7 +976,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 persona=p.persona,
                 certificato_da=self.get_firmatario,
                 data_ottenimento=kwargs.get('data_ottenimento'),
-                data_scadenza=timezone.now() + self.titolo_cri.expires_after_timedelta,
+                data_scadenza=data_scadenza,
                 is_course_title=True,
                 corso_partecipazione=p,
 
@@ -1455,7 +1461,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 
     @property
     def idoneo(self):
-        """ Regole per l'idoneita' """
+        """ Regole per l'idoneità """
 
         case_1 = (
             self.esito_parte_1 == self.POSITIVO and (
@@ -1463,12 +1469,26 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
             )
         )
 
+        # --- Per i corsi avviati prima del 01/09/2019 ---
+        if self.corso.corso_vecchio:
+            return case_1
+
+        # --- Regole per i corsi avviati dopo il 01/09/2019 ---
+
+        # Scheda del corso non prevede esame (e compilare il verbale)
         case_2 = (
-                self.ammissione == self.ESAME_NON_PREVISTO and
-                self.corso.is_nuovo_corso and
-                self.corso.titolo_cri and not self.corso.titolo_cri.scheda_prevede_esame
+            self.ammissione == self.ESAME_NON_PREVISTO and
+            self.corso.titolo_cri and not self.corso.titolo_cri.scheda_prevede_esame
         )
-        return case_1 or case_2
+
+        case_3 = (
+            self.ammissione == self.AMMESSO and
+            self.esito_parte_1 in [self.POSITIVO, self.NON_PREVISTO] and
+            self.esito_parte_2 in [self.POSITIVO, self.NON_PREVISTO]
+
+        )
+
+        return case_1 or case_2 or case_3
 
     def notifica_esito_esame(self, mittente=None):
         """ Invia una e-mail al partecipante con l'esito del proprio esame. """
@@ -1639,8 +1659,10 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
     corso = models.ForeignKey(CorsoBase, related_name='lezioni', on_delete=models.PROTECT)
     nome = models.TextField()
-    docente = models.ForeignKey(Persona, null=True, default='',
-                                verbose_name='Docente della lezione',)
+    docente = models.ManyToManyField(Persona, verbose_name='Docente della lezione',)
+    docente_esterno = models.CharField('Docente esterno della lezione',
+                                       max_length=255, null=True, blank=True,
+                                        help_text="Da compilare solo per i docenti esterni")
     obiettivo = models.CharField('Obiettivo formativo della lezione',
                                  max_length=255, null=True, blank=True)
     luogo = models.CharField(max_length=255, null=True, blank=True,
@@ -1659,40 +1681,45 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         return reverse('courses:lezione_save', args=[self.corso.pk, self.pk])
 
     def avvisa_docente_nominato_al_corso(self, me):
-        Messaggio.costruisci_e_accoda(
-            oggetto='Docente al %s' % self.corso.nome,
-            modello="email_docente_assegnato_a_corso.html",
-            corpo={
-                "persona": self.docente,
-                "corso": self.corso,
-            },
-            mittente=me,
-            destinatari=[self.docente]
-        )
+        docenti = self.docente
+        if docenti.count():
+            for docente in docenti.all():
+                Messaggio.costruisci_e_accoda(
+                    oggetto='Docente al %s' % self.corso.nome,
+                    modello="email_docente_assegnato_a_corso.html",
+                    corpo={
+                        "persona": docente,
+                        "corso": self.corso,
+                    },
+                    mittente=me,
+                    destinatari=[docente])
 
     def avvisa_presidente_docente_nominato(self):
         """Avvisa presidente del comitato della persona che è stato nominato
         come docente di questa lezione."""
 
-        docente = self.docente
-        esito = self.corso.sede.ha_membro(docente, membro=Appartenenza.VOLONTARIO)
-        if not esito:
-            destinatari = list()
-            for sede in docente.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO,
-                                                              Appartenenza.DIPENDENTE]):
-                destinatari.append(sede.presidente())
+        docenti = self.docente
+        if not docenti.count():
+            return
 
-            if destinatari:
-                Messaggio.costruisci_e_accoda(
-                    oggetto="%s è nominato come docente di lezione %s" % (self.docente, self.nome),
-                    modello="email_corso_avvisa_presidente_docente_nominato_a_lezione.html",
-                    corpo={
-                        "persona": self.docente,
-                        "corso": self.corso,
-                        'lezione': self,
-                    },
-                    destinatari=destinatari,
-                )
+        for docente in docenti.all():
+            esito = self.corso.sede.ha_membro(docente, membro=Appartenenza.VOLONTARIO)
+            if not esito:
+                destinatari = list()
+                for sede in docente.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO,
+                                                             Appartenenza.DIPENDENTE]):
+                    destinatari.append(sede.presidente())
+
+                if destinatari:
+                    Messaggio.costruisci_e_accoda(
+                        oggetto="%s è nominato come docente di lezione %s" % (docente, self.nome),
+                        modello="email_corso_avvisa_presidente_docente_nominato_a_lezione.html",
+                        corpo={
+                            "persona": docente,
+                            "corso": self.corso,
+                            'lezione': self,
+                        },
+                        destinatari=destinatari)
 
     def get_full_scheda_lezioni(self):
         if hasattr(self, 'corso') and self.corso.titolo_cri and self.corso.titolo_cri.scheda_lezioni:

@@ -255,9 +255,15 @@ class GestioneLezioni:
         return self._instantiate_new_form()
 
     def new(self):
-        if self._form_nuova_lezione.is_valid():
-            lezione = self._form_nuova_lezione.save(commit=False)
+        form = self._form_nuova_lezione
+        if form.is_valid():
+            cd = form.cleaned_data
+
+            lezione = form.save(commit=False)
             lezione.corso = self.corso
+            lezione.save()
+
+            lezione.docente = cd['docente']
             lezione.save()
 
             # Avvisa docente e il suo presidente della nomina
