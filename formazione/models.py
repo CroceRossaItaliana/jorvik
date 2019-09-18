@@ -322,8 +322,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         ###
         qs_estensioni_1 = CorsoEstensione.objects.filter(sede__in=sede,
                                                          corso__tipo__in=[Corso.CORSO_NUOVO, Corso.BASE],
-                                                         corso__stato=Corso.ATTIVO,
-                                                         corso__data_attivazione__gte=today)
+                                                         corso__stato=Corso.ATTIVO,)
         courses_1 = cls.objects.filter(id__in=qs_estensioni_1.values_list('corso__id'))
 
         ###
@@ -333,9 +332,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         qs_estensioni_2 = CorsoEstensione.objects.filter(
             corso__tipo__in=[Corso.CORSO_NUOVO, Corso.BASE],
             corso__stato=Corso.ATTIVO,
-            corso__data_attivazione__gte=today,
-        ).exclude(
-            corso__id__in=courses_1.values_list('id', flat=True))
+        ).exclude(corso__id__in=courses_1.values_list('id', flat=True))
 
         ###
         # Questo loop cerca coincidenza della sede dell'utente fra le sedi/sottosedi
@@ -489,6 +486,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     @property
     def url_direttori(self):
         return "/formazione/corsi-base/%d/direttori/" % (self.pk,)
+
+    @property
+    def url_commissione_esame(self):
+        return reverse('courses:commissione_esame', args=[self.pk])
 
     @property
     def url_modifica(self):
@@ -850,8 +851,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     @property
     def get_firmatario(self):
         return self.sede.presidente()
-        # last = self.deleghe.last()
-        # return last.firmatario if hasattr(last, 'firmatario') else last
 
     @property
     def get_firmatario_sede(self):
@@ -915,21 +914,16 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         data_ottenimento = kwargs.get('data_ottenimento', self.data_esame)
         partecipazioni_idonei_list = list()
 
+        # Per maggiore sicurezza, questa cosa viene eseguita in una transazione
         with transaction.atomic():
-            # Per maggiore sicurezza, questa cosa viene eseguita in una transazione
-
             for partecipante in partecipanti_qs:
                 if partecipante.ammissione == PartecipazioneCorsoBase.ASSENTE_MOTIVO:
                     # Partecipante con questo motivo non va nel verbale_1
-                    # Non fare niente.
-                    continue
+                    continue  # Non fare niente
 
-                # Calcola e salva l'esito dell'esame.
-                if self.is_nuovo_corso and self.titolo_cri and not self.titolo_cri.scheda_prevede_esame:
-                    esito_esame = partecipante.IDONEO
-                else:
-                    esito_esame = partecipante.IDONEO if partecipante.idoneo \
-                                                    else partecipante.NON_IDONEO
+                # Calcola e salva l'esito dell'esame
+                esito_esame = partecipante.IDONEO if partecipante.idoneo \
+                                                else partecipante.NON_IDONEO
 
                 partecipante.esito_esame = esito_esame
                 partecipante.save()
@@ -968,6 +962,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         from curriculum.models import TitoloPersonale
 
+        if self.corso_vecchio:
+            data_scadenza = None
+        else:
+            data_scadenza = timezone.now() + self.titolo_cri.expires_after_timedelta
+
         objs = [
             TitoloPersonale(
                 confermata=True,
@@ -975,7 +974,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 persona=p.persona,
                 certificato_da=self.get_firmatario,
                 data_ottenimento=kwargs.get('data_ottenimento'),
-                data_scadenza=timezone.now() + self.titolo_cri.expires_after_timedelta,
+                data_scadenza=data_scadenza,
                 is_course_title=True,
                 corso_partecipazione=p,
 
@@ -1460,7 +1459,7 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 
     @property
     def idoneo(self):
-        """ Regole per l'idoneita' """
+        """ Regole per l'idoneità """
 
         case_1 = (
             self.esito_parte_1 == self.POSITIVO and (
@@ -1468,12 +1467,26 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
             )
         )
 
+        # --- Per i corsi avviati prima del 01/09/2019 ---
+        if self.corso.corso_vecchio:
+            return case_1
+
+        # --- Regole per i corsi avviati dopo il 01/09/2019 ---
+
+        # Scheda del corso non prevede esame (e compilare il verbale)
         case_2 = (
-                self.ammissione == self.ESAME_NON_PREVISTO and
-                self.corso.is_nuovo_corso and
-                self.corso.titolo_cri and not self.corso.titolo_cri.scheda_prevede_esame
+            self.ammissione == self.ESAME_NON_PREVISTO and
+            self.corso.titolo_cri and not self.corso.titolo_cri.scheda_prevede_esame
         )
-        return case_1 or case_2
+
+        case_3 = (
+            self.ammissione == self.AMMESSO and
+            self.esito_parte_1 in [self.POSITIVO, self.NON_PREVISTO] and
+            self.esito_parte_2 in [self.POSITIVO, self.NON_PREVISTO]
+
+        )
+
+        return case_1 or case_2 or case_3
 
     def notifica_esito_esame(self, mittente=None):
         """ Invia una e-mail al partecipante con l'esito del proprio esame. """

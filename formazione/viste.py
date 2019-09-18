@@ -642,6 +642,9 @@ def aspirante_corso_base_termina(request, me, pk):
                 corpo={'corso': corso},
                 destinatari=[corso.sede.presidente()]
             )
+
+            if me == corso.get_firmatario:
+                return redirect(corso.url_commissione_esame)
             return redirect_termina
 
         # Tutto ok, posso procedere
@@ -931,7 +934,7 @@ def aspirante_corsi(request, me):
 
     if me.ha_aspirante:
         corsi = me.aspirante.corsi(tipo=Corso.BASE)
-    elif me.volontario:
+    elif me.volontario or me.dipendente:
         # Trova corsi dove l'utente ha già partecipato
         partecipazione = PartecipazioneCorsoBase.objects.filter(confermata=True, persona=me)
         corsi_confermati = CorsoBase.objects.filter(
