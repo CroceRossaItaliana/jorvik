@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 from django.db import transaction, IntegrityError
 from django.db.models import Sum, Q
-from django.core.urlresolvers import reverse
+from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
 from django.core.urlresolvers import reverse
@@ -39,24 +39,37 @@ from .forms import (ModuloCreazioneEstensione, ModuloAggiungiPersona,
     ModuloScaricaTesserini, ModuloDimissioniSostenitore)
 
 
-@pagina_privata(permessi=(GESTIONE_SOCI,))
-def us(request, me):
-    """ Ritorna la home page per la gestione dei soci. """
+def prepare_us(me):
 
+    print('no cache')
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
-
     persone = Persona.objects.filter(
         Appartenenza.query_attuale(sede__in=sedi).via("appartenenze")
-    ).distinct('cognome', 'nome', 'codice_fiscale')
+    ).distinct('cognome', 'nome', 'codice_fiscale').count()
     attivi = Persona.objects.filter(
         Appartenenza.query_attuale(sede__in=sedi, membro=Appartenenza.VOLONTARIO).via("appartenenze")
-    ).distinct('cognome', 'nome', 'codice_fiscale')
+    ).distinct('cognome', 'nome', 'codice_fiscale').count()
 
     contesto = {
         "sedi": sedi,
         "persone": persone,
         "attivi": attivi,
     }
+
+    return contesto
+
+@pagina_privata(permessi=(GESTIONE_SOCI,))
+def us(request, me):
+    """ Ritorna la home page per la gestione dei soci. """
+
+    if cache.get('{}_us_sedi'.format(me.id)):
+        print('using cache')
+        contesto = dict()
+        contesto['sedi'] = Sede.objects.filter(id__in=cache.get('{}_us_sedi'.format(me.id)))
+        contesto['persone'] = cache.get('{}_us_persone'.format(me.id))
+        contesto['attivi'] = cache.get('{}_us_attivi'.format(me.id))
+    else:
+        contesto = prepare_us(me)
 
     return 'us.html', contesto
 
