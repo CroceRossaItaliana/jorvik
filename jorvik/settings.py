@@ -412,3 +412,14 @@ from django.utils.translation import ugettext_lazy as _
 COUNTRIES_OVERRIDE = {
     'KS': _('Kosovo'),
 }
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://{}/1".format(CELERY_CONF.get('celery', 'broker_url')),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient"
+        },
+        "KEY_PREFIX": "jorvik_"
+    }
+}
