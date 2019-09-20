@@ -499,6 +499,11 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def applicazioni_disponibili(self):
+        from django.core.cache import cache
+
+        if cache.get('persona_{}_items_to_display'.format(self.id)):
+            return cache.get('persona_{}_items_to_display'.format(self.id))
+
         # Personalizzare il menu "Utente" secondo il suo ruolo
         utente_url, utente_label, utente_count = ('/utente/', 'Volontario', None)
 
@@ -527,6 +532,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         filter_items_to_display = filter(lambda x: x[1] == True, all_menus)
         items_to_display = [item[0] for item in filter_items_to_display]
+        cache.set('persona_{}_items_to_display'.format(self.id), items_to_display)
         return items_to_display
 
     def oggetti_permesso(self, permesso, al_giorno=None,

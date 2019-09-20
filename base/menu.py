@@ -190,8 +190,11 @@ class Menu:
 
     def get_menu(self):
         from .utils import remove_none
+        from django.core.cache import cache
 
         path = self.request.path
+        if cache.get('menu_{}_get_menu'.format(path)):
+            return cache.get('menu_{}_get_menu'.format(path))
 
         # La ricerca del menu viene per inizio del url che chiama utente
         for i in self.mapping():
@@ -199,6 +202,7 @@ class Menu:
                 if path.startswith(url):
                     menu = remove_none(getattr(self, i['method']))
                     name_for_template = i['name_for_template']
+                    cache.set('menu_{}_get_menu'.format(path), {name_for_template: menu})
                     return {name_for_template: menu}
 
         # Non restituisce nulla. Il menu sarè vuoto.
