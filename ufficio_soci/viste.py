@@ -233,6 +233,8 @@ def us_reclama_persona(request, me, persona_pk):
                                                     "%d anni. " % Persona.ETA_MINIMA_SOCIO)
             continua = False
 
+
+
         if continua:
             with transaction.atomic():
                 app = modulo_appartenenza.save(commit=False)
@@ -280,7 +282,21 @@ def us_reclama_persona(request, me, persona_pk):
                         riduzione=riduzione,
                     )
 
+                oggetto = 'Inserimento come {}'.format(
+                    Appartenenza.MENBRO_DICT[modulo_appartenenza.cleaned_data.get('membro')]
+                )
+                Messaggio.costruisci_e_accoda(
+                    oggetto=oggetto,
+                    modello="email_reclama.html",
+                    mittente=me,
+                    destinatari=[persona],
+                    corpo={
+                        "persona": persona.nome_completo
+                    }
+                )
+
                 return redirect(persona.url)
+
 
     contesto = {
         "modulo_appartenenza": modulo_appartenenza,
