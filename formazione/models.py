@@ -978,13 +978,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 data_ottenimento=kwargs.get('data_ottenimento'),
                 data_scadenza=data_scadenza,
                 is_course_title=True,
-                corso_partecipazione=p,
-
-                # todo: attending details
-                # luogo_ottenimento='',
-                # codice='',
-                # codice_corso='',
-                # certificato='',
+                corso_partecipazione=p
             )
             for p in partecipanti
         ]
