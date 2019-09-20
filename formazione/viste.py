@@ -653,15 +653,16 @@ def aspirante_corso_base_termina(request, me, pk):
                       data_ottenimento=data_ottenimento)
 
         if corso.is_nuovo_corso:
-            return_title = "Vai al Report del Corso"
+            torna_titolo = "Vai al Report del Corso"
+            messaggio = "Tutti gli idonei hanno acquisito la qualifica prevista rispetto al corso frequentato."
         else:
-            return_title = "Vai al Report del Corso Base"
+            torna_titolo = "Vai al Report del Corso Base"
+            messaggio = "Tutti gli idonei sono stati resi volontari delle rispettive sedi."
 
         return messaggio_generico(request, me,
           titolo="Generazione verbale",
-          messaggio="Il verbale è stato generato con successo. Tutti gli idonei "
-                    "sono stati resi volontari delle rispettive sedi.",
-          torna_titolo=return_title,
+          messaggio="Il verbale è stato generato con successo. %s" % messaggio,
+          torna_titolo=torna_titolo,
           torna_url=corso.url_report)
 
     context = {
