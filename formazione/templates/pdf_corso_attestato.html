@@ -47,7 +47,7 @@
 	</style>
 </head>
 <body>
-	{% current_domain as SITE_URL %}
+	{% get_url_for_staticfiles as SITE_URL %}
 
 	<div id="page_1" class="page" style="background-position: center right; background-image: url('{{SITE_URL}}{% static 'img/attestato/sfondo-vuoto-cropped.png' %}'); page-break-after: always;">
 		<div class="page-wrapper">
