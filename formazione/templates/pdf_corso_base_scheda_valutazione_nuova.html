@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block corpo %}
-  {% current_domain as SITE_URL %}
+  {% get_url_for_staticfiles as SITE_URL %}
 
   <img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">
 

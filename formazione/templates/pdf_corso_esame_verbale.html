@@ -23,7 +23,7 @@
 {% endblock %}
 
 {% block corpo %}
-    {% current_domain as SITE_URL %}
+    {% get_url_for_staticfiles as SITE_URL %}
     <div style="page-break-after: always;">
         <div class="western heading-main">
             <img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">

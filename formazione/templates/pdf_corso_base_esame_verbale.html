@@ -20,7 +20,7 @@
 {% endblock %}
 
 {% block corpo %}
-  {% current_domain as SITE_URL %}
+  {% get_static_file_url as SITE_URL %}
 
   <div lang="it-IT" text="#000000" dir="ltr" style="line-height: 150%; background: transparent; padding-top: 0.3cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
       <!-- Logo CRI -->

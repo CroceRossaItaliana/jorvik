@@ -83,12 +83,25 @@ def select_nomina_presidenziale(sede):
 
 
 @register.simple_tag(takes_context=True)
-def current_domain(context):
+def get_url_for_staticfiles(context):
+    """ Questa funzione serve per avere url del host attuale perchè per la
+        renderizzazione del pdf server il percorso assoluto (con dominio)
+
+        - In produzione non restituire nulla perchè {% static %} restituirà percorso corretto
+            - (STATIC_URL in config/media.cnf)
+        - Per gli ambienti di sviluppo o su staging gli statici hanno staticfiles folder diverso
+            - Docker (/tmp/media)
+            - Staging (STATIC_URL; o STATIC_URL to datafiles2)
+    """
+    from jorvik.settings import STATIC_URL
+
+    if STATIC_URL.startswith('http'):
+        return ''
+
+    # request in context è passato nei metodi <genera_*> (pdf/verbale/attestato)
     request = context.get('request')
     if request:
         protocol = "http" if request.is_secure else 'https'
         return "%s://%s" % (protocol, request.get_host())
 
-        # uri = request.build_absolute_uri('/')
-        # return uri[:-1] if uri.endswith('/') else uri
-    return ""
+    return ''

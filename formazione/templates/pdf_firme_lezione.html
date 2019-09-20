@@ -41,7 +41,7 @@
 {% endblock %}
 
 {% block corpo %}
-    {% current_domain as SITE_URL %}
+    {% get_url_for_staticfiles as SITE_URL %}
 
     {% for iscritto in iscritti %}
         {% if forloop.first or forloop.counter0|divisibleby:16 %}
