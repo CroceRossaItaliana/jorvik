@@ -87,7 +87,11 @@
 
 						{% if corso.cdf_level != corso.titolo_cri.CDF_LIVELLO_I %}
 							<div class="front-page-qualifica">
-								{% if corso.is_nuovo_corso %} {{ corso.titolo_cri }} {% else %} Volontario CRI {% endif %}
+								{% if corso.is_nuovo_corso %}
+									{% attestato_replace_corso_name corso.titolo_cri.nome %}
+								{% else %}
+									Volontario CRI
+								{% endif %}
 							</div>
 						{% endif %}
 
