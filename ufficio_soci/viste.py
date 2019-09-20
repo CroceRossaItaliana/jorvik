@@ -1,6 +1,9 @@
 import json
 import random
 import re
+import os
+import tempfile
+import pickle
 from datetime import datetime
 from collections import OrderedDict
 
@@ -714,10 +717,9 @@ def us_elenco_messaggio(request, me, elenco_id):
         # Imposta il modulo
         elenco.modulo_riempito = form
 
-    persone = elenco.ordina(elenco.risultati())
-    request.session["messaggio_destinatari"] = persone
     request.session["messaggio_destinatari_timestamp"] = datetime.now()
-    return redirect(reverse('posta:scrivi'))
+
+    return redirect(reverse('posta:scrivi') + '?id={}'.format(elenco_id))
 
 
 @pagina_privata(permessi=(ELENCHI_SOCI,))
