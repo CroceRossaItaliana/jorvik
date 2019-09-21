@@ -38,7 +38,6 @@ from .forms import (ModuloCreazioneEstensione, ModuloAggiungiPersona,
 
 def prepare_us(me):
 
-    print('no cache')
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
     persone = Persona.objects.filter(
         Appartenenza.query_attuale(sede__in=sedi).via("appartenenze")
@@ -55,12 +54,12 @@ def prepare_us(me):
 
     return contesto
 
+
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us(request, me):
     """ Ritorna la home page per la gestione dei soci. """
 
     if cache.get('{}_us_sedi'.format(me.id)):
-        print('using cache')
         contesto = dict()
         contesto['sedi'] = Sede.objects.filter(id__in=cache.get('{}_us_sedi'.format(me.id)))
         contesto['persone'] = cache.get('{}_us_persone'.format(me.id))
