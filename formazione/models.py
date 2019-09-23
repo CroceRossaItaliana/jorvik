@@ -556,6 +556,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             progressivo = 1  # Se non esiste, inizia da 1
 
         c = CorsoBase(anno=anno, progressivo=progressivo, **kwargs)
+        c.min_participants, c.max_participants = c.titolo_cri.numero_partecipazioni
         c.save()
         return c
 
