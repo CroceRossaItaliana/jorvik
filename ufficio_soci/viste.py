@@ -285,16 +285,17 @@ def us_reclama_persona(request, me, persona_pk):
                         riduzione=riduzione,
                     )
 
-                oggetto = 'Inserimento come {}'.format(
-                    Appartenenza.MENBRO_DICT[modulo_appartenenza.cleaned_data.get('membro')]
-                )
+                m = Appartenenza.MENBRO_DICT[modulo_appartenenza.cleaned_data.get('membro')]
+                oggetto = 'Inserimento come {}'.format(m)
+
                 Messaggio.costruisci_e_accoda(
                     oggetto=oggetto,
                     modello="email_reclama.html",
                     mittente=me,
                     destinatari=[persona],
                     corpo={
-                        "persona": persona.nome_completo
+                        "persona": persona.nome_completo,
+                        "ruolo": m
                     }
                 )
 
