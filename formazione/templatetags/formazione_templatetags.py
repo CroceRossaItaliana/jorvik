@@ -132,3 +132,12 @@ def attestato_replace_corso_name(titolo):
             return titolo.replace(i, '').strip().capitalize()
 
     return titolo
+
+
+@register.simple_tag
+def verbale_indirizzo(corso):
+    locazione = corso.locazione
+    return "nei locali del %s, siti in %s, %s, n. %s" % (corso.sede,
+                                                         locazione.comune,
+                                                         locazione.via,
+                                                         locazione.civico)

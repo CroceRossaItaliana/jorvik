@@ -2,6 +2,7 @@
 
 {% load static %}
 {% load base_tags %}
+{% load formazione_templatetags %}
 
 {% block css_extra %}
     body {font-family: 'Arial'; padding:0; margin:0;}
@@ -47,23 +48,20 @@
             {% if not secondo_verbale %}
                 <p>
                     Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell'anno {{ corso.data_esame|date:"Y" }},
-                    nei locali del {{ corso.sede }}, siti in {{ corso.locazione.comune|default:"____________________" }},
-                    {{ corso.locazione.via }}, n. {{ corso.locazione.civico }}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
+                    {% verbale_indirizzo corso %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
                     della Croce Rossa Italiana</em> attualmente vigente, si è riunita la Commissione d’Esame convocata e composta da:
                 </p>
             {% else %}
                 {% if corso.tipo == corso.BASE %}
                     <p>
                         Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell'anno {{ corso.data_esame|date:"Y" }},
-                        nei locali del {{ corso.sede }}, siti in {{ corso.locazione.comune|default:"____________________" }},
-                        {{ corso.locazione.via }}, n. {{ corso.locazione.civico }}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
+                        {% verbale_indirizzo corso %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
                         della Croce Rossa Italiana</em> attualmente vigente, la Commissione d’Esame convocata per la seconda volta composta da:
                     </p>
                 {% elif corso.tipo == corso.CORSO_NUOVO %}
                     <p>
                         Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell&#39;anno {{ corso.data_esame|date:"Y" }},
-                        nei locali del {{ corso.sede }}, siti in {{ corso.locazione.comune|default:"____________________" }},
-                        {{ corso.locazione.via }}, n. {{ corso.locazione.civico }}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
+                        {% verbale_indirizzo corso %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
                         della Croce Rossa Italiana</em> attualmente vigente, la Commissione d’Esame è stata convocata per la seconda volta
                         per n.____ candidato/i che, per giustificati e comprovati motivi di impedimento non ha/hanno potuto svolgere l’esame
                         nel giorno_______________ ed è composta da:
@@ -79,12 +77,15 @@
                     &nbsp;&nbsp;&nbsp; {{ direttore }}<br>
                 {% endfor %}
             </p>
-            <p>
-                &mdash; Docente/i del corso<br>
-                {% for docente in corso.docenti_corso %}
-                    &nbsp;&nbsp;&nbsp; {{ docente }}<br>
-                {% endfor %}
-            </p>
+
+            {% if corso.commissione_nomi_as_list %}
+                <p>
+                    &mdash; Commissione esame<br>
+                    {% for nome in corso.commissione_nomi_as_list %}
+                        &nbsp;&nbsp;&nbsp; {{ nome|title }}<br>
+                    {% endfor %}
+                </p>
+            {% endif %}
 
             {% if corso.tipo == corso.BASE %}
 
@@ -216,8 +217,9 @@
                 &nbsp;&nbsp;&nbsp; {{ docente }}<br><br>
             {% endfor %}
 
+            &ndash;	Commissione esame<br>
             {% for nome in corso.commissione_nomi_as_list %}
-                &ndash; {{ nome|title }}<br>
+                &nbsp;&nbsp;&nbsp; {{ nome|title }}<br>
             {% endfor %}
         </div>
     </div>
