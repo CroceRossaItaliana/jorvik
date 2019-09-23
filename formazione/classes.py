@@ -266,11 +266,7 @@ class GestioneLezioni:
             lezione.docente = cd['docente']
             lezione.save()
 
-            # Avvisa docente e il suo presidente della nomina
-            lezione.avvisa_docente_nominato_al_corso(self.me)
-
-            # Se non è del comitato che organizza il corso
-            lezione.avvisa_presidente_docente_nominato()
+            self.avvisare_docente_e_presidente(lezione)
 
             self.created = lezione
 
@@ -300,6 +296,8 @@ class GestioneLezioni:
                 # nella form e ha creato una nuova lezione figlio
                 return self.dividi(lezione)
 
+            self.avvisare_docente_e_presidente(lezione)
+
             messages.success(self.request, "La lezione è stata salvata correttamente.")
             return redirect("%s#%d" % (self.corso.url_lezioni, lezione.pk))
         else:
@@ -321,6 +319,13 @@ class GestioneLezioni:
 
         messages.success(self.request, "La lezione è stata divisa. Modifica le date di inizio/fine della nuova lezione")
         return redirect(self.corso.url_lezioni)
+
+    def avvisare_docente_e_presidente(self, lezione):
+        # Avvisa docente e il suo presidente della nomina
+        lezione.avvisa_docente_nominato_al_corso(self.me)
+
+        # Se non è del comitato che organizza il corso
+        lezione.avvisa_presidente_docente_nominato()
 
     def get_context(self):
         return 'aspirante_corso_base_scheda_lezioni.html', {
