@@ -94,11 +94,25 @@ class Titolo(ModelloSemplice, ConVecchioID):
             days = 10 * 365
         return timedelta(days=days)
 
+    @property
+    def numero_partecipazioni(self):
+        from formazione.models import CorsoBase
+
+        if self.is_titolo_corso_base:
+            # Corso per Volontari CRI
+            return 0, 30
+
+        if self.cdf_livello == Titolo.CDF_LIVELLO_IV:
+            # Corsi di 4º livello e Alta Specializzazione
+            return 0, 30000
+
+        elif self.cdf_livello in [Titolo.CDF_LIVELLO_I, Titolo.CDF_LIVELLO_II, Titolo.CDF_LIVELLO_III]:
+            # Corsi di 1º, 2º e 3º livello
+            return 10, 30
+
+        return CorsoBase.MIN_PARTECIPANTI, CorsoBase.MAX_PARTECIPANTI
+
     def __str__(self):
-        # if self.tipo == self.TITOLO_CRI and self.goal:
-        #     return "%s - %s - %s" % (self.nome, self.goal,
-        #                              self.goal.get_unit_reference_display())
-        # else:
         return str(self.nome)
 
 
