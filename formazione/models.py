@@ -1678,15 +1678,23 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         docenti = self.docente
         if docenti.count():
             for docente in docenti.all():
-                Messaggio.costruisci_e_accoda(
-                    oggetto='Docente al %s' % self.corso.nome,
-                    modello="email_docente_assegnato_a_corso.html",
-                    corpo={
-                        "persona": docente,
-                        "corso": self.corso,
-                    },
-                    mittente=me,
-                    destinatari=[docente])
+                query_kwargs = {
+                    'oggetto': 'Docente al %s' % self.corso.nome,
+                    'mittente': me,
+                }
+
+                # Verifica, per non inviare più volte stessa mail
+                msg_already_sent = Messaggio.objects.filter(
+                    oggetti_destinatario__persona__in=[docente],
+                **query_kwargs).count()
+
+                if not msg_already_sent:
+                    Messaggio.costruisci_e_accoda(
+                        modello="email_docente_assegnato_a_corso.html",
+                        corpo={
+                            "persona": docente,
+                            "corso": self.corso,
+                        }, destinatari=[docente], **query_kwargs)
 
     def avvisa_presidente_docente_nominato(self):
         """Avvisa presidente del comitato della persona che è stato nominato
@@ -1705,15 +1713,24 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                     destinatari.append(sede.presidente())
 
                 if destinatari:
-                    Messaggio.costruisci_e_accoda(
-                        oggetto="%s è nominato come docente di lezione %s" % (docente, self.nome),
-                        modello="email_corso_avvisa_presidente_docente_nominato_a_lezione.html",
-                        corpo={
-                            "persona": docente,
-                            "corso": self.corso,
-                            'lezione': self,
-                        },
-                        destinatari=destinatari)
+                    query_kwargs = {
+                        'oggetto': "%s è nominato come docente di lezione %s" % (docente, self.nome),
+                    }
+
+                    # Verifica, per non inviare più volte stessa mail
+                    msg_already_sent = Messaggio.objects.filter(
+                        oggetti_destinatario__persona__in=destinatari,
+                    **query_kwargs).count()
+
+                    if not msg_already_sent:
+                        Messaggio.costruisci_e_accoda(
+                            modello="email_corso_avvisa_presidente_docente_nominato_a_lezione.html",
+                            corpo={
+                                "persona": docente,
+                                "corso": self.corso,
+                                'lezione': self,
+                            },
+                            destinatari=destinatari, **query_kwargs)
 
     def get_full_scheda_lezioni(self):
         if hasattr(self, 'corso') and self.corso.titolo_cri and self.corso.titolo_cri.scheda_lezioni:
