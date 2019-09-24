@@ -234,20 +234,17 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
            messaggio="Siamo spiacenti, ma non sembra che tu possa partecipare "
                      "a questo corso per qualche motivo.",
            torna_titolo="Torna al corso",
-           torna_url=corso.url
-        )
+           torna_url=corso.url)
 
     if corso.is_reached_max_participants_limit:
-        # TODO: informa direttore
-        # send_mail()
+        corso.avvisa_presidente_raggiunto_limite_partecipazioni()
 
         return errore_generico(request, me,
            titolo="Non puoi partecipare a questo corso",
            messaggio="È stato raggiunto il limite massimo di richieste di "
                      "partecipazione al corso.",
            torna_titolo="Torna al corso",
-           torna_url=corso.url
-        )
+           torna_url=corso.url)
 
     p = PartecipazioneCorsoBase(persona=me, corso=corso)
     p.save()
@@ -258,8 +255,7 @@ def aspirante_corso_base_iscriviti(request, me=None, pk=None):
         messaggio="Complimenti! La tua richiesta di iscrizione è stata registrata ed inviata al Direttore di Corso. "
                   "Nei prossimi giorni riceverai una e-mail di conferma o di respingimento della tua iscrizione.",
         torna_titolo="Torna al corso",
-        torna_url=corso.url
-    )
+        torna_url=corso.url)
 
 
 @pagina_privata
