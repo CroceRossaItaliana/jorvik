@@ -137,6 +137,11 @@ def attestato_replace_corso_name(titolo):
 @register.simple_tag
 def verbale_indirizzo(corso):
     locazione = corso.locazione
+
+    # Locazione che non ha tutti i valori, restituire l'<indirizzo>
+    if '' in [locazione.comune, locazione.via, locazione.civico]:
+        return "nei locali di %s" % corso.locazione
+
     return "nei locali del %s, siti in %s, %s, n. %s" % (corso.sede,
                                                          locazione.comune,
                                                          locazione.via,
