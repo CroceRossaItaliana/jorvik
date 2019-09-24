@@ -115,8 +115,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     ]
 
     data_inizio = models.DateTimeField(blank=False, null=False,
-        help_text="La data di inizio del corso. "
-                  "Utilizzata per la gestione delle iscrizioni.")
+        help_text="La data di inizio del corso. Utilizzata per la gestione delle iscrizioni.")
     data_esame = models.DateTimeField(blank=False, null=False)
     data_esame_2 = models.DateTimeField(_('Seconda data esame'), blank=True, null=True)
     progressivo = models.SmallIntegerField(blank=False, null=False, db_index=True)
@@ -304,7 +303,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             data_inizio__gte=timezone.now() - datetime.timedelta(
                 days=settings.FORMAZIONE_FINESTRA_CORSI_INIZIATI
             ))
-
 
     @classmethod
     def find_courses_for_volunteer(cls, volunteer, sede):
@@ -556,6 +554,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             progressivo = 1  # Se non esiste, inizia da 1
 
         c = CorsoBase(anno=anno, progressivo=progressivo, **kwargs)
+        c.min_participants, c.max_participants = c.titolo_cri.numero_partecipazioni
         c.save()
         return c
 
@@ -849,6 +848,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return self.sede.presidente()
 
     @property
+    def presidente_del_corso(self):
+        return self.get_firmatario
+
+    @property
     def get_firmatario_sede(self):
         course_created_by = self.get_firmatario
         if course_created_by is not None:
@@ -978,13 +981,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 data_ottenimento=kwargs.get('data_ottenimento'),
                 data_scadenza=data_scadenza,
                 is_course_title=True,
-                corso_partecipazione=p,
-
-                # todo: attending details
-                # luogo_ottenimento='',
-                # codice='',
-                # codice_corso='',
-                # certificato='',
+                corso_partecipazione=p
             )
             for p in partecipanti
         ]
@@ -1063,8 +1060,27 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def is_reached_max_participants_limit(self):
-        actual_requests = PartecipazioneCorsoBase.objects.filter(corso=self)
-        return self.max_participants + 10 == actual_requests
+        confirmed_requests = self.partecipazioni_confermate().count()
+        return self.max_participants + 10 == confirmed_requests
+
+    def avvisa_presidente_raggiunto_limite_partecipazioni(self):
+        query_kwargs = {
+            'oggetto': "Raggiunto limite di partecipazioni %s" % self.nome,
+        }
+
+        today = timezone.now().today()
+        has_already_sent = Messaggio.objects.filter(
+            oggetti_destinatario__persona__in=[self.presidente_del_corso],
+            creazione__year=today.year,
+            creazione__month=today.month,
+            creazione__day=today.day,
+            **query_kwargs).exists()
+
+        if not has_already_sent:
+            Messaggio.costruisci_e_invia(
+                destinatari=[self.presidente_del_corso],
+                modello="email_corso_raggiunto_limite_partecipazioni.html",
+                corpo={"corso": self}, **query_kwargs)
 
     @property
     def is_nuovo_corso(self):
@@ -1659,10 +1675,10 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
 class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStorico):
     corso = models.ForeignKey(CorsoBase, related_name='lezioni', on_delete=models.PROTECT)
     nome = models.TextField()
-    docente = models.ManyToManyField(Persona, verbose_name='Docente della lezione',)
+    docente = models.ManyToManyField(Persona, blank=True, verbose_name='Docente della lezione',)
     docente_esterno = models.CharField('Docente esterno della lezione',
                                        max_length=255, null=True, blank=True,
-                                        help_text="Da compilare solo per i docenti esterni")
+                                       help_text="Da compilare solo per i docenti esterni")
     obiettivo = models.CharField('Obiettivo formativo della lezione',
                                  max_length=255, null=True, blank=True)
     luogo = models.CharField(max_length=255, null=True, blank=True,
@@ -1684,15 +1700,23 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
         docenti = self.docente
         if docenti.count():
             for docente in docenti.all():
-                Messaggio.costruisci_e_accoda(
-                    oggetto='Docente al %s' % self.corso.nome,
-                    modello="email_docente_assegnato_a_corso.html",
-                    corpo={
-                        "persona": docente,
-                        "corso": self.corso,
-                    },
-                    mittente=me,
-                    destinatari=[docente])
+                query_kwargs = {
+                    'oggetto': 'Docente al %s' % self.corso.nome,
+                    'mittente': me,
+                }
+
+                # Verifica, per non inviare più volte stessa mail
+                msg_already_sent = Messaggio.objects.filter(
+                    oggetti_destinatario__persona__in=[docente],
+                **query_kwargs).count()
+
+                if not msg_already_sent:
+                    Messaggio.costruisci_e_accoda(
+                        modello="email_docente_assegnato_a_corso.html",
+                        corpo={
+                            "persona": docente,
+                            "corso": self.corso,
+                        }, destinatari=[docente], **query_kwargs)
 
     def avvisa_presidente_docente_nominato(self):
         """Avvisa presidente del comitato della persona che è stato nominato
@@ -1711,15 +1735,25 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                     destinatari.append(sede.presidente())
 
                 if destinatari:
-                    Messaggio.costruisci_e_accoda(
-                        oggetto="%s è nominato come docente di lezione %s" % (docente, self.nome),
-                        modello="email_corso_avvisa_presidente_docente_nominato_a_lezione.html",
-                        corpo={
-                            "persona": docente,
-                            "corso": self.corso,
-                            'lezione': self,
-                        },
-                        destinatari=destinatari)
+                    query_kwargs = {
+                        'oggetto': "%s è nominato come docente di lezione %s" % (docente, self.nome),
+                    }
+
+                    # Verifica, per non inviare più volte stessa mail
+                    msg_already_sent = Messaggio.objects.filter(
+                        oggetti_destinatario__persona__in=destinatari,
+                    **query_kwargs).count()
+
+                    if not msg_already_sent:
+                        Messaggio.costruisci_e_accoda(
+                            modello="email_corso_avvisa_presidente_docente_nominato_a_lezione.html",
+                            corpo={
+                                "persona": docente,
+                                "corso": self.corso,
+                                'lezione': self,
+                            },
+                            destinatari=destinatari, **query_kwargs)
+
 
     def get_full_scheda_lezioni(self):
         if hasattr(self, 'corso') and self.corso.titolo_cri and self.corso.titolo_cri.scheda_lezioni:

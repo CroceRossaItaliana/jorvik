@@ -119,3 +119,30 @@ def attestato_contenuti(corso):
         if corso.titolo_cri.scheda_lezioni:
             return [i['lezione'] for i in corso.titolo_cri.scheda_lezioni_sorted.values()]
     return list()
+
+
+@register.simple_tag
+def attestato_replace_corso_name(titolo):
+    titolo_lc = titolo.lower()
+    if titolo_lc.startswith("corso informativo"):
+        return titolo
+
+    for i in ['Corso per', 'Corso di']:
+        if titolo_lc.startswith(i.lower()):
+            return titolo.replace(i, '').strip().capitalize()
+
+    return titolo
+
+
+@register.simple_tag
+def verbale_indirizzo(corso):
+    locazione = corso.locazione
+
+    # Locazione che non ha tutti i valori, restituire l'<indirizzo>
+    if '' in [locazione.comune, locazione.via, locazione.civico]:
+        return "nei locali di %s" % corso.locazione
+
+    return "nei locali del %s, siti in %s, %s, n. %s" % (corso.sede,
+                                                         locazione.comune,
+                                                         locazione.via,
+                                                         locazione.civico)
