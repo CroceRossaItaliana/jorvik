@@ -253,33 +253,49 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         # Prendere le estensioni del corso
         estensioni_dict = dict()
-        for idx, estensione in enumerate(self.get_extensions(), 1):
-            for sede in estensione.sede.all():
-                con_sottosedi = sede.esplora()
-                sede_sottosedi = list(con_sottosedi.values_list('id', flat=True))
-                if idx not in estensioni_dict:
-                    estensioni_dict[idx] = {
-                        'sede_sottosedi': sede_sottosedi,
-                        'segmenti': estensione.segmento,
-                        'estensione': estensione
-                    }
-                else:
-                    estensioni_dict[idx]['sede_sottosedi'].extend(sede_sottosedi)
 
-        # estensioni_che_coincidono = []
+        def esplora_sede(sede, estensione=None, idx=1):
+            con_sottosedi = sede.esplora()
+            sede_sottosedi = list(con_sottosedi.values_list('id', flat=True))
+            if idx not in estensioni_dict:
+                estensioni_dict[idx] = {
+                    'sede_sottosedi': sede_sottosedi,
+                    'segmenti': estensione.segmento if estensione else None,
+                    'estensione': estensione if estensione else None
+                }
+            else:
+                estensioni_dict[idx]['sede_sottosedi'].extend(sede_sottosedi)
+
+        if self.extension_type == CorsoBase.EXT_MIA_SEDE:
+            # Se l'mpostazione è: Solo si mia sede di appartenenze
+            esplora_sede(self.sede)
+        else:
+            # Se l'mpostazione è: A livello regionale
+            for idx, estensione in enumerate(self.get_extensions(), 1):
+                # Leggere le impostazioni di ogni estensione
+                for sede in estensione.sede.all():
+                    esplora_sede(sede, estensione, idx)
+
+        # Incrociare le sedi delle appartenenze dell'Utente e del Corso
         appartenenze_che_coincidono = Appartenenza.objects.none()
+
         for k,v in estensioni_dict.items():
             segmenti, sedi = v['segmenti'], v['sede_sottosedi']
-            appartenenze_che_coincidono |= persona_appartenenze.filter(membro__in=segmenti,
-                                                                       sede__in=sedi)
-            # if appartenenze_che_coincidono:
-            #     estensioni_che_coincidono.append([k, segmenti])
 
-        # print('Appartenenze che coincidono:', appartenenze_che_coincidono)
-        # print('Estensioni che coincidono:', estensioni_che_coincidono)
+            q = persona_appartenenze.filter(sede__in=sedi)
+
+            # Segmenti vuoto nel caso di estensione mia sede
+            # perchè li i segmenti non si selezionano
+            if segmenti is not None:
+                q.filter(membro__in=segmenti)
+
+            appartenenze_che_coincidono |= q
 
         if appartenenze_che_coincidono.exists():
+            # Una delle sedi di appartenenze dell'Utente si è trovata fra le
+            # sedi delle impostazioni delle estensioni del corso
             return True
+
         return False
 
     def possibili_destinazioni(self):
@@ -761,7 +777,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         for recipient in self._corso_activation_recipients_for_email():
             if self.is_nuovo_corso:
                 persona = recipient
-                subject = "Nuovo Corso: %s per Volontari CRI" % self.titolo_cri
+                subject = "Nuovo %s per Volontari CRI" % self.titolo_cri
             else:
                 persona = recipient.persona
                 subject = "Nuovo Corso per Volontari CRI"

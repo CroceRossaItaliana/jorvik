@@ -88,7 +88,14 @@
                                     {% elif r.esito == corso.NON_HAI_CARICATO_DOCUMENTI_PERSONALI %}
                                         Questo utente non ha caricato un documento d'identità
 
+                                    {% else %}
+                                        Non può iscriversi: esito non definito
+
                                     {% endif %}
+
+                                {% else %}
+                                    Esito sconosciuto
+
                                 {% endif %}
                             </td>
                             <td class="grassetto">
