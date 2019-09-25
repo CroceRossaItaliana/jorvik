@@ -196,6 +196,11 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 if not self.persona_verifica_estensioni(persona):
                     return self.NON_PUOI_ISCRIVERTI_ESTENSIONI_NON_COINCIDONO
 
+        # Controllo estensioni
+        if self.extension_type in [CorsoBase.EXT_MIA_SEDE, CorsoBase.EXT_LVL_REGIONALE]:
+            if not self.persona_verifica_estensioni(persona):
+                return self.NON_PUOI_ISCRIVERTI_ESTENSIONI_NON_COINCIDONO
+
         # if not persona.has_required_titles_for_course(course=self):
         #     return self.NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI
 
