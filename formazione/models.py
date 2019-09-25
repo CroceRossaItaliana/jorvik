@@ -182,14 +182,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     NON_PUOI_ISCRIVERTI_SOLO_SE_IN_AUTONOMIA = (NON_PUOI_ISCRIVERTI_TROPPO_TARDI,)
 
     def persona(self, persona):
-        # Verifica presenza dei documenti personali aggiornati
-        if persona.personal_identity_documents():
-            esito_verifica = self.persona_verifica_documenti_personali(persona)
-            if esito_verifica:
-                return esito_verifica
-        else:
-            return self.NON_HAI_CARICATO_DOCUMENTI_PERSONALI
-
         # Validazione per Nuovi Corsi (Altri Corsi)
         if self.is_nuovo_corso:
             # Aspirante non può iscriversi a corso nuovo
@@ -201,8 +193,17 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             if not self.persona_verifica_estensioni(persona):
                 return self.NON_PUOI_ISCRIVERTI_ESTENSIONI_NON_COINCIDONO
 
-            # if not persona.has_required_titles_for_course(course=self):
-            #     return self.NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI
+        # if not persona.has_required_titles_for_course(course=self):
+        #     return self.NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI
+
+        # Verifica presenza dei documenti personali aggiornati
+        if persona.personal_identity_documents():
+            esito_verifica = self.persona_verifica_documenti_personali(
+                persona)
+            if esito_verifica:
+                return esito_verifica
+        else:
+            return self.NON_HAI_CARICATO_DOCUMENTI_PERSONALI
 
         # if (not Aspirante.objects.filter(persona=persona).exists()) and persona.volontario:
         #     return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
