@@ -500,6 +500,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def applicazioni_disponibili(self):
+        from formazione.models import CorsoBase
         from django.core.cache import cache
 
         if cache.get('persona_{}_items_to_display'.format(self.id)):
@@ -515,7 +516,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             if self.dipendente:
                 utente_label = 'Utente'
             else:
-                utente_url, utente_label, utente_count = ('/aspirante/', 'Aspirante', self.aspirante.corsi().count())
+                num_corsi_base = self.aspirante.corsi().exclude(tipo=CorsoBase.CORSO_NUOVO).count()
+                utente_url, utente_label, utente_count = ('/aspirante/', 'Aspirante', num_corsi_base)
 
         all_menus = [
             [(utente_url, utente_label, 'fa-user', utente_count), True],
