@@ -88,7 +88,18 @@
                                     {% elif r.esito == corso.NON_HAI_CARICATO_DOCUMENTI_PERSONALI %}
                                         Questo utente non ha caricato un documento d'identità
 
+                                    {% elif r.esito == corso.NON_PUOI_ISCRIVERTI_ESTENSIONI_NON_COINCIDONO %}
+                                        Questa persona non ha appartenenze che coincidono con la sede organizzatrice del corso
+                                        oppure con le sedi impostati nelle estensioni a livello regionale.
+
+                                    {% else %}
+                                        Non può iscriversi: esito non definito
+
                                     {% endif %}
+
+                                {% else %}
+                                    Esito sconosciuto
+
                                 {% endif %}
                             </td>
                             <td class="grassetto">
