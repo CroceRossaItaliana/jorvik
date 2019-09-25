@@ -44,10 +44,12 @@
 		.first-aid-descr {width: 67%; display: inline-block; vertical-align: top; font-size: 10pt; line-height: 14pt;}
 
 		.persona__nome-completo {font-size: 15pt; text-transform: uppercase;}
+
+		.documento-digitale-text {margin-top:10px; font-size:11px; text-align:right;}
 	</style>
 </head>
 <body>
-	{% current_domain as SITE_URL %}
+	{% get_url_for_staticfiles as SITE_URL %}
 
 	<div id="page_1" class="page" style="background-position: center right; background-image: url('{{SITE_URL}}{% static 'img/attestato/sfondo-vuoto-cropped.png' %}'); page-break-after: always;">
 		<div class="page-wrapper">
@@ -87,7 +89,11 @@
 
 						{% if corso.cdf_level != corso.titolo_cri.CDF_LIVELLO_I %}
 							<div class="front-page-qualifica">
-								{% if corso.is_nuovo_corso %} {{ corso.titolo_cri }} {% else %} Volontario CRI {% endif %}
+								{% if corso.is_nuovo_corso %}
+									{% attestato_replace_corso_name corso.titolo_cri.nome %}
+								{% else %}
+									Volontario CRI
+								{% endif %}
 							</div>
 						{% endif %}
 
@@ -105,7 +111,7 @@
 				</div>
 			</div>
 		</div>
-	</div>
+	</div><!--/#page_1-->
 	<div id="page_2" class="page" style="height:21cm; background-position: center left; background-image: url('{{SITE_URL}}{% static 'img/attestato/sfondo-vuoto2-cropped.png' %}')">
 		<div class="page-wrapper">
 			<div class="page-inner" style="font-size: 0;"> <!--to remove empty space between divs with inline-block -->
@@ -141,8 +147,9 @@
 						{% endif %}
 					</div>
 				</div>
-			</div>
-		</div>
-	</div>
+			</div><!--/.page-inner-->
+			<div class="documento-digitale-text">Documento stampabile generato digitalmente da <strong>Gaia</strong>. Autenticato: {{ timestamp }}.</div>
+		</div><!--/.page-wrapper-->
+	</div><!--/#page_2-->
 </body>
 </html>
