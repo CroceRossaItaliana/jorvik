@@ -143,6 +143,13 @@ class PDF(Allegato):
     def genera_e_salva(self, nome='File.pdf', scadenza=None, corpo={}, modello='pdf_vuoto.html',
                        orientamento=ORIENTAMENTO_VERTICALE, formato=FORMATO_A4,
                        posizione='allegati/'):
+        return self.genera_e_salva_con_python(nome=nome, scadenza=scadenza, corpo=corpo,
+                                              modello=modello, orientamento=orientamento,
+                                              formato=formato, posizione=posizione)
+
+    def genera_e_salva_external(self, nome='File.pdf', scadenza=None, corpo={}, modello='pdf_vuoto.html',
+                       orientamento=ORIENTAMENTO_VERTICALE, formato=FORMATO_A4,
+                       posizione='allegati/'):
         """
         Genera un file PDF con i parametri specificati e salva.
         :param nome: Il nome del file PDF da salvare.
