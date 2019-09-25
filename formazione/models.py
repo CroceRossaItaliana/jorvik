@@ -1171,22 +1171,19 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return False
 
     def can_activate(self, me):
-        if me.is_presidente:
-            """ All'presidente deve sparire la sezione dell'attivazione corso se:
-            - ha caricato delibera
-            - ha impostato estensioni (/aspirante/corso-base/<id>/estensioni/)
-            - ha nominato almeno un direttore
-            """
-            has_delibera = self.delibera_file is not None
-            has_extension = self.has_extensions()
-            has_directors = self.direttori_corso().count() > 0
-            is_all_true = has_delibera, has_extension, has_directors
+        if me.is_presidente or (me.is_presidente and me in self.direttori_corso()):
+            has_delibera = self.delibera_file is not None  # ha caricato delibera
+            # has_extension = self.has_extensions()
+            has_directors = self.direttori_corso().count() > 0  # ha nominato almeno un direttore
+            is_all_true = has_delibera, has_directors  # has_extension,
 
-            # # Deve riapparire se: il direttore ha inserito la descrizione
+            # Deve riapparire se: il direttore ha inserito la descrizione
             # if self.descrizione:
             #     return True
-            # else:
-            return True if False in is_all_true else False
+
+            if False in is_all_true:
+                return False
+            return True
         else:
             """ Direttori del corso vedono sempre la sezione invece """
             return True
