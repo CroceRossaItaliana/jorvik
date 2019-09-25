@@ -244,6 +244,4 @@ class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
             return self.__class__.objects.none()
 
         q = ricerca.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=self.raggio)))
-        #q = ricerca.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=self.raggio)))
-        #print(q.query)
         return q
