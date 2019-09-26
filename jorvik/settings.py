@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'filer',
     'ckeditor',
     'ckeditor_filebrowser_filer',
+    'prettyjson',
 
     'django_otp',
     'django_otp.plugins.otp_static',
