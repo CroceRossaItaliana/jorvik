@@ -1,3 +1,4 @@
+import re
 import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -1769,7 +1770,6 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                             },
                             destinatari=destinatari, **query_kwargs)
 
-
     def get_full_scheda_lezioni(self):
         if hasattr(self, 'corso') and self.corso.titolo_cri and self.corso.titolo_cri.scheda_lezioni:
             return self.corso.titolo_cri.scheda_lezioni
@@ -1794,12 +1794,19 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
     @property
     def lezione_ore(self):
         ore = self.get_from_scheda('ore')
-        if ore:
+        if not ore:
+            return ore
+
+        if "’" in ore:
+            # Elaborare i valori con apostrofo (minuti)
+            minutes = re.findall(r'^\d+', ore.strip())
+            minutes = int(minutes[0]) if minutes else 60
+            return datetime.timedelta(minutes=minutes)
+        else:
             try:
-                return int(ore)
+                return datetime.timedelta(hours=int(ore))
             except ValueError:
-                return 1
-        return ore
+                return datetime.timedelta(hours=1)
 
     @property
     def lezione_id_univoco(self):
@@ -1813,9 +1820,9 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
 
     @property
     def non_revisionata(self):
-        """ Se la data è rimasta minore della data di inizio corso vuol dire
-        che il reponsabile non ha corretto il valore automatico. """
-        return self.inizio < self.corso.data_inizio
+        """ La lezione risulta non revisionata se è rimasto il solo valore di
+        inizio impostato in automatico con la creazione del corso """
+        return self.inizio and not self.fine
 
     @property
     def divisa(self):
