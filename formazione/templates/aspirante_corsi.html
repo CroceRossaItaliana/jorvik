@@ -11,16 +11,14 @@
         .aspirante-corsi-table thead tr th {vertical-align:top;}
     </style>
 
-
     <h2><i class="fa fa-fw fa-home"></i> Corsi {% if me.volontario %}attivi{%else%}nelle tue vicinanze{%endif%}</h2>
 
     {% if me.aspirante %}
-    <div class="alert alert-info">
-        <i class="fa fa-fw fa-info-circle"></i>
-        Questo &egrave; un elenco dei Corsi nel raggio di {{ me.aspirante.raggio|default:"0" }} km
-        da {{ me.aspirante.locazione|default:"n/a" }}. Puoi modificare la posizione dal menu "Aspirante" > "Impostazioni".
-    </div>
-    {%endif%}
+        <div class="alert alert-info">
+            <i class="fa fa-fw fa-info-circle"></i> Questo &egrave; un elenco dei Corsi nel raggio di {{ me.aspirante.raggio|default:"0" }} km
+            da {{ me.aspirante.locazione|default:"n/a" }}. Puoi modificare la posizione dal menu "Aspirante" > "Impostazioni".
+        </div>
+    {% endif %}
 
     <table class="aspirante-corsi-table table table-striped table-bordered">
         <thead>
@@ -31,7 +29,7 @@
             </tr>
         </thead>
 
-        {% for corso in corsi %}
+        {% for corso in corsi_attivi %}
             <tr>
                 <td>
                     <strong>{{ corso.link|safe }}</strong><br />
@@ -71,4 +69,45 @@
             </tr>
         {% endfor %}
     </table>
+
+    {% if corsi_frequentati %}
+    <h2><i class="fa fa-fw fa-home"></i> Corsi frequentati</h2>
+    <table class="aspirante-corsi-table table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th style="width:55%;">Corso e Sede</th>
+                <th style="width:25%;">Informazioni</th>
+            </tr>
+        </thead>
+
+        {% for corso in corsi_frequentati %}
+            <tr>
+                <td>
+                    <strong>{{ corso.link|safe }}</strong><br />
+                    <i class="fa fa-fw fa-home"></i>
+                        {{ corso.sede.link|safe }}<br />
+                    {% if corso.locazione %}
+                        <i class="fa fa-fw fa-map-marker"></i>
+                        {{ corso.locazione }}
+                    {% endif %}
+                </td>
+                <td>
+                    <i class="fa fa-fw fa-calendar"></i>
+                        {% if not corso.iniziato %}
+                            Inizia: {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}
+                        {% else %}
+                            <span class="bg-danger">Iniziato: {{ corso.data_inizio|date:"SHORT_DATETIME_FORMAT" }}</span>
+                        {% endif %}
+                        <br />
+                    <i class="fa fa-fw fa-calendar"></i> Esami: {{ corso.data_esame|date:"SHORT_DATETIME_FORMAT" }}<br />
+                    <i class="fa fa-fw fa-user"></i> Direttore ({{ corso.deleghe.count }}):
+                        {% for d in corso.deleghe.all %}
+                            {{ d.persona.link|safe }}
+                        {% endfor %}
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+
 {% endblock %}
