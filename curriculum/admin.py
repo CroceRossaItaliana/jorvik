@@ -1,4 +1,7 @@
 from django.contrib import admin
+from django.contrib.postgres.fields import JSONField
+
+from prettyjson import PrettyJSONWidget
 
 from base.admin import InlineAutorizzazione
 from gruppi.readonly_admin import ReadonlyAdminMixin
@@ -12,6 +15,9 @@ class AdminTitolo(ReadonlyAdminMixin, admin.ModelAdmin):
         'inseribile_in_autonomia', 'expires_after', 'scheda_prevede_esame',)
     list_filter = ('is_active', 'cdf_livello', 'area', "tipo", "richiede_conferma",
         "inseribile_in_autonomia", 'goal__unit_reference', 'scheda_prevede_esame',)
+    formfield_overrides = {
+        JSONField: {'widget': PrettyJSONWidget}
+    }
 
     def goal_obbiettivo_stragetico(self, obj):
         return obj.goal.unit_reference if hasattr(obj.goal,
