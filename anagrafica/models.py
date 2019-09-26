@@ -682,15 +682,25 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         from formazione.models import PartecipazioneCorsoBase, CorsoBase
         return PartecipazioneCorsoBase.con_esito_ok().filter(persona=self, corso__stato=CorsoBase.ATTIVO).first()
 
-    def richieste_di_partecipazione(self):
-        """ Restituisce richieste di partecipazione confermate e in attesa """
+    def richieste_di_partecipazione(self, corso_stato=None):
+        """ Restituisce richieste di partecipazione ai corsi confermate e in attesa """
         from formazione.models import PartecipazioneCorsoBase, CorsoBase
+        if corso_stato is None:
+            corso_stato = [CorsoBase.ATTIVO,]
 
         confirmed = PartecipazioneCorsoBase.con_esito_ok()
         pending = PartecipazioneCorsoBase.con_esito_pending()
         requests_to_courses = confirmed | pending
 
-        return requests_to_courses.filter(persona=self, corso__stato=CorsoBase.ATTIVO)
+        return requests_to_courses.filter(persona=self, corso__stato__in=corso_stato)
+
+    @property
+    def corsi_frequentati(self):
+        from formazione.models import CorsoBase
+        return CorsoBase.objects.filter(
+            pk__in=[i.corso.pk for i in self.richieste_di_partecipazione(
+                    corso_stato=[CorsoBase.TERMINATO,])]
+        ).order_by('-data_esame')
 
     @property
     def volontario_da_meno_di_un_anno(self):
