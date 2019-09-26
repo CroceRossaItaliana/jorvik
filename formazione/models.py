@@ -188,18 +188,19 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             if persona.ha_aspirante:
                 return self.NON_PUOI_SEI_ASPIRANTE
 
-        # Controllo estensioni
-        if self.extension_type in [CorsoBase.EXT_MIA_SEDE, CorsoBase.EXT_LVL_REGIONALE]:
-            if not self.persona_verifica_estensioni(persona):
-                return self.NON_PUOI_ISCRIVERTI_ESTENSIONI_NON_COINCIDONO
+        # Non fare la verifica per gli aspiranti (non hanno appartenenze)
+        if not persona.ha_aspirante:
+            # Controllo estensioni
+            if self.extension_type in [CorsoBase.EXT_MIA_SEDE, CorsoBase.EXT_LVL_REGIONALE]:
+                if not self.persona_verifica_estensioni(persona):
+                    return self.NON_PUOI_ISCRIVERTI_ESTENSIONI_NON_COINCIDONO
 
         # if not persona.has_required_titles_for_course(course=self):
         #     return self.NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI
 
         # Verifica presenza dei documenti personali aggiornati
         if persona.personal_identity_documents():
-            esito_verifica = self.persona_verifica_documenti_personali(
-                persona)
+            esito_verifica = self.persona_verifica_documenti_personali(persona)
             if esito_verifica:
                 return esito_verifica
         else:
