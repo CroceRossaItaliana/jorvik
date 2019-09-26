@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm, modelformset_factory
@@ -171,11 +173,12 @@ class ModuloModificaLezione(ModelForm):
             lezione_ore = self.instance.lezione_ore
             if lezione_ore:
                 duration = fine-inizio
-                days, seconds = duration.days, duration.seconds
-                hours = days * 24 + seconds // 3600
-                if hours > lezione_ore:
+                # days, seconds = duration.days, duration.seconds
+                # hours = days * 24 + seconds // 3600
+                # hours = datetime.timedelta(hours=hours)
+                if duration.seconds > lezione_ore.seconds:
                     self.add_error('fine', 'La durata della lezione non può essere '
-                       'maggiore della durata impostata nella scheda per questa lezione (%s ore).' % lezione_ore)
+                       'maggiore della durata impostata nella scheda per questa lezione (%s).' % lezione_ore)
 
         self.clean_docente_fields()
 
