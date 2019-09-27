@@ -103,7 +103,7 @@
                                         <p class="grassetto">
                                             {{ t.titolo.nome }}
 
-                                            {% if t.is_course_title and not t.is_expired_course_title %}
+                                            {% if t.is_course_title %} <!-- and not t.is_expired_course_title -->
                                                 <br><a href="{% url 'aspirante:report_schede' t.corso_partecipazione.corso.pk %}?download_single_attestato={{t.pk}}">Scarica attestato</a>
                                             {% endif %}
                                         </p>
@@ -115,10 +115,10 @@
                                             </span>
 
                                         {% elif t.is_expired_course_title %}
-                                            <span class="text-danger">
+                                            <!-- <span class="text-danger">
                                                 <i class="fa fa-fw fa-clock-o"></i>
                                                 Scaduto titolo del corso
-                                            </span>
+                                            </span> -->
 
                                         {% elif t.esito == t.ESITO_OK %}
                                             <span class="text-success">
@@ -151,9 +151,9 @@
                                         {% endif %}
 
                                         {% if t.data_scadenza %}
-                                            <i class="fa fa-fw text-muted fa-clock-o"></i>
+                                            <!-- <i class="fa fa-fw text-muted fa-clock-o"></i>
                                             {{ t.data_scadenza|date:"SHORT_DATE_FORMAT" }}
-                                            <br />
+                                            <br /> -->
                                         {% endif %}
 
                                         {% if t.codice %}
@@ -166,8 +166,7 @@
                                     <td>
                                         <a href="/utente/curriculum/{{ t.pk }}/cancella/"
                                            data-conferma="Sei sicuro/a di voler rimuovere {{ t.titolo.nome }} dal tuo curriculum?"
-                                           class="btn btn-xs btn-danger" title="Rimuovi dal curriculum">
-                                            <i class="fa fa-trash"></i>
+                                           class="btn btn-xs btn-danger" title="Rimuovi dal curriculum"> <i class="fa fa-trash"></i>
                                         </a>
                                     </td>
                                 </tr>
@@ -176,22 +175,15 @@
                                 <tr class="alert alert-warning">
                                     <td colspan="4">
                                         <h4><i class="fa fa-fw fa-info-circle"></i> Nessun dato inserito</h4>
-                                        <p>Se hai un/una {{ tipo_display }}, usa il modulo
-                                            a sinistra per inserirlo.</p>
+                                        <p>Se hai un/una {{ tipo_display }}, usa il modulo a sinistra per inserirlo.</p>
                                     </td>
                                 </tr>
-
                             {% endfor %}
                         </tbody>
                     </table>
-
                 </div>
             </div>
-
         </div>
-
-
-
     </div>
 
 {% endblock %}

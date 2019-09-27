@@ -986,10 +986,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         from curriculum.models import TitoloPersonale
 
-        if self.corso_vecchio:
-            data_scadenza = None
-        else:
-            data_scadenza = timezone.now() + self.titolo_cri.expires_after_timedelta
+        # if self.corso_vecchio:
+        #     data_scadenza = None
+        # else:
+        #     data_scadenza = timezone.now() + self.titolo_cri.expires_after_timedelta
 
         objs = [
             TitoloPersonale(
@@ -998,7 +998,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 persona=p.persona,
                 certificato_da=self.get_firmatario,
                 data_ottenimento=kwargs.get('data_ottenimento'),
-                data_scadenza=data_scadenza,
+                data_scadenza=None,  # OBS: GAIA-184
                 is_course_title=True,
                 corso_partecipazione=p
             )
