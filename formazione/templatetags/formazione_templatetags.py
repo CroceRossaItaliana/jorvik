@@ -1,3 +1,5 @@
+import datetime
+
 from django import template
 from django.utils.safestring import mark_safe
 
@@ -146,3 +148,23 @@ def verbale_indirizzo(corso):
                                                          locazione.comune,
                                                          locazione.via,
                                                          locazione.civico)
+
+@register.simple_tag
+def lezione_durata(lezione):
+    durata = None
+
+    if lezione.non_revisionata:
+        durata = lezione.lezione_ore
+    else:
+        inizio, fine = lezione.inizio, lezione.fine
+        if inizio and fine:
+            durata = lezione.fine - lezione.inizio
+            durata = datetime.timedelta(seconds=durata.seconds)
+        else:
+            durata = lezione.lezione_ore
+
+    if durata:
+        splitted = str(durata).split(':')
+        if splitted:
+            return "%s ore %s min" % tuple(splitted[:2])
+    return ''

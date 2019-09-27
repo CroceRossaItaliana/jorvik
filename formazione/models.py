@@ -1,3 +1,4 @@
+import re
 import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -188,18 +189,19 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             if persona.ha_aspirante:
                 return self.NON_PUOI_SEI_ASPIRANTE
 
-        # Controllo estensioni
-        if self.extension_type in [CorsoBase.EXT_MIA_SEDE, CorsoBase.EXT_LVL_REGIONALE]:
-            if not self.persona_verifica_estensioni(persona):
-                return self.NON_PUOI_ISCRIVERTI_ESTENSIONI_NON_COINCIDONO
+        # Non fare la verifica per gli aspiranti (non hanno appartenenze)
+        if not persona.ha_aspirante:
+            # Controllo estensioni
+            if self.extension_type in [CorsoBase.EXT_MIA_SEDE, CorsoBase.EXT_LVL_REGIONALE]:
+                if not self.persona_verifica_estensioni(persona):
+                    return self.NON_PUOI_ISCRIVERTI_ESTENSIONI_NON_COINCIDONO
 
         # if not persona.has_required_titles_for_course(course=self):
         #     return self.NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI
 
         # Verifica presenza dei documenti personali aggiornati
         if persona.personal_identity_documents():
-            esito_verifica = self.persona_verifica_documenti_personali(
-                persona)
+            esito_verifica = self.persona_verifica_documenti_personali(persona)
             if esito_verifica:
                 return esito_verifica
         else:
@@ -984,10 +986,10 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         from curriculum.models import TitoloPersonale
 
-        if self.corso_vecchio:
-            data_scadenza = None
-        else:
-            data_scadenza = timezone.now() + self.titolo_cri.expires_after_timedelta
+        # if self.corso_vecchio:
+        #     data_scadenza = None
+        # else:
+        #     data_scadenza = timezone.now() + self.titolo_cri.expires_after_timedelta
 
         objs = [
             TitoloPersonale(
@@ -996,7 +998,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 persona=p.persona,
                 certificato_da=self.get_firmatario,
                 data_ottenimento=kwargs.get('data_ottenimento'),
-                data_scadenza=data_scadenza,
+                data_scadenza=None,  # OBS: GAIA-184
                 is_course_title=True,
                 corso_partecipazione=p
             )
@@ -1171,22 +1173,19 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         return False
 
     def can_activate(self, me):
-        if me.is_presidente:
-            """ All'presidente deve sparire la sezione dell'attivazione corso se:
-            - ha caricato delibera
-            - ha impostato estensioni (/aspirante/corso-base/<id>/estensioni/)
-            - ha nominato almeno un direttore
-            """
-            has_delibera = self.delibera_file is not None
-            has_extension = self.has_extensions()
-            has_directors = self.direttori_corso().count() > 0
-            is_all_true = has_delibera, has_extension, has_directors
+        if me.is_presidente or (me.is_presidente and me in self.direttori_corso()):
+            has_delibera = self.delibera_file is not None  # ha caricato delibera
+            # has_extension = self.has_extensions()
+            has_directors = self.direttori_corso().count() > 0  # ha nominato almeno un direttore
+            is_all_true = has_delibera, has_directors  # has_extension,
 
-            # # Deve riapparire se: il direttore ha inserito la descrizione
+            # Deve riapparire se: il direttore ha inserito la descrizione
             # if self.descrizione:
             #     return True
-            # else:
-            return True if False in is_all_true else False
+
+            if False in is_all_true:
+                return False
+            return True
         else:
             """ Direttori del corso vedono sempre la sezione invece """
             return True
@@ -1771,7 +1770,6 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
                             },
                             destinatari=destinatari, **query_kwargs)
 
-
     def get_full_scheda_lezioni(self):
         if hasattr(self, 'corso') and self.corso.titolo_cri and self.corso.titolo_cri.scheda_lezioni:
             return self.corso.titolo_cri.scheda_lezioni
@@ -1796,12 +1794,19 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
     @property
     def lezione_ore(self):
         ore = self.get_from_scheda('ore')
-        if ore:
+        if not ore:
+            return ore
+
+        if "’" in ore:
+            # Elaborare i valori con apostrofo (minuti)
+            minutes = re.findall(r'^\d+', ore.strip())
+            minutes = int(minutes[0]) if minutes else 60
+            return datetime.timedelta(minutes=minutes)
+        else:
             try:
-                return int(ore)
+                return datetime.timedelta(hours=int(ore))
             except ValueError:
-                return 1
-        return ore
+                return datetime.timedelta(hours=1)
 
     @property
     def lezione_id_univoco(self):
@@ -1815,9 +1820,9 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
 
     @property
     def non_revisionata(self):
-        """ Se la data è rimasta minore della data di inizio corso vuol dire
-        che il reponsabile non ha corretto il valore automatico. """
-        return self.inizio < self.corso.data_inizio
+        """ La lezione risulta non revisionata se è rimasto il solo valore di
+        inizio impostato in automatico con la creazione del corso """
+        return self.inizio and not self.fine
 
     @property
     def divisa(self):

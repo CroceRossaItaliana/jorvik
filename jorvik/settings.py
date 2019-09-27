@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'filer',
     'ckeditor',
     'ckeditor_filebrowser_filer',
+    'prettyjson',
 
     'django_otp',
     'django_otp.plugins.otp_static',
@@ -94,7 +95,7 @@ CRON_CLASSES = [
     "base.cron.PulisciAspirantiVolontari",
     "anagrafica.cron.CronReportComitati",
     "centrale_operativa.cron.CronCancellaCoturniInvalidi",
-    'curriculum.cron.CronCheckExpiredCourseTitles',
+    # 'curriculum.cron.CronCheckExpiredCourseTitles',
 ]
 
 # Classi middleware (intercetta & computa)
