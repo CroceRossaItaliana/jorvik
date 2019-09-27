@@ -1200,7 +1200,7 @@ def utente_curriculum(request, me, tipo=None):
                 )
             return redirect("/utente/curriculum/%s/?inserimento=ok" % (tipo,))
 
-    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo).order_by('-data_scadenza')
+    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo).order_by('data_scadenza')
 
     contesto = {
         "tipo": tipo,
