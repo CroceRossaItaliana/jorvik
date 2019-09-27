@@ -1,6 +1,6 @@
 [client]
 host = db
 port = 5432
-database = postgres
+database = qq
 user = postgres
 password =
