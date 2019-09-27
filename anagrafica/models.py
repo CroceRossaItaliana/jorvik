@@ -694,11 +694,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def corsi_frequentati(self):
-        from formazione.models import CorsoBase
-        return CorsoBase.objects.filter(
-            pk__in=[i.corso.pk for i in self.richieste_di_partecipazione(
-                    corso_stato=[CorsoBase.TERMINATO,])]
-        ).order_by('-data_esame')
+        from formazione.models import PartecipazioneCorsoBase, CorsoBase
+
+        confirmed = PartecipazioneCorsoBase.con_esito_ok().filter(persona=self,
+                                                                  corso__stato=CorsoBase.TERMINATO)
+        if not confirmed:
+            return CorsoBase.objects.none()
+
+        corsi = CorsoBase.objects.filter(pk__in=[i.corso.pk for i in confirmed])
+        return corsi.order_by('-data_esame')
 
     @property
     def volontario_da_meno_di_un_anno(self):
