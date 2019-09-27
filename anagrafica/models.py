@@ -450,9 +450,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def volontario(self, **kwargs):
-        """
-        Controlla se membro volontario
-        """
+        """ Controlla se membro volontario """
         return self.membro(Appartenenza.VOLONTARIO, **kwargs)
 
     @property

@@ -88,6 +88,11 @@ class Titolo(ModelloSemplice, ConVecchioID):
 
     @property
     def expires_after_timedelta(self):
+        #
+        # Aggiornato con GAIA-184: attualmente i titoli CRI non hanno una
+        # scadenza, quindi questo metodo non fa niente da nessuna parte.
+        #
+
         from datetime import timedelta
         days = self.expires_after if self.expires_after else 0
         if self.is_titolo_corso_base:
@@ -111,6 +116,9 @@ class Titolo(ModelloSemplice, ConVecchioID):
             return 10, 30
 
         return CorsoBase.MIN_PARTECIPANTI, CorsoBase.MAX_PARTECIPANTI
+
+    def corsi(self, **kwargs):
+        return self.corsobase_set.all().filter(**kwargs)
 
     def __str__(self):
         return str(self.nome)
@@ -202,7 +210,7 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
             return True
         return False
         """
-        return False
+        return False  # OBS: GAIA-184
 
     @classmethod
     def get_expired_course_titles(cls):
