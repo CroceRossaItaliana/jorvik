@@ -44,12 +44,6 @@
                     <a target="_blank" href="https://sites.google.com/a/cri.it/manuale-processi/home?pli=1" class="alert-link">Manuale dei processi</a>
                 </div>
             </div>
-            <div class="col col-md-4">
-                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
-                    <span class="glyphicon glyphicon-folder-open" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
-                    <a target="_blank" href="https://criwiki.cri.it:8443/display/DA/Mission+Report" class="alert-link">Mission Report</a>
-                </div>
-            </div>
         {% endif %}
 
         <div class="col col-md-4">
@@ -91,6 +85,15 @@
                 <a target="_blank" href="https://gaia.cri.it/documenti/91/" class="alert-link">Edicola digitale</a>
             </div>
         </div>
+
+        {% if me.dipendente %}
+            <div class="col col-md-4">
+                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                    <span class="glyphicon glyphicon-globe" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                    <a target="_blank" href="https://criwiki.cri.it:8443/display/DA/Mission+Report" class="alert-link">Mission Report</a>
+                </div>
+            </div>
+        {% endif %}
 
     </div>
     <!--<div
