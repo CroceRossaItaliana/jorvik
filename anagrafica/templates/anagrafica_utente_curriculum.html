@@ -164,10 +164,12 @@
 
                                     </td>
                                     <td>
-                                        <a href="/utente/curriculum/{{ t.pk }}/cancella/"
-                                           data-conferma="Sei sicuro/a di voler rimuovere {{ t.titolo.nome }} dal tuo curriculum?"
-                                           class="btn btn-xs btn-danger" title="Rimuovi dal curriculum"> <i class="fa fa-trash"></i>
-                                        </a>
+                                        {% if not t.is_course_title %}
+                                            <a href="/utente/curriculum/{{ t.pk }}/cancella/"
+                                               data-conferma="Sei sicuro/a di voler rimuovere {{ t.titolo.nome }} dal tuo curriculum?"
+                                               class="btn btn-xs btn-danger" title="Rimuovi dal curriculum"> <i class="fa fa-trash"></i>
+                                            </a>
+                                        {% endif %}
                                     </td>
                                 </tr>
 
