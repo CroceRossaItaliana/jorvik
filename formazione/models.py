@@ -191,6 +191,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         # Non fare la verifica per gli aspiranti (non hanno appartenenze)
         if not persona.ha_aspirante:
+            if persona.volontario:
+                return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
+
             # Controllo estensioni
             if self.extension_type in [CorsoBase.EXT_MIA_SEDE, CorsoBase.EXT_LVL_REGIONALE]:
                 if not self.persona_verifica_estensioni(persona):
@@ -206,9 +209,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 return esito_verifica
         else:
             return self.NON_HAI_CARICATO_DOCUMENTI_PERSONALI
-
-        # if (not Aspirante.objects.filter(persona=persona).exists()) and persona.volontario:
-        #     return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
 
         # UPDATE: (GAIA-93) togliere blocco che non può iscriversi a più corsi
         # if PartecipazioneCorsoBase.con_esito_ok(persona=persona,

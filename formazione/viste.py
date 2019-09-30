@@ -953,6 +953,7 @@ def aspirante_corsi(request, me):
 
         # Unisci 2 categorie di corsi
         corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze
+        corsi = corsi.filter(tipo=Corso.CORSO_NUOVO)
 
     corsi_frequentati = me.corsi_frequentati
     corsi_attivi = corsi.exclude(pk__in=corsi_frequentati.values_list('pk', flat=True))
