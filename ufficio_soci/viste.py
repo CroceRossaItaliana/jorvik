@@ -35,6 +35,8 @@ from .forms import (ModuloCreazioneEstensione, ModuloAggiungiPersona,
     ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, ModuloLavoraTesserini,
     ModuloScaricaTesserini, ModuloDimissioniSostenitore)
 
+from anagrafica.tasks import prefetch_onlogin
+
 
 def prepare_us(me):
 
@@ -50,6 +52,9 @@ def prepare_us(me):
         "sedi": sedi,
         "persone": persone,
         "attivi": attivi,
+        "trasferimenti_automatici": me.trasferimenti_automatici.count(),
+        "trasferimenti_manuali": me.trasferimenti_manuali.count(),
+        "estensioni_da_autorizzare": me.estensioni_da_autorizzare.count()
     }
 
     return contesto
@@ -441,6 +446,8 @@ def us_estensione(request, me):
         "modulo": modulo,
     }
 
+    prefetch_onlogin.apply_async((me.id,))
+
     return 'us_estensione.html', contesto
 
 
@@ -514,6 +521,8 @@ def us_trasferimento(request, me):
         "sedi": sedi,
         "modulo": modulo,
     }
+
+    prefetch_onlogin.apply_async((me.id,))
 
     return 'us_trasferimento.html', contesto
 

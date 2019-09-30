@@ -3,6 +3,7 @@ from datetime import date, timedelta, datetime
 import codicefiscale
 import phonenumbers
 import mptt
+from compressor.cache import cache
 from mptt.querysets import TreeQuerySet
 from autoslug import AutoSlugField
 
