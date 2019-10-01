@@ -191,7 +191,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         # Non fare la verifica per gli aspiranti (non hanno appartenenze)
         if not persona.ha_aspirante:
-            if persona.volontario:
+            if not self.is_nuovo_corso and persona.volontario:
                 return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
 
             # Controllo estensioni
