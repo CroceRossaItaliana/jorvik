@@ -172,13 +172,16 @@ class ModuloModificaLezione(ModelForm):
         if self.has_instance and not self.instance.divisa:
             lezione_ore = self.instance.lezione_ore
             if lezione_ore:
-                duration = fine-inizio
+                duration = fine.timestamp() - inizio.timestamp()
+
                 # days, seconds = duration.days, duration.seconds
                 # hours = days * 24 + seconds // 3600
                 # hours = datetime.timedelta(hours=hours)
-                if duration.seconds > lezione_ore.seconds:
+
+                if duration > lezione_ore.seconds:
                     self.add_error('fine', 'La durata della lezione non può essere '
-                       'maggiore della durata impostata nella scheda per questa lezione (%s).' % lezione_ore)
+                        'maggiore della durata impostata nella scheda per questa lezione (%s). '
+                        'Hai indicato %s' % (lezione_ore, datetime.timedelta(seconds=duration)))
 
         self.clean_docente_fields()
 
