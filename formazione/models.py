@@ -1802,6 +1802,12 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
             minutes = re.findall(r'^\d+', ore.strip())
             minutes = int(minutes[0]) if minutes else 60
             return datetime.timedelta(minutes=minutes)
+
+        elif "," and len(ore) < 5:
+            # Valori ore, minuti con virgola (1,5)
+            minutes = float(ore.replace(',', '.')) * 60
+            return datetime.timedelta(minutes=minutes)
+
         else:
             try:
                 return datetime.timedelta(hours=int(ore))
