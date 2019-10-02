@@ -55,6 +55,34 @@ def formazione(request, me):
 
 
 @pagina_privata
+def formazione_osserva_corsi(request, me):
+    sedi = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
+
+    context = dict()
+
+    sede_pk = request.GET.get('s')
+    if sede_pk:
+        sede = Sede.objects.get(pk=int(sede_pk))
+        corsi = CorsoBase.objects.filter(sede=sede)
+        context['corsi'] = corsi
+        context['sede'] = sede
+
+    if not sede_pk:
+        results = dict()
+        for sede in sedi:
+            comitati = sede.comitati_sottostanti()
+            for comitato in comitati:
+                corsi = CorsoBase.objects.filter(sede=comitato).count()
+                if corsi:
+                    if sede not in results:
+                        results[sede] = list()
+                    results[sede].append([comitato, corsi])
+        context['results'] = results
+
+    return 'formazione_osserva_corsi.html', context
+
+
+@pagina_privata
 def formazione_corsi_base_elenco(request, me):
     puo_modificare = me.ha_permesso(GESTIONE_CORSI_SEDE)
     if not puo_modificare:
