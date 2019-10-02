@@ -13,14 +13,14 @@
 
       <table class="table table-striped table-bordered">
         {% for comitato, count in result %}
-          <tr>
+          <tr id="c_{{ comitato.pk }}">
             <td>{{ comitato }} (<a href="{% url 'formazione:osserva_corsi' %}?s={{comitato.pk}}">{{ count }}</a>)</td>
           </tr>
         {% endfor %}
       </table>
 
     {% empty %}
-      <p style="margin-bottom:35px;">Torna ad osservare il <a href="{% url 'formazione:osserva_corsi' %}">corsi sul territorio</a></p>
+      <p style="margin-bottom:35px;">Torna ad osservare il <a href="{% url 'formazione:osserva_corsi' %}#c_{{sede.pk}}">corsi sul territorio</a></p>
     {% endfor %}
 
     {% if corsi %}

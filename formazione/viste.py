@@ -10,7 +10,9 @@ from django.contrib import messages
 
 from anagrafica.models import Persona, Documento, Sede
 from anagrafica.forms import ModuloCreazioneDocumento
-from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE, PRESIDENTE)
+from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE,
+    COMMISSARIO, PRESIDENTE)
+from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
     GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, RUBRICA_DELEGATI_OBIETTIVO_ALL)
 from curriculum.models import Titolo, TitoloPersonale
@@ -56,16 +58,24 @@ def formazione(request, me):
 
 @pagina_privata
 def formazione_osserva_corsi(request, me):
-    sedi = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
-
     context = dict()
+
+    sedi = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
+    puo_accedere = set((NAZIONALE, REGIONALE)) & set([sede.estensione for sede in sedi])
+
+    if not puo_accedere or not me.deleghe_attuali(tipo__in=[RESPONSABILE_FORMAZIONE, PRESIDENTE, COMMISSARIO]):
+        messages.error(request, 'Non hai accesso a questa pagina.')
+        return redirect('/formazione/')
 
     sede_pk = request.GET.get('s')
     if sede_pk:
-        sede = Sede.objects.get(pk=int(sede_pk))
-        corsi = CorsoBase.objects.filter(sede=sede)
-        context['corsi'] = corsi
+        try:
+            sede = Sede.objects.get(pk=sede_pk)
+        except ValueError:
+            return redirect(reverse('formazione:osserva_corsi'))
+
         context['sede'] = sede
+        context['corsi'] = CorsoBase.objects.filter(sede=sede)
 
     if not sede_pk:
         results = dict()
