@@ -782,7 +782,7 @@ class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
             ).via("appartenenze"),
 
             # Con fototessera confermata
-            Fototessera.con_esito_ok().via("fototessere"),
+            Q(Fototessera.con_esito_ok().via("fototessere")),
 
             # Escludi tesserini rifiutati
             ~Q(tesserini__stato_richiesta=Tesserino.RIFIUTATO),
