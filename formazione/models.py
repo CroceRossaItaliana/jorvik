@@ -1171,6 +1171,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         docenti_esterni = self.lezioni.all().values_list('docente_esterno',  flat=True)
         docenti_esterni_result = list()
 
+        HIGHLIGHT_NAME_SYMBOL = '"'
+
         if not docenti_esterni:
             return docenti_esterni_result
 
@@ -1178,8 +1180,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
             join_docenti_esterni = ''.join(list(map(lambda x: '' if not x else x, docenti_esterni)))
 
-            if "{{" in join_docenti_esterni:
-                pattern = r'.*?\{{(.*)}}.*'
+            if HIGHLIGHT_NAME_SYMBOL in join_docenti_esterni:
+                pattern = r'.*?\%s(.*)%s.*' % (HIGHLIGHT_NAME_SYMBOL, HIGHLIGHT_NAME_SYMBOL)
                 for docente in docenti_esterni:
                     match = re.search(pattern, docente)
                     if match is not None:
