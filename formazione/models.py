@@ -1167,6 +1167,39 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         docenti_ids = self.lezioni.all().values_list('docente', flat=True)
         return Persona.objects.filter(id__in=docenti_ids)
 
+    def docenti_esterni_corso(self):
+        docenti_esterni = self.lezioni.all().values_list('docente_esterno',  flat=True)
+        docenti_esterni_result = list()
+
+        if not docenti_esterni:
+            return docenti_esterni_result
+
+        try:
+
+            join_docenti_esterni = ''.join(list(map(lambda x: '' if not x else x, docenti_esterni)))
+
+            if "{{" in join_docenti_esterni:
+                pattern = r'.*?\{{(.*)}}.*'
+                for docente in docenti_esterni:
+                    match = re.search(pattern, docente)
+                    if match is not None:
+                        name = match.group(1).strip()
+                        if name not in docenti_esterni_result:
+                            docenti_esterni_result.append(name.strip())
+            elif "/" in join_docenti_esterni:
+                for i in docenti_esterni:
+                    names = i.split('/')
+                    docenti_esterni_result.extend(list(map(lambda x: x.strip(), names)))
+            else:
+                docenti_esterni_result = docenti_esterni
+
+            # rimuovi valori vuoti, doppioni
+            return list(set(filter(bool, docenti_esterni_result)))
+
+        except:
+            # per qualsiasi problema. fatto in fretta, per evitare 500.
+            return list()
+
     def can_modify(self, me):
         if me and me.permessi_almeno(self, MODIFICA):
             return True
