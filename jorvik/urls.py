@@ -102,7 +102,7 @@ urlpatterns = [
     url(r'^jsi18n/$', javascript_catalog, js_info_dict, name='javascript-catalog'),
 
     # OAuth 2.0
-    url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    #url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^o/authorize/$', oauth2_provider_views.AuthorizationView.as_view(), name="authorize"),
     url(r'^o/token/$', oauth2_provider_views.TokenView.as_view(), name="token"),
     url(r'^o/revoke_token/$', oauth2_provider_views.RevokeTokenView.as_view(), name="revoke-token"),
