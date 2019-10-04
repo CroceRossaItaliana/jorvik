@@ -818,6 +818,8 @@ class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
                 sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
             ).via("appartenenze"),
 
+            ~Q(Fototessera.con_esito_ok().via("fototessere"))
+
         ).exclude(  # Escludi quelli che posso richiedere
             pk__in=tesserini_da_richiedere.values_list('id', flat=True)
         ).exclude(  # Escludi quelli gia richiesti
