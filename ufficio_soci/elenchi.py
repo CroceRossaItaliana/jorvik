@@ -785,10 +785,13 @@ class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
             Q(Fototessera.con_esito_ok().via("fototessere")),
 
             # Escludi tesserini rifiutati
-            ~Q(tesserini__stato_richiesta=Tesserino.RIFIUTATO),
+            # ~Q(tesserini__stato_richiesta=Tesserino.RIFIUTATO),
+
+            # Escludi tutte le persone che hanno effettuato una richiesta a prescindere da quale sia lo stato
+            ~Q(id__in=Tesserino.objects.all().distinct('persona').values_list('id', flat=True))
 
         ).exclude(  # Escludi quelli richiesti da genitore
-            pk__in=tesserini_richiesti.values_list('id', flat=True)
+                pk__in=tesserini_richiesti.values_list('id', flat=True)
 
         ).annotate(
             appartenenza_tipo=F('appartenenze__membro'),
