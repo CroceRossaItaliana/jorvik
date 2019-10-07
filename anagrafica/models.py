@@ -1880,6 +1880,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True).first()
         return delega_presidenziale
 
+    def commissari(self):
+        return self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True)
+
     def vice_presidente(self):
         delega_vice_presidenziale = self.comitato.delegati_attuali(tipo=VICE_PRESIDENTE, solo_deleghe_attive=True).first()
         return delega_vice_presidenziale if delega_vice_presidenziale else None

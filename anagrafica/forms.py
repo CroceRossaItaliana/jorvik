@@ -460,13 +460,15 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
         super().__init__(*args, **kwargs)
 
     def _validate_delega_per_sede(self, sede, persona):
-        presidente_regionale = self.me.is_presidente and \
-                               sede.presidente() == self.me and \
-                               sede.estensione == REGIONALE
+        me = self.me
+        posso_dare_delega = (me.is_presidente or me.is_comissario) and \
+                            (me == sede.presidente()) or (me in sede.commissari()) and \
+                            sede.estensione == REGIONALE
 
-        if presidente_regionale:
-            vo_in_sede = sede.ha_membro(persona, membro=Appartenenza.VOLONTARIO)
-            di_in_sede = sede.ha_membro(persona, membro=Appartenenza.DIPENDENTE)
+        if posso_dare_delega:
+            vo_in_sede = sede.ha_membro(persona, membro=Appartenenza.VOLONTARIO, figli=True)
+            di_in_sede = sede.ha_membro(persona, membro=Appartenenza.DIPENDENTE, figli=True)
+
             if vo_in_sede or di_in_sede:
                 return persona
             else:
