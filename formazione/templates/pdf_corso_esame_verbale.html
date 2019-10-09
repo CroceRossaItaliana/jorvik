@@ -216,11 +216,16 @@
             {% for docente in corso.docenti_corso %}
                 &nbsp;&nbsp;&nbsp; {{ docente }}<br><br>
             {% endfor %}
-
-            &ndash;	Commissione esame<br>
-            {% for nome in corso.commissione_nomi_as_list %}
-                &nbsp;&nbsp;&nbsp; {{ nome|title }}<br>
+            {% for docente in corso.docenti_esterni_corso %}
+                &nbsp;&nbsp;&nbsp; {{ docente }}<br><br>
             {% endfor %}
+
+            {% if commissione_nomi_as_list %}
+                &ndash;	Commissione esame<br>
+                {% for nome in corso.commissione_nomi_as_list %}
+                    &nbsp;&nbsp;&nbsp; {{ nome|title }}<br>
+                {% endfor %}
+            {% endif %}
         </div>
     </div>
 {% endblock %}

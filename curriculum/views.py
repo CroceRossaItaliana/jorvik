@@ -15,9 +15,10 @@ def cdf_titolo_json(request, me):
                                           area=area_id[0],
                                           cdf_livello=cdf_livello[0]).exclude(sigla__in=['CRI',])
             options_for_select = {option['id']: {
-                    'nome': option['nome'],
-                    'description': option['description']}
-                for option in query.values('id', 'nome', 'description')}
+                'nome': option['nome'],
+                'description': option['description'],
+                'prevede_esame': option['scheda_prevede_esame'],
+            } for option in query.values('id', 'nome', 'description', 'scheda_prevede_esame')}
 
             return JsonResponse(options_for_select)
 

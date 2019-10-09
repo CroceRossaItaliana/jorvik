@@ -181,6 +181,12 @@ $('#id_titolo_cri').on('change', function(e) {
     if ('description' in title && title['description'] !== null) {
         $(this).parent().append('<p id="titleDescription">'+ title['description'] +'</p>');
     }
+
+    if ('prevede_esame' in title && title['prevede_esame'] !== null) {
+        if (title['prevede_esame'] === false) {
+            alert("Per i corsi che non prevedono esame, si prega di indicare la data e l'orario dell'ultima lezione del corso");
+        }
+    }
 });
 
 // Bottoni colorati sul click mostrare alert

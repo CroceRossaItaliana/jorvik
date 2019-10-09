@@ -1048,9 +1048,9 @@ def profilo_turni_foglio(request, me, pk=None):
 @pagina_privata
 def strumenti_delegati(request, me):
     from formazione.forms import FormCreateDirettoreDelega
-    session = request.session
 
     # Get values stored in the session
+    session = request.session
     app_label = session['app_label']
     model = session['model']
     pk = int(session['pk'])
@@ -1063,7 +1063,7 @@ def strumenti_delegati(request, me):
 
     # Instantiate a new form
     form_data = {
-        'course': oggetto,
+        'oggetto': oggetto,
         'me': me,
         'initial': {'inizio': datetime.date.today()},
     }

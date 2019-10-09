@@ -357,8 +357,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """ Ottiene queryset di Sede di cui fa parte. """
         return Sede.objects.filter(pk__in=[x.sede.pk for x in self.appartenenze_attuali(**kwargs)])
 
-
-
     @property
     def sedi_appartenenze_corsi(self):
         return self.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO,
@@ -1892,6 +1890,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True).first()
         return delega_presidenziale
 
+    def commissari(self):
+        return self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True)
+
     def vice_presidente(self):
         delega_vice_presidenziale = self.comitato.delegati_attuali(tipo=VICE_PRESIDENTE, solo_deleghe_attive=True).first()
         return delega_vice_presidenziale if delega_vice_presidenziale else None
@@ -2049,7 +2050,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                 regione_sigla = REGIONI_CON_SIGLE.get(sede_regionale_id, "")
 
         return regione_sigla['sigla'] if regione_sigla else None
-
 
     def __init__(self, *args, **kwargs):
         super(Sede, self).__init__(*args, **kwargs)

@@ -10,7 +10,9 @@ from django.contrib import messages
 
 from anagrafica.models import Persona, Documento, Sede
 from anagrafica.forms import ModuloCreazioneDocumento
-from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE, PRESIDENTE)
+from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE,
+    COMMISSARIO, PRESIDENTE)
+from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
     GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, RUBRICA_DELEGATI_OBIETTIVO_ALL)
 from curriculum.models import Titolo, TitoloPersonale
@@ -52,6 +54,42 @@ def formazione(request, me):
         "puo_pianificare": me.ha_permesso(GESTIONE_CORSI_SEDE),
     }
     return 'formazione.html', context
+
+
+@pagina_privata
+def formazione_osserva_corsi(request, me):
+    context = dict()
+
+    sedi = me.oggetti_permesso(GESTIONE_CORSI_SEDE)
+    puo_accedere = set((NAZIONALE, REGIONALE)) & set([sede.estensione for sede in sedi])
+
+    if not puo_accedere or not me.deleghe_attuali(tipo__in=[RESPONSABILE_FORMAZIONE, PRESIDENTE, COMMISSARIO]):
+        messages.error(request, 'Non hai accesso a questa pagina.')
+        return redirect('/formazione/')
+
+    sede_pk = request.GET.get('s')
+    if sede_pk:
+        try:
+            sede = Sede.objects.get(pk=sede_pk)
+        except ValueError:
+            return redirect(reverse('formazione:osserva_corsi'))
+
+        context['sede'] = sede
+        context['corsi'] = CorsoBase.objects.filter(sede=sede)
+
+    if not sede_pk:
+        results = dict()
+        for sede in sedi:
+            comitati = sede.comitati_sottostanti()
+            for comitato in comitati:
+                corsi = CorsoBase.objects.filter(sede=comitato).count()
+                if corsi:
+                    if sede not in results:
+                        results[sede] = list()
+                    results[sede].append([comitato, corsi])
+        context['results'] = results
+
+    return 'formazione_osserva_corsi.html', context
 
 
 @pagina_privata
@@ -953,6 +991,7 @@ def aspirante_corsi(request, me):
 
         # Unisci 2 categorie di corsi
         corsi = corsi_confermati | corsi_da_partecipare | corsi_estensione_mia_appartenenze
+        corsi = corsi.filter(tipo=Corso.CORSO_NUOVO)
 
     corsi_frequentati = me.corsi_frequentati
     corsi_attivi = corsi.exclude(pk__in=corsi_frequentati.values_list('pk', flat=True))
