@@ -116,10 +116,12 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=None,
     for (permesso, queryset) in permessi_persona(persona):
         permessi += ESPANDI_PERMESSI[permesso](queryset)
 
-    # Per ogni delega attuale, aggiungi i permessi
-    for d in persona.deleghe_attuali(al_giorno=al_giorno, solo_attive=solo_deleghe_attive):
-        ## [(permesso, oggetto), ...] = PERMESSI_DELEGA[d.tipo](d.oggetto)  # ie. ((
-        for (permesso, queryset) in d.permessi(solo_deleghe_attive=solo_deleghe_attive):
+    deleghe_attuali = persona.deleghe_attuali(al_giorno=al_giorno,
+                                              solo_attive=solo_deleghe_attive)
+
+    for delega in deleghe_attuali:
+        delega_permessi = delega.permessi(solo_deleghe_attive=solo_deleghe_attive)
+        for (permesso, queryset) in delega_permessi:
             permessi += ESPANDI_PERMESSI[permesso](queryset)
 
     for (permesso, queryset) in permessi:  # p: (PERMESSO, queryset)

@@ -191,6 +191,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
         # Non fare la verifica per gli aspiranti (non hanno appartenenze)
         if not persona.ha_aspirante:
+            if not self.is_nuovo_corso and persona.volontario:
+                return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
+
             # Controllo estensioni
             if self.extension_type in [CorsoBase.EXT_MIA_SEDE, CorsoBase.EXT_LVL_REGIONALE]:
                 if not self.persona_verifica_estensioni(persona):
@@ -206,9 +209,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 return esito_verifica
         else:
             return self.NON_HAI_CARICATO_DOCUMENTI_PERSONALI
-
-        # if (not Aspirante.objects.filter(persona=persona).exists()) and persona.volontario:
-        #     return self.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO
 
         # UPDATE: (GAIA-93) togliere blocco che non può iscriversi a più corsi
         # if PartecipazioneCorsoBase.con_esito_ok(persona=persona,
@@ -1167,6 +1167,41 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         docenti_ids = self.lezioni.all().values_list('docente', flat=True)
         return Persona.objects.filter(id__in=docenti_ids)
 
+    def docenti_esterni_corso(self):
+        docenti_esterni = self.lezioni.all().values_list('docente_esterno',  flat=True)
+        docenti_esterni_result = list()
+
+        HIGHLIGHT_NAME_SYMBOL = '"'
+
+        if not docenti_esterni:
+            return docenti_esterni_result
+
+        try:
+
+            join_docenti_esterni = ''.join(list(map(lambda x: '' if not x else x, docenti_esterni)))
+
+            if HIGHLIGHT_NAME_SYMBOL in join_docenti_esterni:
+                pattern = r'.*?\%s(.*)%s.*' % (HIGHLIGHT_NAME_SYMBOL, HIGHLIGHT_NAME_SYMBOL)
+                for docente in docenti_esterni:
+                    match = re.search(pattern, docente)
+                    if match is not None:
+                        name = match.group(1).strip()
+                        if name not in docenti_esterni_result:
+                            docenti_esterni_result.append(name.strip())
+            elif "/" in join_docenti_esterni:
+                for i in docenti_esterni:
+                    names = i.split('/')
+                    docenti_esterni_result.extend(list(map(lambda x: x.strip(), names)))
+            else:
+                docenti_esterni_result = docenti_esterni
+
+            # rimuovi valori vuoti, doppioni
+            return list(set(filter(bool, docenti_esterni_result)))
+
+        except:
+            # per qualsiasi problema. fatto in fretta, per evitare 500.
+            return list()
+
     def can_modify(self, me):
         if me and me.permessi_almeno(self, MODIFICA):
             return True
@@ -1802,6 +1837,12 @@ class LezioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConStori
             minutes = re.findall(r'^\d+', ore.strip())
             minutes = int(minutes[0]) if minutes else 60
             return datetime.timedelta(minutes=minutes)
+
+        elif "," and len(ore) < 5:
+            # Valori ore, minuti con virgola (1,5)
+            minutes = float(ore.replace(',', '.')) * 60
+            return datetime.timedelta(minutes=minutes)
+
         else:
             try:
                 return datetime.timedelta(hours=int(ore))

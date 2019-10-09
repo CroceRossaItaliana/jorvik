@@ -357,8 +357,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """ Ottiene queryset di Sede di cui fa parte. """
         return Sede.objects.filter(pk__in=[x.sede.pk for x in self.appartenenze_attuali(**kwargs)])
 
-
-
     @property
     def sedi_appartenenze_corsi(self):
         return self.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO,
@@ -676,7 +674,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     def richieste_di_partecipazione(self, corso_stato=None):
         """ Restituisce richieste di partecipazione ai corsi confermate e in attesa """
+
         from formazione.models import PartecipazioneCorsoBase, CorsoBase
+
         if corso_stato is None:
             corso_stato = [CorsoBase.ATTIVO,]
 
@@ -685,6 +685,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         requests_to_courses = confirmed | pending
 
         return requests_to_courses.filter(persona=self, corso__stato__in=corso_stato)
+
+    @property
+    def corsi(self):
+        from formazione.models import CorsoBase
+
+        richieste_di_partecipazione = self.richieste_di_partecipazione().values_list('corso_id', flat=True)
+        corsi_in_attesa_o_confermati = CorsoBase.objects.filter(id__in=richieste_di_partecipazione)
+        return corsi_in_attesa_o_confermati | self.corsi_frequentati
 
     @property
     def corsi_frequentati(self):
@@ -1882,6 +1890,9 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
             delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True).first()
         return delega_presidenziale
 
+    def commissari(self):
+        return self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True)
+
     def vice_presidente(self):
         delega_vice_presidenziale = self.comitato.delegati_attuali(tipo=VICE_PRESIDENTE, solo_deleghe_attive=True).first()
         return delega_vice_presidenziale if delega_vice_presidenziale else None
@@ -2039,7 +2050,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                 regione_sigla = REGIONI_CON_SIGLE.get(sede_regionale_id, "")
 
         return regione_sigla['sigla'] if regione_sigla else None
-
 
     def __init__(self, *args, **kwargs):
         super(Sede, self).__init__(*args, **kwargs)
@@ -2353,6 +2363,12 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             delega.termina(mittente=mittente, accoda=True, termina_at=datetime.now())
 
         return numero_deleghe
+
+    @classmethod
+    def corsi(cls, persona):
+        from formazione.models import CorsoBase
+        deleghe_direttore_corso = cls.objects.filter(persona=persona, tipo=DIRETTORE_CORSO)
+        return CorsoBase.objects.filter(pk__in=deleghe_direttore_corso.values_list('oggetto_id', flat=True))
 
 
 class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
