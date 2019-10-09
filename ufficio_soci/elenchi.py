@@ -782,7 +782,7 @@ class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
             ).via("appartenenze"),
 
             # Con fototessera confermata
-            Fototessera.con_esito_ok().via("fototessere"),
+            Q(Fototessera.con_esito_ok().via("fototessere")),
 
             # Escludi tesserini rifiutati
             ~Q(tesserini__stato_richiesta=Tesserino.RIFIUTATO),
@@ -814,6 +814,8 @@ class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
             Appartenenza.query_attuale(
                 sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
             ).via("appartenenze"),
+
+            ~Q(Fototessera.con_esito_ok().via("fototessere"))
 
         ).exclude(  # Escludi quelli che posso richiedere
             pk__in=tesserini_da_richiedere.values_list('id', flat=True)
