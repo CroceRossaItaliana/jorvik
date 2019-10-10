@@ -458,15 +458,15 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
     def excel_colonne(self):
 
         def _data(p):
-            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('-id')
             return d.first().protocollo_data if d else ''
 
         def _motivo(p):
-            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('-id')
             return d.first().motivo if d else ''
 
         def _destinazione(p):
-            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('-id')
             return d.first().destinazione if d else ''
 
         return super(ElencoTrasferiti, self).excel_colonne() + (
