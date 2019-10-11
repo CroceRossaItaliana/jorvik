@@ -9,16 +9,16 @@ def filter_per_role(me, persona, sezioni):
 
     # GAIA-213 (filtro aggiuntivo per direttori)
     SEZIONI_VISIBILI_PER_DIRETTORE = ['appartenenze', 'curriculum']
-    if me.is_direttore:
-        menu_items = OrderedDict()
-        # Trova corsi del direttore e corsi della persona
-        corsi_in_comune = Delega.corsi(me) & persona.corsi
 
-        # Se c'è almeno uno in comune - direttore potra vedere alcune sezioni
-        if corsi_in_comune:
-            for k, v in sezioni.items():
-                if k in SEZIONI_VISIBILI_PER_DIRETTORE:
-                    menu_items[k] = v
+    # Trova corsi del direttore e corsi della persona
+    corsi_in_comune = Delega.corsi(me) & persona.corsi
+
+    # Se c'è almeno uno in comune - direttore potra vedere alcune sezioni
+    if me.is_direttore and corsi_in_comune:
+        menu_items = OrderedDict()
+        for k, v in sezioni.items():
+            if k in SEZIONI_VISIBILI_PER_DIRETTORE:
+                menu_items[k] = v
         return menu_items
     return sezioni
 
