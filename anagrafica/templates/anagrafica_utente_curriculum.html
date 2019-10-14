@@ -3,89 +3,20 @@
 {% load bootstrap3 %}
 
 {% block pagina_titolo %}{{ tipo_display }} - Curriculum{% endblock %}
-
 {% block app_contenuto %}
 
     <div class="alert bg-info">
         <p>
-            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire
-            le tue qualifiche del tipo: <strong>{{ tipo_display }}</strong>.
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire le tue qualifiche del tipo: <strong>{{ tipo_display }}</strong>.
         </p>
     </div>
 
-
     <div class="row">
-
-        <div class="col-md-4">
-
-            <div class="panel panel-primary">
-
-                <div class="panel-heading">
-                    <h4 class="panel-title">
-                        <i class="fa fa-fw fa-plus-circle"></i>
-
-                        {% if passo == 1 %}
-                            Aggiungi {{ tipo_display }}
-
-                        {% else %}
-                            Aggiungi {{ titolo.nome }}
-
-                        {% endif %}
-
-                    </h4>
-                </div>
-
-                <div class="panel-body">
-
-                    <form method="POST">
-                    {% csrf_token %}
-
-                        {% if passo == 1 %}
-                            <strong>PASSO 1.</strong>
-                            <p>Cerca un/una {{ tipo_display }} da aggiungere al tuo curriculum.</p>
-                            {% bootstrap_form modulo %}
-
-                            <button type="submit" class="btn btn-sm btn-primary btn-block">
-                                <i class="fa fa-fw fa-check"></i>
-                                Aggiungi {{ tipo_display }}
-                            </button>
-
-                        {% else %}
-                            <strong>PASSO 2.</strong>
-                            <p>Completa i campi necessari per aggiungere "<strong>{{ titolo.nome }}</strong>" al tuo curriculum.</p>
-                            <input type="hidden" name="titolo_selezionato_id" value="{{ titolo.id }}" />
-                            {% bootstrap_form modulo %}
-
-                            <button type="submit" class="btn btn-sm btn-primary btn-block">
-                                <i class="fa fa-fw fa-check"></i>
-                                Aggiungi {{ titolo.nome }}
-                            </button>
-
-                            <a href="?indietro=1" class="btn btn-xs btn-default btn-block">
-                                <i class="fa fa-fw fa-mail-reply"></i>
-                                Torna indietro
-                            </a>
-
-                        {% endif %}
-
-                    </form>
-
-                </div>
-
-            </div>
-
-        </div>
-
         <div class="col-md-8">
-
             <div class="panel panel-info">
                 <div class="panel-heading">
                     <h4 class="panel-title">
-                        <i class="fa fa-fw fa-list"></i>
-                        Nel mio curriculum
-                        <span class="badge">
-                            {{ titoli.count }}
-                        </span>
+                        <i class="fa fa-fw fa-list"></i> Nel mio curriculum <span class="badge">{{ titoli.count }}</span>
                     </h4>
                 </div>
 
@@ -186,6 +117,44 @@
                 </div>
             </div>
         </div>
-    </div>
 
+        <div class="col-md-4">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <i class="fa fa-fw fa-plus-circle"></i>
+                        {% if passo == 1 %}
+                            Aggiungi {{ tipo_display }}
+                        {% else %}
+                            Aggiungi {{ titolo.nome }}
+                        {% endif %}
+                    </h4>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST">
+                    {% csrf_token %}
+                        {% if passo == 1 %}
+                            <strong>PASSO 1.</strong>
+                            <p>Cerca un/una {{ tipo_display }} da aggiungere al tuo curriculum.</p>
+                            {% bootstrap_form modulo %}
+
+                            <button type="submit" class="btn btn-sm btn-primary btn-block">
+                                <i class="fa fa-fw fa-check"></i> Aggiungi {{ tipo_display }}
+                            </button>
+
+                        {% else %}
+                            <strong>PASSO 2.</strong>
+                            <p>Completa i campi necessari per aggiungere "<strong>{{ titolo.nome }}</strong>" al tuo curriculum.</p>
+                            <input type="hidden" name="titolo_selezionato_id" value="{{ titolo.id }}" />
+                            {% bootstrap_form modulo %}
+
+                            <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fa fa-fw fa-check"></i> Aggiungi {{ titolo.nome }}</button>
+                            <a href="?indietro=1" class="btn btn-xs btn-default btn-block"><i class="fa fa-fw fa-mail-reply"></i> Torna indietro</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

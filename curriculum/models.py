@@ -4,9 +4,11 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 
-from .areas import OBBIETTIVI_STRATEGICI
 from base.models import ModelloSemplice, ConAutorizzazioni, ConVecchioID
 from base.tratti import ConMarcaTemporale
+
+from .areas import OBBIETTIVI_STRATEGICI
+from .validators import cv_attestato_file_upload_path
 
 
 class Titolo(ModelloSemplice, ConVecchioID):
@@ -21,7 +23,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
         (PATENTE_CIVILE, "Patente Civile"),
         (PATENTE_CRI, "Patente CRI"),
         (TITOLO_STUDIO, "Titolo di Studio"),
-        (TITOLO_CRI, "Titolo CRI"),
+        (TITOLO_CRI, "Qualifica CRI"),
     )
 
     CDF_LIVELLO_I = '1'
@@ -170,6 +172,14 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
                                        related_name="titoli_da_me_certificati",
                                        on_delete=models.SET_NULL)
     is_course_title = models.BooleanField(default=False)
+
+    # GAIA-210
+    attestato_file = models.FileField(blank=True, null=True,
+                             upload_to=cv_attestato_file_upload_path,
+                             verbose_name='Attestato')
+    direttore_corso = models.CharField(max_length=255, blank=True, null=True,
+                             verbose_name='Nome del direttore del corso')
+    note = models.CharField(max_length=255, blank=True, null=True)
 
 
     # ValueError: Related model u'app.model' cannot be resolved
