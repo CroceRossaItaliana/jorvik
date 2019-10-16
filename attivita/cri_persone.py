@@ -27,10 +27,12 @@ def updateServizio(key, **kwargs):
         data['accountables'] = [{'name': '{}.{}'.format(
             ref.nome.lower(), ref.cognome.lower()
         )} for ref in kwargs.get('referenti')]
-        logger.debug(data['accountables'])
+        logger.debug('- referenti {}'.format(kwargs.get('referenti')))
 
     if kwargs.get('precedenti'):
-        data['accountables'].extend(kwargs.get('precedenti'))
+        for ref in kwargs.get('precedenti'):
+            data['accountables'].append({'name': ref})
+        logger.debug('- precedenti {}'.format(kwargs.get('precedenti')))
 
     if kwargs.get('servizi'):
         ss = ""

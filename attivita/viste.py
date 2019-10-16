@@ -221,7 +221,7 @@ def servizio_organizza(request, me):
 
     if request.POST and modulo.is_valid() and modulo_referente.is_valid():
 
-        progetto = Progetto.object.get(name=modulo.cleaned_data['progetto'])
+        # progetto = Progetto.objects.get(name=modulo.cleaned_data['progetto'])
 
         result = createServizio(
             comitato=646,
@@ -336,6 +336,7 @@ def attivita_organizza_fatto(request, me, pk=None):
 @pagina_privata
 def servizi_referenti(request, me, pk=None, nuova=False):
     from anagrafica.forms import ModuloCreazioneDelega
+    import json
     form = ModuloCreazioneDelega(request.POST or None, initial={
         "inizio": datetime.today(),
     }, me=me)
@@ -343,17 +344,21 @@ def servizi_referenti(request, me, pk=None, nuova=False):
     contesto = {
         "modulo": form,
     }
-
+    result = getServizio(pk)
+    if 'result' in result and 'code' in result['result'] and result['result']['code'] == 200:
+        str_json = "[{}]".format(result['data']['accountables'].replace('\'', '"').replace('}', '},')[:-1])
+        referenti = [r['name'] for r in json.loads(str_json)]
     if request.POST:
         if form.is_valid():
             persona = form.cleaned_data['persona']
-            result = getServizio(pk)
-            if 'result' in result and 'code' in result['result'] and result['result']['code'] == 200:
-                referenti = [r['name'] for r in result['data']['accountables']]
-                updateServizio(pk, referenti=[persona], precedenti=referenti)
-                contesto.update({'referenti': [
-                    Persona.objects.filter(**{'nome': r.split('.')[0], 'cognome': r.split('.')[1]}) for r in referenti]}
-                )
+            updateServizio(pk, referenti=[persona], precedenti=referenti)
+            contesto.update({'referenti': [
+                Persona.objects.filter(nome=r.split('.')[0], cognome=r.split('.')[1]).first() for r in referenti
+            ]})
+    else:
+        contesto.update({'referenti': [
+            Persona.objects.filter(nome=r.split('.')[0], cognome=r.split('.')[1]).first() for r in referenti
+        ]})
 
     return 'servizi_referenti.html', contesto
 
@@ -813,26 +818,27 @@ def attivita_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_p
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def servizio_modifica_servizi_standard(request, me, pk=None):
     from attivita.forms import ModuloServiziModificaStandard
-    modulo = ModuloServiziModificaStandard(request.POST or None)
-
     result = getServizio(pk)
+    # service_delete = request.GET.get('key', None)
+    services = []
+    if 'result' in result and 'code' in result['result'] and result['result']['code'] == 200:
+        for s in result['data']['service']:
+            # if s['key'] == service_delete: continue
+            services.append(s['key'])
+
+    modulo = ModuloServiziModificaStandard(request.POST or None, initial={'servizi': services})
+
+
     modulo.fields['servizi'].choices = ModuloServiziModificaStandard.popola_scelta()
     contesto = {
         "modulo": modulo
     }
-    service_delete = request.GET.get('key', None)
-    services = []
-
-    if 'result' in result and 'code' in result['result'] and result['result']['code'] == 200:
-        for s in result['data']['service']:
-            if s['key'] == service_delete: continue
-            services.append(s['key'])
 
     if request.POST:
         if modulo.is_valid():
             services.extend(modulo.cleaned_data['servizi'])
 
-    if services or service_delete:
+    if services:
         updateServizio(pk, servizi=services)
         result = getServizio(pk)
 
