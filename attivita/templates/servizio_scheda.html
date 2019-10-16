@@ -16,9 +16,39 @@
 
     <ul class="nav nav-tabs">
         <li role="presentation">
-            <a href="/attivita/servizio/scheda/id/modifica/">
+            <a href="/attivita/servizio/scheda/{{ key }}/modifica/">
                 <i class="fa fa-fw fa-pencil"></i>
                 Gestione Servizio
+            </a>
+        </li>
+        <li role="presentation">
+            <a href="/attivita/servizio/scheda/{{ key }}/modifica/accesso">
+                <i class="fa fa-fw fa-pencil"></i>
+                Criteri di accesso
+            </a>
+        </li>
+        <li role="presentation">
+            <a href="/attivita/servizio/scheda/{{ key }}/modifica/specifiche">
+                <i class="fa fa-fw fa-pencil"></i>
+                Specifiche del servizio
+            </a>
+        </li>
+        <li role="presentation">
+            <a href="/attivita/servizio/scheda/{{ key }}/modifica/presentazione">
+                <i class="fa fa-fw fa-pencil"></i>
+                Presentazioni
+            </a>
+        </li>
+        <li role="presentation">
+            <a href="/attivita/servizio/scheda/{{ key }}/modifica/contatti">
+                <i class="fa fa-fw fa-pencil"></i>
+                Contatti
+            </a>
+        </li>
+        <li role="presentation">
+            <a href="/attivita/servizio/scheda/{{ key }}/modifica/convenzioni">
+                <i class="fa fa-fw fa-pencil"></i>
+                Convenzioni
             </a>
         </li>
     </ul>
@@ -27,6 +57,72 @@
     {% block scheda_contenuto %}
     {% endblock %}
 
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            changeForm();
+            changeFormTurni();
+        });
+        $('[name=activationPeriodType]').change(function () {
+            changeForm($(this).val());
+        });
+
+        $('[name=dayHourType]').change(function () {
+            changeFormTurni($(this).val());
+        })
+
+        function showMensile() {
+            $('[id=id_annualPeriod]').parent().show();
+            $('input[id=id_annualPeriodFrom]').parent().hide();
+            $('input[id=id_annualPeriodTo]').parent().hide();
+        }
+        
+        function showDate() {
+            $('[id=id_annualPeriod]').parent().hide();
+            $('input[id=id_annualPeriodFrom]').parent().show();
+            $('input[id=id_annualPeriodTo]').parent().show();
+        }
+
+        function showTurni() {
+            $('[id=id_giorno]').parent().show();
+            $('[id=id_orario_apertura]').parent().show();
+            $('[id=id_orario_chiusura]').parent().show();
+            $('[id=turni_panel]').show();
+            $('[id=aggiungi_turno]').show();
+        }
+        
+        function changeFormTurni(val) {
+            switch (val) {
+                case 'GIORNI_ORARI':
+                    showTurni();
+                    break;
+                default:
+                    $('[id=id_giorno]').parent().hide();
+                    $('[id=id_orario_apertura]').parent().hide();
+                    $('[id=id_orario_chiusura]').parent().hide();
+                    $('[id=turni_panel]').hide();
+                    $('[id=aggiungi_turno]').hide();
+                    break;
+            }
+        }
+
+
+        function changeForm(val) {
+            switch (val) {
+                case 'MENSILE':
+                    showMensile();
+                    break;
+                case  'DA_A':
+                    showDate();
+                    break;
+                default:
+                    $('[id=id_annualPeriod]').parent().hide();
+                    $('input[id=id_annualPeriodFrom]').parent().hide();
+                    $('input[id=id_annualPeriodTo]').parent().hide();
+                    break;
+            }
+        }
+    </script>
 {% endblock %}
 
 

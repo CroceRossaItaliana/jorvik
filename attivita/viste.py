@@ -220,8 +220,12 @@ def servizio_organizza(request, me):
     }
 
     if request.POST and modulo.is_valid() and modulo_referente.is_valid():
+
+        progetto = Progetto.object.get(name=modulo.cleaned_data['progetto'])
+
         result = createServizio(
             comitato=646,
+            # comitato=progetto.sede,
             nome_progetto=modulo.cleaned_data['progetto'],
             servizi=modulo.cleaned_data['servizi'],
         )
@@ -846,7 +850,7 @@ def servizio_scheda_informazioni_modifica(request, me, pk=None):
     modulo = None
 
     result = getServizio(pk)
-    contesto = {}
+    contesto = {'key': pk}
     init = {}
 
     if 'result' in result:
@@ -870,6 +874,106 @@ def servizio_scheda_informazioni_modifica(request, me, pk=None):
         updateServizio(pk, **{'testo': testo})
 
     return 'servizio_scheda_infomazioni_modifica.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
+    from attivita.forms import ModuloServiziCriteriDiAccesso
+    from attivita.cri_persone import update_service
+    modulo = None
+    result = getServizio(pk)
+    init = {}
+
+    if 'result' in result:
+        if result['result']['code'] == 200:
+            if result['data']['address']:
+                init['address'] = result['data']['address']
+            if result['data']['geographical_scope']:
+                init['geo_scope'] = result['data']['geographical_scope']
+            if result['data']['age_from']:
+                init['eta_form'] = result['data']['age_from']
+            if result['data']['age_to']:
+                init['eta_to'] = result['data']['age_to']
+            if result['data']['beneficiary_residence_restriction']:
+                init['recidence_beneficiaries'] = result['data']['beneficiary_residence_restriction']
+            if result['data']['beneficiary_max_isee']:
+                init['beneficiaryMaxIsee'] = result['data']['beneficiary_max_isee']
+            modulo = ModuloServiziCriteriDiAccesso(request.POST or None, initial=init)
+    else:
+        modulo = ModuloServiziCriteriDiAccesso(request.POST or None)
+
+    modulo.fields['beneficiaries'].choices = ModuloServiziCriteriDiAccesso.popola_beneficiaries()
+
+    contesto = {'key': pk}
+    contesto.update({'modulo': modulo})
+
+    if modulo.is_valid():
+        beneficiary = ""
+        for b in modulo.cleaned_data['beneficiaries']:
+            beneficiary += "{},".format(b)
+        data = {
+            'address': modulo.cleaned_data['address'],
+            # 'geographical_scope': modulo.cleaned_data['geo_scope'],
+            "beneficiary_type": [beneficiary[:-1] if beneficiary else ""],
+            'age_from': modulo.cleaned_data['eta_form'],
+            'age_to': modulo.cleaned_data['eta_to'],
+            # 'beneficiary_residence_restriction': modulo.cleaned_data['recidence_beneficiaries'],
+            'beneficiary_max_isee': modulo.cleaned_data['beneficiaryMaxIsee'],
+        }
+        update_service(pk, **data)
+
+    return 'servizio_scheda_infomazioni_modifica_accesso.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
+    from attivita.forms import ModuloServiziSepcificheDelServizio, ModuloServiziSepcificheDelServizioTurni
+    modulo = ModuloServiziSepcificheDelServizio(request.POST or None)
+    turni = ModuloServiziSepcificheDelServizioTurni(request.POST or None)
+    result = getServizio(pk)
+    init = {}
+    contesto = {'key': pk}
+    contesto.update({'modulo': modulo})
+    contesto.update({'turni': turni})
+
+
+    return 'servizio_scheda_infomazioni_modifica_specifiche.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+def servizio_scheda_informazioni_modifica_presentazione(request, me, pk=None):
+    from attivita.forms import ModuloServiziPrestazioni
+    modulo = ModuloServiziPrestazioni(request.POST or None)
+    result = getServizio(pk)
+    init = {}
+    contesto = {'key': pk}
+    contesto.update({'modulo': modulo})
+
+    return 'servizio_scheda_infomazioni_modifica_presentazioni.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+def servizio_scheda_informazioni_modifica_contatti(request, me, pk=None):
+    from attivita.forms import ModuloServiziContatti
+    modulo = ModuloServiziContatti(request.POST or None)
+    result = getServizio(pk)
+    init = {}
+    contesto = {'key': pk}
+    contesto.update({'modulo': modulo})
+
+    return 'servizio_scheda_informazioni_modifica_contatti.html', contesto
+
+
+@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+def servizio_scheda_informazioni_modifica_convenzioni(request, me, pk=None):
+    from attivita.forms import ModuloServiziConvenzioni
+    modulo = ModuloServiziConvenzioni(request.POST or None)
+    result = getServizio(pk)
+    init = {}
+    contesto = {'key': pk}
+    contesto.update({'modulo': modulo})
+
+    return 'servizio_scheda_informazioni_modifica_convenzioni.html', contesto
 
 
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))

@@ -61,6 +61,176 @@ class ModuloServiziModificaStandard(forms.Form):
         label="Scelta servizi standard"
     )
 
+class ModuloServiziPrestazioni(forms.Form):
+    @staticmethod
+    def popola_beneficiaries():
+        pass
+
+    provisioning = forms.MultipleChoiceField(
+        required=False,
+        choices=(),
+        widget=forms.SelectMultiple,
+        label="Approvvigionamenti"
+    )
+
+
+class ModuloServiziContatti(forms.Form):
+    CRI = 'CRI'
+    ALTRO_ENTE = 'ALTRO_ENTE'
+    TIPO_CONTATTO = (
+        ('', ''),
+        (CRI, 'CRI'),
+        (ALTRO_ENTE, 'Altro ente')
+    )
+
+    tipo_contatto = forms.ChoiceField(required=True, choices=TIPO_CONTATTO, label='Tipo Contatto')
+    nome = forms.CharField(required=True, label='Nome')
+    telefono = forms.CharField(required=False, label='Telefono')
+    email = forms.CharField(required=False, label='Email')
+
+class ModuloServiziConvenzioni(forms.Form):
+
+    manage_progect = forms.ChoiceField(required=True, choices=(), label='Tipo Contatto')
+    file = forms.FileField()
+
+
+class ModuloServiziSepcificheDelServizio(forms.Form):
+    MENSILE = 'MENSILE'
+    DA_A = 'DA_A'
+    ACTIVATION_TYPE = (
+        ('', 'Seleziona tipo attivazione'),
+        (MENSILE, 'Mensile'),
+        (DA_A, 'Da a')
+    )
+    activationPeriodType = forms.ChoiceField(choices=ACTIVATION_TYPE, label='Periodo di attivazione')
+    GENNAIO = 'GENNAIO'
+    FEBBRAIO = 'FEBBRAIO'
+    MARZO = 'MARZO'
+    APRILE = 'APRILE'
+    MAGGIO = 'MAGGIO'
+    GIUGNO = 'GIUGNO'
+    LUGLIO = 'LUGLIO'
+    AGOSTO = 'AGOSTO'
+    SETTEMPRE = 'SETTEMPRE'
+    OTTOBRE = 'OTTOBRE'
+    NOVEMBRE = 'NOVEMBRE'
+    DICEMBRE = 'DICEMBRE'
+    ANNUAL_PERIOD = (
+        (GENNAIO, 'Gennaio'),
+        (FEBBRAIO, 'Febbraio'),
+        (MARZO, 'Marzo'),
+        (APRILE, 'Aprile'),
+        (MAGGIO, 'Maggio'),
+        (GIUGNO, 'Giugno'),
+        (LUGLIO, 'Luglio'),
+        (AGOSTO, 'Agosto'),
+        (SETTEMPRE, 'Settembre'),
+        (OTTOBRE, 'Ottobre'),
+        (NOVEMBRE, 'Novembre'),
+        (DICEMBRE, 'Dicembre'),
+    )
+    annualPeriod = forms.MultipleChoiceField(
+        choices=ANNUAL_PERIOD,
+        label="Periodo",
+        required=False,
+        widget=forms.CheckboxSelectMultiple
+    )
+
+    annualPeriodFrom = forms.DateField(label='Da')
+    annualPeriodTo = forms.DateField(label='A')
+
+    SI = '11635'
+    NO = '11636'
+    SI_NO = (
+        ('', ''),
+        (SI, 'Si'),
+        (NO, 'No'),
+    )
+    variableDay = forms.ChoiceField(choices=SI_NO, label='Variabile')
+
+    costField = forms.CharField(required=False)
+
+    accessMode = forms.CharField(required=False)
+
+    dueDate = forms.DateField(label='Chiusura')
+
+
+class ModuloServiziSepcificheDelServizioTurni(forms.Form):
+
+    H24 = 'H24'
+    GIORNI_ORARI = 'GIORNI_ORARI'
+
+    DAY_HOUR_TYPE = (
+        ('', 'Tipo di orario'),
+        (H24, 'H24'),
+        (GIORNI_ORARI, 'Giorni')
+    )
+    dayHourType = forms.ChoiceField(choices=DAY_HOUR_TYPE, label='Orari')
+
+    LUNEDI = 'LUNEDI'
+    MARTEDI = 'MARTEDI'
+    MERCOLEDI = 'MERCOLEDI'
+    GIOVEDI = 'GIOVEDI'
+    VENERDI = 'VENERDI'
+    SABATO = 'SABATO'
+    DOMENICA = 'DOMENICA'
+
+    DAY = (
+        (LUNEDI, 'Lunedi'),
+        (MARTEDI, 'Martedi'),
+        (MERCOLEDI, 'Mercoledi'),
+        (GIOVEDI, 'Giovedi'),
+        (VENERDI, 'Venerdi'),
+        (SABATO, 'Sabato'),
+        (DOMENICA, 'Domenica'),
+    )
+
+    giorno = forms.ChoiceField(choices=DAY, label='Orari')
+    orario_apertura = forms.CharField(required=False, label='Orario apertura')
+    orario_chiusura = forms.CharField(required=False, label='Orario chiusura')
+
+
+class ModuloServiziCriteriDiAccesso(forms.Form):
+    GEO_SCOPE = (
+        ('', ''),
+        (11639, 'Comuni'),
+        (11640, 'Ambito territoriale del comitato'),
+        (11641, 'Provincia'),
+        (11642, 'Regione'),
+        (11643, 'Italia'),
+        (11644, 'Europa'),
+        (11644, 'Mondo'),
+    )
+    R_BENEFICIARIES = (
+        ('', ''),
+        (11646, 'Ambito Territoriale del Comitato'),
+        (11647, 'Comuni')
+    )
+    address = forms.CharField(required=False, label='Indirizzo')
+    geo_scope = forms.ChoiceField(required=False, choices=GEO_SCOPE, label='Ambito geografico')
+    beneficiaries = forms.MultipleChoiceField(
+        required=False,
+        choices=(),
+        widget=forms.SelectMultiple,
+        label="Beneficiari"
+    )
+    eta_form = forms.IntegerField(required=False, label='Età Da')
+    eta_to = forms.IntegerField(required=False, label='A')
+    recidence_beneficiaries = forms.ChoiceField(required=False, choices=R_BENEFICIARIES, label='Residenza Beneficiari')
+    beneficiaryMaxIsee = forms.CharField(required=False, label='Isee Max')
+
+    @staticmethod
+    def popola_beneficiaries():
+        from attivita.cri_persone import getBeneficiary
+        select = []
+        beneficiaries = getBeneficiary()
+        print('beneficiaries', beneficiaries)
+        if 'data' in beneficiaries and 'generic_issue' in beneficiaries['data']:
+            for s in beneficiaries['data']['generic_issue']:
+                select.append(
+                    (s['key'], s['summary'])
+                )
+        return tuple(select)
 
 class ModuloModificaTurno(ModelForm):
     class Meta:

@@ -12,5 +12,6 @@
 endpoint = http://pdf/www/render.php
 
 [crip]
-
 endpoint = https://mscriperlepersone.cri.it
+
+am_end_pont = https://am.cri.it:8243

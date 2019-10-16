@@ -1,0 +1,82 @@
+{% extends 'servizio_scheda.html' %}
+{% load social %}
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}
+        {% if nome %}
+            {{ nome }}
+        {% endif %}
+    {% endblock %}
+{% endblock %}
+
+{% block scheda_contenuto %}
+    <div class="row">
+        <div class="col-md-12">
+
+            <div class="panel panel-primary">
+
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-pencil-square-o"></i>
+                        Modifica Contatti
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+                    <form method="POST">
+
+                        {% csrf_token %}
+                        {% bootstrap_form modulo %}
+
+                        <p>&nbsp;</p>
+                        <button type="submit" class="btn btn-lg btn-success">
+                            <i class="fa fa-fw fa-save"></i>
+                            Aggiungi
+                        </button>
+                    </form>
+
+                </div>
+
+
+            </div>
+        </div>
+
+{#        <div class="col-md-6">#}
+{##}
+{#        </div>#}
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+
+                <div class="panel panel-primary">
+
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-pencil-square-o"></i>
+                        Aggiungi Contatti
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                                <th>Tipo</th>
+                                <th>Nome</th>
+                                <th>Telefono</th>
+                                <th>Email</th>
+                                <th>Azione</th>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+
+
+            </div>
+
+        </div>
+    </div>
+{% endblock %}

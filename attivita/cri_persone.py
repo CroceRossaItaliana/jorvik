@@ -3,12 +3,20 @@ from django.conf import settings
 import logging
 
 end_point = settings.APIS_CONF['crip']['endpoint']
+am_end_pont = settings.APIS_CONF['crip']['am_end_pont']
 
 logger = logging.getLogger(__name__)
 
 def getServiziStandard(max_result=200):
     r = requests.get(
         '{}/service/?maxResults={}'.format(end_point, max_result)
+    )
+    return r.json() if r.status_code == 200 else {}
+
+
+def getBeneficiary():
+    r = requests.get(
+        '{}/public/cri/crip/autosug/offeredservice/beneficiarytype'.format(am_end_pont)
     )
     return r.json() if r.status_code == 200 else {}
 
@@ -33,6 +41,9 @@ def updateServizio(key, **kwargs):
     if kwargs.get('testo'):
         data['description'] = kwargs.get('testo')
 
+    if kwargs.get('address'):
+        data['address'] = kwargs.get('address')
+
     r = requests.put(
         '{}/offeredserviceextended/{}/'.format(end_point, key),
         json=data
@@ -41,6 +52,17 @@ def updateServizio(key, **kwargs):
     logger.debug('- updateServizio {} {}'.format(resp['result']['code'], resp['result']['description']))
     return resp if 'result' in resp and resp['result']['code'] == 204 else {}
 
+
+def update_service(key, **kwargs):
+
+    r = requests.put(
+        '{}/offeredserviceextended/{}/'.format(end_point, key),
+        json=kwargs
+    )
+
+    resp = r.json()
+    logger.debug('- _updateServizio {} {}'.format(resp['result']['code'], resp['result']['description']))
+    return resp if 'result' in resp and resp['result']['code'] == 204 else {}
 
 def changeState(key='', state=''):
 

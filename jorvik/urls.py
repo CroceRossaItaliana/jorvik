@@ -123,6 +123,11 @@ urlpatterns = [
     url(r'^attivita/servizio/gestisci/chiuse/$', attivita.viste.servizio_gestisci, {"stato": "chiuse"}),
     url(r'^attivita/servizio/organizza/(?P<pk>[a-zA-Z0-9\-]+)/referenti/$', attivita.viste.servizi_referenti, {"nuova": True}),
     url(r'^attivita/servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica/$', attivita.viste.servizio_scheda_informazioni_modifica),
+    url(r'^attivita/servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica/accesso$', attivita.viste.servizio_scheda_informazioni_modifica_accesso),
+    url(r'^attivita/servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica/specifiche', attivita.viste.servizio_scheda_informazioni_modifica_specifiche),
+    url(r'^attivita/servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica/presentazione', attivita.viste.servizio_scheda_informazioni_modifica_presentazione),
+    url(r'^attivita/servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica/contatti', attivita.viste.servizio_scheda_informazioni_modifica_contatti),
+    url(r'^attivita/servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica/convenzioni', attivita.viste.servizio_scheda_informazioni_modifica_convenzioni),
     url(r'^attivita/servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica/servizi$', attivita.viste.servizio_modifica_servizi_standard),
 
     url(r'^attivita/aree/$', attivita.viste.attivita_aree),
