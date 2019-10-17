@@ -351,10 +351,12 @@ def servizi_referenti(request, me, pk=None, nuova=False):
     else:
         contesto.update({'errore': 'Ci sono problemi a connettersi al servizio riprova piu tardi.'})
         return 'servizi_referenti.html', contesto
+
     if request.POST:
         if form.is_valid():
             persona = form.cleaned_data['persona']
             updateServizio(pk, referenti=[persona], precedenti=referenti)
+            referenti.append({'name': '{}.{}'.format(persona.nome.lower(), persona.cognome.lower())})
             contesto.update({'referenti': [
                 Persona.objects.filter(nome__iexact=r.split('.')[0], cognome__iexact=r.split('.')[1]).first() for r in referenti
             ]})
