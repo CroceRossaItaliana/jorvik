@@ -60,8 +60,8 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
-            changeForm();
-            changeFormTurni();
+            changeForm($('[name=activationPeriodType]').val());
+            changeFormTurni($('[name=dayHourType]').val());
         });
         $('[name=activationPeriodType]').change(function () {
             changeForm($(this).val());
@@ -88,12 +88,11 @@
             $('[id=id_orario_apertura]').parent().show();
             $('[id=id_orario_chiusura]').parent().show();
             $('[id=turni_panel]').show();
-            $('[id=aggiungi_turno]').show();
         }
         
         function changeFormTurni(val) {
             switch (val) {
-                case 'GIORNI_ORARI':
+                case 'Giorni e Orari':
                     showTurni();
                     break;
                 default:
@@ -101,7 +100,6 @@
                     $('[id=id_orario_apertura]').parent().hide();
                     $('[id=id_orario_chiusura]').parent().hide();
                     $('[id=turni_panel]').hide();
-                    $('[id=aggiungi_turno]').hide();
                     break;
             }
         }
@@ -109,10 +107,10 @@
 
         function changeForm(val) {
             switch (val) {
-                case 'MENSILE':
+                case 'Mensile':
                     showMensile();
                     break;
-                case  'DA_A':
+                case 'Da - A':
                     showDate();
                     break;
                 default:

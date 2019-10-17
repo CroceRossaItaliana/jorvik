@@ -221,11 +221,11 @@ def servizio_organizza(request, me):
 
     if request.POST and modulo.is_valid() and modulo_referente.is_valid():
 
-        # progetto = Progetto.objects.get(name=modulo.cleaned_data['progetto'])
+        # progetto = Progetto.objects.filter(name__iexact=modulo.cleaned_data['progetto']).first()
 
         result = createServizio(
             comitato=646,
-            # comitato=progetto.sede,
+            # comitato=int(progetto.sede),
             nome_progetto=modulo.cleaned_data['progetto'],
             servizi=modulo.cleaned_data['servizi'],
         )
@@ -348,16 +348,19 @@ def servizi_referenti(request, me, pk=None, nuova=False):
     if 'result' in result and 'code' in result['result'] and result['result']['code'] == 200:
         str_json = "[{}]".format(result['data']['accountables'].replace('\'', '"').replace('}', '},')[:-1])
         referenti = [r['name'] for r in json.loads(str_json)]
+    else:
+        contesto.update({'errore': 'Ci sono problemi a connettersi al servizio riprova piu tardi.'})
+        return 'servizi_referenti.html', contesto
     if request.POST:
         if form.is_valid():
             persona = form.cleaned_data['persona']
             updateServizio(pk, referenti=[persona], precedenti=referenti)
             contesto.update({'referenti': [
-                Persona.objects.filter(nome=r.split('.')[0], cognome=r.split('.')[1]).first() for r in referenti
+                Persona.objects.filter(nome__iexact=r.split('.')[0], cognome__iexact=r.split('.')[1]).first() for r in referenti
             ]})
     else:
         contesto.update({'referenti': [
-            Persona.objects.filter(nome=r.split('.')[0], cognome=r.split('.')[1]).first() for r in referenti
+            Persona.objects.filter(nome__iexact=r.split('.')[0], cognome__iexact=r.split('.')[1]).first() for r in referenti
         ]})
 
     return 'servizi_referenti.html', contesto
@@ -895,15 +898,20 @@ def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
             if result['data']['address']:
                 init['address'] = result['data']['address']
             if result['data']['geographical_scope']:
+                print('geographical_scope', result['data']['geographical_scope'])
                 init['geo_scope'] = result['data']['geographical_scope']
             if result['data']['age_from']:
-                init['eta_form'] = result['data']['age_from']
+                init['eta_form'] = result['data']['age_from'].split('.')[0]
             if result['data']['age_to']:
-                init['eta_to'] = result['data']['age_to']
+                init['eta_to'] = result['data']['age_to'].split('.')[0]
             if result['data']['beneficiary_residence_restriction']:
                 init['recidence_beneficiaries'] = result['data']['beneficiary_residence_restriction']
             if result['data']['beneficiary_max_isee']:
-                init['beneficiaryMaxIsee'] = result['data']['beneficiary_max_isee']
+                init['beneficiaryMaxIsee'] = result['data']['beneficiary_max_isee'].split('.')[0]
+            if result['data']['beneficiary_type']:
+                init['beneficiaries'] = tuple(result['data']['beneficiary_type'].split(','))
+            if result['data']['other_beneficiary_data']:
+                init['otherBeneficiaryData'] = result['data']['other_beneficiary_data']
             modulo = ModuloServiziCriteriDiAccesso(request.POST or None, initial=init)
     else:
         modulo = ModuloServiziCriteriDiAccesso(request.POST or None)
@@ -917,15 +925,23 @@ def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
         beneficiary = ""
         for b in modulo.cleaned_data['beneficiaries']:
             beneficiary += "{},".format(b)
-        data = {
-            'address': modulo.cleaned_data['address'],
-            # 'geographical_scope': modulo.cleaned_data['geo_scope'],
-            "beneficiary_type": [beneficiary[:-1] if beneficiary else ""],
-            'age_from': modulo.cleaned_data['eta_form'],
-            'age_to': modulo.cleaned_data['eta_to'],
-            # 'beneficiary_residence_restriction': modulo.cleaned_data['recidence_beneficiaries'],
-            'beneficiary_max_isee': modulo.cleaned_data['beneficiaryMaxIsee'],
-        }
+        data = {}
+        if modulo.cleaned_data['address']:
+            data['address'] = modulo.cleaned_data['address']
+        if modulo.cleaned_data['geo_scope']:
+            data['geographical_scope'] = {'value': modulo.cleaned_data['geo_scope']}
+        if beneficiary:
+            data["beneficiary_type"] = [beneficiary[:-1] if beneficiary else ""]
+        if modulo.cleaned_data['eta_form']:
+            data['age_from'] = str(modulo.cleaned_data['eta_form'])
+        if modulo.cleaned_data['eta_to']:
+            data['age_to'] = str(modulo.cleaned_data['eta_to'])
+        if modulo.cleaned_data['recidence_beneficiaries']:
+            data['beneficiary_residence_restriction'] = {'value': modulo.cleaned_data['recidence_beneficiaries']}
+        if modulo.cleaned_data['beneficiaryMaxIsee']:
+            data['beneficiary_max_isee'] = modulo.cleaned_data['beneficiaryMaxIsee']
+        if modulo.cleaned_data['otherBeneficiaryData']:
+            data['other_beneficiary_data'] = modulo.cleaned_data['otherBeneficiaryData']
         update_service(pk, **data)
 
     return 'servizio_scheda_infomazioni_modifica_accesso.html', contesto
@@ -934,14 +950,80 @@ def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
     from attivita.forms import ModuloServiziSepcificheDelServizio, ModuloServiziSepcificheDelServizioTurni
-    modulo = ModuloServiziSepcificheDelServizio(request.POST or None)
-    turni = ModuloServiziSepcificheDelServizioTurni(request.POST or None)
+    from attivita.cri_persone import update_service
     result = getServizio(pk)
-    init = {}
+    init_modulo = {}
+    init_turni = {}
+
+    if 'result' in result:
+        if result['result']['code'] == 200:
+            if 'os_activation_period_type' in result['data']:
+                if result['data']['os_activation_period_type']:
+                    init_modulo['activationPeriodType'] = result['data']['os_activation_period_type']['value']
+            if 'os_annual_period' in result['data']:
+                init_modulo['annualPeriod'] = result['data']['os_annual_period']
+            if 'os_annual_period_from' in result['data']:
+                init_modulo['annualPeriodFrom'] = datetime.strptime(
+                    result['data']['os_annual_period_from'], '%Y-%m-%d'
+                )
+            if 'os_annual_period_to' in result['data']:#
+                init_modulo['annualPeriodTo'] = datetime.strptime(
+                    result['data']['os_annual_period_to'], '%Y-%m-%d'
+                )
+            if 'variable_day' in result['data']:
+                if result['data']['variable_day']:
+                    init_modulo['variableDay'] = result['data']['variable_day']['value']
+            if 'os_due_date' in result['data']:
+                init_modulo['dueDate'] = datetime.strptime(
+                    result['data']['os_due_date'], '%Y-%m-%d'
+                )
+            if 'os_dayhour_type' in result['data']:
+                if result['data']['os_dayhour_type']:
+                    init_turni['dayHourType'] = result['data']['os_dayhour_type']['value']
+
+            modulo = ModuloServiziSepcificheDelServizio(request.POST or None, initial=init_modulo)
+            turni = ModuloServiziSepcificheDelServizioTurni(request.POST or None, initial=init_turni)
+        else:
+            # Errore
+            modulo = ModuloServiziSepcificheDelServizio(request.POST or None)
+            turni = ModuloServiziSepcificheDelServizioTurni(request.POST or None)
+    else:
+        modulo = ModuloServiziSepcificheDelServizio(request.POST or None)
+        turni = ModuloServiziSepcificheDelServizioTurni(request.POST or None)
+
+
     contesto = {'key': pk}
     contesto.update({'modulo': modulo})
     contesto.update({'turni': turni})
 
+    data = {}
+    if modulo.is_valid() and turni.is_valid():
+        if modulo.cleaned_data['activationPeriodType'] == ModuloServiziSepcificheDelServizio.MENSILE:
+            data['os_activation_period_type'] = {"value": modulo.cleaned_data['activationPeriodType']}
+            data['os_activation_period_type'] = {"value": modulo.cleaned_data['activationPeriodType']}
+            data['os_annual_period'] = modulo.cleaned_data['annualPeriod']
+            data['os_annual_period_from'] = ""
+            data['os_annual_period_to'] = ""
+        elif modulo.cleaned_data['activationPeriodType'] == ModuloServiziSepcificheDelServizio.DA_A:
+            data['os_activation_period_type'] = {"value": modulo.cleaned_data['activationPeriodType']}
+            data['os_annual_period'] = ""
+            data['os_annual_period_from'] = modulo.cleaned_data['annualPeriodFrom'].strftime("%Y-%m-%d")
+            data['os_annual_period_to'] = modulo.cleaned_data['annualPeriodTo'].strftime("%Y-%m-%d")
+        else:
+            data['os_activation_period_type'] = ""
+            data['os_annual_period'] = ""
+            data['os_annual_period_from'] = ""
+            data['os_annual_period_to'] = ""
+
+        if modulo.cleaned_data['variableDay']:
+            data['variable_day'] = {'value': modulo.cleaned_data['variableDay']}
+        if modulo.cleaned_data['dueDate']:
+            data['os_due_date'] = {'value': modulo.cleaned_data['dueDate'].strftime("%Y-%m-%d")}
+
+        if turni.cleaned_data['dayHourType']:
+            data['os_dayhour_type'] = {'value': turni.cleaned_data['dayHourType']}
+
+        update_service(pk, **data)
 
     return 'servizio_scheda_infomazioni_modifica_specifiche.html', contesto
 

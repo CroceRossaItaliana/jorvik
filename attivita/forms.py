@@ -95,26 +95,26 @@ class ModuloServiziConvenzioni(forms.Form):
 
 
 class ModuloServiziSepcificheDelServizio(forms.Form):
-    MENSILE = 'MENSILE'
-    DA_A = 'DA_A'
+    MENSILE = 'Mensile'
+    DA_A = 'Da - A'
     ACTIVATION_TYPE = (
-        ('', 'Seleziona tipo attivazione'),
+        ('', ''),
         (MENSILE, 'Mensile'),
         (DA_A, 'Da a')
     )
-    activationPeriodType = forms.ChoiceField(choices=ACTIVATION_TYPE, label='Periodo di attivazione')
-    GENNAIO = 'GENNAIO'
-    FEBBRAIO = 'FEBBRAIO'
-    MARZO = 'MARZO'
-    APRILE = 'APRILE'
-    MAGGIO = 'MAGGIO'
-    GIUGNO = 'GIUGNO'
-    LUGLIO = 'LUGLIO'
-    AGOSTO = 'AGOSTO'
-    SETTEMPRE = 'SETTEMPRE'
-    OTTOBRE = 'OTTOBRE'
-    NOVEMBRE = 'NOVEMBRE'
-    DICEMBRE = 'DICEMBRE'
+    activationPeriodType = forms.ChoiceField(required=False, choices=ACTIVATION_TYPE, label='Periodo di attivazione')
+    GENNAIO = 'Gennaio'
+    FEBBRAIO = 'Febbraio'
+    MARZO = 'Marzo'
+    APRILE = 'Aprile'
+    MAGGIO = 'Maggio'
+    GIUGNO = 'Giugno'
+    LUGLIO = 'Luglio'
+    AGOSTO = 'Agosto'
+    SETTEMPRE = 'Settembre'
+    OTTOBRE = 'Ottobre'
+    NOVEMBRE = 'Novembre'
+    DICEMBRE = 'Dicembre'
     ANNUAL_PERIOD = (
         (GENNAIO, 'Gennaio'),
         (FEBBRAIO, 'Febbraio'),
@@ -136,36 +136,38 @@ class ModuloServiziSepcificheDelServizio(forms.Form):
         widget=forms.CheckboxSelectMultiple
     )
 
-    annualPeriodFrom = forms.DateField(label='Da')
-    annualPeriodTo = forms.DateField(label='A')
+    annualPeriodFrom = forms.DateField(required=False, label='Da')
+    annualPeriodTo = forms.DateField(required=False, label='A')
 
-    SI = '11635'
-    NO = '11636'
+    SI = 'SI'
+    NO = 'NO'
     SI_NO = (
         ('', ''),
         (SI, 'Si'),
         (NO, 'No'),
     )
-    variableDay = forms.ChoiceField(choices=SI_NO, label='Variabile')
+    variableDay = forms.ChoiceField(required=False, choices=SI_NO, label='Variabile')
 
-    costField = forms.CharField(required=False)
+    # Todo: manca la chiamata
+    costField = forms.CharField(required=False, label='Dati di costo (campo libero)')
 
-    accessMode = forms.CharField(required=False)
+    # Todo: manca la chiamata
+    accessMode = forms.CharField(widget=forms.Textarea, required=False, label='Modailità di accesso')
 
-    dueDate = forms.DateField(label='Chiusura')
+    dueDate = forms.DateField(required=False, label='Chiusura')
 
 
 class ModuloServiziSepcificheDelServizioTurni(forms.Form):
 
     H24 = 'H24'
-    GIORNI_ORARI = 'GIORNI_ORARI'
+    GIORNI_ORARI = 'Giorni e Orari'
 
     DAY_HOUR_TYPE = (
-        ('', 'Tipo di orario'),
+        ('', ''),
         (H24, 'H24'),
-        (GIORNI_ORARI, 'Giorni')
+        (GIORNI_ORARI, 'Giorni e Orari')
     )
-    dayHourType = forms.ChoiceField(choices=DAY_HOUR_TYPE, label='Orari')
+    dayHourType = forms.ChoiceField(required=False, choices=DAY_HOUR_TYPE, label='Orari')
 
     LUNEDI = 'LUNEDI'
     MARTEDI = 'MARTEDI'
@@ -176,6 +178,7 @@ class ModuloServiziSepcificheDelServizioTurni(forms.Form):
     DOMENICA = 'DOMENICA'
 
     DAY = (
+        ('', ''),
         (LUNEDI, 'Lunedi'),
         (MARTEDI, 'Martedi'),
         (MERCOLEDI, 'Mercoledi'),
@@ -185,26 +188,34 @@ class ModuloServiziSepcificheDelServizioTurni(forms.Form):
         (DOMENICA, 'Domenica'),
     )
 
-    giorno = forms.ChoiceField(choices=DAY, label='Orari')
+    giorno = forms.ChoiceField(required=False, choices=DAY, label='Giorno')
     orario_apertura = forms.CharField(required=False, label='Orario apertura')
     orario_chiusura = forms.CharField(required=False, label='Orario chiusura')
 
 
 class ModuloServiziCriteriDiAccesso(forms.Form):
+    COMUNI = 'Comuni'
+    AMBITO_TERRITORIALE = 'Ambito Territoriale del Comitato'
+    PROVINCIA = 'Provincia'
+    REGIONALE = 'Regione'
+    ITALIA = 'Italia'
+    EUROPA = 'Europa'
+    MONDO = 'Mondo'
+
     GEO_SCOPE = (
         ('', ''),
-        (11639, 'Comuni'),
-        (11640, 'Ambito territoriale del comitato'),
-        (11641, 'Provincia'),
-        (11642, 'Regione'),
-        (11643, 'Italia'),
-        (11644, 'Europa'),
-        (11644, 'Mondo'),
+        (COMUNI, 'Comuni'),
+        (AMBITO_TERRITORIALE, 'Ambito territoriale del comitato'),
+        (PROVINCIA, 'Provincia'),
+        (REGIONALE, 'Regione'),
+        (ITALIA, 'Italia'),
+        (EUROPA, 'Europa'),
+        (MONDO, 'Mondo'),
     )
     R_BENEFICIARIES = (
         ('', ''),
-        (11646, 'Ambito Territoriale del Comitato'),
-        (11647, 'Comuni')
+        (AMBITO_TERRITORIALE, 'Ambito Territoriale del Comitato'),
+        (COMUNI, 'Comuni')
     )
     address = forms.CharField(required=False, label='Indirizzo')
     geo_scope = forms.ChoiceField(required=False, choices=GEO_SCOPE, label='Ambito geografico')
@@ -218,6 +229,7 @@ class ModuloServiziCriteriDiAccesso(forms.Form):
     eta_to = forms.IntegerField(required=False, label='A')
     recidence_beneficiaries = forms.ChoiceField(required=False, choices=R_BENEFICIARIES, label='Residenza Beneficiari')
     beneficiaryMaxIsee = forms.CharField(required=False, label='Isee Max')
+    otherBeneficiaryData = forms.CharField(widget=forms.Textarea, required=False, label='Beneficiari Altro')
 
     @staticmethod
     def popola_beneficiaries():

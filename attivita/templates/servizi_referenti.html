@@ -9,6 +9,15 @@
 
 {% block app_contenuto %}
 
+    {% if errore %}
+            <div class="alert alert-danger alert-block">
+                <p>
+                    <i class="fa fa-fw fa-exclamation-triangle"></i>
+                    {{ errore }}
+                </p>
+            </div>
+    {% endif %}
+
     <div class="row">
 
     <div class="col-md-9">
