@@ -80,9 +80,7 @@ class Titolo(ModelloSemplice, ConVecchioID):
 
     @property
     def is_course_title(self):
-        is_titolo_cri = self.is_titolo_cri
-        has_goal = self.goal
-        return is_titolo_cri and bool(has_goal) and bool(has_goal.obbiettivo_stragetico)
+        return self.is_titolo_cri and self.sigla
 
     @property
     def is_titolo_corso_base(self):
@@ -147,6 +145,18 @@ class TitleGoal(models.Model):
 class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     RICHIESTA_NOME = 'titolo'
 
+    ATTESTATO = 'a'
+    BREVETTO = 'b'
+    VERBALE_ESAME = 'v'
+    ALTRO_DOC = 'd'
+
+    TIPO_DOCUMENTAZIONE = (
+        (ATTESTATO, 'Attestato'),
+        (BREVETTO, 'Brevetto'),
+        (VERBALE_ESAME, "Verbale d'esame"),
+        (ALTRO_DOC, 'Altro documento inerente al corso'),
+    )
+
     titolo = models.ForeignKey(Titolo, on_delete=models.CASCADE)
     persona = models.ForeignKey("anagrafica.Persona",
                                 related_name="titoli_personali",
@@ -174,6 +184,8 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
     is_course_title = models.BooleanField(default=False)
 
     # GAIA-210
+    tipo_documentazione = models.CharField(max_length=2, blank=True,
+                                           null=True, choices=TIPO_DOCUMENTAZIONE)
     attestato_file = models.FileField(blank=True, null=True,
                              upload_to=cv_attestato_file_upload_path,
                              verbose_name='Attestato')
@@ -227,6 +239,21 @@ class TitoloPersonale(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni):
         now = timezone.now()
         today = date(now.year, now.month, now.day)
         return cls.objects.filter(is_course_title=True, data_scadenza=today)
+
+    @property
+    def qualifica_regresso(self):
+        if self.tipo_documentazione and self.attestato_file:
+            return True
+        return False
+
+    @property
+    def can_delete(self):
+        """ GAIA-207 """
+        if self.confermata and self.qualifica_regresso:
+            return False
+        elif self.titolo.is_course_title and not self.titolo.inseribile_in_autonomia:
+            return False
+        return True
 
     def __str__(self):
         return "%s di %s" % (self.titolo, self.persona)

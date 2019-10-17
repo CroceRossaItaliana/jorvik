@@ -1,3 +1,4 @@
+from os import path
 from datetime import datetime
 from django import template
 from django.contrib.messages import constants
@@ -105,3 +106,32 @@ def get_url_for_staticfiles(context):
         return "%s://%s" % (protocol, request.get_host())
 
     return ''
+
+
+@register.simple_tag
+def get_filename(file):
+    return path.basename(file.name)
+
+
+@register.simple_tag(takes_context=True)
+def richiesta_autorizzazione_button(context, action):
+    richiesta = context['richiesta']
+    oggetto = richiesta.oggetto
+
+    display = True
+    if hasattr(oggetto, 'qualifica_regresso') and oggetto.qualifica_regresso == True:
+        display = False
+
+    if action == 'nega':
+        return display
+
+    return True
+
+
+@register.simple_tag(takes_context=True)
+def richiesta_autorizzazione_button_text(context):
+    richiesta = context['richiesta']
+
+    if str(richiesta.oggetto_tipo) == 'Titolo personale':
+        return 'Presa visione'
+    return "Conferma"
