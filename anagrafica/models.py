@@ -688,12 +688,15 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         return requests_to_courses.filter(persona=self, corso__stato__in=corso_stato)
 
-    @property
-    def corsi(self):
+    def corsi(self, **richieste_di_partecipazione_kwargs):
         from formazione.models import CorsoBase
 
-        richieste_di_partecipazione = self.richieste_di_partecipazione().values_list('corso_id', flat=True)
+        richieste_di_partecipazione = self.richieste_di_partecipazione(
+            **richieste_di_partecipazione_kwargs
+        ).values_list('corso_id', flat=True)
+
         corsi_in_attesa_o_confermati = CorsoBase.objects.filter(id__in=richieste_di_partecipazione)
+
         return corsi_in_attesa_o_confermati | self.corsi_frequentati
 
     @property

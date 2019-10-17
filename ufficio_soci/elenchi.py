@@ -87,6 +87,8 @@ class ElencoVistaAnagrafica(ElencoVistaSemplice):
      anagrafici delle persone.
     """
 
+    SHORT_NAME = 'ea'  # utilizzato in anagrafica.profile.menu.filter_per_role
+
     def excel_colonne(self):
         return super(ElencoVistaAnagrafica, self).excel_colonne() + (
             ("Data di Nascita", lambda p: p.data_nascita),
@@ -109,6 +111,7 @@ class ElencoVistaAnagrafica(ElencoVistaSemplice):
 
 
 class ElencoVistaSoci(ElencoVistaAnagrafica):
+    SHORT_NAME = 'us'  # utilizzato in anagrafica.profile.menu.filter_per_role
 
     def template(self):
         return 'us_elenchi_inc_soci.html'
