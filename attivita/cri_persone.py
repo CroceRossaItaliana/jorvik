@@ -37,8 +37,13 @@ def updateServizio(key, **kwargs):
         logger.debug('- referenti {}'.format(kwargs.get('referenti')))
 
     if kwargs.get('precedenti'):
+        l = []
         for ref in kwargs.get('precedenti'):
-            data['accountables'].append({'name': ref})
+            l.append({'name': ref})
+        if 'accountables' in data:
+            data['accountables'].extend(l)
+        else:
+            data['accountables'] = l
         logger.debug('- precedenti {}'.format(kwargs.get('precedenti')))
 
     if kwargs.get('servizi'):

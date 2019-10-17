@@ -62,16 +62,18 @@
                          <table class="table table-bordered table-striped">
                             <thead>
                                 <th>Persona</th>
-{#                                <th>Validità</th>#}
-{#                                <th>Azioni</th>#}
+                                <th>Azioni</th>
                             </thead>
 
                             <tbody>
-                                {% for p in referenti %}
+                                {% for idx, p in referenti %}
 
                                     <tr>
                                         <td class="grassetto">
                                             <a target="_new" href="{{ p.url }}">{{ p.nome_completo }}</a>
+                                        </td>
+                                        <td class="grassetto">
+                                            <a href="?d={{ forloop.counter }}">Elimina</a>
                                         </td>
                                     </tr>
 

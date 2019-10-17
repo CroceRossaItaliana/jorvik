@@ -337,6 +337,9 @@ def attivita_organizza_fatto(request, me, pk=None):
 def servizi_referenti(request, me, pk=None, nuova=False):
     from anagrafica.forms import ModuloCreazioneDelega
     import json
+
+    delete = request.GET.get('d', '')
+
     form = ModuloCreazioneDelega(request.POST or None, initial={
         "inizio": datetime.today(),
     }, me=me)
@@ -351,6 +354,11 @@ def servizi_referenti(request, me, pk=None, nuova=False):
     else:
         contesto.update({'errore': 'Ci sono problemi a connettersi al servizio riprova piu tardi.'})
         return 'servizi_referenti.html', contesto
+
+    # elimino referente
+    if delete:
+        referenti.pop(int(delete))
+        updateServizio(pk, precedenti=referenti)
 
     if request.POST:
         if form.is_valid():
