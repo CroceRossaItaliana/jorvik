@@ -7,22 +7,23 @@
 {% block menu_laterale %}
     <div class="col-md-2 well well-sm">
         <ul id="sezione" role="navigation" class="nav nav-pills nav-stacked navbar-collapse collapse">
-            <li class="dropdown-header grassetto piu-grande">Documenti</li>
-                <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
-                    <a href="{{ link_url|urlencode }}">
-                        <i class="fa fa-newspaper-o fa-fw"></i>
-                        Elenco
-                    </a>
-                </li>
-            <hr />
+            {% for sezione_nome, sezione_pagine in menu.documenti %}
+                <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
+                {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
+                    <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
+                        <a href="{{ link_url|urlencode }}"><i class="fa {{ link_icona }} fa-fw"></i> {{ link_nome }}</a>
+                    </li>
+                {% endfor %}
+                <hr />
+            {% endfor %}
         </ul>
     </div>
 {% endblock %}
 
 {% block app_contenuto %}
 
-    {% if cartella %}{% url 'lista_documenti' cartella.pk as url_base %}
-    {% else %}{% url 'lista_documenti' as url_base %}
+    {% if cartella %}{% url 'documenti:lista_documenti' cartella.pk as url_base %}
+    {% else %}{% url 'documenti:lista_documenti' as url_base %}
     {% endif %}
     <div class="row">
 
@@ -41,9 +42,9 @@
                 <h3>
                     <i class="fa fa-fw fa-folder-open-o"></i>
                     <span class="text-muted">Sei in:</span>
-                    <a href="{% url 'lista_documenti' %}"> Documenti </a>&nbsp;/
+                    <a href="{% url 'documenti:lista_documenti' %}"> Documenti </a>&nbsp;/
                     {% for parent in cartella.get_ancestors %}
-                        <a href="{% url 'lista_documenti' parent.pk %}">{{ parent }}</a>&nbsp;/
+                        <a href="{% url 'documenti:lista_documenti' parent.pk %}">{{ parent }}</a>&nbsp;/
                     {% endfor %}
                     {{ cartella }}
                 </h3>
@@ -96,7 +97,7 @@
         {% for cartella in cartelle %}
             <tr class="info">
                 <th><i class="fa fa-fw fa-folder-o"></i></th>
-                <td class="grassetto"><a href='{% url 'lista_documenti' cartella.pk %}'>{{ cartella.name }}</a></td>
+                <td class="grassetto"><a href='{% url 'documenti:lista_documenti' cartella.pk %}'>{{ cartella.name }}</a></td>
                 <td></td>
                 <td></td>
                 <td></td>
@@ -110,7 +111,7 @@
                 <th><i class="fa fa-fw {{ documento.icona }}"></i></th>
                 <td><a target="_blank" href="{{ documento.url_scarica }}">{{ documento.label }}</a></td>
                 {% if query and documento.folder.pk%}
-                    <td><a href="{% url 'lista_documenti' documento.folder.pk %}">
+                    <td><a href="{% url 'documenti:lista_documenti' documento.folder.pk %}">
                         <i class="fa fa-fw fa-folder"></i> {{ documento.folder }}</a>
                     </td>
                 {% endif %}

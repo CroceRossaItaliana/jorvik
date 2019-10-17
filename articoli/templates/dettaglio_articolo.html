@@ -5,14 +5,15 @@
 {% block menu_laterale %}
     <div class="col-md-2 well well-sm">
         <ul id="sezione" role="navigation" class="nav nav-pills nav-stacked navbar-collapse collapse">
-            <li class="dropdown-header grassetto piu-grande">Articoli</li>
-                <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
-                    <a href="{% url 'lista_articoli' %}">
-                        <i class="fa fa-newspaper-o fa-fw"></i>
-                        Elenco
-                    </a>
-                </li>
-            <hr />
+            {% for sezione_nome, sezione_pagine in menu.articoli %}
+                <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
+                {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
+                    <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
+                        <a href="{{ link_url|urlencode }}"><i class="fa {{ link_icona }} fa-fw"></i> {{ link_nome }}</a>
+                    </li>
+                {% endfor %}
+                <hr />
+            {% endfor %}
         </ul>
     </div>
 {% endblock %}
@@ -20,6 +21,6 @@
 {% block app_contenuto %}
     <div class="articolo">
         {% include "includes/articolo.html" %}
-        <p><a href='{% url 'lista_articoli' %}'><i class="fa fa-level-up" ></i> torna all'elenco</a></p>
+        <p><a href='{% url 'articoli:lista' %}'><i class="fa fa-level-up" ></i> torna all'elenco</a></p>
     </div>
 {% endblock %}

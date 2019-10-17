@@ -70,9 +70,9 @@ class ListaDocumenti(VistaDecorata, ListView):
         else:
             context['query'] = self.request.GET.get('q', '')
         if cartella:
-            context['url_vista'] = reverse('lista_documenti', kwargs={'cartella': cartella})
+            context['url_vista'] = reverse('documenti:lista_documenti', kwargs={'cartella': cartella})
         else:
-            context['url_vista'] = reverse('lista_documenti')
+            context['url_vista'] = reverse('documenti:lista_documenti')
         return context
 
 

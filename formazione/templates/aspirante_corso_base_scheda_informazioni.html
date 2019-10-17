@@ -3,240 +3,255 @@
 {% load utils %}
 {% load social %}
 {% load humanize %}
+{% load bootstrap3 %}
+{% load formazione_templatetags %}
 
 {% block scheda_contenuto %}
 
+<style>
+    .scheda-lezione-non-revisionata {color:red;}
+</style>
+
 {% if not me or not puo_modificare %}
-
-
     {% if not me or puoi_partecipare in corso.PUOI_ISCRIVERTI %}
-
         <div class="alert alert-success alert-block">
-            <h4><i class="fa fa-question-circle"></i> Vuoi partecipare a questo corso base?</h4>
+            <h4><i class="fa fa-question-circle"></i> Vuoi partecipare a questo corso?</h4>
 
             {% if not me %}
-                <p>Per diventare volontario di Croce Rossa Italiana, iscrivendoti a
-                    questo o altri corsi base nelle tue vicinanze, registrati
+                <p>Per diventare volontario di Croce Rossa Italiana, iscrivendoti a questo o altri corsi nelle tue vicinanze, registrati
                     come aspirante su Gaia. Potrai vedere i corsi nelle tue vicinanze ed essere informato immediatamente
                     quando un nuovo corso viene attivato vicino a te!</p>
                 <p>
-                    <a href="https://gaia.cri.it/registrati/aspirante/"
-                       class="btn btn-block btn-success">
+                    <a href="/registrati/aspirante/" class="btn btn-block btn-success">
                         <i class="fa fa-fw fa-check-circle"></i> Voglio registrarmi come Aspirante
                     </a>
                 </p>
-
             {% else %}
                 <p>Se sei interessat{{ me.genere_o_a }} a iscriverti a questo corso, clicca sul pulsante seguente.
-                    Notificheremo il tuo interesse al direttore del corso, che ti contatter&agrave;</p>
+                    La tua richiesta di iscrizione verrà inviata al Direttore del Corso.
+
+                    {% if not corso.is_nuovo_corso %}
+                        <label for="autocert_assenza_condanne_penali">
+                            <input type="checkbox" id="autocert_assenza_condanne_penali" style="display: inline-block;">
+                            Autocertificare l’assenza di condanne penali, con sentenza passata in giudicato, per uno dei reati comportanti la destituzione di diritto dal pubblico impiego
+                        </label>
+                    {% endif %}
+                </p>
                 <p>
-                    <a href="{{ corso.url_iscriviti }}"
-                       class="btn btn-block btn-success">
+                    <a id="VO_want_to_participate_to_this_course" href="{% url 'aspirante:subscribe' corso.pk %}" class="btn btn-block btn-success">
                         <i class="fa fa-fw fa-check-circle"></i> Voglio iscrivermi a questo corso
                     </a>
-
                 </p>
-
             {% endif %}
-
-
         </div>
 
-    {% elif puoi_partecipare in corso.SEI_ISCRITTO %}
+        <script>
+            $('#VO_want_to_participate_to_this_course').on('click', function(e) {
+                var is_nuovo_corso = {% if corso.is_nuovo_corso %}true{% else %} false{% endif %};
+                if (is_nuovo_corso) {
+                    //
+                } else {
+                    let autocert_assenza_condanne_penali = $('#autocert_assenza_condanne_penali');
+                    if (!autocert_assenza_condanne_penali.is(':checked')) {
+                        e.preventDefault();
+                        autocert_assenza_condanne_penali.parent().css({'color': 'red'});
+                    }
+                }
+            });
+        </script>
 
+    {% elif puoi_partecipare in corso.SEI_ISCRITTO %}
         {% if puoi_partecipare == corso.SEI_ISCRITTO_PUOI_RITIRARTI %}
             <div class="alert alert-info alert-block">
                 <h4><i class="fa fa-info-circle"></i> Hai chiesto di partecipare a questo corso</h4>
-                <p>Verrai contattat{{ me.genere_o_a }} a breve dal direttore del corso.</p>
-                <p>Puoi presentarti alla prima lezione del corso base, dove la tua iscrizione
-                    verr&agrave; completata e confermata dal direttore &mdash;
-                    nota solo che il direttore ha facolt&agrave; di limitare l'accesso
-                    ai primi {{ me.aspirante.richiesta_corso.MAX_PARTECIPANTI }} iscritti.</p>
+                <p>Hai chiesto di partecipare a questo corso. Se non desideri più partecipare clicca sul pulsante seguente.</p>
                 <p>
-                     <a href="{{ corso.url_ritirati }}"
-                        data-conferma="Sei sicur{{ me.genere_o_a }} di voler rinunciare a questo corso?"
-                       class="btn btn-block btn-warning">
-                        <i class="fa fa-fw fa-times"></i>
-                         Non posso pi&ugrave; partecipare &mdash; voglio ritirarmi
+                     <a href="{% url 'aspirante:retired' corso.pk %}" data-conferma="Sei sicur{{ me.genere_o_a }} di voler rinunciare a questo corso?" class="btn btn-block btn-warning">
+                        <i class="fa fa-fw fa-times"></i> Non posso pi&ugrave; partecipare &mdash; voglio ritirarmi
                     </a>
-
                 </p>
-
             </div>
 
-        {% elif puoi_partecipare == corso.SEI_ISCRITTO_NON_PUOI_RITIRARTI %}
-
+        {% elif puoi_partecipare == corso.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI and corso.stato != corso.TERMINATO %}
             <div class="alert alert-info alert-block">
                 <h4><i class="fa fa-check-circle"></i> Sei iscritt{{ me.genere_o_a }} a questo corso!</h4>
                 <p>Meraviglioso! Presentati alle lezioni del corso secondo il programma indicato sotto.</p>
                 <p>Per qualsiasi domanda, contatta uno dei direttori del corso, cliccando sul suo nome.</p>
 
+                <p>
+                     <a href="{% url 'aspirante:retired' corso.pk %}" data-conferma="Sei sicur{{ me.genere_o_a }} di voler rinunciare a questo corso?" class="btn btn-block btn-warning">
+                        <i class="fa fa-fw fa-times"></i> Non posso pi&ugrave; partecipare &mdash; voglio ritirarmi
+                    </a>
+                </p>
             </div>
-
-
-
         {% endif %}
-
 
     {% elif puoi_partecipare in corso.NON_PUOI_ISCRIVERTI %}
-
+        <div class="alert alert-warning"><i class="fa fa-fw fa-info-circle"></i>
         {% if puoi_partecipare == corso.NON_PUOI_ISCRIVERTI_GIA_VOLONTARIO %}
-            <div class="alert alert-warning">
-                <i class="fa fa-fw fa-info-circle"></i>
-                Sei gi&agrave; parte di Croce Rossa Italiana, le funzionalit&agrave; di
-                iscrizione al corso sono disabilitate.
-            </div>
-
-
+                Sei gi&agrave; parte di Croce Rossa Italiana, le funzionalit&agrave; di iscrizione al corso sono disabilitate.
         {% elif puoi_partecipare == corso.NON_PUOI_ISCRIVERTI_TROPPO_TARDI %}
-
-            <div class="alert alert-warning">
-                <i class="fa fa-fw fa-info-circle"></i>
                 Questo corso &egrave; gi&agrave; iniziato da troppo tempo per iscriverti.
-            </div>
-
         {% elif puoi_partecipare == corso.NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO %}
+                Sei gi&agrave; iscritt{{ me.genere_o_a }} a un altro corso, quindi non puoi iscriverti a questo.
+        {% elif puoi_partecipare == corso.NON_PUOI_SEI_ASPIRANTE %}
+                Non puoi iscriverti a questo corso.
+        {% elif puoi_partecipare == corso.NON_HAI_DOCUMENTO_PERSONALE_VALIDO %}
+            Per iscriverti a questo corso devi <a href="{% url 'utente:documenti' %}" target="_blank">aggiornare il documento di riconoscimento</a> in corso di validità.
+        {% elif puoi_partecipare == corso.NON_PUOI_ISCRIVERTI_NON_HAI_TITOLI %}
+            Non puoi partecipare perchè non hai titoli necessari.
+        {% elif puoi_partecipare == corso.NON_PUOI_ISCRIVERTI_ESTENSIONI_NON_COINCIDONO %}
+            Non puoi partecipare perchè non hai tutti i requisiti.
+        {% elif puoi_partecipare == corso.NON_HAI_CARICATO_DOCUMENTI_PERSONALI %}
+            Per iscriverti a questo corso inserisci la copia di un documento di riconoscimento in corso di validità (CDI, Passaporto o Patente Civile).
 
-            <div class="alert alert-warning">
-                <i class="fa fa-fw fa-info-circle"></i>
-                Sei gi&agrave; iscritt{{ me.genere_o_a }} a un altro corso, quindi
-                non puoi iscriverti a questo.
-            </div>
-
+            <form action="{% url 'aspirante:info' corso.pk %}" method="post" enctype="multipart/form-data">
+                <div style="display: flex;justify-content: space-between; margin-top:10px;">
+                    {% bootstrap_form load_personal_document %}
+                </div>
+                {% csrf_token %}
+                <input type="submit" class="btn btn-primary" value="Carica">
+            </form>
+        {% else %}
+            Non puoi partecipare a questo corso.
         {% endif %}
-
-
-
-
+        </div>
     {% endif %}
-
-
 {% endif %}
 
-
  <div class="row">
-
     <div class="col-md-3">
         <div class="panel panel-info">
             <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-user"></i>
-                    Direttori
-                    <span class="pull-right">
-                        {{ corso.delegati_attuali.count }}
-                    </span>
-                </h3>
+                <h3 class="panel-title"><i class="fa fa-fw fa-user"></i> Direttore <span class="pull-right">{{ corso.delegati_attuali.count }}</span></h3>
             </div>
 
             <div class="panel-body">
                 <div class="btn-group btn-group-vertical">
                 {% for direttore in corso.delegati_attuali %}
                     {% card direttore extra_class='' mute_contact=True %}
-
                 {% empty %}
-                    <i class="fa fa-fw fa-warning"></i>
-                    Nessun direttore.
-
+                    <i class="fa fa-fw fa-warning"></i> Nessun direttore.
                 {% endfor %}
                 </div>
             </div>
-
         </div>
     </div>
 
     <div class="col-md-3">
         <div class="panel panel-info">
             <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-home"></i>
-                    Organizzatore
-                </h3>
+                <h3 class="panel-title"><i class="fa fa-fw fa-home"></i> Organizzatore</h3>
             </div>
-
             <div class="panel-body">
-                <strong>
-                    <a href="{{ corso.sede.url }}" target="_new">
-                        {{ corso.sede.nome }}
-                    </a>
-                </strong><br />
+                <strong><a href="{{ corso.sede.url }}" target="_new">{{ corso.sede.nome }}</a></strong><br />
                 {{ corso.sede.get_tipo_display }} &mdash;
                 {{ corso.sede.get_estensione_display }}
             </div>
-
         </div>
     </div>
 
     <div class="col-md-3">
         <div class="panel panel-info">
             <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-calendar"></i>
-                    Data di inizio
-                </h3>
+                <h3 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Data di inizio</h3>
             </div>
-
-            <div class="panel-body">
-                {{ corso.data_inizio }}
-            </div>
-
+            <div class="panel-body">{{ corso.data_inizio }}</div>
         </div>
     </div>
 
     <div class="col-md-3">
         <div class="panel panel-info">
             <div class="panel-heading">
-                <h3 class="panel-title">
-                    <i class="fa fa-fw fa-calendar"></i>
-                    Data di esame
-                </h3>
+                <h3 class="panel-title"><i class="fa fa-fw fa-calendar"></i> Data di esame</h3>
             </div>
-
-            <div class="panel-body">
-                {{ corso.data_esame }}
-            </div>
-
+            <div class="panel-body">{{ corso.data_esame }}</div>
         </div>
     </div>
-
 </div>
 
 <div class="row">
     <div class="col-md-6">
         <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
-        {{ corso.descrizione|safe }}
+        {{ corso.descrizione|default:"<p>Ancora non disponibili</p>"|safe }}
 
+        {% if puoi_partecipare == corso.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI or puo_modificare %}
+            <h3>Materiale didattico</h3>
+
+            {% if corso.get_course_links %}
+                <div style="margin:0 0 20px;">
+                    <strong>Link:</strong><br>
+                    {% for link in corso.get_course_links %}
+                        <a href="{{link.link}}" target="_blank">{{link.link}}</a><br>
+                    {% endfor %}
+                </div>
+            {%endif%}
+
+            {% if corso.get_course_files %}
+                <div style="margin:0 0 20px;">
+                    <strong>File:</strong><br>
+                    {% for file in corso.get_course_files %}
+                        <a href="{{ file.download_url }}" target="_blank">{{file.filename}}</a> <small>({{file.download_count}})</small><br>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+        {% endif %}
+
+        <p>
+            <strong>Regolamenti:</strong>
+            <ul>
+                <li><a href="https://datafiles.gaia.cri.it/media/filer_public/94/12/94127b9a-b049-45bc-ae82-b326707528bf/statuto_dell__associazione_della_croce_rossa_italiana_odv_versione_grafica.pdf" target="_blank">Lo Statuto</a></li>
+                <li><a href="https://datafiles.gaia.cri.it/media/filer_public/5b/4b/5b4ba0cb-239f-40e7-a414-a49023e5eb36/codice_etico_provvedimenti_disciplinari_e_collegi_disciplinari.pdf" target="_blank">Il Codice Etico</a></li>
+            </ul>
+        </p>
+
+        {% if corso.tipo == corso.CORSO_NUOVO and corso.get_extensions_titles %}
+            <p>
+                <strong>Titoli necessari:</strong>
+                <ul>
+                {% for e in corso.get_extensions_titles %}
+                    <li>{{ e.nome }}</li>
+                {% endfor %}
+                </ul>
+            </p>
+        {% endif %}
     </div>
 
     <div class="col-md-6">
         <h3>
             <i class="fa fa-fw fa-calendar"></i> Lezioni
-            <span class="text-muted">
-                {{ corso.lezioni.count }}
-            </span>
-
+            <span class="text-muted">{{ corso.lezioni.count }}</span>
         </h3>
-
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Data</th>
-                    <th>Argomento</th>
+                    <th>Data e Argomento, Docente</th>
                 </tr>
             </thead>
             <tbody>
+                {% if puo_modificare and corso.ha_lezioni_non_revisionate %}
+                    <p style="color:red; font-size:16px; text-align:center;">Controllare la compilazione delle lezione pre-caricate dalla scheda.</p>
+                {% endif %}
 
-                {% for lezione in corso.lezioni.all %}
+                {% for lezione in lezioni %}
                     <tr class="piu-piccolo">
                         <td>
-                            {{ lezione.inizio.date|naturalday:"DATE_FORMAT" }}<br />
-                            {{ lezione.inizio.time|date:"TIME_FORMAT" }}
-                            &mdash;{{ lezione.fine.time|date:"TIME_FORMAT" }}
-                        </td>
-                        <th>
-                            {{ lezione.nome }}
-                        </th>
-                    </tr>
+                            <strong style="display:block; margin:0 0 7px 0; font-size:14px;">
+                                {% if lezione.precaricata %}<i class="fa fa-fw fa-list"></i>{% endif %}
+                                {% if lezione.divisa %}<i class="fa fa-fw fa-columns"></i>{% endif %}
+                                {% if lezione.precaricata %}#{{ lezione.scheda_lezione_num }} - {% endif %} {{ lezione.nome }}
+                            </strong>
 
+                            <span {% if puo_modificare and lezione.non_revisionata %}class="scheda-lezione-non-revisionata"{% endif %}>
+                                {{ lezione.inizio.date|naturalday:"DATE_FORMAT" }}, {{ lezione.inizio.time|date:"TIME_FORMAT" }}
+                            </span>
+                            {% if lezione.fine %} &mdash; {{ lezione.fine.time|date:"TIME_FORMAT" }}{% endif %}
+                            {% if lezione.lezione_ore and not lezione.divisa %}(<strong>{% lezione_durata lezione %}</strong>){% endif %}
+                            {% if lezione.luogo %}<br>{{ lezione.luogo }}{% endif %}
+                            {% if lezione.docente %}<br>{{ lezione.docente.cognome }} {{ lezione.docente.nome }}{% endif %}
+                        </td>
+                    </tr>
                 {% empty %}
                     <tr class="alert alert-warning">
                     <td colspan="2">
@@ -244,16 +259,10 @@
                         Lezioni non ancora inserite.
                     </td>
                     </tr>
-
-
-
                 {% endfor %}
-
             </tbody>
         </table>
-
     </div>
-
 </div>
 
 <div class="row">
@@ -261,13 +270,9 @@
         <h3>
             <i class="fa fa-fw fa-comments-o"></i>
             Commenti
-            <span class="text-muted">
-                {{ corso.commenti.count }}
-            </span>
+            <span class="text-muted">{{ corso.commenti.count }}</span>
         </h3>
         {% commenti corso 10 %}
-
     </div>
 </div>
-
 {% endblock %}

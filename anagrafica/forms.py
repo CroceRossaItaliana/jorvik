@@ -3,27 +3,29 @@ import unicodecsv
 import stdnum
 from dateutil.parser import parse
 
-from django import forms
 from django.conf import settings
+from django import forms
+from django.forms import ModelForm, ChoiceField
 from django.contrib.admin.templatetags.admin_static import static
 from django.contrib.admin.widgets import AdminDateWidget
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet
-from django.forms import ModelForm, ChoiceField
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 
-from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega, \
-    Fototessera, Trasferimento, Riserva
-from anagrafica.validators import valida_almeno_14_anni, valida_data_nel_passato
-from autenticazione.models import Utenza
 from autocomplete_light import shortcuts as autocomplete_light
 
+from autenticazione.models import Utenza
 from base.forms import ModuloMotivoNegazione
 from curriculum.models import TitoloPersonale
 from sangue.models import Donatore, Donazione
-from anagrafica.permessi.applicazioni import PRESIDENTE, COMMISSARIO, CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE
+from formazione.models import Corso
+from .costanti import REGIONALE
+from .models import (Sede, Persona, Appartenenza, Documento, Estensione,
+    ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva)
+from .validators import valida_almeno_14_anni, valida_data_nel_passato
+from .permessi.applicazioni import (PRESIDENTE, COMMISSARIO,
+    CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE)
 
 
 class ModuloSpostaPersone(object):
@@ -318,9 +320,32 @@ class ModuloNuovaFototessera(ModelForm):
 
 
 class ModuloCreazioneDocumento(ModelForm):
+    expires = forms.DateField(required=False, label='Data di scadenza')
+
     class Meta:
         model = Documento
-        fields = ['tipo', 'file']
+        fields = ['tipo', 'file', 'expires']
+
+    def clean(self):
+        cd = self.cleaned_data
+        type = cd['tipo']
+
+        if type in [Documento.CARTA_IDENTITA, Documento.PATENTE_CIVILE]:
+            expires_error = None
+            expires = cd.get('expires')
+
+            if not expires:
+                expires_error = 'Indicare la data di scadenza del documento'
+            elif now().date() > expires:
+                expires_error = 'Non si può caricare documento scaduto.'
+
+            if expires_error:
+                raise ValidationError({'expires': ValidationError(expires_error)})
+
+        return cd
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class ModuloModificaPassword(PasswordChangeForm):
@@ -428,19 +453,43 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
         fields = ['persona',]
 
     def __init__(self, *args, **kwargs):
-        self.me = kwargs.pop('me')
+        # These attrs are passed in anagrafica.viste.strumenti_delegati
+        for attr in ['me', 'oggetto']:
+            if attr in kwargs:
+                setattr(self, attr, kwargs.pop(attr))
         super().__init__(*args, **kwargs)
 
-    def clean_persona(self):
-        me_sede = self.me.sede_riferimento()  # Authorized user's <Sede> (myself)
-        persona = self.cleaned_data['persona']  # Selected user whom to be given <Delega> in <Sede>
+    def _validate_delega_per_sede(self, sede, persona):
+        me = self.me
+        posso_dare_delega = (me.is_presidente or me.is_comissario) and \
+                            (me == sede.presidente()) or (me in sede.commissari()) and \
+                            sede.estensione == REGIONALE
 
-        # Queries for possible cases
-        persona_appartenenze = persona.appartenenze_attuali(
-            membro__in=Appartenenza.MEMBRO_DIRETTO)
-        persona_estesa = persona_appartenenze.filter(sede=me_sede).count()
-        persona_volontario = persona_appartenenze.filter(membro=Appartenenza.VOLONTARIO)
-        stesse_sedi = me_sede == persona.sede_riferimento()
+        if posso_dare_delega:
+            vo_in_sede = sede.ha_membro(persona, membro=Appartenenza.VOLONTARIO, figli=True)
+            di_in_sede = sede.ha_membro(persona, membro=Appartenenza.DIPENDENTE, figli=True)
+
+            if vo_in_sede or di_in_sede:
+                return persona
+            else:
+                raise forms.ValidationError("Questa persona non può essere nominata.")
+
+        # Per tutti gli altri casi
+        return self._validate_delega(persona)
+
+    def _validate_delega_per_corso(self, persona):
+        """
+        Validate only Volontario membership on url:
+        /formazione/corsi-base/<pk>/direttori/
+
+        Task: https://jira.gaia.cri.it/browse/JO-754
+        """
+        if not self.persona_volontario:
+            raise forms.ValidationError("Questa persona non è Volontario.")
+        return persona
+
+    def _validate_delega(self, persona):
+        me_sede = self.me.sede_riferimento()
 
         """
         Possible cases:
@@ -452,11 +501,11 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
         5) [OK] Persona come Volontario (VO), <me> è Presidente nella mia sede.
         """
         CASES = (
-            persona_estesa,
-            stesse_sedi,
-            stesse_sedi and persona_estesa,
-            any([a.appartiene_a(me_sede) for a in persona_appartenenze]),
-            any([a for a in persona_appartenenze if a.sede.presidente() == self.me])
+            self.persona_estesa,
+            self.stesse_sedi,
+            self.stesse_sedi and self.persona_estesa,
+            any([a.appartiene_a(me_sede) for a in self.persona_volontario]),
+            any([a for a in self.persona_volontario if a.sede.presidente() == self.me])
         )
 
         if not any(CASES):
@@ -464,8 +513,31 @@ class ModuloCreazioneDelega(autocomplete_light.ModelForm):
             raise forms.ValidationError(
                 "Il volontario non è appartenente alla tua sede."
             )
+
         # Some case returned True, so <me> can proceed with creating new delega.
         return persona
+
+    def clean_persona(self):
+        oggetto = self.oggetto  # <oggetto> arriva da anagrafica.viste.strumenti_delegati
+        me_sede = self.me.sede_riferimento()  # Authorized user's <Sede> (myself)
+        persona = self.cleaned_data['persona']  # Selected user whom to be given <Delega> in <Sede>
+
+        # Queries for possible cases
+        persona_appartenenze = persona.appartenenze_attuali(membro__in=Appartenenza.MEMBRO_ATTIVITA)
+        self.persona_estesa = persona_appartenenze.filter(sede=me_sede).count()
+        self.persona_volontario = persona_appartenenze.filter(membro=Appartenenza.VOLONTARIO)
+        self.stesse_sedi = me_sede == persona.sede_riferimento()
+
+        if type(oggetto) is Sede:
+            return self._validate_delega_per_sede(oggetto, persona)
+
+        # Logica di validazione per modulo formazione
+        if type(oggetto) is Corso:
+            if oggetto.tipo == Corso.CORSO_NUOVO:
+                return self._validate_delega_per_corso(persona)
+
+        # Per tutti gli altri moduli che usano questa form
+        return self._validate_delega(persona)
     
     def clean_inizio(self):
         """ Impedisce inizio passato """

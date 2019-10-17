@@ -1,29 +1,20 @@
-<style>.grassetto{font-weight:bold;}</style>
-
 {% block top %}<body style="font-family: 'Verdana', 'Tahoma'; color: #333;">{% endblock %}
 {% block top_extra %} {% endblock %}
 {% block header %} {% endblock %}
-{% block corpo %}<p>&nbsp;</p>{% endblock %}
-
-<hr/>
+{% block corpo %}<p>&nbsp;</p>{% endblock %}<hr/>
 
 {% block corpo_allegati %}
-
     {% if allegati %}
         <h4>Allegati ({{ allegati|length }})</h4>
         <ul>
             {% for allegato in allegati %}
                 <li>
-                    <strong>{{ allegato.nome }}</strong> (<a href="{{ allegato.download_url }}" target="_new" download>Scarica</a>) <br />
-                    Peso {{ allegato.file.size|filesizeformat }}, scadenza {{ allegato.scadenza }}
+                    <strong>{{ allegato.filename }}</strong> (<a href="{{ allegato.download_url }}" target="_new" download>Scarica</a>)
+                    <br>Peso {{ allegato.file.size|filesizeformat }} {% if allegato.scadenza %}, scadenza{{ allegato.scadenza }}{% endif %}
                 </li>
             {% endfor %}
-        </ul>
-        <hr />
-
-    {% else %}
+        </ul> <hr />
     {% endif %}
-
 {% endblock %}
 
 {% block footer %}
@@ -37,6 +28,8 @@
         Croce Rossa Italiana. <strong>Un'Italia che aiuta.</strong>
     </p>
 {% endblock %}
+
+    <style>.grassetto{font-weight:bold;}</style>
 
 {% block bottom_extra %} {% endblock %}
 {% block bottom %}</body>{% endblock %}

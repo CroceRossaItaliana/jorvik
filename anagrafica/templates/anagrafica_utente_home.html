@@ -5,17 +5,10 @@
 {% load utils %}
 
 {% block app_contenuto %}
-
     {% if me.aspirante %}
         <div class="alert alert-success">
-            <h4>
-                <i class="fa fa-fw fa-info-circle"></i>
-                Vuoi trovare Corsi Base vicino a te?
-            </h4>
-            <p>
-                Clicca su "Aspirante" in alto a questa pagina per vedere i Corsi Base
-                e le Sedi CRI nelle tue vicinanze.
-            </p>
+            <h4><i class="fa fa-fw fa-info-circle"></i> Vuoi trovare Corsi Base vicino a te?</h4>
+            <p>Clicca su "Aspirante" in alto a questa pagina per vedere i Corsi Base e le Sedi CRI nelle tue vicinanze.</p>
         </div>
     {% endif %}
 
@@ -78,6 +71,30 @@
                 <a target="_blank" href="https://cri.it" class="alert-link">CRI.IT</a>
             </div>
         </div>
+
+        <div class="col col-md-4">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
+                <span class="glyphicon glyphicon-folder-open" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://gaia.cri.it/documenti/90/" class="alert-link">Toolkit Inclusione Lavorativa</a>
+            </div>
+        </div>
+
+        <div class="col col-md-4">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
+                <span class="fa fa-newspaper-o" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://gaia.cri.it/documenti/91/" class="alert-link">Edicola digitale</a>
+            </div>
+        </div>
+
+        {% if me.dipendente %}
+            <div class="col col-md-4">
+                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                    <span class="glyphicon glyphicon-globe" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                    <a target="_blank" href="https://criwiki.cri.it:8443/display/DA/Mission+Report" class="alert-link">Mission Report</a>
+                </div>
+            </div>
+        {% endif %}
+
     </div>
     <!--<div
             id="benvenuto"
@@ -102,29 +119,22 @@
 
     {% if me.trasferimento and not me.trasferimento.con_scadenza %}
         <div class="alert alert-warning">
-            <h4>
-                <i class="fa fa-fw fa-warning"></i>
-                Hai attualmente un trasferimento in attesa di approvazione
-            </h4>
+            <h4><i class="fa fa-fw fa-warning"></i> Hai attualmente un trasferimento in attesa di approvazione</h4>
             <p>
                 Per ragioni tecniche -risolte a partire dal {{ SETTINGS.DATA_AVVIO_TRASFERIMENTI_AUTO|date:"SHORT_DATE_FORMAT" }}- non è stato possibile approvare in automatico il trasferimento.<br>
                 Vai alla <a href="/utente/trasferimenti/">sezione Trasferimenti</a> per maggiori informazioni.
             </p>
         </div>
-
     {% endif %}
 
     {% if me.nuovo_presidente %}
-        <div class="alert alert-success">
+        <div class="alert" style="border: 1px solid #f1f1f1;">
             <p class="grassetto">
                 <i class="fa fa-fw fa-smile-o"></i>
                 Ciao neo {{ me | select_presidente_commissario_da_persona }}!
-                <a href="/presidente/">
-                    Hai gi&agrave; completato la check-list per il tuo Comitato?
-                </a>
+                <a href="/presidente/">Hai gi&agrave; completato la check-list per il tuo Comitato?</a>
             </p>
         </div>
-
     {% endif %}
 
     {% if not me.numeri_telefono.exists and False %}

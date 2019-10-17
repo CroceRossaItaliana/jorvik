@@ -1,0 +1,10 @@
+{% extends 'formazione_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load utils %}
+
+{% block pagina_titolo %}{{ elenco_nome }}{% endblock %}
+
+{% block app_contenuto %}
+    {% include "formazione_albo_inc_elenco_sede.html" %}
+{% endblock %}

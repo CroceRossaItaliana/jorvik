@@ -963,20 +963,23 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
             if 'os_annual_period' in result['data']:
                 init_modulo['annualPeriod'] = result['data']['os_annual_period']
             if 'os_annual_period_from' in result['data']:
-                init_modulo['annualPeriodFrom'] = datetime.strptime(
-                    result['data']['os_annual_period_from'], '%Y-%m-%d'
-                )
-            if 'os_annual_period_to' in result['data']:#
-                init_modulo['annualPeriodTo'] = datetime.strptime(
-                    result['data']['os_annual_period_to'], '%Y-%m-%d'
-                )
+                if result['data']['os_annual_period_from']:
+                    init_modulo['annualPeriodFrom'] = datetime.strptime(
+                        result['data']['os_annual_period_from'], '%Y-%m-%d'
+                    )
+            if 'os_annual_period_to' in result['data']:
+                if result['data']['os_annual_period_to']:
+                    init_modulo['annualPeriodTo'] = datetime.strptime(
+                        result['data']['os_annual_period_to'], '%Y-%m-%d'
+                    )
             if 'variable_day' in result['data']:
                 if result['data']['variable_day']:
                     init_modulo['variableDay'] = result['data']['variable_day']['value']
             if 'os_due_date' in result['data']:
-                init_modulo['dueDate'] = datetime.strptime(
-                    result['data']['os_due_date'], '%Y-%m-%d'
-                )
+                if result['data']['os_due_date']:
+                    init_modulo['dueDate'] = datetime.strptime(
+                        result['data']['os_due_date'], '%Y-%m-%d'
+                    )
             if 'os_dayhour_type' in result['data']:
                 if result['data']['os_dayhour_type']:
                     init_turni['dayHourType'] = result['data']['os_dayhour_type']['value']
@@ -1031,11 +1034,34 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def servizio_scheda_informazioni_modifica_presentazione(request, me, pk=None):
     from attivita.forms import ModuloServiziPrestazioni
+    from attivita.cri_persone import update_service
     modulo = ModuloServiziPrestazioni(request.POST or None)
+    modulo.fields['provisioning'].choices = ModuloServiziPrestazioni.popola_previsioning()
     result = getServizio(pk)
     init = {}
+
+    if 'result' in result:
+        if result['result']['code'] == 200:
+            if result['data']['provisioning']:
+                init['provisioning'] = result['data']['provisioning'].split(',')
+            modulo = ModuloServiziPrestazioni(request.POST or None, initial=init)
+        else: # Errore
+            modulo = ModuloServiziPrestazioni(request.POST or None)
+    else:
+        modulo = ModuloServiziPrestazioni(request.POST or None)
+
+    modulo.fields['provisioning'].choices = ModuloServiziPrestazioni.popola_previsioning()
+
     contesto = {'key': pk}
     contesto.update({'modulo': modulo})
+    data = {}
+    if modulo.is_valid():
+        previsioning = ""
+        for prev in modulo.cleaned_data['provisioning']:
+            previsioning += "{},".format(prev)
+        data['provisioning'] = [previsioning[:-1] if previsioning else ""]
+
+        update_service(pk, **data)
 
     return 'servizio_scheda_infomazioni_modifica_presentazioni.html', contesto
 
@@ -1046,6 +1072,17 @@ def servizio_scheda_informazioni_modifica_contatti(request, me, pk=None):
     modulo = ModuloServiziContatti(request.POST or None)
     result = getServizio(pk)
     init = {}
+
+    if 'result' in result:
+        if result['result']['code'] == 200:
+            modulo = ModuloServiziContatti(request.POST or None)
+        else: # Errore
+            modulo = ModuloServiziContatti(request.POST or None)
+    else:
+        modulo = ModuloServiziContatti(request.POST or None)
+
+
+
     contesto = {'key': pk}
     contesto.update({'modulo': modulo})
 

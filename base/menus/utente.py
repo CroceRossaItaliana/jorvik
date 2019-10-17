@@ -1,3 +1,6 @@
+from django.core.urlresolvers import reverse
+
+
 class MenuUtente:
     def __init__(self, me):
         self.me = me
@@ -18,10 +21,16 @@ class MenuUtente:
 
     def menu_volontario(self):
         return ("Volontario", (
-            ("Estensione", "fa-random", "/utente/estensione/"),
-            ("Trasferimento", "fa-arrow-right", "/utente/trasferimento/"),
-            ("Riserva", "fa-pause", "/utente/riserva/"),
+            ("Estensione", "fa-random", reverse('utente:estensione')),
+            ("Trasferimento", "fa-arrow-right", reverse('utente:trasferimento')),
+            ("Riserva", "fa-pause", reverse('utente:riserva')),
         ))
+
+    def menu_formazione(self):
+        from formazione.menus import formazione_menu
+        menu = list(formazione_menu('formazione')[0])
+        menu[0] = 'Formazione'
+        return menu
 
     def menu_persona(self):
         me = self.me
@@ -65,16 +74,19 @@ class MenuUtente:
             for link in Menu.objects.filter(is_active=True).order_by('order')))
 
     def get_menu(self):
-        from .utente_monitoraggio import menu_monitoraggio
+        # from .utente_monitoraggio import menu_monitoraggio
         from .utente_rubrica import menu_rubrica_base
+
+        me = self.me
 
         return ((
             self.menu_persona(),
-            self.menu_volontario() if self.is_volontario else None,
-            menu_rubrica_base(self.me),
+            self.menu_volontario() if me.volontario else None,
+            self.menu_formazione() if me.volontario or me.dipendente else None,
+            menu_rubrica_base(me),
             self.menu_curriculum(),
             self.menu_donatore() if self.is_volontario else None,
             self.menu_sicurezza(),
             self.menu_links(),
-            # menu_monitoraggio(self.me),
+            # menu_monitoraggio(me),
         ))

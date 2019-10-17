@@ -1,77 +1,43 @@
-# coding=utf-8
-
-"""
-Questo modulo definisce i modelli del modulo anagrafico di Gaia.
-
-- Persona
-- Telefono
-- Documento
-- Utente
-- Appartenenza
-- Comitato
-- Delega
-"""
 from datetime import date, timedelta, datetime
 
-import stdnum
-from django.conf import settings
-from django.db.transaction import atomic
-from django.utils import timezone
-
 import codicefiscale
+import phonenumbers
 import mptt
-from django.contrib.auth.models import PermissionsMixin
+from mptt.querysets import TreeQuerySet
+from autoslug import AutoSlugField
+
+from django.apps import apps
+from django.core.urlresolvers import reverse
+from django.db import models
+from django.db.models import Q, QuerySet, Avg
+from django.db.transaction import atomic
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
-from django.db import models
-from django.db.models import Q, QuerySet, Avg
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django_countries.fields import CountryField
-import phonenumbers
-from mptt.querysets import TreeQuerySet
 
-from anagrafica.costanti import ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE
-
-from anagrafica.permessi.applicazioni import PRESIDENTE, PERMESSI_NOMI, PERMESSI_NOMI_DICT, UFFICIO_SOCI_UNITA, \
-    DELEGHE_RUBRICA, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_4, \
-    RESPONSABILE_FORMAZIONE, DELEGATO_OBIETTIVO_6, DELEGATO_OBIETTIVO_5, RESPONSABILE_AUTOPARCO, DELEGATO_CO, \
-    DIRETTORE_CORSO, RESPONSABILE_AREA, REFERENTE, OBIETTIVI, COMMISSARIO, CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PERMESSI_NOMI_DICT
-from anagrafica.permessi.costanti import GESTIONE_ATTIVITA, PERMESSI_OGGETTI_DICT, GESTIONE_SOCI, GESTIONE_CORSI_SEDE, GESTIONE_CORSO, \
-    GESTIONE_SEDE, GESTIONE_AUTOPARCHI_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE
-from anagrafica.permessi.delega import delega_permessi, delega_incarichi
-from anagrafica.permessi.incarichi import INCARICO_GESTIONE_APPARTENENZE, INCARICO_GESTIONE_TRASFERIMENTI, \
-    INCARICO_GESTIONE_ESTENSIONI, INCARICO_GESTIONE_RISERVE, INCARICO_ASPIRANTE
-from anagrafica.permessi.persona import persona_ha_permesso, persona_oggetti_permesso, persona_permessi, \
-    persona_permessi_almeno, persona_ha_permessi
-from anagrafica.validators import valida_codice_fiscale, ottieni_genere_da_codice_fiscale, \
-    crea_validatore_dimensione_file, valida_dimensione_file_8mb, valida_dimensione_file_5mb, valida_almeno_14_anni, \
-    valida_partita_iva, valida_iban, valida_email_personale
+from .costanti import (ESTENSIONE, TERRITORIALE, LOCALE, PROVINCIALE, REGIONALE, NAZIONALE)
+from .validators import (valida_codice_fiscale, ottieni_genere_da_codice_fiscale,
+    valida_dimensione_file_8mb, valida_partita_iva, valida_dimensione_file_5mb,
+    valida_iban, valida_email_personale) # valida_almeno_14_anni, crea_validatore_dimensione_file)
+from .permessi.shortcuts import *
+from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL
 from attivita.models import Turno, Partecipazione
 from base.files import PDF, Excel, FoglioExcel
-from base.geo import ConGeolocalizzazioneRaggio, ConGeolocalizzazione
-from base.models import ModelloSemplice, ModelloAlbero, ConAutorizzazioni, ConAllegati, \
-    Autorizzazione, ConVecchioID
+from base.geo import ConGeolocalizzazione
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
-from base.tratti import ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF
-from base.utils import is_list, sede_slugify, UpperCaseCharField, TitleCharField, poco_fa, mezzanotte_24_ieri, \
-    mezzanotte_00, mezzanotte_24, concept
-from autoslug import AutoSlugField
-
+from base.models import (ModelloSemplice, ModelloAlbero, ConAutorizzazioni,
+    ConAllegati, Autorizzazione, ConVecchioID)
+from base.tratti import (ConMarcaTemporale, ConStorico, ConProtocollo, ConDelegati, ConPDF)
+from base.utils import (is_list, sede_slugify, UpperCaseCharField, concept, oggi,
+    TitleCharField, poco_fa, mezzanotte_24_ieri, mezzanotte_00, mezzanotte_24)
 from curriculum.models import Titolo, TitoloPersonale
 from posta.models import Messaggio
-from django.apps import apps
-
-from base.notifiche import NOTIFICA_INVIA, NOTIFICA_NON_INVIARE
 
 
 class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
-    """
-    Rappresenta un record anagrafico in Gaia.
-    """
-
     # Genere
     MASCHIO = 'M'
     FEMMINA = 'F'
@@ -197,7 +163,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return normalizza_nome(self.cognome + " " + self.nome)
 
-
     # Q: Qual e' l'email di questa persona?
     # A: Una persona puo' avere da zero a due indirizzi email.
     #    - Persona.email_contatto e' quella scelta dalla persona per il contatto.
@@ -259,28 +224,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def ultimo_tesserino(self):
         return self.tesserini.all().order_by("creazione").last()
 
-    def __str__(self):
-        return self.nome_completo
-
-    class Meta:
-        verbose_name_plural = "Persone"
-        app_label = 'anagrafica'
-        index_together = [
-            ['nome', 'cognome'],
-            ['nome', 'cognome', 'codice_fiscale'],
-            ['id', 'nome', 'cognome', 'codice_fiscale'],
-        ]
-        permissions = (
-            ('view_persona', "Can view persona"),
-            ('transfer_persona', "Can transfer persona"),
-        )
-
     # Q: Qual e' il numero di telefono di questa persona?
     # A: Una persona puo' avere da zero ad illimitati numeri di telefono.
     #    - Persona.numeri_telefono ottiene l'elenco di oggetti Telefono.
     #    - Per avere un elenco di numeri di telefono formattati, usare ad esempio
     #       numeri = [str(x) for x in Persona.numeri_telefono]
     #    - Usare Persona.aggiungi_numero_telefono per aggiungere un numero di telefono.
+
     def numeri_pubblici(self):
         numeri_servizio = self.numeri_telefono.filter(servizio=True)
         if numeri_servizio.exists():
@@ -404,15 +354,19 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.membro_di(self, sede, includi_figli=True, **kwargs)
 
     def sedi_attuali(self, **kwargs):
-        """
-        Ottiene queryset di Sede di cui fa parte
-        """
+        """ Ottiene queryset di Sede di cui fa parte. """
         return Sede.objects.filter(pk__in=[x.sede.pk for x in self.appartenenze_attuali(**kwargs)])
 
+    @property
+    def sedi_appartenenze_corsi(self):
+        return self.sedi_attuali(membro__in=[Appartenenza.VOLONTARIO,
+                                             Appartenenza.ESTESO,
+                                             Appartenenza.ORDINARIO,
+                                             Appartenenza.SOSTENITORE,
+                                             Appartenenza.DIPENDENTE,])
+
     def titoli_personali_confermati(self):
-        """
-        Ottiene queryset per TitoloPersonale con conferma approvata.
-        """
+        """ Ottiene queryset per TitoloPersonale con conferma approvata. """
         return self.titoli_personali.filter(confermata=True).select_related('titolo')
 
     def titoli_confermati(self):
@@ -494,9 +448,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def volontario(self, **kwargs):
-        """
-        Controlla se membro volontario
-        """
+        """ Controlla se membro volontario """
         return self.membro(Appartenenza.VOLONTARIO, **kwargs)
 
     @property
@@ -543,6 +495,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def applicazioni_disponibili(self):
+        from formazione.models import CorsoBase
+
         # Personalizzare il menu "Utente" secondo il suo ruolo
         utente_url, utente_label, utente_count = ('/utente/', 'Volontario', None)
 
@@ -553,7 +507,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             if self.dipendente:
                 utente_label = 'Utente'
             else:
-                utente_url, utente_label, utente_count = ('/aspirante/', 'Aspirante', self.aspirante.corsi().count())
+                num_corsi_base = self.aspirante.corsi().exclude(tipo=CorsoBase.CORSO_NUOVO).count()
+                utente_url, utente_label, utente_count = ('/aspirante/', 'Aspirante', num_corsi_base)
 
         all_menus = [
             [(utente_url, utente_label, 'fa-user', utente_count), True],
@@ -717,6 +672,40 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         from formazione.models import PartecipazioneCorsoBase, CorsoBase
         return PartecipazioneCorsoBase.con_esito_ok().filter(persona=self, corso__stato=CorsoBase.ATTIVO).first()
 
+    def richieste_di_partecipazione(self, corso_stato=None):
+        """ Restituisce richieste di partecipazione ai corsi confermate e in attesa """
+
+        from formazione.models import PartecipazioneCorsoBase, CorsoBase
+
+        if corso_stato is None:
+            corso_stato = [CorsoBase.ATTIVO,]
+
+        confirmed = PartecipazioneCorsoBase.con_esito_ok()
+        pending = PartecipazioneCorsoBase.con_esito_pending()
+        requests_to_courses = confirmed | pending
+
+        return requests_to_courses.filter(persona=self, corso__stato__in=corso_stato)
+
+    @property
+    def corsi(self):
+        from formazione.models import CorsoBase
+
+        richieste_di_partecipazione = self.richieste_di_partecipazione().values_list('corso_id', flat=True)
+        corsi_in_attesa_o_confermati = CorsoBase.objects.filter(id__in=richieste_di_partecipazione)
+        return corsi_in_attesa_o_confermati | self.corsi_frequentati
+
+    @property
+    def corsi_frequentati(self):
+        from formazione.models import PartecipazioneCorsoBase, CorsoBase
+
+        confirmed = PartecipazioneCorsoBase.con_esito_ok().filter(persona=self,
+                                                                  corso__stato=CorsoBase.TERMINATO)
+        if not confirmed:
+            return CorsoBase.objects.none()
+
+        corsi = CorsoBase.objects.filter(pk__in=[i.corso.pk for i in confirmed])
+        return corsi.order_by('-data_esame')
+
     @property
     def volontario_da_meno_di_un_anno(self):
         """
@@ -727,9 +716,17 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             r = self.appartenenze_attuali().filter(membro=Appartenenza.VOLONTARIO, inizio__gte=inizio_anno)
             return r.exists()
 
+    def personal_identity_documents(self):
+        """
+        Restituisce un queryset di documenti che valgono come documenti d'identitè della persona.
+        """
+        return self.documenti.filter(tipo__in=[Documento.CARTA_IDENTITA,
+                                               Documento.PATENTE_CIVILE,
+                                               Documento.PASSAPORTO,])
+
     @property
     def url(self):
-        return "/profilo/%d/" % (self.pk,)
+        return reverse('profilo:main', args=[self.pk])
 
     @property
     def url_profilo_anagrafica(self):
@@ -781,7 +778,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     @property
     def link(self):
-        return "<a href='" + str(self.url) + "'>" + str(self.nome_completo) + "</a>"
+        return '<a href="%s">%s</a>' % (self.url, self.nome_completo)
 
     def calendario_turni(self, inizio, fine):
         """
@@ -814,23 +811,20 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                 INCARICO_ASPIRANTE in dict(self.incarichi()))
 
     def incarichi(self):
-
         if hasattr(self, 'aspirante'):
             incarichi_persona = {INCARICO_ASPIRANTE: [(self.__class__.objects.filter(pk=self.pk),
                                                        self.creazione)]}
-
         else:
             incarichi_persona = {}
 
         for delega in self.deleghe_attuali():
-            incarichi_delega = delega.espandi_incarichi()
+            for incarico in delega.espandi_incarichi():
+                nome_del_incarico, oggetto_del_incarico = incarico
 
-            for incarico in incarichi_delega:
-                if not incarico[0] in incarichi_persona:
-                    incarichi_persona.update({incarico[0]: [(incarico[1], delega.inizio)]})
-
+                if not nome_del_incarico in incarichi_persona:
+                    incarichi_persona.update({nome_del_incarico: [(oggetto_del_incarico, delega.inizio)]})
                 else:
-                    incarichi_persona[incarico[0]].append((incarico[1], delega.inizio))
+                    incarichi_persona[nome_del_incarico].append((oggetto_del_incarico, delega.inizio))
 
         return incarichi_persona.items()
 
@@ -842,38 +836,34 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         a = Autorizzazione.objects.none()
         for incarico in self.incarichi():
             for potere in incarico[1]:
+                oggetto_del_incarico, delega_data_inizio = potere
 
-                if isinstance(potere[0], QuerySet):
-                    q_id = Q(destinatario_oggetto_id__in=potere[0].values_list('id', flat=True),
-                             destinatario_oggetto_tipo=ContentType.objects.get_for_model(potere[0].model))
+                if not oggetto_del_incarico:
+                    continue  # Salta potere senza oggetto
 
+                if isinstance(oggetto_del_incarico, QuerySet):
+                    q_kwargs = {
+                        "destinatario_oggetto_id__in": oggetto_del_incarico.values_list('id', flat=True),
+                        "destinatario_oggetto_tipo": ContentType.objects.get_for_model(oggetto_del_incarico.model)}
                 else:  # Se modello instanziato
-                    q_id = Q(destinatario_oggetto_id=potere[0].pk,
-                             destinatario_oggetto_tipo=ContentType.objects.get_for_model(potere[0]))
+                    q_kwargs = {
+                        "destinatario_oggetto_id": oggetto_del_incarico.pk,
+                        "destinatario_oggetto_tipo": ContentType.objects.get_for_model(oggetto_del_incarico)}
 
                 a |= Autorizzazione.objects.filter(
-                    q_id,
-                    destinatario_ruolo=incarico[0], creazione__gte=potere[1],
-                )
+                    Q(**q_kwargs),
+                    destinatario_ruolo=incarico[0],
+                    creazione__gte=delega_data_inizio)
 
-        a = a.distinct('progressivo', 'oggetto_tipo_id', 'oggetto_id',)
-        return Autorizzazione.objects.filter(
-            pk__in=a.values_list('id', flat=True)
-        )
-
-    def _autorizzazioni_in_attesa(self):
-        """
-        Ritorna tutte le autorizzazioni firmabili da qesto utente e in attesa di firma.
-        :return: QuerySet<Autorizzazione>
-        """
-        return self.autorizzazioni().filter(necessaria=True)
+        a = a.distinct('progressivo', 'oggetto_tipo_id', 'oggetto_id')
+        return Autorizzazione.objects.filter(pk__in=a.values_list('id', flat=True))
 
     def autorizzazioni_in_attesa(self):
         """
         Ritorna tutte le autorizzazioni firmabili da qesto utente e in attesa di firma.
         :return: QuerySet<Autorizzazione>
         """
-        return self._autorizzazioni_in_attesa().order_by('creazione')
+        return self.autorizzazioni().filter(necessaria=True).order_by('creazione')
 
     @cached_property
     def trasferimenti_in_attesa(self):
@@ -1060,13 +1050,11 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     def sede_riferimento(self, membro=None, **kwargs):
         membro = membro or Appartenenza.MEMBRO_DIRETTO
-        return self.sedi_attuali(membro__in=membro, **kwargs).\
-            order_by('-appartenenze__inizio').first()
+        return self.sedi_attuali(membro__in=membro, **kwargs).order_by('-appartenenze__inizio').first()
 
     def sedi_riferimento(self, membro=None, **kwargs):
         membro = membro or Appartenenza.MEMBRO_DIRETTO
-        return self.sedi_attuali(membro__in=membro, **kwargs). \
-            order_by('-appartenenze__inizio')
+        return self.sedi_attuali(membro__in=membro, **kwargs).order_by('-appartenenze__inizio')
 
     def comitati_riferimento(self, **kwargs):
         sedi = self.sede_riferimento(**kwargs)
@@ -1215,6 +1203,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=COMMISSARIO).exists()
 
     @property
+    def is_direttore(self):
+        return self.deleghe_attuali(tipo=DIRETTORE_CORSO).exists()
+
+    @property
     def nuovo_presidente(self):
         """
         Ritorna True se la persona e' un nuovo presidente/commissario (meno di un mese)
@@ -1288,6 +1280,42 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
                         attivi.append({'sedi_sottostanti': True, 'sede': sede.genitore})
         return attivi
 
+    @classmethod
+    @concept
+    def to_contact_for_courses(cls, corso, membro='VO', *args, **kwargs):
+        from formazione.models import PartecipazioneCorsoBase
+
+        if membro in [Appartenenza.VOLONTARIO, Appartenenza.DIPENDENTE,]:
+            to_exclude = cls.objects.filter(
+                PartecipazioneCorsoBase.con_esito(
+                    PartecipazioneCorsoBase.ESITO_OK,
+                    corso__tipo__isnull=False,
+                    corso=corso
+                ).via("partecipazioni_corsi")
+            )
+
+            without_to_exclude = ~Q(id__in=to_exclude.values_list('id', flat=True))
+            return Q(without_to_exclude, *args, **kwargs)
+
+        elif membro == Appartenenza.ESTESO:
+            # TODO: place for another Appartenenza membro
+            pass
+        else:
+            # TODO: what to return otherwise?
+            pass
+
+    def has_required_titles_for_course(self, course):
+        volunteer_titles = self.titoli_personali_confermati().filter(
+            titolo__tipo=Titolo.TITOLO_CRI).values_list('titolo', flat=True)
+
+        corso_titles = course.get_extensions_titles().values_list('id',flat=True)
+        intersection = set(volunteer_titles) & set(corso_titles)
+
+        return len(intersection) == len(corso_titles)
+
+    def __str__(self):
+        return self.nome_completo
+
     def save(self, *args, **kwargs):
         self.nome = normalizza_nome(self.nome)
         self.cognome = normalizza_nome(self.cognome)
@@ -1297,6 +1325,19 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
             self.genere = self.genere_codice_fiscale
             
         super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name_plural = "Persone"
+        app_label = 'anagrafica'
+        index_together = [
+            ['nome', 'cognome'],
+            ['nome', 'cognome', 'codice_fiscale'],
+            ['id', 'nome', 'cognome', 'codice_fiscale'],
+        ]
+        permissions = (
+            ('view_persona', "Can view persona"),
+            ('transfer_persona', "Can transfer persona"),
+        )
 
 
 class Telefono(ConMarcaTemporale, ModelloSemplice):
@@ -1357,18 +1398,18 @@ class Telefono(ConMarcaTemporale, ModelloSemplice):
 
 
 class Documento(ModelloSemplice, ConMarcaTemporale):
-    """
-    Rappresenta un documento caricato da un utente.
-    """
+    """ Rappresenta un documento caricato da un utente. """
 
     # Tipologie di documento caricabili
     CARTA_IDENTITA = 'I'
+    PASSAPORTO = 'B'
     PATENTE_CIVILE = 'P'
     PATENTE_CRI = 'S'
     CODICE_FISCALE = 'C'
     ALTRO = 'A'
     TIPO = (
-        (CARTA_IDENTITA, 'Carta d\'identità'),
+        (CARTA_IDENTITA, "Carta d'identità"),
+        (PASSAPORTO, "Passaporto"),
         (PATENTE_CIVILE, 'Patente Civile'),
         (PATENTE_CRI, 'Patente CRI'),
         (CODICE_FISCALE, 'Codice Fiscale'),
@@ -1379,6 +1420,25 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
     persona = models.ForeignKey(Persona, related_name="documenti", db_index=True, on_delete=models.CASCADE)
     file = models.FileField("File", upload_to=GeneratoreNomeFile('documenti/'),
                             validators=[valida_dimensione_file_8mb])
+    expires = models.DateField(null=True)
+
+    @property
+    def is_requested_for_course(self):
+        """ Restituisce True se il proprietario del documento ha richieste di
+        partecipazione ai corsi confermate o in attesa. """
+        if self.tipo in [self.CARTA_IDENTITA, self.PATENTE_CIVILE]:
+            if self.persona.richieste_di_partecipazione().count():
+                return True
+        return False
+
+    @property
+    def can_be_deleted(self):
+        if self.is_requested_for_course:
+            return False
+        return True
+
+    def __str__(self):
+        return str(self.file)
 
     class Meta:
         verbose_name_plural = "Documenti"
@@ -1389,9 +1449,7 @@ class Documento(ModelloSemplice, ConMarcaTemporale):
 
 
 class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzazioni):
-    """
-    Rappresenta un'appartenenza di una Persona ad un Sede.
-    """
+    """ Rappresenta un'appartenenza di una Persona ad un Sede. """
 
     class Meta:
         verbose_name_plural = "Appartenenze"
@@ -1450,6 +1508,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     # Membri sotto il diretto controllo di una altra Sede
     MEMBRO_ESTESO = (ESTESO,)
 
+    # Utilizzati in Corso Nuovo (formazione)
+    MEMBRO_CORSO = (VOLONTARIO, ESTESO, DIPENDENTE, INFERMIERA, MILITARE)
+
     MEMBRO = (
         (VOLONTARIO, 'Volontario'),
         (ESTESO, 'Volontario in Estensione'),
@@ -1460,6 +1521,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         #(MILITARE, 'Membro Militare'),
         #(DONATORE, 'Donatore Finanziario'),
     )
+
+    MENBRO_DICT = dict(MEMBRO)
+
     PRECEDENZE_MODIFICABILI = (ESTESO,)
     NON_MODIFICABILE = (ESTESO,)
     membro = models.CharField("Tipo membro", max_length=2, choices=MEMBRO, default=VOLONTARIO, db_index=True)
@@ -1645,27 +1709,6 @@ class SedeQuerySet(TreeQuerySet):
 
 
 class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID, ConDelegati):
-
-    class Meta:
-        verbose_name = "Sede CRI"
-        verbose_name_plural = "Sedi CRI"
-        app_label = 'anagrafica'
-        index_together = [
-            ['estensione', 'tipo'],
-            ['genitore', 'estensione'],
-            ['attiva', 'estensione'],
-            ['attiva', 'tipo'],
-            ['lft', 'rght'],
-            ['lft', 'rght', 'attiva'],
-            ['lft', 'rght', 'attiva', 'estensione'],
-            ['lft', 'rght', 'tree_id'],
-        ]
-        permissions = (
-            ("view_sede", "Can view Sede CRI"),
-        )
-
-    # Nome gia' presente in Modello Albero
-
     # Tipologia della sede
     COMITATO = 'C'
     MILITARE = 'M'
@@ -1699,18 +1742,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     attiva = models.BooleanField("Attiva", default=True, db_index=True)
     __attiva_default = None
-
-    def __init__(self, *args, **kwargs):
-        super(Sede, self).__init__(*args, **kwargs)
-        # Questo attributo a runtime ci serve per verificare durante il save se il flag "attiva" è stato modficato
-        self.__attiva_default = self.attiva
-
-    def save(self, *args, **kwargs):
-        super(Sede, self).save(*args, **kwargs)
-        if self.__attiva_default is not None and not self.attiva and self.__attiva_default != self.attiva:
-            for sottosede in self.ottieni_figli(solo_attivi=False):
-                sottosede.attiva = False
-                sottosede.save()
 
     def sorgente_slug(self):
         if self.estensione == PROVINCIALE:
@@ -1845,29 +1876,22 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                 .distinct('nome', 'cognome', 'codice_fiscale')
 
     def appartenenze_persona(self, persona, membro=None, figli=False, **kwargs):
-        """
-        Ottiene le appartenenze attuali di una data persona, o None se la persona non appartiene al sede.
-        """
-        self.appartenenze_attuali(membro=membro, figli=figli, persona=persona, **kwargs)
+        """ Ottiene le appartenenze attuali di una data persona,
+        o None se la persona non appartiene al sede """
+        return self.appartenenze_attuali(membro=membro, figli=figli, persona=persona, **kwargs)
 
     def ha_membro(self, persona, membro=None, figli=False, **kwargs):
-        """
-        Controlla se una persona e' membro del sede o meno.
-        """
+        """ Controlla se una persona è membro del sede o meno. """
         return self.appartenenze_persona(persona, membro=membro, figli=figli, **kwargs).exists()
-
-    def __str__(self):
-        if self.estensione == TERRITORIALE and self.genitore is not None:
-            return "%s: %s" % (self.genitore.nome, self.nome,)
-
-        else:
-            return "%s" % (self.nome,)
 
     def presidente(self):
         delega_presidenziale = self.comitato.delegati_attuali(tipo=PRESIDENTE, solo_deleghe_attive=True).first()
         if not delega_presidenziale:
             delega_presidenziale = self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True).first()
         return delega_presidenziale
+
+    def commissari(self):
+        return self.comitato.delegati_attuali(tipo=COMMISSARIO, solo_deleghe_attive=True)
 
     def vice_presidente(self):
         delega_vice_presidenziale = self.comitato.delegati_attuali(tipo=VICE_PRESIDENTE, solo_deleghe_attive=True).first()
@@ -1899,7 +1923,8 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     @property
     def nome_completo(self):
-        return str(self)
+        # ho corretto il bug, non so cosa intendeva lo sviluppatore precedente per il "nome completo"
+        return self.nome
 
     def esplora(self, includi_me=True):
         """
@@ -1979,7 +2004,6 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
         else:
             queryset = self.__class__.objects.none()
 
-
         # Cosa fare con le sedi disattive?
         if ignora_disattive:
             return queryset.filter(attiva=True)
@@ -1996,6 +2020,71 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
 
     def unita_sottostanti(self):
         return self.ottieni_figli().filter(estensione=TERRITORIALE)
+
+    @property
+    def sede_regionale(self):
+        if self.estensione == REGIONALE:
+            return self
+        return self.superiore(REGIONALE)
+
+    @property
+    def sede_regionale_sigla(self):
+        from .costanti import REGIONI_CON_SIGLE
+
+        regione_sigla = None
+        sede_area_metro_roma = 1638
+
+        if self.id == 1:
+            regione_sigla = REGIONI_CON_SIGLE.get(1)  # Comitato Nazionale
+
+        # Comitati Regionali > Comitato dell'Area Metropolitana di Roma Capitale
+        elif self.sede_regionale and self.sede_regionale.id == sede_area_metro_roma:
+            regione_sigla = REGIONI_CON_SIGLE.get(524)  # Lazio
+
+        elif self.estensione == REGIONALE:
+            regione_sigla = REGIONI_CON_SIGLE.get(self.id)  # Comitati Regionali
+
+        else:
+            sede_regionale_id = self.sede_regionale.id if self.sede_regionale else None
+            if sede_regionale_id:
+                regione_sigla = REGIONI_CON_SIGLE.get(sede_regionale_id, "")
+
+        return regione_sigla['sigla'] if regione_sigla else None
+
+    def __init__(self, *args, **kwargs):
+        super(Sede, self).__init__(*args, **kwargs)
+        # Questo attributo a runtime ci serve per verificare durante il save se il flag "attiva" è stato modficato
+        self.__attiva_default = self.attiva
+
+    def __str__(self):
+        if self.estensione == TERRITORIALE and self.genitore is not None:
+            return "%s: %s" % (self.genitore.nome, self.nome,)
+        return "%s" % self.nome
+
+    class Meta:
+        verbose_name = "Sede CRI"
+        verbose_name_plural = "Sedi CRI"
+        app_label = 'anagrafica'
+        index_together = [
+            ['estensione', 'tipo'],
+            ['genitore', 'estensione'],
+            ['attiva', 'estensione'],
+            ['attiva', 'tipo'],
+            ['lft', 'rght'],
+            ['lft', 'rght', 'attiva'],
+            ['lft', 'rght', 'attiva', 'estensione'],
+            ['lft', 'rght', 'tree_id'],
+        ]
+        permissions = (
+            ("view_sede", "Can view Sede CRI"),
+        )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.__attiva_default is not None and not self.attiva and self.__attiva_default != self.attiva:
+            for sottosede in self.ottieni_figli(solo_attivi=False):
+                sottosede.attiva = False
+                sottosede.save()
 
 
 class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
@@ -2076,10 +2165,83 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
                                              destinatario_oggetto_tipo__pk=oggetto_tipo.pk,
                                              destinatario_oggetto_id=self.oggetto.pk)
 
-    def invia_notifica_creazione(self):
-        messaggi = []
+    @property
+    def is_delega_formazione(self):
+        """ Il metodo restituisce tuple() per comodità con:
+        0 (idx) - True se l'oggetto della delega è Formazione
+        1 (idx) - True se il Corso è nuovo, False "Corso Base"
+        """
+        if hasattr(self.oggetto, 'is_nuovo_corso'):
+            return (True, self.oggetto.is_nuovo_corso)
+        return (False, False)
+
+    def invia_notifica_creazione_check_list(self):
+        _email_oggetto = 'Presidente' if self.tipo == PRESIDENTE else 'Commissario'
+
+        return [Messaggio.costruisci_e_invia(
+                oggetto="IMPORTANTE: Check-list nuovo %s" % _email_oggetto,
+                modello="email_delega_notifica_nuova_nomina_presidenziale.html",
+                corpo={
+                    "delega": self,
+                },
+                mittente=self.firmatario,
+                destinatari=[self.persona],
+            )
+        ]
+
+    def invia_notifica_creazione_per_delega_formazione(self):
+        delega_tipo = self.get_tipo_display()
+        corso = self.oggetto
+
+        msg_subject = "%s per %s" % (delega_tipo, corso)
+        if self.is_delega_formazione[1]:
+            # Modificare la mail apposta per l'app <formazione>
+            msg_subject = '%s per %s (%s)' % (delega_tipo, corso, corso.titolo_cri)
+
+        messaggi = list()
+
+        # Una mail al "nominato"
         messaggi += [Messaggio.costruisci_e_invia(
-            oggetto="%s per %s" % (self.get_tipo_display(), self.oggetto,),
+            oggetto=msg_subject,
+            modello="email_delega_notifica_creazione.html",
+            corpo={
+                "delega": self,
+            },
+            mittente=self.firmatario,
+            destinatari=[self.persona],
+        )]
+
+        # (GAIA-120): Mandare una mail quando il direttore del corso non è
+        # appartenente al comitato che organizza il corso (non inviare di default)
+        for sede in self.persona.sedi_attuali():
+            esito = corso.sede.ha_membro(self.persona, membro=Appartenenza.VOLONTARIO)
+            if not esito:
+                # Un'altra mail per avvertire il presidente del comitato del nominato
+                messaggi += [Messaggio.costruisci_e_invia(
+                    oggetto="%s è nominato come direttore di %s" % (self.persona.nome_completo, corso),
+                    modello="email_delega_notifica_creazione_per_formazione.html",
+                    corpo={
+                        "delega": self,
+                        "persona": self.persona,
+                        'corso': corso,
+                    },
+                    destinatari=[sede.presidente()],
+                )]
+
+        return messaggi
+
+    def invia_notifica_creazione(self):
+        delega_tipo = self.get_tipo_display()
+        obj = self.oggetto
+
+        # Elaborare l'invio nel metodo dedicato per la formazione, esci qui.
+        if self.is_delega_formazione[0]:
+            return self.invia_notifica_creazione_per_delega_formazione()
+
+        # Elaborere tutti gli altri tipi di Delega
+        messaggi = list()
+        messaggi += [Messaggio.costruisci_e_invia(
+            oggetto="%s per %s" % (delega_tipo, obj),
             modello="email_delega_notifica_creazione.html",
             corpo={
                 "delega": self,
@@ -2090,17 +2252,7 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
 
         # Se presidente, invia check-list.
         if self.tipo == PRESIDENTE or self.tipo == COMMISSARIO:
-            messaggi += [
-                 Messaggio.costruisci_e_invia(
-                     oggetto="IMPORTANTE: Check-list nuovo {}".format('Presidente' if self.tipo == PRESIDENTE else 'Commissario'),
-                     modello="email_delega_notifica_nuova_nomina_presidenziale.html",
-                     corpo={
-                         "delega": self,
-                     },
-                     mittente=self.firmatario,
-                     destinatari=[self.persona],
-                 )
-            ]
+            messaggi += self.invia_notifica_creazione_check_list()
 
         return messaggi
 
@@ -2211,6 +2363,12 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
             delega.termina(mittente=mittente, accoda=True, termina_at=datetime.now())
 
         return numero_deleghe
+
+    @classmethod
+    def corsi(cls, persona):
+        from formazione.models import CorsoBase
+        deleghe_direttore_corso = cls.objects.filter(persona=persona, tipo=DIRETTORE_CORSO)
+        return CorsoBase.objects.filter(pk__in=deleghe_direttore_corso.values_list('oggetto_id', flat=True))
 
 
 class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
@@ -2337,7 +2495,7 @@ class Trasferimento(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPD
     def url(self):
         return "#"
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva(
           nome="Trasferimento %s.pdf" % (self.persona.nome_completo, ),
@@ -2442,7 +2600,7 @@ class Estensione(ModelloSemplice, ConMarcaTemporale, ConAutorizzazioni, ConPDF):
         self.appartenenza.terminazione = Appartenenza.FINE_ESTENSIONE
         self.appartenenza.save()
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         pdf = PDF(oggetto=self)
         appartenenza = Appartenenza.objects.filter(Appartenenza.query_attuale(al_giorno=self.creazione).q,
                                                    membro=Appartenenza.VOLONTARIO, persona=self.persona).first()
@@ -2523,7 +2681,7 @@ class Riserva(ModelloSemplice, ConMarcaTemporale, ConStorico, ConProtocollo,
            ]
         )
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva(
           nome="Riserva %s.pdf" % (self.persona.nome_completo, ),
@@ -2643,6 +2801,8 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         else:
             template = "email_dimissioni.html"
 
+        corpo = {}
+
         da_dipendente = False
         if precedente_appartenenza.membro == Appartenenza.DIPENDENTE:
             if self.persona.appartenenze_attuali(membro__in=(Appartenenza.VOLONTARIO, Appartenenza.SOSTENITORE)).exists():
@@ -2658,9 +2818,12 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
                 [x.autorizzazioni_ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
                 for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
             ]
+
         Appartenenza.query_attuale(
             al_giorno=self.creazione, persona=self.persona, membro=precedente_appartenenza.membro
         ).update(fine=mezzanotte_24_ieri(data), terminazione=Appartenenza.DIMISSIONE)
+
+        corpo['membro'] = dict(Appartenenza.MEMBRO)[precedente_appartenenza.membro]
 
         self.persona.chiudi_tutto(mezzanotte_24_ieri(data), mittente_mail=applicante, da_dipendente=da_dipendente)
 
@@ -2689,15 +2852,12 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
                     )
 
             else:
-
+                corpo["dimissione"] = self
                 Messaggio.costruisci_e_invia(
                     oggetto="Dimissioni",
                     modello=template,
-                    corpo={
-                        "dimissione": self,
-                    },
+                    corpo=corpo,
                     mittente=self.richiedente,
-
                     destinatari=[
                         self.persona
                     ]

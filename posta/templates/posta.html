@@ -114,7 +114,7 @@
 
             </ul>
 
-            <p>{{ totale  }} messaggi in questa casella.</p>
+            {% if messaggi|length > 0 %}<p>{{ totale  }} messaggi in questa casella.</p>{% endif %}
         </div>
 
     </div>
@@ -277,16 +277,16 @@
 
 
         {% elif messaggi|length == 0 %}
-            <div class="alert alert-info allinea-centro">
-                <p>&nbsp;</p>
-                <h4>
-                    <i class="fa fa-fw fa-info-circle"></i>
-                    Ancora nessun messaggio.
-                </h4>
-                <p>Nessun problema.</p>
-                <p>Quando ci saranno dei messaggi da visualizzare, li troverai qui.</p>
-                <p>&nbsp;</p>
-            </div>
+<!--            <div style="display:none" class="alert alert-info allinea-centro">-->
+<!--                <p>&nbsp;</p>-->
+<!--                <h4>-->
+<!--                    <i class="fa fa-fw fa-info-circle"></i>-->
+<!--                    Ancora nessun messaggio.-->
+<!--                </h4>-->
+<!--                <p>Nessun problema.</p>-->
+<!--                <p>Quando ci saranno dei messaggi da visualizzare, li troverai qui.</p>-->
+<!--                <p>&nbsp;</p>-->
+<!--            </div>-->
 
 
         {% else %}

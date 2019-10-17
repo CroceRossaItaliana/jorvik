@@ -63,8 +63,17 @@ class ModuloServiziModificaStandard(forms.Form):
 
 class ModuloServiziPrestazioni(forms.Form):
     @staticmethod
-    def popola_beneficiaries():
-        pass
+    def popola_previsioning():
+        from attivita.cri_persone import getPrevisioning
+        select = []
+        prevision = getPrevisioning()
+
+        if 'data' in prevision and 'generic_issue' in prevision['data']:
+            for s in prevision['data']['generic_issue']:
+                select.append(
+                    (s['key'], s['summary'])
+                )
+        return tuple(select)
 
     provisioning = forms.MultipleChoiceField(
         required=False,
@@ -236,7 +245,6 @@ class ModuloServiziCriteriDiAccesso(forms.Form):
         from attivita.cri_persone import getBeneficiary
         select = []
         beneficiaries = getBeneficiary()
-        print('beneficiaries', beneficiaries)
         if 'data' in beneficiaries and 'generic_issue' in beneficiaries['data']:
             for s in beneficiaries['data']['generic_issue']:
                 select.append(

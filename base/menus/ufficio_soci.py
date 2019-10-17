@@ -22,7 +22,7 @@ def menu_us(me):
             ("Elettorato", "fa-list", "/us/elenchi/elettorato/"),
             ("Tesserini", "fa-list", "/us/tesserini/"),
             ("Per Titoli", "fa-search", "/us/elenchi/titoli/"),
-            ("Scarica elenchi richiesti", "fa-download", reverse('elenchi_richiesti_download'), '', True),
+            ("Scarica elenchi richiesti", "fa-download", reverse('ufficio_soci:elenchi_richiesti_download'), '', True),
         )),
         ("Aggiungi", (
             ("Persona", "fa-plus-square", "/us/aggiungi/"),

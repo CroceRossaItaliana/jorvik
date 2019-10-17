@@ -533,11 +533,12 @@ class ElencoQuote(ElencoVistaSoci):
             origine = tesseramento.non_paganti(attivi=attivi, ordinari=ordinari)  # Persone con quote NON pagate
 
         # Ora filtra per Sede
-        q = Appartenenza.query_attuale(al_giorno=giorno_appartenenza,
-                                       membro=Appartenenza.VOLONTARIO)
+        q = Appartenenza.query_attuale(
+            al_giorno=giorno_appartenenza,
+            membro=Appartenenza.VOLONTARIO
+        ).filter(sede__in=qs_sedi).defer('membro', 'inizio', 'sede')
 
-        app = Appartenenza.objects.filter(pk__in=q).filter(sede__in=qs_sedi)
-        return origine.filter(appartenenze__in=app).annotate(
+        return origine.filter(appartenenze__in=q).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
                 appartenenza_sede=F('appartenenze__sede'),
@@ -654,6 +655,8 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
             Q(Appartenenza.query_attuale(membro=Appartenenza.DIPENDENTE, sede__in=qs_sedi,
                                             al_giorno=oggi
                                             ).via("appartenenze")))
+                                            
+        # print("dipendenti", dipendenti.values_list('pk', flat=True) )
 
         r = Persona.objects.filter(
             Appartenenza.query_attuale(
@@ -716,11 +719,29 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
             base = base.filter(titoli_personali__in=TitoloPersonale.con_esito_ok())
             for titolo in titoli:
                 base = base.filter(titoli_personali__titolo=titolo)
-            return base.distinct('cognome', 'nome', 'codice_fiscale')
+
+        return base.distinct('cognome', 'nome', 'codice_fiscale')
 
     def modulo(self):
         from .forms import ModuloElencoPerTitoli
         return ModuloElencoPerTitoli
+
+
+class ElencoPerTitoliCorso(ElencoPerTitoli):
+    def risultati(self):
+        cd = self.modulo_riempito.cleaned_data
+        self.kwargs['cleaned_data'] = cd
+
+        # Mostra persone con titoli scaduti/non scaduti
+        results = super().risultati()
+        return results.filter(titoli_personali__in=TitoloPersonale.con_esito_ok())
+
+    def modulo(self):
+        from .forms import ModuloElencoPerTitoliCorso
+        return ModuloElencoPerTitoliCorso
+
+    def template(self):
+        return 'formazione_albo_inc_elenchi_persone_titoli.html'
 
 
 class ElencoTesseriniRichiesti(ElencoVistaSoci):
@@ -761,7 +782,7 @@ class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
             ).via("appartenenze"),
 
             # Con fototessera confermata
-            Fototessera.con_esito_ok().via("fototessere"),
+            Q(Fototessera.con_esito_ok().via("fototessere")),
 
             # Escludi tesserini rifiutati
             ~Q(tesserini__stato_richiesta=Tesserino.RIFIUTATO),
@@ -793,6 +814,8 @@ class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
             Appartenenza.query_attuale(
                 sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
             ).via("appartenenze"),
+
+            ~Q(Fototessera.con_esito_ok().via("fototessere"))
 
         ).exclude(  # Escludi quelli che posso richiedere
             pk__in=tesserini_da_richiedere.values_list('id', flat=True)

@@ -21,6 +21,13 @@ def getBeneficiary():
     return r.json() if r.status_code == 200 else {}
 
 
+def getPrevisioning():
+    r = requests.get(
+        '{}/generic_issue/CRIP-Provision'.format(end_point)
+    )
+    return r.json() if r.status_code == 200 else {}
+
+
 def updateServizio(key, **kwargs):
     data = {}
     if kwargs.get('referenti'):

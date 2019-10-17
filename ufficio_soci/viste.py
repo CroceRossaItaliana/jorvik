@@ -1,6 +1,9 @@
 import json
 import random
 import re
+import os
+import tempfile
+import pickle
 from datetime import datetime
 from collections import OrderedDict
 
@@ -9,6 +12,7 @@ from django.db.models import Sum, Q
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
+from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 
 from anagrafica.costanti import NAZIONALE, REGIONALE
@@ -232,6 +236,8 @@ def us_reclama_persona(request, me, persona_pk):
                                                     "%d anni. " % Persona.ETA_MINIMA_SOCIO)
             continua = False
 
+
+
         if continua:
             with transaction.atomic():
                 app = modulo_appartenenza.save(commit=False)
@@ -279,7 +285,24 @@ def us_reclama_persona(request, me, persona_pk):
                         riduzione=riduzione,
                     )
 
+                m = modulo_appartenenza.cleaned_data.get('membro')
+                if m == Appartenenza.DIPENDENTE:
+                    oggetto = 'Inserimento come {}'.format(
+                        Appartenenza.MENBRO_DICT[modulo_appartenenza.cleaned_data.get('membro')]
+                    )
+
+                    Messaggio.costruisci_e_accoda(
+                        oggetto=oggetto,
+                        modello="email_reclama.html",
+                        mittente=me,
+                        destinatari=[persona],
+                        corpo={
+                            "persona": persona.nome_completo
+                        }
+                    )
+
                 return redirect(persona.url)
+
 
     contesto = {
         "modulo_appartenenza": modulo_appartenenza,
@@ -643,19 +666,18 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
 def us_elenco_modulo(request, me, elenco_id):
     try:
         # Prova a ottenere l'elenco dalla sessione.
-        elenco = request.session["elenco_%s" % (elenco_id,)]
+        elenco = request.session["elenco_%s" % elenco_id]
     except KeyError:
         # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
         raise ValueError("Elenco non presente in sessione.")
 
     if not elenco.modulo():  # No modulo? Vai all'elenco
-        return redirect("/us/elenco/%s/1/" % (elenco_id,))
+        return redirect("/us/elenco/%s/1/" % elenco_id)
 
     form = elenco.modulo()(request.POST or None)
     if request.POST and form.is_valid():  # Modulo ok
         # Salva modulo in sessione
         request.session["elenco_modulo_%s" % elenco_id] = request.POST
-
         # Redirigi alla prima pagina
         return redirect("/us/elenco/%s/1/" % elenco_id)
 
@@ -698,10 +720,9 @@ def us_elenco_messaggio(request, me, elenco_id):
         # Imposta il modulo
         elenco.modulo_riempito = form
 
-    persone = elenco.ordina(elenco.risultati())
-    request.session["messaggio_destinatari"] = persone
     request.session["messaggio_destinatari_timestamp"] = datetime.now()
-    return redirect(reverse('posta-scrivi'))
+
+    return redirect(reverse('posta:scrivi') + '?id={}'.format(elenco_id))
 
 
 @pagina_privata(permessi=(ELENCHI_SOCI,))

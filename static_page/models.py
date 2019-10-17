@@ -12,5 +12,5 @@ class Page(models.Model):
         return str(self.title)
 
     class Meta:
-        verbose_name = 'Pagina static'
+        verbose_name = 'Pagina statica'
         verbose_name_plural = 'Pagine statiche'
