@@ -28,7 +28,7 @@ def profilo(request, me, pk, sezione=None):
 
     # Controlla permessi di visualizzazione
     sezioni = profile_sections(puo_leggere, puo_modificare)
-    sezioni = filter_per_role(me, persona, sezioni)
+    sezioni = filter_per_role(request, me, persona, sezioni)
 
     context = {
         "persona": persona,

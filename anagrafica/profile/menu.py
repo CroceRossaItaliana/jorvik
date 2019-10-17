@@ -1,25 +1,38 @@
 from collections import OrderedDict
 
+from formazione.elenchi import ElencoPartecipantiCorsiBase
+from formazione.models import Corso
+from ..permessi.costanti import LETTURA
 from ..models import Delega
 from ..profile import views
 
 
-def filter_per_role(me, persona, sezioni):
-    sezioni = OrderedDict(sezioni)
+def filter_per_role(request, me, persona, sezioni):
+    puo_leggere = me.permessi_almeno(persona, LETTURA)
+    if not puo_leggere:
+        return OrderedDict()
 
     # GAIA-213 (filtro aggiuntivo per direttori)
-    SEZIONI_VISIBILI_PER_DIRETTORE = ['appartenenze', 'curriculum']
+    corsi_direttore = Delega.corsi(me).filter(stato__in=[Corso.ATTIVO, Corso.PREPARAZIONE])
+    corsi_persona = persona.corsi(corso_stato=[Corso.ATTIVO, Corso.PREPARAZIONE])
+    corsi_in_comune = corsi_direttore & corsi_persona
 
-    # Trova corsi del direttore e corsi della persona
-    corsi_in_comune = Delega.corsi(me) & persona.corsi
+    sezioni = OrderedDict(sezioni)
+    if 'us' in request.GET or 'ea' in request.GET:
+        return sezioni
 
-    # Se c'è almeno uno in comune - direttore potra vedere alcune sezioni
-    if me.is_direttore and corsi_in_comune:
-        menu_items = OrderedDict()
-        for k, v in sezioni.items():
-            if k in SEZIONI_VISIBILI_PER_DIRETTORE:
-                menu_items[k] = v
-        return menu_items
+    elif ElencoPartecipantiCorsiBase.SHORT_NAME in request.GET or corsi_in_comune:
+        SEZIONI_VISIBILI_PER_DIRETTORE = ['appartenenze', 'curriculum',]
+
+        # Trova corsi del direttore e corsi della persona
+        if corsi_in_comune:
+            menu_items = OrderedDict()
+            for k, v in sezioni.items():
+                if k in SEZIONI_VISIBILI_PER_DIRETTORE:
+                    menu_items[k] = v
+            return menu_items
+        return OrderedDict()
+
     return sezioni
 
 

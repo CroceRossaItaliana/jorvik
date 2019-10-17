@@ -7,6 +7,7 @@ from ufficio_soci.elenchi import ElencoVistaAnagrafica
 
 class ElencoPartecipantiCorsiBase(ElencoVistaAnagrafica):
     NAME = 'Partecipanti Corso'
+    SHORT_NAME = 'fpc'  # <formazione> partecipanti corsi
 
     def template(self):
         return 'formazione_elenchi_inc_iscritti.html'
@@ -22,8 +23,8 @@ class ElencoPartecipantiCorsiBase(ElencoVistaAnagrafica):
                 return "Iscritto"
             else:
                 return "Invitato"
-        return super(ElencoPartecipantiCorsiBase, self).excel_colonne() + (
-            ("Stato", lambda p: stato_iscritto(p,self)),
+        return super().excel_colonne() + (
+            ("Stato", lambda p: stato_iscritto(p, self)),
         )
 
     def risultati(self):
