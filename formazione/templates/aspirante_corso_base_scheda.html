@@ -217,7 +217,7 @@
                     <hr><p>Per generare il verbale è necessario <strong><a href="{% url 'courses:commissione_esame' corso.pk %}">compilare i nominativi e caricare delibera</a></strong> della commissione esame.</p>
                 {% elif not me.is_presidente and me.is_direttore %}
                     {% if not corso.ha_compilato_commissione_esame %}
-                        <hr><p>Per generare il verbale è necessario che il presidente <strong>compili i nominativi e carichi delibera</strong> della commissione esame.</p>
+                        <hr><p>Per generare il verbale è necessario che il presidente <strong>compili i nominativi e carichi la delibera</strong> della commissione esame.</p>
                     {% endif %}
                 {% endif %}
             {% endif %}
