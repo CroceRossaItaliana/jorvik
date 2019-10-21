@@ -140,7 +140,8 @@
             </div>
             {% endif %}
 
-            <div class="panel panel-primary" style="display:none;">
+            {% if tipo != 'TC' %}
+            <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h4 class="panel-title">
                         <i class="fa fa-fw fa-plus-circle"></i>
@@ -174,6 +175,7 @@
                     </form>
                 </div>
             </div>
+            {% endif %}
         </div>
     </div>
 {% endblock %}

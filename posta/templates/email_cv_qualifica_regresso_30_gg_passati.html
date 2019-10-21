@@ -1,0 +1,27 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p class="grassetto">Caro Presidente,</p>
+
+    {% if not multiple %}
+      <p>sono trascorsi 30 giorni da quando il Volontario {{ persona.nome_completo }} ha inserito su GAIA tutte le informazioni e i relativi documenti
+        per il riconoscimento della qualifica CRI <storng>{{ richiesta.oggetto.titolo.nome }}</storng>.<br>
+        Il Presidente {{ presidente_territoriale }} del {{ delega_pt.oggetto|default:"Comitato CRI" }} non ne ha ancora preso visione pertanto il Volontario tali qualifiche non vede nel suo Curriculum CRI.<br><br>
+        Ti preghiamo di supportare il Presidente in questo iter al fine di permettere un corretto inserimento delle qualifiche del/la Volontario/a.<br><br>
+      </p>
+
+    {% else %}
+      <p>
+        sono trascorsi 30 giorni da quando i Volontari hanno inserito su GAIA tutte le informazioni e i relativi documenti per il riconoscimento delle qualifiche CRI:<br>
+        {% for richiesta in richieste %}
+          <strong>{{ richiesta.richiedente.nome_completo }}</strong> - {{ richiesta.oggetto.titolo.nome }}<br>
+        {% endfor %}
+        <br>
+        Il Presidente {{ presidente_territoriale }} del {{ delega_pt.oggetto|default:"Comitato CRI" }} non ne ha ancora preso visione pertanto i Volontari tali qualifiche non vedono nel loro Curriculum CRI.<br><br>
+        Ti preghiamo di supportare il Presidente in questo iter al fine di permettere un corretto inserimento delle qualifiche dei Volontari.<br><br>
+      </p>
+    {% endif %}
+
+    <p>Grazie per il tuo supporto!</p>
+
+{% endblock %}

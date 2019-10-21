@@ -60,6 +60,8 @@ class ModuloNuovoTitoloPersonale(autocomplete_light.ModelForm):
             
 
 class FormAddQualificaCRI(autocomplete_light.ModelForm):
+    titolo = autocomplete_light.ModelChoiceField('QualificaCRIRegressoAutocompletamento')
+
     class Meta:
         model = TitoloPersonale
         fields = ['titolo', 'data_ottenimento', 'tipo_documentazione', 'attestato_file',

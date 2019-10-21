@@ -106,7 +106,7 @@ def curriculum(request, me, tipo=None):
         "titoli": titoli.order_by('-creazione', '-data_ottenimento', '-data_scadenza'),
         "titolo": titolo_selezionato
     }
-    return 'anagrafica_utente_curriculum.html', context
+    return 'cv_index.html', context
 
 
 @pagina_privata
