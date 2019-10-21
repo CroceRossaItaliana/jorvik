@@ -84,8 +84,8 @@ class ModuloServiziPrestazioni(forms.Form):
 
 
 class ModuloServiziContatti(forms.Form):
-    CRI = 'CRI'
-    ALTRO_ENTE = 'ALTRO_ENTE'
+    CRI = 8
+    ALTRO_ENTE = 9
     TIPO_CONTATTO = (
         ('', ''),
         (CRI, 'CRI'),
@@ -178,16 +178,15 @@ class ModuloServiziSepcificheDelServizioTurni(forms.Form):
     )
     dayHourType = forms.ChoiceField(required=False, choices=DAY_HOUR_TYPE, label='Orari')
 
-    LUNEDI = 'LUNEDI'
-    MARTEDI = 'MARTEDI'
-    MERCOLEDI = 'MERCOLEDI'
-    GIOVEDI = 'GIOVEDI'
-    VENERDI = 'VENERDI'
-    SABATO = 'SABATO'
-    DOMENICA = 'DOMENICA'
+    LUNEDI = 1
+    MARTEDI = 2
+    MERCOLEDI = 3
+    GIOVEDI = 4
+    VENERDI = 5
+    SABATO = 6
+    DOMENICA = 7
 
     DAY = (
-        ('', ''),
         (LUNEDI, 'Lunedi'),
         (MARTEDI, 'Martedi'),
         (MERCOLEDI, 'Mercoledi'),
@@ -197,9 +196,9 @@ class ModuloServiziSepcificheDelServizioTurni(forms.Form):
         (DOMENICA, 'Domenica'),
     )
 
-    giorno = forms.ChoiceField(required=False, choices=DAY, label='Giorno')
-    orario_apertura = forms.CharField(required=False, label='Orario apertura')
-    orario_chiusura = forms.CharField(required=False, label='Orario chiusura')
+    giorno = forms.MultipleChoiceField(required=False, choices=DAY, label='Giorni')
+    orario_apertura = forms.CharField(required=False)
+    orario_chiusura = forms.CharField(required=False)
 
 
 class ModuloServiziCriteriDiAccesso(forms.Form):

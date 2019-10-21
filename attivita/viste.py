@@ -960,11 +960,16 @@ def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
     from attivita.forms import ModuloServiziSepcificheDelServizio, ModuloServiziSepcificheDelServizioTurni
-    from attivita.cri_persone import update_service
-    result = getServizio(pk)
+    from attivita.cri_persone import update_service, deleteStagil, createStagilTurni
     init_modulo = {}
     init_turni = {}
+    dayHour = []
+    dt = request.GET.get('dt', '')
 
+    if dt:
+        deleteStagil(dt)
+
+    result = getServizio(pk)
     if 'result' in result:
         if result['result']['code'] == 200:
             if 'os_activation_period_type' in result['data']:
@@ -990,12 +995,20 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
                     init_modulo['dueDate'] = datetime.strptime(
                         result['data']['os_due_date'], '%Y-%m-%d'
                     )
+            # if 'costField' in result['data']:
+            #     pass
+
             if 'os_dayhour_type' in result['data']:
                 if result['data']['os_dayhour_type']:
                     init_turni['dayHourType'] = result['data']['os_dayhour_type']['value']
 
+            if 'dayhour' in result['data']:
+                dayHour = result['data']['dayhour']
+
+
             modulo = ModuloServiziSepcificheDelServizio(request.POST or None, initial=init_modulo)
             turni = ModuloServiziSepcificheDelServizioTurni(request.POST or None, initial=init_turni)
+
         else:
             # Errore
             modulo = ModuloServiziSepcificheDelServizio(request.POST or None)
@@ -1008,9 +1021,13 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
     contesto = {'key': pk}
     contesto.update({'modulo': modulo})
     contesto.update({'turni': turni})
+    if dayHour:
+        contesto.update({'dayhour': dayHour})
 
     data = {}
+
     if modulo.is_valid() and turni.is_valid():
+
         if modulo.cleaned_data['activationPeriodType'] == ModuloServiziSepcificheDelServizio.MENSILE:
             data['os_activation_period_type'] = {"value": modulo.cleaned_data['activationPeriodType']}
             data['os_activation_period_type'] = {"value": modulo.cleaned_data['activationPeriodType']}
@@ -1037,6 +1054,22 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
             data['os_dayhour_type'] = {'value': turni.cleaned_data['dayHourType']}
 
         update_service(pk, **data)
+
+        if turni.cleaned_data['giorno'] and turni.cleaned_data['orario_apertura'] and turni.cleaned_data['orario_chiusura']:
+            createStagilTurni(
+                turni.cleaned_data['giorno'],
+                turni.cleaned_data['orario_apertura'],
+                turni.cleaned_data['orario_chiusura'],
+                result['data']['id']
+            )
+            result = getServizio(pk)
+            if 'result' in result:
+                if result['result']['code'] == 200:
+                    if 'dayhour' in result['data']:
+                        contesto.update({'dayhour': result['data']['dayhour']})
+                        from django.core.urlresolvers import reverse
+                        return redirect(reverse('attivita:specifiche', kwargs={'pk': result['data']['key']}))
+
 
     return 'servizio_scheda_infomazioni_modifica_specifiche.html', contesto
 

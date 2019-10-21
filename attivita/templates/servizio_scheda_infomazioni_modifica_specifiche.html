@@ -1,6 +1,7 @@
 {% extends 'servizio_scheda.html' %}
 {% load social %}
 {% load utils %}
+{% load util %}
 {% load bootstrap3 %}
 
 {% block pagina_titolo %}
@@ -85,12 +86,26 @@
                                 <th>Azione</th>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>Lunedi</td>
-                                <td>10/12/2019</td>
-                                <td>10/12/2019</td>
-                                <td><a>Elimina</a></td>
-                            </tr>
+                            {% for t in dayhour %}
+                                <tr>
+                                    <td>
+                                        <ul>
+                                            {% for day in  t|dammi:'field-1' %}
+                                                <li>{{ day|parse_girni }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        {{ t|dammi:'field-2' }}
+                                    </td>
+                                    <td>
+                                        {{ t|dammi:'field-3' }}
+                                    </td>
+                                    <td>
+                                        <a href="?dt={{ t.id }}">Elimina</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
