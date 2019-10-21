@@ -33,7 +33,7 @@
                 </thead>
                 <tbody>
 
-                {% for app, modulo in appartenenze %}
+                {% for app, modulo, terminabile in appartenenze %}
                     <tr {% if app.attuale %}class="success"{% endif %}>
                         <td>
                             {{ app.esito }}
@@ -109,7 +109,7 @@
                             {{ app.creazione }}
                         </td>
                         <td>
-                            {% if app.attuale and app.esito == app.ESITO_OK and app.membro == es %}
+                            {% if app.attuale and app.esito == app.ESITO_OK and app.membro == es and terminabile %}
 
                                 <a href="/us/estensione/{{ app.pk }}/termina/"
                                data-conferma="Vuoi veramente terminare l'estensione?">
@@ -122,7 +122,7 @@
                     </tr>
 
                 {% empty %}
-                    <tr class="warning">
+                    <tr class="alert alert-warning">
                         <td colspan="5">
                             Nessuna appartenenza registrata.
                         </td>

@@ -183,7 +183,7 @@ class TestInviiMassivi(TestCase):
             oggetto="Email contatto",
             modello="email.html",
         )
-        messaggio.smaltisci_coda()
+        messaggio._smaltisci_coda()
         self.assertEqual(Messaggio.in_coda().count(), 0)
 
     def test_messaggio_con_destinatario_vuoto(self):
@@ -194,7 +194,7 @@ class TestInviiMassivi(TestCase):
             oggetto="Email contatto",
             modello="email.html",
         )
-        messaggio.smaltisci_coda()
+        messaggio._smaltisci_coda()
         self.assertEqual(Messaggio.in_coda().count(), 0)
 
     @patch('smtplib.SMTP')
@@ -204,7 +204,7 @@ class TestInviiMassivi(TestCase):
             oggetto="Email contatto",
             modello="email.html",
         )
-        messaggio.smaltisci_coda()
+        messaggio._smaltisci_coda()
         self.assertEqual(Messaggio.in_coda().count(), 0)
 
     @patch('smtplib.SMTP')
@@ -216,7 +216,7 @@ class TestInviiMassivi(TestCase):
             oggetto="Email contatto",
             modello="email.html",
         )
-        messaggio.smaltisci_coda()
+        messaggio._smaltisci_coda()
         self.assertEqual(Messaggio.in_coda().count(), 0)
 
     @patch('smtplib.SMTP')
@@ -235,7 +235,7 @@ class TestInviiMassivi(TestCase):
     def test_fallimento_helo(self, mock_smtp):
         """
         In caso di fallimento durante helo il messaggio viene rimesso in coda, tranne che in caso
-        di errore 501 che è permanente
+        di errore 5XX che è permanente
         """
         self.assertEqual(Messaggio.in_coda().count(), 0)
         codici = (500, 501, 504, 521, 421)
@@ -268,7 +268,7 @@ class TestInviiMassivi(TestCase):
     def test_fallimento_data(self, mock_smtp):
         """
         In caso di fallimento durante il comando data  il messaggio viene rimesso in coda,
-        tranne che in caso di errore 501 che è permanente
+        tranne che in caso di errore 5XX che è permanente
         """
         codici = (451, 554, 500, 501, 503, 421, 552, 451, 452)
         for codice in codici:
@@ -309,7 +309,7 @@ class TestInviiMassivi(TestCase):
     def test_fallimento_sender(self, mock_smtp):
         """
         In caso di fallimento del sender il messaggio viene rimesso in coda,
-        tranne che in caso di errore 501 che è permanente
+        tranne che in caso di errore 5XX che è permanente
         """
         codici = (451, 452, 500, 501, 421)
         for codice in codici:

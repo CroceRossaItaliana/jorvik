@@ -1,11 +1,9 @@
 {% extends "anagrafica_utente_vuota.html" %}
 
 {% load bootstrap3 %}
-
 {% block pagina_titolo %}Modifica Anagrafica{% endblock %}
 
 {% block app_contenuto %}
-
     <div class="alert bg-info">
         <p>
             <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire la tua anagrafica.
@@ -14,47 +12,65 @@
         </p>
     </div>
 
-    <form action="/utente/anagrafica/" method="POST" enctype="multipart/form-data">
+    <form action="{% url 'utente:anagrafica' %}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-
-
         <div class="row">
-
             <div class="col-lg-7">
-
                 <div class="panel panel-primary">
-
                     <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <i class="fa fa-edit fa-fw"></i> Dati anagrafici
-                        </h4>
+                        <h4 class="panel-title"><i class="fa fa-edit fa-fw"></i> Dati anagrafici</h4>
                     </div>
-
                     <div class="panel-body">
+                        <h4>Modifica Residenza</h4>
+                        {% bootstrap_form form_residenza %}
 
-                        {% bootstrap_form modulo_dati %}
+                        <hr style="margin:40px 0;">
+
+                        <h4>Modifica Domicilio</h4>
+                        <div id="domicilioEqualToResidenzaFormSection">
+                            {% bootstrap_form form_domicilio %}
+                        </div>
+
+                        <script>
+                            var checkbox_domicilio_uguale_a_residenza = $('#id_domicilio_uguale_a_residenza');
+
+                            function set_disabled_to_fields(e) {
+                                let form = $('#domicilioEqualToResidenzaFormSection');
+                                let inputs = form.find('input');
+                                let selects = form.find('select');
+
+                                if (e.is(':checked')) {
+                                    inputs.attr('disabled', 'disabled');
+                                    selects.attr('disabled', 'disabled');
+                                } else {
+                                    inputs.removeAttr('disabled');
+                                    selects.removeAttr('disabled');
+                                }
+
+                                e.removeAttr('disabled');
+                            }
+
+                            if (checkbox_domicilio_uguale_a_residenza.is(':checked')) {
+                                set_disabled_to_fields(checkbox_domicilio_uguale_a_residenza);
+                            }
+
+                            $('#id_domicilio_uguale_a_residenza').on('change', function(){
+                                set_disabled_to_fields($(this));
+                            });
+                        </script>
+
                         <button class="btn btn-block btn-primary" type="submit">
                              <i class="fa fa-save fa-fw"></i>
                              Salva modifiche
                          </button>
-
                     </div>
-
                 </div>
-
-
             </div>
 
             <div class="col-lg-5">
-
                 <div class="panel panel-info">
-
-                    <div class="panel-heading">
-                        <i class="fa fa-fw fa-user"></i> Informazioni di base
-                    </div>
-
+                    <div class="panel-heading"><i class="fa fa-fw fa-user"></i> Informazioni di base</div>
                     <div class="panel-body">
-
                         <p>Le informazioni di base non possono essere modificate direttamente
                             per motivi di sicurezza. Queste sono qui elencate:</p>
 
@@ -75,14 +91,11 @@
                                 <td>Data di nascita</td>
                                 <td>{{ me.data_nascita }}</td>
                             </tr>
-
                         </table>
 
-                            <p>Se qualcosa &egrave; sbagliato tra le informazioni qui sopra,
-                                puoi richiederne la modifica cos&iacute;:</p>
+                            <p>Se qualcosa &egrave; sbagliato tra le informazioni qui sopra, puoi richiederne la modifica cos&iacute;:</p>
 
                             <ol>
-
                                 <li>Assicurati di aver caricato un documento d'identit&agrave;
                                     valido e recente <a href="/utente/documenti/">nella sezione
                                     documenti</a>;</li>
@@ -113,26 +126,11 @@
                                         l'errore che hai individuato e richiedendo la modifica dei tuoi
                                         dati.
                                     </li>
-
                                 {% endif %}
-
                             </ol>
-
-
-
-
                     </div>
-
                 </div>
-
-
-
-
             </div>
-
         </div>
-
-
     </form>
-
 {% endblock %}

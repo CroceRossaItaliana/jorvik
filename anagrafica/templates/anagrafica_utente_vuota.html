@@ -1,88 +1,85 @@
 {% extends "base_vuota.html" %}
 
-{% load bootstrap3 base_tags %}
+{% load bootstrap3  %}
+{% load base_tags %} {# base.templatetsgs #}
+{% load utils %} {# anagrafica.templatetsgs #}
 
-{% block pagina_titolo %}
-    Benvenuto in Gaia
-{% endblock %}
+{% block pagina_titolo %}Benvenuto in Gaia{% endblock %}
 
 {% block pagina_principale %}
 <div class="container">
-
-    <div class="row allinea-centro" role="navigation" id="menu-applicazione">
-
+    <div id="menu-applicazione" class="row allinea-centro gaia-topnav" role="navigation" style="margin-bottom:20px;">
         <ul class="nav nav-tabs nav-justified">
-            {% for app_slug, app_nome, app_icona, app_num in user.applicazioni_disponibili %}
+            {% get_top_navbar as menu_applicazioni %} {# anagrafica.templatetsgs #}
+
+            {% for app_slug, app_nome, app_icona, app_num in menu_applicazioni %}
                 <li role="presentation" class="{% if request.path|startswith:app_slug %}active{% endif %}{% if app_slug == '/aspirante/' and '/utente/' in request.path %}active{% endif %}">
                     <a href="{{ app_slug }}" class="grassetto">
-                        <i class="fa fa-fw {{ app_icona }}"></i>
-                        {{ app_nome }}
-
+                        <i class="fa fa-fw {{ app_icona }}"></i> {{ app_nome }}
                         {% if app_num %}
-                            <span class="badge badge-danger">
-                                {{ app_num }}
-                            </span>
+                            <span class="badge badge-danger">{{ app_num }}</span>
                         {% endif %}
                     </a>
                 </li>
             {% endfor %}
         </ul>
-
-        <p>&nbsp;</p>
-
     </div>
 
     <div class="row">
-
         <div class="navbar-toggle collapsed" aria-expanded="false" aria-controls="navbar"  style="float: none;">
-            <button type="button" class="btn btn-block btn-default" data-toggle="collapse"
-                    data-target="#sezione">
-
-                <i class="fa fa-fw fa-bars"></i>
-                Mostra navigazione
+            <button type="button" class="btn btn-block btn-default" data-toggle="collapse" data-target="#sezione">
+                <i class="fa fa-fw fa-bars"></i> Mostra navigazione
             </button>
         </div>
 
         {% block menu_laterale %}
-        <div role="navigation" class="{% block menu_laterale_col %}col-md-3{% endblock %} well well-sm">
-
-
-            <ul id="sezione" class="nav nav-pills nav-stacked navbar-collapse collapse">
-
-                {% for sezione_nome, sezione_pagine in menu.elementi_anagrafica %}
-
-                    <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
-
+        <div role="navigation" class="{% block menu_laterale_col %}col-md-3{% endblock %} well well-sm gaia-left-sidebar">
+            {% for sezione_nome, sezione_pagine in menu.elementi_anagrafica %}
+                {% if sezione_pagine|length %}
+                <div data-nav-id="{{forloop.counter}}" class="collapsible-menu-title dropdown-header grassetto piu-grande" style="margin-bottom:3px; cursor:pointer;">{{ sezione_nome }}</div>
+                <ul id="sezione" data-nav-ul="{{forloop.counter}}" class="nav nav-pills nav-stacked collapsible-menu-ul">
                     {% for link_nome, link_icona, link_url in sezione_pagine %}
-
-                        <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
-                            <a href="{{ link_url|urlencode }}">
+                        <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
+                            <a href="{{ link_url }}">
                                 <i class="fa {{ link_icona }} fa-fw"></i>
                                 {{ link_nome }}
                             </a>
                         </li>
-
                     {% endfor %}
-
                     <hr />
-
-                {% endfor %}
-
-            </ul>
-
+                </ul>
+                {% endif %}
+            {% endfor %}
         </div>
         {% endblock %}
 
         <div class="{% block app_contenuto_col %}col-md-9{% endblock %}">
-
             {% block app_contenuto %}
                 Pagina in costruzione!
             {% endblock %}
-
         </div>
-
     </div>
-
 </div>
 
+<script>
+    $('#id_area').on('change', function(e) {
+        let data = $('#id_titolo-autocomplete');
+        if (data.length) {
+            data = data.yourlabsAutocomplete().data;
+        } else {
+            return;
+        }
+
+        let area_id = $(this).val();
+
+        // default select option has '' value
+        if (area_id !== '') {
+            data['area'] = area_id;
+        } else {
+            if ('area' in data) {
+                delete data['area']
+            };
+        }
+    });
+</script>
 {% endblock %}

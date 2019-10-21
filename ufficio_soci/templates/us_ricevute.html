@@ -29,6 +29,7 @@
                             <i class="fa fa-fw fa-search"></i>
                             Filtra ricevute
                         </button>
+                        <input type="submit" class="btn btn-block btn-primary" name="download_report_ricevute" value="Scarica">
                     </form>
 
                 </div>
@@ -97,18 +98,15 @@
 
             {% for ricevuta in ricevute %}
 
-                <tr {% if ricevuta.stato == ricevuta.ANNULLATA %}class="warning"{% endif %}>
+                <tr {% if ricevuta.stato == ricevuta.ANNULLATA %}class="alert-warning"{% endif %}>
                     <td class="grassetto">
                         {{ ricevuta.anno }}/{{ ricevuta.progressivo }}
                         {% if ricevuta.stato == ricevuta.ANNULLATA %}<br />
                             <span class="text-danger">ANNULLATA</span>
                         {% endif %}
                     </td>
-
-                    <td class="text-info">
-                        <acronym title="{{ ricevuta.get_tipo_display }}">
-                            {{ ricevuta.tipo }}
-                        </acronym>
+                    <td class="grassetto">
+                        <span class="text-danger" title="{{ ricevuta.get_tipo_display }}">{{ ricevuta.tipo }}</span>
                     </td>
                     <td>
                         {{ ricevuta.persona.link|safe }}<br />
@@ -161,7 +159,7 @@
 
             {% empty %}
 
-                <tr class="warning">
+                <tr class="alert alert-warning">
                     <td colspan="6">
                         <p>
                             <i class="fa fa-fw fa-info-circle"></i>

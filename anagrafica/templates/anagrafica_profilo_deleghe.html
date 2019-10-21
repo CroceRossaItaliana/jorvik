@@ -29,6 +29,11 @@
                         {% if d.attuale %}
                             Attiva
 
+                            {% if d.stato == d.SOSPESA %}
+                                (Sospesa)
+
+                            {% endif %}
+
                         {% else %}
                             Passata
 
@@ -56,7 +61,7 @@
                 </tr>
 
             {% empty %}
-                <tr class="warning">
+                <tr class="alert alert-warning">
                     <td colspan="4">
                         Nessuna delega registrata.
                     </td>

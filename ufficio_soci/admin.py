@@ -1,8 +1,7 @@
 from django.contrib import admin
-from ufficio_soci.models import Tesserino, Quota, Tesseramento, Riduzione
-from gruppi.readonly_admin import ReadonlyAdminMixin
 
-__author__ = 'alfioemanuele'
+from gruppi.readonly_admin import ReadonlyAdminMixin
+from .models import Tesserino, Quota, Tesseramento, Riduzione, ReportElenco
 
 
 @admin.register(Quota)
@@ -35,3 +34,11 @@ class AdminTesseramento(ReadonlyAdminMixin, admin.ModelAdmin):
 @admin.register(Riduzione)
 class AdminRiduzione(ReadonlyAdminMixin, admin.ModelAdmin):
     pass
+
+
+@admin.register(ReportElenco)
+class AdminReportElenco(ReadonlyAdminMixin, admin.ModelAdmin):
+    raw_id_fields = ('user',)
+    list_display = ['user', 'file', 'is_ready', 'creazione',
+                    'ultima_modifica', 'report_type', 'task_id']
+    list_filter = ['is_ready', 'report_type',]

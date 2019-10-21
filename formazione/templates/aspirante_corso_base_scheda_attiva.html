@@ -1,66 +1,44 @@
 {% extends 'aspirante_corso_base_scheda.html' %}
 
-{% block scheda_titolo %}
-    Attiva Corso Base
-{% endblock %}
+{% block scheda_titolo %}Attiva Corso{% endblock %}
 
 {% block scheda_contenuto %}
-
 <div class="row">
 <form method="POST">
     {% csrf_token %}
-
     <div class="col-md-8 col-md-offset-2">
         <div class="panel panel-primary">
             <div class="panel-heading">
-                <h2 class="panel-title">
-                    <i class="fa fa-fw fa-warning"></i>
-                    Attiva il Corso Base
-                </h2>
+                <h2 class="panel-title"><i class="fa fa-fw fa-warning"></i> Attiva il Corso {% if corso.tipo == Corso.BASE %}Base{%endif%}</h2>
             </div>
             <div class="panel-body">
-                <p>Assicurati di aver inserito tutte le informazioni utili per la partecipazione
-                    al Corso Base nella descrizione del corso.</p>
-                <p>Invieremo un messaggio a <strong>tutti i {{ corso.aspiranti_nelle_vicinanze.count }}
-                    aspiranti nelle vicinanze</strong> avvisandoli dell'attivazione di questo corso.
+                <p>Assicurati di aver inserito tutte le informazioni utili per la partecipazione al Corso nella descrizione del corso.</p>
+
+                <p>Invieremo un messaggio a tutti i
+                    {% if corso.is_nuovo_corso %}
+                        <strong>volontari in base all' estensione impostata</strong>
+                    {% else %}
+                        <strong>{{ corso.aspiranti_nelle_vicinanze.count }} aspiranti nelle vicinanze</strong>
+                    {% endif %} avvisandoli dell'attivazione di questo corso.
+
                     Tieni presente che puoi attivare il corso, ed inviare questa e-mail, solo una volta.</p>
-                <p>Ecco un'anteprima dell'e-mail che invieremo a tutti gli aspiranti:</p>
+                <p>Ecco un'anteprima dell'e-mail che invieremo a tutti {% if corso.is_nuovo_corso %}i volontari{%else%}gli aspiranti{%endif%}:</p>
                 <div class="panel panel-info">
                     <div class="panel-heading">
-                        <i class="fa fa-fw fa-search"></i>
-                        Anteprima messaggio
+                        <i class="fa fa-fw fa-search"></i> Anteprima messaggio
                     </div>
-                    <div class="panel-body piu-piccolo">
-                        {{ testo|safe }}
-                    </div>
+                    <div class="panel-body piu-piccolo">{{ testo|safe }}</div>
                 </div>
-                <p>Dopo aver verificato la correttezza e la completezza delle informazioni qui presenti,
-                    clicca sul pulsante per attivare il corso e inviare l'e-mail.</p>
+                <p>Dopo aver verificato la correttezza e la completezza delle informazioni qui presenti, clicca sul pulsante per attivare il corso e inviare l'e-mail.</p>
                 <p>
-                    <button type="submit" class="btn btn-primary btn-block"
-                            data-conferma="Sei sicur{{ me.genere_o_a }}?">
-                        <i class="fa fa-fw fa-check-circle"></i>
-                        OK, attiva il corso e invia il messaggio
+                    <button type="submit" class="btn btn-primary btn-block" data-conferma="Sei sicur{{ me.genere_o_a }}?">
+                        <i class="fa fa-fw fa-check-circle"></i> OK, attiva il corso e invia il messaggio
                     </button>
                 </p>
-                <p>
-                    <a href="{{ corso.url }}" class="btn btn-default btn-sm btn-block">
-                        <i class="fa fa-fw fa-mail-reply"></i>
-                        Torna indietro
-                    </a>
-                </p>
-
-
+                <p><a href="{{ corso.url }}" class="btn btn-default btn-sm btn-block"><i class="fa fa-fw fa-mail-reply"></i> Torna indietro</a></p>
             </div>
-
-
         </div>
-
-
-
     </div>
-
 </form>
 </div>
-
 {% endblock %}

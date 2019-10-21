@@ -1,148 +1,169 @@
 {% extends 'aspirante_corso_base_scheda.html' %}
 
+{% load staticfiles %}
+{% load humanize %}
 {% load bootstrap3 %}
+{% load formazione_templatetags %}
 
-{% block scheda_titolo %}
-    Lezioni
-{% endblock %}
+{% block scheda_titolo %}Lezioni{% endblock %}
 
 {% block scheda_contenuto %}
+<style>
+  .scheda-lezione-non-revisionata {color:red;}
+  .esonero-text {font-size: 12px; padding: 4px 6px;}
+  .lezione-scheda-text {display:block; margin-bottom:15px; text-align:center; color:red; font-weight:bold;}
+  .toggle-bg {background-color: #c00 !important; color: #fff;}
+  .lezione-validation-msg {margin:15px 0; color:red; font-size:16px; text-align:center; font-weight:bold;}
+</style>
 
 <div class="row">
-    <form method="POST">
-    {% csrf_token %}
+  <div class="col-md-9">
+    <div class="panel panel-info">
+      <div class="panel-heading">
+        <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Lezioni</h2>
+      </div>
 
-        <div class="col-md-9">
-
-            <div class="panel panel-info">
-                <div class="panel-heading">
-                    <h2 class="panel-title">
-                        <i class="fa fa-fw fa-list"></i>
-                        Lezioni
-                    </h2>
+      <div class="panel-body">
+        <table class="table table-striped">
+          {% for lezione, modulo, partecipanti_lezione in lezioni %}
+          <tr class="lezione-head" style="margin-bottom:6px;">
+            <td colspan="2">
+              <div class="toggleLezione" data-lezione-id="#{{ lezione.pk }}" style="cursor:pointer; font-size:22px;">
+                <strong>{{ lezione.nome }}</strong>
+                <div style="margin:0 0 7px 0; font-size:14px;">
+                  <span {% if puo_modificare and lezione.non_revisionata %}class="scheda-lezione-non-revisionata"{% endif %}>
+                      {{ lezione.inizio.date|naturalday:"DATE_FORMAT" }}, {{ lezione.inizio.time|date:"TIME_FORMAT" }}
+                  </span>
+                  {% if lezione.fine %} &mdash; {{ lezione.fine.time|date:"TIME_FORMAT" }}{% endif %}
+                  {% if lezione.lezione_ore and not lezione.divisa %}(<strong>{% lezione_durata lezione %}</strong> ore){% endif %}
                 </div>
+              </div>
+            </td>
+          </tr>
+          <tr class="lezione-data" id="{{ lezione.pk }}" style="display:none;">
+            <td style="width: 40%">
+              {% if lezione.precaricata %}<p class="lezione-scheda-text">Lezione precompilata come da scheda corso</p>{% endif %}
+              {% if lezione.divisa %}<span class="lezione-scheda-text" style="color:blue;">Lezione divisa</span>{% endif %}
 
-                <div class="panel-body">
+              <form action="{{ lezione.url_save }}" method="POST">
+                {% csrf_token %}
 
+                {% bootstrap_form modulo %}
 
-                    <table class="table table-striped">
-                       <thead>
-                        <tr>
-                            <th>Lezione</th>
-                            <th>Presenti</th>
+                {% if invalid_forms and lezione.pk in invalid_forms  %}
+                  <div class="lezione-validation-msg">Verificare i dati inseriti per questa lezione.</div>
+                {% endif %}
+
+                <button type="submit" name="azione" value="salva" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva informazioni</button>
+
+                {% if lezione.precaricata and not lezione.divisa and lezione.puo_dividere %}
+                  <button type="submit" name="azione" value="dividi" class="btn btn-block"><i class="fa fa-fw fa-columns"></i> Dividi lezione</button>
+                {% endif %}
+
+                {% if not lezione.precaricata or lezione.precaricata and lezione.divisa %}
+                  <a href="{{ lezione.url_cancella }}" class="btn btn-sm btn-danger btn-block" data-conferma="Cancellare questa lezione? Questo eliminerà anche le assenze registrate.">
+                    <i class="fa fa-fw fa-trash"></i> Cancella lezione
+                  </a>
+                {% endif %}
+              </form>
+            </td>
+            <td>
+              <form action="{{ lezione.url_save }}" method="POST">
+                {% csrf_token %}
+
+                <table class="table table-striped table-condensed">
+                  <thead>
+                  <tr>
+                    <th>Pres.</th>
+                    <th>Nome</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                    {% for partecipante in partecipanti %}
+                      {% lezione_partecipante_pk_shortcut lezione partecipante as lezione_partecipante_pk %}
+                      {% lezione_esonero lezione partecipante as assenza_lezione_esonero %}
+
+                      <tr>
+                        <td id="actions-{{partecipante.pk}}" style="min-width: 125px;">
+                          <label style="margin-bottom: -1px;"><input type="checkbox"
+                                                                     id="presenza-{{ lezione_partecipante_pk }}"
+                                                                     name="presenze-{{ lezione.pk }}"
+                                                                     value="{{ partecipante.pk }}"
+                                                                     {% if partecipante in partecipanti_lezione %}checked="checked"{% endif %} /> S&igrave;
+                          </label>
+
+                          <label style="margin: 0 0 0 8px;"><input type="checkbox"
+                                                                   class="esoneroCheckbox"
+                                                                   name="esonero-checkbox-{{ lezione_partecipante_pk }}"
+                                                                   data-esonero="#esonero-{{ lezione_partecipante_pk }}"
+                                                                   data-lezione-partecipante="{{ lezione_partecipante_pk }}"
+                                                                   {% if assenza_lezione_esonero %}checked="checked"{% endif %}> Esonero
+                          </label>
+
+                          <input type="text" style="{% if not assenza_lezione_esonero %}display:none;{% endif %}"
+                                 class="esonero-text"
+                                 id="esonero-{{ lezione_partecipante_pk }}"
+                                 name="esonero-{{ lezione_partecipante_pk }}"
+                                 placeholder="Motivazione dell'esonero"
+                                 value='{{ assenza_lezione_esonero.esonero_motivazione|default:"" }}'>
+                        </td>
+                        <td>
+                          <a href="{% url 'profilo:main' partecipante.pk %}">{{partecipante.cognome}} {{partecipante.nome}}</a>
+                        </td>
+                      </tr>
+                      {% empty %}
+                        <tr class="alert alert-warning">
+                          <td colspan="2">Nessun iscritto confermato.</td>
                         </tr>
-                       </thead>
+                    {% endfor %}
+                  </tbody>
+                </table>
+                <button type="submit" name="azione" value="salva_presenze" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva presenze</button>
 
-                        {% for lezione, modulo, partecipanti_lezione in lezioni %}
+              </form>
+            </td>
+          </tr>
 
-                            <tr id="{{ lezione.pk }}">
-                                <td style="width: 40%">
-                                    {% bootstrap_form modulo %}
-                                    <button type="submit" name="azione" value="salva"
-                                            class="btn btn-primary btn-block">
-                                        <i class="fa fa-fw fa-save"></i>
-                                        Salva informazioni
-                                    </button>
-                                    <a href="{{ lezione.url_cancella }}" class="btn btn-sm btn-danger btn-block"
-                                        data-conferma="Cancellare questa lezione? Questo eliminerà anche le assenze registrate.">
-                                        <i class="fa fa-fw fa-trash"></i>
-                                        Cancella lezione
-                                    </a>
-                                </td>
-                                <td>
-                                    <table class="table table-striped table-condensed">
-                                        <thead>
-                                        <tr>
-                                            <th>Pres.</th>
-                                            <th>Nome</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for partecipante in partecipanti %}
-                                                <tr>
-                                                    <td>
-                                                        <label style="margin-bottom: -1px;">
-                                                            <input type="checkbox" name="presenze-{{ lezione.pk }}"
-                                                                   value="{{ partecipante.pk }}"
-                                                                   {% if partecipante in partecipanti_lezione %}checked="checked"{% endif %} />
-                                                            S&igrave;
-                                                        </label>
-                                                    </td>
-                                                    <td>
-                                                        {{ partecipante.link|safe }}
-                                                    </td>
-                                                </tr>
-                                            {% empty %}
-                                                <tr class="warning">
-                                                    <td colspan="2">Nessun iscritto confermato.</td>
-                                                </tr>
-                                            {% endfor %}
+          {% empty %}
+          <tr class="alert alert-warning">
+            <td colspan="2">
+              <i class="fa fa-fw fa-warning"></i> Ancora nessuna lezione inserita. Inserisci una lezione col modulo in questa pagina.
+            </td>
+          </tr>
+          {% endfor %}
 
-                                        </tbody>
-                                    </table>
-                                    <button type="submit" name="azione" value="salva"
-                                            class="btn btn-primary btn-block">
-                                        <i class="fa fa-fw fa-save"></i>
-                                        Salva presenze
-                                    </button>
+          {% if invalid_forms %}
+            <script>
+                $('#{{ invalid_forms.0 }}').show();
+                document.getElementById("{{ invalid_forms.0 }}").scrollIntoView({
+                  behavior: 'smooth'
+                });
+            </script>
+          {% endif %}
 
-                                </td>
-                            </tr>
+        </table>
+      </div>
+    </div>
+  </div>
 
-
-
-
-                        {% empty %}
-
-                            <tr class="warning">
-                                <td colspan="2">
-                                    <i class="fa fa-fw fa-warning"></i>
-                                    Ancora nessuna lezione inserita.
-                                    Inserisci una lezione col modulo in questa pagina.
-                                </td>
-                            </tr>
-
-                        {% endfor %}
-
-
-
-
-                    </table>
-
-                </div>
-
-            </div>
-
+  <form action="{{ corso.url_lezioni }}" method="POST">
+    {% csrf_token %}
+    <div class="col-md-3">
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Completa Lezioni</h2>
         </div>
-
-        </form>
-
-        <form method="POST">
-            {% csrf_token %}
-        <div class="col-md-3">
-
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h2 class="panel-title">
-                        <i class="fa fa-fw fa-plus-circle"></i>
-                        Aggiungi lezione
-                    </h2>
-                </div>
-                <div class="panel-body">
-                    {% bootstrap_form modulo_nuova_lezione %}
-                    <button type="submit" name="azione" value="nuova"
-                            class="btn btn-primary btn-block">
-                        <i class="fa fa-fw fa-check-circle"></i>
-                        Aggiungi lezione
-                    </button>
-
-                </div>
-            </div>
-
+        <div class="panel-body">
+          {% bootstrap_form modulo_nuova_lezione %}
+          <button type="submit" name="azione" value="nuova" class="btn btn-primary btn-block">
+            <i class="fa fa-fw fa-check-circle"></i> Aggiungi lezione
+          </button>
         </div>
-        </form>
+      </div>
+    </div>
+  </form>
 
+  <script src="{% static 'js/formazione/formazione-lezioni.js' %}"></script>
 
 </div>
-
 {% endblock %}

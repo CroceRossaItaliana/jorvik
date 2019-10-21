@@ -1,0 +1,99 @@
+{% extends 'pdf_standard.html' %}
+
+{% load static %}
+{% load base_tags %}
+
+{% block css_extra %}
+    body {font-family: 'Arial'; padding:0; margin:0;}
+    .heading-logo-cri {display:block; margin:0 auto 20px; width:150px;}
+    .heading-scheda-title {margin-bottom:50px; text-align:center; text-transform:uppercase;font-weight:bold;}
+    .table-elenco {border: 1px solid #bbb; width: 100%; text-align: left; font-size: 11pt; border-collapse: collapse;}
+    .table-elenco td, .table-elenco th {border: 1px solid; padding: 6px 4px;}
+    .table-elenco-col-name {font-size:11px; font-weight:bold; text-align:center;}
+    .idoneita-btn {padding:8px 12px; font-size:14px; font-weight:bold; margin-right: 20px; border: 2px solid #000;}
+{% endblock %}
+
+{% block corpo %}
+  {% get_url_for_staticfiles as SITE_URL %}
+
+  <img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">
+
+  <div class="heading-scheda-title">{{ corso.titolo_cri }}<br>SCHEDA DI VALUTAZIONE INDIVIDUALE</div>
+
+  <div style="padding-bottom:15px;">
+    <span>{{ persona.nome }}</span> <span>{{ persona.cognome }}</span>
+  </div>
+
+  <div style="padding-bottom:15px;">
+    Luogo e data di<br>nascita {{ persona.luogo_nascita|default:"______________" }}, {{ persona.data_nascita|date:"DATE_FORMAT" }}
+  </div>
+
+  <div>
+    Comitato CRI e Regione {{ corso.sede.comitato }}
+  </div>
+
+  <div>
+    <div style="margin:15px 0; font-weight:bold; font-size:13px; text-align:center;">VALUTAZIONI CONSEGUITE</div>
+    <table class="table-elenco" style="margin-bottom:30px;">
+      <thead>
+          <tr>
+              <td class="table-elenco-col-name">Tipologia di Valutazione</td>
+              <td class="table-elenco-col-name">Positivo/Negativo</td>
+          </tr>
+      </thead>
+      <tr style="font-size:10px;">
+          <td>
+            <strong><u>Parte teorica:</u></strong>
+          </td>
+          <td>{{ partecipazione.get_esito_parte_1_display }}</td>
+      </tr>
+      <tr style="font-size:10px;">
+          <td>
+            <strong><u>Parte pratica:</u></strong>
+          </td>
+          <td>{{ partecipazione.get_esito_parte_2_display }}</td>
+      </tr>
+      <tr style="font-size:10px;">
+          <td>
+            <strong><u>Eventuale tirocinio/affiancamento:</u></strong>
+          </td>
+          <td>{{ partecipazione.get_eventuale_tirocinio_display }}</td>
+      </tr>
+    </table>
+    <table class="table-elenco" style="margin-bottom:30px;">
+      <tr>
+        <td>
+          <div style="margin-bottom:25px;"><strong>Valutazione complessiva del Direttore del Corso:</strong></div>
+          <div>{{ partecipazione.valutazione_complessiva }}</div>
+        </td>
+      </tr>
+    </table>
+    <table class="table-elenco" style="margin-bottom:30px;">
+      <tr>
+        <td>
+          <div style="margin-bottom:25px;"><strong>Eventuali note/osservazioni:</strong></div>
+          <div>{{ partecipazione.eventuali_note }}</div>
+        </td>
+      </tr>
+    </table>
+    <div style="margin-bottom:25px;">Alla luce della valutazione complessiva, il Partecipante risulta essere <br><br>
+      <span class="idoneita-btn">{{ partecipazione.get_esito_esame_display }}</span></div>
+  </div>
+
+  <div>
+    <div style="margin-bottom:10px; text-align:right;">Luogo e data della valutazione:</div>
+    <table>
+      <tr>
+        <td style="width:50%; vertical-align: top;">
+          <div style="margin-bottom:10px;">Il Direttore del Corso</div>
+          {% for direttore in corso.direttori_corso %}
+            {{ direttore }}<br>
+          {% endfor %}
+        </td>
+        <td style="width:50%; vertical-align: top;">
+          <div style="margin-bottom:10px;">Il Presidente della Commissione</div> {{ corso.sede.presidente }}
+        </td>
+      </tr>
+    </table>
+  </div>
+{% endblock %}

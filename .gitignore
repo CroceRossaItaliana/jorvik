@@ -10,6 +10,8 @@ assets/
 /*.sql.gz
 /*.sql
 .sass-cache
+venv
 .venv
 /log/debug.log
 /ghostdriver.log
+celerybeat-schedule

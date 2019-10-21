@@ -73,6 +73,8 @@ class ModuloCreazioneArea(ModelForm):
 
 
 class ModuloOrganizzaAttivita(ModelForm):
+
+    gruppo = forms.BooleanField(required=False, initial=False, label="Vuoi creare un gruppo di lavoro per quest'attività?")
     class Meta:
         model = Attivita
         fields = ['nome', 'area', ]
@@ -89,7 +91,25 @@ class ModuloOrganizzaAttivitaReferente(forms.Form):
                            "quest'attività")
     )
 
-    scelta = forms.ChoiceField(choices=SCELTA, help_text="Scegli l'opzione appropriata.")
+    @staticmethod
+    def popola_scelta():
+        from attivita.models import NonSonoUnBersaglio
+        bersaglio = NonSonoUnBersaglio.objects.all()
+        choices = [
+            (None,  "-- Scegli un'opzione --"),
+            (ModuloOrganizzaAttivitaReferente.SONO_IO, "Sarò io il referente per questa attività"),
+            (ModuloOrganizzaAttivitaReferente.SCEGLI_REFERENTI, "Fammi scegliere uno o più referenti che gestiranno "
+                               "quest'attività"),
+        ]
+        for b in bersaglio:
+            choices.append((b.persona.id, b.persona))
+
+        return choices
+
+    scelta = forms.ChoiceField(
+        choices=SCELTA,
+        help_text="Scegli l'opzione appropriata."
+    )
 
 
 class ModuloStatisticheAttivita(forms.Form):
@@ -103,7 +123,7 @@ class ModuloStatisticheAttivita(forms.Form):
         (MESE, "Per mese"),
     )
 
-    sedi = forms.ModelMultipleChoiceField(queryset=Sede.objects.all())
+    sedi = forms.ModelMultipleChoiceField(queryset=Sede.objects.filter(attiva=True))
     periodo = forms.ChoiceField(choices=SCELTE, initial=SETTIMANA)
 
 

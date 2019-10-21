@@ -1,19 +1,15 @@
-from datetime import date
-from anagrafica.permessi.costanti import permesso_minimo, LETTURA
-from anagrafica.permessi.espansioni import ESPANDI_PERMESSI, espandi_persona
-from django.utils import timezone
-
-from anagrafica.permessi.funzioni import permessi_persona
-
-__author__ = 'alfioemanuele'
+from ..permessi.costanti import permesso_minimo, LETTURA
+from ..permessi.espansioni import ESPANDI_PERMESSI, espandi_persona
+from ..permessi.funzioni import permessi_persona
 
 
-def persona_oggetti_permesso(persona, permesso, al_giorno=None):
+def persona_oggetti_permesso(persona, permesso, al_giorno=None, solo_deleghe_attive=True):
     """
     Dato un permesso, ritorna un queryset agli oggetti che sono coperti direttamente
     dal permesso. Es.: GESTINE_SOCI -> Elenco dei Comitati in cui si ha gestione dei soci.
     :param permesso: Permesso singolo.
     :param al_giorno: Data di verifica.
+    :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
     :return: QuerySet. Se permesso non valido, QuerySet vuoto o None (EmptyQuerySet).
     """
     if not permesso:
@@ -30,8 +26,11 @@ def persona_oggetti_permesso(persona, permesso, al_giorno=None):
                 qs = qs | o
 
     # Permessi derivanti dalle deleghe
-    for d in persona.deleghe_attuali(al_giorno=al_giorno):
-        for (p, o) in d.permessi():
+    deleghe_attuali = persona.deleghe_attuali(al_giorno=al_giorno,
+                                              solo_attive=solo_deleghe_attive)
+
+    for d in deleghe_attuali:
+        for (p, o) in d.permessi(solo_deleghe_attive=solo_deleghe_attive):
             if p == permesso:
                 if qs is None:
                     qs = o
@@ -44,7 +43,7 @@ def persona_oggetti_permesso(persona, permesso, al_giorno=None):
         return qs
 
 
-def persona_permessi(persona, oggetto, al_giorno=None):
+def persona_permessi(persona, oggetto, al_giorno=None, solo_deleghe_attive=True):
     """
     Ritorna il livello di permessi che si ha su un qualunque oggetto.
 
@@ -55,6 +54,7 @@ def persona_permessi(persona, oggetto, al_giorno=None):
 
     :param oggetto: Oggetto qualunque.
     :param al_giorno:  Data di verifica.
+    :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
     :return: Intero. NESSUNO...COMPLETO
     """
 
@@ -65,7 +65,7 @@ def persona_permessi(persona, oggetto, al_giorno=None):
         permessi += ESPANDI_PERMESSI[permesso][queryset]
 
     # Per ogni delega attuale, aggiungi i permessi
-    for d in persona.deleghe_attuali(al_giorno=al_giorno):
+    for d in persona.deleghe_attuali(al_giorno=al_giorno, solo_attive=solo_deleghe_attive):
         ## [(permesso, oggetto), ...] = PERMESSI_DELEGA[d.tipo](d.oggetto)  # ie. ((
         for (permesso, queryset) in d.permessi():
             permessi += ESPANDI_PERMESSI[permesso](queryset)
@@ -88,13 +88,15 @@ def persona_permessi(persona, oggetto, al_giorno=None):
     return massimo
 
 
-def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=None):
+def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=None,
+                            solo_deleghe_attive=True):
     """
     Controlla se ho i permessi minimi richiesti specificati su un dato oggetto.
 
     :param oggetto: Oggetto qualunque.
     :param minimo: Oggetto qualunque.
     :param al_giorno:  Data di verifica.
+    :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
     :return: True se permessi >= minimo, False altrimenti
     """
 
@@ -114,10 +116,12 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=None):
     for (permesso, queryset) in permessi_persona(persona):
         permessi += ESPANDI_PERMESSI[permesso](queryset)
 
-    # Per ogni delega attuale, aggiungi i permessi
-    for d in persona.deleghe_attuali(al_giorno=al_giorno):
-        ## [(permesso, oggetto), ...] = PERMESSI_DELEGA[d.tipo](d.oggetto)  # ie. ((
-        for (permesso, queryset) in d.permessi():
+    deleghe_attuali = persona.deleghe_attuali(al_giorno=al_giorno,
+                                              solo_attive=solo_deleghe_attive)
+
+    for delega in deleghe_attuali:
+        delega_permessi = delega.permessi(solo_deleghe_attive=solo_deleghe_attive)
+        for (permesso, queryset) in delega_permessi:
             permessi += ESPANDI_PERMESSI[permesso](queryset)
 
     for (permesso, queryset) in permessi:  # p: (PERMESSO, queryset)
@@ -132,11 +136,12 @@ def persona_permessi_almeno(persona, oggetto, minimo=LETTURA, al_giorno=None):
     return False
 
 
-def persona_ha_permesso(persona, permesso, al_giorno=None):
+def persona_ha_permesso(persona, permesso, al_giorno=None, solo_deleghe_attive=True):
     """
     Dato un permesso, ritorna true se il permesso e' posseduto.
     :param permesso: Permesso singolo.
     :param al_giorno: Data di verifica.
+    :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
     :return: True se il permesso e' posseduto. False altrimenti.
     """
     if not permesso:
@@ -148,7 +153,7 @@ def persona_ha_permesso(persona, permesso, al_giorno=None):
             return True
 
     # Permessi derivanti dalle deleghe
-    for d in persona.deleghe_attuali(al_giorno=al_giorno):
+    for d in persona.deleghe_attuali(al_giorno=al_giorno, solo_attive=solo_deleghe_attive):
         for (p, o) in d.permessi():
             if p == permesso:
                 return True
@@ -156,20 +161,21 @@ def persona_ha_permesso(persona, permesso, al_giorno=None):
     return False
 
 
-def persona_ha_permessi(persona, *permessi):
+def persona_ha_permessi(persona, *permessi, solo_deleghe_attive=True):
     """
     Dato un elenco di permessi, ritorna True se tutti i permessi sono posseduti.
     :param permessi: Elenco di permessi.
     :param al_giorno: Data di verifica.
+    :param solo_deleghe_attive: True se deve usare solo le deleghe attive per il calcolo del permesso. False altrimenti.
     :return: True se tutti i permessi sono posseduti. False altrimenti.
     """
     if persona.admin:
         return True
     for p in permessi:
         if isinstance(p, (list, tuple)):  # Tupla
-            if not persona.ha_permessi(*p):
+            if not persona.ha_permessi(*p, solo_deleghe_attive=solo_deleghe_attive):
                 return False
         else:  # Singolo permesso
-            if not persona.ha_permesso(p):
+            if not persona.ha_permesso(p, solo_deleghe_attive=solo_deleghe_attive):
                 return False
     return True

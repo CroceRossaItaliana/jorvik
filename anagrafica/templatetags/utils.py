@@ -1,4 +1,5 @@
 from django import template
+from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import QuerySet, Max
 from django.template import Library
@@ -6,6 +7,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_text
 
+from jorvik.settings import GOOGLE_KEY
 from anagrafica.models import Persona, Delega
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI
 from anagrafica.permessi.costanti import PERMESSI_TESTO, NESSUNO
@@ -14,12 +16,50 @@ from base.stringhe import genera_uuid_casuale
 from base.tratti import ConDelegati
 from base.utils import testo_euro
 from ufficio_soci.elenchi import Elenco
+from anagrafica.permessi.applicazioni import PRESIDENTE
+from datetime import timezone
+from django.utils import timezone
+
 
 register = Library()
 
 
+@register.filter
+def stato_riserva(riserva):
+    ATTUALE = 'Attuale'
+    PASSATA = 'Passata'
+    # Se la riserva non è iniziata ne passata allora non mostriamo niente fino alla sua attivazione
+    NON_ATTIVA = ''
+
+    oggi = timezone.now()
+
+    # La riserva no ha una fine è in stato indeterminato
+    if not riserva.fine:
+        return ATTUALE
+
+    # se il giorno odierno e compreso tra inizio e fine delle riserve, questa è attuale
+    if riserva.inizio <= oggi <= riserva.fine:
+        return ATTUALE
+    # se il giorno odierno è maggiore della fine riserva, questa è passata
+    elif oggi > riserva.fine:
+        return PASSATA
+    # se il giorno di inizio della riserva è maggiore del giorno odierno, questa non è ancora attiva
+    elif riserva.inizio > oggi:
+        return NON_ATTIVA
+
+
+@register.filter
+def select_presidente_commissario_da_persona(persona):
+    return 'Presidente' if persona.deleghe_attuali(tipo=PRESIDENTE).exists() else 'Commissario'
+
+
+@register.filter
+def select_presidente_commisario_da_sede(sede):
+    return 'Presidente' if sede.presidente() else 'Commissario'
+
+
 @register.simple_tag(takes_context=True)
-def card(context, persona=None, nome=True, extra_class="btn btn-sm btn-default", avatar=False):
+def card(context, persona=None, nome=True, extra_class="btn btn-sm btn-default", avatar=False, mute_contact=False):
 
     if not isinstance(persona, Persona):
         raise ValueError("Il tag card puo' solo essere usato con una persona, ma e' stato usato con un oggetto %s." % (persona.__class__.__name__,))
@@ -29,6 +69,7 @@ def card(context, persona=None, nome=True, extra_class="btn btn-sm btn-default",
         'card_nome': nome,
         'card_avatar': avatar,
         'card_class': extra_class,
+        'mute_contact': mute_contact,
     })
 
     return render_to_string('anagrafica_tags_card.html', context)
@@ -64,7 +105,6 @@ def checkbox(booleano, extra_classe='', con_testo=1):
 
 @register.simple_tag(takes_context=True)
 def localizzatore(context, oggetto_localizzatore=None, continua_url=None, solo_italia=False):
-
     if not isinstance(oggetto_localizzatore, ConGeolocalizzazione):
         raise ValueError("Il tag localizzatore puo' solo essere usato con un oggetto ConGeolocalizzazione, ma e' stato usato con un oggetto %s." % (oggetto_localizzatore.__class__.__name__,))
 
@@ -75,9 +115,10 @@ def localizzatore(context, oggetto_localizzatore=None, continua_url=None, solo_i
     context.request.session['pk'] = oggetto_localizzatore.pk
     context.request.session['continua_url'] = continua_url
 
-    url = "/geo/localizzatore/"
+    url = reverse('geo_localizzatore')
     if solo_italia:
         url += '?italia=1'
+
     context.update({
         'iframe_url': url,
     })
@@ -85,9 +126,11 @@ def localizzatore(context, oggetto_localizzatore=None, continua_url=None, solo_i
 
 
 @register.simple_tag(takes_context=True)
-def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None, almeno=0):
+def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None, almeno=0, *args, **kwargs):
     if not isinstance(oggetto, ConDelegati):
-        raise ValueError("Il tag delegati puo' solo essere usato con un oggetto ConDelegati, ma e' stato usato con un oggetto %s." % (oggetto_localizzatore.__class__.__name__,))
+        msg = "Il tag delegati può solo essere usato con un oggetto ConDelegati, " \
+              "ma è stato usato con un oggetto %s."
+        raise ValueError(msg % oggetto_localizzatore.__class__.__name__)
 
     oggetto_tipo = ContentType.objects.get_for_model(oggetto)
     context.request.session['app_label'] = oggetto_tipo.app_label
@@ -96,9 +139,8 @@ def delegati(context, delega=UFFICIO_SOCI, oggetto=None, continua_url=None, alme
     context.request.session['continua_url'] = continua_url
     context.request.session['delega'] = delega
     context.request.session['almeno'] = almeno
-    url = "/strumenti/delegati/"
     context.update({
-        'iframe_url': url,
+        'iframe_url': reverse('strumenti_delegati'),
     })
     return render_to_string('base_iframe_4_3.html', context)
 
@@ -111,11 +153,14 @@ def giorni_ore_minuti(context, tdelta):
 
 
 @register.assignment_tag(takes_context=True)
-def permessi_almeno(context, oggetto, minimo="lettura"):
+def permessi_almeno(context, oggetto, minimo="lettura", deleghe="solo_attive"):
     """
     Controlla che l'utente attuale -estrapolato dal contesto- abbia i permessi
      minimi su un determinato oggetto. Ritorna True o False.
     """
+
+    if deleghe not in ("solo_attive", "tutte"):
+        raise ValueError("Valore per 'deleghe' non riconosciuto.")
 
     if minimo not in PERMESSI_TESTO:
         raise ValueError("Permesso '%s' non riconosciuto. Deve essere in 'PERMESSI_TESTO'." % (minimo,))
@@ -128,7 +173,13 @@ def permessi_almeno(context, oggetto, minimo="lettura"):
     if not hasattr(context.request, 'me'):
         return False
 
-    almeno = context.request.me.permessi_almeno(oggetto, minimo_int)
+    me = context.request.me
+
+    if not me:
+        return False
+
+    solo_deleghe_attive = deleghe == "solo_attive"
+    almeno = me.permessi_almeno(oggetto, minimo_int, solo_deleghe_attive=solo_deleghe_attive)
     return almeno
 
 
@@ -186,7 +237,10 @@ def differenza(a, b, piu=0):
 
 @register.filter(name='volte')
 def volte(number, meno=0):
-    return range(number-meno)
+    try:
+        return range(number-meno)
+    except TypeError:
+        pass
 
 
 class NodoMappa(template.Node):
@@ -251,7 +305,7 @@ class NodoMappa(template.Node):
             function loadScript() {
               var script = document.createElement("script");
               script.type = "text/javascript";
-              script.src = "https://maps.google.com/maps/api/js?sensor=false&callback=initialize";
+              script.src = "https://maps.googleapis.com/maps/api/js?sensor=false&callback=initialize&key=""" + GOOGLE_KEY + """ ";
               document.body.appendChild(script);
           }
           window.onload = loadScript;
@@ -259,4 +313,49 @@ class NodoMappa(template.Node):
         """
 
         return output
+
+
+@register.simple_tag()
+def image_as_base64(image_file):
+    import os
+    import base64
+    import pathlib
+
+    image_path = image_file.path
+
+    if not os.path.isfile(image_path):
+        return None
+
+    encoded_string = ''
+    extension = pathlib.Path(image_path).suffix
+
+    with open(image_path, 'rb') as img:
+        encoded_string = base64.b64encode(img.read())
+
+    return 'data:image/%s;base64,%s' % (extension, encoded_string.decode("utf-8"))
+
+
+@register.simple_tag(takes_context=True)
+def get_top_navbar(context):
+    from django.contrib.auth.models import AnonymousUser
+
+    # menu_applicazioni passato nel context nei deocratori in: autenticazione.funzioni
+
+    request = context['request']
+    user = request.user
+
+    menu = context.get('menu_applicazioni')
+    if menu:
+        return menu
+
+    if user and not isinstance(user, AnonymousUser):
+        # restituisci il menu chiamando il metodo direttamente
+        return user.applicazioni_disponibili
+
+    return ""
+
+@register.filter
+def is_rifiutato(id):
+    from ufficio_soci.models import Tesserino
+    return False if Tesserino.objects.filter(persona=id, stato_richiesta=Tesserino.RIFIUTATO).count() else True
 

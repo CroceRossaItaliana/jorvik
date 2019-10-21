@@ -77,6 +77,51 @@ def messaggio_generico(request, me=None,
     }
     return 'base_messaggio_generico.html', contesto
 
+def messaggio_avvertimento(request, me=None,
+                       titolo="OK", messaggio="Azione effettuata.",
+                       torna_titolo="Home page", torna_url="/", embed=False):
+    """
+    Ritorna un messaggio generico con un link per tornare indietro.
+    :param titolo: Il titolo del messaggio .
+    :param messaggio: Il messaggio .
+    :param torna_titolo: Il titolo del link per tornare alla pagina precedente.
+    :param torna_url: L'URL della pagina precedente alla quale tornare.
+    """
+    contesto = {
+        "messaggio_titolo": titolo,
+        "messaggio_messaggio": messaggio,
+        "messaggio_torna_titolo": torna_titolo,
+        "messaggio_torna_url": torna_url,
+        "embed": embed
+    }
+    return 'base_messaggio_avvertimento.html', contesto
+
+
+def messaggio_conferma(request, me=None,
+             titolo="OK", messaggio="Conferma azione",
+             torna_titolo="Home page", torna_url="/", 
+             esegui_titolo="Home page", esegui_url="/", 
+             embed=False):
+    """
+    Ritorna un messaggio generico con un link per tornare indietro.
+    :param titolo: Il titolo del messaggio .
+    :param messaggio: Il messaggio .
+    :param torna_titolo: Il titolo del link per tornare alla pagina precedente.
+    :param torna_url: L'URL della pagina precedente alla quale tornare.
+    :param esegui_titolo: Il titolo del link per eseguire l'azione.
+    :param esegui_url: L'URL della pagina per eseguire l'azione.
+    """
+    contesto = {
+        "messaggio_titolo": titolo,
+        "messaggio_messaggio": messaggio,
+        "messaggio_torna_titolo": torna_titolo,
+        "messaggio_torna_url": torna_url,
+        "messaggio_esegui_titolo": esegui_titolo,
+        "messaggio_esegui_url": esegui_url,
+        "embed": embed
+    }
+    return 'base_messaggio_conferma.html', contesto
+
 
 def errore_nessuna_appartenenza(request, me=None, torna_url="/utente/"):
     return errore_generico(request, me,

@@ -2,23 +2,101 @@
 
 {% load bootstrap3 %}
 {% load static %}
+{% load utils %}
 
 {% block app_contenuto %}
-
     {% if me.aspirante %}
         <div class="alert alert-success">
-            <h4>
-                <i class="fa fa-fw fa-info-circle"></i>
-                Vuoi trovare Corsi Base vicino a te?
-            </h4>
-            <p>
-                Clicca su "Aspirante" in alto a questa pagina per vedere i Corsi Base
-                e le Sedi CRI nelle tue vicinanze.
-            </p>
+            <h4><i class="fa fa-fw fa-info-circle"></i> Vuoi trovare Corsi Base vicino a te?</h4>
+            <p>Clicca su "Aspirante" in alto a questa pagina per vedere i Corsi Base e le Sedi CRI nelle tue vicinanze.</p>
         </div>
     {% endif %}
 
-    <div
+        <div class="row" style="margin-bottom:3em;">
+        <!--<div class="col col-md-4">
+            <div class="alert alert-danger" role="alert" style="text-align: center; margin:0; display: grid;">
+                <span class="glyphicon glyphicon-phone-alt" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://telefonia.cri.it" class="alert-link">Gestionale Telefonia</a>
+            </div>
+        </div>-->
+        {% if me.dipendente %}
+            <div class="col col-md-4">
+                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                    <span class="glyphicon glyphicon-check" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                    <a target="_blank" href="https://criwiki.cri.it:8443/pages/viewpage.action?spaceKey=DA&title=Minute+di+Riunione" class="alert-link">Minute di riunione</a>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if me.dipendente or me.volontario %}
+        <div class="col col-md-4">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                <span class="glyphicon glyphicon-road" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://roadmap.cri.it" class="alert-link">Roadmap</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if me.dipendente %}
+            <div class="col col-md-4">
+                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                    <span class="glyphicon glyphicon-folder-open" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                    <a target="_blank" href="https://sites.google.com/a/cri.it/manuale-processi/home?pli=1" class="alert-link">Manuale dei processi</a>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="col col-md-4">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
+                <span class="glyphicon glyphicon-cloud" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://redcloud.cri.it/?auto_login=true" class="alert-link">Redcloud</a>
+            </div>
+        </div>
+
+        <div class="col col-md-4">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
+                <span class="glyphicon glyphicon-link" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://gaia.cri.it/page/portale-convenzioni/" class="alert-link">Portale Convenzioni</a>
+            </div>
+        </div>
+        <!--<div class="col col-md-4">
+            <div class="alert alert-danger" role="alert" style="text-align: center; margin:0; display: grid; ">
+                <span class="glyphicon glyphicon-inbox" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://gestionale.cri.it" class="alert-link">Gestionale SG</a>
+            </div>
+        </div>-->
+        <div class="col col-md-4">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
+                <span class="glyphicon glyphicon-home" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://cri.it" class="alert-link">CRI.IT</a>
+            </div>
+        </div>
+
+        <div class="col col-md-4">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
+                <span class="glyphicon glyphicon-folder-open" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://gaia.cri.it/documenti/90/" class="alert-link">Toolkit Inclusione Lavorativa</a>
+            </div>
+        </div>
+
+        <div class="col col-md-4">
+            <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
+                <span class="fa fa-newspaper-o" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                <a target="_blank" href="https://gaia.cri.it/documenti/91/" class="alert-link">Edicola digitale</a>
+            </div>
+        </div>
+
+        {% if me.dipendente %}
+            <div class="col col-md-4">
+                <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
+                    <span class="glyphicon glyphicon-globe" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
+                    <a target="_blank" href="https://criwiki.cri.it:8443/display/DA/Mission+Report" class="alert-link">Mission Report</a>
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+    <!--<div
             id="benvenuto"
             class="well well-lg allinea-centro" style="
             background-image: url('{% static 'img/welcome_img1.jpg' %}');
@@ -37,36 +115,29 @@
         </p>
         <p>&nbsp;</p>
         <p>&nbsp;</p>
-    </div>
+    </div>-->
 
     {% if me.trasferimento and not me.trasferimento.con_scadenza %}
         <div class="alert alert-warning">
-            <h4>
-                <i class="fa fa-fw fa-warning"></i>
-                Hai attualmente un trasferimento in attesa di approvazione
-            </h4>
+            <h4><i class="fa fa-fw fa-warning"></i> Hai attualmente un trasferimento in attesa di approvazione</h4>
             <p>
                 Per ragioni tecniche -risolte a partire dal {{ SETTINGS.DATA_AVVIO_TRASFERIMENTI_AUTO|date:"SHORT_DATE_FORMAT" }}- non è stato possibile approvare in automatico il trasferimento.<br>
                 Vai alla <a href="/utente/trasferimenti/">sezione Trasferimenti</a> per maggiori informazioni.
             </p>
         </div>
-
     {% endif %}
 
     {% if me.nuovo_presidente %}
-        <div class="alert alert-success">
+        <div class="alert" style="border: 1px solid #f1f1f1;">
             <p class="grassetto">
                 <i class="fa fa-fw fa-smile-o"></i>
-                Ciao neo Presidente!
-                <a href="/presidente/">
-                    Hai gi&agrave; completato la check-list per il tuo Comitato?
-                </a>
+                Ciao neo {{ me | select_presidente_commissario_da_persona }}!
+                <a href="/presidente/">Hai gi&agrave; completato la check-list per il tuo Comitato?</a>
             </p>
         </div>
-
     {% endif %}
 
-    {% if not me.numeri_telefono.exists %}
+    {% if not me.numeri_telefono.exists and False %}
         <div class="alert alert-warning">
             <h4>
                 <i class="fa fa-fw fa-warning"></i>
@@ -84,7 +155,7 @@
         </div>
     {% endif %}
 
-    {% if me.titoli_personali.all.count < 3 %}
+    {% if me.titoli_personali.all.count < 3 and False %}
         <div class="alert alert-info">
             <h4>
                 <i class="fa fa-fw fa-info-circle"></i>
@@ -106,15 +177,12 @@
         </div>
     {% endif %}
 
-
-	
-
-
     <div class="articoli">
     {% for articolo in articoli %}
         {% include "includes/elemento_lista.html" %}
     {% endfor %}
     </div>
 
+    {% include "base_privacy_policy_popup.html" %}
 
 {% endblock %}

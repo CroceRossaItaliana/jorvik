@@ -67,7 +67,7 @@
                                     <tbody>
                                         {% for p in turno.partecipazioni_confermate %}
                                             <tr {% if p.stato == p.NON_PRESENTATO %}class="danger"{% endif %}>
-                                                <td class="warning">
+                                                <td class="alert alert-warning">
                                                     <input type="hidden" name="presenza-{{ p.pk }}" value="0" />
                                                     <label>
                                                         <input
@@ -101,12 +101,12 @@
 
                                         {% if turno.partecipazioni_confermate %}
                                             <tr>
-                                                <td class="warning">
+                                                <td class="alert alert-warning">
                                                     <button type="submit" class="btn btn-xs btn-warning">
                                                         <i class="fa fa-fw fa-save"></i>
                                                     </button>
                                                 </td>
-                                                <td class="text-warning" colspan="3">
+                                                <td class="alert-warning" colspan="3">
                                                     Usa il pulsante <i class="fa fa-fw fa-save"></i>
                                                     per salvare le presenze.
                                                 </td>
@@ -120,7 +120,7 @@
 
                             <tr><td>
 
-                                <h4 class="text-warning">
+                                <h4 class="alert-warning">
                                     <i class="fa fa-fw fa-clock-o"></i>
                                     Partecipazioni in attesa:
                                     {{ turno.partecipazioni_in_attesa.count }}
@@ -248,7 +248,7 @@
                 </tr>
             {% empty %}
 
-                <tr class="warning allinea-centro">
+                <tr class="alert alert-warning allinea-centro">
                     <td colspan="3">
                         <p>
                             <i class="fa fa-fw fa-info-circle"></i>

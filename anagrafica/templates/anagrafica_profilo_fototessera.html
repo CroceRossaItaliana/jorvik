@@ -5,7 +5,6 @@
 
 {% block profilo_corpo %}
 <div class="row">
-
     <div class="col-md-8">
         <div class="panel panel-info">
             <div class="panel-heading">
@@ -51,26 +50,21 @@
 
                             </tr>
                         {% empty %}
-                            <tr class="warning">
+                            <tr class="alert alert-warning">
                                 <td colspan="3">
                                     <i class="fa fa-fw fa-warning"></i>
                                     Nessuna fototessera caricata.
                                 </td>
                             </tr>
-
                         {% endfor %}
 
                     </tbody>
                 </table>
-
-
             </div>
         </div>
-
     </div>
 
     <div class="col-md-4">
-
     {% if puo_modificare %}
         <div class="panel panel-primary">
 
@@ -82,33 +76,18 @@
             </div>
 
             <div class="panel-body">
-
                 <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
-
-
                     {% bootstrap_form modulo %}
 
-                    <p class="text-warning">
-                        <i class="fa fa-fw fa-warning"></i>
-                        Assicurati che rispetti le norme per le
-                        fototessere riportate <a target="_new"
-                            href="http://wiki.gaia.cri.it/index.php?title=Manuale_del_Volontario#Norme_generali">
-                        in questa pagina</a>.
+                    <p class="alert-warning">
+                        <i class="fa fa-fw fa-warning"></i> Assicurati che rispetti le norme per le fototessere riportate
+                        <a target="_new" href="https://wiki.gaia.cri.it/display/GAIA/Norme+da+rispettare+per+la+fototessera">in questa pagina</a>.
                     </p>
 
-                    <button type="submit" class="btn btn-block btn-primary">
-                        <i class="fa fa-fw fa-save"></i>
-                        Salva fototessera
-                    </button>
-
+                    <button type="submit" class="btn btn-block btn-primary"><i class="fa fa-fw fa-save"></i> Salva fototessera</button>
                 </form>
-
             </div>
-
-
-
-
         </div>
     </div>
     {% endif %}

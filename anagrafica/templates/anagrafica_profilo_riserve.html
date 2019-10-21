@@ -31,7 +31,7 @@
 
                     {% for r in riserve %}
                         <tr>
-                            <td>{% if r.attuale %}Attuale{% else %}Passato{% endif %}</td>
+                            <td>{{ r|stato_riserva }}</td>
                             <td>{{ r.inizio|date:"SHORT_DATE_FORMAT" }}</td>
                             <td>{{ r.fine|date:"SHORT_DATE_FORMAT" }}</td>
                             <td>{{ r.motivo }}</td>
@@ -47,8 +47,8 @@
 
                     {% empty %}
                         <tr>
-                            <td colspan="8" class="bg-warning">
-                                <i class="fa fa-info"></i> Nessuna riserva passata.
+                            <td colspan="8" class="alert-warning">
+                                <i class="fa fa-info-circle"></i> Nessuna riserva passata.
                             </td>
                         </tr>
 

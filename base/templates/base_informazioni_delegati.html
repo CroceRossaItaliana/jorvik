@@ -7,7 +7,7 @@
         <ul>
             {% for delega in delegati %}
                 <li>
-                    <a href="mailto:{{ delega.persona.utenza.email }}">
+                    <a href="mailto:{{ delega.persona.email }}">
                         {{ delega.persona.nome_completo }}
                     </a>
                     ({{ delega.get_tipo_display }})

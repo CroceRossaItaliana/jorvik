@@ -9,9 +9,8 @@
 {% block pagina_titolo %}Elenco Sedi CRI con Recapiti e Mappa{% endblock %}
 
 {% block pagina_principale %}
+
 {% cache 1800 informazioni_sedi_v5 %}
-
-
     <div class="container">
 
         <div class="row">
@@ -19,7 +18,7 @@
             <div class="col-md-8">
 
                 <h2>
-                    <i class="fa fa-globe text-warning"></i>
+                    <i class="fa fa-globe alert-warning"></i>
                     Dov'&egrave; Croce Rossa attorno a me?
                 </h2>
                 <p>Elenco delle Sedi CRI che aderiscono al Progetto Gaia, con i relativi Recapiti ed una mappa.</p>
@@ -56,6 +55,11 @@
                             </p>
                             {% if not node.estensione == massimo_lista and not node.is_leaf_node %}
                                 <ul class="children">
+                                    <li>
+                                        <p>
+                                            <a href="{{ capitale.url }}?embed={{ embed|bool }}"><strong>{{ capitale.nome }}</strong></a>, Sede Provinciale
+                                        </p>
+                                    </li>
                                     {{ children }}
                                 </ul>
                             {% endif %}
@@ -86,7 +90,5 @@
 
         </div>
     </div>
-
-
 {% endcache %}
 {% endblock %}

@@ -1,0 +1,6 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p class="grassetto">Ciao {{ persona.nome }}, sei stat{{persona.genere_o_a}} inserit{{persona.genere_o_a}} come docente del {{ corso.nome }}.</p>
+    <p><strong><a href="{{ corso.url }}">Clicca qui per aprire la pagina del corso.</a></strong></p>
+{% endblock %}

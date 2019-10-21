@@ -1,30 +1,20 @@
 {% extends 'aspirante_corso_base_scheda.html' %}
 
-{% block scheda_titolo %}
-    Aggiungi Iscritti
-{% endblock %}
+{% block scheda_titolo %}Aggiungi Iscritti{% endblock %}
 
 {% load utils %}
 {% load bootstrap3 %}
 
 {% block scheda_contenuto %}
-
 <div class="row">
-
     <div class="col-md-4">
         <div class="panel panel-primary">
             <div class="panel-heading">
-                <h2 class="panel-title">
-                    <i class="fa fa-fw fa-plus-circle"></i>
-                    Aggiungi iscritti
-                </h2>
+                <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Aggiungi Iscritti</h2>
             </div>
             <div class="panel-body">
-                <p>Con questo modulo puoi selezionare uno o pi&ugrave;
-                    <strong>Sostenitori</strong> o <strong>Aspiranti</strong> da iscrivere a questo
-                    corso base.</p>
-                <p>Presidente e Ufficio Soci possono inserire i sostenitori
-                    dal pannello "Soci" > "Aggiungi Persona".</p>
+                <p>Ricerca per Codice Fiscale o E-mail la persona da iscrivere a questo corso.</p>
+                <p>Presidente e Ufficio Soci possono inserire i sostenitori dal pannello "Soci" > "Aggiungi Persona".</p>
 
                 <form method="POST">
                     {% csrf_token %}
@@ -43,13 +33,9 @@
             </div>
             <div class="panel-footer">
                 <i class="fa fa-fw fa-envelope-o"></i>
-                Avviseremo per e-mail le persone che verranno
-                 iscritte al corso; le persone dovranno accettare
-                l'iscrizione perché sia effettiva.
+                Avviseremo per e-mail le persone che verranno iscritte al corso; le persone dovranno accettare l'iscrizione perché sia effettiva.
             </div>
         </div>
-
-
     </div>
 
     <div class="col-md-8">
@@ -96,7 +82,24 @@
                                     {% elif r.esito == corso.NON_PUOI_ISCRIVERTI_GIA_ISCRITTO_ALTRO_CORSO %}
                                         Già iscritt{{ r.persona.genere_o_a }} a un altro corso
 
+                                    {% elif r.esito == corso.NON_HAI_DOCUMENTO_PERSONALE_VALIDO %}
+                                        Questo utente non ha un documento di riconoscimento valido/rinnovato
+
+                                    {% elif r.esito == corso.NON_HAI_CARICATO_DOCUMENTI_PERSONALI %}
+                                        Questo utente non ha caricato un documento d'identità
+
+                                    {% elif r.esito == corso.NON_PUOI_ISCRIVERTI_ESTENSIONI_NON_COINCIDONO %}
+                                        Questa persona non ha appartenenze che coincidono con la sede organizzatrice del corso
+                                        oppure con le sedi impostati nelle estensioni a livello regionale.
+
+                                    {% else %}
+                                        Non può iscriversi: esito non definito
+
                                     {% endif %}
+
+                                {% else %}
+                                    Esito sconosciuto
+
                                 {% endif %}
                             </td>
                             <td class="grassetto">
@@ -112,29 +115,20 @@
                                 {% else %}
                                     <i class="fa fa-fw fa-times"></i>
                                     No
-
                                 {% endif %}
                             </td>
-
                         </tr>
-
                         {% empty %}
-                            <tr class="warning">
+                            <tr class="alert alert-warning">
                                 <td colspan="3">
-                                    Seleziona una o pi&ugrave; persone da iscrivere al
-                                    corso base. Qui vedrai l'esito della procedura
-                                    di iscrizione.
+                                    Seleziona una o pi&ugrave; persone da iscrivere al corso{% if not corso.is_nuovo_corso %} base{%endif%}. Qui vedrai l'esito della procedura di iscrizione.
                                 </td>
                             </tr>
-
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-
     </div>
-
 </div>
-
 {% endblock %}

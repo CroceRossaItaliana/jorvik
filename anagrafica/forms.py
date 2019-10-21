@@ -1,21 +1,127 @@
 import datetime
-
+import unicodecsv
 import stdnum
+from dateutil.parser import parse
+
+from django.conf import settings
 from django import forms
+from django.forms import ModelForm, ChoiceField
+from django.contrib.admin.templatetags.admin_static import static
+from django.contrib.admin.widgets import AdminDateWidget
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
-from django.forms import ModelForm
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 
-from anagrafica.models import Sede, Persona, Appartenenza, Documento, Estensione, ProvvedimentoDisciplinare, Delega, \
-    Fototessera, Trasferimento, Riserva
-from anagrafica.validators import valida_almeno_14_anni
-from autenticazione.models import Utenza
 from autocomplete_light import shortcuts as autocomplete_light
 
+from autenticazione.models import Utenza
 from base.forms import ModuloMotivoNegazione
 from curriculum.models import TitoloPersonale
 from sangue.models import Donatore, Donazione
+from formazione.models import Corso
+from .costanti import REGIONALE
+from .models import (Sede, Persona, Appartenenza, Documento, Estensione,
+    ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva)
+from .validators import valida_almeno_14_anni, valida_data_nel_passato
+from .permessi.applicazioni import (PRESIDENTE, COMMISSARIO,
+    CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE)
+
+
+class ModuloSpostaPersone(object):
+
+    def elenco_persone(self, source):
+        return source, []
+
+    def mappa_persone(self, source):
+        return source, []
+
+    def sposta_persone(self, firmatario, source=None, persone=None):
+        trasferimenti = []
+        if source and not persone:
+            persone, errori = self.elenco_persone(source)
+        if not persone:
+            persone = []
+        for persona in persone:
+            if persona['sede']:
+                trasferita = persona['persona'].trasferimento_massivo(
+                    persona['sede'],
+                    firmatario,
+                    persona['motivazione'],
+                    persona['inizio_appartenenza']
+                )
+                trasferimenti.append((persona['persona'], trasferita))
+            else:
+                trasferimenti.append((persona['persona'], 'Non è stata specificata la sede'))
+
+        return trasferimenti
+
+
+class ModuloSpostaPersoneManuale(ModuloSpostaPersone, forms.Form):
+    sede = autocomplete_light.ModelChoiceField("SedeAutocompletamento")
+    inizio_appartenenza = forms.DateField(label='Data di inizio appartenenza', widget=AdminDateWidget(format='%Y-%m-%d'))
+    motivazione = forms.CharField()
+
+    @property
+    def media(self):
+        extra = '' if settings.DEBUG else '.min'
+        js = [
+            'core.js',
+            'vendor/jquery/jquery%s.js' % extra,
+            'jquery.init.js',
+            'admin/RelatedObjectLookups.js',
+        ]
+        return forms.Media(js=[static('admin/js/%s' % url) for url in js]) + super(ModuloSpostaPersone, self).media
+
+    def mappa_persone(self, source):
+        trasferimenti = []
+        for persona in source.order_by('cognome', 'nome'):
+            trasferimenti.append({
+                'persona': persona,
+                'sede': self.cleaned_data['sede'],
+                'motivazione': self.cleaned_data['motivazione'],
+                'inizio_appartenenza': self.cleaned_data['inizio_appartenenza']
+            })
+        return trasferimenti, []
+
+
+class ModuloSpostaPersoneDaCSV(ModuloSpostaPersone, forms.Form):
+    dati = forms.FileField(
+        required=False, help_text=mark_safe(
+            'Il file deve essere in formato CSV, con i seguenti campi: '
+            '<pre>CF,DATA INIZIO APPARTENENZA (AAAA-MM-GG),ID NUOVA SEDE,MOTIVAZIONE,</pre>'
+        )
+    )
+    procedi = forms.BooleanField(widget=forms.HiddenInput(), required=False)
+
+    def elenco_persone(self, source):
+        dati = {}
+        sedi = set()
+        trasferimenti = []
+        scarti = []
+        if self.is_valid():
+            data = unicodecsv.reader(source)
+            for persona in data:
+                dati[persona[0]] = persona
+                try:
+                    sedi.add(int(persona[2]))
+                except ValueError:
+                    scarti.append(persona[0])
+            sedi = {str(sede.pk): sede for sede in Sede.objects.filter(pk__in=sedi)}
+            for persona in Persona.objects.filter(codice_fiscale__in=dati.keys()).order_by('cognome', 'nome'):
+                dati_persona = dati[persona.codice_fiscale]
+                sede = sedi.get(dati_persona[2], None)
+                try:
+                    data = parse(dati_persona[1])
+                    trasferimenti.append({
+                        'persona': persona,
+                        'sede': sede,
+                        'motivazione': dati_persona[3],
+                        'inizio_appartenenza': data,
+                    })
+                except (ValueError, OverflowError, KeyError):
+                    scarti.append(persona.codice_fiscale)
+        return trasferimenti, scarti
 
 
 class ModuloStepComitato(autocomplete_light.ModelForm):
@@ -73,25 +179,42 @@ class ModuloStepCredenziali(forms.Form):
         return cleaned_data
 
 
+class ModuloStepFine(forms.Form):
+    confirm_1 = forms.BooleanField(
+        label='Accettazione del consenso al trattamento dei dati personali comuni')
+    confirm_2 = forms.BooleanField(
+        label='Accettazione del consenso al trattamento delle categorie particolari di dati personali (dati relativi alla salute, dati biometrici...)')
+
+
 class ModuloStepAnagrafica(ModelForm):
     class Meta:
         model = Persona
-        fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita', 'provincia_nascita', 'stato_nascita',
-                  'codice_fiscale',
-                  'indirizzo_residenza', 'comune_residenza', 'provincia_residenza', 'stato_residenza',
-                  'cap_residenza', 'conoscenza', ]
+        fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita',
+                  'provincia_nascita', 'stato_nascita', 'codice_fiscale',
+                  'indirizzo_residenza', 'comune_residenza', 'provincia_residenza',
+                  'stato_residenza', 'cap_residenza', 'domicilio_uguale_a_residenza',
+                  'domicilio_indirizzo', 'domicilio_comune', 'domicilio_provincia',
+                  'domicilio_stato', 'domicilio_cap', 'conoscenza',]
 
     def clean_codice_fiscale(self):
         codice_fiscale = self.cleaned_data.get('codice_fiscale')
+        # TODO:
         # Qui si potrebbe controllare la validita' del codice fiscale,
-        #  cosa che attualmente abbiamo deciso di non fare.
-        codice_fiscale = codice_fiscale.upper()
-        return codice_fiscale
+        # cosa che attualmente abbiamo deciso di non fare.
+        return codice_fiscale.upper()
 
     def clean_data_nascita(self):
         data_nascita = self.cleaned_data.get('data_nascita')
         valida_almeno_14_anni(data_nascita)
         return data_nascita
+
+    def clean(self):
+        cd = self.cleaned_data
+        if True == cd['domicilio_uguale_a_residenza']:
+            for f in ('indirizzo', 'comune', 'provincia', 'stato', 'cap'):
+                domicilio_key = 'domicilio_%s' % f
+                residenza_value = cd['%s_residenza' % f]
+                cd[domicilio_key] = residenza_value
 
 
 class ModuloModificaAnagrafica(ModelForm):
@@ -112,8 +235,31 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
                   'note',]
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('me')
         super(ModuloProfiloModificaAnagrafica, self).__init__(*args, **kwargs)
-        #self.fields['note'].widget = forms.Textarea
+
+        """
+        Utente autorizzato nel sistema può essere sia Presidente che Ufficio soci,
+        ma se l'utente e il profilo (instance da modificare) non appartengono alla
+        stessa sede di riferimento l'utente non può modificare i seguenti campi.
+        (sistemato il 08-10'18 da akarlkvist)
+        """
+        if user:
+            if user.sede_riferimento != self.instance.sede_riferimento:
+                for f in ['codice_fiscale', 'nome', 'cognome', 'data_nascita']:
+                    self.fields[f].disabled = True
+
+
+class ModuloProfiloModificaAnagraficaDomicilio(ModelForm):
+    class Meta:
+        model = Persona
+        fields = ['domicilio_uguale_a_residenza', 'domicilio_indirizzo',
+                  'domicilio_comune', 'domicilio_provincia',
+                  'domicilio_stato', 'domicilio_cap']
+
+    def clean(self):
+        cd = self.cleaned_data
+        return cd
 
 
 class ModuloProfiloTitoloPersonale(autocomplete_light.ModelForm):
@@ -174,9 +320,32 @@ class ModuloNuovaFototessera(ModelForm):
 
 
 class ModuloCreazioneDocumento(ModelForm):
+    expires = forms.DateField(required=False, label='Data di scadenza')
+
     class Meta:
         model = Documento
-        fields = ['tipo', 'file']
+        fields = ['tipo', 'file', 'expires']
+
+    def clean(self):
+        cd = self.cleaned_data
+        type = cd['tipo']
+
+        if type in [Documento.CARTA_IDENTITA, Documento.PATENTE_CIVILE]:
+            expires_error = None
+            expires = cd.get('expires')
+
+            if not expires:
+                expires_error = 'Indicare la data di scadenza del documento'
+            elif now().date() > expires:
+                expires_error = 'Non si può caricare documento scaduto.'
+
+            if expires_error:
+                raise ValidationError({'expires': ValidationError(expires_error)})
+
+        return cd
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class ModuloModificaPassword(PasswordChangeForm):
@@ -207,6 +376,11 @@ class ModuloCreazioneTelefono(forms.Form):
 
 
 class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
+    destinazione = autocomplete_light.ModelChoiceField("SedeTrasferimentoAutocompletamento", error_messages={
+        'invalid': "Non è possibile effettuare un trasferimento verso il Comitato Nazionale, verso i Comitati Regionali"
+                   "e verso i comitati delle Province Autonome di Trento e Bolzano"
+    })
+
     class Meta:
         model = Estensione
         fields = ['destinazione', 'motivo']
@@ -222,6 +396,11 @@ class ModuloNegaEstensione(ModuloMotivoNegazione):
 
 
 class ModuloCreazioneTrasferimento(autocomplete_light.ModelForm):
+    destinazione = autocomplete_light.ModelChoiceField("SedeTrasferimentoAutocompletamento", error_messages={
+        'invalid': "Non è possibile effettuare un trasferimento verso il Comitato Nazionale, verso i Comitati Regionali"
+                   "e verso i comitati delle Province Autonome di Trento e Bolzano"
+    })
+
     class Meta:
         model = Trasferimento
         fields = ['destinazione', 'motivo']
@@ -271,9 +450,97 @@ class ModuloCreazioneRiserva(ModelForm):
 class ModuloCreazioneDelega(autocomplete_light.ModelForm):
     class Meta:
         model = Delega
-        fields = ['persona', ]
+        fields = ['persona',]
 
-    def clean_inizio(self):  # Impedisce inizio passato
+    def __init__(self, *args, **kwargs):
+        # These attrs are passed in anagrafica.viste.strumenti_delegati
+        for attr in ['me', 'oggetto']:
+            if attr in kwargs:
+                setattr(self, attr, kwargs.pop(attr))
+        super().__init__(*args, **kwargs)
+
+    def _validate_delega_per_sede(self, sede, persona):
+        me = self.me
+        posso_dare_delega = (me.is_presidente or me.is_comissario) and \
+                            (me == sede.presidente()) or (me in sede.commissari()) and \
+                            sede.estensione == REGIONALE
+
+        if posso_dare_delega:
+            vo_in_sede = sede.ha_membro(persona, membro=Appartenenza.VOLONTARIO, figli=True)
+            di_in_sede = sede.ha_membro(persona, membro=Appartenenza.DIPENDENTE, figli=True)
+
+            if vo_in_sede or di_in_sede:
+                return persona
+            else:
+                raise forms.ValidationError("Questa persona non può essere nominata.")
+
+        # Per tutti gli altri casi
+        return self._validate_delega(persona)
+
+    def _validate_delega_per_corso(self, persona):
+        """
+        Validate only Volontario membership on url:
+        /formazione/corsi-base/<pk>/direttori/
+
+        Task: https://jira.gaia.cri.it/browse/JO-754
+        """
+        if not self.persona_volontario:
+            raise forms.ValidationError("Questa persona non è Volontario.")
+        return persona
+
+    def _validate_delega(self, persona):
+        me_sede = self.me.sede_riferimento()
+
+        """
+        Possible cases:
+        1) [OK] Persona è estesa (ES) nel mio comitato.
+        2) [OK] <me> e <persona> abbiamo la stessa sede di riferimento.
+        3) [FAIL] Persona è estesa (ES) nel mio comitato, <me> e <Persona>
+            abbiamo 2 sedi di riferimento diversi.
+        4) [OK] Persona come Volontario (VO), la sua sede appartiene a sede di <me>.
+        5) [OK] Persona come Volontario (VO), <me> è Presidente nella mia sede.
+        """
+        CASES = (
+            self.persona_estesa,
+            self.stesse_sedi,
+            self.stesse_sedi and self.persona_estesa,
+            any([a.appartiene_a(me_sede) for a in self.persona_volontario]),
+            any([a for a in self.persona_volontario if a.sede.presidente() == self.me])
+        )
+
+        if not any(CASES):
+            # All CASES return False, so the form returns validation error.
+            raise forms.ValidationError(
+                "Il volontario non è appartenente alla tua sede."
+            )
+
+        # Some case returned True, so <me> can proceed with creating new delega.
+        return persona
+
+    def clean_persona(self):
+        oggetto = self.oggetto  # <oggetto> arriva da anagrafica.viste.strumenti_delegati
+        me_sede = self.me.sede_riferimento()  # Authorized user's <Sede> (myself)
+        persona = self.cleaned_data['persona']  # Selected user whom to be given <Delega> in <Sede>
+
+        # Queries for possible cases
+        persona_appartenenze = persona.appartenenze_attuali(membro__in=Appartenenza.MEMBRO_ATTIVITA)
+        self.persona_estesa = persona_appartenenze.filter(sede=me_sede).count()
+        self.persona_volontario = persona_appartenenze.filter(membro=Appartenenza.VOLONTARIO)
+        self.stesse_sedi = me_sede == persona.sede_riferimento()
+
+        if type(oggetto) is Sede:
+            return self._validate_delega_per_sede(oggetto, persona)
+
+        # Logica di validazione per modulo formazione
+        if type(oggetto) is Corso:
+            if oggetto.tipo == Corso.CORSO_NUOVO:
+                return self._validate_delega_per_corso(persona)
+
+        # Per tutti gli altri moduli che usano questa form
+        return self._validate_delega(persona)
+    
+    def clean_inizio(self):
+        """ Impedisce inizio passato """
         inizio = self.cleaned_data['inizio']
         if inizio < datetime.date.today():
             raise forms.ValidationError("La data di inzio non può essere passata.")
@@ -354,8 +621,26 @@ class ModuloModificaDataInizioAppartenenza(ModelForm):
         return inizio
 
 
+class ModuloReportFederazione(forms.Form):
+    data = forms.DateTimeField(help_text="Data e ora per i quali computare il report.",
+                               validators=[valida_data_nel_passato,],)
+
+
 class ModuloImportPresidenti(forms.Form):
-    presidente = autocomplete_light.ModelChoiceField("PresidenteAutocompletamento")
+    nomina = forms.ChoiceField(widget=forms.Select(),
+                      choices=(
+                          [
+                              ('Seleziona', ''),
+                              (PRESIDENTE, 'Presidente'),
+                              (COMMISSARIO, 'Commissario'),
+                              (CONSIGLIERE, 'Consigliere'),
+                              (CONSIGLIERE_GIOVANE, 'Consigliere giovane'),
+                              (VICE_PRESIDENTE, 'Vice presidente'),
+                          ]
+                      ),
+                      initial='Nomina',
+                      required=True,)
+    persona = autocomplete_light.ModelChoiceField("PresidenteAutocompletamento")
     sede = autocomplete_light.ModelChoiceField("ComitatoAutocompletamento")
 
 

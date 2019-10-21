@@ -1,42 +1,47 @@
 import json
 import random
+import re
+import os
+import tempfile
+import pickle
+from datetime import datetime
 from collections import OrderedDict
 
-from django.core.paginator import Paginator
+from django.db import transaction, IntegrityError
 from django.db.models import Sum, Q
+from django.core.urlresolvers import reverse
+from django.core.paginator import Paginator
 from django.shortcuts import redirect, get_object_or_404
+from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 
-from anagrafica.costanti import REGIONALE
+from anagrafica.costanti import NAZIONALE, REGIONALE
 from anagrafica.forms import ModuloNuovoProvvedimento
-from anagrafica.models import Appartenenza, Persona, Estensione, ProvvedimentoDisciplinare, Sede, Dimissione, Riserva, \
-    Trasferimento
-from anagrafica.permessi.applicazioni import PRESIDENTE
-from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI , ERRORE_PERMESSI, MODIFICA, EMISSIONE_TESSERINI
-from autenticazione.forms import ModuloCreazioneUtenza
+from anagrafica.models import Appartenenza, Persona, Estensione, Sede, Riserva
+from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI,
+                                          ERRORE_PERMESSI, MODIFICA,
+                                          EMISSIONE_TESSERINI)
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
-from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico
-from base.files import Excel, FoglioExcel
-from base.notifiche import NOTIFICA_INVIA
-from base.utils import poco_fa, testo_euro, oggi
+from base.errori import (errore_generico, errore_nessuna_appartenenza,
+                         messaggio_generico, messaggio_avvertimento)
+from base.utils import poco_fa, mezzanotte_24_ieri, testo_euro, oggi
 from posta.models import Messaggio
-from posta.utils import imposta_destinatari_e_scrivi_messaggio
-from ufficio_soci.elenchi import ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari, ElencoOrdinari, \
-    ElencoElettoratoAlGiorno, ElencoQuote, ElencoPerTitoli, ElencoDipendenti, ElencoDimessi, ElencoTrasferiti, \
-    ElencoVolontariGiovani, ElencoEstesi, ElencoInRiserva, ElencoIVCM, ElencoTesseriniSenzaFototessera, \
-    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoExSostenitori, ElencoSenzaTurni
-from ufficio_soci.forms import ModuloCreazioneEstensione, ModuloAggiungiPersona, ModuloReclamaAppartenenza, \
-    ModuloReclamaQuota, ModuloReclama, ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute, \
-    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario, ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, \
-    ModuloLavoraTesserini, ModuloScaricaTesserini, ModuloDimissioniSostenitore
-from ufficio_soci.models import Quota, Tesseramento, Tesserino, Riduzione
+
+from .models import Quota, Tesseramento, Tesserino, Riduzione, ReportElenco
+from .elenchi import (ElencoSociAlGiorno, ElencoSostenitori, ElencoVolontari,
+    ElencoOrdinari, ElencoElettoratoAlGiorno, ElencoQuote, ElencoTesseriniSenzaFototessera,
+    ElencoTesseriniRichiesti, ElencoTesseriniDaRichiedere, ElencoTesseriniRifiutati)
+from .forms import (ModuloCreazioneEstensione, ModuloAggiungiPersona,
+    ModuloReclamaAppartenenza, ModuloReclamaQuota, ModuloReclama,
+    ModuloCreazioneDimissioni, ModuloVerificaTesserino, ModuloElencoRicevute,
+    ModuloCreazioneRiserva, ModuloCreazioneTrasferimento, ModuloQuotaVolontario,
+    ModuloNuovaRicevuta, ModuloFiltraEmissioneTesserini, ModuloLavoraTesserini,
+    ModuloScaricaTesserini, ModuloDimissioniSostenitore)
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us(request, me):
-    """
-    Ritorna la home page per la gestione dei soci.
-    """
+    """ Ritorna la home page per la gestione dei soci. """
 
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
 
@@ -60,14 +65,19 @@ def us(request, me):
 def us_aggiungi(request, me):
 
     modulo_persona = ModuloAggiungiPersona(request.POST or None)
-
+    contesto = {
+        "modulo_persona": modulo_persona,
+        "exists": False
+    }
     if modulo_persona.is_valid():
-        persona = modulo_persona.save()
+        try:
+            persona = modulo_persona.save()
+        except IntegrityError as e:
+            contesto['exists'] = True
+            return 'us_aggiungi.html', contesto
+
         return redirect("/us/reclama/%d/" % (persona.pk,))
 
-    contesto = {
-        "modulo_persona": modulo_persona
-    }
     return 'us_aggiungi.html', contesto
 
 
@@ -118,12 +128,15 @@ def us_reclama(request, me):
 def us_reclama_persona(request, me, persona_pk):
 
     persona = get_object_or_404(Persona, pk=persona_pk)
+    volontario = False
 
     sedi = []
     ss = me.oggetti_permesso(GESTIONE_SOCI)
     for s in ss:  # Per ogni sede di mia competenza
         if persona.reclamabile_in_sede(s):  # Posso reclamare?
             sedi += [s]  # Aggiungi a elenco sedi
+            volontario = volontario or persona.appartenenze_attuali()\
+                .filter(sede=s, membro=Appartenenza.VOLONTARIO).exists()
 
     if persona.appartenenze_attuali().filter(membro=Appartenenza.SOSTENITORE).exists():
         messaggio_extra = "<br>Questa persona è già registrata come sostenitore. Prima di poterla reclamare deve essere dimessa dal ruolo di sostenitore"
@@ -155,7 +168,8 @@ def us_reclama_persona(request, me, persona_pk):
     modulo_quota = ModuloReclamaQuota(request.POST or None, initial=dati_iniziali, sedi=sedi, prefix="quota")
 
     if modulo_appartenenza.is_valid():
-
+        sede = modulo_appartenenza.cleaned_data.get('sede')
+        membro = modulo_appartenenza.cleaned_data.get('membro')
         continua = True
         if not modulo_quota.is_valid() and modulo_quota.get('registra_quota') == modulo_quota.SI:
             continua = False
@@ -167,13 +181,45 @@ def us_reclama_persona(request, me, persona_pk):
                                                         "data selezionata. Inserisci la data corretta di "
                                                         "cambio appartenenza.")
                 continua = False
+            if membro == Appartenenza.ORDINARIO and not appartenenza_ordinario.appartiene_a(sede=sede):
+                modulo_appartenenza.add_error('membro', "La persona e' gia un ordinario "
+                                                        "in un altro comitato: %s "
+                                              % appartenenza_ordinario.sede.nome_completo)
+                continua = False
 
         appartenenza_dipendente = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.DIPENDENTE).first()
-        if appartenenza_dipendente:  # Se dipendente.
-            if modulo_appartenenza.cleaned_data['inizio'] < appartenenza_dipendente.inizio:
-                modulo_appartenenza.add_error('inizio', "La persona non era dipendente alla "
-                                                        "data selezionata. Inserisci la data corretta di "
-                                                        "cambio appartenenza.")
+        if appartenenza_dipendente and membro == Appartenenza.DIPENDENTE: # Se dipendente e vuole diventare dipendente
+                if appartenenza_dipendente.appartiene_a(sede=sede):
+                    modulo_appartenenza.add_error('membro', "La persona e' gia dipendente nel tuo comitato")
+                    continua = False
+                else:
+                    modulo_appartenenza.add_error('membro', "La persona e' gia dipendente "
+                                                            "in un altro comitato: %s "
+                                                  % appartenenza_dipendente.sede.nome_completo)
+                    continua = False
+
+                if modulo_appartenenza.cleaned_data['inizio'] < appartenenza_dipendente.inizio:
+                    modulo_appartenenza.add_error('inizio', "La persona non era dipendente alla "
+                                                            "data selezionata. Inserisci la data corretta di "
+                                                            "cambio appartenenza.")
+                    continua = False
+
+
+        sede = modulo_appartenenza.cleaned_data.get('sede')
+        appartenenza_volontario = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.VOLONTARIO).first()
+        if appartenenza_volontario:
+            if membro == Appartenenza.VOLONTARIO and appartenenza_volontario.appartiene_a(sede=sede):
+                modulo_appartenenza.add_error('membro', "La persona e' gia volontario nel tuo comitato")
+                continua = False
+
+            if membro == Appartenenza.VOLONTARIO and not appartenenza_volontario.appartiene_a(sede=sede):
+                modulo_appartenenza.add_error('membro', "La persona e' gia volontario "
+                                                        "in un altro comitato: %s "
+                                              % appartenenza_volontario.sede.nome_completo)
+                continua = False
+        if appartenenza_dipendente:
+            if membro == Appartenenza.VOLONTARIO and appartenenza_dipendente.appartiene_a(sede=sede):
+                modulo_appartenenza.add_error('membro', "La persona e' gia dipendente nel tuo comitato")
                 continua = False
 
         # Controllo eta' minima socio
@@ -190,49 +236,79 @@ def us_reclama_persona(request, me, persona_pk):
                                                     "%d anni. " % Persona.ETA_MINIMA_SOCIO)
             continua = False
 
+
+
         if continua:
+            with transaction.atomic():
+                app = modulo_appartenenza.save(commit=False)
+                app.persona = persona
+                app.save()
 
-            app = modulo_appartenenza.save(commit=False)
-            app.persona = persona
-            app.save()
+                # Termina app. ordinario - I dipendenti rimangono tali
+                if appartenenza_ordinario:
+                    appartenenza_ordinario.fine = app.inizio
+                    appartenenza_ordinario.save()
 
-            # Termina app. ordinario - I dipendenti rimangono tali
-            if appartenenza_ordinario:
-                appartenenza_ordinario.fine = app.inizio
-                appartenenza_ordinario.save()
+                # se volontario nello stesso comitato e sta passando a dipendente mette in riserva
+                if appartenenza_volontario \
+                        and app.membro == app.DIPENDENTE \
+                        and (appartenenza_volontario.riserve.exclude(fine__isnull=True).exists() or not appartenenza_volontario.riserve.exclude(fine__isnull=True)) \
+                        and appartenenza_volontario.appartiene_a(sede=sede) and appartenenza_volontario.sede == app.sede:
+                    Riserva.objects.create(inizio=mezzanotte_24_ieri(app.inizio),
+                                           persona=persona,
+                                           motivo="Adozione come dipendente",
+                                           appartenenza=appartenenza_volontario)
 
-            q = modulo_quota.cleaned_data
-            riduzione = q.get('riduzione', None)
-            registra_quota = q.get('registra_quota')
-            importo = q.get('importo')
-            data_versamento = q.get('data_versamento')
+                q = modulo_quota.cleaned_data
+                riduzione = q.get('riduzione', None)
+                registra_quota = q.get('registra_quota')
+                importo = q.get('importo')
+                data_versamento = q.get('data_versamento')
 
-            if registra_quota == modulo_quota.SI:
-                if riduzione:
-                    suffisso = ' - %s' % riduzione.descrizione
-                else:
-                    suffisso = ''
-                quota = Quota.nuova(
-                    appartenenza=app,
-                    data_versamento=data_versamento,
-                    registrato_da=me,
-                    importo=importo,
-                    causale="Iscrizione %s anno %d%s" % (
-                        app.get_membro_display(),
-                        q.get('data_versamento').year,
-                        suffisso,
-                    ),
-                    tipo=Quota.QUOTA_SOCIO,
-                    invia_notifica=True,
-                    riduzione=riduzione,
-                )
+                if registra_quota == modulo_quota.SI:
+                    if riduzione:
+                        suffisso = ' - %s' % riduzione.descrizione
+                    else:
+                        suffisso = ''
+                    Quota.nuova(
+                        appartenenza=app,
+                        data_versamento=data_versamento,
+                        registrato_da=me,
+                        importo=importo,
+                        causale="Iscrizione %s anno %d%s" % (
+                            app.get_membro_display(),
+                            q.get('data_versamento').year,
+                            suffisso,
+                        ),
+                        tipo=Quota.QUOTA_SOCIO,
+                        invia_notifica=True,
+                        riduzione=riduzione,
+                    )
 
-            return redirect(persona.url)
+                m = modulo_appartenenza.cleaned_data.get('membro')
+                if m == Appartenenza.DIPENDENTE:
+                    oggetto = 'Inserimento come {}'.format(
+                        Appartenenza.MENBRO_DICT[modulo_appartenenza.cleaned_data.get('membro')]
+                    )
+
+                    Messaggio.costruisci_e_accoda(
+                        oggetto=oggetto,
+                        modello="email_reclama.html",
+                        mittente=me,
+                        destinatari=[persona],
+                        corpo={
+                            "persona": persona.nome_completo
+                        }
+                    )
+
+                return redirect(persona.url)
+
 
     contesto = {
         "modulo_appartenenza": modulo_appartenenza,
         "modulo_quota": modulo_quota,
         "persona": persona,
+        "volontario": volontario
     }
 
     return 'us_reclama_persona.html', contesto
@@ -241,8 +317,8 @@ def us_reclama_persona(request, me, persona_pk):
 @pagina_privata
 def us_dimissioni(request, me, pk):
 
-    modulo = ModuloCreazioneDimissioni(request.POST or None)
     persona = get_object_or_404(Persona, pk=pk)
+    modulo = ModuloCreazioneDimissioni(request.POST or None, pers=persona, me=me)
 
     if not me.permessi_almeno(persona, MODIFICA):
         return redirect(ERRORE_PERMESSI)
@@ -251,10 +327,9 @@ def us_dimissioni(request, me, pk):
         dim = modulo.save(commit=False)
         dim.richiedente = me
         dim.persona = persona
-        dim.sede = dim.persona.sede_riferimento()
-        dim.appartenenza = persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
-        dim.save()
-        dim.applica(modulo.cleaned_data['trasforma_in_sostenitore'])
+        dim.appartenenza = modulo.cleaned_data['appartenenza']
+        dim.sede = dim.appartenenza.sede
+        dim.applica(trasforma_in_sostenitore=modulo.cleaned_data['trasforma_in_sostenitore'], applicante=me)
 
         if dim.motivo == dim.DECEDUTO:
             messaggio = 'Il decesso è stato registrato.<br>Vista la motivazione non sarà inviata alcuna notifica ' \
@@ -263,10 +338,42 @@ def us_dimissioni(request, me, pk):
         else:
             messaggio = "Le dimissioni sono state registrate con successo"
 
-        return messaggio_generico(request, me, titolo="Dimissioni registrate",
-                                  messaggio=messaggio,
-                                  torna_titolo="Vai allo storico appartenenze",
-                                  torna_url=persona.url_profilo_appartenenze)
+        dim.save()
+
+        if persona.appartenenze_attuali().exclude(id=dim.appartenenza.id).exists():
+            presidenti_da_contattare = set()
+            for appartenenza_restante in persona.appartenenze_attuali():
+                pdc = appartenenza_restante.sede.presidente()
+                if not pdc in presidenti_da_contattare:
+                    presidenti_da_contattare.add(pdc)
+
+            testo_email = "Le dimissioni di %s sono state registrate con successo, ti invitiamo a  " \
+                          "creare nuovamente le deleghe che desideri mantenere attive " % persona.nome_completo
+
+            oggetto = "Riapertura deleghe: %s" % (persona.nome_completo)
+            Messaggio.costruisci_e_accoda(
+                oggetto=oggetto,
+                modello="email_testo.html",
+                mittente=me,
+                destinatari=presidenti_da_contattare,
+                corpo={
+                    "testo": testo_email,
+                },
+            )
+
+            messaggio = "Le dimissioni sono state registrate con successo, <strong>MA</strong> sara' necessario " \
+                        "creare nuovamente le deleghe di <strong>%s</strong> nel caso faccia ancora parte " \
+                        "del tuo comitato" % persona.nome_completo
+
+            return messaggio_avvertimento(request, me, titolo="Dimissioni registrate",
+                                      messaggio=messaggio,
+                                      torna_titolo="Vai allo storico appartenenze",
+                                      torna_url=persona.url_profilo_appartenenze)
+        else:
+            return messaggio_generico(request, me, titolo="Dimissioni registrate",
+                                      messaggio=messaggio,
+                                      torna_titolo="Vai allo storico appartenenze",
+                                      torna_url=persona.url_profilo_appartenenze)
 
     contesto = {
         "modulo": modulo,
@@ -322,7 +429,7 @@ def us_estensione(request, me):
 
     if modulo.is_valid():
         est = modulo.save(commit=False)
-        if not est.persona.sede_riferimento():
+        if not est.persona.sedi_riferimento().exists():
             return errore_nessuna_appartenenza(request, me)
         if not me.permessi_almeno(est.persona, MODIFICA):
             return redirect(ERRORE_PERMESSI)
@@ -346,6 +453,7 @@ def us_estensione(request, me):
 
     return 'us_estensione.html', contesto
 
+
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_trasferimento(request, me):
     """
@@ -356,10 +464,9 @@ def us_trasferimento(request, me):
                                                          #     ad una delle sedi che gestisco io
 
     modulo = ModuloCreazioneTrasferimento(request.POST or None)
-
     if modulo.is_valid():
         trasf = modulo.save(commit=False)
-        if not trasf.persona.sede_riferimento():
+        if not trasf.persona.sedi_riferimento().exists():
             return errore_nessuna_appartenenza(request, me)
         if not me.permessi_almeno(trasf.persona, MODIFICA):
             return redirect(ERRORE_PERMESSI)
@@ -373,8 +480,8 @@ def us_trasferimento(request, me):
             trasf.richiedente = me
             trasf.save()
             if me.sede_riferimento().comitato == trasf.destinazione.comitato:
-                trasf.esegui()
-
+                # trasf.esegui()
+                trasf.richiedi()
                 Messaggio.costruisci_e_invia(
                     oggetto="Richiesta di trasferimento",
                     modello="email_richiesta_trasferimento_cc.html",
@@ -420,6 +527,7 @@ def us_trasferimento(request, me):
 
     return 'us_trasferimento.html', contesto
 
+
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensioni(request, me):
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
@@ -431,10 +539,11 @@ def us_estensioni(request, me):
 
     return 'us_estensioni.html', contesto
 
+
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_estensione_termina(request, me, pk):
     appartenenza = get_object_or_404(Appartenenza, pk=pk)
-    if me.permessi_almeno(appartenenza, MODIFICA):
+    if not me.permessi_almeno(appartenenza.estensione.first(), MODIFICA):
         return redirect(ERRORE_PERMESSI)
     else:
         appartenenza.fine = poco_fa()
@@ -445,6 +554,7 @@ def us_estensione_termina(request, me, pk):
                                                 "terminata con successo",
                                       torna_titolo="Registra nuova estensione",
                                       torna_url="/us/estensione/")
+
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_riserva_termina(request, me, pk):
@@ -484,10 +594,8 @@ def us_provvedimento(request, me):
     return "us_provvedimento.html", contesto
 
 
-
 @pagina_privata
 def us_elenco(request, me, elenco_id=None, pagina=1):
-
     pagina = int(pagina)
     if pagina < 0:
         pagina = 1
@@ -556,174 +664,90 @@ def us_elenco(request, me, elenco_id=None, pagina=1):
 
 @pagina_privata
 def us_elenco_modulo(request, me, elenco_id):
-
-    try:  # Prova a ottenere l'elenco dalla sessione.
-        elenco = request.session["elenco_%s" % (elenco_id,)]
-
-    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
+    try:
+        # Prova a ottenere l'elenco dalla sessione.
+        elenco = request.session["elenco_%s" % elenco_id]
+    except KeyError:
+        # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
         raise ValueError("Elenco non presente in sessione.")
 
     if not elenco.modulo():  # No modulo? Vai all'elenco
-        return redirect("/us/elenco/%s/1/" % (elenco_id,))
+        return redirect("/us/elenco/%s/1/" % elenco_id)
 
-    modulo = elenco.modulo()(request.POST or None)
+    form = elenco.modulo()(request.POST or None)
+    if request.POST and form.is_valid():  # Modulo ok
+        # Salva modulo in sessione
+        request.session["elenco_modulo_%s" % elenco_id] = request.POST
+        # Redirigi alla prima pagina
+        return redirect("/us/elenco/%s/1/" % elenco_id)
 
-    if request.POST and modulo.is_valid():  # Modulo ok
-        request.session["elenco_modulo_%s" % (elenco_id,)] = request.POST            # Salva modulo in sessione
-        return redirect("/us/elenco/%s/1/" % (elenco_id,))                           # Redirigi alla prima pagina
-
-    contesto = {
-        "modulo": modulo
+    context = {
+        "modulo": form
     }
 
-    return 'us_elenchi_inc_modulo.html', contesto
+    return 'us_elenchi_inc_modulo.html', context
 
 
 @pagina_privata
 def us_elenco_download(request, me, elenco_id):
+    from .reports import ReportElencoSoci
 
-    try:  # Prova a ottenere l'elenco dalla sessione.
-        elenco = request.session["elenco_%s" % (elenco_id,)]
-
-    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
-        raise ValueError("Elenco non presente in sessione.")
-
-    if elenco.modulo():  # Se l'elenco richiede un modulo
-
-        try:  # Prova a recuperare il modulo riempito
-            modulo = elenco.modulo()(request.session["elenco_modulo_%s" % (elenco_id,)])
-
-        except KeyError:  # Se fallisce, il modulo non e' stato ancora compilato
-            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
-
-        if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
-            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
-
-        elenco.modulo_riempito = modulo  # Imposta il modulo
-
-    FOGLIO_DEFAULT = "Foglio 1"
-
-    fogli_multipli = True
-    if 'foglio_singolo' in request.GET:
-        fogli_multipli = False
-
-    # Ottiene elenco
-    persone = elenco.ordina(elenco.risultati())
-
-    # Crea nuovo excel
-    excel = Excel(oggetto=me)
-
-    # Ottiene intestazione e funzioni colonne
-    intestazione = [x[0] for x in elenco.excel_colonne()]
-    colonne = [x[1] for x in elenco.excel_colonne()]
-    if not fogli_multipli:
-        intestazione += ["Elenco"]
-
-    fogli = {}
-
-    def __semplifica_nome(nome):
-        return nome\
-            .replace("/", "")\
-            .replace(": ", "-")\
-            .replace("Comitato ", "")\
-            .replace("Locale ", "")\
-            .replace("Provinciale ", "")\
-            .replace("Di ", "")\
-            .replace("di ", "")\
-            .replace("Della ", "")\
-            .replace("Dell'", "")\
-            .replace("Del ", "")
-
-    for persona in persone:
-        foglio = __semplifica_nome(elenco.excel_foglio(persona))[:31] if fogli_multipli else FOGLIO_DEFAULT
-        foglio_key = foglio.lower().strip()
-        if foglio_key not in [x.lower() for x in fogli.keys()]:
-            fogli.update({
-                foglio_key: FoglioExcel(foglio, intestazione)
-            })
-
-        persona_colonne = [y if y is not None else "" for y in [x(persona) for x in colonne]]
-        if not fogli_multipli:
-            persona_colonne += [elenco.excel_foglio(persona)]
-
-        fogli[foglio_key].aggiungi_riga(
-            *persona_colonne
-        )
-
-    excel.fogli = fogli.values()
-    excel.genera_e_salva("Elenco.xlsx")
-
-    return redirect(excel.download_url)
+    report = ReportElencoSoci(request, elenco_id)
+    return report.make()
 
 
 @pagina_privata
 def us_elenco_messaggio(request, me, elenco_id):
-
-    try:  # Prova a ottenere l'elenco dalla sessione.
+    try:
+        # Prova a ottenere l'elenco dalla sessione.
         elenco = request.session["elenco_%s" % (elenco_id,)]
-
-    except KeyError:  # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
+    except KeyError:
+        # Se l'elenco non e' piu' in sessione, potrebbe essere scaduto.
         raise ValueError("Elenco non presente in sessione.")
 
     if elenco.modulo():  # Se l'elenco richiede un modulo
+        try:
+            # Prova a recuperare il modulo riempito
+            form = elenco.modulo()(request.session['elenco_modulo_%s' % elenco_id])
+        except KeyError:
+            # Se fallisce, il modulo non e' stato ancora compilato
+            return redirect("/us/elenco/%s/modulo/" % elenco_id)
 
-        try:  # Prova a recuperare il modulo riempito
-            modulo = elenco.modulo()(request.session["elenco_modulo_%s" % (elenco_id,)])
+        if not form.is_valid():
+            # Se il modulo non e' valido, qualcosa e' andato storto
+            return redirect("/us/elenco/%s/modulo/" % elenco_id)  # Prova nuovamente?
 
-        except KeyError:  # Se fallisce, il modulo non e' stato ancora compilato
-            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))
+        # Imposta il modulo
+        elenco.modulo_riempito = form
 
-        if not modulo.is_valid():  # Se il modulo non e' valido, qualcosa e' andato storto
-            return redirect("/us/elenco/%s/modulo/" % (elenco_id,))  # Prova nuovamente?
+    request.session["messaggio_destinatari_timestamp"] = datetime.now()
 
-        elenco.modulo_riempito = modulo  # Imposta il modulo
-
-    persone = elenco.ordina(elenco.risultati())
-    return imposta_destinatari_e_scrivi_messaggio(request, persone)
+    return redirect(reverse('posta:scrivi') + '?id={}'.format(elenco_id))
 
 
 @pagina_privata(permessi=(ELENCHI_SOCI,))
 def us_elenchi(request, me, elenco_tipo):
+    from .reports import SOCI_TIPI_ELENCHI
 
-    tipi_elenco = {
-        "volontari": (ElencoVolontari, "Elenco dei Volontari"),
-        "giovani": (ElencoVolontariGiovani, "Elenco dei Volontari Giovani"),
-        "ivcm": (ElencoIVCM, "Elenco IV e CM"),
-        "dimessi": (ElencoDimessi, "Elenco Dimessi"),
-        "riserva": (ElencoInRiserva, "Elenco Volontari in Riserva"),
-        "trasferiti": (ElencoTrasferiti, "Elenco Trasferiti"),
-        "dipendenti": (ElencoDipendenti, "Elenco dei Dipendenti"),
-        "ordinari": (ElencoOrdinari, "Elenco dei Soci Ordinari"),
-        "estesi": (ElencoEstesi, "Elenco dei Volontari Estesi/In Estensione"),
-        "soci": (ElencoSociAlGiorno, "Elenco dei Soci"),
-        "sostenitori": (ElencoSostenitori, "Elenco dei Sostenitori"),
-        "ex-sostenitori": (ElencoExSostenitori, "Elenco degli Ex Sostenitori"),
-        "senza-turni": (ElencoSenzaTurni, "Elenco dei volontari con zero turni"),
-        "elettorato": (ElencoElettoratoAlGiorno, "Elenco Elettorato", "us_elenco_inc_elettorato.html"),
-        "titoli": (ElencoPerTitoli, "Ricerca dei soci per titoli"),
-    }
-
-    if elenco_tipo not in tipi_elenco:
+    if elenco_tipo not in SOCI_TIPI_ELENCHI:
         return redirect("/us/")
 
-    elenco_nome = tipi_elenco[elenco_tipo][1]
-    elenco_template = tipi_elenco[elenco_tipo][2] if len(tipi_elenco[elenco_tipo]) > 2 else None
+    elenco_nome = SOCI_TIPI_ELENCHI[elenco_tipo][1]
+    elenco_template = SOCI_TIPI_ELENCHI[elenco_tipo][2] if len(SOCI_TIPI_ELENCHI[elenco_tipo]) > 2 else None
 
-    if request.POST:  # Ho selezionato delle sedi. Elabora elenco.
-
+    if request.POST:
+        # Ho selezionato delle sedi. Elabora elenco.
         sedi = me.oggetti_permesso(ELENCHI_SOCI).filter(pk__in=request.POST.getlist('sedi'))
-        elenco = tipi_elenco[elenco_tipo][0](sedi)
+        elenco = SOCI_TIPI_ELENCHI[elenco_tipo][0](sedi)
 
         return 'us_elenco_generico.html', {
             "elenco": elenco,
             "elenco_nome": elenco_nome,
             "elenco_template": elenco_template,
         }
-
-    else:  # Devo selezionare delle Sedi.
-
+    else:
+        # Devo selezionare delle Sedi.
         sedi = me.oggetti_permesso(ELENCHI_SOCI)
-
         return 'us_elenco_sede.html', {
             "sedi": sedi,
             "elenco_nome": elenco_nome,
@@ -731,18 +755,16 @@ def us_elenchi(request, me, elenco_tipo):
         }
 
 
-
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_elenco_soci(request, me):
-
     elenco = ElencoSociAlGiorno(me.oggetti_permesso(GESTIONE_SOCI))
 
-    contesto = {
+    context = {
         "elenco_nome": "Elenco dei Soci",
         "elenco": elenco
     }
+    return 'us_elenco_generico.html', context
 
-    return 'us_elenco_generico.html', contesto
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_riserva(request, me):
@@ -768,6 +790,7 @@ def us_riserva(request, me):
     }
 
     return "us_riserva.html", contesto
+
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_elenco_sostenitori(request, me):
@@ -838,6 +861,36 @@ def us_quote_nuova(request, me):
 
     sedi = me.oggetti_permesso(GESTIONE_SOCI)
 
+    def __is_us_territoriale(me, sedi):
+        """
+        In Gaia non è prevista la Delega US T su sede LOCALE
+        US T su LOCALE gestisce tutte le sedi territoriali al di sotto di essa
+        US su LOCALE gestisce tutte le sedi territoriali più la sede locale
+        :param me:
+        :param sedi:
+        :return: ritorna una lista di sedi gestite da un delegato con US o US T
+        """
+        from anagrafica.permessi.applicazioni import UFFICIO_SOCI_UNITA, UFFICIO_SOCI
+        from anagrafica.costanti import LOCALE
+        sedi_us_t = []
+        sedi_us = []
+        espandi = []
+        for delega in me.deleghe_attuali():
+            # prende le sedi locali su cui è delegato con US T (queste devono essere eliminate)
+            if delega.tipo == UFFICIO_SOCI_UNITA and delega.oggetto.estensione == LOCALE:
+                sedi_us_t.append(delega.oggetto)
+                # se la delega US T è sul locale avra sicuramente potere su le sedi sottostanti
+                espandi.extend(delega.oggetto.unita_sottostanti())
+            # prende le sedi locali su cui è delegato con US (queste devono essere aggiunte)
+            elif delega.tipo == UFFICIO_SOCI and delega.oggetto.estensione == LOCALE:
+                sedi_us.append(delega.oggetto)
+
+            sedi_exclude = set(sedi_us_t) - set(sedi_us)
+        sedi_tmp = list(sedi.exclude(nome__in=sedi_exclude))
+        sedi_tmp.extend(list(Sede.objects.filter(nome__in=[sede.nome for sede in espandi])))
+        return sedi_tmp
+
+    sedi = __is_us_territoriale(me, sedi)
     questo_anno = poco_fa().year
 
     try:
@@ -856,7 +909,9 @@ def us_quote_nuova(request, me):
             "importo": tesseramento.importo_quota_volontario(),
             "riduzione": None
         }
-        modulo = ModuloQuotaVolontario(request.POST or None, initial=dati_iniziali, sedi=sedi)
+        modulo = ModuloQuotaVolontario(request.POST or None,
+                                       initial=dati_iniziali, sedi=sedi,
+                                       tesseramento=tesseramento)
 
         if modulo and modulo.is_valid():
 
@@ -866,25 +921,26 @@ def us_quote_nuova(request, me):
             importo = modulo.cleaned_data['importo']
             data_versamento = modulo.cleaned_data['data_versamento']
 
+            appartenenza = volontario.appartenenze_attuali(
+                al_giorno=data_versamento, membro=Appartenenza.VOLONTARIO
+            ).first()
 
-            appartenenza = volontario.appartenenze_attuali(al_giorno=data_versamento,
-                                                           membro=Appartenenza.VOLONTARIO).first()
             comitato = appartenenza.sede.comitato if appartenenza else None
 
             if not appartenenza:
                 modulo.add_error('data_versamento', 'In questa data, il Volontario non risulta appartenente '
-                                                  'alla Sede.')
+                                                    'alla Sede.')
 
-            elif appartenenza.sede not in sedi:
+            elif appartenenza.sede not in sedi: # or comitato not in sedi:
                 modulo.add_error('volontario', 'Questo Volontario non è appartenente a una Sede di tua competenza.')
 
-            if not comitato.locazione:
+            elif not comitato.locazione:
                 return errore_generico(request, me, titolo="Necessario impostare indirizzo del Comitato",
                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un indirizzo "
                                                  "per la Sede del Comitato di %s. Il Presidente può gestire i dati "
                                                  "della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
 
-            if not comitato.codice_fiscale:
+            elif not comitato.codice_fiscale:
                 return errore_generico(request, me, titolo="Necessario impostare codice fiscale del Comitato",
                                        messaggio="Per poter rilasciare ricevute, è necessario impostare un "
                                                  "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
@@ -939,6 +995,7 @@ def us_ricevute_nuova(request, me):
         if 'appena_registrata' in request.GET else None
 
     modulo = ModuloNuovaRicevuta(request.POST or None)
+    tesseramento = Tesseramento.ultimo_tesseramento()
 
     if modulo.is_valid():
 
@@ -948,19 +1005,26 @@ def us_ricevute_nuova(request, me):
         importo = modulo.cleaned_data['importo']
         data_versamento = modulo.cleaned_data['data_versamento']
 
-        appartenenza = persona.appartenenze_attuali(al_giorno=data_versamento,
-                                                    sede__in=sedi).first()
+        appartenenza = persona.appartenenze_attuali(al_giorno=data_versamento, sede__in=sedi).first()
+        appartenenza_sostenitore = persona.appartenenze_attuali(
+            al_giorno=data_versamento, sede__in=sedi, membro=Appartenenza.SOSTENITORE
+        ).first()
+
+        comitato = None
 
         partecipazione_corso = persona.partecipazione_corso_base()
 
-        comitato = appartenenza.sede.comitato if appartenenza else partecipazione_corso.corso.sede.comitato
+        if partecipazione_corso and partecipazione_corso.corso and partecipazione_corso.corso.sede:
+            comitato = partecipazione_corso.corso.sede.comitato
+
+        comitato = appartenenza.sede.comitato if appartenenza else comitato
 
         if not comitato:
             modulo.add_error('data_versamento', 'In questa data, la persona non risulta appartenente '
                                                 'come Volontario o Sostenitore per alla Sede o '
                                                 'partecipante confermato ad un corso base attivo.')
 
-        elif tipo_ricevuta == Quota.QUOTA_SOSTENITORE and (not appartenenza or appartenenza.membro != Appartenenza.SOSTENITORE):
+        elif tipo_ricevuta == Quota.QUOTA_SOSTENITORE and not appartenenza_sostenitore:
             modulo.add_error('persona', 'Questa persona non è registrata come Sostenitore CRI '
                                         'della Sede. Non è quindi possibile registrare la Ricevuta '
                                         'come Sostenitore CRI.')
@@ -976,6 +1040,19 @@ def us_ricevute_nuova(request, me):
                                    messaggio="Per poter rilasciare ricevute, è necessario impostare un "
                                              "codice fiscale per la Sede del Comitato di %s. Il Presidente può "
                                              "gestire i dati della Sede dalla sezione 'Sedi'." % comitato.nome_completo)
+
+        elif (
+                tipo_ricevuta == Quota.QUOTA_SOSTENITORE and
+                Quota.objects.filter(
+                    persona=persona, sede=comitato, anno=data_versamento.year, tipo=Quota.QUOTA_SOSTENITORE,
+                    stato=Quota.REGISTRATA
+                ).exists()
+        ):
+            return errore_generico(
+                request, me, titolo="Quota già registrata",
+                messaggio="La quota per l'anno %s è già stata registrata per la Sede del Comitato di %s." % (
+                    data_versamento.year, comitato.nome_completo
+                ))
 
         else:
             # OK, paga quota!
@@ -1001,52 +1078,37 @@ def us_ricevute_nuova(request, me):
         "ultime_quote": ultime_quote,
         "anno": questo_anno,
         "appena_registrata": appena_registrata,
+        "tesseramento": tesseramento,
     }
     return 'us_ricevute_nuova.html', contesto
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_ricevute(request, me):
+    from .reports import ReportRicevute
 
-    modulo = ModuloElencoRicevute(request.POST or (request.GET or None))
+    form = ModuloElencoRicevute(request.POST or (request.GET or None))
+    report = ReportRicevute(me=me, form=form)
 
-    tipi = [x[0] for x in Quota.TIPO]
-    anno = Tesseramento.ultimo_anno()
-    if modulo.is_valid():
-        tipi = modulo.cleaned_data.get('tipi_ricevute')
-        anno = modulo.cleaned_data.get('anno')
+    to_download = request.POST.get('download_report_ricevute') == 'Scarica'
+    if to_download:
+        return report.download()
 
-    dict_tipi = dict(Quota.TIPO)
-    tipi_testo = [dict_tipi[t] for t in tipi]
-
-    sedi = me.oggetti_permesso(GESTIONE_SOCI)
-    ricevute = Quota.objects.filter(
-        Q(Q(sede__in=sedi) | Q(appartenenza__sede__in=sedi)),
-        anno=anno,
-        tipo__in=tipi,
-    ).order_by('progressivo')
-
-    non_annullate = ricevute.filter(stato=Quota.REGISTRATA)
-    importo = non_annullate.aggregate(Sum('importo'))['importo__sum'] or 0.0
-    importo_extra = non_annullate.aggregate(Sum('importo_extra'))['importo_extra__sum'] or 0.0
-    importo_totale = importo + importo_extra
-
-    contesto = {
-        "modulo": modulo,
-        "anno": anno,
-        "ricevute": ricevute,
-        "tipi_testo": tipi_testo,
-        "importo_totale": importo_totale,
+    context = {
+        'modulo': form,
+        'anno': report.anno,
+        'ricevute': report.queryset,
+        'tipi_testo': report.tipi_testo,
+        'importo_totale': report.importo_totale,
     }
-
-    return 'us_ricevute.html', contesto
+    return 'us_ricevute.html', context
 
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_ricevute_annulla(request, me, pk):
     ricevuta = get_object_or_404(Quota, pk=pk)
 
-    if ricevuta.sede not in me.oggetti_permesso(GESTIONE_SOCI):
+    if ricevuta.appartenenza.sede not in me.oggetti_permesso(GESTIONE_SOCI):
         return redirect(ERRORE_PERMESSI)
 
     if ricevuta.stato == ricevuta.REGISTRATA:
@@ -1134,6 +1196,20 @@ def us_tesserini_richiesti(request, me):
 
 
 @pagina_privata
+def us_tesserini_rifiutati(request, me):
+    """
+    Mostra l'elenco dei volontari per i quali è stata rifiutata la
+     richiesta del tesserino.
+    """
+    sedi = me.oggetti_permesso(GESTIONE_SOCI)
+    elenco = ElencoTesseriniRifiutati(sedi)
+    contesto = {
+        "elenco": elenco
+    }
+    return "us_tesserini_rifiutati.html", contesto
+
+
+@pagina_privata
 def us_tesserini_richiedi(request, me, persona_pk=None):
     """
     Effettua la richiesta di tesserino per il volontario.
@@ -1167,6 +1243,11 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
                                          "i volontari in possesso di una fototessera "
                                          "confermata su Gaia.", **torna)
 
+    if persona.tesserini.filter(Q(stato_richiesta__in=(Tesserino.RICHIESTO,)) | Q(codice='')).exists():
+        return errore_generico(request, me, titolo="Tesserino non accettato",
+                               messaggio="Esiste già una richiesta di un tesserino per la persona "
+                                         "e non è pertanto possibile richiedere un duplicato ", **torna)
+
     tesserini = persona.tesserini.filter(stato_richiesta__in=(Tesserino.RICHIESTO, Tesserino.ACCETTATO))
     if tesserini.exists():
         tipo_richiesta = Tesserino.DUPLICATO
@@ -1184,8 +1265,23 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
                                **torna)
 
     regionale = comitato.superiore(estensione=REGIONALE)
+
     if not regionale:
         raise ValueError("%s non ha un comitato regionale." % (comitato,))
+
+    tesserini = []
+
+    if regionale.nome == "Comitato dell'Area Metropolitana di Roma Capitale Coordinamento":
+        lazio = Sede.objects.filter(nome="Comitato Regionale Lazio").first()
+        # Crea la richiesta di tesserino
+        tesserino = Tesserino.objects.create(
+            persona=persona,
+            emesso_da=lazio,
+            tipo_richiesta=tipo_richiesta,
+            stato_richiesta=Tesserino.RICHIESTO,
+            richiesto_da=me,
+        )
+        tesserini.append(tesserino)
 
     # Crea la richiesta di tesserino
     tesserino = Tesserino.objects.create(
@@ -1195,6 +1291,7 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
         stato_richiesta=Tesserino.RICHIESTO,
         richiesto_da=me,
     )
+    tesserini.append(tesserino)
 
     if duplicato:
         oggetto = "Richiesta Duplicato Tesserino inoltrata"
@@ -1207,32 +1304,49 @@ def us_tesserini_richiedi(request, me, persona_pk=None):
         modello="posta_richiesta_tesserino.html",
         corpo={
             "persona": persona,
-            "tesserino": tesserino,
+            "tesserino": tesserini[0] if len(tesserini) == 1 else tesserini,
+            "is_list": False if len(tesserini) == 1 else True,
             "duplicato": duplicato
         },
         mittente=me,
         destinatari=[persona]
     )
 
+    def __componi_messaggio(tesserini, persona):
+        tes = ""
+        for tesserino in tesserini:
+            tes += "({})".format(tesserino.emesso_da)
+
+        messaggio = "La richiesta di stampa è stata inoltrata correttamente {} {} per il volontario {}".format(
+            "alla Sede di" if len(tesserini) == 1 else "alle Sedi di",
+            tes,
+            persona.nome_completo
+        )
+        return messaggio
+
     # Mostra un messaggio
-    return messaggio_generico(request, me, titolo="Richiesta inoltrata",
-                              messaggio="La richiesta di stampa è stata inoltrata correttamente alla Sede di "
-                                        "emissione (%s) per il Volontario %s." % (
-                                  tesserino.emesso_da, persona.nome_completo,
-                              ), **torna)
+    return messaggio_generico(
+        request, me, titolo="Richiesta inoltrata", messaggio=__componi_messaggio(tesserini, persona)
+        , **torna)
 
 
 @pagina_privata
 def us_tesserini_emissione(request, me):
     sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
 
+    sedi = Sede.objects.filter(id__in=sedi.values_list('id', flat=True))
+
+    # Comitati Locali e Provinciali.
+    sedi_espandi = sedi.espandi(pubblici=True).comitati().exclude(estensione__in=[NAZIONALE, REGIONALE])
+
     tesserini = Tesserino.objects.none()
 
-    modulo = ModuloFiltraEmissioneTesserini(request.POST or None)
+    modulo = ModuloFiltraEmissioneTesserini(request.POST or None, sedi=sedi_espandi)
     modulo_compilato = True if request.POST else False
 
     if modulo.is_valid():
         stato_emissione = modulo.cleaned_data['stato_emissione']
+        sedi_selezionate = modulo.cleaned_data['sedi'].espandi(pubblici=True)
         stato_emissione_q = Q(stato_emissione__in=stato_emissione)
         if '' in stato_emissione:
             stato_emissione_q |= Q(stato_emissione__isnull=True)
@@ -1248,6 +1362,11 @@ def us_tesserini_emissione(request, me):
             stato_richiesta__in=modulo.cleaned_data['stato_richiesta']
         ).order_by(modulo.cleaned_data['ordine'])
 
+        # Ottiene oggetto Q per tutte le appartenenze attuali come Volontario in una delle Sedi selezionate.
+        q = Appartenenza.query_attuale(membro=Appartenenza.VOLONTARIO, sede__in=sedi_selezionate) \
+            .via("persona__appartenenze")
+        tesserini = tesserini.filter(q)
+
     contesto = {
         "tesserini": tesserini,
         "modulo": modulo,
@@ -1259,7 +1378,20 @@ def us_tesserini_emissione(request, me):
 @pagina_privata
 def us_tesserini_emissione_processa(request, me):
 
+    def __multi_richiesta(sedi):
+        """
+        Nel caso di Comitato lazio i tesserini richiesti sono sempre 2 (Comitato regionale Lazio e Comitato dell' area metropolitana di roma Coordinamento)
+        :return: True se in sedi è presente Comitato lazio o roma
+        """
+        for sede in sedi:
+            if re.search('roma', sede.nome) or re.search('Roma', sede.nome):
+                return True
+            elif re.search('lazio', sede.nome) or re.search('Lazio', sede.nome):
+                return True
+        return False
+
     sedi = me.oggetti_permesso(EMISSIONE_TESSERINI)
+
 
     if not request.POST:  # Qui si arriva tramite POST.
         return redirect("/us/tesserini/emissione/")
@@ -1307,6 +1439,18 @@ def us_tesserini_emissione_processa(request, me):
                              motivo_rifiutato=motivo_rifiutato,
                              data_conferma=poco_fa())
 
+            if __multi_richiesta(sedi):
+                # Devo eliminare richiesta tesserino di Roma Coordinamento
+                for tesserino in tesserini:
+                    tess = Tesserino.objects.filter(
+                        persona=tesserino.persona,
+                        emesso_da=Sede.objects.filter(
+                            nome="Comitato dell'Area Metropolitana di Roma Capitale Coordinamento"
+                        ).first(),
+                        stato_richiesta=Tesserino.RICHIESTO
+                    )
+                    tess.delete()
+
             # Attiva i tesserini o disattiva come appropriato
             valido = (stato_emissione and stato_richiesta == Tesserino.ACCETTATO)
 
@@ -1319,6 +1463,22 @@ def us_tesserini_emissione_processa(request, me):
             tesserini.update(valido=valido)
 
             fine = True
+
+            # invio messaggio all'US richiedente se tesserino rifiutato
+            if stato_richiesta == Tesserino.RIFIUTATO:
+                for tesserino in tesserini:
+                    persona = tesserino.persona
+                    Messaggio.costruisci_e_accoda(
+                        oggetto="Richiesta tesserino rifiutata",
+                        modello="email_tesserino_rifiutato.html",
+                        corpo={
+                            "mittente": me.nome + " " + me.cognome,
+                            "volontario_tesserino_rifiutato": persona.nome + " " + persona.cognome,
+                            "motivo_rifiuto": tesserino.motivo_rifiutato,
+                        },
+                        mittente=me,
+                        destinatari=[tesserino.richiesto_da]
+                    )
 
     else:
         modulo = ModuloScaricaTesserini(request.POST if 'tesserini' not in request.POST else None)
@@ -1367,3 +1527,21 @@ def us_tesserini_emissione_scarica(request, me):
     }
 
     return "us_tesserini_emissione_scarica.html", contesto
+
+
+@pagina_privata
+def us_elenchi_richiesti_download(request, me):
+    # Download a file
+    if request.GET.get('tid'):
+        file = ReportElenco.objects.get(task_id=request.GET.get('tid'))
+        return file.download()
+
+    # List all files per user
+    context = dict()
+    files = ReportElenco.objects.filter(user=me).order_by('-creazione', '-is_ready',)
+    context['files'] = files
+
+    if files.exists():
+        context['has_unfinished_tasks'] = False in files.values_list('is_ready', flat=True)
+
+    return 'us_elenchi_richiesti_download.html', context

@@ -2,6 +2,7 @@
    title="{{ card_persona.nome_completo }}"
    data-html="true" data-placement="top"
    data-content="
+    {% if not mute_contact %}
     <p>
         <strong><i class='fa fa-fw fa-phone'></i> Telefono</strong>:
         <ul>
@@ -22,6 +23,7 @@
             Nessuna e-mail.
         {% endif %}
     <p>
+    {% endif %}
     <p>
         <a href='{{ card_persona.url }}' target='_new'>
             <i class='fa fa-fw fa-mail-forward'></i>
@@ -33,6 +35,6 @@
 >
     {% if card_nome %}
         <i class="fa fa-fw fa-info-circle"></i>
-        {{ card_persona.nome_completo }}
+        {{ card_persona.cognome }} {{ card_persona.nome }}
     {% endif %}
 </a>

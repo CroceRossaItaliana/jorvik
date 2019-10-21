@@ -1,16 +1,20 @@
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 
-from base.geo import Locazione
-from base.models import Autorizzazione, Token, Allegato
 from gruppi.readonly_admin import ReadonlyAdminMixin
+from .geo import Locazione
+from .models import Autorizzazione, Token, Allegato, Menu
 
 
+@admin.register(Token)
 class TokenAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
     pass
 
-# Aggiugni al pannello di amministrazione
-admin.site.register(Token, TokenAdmin)
+
+@admin.register(Menu)
+class MenuAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
+    list_display = ['url', 'order', 'is_active', 'name',]
+
 
 def locazione_aggiorna(modello, request, queryset):
     for locazione in queryset:
@@ -38,10 +42,11 @@ class AdminLocazione(ReadonlyAdminMixin, admin.ModelAdmin):
 class AdminAutorizzazione(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ["richiedente__nome", "richiedente__cognome", "richiedente__codice_fiscale",
                      "firmatario__nome", "firmatario__cognome", "firmatario__codice_fiscale", ]
-    list_display = ("richiedente", "firmatario", "concessa", "necessaria", "progressivo",
-                    "oggetto_tipo", "oggetto_id",
-                    "destinatario_ruolo", "destinatario_oggetto_tipo", "destinatario_oggetto_id")
-    list_filter = ("necessaria", "concessa", "destinatario_oggetto_tipo",)
+    list_display = ("richiedente", "firmatario", "concessa", 'automatica',
+                    "necessaria", "progressivo", "oggetto_tipo", "oggetto_id",
+                    "destinatario_ruolo",
+                    "destinatario_oggetto_tipo", "destinatario_oggetto_id")
+    list_filter = ("necessaria", "concessa", 'automatica', "destinatario_oggetto_tipo",)
     raw_id_fields = ("richiedente", "firmatario", )
 
 

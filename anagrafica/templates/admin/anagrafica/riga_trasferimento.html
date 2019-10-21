@@ -1,0 +1,7 @@
+{% spaceless %}
+    <li><span style="font-weight:bold;">{{ persona.nome_completo }}</span> (CF: {{ persona.codice_fiscale }}, volontario: {{ persona.volontario|yesno:"Sì,No" }})
+    <ul>
+        {% if persona.sede_riferimento %}<li>{{ etichetta_sede }}: {{ persona.sede_riferimento }}</li>{% endif %}
+    </ul>
+</li>
+{% endspaceless %}

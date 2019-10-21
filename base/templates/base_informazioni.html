@@ -9,7 +9,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-8">
-                <h2><i class="fa fa-info"></i> Il progetto Gaia</h2>
+                <h2><i class="fa fa-info-circle"></i> Il progetto Gaia</h2>
                 <hr />
                 <h3>La storia</h3>
                 <p>Gaia nasce nell'estate del 2012 con l'idea di una profonda rivoluzione in Croce Rossa, che mostri il dinamismo, la forza e la giovinezza dell'associazione.</p>
@@ -68,7 +68,7 @@
         <div class="col-md-4">
             <h2><i class="fa fa-heart-o"></i> Aiuto</h2>
 
-            <p><a href="http://wiki.gaia.cri.it" class="btn btn-large btn-primary btn-block">
+            <p><a href="https://wiki.gaia.cri.it" class="btn btn-large btn-primary btn-block">
                 <i class="fa fa-question-circle"></i>
                 Hai già letto il nostro WIKI?
             </a></p>
@@ -111,8 +111,11 @@
 
             <h2><i class="fa fa-shield"></i> Condizioni d'uso</h2>
 
-            <p>Leggi l'informativa sul trattamento dei dati e scopri le <a href="/informazioni/condizioni/">condizioni d'uso</a> di Gaia e le <a href="{% url 'informazioni_cookie' %}">politiche di uso dei cookie</a>.</p>
+            <p>Leggi l'informativa sul trattamento dei dati e scopri le <a href="/informazioni/condizioni/">condizioni d'uso</a> di Gaia e le <a href="{% url 'informazioni:cookie' %}">politiche di uso dei cookie</a>.</p>
 
+            <h2><i class="fa fa-shield"></i> Browser supportati</h2>
+
+            <p>Controlla che il tuo browser sia correttamente supportato <a href="{% url 'informazioni:browser_supportati' %}">qua</a>.</p>
 
             </div>
         </div>

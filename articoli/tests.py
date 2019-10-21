@@ -157,7 +157,7 @@ class TestFunzionaleArticoli(TestFunzionale):
         persona = crea_persona()
         persona, sede, app = crea_persona_sede_appartenenza()
         sessione_persona = self.sessione_utente(persona=persona)
-        sessione_persona.visit("%s%s" % (self.live_server_url, reverse('lista_articoli')))
+        sessione_persona.visit("%s%s" % (self.live_server_url, reverse('articoli:lista')))
         self.assertTrue(sessione_persona.is_text_present('Non è stato trovato alcun articolo'))
 
     def test_lista_articoli(self):
@@ -185,7 +185,7 @@ class TestFunzionaleArticoli(TestFunzionale):
         persona = crea_persona()
         persona, sede, app = crea_persona_sede_appartenenza()
         sessione_persona = self.sessione_utente(persona=persona)
-        sessione_persona.visit("%s%s" % (self.live_server_url, reverse('lista_articoli')))
+        sessione_persona.visit("%s%s" % (self.live_server_url, reverse('articoli:lista')))
         self.assertFalse(sessione_persona.is_text_present('Non è stato trovato alcun articolo'))
         self.assertTrue(sessione_persona.is_text_present(articolo.titolo))
         self.assertTrue(sessione_persona.is_text_present(articolo.estratto))
@@ -193,10 +193,10 @@ class TestFunzionaleArticoli(TestFunzionale):
         self.assertTrue(sessione_persona.is_text_present(articolo2.estratto))
         self.assertTrue(sessione_persona.is_text_present(articolo3.titolo))
         self.assertTrue(sessione_persona.is_text_present(articolo3.estratto))
-        self.assertEqual(3, len(sessione_persona.find_by_css('.panel.panel-primary')))
+        self.assertEqual(3, len(sessione_persona.find_by_css('.panel.articolo-lista')))
         sessione_persona.fill('q', 'primo')
         sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
-        self.assertEqual(1, len(sessione_persona.find_by_css('.panel.panel-primary')))
+        self.assertEqual(1, len(sessione_persona.find_by_css('.panel.articolo-lista')))
         self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
         self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
         self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
@@ -205,7 +205,7 @@ class TestFunzionaleArticoli(TestFunzionale):
         self.assertFalse(sessione_persona.is_text_present(articolo3.estratto))
         sessione_persona.find_by_xpath('//select[@name="anno"]//option[@value="1980"]').first.click()
         sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
-        self.assertEqual(1, len(sessione_persona.find_by_css('.panel.panel-primary')))
+        self.assertEqual(1, len(sessione_persona.find_by_css('.panel.articolo-lista')))
         self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
         self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
         self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
@@ -215,7 +215,7 @@ class TestFunzionaleArticoli(TestFunzionale):
         sessione_persona.fill('q', '')
         sessione_persona.find_by_xpath('//select[@name="anno"]//option[@value="1980"]').first.click()
         sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
-        self.assertEqual(2, len(sessione_persona.find_by_css('.panel.panel-primary')))
+        self.assertEqual(2, len(sessione_persona.find_by_css('.panel.articolo-lista')))
         self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
         self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
         self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
@@ -225,7 +225,7 @@ class TestFunzionaleArticoli(TestFunzionale):
         sessione_persona.find_by_xpath('//select[@name="anno"]//option[@value="1980"]').first.click()
         sessione_persona.find_by_xpath('//select[@name="mese"]//option[@value=6]').first.click()
         sessione_persona.find_by_xpath('//button[@type="submit"]').first.click()
-        self.assertEqual(1, len(sessione_persona.find_by_css('.panel.panel-primary')))
+        self.assertEqual(1, len(sessione_persona.find_by_css('.panel.articolo-lista')))
         self.assertFalse(sessione_persona.is_text_present(articolo.titolo))
         self.assertFalse(sessione_persona.is_text_present(articolo.estratto))
         self.assertTrue(sessione_persona.is_text_present(articolo2.titolo))
@@ -262,7 +262,7 @@ class TestFunzionaleArticoli(TestFunzionale):
         )
         sessione_persona = self.sessione_anonimo()
         sessione_persona.visit("%s%s" % (
-            self.live_server_url, reverse('dettaglio_articolo', kwargs={
+            self.live_server_url, reverse('articoli:dettaglio', kwargs={
                 'articolo_slug': articolo.slug
             })
         ))
@@ -270,7 +270,7 @@ class TestFunzionaleArticoli(TestFunzionale):
         settings.DEBUG = True
 
         sessione_persona.visit("%s%s" % (
-            self.live_server_url, reverse('dettaglio_articolo', kwargs={
+            self.live_server_url, reverse('articoli:dettaglio', kwargs={
                 'articolo_slug': articolo2.slug
             })
         ))
@@ -302,7 +302,7 @@ class TestFunzionaleArticoli(TestFunzionale):
         delega_us.save()
         sessione_persona = self.sessione_utente(persona=normale)
         sessione_persona.visit("%s%s" % (
-            self.live_server_url, reverse('dettaglio_articolo', kwargs={
+            self.live_server_url, reverse('articoli:dettaglio', kwargs={
                 'articolo_slug': articolo.slug
             })
         ))
@@ -329,7 +329,7 @@ class TestFunzionaleArticoli(TestFunzionale):
         delega_presidente_in_corso.save()
         sessione_persona = self.sessione_utente(persona=presidente)
         sessione_persona.visit("%s%s" % (
-            self.live_server_url, reverse('dettaglio_articolo', kwargs={
+            self.live_server_url, reverse('articoli:dettaglio', kwargs={
                 'articolo_slug': articolo.slug
             })
         ))

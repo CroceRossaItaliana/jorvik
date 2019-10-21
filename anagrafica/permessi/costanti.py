@@ -1,18 +1,17 @@
-# coding=utf-8
-
+from ..permessi.applicazioni import (PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA,
+    REFERENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO,
+    CONSIGLIERE, UFFICIO_SOCI)
 
 """
-Questo file gestisce i permessi in Gaia.
- ============================================================================================
- |                                    ! HEEEEY, TU !                                        |
- ============================================================================================
-  Prima di avventurarti da queste parti, assicurati di leggere la documentazione a:
-   https://github.com/CroceRossaItaliana/jorvik/wiki/Deleghe,-Permessi-e-Livelli-di-Accesso
- ============================================================================================
+                       Questo file gestisce i permessi in Gaia.
+ ===============================================================================
+ |                                   ! HEEEEY, TU !                            |
+ ===============================================================================
+ Prima di avventurarti da queste parti, assicurati di leggere la documentazione:
+ https://github.com/CroceRossaItaliana/jorvik/wiki/Deleghe,-Permessi-e-Livelli-di-Accesso
+ ===============================================================================
 """
-from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_AREA, RESPONSABILE_AREA, REFERENTE, DIRETTORE_CORSO, \
-    RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI
+
 
 GESTIONE_SEDE = "GESTIONE_SEDE"
 GESTIONE_SOCI = "GESTIONE_SOCI"
@@ -20,6 +19,8 @@ ELENCHI_SOCI = "ELENCHI_SOCI"
 RUBRICA_UFFICIO_SOCI = "RUBRICA_UFFICIO_SOCI"
 RUBRICA_UFFICIO_SOCI_UNITA = "RUBRICA_UFFICIO_SOCI_UNITA"
 RUBRICA_PRESIDENTI = "RUBRICA_PRESIDENTI"
+RUBRICA_COMMISSARI = "RUBRICA_COMMISSARI"
+RUBRICA_CONSIGLIERE_GIOVANE = "RUBRICA_COMMISSARI"
 RUBRICA_DELEGATI_AREA = "RUBRICA_DELEGATI_AREA"
 RUBRICA_DELEGATI_OBIETTIVO_1 = "RUBRICA_DELEGATI_OBIETTIVO_1"
 RUBRICA_DELEGATI_OBIETTIVO_2 = "RUBRICA_DELEGATI_OBIETTIVO_2"
@@ -44,6 +45,7 @@ GESTIONE_CORSO = "GESTIONE_CORSO"
 GESTIONE_AUTOPARCHI_SEDE = "GESTIONE_AUTOPARCHI_SEDE"
 GESTIONE_GRUPPI_SEDE = "GESTIONE_GRUPPI_SEDE"
 GESTIONE_GRUPPO = "GESTIONE_GRUPPO"
+GESTIONE_GRUPPI = "GESTIONE_GRUPPI"
 GESTIONE_CENTRALE_OPERATIVA_SEDE = "GESTIONE_CENTRALE_OPERATIVA_SEDE"
 GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE = "GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE"
 EMISSIONE_TESSERINI = "EMISSIONE_TESSERINI"
@@ -57,6 +59,7 @@ PERMESSI_OGGETTI = (
     (RUBRICA_UFFICIO_SOCI,      ('anagrafica', 'Sede')),
     (RUBRICA_UFFICIO_SOCI_UNITA,('anagrafica', 'Sede')),
     (RUBRICA_PRESIDENTI,        ('anagrafica', 'Sede')),
+    (RUBRICA_COMMISSARI,       ('anagrafica', 'Sede')),
     (RUBRICA_DELEGATI_AREA,     ('attivita', 'Area')),
     (RUBRICA_DELEGATI_OBIETTIVO_1,  ('anagrafica', 'Sede')),
     (RUBRICA_DELEGATI_OBIETTIVO_2,  ('anagrafica', 'Sede')),
@@ -82,6 +85,7 @@ PERMESSI_OGGETTI = (
     (GESTIONE_AUTOPARCHI_SEDE,  ('anagrafica', 'Sede')),
     (GESTIONE_GRUPPI_SEDE,      ('anagrafica', 'Sede')),
     (GESTIONE_GRUPPO,           ('gruppi',     'Gruppo')),
+    (GESTIONE_GRUPPI,           ('gruppi',     'Gruppo')),
     (GESTIONE_CENTRALE_OPERATIVA_SEDE,  ('anagrafica', 'Sede')),
     (GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE,  ('anagrafica', 'Sede')),
     (ASPIRANTE,                 ('formazione', 'InvitoCorsoBase')),
@@ -90,6 +94,8 @@ PERMESSI_OGGETTI = (
 # Tipologia degli oggetti assegnati ad ogni Delega.
 DELEGHE_OGGETTI = (
     (PRESIDENTE,                ('anagrafica', 'Sede', None)),
+    (CONSIGLIERE,                ('anagrafica', 'Sede', None)),
+    (COMMISSARIO,                ('anagrafica', 'Sede', None)),
     (UFFICIO_SOCI,              ('anagrafica', 'Sede', None)),
     (DELEGATO_AREA,             ('attivita', 'Area', 'sede__in')),
     (RESPONSABILE_AREA,         ('attivita', 'Area', 'sede__in')),
@@ -98,6 +104,12 @@ DELEGHE_OGGETTI = (
     (RESPONSABILE_AUTOPARCO,    ('anagrafica', 'Sede', None)),
     (REFERENTE_GRUPPO,          ('anagrafica', 'Gruppo', 'sede__in')),
 )
+
+RUBRICA_DELEGATI_OBIETTIVO_ALL = [RUBRICA_DELEGATI_OBIETTIVO_1,
+                                  RUBRICA_DELEGATI_OBIETTIVO_2,
+                                  RUBRICA_DELEGATI_OBIETTIVO_3,
+                                  RUBRICA_DELEGATI_OBIETTIVO_4,
+                                  RUBRICA_DELEGATI_OBIETTIVO_6,]
 
 
 # Livelli di permesso

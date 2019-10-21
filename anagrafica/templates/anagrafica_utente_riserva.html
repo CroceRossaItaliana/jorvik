@@ -34,7 +34,7 @@
                                 {% for r in storico %}
                                 <tr
                                     {% if r.esito == r.ESITO_PENDING %}
-                                        class="warning"
+                                        class="alert alert-warning"
                                     {% endif %}
                                 >
                                     <td>{{ r.inizio|date:"SHORT_DATE_FORMAT" }}</td>
@@ -57,8 +57,8 @@
                                 </tr>
                                 {% empty %}
                                     <tr>
-                                        <td colspan="5" class="bg-warning">
-                                            <i class="fa fa-info"></i> Nessuna riserva passata.
+                                        <td colspan="5" class="alert-warning">
+                                            <i class="fa fa-info-circle"></i> Nessuna riserva passata.
                                         </td>
                                     </tr>
                                 {% endfor %}

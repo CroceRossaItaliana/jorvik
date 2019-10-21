@@ -1,0 +1,15 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+
+{% block app_contenuto %}
+  <div class="articolo single-page">
+    <h1>{{ page.title }}</h1>
+    {{ page.text|safe }}
+  </div>
+
+  {% if has_privacy_popup %}
+    {% include "base_privacy_policy_popup.html" %}
+  {% endif %}
+
+{% endblock %}

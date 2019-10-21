@@ -1,15 +1,13 @@
-import datetime
-import operator
-
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Count
 from django.utils.timezone import now
 
-from anagrafica.costanti import LOCALE, REGIONALE, LIMITE_ETA, LIMITE_ANNI_ATTIVITA
 from anagrafica.models import Appartenenza, Delega, Sede, Persona
-from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, REFERENTE, RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE
+from anagrafica.costanti import LOCALE, REGIONALE, LIMITE_ETA, LIMITE_ANNI_ATTIVITA
+from anagrafica.permessi.applicazioni import (PRESIDENTE, COMMISSARIO, UFFICIO_SOCI,
+    DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
+    DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, REFERENTE,
+    RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE)
 from attivita.models import Attivita, Partecipazione
-
 
 
 # Utils
@@ -64,7 +62,7 @@ def _referenti_attivita(queryset, obiettivo=0):
 
 
 def _presidenze_comitati(queryset, estensione=LOCALE):
-    sedi = Sede.objects.filter(tipo=Sede.COMITATO, estensione=estensione)
+    sedi = Sede.objects.filter(attiva=True, tipo=Sede.COMITATO, estensione=estensione)
     return queryset.filter(delega__oggetto_tipo=ContentType.objects.get_for_model(Sede), delega__oggetto_id__in=sedi.values_list('id', flat=True))
 
 
@@ -116,9 +114,13 @@ def aspiranti_volontari_iscritti_ad_un_corso(queryset):
     return qs
 
 
+# funzione di supporto ricerca presidenti/commissari
+def com_pres_all(queryset, tipo=PRESIDENTE):
+    return queryset.filter(delega__tipo=tipo)
+
+
 def tutti_i_presidenti(queryset):
-    qs = queryset.filter(delega__tipo=PRESIDENTE)
-    return _deleghe_attive(qs)
+    return com_pres_all(queryset, PRESIDENTE)
 
 
 def presidenti_comitati_locali(queryset):
@@ -127,6 +129,18 @@ def presidenti_comitati_locali(queryset):
 
 def presidenti_comitati_regionali(queryset):
     return _presidenze_comitati(tutti_i_presidenti(queryset), REGIONALE)
+
+
+def tutti_i_commissari(queryset):
+    return com_pres_all(queryset, COMMISSARIO)
+
+
+def commissari_comitati_locali(queryset):
+    return _presidenze_comitati(tutti_i_commissari(queryset))
+
+
+def commissari_comitati_regionali(queryset):
+    return _presidenze_comitati(tutti_i_commissari(queryset), REGIONALE)
 
 
 def delegati_US(queryset):
@@ -215,6 +229,9 @@ NOMI_SEGMENTI = (
     ('I', 'Tutti i Presidenti'),
     ('J', 'Presidenti di Comitati Locali'),
     ('K', 'Presidenti di Comitati Regionali'),
+    ('IC', 'Tutti i Commissari'),
+    ('JC', 'Commissari di Comitati Locali'),
+    ('KC', 'Commissari di Comitati Regionali'),
     ('L', 'Delegati US'),
     ('M', 'Delegati Obiettivo I'),
     ('N', 'Delegati Obiettivo II'),
@@ -246,8 +263,11 @@ SEGMENTI = {
     'G':              sostenitori_cri,
     'H':              aspiranti_volontari_iscritti_ad_un_corso,
     'I':              tutti_i_presidenti,
+    'IC':             tutti_i_commissari,
     'J':              presidenti_comitati_locali,
+    'JC':             commissari_comitati_locali,
     'K':              presidenti_comitati_regionali,
+    'KC':             commissari_comitati_regionali,
     'L':              delegati_US,
     'M':              delegati_Obiettivo_I,
     'N':              delegati_Obiettivo_II,

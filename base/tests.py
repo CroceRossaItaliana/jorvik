@@ -12,6 +12,7 @@ from django.core.files.temp import NamedTemporaryFile
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils.encoding import force_bytes, force_text
+from django.utils.timezone import now
 from django.utils.http import urlsafe_base64_encode
 from splinter.exceptions import ElementDoesNotExist
 
@@ -23,7 +24,8 @@ from autenticazione.utils_test import TestFunzionale
 from base.files import Zip
 from base.forms_extra import ModuloRichiestaSupporto
 from base.geo import Locazione
-from base.utils import UpperCaseCharField, poco_fa
+from base.stringhe import normalizza_nome
+from base.utils import UpperCaseCharField, poco_fa, TitleCharField, mezzanotte_24, mezzanotte_24_ieri, mezzanotte_00
 from base.utils_tests import crea_appartenenza, crea_persona_sede_appartenenza, crea_persona, crea_area_attivita, crea_utenza, \
     email_fittizzia, crea_sede
 from curriculum.models import Titolo
@@ -94,11 +96,54 @@ class TestBase(TestCase):
             msg="Allegato associato correttamente alla persona"
         )
 
+    def test_mezzanotte24(self):
+        """
+        Test per verificare il comportamento di mezzanotte24, in particolare la sua idempotenza
+        """
+        data = datetime.datetime(2017, 3, 22, 3, 5, 24)
+        mezzanotte = mezzanotte_24(data)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 22, 23, 59, 59))
+        mezzanotte = mezzanotte_24(mezzanotte)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 22, 23, 59, 59))
+        mezzanotte = mezzanotte_00(mezzanotte)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 22, 0, 0, 0))
+
+    def test_mezzanotte24_ieri(self):
+        """
+        Test per verificare il comportamento di mezzanotte24
+        """
+        data = datetime.datetime(2017, 3, 22, 3, 5, 24)
+        mezzanotte = mezzanotte_24_ieri(data)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 21, 23, 59, 59))
+        mezzanotte = mezzanotte_24_ieri(mezzanotte)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 20, 23, 59, 59))
+
+    def test_mezzanotte00(self):
+        """
+        Test per verificare il comportamento di mezzanotte00, in particolare la sua idempotenza
+        """
+        data = datetime.datetime(2017, 3, 22, 3, 5, 24)
+        mezzanotte = mezzanotte_00(data)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 22, 0, 0, 0))
+        mezzanotte = mezzanotte_00(mezzanotte)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 22, 0, 0, 0))
+        mezzanotte = mezzanotte_24(mezzanotte)
+        self.assertEqual(mezzanotte, datetime.datetime(2017, 3, 22, 23, 59, 59))
+
 
 class TestGeo(TestCase):
+    """
+    Effettua test sulla localizzazione confrontando i risultati memorizzati qui sotto con quelli
+    riportati in tempo reale dal metodo di Gaia
+
+    Usando dati storicizzati, e soggetti a piccoli cambiamenti da parte di google, potrebbero essere
+    necessari cambiamenti. Per minimizzare la manutenzione sono effettuati test esclusivamente
+    sugli indirizzi, anziché sulle coordinate. I dump sotto sono riportati completi ma potrebbero
+    differire da quelli attuali per le voci non testate
+    """
     posto_google = [
         {'place_id': 'ChIJ4ZrMcgdhLxMR7F_Z1sLKCOA',
-         'formatted_address': 'Via Toscana, 12, 00187 Roma, Italia',
+         'formatted_address': 'Via Toscana, 12, 00187 Roma RM, Italia',
          'geometry': {'location': {'lng': 0, 'lat': 0},
                       'location_type': 'ROOFTOP', 'viewport':
                           {'northeast': {'lng': 12.4929659802915, 'lat': 41.90993408029149},
@@ -115,7 +160,7 @@ class TestGeo(TestCase):
 
     posto_senza_coord = [
         {'place_id': 'ChIJ4ZrMcgdhLxMR7F_Z1sLKCOA',
-         'formatted_address': 'Via Toscana, 12, 00187 Roma, Italia',
+         'formatted_address': 'Via Toscana, 12, 00187 Roma RM, Italia',
          'geometry': {'location': '',
                       'location_type': 'ROOFTOP', 'viewport':
                           {'northeast': {'lng': 12.4929659802915, 'lat': 41.90993408029149},
@@ -136,7 +181,7 @@ class TestGeo(TestCase):
                                                   'viewport': {'southwest': {'lng': -1.622701, 'lat': 6.6697722},
                                                                'northeast': {'lng': -1.6176442,
                                                                              'lat': 6.680420799999999}},
-                                                  'location': {'lng': -1.6204888, 'lat': 6.6748961},
+                                                  'location': {'lng': -1.620479, 'lat': 6.6748954},
                                                   'bounds': {'southwest': {'lng': -1.622701, 'lat': 6.6697722},
                                                              'northeast': {'lng': -1.6176442,
                                                                            'lat': 6.680420799999999}}},
@@ -154,7 +199,7 @@ class TestGeo(TestCase):
                                      {'long_name': 'Ghana', 'short_name': 'GH', 'types': ['country', 'political']}],
               'formatted_address': 'Harper Rd, Kumasi, Ghana', 'types': ['route'],
               'place_id': 'ChIJda2WAseW2w8RuCwOYKAZleY'}],
-            [('Harper Rd, Kumasi, Ghana', {'lng': -1.6204888, 'lat': 6.6748961},
+            [('Harper Rd, Kumasi, Ghana', {'lng': -1.620479, 'lat': 6.6748954},
               {'via': 'Harper Road', 'cap': None, 'comune': 'Kumasi', 'provincia': 'Kumasi Metropolitan',
                'provincia_breve': 'Kumasi Metropolitan', 'stato': 'GH', 'civico': None, 'regione': 'Ashanti Region'})]
         ],
@@ -183,7 +228,7 @@ class TestGeo(TestCase):
                                       'southwest': {'lat': -0.7461185, 'lng': 8.753189299999999}},
                            'viewport': {'northeast': {'lat': -0.7244695, 'lng': 8.767470699999999},
                                         'southwest': {'lat': -0.7461185, 'lng': 8.753189299999999}},
-                           'location': {'lat': -0.7345885999999999, 'lng': 8.760486199999999},
+                           'location': {'lat': -0.7351183, 'lng': 8.760859},
                            'location_type': 'GEOMETRIC_CENTER'},
               'formatted_address': 'Route des Hydrocarbures, Port-Gentil, Gabon', 'address_components': [
                     {'types': ['route'], 'short_name': 'Route des Hydrocarbures',
@@ -195,7 +240,7 @@ class TestGeo(TestCase):
                      'long_name': 'Ogooué-Maritime'},
                     {'types': ['country', 'political'], 'short_name': 'GA', 'long_name': 'Gabon'}],
               'place_id': 'ChIJFSkO1Fq3gxoRauW9p1O_G_s', 'types': ['route']}],
-            [('Route des Hydrocarbures, Port-Gentil, Gabon', {'lat': -0.7345885999999999, 'lng': 8.760486199999999},
+            [('Route des Hydrocarbures, Port-Gentil, Gabon', {'lat': -0.7351183, 'lng': 8.760859},
               {'provincia_breve': 'Bendje', 'regione': 'Ogooué-Maritime', 'provincia': 'Bendje',
                'comune': 'Port-Gentil', 'via': 'Route des Hydrocarbures', 'stato': 'GA', 'civico': None, 'cap': None})]
         ],
@@ -249,21 +294,42 @@ class TestGeo(TestCase):
         indirizzo = Locazione.cerca(indirizzo_base)
         self.assertEqual(len(indirizzo[0]), 3)
         self.assertEqual(indirizzo[0][0], self.posti_africa[0][0][0]['formatted_address'])
-        self.assertEqual(indirizzo[0][1], self.posti_africa[0][0][0]['geometry']['location'])
+        self.assertEqual(
+            str(indirizzo[0][1]['lat'])[:4],
+            str(self.posti_africa[0][0][0]['geometry']['location']['lat'])[:4]
+        )
+        self.assertEqual(
+            str(indirizzo[0][1]['lng'])[:4],
+            str(self.posti_africa[0][0][0]['geometry']['location']['lng'])[:4]
+        )
 
         # Ovest di Greenwitch, Nord dell'equatore
         indirizzo_base = 'Carrettera del Aeropuerto, Malabo, Guinea Equatoriale'
         indirizzo = Locazione.cerca(indirizzo_base)
         self.assertEqual(len(indirizzo[0]), 3)
         self.assertEqual(indirizzo[0][0], self.posti_africa[1][0][0]['formatted_address'])
-        self.assertEqual(indirizzo[0][1], self.posti_africa[1][0][0]['geometry']['location'])
+        self.assertEqual(
+            str(indirizzo[0][1]['lat'])[:4],
+            str(self.posti_africa[1][0][0]['geometry']['location']['lat'])[:4]
+        )
+        self.assertEqual(
+            str(indirizzo[0][1]['lng'])[:4],
+            str(self.posti_africa[1][0][0]['geometry']['location']['lng'])[:4]
+        )
 
         # Ovest di Greenwitch, Sud dell'equatore
         indirizzo_base = 'Route des Hydrocarbures, Port Gentil, Gabon'
         indirizzo = Locazione.cerca(indirizzo_base)
         self.assertEqual(len(indirizzo[0]), 3)
         self.assertEqual(indirizzo[0][0], self.posti_africa[2][0][0]['formatted_address'])
-        self.assertEqual(indirizzo[0][1], self.posti_africa[2][0][0]['geometry']['location'])
+        self.assertEqual(
+            str(indirizzo[0][1]['lat'])[:4],
+            str(self.posti_africa[2][0][0]['geometry']['location']['lat'])[:4]
+        )
+        self.assertEqual(
+            str(indirizzo[0][1]['lng'])[:4],
+            str(self.posti_africa[2][0][0]['geometry']['location']['lng'])[:4]
+        )
 
         # Est di Greenwitch, Sud dell'equatore
         # Non c'è nulla :D
@@ -280,6 +346,34 @@ class TestUtils(TestBase):
         self.assertEqual(field_stub.to_python(False), False)
 
 
+    def test_normalizza_nome(self):
+        nomi = {
+            'gIoVanni': 'Giovanni',
+            "D'AMATO": "D'Amato",
+            "'apostrofo": "'Apostrofo",
+            "franÇoise": "Françoise",
+            "günther": "Günther",
+        }
+        field_stub = TitleCharField()
+        field_stub.attname = 'nome'
+        persona = Persona()
+        persona.nome = None
+        self.assertEqual(field_stub.pre_save(persona, False), None)
+        persona.nome = 1
+        self.assertEqual(field_stub.pre_save(persona, False), 1)
+        persona.nome = ''
+        self.assertEqual(field_stub.pre_save(persona, False), '')
+        persona.nome = 'testo minuscolo'
+        self.assertEqual(field_stub.pre_save(persona, False), 'Testo Minuscolo')
+        persona.nome = False
+        self.assertEqual(field_stub.pre_save(persona, False), False)
+
+        for nome, atteso in nomi.items():
+            self.assertEqual(normalizza_nome(nome), atteso)
+            persona.nome = nome
+            self.assertEqual(field_stub.pre_save(persona, False), atteso)
+
+
 class TestFunzionaleBase(TestFunzionale):
 
     def test_menu_non_volontario(self):
@@ -294,7 +388,7 @@ class TestFunzionaleBase(TestFunzionale):
         Appartenenza.objects.create(persona=ordinario, sede=sede, membro=Appartenenza.ORDINARIO, inizio=poco_fa())
         Appartenenza.objects.create(persona=sostenitore, sede=sede, membro=Appartenenza.SOSTENITORE, inizio=poco_fa())
 
-        sessione_aspirante = self.sessione_utente(persona=aspirante, wait_time=1)
+        sessione_aspirante = self.sessione_utente(persona=aspirante, wait_time=2)
         self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Estensione')), 0)
         self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Trasferimento')), 0)
         self.assertEqual(len(sessione_aspirante.find_link_by_partial_text('Riserva')), 0)
@@ -332,7 +426,7 @@ class TestFunzionaleBase(TestFunzionale):
         sessione_aspirante.visit("%s/utente/documenti/" % self.live_server_url)
         self.assertTrue(sessione_aspirante.is_text_present('Accesso Volontari'))
 
-        sessione_dipendente = self.sessione_utente(persona=dipendente, wait_time=1)
+        sessione_dipendente = self.sessione_utente(persona=dipendente, wait_time=2)
         self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Estensione')), 0)
         self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Trasferimento')), 0)
         self.assertEqual(len(sessione_dipendente.find_link_by_partial_text('Riserva')), 0)
@@ -367,7 +461,7 @@ class TestFunzionaleBase(TestFunzionale):
         sessione_dipendente.visit("%s/utente/documenti/" % self.live_server_url)
         self.assertTrue(sessione_dipendente.is_text_not_present('Accesso Volontari'))
 
-        sessione_ordinario = self.sessione_utente(persona=ordinario, wait_time=1)
+        sessione_ordinario = self.sessione_utente(persona=ordinario, wait_time=2)
         self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Estensione')), 0)
         self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Trasferimento')), 0)
         self.assertEqual(len(sessione_ordinario.find_link_by_partial_text('Riserva')), 0)
@@ -405,7 +499,7 @@ class TestFunzionaleBase(TestFunzionale):
         sessione_ordinario.visit("%s/utente/documenti/" % self.live_server_url)
         self.assertTrue(sessione_ordinario.is_text_present('Accesso Volontari'))
 
-        sessione_sostenitore = self.sessione_utente(persona=sostenitore, wait_time=1)
+        sessione_sostenitore = self.sessione_utente(persona=sostenitore, wait_time=2)
         self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Estensione')), 0)
         self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Trasferimento')), 0)
         self.assertEqual(len(sessione_sostenitore.find_link_by_partial_text('Riserva')), 0)
@@ -474,7 +568,7 @@ class TestFunzionaleBase(TestFunzionale):
             descrizione='Un corso',
         )
 
-        sessione = self.sessione_utente(persona=presidente, wait_time=1)
+        sessione = self.sessione_utente(persona=presidente, wait_time=2)
         sessione.visit("%s/presidente/sedi/%s/" % (self.live_server_url, sede.pk))
         with sessione.get_iframe(0) as iframe:
             self.assertEqual(len(iframe.find_by_xpath('//select[@name="stato"]/option[@value="EC"]')), 0)

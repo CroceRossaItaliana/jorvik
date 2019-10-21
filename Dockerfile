@@ -1,21 +1,30 @@
-FROM alfioemanuele/gaia-jorvik
+#FROM alfioemanuele/jorvik-docker-base:latest
 
-RUN rm -rf /vagrant
+FROM python:3.5
+ENV PYTHONUNBUFFERED 1
 
-RUN rm /usr/bin/python3
-RUN ln -s /usr/bin/python3.5 /usr/bin/python3
+ADD . /tmp
+WORKDIR /tmp
 
-ADD . /vagrant
-WORKDIR /vagrant
+# Installa tutti i requisiti Ubuntu
+RUN apt-get update
+RUN wget https://raw.githubusercontent.com/CroceRossaItaliana/jorvik-docker-base/2e0c524a41bcb86632930a02aa39009cf008a8b8/apt-dependencies.txt
+RUN apt-get --assume-yes install `cat apt-dependencies.txt | grep -v "#" | xargs`
+# actually not deleting the file, to fix
+RUN rm apt-dependencies.txt
 
-#ENV PYTHONPATH \$PYTHONPATH:/usr/local/lib/python3.5/dist-packages
-RUN pip3 install -r requirements.txt
+# Scarica e installa i requisiti PIP da CroceRossaItalian/jorvik (branch master)
+RUN pip install -r https://raw.githubusercontent.com/CroceRossaItaliana/jorvik/master/requirements.txt
 
-RUN cp /vagrant/config/pgsql.cnf.sample /vagrant/config/pgsql.cnf
-RUN sed -i -e 's/host = localhost/host = db/' /vagrant/config/pgsql.cnf
-RUN sed -i -e 's/user = postgres/user = jorvik/' /vagrant/config/pgsql.cnf
-RUN sed -i -e 's/password =/password = jorvik/' /vagrant/config/pgsql.cnf
+# Working directory
+RUN mkdir /code
+ADD . /code/
+WORKDIR /code
 
-EXPOSE 8000
+# Entrypoint
+RUN chmod +x ./config/docker-entrypoint.sh
 
-CMD python3 manage.py migrate --noinput && python3 manage.py collectstatic --noinput && python3 manage.py runserver 0.0.0.0:8000
+ENTRYPOINT ["bash", "./config/docker-entrypoint.sh"]
+
+# Start development server
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

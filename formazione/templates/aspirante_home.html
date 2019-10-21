@@ -4,96 +4,42 @@
 {% load static %}
 
 {% block app_contenuto %}
-
-
-
     <h2 class="allinea-centro">Il Volontariato in CRI ti cambier&agrave; la vita.</h2>
 
     {% if me.aspirante.corso %}
-
         <div class="alert alert-block alert-success">
-            <h4>
-                <i class="fa fa-fw fa-flag"></i>
-                Sei iscritt{{ me.genere_o_a }} a un Corso Base!
-            </h4>
-            <p>
-               Fantastico. Ora non ti resta che presentarti presso il luogo indicato per lo svolgimento
-                    delle lezioni che puoi vedere premendo il pulsante presente qui sotto.
-            </p>
-            <p>
-                <a href="{{ me.aspirante.corso.url }}" class="btn btn-success btn-block">
-                    <i class="fa fa-fw fa-info-circle"></i>
-                    Vai alla pagina del Corso Base
-                </a>
-            </p>
+            <h4><i class="fa fa-fw fa-flag"></i> Sei iscritt{{ me.genere_o_a }} a un Corso Base!</h4>
+            <p>Fantastico. Ora non ti resta che presentarti presso il luogo indicato per lo svolgimento delle lezioni che puoi vedere premendo il pulsante presente qui sotto.</p>
+            <p><a href="{{ me.aspirante.corso.url }}" class="btn btn-success btn-block"><i class="fa fa-fw fa-info-circle"></i> Vai alla pagina del Corso Base</a></p>
         </div>
-
     {% endif %}
 
     {% if me.aspirante.richiesta_corso %}
-
         <div class="alert alert-block alert-success">
-            <h4>
-                <i class="fa fa-fw fa-flag"></i>
-                Hai fatto domanda di iscrizione a un Corso Base!
-            </h4>
-            <p>
-               Fantastico. Ora non ti resta che presentarti presso il luogo indicato per lo svolgimento
-                    delle lezioni che puoi vedere premendo il pulsante presente qui sotto.
-            </p>
+            <h4><i class="fa fa-fw fa-flag"></i> Hai fatto domanda di iscrizione a un Corso Base!</h4>
+            <p>Fantastico. Ora non ti resta che presentarti presso il luogo indicato per lo svolgimento delle lezioni che puoi vedere premendo il pulsante presente qui sotto.</p>
             <p class="piu-piccolo">
-                Il direttore del corso non ha ancora confermato la tua partecipazione,
-                ma non preoccuparti &mdash; puoi comunque presentarti alla prima lezione
-                del corso. Tieni solo presente che il direttore ha facolt&agrave; di limitare l'accesso
-                    ai primi {{ me.aspirante.richiesta_corso.MAX_PARTECIPANTI }} iscritti.
+                Il direttore del corso non ha ancora confermato la tua partecipazione, ma non preoccuparti &mdash; puoi comunque presentarti alla prima lezione
+                del corso. Tieni solo presente che il direttore ha facolt&agrave; di limitare l'accesso ai primi {{ me.aspirante.richiesta_corso.MAX_PARTECIPANTI }} iscritti.
             </p>
-            <p>
-                <a href="{{ me.aspirante.richiesta_corso.url }}" class="btn btn-success btn-block">
-                    <i class="fa fa-fw fa-info-circle"></i>
-                    Vai alla pagina del Corso Base
-                </a>
-            </p>
+            <p><a href="{{ me.aspirante.richiesta_corso.url }}" class="btn btn-success btn-block"><i class="fa fa-fw fa-info-circle"></i> Vai alla pagina del Corso Base</a></p>
         </div>
-
     {% endif %}
 
     <p>&nbsp;</p>
     <div class="col-md-8 col-md-offset-2">
         <div class="row allinea-centro well well-sm">
-
             <div class="col-md-6">
-                <h1 class="enorme">
-                    {{ me.aspirante.corsi.count }}
-                </h1>
-                <h3 class="text-success">
-                    Corsi Base attivi
-                </h3>
-                <p>
-                    <a href="/aspirante/corsi-base/" class="btn btn-xs btn-success btn-block">
-                        <i class="fa fa-list"></i>
-                        Elenco dei corsi nelle vicinanze
-                    </a>
-                </p>
-
+                <h1 class="enorme">{{ me.aspirante.corsi.count }}</h1>
+                <h3 class="text-success">Corsi Base attivi</h3>
+                <p><a href="{% url 'aspirante:corsi_base' %}" class="btn btn-xs btn-success btn-block"><i class="fa fa-list"></i> Elenco dei corsi nelle vicinanze</a></p>
             </div>
 
             <div class="col-md-6">
-                <h1 class="enorme">
-                    {{ me.aspirante.sedi.count }}
-                </h1>
-                <h3 class="text-success">
-                    Sedi CRI
-                </h3>
-                <p>
-                    <a href="/aspirante/sedi/" class="btn btn-xs btn-success btn-block">
-                        <i class="fa fa-list"></i>
-                        Elenco delle sedi nelle vicinanze
-                    </a>
-                </p>
-
-
+                <h1 class="enorme">{{ me.aspirante.sedi.count }}</h1>
+                <h3 class="text-success">Sedi CRI</h3>
+                <p><a href="/aspirante/sedi/" class="btn btn-xs btn-success btn-block"><i class="fa fa-list"></i> Elenco delle sedi nelle vicinanze</a></p>
             </div>
-
         </div>
         <div class="alert alert-info">
             <i class="fa fa-fw fa-map-marker"></i> Nel raggio di {{ me.aspirante.raggio }} km da:<br />
@@ -105,10 +51,5 @@
             <i class="fa fa-fw fa-envelope"></i> Niente paura: Ti invieremo una e-mail all'indirizzo che ci hai fornito
             <strong>{{ me.email }}</strong> (<a href="/utente/contatti/"><i class="fa fa-fw fa-pencil"></i> cambia</a>) ogni volta che un nuovo corso verr&agrave; attivato nelle tue vicinanze.
         </div>
-
-
     </div>
-
-
-
 {% endblock %}

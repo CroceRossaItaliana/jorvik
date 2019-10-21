@@ -5,18 +5,24 @@ from datetime import timedelta
 from unittest import skipIf
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.core import mail
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import timezone
 from django.utils.encoding import force_text
 
-from anagrafica.models import Appartenenza
+from anagrafica.models import Appartenenza, Persona, Delega, Estensione
+from anagrafica.permessi.applicazioni import DIRETTORE_CORSO
 from autenticazione.utils_test import TestFunzionale
 from base.geo import Locazione
 from base.models import Autorizzazione
 from base.utils import poco_fa
-from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia, codice_fiscale, crea_utenza
+from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia, codice_fiscale, crea_utenza, \
+    crea_sede, crea_appartenenza
+from base.viste import autorizzazione_nega, autorizzazione_concedi
+from formazione.forms import FormVerbaleCorso
 from jorvik.settings import GOOGLE_KEY
 from .models import CorsoBase, Aspirante, InvitoCorsoBase, PartecipazioneCorsoBase
 
@@ -78,6 +84,44 @@ class TestCorsi(TestCase):
         self.assertFalse(aspirante1.autorizzazioni_in_attesa().exists())
         self.assertFalse(corso.inviti.exists())
         self.assertEqual(corso.partecipazioni.count(), 1)
+
+    def test_pulizia_aspiranti(self):
+        presidente = crea_persona()
+        sede = crea_sede(presidente)
+
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=poco_fa() + timedelta(days=7),
+            data_esame=poco_fa() + timedelta(days=14),
+            progressivo=1,
+            anno=poco_fa().year,
+            descrizione='Un corso',
+        )
+
+        for x in range(30):
+            persona = crea_persona()
+            Aspirante.objects.create(persona=persona, locazione = sede.locazione)
+            PartecipazioneCorsoBase.objects.create(persona=persona, corso=corso, confermata=True)
+            if x % 4 == 1:
+                crea_appartenenza(persona, sede)
+            elif x % 4 == 2:
+                app = crea_appartenenza(persona, sede)
+                app.fine = poco_fa()
+                app.save()
+            elif x % 4 == 3:
+                app = crea_appartenenza(persona, sede)
+                app.membro = Appartenenza.SOSTENITORE
+                app.save()
+
+        vol = Aspirante._anche_volontari()
+        persone = Persona.objects.filter(pk__in=vol.values_list('persona', flat=True))
+        self.assertEqual(len(vol), 8)
+        Aspirante.pulisci_volontari()
+
+        for persona in persone:
+            self.assertFalse(hasattr(persona, 'aspirante'))
+            self.assertTrue(persona.partecipazioni_corsi.esito_esame, PartecipazioneCorsoBase.IDONEO)
 
     def test_invito_aspirante_automatico(self):
         presidente = crea_persona()
@@ -198,30 +242,30 @@ class TestCorsi(TestCase):
         # Test del controllo di cancellazione nei 4 stati del corso
         corso.stato = CorsoBase.TERMINATO
         corso.save()
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "stadio della vita del corso base")
 
         corso.stato = CorsoBase.ANNULLATO
         corso.save()
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "stadio della vita del corso base")
 
         corso.stato = CorsoBase.PREPARAZIONE
         corso.save()
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "Conferma cancellazione")
 
         corso.stato = CorsoBase.ATTIVO
         corso.save()
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "Conferma cancellazione")
 
         # GET chiede conferma
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "Conferma cancellazione")
         self.assertContains(response, force_text(sostenitore))
         # POST cancella
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 2)
@@ -241,12 +285,12 @@ class TestCorsi(TestCase):
         mail.outbox = []
 
         # Cancellare utente non esistente ritorna errore
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, altro.pk + 10000)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, altro.pk + 10000)))
         self.assertContains(response, "La persona cercata non è iscritta")
 
         # Cancellare utente non associato al corso non ritorna errore -per evitare information leak- ma non cambia
         # i dati
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, altro.pk)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, altro.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 2)
@@ -255,7 +299,7 @@ class TestCorsi(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
         # Cancellare invitato confermato
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, aspirante1.pk)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, aspirante1.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 1)
@@ -275,7 +319,7 @@ class TestCorsi(TestCase):
         mail.outbox = []
 
         # Cancellare invitato in attesa
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, aspirante2.pk)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, aspirante2.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 1)
@@ -289,7 +333,9 @@ class TestCorsi(TestCase):
         mail.outbox = []
 
         # Cancellare partecipante in attesa
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, aspirante3.pk)))
+        response = self.client.post(reverse(
+            'aspirante:formazione_iscritti_cancella', args=(corso.pk,
+                                                        aspirante3.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 0)
@@ -577,6 +623,186 @@ class TestCorsi(TestCase):
         self.assertFalse(corso.inviti.exists())
         self.assertEqual(corso.partecipazioni.count(), 2)
 
+    def test_aspirante_confermato(self):
+        presidente = crea_persona()
+        presidente.email_contatto = email_fittizzia()
+        presidente.save()
+        crea_utenza(presidente, presidente.email_contatto)
+        sede = crea_sede(presidente)
+
+        aspirante1 = crea_persona()
+        aspirante1.email_contatto = email_fittizzia()
+        aspirante1.codice_fiscale = codice_fiscale()
+        aspirante1.save()
+        a = Aspirante(persona=aspirante1)
+        a.locazione = sede.locazione
+        a.save()
+
+        oggi = poco_fa()
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi + timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+        partecipazione1 = PartecipazioneCorsoBase.objects.create(persona=aspirante1, corso=corso)
+        partecipazione1.richiedi()
+
+        for autorizzazione in partecipazione1.autorizzazioni:
+            autorizzazione.concedi(firmatario=presidente, modulo=None)
+        partecipazione1.refresh_from_db()
+
+        dati = {
+            'ammissione': PartecipazioneCorsoBase.AMMESSO,
+            'motivo_non_ammissione': None,
+            'esito_parte_1': PartecipazioneCorsoBase.POSITIVO,
+            'argomento_parte_1': 'blah',
+            'esito_parte_2': PartecipazioneCorsoBase.POSITIVO,
+            'argomento_parte_2': 'bla',
+            'extra_1': False,
+            'extra_2': False,
+            'destinazione': sede.pk,
+        }
+        modulo = FormVerbaleCorso(
+            data=dati, generazione_verbale=True, instance=partecipazione1,
+        )
+        modulo.fields['destinazione'].queryset = corso.possibili_destinazioni()
+        modulo.fields['destinazione'].initial = corso.sede
+        self.assertTrue(modulo.is_valid())
+        modulo.save()
+        corso.termina(presidente)
+        self.assertFalse(Aspirante.objects.all().exists())
+        aspirante1 = Persona.objects.get(pk=aspirante1.pk)
+        with self.assertRaises(ObjectDoesNotExist):
+            self.assertFalse(aspirante1.aspirante)
+
+    def test_richieste_processabili(self):
+        presidente = crea_persona()
+        presidente.email_contatto = email_fittizzia()
+        presidente.save()
+        crea_utenza(presidente, presidente.email_contatto)
+        sede = crea_sede(presidente)
+        crea_appartenenza(sede=sede, persona=presidente)
+        sede2 = crea_sede(presidente)
+
+        aspirante1 = crea_persona()
+        aspirante1.email_contatto = email_fittizzia()
+        aspirante1.codice_fiscale = codice_fiscale()
+        aspirante1.save()
+        a = Aspirante(persona=aspirante1)
+        a.locazione = sede.locazione
+        a.save()
+
+        est = Estensione.objects.create(
+            destinazione=sede2,
+            persona=presidente,
+            richiedente=presidente,
+            motivo='test'
+        )
+        est.richiedi()
+
+        oggi = poco_fa()
+        corso1 = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi + timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+        partecipazione1 = PartecipazioneCorsoBase.objects.create(persona=aspirante1, corso=corso1)
+        partecipazione1.richiedi()
+
+        corso2 = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi - timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+        partecipazione2 = PartecipazioneCorsoBase.objects.create(persona=aspirante1, corso=corso2)
+        partecipazione2.richiedi()
+
+        corso3 = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede,
+            data_inizio=oggi - timedelta(days=7),
+            data_esame=oggi + timedelta(days=14),
+            progressivo=1,
+            anno=oggi.year,
+            descrizione='Un corso',
+        )
+        partecipazione3 = PartecipazioneCorsoBase.objects.create(persona=aspirante1, corso=corso3)
+        partecipazione3.richiedi()
+
+        ctype = ContentType.objects.get_for_model(CorsoBase)
+        Delega.objects.create(
+            persona=presidente, tipo=DIRETTORE_CORSO, stato=Delega.ATTIVA, firmatario=presidente, inizio=poco_fa(),
+            oggetto_id=corso1.pk, oggetto_tipo=ctype
+        )
+        Delega.objects.create(
+            persona=presidente, tipo=DIRETTORE_CORSO, stato=Delega.ATTIVA, firmatario=presidente, inizio=poco_fa(),
+            oggetto_id=corso2.pk, oggetto_tipo=ctype
+        )
+        Delega.objects.create(
+            persona=presidente, tipo=DIRETTORE_CORSO, stato=Delega.ATTIVA, firmatario=presidente, inizio=poco_fa(),
+            oggetto_id=corso3.pk, oggetto_tipo=ctype
+        )
+
+        url_presenti = []
+        url_assenti = []
+        richieste_non_processabili = partecipazione1.autorizzazioni.all()
+        for richiesta in richieste_non_processabili:
+            self.assertFalse(PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta))
+            url_assenti.append(reverse('autorizzazioni:concedi', args=(richiesta.pk,)))
+            url_assenti.append(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
+
+        non_processabili = PartecipazioneCorsoBase.richieste_non_processabili(Autorizzazione.objects.all())
+        self.assertEqual(list(non_processabili), [richiesta.pk for richiesta in richieste_non_processabili])
+
+        richieste_processabili = partecipazione2.autorizzazioni.all() | partecipazione3.autorizzazioni.all()
+        for richiesta in richieste_processabili:
+            self.assertTrue(PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta))
+            url_presenti.append(reverse('autorizzazioni:concedi', args=(richiesta.pk,)))
+            url_presenti.append(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
+
+        # Mettendo nel mezzo anche autorizzazioni diverse si verifica che il meccanismo non interferisca
+        richieste_estensioni = est.autorizzazioni.all()
+        for richiesta in richieste_estensioni:
+            pass
+            url_presenti.append(reverse('autorizzazioni:concedi', args=(richiesta.pk,)))
+            url_presenti.append(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
+
+        self.client.login(email=presidente.email_contatto, password='prova')
+        response = self.client.get(reverse('autorizzazioni-aperte'))
+        for url in url_presenti:
+            self.assertContains(response, url)
+        for url in url_assenti:
+            self.assertNotContains(response, url)
+        self.assertContains(response, 'Corso non ancora iniziato, impossibile processare la richiesta.')
+
+        for url in url_assenti:
+            response = self.client.get(url)
+            self.assertContains(response, 'Richiesta non processabile')
+
+        for richiesta in partecipazione2.autorizzazioni.all():
+            response = self.client.get(reverse('autorizzazioni:concedi', args=(richiesta.pk,)))
+            self.assertContains(response, 'Per dare consenso a questa richiesta')
+
+        for richiesta in partecipazione3.autorizzazioni.all():
+            response = self.client.get(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
+            self.assertContains(response, 'Per negare questa richiesta')
+
+        for richiesta in est.autorizzazioni.all():
+            response = self.client.get(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
+            self.assertContains(response, 'Per negare questa richiesta')
+
 
 class TestFunzionaleFormazione(TestFunzionale):
     """
@@ -816,6 +1042,14 @@ class TestFunzionaleFormazione(TestFunzionale):
         self.assertTrue(sessione_direttore.is_text_present("chiede di essere contattato"),
                         msg="Esplicitare che l'aspirante vuole essere contattato")
 
+        self.assertTrue(sessione_direttore.is_text_present("Corso non ancora iniziato, impossibile processare la richiesta."),
+                        msg="Corso non ancora iniziato, impossibile processare la richiesta.")
+
+        for corso in sede.corsobase_set.all():
+            corso.data_inizio = poco_fa()
+            corso.save()
+
+        sessione_direttore.click_link_by_partial_text("Richieste")
         sessione_direttore.click_link_by_partial_text("Conferma")
         sessione_direttore.check('conferma_1')
         sessione_direttore.check('conferma_2')

@@ -255,7 +255,7 @@ def veicoli_termina_fermo_tecnico(request, me, fermo):
     fermo = get_object_or_404(FermoTecnico, pk=fermo)
     if me.permessi_almeno(fermo.veicolo, MODIFICA):
         fermo.termina()
-        return redirect("/veicolo/fermi-tecnici/%s/" %(fermo.veicolo.pk,))
+        return redirect("/veicoli/fermi-tecnici/%s/" %(fermo.veicolo.pk,))
     else:
         return redirect(ERRORE_PERMESSI)
 

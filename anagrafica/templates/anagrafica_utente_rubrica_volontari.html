@@ -17,7 +17,7 @@
     </div>
 
     {% if not ci_sono %}
-    <div class="alert bg-warning">
+    <div class="alert alert-warning">
         <p>
             <i class="fa fa-warning fa-fw"></i> Non sei presente in questo elenco.
         </p>
@@ -57,7 +57,7 @@
                         <a href="{{ volontario.url_messaggio }}" class="btn btn-xs btn-primary">
                             Scrivi messaggio
                         </a>
-                        {% card volontario extra_class='btn btn-xs btn-default' %}
+                        {% card volontario extra_class='btn btn-xs btn-default' mute_contact=True %}
                     </div>
                 </td>
             </tr>
@@ -65,7 +65,7 @@
 
 
         {% empty %}
-            <tr class="warning">
+            <tr class="alert alert-warning">
                 <td colspan="3">
                     <p>
                         <i class="fa fa-fw fa-info-circle"></i>
