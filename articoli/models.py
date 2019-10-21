@@ -3,8 +3,8 @@ from html import unescape
 from autoslug import AutoSlugField
 from django.core.urlresolvers import reverse
 from django.db import models, transaction
-from django.forms import Textarea
-from django.template.defaultfilters import slugify
+# from django.forms import Textarea
+# from django.template.defaultfilters import slugify
 from django.utils import timezone
 from django.utils.html import strip_tags
 
@@ -76,7 +76,7 @@ class Articolo(ModelloSemplice, ConMarcaTemporale, ConAllegati):
         super(Articolo, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse('dettaglio_articolo', kwargs={'articolo_slug': self.slug})
+        return reverse('articoli:dettaglio', kwargs={'articolo_slug': self.slug})
 
     class Meta:
         app_label = 'articoli'

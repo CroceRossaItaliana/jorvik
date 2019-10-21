@@ -5,6 +5,7 @@ from .models import Gruppo, Appartenenza
 
 
 class ElencoMembriGruppo(ElencoVistaAnagrafica):
+    NAME = 'Membri Gruppo'
 
     def risultati(self):
         qs_sedi = self.args[0]

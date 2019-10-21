@@ -7,9 +7,10 @@ from datetime import date
 from django.contrib.contenttypes.models import ContentType
 
 from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, REFERENTE, DIRETTORE_CORSO, \
-    RESPONSABILE_FORMAZIONE
+    RESPONSABILE_FORMAZIONE, COMMISSARIO, VICE_PRESIDENTE
 
 INCARICO_PRESIDENZA = "PRES"
+INCARICO_COMMISSARIO = "COM"
 INCARICO_GESTIONE_SOCI = "US-GEN"
 INCARICO_GESTIONE_TRASFERIMENTI = "US-TRASF"
 INCARICO_GESTIONE_ESTENSIONI = "US-EST"
@@ -25,6 +26,7 @@ INCARICO_ASPIRANTE = "ASP"
 
 INCARICHI = (
     (INCARICO_PRESIDENZA,                       "Presidenza"),
+    (INCARICO_COMMISSARIO,                      "Commissario"),
     (INCARICO_GESTIONE_SOCI,                    "Gestione dei Soci"),
     (INCARICO_GESTIONE_TRASFERIMENTI,           "Gestione dei Trasferimenti"),
     (INCARICO_GESTIONE_ESTENSIONI,              "Gestione delle Estensioni"),
@@ -41,6 +43,7 @@ INCARICHI_DICT = dict(INCARICHI)
 
 INCARICHI_TIPO = (
     (INCARICO_PRESIDENZA,                       "anagrafica.Sede"),
+    (INCARICO_COMMISSARIO,                      "anagrafica.Sede"),
     (INCARICO_GESTIONE_SOCI,                    "anagrafica.Sede"),
     (INCARICO_GESTIONE_TRASFERIMENTI,           "anagrafica.Sede"),
     (INCARICO_GESTIONE_ESTENSIONI,              "anagrafica.Sede"),
@@ -63,44 +66,52 @@ def espandi_incarichi_ufficio_soci(qs_sede, al_giorno=None):
         + espandi_incarichi_ufficio_soci_unita(qs_sede.espandi(), al_giorno=al_giorno)
 
 
-def espandi_incarichi_ufficio_soci_unita(qs_sede, al_giorno=None):
+def espandi_incarichi_ufficio_soci_unita(sede, al_giorno=None):
     return [
-        (INCARICO_GESTIONE_SOCI,                        qs_sede),
-        (INCARICO_GESTIONE_APPARTENENZE,                qs_sede),
-        (INCARICO_GESTIONE_TRASFERIMENTI,               qs_sede),
-        (INCARICO_GESTIONE_ESTENSIONI,                  qs_sede),
-        (INCARICO_GESTIONE_FOTOTESSERE,                 qs_sede),
-        (INCARICO_GESTIONE_TITOLI,                      qs_sede),
-        (INCARICO_GESTIONE_RISERVE,                     qs_sede),
+        (INCARICO_GESTIONE_SOCI,                        sede),
+        (INCARICO_GESTIONE_APPARTENENZE,                sede),
+        (INCARICO_GESTIONE_TRASFERIMENTI,               sede),
+        (INCARICO_GESTIONE_ESTENSIONI,                  sede),
+        (INCARICO_GESTIONE_FOTOTESSERE,                 sede),
+        (INCARICO_GESTIONE_TITOLI,                      sede),
+        (INCARICO_GESTIONE_RISERVE,                     sede),
     ]
 
 
-def espandi_incarichi_referente_attivita(qs_attivita, al_giorno=None):
+def espandi_incarichi_referente_attivita(attivita, al_giorno=None):
     return [
-        (INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI,       qs_attivita),
+        (INCARICO_GESTIONE_ATTIVITA_PARTECIPANTI,       attivita),
     ]
 
 
-def espandi_incarichi_direttore_corso(qs_corso, al_giorno=None):
+def espandi_incarichi_direttore_corso(corso, al_giorno=None):
     return [
-        (INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,      qs_corso)
+        (INCARICO_GESTIONE_CORSOBASE_PARTECIPANTI,      corso)
     ]
 
 
-def espandi_incarichi_responsabile_formazione(qs_sede, al_giorno=None):
+def espandi_incarichi_responsabile_formazione(sede, al_giorno=None):
     from formazione.models import CorsoBase
     return [
 
-    ] + espandi_incarichi_direttore_corso(CorsoBase.objects.filter(sede__in=qs_sede.espandi()))
+    ] + espandi_incarichi_direttore_corso(CorsoBase.objects.filter(sede__in=sede.espandi()))
 
 
-def espandi_incarichi_presidente(qs_sede, al_giorno=None):
+def espandi_incarichi_presidente(sede, al_giorno=None):
     return [
-       (INCARICO_GESTIONE_SANGUE,                       qs_sede),
-       (INCARICO_PRESIDENZA,                            qs_sede),
+       (INCARICO_GESTIONE_SANGUE,                       sede),
+       (INCARICO_PRESIDENZA,                            sede),
 
     ] \
-        + espandi_incarichi_ufficio_soci(qs_sede, al_giorno=al_giorno)
+        + espandi_incarichi_ufficio_soci(sede, al_giorno=al_giorno)
+
+def espandi_incarichi_commissario(sede, al_giorno=None):
+    return [
+       (INCARICO_GESTIONE_SANGUE,                       sede),
+       (INCARICO_PRESIDENZA,                            sede),
+
+    ] \
+        + espandi_incarichi_ufficio_soci(sede, al_giorno=al_giorno)
 
 
 # Questo dizionario contiene la corrispondenza tra la funzione di
@@ -108,6 +119,8 @@ ESPANSIONE_DELEGHE = {
     UFFICIO_SOCI_UNITA:     espandi_incarichi_ufficio_soci_unita,
     UFFICIO_SOCI:           espandi_incarichi_ufficio_soci,
     PRESIDENTE:             espandi_incarichi_presidente,
+    VICE_PRESIDENTE:             espandi_incarichi_presidente,
+    COMMISSARIO:            espandi_incarichi_commissario,
     REFERENTE:              espandi_incarichi_referente_attivita,
     DIRETTORE_CORSO:        espandi_incarichi_direttore_corso,
     RESPONSABILE_FORMAZIONE:espandi_incarichi_responsabile_formazione,

@@ -42,7 +42,7 @@
 
                                 {% if d.attuale %}
                                     <i class="fa fa-check fa-fw"></i>
-                                    Attuale
+                                    Indeterminata
                                 {% else %}
                                     <i class="fa fa-folder fa-fw"></i>
                                     Passata
@@ -89,8 +89,8 @@
 
                 {% empty %}
                     <tr>
-                        <td colspan="5" class="bg-warning">
-                            <i class="fa fa-info"></i> Nessuna appartenenza registrata.
+                        <td colspan="5" class="alert alert-warning">
+                            <i class="fa fa-info-circle"></i> Nessuna appartenenza registrata.
                         </td>
                     </tr>
 
@@ -140,7 +140,7 @@
 
                     {% empty %}
 
-                        <tr class="warning">
+                        <tr class="alert alert-warning">
                             <td colspan="4">
                                 <p><i class="fa fa-fw fa-info-circle"></i>
                                     Nessuna ricevuta o quota associativa registrata.
@@ -168,13 +168,21 @@
 
                 <tbody>
                 {% for d in deleghe %}
-                    <tr     {% if d.attuale %}class="bg-success"
+                    <tr     {% if d.attuale and d.stato == d.ATTIVA %}class="bg-success"
                             {% endif %}>
                         <td>
 
                             {% if d.attuale %}
-                                <i class="fa fa-check fa-fw"></i>
-                                Valida
+
+                                {% if d.stato == d.ATTIVA %}
+                                    <i class="fa fa-check fa-fw"></i>
+                                    Valida
+
+                                {% else %}
+                                    <i class="fa fa-check fa-fw"></i>
+                                    Valida (Sospesa)
+                                {% endif %}
+
                             {% else %}
                                 <i class="fa fa-folder fa-fw"></i>
                                 Archiviata
@@ -210,8 +218,8 @@
 
                 {% empty %}
                     <tr>
-                        <td colspan="5" class="bg-warning">
-                            <i class="fa fa-info"></i> Nessuna delega registrata.
+                        <td colspan="5" class="alert alert-warning">
+                            <i class="fa fa-info-circle"></i> Nessuna delega registrata.
                         </td>
                     </tr>
 

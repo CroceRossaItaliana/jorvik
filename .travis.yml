@@ -1,27 +1,12 @@
-language: python
-python:
-- '3.4'
-- '3.5'
-addons:
-  postgresql: "9.4"
+sudo: required
+services:
+  - docker
 
-env:
-  global:
-    - ENABLE_TEST_APPS=1
+before_install:
+  - curl -L https://github.com/docker/compose/releases/download/1.18.0/docker-compose-Linux-x86_64 > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  - docker-compose build
 
-cache: pip
-
-before_script:
-- export DISPLAY=:99.0
-- sh -e /etc/init.d/xvfb start
-- sleep 3
-- psql -U postgres -c 'CREATE DATABASE test_jorvik;'
-- psql -U postgres -c "CREATE EXTENSION postgis" -d test_jorvik
-- psql -U postgres -c "CREATE EXTENSION postgis_topology" -d test_jorvik
-- pg_restore -O -d test_jorvik ./base/test_jorvik.pgsql
-- mkdir -p ../log
-install:
-- pip install -U pip wheel
-- pip install -r requirements.txt
 script:
-- travis_retry python ./manage.py test -k -v 3 --parallel 2
+- docker-compose run -e SKIP_DJANGO_MIGRATE=1 -e GOOGLE_KEY=$GOOGLE_KEY web python manage.py test -k -v 3

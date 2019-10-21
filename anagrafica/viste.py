@@ -1,72 +1,58 @@
-import codecs
-import csv
-import datetime
+import codecs, csv, datetime
 from collections import OrderedDict
 from importlib import import_module
 
+from django.db.models import Q
 from django.apps import apps
 from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
-from django.http import HttpResponse
-from django.shortcuts import render_to_response, redirect, get_object_or_404
+from django.contrib import messages
 from django.contrib.auth import login
-from django.utils.crypto import get_random_string
+from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import reverse
+from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template.loader import get_template
-
-# Le viste base vanno qui.
-from django.views.generic import ListView
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 
-from anagrafica.costanti import TERRITORIALE, REGIONALE
-from anagrafica.elenchi import ElencoDelegati
-from anagrafica.forms import ModuloStepComitato, ModuloStepCredenziali, ModuloModificaAnagrafica, ModuloModificaAvatar, \
-    ModuloCreazioneDocumento, ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto, \
-    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento, ModuloCreazioneDelega, \
-    ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera, ModuloProfiloModificaAnagrafica, \
-    ModuloProfiloTitoloPersonale, ModuloUtenza, ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede, \
-    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti, ModuloPulisciEmail, \
-    ModuloUSModificaUtenza
-from anagrafica.forms import ModuloStepCodiceFiscale
-from anagrafica.forms import ModuloStepAnagrafica
-
-# Tipi di registrazione permessi
-from anagrafica.importa import VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari
-from anagrafica.models import Persona, Documento, Telefono, Estensione, Delega, Appartenenza, Trasferimento, \
-    ProvvedimentoDisciplinare, Sede, Riserva
-from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT, DELEGATO_OBIETTIVO_1, \
-    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
-    RESPONSABILE_FORMAZIONE, RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE, \
-    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO, PERMESSI_NOMI, RUBRICHE_TITOLI
-from anagrafica.permessi.costanti import ERRORE_PERMESSI, COMPLETO, MODIFICA, LETTURA, GESTIONE_SEDE, GESTIONE, \
-    ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO, \
-    RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
-    RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1, RUBRICA_DELEGATI_OBIETTIVO_2, \
-    RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
-    RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
-    RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO
-from anagrafica.permessi.incarichi import INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI, \
-    INCARICO_GESTIONE_FOTOTESSERE
-from anagrafica.utils import _conferma_email
-from anagrafica.utils import _richiesta_conferma_email
 from articoli.viste import get_articoli
-from attivita.forms import ModuloStatisticheAttivitaPersona
-from attivita.models import Partecipazione
-from attivita.stats import statistiche_attivita_persona
-from attivita.viste import attivita_storico_excel
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
-from base.errori import errore_generico, errore_nessuna_appartenenza, messaggio_generico, errore_no_volontario
+from base.errori import (errore_generico, errore_nessuna_appartenenza,
+                         messaggio_generico, errore_no_volontario)
 from base.files import Zip
 from base.models import Log
-from base.notifiche import NOTIFICA_INVIA
 from base.stringhe import genera_uuid_casuale
-from base.utils import remove_none, poco_fa, oggi
+from base.utils import poco_fa, oggi
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
-from posta.models import Messaggio, Q
+from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
-from sangue.models import Donatore, Donazione
+from sangue.models import Donazione
+
+from .costanti import TERRITORIALE, REGIONALE
+from .elenchi import ElencoDelegati
+from .utils import _conferma_email, _richiesta_conferma_email
+from .permessi.applicazioni import (PRESIDENTE, UFFICIO_SOCI, PERMESSI_NOMI_DICT,
+    DELEGATO_OBIETTIVO_1, COMMISSARIO, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
+    DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE,
+    RESPONSABILE_AUTOPARCO, DELEGATO_CO, UFFICIO_SOCI_UNITA, DELEGHE_RUBRICA, REFERENTE,
+    RESPONSABILE_AREA, DIRETTORE_CORSO, DELEGATO_AREA, REFERENTE_GRUPPO,
+    PERMESSI_NOMI, RUBRICHE_TITOLI, CONSIGLIERE, VICE_PRESIDENTE, CONSIGLIERE_GIOVANE)
+from .permessi.costanti import (ERRORE_PERMESSI, MODIFICA, LETTURA, GESTIONE_SEDE,
+    GESTIONE, ELENCHI_SOCI, GESTIONE_ATTIVITA, GESTIONE_ATTIVITA_AREA, GESTIONE_CORSO)
+from .permessi.incarichi import (INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TITOLI,
+    INCARICO_GESTIONE_FOTOTESSERE)
+from .importa import (VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari)
+from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
+    ModuloModificaAnagrafica, ModuloModificaAvatar, ModuloCreazioneDocumento,
+    ModuloModificaEmailAccesso, ModuloModificaEmailContatto,
+    ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento,
+    ModuloCreazioneDelega, ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera,
+    ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
+    ModuloImportVolontari, ModuloImportPresidenti, ModuloPulisciEmail,
+    ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica)
+from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
+    Appartenenza, Sede, Riserva, Dimissione)
 
 
 TIPO_VOLONTARIO = 'volontario'
@@ -80,7 +66,6 @@ STEP_CODICE_FISCALE = 'codice_fiscale'
 STEP_ANAGRAFICA = 'anagrafica'
 STEP_CREDENZIALI = 'credenziali'
 STEP_FINE = 'fine'
-
 STEP_NOMI = {
     STEP_COMITATO: 'Selezione Comitato',
     STEP_CODICE_FISCALE: 'Codice Fiscale',
@@ -101,15 +86,13 @@ MODULI = {
     STEP_CODICE_FISCALE: ModuloStepCodiceFiscale,
     STEP_ANAGRAFICA: ModuloStepAnagrafica,
     STEP_CREDENZIALI: ModuloStepCredenziali,
-    STEP_FINE: None,
+    STEP_FINE: ModuloStepFine,
 }
 
 
 @pagina_anonima
 def registrati(request, tipo, step=None):
-    """
-    La vista per tutti gli step della registrazione.
-    """
+    """ La vista per tutti gli step della registrazione. """
 
     # Controlla che il tipo sia valido (/registrati/<tipo>/)
     if tipo not in TIPO:
@@ -147,12 +130,12 @@ def registrati(request, tipo, step=None):
         #  nome: Il nome completo dello step (es. "Selezione Comitato")
         #  slug: Il nome per il link (es. "comitato" per /registrati/<tipo>/comitato/")
         #  completato: True se lo step e' stato completato o False se futuro o attuale
-        {'nome': STEP_NOMI[x], 'slug': x,
+
+        {'nome': STEP_NOMI[x],
+         'slug': x,
          'completato': (STEP[tipo].index(x) < STEP[tipo].index(step)),
          'attuale': (STEP[tipo].index(x) == STEP[tipo].index(step)),
-         'modulo': MODULI[x](initial=sessione) if MODULI[x] else None,
-         }
-        for x in STEP[tipo]
+         'modulo': MODULI[x](initial=sessione) if MODULI[x] else None,} for x in STEP[tipo]
     ]
 
     # Controlla se e' l'ultimo step
@@ -182,7 +165,7 @@ def registrati(request, tipo, step=None):
         else:
             modulo = None
 
-    contesto = {
+    context = {
         'email': sessione.get('email'),
         'attuale_nome': STEP_NOMI[step],
         'attuale_slug': step,
@@ -198,18 +181,17 @@ def registrati(request, tipo, step=None):
             request.session['registrazione_id'] = get_random_string(length=32)
 
         if not sessione.get('email'):
-            contesto = {
+            context = {
                 'attuale_nome': STEP_NOMI[step],
                 'attuale_slug': step,
                 'lista_step': lista_step,
                 'tipo': tipo,
             }
-            return 'anagrafica_registrati_errore.html', contesto
+            return 'anagrafica_registrati_errore.html', context
 
         else:
             if uid is not None or request.session['registrazione_id'] != registration_code:
-
-                corpo = {
+                email_body = {
                     'tipo': tipo,
                     'step': step,
                     'code': request.session['registrazione_id'],
@@ -219,23 +201,28 @@ def registrati(request, tipo, step=None):
 
                 Messaggio.invia_raw(
                    oggetto="Registrazione su Gaia",
-                   corpo_html=get_template('email_conferma.html').render(corpo),
+                   corpo_html=get_template('email_conferma.html').render(email_body),
                    email_mittente=None,
                    lista_email_destinatari=[
                         sessione.get('email')
                    ]
                 )
+                link_debug = '/registrati/{tipo}/{step}/?code={code}&registration={sessione}'.format(
+                    tipo=tipo, step=step, code=request.session['registrazione_id'],
+                    sessione=request.session.session_key
+                )
 
-                contesto = {
+                context = {
                     'attuale_nome': STEP_NOMI[step],
                     'attuale_slug': step,
                     'lista_step': lista_step,
                     'email': sessione.get('email'),
                     'tipo': tipo,
+                    'link_debug': link_debug if settings.DEBUG else ''
                 }
-                return 'anagrafica_registrati_attesa_mail.html', contesto
+                return 'anagrafica_registrati_attesa_mail.html', context
 
-    return 'anagrafica_registrati_step_' + step + '.html', contesto
+    return 'anagrafica_registrati_step_%s.html' % step, context
 
 
 @pagina_anonima
@@ -249,21 +236,34 @@ def registrati_conferma(request, tipo):
     if tipo not in TIPO:
         return redirect('/errore/')  # Altrimenti porta ad errore generico
 
+    dati = {}
+
     try:
         sessione = request.session['registrati'].copy()
     except KeyError:
         sessione = {}
-    dati = {}
+
+    form_confirm = ModuloStepFine(request.POST)
 
     # Carica tutti i moduli inviati da questo tipo di registrazione
-    for (k, modulo) in [(x, MODULI[x](data=sessione)) for x in STEP[tipo] if MODULI[x] is not None]:
+    for (k, form) in [(x, MODULI[x](data=sessione)) for x in STEP[tipo] if MODULI[x] is not None]:
+        if k == STEP_FINE:
+            """ Comportamento adeguato per la form ModuloStepFine introdotta 
+                dall'issue GAIA-49, altrimenti finiva nell'exception sotto. """
+            if form_confirm.is_valid():
+                dati.update(form_confirm.cleaned_data)
+            else:
+                response = redirect('/registrati/aspirante/fine/')
+                messages.error(request, 'Controlla tutti i campo obbligatori.')
+                return response
+            continue
 
         # Controlla nuovamente la validita'
-        if not modulo.is_valid():
-            raise ValueError("Errore nella validazione del sub-modulo %s" % (k, ))
+        if not form.is_valid():
+            raise ValueError("Errore nella validazione del sub-modulo %s" % k)
 
         # Aggiunge tutto a "dati"
-        dati.update(modulo.cleaned_data)
+        dati.update(form.cleaned_data)
 
     # Quali di questi campi vanno nella persona?
     campi_persona = [str(x.name) for x in Persona._meta.get_fields() if not x.is_relation]
@@ -332,32 +332,46 @@ def utente(request, me):
 
 @pagina_privata
 def utente_anagrafica(request, me):
+    from .forms import ModuloProfiloModificaAnagraficaDomicilio
 
-    contesto = {
+    context = {
         "delegati": me.deleghe_anagrafica(),
     }
 
-    modulo_dati = ModuloModificaAnagrafica(request.POST or None, instance=me)
+    form_residenza = ModuloModificaAnagrafica(request.POST or None, instance=me)
+    form_domicilio = ModuloProfiloModificaAnagraficaDomicilio(request.POST or None, instance=me)
 
     if request.POST:
+        if form_residenza.is_valid() and form_domicilio.is_valid():
+            cd_residenza = form_residenza.cleaned_data
+            cd_domicilio = form_domicilio.cleaned_data
 
-        if modulo_dati.is_valid():
-            modulo_dati.save()
+            if True == cd_domicilio['domicilio_uguale_a_residenza']:
+                for f in ('indirizzo', 'comune', 'provincia', 'stato', 'cap'):
+                    domicilio_key = 'domicilio_%s' % f
+                    residenza_value = cd_residenza['%s_residenza' % f]
+                    setattr(form_domicilio.instance, domicilio_key, residenza_value)
 
+            form_residenza.save()
+            form_domicilio.save()
+
+            messages.success(request, "I tuoi dati anagrafici sono stati salvati correttamente.")
+            return redirect(reverse('utente:anagrafica'))
     else:
+        form_residenza = ModuloModificaAnagrafica(instance=me)
+        form_domicilio = ModuloProfiloModificaAnagraficaDomicilio(instance=me)
 
-        modulo_dati = ModuloModificaAnagrafica(instance=me)
-
-    contesto.update({
-        "modulo_dati": modulo_dati,
+    context.update({
+        "form_residenza": form_residenza,
+        "form_domicilio": form_domicilio,
     })
 
-    return 'anagrafica_utente_anagrafica.html', contesto
+    return 'anagrafica_utente_anagrafica.html', context
 
 
 @pagina_privata
 def utente_fotografia(request, me):
-   return redirect("/utente/fotografia/avatar/")
+   return redirect(reverse('utente:avatar'))
 
 
 @pagina_privata
@@ -421,40 +435,41 @@ def utente_fotografia_fototessera(request, me):
 
 @pagina_privata
 def utente_documenti(request, me):
-    if not me.volontario and not me.dipendente:
+    if me.volontario or me.dipendente or me.ha_aspirante:
+        pass
+    else:
         return errore_no_volontario(request, me)
 
-    contesto = {
-        "documenti": me.documenti.all()
+    context = {
+        'documenti': me.documenti.all()
     }
 
-    if request.method == "POST":
-
-        nuovo_doc = Documento(persona=me)
-        modulo_aggiunta = ModuloCreazioneDocumento(request.POST, request.FILES, instance=nuovo_doc)
-
-        if modulo_aggiunta.is_valid():
-            modulo_aggiunta.save()
-
+    if request.method == 'POST':
+        doc = Documento(persona=me)
+        form = ModuloCreazioneDocumento(request.POST, request.FILES, instance=doc)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('utente:documenti'))
     else:
+        form = ModuloCreazioneDocumento()
 
-        modulo_aggiunta = ModuloCreazioneDocumento()
-
-    contesto.update({"modulo_aggiunta": modulo_aggiunta})
-
-    return 'anagrafica_utente_documenti.html', contesto
+    context.update({'modulo_aggiunta': form})
+    return 'anagrafica_utente_documenti.html', context
 
 
 @pagina_privata
 def utente_documenti_cancella(request, me, pk):
-
     doc = get_object_or_404(Documento, pk=pk)
 
     if not doc.persona == me:
         return redirect('/errore/permessi/')
 
-    doc.delete()
-    return redirect('/utente/documenti/')
+    if doc.can_be_deleted:
+        doc.delete()
+    else:
+        messages.error(request, 'Questo documento non può essere cancellato')
+
+    return redirect(reverse('utente:documenti'))
 
 
 @pagina_privata
@@ -469,6 +484,7 @@ def utente_documenti_zip(request, me):
     z.comprimi_e_salva(nome='Documenti.zip')
 
     return redirect(z.download_url)
+
 
 @pagina_privata
 def utente_storico(request, me):
@@ -635,6 +651,7 @@ def rubrica_delegati(request, me, rubrica):
         tipo=delega,
         oggetto_tipo=ContentType.objects.get_for_model(Sede),
     )
+
     sedi_delega = me.sedi_deleghe_attuali(espandi=True, deleghe=deleghe).espandi(pubblici=espandi)
 
     if request.POST:  # Ho selezionato delle sedi. Elabora elenco.
@@ -669,6 +686,7 @@ def utente_contatti_cancella_numero(request, me, pk):
     tel.delete()
     return redirect('/utente/contatti/')
 
+
 @pagina_privata
 def utente_donazioni_profilo(request, me):
 
@@ -689,6 +707,7 @@ def utente_donazioni_profilo(request, me):
     }
     return 'anagrafica_utente_donazioni_profilo.html', contesto
 
+
 @pagina_privata
 def utente_donazioni_sangue(request, me):
     modulo = ModuloDonazione(request.POST or None)
@@ -708,6 +727,7 @@ def utente_donazioni_sangue(request, me):
     }
     return 'anagrafica_utente_donazioni_sangue.html', contesto
 
+
 @pagina_privata
 def utente_donazioni_sangue_cancella(request, me, pk):
     donazione = get_object_or_404(Donazione, pk=pk)
@@ -716,6 +736,7 @@ def utente_donazioni_sangue_cancella(request, me, pk):
 
     donazione.delete()
     return redirect("/utente/donazioni/sangue/")
+
 
 def estensioni_pending(me):
 
@@ -730,6 +751,7 @@ def estensioni_pending(me):
                     )
                     persone.append(persona)
     return me.estensioni_in_attesa(), delegati
+
 
 @pagina_privata
 def utente_estensione(request, me):
@@ -795,6 +817,7 @@ def utente_estensione(request, me):
     }
     return "anagrafica_utente_estensione.html", contesto
 
+
 @pagina_privata()
 def utente_estensione_termina(request, me, pk):
     if not me.volontario:
@@ -806,6 +829,7 @@ def utente_estensione_termina(request, me, pk):
         estensione.termina()
         return redirect('/utente/')
 
+
 def utente_trasferimento_termina(request, me, pk):
     if not me.volontario:
         return errore_no_volontario(request, me)
@@ -815,6 +839,7 @@ def utente_trasferimento_termina(request, me, pk):
     else:
         trasferimento.ritira()
         return redirect('/utente/trasferimento/')
+
 
 def trasferimenti_pending(me):
 
@@ -847,6 +872,7 @@ def trasferimenti_pending(me):
         else:
             trasferimenti_manuali_pending = trasferimento
     return trasferimenti_auto_pending, trasferimenti_manuali_pending, persone
+
 
 @pagina_privata
 def utente_trasferimento(request, me):
@@ -916,6 +942,7 @@ def utente_trasferimento(request, me):
     }
     return "anagrafica_utente_trasferimento.html", contesto
 
+
 @pagina_privata
 def utente_riserva(request, me):
     if not me.volontario:
@@ -966,6 +993,7 @@ def utente_riserva_ritira(request, me, pk):
            ]
         )
     return redirect("/utente/")
+
 
 @pagina_privata
 def utente_riserva_termina(request, me, pk):
@@ -1019,21 +1047,34 @@ def profilo_turni_foglio(request, me, pk=None):
 
 @pagina_privata
 def strumenti_delegati(request, me):
-    app_label = request.session['app_label']
-    model = request.session['model']
-    pk = int(request.session['pk'])
-    continua_url = request.session['continua_url']
-    almeno = request.session['almeno']
-    delega = request.session['delega']
-    oggetto = apps.get_model(app_label, model)
-    oggetto = oggetto.objects.get(pk=pk)
+    from formazione.forms import FormCreateDirettoreDelega
 
-    modulo = ModuloCreazioneDelega(request.POST or None, initial={
-        "inizio": datetime.date.today(),
-    })
+    # Get values stored in the session
+    session = request.session
+    app_label = session['app_label']
+    model = session['model']
+    pk = int(session['pk'])
+    continua_url = session['continua_url']
+    almeno = session['almeno']
+    delega = session['delega']
 
-    if modulo.is_valid():
-        d = modulo.save(commit=False)
+    # Get object
+    oggetto = apps.get_model(app_label, model).objects.get(pk=pk)
+
+    # Instantiate a new form
+    form_data = {
+        'oggetto': oggetto,
+        'me': me,
+        'initial': {'inizio': datetime.date.today()},
+    }
+    form = ModuloCreazioneDelega(request.POST or None, **form_data)
+    if model == 'corsobase':
+        # if oggetto.is_nuovo_corso:
+        form = FormCreateDirettoreDelega(request.POST or None, **form_data)
+
+    # Check form is valid
+    if form.is_valid():
+        d = form.save(commit=False)
 
         if oggetto.deleghe.all().filter(Delega.query_attuale().q, tipo=delega, persona=d.persona).exists():
             return errore_generico(
@@ -1041,7 +1082,7 @@ def strumenti_delegati(request, me):
                 titolo="%s è già delegato" % (d.persona.nome_completo,),
                 messaggio="%s ha già una delega attuale come %s per %s" % (d.persona.nome_completo, PERMESSI_NOMI_DICT[delega], oggetto),
                 torna_titolo="Torna indietro",
-                torna_url="/strumenti/delegati/",
+                torna_url=reverse('strumenti_delegati'),
             )
 
         d.inizio = poco_fa()
@@ -1054,17 +1095,17 @@ def strumenti_delegati(request, me):
     deleghe = oggetto.deleghe.filter(tipo=delega)
     deleghe_attuali = oggetto.deleghe_attuali(tipo=delega)
 
-    contesto = {
+    context = {
         "continua_url": continua_url,
         "almeno": almeno,
         "delega": PERMESSI_NOMI_DICT[delega],
-        "modulo": modulo,
+        "modulo": form,
         "oggetto": oggetto,
         "deleghe": deleghe,
         "deleghe_attuali": deleghe_attuali,
     }
 
-    return 'anagrafica_strumenti_delegati.html', contesto
+    return 'anagrafica_strumenti_delegati.html', context
 
 
 @pagina_privata
@@ -1082,9 +1123,8 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
     if not me.permessi_almeno(delega.oggetto, GESTIONE):
         return redirect(ERRORE_PERMESSI)
 
-    delega.termina(mittente=me)
-
-    return redirect("/strumenti/delegati/")
+    delega.termina(mittente=me, termina_at=poco_fa())
+    return redirect(reverse('strumenti_delegati'))
 
 
 @pagina_privata
@@ -1103,9 +1143,12 @@ def utente_curriculum(request, me, tipo=None):
     tipo_display = dict(Titolo.TIPO)[tipo]
     request.session['titoli_tipo'] = tipo
 
-    titolo_selezionato = None
-    modulo = ModuloNuovoTitoloPersonale(tipo, tipo_display, request.POST or None)
     valida_secondo_form = True
+    titolo_selezionato = None
+    modulo = ModuloNuovoTitoloPersonale(tipo,
+                                        tipo_display,
+                                        request.POST or None,
+                                        me=me)
     if modulo.is_valid():
         titolo_selezionato = modulo.cleaned_data['titolo']
         passo = 2
@@ -1149,10 +1192,9 @@ def utente_curriculum(request, me, tipo=None):
                 tp.autorizzazione_richiedi_sede_riferimento(
                     me, INCARICO_GESTIONE_TITOLI
                 )
-
             return redirect("/utente/curriculum/%s/?inserimento=ok" % (tipo,))
 
-    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo)
+    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo).order_by('data_scadenza')
 
     contesto = {
         "tipo": tipo,
@@ -1163,6 +1205,7 @@ def utente_curriculum(request, me, tipo=None):
         "titolo": titolo_selezionato
     }
     return 'anagrafica_utente_curriculum.html', contesto
+
 
 @pagina_privata
 def utente_curriculum_cancella(request, me, pk=None):
@@ -1175,237 +1218,6 @@ def utente_curriculum_cancella(request, me, pk=None):
     titolo_personale.delete()
 
     return redirect("/utente/curriculum/%s/" % (tipo,))
-
-
-def _profilo_anagrafica(request, me, persona):
-    puo_modificare = me.permessi_almeno(persona, MODIFICA)
-    modulo = ModuloProfiloModificaAnagrafica(request.POST or None, instance=persona, prefix="anagrafica")
-    modulo_numero_telefono = ModuloCreazioneTelefono(request.POST or None, prefix="telefono")
-    if puo_modificare and modulo.is_valid():
-        Log.registra_modifiche(me, modulo)
-        modulo.save()
-
-    if puo_modificare and modulo_numero_telefono.is_valid():
-        persona.aggiungi_numero_telefono(
-            modulo_numero_telefono.cleaned_data.get('numero_di_telefono'),
-            modulo_numero_telefono.cleaned_data.get('tipologia') == modulo_numero_telefono.SERVIZIO,
-        )
-
-    contesto = {
-        "modulo": modulo,
-        "modulo_numero_telefono": modulo_numero_telefono,
-    }
-    return 'anagrafica_profilo_anagrafica.html', contesto
-
-
-def _profilo_appartenenze(request, me, persona):
-    puo_modificare = me.permessi_almeno(persona, MODIFICA)
-
-    moduli = []
-    for app in persona.appartenenze.all():
-        modulo = None
-        if puo_modificare and app.attuale() and app.modificabile():
-            modulo = ModuloModificaDataInizioAppartenenza(request.POST or None,
-                                                          instance=app,
-                                                          prefix="%d" % (app.pk,))
-            if ("%s-inizio" % (app.pk,)) in request.POST and modulo.is_valid():
-                modulo.save()
-
-        moduli += [modulo]
-
-    appartenenze = zip(persona.appartenenze.all(), moduli)
-
-    contesto = {
-        "appartenenze": appartenenze,
-        "es": Appartenenza.ESTESO
-    }
-
-    return 'anagrafica_profilo_appartenenze.html', contesto
-
-
-def _profilo_fototessera(request, me, persona):
-    puo_modificare = me.permessi_almeno(persona, MODIFICA)
-
-    modulo = ModuloNuovaFototessera(request.POST or None, request.FILES or None)
-    if modulo.is_valid():
-        fototessera = modulo.save(commit=False)
-        fototessera.persona = persona
-        fototessera.save()
-
-        # Ritira eventuali fototessere in attesa
-        if persona.fototessere_pending().exists():
-            for x in persona.fototessere_pending():
-                x.autorizzazioni_ritira()
-
-        Log.crea(me, fototessera)
-
-    contesto = {
-        "puo_modificare": puo_modificare,
-        "modulo": modulo,
-    }
-    return 'anagrafica_profilo_fototessera.html', contesto
-
-
-def _profilo_deleghe(request, me, persona):
-    return 'anagrafica_profilo_deleghe.html', {}
-
-
-def _profilo_turni(request, me, persona):
-    modulo = ModuloStatisticheAttivitaPersona(request.POST or None)
-    storico = Partecipazione.objects.filter(persona=persona).order_by('-turno__inizio')
-    statistiche = statistiche_attivita_persona(persona, modulo)
-    contesto = {
-        "storico": storico,
-        "statistiche": statistiche,
-        "statistiche_modulo": modulo,
-    }
-    return 'anagrafica_profilo_turni.html', contesto
-
-
-def _profilo_riserve(request, me, persona):
-
-    riserve = Riserva.objects.filter(persona=persona)
-
-    contesto = {
-        "riserve": riserve,
-    }
-
-
-    return 'anagrafica_profilo_riserve.html', contesto
-
-
-def _profilo_curriculum(request, me, persona):
-    modulo = ModuloProfiloTitoloPersonale(request.POST or None)
-
-    if modulo.is_valid():
-        tp = modulo.save(commit=False)
-        tp.persona = persona
-        tp.save()
-
-    contesto = {
-        "modulo": modulo,
-    }
-    return 'anagrafica_profilo_curriculum.html', contesto
-
-
-def _profilo_sangue(request, me, persona):
-    modulo_donatore = ModuloDonatore(request.POST or None, prefix="donatore", instance=Donatore.objects.filter(persona=persona).first())
-    modulo_donazione = ModuloDonazione(request.POST or None, prefix="donazione")
-
-    if modulo_donatore.is_valid():
-        donatore = modulo_donatore.save(commit=False)
-        donatore.persona = persona
-        donatore.save()
-
-    if modulo_donazione.is_valid():
-        donazione = modulo_donazione.save(commit=False)
-        donazione.persona = persona
-        r = donazione.save()
-
-    contesto = {
-        "modulo_donatore": modulo_donatore,
-        "modulo_donazione": modulo_donazione,
-    }
-
-    return 'anagrafica_profilo_sangue.html', contesto
-
-
-def _profilo_documenti(request, me, persona):
-    puo_modificare = me.permessi_almeno(persona, MODIFICA)
-    modulo = ModuloCreazioneDocumento(request.POST or None, request.FILES or None)
-    if puo_modificare and modulo.is_valid():
-        f = modulo.save(commit=False)
-        f.persona = persona
-        f.save()
-
-    contesto = {
-        "modulo": modulo,
-    }
-    return 'anagrafica_profilo_documenti.html', contesto
-
-def _profilo_provvedimenti(request, me, persona):
-        provvedimenti = ProvvedimentoDisciplinare.objects.filter(persona=persona)
-        contesto = {
-            "provvedimenti": provvedimenti,
-        }
-
-        return 'anagrafica_profilo_provvedimenti.html', contesto
-
-def _profilo_quote(request, me, persona):
-    contesto = {}
-    return 'anagrafica_profilo_quote.html', contesto
-
-
-def _profilo_credenziali(request, me, persona):
-    utenza = Utenza.objects.filter(persona=persona).first()
-
-    modulo_utenza = modulo_modifica = None
-    if utenza:
-        modulo_modifica = ModuloUSModificaUtenza(request.POST or None, instance=utenza)
-    else:
-        modulo_utenza = ModuloUtenza(request.POST or None, instance=utenza, initial={"email": persona.email_contatto})
-
-    if modulo_utenza and modulo_utenza.is_valid():
-        utenza = modulo_utenza.save(commit=False)
-        utenza.persona = persona
-        utenza.save()
-        utenza.genera_credenziali()
-        return redirect(persona.url_profilo_credenziali)
-
-    if modulo_modifica and modulo_modifica.is_valid():
-        vecchia_email_contatto = persona.email
-        vecchia_email = Utenza.objects.get(pk=utenza.pk).email
-        nuova_email = modulo_modifica.cleaned_data.get('email')
-
-        if vecchia_email == nuova_email:
-            return errore_generico(request, me, titolo="Nessun cambiamento",
-                                   messaggio="Per cambiare indirizzo e-mail, inserisci un "
-                                             "indirizzo differente.",
-                                   torna_titolo="Credenziali",
-                                   torna_url=persona.url_profilo_credenziali)
-
-        if Utenza.objects.filter(email__icontains=nuova_email).first():
-            return errore_generico(request, me, titolo="E-mail già utilizzata",
-                                   messaggio="Esiste un altro utente in Gaia che utilizza "
-                                             "questa e-mail (%s). Impossibile associarla quindi "
-                                             "a %s." % (nuova_email, persona.nome_completo),
-                                   torna_titolo="Credenziali",
-                                   torna_url=persona.url_profilo_credenziali)
-
-        def _invia_notifica():
-            Messaggio.costruisci_e_invia(
-                oggetto="IMPORTANTE: Cambio e-mail di accesso a Gaia (credenziali)",
-                modello="email_credenziali_modificate.html",
-                corpo={
-                    "vecchia_email": vecchia_email,
-                    "nuova_email": nuova_email,
-                    "persona": persona,
-                    "autore": me,
-                },
-                mittente=me,
-                destinatari=[persona],
-                utenza=True
-            )
-
-        _invia_notifica()  # Invia notifica alla vecchia e-mail
-        Log.registra_modifiche(me, modulo_modifica)
-        modulo_modifica.save()  # Effettua le modifiche
-        persona.refresh_from_db()
-        if persona.email != vecchia_email_contatto:  # Se e-mail principale cambiata
-            _invia_notifica()  # Invia la notifica anche al nuovo indirizzo
-
-        return messaggio_generico(request, me, titolo="Credenziali modificate",
-                                  messaggio="Le credenziali di %s sono state correttamente aggiornate." % persona.nome,
-                                  torna_titolo="Credenziali",
-                                  torna_url=persona.url_profilo_credenziali)
-
-    contesto = {
-        "utenza": utenza,
-        "modulo_creazione": modulo_utenza,
-        "modulo_modifica": modulo_modifica
-
-    }
-    return 'anagrafica_profilo_credenziali.html', contesto
 
 
 @pagina_privata
@@ -1448,85 +1260,6 @@ def profilo_telefono_cancella(request, me, pk, tel_pk):
     return redirect("/profilo/%d/anagrafica/" % (persona.pk,))
 
 
-def _sezioni_profilo(puo_leggere, puo_modificare):
-    r = (
-        # (path, (
-        #   nome, icona, _funzione, permesso?,
-        # ))
-        ('anagrafica', (
-            'Anagrafica', 'fa-edit', _profilo_anagrafica, puo_leggere
-        )),
-        ('appartenenze', (
-            'Appartenenze', 'fa-clock-o', _profilo_appartenenze, puo_leggere
-        )),
-        ('deleghe', (
-            'Deleghe', 'fa-clock-o', _profilo_deleghe, puo_leggere
-        )),
-        ('turni', (
-            'Turni', 'fa-calendar', _profilo_turni, puo_leggere
-        )),
-        ('riserve', (
-            'Riserve', 'fa-pause', _profilo_riserve, puo_leggere
-        )),
-        ('fototessera', (
-            'Fototessera', 'fa-photo', _profilo_fototessera, puo_leggere
-        )),
-        ('documenti', (
-            'Documenti', 'fa-folder', _profilo_documenti, puo_leggere
-        )),
-        ('curriculum', (
-            'Curriculum', 'fa-list', _profilo_curriculum, puo_leggere
-        )),
-        ('sangue', (
-            'Sangue', 'fa-flask', _profilo_sangue, puo_modificare
-        )),
-        ('quote', (
-            'Quote/Ricevute', 'fa-money', _profilo_quote, puo_leggere
-        )),
-        ('provvedimenti', (
-            'Provvedimenti', 'fa-legal', _profilo_provvedimenti, puo_leggere
-        )),
-        ('credenziali', (
-            'Credenziali', 'fa-key', _profilo_credenziali, puo_modificare
-        )),
-    )
-    return (x for x in r if len(x[1]) < 4 or x[1][3] == True)
-
-@pagina_privata
-def profilo(request, me, pk, sezione=None):
-    persona = get_object_or_404(Persona, pk=pk)
-    puo_modificare = me.permessi_almeno(persona, MODIFICA)
-    puo_leggere = me.permessi_almeno(persona, LETTURA)
-    sezioni = OrderedDict(_sezioni_profilo(puo_leggere, puo_modificare))
-
-    contesto = {
-        "persona": persona,
-        "puo_modificare": puo_modificare,
-        "puo_leggere": puo_leggere,
-        "sezioni": sezioni,
-        "attuale": sezione,
-    }
-
-    if not sezione:  # Prima pagina
-        return 'anagrafica_profilo_profilo.html', contesto
-
-    else:  # Sezione aperta
-
-        if sezione not in sezioni:
-            return redirect(ERRORE_PERMESSI)
-
-        s = sezioni[sezione]
-        risposta = s[2](request, me, persona)
-
-        try:
-            f_template, f_contesto = risposta
-            contesto.update(f_contesto)
-            return f_template, contesto
-
-        except ValueError:
-            return risposta
-
-
 @pagina_privata
 def presidente(request, me):
     sedi = me.oggetti_permesso(GESTIONE_SEDE)
@@ -1546,23 +1279,31 @@ def _presidente_sede_ruoli(sede):
 
     sezioni.update({
         "Obiettivi Strategici": [
-            (DELEGATO_OBIETTIVO_1, "Obiettivo Strategico I", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_1).count()),
-            (DELEGATO_OBIETTIVO_2, "Obiettivo Strategico II", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_2).count()),
-            (DELEGATO_OBIETTIVO_3, "Obiettivo Strategico III", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count()),
-            (DELEGATO_OBIETTIVO_4, "Obiettivo Strategico IV", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_4).count()),
-            (DELEGATO_OBIETTIVO_5, "Obiettivo Strategico V", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_5).count()),
-            (DELEGATO_OBIETTIVO_6, "Obiettivo Strategico VI", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_6).count()),
+            (DELEGATO_OBIETTIVO_1, "Obiettivo Strategico I", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_1).count(), []),
+            (DELEGATO_OBIETTIVO_2, "Obiettivo Strategico II", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_2).count(),[]),
+            (DELEGATO_OBIETTIVO_3, "Obiettivo Strategico III", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_3).count(), []),
+            (DELEGATO_OBIETTIVO_4, "Obiettivo Strategico IV", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_4).count(), []),
+            (DELEGATO_OBIETTIVO_5, "Obiettivo Strategico V", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_5).count(), []),
+            (DELEGATO_OBIETTIVO_6, "Obiettivo Strategico VI", sede.delegati_attuali(tipo=DELEGATO_OBIETTIVO_6).count(), []),
         ]
 
     })
 
     sezioni.update({
         "Responsabili": [
-            (UFFICIO_SOCI, "Ufficio Soci", sede.delegati_attuali(tipo=UFFICIO_SOCI).count()),
-            (UFFICIO_SOCI_UNITA, "Ufficio Soci per Unità territoriale", sede.delegati_attuali(tipo=UFFICIO_SOCI_UNITA).count()),
-            (RESPONSABILE_FORMAZIONE, "Formazione", sede.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE).count()),
-            (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count()),
-            (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count()),
+            (UFFICIO_SOCI, "Ufficio Soci", sede.delegati_attuali(tipo=UFFICIO_SOCI).count(), []),
+            (UFFICIO_SOCI_UNITA, "Ufficio Soci per Unità territoriale", sede.delegati_attuali(tipo=UFFICIO_SOCI_UNITA).count(), []),
+            (RESPONSABILE_FORMAZIONE, "Formazione", sede.delegati_attuali(tipo=RESPONSABILE_FORMAZIONE).count(), []),
+            (RESPONSABILE_AUTOPARCO, "Autoparco", sede.delegati_attuali(tipo=RESPONSABILE_AUTOPARCO).count(), []),
+            (DELEGATO_CO, "Centrale Operativa", sede.delegati_attuali(tipo=DELEGATO_CO).count(), []),
+        ]
+    })
+
+    sezioni.update({
+        "Cariche elettive": [
+            (VICE_PRESIDENTE, "Vice Presidente", sede.delegati_attuali(tipo=VICE_PRESIDENTE).count(), [sede.vice_presidente()] if sede.vice_presidente() else []),
+            (CONSIGLIERE, "Consigliere", sede.delegati_attuali(tipo=CONSIGLIERE).count(), sede.consiglieri()),
+            (CONSIGLIERE_GIOVANE, "Consigliere giovane", sede.delegati_attuali(tipo=CONSIGLIERE_GIOVANE).count(), [sede.consigliere_giovane()] if sede.consigliere_giovane() else []),
         ]
     })
 
@@ -1600,6 +1341,7 @@ def presidente_checklist(request, me, sede_pk):
 
     deleghe_da_processare = [
         (UFFICIO_SOCI, sede),
+        # (CONSIGLIERE, sede),
         (DELEGATO_OBIETTIVO_1, sede),
         (DELEGATO_OBIETTIVO_2, sede),
         (DELEGATO_OBIETTIVO_3, sede),
@@ -1801,7 +1543,75 @@ def admin_statistiche(request, me):
 
 
 @pagina_privata
+def admin_report_federazione(request, me):
+
+    if not me.utenza.is_superuser:
+        return redirect(ERRORE_PERMESSI)
+
+    modulo = ModuloReportFederazione(request.POST or None,
+                                     initial={"data": oggi()})
+    contesto = {"modulo": modulo,}
+
+    fasce_di_eta = [(0, 30), (30, 41), (41, 51), (51, 66), (66, 999)]
+    # fasce_di_anzianita = [(0, 1), (1, 5), (5, 10), (10, 21), (21, 30), (30, 999)]
+
+    if modulo.is_valid():
+
+        volontari_per_fasce_di_eta = []
+        tutti_volontari = Persona.objects.filter(Appartenenza
+                                                 .query_attuale(al_giorno=modulo.cleaned_data['data'],
+                                                                membro__in=Appartenenza.MEMBRO_SOCIO)
+                                                 .via("appartenenze")) \
+                                         .distinct('nome', 'cognome', 'codice_fiscale')
+
+        for fascia_di_eta in fasce_di_eta:
+            eta_minima, eta_massima = fascia_di_eta
+            r = tutti_volontari.filter(Persona.query_eta_minima(eta_minima).q,
+                                       Persona.query_eta_massima(eta_massima - 1).q) \
+                               .count()
+            volontari_per_fasce_di_eta.append((fascia_di_eta, r))
+
+        decessi = Dimissione.objects.filter(motivo=Dimissione.DECEDUTO,
+                                            creazione__gt=modulo.cleaned_data['data'] - datetime.timedelta(days=365),
+                                            creazione__lte=modulo.cleaned_data['data']) \
+                                    .count()
+
+        contesto.update({"volontari_per_fasce_di_eta": volontari_per_fasce_di_eta,
+                         "volontari": tutti_volontari.count(),
+                         "decessi": decessi,})
+
+    return 'admin_report_federazione.html', contesto
+
+
+@pagina_privata
 def admin_import_presidenti(request, me):
+
+    def __get_presidiata(sede):
+        """
+            Ritorna delega del presidente o commissario se la sede è presidiata.
+        """
+        delega_presidente = sede.deleghe_attuali(
+            al_giorno=datetime.datetime.now(), tipo=PRESIDENTE, fine=None
+        ).first()
+        delega_commissario = sede.deleghe_attuali(
+            al_giorno=datetime.datetime.now(), tipo=COMMISSARIO, fine=None
+        ).first()
+
+        if delega_presidente and delega_commissario:
+            # Ritorna l'ultimo in carica
+            if int(delega_presidente.inizio.strftime('%s')) > int(delega_commissario.inizio.strftime('%s')):
+                return delega_presidente, True
+            else:
+                return delega_commissario, False
+        elif delega_presidente:
+            # Ritorna Presidente
+            return delega_presidente, True
+        elif delega_commissario:
+            # Ritorna Commissario
+            return delega_commissario, False
+        else:
+            # Non è presidiata da nessuno
+            return None, False
 
     if not me.utenza.is_superuser:
         return redirect(ERRORE_PERMESSI)
@@ -1812,47 +1622,153 @@ def admin_import_presidenti(request, me):
     moduli = []
     esiti = []
     for i in range(0, numero_presidenti_per_pagina):
-        modulo = ModuloImportPresidenti(request.POST or None, prefix="presidente_%d" % i)
+        modulo = ModuloImportPresidenti(request.POST or None, prefix="presidenti_%d" % i)
+
+        msg = ""
 
         if modulo.is_valid():
 
             # Ottieni i dati
-            presidente = modulo.cleaned_data['presidente']
+            nomina = modulo.cleaned_data['nomina']
+            persona = modulo.cleaned_data['persona']
             sede = modulo.cleaned_data['sede']
 
-            # Se la Sede ha un Presidente, termina la sua Delega e notifica.
-            delega_presidente_precedente = sede.deleghe_attuali(tipo=PRESIDENTE).first()
-            if delega_presidente_precedente:
+            if nomina == PRESIDENTE or nomina == COMMISSARIO:
+                # Prendo l'ultima delega da commissario/presidente per la sede
+                delega_persona_precedente, isPresidente = __get_presidiata(sede)
 
-                # Se il Presidente è già stato nominato.
-                if delega_presidente_precedente.persona == presidente:
-                    esiti += [
-                        (presidente, sede, "Saltato. Era già Presidente di questa Sede.")
-                    ]
-                    continue
+                # Se una delle due figure esiste (Presidente/Commissario)
+                if delega_persona_precedente:
 
-                # Termina la Presidenza.
-                delega_presidente_precedente.termina(mittente=me, accoda=True)
+                    # Se è già stato nominato in questa sede.
+                    if delega_persona_precedente.persona == persona and isPresidente:
+                        esiti += [
+                            (
+                                persona,
+                                sede,
+                                "Saltato. E' già {} di questa Sede.".format(
+                                    'Presidente' if isPresidente else 'Commissario'
+                                )
+                            )
+                        ]
+                        continue
 
-                # Termina tutte le Deleghe correlate.
-                delega_presidente_precedente.presidente_termina_deleghe_dipendenti()
+                    # Termina la Presidenza/Commissariato.
+                    delega_persona_precedente.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+
+                    # Termina tutte le Deleghe correlate.
+                    delega_persona_precedente.presidenziali_termina_deleghe_dipendenti()
+
+                # Controllo se è gia commissario di un altra sede
+                gia_presidente = persona.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=PRESIDENTE, fine=None
+                ).first()
+                if gia_presidente:
+                    gia_presidente.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+                else:
+                    gia_commissario = persona.deleghe_attuali(
+                        al_giorno=datetime.datetime.now(), tipo=COMMISSARIO, fine=None
+                    ).first()
+                    if gia_commissario:
+                        gia_commissario.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+
+                    msg = "OK, Nomina effettuata."
+                    if delega_persona_precedente:
+                        msg += "Vecchio {} dimesso {}".format(
+                            'Presidente' if isPresidente else 'Commissario',
+                            delega_persona_precedente.persona.codice_fiscale
+                        )
+                    else:
+                        msg += "Non vi era alcuna nomina."
+
+            elif nomina == CONSIGLIERE:
+                deleghe_consigliere = sede.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE, fine=None
+                )
+
+                for delega in deleghe_consigliere:
+                    # Se è già stato nominato in questa sede.
+                    if delega.persona == persona:
+                        esiti += [
+                            (
+                                persona,
+                                sede,
+                                "Saltato. E' già Consigliere di questa Sede."
+                            )
+                        ]
+                        continue
+
+                gia_consigliere = persona.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE, fine=None
+                ).first()
+
+                if gia_consigliere:
+                    gia_consigliere.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+
+                msg = "OK, Nomina effettuata."
+            elif nomina == CONSIGLIERE_GIOVANE:
+                delega_consigliere_giovane = sede.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE_GIOVANE, fine=None
+                ).first()
+
+                if delega_consigliere_giovane:
+                    if delega_consigliere_giovane.persona == persona:
+                        esiti += [
+                            (
+                                persona,
+                                sede,
+                                "Saltato. E' già Consigliere giovane di questa Sede."
+                            )
+                        ]
+                        continue
+
+                gia_consigliere = persona.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=CONSIGLIERE_GIOVANE, fine=None
+                ).first()
+
+                if gia_consigliere:
+                    gia_consigliere.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+
+                msg = "OK, Nomina effettuata."
+            elif nomina == VICE_PRESIDENTE:
+                delega_vice_presidente = sede.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=VICE_PRESIDENTE, fine=None
+                ).first()
+
+                if delega_vice_presidente:
+                    if delega_vice_presidente.persona == persona:
+                        esiti += [
+                            (
+                                persona,
+                                sede,
+                                "Saltato. E' già Vice Presidente di questa Sede."
+                            )
+                        ]
+                        continue
+
+                gia_consigliere = persona.deleghe_attuali(
+                    al_giorno=datetime.datetime.now(), tipo=VICE_PRESIDENTE, fine=None
+                ).first()
+
+                if gia_consigliere:
+                    gia_consigliere.termina(mittente=me, accoda=True, termina_at=datetime.datetime.now())
+
+                msg = "OK, Nomina effettuata."
 
             # Crea la nuova delega e notifica.
             delega = Delega(
-                persona=presidente,
-                tipo=PRESIDENTE,
+                persona=persona,
+                tipo=nomina,
                 oggetto=sede,
                 inizio=poco_fa(),
                 firmatario=me,
             )
+
             delega.save()
             delega.invia_notifica_creazione()
 
             esiti += [
-                (presidente, sede, "OK. Nomina effettuata%s." % (
-                    (", vecchio Presidente %s dimesso" % delega_presidente_precedente.persona.codice_fiscale)
-                    if delega_presidente_precedente else ", non vi era alcun Presidente."
-                ))
+                (persona, sede, msg)
             ]
 
         moduli += [modulo]
@@ -1862,6 +1778,7 @@ def admin_import_presidenti(request, me):
         "numero_presidenti_per_pagina": numero_presidenti_per_pagina,
         "esiti": esiti,
     }
+
     return 'admin_import_presidenti.html', contesto
 
 
@@ -1905,7 +1822,7 @@ def admin_pulisci_email(request, me):
 
                     if not delegati.exists():
                         risultati += [
-                            (indirizzo, 'text-warning', "La persona trovata (%s) non ha delegati a cui notificare la "
+                            (indirizzo, 'alert-warning', "La persona trovata (%s) non ha delegati a cui notificare la "
                                                         "disattivazione." % persona.codice_fiscale)
                         ]
                         continue

@@ -1,7 +1,28 @@
 {% extends 'us_elenchi_inc_soci.html' %}
 
+{% block testo_pre_elenco %}
+	<div class="alert alert-info">
+	    <p class="grassetto">
+	        <i class="fa fa-fw fa-info-circle"></i>
+	        Da questa pagina puoi vedere l'elenco dei Soci Volontari in riferimento alla situazione di pagamento della quota:
+	        <ul>
+	        	<li>se stai visualizzando l'elenco dei Soci che hanno pagato la quota troverai solamente quelle persone che 
+	        	alla data attuale sono Soci del Comitato e hanno pagato la quota. Non troverai quote di persone dimesse
+	        	o trasferite ad altri Comitati.</li>
+	        	<li>se stai visualizzando l'elenco dei soci che non hanno pagato la quota troverai solamente quelle persone che 
+	        	alla data attuale sono Soci Volontari e che non hanno pagato la quota. Se una persona non è più appartenente
+	        	al Comitato per un motivo qualsiasi non sarà presente in questo elenco.</li>
+	        	<li>se stai visualizzando un elenco relativo ad un anno passato valgono le medesime condizioni indicate qui
+	        	sopra con la differenza che la data presa in considerazione è il 31 dicembre dell'anno in questione.</li>
+	        </ul>
+	    </p>
+	</div>
+
+
+{% endblock %}
+
 {% block elenco_intestazione_extra %}
-    <th>Quota</th>
+    <th>Appartenenza</th>
 {% endblock %}
 
 

@@ -46,7 +46,12 @@
             </ul>
         </p>
 
+        {% include "attivita_gestisci_inc_paginazione.html" %}
+
+
     </div>
+
+
     <table class="table table-responsive table-striped">
         <thead>
         <tr>
@@ -92,10 +97,15 @@
                         <a href="{{ a.url_cancella }}" class="text-danger">
                             <i class="fa fa-fw fa-trash"></i> cancella attivit&agrave;
                         </a><br />
+                        <a href="{{ a.url_cancella_gruppo }}" class="text-danger">
+                            <i class="fa fa-fw fa-trash"></i> cancella attivit&agrave; e gruppo
+                        </a><br />
                     {% endif %}
+
                     <a href="{{ a.url_modifica }}">
                         <i class="fa fa-fw fa-pencil"></i> modifica info
                     </a><br />
+
                     {% if a in attivita_referenti_modificabili %}
                         <a href="{{ a.url_referenti }}">
                             <i class="fa fa-fw fa-pencil"></i> modifica referenti
@@ -109,7 +119,7 @@
 
 
         {% empty %}
-            <tr class="warning">
+            <tr class="alert alert-warning">
                 <td colspan="4">
                     <p>
                         <i class="fa fa-fw fa-info-circle"></i>
@@ -123,6 +133,9 @@
 
 
     </table>
+
+    {% include "attivita_gestisci_inc_paginazione.html" %}
+
 </div>
 
 

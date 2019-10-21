@@ -7,12 +7,12 @@ from django.db.models import Count, F, Sum
 from django.utils import timezone
 
 
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.costanti import NAZIONALE
 from anagrafica.models import Sede
-from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE
+from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE, REFERENTE_GRUPPO
 from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO, \
     GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE, \
     GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
@@ -99,18 +99,32 @@ def attivita_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
 def attivita_gestisci(request, me, stato="aperte"):
     # stato = "aperte" | "chiuse"
 
-    attivita_tutte = me.oggetti_permesso(GESTIONE_ATTIVITA)
+    attivita_tutte = me.oggetti_permesso(GESTIONE_ATTIVITA, solo_deleghe_attive=False)
     attivita_aperte = attivita_tutte.filter(apertura=Attivita.APERTA)
     attivita_chiuse = attivita_tutte.filter(apertura=Attivita.CHIUSA)
 
     if stato == "aperte":
         attivita = attivita_aperte
+
     else:  # stato == "chiuse"
         attivita = attivita_chiuse
 
     attivita_referenti_modificabili = me.oggetti_permesso(GESTIONE_REFERENTI_ATTIVITA)
 
     attivita = attivita.annotate(num_turni=Count('turni'))
+
+    attivita = Paginator(attivita, 30)
+    pagina = request.GET.get('pagina')
+
+    try:
+        attivita = attivita.page(pagina)
+
+    except PageNotAnInteger:
+        attivita = attivita.page(1)
+
+    except EmptyPage:
+        attivita = attivita.page(attivita.num_pages)
+
     contesto = {
         "stato": stato,
         "attivita": attivita,
@@ -125,6 +139,16 @@ def attivita_gestisci(request, me, stato="aperte"):
 def attivita_organizza(request, me):
     aree = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
     sedi = Sede.objects.filter(aree__in=aree)
+    deleghe = me.deleghe_attuali()
+    from anagrafica.permessi.applicazioni import DELEGATI_NON_SONO_UN_BERSAGLIO
+    deleghe_bersaglio = deleghe.filter(tipo__in=DELEGATI_NON_SONO_UN_BERSAGLIO)
+
+    if deleghe_bersaglio:
+        if not aree.filter(obiettivo=4, nome__icontains='non sono un bersaglio'):
+            for delega in deleghe.filter(tipo__in=DELEGATI_NON_SONO_UN_BERSAGLIO):
+                area = Area(nome='Non sono un bersaglio', obiettivo=4, sede=delega.oggetto)
+                area.save()
+
     if not aree:
         return messaggio_generico(request, me, titolo="Crea un'area di intervento, prima!",
                                   messaggio="Le aree di intervento fungono da 'contenitori' per le "
@@ -132,22 +156,39 @@ def attivita_organizza(request, me):
                                             "almeno un'area di intervento. ",
                                   torna_titolo="Gestisci le Aree di intervento",
                                   torna_url="/attivita/aree/")
+
     modulo_referente = ModuloOrganizzaAttivitaReferente(request.POST or None)
     modulo = ModuloOrganizzaAttivita(request.POST or None)
-    modulo.fields['area'].queryset = aree
+    modulo.fields['area'].queryset = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
+    if deleghe_bersaglio:
+        modulo_referente.fields['scelta'].choices = ModuloOrganizzaAttivitaReferente.popola_scelta()
     if modulo_referente.is_valid() and modulo.is_valid():
         attivita = modulo.save(commit=False)
         attivita.sede = attivita.area.sede
         attivita.estensione = attivita.sede.comitato
         attivita.save()
 
+        # Crea gruppo per questa specifica attività se la casella viene selezionata.
+        crea_gruppo = modulo.cleaned_data['gruppo']
+        if crea_gruppo:
+            area = attivita.area
+            gruppo = Gruppo.objects.create(nome=attivita.nome, sede=attivita.sede, obiettivo=area.obiettivo,
+                                           attivita=attivita, estensione=attivita.estensione.estensione,
+                                           area=area)
+
+            gruppo.aggiungi_delegato(REFERENTE_GRUPPO, me)
+
         if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
             # Io sono il referente.
             attivita.aggiungi_delegato(REFERENTE, me, firmatario=me, inizio=poco_fa())
             return redirect(attivita.url_modifica)
-
-        else:  # Il referente e' qualcun altro.
+        elif modulo_referente.cleaned_data['scelta'] == modulo_referente.SCEGLI_REFERENTI:  # Il referente e' qualcun altro.
             return redirect("/attivita/organizza/%d/referenti/" % (attivita.pk,))
+        else:
+            from anagrafica.models import Persona
+            persona = Persona.objects.get(pk=modulo_referente.cleaned_data['scelta'])
+            attivita.aggiungi_delegato(REFERENTE, persona, firmatario=me, inizio=poco_fa())
+            return redirect(attivita.url_modifica)
 
     contesto = {
         "modulo": modulo,
@@ -306,6 +347,7 @@ def attivita_scheda_informazioni(request, me=None, pk=None):
     contesto = {
         "attivita": attivita,
         "puo_modificare": puo_modificare,
+        "me": me,
     }
 
     return 'attivita_scheda_informazioni.html', contesto
@@ -321,9 +363,19 @@ def attivita_scheda_cancella(request, me, pk):
         return errore_generico(request, me, titolo="Attività non cancellabile",
                                messaggio="Questa attività non può essere cancellata.")
 
+    titolo_messaggio = "Attività cancellata"
+    testo_messaggio = "L'attività è stata cancellata con successo."
+    if 'cancella-gruppo' in request.path.split('/'):
+        try:
+            gruppo = Gruppo.objects.get(attivita=attivita)
+            gruppo.delete()
+            titolo_messaggio = "Attività e gruppo cancellati"
+            testo_messaggio = "L'attività e il gruppo associato sono stati cancellati con successo."
+        except Gruppo.DoesNotExist:
+            testo_messaggio = "L'attività è stata cancellata con successo (non esisteva un gruppo associato a quest'attività)."
     attivita.delete()
-    return messaggio_generico(request, me, titolo="Attività cancellata",
-                              messaggio="L'attività è stata cancellata con successo.",
+    return messaggio_generico(request, me, titolo=titolo_messaggio,
+                              messaggio=testo_messaggio,
                               torna_titolo="Gestione attività", torna_url="/attivita/gestisci/")
 
 
@@ -612,14 +664,21 @@ def attivita_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_p
     ))
 
 
-
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def attivita_scheda_informazioni_modifica(request, me, pk=None):
     """
     Mostra la pagina di modifica di una attivita'.
     """
     attivita = get_object_or_404(Attivita, pk=pk)
+    apertura_precedente = attivita.apertura
+
     if not me.permessi_almeno(attivita, MODIFICA):
+
+        if me.permessi_almeno(attivita, MODIFICA, solo_deleghe_attive=False):
+            # Se la mia delega e' sospesa per l'attivita', vai in prima pagina
+            #  per riattivarla.
+            return redirect(attivita.url)
+
         return redirect(ERRORE_PERMESSI)
 
     if request.POST and not me.ha_permesso(GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE):
@@ -635,6 +694,16 @@ def attivita_scheda_informazioni_modifica(request, me, pk=None):
     if modulo.is_valid():
         modulo.save()
 
+        # Se e' stato cambiato lo stato dell'attivita'
+        attivita.refresh_from_db()
+        if attivita.apertura != apertura_precedente:
+
+            if attivita.apertura == attivita.APERTA:
+                attivita.riapri()
+
+            else:
+                attivita.chiudi(autore=me)
+
     contesto = {
         "attivita": attivita,
         "puo_modificare": True,
@@ -643,17 +712,35 @@ def attivita_scheda_informazioni_modifica(request, me, pk=None):
 
     return 'attivita_scheda_informazioni_modifica.html', contesto
 
+
+@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+def attivita_riapri(request, me, pk=None):
+    """
+    Riapre l'attivita'.
+    """
+    attivita = get_object_or_404(Attivita, pk=pk)
+
+    if not me.permessi_almeno(attivita, MODIFICA, solo_deleghe_attive=False):
+        return redirect(ERRORE_PERMESSI)
+
+    attivita.riapri(invia_notifiche=True)
+    return redirect(attivita.url)
+
+
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def attivita_scheda_turni_modifica(request, me, pk=None, pagina=None):
     """
     Mostra la pagina di modifica di una attivita'.
     """
 
-    if False:
-        return ci_siamo_quasi(request, me)
-
     attivita = get_object_or_404(Attivita, pk=pk)
     if not me.permessi_almeno(attivita, MODIFICA):
+
+        if me.permessi_almeno(attivita, MODIFICA, solo_deleghe_attive=False):
+            # Se la mia delega e' sospesa per l'attivita', vai in prima pagina
+            #  per riattivarla.
+            return redirect(attivita.url)
+
         return redirect(ERRORE_PERMESSI)
 
     if pagina is None:

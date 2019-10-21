@@ -1,22 +1,20 @@
-from django.contrib.admin import ModelAdmin
+from datetime import date, datetime
+from django.utils import timezone
 from django.db.models import Q, F
 from django.utils.encoding import force_text
 
-from anagrafica.models import Persona, Appartenenza, Riserva, Sede, Fototessera, ProvvedimentoDisciplinare
+from anagrafica.models import (Persona, Appartenenza, Riserva, Sede,
+                               Fototessera, ProvvedimentoDisciplinare,
+                               Trasferimento, Dimissione, Estensione)
 from attivita.models import Partecipazione
-from base.utils import filtra_queryset, testo_euro
+from base.utils import filtra_queryset, testo_euro, oggi
 from curriculum.models import TitoloPersonale
-from ufficio_soci.forms import ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote, ModuloElencoPerTitoli
-from datetime import date, datetime
-from django.utils.timezone import now
-
-from ufficio_soci.models import Tesseramento, Quota, Tesserino
+from .models import Tesseramento, Quota, Tesserino, ReportElenco
+from .forms import (ModuloElencoSoci, ModuloElencoElettorato, ModuloElencoQuote)
 
 
 class Elenco:
-    """
-    Rappresenta un elenco semplice di persone.
-    """
+    """ Rappresenta un elenco semplice di persone. """
 
     def __init__(self, *args, **kwargs):
         self.args = args
@@ -62,15 +60,15 @@ class Elenco:
         return 'us_elenchi_inc_vuoto.html'
 
 
-
 class ElencoVistaSemplice(Elenco):
 
     def excel_colonne(self):
-        return super(ElencoVistaSemplice, self).excel_colonne() + (
+        columns = (
             ("Cognome", lambda p: p.cognome),
             ("Nome", lambda p: p.nome),
             ("Codice Fiscale", lambda p: p.codice_fiscale),
         )
+        return super().excel_colonne() + columns
 
     def ordina(self, qs):
         return qs.order_by('cognome', 'nome', 'codice_fiscale',)
@@ -100,6 +98,11 @@ class ElencoVistaAnagrafica(ElencoVistaSemplice):
             ("CAP di residenza", lambda p: p.cap_residenza),
             ("Provincia di residenza", lambda p: p.provincia_residenza),
             ("Stato di residenza", lambda p: p.stato_residenza),
+            ("Indirizzo di domicilio", lambda p: p.domicilio_indirizzo),
+            ("Comune di domicilio", lambda p: p.domicilio_comune),
+            ("Provincia di domicilio", lambda p: p.domicilio_provincia),
+            ("Stato di domicilio", lambda p: p.domicilio_stato),
+            ("CAP di domicilio", lambda p: p.domicilio_cap),
             ("Email", lambda p: p.email),
             ("Numeri di telefono", lambda p: ", ".join([str(x) for x in p.numeri_telefono.all()])),
         )
@@ -125,36 +128,52 @@ class ElencoVistaSoci(ElencoVistaAnagrafica):
     def excel_colonne(self):
 
         def _tipo_socio(p):
-            scelte = dict(Appartenenza._meta.get_field_by_name('membro')[0].flatchoices)
+            scelte = dict(Appartenenza._meta.get_field('membro').flatchoices)
             return force_text(scelte[p.appartenenza_tipo], strings_only=True)
 
         return super(ElencoVistaSoci, self).excel_colonne() + (
             ("Giovane", lambda p: "Si" if p.giovane else "No"),
             ("Ingresso in CRI", lambda p: p.ingresso().date()),
             ("Tipo Attuale", lambda p: _tipo_socio(p) if p.appartenenza_tipo else "N/A"),
-            ("A partire dal", lambda p: p.appartenenza_inizio.date() if p.appartenenza_inizio else "N/A")
+            ("A partire dal", lambda p: p.appartenenza_inizio.date() if p.appartenenza_inizio else "N/A"),
+        )
+
+
+class ElencoVistaTesseriniRifiutati(ElencoVistaSoci):
+    """
+    Aggiunge all'elecno, esportato in excel, il motivo del rifiuto
+     del tesserino e il tipo di rilascio.
+    """
+
+    def excel_colonne(self):
+        return super(ElencoVistaTesseriniRifiutati, self).excel_colonne() + (
+            ("Motivo rifiuto tesserino", lambda p: p.ultimo_tesserino.motivo_rifiutato),
+            ("Tipo richiesta tesserino", lambda p: p.ultimo_tesserino.get_tipo_richiesta_display())
         )
 
 
 class ElencoSociAlGiorno(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi soci
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi soci """
+
+    REPORT_TYPE = ReportElenco.SOCI_AL_GIORNO
 
     def risultati(self):
         qs_sedi = self.args[0]
+
+        al_giorno = self.modulo_riempito.cleaned_data['al_giorno']
+
         return Persona.objects.filter(
             Appartenenza.query_attuale(
-                al_giorno=self.modulo_riempito.cleaned_data['al_giorno'],
-                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_SOCIO,
+                al_giorno=al_giorno,
+                sede__in=qs_sedi,
+                membro__in=Appartenenza.MEMBRO_SOCIO,
             ).via("appartenenze")
         ).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
                 appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related(
-            'appartenenze', 'appartenenze__sede',
-            'utenza', 'numeri_telefono'
+            'appartenenze', 'appartenenze__sede', 'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
     def modulo(self):
@@ -162,9 +181,9 @@ class ElencoSociAlGiorno(ElencoVistaSoci):
 
 
 class ElencoSostenitori(ElencoVistaAnagrafica):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.SOSTENITORI
 
     def template(self):
         return 'us_elenchi_inc_sostenitori.html'
@@ -182,6 +201,7 @@ class ElencoSostenitori(ElencoVistaAnagrafica):
 
 
 class ElencoExSostenitori(ElencoVistaAnagrafica):
+    REPORT_TYPE = ReportElenco.EX_SOSTENITORI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -204,9 +224,9 @@ class ElencoExSostenitori(ElencoVistaAnagrafica):
 
 
 class ElencoVolontari(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori"""
+
+    REPORT_TYPE = ReportElenco.VOLONTARI
 
     def modulo(self):
         from .forms import ModuloElencoVolontari
@@ -216,7 +236,7 @@ class ElencoVolontari(ElencoVistaSoci):
         qs_sedi = self.args[0]
 
         modulo = self.modulo_riempito
-        if modulo.cleaned_data['includi_estesi'] == modulo.SI:
+        if modulo and modulo.cleaned_data['includi_estesi'] == modulo.SI:
             appartenenze = [Appartenenza.VOLONTARIO, Appartenenza.ESTESO]
         else:
             appartenenze = [Appartenenza.VOLONTARIO,]
@@ -236,9 +256,9 @@ class ElencoVolontari(ElencoVistaSoci):
 
 
 class ElencoIVCM(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.IV_E_CM
 
     def modulo(self):
         from .forms import ModuloElencoIVCM
@@ -269,9 +289,9 @@ class ElencoIVCM(ElencoVistaSoci):
 
 
 class ElencoSenzaTurni(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare l'elenco
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.SENZA_TURNI
 
     def modulo(self):
         from .forms import ModuloSenzaTurni
@@ -301,9 +321,9 @@ class ElencoSenzaTurni(ElencoVistaSoci):
 
 
 class ElencoEstesi(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.ESTESI
 
     def modulo(self):
         from .forms import ModuloElencoEstesi
@@ -312,13 +332,14 @@ class ElencoEstesi(ElencoVistaSoci):
     def risultati(self):
         qs_sedi = self.args[0]
 
+        from django.db.models import BooleanField, Value
         if self.modulo_riempito.cleaned_data['estesi'] == self.modulo_riempito.ESTESI_INGRESSO:
             # Estesi in ingresso
             risultati = Persona.objects.filter(
                 Appartenenza.query_attuale(
                     sede__in=qs_sedi, membro=Appartenenza.ESTESO,
                 ).via("appartenenze")
-            )
+            ).annotate(is_ingresso=Value(value=True, output_field=BooleanField()))
 
         else:
             # Estesi in uscita
@@ -338,7 +359,7 @@ class ElencoEstesi(ElencoVistaSoci):
                 pk__in=volontari_da_me
             ).filter(
                 pk__in=estesi_da_qualche_parte
-            )
+            ).annotate(is_ingresso=Value(value=False, output_field=BooleanField()))
 
         return risultati.annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
@@ -349,11 +370,24 @@ class ElencoEstesi(ElencoVistaSoci):
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
+    def excel_colonne(self):
+
+        def _comitato(p):
+            if not p.is_ingresso:
+                return Estensione.objects.filter(persona=p.pk, ritirata=False).order_by('creazione').first().destinazione
+            else:
+                return p.appartenenze_attuali().filter(fine=None).first().sede
+
+        return super(ElencoEstesi, self).excel_colonne() + (
+            ('Data inizio estensione', lambda p: Estensione.objects.filter(persona=p.pk, ritirata=False).order_by('creazione').first().protocollo_data),
+            ('Comitato di estensione', lambda p: _comitato(p)),
+        )
+
 
 class ElencoVolontariGiovani(ElencoVolontari):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.VOLONTARI_GIOVANI
 
     def risultati(self):
         oggi = date.today()
@@ -364,9 +398,9 @@ class ElencoVolontariGiovani(ElencoVolontari):
 
 
 class ElencoDimessi(ElencoVistaAnagrafica):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi """
+
+    REPORT_TYPE = ReportElenco.DIMESSI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -381,11 +415,27 @@ class ElencoDimessi(ElencoVistaAnagrafica):
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
+    def excel_colonne(self):
+
+        def _data(p):
+            dim = Dimissione.objects.filter(persona=p.pk).order_by('ultima_modifica').first()
+            return dim.creazione if dim else ''
+
+        def _motivo(p):
+            dim = Dimissione.objects.filter(persona=p.pk).order_by('ultima_modifica').first()
+            motivi = dict(Dimissione.MOTIVI)
+            return motivi[dim.motivo] if dim else ''
+
+        return super(ElencoDimessi, self).excel_colonne() + (
+            ('Data dimissioni', lambda p: _data(p)),
+            ('Motivazioni', lambda p: _motivo(p))
+        )
+
 
 class ElencoTrasferiti(ElencoVistaAnagrafica):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi """
+
+    REPORT_TYPE = ReportElenco.TRASFERITI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -405,11 +455,31 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
+    def excel_colonne(self):
+
+        def _data(p):
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            return d.first().protocollo_data if d else ''
+
+        def _motivo(p):
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            return d.first().motivo if d else ''
+
+        def _destinazione(p):
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            return d.first().destinazione if d else ''
+
+        return super(ElencoTrasferiti, self).excel_colonne() + (
+            ('Data del trasferimento', lambda p: _data(p)),
+            ('Comitato di destinazione', lambda p: _destinazione(p)),
+            ('Motivazione', lambda p: _motivo(p)),
+        )
+
 
 class ElencoDipendenti(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.DIPENDENTI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -428,9 +498,9 @@ class ElencoDipendenti(ElencoVistaSoci):
 
 
 class ElencoQuote(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede> Sedi per le quali compilare gli elenchi quote associative
-    """
+    """ args: QuerySet<Sede> Sedi per le quali compilare gli elenchi quote associative """
+    NAME = 'Quote'
+
     def modulo(self):
         return ModuloElencoQuote
 
@@ -442,11 +512,19 @@ class ElencoQuote(ElencoVistaSoci):
         attivi = membri == modulo.MEMBRI_VOLONTARI
         ordinari = membri == modulo.MEMBRI_ORDINARI
 
+        anno = modulo.cleaned_data['anno']
+
         try:
-            tesseramento = Tesseramento.objects.get(anno=modulo.cleaned_data.get('anno'))
+            tesseramento = Tesseramento.objects.get(anno=anno)
 
         except Tesseramento.DoesNotExist:  # Errore tesseramento anno non esistente
             raise ValueError("Anno di tesseramento non valido o gestito da Gaia.")
+
+        # Dobbiamo ridurre il set a tutti i volontari che sono, al giorno attuale, appartenenti a questa sede
+        # Nel caso di un anno passato, generiamo l'elenco al 31 dicembre. Nel caso dell'anno in corso,
+        # generiamo l'elenco al giorno attuale. Questo e' equivalente a:
+        #  giorno = min(31/dicembre/<anno selezionato>, oggi)
+        giorno_appartenenza = min(date(day=31, month=12, year=anno), oggi())
 
         if modulo.cleaned_data['tipo'] == modulo.VERSATE:
             origine = tesseramento.paganti(attivi=attivi, ordinari=ordinari)  # Persone con quote pagate
@@ -455,9 +533,12 @@ class ElencoQuote(ElencoVistaSoci):
             origine = tesseramento.non_paganti(attivi=attivi, ordinari=ordinari)  # Persone con quote NON pagate
 
         # Ora filtra per Sede
-        return origine.filter(
-            appartenenze__sede__in=qs_sedi,
-        ).annotate(
+        q = Appartenenza.query_attuale(
+            al_giorno=giorno_appartenenza,
+            membro=Appartenenza.VOLONTARIO
+        ).filter(sede__in=qs_sedi).defer('membro', 'inizio', 'sede')
+
+        return origine.filter(appartenenze__in=q).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
                 appartenenza_sede=F('appartenenze__sede'),
@@ -476,11 +557,10 @@ class ElencoQuote(ElencoVistaSoci):
         return 'us_elenchi_inc_quote.html'
 
 
-
 class ElencoOrdinari(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.SOCI_ORDINARI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -499,9 +579,9 @@ class ElencoOrdinari(ElencoVistaSoci):
 
 
 class ElencoInRiserva(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi in riserva
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi in riserva """
+
+    REPORT_TYPE = ReportElenco.VOLONTARI_IN_RISERVA
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -510,7 +590,7 @@ class ElencoInRiserva(ElencoVistaSoci):
                 Riserva.con_esito_ok().q,
                 Appartenenza.query_attuale(
                     sede__in=qs_sedi
-                ).via("appartenenza")
+                ).via("appartenenza"),
             ).via("riserve")
         ).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
@@ -520,11 +600,26 @@ class ElencoInRiserva(ElencoVistaSoci):
             'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
 
+    def excel_colonne(self):
+        def riserva(p, attr):
+            query = Riserva.objects.filter(
+                Q(fine__gte=timezone.now()) | Q(fine__isnull=True),
+                persona=p.id)
+            if query:
+                return getattr(query.last(), attr)
+            return ''
+
+        return super().excel_colonne() + (
+            ("Data inizio", lambda p: riserva(p, 'inizio')),
+            ("Data fine", lambda p: riserva(p, 'fine')),
+            ("Motivazioni", lambda p: riserva(p, 'motivo'))
+        )
+
 
 class ElencoElettoratoAlGiorno(ElencoVistaSoci):
-    """
-    args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi soci
-    """
+    """ args: QuerySet<Sede>, Sedi per le quali compilare gli elenchi sostenitori """
+
+    REPORT_TYPE = ReportElenco.ELETTORATO
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -541,13 +636,13 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
             )
 
         aggiuntivi = {
-            # Anzianita' minima
+            # Anzianita' minima 
             "pk__in": Persona.objects.filter(
                 Appartenenza.con_esito_ok(
                     membro__in=Appartenenza.MEMBRO_ANZIANITA,
                     inizio__lte=anzianita_minima
                 ).via("appartenenze")
-            ).only("id")
+            ).only("id") 
         }
         if self.modulo_riempito.cleaned_data['elettorato'] == ModuloElencoElettorato.ELETTORATO_PASSIVO:
             # Elettorato passivo,
@@ -556,9 +651,16 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
                 "data_nascita__lte": nascita_minima,
             })
 
+        dipendenti = Persona.objects.filter(
+            Q(Appartenenza.query_attuale(membro=Appartenenza.DIPENDENTE, sede__in=qs_sedi,
+                                            al_giorno=oggi
+                                            ).via("appartenenze")))
+                                            
+        # print("dipendenti", dipendenti.values_list('pk', flat=True) )
+
         r = Persona.objects.filter(
             Appartenenza.query_attuale(
-                al_giorno=oggi,
+                    al_giorno=oggi,
                 sede__in=qs_sedi, membro=Appartenenza.VOLONTARIO,
             ).via("appartenenze"),
             Q(**aggiuntivi),
@@ -572,6 +674,8 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
                 Q(fine__gte=oggi) | Q(fine__isnull=True), inizio__lte=oggi, tipo=ProvvedimentoDisciplinare.SOSPENSIONE
             ).values_list('persona_id', flat=True)
 
+        ).exclude(
+            pk__in=dipendenti.values_list('pk', flat=True)
         ).annotate(
             appartenenza_tipo=F('appartenenze__membro'),
             appartenenza_inizio=F('appartenenze__inizio'),
@@ -587,12 +691,14 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
 
 class ElencoPerTitoli(ElencoVistaAnagrafica):
+    REPORT_TYPE = ReportElenco.TITOLI
 
     def risultati(self):
         qs_sedi = self.args[0]
 
-        metodo = self.modulo_riempito.cleaned_data['metodo']
-        titoli = self.modulo_riempito.cleaned_data['titoli']
+        cd = self.modulo_riempito.cleaned_data
+        metodo = cd['metodo']
+        titoli = cd['titoli']
 
         base = Persona.objects.filter(
             Appartenenza.query_attuale(
@@ -603,30 +709,43 @@ class ElencoPerTitoli(ElencoVistaAnagrafica):
             'utenza', 'numeri_telefono'
         )
 
-        if metodo == self.modulo_riempito.METODO_OR:  # Almeno un titolo
-
+        if metodo == self.modulo_riempito.METODO_OR:
+            # Almeno un titolo
             return base.filter(titoli_personali__in=TitoloPersonale.con_esito_ok().filter(
                     titolo__in=titoli,
             )).distinct('cognome', 'nome', 'codice_fiscale')
-
-        else:  # Tutti i titoli
-
-            base = base.filter(
-                titoli_personali__in=TitoloPersonale.con_esito_ok()
-            )
-
+        else:
+            # Tutti i titoli
+            base = base.filter(titoli_personali__in=TitoloPersonale.con_esito_ok())
             for titolo in titoli:
-                base = base.filter(
-                    titoli_personali__titolo=titolo
-                )
+                base = base.filter(titoli_personali__titolo=titolo)
 
-            return base.distinct('cognome', 'nome', 'codice_fiscale')
+        return base.distinct('cognome', 'nome', 'codice_fiscale')
 
     def modulo(self):
+        from .forms import ModuloElencoPerTitoli
         return ModuloElencoPerTitoli
 
 
+class ElencoPerTitoliCorso(ElencoPerTitoli):
+    def risultati(self):
+        cd = self.modulo_riempito.cleaned_data
+        self.kwargs['cleaned_data'] = cd
+
+        # Mostra persone con titoli scaduti/non scaduti
+        results = super().risultati()
+        return results.filter(titoli_personali__in=TitoloPersonale.con_esito_ok())
+
+    def modulo(self):
+        from .forms import ModuloElencoPerTitoliCorso
+        return ModuloElencoPerTitoliCorso
+
+    def template(self):
+        return 'formazione_albo_inc_elenchi_persone_titoli.html'
+
+
 class ElencoTesseriniRichiesti(ElencoVistaSoci):
+    REPORT_TYPE = ReportElenco.TESSERINI_RICHIESTI
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -639,6 +758,7 @@ class ElencoTesseriniRichiesti(ElencoVistaSoci):
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
                 appartenenza_sede=F('appartenenze__sede'),
+                tesserino_pk=F('tesserini__pk'),
                 tesserino_codice=F('tesserini__codice'),
                 tesserino_tipo_richiesta=F('tesserini__tipo_richiesta'),
         ).prefetch_related(
@@ -651,6 +771,7 @@ class ElencoTesseriniRichiesti(ElencoVistaSoci):
 
 
 class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
+    REPORT_TYPE = ReportElenco.TESSERINI_DA_RICHIEDERE
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -661,15 +782,18 @@ class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
             ).via("appartenenze"),
 
             # Con fototessera confermata
-            Fototessera.con_esito_ok().via("fototessere"),
+            Q(Fototessera.con_esito_ok().via("fototessere")),
+
+            # Escludi tesserini rifiutati
+            ~Q(tesserini__stato_richiesta=Tesserino.RIFIUTATO),
 
         ).exclude(  # Escludi quelli richiesti da genitore
             pk__in=tesserini_richiesti.values_list('id', flat=True)
 
         ).annotate(
-                appartenenza_tipo=F('appartenenze__membro'),
-                appartenenza_inizio=F('appartenenze__inizio'),
-                appartenenza_sede=F('appartenenze__sede'),
+            appartenenza_tipo=F('appartenenze__membro'),
+            appartenenza_inizio=F('appartenenze__inizio'),
+            appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede',
             'utenza', 'numeri_telefono'
@@ -680,6 +804,7 @@ class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
 
 
 class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
+    REPORT_TYPE = ReportElenco.TESSERINI_SENZA_FOTOTESSERA
 
     def risultati(self):
         qs_sedi = self.args[0]
@@ -689,6 +814,8 @@ class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
             Appartenenza.query_attuale(
                 sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
             ).via("appartenenze"),
+
+            ~Q(Fototessera.con_esito_ok().via("fototessere"))
 
         ).exclude(  # Escludi quelli che posso richiedere
             pk__in=tesserini_da_richiedere.values_list('id', flat=True)
@@ -706,3 +833,33 @@ class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
 
     def template(self):
         return "us_elenchi_inc_tesserini_senza_fototessera.html"
+
+
+class ElencoTesseriniRifiutati(ElencoVistaTesseriniRifiutati, ElencoTesseriniRichiesti):
+    REPORT_TYPE = ReportElenco.TESSERINI_RIFIUTATI
+
+    def risultati(self):
+        qs_sedi = self.args[0]
+        tesserini_richiesti = super(ElencoTesseriniRifiutati, self).risultati()
+        return Persona.objects.filter(
+            Appartenenza.query_attuale(
+                sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
+            ).via("appartenenze"),
+
+            # Escludi tesserini non rifiutati
+            Q(tesserini__stato_richiesta=Tesserino.RIFIUTATO),
+
+        ).exclude(  # Escludi quelli richiesti da genitore
+            pk__in=tesserini_richiesti.values_list('id', flat=True)
+
+        ).annotate(
+            appartenenza_tipo=F('appartenenze__membro'),
+            appartenenza_inizio=F('appartenenze__inizio'),
+            appartenenza_sede=F('appartenenze__sede'),
+        ).prefetch_related(
+            'appartenenze', 'appartenenze__sede',
+            'utenza', 'numeri_telefono'
+        ).distinct('cognome', 'nome', 'codice_fiscale')
+
+    def template(self):
+        return "us_elenchi_inc_tesserini_rifiutati.html"

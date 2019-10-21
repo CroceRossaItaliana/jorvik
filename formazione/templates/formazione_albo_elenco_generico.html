@@ -1,0 +1,11 @@
+{% extends 'formazione_vuota.html' %}
+
+{% load bootstrap3 %}
+{% load utils %}
+
+{% block pagina_titolo %}{{ elenco_nome }}{% endblock %}
+{% block app_contenuto %}
+  <h2 class="allinea-centro"><i class="fa fa-fw fa-users"></i> {{ elenco_nome }}</h2><hr />
+  {% elenco elenco %}
+
+{% endblock %}

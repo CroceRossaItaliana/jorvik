@@ -2,63 +2,30 @@
 
 {% load bootstrap3 %}
 
-{% block pagina_titolo %}
-    {{ persona.nome_completo }}
-{% endblock %}
+{% block pagina_titolo %}{{ persona.nome_completo }}{% endblock %}
 
 {% block pagina_principale %}
 <div class="container">
-
-    <h2 class="allinea-centro text-success">
-        {{ persona.nome_completo }}
-    </h2>
-
-    <p>&nbsp;</p>
-
+    <h2 class="allinea-centro text-success">{{ persona.nome_completo }}</h2>
     <div class="row">
-
         <div class="col-md-2">
-                <ul class="nav nav-pills nav-stacked grassetto">
+            <ul class="nav nav-pills nav-stacked grassetto">
+                <li role="presentation" {% if request.path == persona.url %}class="active"{% endif %}>
+                    <a href="{{ persona.url }}"><i class="fa fa-fw fa-info-circle"></i> Profilo</a>
+                </li>
 
-                    <li role="presentation" {% if request.path == persona.url %}class="active"{% endif %}>
-                        <a href="{{ persona.url }}">
-                            <i class="fa fa-fw fa-info-circle"></i>
-                            Profilo
-                        </a>
-                    </li>
-
-                    {% for chiave, sezione in sezioni.items %}
-
-                        {% if sezione|length_is:4 or sezione.3 %}
-
-                            <li role="presentation" {% if attuale == chiave %}class="active"{% endif %}>
-                                <a href="/profilo/{{ persona.pk }}/{{ chiave }}/" class="">
-                                    <i class="fa fa-fw {{ sezione.1 }}"></i>
-                                    {{ sezione.0 }}
-                                </a>
-                            </li>
-
-
-                        {% endif %}
-                    {% endfor %}
-
-
-                 </ul>
-
+                {% for chiave, sezione in sezioni.items %}
+                    {% if sezione|length_is:4 or sezione.3 %}
+                        <li role="presentation" {% if attuale == chiave %}class="active"{% endif %}>
+                            <a href="/profilo/{{ persona.pk }}/{{ chiave }}/" class="">
+                                <i class="fa fa-fw {{ sezione.1 }}"></i> {{ sezione.0 }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+             </ul>
         </div>
-
-        <div class="col-md-10">
-
-
-            {% block profilo_corpo %}
-            {% endblock %}
-
-        </div>
-
-
+        <div class="col-md-10">{% block profilo_corpo %} {% endblock %}</div>
     </div>
-
-
-
 </div>
 {% endblock %}

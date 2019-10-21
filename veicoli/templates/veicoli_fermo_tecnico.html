@@ -33,14 +33,14 @@
                                 <td>{{ fermo.motivo }}</td>
                                 <td>
                                     {% if not fermo.fine %}
-                                    <a href="/veicolo/termina/fermo-tecnico/{{ fermo.pk }}/" class="btn btn-danger btn-sm"><i class="fa fa-trash-o"></i> Termina</a>
+                                    <a href="/veicoli/termina/fermo-tecnico/{{ fermo.pk }}/" class="btn btn-danger btn-sm"><i class="fa fa-trash-o"></i> Termina</a>
                                     {% endif %}
                                 </td>
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="4" class="bg-warning">
-                                    <i class="fa fa-info"></i> Nessun fermo tecnico.
+                                <td colspan="4" class="alert alert-warning">
+                                    <i class="fa fa-info-circle"></i> Nessun fermo tecnico.
                                 </td>
                             </tr>
                         {% endfor %}

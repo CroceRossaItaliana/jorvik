@@ -45,6 +45,11 @@
 
     </div>
 
+<div class="alert alert-info">
+    <p>
+    Le notifiche di revisione e manutenzione ordinaria dei veicoli sono indipendenti. Pertanto la data della revisione non viene conteggiata ai fini degli intervalli di manutenzione programmata.
+    </p>
+</div>
 
 <div class="row">
 
@@ -70,14 +75,14 @@
                     <tbody>
                         {% for veicolo in revisione %}
                         <tr>
-                            <td><a href="/veicolo/dettagli/{{ veicolo.pk }}/">{{ veicolo.targa }}</a></td>
+                            <td><a href="/veicoli/dettagli/{{ veicolo.pk }}/">{{ veicolo.targa }}</a></td>
                             <td>{{ veicolo.ultima_revisione.data }}</td>
                             <td>{{ veicolo.get_intervallo_revisione_display }}</td>
                         </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="7" class="bg-warning">
-                                    <i class="fa fa-info"></i> Nessun veicolo necessita revisione.
+                                <td colspan="7" class="alert-warning">
+                                    <i class="fa fa-info-circle"></i> Nessun veicolo necessita revisione.
                                 </td>
                             </tr>
                         {% endfor %}
@@ -107,13 +112,13 @@
                     <tbody>
                         {% for veicolo in manutenzione %}
                         <tr>
-                            <td><a href="/veicolo/dettagli/{{ veicolo.pk }}/">{{ veicolo.targa }}</a></td>
+                            <td><a href="/veicoli/dettagli/{{ veicolo.pk }}/">{{ veicolo.targa }}</a></td>
                             <td>{{ veicolo.ultima_manutenzione.data }}</td>
                         </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="2" class="bg-warning">
-                                    <i class="fa fa-info"></i> Nessun veicolo richiede manutenzione.
+                                <td colspan="2" class="alert-warning">
+                                    <i class="fa fa-info-circle"></i> Nessun veicolo richiede manutenzione.
                                 </td>
                             </tr>
                         {% endfor %}

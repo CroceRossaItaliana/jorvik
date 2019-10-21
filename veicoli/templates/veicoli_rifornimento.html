@@ -42,13 +42,13 @@
                                 <td>{{ rifornimento.contalitri }}</td>
                                 <td>{{ rifornimento.ricevuta }}</td>
                                 <td>
-                                    <a href="/veicolo/rifornimento/{{ rifornimento.pk }}/modifica/">Modifica</a>
+                                    <a href="/veicoli/rifornimento/{{ rifornimento.pk }}/modifica/">Modifica</a>
                                 </td>
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="10" class="bg-warning">
-                                    <i class="fa fa-info"></i> Nessun rifornimento.
+                                <td colspan="10" class="alert alert-warning">
+                                    <i class="fa fa-info-circle"></i> Nessun rifornimento.
                                 </td>
                             </tr>
                         {% endfor %}

@@ -17,12 +17,12 @@
               <i class="fa fa-quote-right fa-fw"></i> Che cosa prevede il <a href="https://gaia.cri.it/documenti/scarica/282/">regolamento</a>?
           </p>
        
-         <h3>10. ESTENSIONE DI SERVIZIO</h3>
+         <h4>Estensione di servizio</h4>
          <ul>
-             <li>10.1 Il Volontario C.R.I. che intende svolgere servizio continuativo anche in un altro Comitato C.R.I., presenta motivata richiesta al proprio Presidente.</li>
-             <li>10.2 L&rsquo;estensione di servizio &egrave; disposta, senza altra formalit&agrave;, di concerto fra i due Presidenti di Comitato C.R.I. Dell&rsquo;estensione &egrave; data idonea informativa al competente Presidente Regionale.</li>
-             <li>10.3 La richiesta di estensione di servizio non pu&ograve; essere rigettata, salvo che la motivazione sia assente o incongrua. Il rigetto &egrave; impugnabile dinanzi al Presidente Regionale.</li>
-             <li>10.4 In ogni caso, il Volontario C.R.I. deve mantenere i requisiti minimi di permanenza nello status di Socio nel Comitato C.R.I. in cui &egrave; iscritto.</li>
+             <li>Il Volontario CRI che intende svolgere servizio continuativo anche in un altro Comitato CRI, presenta motivata richiesta al proprio Presidente</li>
+             <li>L&rsquo;estensione di servizio &egrave; disposta, senza altra formalit&agrave;, di concerto fra i due Presidenti di Comitato CRI. Dell&rsquo;estensione &egrave; data idonea informativa al competente Presidente Regionale</li>
+             <li>La richiesta di estensione di servizio non pu&ograve; essere rigettata, salvo che la motivazione sia assente o incongrua. Il rigetto &egrave; impugnabile dinanzi al Presidente Regionale</li>
+             <li>In ogni caso, il Volontario CRI deve mantenere i requisiti minimi di permanenza nello status di Socio nel Comitato CRI in cui &egrave; iscritto</li>
          </ul>
         </div>
 
@@ -77,7 +77,7 @@
                             <tbody>
                                 {% for estensione in storico %}
                                 <tr {% if estensione.attuale %}class="success"
-                                    {% elif estensione.esito == estensione.ESITO_PENDING %}class="warning"
+                                    {% elif estensione.esito == estensione.ESITO_PENDING %}class="alert alert-warning"
                                     {% endif %}>
                                     <td>
                                         {% if estensione.esito == estensione.ESITO_OK %}
@@ -123,8 +123,8 @@
                                 </tr>
                                 {% empty %}
                                     <tr>
-                                        <td colspan="5" class="bg-warning">
-                                            <i class="fa fa-info"></i> Nessuna estensione passata.
+                                        <td colspan="5" class="alert-warning">
+                                            <i class="fa fa-info-circle"></i> Nessuna estensione passata.
                                         </td>
                                     </tr>
                                 {% endfor %}

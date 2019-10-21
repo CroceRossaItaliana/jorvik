@@ -1,21 +1,18 @@
 import random
-from datetime import timezone, date, timedelta
-from django.utils import timezone as timezone_django
+from datetime import timedelta, datetime
 
-import barcode
-from barcode.writer import ImageWriter
 from django.db import models
 from django.db.models import Q, Max
+from django.http import HttpResponse
+from django.utils import timezone as timezone_django
 from django.utils.translation import ugettext_lazy as _
 
 from anagrafica.models import Persona, Appartenenza, Sede
 from base.files import PDF, EAN13
-from base.models import ModelloSemplice, ConAutorizzazioni, ConVecchioID
+from base.models import ModelloSemplice, ConVecchioID
 from base.tratti import ConMarcaTemporale, ConPDF
 from base.utils import concept, UpperCaseCharField, ean13_carattere_di_controllo, questo_anno, oggi
 from posta.models import Messaggio
-
-__author__ = 'alfioemanuele'
 
 
 class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
@@ -130,7 +127,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
         self.codice = Tesserino._genera_nuovo_codice()
         self.save()
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         codice = self.genera_codice_a_barre_png()
         sede = self.persona.sede_riferimento(al_giorno=self.creazione).comitato
         pdf = PDF(oggetto=self)
@@ -170,7 +167,7 @@ class Riduzione(ModelloSemplice, ConMarcaTemporale):
 
     nome = models.CharField(max_length=255, help_text='Compare nelle maschere di registrazione quote')
     quota = models.FloatField(default=1.00)
-    descrizione = models.CharField(max_length=500, help_text='Dicitira riportata sulle ricevute e nella causale della quota')
+    descrizione = models.CharField(max_length=500, help_text='Dicitura riportata sulle ricevute e nella causale della quota')
     tesseramento = models.ForeignKey('ufficio_soci.Tesseramento')
 
     def __str__(self):
@@ -241,6 +238,11 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
                 termine = oggi()
 
         return self.stato == self.APERTO and data >= self.inizio and data <= termine
+
+    def quota_sostenitore_value(self):
+        if self.quota_sostenitore:
+            return self.quota_sostenitore
+        return 0
 
     def importo_quota_volontario(self, riduzione=None):
         if riduzione:
@@ -355,6 +357,13 @@ class Tesseramento(ModelloSemplice, ConMarcaTemporale):
     @classmethod
     def anni_scelta(cls):
         return ((y, y) for y in [x['anno'] for x in cls.objects.all().values("anno")])
+
+    @classmethod
+    def ultimo_tesseramento(cls):
+        try:
+            return cls.objects.latest('anno')
+        except Tesseramento.DoesNotExist:
+            return None
 
     @classmethod
     def ultimo_anno(cls):
@@ -474,15 +483,14 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
         anno = self.anno
         sede = self.sede
 
-        prec = Quota.per_sede(sede).filter(anno=anno) \
-                    .aggregate(max=Max('progressivo'))['max'] or 0
+        prec = Quota.per_sede(sede).filter(anno=anno).aggregate(max=Max('progressivo'))['max'] or 0
         return prec + 1
 
     @property
     def importo_totale(self):
         return self.importo + self.importo_extra
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva(
           nome="Ricevuta %s.pdf" % (self.persona.nome_completo, ),
@@ -522,3 +530,68 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
             mittente=self.registrato_da,
             destinatari=[self.persona],
         )
+
+
+class ReportElenco(ConMarcaTemporale):
+    VOLONTARI = 'vol'
+    VOLONTARI_GIOVANI = 'vog'
+    IV_E_CM = 'ivcm'
+    DIMESSI = 'dim'
+    VOLONTARI_IN_RISERVA = 'vir'
+    TRASFERITI = 'tra'
+    DIPENDENTI = 'dip'
+    SOCI_ORDINARI = 'soc'
+    ESTESI = 'est'
+    SOCI_AL_GIORNO = 'sag'
+    SOSTENITORI = 'sos'
+    EX_SOSTENITORI = 'exs'
+    SENZA_TURNI = 'stu'
+    ELETTORATO = 'ele'
+    TITOLI = 'tit'
+    TESSERINI_RICHIESTI = 'trc'
+    TESSERINI_DA_RICHIEDERE = 'tdr'
+    TESSERINI_SENZA_FOTOTESSERA = 'tsf'
+    TESSERINI_RIFIUTATI = 'trf'
+    GENERICO = 'gen'
+    REPORT_TYPE = (
+        (VOLONTARI, 'Volontari'),
+        (VOLONTARI_GIOVANI, 'Volontari Giovani'),
+        (IV_E_CM, 'IV e CM'),
+        (DIMESSI, 'Dimessi'),
+        (VOLONTARI_IN_RISERVA, 'Volontari in Riserva'),
+        (TRASFERITI, 'Trasferiti'),
+        (DIPENDENTI, 'Dipendenti'),
+        (SOCI_ORDINARI, 'Soci Ordinari'),
+        (ESTESI, 'Volontari Estesi/In Estensione'),
+        (SOCI_AL_GIORNO, 'Soci al giorno'),
+        (SOSTENITORI, 'Sostenitori'),
+        (EX_SOSTENITORI, 'Ex Sostenitori'),
+        (SENZA_TURNI, 'Volontari con zero turni'),
+        (ELETTORATO, 'Elettorato'),
+        (TITOLI, 'Soci per Titoli'),
+        (TESSERINI_RICHIESTI, 'Tesserini richiesti'),
+        (TESSERINI_DA_RICHIEDERE, 'Tesserini da richiedere'),
+        (TESSERINI_SENZA_FOTOTESSERA, 'Tesserini senza fototessera'),
+        (TESSERINI_RIFIUTATI, 'Tesserini Rifiutati'),
+        (GENERICO, 'Generico'),
+    )
+
+    user = models.ForeignKey(Persona)
+    file = models.FileField(upload_to='us_elenchi/')
+    report_type = models.CharField(max_length=5, choices=REPORT_TYPE, null=True, blank=True)
+    task_id = models.CharField(max_length=255, null=True, blank=True)
+    is_ready = models.BooleanField(default=False)
+
+    @property
+    def filename(self):
+        s = "Elenco %s - %s.xlsx" % (self.get_report_type_display(), str(datetime.now()))
+        return '_'.join(s.split(' '))
+
+    def download(self):
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        response = HttpResponse(self.file, content_type=content_type)
+        response['Content-Disposition'] = "attachment; filename=%s" % self.filename
+        return response
+
+    def __str__(self):
+        return str(self.file) if self.file else 'No File'

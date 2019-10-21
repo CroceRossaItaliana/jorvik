@@ -19,7 +19,7 @@
 
             <tr id="turno-{{ turno.pk }}"
                 {% if turno.scoperto and turno.futuro %}
-                    class="warning"
+                    class="alert alert-warning"
                 {% endif %}>
                 <td class="row">
 
@@ -42,7 +42,7 @@
                     <div class="col-md-5">
                         <p>
                            <i class="fa fa-fw fa-users"></i> <strong>{{ turno.partecipazioni_confermate.count }} partecipanti confermati</strong>
-                         <span class="text-muted">(minimo {{ turno.minimo }}, massimo {{ turno.massimo }})</span>
+                         <span class="">(minimo {{ turno.minimo }}, massimo {{ turno.massimo }})</span>
                         </p>
 
                         {% if turno.scoperto %}

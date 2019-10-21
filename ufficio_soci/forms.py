@@ -16,12 +16,22 @@ from ufficio_soci.models import Tesseramento, Quota, Tesserino, Riduzione
 
 
 class ModuloCreazioneEstensione(autocomplete_light.ModelForm):
+    destinazione = autocomplete_light.ModelChoiceField("SedeTrasferimentoAutocompletamento", error_messages={
+        'invalid': "Non è possibile effettuare un trasferimento verso il Comitato Nazionale, verso i Comitati Regionali"
+                   "e verso i comitati delle Province Autonome di Trento e Bolzano"
+    })
+
     class Meta:
         model = Estensione
         fields = ['persona', 'destinazione', 'motivo']
 
 
 class ModuloCreazioneTrasferimento(autocomplete_light.ModelForm):
+    destinazione = autocomplete_light.ModelChoiceField("SedeTrasferimentoAutocompletamento", error_messages={
+        'invalid': "Non è possibile effettuare un trasferimento verso il Comitato Nazionale, verso i Comitati Regionali"
+                   "e verso i comitati delle Province Autonome di Trento e Bolzano"
+    })
+
     class Meta:
         model = Trasferimento
         fields = ['persona', 'destinazione', 'motivo']
@@ -62,9 +72,20 @@ class ModuloElencoPerTitoli(forms.Form):
         (METODO_AND, "Tutti i soci aventi TUTTI i titoli selezionati"),
     )
     metodo = forms.ChoiceField(choices=METODI, initial=METODO_OR)
+    titoli = autocomplete_light.ModelMultipleChoiceField('TitoloCRIAutocompletamento')
 
-    titoli = autocomplete_light.ModelMultipleChoiceField("TitoloAutocompletamento", help_text="Seleziona uno o più titoli per"
-                                                                                              " la tua ricerca.")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['titoli'].widget.attrs['placeholder'] = 'Seleziona uno o più titoli per la tua ricerca'
+
+
+class ModuloElencoPerTitoliCorso(ModuloElencoPerTitoli):
+    titoli = autocomplete_light.ModelMultipleChoiceField('TitoloCRIAutocompletamento',
+         help_text="Seleziona uno o più titoli per la tua ricerca.", required=False)
+    show_only_active = forms.BooleanField(label='Seleziona solo i titoli attivi',
+                                          required=False)
+    # titoli = autocomplete_light.ModelMultipleChoiceField('TitoloAutocompletamento',
+    #     help_text="Seleziona uno o più titoli per la tua ricerca.")
 
 
 class ModuloElencoQuote(forms.Form):
@@ -96,13 +117,6 @@ class ModuloElencoQuote(forms.Form):
 
 
 class ModuloAggiungiPersona(ModuloStepAnagrafica):
-    class Meta:
-        model = Persona
-        fields = ['nome', 'cognome', 'data_nascita', 'comune_nascita',
-                  'provincia_nascita', 'stato_nascita', 'codice_fiscale',
-                  'indirizzo_residenza', 'comune_residenza', 'provincia_residenza',
-                  'stato_residenza', 'cap_residenza', 'email_contatto', ]
-
     def clean_data_nascita(self):
         # Permette tutte le date di nascita.
         return self.cleaned_data.get('data_nascita')
@@ -193,16 +207,28 @@ class ModuloSenzaTurni(forms.Form):
 
 
 class ModuloCreazioneDimissioni(ModelForm):
+
     class Meta:
         model = Dimissione
         fields = ['motivo', 'info', ]
 
+    appartenenza = forms.ChoiceField(required=True)
     trasforma_in_sostenitore = forms.BooleanField(help_text="In caso di Dimissioni Volontarie seleziona quest'opzione "
                                                             "per trasformare il volontario in sostenitore. ", required=False)
 
     def __init__(self, *args, **kwargs):
+        self.persona = kwargs.pop('pers')
+        self.me = kwargs.pop('me')
         super(ModuloCreazioneDimissioni, self).__init__(*args, **kwargs)
         self.fields['motivo'].choices = (("", "---------"),) + Dimissione.MOTIVI_VOLONTARI
+        self.fields['appartenenza'].choices = self.persona.appartenenze_per_presidente(presidente=self.me)
+        self.fields['appartenenza'].help_text = "Seleziona quale Appartenza vuoi far terminare."
+
+    def clean_appartenenza(self):
+        try:
+            return Appartenenza.objects.get(pk=self.cleaned_data['appartenenza'])
+        except Appartenenza.DoesNotExist:
+            raise ValidationError("Scegli un'opzione valida.")
 
     def clean_trasforma_in_sostenitore(self):
         trasforma_in_sostenitore = self.cleaned_data['trasforma_in_sostenitore']
@@ -255,18 +281,26 @@ class ModuloElencoIVCM(forms.Form):
     )
     includi = forms.ChoiceField(choices=SCELTE)
 
+
 class ModuloQuotaGenerico(forms.Form):
-    riduzione = forms.ModelChoiceField(label='Riduzione', queryset=Riduzione.objects.all(), widget=forms.RadioSelect, required=False, empty_label='Nessuna')
+    riduzione = forms.ModelChoiceField(
+        label='Riduzione', queryset=Riduzione.objects.all(),
+        widget=forms.RadioSelect,
+        required=False, empty_label='Nessuna'
+    )
     importo = forms.FloatField(help_text="Il totale versato in euro, comprensivo dell'eventuale "
                                          "donazione aggiuntiva.")
-    data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro], initial=datetime.date.today)
+    data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro],
+                                      initial=datetime.date.today)
 
     sedi = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, tesseramento=None, **kwargs):
         self.sedi = kwargs.pop('sedi')
         super(ModuloQuotaGenerico, self).__init__(*args, **kwargs)
         self.fields['importo'].widget.attrs['min'] = self.initial.get('importo', 0)
+        if tesseramento:
+            self.fields['riduzione'].queryset = Riduzione.objects.filter(tesseramento=tesseramento)
 
     def clean_quota(self, data):
 
@@ -326,7 +360,7 @@ class ModuloQuotaGenerico(forms.Form):
 
 
 class ModuloQuotaVolontario(ModuloQuotaGenerico):
-    volontario = autocomplete_light.ModelChoiceField("PersonaAutocompletamento",
+    volontario = autocomplete_light.ModelChoiceField("VolontarioSedeAutocompletamento",
                                                      help_text="Seleziona il Volontario per il quale registrare"
                                                                " la quota associativa.")
 
@@ -369,8 +403,33 @@ class ModuloNuovaRicevuta(forms.Form):
 
     data_versamento = forms.DateField(validators=[valida_data_non_nel_futuro])
 
+    def clean(self):
+        data = self.cleaned_data
+        tesseramento = Tesseramento.ultimo_tesseramento()
+        if (self.cleaned_data['tipo_ricevuta'] == Quota.QUOTA_SOSTENITORE and
+                self.cleaned_data['importo'] < tesseramento.quota_sostenitore):
+            self.add_error(
+                'importo', 'L\'importo minimo per la quota sostenitore per l\'anno {} è di {} €'.format(
+                    tesseramento.anno, tesseramento.quota_sostenitore
+                )
+            )
+
+        return data
+
+    def clean_data_versamento(self):
+        data = self.cleaned_data['data_versamento']
+        if data.year != now().year:
+            self.add_error(
+                'data_versamento',
+                'Non è possibile registrare quote sostenitore per un anno diverso da quello corrente.'
+            )
+        return data
+
 
 class ModuloFiltraEmissioneTesserini(forms.Form):
+    def __init__(self, *args, sedi, **kwargs):
+        super(ModuloFiltraEmissioneTesserini, self).__init__(*args, **kwargs)
+        self.fields['sedi'].queryset = sedi
 
     stato_richiesta = forms.MultipleChoiceField(choices=Tesserino.STATO_RICHIESTA)
     tipo_richiesta = forms.MultipleChoiceField(choices=Tesserino.TIPO_RICHIESTA, initial=(Tesserino.RILASCIO,
@@ -379,6 +438,7 @@ class ModuloFiltraEmissioneTesserini(forms.Form):
     stato_emissione = forms.MultipleChoiceField(choices=Tesserino.STATO_EMISSIONE, initial=(("", Tesserino.STAMPATO,
                                                                                              Tesserino.SPEDITO_CASA,
                                                                                              Tesserino.SPEDITO_SEDE)),)
+    sedi = forms.ModelMultipleChoiceField(queryset=None)
 
     DATA_RICHIESTA_DESC = '-creazione'
     DATA_RICHIESTA_ASC = 'creazione'

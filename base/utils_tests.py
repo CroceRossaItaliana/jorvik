@@ -1,17 +1,18 @@
 import random
 import string
+import names
 from datetime import timedelta
 from codicefiscale import build
-import names
 
-from anagrafica.costanti import LOCALE, ESTENSIONE
-from anagrafica.models import Persona, Sede, Appartenenza, Delega
-from anagrafica.permessi.applicazioni import PRESIDENTE
-from attivita.models import Area, Attivita, Turno, Partecipazione
 from autenticazione.models import Utenza
 from base.geo import Locazione
 from base.utils import poco_fa
-from jorvik.settings import DRIVER_WEB
+from anagrafica.costanti import LOCALE, ESTENSIONE
+from anagrafica.models import Persona, Sede, Appartenenza, Delega
+from anagrafica.permessi.applicazioni import PRESIDENTE, UFFICIO_SOCI
+from attivita.models import Area, Attivita, Turno, Partecipazione
+from ufficio_soci.models import Tesseramento
+from jorvik.settings import SELENIUM_DRIVER, SELENIUM_URL, SELENIUM_BROWSER
 
 
 def codice_fiscale(length=16):
@@ -24,18 +25,41 @@ def codice_fiscale_persona(persona):
         codice_comune = COMUNI[persona.comune_nascita.lower()]
     except KeyError:
         codice_comune = 'D000'
-    return build(persona.cognome, persona.nome, persona.data_nascita, persona.genere, codice_comune)
+
+    try:
+        return build(persona.cognome, persona.nome, persona.data_nascita, persona.genere, codice_comune)
+    except:
+        # Dati personali imcompatibili per creare un codice fiscale corretto.
+        return build(names.get_last_name(), names.get_first_name(), persona.data_nascita,
+                     persona.genere, codice_comune)
 
 
-def crea_persona():
+def crea_persona(nome=None, cognome=None):
+    nome = names.get_first_name() if not nome else nome
+    cognome = names.get_last_name() if not cognome else cognome
     p = Persona.objects.create(
-        nome=names.get_first_name(),
-        cognome=names.get_last_name(),
+        nome=nome,
+        cognome=cognome,
         codice_fiscale=codice_fiscale(),
         data_nascita="{}-{}-{}".format(random.randint(1960, 1990), random.randint(1, 12), random.randint(1, 28))
     )
     p.refresh_from_db()
     return p
+
+
+def crea_tesseramento(anno=None):
+    anno = anno or poco_fa().year
+    inizio_anno = poco_fa()
+    inizio_anno = inizio_anno.replace(day=1, month=1, hour=0, minute=0, second=0)
+    if anno:
+        inizio_anno = inizio_anno.replace(year=anno)
+    fine_soci = inizio_anno.replace(day=31, month=3, hour=23, minute=59, second=59)
+    t = Tesseramento.objects.create(
+        stato=Tesseramento.APERTO, inizio=inizio_anno, fine_soci=fine_soci,
+        anno=anno, quota_attivo=8, quota_ordinario=8, quota_benemerito=8,
+        quota_aspirante=8, quota_sostenitore=8
+    )
+    return t
 
 
 def crea_utenza(persona, email="mario@rossi.it", password="prova"):
@@ -50,13 +74,20 @@ def crea_utenza(persona, email="mario@rossi.it", password="prova"):
     return u
 
 
-def crea_sede(presidente=None, estensione=LOCALE, genitore=None):
+def crea_sede(presidente=None, estensione=LOCALE, genitore=None,
+              locazione=None):
     ESTENSIONE_DICT = dict(ESTENSIONE)
+    locazione = locazione or crea_locazione()
     s = Sede(
         nome="Com. " + ESTENSIONE_DICT[estensione] + " " + names.get_last_name(),
         tipo=Sede.COMITATO,
         estensione=estensione,
         genitore=genitore,
+        telefono='+3902020202',
+        email='comitato@prova.it',
+        codice_fiscale='01234567891',
+        partita_iva='01234567891',
+        locazione=locazione
     )
     s.save()
     if presidente is not None:
@@ -68,6 +99,25 @@ def crea_sede(presidente=None, estensione=LOCALE, genitore=None):
         )
         d.save()
     return s
+
+
+def crea_delega(sede=None, **kwargs):
+    if not sede:
+        sede = crea_sede()
+        print('[sede] <sede> argument was not passed. Created a sede %s' % sede)
+
+    params = {
+        'creazione': kwargs.get('creazione', "1980-12-01"),
+        'inizio': kwargs.get('inizio', "1980-12-10"),
+        'persona': crea_persona(),
+        'tipo': kwargs.get('tipo', UFFICIO_SOCI),
+        'stato': kwargs.get('stato', 'a'),
+        'oggetto': sede,
+    }
+    delega = Delega(**params)
+    delega.save()
+    print('[delega] Created %s' % delega)
+    return delega
 
 
 def crea_locazione(dati=None, geo=False):
@@ -90,15 +140,13 @@ def crea_locazione(dati=None, geo=False):
     return locazione
 
 
-def crea_appartenenza(persona, sede):
-    app = Appartenenza(
+def crea_appartenenza(persona, sede, tipo=Appartenenza.VOLONTARIO):
+    return Appartenenza.objects.create(
         persona=persona,
         sede=sede,
-        membro=Appartenenza.VOLONTARIO,
+        membro=tipo,
         inizio="1980-12-10",
     )
-    app.save()
-    return app
 
 
 def crea_persona_sede_appartenenza(presidente=None):
@@ -168,9 +216,11 @@ def crea_partecipazione(persona, turno):
     return p
 
 
-def crea_sessione(wait_time=7):
+def crea_sessione(wait_time=5):
     from splinter import Browser
-    browser = Browser(DRIVER_WEB, wait_time=wait_time)
+    browser = Browser(driver_name=SELENIUM_DRIVER, url=SELENIUM_URL,
+                      browser=SELENIUM_BROWSER,
+                      wait_time=wait_time)
     return browser
 
 

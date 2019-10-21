@@ -44,4 +44,8 @@ def commenti(context, oggetto=None, numero=20, altezza_massima=None):
         'social_num_avvisati': num_avvisati,
     })
 
+    # Questa parte appartiene alla "formazione"
+    if oggetto.__class__.__name__ in ['Corso', 'CorsoBase']:
+        context['comments_section_title'] = "Chiedi informazioni al Direttore del corso"
+
     return render_to_string('social_commenti_tag_elenco.html', context)

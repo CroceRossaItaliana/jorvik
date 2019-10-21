@@ -1,37 +1,236 @@
 import datetime
-from unittest import skipIf
-
 import re
+from io import BytesIO
+from random import randint, choice
+
+import unicodecsv
 from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import Client
 from django.test import TestCase
+from django.utils.encoding import force_text
+from django.utils.six import text_type
 from django.utils.timezone import now
 from freezegun import freeze_time
 from lxml import html
 
 from anagrafica.costanti import LOCALE, PROVINCIALE, REGIONALE, NAZIONALE, TERRITORIALE
 from anagrafica.forms import ModuloCreazioneEstensione, ModuloNegaEstensione, ModuloProfiloModificaAnagrafica, \
-    ModuloConsentiTrasferimento
+    ModuloConsentiTrasferimento, ModuloConsentiEstensione, ModuloCreazioneTrasferimento, ModuloSpostaPersoneManuale,\
+    ModuloSpostaPersoneDaCSV
 from anagrafica.models import Appartenenza, Documento, Delega, Dimissione, Estensione, Trasferimento, Riserva, Sede
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI, PRESIDENTE, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, \
-    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, \
-    DELEGATO_AREA, UFFICIO_SOCI, UFFICIO_SOCI_UNITA, RESPONSABILE_AREA, REFERENTE, REFERENTE_GRUPPO, DELEGATO_CO, \
-    RESPONSABILE_FORMAZIONE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO
+from anagrafica.permessi.applicazioni import PRESIDENTE, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_5, \
+    DELEGATO_OBIETTIVO_6, UFFICIO_SOCI, UFFICIO_SOCI_UNITA, RESPONSABILE_AREA, REFERENTE, DIRETTORE_CORSO, \
+    RESPONSABILE_AUTOPARCO
 from anagrafica.permessi.costanti import MODIFICA, ELENCHI_SOCI, LETTURA, GESTIONE_SOCI
+from anagrafica.permessi.espansioni import espandi_elenchi_soci
 from anagrafica.utils import termina_deleghe_giovani
 from anagrafica.viste import _rubrica_delegati
+from attivita.models import Area, Turno, Partecipazione
+from attivita.models import Attivita
 from autenticazione.models import Utenza
 from autenticazione.utils_test import TestFunzionale
 from base.utils import poco_fa
-from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, email_fittizzia, \
+from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, crea_sede, crea_appartenenza, \
+    email_fittizzia, \
     crea_utenza
 from formazione.models import Aspirante, CorsoBase, PartecipazioneCorsoBase
 from posta.models import Messaggio, Autorizzazione
 from ufficio_soci.forms import ModuloElencoVolontari
+from veicoli.models import Autoparco
 
 
 class TestAnagrafica(TestCase):
+
+    def test_chiusure_trasferimento(self):
+        presidente1 = crea_persona()
+        presidente2 = crea_persona()
+
+        sede1 = crea_sede(presidente1)
+        sede2 = crea_sede(presidente2)
+
+        trasferire = crea_persona()
+        originale = crea_appartenenza(trasferire, sede1)
+
+        persona_1 = crea_persona()
+        crea_appartenenza(persona_1, sede1)
+
+        persona_2 = crea_persona()
+        crea_appartenenza(persona_2, sede1)
+
+
+        # creazione oggetti collegati
+        corso = CorsoBase.objects.create(
+            stato=CorsoBase.ATTIVO,
+            sede=sede1,
+            data_inizio=poco_fa()+ datetime.timedelta(days=7),
+            data_esame=poco_fa() + datetime.timedelta(days=14),
+            progressivo=1,
+            anno=poco_fa().year,
+            descrizione='Un corso',
+        )
+        area = Area.objects.create(
+            nome="6",
+            obiettivo=6,
+            sede=sede1
+        )
+        area_2 = Area.objects.create(
+            nome="6",
+            obiettivo=6,
+            sede=sede1
+        )
+        a1 = Attivita.objects.create(
+            stato=Attivita.VISIBILE,
+            nome="Att 1",
+            apertura=Attivita.APERTA,
+            area=area,
+            descrizione="1",
+            sede=sede1,
+            estensione=sede1,
+        )
+        a2 = Attivita.objects.create(
+            stato=Attivita.VISIBILE,
+            nome="Att 2",
+            apertura=Attivita.APERTA,
+            area=area,
+            descrizione="2",
+            sede=sede1,
+            estensione=sede1,
+        )
+
+        t1 = Turno.objects.create(
+            attivita=a1,
+            prenotazione=poco_fa() - datetime.timedelta(days=1),
+            inizio=poco_fa() - datetime.timedelta(days=1),
+            fine=poco_fa() + datetime.timedelta(days=1),
+            minimo=1,
+            massimo=6,
+        )
+        t2 = Turno.objects.create(
+            attivita=a1,
+            prenotazione=poco_fa() - datetime.timedelta(days=10),
+            inizio=poco_fa() - datetime.timedelta(days=10),
+            fine=poco_fa() - datetime.timedelta(days=5),
+            minimo=1,
+            massimo=6,
+        )
+        t3 = Turno.objects.create(
+            attivita=a2,
+            prenotazione=poco_fa() + datetime.timedelta(days=10),
+            inizio=poco_fa() + datetime.timedelta(days=10),
+            fine=poco_fa() + datetime.timedelta(days=20),
+            minimo=1,
+            massimo=6,
+        )
+        parco = Autoparco.objects.create(nome='autoparco1', sede=sede1)
+
+        # Deleghe a tutti i possibili oggetti
+        Delega.objects.create(persona=trasferire, tipo=UFFICIO_SOCI, oggetto=sede1, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=UFFICIO_SOCI_UNITA, oggetto=sede1, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=DELEGATO_OBIETTIVO_6, oggetto=sede1, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=RESPONSABILE_AREA, oggetto=area, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=RESPONSABILE_AREA, oggetto=area_2, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=REFERENTE, oggetto=a1, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=REFERENTE, oggetto=a2, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=DIRETTORE_CORSO, oggetto=corso, inizio=poco_fa())
+        Delega.objects.create(persona=trasferire, tipo=RESPONSABILE_AUTOPARCO, oggetto=parco, inizio=poco_fa())
+
+        Delega.objects.create(persona=persona_1, tipo=RESPONSABILE_AREA, oggetto=area, inizio=poco_fa())
+        Delega.objects.create(persona=persona_2, tipo=REFERENTE, oggetto=a2, inizio=poco_fa())
+        Delega.objects.create(persona=persona_2, tipo=DELEGATO_OBIETTIVO_6, oggetto=sede1, inizio=poco_fa())
+
+        # Turni
+        p1 = Partecipazione.objects.create(persona=trasferire, turno=t1)
+        p1.richiedi()
+        p2 = Partecipazione.objects.create(persona=trasferire, turno=t2)
+        p2.richiedi()
+        p3 = Partecipazione.objects.create(persona=trasferire, turno=t3)
+        p3.richiedi()
+        for p in (p1, p2, p3):
+            for autorizzazione in p.autorizzazioni:
+                autorizzazione.concedi(presidente1)
+
+        # Trasferimenti / Riserve / Estensioni
+        estensione = Estensione.objects.create(
+            persona=trasferire, destinazione=sede2, richiedente=trasferire, motivo='test'
+        )
+        estensione.richiedi()
+        estensione = Estensione.objects.create(
+            persona=trasferire, destinazione=sede2, richiedente=trasferire, motivo='test'
+        )
+        estensione.richiedi()
+        modulo = ModuloConsentiEstensione({'protocollo_numero': 1, 'protocollo_data': now()})
+        self.assertTrue(modulo.is_valid())
+        for autorizzazione in estensione.autorizzazioni:
+            autorizzazione.concedi(presidente1, modulo=modulo)
+        trasferimento_vecchio = Trasferimento.objects.create(
+            persona=trasferire, destinazione=sede2, richiedente=trasferire, motivo='test'
+        )
+        trasferimento_vecchio.richiedi()
+        riserva = Riserva.objects.create(
+            persona=trasferire, motivo='test', appartenenza=originale, inizio=poco_fa(),
+        )
+        riserva.richiedi()
+        modulo = ModuloConsentiTrasferimento({'protocollo_numero': 1, 'protocollo_data': now()})
+        self.assertTrue(modulo.is_valid())
+        for autorizzazione in riserva.autorizzazioni:
+            autorizzazione.concedi(presidente1, modulo=modulo)
+
+        # Comincia il processo di trasferimento
+        trasferimento = Trasferimento.objects.create(
+            persona=trasferire, destinazione=sede2, richiedente=trasferire, motivo='test'
+        )
+        trasferimento.richiedi()
+        data_trasferimento = poco_fa() + datetime.timedelta(days=4)
+        modulo = ModuloConsentiTrasferimento({'protocollo_numero': 1, 'protocollo_data': now()})
+        self.assertTrue(modulo.is_valid())
+        for autorizzazione in trasferimento.autorizzazioni:
+            autorizzazione.concedi(presidente1, modulo=modulo, data=data_trasferimento)
+
+        trasferire.refresh_from_db()
+        trasferimento.refresh_from_db()
+        # Eseguiamo verifica alla data attuale, nulla dovrebbe essere cambiato
+        # Tutti i dati della persona trasferita sono aggiornati
+        self.assertEqual(trasferire.comitato_riferimento(), sede1)
+        self.assertTrue(trasferire.in_riserva)
+        self.assertFalse(trasferire.trasferimenti_in_attesa.exists())  # Non in attesa perché già approvato
+        self.assertFalse(trasferire.autorizzazioni_in_attesa().exists())  # Non in attesa perché già approvato
+        self.assertFalse(trasferire.riserve.filter(fine__isnull=True).exists())  # Non in attesa perché già approvato
+        self.assertTrue(trasferire.appartenenze_attuali(membro=Appartenenza.ESTESO).exists())
+        self.assertTrue(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).exists())
+        self.assertTrue(trasferire.deleghe_attuali(solo_attive=False).exists())
+        self.assertIsNone(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first().precedente)
+
+        # Aree e attività sono passati di competenza a chi di dovere
+        self.assertEqual(area.deleghe_attuali(solo_attive=False).count(), 2)
+        self.assertEqual(area_2.deleghe_attuali(solo_attive=False).count(), 1)
+        self.assertEqual(area_2.deleghe_attuali(solo_attive=False).get().persona, trasferire)
+        self.assertEqual(a1.deleghe_attuali(solo_attive=False).count(), 1)
+        self.assertEqual(a1.deleghe_attuali(solo_attive=False).get().persona, trasferire)
+        self.assertEqual(a2.deleghe_attuali(solo_attive=False).count(), 2)
+
+        # Eseguiamo verifica alla data del trasferimento, i dati dovrebbero essere aggiornati
+        with freeze_time(data_trasferimento):
+            # Tutti i dati della persona trasferita sono aggiornati
+            self.assertEqual(trasferire.comitato_riferimento(), sede2)
+            self.assertFalse(trasferire.in_riserva)
+            self.assertFalse(trasferire.trasferimenti_in_attesa.exists())
+            self.assertFalse(trasferire.autorizzazioni_in_attesa().exists())
+            self.assertFalse(trasferire.riserve.filter(fine__isnull=True).exists())
+            self.assertFalse(trasferire.appartenenze_attuali(membro=Appartenenza.ESTESO).exists())
+            self.assertFalse(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).exists())
+            self.assertFalse(trasferire.deleghe_attuali(solo_attive=False).exists())
+            self.assertIsNotNone(trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first().precedente)
+
+            # Aree e attività sono passati di competenza a chi di dovere
+            self.assertEqual(area.deleghe_attuali(solo_attive=False).count(), 1)
+            self.assertEqual(area.deleghe_attuali(solo_attive=False).get().persona, persona_1)
+            self.assertEqual(area_2.deleghe_attuali(solo_attive=False).count(), 1)
+            self.assertEqual(area_2.deleghe_attuali(solo_attive=False).get().persona, persona_2)
+            self.assertEqual(a1.deleghe_attuali(solo_attive=False).count(), 1)
+            self.assertEqual(a1.deleghe_attuali(solo_attive=False).get().persona, persona_1)
+            self.assertEqual(a2.deleghe_attuali(solo_attive=False).count(), 1)
+            self.assertEqual(a2.deleghe_attuali(solo_attive=False).get().persona, persona_2)
 
     def test_appartenenza_modificabile_con_campo_precedente(self):
 
@@ -436,6 +635,21 @@ class TestAnagrafica(TestCase):
 
         d6.delete()
 
+    def test_permessi_profilo(self):
+        presidente = crea_persona()
+        persona, sede, appartenenza = crea_persona_sede_appartenenza(presidente)
+        sede2 = crea_sede()
+
+        appartenenza.fine = poco_fa()
+        appartenenza.terminazione = Appartenenza.TRASFERIMENTO
+        appartenenza.save()
+
+        Appartenenza.objects.create(sede=sede2, persona=persona, inizio=poco_fa())
+
+        risultati = espandi_elenchi_soci(Sede.objects.filter(pk=sede.pk))
+        for permesso, qs in risultati:
+            self.assertFalse(persona in qs)
+
     def test_documenti(self):
 
         p = crea_persona()
@@ -463,12 +677,53 @@ class TestAnagrafica(TestCase):
             msg="Il membro non ha davvero alcuna carta di identita"
         )
 
+    def test_blocco_estensione_regionale(self):
+        presidente1 = crea_persona()
+        presidente2 = crea_persona()
+        sede1 = crea_sede(presidente1, estensione=TERRITORIALE)
+        sede2 = crea_sede(presidente2, estensione=LOCALE)
+        sede3 = crea_sede(presidente2, estensione=REGIONALE)
+
+        modulo = ModuloCreazioneEstensione({'destinazione': sede1.pk, 'motivo': 'blag'})
+        self.assertTrue(modulo.is_valid())
+
+        modulo = ModuloCreazioneEstensione({'destinazione': sede2.pk, 'motivo': 'blag'})
+        self.assertTrue(modulo.is_valid())
+
+        modulo = ModuloCreazioneEstensione({'destinazione': sede3.pk, 'motivo': 'blag'})
+        self.assertFalse(modulo.is_valid())
+        self.assertTrue('destinazione'in modulo.errors)
+        self.assertTrue('Non è possibile effettuare un trasferimento verso il Comitato Nazionale,' in modulo.errors['destinazione'].as_text())
+
+    def test_blocco_trasferimento_regionale(self):
+        presidente1 = crea_persona()
+        presidente2 = crea_persona()
+        sede1 = crea_sede(presidente1, estensione=TERRITORIALE)
+        sede2 = crea_sede(presidente2, estensione=LOCALE)
+        sede3 = crea_sede(presidente2, estensione=REGIONALE)
+
+        modulo = ModuloCreazioneTrasferimento({'destinazione': sede1.pk, 'motivo': 'blag'})
+        self.assertTrue(modulo.is_valid())
+
+        modulo = ModuloCreazioneTrasferimento({'destinazione': sede2.pk, 'motivo': 'blag'})
+        self.assertTrue(modulo.is_valid())
+
+        modulo = ModuloCreazioneTrasferimento({'destinazione': sede3.pk, 'motivo': 'blag'})
+        self.assertFalse(modulo.is_valid())
+        self.assertTrue('destinazione'in modulo.errors)
+        self.assertTrue('Non è possibile effettuare un trasferimento verso il Comitato Nazionale,' in modulo.errors['destinazione'].as_text())
+
     def test_estensione_accettata(self):
         presidente1 = crea_persona()
         presidente2 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        presidente2.email_contatto = email_fittizzia()
+        presidente2.save()
 
         da_estendere, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
-
+        da_estendere.email_contatto = email_fittizzia()
+        da_estendere.save()
         sede2 = crea_sede(presidente2)
 
         self.assertFalse(
@@ -487,6 +742,7 @@ class TestAnagrafica(TestCase):
         est.persona = da_estendere
         est.destinazione = sede2
         est.save()
+        ora = now()
         est.richiedi()
 
         self.assertTrue(
@@ -521,7 +777,20 @@ class TestAnagrafica(TestCase):
             "protocollo_data": datetime.date.today()
         })
 
+        self.assertEqual(2, len(mail.outbox))
         aut.concedi(presidente1, modulo=modulo)
+        self.assertEqual(5, len(mail.outbox))
+        destinatari_verificati = 0
+        for email in mail.outbox[2:]:
+            if da_estendere.email_contatto in email.to:
+                self.assertTrue(email.subject.find('Richiesta di Estensione APPROVATA') > -1)
+                destinatari_verificati += 1
+            elif presidente1.email_contatto in email.to or presidente2.email_contatto in email.to:
+                self.assertTrue(email.subject.find('Richiesta di Estensione da %s APPROVATA' % da_estendere.nome_completo) > -1)
+                self.assertTrue(email.body.find(presidente1.nome_completo) > -1)
+                self.assertTrue(email.body.find('La richiesta di Estensione inoltrata il {}'.format(ora.strftime('%d/%m/%Y'))) > -1)
+                destinatari_verificati += 1
+        self.assertEqual(destinatari_verificati, 3)
 
         self.assertFalse(
             presidente2.autorizzazioni_in_attesa().exists(),
@@ -670,7 +939,7 @@ class TestAnagrafica(TestCase):
         a.inizio = "1980-12-10"
         a.save()
         self.assertFalse(persona.volontario_da_meno_di_un_anno)
-        
+
         # trasferiscilo ad altro comitato
 
         modulo = ModuloCreazioneEstensione()
@@ -773,6 +1042,10 @@ class TestAnagrafica(TestCase):
 
         presidente1 = crea_persona()
         presidente2 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        presidente2.email_contatto = email_fittizzia()
+        presidente2.save()
 
         da_estendere, sede1, app1 = crea_persona_sede_appartenenza(presidente1)
 
@@ -910,6 +1183,192 @@ class TestAnagrafica(TestCase):
         self.assertNotIn(est, Estensione.con_esito_ok())
         self.assertEqual(da_estendere.appartenenze_attuali(membro=Appartenenza.ESTESO, sede=sede2).count(), 0)
 
+    def test_spostamento_massivo_persona(self):
+        presidente1 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        admin = crea_persona()
+        admin.email_contatto = email_fittizzia()
+        admin.save()
+        sede = crea_sede(presidente1)
+        sede2 = crea_sede(presidente1)
+        data_trasferimento = poco_fa() - datetime.timedelta(days=360)
+
+        persona = crea_persona()
+        persona.email_contatto = email_fittizzia()
+        persona.save()
+        crea_appartenenza(persona, sede)
+
+        sostenitore = crea_persona()
+        sostenitore.email_contatto = email_fittizzia()
+        sostenitore.save()
+        crea_appartenenza(sostenitore, sede, tipo=Appartenenza.SOSTENITORE)
+
+        solo_chiuse = crea_persona()
+        solo_chiuse.email_contatto = email_fittizzia()
+        solo_chiuse.save()
+        app = crea_appartenenza(solo_chiuse, sede)
+        app.terminazione = Appartenenza.DIMISSIONE
+        app.fine = data_trasferimento
+        app.save()
+
+        chiuse_dopo = crea_persona()
+        chiuse_dopo.email_contatto = email_fittizzia()
+        chiuse_dopo.save()
+        app = crea_appartenenza(solo_chiuse, sede)
+        app.terminazione = Appartenenza.DIMISSIONE
+        app.fine = data_trasferimento + datetime.timedelta(days=10)
+        app.save()
+
+        stessa_sede = crea_persona()
+        stessa_sede.email_contatto = email_fittizzia()
+        stessa_sede.save()
+        crea_appartenenza(stessa_sede, sede2)
+
+        self.assertEqual(list(stessa_sede.sedi_attuali()), [sede2])
+        self.assertEqual(list(persona.sedi_attuali()), [sede])
+        self.assertEqual(list(sostenitore.sedi_attuali()), [sede])
+        self.assertEqual(list(solo_chiuse.sedi_attuali()), [])
+        self.assertEqual(list(chiuse_dopo.sedi_attuali()), [])
+
+        mail.outbox = []
+
+        self.assertTrue('non è un volontario' in chiuse_dopo.trasferimento_massivo(sede2, admin, 'prova', data_trasferimento))
+        self.assertTrue(isinstance(persona.trasferimento_massivo(sede2, admin, 'prova', data_trasferimento), Appartenenza))
+        self.assertTrue('non è un volontario' in sostenitore.trasferimento_massivo(sede2, admin, 'prova', data_trasferimento))
+        self.assertTrue('non è un volontario' in solo_chiuse.trasferimento_massivo(sede2, admin, 'prova', data_trasferimento))
+        self.assertTrue('sede indicata' in stessa_sede.trasferimento_massivo(sede2, admin, 'prova', data_trasferimento))
+
+        self.assertFalse(mail.outbox)
+
+    def _dati_test_trasferimenti(self):
+        presidente1 = crea_persona()
+        presidente1.email_contatto = email_fittizzia()
+        presidente1.save()
+        sede = crea_sede(presidente1)
+        sede2 = crea_sede(presidente1)
+
+        persone = []
+        sostentori = []
+        for x in range(0, 10):
+            persona = crea_persona()
+            persona.email_contatto = email_fittizzia()
+            persona.save()
+            persone.append(persona)
+            crea_appartenenza(persona, sede)
+
+        for x in range(0, 10):
+            persona = crea_persona()
+            persona.email_contatto = email_fittizzia()
+            persona.save()
+            sostentori.append(persona)
+            crea_appartenenza(persona, sede, tipo=Appartenenza.SOSTENITORE)
+        return sede, sede2, persone, sostentori
+
+    def test_spostamento_massivo_csv(self):
+        admin = crea_persona()
+        admin.email_contatto = email_fittizzia()
+        admin.save()
+
+        sede, sede2, persone, sostentori = self._dati_test_trasferimenti()
+        sede3 = crea_sede(admin)
+        sede4 = crea_sede(admin)
+        dati = {}
+
+        mail.outbox = []
+
+        input_file = BytesIO()
+        csv_data = unicodecsv.writer(input_file)
+        for index, persona in enumerate(persone):
+            if index == 0:
+                data_trasferimento = 'non valida'
+            else:
+                data_trasferimento = (poco_fa() + datetime.timedelta(days=randint(-90, -30))).strftime('%Y-%m-%d')
+            data = (
+                persona.codice_fiscale,
+                data_trasferimento,
+                choice((str(sede2.pk), str(sede3.pk), str(sede2.pk + 1000))),
+                'esempio'
+            )
+            csv_data.writerow(data)
+        input_file.seek(0)
+
+        form = ModuloSpostaPersoneDaCSV(data={})
+
+        elenco, errori = form.elenco_persone(input_file)
+        self.assertTrue(len(errori), 1)
+        in_sede2 = []
+        in_sede3 = []
+        in_sede_nessuna = []
+        for item in elenco:
+            if item['sede'] == sede2:
+                in_sede2.append(item['persona'])
+            elif item['sede'] == sede3:
+                in_sede3.append(item['persona'])
+            elif item['sede'] is None:
+                in_sede_nessuna.append(item['persona'])
+
+        input_file.seek(0)
+        trasferimenti = form.sposta_persone(admin, persone=elenco)
+        # Niente sede nel file di trasferimento significa niente trasferimento
+        # il +1 rappresenta la persona scartata e non trasferita
+        self.assertEqual(sede.membri_attuali(membro=Appartenenza.VOLONTARIO).count(), len(in_sede_nessuna) + 1)
+        self.assertEqual(sede.membri_attuali(membro=Appartenenza.SOSTENITORE).count(), 10)
+        self.assertEqual(sede2.membri_attuali(membro=Appartenenza.VOLONTARIO).count(), len(in_sede2))
+        self.assertEqual(sede2.membri_attuali(membro=Appartenenza.SOSTENITORE).count(), 0)
+        self.assertEqual(sede3.membri_attuali(membro=Appartenenza.VOLONTARIO).count(), len(in_sede3))
+        self.assertEqual(sede3.membri_attuali(membro=Appartenenza.SOSTENITORE).count(), 0)
+
+        for trasferimento in trasferimenti:
+            if trasferimento[0] in persone:
+                if trasferimento[0] not in in_sede_nessuna:
+                    self.assertTrue(trasferimento[1] is True or isinstance(trasferimento[1], Appartenenza))
+                else:
+                    self.assertTrue(isinstance(trasferimento[1], text_type))
+            elif trasferimento[0] in persone:
+                self.assertTrue(isinstance(trasferimento[1], text_type))
+
+        for persona, esito in trasferimenti:
+            if isinstance(esito, Appartenenza):
+                self.assertEqual(esito.inizio.time(), datetime.time(0, 0, 0))
+                precedente = persona.appartenenze.exclude(pk=esito.pk).latest('fine')
+                self.assertEqual(precedente, esito.precedente)
+                self.assertEqual(precedente.fine + datetime.timedelta(seconds=1), esito.inizio)
+
+        self.assertFalse(mail.outbox)
+
+    def test_spostamento_massivo_form(self):
+        admin = crea_persona()
+        admin.email_contatto = email_fittizzia()
+        admin.save()
+
+        sede, sede2, persone, sostentori = self._dati_test_trasferimenti()
+        dati = {
+            'sede': sede2.pk,
+            'motivazione': 'prova',
+            'inizio_appartenenza': datetime.date(2016, 1, 1)
+        }
+
+        mail.outbox = []
+
+        form = ModuloSpostaPersoneManuale(dati)
+        self.assertTrue(form.is_valid())
+        persone, scarti = form.mappa_persone(sede.membri_attuali())
+        trasferimenti = form.sposta_persone(admin, persone=persone)
+
+        self.assertEqual(sede.membri_attuali(membro=Appartenenza.VOLONTARIO).count(), 0)
+        self.assertEqual(sede.membri_attuali(membro=Appartenenza.SOSTENITORE).count(), 10)
+        self.assertEqual(sede2.membri_attuali(membro=Appartenenza.VOLONTARIO).count(), 10)
+        self.assertEqual(sede2.membri_attuali(membro=Appartenenza.SOSTENITORE).count(), 0)
+
+        for trasferimento in trasferimenti:
+            if trasferimento[0] in persone:
+                self.assertTrue(trasferimento[1] is True or isinstance(trasferimento[1], Appartenenza))
+            elif trasferimento[0] in sostentori:
+                self.assertTrue(isinstance(trasferimento[1], text_type))
+
+        self.assertFalse(mail.outbox)
+
     def test_trasferimento_automatico(self):
         presidente1 = crea_persona()
         presidente1.email_contatto = email_fittizzia()
@@ -966,17 +1425,37 @@ class TestAnagrafica(TestCase):
         self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede1).count(), 1)
         self.assertEqual(da_trasferire.appartenenze_attuali(membro=Appartenenza.VOLONTARIO, sede=sede2).count(), 0)
 
+        self.assertEqual(Trasferimento.con_esito_ok().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_pending().count(), 1)
+        self.assertEqual(Trasferimento.con_esito_ritirata().count(), 0)
+
+        trasf.ritirata = True
+        trasf.save()
+        Autorizzazione.gestisci_automatiche()
+        self.assertEqual(Trasferimento.con_esito_ok().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_pending().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_ritirata().count(), 1)
+
+        trasf.ritirata = False
+        trasf.save()
+        self.assertEqual(Trasferimento.con_esito_ok().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_pending().count(), 1)
+        self.assertEqual(Trasferimento.con_esito_ritirata().count(), 0)
+
         Autorizzazione.gestisci_automatiche()
         autorizzazione.refresh_from_db()
+        self.assertEqual(Trasferimento.con_esito_ok().count(), 1)
+        self.assertEqual(Trasferimento.con_esito_pending().count(), 0)
+        self.assertEqual(Trasferimento.con_esito_ritirata().count(), 0)
 
-        self.assertEqual(4, len(mail.outbox))
+        self.assertEqual(5, len(mail.outbox))
         destinatari_verificati = 0
         for email in mail.outbox[1:]:
             if da_trasferire.email_contatto in email.to:
                 # Notifica alla persona trasferita
                 self.assertTrue(email.subject.find('Richiesta di trasferimento APPROVATA') > -1)
                 destinatari_verificati += 1
-            elif presidente1.email_contatto in email.to or ufficio_soci.email_contatto in email.to:
+            elif presidente1.email_contatto in email.to or ufficio_soci.email_contatto in email.to or presidente2.email_contatto in email.to:
                 # Notifica presidente e ufficio soci in uscita
                 self.assertTrue(email.subject.find('Richiesta di trasferimento da %s APPROVATA' % da_trasferire.nome_completo) > -1)
                 self.assertTrue(email.body.find('articolo 9.5 del "Regolamento') > -1)
@@ -984,7 +1463,7 @@ class TestAnagrafica(TestCase):
                 self.assertFalse(email.body.find(presidente1.nome_completo) > -1)
                 self.assertTrue(email.body.find('La richiesta di trasferimento inoltrata il {}'.format(ora.strftime('%d/%m/%Y'))) > -1)
                 destinatari_verificati += 1
-        self.assertEqual(destinatari_verificati, 3)
+        self.assertEqual(destinatari_verificati, 4)
 
         trasf.refresh_from_db()
         autorizzazione.refresh_from_db()
@@ -1063,14 +1542,14 @@ class TestAnagrafica(TestCase):
         autorizzazione.refresh_from_db()
         trasf.refresh_from_db()
 
-        self.assertEqual(4, len(mail.outbox))
+        self.assertEqual(5, len(mail.outbox))
         destinatari_verificati = 0
         for email in mail.outbox[1:]:
             if da_trasferire.email_contatto in email.to:
                 # Notifica alla persona trasferita
                 self.assertTrue(email.subject.find('Richiesta di trasferimento APPROVATA') > -1)
                 destinatari_verificati += 1
-            elif presidente1.email_contatto in email.to or ufficio_soci.email_contatto in email.to:
+            elif presidente1.email_contatto in email.to or ufficio_soci.email_contatto in email.to or presidente2.email_contatto in email.to:
                 # Notifica presidente e ufficio soci in uscita
                 self.assertTrue(email.subject.find('Richiesta di trasferimento da %s APPROVATA' % da_trasferire.nome_completo) > -1)
                 self.assertFalse(email.body.find('articolo 9.5 del "Regolamento') > -1)
@@ -1078,7 +1557,7 @@ class TestAnagrafica(TestCase):
                 self.assertTrue(email.body.find('Nota bene: Questa richiesta di trasferimento') == -1)
                 self.assertTrue(email.body.find('La richiesta di trasferimento inoltrata il {}'.format(ora.strftime('%d/%m/%Y'))) > -1)
                 destinatari_verificati += 1
-        self.assertEqual(destinatari_verificati, 3)
+        self.assertEqual(destinatari_verificati, 4)
 
         trasf.refresh_from_db()
         autorizzazione.refresh_from_db()
@@ -1282,9 +1761,8 @@ class TestAnagrafica(TestCase):
         for x in [italia, _sicilia, __catania, ___maletto, ___giarre, ____riposto, ____salfio, lombardia, _milano]:
             x.refresh_from_db()
 
-
         self.assertTrue(
-            italia.espandi(includi_me=True, pubblici=True).count() == (italia.get_descendants().count() + 1),
+            italia.espandi(includi_me=True, pubblici=True).count() == (italia.get_descendants(include_self=True).count()),
             msg="Espansione dal Nazionale ritorna tutti i Comitati - inclusa Italia",
         )
 
@@ -1299,7 +1777,7 @@ class TestAnagrafica(TestCase):
         )
 
         self.assertTrue(
-            _sicilia.espandi(includi_me=True, pubblici=True).count() == (_sicilia.get_descendants().count() + 1),
+            _sicilia.espandi(includi_me=True, pubblici=True).count() == (_sicilia.get_descendants(include_self=True).count()),
             msg="Espansione dal Regionale ritrna tutti i Comitati - Inclusa Regione"
         )
 
@@ -1772,7 +2250,7 @@ class TestAnagrafica(TestCase):
 
         # L'autorizzazione chiesta dopo l'inizio della delega è visibile
         self.client.login(username=presidente.utenza.email, password='prova')
-        response = self.client.get(reverse('autorizzazioni-storico'))
+        response = self.client.get(reverse('autorizzazioni:storico'))
         self.assertContains(response, 'chiede il trasferimento verso')
         self.assertContains(response, sede2)
         self.assertContains(response, uff_soci.nome_completo)
@@ -1781,7 +2259,7 @@ class TestAnagrafica(TestCase):
         # L'autorizzazione chiesta prima dell'inizio della delega non è visibile
         autorizzazione.creazione = now() - datetime.timedelta(days=10)
         autorizzazione.save()
-        response = self.client.get(reverse('autorizzazioni-storico'))
+        response = self.client.get(reverse('autorizzazioni:storico'))
         self.assertNotContains(response, 'chiede il trasferimento verso')
         self.assertNotContains(response, sede2)
         self.assertNotContains(response, uff_soci.nome_completo)
@@ -1791,7 +2269,7 @@ class TestAnagrafica(TestCase):
         delega = presidente.deleghe.last()
         delega.inizio = now() - datetime.timedelta(days=20)
         delega.save()
-        response = self.client.get(reverse('autorizzazioni-storico'))
+        response = self.client.get(reverse('autorizzazioni:storico'))
         self.assertNotContains(response, 'chiede il trasferimento verso')
         self.assertNotContains(response, sede2)
         self.assertNotContains(response, uff_soci.nome_completo)
@@ -1804,11 +2282,232 @@ class TestAnagrafica(TestCase):
         delega = presidente.deleghe.last()
         delega.inizio = now() - datetime.timedelta(days=5)
         delega.save()
-        response = self.client.get(reverse('autorizzazioni-storico'))
+        response = self.client.get(reverse('autorizzazioni:storico'))
         self.assertContains(response, 'chiede il trasferimento verso')
         self.assertContains(response, sede2)
         self.assertContains(response, uff_soci.nome_completo)
         self.assertContains(response, socio.nome_completo)
+
+    def test_attiva_cascata(self):
+        sede1 = crea_sede()
+        sede1.nome = '1sede'
+        sede1.save()
+        sede2 = crea_sede(genitore=sede1)
+        sede2.nome = '2sede'
+        sede2.save()
+        sede2b = crea_sede(genitore=sede2, estensione=TERRITORIALE)
+        sede2b.nome = '2bsede'
+        sede2b.save()
+        sede3 = crea_sede(genitore=sede1, estensione=TERRITORIALE)
+        sede3.nome = '3sede'
+        sede3.save()
+        sede4 = crea_sede(estensione=REGIONALE)
+        sede4.nome = '4sede'
+        sede4.save()
+
+        admin = crea_persona()
+        utente = crea_utenza(admin, email=email_fittizzia())
+        utente.is_staff = True
+        utente.is_superuser = True
+        utente.save()
+
+        self.assertTrue(self.client.login(username=utente.email, password='prova'))
+        data = {
+            'nome': sede1.nome,
+            'estensione': sede1.estensione,
+            'tipo': sede1.tipo,
+            'creazione_0': sede1.creazione.strftime('%Y-%m-%d'),
+            'creazione_1': sede1.creazione.strftime('%H:%M:00'),
+            'attiva': False,
+            'anagrafica-delega-oggetto_tipo-oggetto_id-TOTAL_FORMS': 0,
+            'anagrafica-delega-oggetto_tipo-oggetto_id-INITIAL_FORMS': 0,
+            'anagrafica-delega-oggetto_tipo-oggetto_id-MIN_NUM_FORMS': 0,
+            'anagrafica-delega-oggetto_tipo-oggetto_id-MAX_NUM_FORMS': 1000,
+        }
+        self.client.post(reverse('admin:anagrafica_sede_change', args=(sede1.pk,)), data=data)
+
+        self.assertEqual(Sede.objects.filter(attiva=True).count(), 1)
+        self.assertEqual(Sede.objects.filter(attiva=False).count(), 4)
+        self.assertFalse(sede1 in Sede.objects.filter(attiva=True).all())
+        self.assertFalse(sede2 in Sede.objects.filter(attiva=True).all())
+        self.assertFalse(sede2b in Sede.objects.filter(attiva=True).all())
+        self.assertFalse(sede3 in Sede.objects.filter(attiva=True).all())
+
+    def test_autocomplete_sedi(self):
+        sede1 = crea_sede()
+        sede1.nome = '1sede'
+        sede1.save()
+        sede2 = crea_sede(genitore=sede1)
+        sede2.nome = '2sede'
+        sede2.save()
+        sede2b = crea_sede(genitore=sede2, estensione=TERRITORIALE)
+        sede2b.nome = '2bsede'
+        sede2b.save()
+        sede3 = crea_sede(genitore=sede1, estensione=TERRITORIALE)
+        sede3.nome = '3sede'
+        sede3.save()
+        sede4 = crea_sede(estensione=REGIONALE)
+        sede4.nome = '4sede'
+        sede4.save()
+
+        response = self.client.get('/autocomplete/SedeAutocompletamento/?q=sede')
+        self.assertContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertContains(response, '{}<'.format(sede2b.nome))
+        self.assertContains(response, '{}<'.format(sede3.nome))
+        self.assertContains(response, '{}<'.format(sede4.nome))
+
+        response = self.client.get('/autocomplete/SedeAutocompletamento/?q=1s')
+        self.assertContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        response = self.client.get('/autocomplete/SedeAutocompletamento/?q=2s')
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        sede1.attiva = False
+        sede1.save()
+
+        response = self.client.get('/autocomplete/SedeAutocompletamento/?q=sede')
+        self.assertNotContains(response, '{}<'.format(sede1.nome))
+        self.assertNotContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertContains(response, '{}<'.format(sede4.nome))
+
+    def test_autocomplete_comitati(self):
+        sede1 = crea_sede()
+        sede1.nome = '1sede'
+        sede1.save()
+        sede2 = crea_sede(genitore=sede1)
+        sede2.nome = '2sede'
+        sede2.save()
+        sede2b = crea_sede(genitore=sede2, estensione=TERRITORIALE)
+        sede2b.nome = '2bsede'
+        sede2b.save()
+        sede3 = crea_sede(genitore=sede1, estensione=TERRITORIALE)
+        sede3.nome = '3sede'
+        sede3.save()
+        sede4 = crea_sede(estensione=REGIONALE)
+        sede4.nome = '4sede'
+        sede4.save()
+
+        response = self.client.get('/autocomplete/ComitatoAutocompletamento/?q=sede')
+        self.assertContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertContains(response, '{}<'.format(sede4.nome))
+
+        response = self.client.get('/autocomplete/ComitatoAutocompletamento/?q=1s')
+        self.assertContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        response = self.client.get('/autocomplete/ComitatoAutocompletamento/?q=2s')
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede1.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        sede1.attiva = False
+        sede1.save()
+
+        response = self.client.get('/autocomplete/ComitatoAutocompletamento/?q=sede')
+        self.assertNotContains(response, '{}<'.format(sede1.nome))
+        self.assertNotContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertContains(response, '{}<'.format(sede4.nome))
+
+    def test_autocomplete_sedi_trasferimenti(self):
+        sede1 = crea_sede()
+        sede1.nome = '1sede'
+        sede1.save()
+        sede2 = crea_sede(genitore=sede1)
+        sede2.nome = '2sede'
+        sede2.save()
+        sede2b = crea_sede(genitore=sede2, estensione=TERRITORIALE)
+        sede2b.nome = '2bsede'
+        sede2b.save()
+        sede3 = crea_sede(genitore=sede1, estensione=TERRITORIALE)
+        sede3.nome = '3sede'
+        sede3.save()
+        sede4 = crea_sede(estensione=REGIONALE)
+        sede4.nome = '4sede'
+        sede4.save()
+
+        response = self.client.get('/autocomplete/SedeTrasferimentoAutocompletamento/?q=sede')
+        self.assertContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertContains(response, '{}<'.format(sede2b.nome))
+        self.assertContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        response = self.client.get('/autocomplete/SedeTrasferimentoAutocompletamento/?q=1s')
+        self.assertContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        response = self.client.get('/autocomplete/SedeTrasferimentoAutocompletamento/?q=2s')
+        self.assertContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede1.nome))
+        self.assertContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+        sede1.attiva = False
+        sede1.save()
+
+        response = self.client.get('/autocomplete/SedeTrasferimentoAutocompletamento/?q=sede')
+        self.assertNotContains(response, '{}<'.format(sede1.nome))
+        self.assertNotContains(response, '{}<'.format(sede2.nome))
+        self.assertNotContains(response, '{}<'.format(sede2b.nome))
+        self.assertNotContains(response, '{}<'.format(sede3.nome))
+        self.assertNotContains(response, '{}<'.format(sede4.nome))
+
+    def test_autocomplete_volontari_sedi(self):
+        presidente = crea_persona()
+        persona, sede1, appartenenza = crea_persona_sede_appartenenza(presidente=presidente)
+        sede2 = crea_sede(genitore=sede1)
+        sede2.nome = '2sede'
+        sede2.save()
+        sede2b = crea_sede(genitore=sede2, estensione=TERRITORIALE)
+        sede2b.nome = '2bsede'
+        sede2b.save()
+
+        crea_utenza(persona, email=email_fittizzia())
+        Delega.objects.create(persona=persona, tipo=UFFICIO_SOCI, oggetto=sede2, inizio=poco_fa())
+
+        persona_sede1 = crea_persona()
+        persona_sede1.nome = 'PersonaSede 1'
+        persona_sede1.save()
+        Appartenenza.objects.create(persona=persona_sede1, sede=sede1, inizio=poco_fa())
+        persona_sede2 = crea_persona()
+        persona_sede2.nome = 'PersonaSede 2'
+        persona_sede2.save()
+        Appartenenza.objects.create(persona=persona_sede2, sede=sede2, inizio=poco_fa())
+        persona_sede2b = crea_persona()
+        persona_sede2b.nome = 'PersonaSede 2b'
+        persona_sede2b.save()
+        Appartenenza.objects.create(persona=persona_sede2b, sede=sede2b, inizio=poco_fa())
+
+        self.client.login(email=persona.utenza.email, password='prova')
+        response = self.client.get('/autocomplete/VolontarioSedeAutocompletamento/?q=PersonaSede')
+        self.assertNotContains(response, persona_sede1)
+        self.assertContains(response, persona_sede2)
+        self.assertContains(response, persona_sede2b)
 
 
 class TestFunzionaliAnagrafica(TestFunzionale):
@@ -2093,7 +2792,7 @@ class TestFunzionaliAnagrafica(TestFunzionale):
         Delega.objects.create(persona=delegato_abruzzo, tipo=DELEGATO_OBIETTIVO_3, oggetto=abruzzo, inizio=poco_fa())
         # Testa la rubrica per il delegato nazionale
         utenza = crea_utenza(persona=delegato_nazionale, email=EMAIL)
-        sessione_delegato_nazionale = self.sessione_utente(utente=utenza, wait_time=1)
+        sessione_delegato_nazionale = self.sessione_utente(utente=utenza, wait_time=2)
         sessione_delegato_nazionale.visit("%s%s" % (self.live_server_url, '/utente/'))
         self.assertTrue(sessione_delegato_nazionale.is_text_present("Rubrica"))
         self.assertTrue(sessione_delegato_nazionale.is_text_present("Referenti"))
@@ -2146,7 +2845,7 @@ class TestFunzionaliAnagrafica(TestFunzionale):
         # Testa la rubrica per il delegato di firenze
         EMAIL = email_fittizzia()
         utenza = crea_utenza(persona=delegato_firenze, email=EMAIL)
-        sessione_delegato_firenze = self.sessione_utente(utente=utenza, wait_time=1)
+        sessione_delegato_firenze = self.sessione_utente(utente=utenza, wait_time=2)
         sessione_delegato_firenze.visit("%s%s" % (self.live_server_url, '/utente/'))
         self.assertTrue(sessione_delegato_firenze.is_text_present("Rubrica"))
         self.assertTrue(sessione_delegato_firenze.is_text_present("Referenti"))
@@ -2174,7 +2873,7 @@ class TestFunzionaliAnagrafica(TestFunzionale):
         # Testa la rubrica per il delegato territoriale dicomano
         EMAIL = email_fittizzia()
         utenza = crea_utenza(persona=delegato_dicomano, email=EMAIL)
-        sessione_delegato_dicomano = self.sessione_utente(utente=utenza, wait_time=1)
+        sessione_delegato_dicomano = self.sessione_utente(utente=utenza, wait_time=2)
         sessione_delegato_dicomano.visit("%s%s" % (self.live_server_url, '/utente/'))
         self.assertTrue(sessione_delegato_dicomano.is_text_present("Rubrica"))
         self.assertTrue(sessione_delegato_dicomano.is_text_present("Referenti"))
@@ -2183,7 +2882,7 @@ class TestFunzionaliAnagrafica(TestFunzionale):
         # Testa la rubrica per il delegato regionale abruzzo (non vede la rubrica)
         EMAIL = email_fittizzia()
         utenza = crea_utenza(persona=delegato_abruzzo, email=EMAIL)
-        sessione_delegato_abruzzo = self.sessione_utente(utente=utenza, wait_time=1)
+        sessione_delegato_abruzzo = self.sessione_utente(utente=utenza, wait_time=2)
         sessione_delegato_abruzzo.visit("%s%s" % (self.live_server_url, '/utente/'))
         self.assertTrue(sessione_delegato_dicomano.is_text_present("Rubrica"))
         self.assertTrue(sessione_delegato_dicomano.is_text_present("Referenti"))

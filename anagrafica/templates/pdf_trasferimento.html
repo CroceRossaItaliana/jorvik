@@ -11,6 +11,7 @@
 <P ALIGN=RIGHT STYLE="margin-bottom: 0cm"><BR>
 </P>
 <P STYLE="margin-bottom: 0.35cm">Con la presente il sottoscritto
+{{ trasferimento.richiedente.nome }} {{ trasferimento.richiedente.cognome }}, a nome e per conto di
 {{ trasferimento.persona.nome }} {{ trasferimento.persona.cognome }} nato a {{ trasferimento.persona.comune_nascita }} il {{ trasferimento.persona.data_nascita }}, volontario presso il {{ sede_attuale }}, dal {{ trasferimento.persona.ingresso|date:"Y" }}.</P>
 <P STYLE="margin-bottom: 0.35cm">Secondo l'articolo 9 del
 Regolamento sull'organizzazione, attività, formazione e ordinamento dei Volontari
@@ -27,7 +28,7 @@ trasferimento presso il {{ trasferimento.destinazione }} per {{ trasferimento.mo
 				In Fede <br/>
 			</span>
 			<span style="text-align: right; position: relative; right;">
-				F.to {{ trasferimento.persona.nome }} {{ trasferimento.persona.cognome }}
+				F.to {{ trasferimento.richiedente.nome }} {{ trasferimento.richiedente.cognome }}
 			</span>
 		</div>
 {% else %}

@@ -8,16 +8,16 @@ particolari. Fare riferimento alla documentazione del tratto
 utilizzato.
 """
 from datetime import date, datetime, timedelta
+
 from django.apps import AppConfig, apps
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
-from anagrafica.costanti import ESTENSIONE, ESTENSIONE_MINORE
-from base.stringhe import domani, genera_uuid_casuale
-from base.utils import concept, poco_fa
 from django.utils import timezone
+
+from anagrafica.costanti import ESTENSIONE, ESTENSIONE_MINORE
+from .utils import concept, poco_fa
 
 
 class ConMarcaTemporale(models.Model):
@@ -30,7 +30,6 @@ class ConMarcaTemporale(models.Model):
 
     creazione = models.DateTimeField(default=timezone.now, db_index=True)
     ultima_modifica = models.DateTimeField(auto_now=True, db_index=True)
-
 
 
 class ConProtocollo(models.Model):
@@ -148,7 +147,6 @@ class ConStorico(models.Model):
 
         return risultato
 
-
     @classmethod
     @concept
     def query_attuale_in_anno(cls, anno, **kwargs):
@@ -200,23 +198,30 @@ class ConDelegati(models.Model):
         object_id_field='oggetto_id'
     )
 
-    def deleghe_attuali(self, al_giorno=None, **kwargs):
+    def deleghe_attuali(self, al_giorno=None, solo_attive=False, **kwargs):
         """
         Ottiene QuerySet per gli oggetti Delega validi ad un determinato giorno.
         :param al_giorno: Giorno da verificare. Se assente, oggi.
+        :param solo_attive: True se deve ritornare solo le deleghe attive. False per includere deleghe sospese.
         :return: QuerySet di oggetti Delega.
         """
         Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
-        return self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno, **kwargs).q)
+        deleghe = self.deleghe.filter(Delega.query_attuale(al_giorno=al_giorno, **kwargs).q)
+        if solo_attive:
+            deleghe = deleghe.filter(stato=Delega.ATTIVA)
+        return deleghe
 
-    def delegati_attuali(self, al_giorno=None, **kwargs):
+    def delegati_attuali(self, al_giorno=None, solo_deleghe_attive=False, **kwargs):
         """
         Ottiene QuerySet per gli oggetti Persona delegati ad un determinato giorno.
         :param al_giorno: Giorno da verificare. Se assente, oggi.
+        :param solo_deleghe_attive: True se deve ritornare delegati con deleghe esclusivamente attive. False per
+                                    includere anche i delegati con deleghe sospese.
         :return: QuerySet di oggetti Persona.
         """
         Persona = apps.get_model(app_label='anagrafica', model_name='Persona')
-        return Persona.objects.filter(delega__in=self.deleghe_attuali(al_giorno, **kwargs))
+        return Persona.objects.filter(delega__in=self.deleghe_attuali(al_giorno, solo_attive=solo_deleghe_attive,
+                                                                      **kwargs))
 
     def aggiungi_delegato(self, tipo, persona, firmatario=None, inizio=None, fine=None):
         """
@@ -253,11 +258,16 @@ class ConDelegati(models.Model):
         d.save()
         return d
 
+    def sospendi_deleghe(self):
+        Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
+        self.deleghe_attuali(solo_attive=True).update(stato=Delega.SOSPESA)
 
-class ConPDF():
+    def attiva_deleghe(self):
+        Delega = apps.get_model(app_label='anagrafica', model_name='Delega')
+        self.deleghe_attuali(solo_attive=False).update(stato=Delega.ATTIVA)
 
-    class Meta:
-        abstract = True
+
+class ConPDF:
     pdf_token = models.CharField("Token Scaricamento PDF", max_length=127, blank=True, null=True, db_index=True, default=None)
     pdf_token_scadenza = models.DateTimeField(blank=True, null=True, db_index=True, default=None)
 
@@ -272,7 +282,7 @@ class ConPDF():
         token = Token.genera(persona)
         return "%s?token=%s" % (self.url_pdf, token)
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         raise NotImplemented('La classe non implementa il metodo "genera_pdf"')
 
     @property
@@ -281,8 +291,8 @@ class ConPDF():
         app_label = content_type.app_label
         model = content_type.model
         pk = self.pk
-        return "/pdf/%s/%s/%d/" % (
-            app_label,
-            model,
-            pk
-        )
+
+        return "/pdf/%s/%s/%d/" % (app_label, model, pk)
+
+    class Meta:
+        abstract = True

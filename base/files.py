@@ -1,21 +1,19 @@
 import os
+import urllib
+from io import BytesIO
 from datetime import datetime, date
 from zipfile import ZipFile
+from weasyprint import HTML
 
+from xlsxwriter import Workbook
 from barcode import generate
 from barcode.writer import ImageWriter
-from django.core.files import File
-from django.template import Context
-from django.template.loader import get_template
 
-from base.models import Allegato
-from base.stringhe import domani, GeneratoreNomeFile
+from django.template.loader import render_to_string, get_template
+
 from jorvik.settings import MEDIA_ROOT, DOMPDF_ENDPOINT
-from io import StringIO
-import urllib
-import xlsxwriter
-
-__author__ = 'alfioemanuele'
+from .models import Allegato
+from .stringhe import domani, GeneratoreNomeFile
 
 
 class Zip(Allegato):
@@ -106,18 +104,41 @@ class EAN13(Allegato):
 
 
 class PDF(Allegato):
-    """
-    Rappresenta un file PDF generato al volo.
-    """
-
-    class Meta:
-        proxy = True
+    """ Rappresenta un file PDF generato al volo. """
 
     ORIENTAMENTO_ORIZZONTALE = 'landscape'
     ORIENTAMENTO_VERTICALE = 'portrait'
 
     FORMATO_A4 = 'a4'
     FORMATO_CR80 = 'cr80'
+
+    def salva(self, posizione, nome, response, scadenza):
+        generatore = GeneratoreNomeFile(posizione)
+        zname = generatore(self, nome)
+
+        self.prepara_cartelle(MEDIA_ROOT + zname)
+
+        pdffile = open(MEDIA_ROOT + zname, 'wb')
+        response_read = response.read() if hasattr(response, 'read') else response
+        pdffile.write(response_read)
+        pdffile.close()
+
+        self.file = zname
+        self.nome = nome
+        self.scadenza = scadenza
+        self.save()
+
+    def genera_e_salva_con_python(self, nome='File.pdf', scadenza=None, corpo={},
+        modello='pdf_vuoto.html', posizione='allegati/', **kwargs):
+
+        scadenza = scadenza or domani()
+        corpo.update({"timestamp": datetime.now()})
+
+        html_string = render_to_string(modello, corpo).encode('utf-8')
+        html = HTML(string=html_string)
+        result = html.write_pdf()
+
+        self.salva(posizione, nome, result, scadenza)
 
     def genera_e_salva(self, nome='File.pdf', scadenza=None, corpo={}, modello='pdf_vuoto.html',
                        orientamento=ORIENTAMENTO_VERTICALE, formato=FORMATO_A4,
@@ -150,17 +171,10 @@ class PDF(Allegato):
         req = urllib.request.Request(url, data)
         response = urllib.request.urlopen(req)
 
-        generatore = GeneratoreNomeFile(posizione)
-        zname = generatore(self, nome)
-        self.prepara_cartelle(MEDIA_ROOT + zname)
-        pdffile = open(MEDIA_ROOT + zname, 'wb')
-        pdffile.write(response.read())
-        pdffile.close()
+        self.salva(posizione, nome, response, scadenza)
 
-        self.file = zname
-        self.nome = nome
-        self.scadenza = scadenza
-        self.save()
+    class Meta:
+        proxy = True
 
 
 class FoglioExcel:
@@ -193,16 +207,16 @@ class FoglioExcel:
 
 
 class Excel(Allegato):
-    """
-    Rappresenta un file Excel generato al volo.
-    """
+    """ Rappresenta un file Excel generato al volo. """
 
     class Meta:
         proxy = True
 
     def __init__(self, *args, **kwargs):
-        super(Excel, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fogli = []
+        self.output = BytesIO()
+
 
     def aggiungi_foglio(self, foglio):
         """
@@ -214,26 +228,28 @@ class Excel(Allegato):
 
         self.fogli.append(foglio)
 
-    def genera_e_salva(self, nome='File.xlsx', scadenza=None,
-                       ordina_fogli=True, **kwargs):
+    def genera_e_salva(self, nome='File.xlsx', scadenza=None, ordina_fogli=True, save_to_memory=False):
         """
         Genera il file e lo salva su database.
         :param nome: Il nome del file da allegare (opzionale, default 'File.xlsx').
         :param scadenza: Scadenza del file. Domani.
-        :param kwargs:
         :return:
         """
 
-        scadenza = scadenza or domani()
-
         generatore = GeneratoreNomeFile('allegati/')
         zname = generatore(self, nome)
+
         self.prepara_cartelle(MEDIA_ROOT + zname)
 
-        workbook = xlsxwriter.Workbook(MEDIA_ROOT + zname)
+        if save_to_memory:
+            workbook = Workbook(self.output)
+        else:
+            workbook = Workbook(MEDIA_ROOT + zname)
+
         bold = workbook.add_format({'bold': True})
 
-        for foglio in [x for x in self.fogli]:  # Per ogni foglio
+        # Per ogni foglio
+        for foglio in [x for x in self.fogli]:
 
             # Aggiunge il foglio
             worksheet = workbook.add_worksheet(foglio.nome)
@@ -256,9 +272,13 @@ class Excel(Allegato):
 
         if ordina_fogli:
             workbook.worksheets_objs.sort(key=lambda x: x.name)
+
         workbook.close()
 
-        self.file = zname
-        self.nome = nome
-        self.scadenza = scadenza
-        self.save()
+        if save_to_memory:
+            self.output.seek(0)
+        else:
+            self.file = zname
+            self.nome = nome
+            self.scadenza = scadenza or domani()
+            self.save()

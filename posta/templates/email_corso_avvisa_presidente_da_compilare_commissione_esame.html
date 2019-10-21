@@ -1,0 +1,6 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+    <p class="grassetto">Gentile presidente,</p>
+    <p>è necessario <a href="{% url 'courses:commissione_esame' corso.pk %}">compilare la commissione di esame</a> del corso {{ corso.nome }} ed inserire la delibera per poter generare il verbale e terminare il corso.</p>
+{% endblock %}

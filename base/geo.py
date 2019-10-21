@@ -9,6 +9,11 @@ from base.tratti import ConMarcaTemporale
 from django.contrib.gis.measure import Distance, D
 from jorvik.settings import GOOGLE_KEY
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 class Locazione(ConMarcaTemporale, models.Model):
 
@@ -79,10 +84,19 @@ class Locazione(ConMarcaTemporale, models.Model):
         """
         Usa le API di Google (Geocode) per cercare l'indirizzo,
         ritorna una stringa (indirizzo formattato) per ogni risultato.
+
         :param indirizzo: Indirizzo da cercare
         :return: Lista di risultati.
         """
-        gmaps = googlemaps.Client(key=GOOGLE_KEY)
+        try:
+            gmaps = googlemaps.Client(key=GOOGLE_KEY)
+
+        except ValueError:
+            # API key not configured
+            logger.warning("Chiave API Google non configurata. Le ricerche geografiche non ritorneranno "
+                           "alcun risultato.")
+            return []
+
         risultati = gmaps.geocode(indirizzo, region="it", language="it")
         return [
             (x['formatted_address'], cls.controlla_posizione(x['geometry']['location']),
@@ -226,10 +240,14 @@ class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
         Filtra una ricerca, per gli elementi nel raggio di questo elemento.
         :return: La ricerca filtrata
         """
+        from formazione.models import CorsoBase
+
         if not self.locazione:
+            # Check per restituire <QuerySet> dello stesso tipo di oggetto <ricerca>
+            if ricerca.model is CorsoBase:
+                return CorsoBase.objects.none()
+
             return self.__class__.objects.none()
 
         q = ricerca.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=self.raggio)))
-        #q = ricerca.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=self.raggio)))
-        #print(q.query)
         return q

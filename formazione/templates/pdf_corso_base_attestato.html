@@ -1,17 +1,22 @@
 {% extends 'pdf_standard.html' %}
 
-{% load static %}
+{% load staticfiles %}
+{% load base_tags %}
 
 {% block corpo %}
 
-<div lang="it-IT" text="#000000" dir="ltr" style="padding: 10px 10px 10px 10px; background: transparent; border: 3.00pt solid #cc0000; padding-top: 0.2cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
-    <!-- Logo CRI -->
+<style>
+    body {padding: 0; margin: 0; }
+    *, html, body {font-family: "Arial", sans-serif;}
+    .front-page-logo {display:block; margin:0 auto; width: 100%; max-width: 125px;}
+</style>
+
+{% get_url_for_staticfiles as SITE_URL %}
+
+<div lang="it-IT" text="#000000" dir="ltr" style="text-align:center; padding: 10px 10px 10px 10px; background: transparent; border: 3.00pt solid #cc0000; padding-top: 0.2cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
-        <img src="{% static "img/Emblema_CRI.png" %}" name="LogoCri" align="middle" width="300" height="270">
-        <br/>
-        <font face="Arial, sans-serif" style="font-size: 9pt" color="#cc0000">
-            {{corso.sede.comitato}}
-        </font><
+        <img class="front-page-logo" src="{{SITE_URL}}{% static 'img/attestato/cri-logo-transparent-small.png' %}" alt="Croce Rossa Italiana">
+        <span style="display:block; margin:10px 0; font-size: 9ptl color: #cc0000">{{ corso.sede.comitato }}</span>
     </p>
     <p class="western" align="center" style="margin-bottom: 0.25cm; line-height: 115%">
     </p>
@@ -23,7 +28,7 @@
             <i><b>ATTESTATO</b></i>
         </font>
     </p>
-    <p class="western" style="margin-bottom: 0cm; line-height: 100%"><br/>
+    <p class="western" style="margin-bottom: 0cm; line-height: 100%">
     </p>
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
         <font face="Arial, sans-serif">
@@ -82,7 +87,6 @@
         </font>
     </p>
     <p class="western" align="center" style="margin-bottom: 0cm; line-height: 100%">
-        <br/>
     </p>
     <p class="western" style="margin-bottom: 0cm; line-height: 100%">
         <br/>
@@ -97,7 +101,6 @@
             </td>
         </tr>
     </table>
-    <br/>
     <br/>
     <p class="western" style="margin-bottom: 0cm; line-height: 100%">
         <font face="Arial, sans-serif">
