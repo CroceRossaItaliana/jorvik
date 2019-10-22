@@ -87,6 +87,8 @@ class ElencoVistaAnagrafica(ElencoVistaSemplice):
      anagrafici delle persone.
     """
 
+    SHORT_NAME = 'ea'  # utilizzato in anagrafica.profile.menu.filter_per_role
+
     def excel_colonne(self):
         return super(ElencoVistaAnagrafica, self).excel_colonne() + (
             ("Data di Nascita", lambda p: p.data_nascita),
@@ -109,6 +111,7 @@ class ElencoVistaAnagrafica(ElencoVistaSemplice):
 
 
 class ElencoVistaSoci(ElencoVistaAnagrafica):
+    SHORT_NAME = 'us'  # utilizzato in anagrafica.profile.menu.filter_per_role
 
     def template(self):
         return 'us_elenchi_inc_soci.html'
@@ -458,15 +461,15 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
     def excel_colonne(self):
 
         def _data(p):
-            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('-id')
             return d.first().protocollo_data if d else ''
 
         def _motivo(p):
-            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('-id')
             return d.first().motivo if d else ''
 
         def _destinazione(p):
-            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('-id')
             return d.first().destinazione if d else ''
 
         return super(ElencoTrasferiti, self).excel_colonne() + (

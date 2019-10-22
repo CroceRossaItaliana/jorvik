@@ -1,27 +1,23 @@
 {% extends 'us_elenchi_inc_vuoto.html' %}
 
+{% load base_tags %}
 
 {% block elenco_intestazione %}
-
     <th>Cognome</th>
     <th>Nome</th>
     <th>Codice Fiscale</th>
 
     {% block elenco_intestazione_extra %}
-
     {% endblock %}
 
 {% endblock %}
 
-
 {% block elenco_riga %}
-
     <td>{{ persona.cognome }}</td>
     <td>{{ persona.nome }}</td>
     <td class="monospace">{{ persona.codice_fiscale }}</td>
 
     {% block elenco_riga_extra %}
-
     {% endblock %}
 
 {% endblock %}
@@ -33,14 +29,10 @@
     {% permessi_almeno persona "lettura" as puo_leggere %}
 
     {% if puo_leggere %}
-        <a href="{{ persona.url }}" class="btn btn-default" target="_new">
-            <i class="fa fa-fw fa-file-o"></i> Scheda
-        </a>
+        <a href="{{ persona.url }}?{% add_flag_to_profile_url %}" class="btn btn-default" target="_blank"><i class="fa fa-fw fa-file-o"></i> Scheda</a>
     {% endif %}
 
-    <a href="{{ persona.messaggio_url }}" class="btn btn-default" target="_new">
-        <i class="fa fa-fw fa-envelope-o"></i> Msg.
-    </a>
+    <a href="{{ persona.messaggio_url }}" class="btn btn-default" target="_new"><i class="fa fa-fw fa-envelope-o"></i> Msg.</a>
 
     {% block elenco_riga_azioni_extra %}
     {% endblock %}
