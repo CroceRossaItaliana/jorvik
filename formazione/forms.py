@@ -615,7 +615,7 @@ class FormCreateDirettoreDelega(ModelForm):
 
     def __init__(self, *args, **kwargs):
         # These attrs are passed in anagrafica.viste.strumenti_delegati()
-        for attr in ['me', 'course']:
+        for attr in ['me', 'oggetto']:
             if attr in kwargs:
                 setattr(self, attr, kwargs.pop(attr))
         super().__init__(*args, **kwargs)
