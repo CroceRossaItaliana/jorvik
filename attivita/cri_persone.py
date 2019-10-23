@@ -156,10 +156,10 @@ def createStagilTurni(giorni=[], apertura='', chiusura='', id=0):
         json=data
     )
     resp = r.json()
-    logger.debug('- createStagil {} {}'.format(resp['result']['code'], resp['result']['description']))
+    logger.debug('- createStagilTurni {} {}'.format(resp['result']['code'], resp['result']['description']))
     return resp if 'data' in resp and resp['data'] else {}
 
-def deleteStagil(id):
+def deleteStagil(id=0):
     r = requests.delete(
         '{}/stagiltables/{}/'.format(end_point, id)
     )
@@ -168,5 +168,20 @@ def deleteStagil(id):
     return resp if 'result' in resp and resp['result']['code'] == 204 else {}
 
 
-def createStagilContatti(id=0):
-    pass
+def createStagilContatti(tipo_contatto='', nome='', telefono='', email='', id=0):
+    data = {
+        "tipo_contatto": [str(tipo_contatto)],
+        "nome": nome,
+        "telefono": telefono,
+        "email": email,
+        "customFieldId": "11857",
+        "issueId": id
+    }
+
+    r = requests.post(
+        '{}/stagiltables/'.format(end_point),
+        json=data
+    )
+    resp = r.json()
+    logger.debug('- createStagilContatti {} {}'.format(resp['result']['code'], resp['result']['description']))
+    return resp if 'data' in resp and resp['data'] else {}

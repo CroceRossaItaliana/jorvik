@@ -13,5 +13,5 @@ def dammi(json, key):
 
 @register.filter
 def parse_girni(l):
-    parse = {1: 'Lunedì', 2: 'Martedì', 3: 'Mercoledì', 4: 'Giovedì',  5: 'Venerdì', 6: 'Sabato', 7: 'Domenica'}
+    parse = {1: 'Lunedì', 2: 'Martedì', 3: 'Mercoledì', 4: 'Giovedì',  5: 'Venerdì', 6: 'Sabato', 7: 'Domenica', 8: 'CRI', 9: 'Altro Ente'}
     return parse[l]

@@ -84,6 +84,8 @@ class ModuloServiziPrestazioni(forms.Form):
 
 
 class ModuloServiziContatti(forms.Form):
+    from anagrafica.models import Persona
+    from autocomplete_light import shortcuts as autocomplete_light
     CRI = 8
     ALTRO_ENTE = 9
     TIPO_CONTATTO = (
@@ -91,11 +93,13 @@ class ModuloServiziContatti(forms.Form):
         (CRI, 'CRI'),
         (ALTRO_ENTE, 'Altro ente')
     )
-
     tipo_contatto = forms.ChoiceField(required=True, choices=TIPO_CONTATTO, label='Tipo Contatto')
-    nome = forms.CharField(required=True, label='Nome')
-    telefono = forms.CharField(required=False, label='Telefono')
-    email = forms.CharField(required=False, label='Email')
+    persona = forms.ModelMultipleChoiceField(
+        Persona.objects.all(), widget=autocomplete_light.MultipleChoiceWidget('PersonaAutocompletamento')
+    )
+    # nome = forms.CharField(required=True, label='Nome')
+    # telefono = forms.CharField(required=False, label='Telefono')
+    # email = forms.CharField(required=False, label='Email')
 
 class ModuloServiziConvenzioni(forms.Form):
 

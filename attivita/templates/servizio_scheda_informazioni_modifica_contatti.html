@@ -1,6 +1,7 @@
 {% extends 'servizio_scheda.html' %}
 {% load social %}
 {% load utils %}
+{% load util %}
 {% load bootstrap3 %}
 
 {% block pagina_titolo %}
@@ -69,7 +70,19 @@
                                 <th>Azione</th>
                         </thead>
                         <tbody>
-
+                            {% for c in contatti %}
+                                <tr>
+                                    <td>
+                                        {% for t in c|dammi:'field-4' %}
+                                            {{ t|parse_girni }}
+                                        {% endfor %}
+                                    </td>
+                                    <td>{{ c|dammi:'field-5' }}</td>
+                                    <td>{{ c|dammi:'field-6' }}</td>
+                                    <td>{{ c|dammi:'field-7' }}</td>
+                                    <td><a href="?d={{ c|dammi:'id' }}">Elimina</a></td>
+                                </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>

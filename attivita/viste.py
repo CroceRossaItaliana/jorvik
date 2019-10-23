@@ -1112,22 +1112,36 @@ def servizio_scheda_informazioni_modifica_presentazione(request, me, pk=None):
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def servizio_scheda_informazioni_modifica_contatti(request, me, pk=None):
     from attivita.forms import ModuloServiziContatti
+    from attivita.cri_persone import createStagilContatti, deleteStagil
+
+    id = request.GET.get('d', '')
+    if id:
+        deleteStagil(id)
+
     modulo = ModuloServiziContatti(request.POST or None)
-    result = getServizio(pk)
     init = {}
+    contesto = {'key': pk}
+    contesto.update({'modulo': modulo})
+    result = getServizio(pk)
 
     if 'result' in result:
         if result['result']['code'] == 200:
-            modulo = ModuloServiziContatti(request.POST or None)
-        else: # Errore
-            modulo = ModuloServiziContatti(request.POST or None)
-    else:
-        modulo = ModuloServiziContatti(request.POST or None)
+            if 'contact_table' in result['data']:
+                contesto.update({'contatti': result['data']['contact_table']})
 
+    if request.POST:
+        if modulo.is_valid():
+            tipo_contatto = modulo.cleaned_data['tipo_contatto']
+            for p in modulo.cleaned_data['persona']:
+                telefono = ''
+                for x in p.numeri_pubblici():
+                    telefono+='{}, '.format(x)
+                createStagilContatti(
+                    tipo_contatto, p.nome_completo , telefono[:-1], p.email_contatto, result['data']['id']
+                )
+                result = getServizio(pk)
+                contesto.update({'contatti': result['data']['contact_table']})
 
-
-    contesto = {'key': pk}
-    contesto.update({'modulo': modulo})
 
     return 'servizio_scheda_informazioni_modifica_contatti.html', contesto
 
