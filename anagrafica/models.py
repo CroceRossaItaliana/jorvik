@@ -674,7 +674,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     def richieste_di_partecipazione(self, corso_stato=None):
         """ Restituisce richieste di partecipazione ai corsi confermate e in attesa """
+
         from formazione.models import PartecipazioneCorsoBase, CorsoBase
+
         if corso_stato is None:
             corso_stato = [CorsoBase.ATTIVO,]
 
@@ -683,6 +685,17 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         requests_to_courses = confirmed | pending
 
         return requests_to_courses.filter(persona=self, corso__stato__in=corso_stato)
+
+    def corsi(self, **richieste_di_partecipazione_kwargs):
+        from formazione.models import CorsoBase
+
+        richieste_di_partecipazione = self.richieste_di_partecipazione(
+            **richieste_di_partecipazione_kwargs
+        ).values_list('corso_id', flat=True)
+
+        corsi_in_attesa_o_confermati = CorsoBase.objects.filter(id__in=richieste_di_partecipazione)
+
+        return corsi_in_attesa_o_confermati | self.corsi_frequentati
 
     @property
     def corsi_frequentati(self):
@@ -1511,6 +1524,9 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         #(MILITARE, 'Membro Militare'),
         #(DONATORE, 'Donatore Finanziario'),
     )
+
+    MENBRO_DICT = dict(MEMBRO)
+
     PRECEDENZE_MODIFICABILI = (ESTESO,)
     NON_MODIFICABILE = (ESTESO,)
     membro = models.CharField("Tipo membro", max_length=2, choices=MEMBRO, default=VOLONTARIO, db_index=True)
@@ -2351,6 +2367,12 @@ class Delega(ModelloSemplice, ConStorico, ConMarcaTemporale):
 
         return numero_deleghe
 
+    @classmethod
+    def corsi(cls, persona):
+        from formazione.models import CorsoBase
+        deleghe_direttore_corso = cls.objects.filter(persona=persona, tipo=DIRETTORE_CORSO)
+        return CorsoBase.objects.filter(pk__in=deleghe_direttore_corso.values_list('oggetto_id', flat=True))
+
 
 class Fototessera(ModelloSemplice, ConAutorizzazioni, ConMarcaTemporale):
     """
@@ -2782,6 +2804,8 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         else:
             template = "email_dimissioni.html"
 
+        corpo = {}
+
         da_dipendente = False
         if precedente_appartenenza.membro == Appartenenza.DIPENDENTE:
             if self.persona.appartenenze_attuali(membro__in=(Appartenenza.VOLONTARIO, Appartenenza.SOSTENITORE)).exists():
@@ -2797,9 +2821,12 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
                 [x.autorizzazioni_ritira() for x in y.con_esito_pending().filter(persona=self.persona)]
                 for y in [Estensione, Trasferimento, Partecipazione, TitoloPersonale]
             ]
+
         Appartenenza.query_attuale(
             al_giorno=self.creazione, persona=self.persona, membro=precedente_appartenenza.membro
         ).update(fine=mezzanotte_24_ieri(data), terminazione=Appartenenza.DIMISSIONE)
+
+        corpo['membro'] = dict(Appartenenza.MEMBRO)[precedente_appartenenza.membro]
 
         self.persona.chiudi_tutto(mezzanotte_24_ieri(data), mittente_mail=applicante, da_dipendente=da_dipendente)
 
@@ -2828,15 +2855,12 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
                     )
 
             else:
-
+                corpo["dimissione"] = self
                 Messaggio.costruisci_e_invia(
                     oggetto="Dimissioni",
                     modello=template,
-                    corpo={
-                        "dimissione": self,
-                    },
+                    corpo=corpo,
                     mittente=self.richiedente,
-
                     destinatari=[
                         self.persona
                     ]

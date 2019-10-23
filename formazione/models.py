@@ -1526,8 +1526,10 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     RICHIESTA_NOME = "Iscrizione Corso"
 
     def autorizzazione_concessa(self, modulo=None, auto=False, notifiche_attive=True, data=None):
-        # Quando un aspirante viene iscritto, tutte le richieste presso altri corsi devono essere cancellati.
+        if self.corso.is_nuovo_corso:
+            return
 
+        # Quando un aspirante viene iscritto, tutte le richieste presso altri corsi devono essere cancellati
         # Cancella tutte altre partecipazioni con esito pending - ce ne puo' essere solo una.
         PartecipazioneCorsoBase.con_esito_pending(persona=self.persona).exclude(corso=self.corso).delete()
 

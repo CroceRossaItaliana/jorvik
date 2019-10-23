@@ -1,6 +1,9 @@
 import json
 import random
 import re
+import os
+import tempfile
+import pickle
 from datetime import datetime
 from collections import OrderedDict
 
@@ -233,6 +236,8 @@ def us_reclama_persona(request, me, persona_pk):
                                                     "%d anni. " % Persona.ETA_MINIMA_SOCIO)
             continua = False
 
+
+
         if continua:
             with transaction.atomic():
                 app = modulo_appartenenza.save(commit=False)
@@ -280,7 +285,24 @@ def us_reclama_persona(request, me, persona_pk):
                         riduzione=riduzione,
                     )
 
+                m = modulo_appartenenza.cleaned_data.get('membro')
+                if m == Appartenenza.DIPENDENTE:
+                    oggetto = 'Inserimento come {}'.format(
+                        Appartenenza.MENBRO_DICT[modulo_appartenenza.cleaned_data.get('membro')]
+                    )
+
+                    Messaggio.costruisci_e_accoda(
+                        oggetto=oggetto,
+                        modello="email_reclama.html",
+                        mittente=me,
+                        destinatari=[persona],
+                        corpo={
+                            "persona": persona.nome_completo
+                        }
+                    )
+
                 return redirect(persona.url)
+
 
     contesto = {
         "modulo_appartenenza": modulo_appartenenza,
@@ -698,10 +720,9 @@ def us_elenco_messaggio(request, me, elenco_id):
         # Imposta il modulo
         elenco.modulo_riempito = form
 
-    persone = elenco.ordina(elenco.risultati())
-    request.session["messaggio_destinatari"] = persone
     request.session["messaggio_destinatari_timestamp"] = datetime.now()
-    return redirect(reverse('posta:scrivi'))
+
+    return redirect(reverse('posta:scrivi') + '?id={}'.format(elenco_id))
 
 
 @pagina_privata(permessi=(ELENCHI_SOCI,))

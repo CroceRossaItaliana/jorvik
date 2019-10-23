@@ -87,6 +87,8 @@ class ElencoVistaAnagrafica(ElencoVistaSemplice):
      anagrafici delle persone.
     """
 
+    SHORT_NAME = 'ea'  # utilizzato in anagrafica.profile.menu.filter_per_role
+
     def excel_colonne(self):
         return super(ElencoVistaAnagrafica, self).excel_colonne() + (
             ("Data di Nascita", lambda p: p.data_nascita),
@@ -109,6 +111,7 @@ class ElencoVistaAnagrafica(ElencoVistaSemplice):
 
 
 class ElencoVistaSoci(ElencoVistaAnagrafica):
+    SHORT_NAME = 'us'  # utilizzato in anagrafica.profile.menu.filter_per_role
 
     def template(self):
         return 'us_elenchi_inc_soci.html'
@@ -458,15 +461,15 @@ class ElencoTrasferiti(ElencoVistaAnagrafica):
     def excel_colonne(self):
 
         def _data(p):
-            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('-id')
             return d.first().protocollo_data if d else ''
 
         def _motivo(p):
-            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('-id')
             return d.first().motivo if d else ''
 
         def _destinazione(p):
-            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('creazione')
+            d = Trasferimento.objects.filter(persona=p.id, ritirata=False).order_by('-id')
             return d.first().destinazione if d else ''
 
         return super(ElencoTrasferiti, self).excel_colonne() + (
@@ -533,11 +536,12 @@ class ElencoQuote(ElencoVistaSoci):
             origine = tesseramento.non_paganti(attivi=attivi, ordinari=ordinari)  # Persone con quote NON pagate
 
         # Ora filtra per Sede
-        q = Appartenenza.query_attuale(al_giorno=giorno_appartenenza,
-                                       membro=Appartenenza.VOLONTARIO)
+        q = Appartenenza.query_attuale(
+            al_giorno=giorno_appartenenza,
+            membro=Appartenenza.VOLONTARIO
+        ).filter(sede__in=qs_sedi).defer('membro', 'inizio', 'sede')
 
-        app = Appartenenza.objects.filter(pk__in=q).filter(sede__in=qs_sedi)
-        return origine.filter(appartenenze__in=app).annotate(
+        return origine.filter(appartenenze__in=q).annotate(
                 appartenenza_tipo=F('appartenenze__membro'),
                 appartenenza_inizio=F('appartenenze__inizio'),
                 appartenenza_sede=F('appartenenze__sede'),
@@ -781,7 +785,7 @@ class ElencoTesseriniDaRichiedere(ElencoTesseriniRichiesti):
             ).via("appartenenze"),
 
             # Con fototessera confermata
-            Fototessera.con_esito_ok().via("fototessere"),
+            Q(Fototessera.con_esito_ok().via("fototessere")),
 
             # Escludi tesserini rifiutati
             ~Q(tesserini__stato_richiesta=Tesserino.RIFIUTATO),
@@ -813,6 +817,8 @@ class ElencoTesseriniSenzaFototessera(ElencoTesseriniDaRichiedere):
             Appartenenza.query_attuale(
                 sede__in=qs_sedi, membro__in=Appartenenza.MEMBRO_TESSERINO,
             ).via("appartenenze"),
+
+            ~Q(Fototessera.con_esito_ok().via("fototessere"))
 
         ).exclude(  # Escludi quelli che posso richiedere
             pk__in=tesserini_da_richiedere.values_list('id', flat=True)

@@ -105,3 +105,10 @@ def get_url_for_staticfiles(context):
         return "%s://%s" % (protocol, request.get_host())
 
     return ''
+
+
+@register.simple_tag(takes_context=True)
+def add_flag_to_profile_url(context):
+    elenco = context['elenco']
+    elenco_short_name = elenco.SHORT_NAME if hasattr(elenco, 'SHORT_NAME') else ''
+    return elenco_short_name

@@ -353,3 +353,9 @@ def get_top_navbar(context):
         return user.applicazioni_disponibili
 
     return ""
+
+@register.filter
+def is_rifiutato(id):
+    from ufficio_soci.models import Tesserino
+    return False if Tesserino.objects.filter(persona=id, stato_richiesta=Tesserino.RIFIUTATO).count() else True
+
