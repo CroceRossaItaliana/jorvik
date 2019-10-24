@@ -141,28 +141,28 @@ def attivita_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
                                    torna_url="/attivita/aree/%d/" % (sede.pk,))
         area.delete()
     else:
-        #TODO: controlo servizi associati
         progetto.delete()
     return redirect("/attivita/aree/%d/" % (sede.pk,))
 
 @pagina_privata
 def servizio_gestisci(request, me, stato="aperte"):
     from attivita.cri_persone import getListService, deleteService
+    contesto = {}
     sedi = me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE, solo_deleghe_attive=True)
-
+    # Decommenta per i test
+    sedi = [646]
     delServizio = request.GET.get('del', None)
     if delServizio:
         deleteService(delServizio)
 
-    result = getListService(646)
+    for id in sedi:
+        result = getListService(id)
 
-    contesto = {}
-
-    if 'result' in result:
-        if result['result']['code'] == 200:
-            for sevizio in result['data']['offered_services']:
-                sevizio['project'] = Progetto.objects.filter(nome=sevizio['project'].replace('X', '')).first()
-            contesto['servizi'] = result['data']['offered_services']
+        if 'result' in result:
+            if result['result']['code'] == 200:
+                for sevizio in result['data']['offered_services']:
+                    sevizio['project'] = Progetto.objects.filter(nome=sevizio['project'].replace('X', '')).first()
+                contesto['servizi'] = result['data']['offered_services']
 
     return 'servizio_gestisci.html', contesto
 
@@ -1058,8 +1058,8 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
         if turni.cleaned_data['giorno'] and turni.cleaned_data['orario_apertura'] and turni.cleaned_data['orario_chiusura']:
             createStagilTurni(
                 turni.cleaned_data['giorno'],
-                turni.cleaned_data['orario_apertura'],
-                turni.cleaned_data['orario_chiusura'],
+                turni.cleaned_data['orario_apertura'].strftime("%H:%M"),
+                turni.cleaned_data['orario_chiusura'].strftime("%H:%M"),
                 result['data']['id']
             )
             result = getServizio(pk)

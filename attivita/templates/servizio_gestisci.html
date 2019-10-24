@@ -55,7 +55,7 @@
                 <tr>
                     <th>Servizio offerto</th>
                     <th>Progetto</th>
-                    <th>Informazioni</th>
+                    <th>Servizi standard</th>
                     <th>Azioni</th>
                 </tr>
             </thead>
@@ -69,7 +69,13 @@
                             {{ s.project }}
                         </td>
                         <td>
-
+                            <ul>
+                                {% for st in s.service %}
+                                    <li>
+                                        {{ st.summary }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
                         </td>
                         <td>
                             <a href="/attivita/servizio/gestisci?del={{ s.key }}" class="text-danger">
