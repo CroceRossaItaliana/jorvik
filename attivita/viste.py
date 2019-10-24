@@ -335,14 +335,12 @@ def attivita_organizza_fatto(request, me, pk=None):
 
 @pagina_privata
 def servizi_referenti(request, me, pk=None, nuova=False):
-    from anagrafica.forms import ModuloCreazioneDelega
+    from attivita.forms import ModuloServiziReferenti
     import json
 
     delete = request.GET.get('d', '')
 
-    form = ModuloCreazioneDelega(request.POST or None, initial={
-        "inizio": datetime.today(),
-    }, me=me)
+    form = ModuloServiziReferenti(request.POST or None)
 
     contesto = {
         "modulo": form,

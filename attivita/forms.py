@@ -97,9 +97,15 @@ class ModuloServiziContatti(forms.Form):
     persona = forms.ModelMultipleChoiceField(
         Persona.objects.all(), widget=autocomplete_light.MultipleChoiceWidget('PersonaAutocompletamento')
     )
-    # nome = forms.CharField(required=True, label='Nome')
-    # telefono = forms.CharField(required=False, label='Telefono')
-    # email = forms.CharField(required=False, label='Email')
+
+
+class ModuloServiziReferenti(forms.Form):
+    from anagrafica.models import Persona
+    from autocomplete_light import shortcuts as autocomplete_light
+    persona = forms.ModelMultipleChoiceField(
+        Persona.objects.all(), widget=autocomplete_light.MultipleChoiceWidget('PersonaAutocompletamento')
+    )
+
 
 class ModuloServiziConvenzioni(forms.Form):
 
@@ -202,7 +208,7 @@ class ModuloServiziSepcificheDelServizioTurni(forms.Form):
 
     giorno = forms.MultipleChoiceField(required=False, choices=DAY, label='Giorni')
     orario_apertura = forms.TimeField(required=False)
-    orario_chiusura = forms.TimeField(required=False, widget=forms.TimeInput(format='%H:%M'))
+    orario_chiusura = forms.TimeField(required=False)
 
 
 class ModuloServiziCriteriDiAccesso(forms.Form):
