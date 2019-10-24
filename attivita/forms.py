@@ -201,8 +201,8 @@ class ModuloServiziSepcificheDelServizioTurni(forms.Form):
     )
 
     giorno = forms.MultipleChoiceField(required=False, choices=DAY, label='Giorni')
-    orario_apertura = forms.CharField(required=False)
-    orario_chiusura = forms.CharField(required=False)
+    orario_apertura = forms.TimeField(required=False)
+    orario_chiusura = forms.TimeField(required=False, widget=forms.TimeInput(format='%H:%M'))
 
 
 class ModuloServiziCriteriDiAccesso(forms.Form):

@@ -60,6 +60,8 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
+            $('[id=id_orario_apertura]').attr('type', 'time');
+            $('[id=id_orario_chiusura]').attr('type', 'time');
             changeForm($('[name=activationPeriodType]').val());
             changeFormTurni($('[name=dayHourType]').val());
         });
