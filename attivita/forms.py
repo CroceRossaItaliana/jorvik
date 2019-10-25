@@ -368,6 +368,21 @@ class ModuloOrganizzaAttivita(ModelForm):
         model = Attivita
         fields = ['nome', 'area', ]
 
+class ModuloOrganizzaServizioReferente(forms.Form):
+    SONO_IO = "IO"
+    SCEGLI_REFERENTI = "SC"
+    SCELTA = (
+        (None, "-- Scegli un'opzione --"),
+        (SONO_IO, "Sarò io il referente per questo servizio"),
+        (SCEGLI_REFERENTI, "Fammi scegliere uno o più referenti che gestiranno "
+                           "questo servizio")
+    )
+
+    scelta = forms.ChoiceField(
+        choices=SCELTA,
+        help_text="Scegli l'opzione appropriata."
+    )
+
 
 class ModuloOrganizzaAttivitaReferente(forms.Form):
 

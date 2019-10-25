@@ -361,8 +361,9 @@ def servizi_referenti(request, me, pk=None, nuova=False):
     if request.POST:
         if form.is_valid():
             persona = form.cleaned_data['persona']
-            updateServizio(pk, referenti=[persona], precedenti=referenti)
-            referenti.append({'name': '{}.{}'.format(persona.nome.lower(), persona.cognome.lower())})
+            updateServizio(pk, referenti=persona, precedenti=referenti)
+            for ref in persona:
+                referenti.append('{}.{}'.format(ref.nome.lower(), ref.cognome.lower()))
             contesto.update({'referenti': [
                 Persona.objects.filter(nome__iexact=r.split('.')[0], cognome__iexact=r.split('.')[1]).first() for r in referenti
             ]})
