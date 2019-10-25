@@ -1,3 +1,4 @@
+from dateutil.relativedelta import relativedelta
 from datetime import date, datetime
 from django.utils import timezone
 from django.db.models import Q, F
@@ -633,8 +634,9 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         # Impostazione Anzianità
         oggi = datetime.combine(oggi, datetime.min.time())  # date -> datetime
-        anzianita_minima = oggi.replace(month=oggi.month-Appartenenza.MEMBRO_ANZIANITA_MESI,
-                                        hour=23, minute=59, second=59)
+        delta_months = oggi - relativedelta(months=Appartenenza.MEMBRO_ANZIANITA_MESI)
+        anzianita_minima = delta_months.replace(hour=23, minute=59, second=59)
+
         aggiuntivi = {
             # Anzianita' minima 
             "pk__in": Persona.objects.filter(
