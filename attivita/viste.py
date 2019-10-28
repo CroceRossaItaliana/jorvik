@@ -229,11 +229,11 @@ def servizio_organizza(request, me):
 
     if request.POST and modulo.is_valid() and modulo_referente.is_valid():
 
-        # progetto = Progetto.objects.filter(name__iexact=modulo.cleaned_data['progetto']).first()
+        progetto = Progetto.objects.filter(name__iexact=modulo.cleaned_data['progetto']).first()
 
         result = createServizio(
-            comitato=646,
-            # comitato=int(progetto.sede),
+            # comitato=646,
+            comitato=int(progetto.sede),
             nome_progetto=modulo.cleaned_data['progetto'],
             servizi=modulo.cleaned_data['servizi'],
         )
@@ -835,7 +835,7 @@ def attivita_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_p
     ))
 
 
-@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+@pagina_privata
 def servizio_modifica_servizi_standard(request, me, pk=None):
     from attivita.forms import ModuloServiziModificaStandard
     result = getServizio(pk)
@@ -869,7 +869,7 @@ def servizio_modifica_servizi_standard(request, me, pk=None):
     return 'servizi_standard_modifica.html', contesto
 
 
-@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+@pagina_privata
 def servizio_scheda_informazioni_modifica(request, me, pk=None):
     from attivita.forms import ModuloServizioModifica
     from attivita.cri_persone import getServizio
@@ -902,7 +902,7 @@ def servizio_scheda_informazioni_modifica(request, me, pk=None):
     return 'servizio_scheda_infomazioni_modifica.html', contesto
 
 
-@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+@pagina_privata
 def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
     from attivita.forms import ModuloServiziCriteriDiAccesso, ModuloServiziCriteriDiAccessoGeo
     from attivita.cri_persone import update_service
@@ -977,7 +977,7 @@ def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
     return 'servizio_scheda_infomazioni_modifica_accesso.html', contesto
 
 
-@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+@pagina_privata
 def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
     from attivita.forms import ModuloServiziSepcificheDelServizio, ModuloServiziSepcificheDelServizioTurni
     from attivita.cri_persone import update_service, deleteStagil, createStagilTurni
@@ -1094,7 +1094,7 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
     return 'servizio_scheda_infomazioni_modifica_specifiche.html', contesto
 
 
-@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+@pagina_privata
 def servizio_scheda_informazioni_modifica_presentazione(request, me, pk=None):
     from attivita.forms import ModuloServiziPrestazioni
     from attivita.cri_persone import update_service
@@ -1129,7 +1129,7 @@ def servizio_scheda_informazioni_modifica_presentazione(request, me, pk=None):
     return 'servizio_scheda_infomazioni_modifica_presentazioni.html', contesto
 
 
-@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+@pagina_privata
 def servizio_scheda_informazioni_modifica_contatti(request, me, pk=None):
     from attivita.forms import ModuloServiziContatti
     from attivita.cri_persone import createStagilContatti, deleteStagil
@@ -1166,7 +1166,7 @@ def servizio_scheda_informazioni_modifica_contatti(request, me, pk=None):
     return 'servizio_scheda_informazioni_modifica_contatti.html', contesto
 
 
-@pagina_privata(permessi=(GESTIONE_ATTIVITA,))
+@pagina_privata
 def servizio_scheda_informazioni_modifica_convenzioni(request, me, pk=None):
     from attivita.forms import ModuloServiziConvenzioni
     modulo = ModuloServiziConvenzioni(request.POST or None)
