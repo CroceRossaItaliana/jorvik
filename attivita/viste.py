@@ -155,9 +155,9 @@ def servizio_gestisci(request, me, stato="aperte"):
     else:
         sedi = Progetto.objects.filter(
             id__in=Delega.objects.filter(tipo=DELEGATO_PROGETTO, persona=me).values_list('oggetto_id', flat=True)
-        ).values_list('id', flat=True)
+        ).values_list('sede', flat=True)
     # Decommenta per i test
-    sedi = [646]
+    # sedi = [646]
 
     delServizio = request.GET.get('del', None)
     if delServizio:
@@ -229,11 +229,11 @@ def servizio_organizza(request, me):
 
     if request.POST and modulo.is_valid() and modulo_referente.is_valid():
 
-        progetto = Progetto.objects.filter(name__iexact=modulo.cleaned_data['progetto']).first()
+        progetto = Progetto.objects.filter(nome__iexact=modulo.cleaned_data['progetto']).first()
 
         result = createServizio(
             # comitato=646,
-            comitato=int(progetto.sede),
+            comitato=int(progetto.sede.id),
             nome_progetto=modulo.cleaned_data['progetto'],
             servizi=modulo.cleaned_data['servizi'],
         )
@@ -1070,8 +1070,11 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
         if modulo.cleaned_data['dueDate']:
             data['os_due_date'] = {'value': modulo.cleaned_data['dueDate'].strftime("%Y-%m-%d")}
 
+
         if turni.cleaned_data['dayHourType']:
             data['os_dayhour_type'] = {'value': turni.cleaned_data['dayHourType']}
+            return redirect(reverse('attivita:specifiche', kwargs={'pk': result['data']['key']}))
+            update_service(pk, **data)
 
         update_service(pk, **data)
 
@@ -1087,7 +1090,6 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
                 if result['result']['code'] == 200:
                     if 'dayhour' in result['data']:
                         contesto.update({'dayhour': result['data']['dayhour']})
-                        from django.core.urlresolvers import reverse
                         return redirect(reverse('attivita:specifiche', kwargs={'pk': result['data']['key']}))
 
 
