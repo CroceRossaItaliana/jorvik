@@ -13,7 +13,7 @@
 
 {% block scheda_contenuto %}
     <div class="row">
-        <div class="col-md-7">
+        <div class="col-md-6">
 
             <div class="panel panel-primary">
 
@@ -41,9 +41,48 @@
 
 
             </div>
+
         </div>
 
-        <div class="col-md-5">
+        <div class="col-md-6">
+
+            <div class="panel panel-primary">
+
+
+                <div class="panel-heading">
+                    <h2 class="panel-title">
+                        <i class="fa fa-fw fa-pencil-square-o"></i>
+                        Cerca posizione geografica
+                    </h2>
+                </div>
+
+                <div class="panel-body">
+
+                    {% if indirizzo %}
+                        <div class="alert alert-success" role="alert">
+                            <b>Indirizzo:</b><br>
+                            <i class="fa fa-fw fa-map-marker"></i>
+                            {{ indirizzo }}
+                        </div>
+                    {% endif %}
+
+                    <form method="POST">
+
+                        {% csrf_token %}
+                        {% bootstrap_form geo %}
+
+                        <p>&nbsp;</p>
+                        <button type="submit" class="btn btn-lg btn-success">
+                            <i class="fa fa-fw fa-search"></i>
+                            Trova posizione
+                        </button>
+                    </form>
+
+                </div>
+
+
+            </div>
+
         </div>
     </div>
 {% endblock %}

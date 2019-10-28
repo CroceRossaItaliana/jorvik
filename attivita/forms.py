@@ -207,8 +207,21 @@ class ModuloServiziSepcificheDelServizioTurni(forms.Form):
     )
 
     giorno = forms.MultipleChoiceField(required=False, choices=DAY, label='Giorni')
-    orario_apertura = forms.TimeField(required=False)
-    orario_chiusura = forms.TimeField(required=False)
+    orario_apertura = forms.TimeField(required=False, label='Prario Apertura')
+    orario_chiusura = forms.TimeField(required=False, label='Orario Chiusura')
+
+
+class ModuloServiziCriteriDiAccessoGeo(forms.Form):
+    indirizzo = forms.CharField(required=False, help_text='es. Via Rosmini, 42.')
+    comune = forms.CharField(required=False, help_text='es. Cinisello Balsamo.')
+    provincia = forms.CharField(required=False, help_text='es. Via Rosmini, 42.')
+
+    ITALIA = 'Italia'
+    CHOICE = (
+        (ITALIA, 'Italia'),
+    )
+
+    stato = forms.ChoiceField(required=False, choices=CHOICE)
 
 
 class ModuloServiziCriteriDiAccesso(forms.Form):
@@ -235,7 +248,7 @@ class ModuloServiziCriteriDiAccesso(forms.Form):
         (AMBITO_TERRITORIALE, 'Ambito Territoriale del Comitato'),
         (COMUNI, 'Comuni')
     )
-    address = forms.CharField(required=False, label='Indirizzo')
+    # address = forms.CharField(required=False, label='Indirizzo')
     geo_scope = forms.ChoiceField(required=False, choices=GEO_SCOPE, label='Ambito geografico')
     beneficiaries = forms.MultipleChoiceField(
         required=False,

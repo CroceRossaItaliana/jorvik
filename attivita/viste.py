@@ -6,7 +6,6 @@ from attivita.stats import statistiche_attivita_persona
 from django.db.models import Count, F, Sum
 from django.utils import timezone
 
-
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect, get_object_or_404
 
@@ -28,6 +27,8 @@ from base.files import Excel, FoglioExcel
 from base.utils import poco_fa, timedelta_ore
 from gruppi.models import Gruppo
 from attivita.cri_persone import createServizio, updateServizio, getServizio, changeState
+from base.geo import Locazione
+from django.core.urlresolvers import reverse
 
 def attivita(request):
     return redirect('/attivita/calendario/')
@@ -896,18 +897,19 @@ def servizio_scheda_informazioni_modifica(request, me, pk=None):
 
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
-    from attivita.forms import ModuloServiziCriteriDiAccesso
+    from attivita.forms import ModuloServiziCriteriDiAccesso, ModuloServiziCriteriDiAccessoGeo
     from attivita.cri_persone import update_service
     modulo = None
+    geo = None
     result = getServizio(pk)
     init = {}
+    contesto = {'key': pk}
 
     if 'result' in result:
         if result['result']['code'] == 200:
             if result['data']['address']:
-                init['address'] = result['data']['address']
+                contesto.update({'indirizzo': result['data']['address']})
             if result['data']['geographical_scope']:
-                print('geographical_scope', result['data']['geographical_scope'])
                 init['geo_scope'] = result['data']['geographical_scope']
             if result['data']['age_from']:
                 init['eta_form'] = result['data']['age_from'].split('.')[0]
@@ -922,21 +924,22 @@ def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
             if result['data']['other_beneficiary_data']:
                 init['otherBeneficiaryData'] = result['data']['other_beneficiary_data']
             modulo = ModuloServiziCriteriDiAccesso(request.POST or None, initial=init)
+            geo = ModuloServiziCriteriDiAccessoGeo(request.POST or None)
     else:
         modulo = ModuloServiziCriteriDiAccesso(request.POST or None)
+        geo = ModuloServiziCriteriDiAccessoGeo(request.POST or None)
 
     modulo.fields['beneficiaries'].choices = ModuloServiziCriteriDiAccesso.popola_beneficiaries()
 
-    contesto = {'key': pk}
-    contesto.update({'modulo': modulo})
 
-    if modulo.is_valid():
+    contesto.update({'modulo': modulo})
+    contesto.update({'geo': geo})
+
+    if modulo.is_valid() and geo.is_valid():
         beneficiary = ""
         for b in modulo.cleaned_data['beneficiaries']:
             beneficiary += "{},".format(b)
         data = {}
-        if modulo.cleaned_data['address']:
-            data['address'] = modulo.cleaned_data['address']
         if modulo.cleaned_data['geo_scope']:
             data['geographical_scope'] = {'value': modulo.cleaned_data['geo_scope']}
         if beneficiary:
@@ -951,7 +954,18 @@ def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
             data['beneficiary_max_isee'] = modulo.cleaned_data['beneficiaryMaxIsee']
         if modulo.cleaned_data['otherBeneficiaryData']:
             data['other_beneficiary_data'] = modulo.cleaned_data['otherBeneficiaryData']
+
+        if geo.cleaned_data['comune'] and geo.cleaned_data['provincia']:
+
+            indirizzo = '{}, {}, {}'.format(geo.cleaned_data['indirizzo'], geo.cleaned_data['comune'], geo.cleaned_data['provincia'])
+            l = Locazione.oggetto(indirizzo)
+            data['address'] = l.indirizzo
+            update_service(pk, **data)
+
+            return redirect(reverse('attivita:accesso', kwargs={'pk': result['data']['key']}))
+
         update_service(pk, **data)
+
 
     return 'servizio_scheda_infomazioni_modifica_accesso.html', contesto
 
