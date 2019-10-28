@@ -97,9 +97,9 @@ class FormAddQualificaCRI(autocomplete_light.ModelForm):
             alert = """Caro Volontario/Dipendente,
                 se non sei in possesso di tutte le informazioni richieste per inserire le qualifiche CRI acquisite, 
                 ti suggeriamo di rivolgerti al tuo Comitato Regionale (%s) che ti supporterà nella ricerca delle informazioni mancanti. 
-                Puoi scrivere una mail indicando il tuo nome, cognome, codice fiscale e indicando le qualifiche da validare. 
-                Specifica, inoltre, che hai già provveduto ad inserire le informazioni in tuo possesso su GAIA. 
-                Tutto ciò avvolgerà lo staff dedicato a supportarti.""" % email
+                Puoi scrivere una mail indicando il tuo nome, cognome, codice fiscale e indicando le qualifiche da validare 
+                ed inserendo tutte le informazioni in tuo possesso in merito. 
+                Tutto ciò agevolerà lo staff dedicato a supportarti.""" % email
             raise ValidationError(alert)
 
     def __init__(self, *args, **kwargs):
