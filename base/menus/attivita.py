@@ -2,9 +2,24 @@ def menu_attivita(me):
     from anagrafica.permessi.costanti import (GESTIONE_ATTIVITA,
         GESTIONE_ATTIVITA_AREA, GESTIONE_AREE_SEDE, GESTIONE_ATTIVITA_SEDE,)
     from attivita.models import Progetto
+    from anagrafica.models import Delega
+    from anagrafica.permessi.applicazioni import DELEGATO_PROGETTO
+    from anagrafica.permessi.costanti import GESTIONE_SEDE
+
     if me and me.volontario:
         attivita_area_exists = me and me.oggetti_permesso(GESTIONE_ATTIVITA_AREA).exists()
-        progetti_exists = me and Progetto.objects.filter(sede__in=me.oggetti_permesso(GESTIONE_AREE_SEDE))
+        # Se si è presidenti/commissari/ufficio_soci
+        # mostra il menu con tutti i progetti associati alle sedi gestite
+        # altrimenti mostra solo i progetti di cui si è delegato
+        if me.is_presidente or me.is_comissario or me.is_ufficio_soci:
+            progetti_exists = Progetto.objects.filter(
+                sede_id__in=me.oggetti_permesso(GESTIONE_SEDE, solo_deleghe_attive=True).values_list('id', flat=True)
+            )
+        else:
+            progetti_exists = Progetto.objects.filter(
+                id__in=Delega.objects.filter(tipo=DELEGATO_PROGETTO, persona=me).values_list('oggetto_id', flat=True)
+            )
+
         return (
             ("Attività", (
                 ("Calendario", "fa-calendar", "/attivita/calendario/"),

@@ -1203,6 +1203,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.deleghe_attuali(tipo=COMMISSARIO).exists()
 
     @property
+    def is_ufficio_soci(self):
+        return self.deleghe_attuali(tipo=UFFICIO_SOCI).exists()
+
+    @property
     def is_direttore(self):
         return self.deleghe_attuali(tipo=DIRETTORE_CORSO).exists()
 

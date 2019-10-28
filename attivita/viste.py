@@ -148,10 +148,17 @@ def attivita_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
 @pagina_privata
 def servizio_gestisci(request, me, stato="aperte"):
     from attivita.cri_persone import getListService, deleteService
+    from anagrafica.models import Delega
     contesto = {}
-    sedi = me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE, solo_deleghe_attive=True)
+    if me.is_presidente or me.is_comissario or me.is_ufficio_soci:
+        sedi = me.oggetti_permesso(GESTIONE_SEDE, solo_deleghe_attive=True).values_list('id', flat=True)
+    else:
+        sedi = Progetto.objects.filter(
+            id__in=Delega.objects.filter(tipo=DELEGATO_PROGETTO, persona=me).values_list('oggetto_id', flat=True)
+        ).values_list('id', flat=True)
     # Decommenta per i test
     sedi = [646]
+
     delServizio = request.GET.get('del', None)
     if delServizio:
         deleteService(delServizio)

@@ -342,11 +342,18 @@ class ModuloOrganizzaServizio(forms.Form):
     @staticmethod
     def popola_progetto(me):
         from attivita.models import Progetto
-        from anagrafica.permessi.costanti import GESTIONE_ATTIVITA_SEDE
+        from anagrafica.models import Delega
+        from anagrafica.permessi.applicazioni import DELEGATO_PROGETTO
+        from anagrafica.permessi.costanti import GESTIONE_SEDE
         select = [('', 'Seleziona un progetto')]
-        qs = Progetto.objects.filter(
-            sede__in=me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE, solo_deleghe_attive=True)
-        )
+        if me.is_presidente or me.is_comissario or me.is_ufficio_soci:
+            qs = Progetto.objects.filter(
+                sede_id__in=me.oggetti_permesso(GESTIONE_SEDE, solo_deleghe_attive=True).values_list('id', flat=True)
+            )
+        else:
+            qs = Progetto.objects.filter(
+                id__in=Delega.objects.filter(tipo=DELEGATO_PROGETTO, persona=me).values_list('oggetto_id', flat=True)
+            )
         for p in qs:
             select.append(
                 (p.nome, p.nome)
