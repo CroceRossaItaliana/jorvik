@@ -60,8 +60,8 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     # Informazioni anagrafiche
     nome = TitleCharField("Nome", max_length=64, db_index=True)
     cognome = encrypt(TitleCharField("Cognome", max_length=64, db_index=True))
-    codice_fiscale = encrypt(UpperCaseCharField("Codice Fiscale", max_length=16, blank=False,
-                unique=True, db_index=True, validators=[valida_codice_fiscale,]))
+    codice_fiscale = UpperCaseCharField("Codice Fiscale", max_length=16, blank=False,
+                unique=True, db_index=True, validators=[valida_codice_fiscale,])
     data_nascita = models.DateField("Data di nascita", db_index=True, null=True)
     genere = models.CharField("Sesso", max_length=1, choices=GENERE, db_index=True)
     stato = models.CharField("Stato", max_length=1, choices=STATO, default=PERSONA, db_index=True)
@@ -79,9 +79,9 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
     # Domicilio
     domicilio_uguale_a_residenza = models.BooleanField(default=False, verbose_name='Domicilio uguale a residenza')
-    domicilio_indirizzo = encrypt(models.CharField("Indirizzo di domicilio", max_length=512, null=True, blank=True))
+    domicilio_indirizzo = models.CharField("Indirizzo di domicilio", max_length=512, null=True, blank=True)
     domicilio_comune = models.CharField("Comune di domicilio", max_length=64, null=True, blank=True)
-    domicilio_provincia = encrypt(models.CharField("Provincia di domicilio", max_length=2, null=True, blank=True))
+    domicilio_provincia = models.CharField("Provincia di domicilio", max_length=2, null=True, blank=True)
     domicilio_stato = CountryField("Stato di domicilio", default="IT", null=True, blank=True)
     domicilio_cap = models.CharField("CAP di domicilio", max_length=16, null=True, blank=True)
 
