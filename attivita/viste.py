@@ -242,7 +242,7 @@ def servizio_organizza(request, me):
                 if result['result']['code'] == 201:
                     updateServizio(key=result["data"]["key"], referenti=[me])
                     return redirect(
-                        "/attivita/servizio/scheda/{}/modifica/".format(
+                        "/attivita/servizio/scheda/{}/modifica".format(
                             result["data"]["key"]
                         )
                     )
@@ -851,7 +851,8 @@ def servizio_modifica_servizi_standard(request, me, pk=None):
 
     modulo.fields['servizi'].choices = ModuloServiziModificaStandard.popola_scelta()
     contesto = {
-        "modulo": modulo
+        "modulo": modulo,
+        'type': request.get_full_path().split('/')[-2].strip()
     }
 
     if request.POST:
@@ -876,7 +877,7 @@ def servizio_scheda_informazioni_modifica(request, me, pk=None):
     modulo = None
 
     result = getServizio(pk)
-    contesto = {'key': pk}
+    contesto = {'key': pk, 'type': request.get_full_path().split('/')[-1].strip()}
     init = {}
 
     if 'result' in result:
@@ -910,7 +911,7 @@ def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
     geo = None
     result = getServizio(pk)
     init = {}
-    contesto = {'key': pk}
+    contesto = {'key': pk, 'type': request.get_full_path().split('/')[-1].strip()}
 
     if 'result' in result:
         if result['result']['code'] == 200:
@@ -1043,7 +1044,7 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
         turni = ModuloServiziSepcificheDelServizioTurni(request.POST or None)
 
 
-    contesto = {'key': pk}
+    contesto = {'key': pk, 'type': request.get_full_path().split('/')[-1].strip()}
     contesto.update({'modulo': modulo})
     contesto.update({'turni': turni})
     if dayHour:
@@ -1128,7 +1129,7 @@ def servizio_scheda_informazioni_modifica_presentazione(request, me, pk=None):
 
     modulo.fields['provisioning'].choices = ModuloServiziPrestazioni.popola_previsioning()
 
-    contesto = {'key': pk}
+    contesto = {'key': pk, 'type': request.get_full_path().split('/')[-1].strip()}
     contesto.update({'modulo': modulo})
     data = {}
     if modulo.is_valid():
@@ -1153,7 +1154,7 @@ def servizio_scheda_informazioni_modifica_contatti(request, me, pk=None):
 
     modulo = ModuloServiziContatti(request.POST or None)
     init = {}
-    contesto = {'key': pk}
+    contesto = {'key': pk, 'type': request.get_full_path().split('/')[-1].strip()}
     contesto.update({'modulo': modulo})
     result = getServizio(pk)
 
@@ -1185,7 +1186,7 @@ def servizio_scheda_informazioni_modifica_convenzioni(request, me, pk=None):
     modulo = ModuloServiziConvenzioni(request.POST or None)
     result = getServizio(pk)
     init = {}
-    contesto = {'key': pk}
+    contesto = {'key': pk, 'type': request.get_full_path().split('/')[-1].strip()}
     contesto.update({'modulo': modulo})
 
     return 'servizio_scheda_informazioni_modifica_convenzioni.html', contesto

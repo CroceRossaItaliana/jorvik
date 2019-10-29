@@ -15,37 +15,37 @@
     </h2>
 
     <ul class="nav nav-tabs">
-        <li role="presentation">
-            <a href="/attivita/servizio/scheda/{{ key }}/modifica/">
+        <li role="presentation" {% if type == 'modifica' %}class="active"{% endif %}>
+            <a href="/attivita/servizio/scheda/{{ key }}/modifica">
                 <i class="fa fa-fw fa-pencil"></i>
                 Gestione Servizio
             </a>
         </li>
-        <li role="presentation">
+        <li role="presentation" {% if type == 'accesso' %}class="active"{% endif %}>
             <a href="/attivita/servizio/scheda/{{ key }}/modifica/accesso">
                 <i class="fa fa-fw fa-pencil"></i>
                 Criteri di accesso
             </a>
         </li>
-        <li role="presentation">
+        <li role="presentation" {% if type == 'specifiche' %}class="active"{% endif %}>
             <a href="/attivita/servizio/scheda/{{ key }}/modifica/specifiche">
                 <i class="fa fa-fw fa-pencil"></i>
                 Specifiche del servizio
             </a>
         </li>
-        <li role="presentation">
+        <li role="presentation" {% if type == 'presentazione' %}class="active"{% endif %}>
             <a href="/attivita/servizio/scheda/{{ key }}/modifica/presentazione">
                 <i class="fa fa-fw fa-pencil"></i>
                 Presentazioni
             </a>
         </li>
-        <li role="presentation">
+        <li role="presentation" {% if type == 'contatti' %}class="active"{% endif %}>
             <a href="/attivita/servizio/scheda/{{ key }}/modifica/contatti">
                 <i class="fa fa-fw fa-pencil"></i>
                 Contatti
             </a>
         </li>
-        <li role="presentation">
+        <li role="presentation" {% if type == 'convenzioni' %}class="active"{% endif %}>
             <a href="/attivita/servizio/scheda/{{ key }}/modifica/convenzioni">
                 <i class="fa fa-fw fa-pencil"></i>
                 Convenzioni

@@ -56,12 +56,12 @@ urlpatterns = [
     url(r'^scheda/(?P<pk>[0-9]+)/riapri/$', viste.attivita_riapri),
     url(r'^scheda/(?P<pk>[0-9]+)/referenti/$', viste.attivita_referenti),
     url(r'^scheda/(?P<pk>[0-9]+)/report/$', viste.attivita_scheda_report),
-    #TODO: path servizi
+    # Servizi
     url(r'^servizio/organizza/$', viste.servizio_organizza),
     url(r'^servizio/gestisci/$', viste.servizio_gestisci, {"stato": "aperte"}),
     url(r'^servizio/gestisci/chiuse/$', viste.servizio_gestisci, {"stato": "chiuse"}),
     url(r'^servizio/organizza/(?P<pk>[a-zA-Z0-9\-]+)/referenti/$', viste.servizi_referenti, {"nuova": True}),
-    url(r'^servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica/$', viste.servizio_scheda_informazioni_modifica),
+    url(r'^servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica$', viste.servizio_scheda_informazioni_modifica),
     url(r'^servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica/accesso$', viste.servizio_scheda_informazioni_modifica_accesso, name='accesso'),
     url(r'^servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica/specifiche', viste.servizio_scheda_informazioni_modifica_specifiche, name='specifiche'),
     url(r'^servizio/scheda/(?P<pk>[a-zA-Z0-9\-]+)/modifica/presentazione', viste.servizio_scheda_informazioni_modifica_presentazione),
