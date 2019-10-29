@@ -167,10 +167,8 @@ class ModuloServiziSepcificheDelServizio(forms.Form):
     )
     variableDay = forms.ChoiceField(required=False, choices=SI_NO, label='Variabile')
 
-    # Todo: manca la chiamata
-    costField = forms.CharField(required=False, label='Dati di costo (campo libero)')
+    costField = forms.CharField(required=False, label='Dati di costo')
 
-    # Todo: manca la chiamata
     accessMode = forms.CharField(widget=forms.Textarea, required=False, label='Modailità di accesso')
 
     dueDate = forms.DateField(required=False, label='Chiusura')

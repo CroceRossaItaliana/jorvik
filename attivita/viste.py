@@ -1015,8 +1015,13 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
                     init_modulo['dueDate'] = datetime.strptime(
                         result['data']['os_due_date'], '%Y-%m-%d'
                     )
-            # if 'costField' in result['data']:
-            #     pass
+
+            if 'os_cost_' in result['data']:
+                init_modulo['costField'] = result['data']['os_cost_']
+
+            if 'access_mode' in result['data']:
+                init_modulo['accessMode'] = result['data']['access_mode']
+
 
             if 'os_dayhour_type' in result['data']:
                 if result['data']['os_dayhour_type']:
@@ -1070,11 +1075,17 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
         if modulo.cleaned_data['dueDate']:
             data['os_due_date'] = {'value': modulo.cleaned_data['dueDate'].strftime("%Y-%m-%d")}
 
+        if modulo.cleaned_data['costField']:
+            data['os_cost_'] = modulo.cleaned_data['costField']
+
+        if modulo.cleaned_data['accessMode']:
+            data['access_mode'] = modulo.cleaned_data['accessMode']
 
         if turni.cleaned_data['dayHourType']:
             data['os_dayhour_type'] = {'value': turni.cleaned_data['dayHourType']}
-            return redirect(reverse('attivita:specifiche', kwargs={'pk': result['data']['key']}))
-            update_service(pk, **data)
+            if turni.cleaned_data['dayHourType'] == ModuloServiziSepcificheDelServizioTurni.H24:
+                update_service(pk, **data)
+                return redirect(reverse('attivita:specifiche', kwargs={'pk': result['data']['key']}))
 
         update_service(pk, **data)
 
