@@ -192,7 +192,13 @@
                     <td>{{ p.persona.codice_fiscale }}</td>
                     <td><b>
                         {% if corso.titolo_cri.scheda_prevede_esame %}
-                            {{ p.get_esito_esame_display|default:"N/D" }}
+
+                            {% if not p.get_esito_esame_display %}
+                                <span style="color:red;">{% if p.idoneo %}IDONEO{% else %}NON IDONEO{% endif %}</span>
+                            {% else %}
+                                {{ p.get_esito_esame_display|default:"N/D" }}
+                            {% endif %}
+
                         {% else %}
                             {{ p.get_ammissione_display|default:"Esame non previsto" }}
                         {% endif %}
