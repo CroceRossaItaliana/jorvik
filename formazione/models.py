@@ -1154,11 +1154,18 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 allegati=[self.delibera_file,]
             )
 
-    def direttori_corso(self):
+    def direttori_corso(self, as_delega=False):
+        """
+        :param as_delega (True): return Delega<QuerySet>
+        :param as_delega (False): return Persona<QuerySet>
+        """
         oggetto_tipo = ContentType.objects.get_for_model(self)
         deleghe = Delega.objects.filter(tipo=DIRETTORE_CORSO,
                                         oggetto_tipo=oggetto_tipo.pk,
                                         oggetto_id=self.pk)
+        if as_delega == True:
+            return deleghe
+
         deleghe_persone_id = deleghe.values_list('persona__id', flat=True)
         persone_qs = Persona.objects.filter(id__in=deleghe_persone_id)
         return persone_qs
