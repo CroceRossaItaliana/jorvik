@@ -1,4 +1,7 @@
 from django.db import models
+from django.core.urlresolvers import reverse
+from django.contrib.postgres.fields import JSONField
+
 from anagrafica.models import Persona
 
 
@@ -81,10 +84,10 @@ class Question(models.Model):
     survey = models.ForeignKey(Survey)
     is_active = models.BooleanField(default=True)
     required = models.BooleanField(default=True, verbose_name='Obbligatorio')
+    order = models.SmallIntegerField(null=True, blank=True)
     question_group = models.ForeignKey('QuestionGroup', null=True, blank=True)
-
-    # question_type = models.CharField(max_length=100, choices=QUESTION_TYPES,
-    #                                  default=TEXT, null=True, blank=True)
+    question_type = models.CharField(max_length=100, choices=QUESTION_TYPES,
+                                     default=TEXT, null=True, blank=True)
 
     @property
     def qid(self):
@@ -99,11 +102,28 @@ class Question(models.Model):
 
 
 class SurveyResult(models.Model):
+    from .forms import (SelectDirettoreCorsoForm, ValutazioneDirettoreCorsoForm,
+                        ValutazioneDocenteCorsoForm, QuestionarioPaginaIniziale)
+
+    INIZIO = 'in'
+    SELEZIONA_DIRETTORE = 'sd'
+    VALUTAZIONE_DIRETTORE = 'vd'
+    VALUTAZIONE_DOCENTE = 'dv'
+
+    # Not for model field choices use
+    STEPS = {
+        INIZIO: (0, QuestionarioPaginaIniziale, SELEZIONA_DIRETTORE ),
+        SELEZIONA_DIRETTORE: (1, SelectDirettoreCorsoForm, VALUTAZIONE_DIRETTORE),
+        VALUTAZIONE_DIRETTORE: (2, ValutazioneDirettoreCorsoForm, VALUTAZIONE_DOCENTE),
+        VALUTAZIONE_DOCENTE: (3, ValutazioneDocenteCorsoForm, None),
+    }
+
     user = models.ForeignKey(Persona)
     course = models.ForeignKey('formazione.CorsoBase', blank=True, null=True)
     survey = models.ForeignKey(Survey)
-    question = models.ForeignKey(Question)
+    question = models.ForeignKey(Question, blank=True, null=True)
     response = models.TextField(max_length=1000, blank=True, null=True)
+    response_json = JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
