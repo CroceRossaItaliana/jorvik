@@ -11,7 +11,7 @@ def menu_attivita(me):
         # Se si è presidenti/commissari/ufficio_soci
         # mostra il menu con tutti i progetti associati alle sedi gestite
         # altrimenti mostra solo i progetti di cui si è delegato
-        if me.is_presidente or me.is_comissario or me.is_ufficio_soci:
+        if me.is_presidente or me.is_comissario:
             progetti_exists = Progetto.objects.filter(
                 sede_id__in=me.oggetti_permesso(GESTIONE_SEDE, solo_deleghe_attive=True).values_list('id', flat=True)
             )
