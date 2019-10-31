@@ -40,22 +40,14 @@
                 <p style="text-align: center;">Vuoi continuare con la compilazione del questionario? <a href="{{ continue_step }}">Continua</a></p>
 
             {% else %}
-                {% if not step %}
-                    {% include 'survey_step_0_inc.html' %}
-                {% endif %}
-
-                {% if step %}
+                {% if step and form %}
                     <form action="." method="POST" class="step-form form-inline">
                         {% csrf_token %}
-
-                        {% if step == 1 %}
-                            {% include 'survey_step_1_inc.html' %}
-                        {% elif step == 2 %}
-                            {% include 'survey_step_2_inc.html' %}
-                        {% endif %}
-
+                        {% include template %}
                         <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Avanti</button>
                     </form>
+                {% else %}
+                    {% include 'survey_step_0_inc.html' %}
                 {% endif %}
 
             {% endif %}
