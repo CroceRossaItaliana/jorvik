@@ -167,10 +167,8 @@ class ModuloServiziSepcificheDelServizio(forms.Form):
     )
     variableDay = forms.ChoiceField(required=False, choices=SI_NO, label='Variabile')
 
-    # Todo: manca la chiamata
-    costField = forms.CharField(required=False, label='Dati di costo (campo libero)')
+    costField = forms.CharField(required=False, label='Dati di costo')
 
-    # Todo: manca la chiamata
     accessMode = forms.CharField(widget=forms.Textarea, required=False, label='Modailità di accesso')
 
     dueDate = forms.DateField(required=False, label='Chiusura')
@@ -207,8 +205,21 @@ class ModuloServiziSepcificheDelServizioTurni(forms.Form):
     )
 
     giorno = forms.MultipleChoiceField(required=False, choices=DAY, label='Giorni')
-    orario_apertura = forms.TimeField(required=False)
-    orario_chiusura = forms.TimeField(required=False)
+    orario_apertura = forms.TimeField(required=False, label='Prario Apertura')
+    orario_chiusura = forms.TimeField(required=False, label='Orario Chiusura')
+
+
+class ModuloServiziCriteriDiAccessoGeo(forms.Form):
+    indirizzo = forms.CharField(required=False, help_text='es. Via Rosmini, 42.')
+    comune = forms.CharField(required=False, help_text='es. Cinisello Balsamo.')
+    provincia = forms.CharField(required=False, help_text='es. Via Rosmini, 42.')
+
+    ITALIA = 'Italia'
+    CHOICE = (
+        (ITALIA, 'Italia'),
+    )
+
+    stato = forms.ChoiceField(required=False, choices=CHOICE)
 
 
 class ModuloServiziCriteriDiAccesso(forms.Form):
@@ -235,7 +246,7 @@ class ModuloServiziCriteriDiAccesso(forms.Form):
         (AMBITO_TERRITORIALE, 'Ambito Territoriale del Comitato'),
         (COMUNI, 'Comuni')
     )
-    address = forms.CharField(required=False, label='Indirizzo')
+    # address = forms.CharField(required=False, label='Indirizzo')
     geo_scope = forms.ChoiceField(required=False, choices=GEO_SCOPE, label='Ambito geografico')
     beneficiaries = forms.MultipleChoiceField(
         required=False,
@@ -329,11 +340,18 @@ class ModuloOrganizzaServizio(forms.Form):
     @staticmethod
     def popola_progetto(me):
         from attivita.models import Progetto
-        from anagrafica.permessi.costanti import GESTIONE_ATTIVITA_SEDE
+        from anagrafica.models import Delega
+        from anagrafica.permessi.applicazioni import DELEGATO_PROGETTO
+        from anagrafica.permessi.costanti import GESTIONE_SEDE
         select = [('', 'Seleziona un progetto')]
-        qs = Progetto.objects.filter(
-            sede__in=me.oggetti_permesso(GESTIONE_ATTIVITA_SEDE, solo_deleghe_attive=True)
-        )
+        if me.is_presidente or me.is_comissario or me.is_ufficio_soci:
+            qs = Progetto.objects.filter(
+                sede_id__in=me.oggetti_permesso(GESTIONE_SEDE, solo_deleghe_attive=True).values_list('id', flat=True)
+            )
+        else:
+            qs = Progetto.objects.filter(
+                id__in=Delega.objects.filter(tipo=DELEGATO_PROGETTO, persona=me).values_list('oggetto_id', flat=True)
+            )
         for p in qs:
             select.append(
                 (p.nome, p.nome)
@@ -367,6 +385,21 @@ class ModuloOrganizzaAttivita(ModelForm):
     class Meta:
         model = Attivita
         fields = ['nome', 'area', ]
+
+class ModuloOrganizzaServizioReferente(forms.Form):
+    SONO_IO = "IO"
+    SCEGLI_REFERENTI = "SC"
+    SCELTA = (
+        (None, "-- Scegli un'opzione --"),
+        (SONO_IO, "Sarò io il referente per questo servizio"),
+        (SCEGLI_REFERENTI, "Fammi scegliere uno o più referenti che gestiranno "
+                           "questo servizio")
+    )
+
+    scelta = forms.ChoiceField(
+        choices=SCELTA,
+        help_text="Scegli l'opzione appropriata."
+    )
 
 
 class ModuloOrganizzaAttivitaReferente(forms.Form):
