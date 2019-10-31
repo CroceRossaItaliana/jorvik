@@ -102,20 +102,25 @@ class Question(models.Model):
 
 
 class SurveyResult(models.Model):
-    from .forms import (SelectDirettoreCorsoForm, ValutazioneDirettoreCorsoForm,
-                        ValutazioneDocenteCorsoForm, QuestionarioPaginaIniziale)
+    from .forms import (QuestionarioPaginaIniziale, SelectDirettoreCorsoForm,
+        ValutazioneDirettoreCorsoForm, ValutazioneUtilitaLezioniForm,
+        ValutazioneDocenteCorsoForm,)
 
     INIZIO = 'in'
     SELEZIONA_DIRETTORE = 'sd'
     VALUTAZIONE_DIRETTORE = 'vd'
+    VALUTAZIONE_LEZIONI = 'vl'
     VALUTAZIONE_DOCENTE = 'dv'
+    GRAZIE = 'gr'
 
     # Not for model field choices use
     STEPS = {
         INIZIO: (0, QuestionarioPaginaIniziale, SELEZIONA_DIRETTORE ),
         SELEZIONA_DIRETTORE: (1, SelectDirettoreCorsoForm, VALUTAZIONE_DIRETTORE),
-        VALUTAZIONE_DIRETTORE: (2, ValutazioneDirettoreCorsoForm, VALUTAZIONE_DOCENTE),
-        VALUTAZIONE_DOCENTE: (3, ValutazioneDocenteCorsoForm, None),
+        VALUTAZIONE_DIRETTORE: (2, ValutazioneDirettoreCorsoForm, VALUTAZIONE_LEZIONI),
+        VALUTAZIONE_LEZIONI: (3, ValutazioneUtilitaLezioniForm, VALUTAZIONE_DOCENTE),
+        VALUTAZIONE_DOCENTE: (4, ValutazioneDocenteCorsoForm, GRAZIE),
+        GRAZIE: (5, None, None),
     }
 
     user = models.ForeignKey(Persona)
@@ -153,6 +158,22 @@ class SurveyResult(models.Model):
             ])
 
         return response
+
+    def get_uncompleted_valutazione_docente_lezione(self):
+        """
+        Restituisce docente -> lezione da valutare (completed=False).
+        Restituisce None, None: Se non ci sono gruppo docente->lezione da
+        valutare (assenti completed=False).
+
+        :return: docente.pk<int> or None, lezione.pk <int> or None
+        """
+        docenti = self.response_json['lezioni']
+        for docente_pk, lezione_data in docenti.items():
+            for lezione_pk, lezione_data in lezione_data.items():
+                if lezione_data['completed']:
+                    continue
+                return int(docente_pk), int(lezione_pk)
+        return None, None
 
     class Meta:
         verbose_name = "Risposta dell'utente"
