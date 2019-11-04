@@ -64,6 +64,7 @@
             $('[id=id_orario_chiusura]').attr('type', 'time');
             changeForm($('[name=activationPeriodType]').val());
             changeFormTurni($('[name=dayHourType]').val());
+            changeFormContatti($('[name=tipo_contatto]').val());
         });
         $('[name=activationPeriodType]').change(function () {
             changeForm($(this).val());
@@ -71,7 +72,11 @@
 
         $('[name=dayHourType]').change(function () {
             changeFormTurni($(this).val());
-        })
+        });
+
+        $('[name=tipo_contatto]').change(function () {
+            changeFormContatti($(this).val());
+        });
 
         function showMensile() {
             $('[id=id_annualPeriod]').parent().show();
@@ -92,6 +97,20 @@
             $('[id=turni_panel]').show();
         }
         
+        function showContattiCRI() {
+            $('[id=id_persona-autocomplete]').parent().parent().show();
+            $('[id=id_nome]').parent().hide();
+            $('[id=id_telefono]').parent().hide();
+            $('[id=id_email]').parent().hide();
+        }
+
+        function showContattiAltro() {
+            $('[id=id_persona-autocomplete]').parent().parent().hide();
+            $('[id=id_nome]').parent().show();
+            $('[id=id_telefono]').parent().show();
+            $('[id=id_email]').parent().show();
+        }
+
         function changeFormTurni(val) {
             switch (val) {
                 case 'Giorni e Orari':
@@ -122,6 +141,24 @@
                     break;
             }
         }
+
+         function changeFormContatti(val) {
+             console.log(val);
+             switch (val) {
+                case '8':
+                    showContattiCRI();
+                    break;
+                case '9':
+                    showContattiAltro();
+                    break;
+                default:
+                    $('[id=id_persona-autocomplete]').parent().parent().hide();
+                    $('[id=id_nome]').parent().hide();
+                    $('[id=id_telefono]').parent().hide();
+                    $('[id=id_email]').parent().hide();
+                    break;
+             }
+         }
     </script>
 {% endblock %}
 

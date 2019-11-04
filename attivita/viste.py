@@ -28,7 +28,8 @@ from base.utils import poco_fa, timedelta_ore
 from gruppi.models import Gruppo
 from attivita.cri_persone import createServizio, updateServizio, getServizio, changeState
 from base.geo import Locazione
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import resolve
+
 
 def attivita(request):
     return redirect('/attivita/calendario/')
@@ -150,7 +151,7 @@ def servizio_gestisci(request, me, stato="aperte"):
     from attivita.cri_persone import getListService, deleteService
     from anagrafica.models import Delega
     contesto = {}
-    if me.is_presidente or me.is_comissario or me.is_ufficio_soci:
+    if me.is_presidente or me.is_comissario:
         sedi = me.oggetti_permesso(GESTIONE_SEDE, solo_deleghe_attive=True).values_list('id', flat=True)
     else:
         sedi = Progetto.objects.filter(
@@ -215,10 +216,10 @@ def attivita_gestisci(request, me, stato="aperte"):
 
 @pagina_privata
 def servizio_organizza(request, me):
-    from attivita.forms import ModuloOrganizzaServizio
+    from attivita.forms import ModuloOrganizzaServizio, ModuloOrganizzaServizioReferente
 
     modulo = ModuloOrganizzaServizio(request.POST or None)
-    modulo_referente = ModuloOrganizzaAttivitaReferente(request.POST or None)
+    modulo_referente = ModuloOrganizzaServizioReferente(request.POST or None)
     modulo.fields['servizi'].choices = ModuloOrganizzaServizio.popola_scelta()
     modulo.fields['progetto'].choices = ModuloOrganizzaServizio.popola_progetto(me)
 
@@ -911,7 +912,7 @@ def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
     geo = None
     result = getServizio(pk)
     init = {}
-    contesto = {'key': pk, 'type': request.get_full_path().split('/')[-1].strip()}
+    contesto = {'key': pk, 'type': resolve(request.path_info).url_name}
 
     if 'result' in result:
         if result['result']['code'] == 200:
@@ -1043,8 +1044,7 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
         modulo = ModuloServiziSepcificheDelServizio(request.POST or None)
         turni = ModuloServiziSepcificheDelServizioTurni(request.POST or None)
 
-
-    contesto = {'key': pk, 'type': request.get_full_path().split('/')[-1].strip()}
+    contesto = {'key': pk, 'type': resolve(request.path_info).url_name}
     contesto.update({'modulo': modulo})
     contesto.update({'turni': turni})
     if dayHour:
@@ -1129,7 +1129,7 @@ def servizio_scheda_informazioni_modifica_presentazione(request, me, pk=None):
 
     modulo.fields['provisioning'].choices = ModuloServiziPrestazioni.popola_previsioning()
 
-    contesto = {'key': pk, 'type': request.get_full_path().split('/')[-1].strip()}
+    contesto = {'key': pk, 'type': resolve(request.path_info).url_name}
     contesto.update({'modulo': modulo})
     data = {}
     if modulo.is_valid():
@@ -1147,14 +1147,13 @@ def servizio_scheda_informazioni_modifica_presentazione(request, me, pk=None):
 def servizio_scheda_informazioni_modifica_contatti(request, me, pk=None):
     from attivita.forms import ModuloServiziContatti
     from attivita.cri_persone import createStagilContatti, deleteStagil
-
     id = request.GET.get('d', '')
     if id:
         deleteStagil(id)
 
     modulo = ModuloServiziContatti(request.POST or None)
     init = {}
-    contesto = {'key': pk, 'type': request.get_full_path().split('/')[-1].strip()}
+    contesto = {'key': pk, 'type': resolve(request.path_info).url_name}
     contesto.update({'modulo': modulo})
     result = getServizio(pk)
 
@@ -1166,16 +1165,26 @@ def servizio_scheda_informazioni_modifica_contatti(request, me, pk=None):
     if request.POST:
         if modulo.is_valid():
             tipo_contatto = modulo.cleaned_data['tipo_contatto']
-            for p in modulo.cleaned_data['persona']:
-                telefono = ''
-                for x in p.numeri_pubblici():
-                    telefono+='{}, '.format(x)
+            if tipo_contatto == ModuloServiziContatti.CRI:
+                for p in modulo.cleaned_data['persona']:
+                    telefono = ''
+                    for x in p.numeri_pubblici():
+                        telefono += '{}, '.format(x)
+                    createStagilContatti(
+                        tipo_contatto, p.nome_completo, telefono[:-1], p.email_contatto, result['data']['id']
+                    )
+                    result = getServizio(pk)
+                    contesto.update({'contatti': result['data']['contact_table']})
+            elif tipo_contatto == ModuloServiziContatti.ALTRO_ENTE:
                 createStagilContatti(
-                    tipo_contatto, p.nome_completo , telefono[:-1], p.email_contatto, result['data']['id']
+                    tipo_contatto,
+                    modulo.cleaned_data['nome'],
+                    modulo.cleaned_data['telefono'],
+                    modulo.cleaned_data['email'],
+                    result['data']['id']
                 )
                 result = getServizio(pk)
                 contesto.update({'contatti': result['data']['contact_table']})
-
 
     return 'servizio_scheda_informazioni_modifica_contatti.html', contesto
 
@@ -1186,7 +1195,7 @@ def servizio_scheda_informazioni_modifica_convenzioni(request, me, pk=None):
     modulo = ModuloServiziConvenzioni(request.POST or None)
     result = getServizio(pk)
     init = {}
-    contesto = {'key': pk, 'type': request.get_full_path().split('/')[-1].strip()}
+    contesto = {'key': pk, 'type': resolve(request.path_info).url_name}
     contesto.update({'modulo': modulo})
 
     return 'servizio_scheda_informazioni_modifica_convenzioni.html', contesto

@@ -86,8 +86,8 @@ class ModuloServiziPrestazioni(forms.Form):
 class ModuloServiziContatti(forms.Form):
     from anagrafica.models import Persona
     from autocomplete_light import shortcuts as autocomplete_light
-    CRI = 8
-    ALTRO_ENTE = 9
+    CRI = '8'
+    ALTRO_ENTE = '9'
     TIPO_CONTATTO = (
         ('', ''),
         (CRI, 'CRI'),
@@ -95,8 +95,12 @@ class ModuloServiziContatti(forms.Form):
     )
     tipo_contatto = forms.ChoiceField(required=True, choices=TIPO_CONTATTO, label='Tipo Contatto')
     persona = forms.ModelMultipleChoiceField(
-        Persona.objects.all(), widget=autocomplete_light.MultipleChoiceWidget('PersonaAutocompletamento')
+        Persona.objects.all(), required=False, widget=autocomplete_light.MultipleChoiceWidget('PersonaAutocompletamento')
     )
+
+    nome = forms.CharField(required=False, label='Nome')
+    telefono = forms.CharField(required=False, label='Telefono')
+    email = forms.CharField(required=False, label='Email')
 
 
 class ModuloServiziReferenti(forms.Form):
@@ -109,7 +113,7 @@ class ModuloServiziReferenti(forms.Form):
 
 class ModuloServiziConvenzioni(forms.Form):
 
-    manage_progect = forms.ChoiceField(required=True, choices=(), label='Tipo Contatto')
+    manage_progect = forms.ChoiceField(required=True, choices=(), label='Tipo Contratto')
     file = forms.FileField()
 
 
@@ -205,7 +209,7 @@ class ModuloServiziSepcificheDelServizioTurni(forms.Form):
     )
 
     giorno = forms.MultipleChoiceField(required=False, choices=DAY, label='Giorni')
-    orario_apertura = forms.TimeField(required=False, label='Prario Apertura')
+    orario_apertura = forms.TimeField(required=False, label='Orario Apertura')
     orario_chiusura = forms.TimeField(required=False, label='Orario Chiusura')
 
 
@@ -344,7 +348,7 @@ class ModuloOrganizzaServizio(forms.Form):
         from anagrafica.permessi.applicazioni import DELEGATO_PROGETTO
         from anagrafica.permessi.costanti import GESTIONE_SEDE
         select = [('', 'Seleziona un progetto')]
-        if me.is_presidente or me.is_comissario or me.is_ufficio_soci:
+        if me.is_presidente or me.is_comissario:
             qs = Progetto.objects.filter(
                 sede_id__in=me.oggetti_permesso(GESTIONE_SEDE, solo_deleghe_attive=True).values_list('id', flat=True)
             )
@@ -385,6 +389,7 @@ class ModuloOrganizzaAttivita(ModelForm):
     class Meta:
         model = Attivita
         fields = ['nome', 'area', ]
+
 
 class ModuloOrganizzaServizioReferente(forms.Form):
     SONO_IO = "IO"

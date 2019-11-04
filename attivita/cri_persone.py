@@ -129,7 +129,7 @@ def getListService(comitato):
         '{}/offeredservice/?committee={}'.format(end_point, comitato)
     )
     resp = r.json()
-    logger.debug('- getListService {} {}'.format(resp['result']['code'], resp['result']['description']))
+    logger.debug('- getListService {} {} {}'.format(r.url, resp['result']['code'], resp['result']['description']))
     return resp if 'data' in resp and resp['data'] else {}
 
 
