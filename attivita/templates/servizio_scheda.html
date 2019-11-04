@@ -9,14 +9,6 @@
 
 {% block app_contenuto %}
 
-    {% if messages %}
-      <ul class="messages">
-        {% for message in messages %}
-          <li class="{{ message.tags }}">{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-
     <h2 class="allinea-centro grassetto text-success">
         {% if nome %}
             {{ nome }}
