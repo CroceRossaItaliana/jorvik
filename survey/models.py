@@ -175,6 +175,10 @@ class SurveyResult(models.Model):
                 return int(docente_pk), int(lezione_pk)
         return None, None
 
+    @property
+    def current_step(self):
+        return self.response_json.get('step')
+
     class Meta:
         verbose_name = "Risposta dell'utente"
         verbose_name_plural = "Risposte degli utenti"

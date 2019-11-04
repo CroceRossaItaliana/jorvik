@@ -44,25 +44,28 @@ def course_survey(request, me, pk):
     step_in_dict = SurveyResult.STEPS.get(step_in_request, [None, None, None])
     step, form, next_step = step_in_dict
 
-    # print(step)
-
     # Crea/trova oggetto per le risposte
     result, created = SurveyResult.objects.get_or_create(course=course,
                                                          user=me,
                                                          survey=survey)
+    context['survey_result'] = result
 
     # Valorizza il campo json senza dati (keys vuoti)
     if result and not result.response_json:
         result.response_json = {
             'direttori': dict(),
-            'docenti': dict(),
+            'utilita_lezioni': dict(),
+            'lezioni': dict(),
             'step': None,
         }
         result.save()
 
     if step_in_request:
-        form_kwargs = dict(instance=survey, course=course,
-                           step=step_in_request, survey_result=result, me=me)
+        form_kwargs = dict(instance=survey,
+                           course=course,
+                           step=step_in_request,
+                           survey_result=result,
+                           me=me)
         if step:
             context['step'] = step
 
@@ -98,8 +101,12 @@ def course_survey(request, me, pk):
 
     elif step_in_request == SurveyResult.VALUTAZIONE_DOCENTE:
         docente, lezione = result.get_uncompleted_valutazione_docente_lezione()
-        context['valutazione_docente'] = Persona.objects.get(pk=docente)
-        context['valutazione_lezione'] = LezioneCorsoBase.objects.get(pk=lezione)
+        if docente and lezione:
+            context['valutazione_docente'] = Persona.objects.get(pk=docente)
+            context['valutazione_lezione'] = LezioneCorsoBase.objects.get(pk=lezione)
+        else:
+            messages.warning(request, "Questo step del questionario è stato già completato.")
+            return redirect(survey_url)
 
     # Arriva form da validare e salvare
     if (request.method == 'POST') and (form is not None):
@@ -132,11 +139,15 @@ def course_survey(request, me, pk):
             result.response_json['step'] = next_step
             result.save()
 
+            # print(1, step, form, next_step)
+
             # Rindirizza
             next_step_qs = "?step=%s" % next_step if next_step is not None else ''
             next_step_reverse = survey_url + next_step_qs
 
             return redirect(next_step_reverse)
+
+    # print(0, step, form, next_step)
 
     context['template'] = 'survey_step_%s_inc.html' % step
     return 'corso_questionario_di_gradimento.html', context

@@ -89,12 +89,20 @@ class SelectDirettoreCorsoForm(QuestionarioForm):
 class ValutazioneDirettoreCorsoForm(QuestionarioForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        survey, course = self.instance, self.course
 
         # Per indicare con request.POST con che form/step stiamo lavorando
         self.fields['step'].initial = self.step
 
         self.populate_questions_inputs(self.instance, QuestionarioForm.QGROUP_UTILITA_PERCEPITA)
+        self.set_initial_values()
+
+    def set_initial_values(self):
+        # Risposte precedentemente salvate
+        direttori = self.survey_result.response_json['direttori']
+        for direttore_pk, responses in direttori.items():
+            for question_id, response in responses.items():
+                qid = 'qid_%s' % question_id
+                self.fields[qid].initial = response
 
     def validate_questionario(self, result, **kwargs):
         direttore = kwargs.pop('direttore_da_valutare')
@@ -120,7 +128,7 @@ class ValutazioneUtilitaLezioniForm(QuestionarioForm):
         self.fields['step'].initial = self.step
 
         # Risposte precedentemente salvate
-        response_lezioni = self.survey_result.response_json['lezioni']
+        response_lezioni = self.survey_result.response_json['utilita_lezioni']
 
         for lezione in self.course.get_lezioni_precaricate():
             lezione_pk = 'lezioni_pk_%s' % lezione.pk
@@ -139,11 +147,12 @@ class ValutazioneUtilitaLezioniForm(QuestionarioForm):
         if form.is_valid():
             cd = form.cleaned_data
 
-            if 'lezioni' not in result.response_json:
-                result.response_json['lezioni'] = dict()
+            if 'utilita_lezioni' not in result.response_json:
+                result.response_json['utilita_lezioni'] = dict()
 
             lezioni_valutate = {k.replace('lezioni_pk_', ''): v for k, v in cd.items() if k.startswith('lezioni_pk_')}
-            result.response_json['lezioni'] = lezioni_valutate
+
+            result.response_json['utilita_lezioni'] = lezioni_valutate
             result.save()
 
             return True

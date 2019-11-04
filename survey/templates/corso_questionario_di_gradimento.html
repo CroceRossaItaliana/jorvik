@@ -37,7 +37,13 @@
             {% endif %}
 
             {% if continue_step and not step %}
-                <p style="text-align: center;">Vuoi continuare con la compilazione del questionario? <a href="{{ continue_step }}">Continua</a></p>
+                <p style="text-align: center;">
+                    {% if survey_result.current_step == survey_result.GRAZIE %}
+                        Il questionario è già stato completato.
+                    {% else %}
+                        Vuoi continuare con la compilazione del questionario? <a href="{{ continue_step }}">Continua</a>
+                    {% endif %}
+                </p>
 
             {% else %}
                 {% if step and form %}
@@ -46,6 +52,8 @@
                         {% include template %}
                         <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Avanti</button>
                     </form>
+                {% elif step == 5 %}
+                    {% include 'survey_step_5_inc.html' %}
                 {% else %}
                     {% include 'survey_step_0_inc.html' %}
                 {% endif %}
