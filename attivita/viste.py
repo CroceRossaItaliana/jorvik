@@ -1092,6 +1092,7 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
                 return redirect(reverse('attivita:specifiche', kwargs={'pk': result['data']['key']}))
 
         update_service(pk, **data)
+        messages.success(request, 'Salvato correttamente')
 
         if turni.cleaned_data['giorno'] and turni.cleaned_data['orario_apertura'] and turni.cleaned_data['orario_chiusura']:
             createStagilTurni(
@@ -1105,7 +1106,6 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
                 if result['result']['code'] == 200:
                     if 'dayhour' in result['data']:
                         contesto.update({'dayhour': result['data']['dayhour']})
-                        messages.success(request, 'Salvato correttamente')
                         return redirect(reverse('attivita:specifiche', kwargs={'pk': result['data']['key']}))
 
 
