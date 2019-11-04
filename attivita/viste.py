@@ -28,7 +28,8 @@ from base.utils import poco_fa, timedelta_ore
 from gruppi.models import Gruppo
 from attivita.cri_persone import createServizio, updateServizio, getServizio, changeState
 from base.geo import Locazione
-from django.core.urlresolvers import resolve
+from django.core.urlresolvers import resolve, reverse
+from django.contrib import messages
 
 
 def attivita(request):
@@ -233,6 +234,7 @@ def servizio_organizza(request, me):
         progetto = Progetto.objects.filter(nome__iexact=modulo.cleaned_data['progetto']).first()
 
         result = createServizio(
+            # Decommenta per i test
             # comitato=646,
             comitato=int(progetto.sede.id),
             nome_progetto=modulo.cleaned_data['progetto'],
@@ -900,6 +902,7 @@ def servizio_scheda_informazioni_modifica(request, me, pk=None):
         if stato:
             changeState(pk, stato)
         updateServizio(pk, **{'testo': testo})
+        messages.success(request, 'Salvato correttamente')
 
     return 'servizio_scheda_infomazioni_modifica.html', contesto
 
@@ -940,7 +943,6 @@ def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
 
     modulo.fields['beneficiaries'].choices = ModuloServiziCriteriDiAccesso.popola_beneficiaries()
 
-
     contesto.update({'modulo': modulo})
     contesto.update({'geo': geo})
 
@@ -970,11 +972,11 @@ def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
             l = Locazione.oggetto(indirizzo)
             data['address'] = l.indirizzo
             update_service(pk, **data)
-
+            messages.success(request, 'Salvato correttamente')
             return redirect(reverse('attivita:accesso', kwargs={'pk': result['data']['key']}))
 
         update_service(pk, **data)
-
+        messages.success(request, 'Salvato correttamente')
 
     return 'servizio_scheda_infomazioni_modifica_accesso.html', contesto
 
@@ -990,6 +992,7 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
 
     if dt:
         deleteStagil(dt)
+        messages.warning(request, 'Eliminato turno')
 
     result = getServizio(pk)
     if 'result' in result:
@@ -1023,7 +1026,6 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
 
             if 'access_mode' in result['data']:
                 init_modulo['accessMode'] = result['data']['access_mode']
-
 
             if 'os_dayhour_type' in result['data']:
                 if result['data']['os_dayhour_type']:
@@ -1086,6 +1088,7 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
             data['os_dayhour_type'] = {'value': turni.cleaned_data['dayHourType']}
             if turni.cleaned_data['dayHourType'] == ModuloServiziSepcificheDelServizioTurni.H24:
                 update_service(pk, **data)
+                messages.success(request, 'Salvato correttamente')
                 return redirect(reverse('attivita:specifiche', kwargs={'pk': result['data']['key']}))
 
         update_service(pk, **data)
@@ -1102,6 +1105,7 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
                 if result['result']['code'] == 200:
                     if 'dayhour' in result['data']:
                         contesto.update({'dayhour': result['data']['dayhour']})
+                        messages.success(request, 'Salvato correttamente')
                         return redirect(reverse('attivita:specifiche', kwargs={'pk': result['data']['key']}))
 
 
@@ -1137,7 +1141,7 @@ def servizio_scheda_informazioni_modifica_presentazione(request, me, pk=None):
         for prev in modulo.cleaned_data['provisioning']:
             previsioning += "{},".format(prev)
         data['provisioning'] = [previsioning[:-1] if previsioning else ""]
-
+        messages.success(request, 'Salvato correttamente')
         update_service(pk, **data)
 
     return 'servizio_scheda_infomazioni_modifica_presentazioni.html', contesto
@@ -1150,6 +1154,8 @@ def servizio_scheda_informazioni_modifica_contatti(request, me, pk=None):
     id = request.GET.get('d', '')
     if id:
         deleteStagil(id)
+        messages.warning(request, 'Eliminato Contatto')
+
 
     modulo = ModuloServiziContatti(request.POST or None)
     init = {}
@@ -1185,7 +1191,7 @@ def servizio_scheda_informazioni_modifica_contatti(request, me, pk=None):
                 )
                 result = getServizio(pk)
                 contesto.update({'contatti': result['data']['contact_table']})
-
+            messages.success(request, 'Salvato correttamente')
     return 'servizio_scheda_informazioni_modifica_contatti.html', contesto
 
 
@@ -1197,7 +1203,7 @@ def servizio_scheda_informazioni_modifica_convenzioni(request, me, pk=None):
     init = {}
     contesto = {'key': pk, 'type': resolve(request.path_info).url_name}
     contesto.update({'modulo': modulo})
-
+    messages.success(request, 'Salvato correttamente')
     return 'servizio_scheda_informazioni_modifica_convenzioni.html', contesto
 
 
