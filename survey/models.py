@@ -145,22 +145,100 @@ class SurveyResult(models.Model):
     def generate_report_for_course(cls, course):
         import csv
         from django.shortcuts import HttpResponse
+        from formazione.models import LezioneCorsoBase
 
         filename = "Questionario di gradimento [%s].csv" % course.nome
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
 
         writer = csv.writer(response, delimiter=';')
-        writer.writerow(['Corso', 'Domanda', 'Risposta', 'Creato', 'Modificato'])
 
-        for result in cls.get_responses_for_course(course):
-            writer.writerow([
-                course.nome,
-                result.question,
-                result.response,
-                result.created_at,
-                result.updated_at
-            ])
+        responses_to_q = cls.get_responses_for_course(course)
+        responses_with_json = responses_to_q.values_list('response_json', flat=True)
+
+        def _direttori(result):
+            rows = list()
+            direttori = result.response_json['direttori']
+            for persona_pk, response_data in direttori.items():
+                p = Persona.objects.get(pk=persona_pk)
+                for domanda_pk, risposta in response_data.items():
+                    domanda = Question.objects.get(pk=domanda_pk)
+                    rows.append([p, domanda.text, risposta])
+            return rows
+
+        def _utilita_lezioni_rows(result):
+            rows = list()
+            utilita_lezioni_rows = result.response_json['utilita_lezioni']
+            for lezione_pk, voto in utilita_lezioni_rows.items():
+                lezione = LezioneCorsoBase.objects.get(pk=lezione_pk)
+                rows.append([lezione.nome, voto])
+            return rows
+
+        def _org_servizi(result):
+            rows = list()
+            org_servizi_rows = result.response_json['org_servizi']
+            for domanda_pk, voto in org_servizi_rows.items():
+                domanda = Question.objects.get(pk=domanda_pk)
+                rows.append([domanda.text, voto])
+            return rows
+
+        def _valutazione_docenti(result):
+            rows = list()
+            lezioni_rows = result.response_json['lezioni']
+
+            for docente_pk, lezione_data in lezioni_rows.items():
+                docente = Persona.objects.get(pk=docente_pk)
+
+                for lezione_pk, data in lezione_data.items():
+                    lezione = LezioneCorsoBase.objects.get(pk=lezione_pk)
+
+                    for domanda_pk, risposta in data.items():
+                        if domanda_pk == 'completed':  continue
+                        domanda = Question.objects.get(pk=domanda_pk)
+
+                        rows.append([docente, lezione, domanda, risposta])
+
+            return rows
+
+        if responses_with_json:
+            columns = [
+                '1. Valutazione direttore (nome)', 'Domanda', 'Risposta',
+                '2. Utilita lezione', 'Voto',
+                '3. Valutazione docente (nome)', 'Lezione', 'Domanda', 'Voto',
+                '4. Org. e servizi (domanda)', 'Risposta',
+                'Creato', 'Modificato',
+            ]
+
+            writer.writerow(columns)
+            for result in responses_to_q:
+                direttori_rows = _direttori(result)
+                utilita_lezioni_rows = _utilita_lezioni_rows(result)
+                valutazione_docente_rows = _valutazione_docenti(result)
+                org_servizi_rows = _org_servizi(result)
+
+                for row in direttori_rows:
+                    writer.writerow(row)
+
+                for row in utilita_lezioni_rows:
+                    writer.writerow([''] * 3 + row)
+
+                for row in valutazione_docente_rows:
+                    writer.writerow([''] * 5 + row)
+
+                for row in org_servizi_rows:
+                    writer.writerow([''] * 9 + row)
+
+        else:
+            columns = ['Corso', 'Domanda', 'Risposta', 'Creato', 'Modificato']
+            writer.writerow(columns)
+            for result in responses_to_q:
+                writer.writerow([
+                    course.nome,
+                    result.question,
+                    result.response,
+                    result.created_at,
+                    result.updated_at
+                ])
 
         return response
 
