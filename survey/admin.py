@@ -13,7 +13,7 @@ class QuestionInline(admin.TabularInline):
 @admin.register(Question)
 class AdminQuestion(admin.ModelAdmin):
     list_display = ['text', 'survey', 'is_active', 'order', 'question_group',
-                    'question_type',]
+                    'question_type', 'anchor',]
     list_filter = ['is_active', ]
 
 

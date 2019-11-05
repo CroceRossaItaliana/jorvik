@@ -19,12 +19,12 @@ class Survey(models.Model):
     def get_questions(self):
         return self.question_set.all()
 
-    def get_my_responses(self, user):
-        return SurveyResult.objects.filter(user=user, survey=self)
+    def get_my_responses(self, user, course):
+        return SurveyResult.objects.filter(survey=self, user=user, course=course)
 
-    def get_responses_dict(self, me):
+    def get_responses_dict(self, me, course):
         d = dict()
-        for r in self.get_my_responses(me):
+        for r in self.get_my_responses(me, course):
             qid = r.question.qid
             if qid not in d:
                 d[qid] = dict(response=r.response, object=r)
@@ -71,6 +71,7 @@ class Question(models.Model):
     SELECT = 'select'
     SELECT_MULTIPLE = 'select-multiple'
     INTEGER = 'integer'
+    BOOLEAN = 'boolean'
 
     QUESTION_TYPES = (
         (TEXT, 'text'),
@@ -78,6 +79,7 @@ class Question(models.Model):
         (SELECT, 'select'),
         (SELECT_MULTIPLE, 'Select Multiple'),
         (INTEGER, 'integer'),
+        (BOOLEAN, 'boolean'),
     )
 
     text = models.CharField(max_length=255)
@@ -88,6 +90,7 @@ class Question(models.Model):
     question_group = models.ForeignKey('QuestionGroup', null=True, blank=True)
     question_type = models.CharField(max_length=100, choices=QUESTION_TYPES,
                                      default=TEXT, null=True, blank=True)
+    anchor = models.CharField(max_length=100, null=True, blank=True)
 
     @property
     def qid(self):
@@ -104,13 +107,14 @@ class Question(models.Model):
 class SurveyResult(models.Model):
     from .forms import (QuestionarioPaginaIniziale, SelectDirettoreCorsoForm,
         ValutazioneDirettoreCorsoForm, ValutazioneUtilitaLezioniForm,
-        ValutazioneDocenteCorsoForm,)
+        ValutazioneDocenteCorsoForm, ValutazioneOrganizzazioneServiziForm,)
 
     INIZIO = 'in'
     SELEZIONA_DIRETTORE = 'sd'
     VALUTAZIONE_DIRETTORE = 'vd'
     VALUTAZIONE_LEZIONI = 'vl'
     VALUTAZIONE_DOCENTE = 'dv'
+    VALUTAZIONE_ORG_SERVIZI = 'os'
     GRAZIE = 'gr'
 
     # Not for model field choices use
@@ -119,8 +123,9 @@ class SurveyResult(models.Model):
         SELEZIONA_DIRETTORE: (1, SelectDirettoreCorsoForm, VALUTAZIONE_DIRETTORE),
         VALUTAZIONE_DIRETTORE: (2, ValutazioneDirettoreCorsoForm, VALUTAZIONE_LEZIONI),
         VALUTAZIONE_LEZIONI: (3, ValutazioneUtilitaLezioniForm, VALUTAZIONE_DOCENTE),
-        VALUTAZIONE_DOCENTE: (4, ValutazioneDocenteCorsoForm, GRAZIE),
-        GRAZIE: (5, None, None),
+        VALUTAZIONE_DOCENTE: (4, ValutazioneDocenteCorsoForm, VALUTAZIONE_ORG_SERVIZI),
+        VALUTAZIONE_ORG_SERVIZI: (5, ValutazioneOrganizzazioneServiziForm, GRAZIE),
+        GRAZIE: (6, None, None),
     }
 
     user = models.ForeignKey(Persona)
@@ -178,6 +183,10 @@ class SurveyResult(models.Model):
     @property
     def current_step(self):
         return self.response_json.get('step')
+
+    @property
+    def final_step_id(self):
+        return SurveyResult.STEPS[SurveyResult.GRAZIE][0]
 
     class Meta:
         verbose_name = "Risposta dell'utente"
