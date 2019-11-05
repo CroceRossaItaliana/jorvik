@@ -48,6 +48,11 @@ def course_survey(request, me, pk):
     result, created = SurveyResult.objects.get_or_create(course=course,
                                                          user=me,
                                                          survey=survey)
+
+    if result.concluso:
+        messages.success(request, "Grazie per la compilazione di tutto il questionario.")
+        return redir_to_course
+
     context['survey_result'] = result
 
     # Valorizza il campo json senza dati (keys vuoti)

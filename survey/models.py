@@ -185,6 +185,10 @@ class SurveyResult(models.Model):
         return self.response_json.get('step')
 
     @property
+    def concluso(self):
+        return True if self.current_step == SurveyResult.GRAZIE else False
+
+    @property
     def final_step_id(self):
         return SurveyResult.STEPS[SurveyResult.GRAZIE][0]
 
