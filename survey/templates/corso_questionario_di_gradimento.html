@@ -52,8 +52,9 @@
                         {% include template %}
                         <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Avanti</button>
                     </form>
-                {% elif step == 5 %}
-                    {% include 'survey_step_5_inc.html' %}
+
+                {% elif step == survey_result.final_step_id %}
+                    {% include template %}
                 {% else %}
                     {% include 'survey_step_0_inc.html' %}
                 {% endif %}

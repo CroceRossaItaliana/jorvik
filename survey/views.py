@@ -115,7 +115,8 @@ def course_survey(request, me, pk):
             (2): Valutazione direttore
             (3): Valutazione lezioni
             (4): Valutazione di ogni docente di ogni lezione
-            (5): Grazie.
+            (5): Valutazione organizzazione e servizi
+            (6): Grazie.
         """
 
         # Valida form collegaga allo step attuale

@@ -8,8 +8,7 @@ from .models import Survey, Question # SurveyResult
 class QuestionarioForm(forms.Form):
     QGROUP_UTILITA_PERCEPITA = 1
     QGROUP_DOCENTI = 2
-    QGROUP_ORGANIZZAZIONE = 3
-    QGROUP_SERVIZI = 4
+    QGROUP_ORG_SERVIZI = 3
 
     CHOICES_1_10 = [(i, i) for i in range(1, 11)]
 
@@ -27,7 +26,11 @@ class QuestionarioForm(forms.Form):
         return list(self.survey_result.response_json['direttori'].keys())
 
     def populate_questions_inputs(self, survey, question_group_id, **kwargs):
-        for question in survey.get_questions().filter(question_group__id=question_group_id):
+        questions_qs = survey.get_questions().filter(
+            question_group__id=question_group_id
+        ).order_by('order',)
+
+        for question in questions_qs:
             if not question.is_active:
                 # skip inactive questions
                 continue
@@ -37,8 +40,12 @@ class QuestionarioForm(forms.Form):
 
             if question.question_type == Question.RADIO:
                 self.fields[qid].widget = forms.RadioSelect(choices=self.CHOICES_1_10)
+
+            elif question.question_type == Question.BOOLEAN:
+                self.fields[qid] = forms.BooleanField(label=question.text)
+
             elif question.question_type == Question.TEXT:
-                pass
+                pass  # non modifica niente
 
     def process_qid(self, cd):
         QID_PREFIX = 'qid_'
@@ -242,6 +249,64 @@ class ValutazioneDocenteCorsoForm(QuestionarioForm):
         return False
 
 
+class ValutazioneOrganizzazioneServiziForm(QuestionarioForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        survey = self.instance
+
+        # Per indicare con request.POST con che form/step stiamo lavorando
+        self.fields['step'].initial = self.step
+
+        self.populate_questions_inputs(survey, QuestionarioForm.QGROUP_ORG_SERVIZI)
+
+        boolean_non_required_fields = survey.get_questions().filter(
+            question_group__id=QuestionarioForm.QGROUP_ORG_SERVIZI,
+        )
+
+        for field in boolean_non_required_fields:
+            self.fields[field.qid].required = False
+
+    def clean(self):
+        cd = self.cleaned_data
+
+        questions_to_validate = self.instance.get_questions().filter(
+            question_group__id=QuestionarioForm.QGROUP_ORG_SERVIZI,
+            question_type=Question.RADIO,
+            anchor__isnull=False,
+        ).values_list('pk', 'anchor',)
+        questions_to_validate = list(filter(lambda x: x[1], questions_to_validate))
+
+        for i in questions_to_validate:
+            pk, anchor = i
+            risposta_parente = cd.get('qid_%s' % anchor)
+            if risposta_parente is None:
+                continue
+
+            rispost_qid = 'qid_%s' % pk
+            risposta = cd.get(rispost_qid)
+            if risposta and not risposta_parente:
+                msg = 'Questo campo è valorazzare solo nel caso di risposta "Si" nella domanda precedente'
+                self.add_error(rispost_qid, msg)
+
+        return cd
+
+    def validate_questionario(self, result, **kwargs):
+        form = self
+        if form.is_valid():
+            cd = form.cleaned_data
+
+            if 'org_servizi' not in result.response_json:
+                result.response_json['org_servizi'] = dict()
+
+            risposte = {k.replace('qid_', ''): v for k, v in cd.items() if k.startswith('qid')}
+            result.response_json['org_servizi'] = risposte
+            result.save()
+            return True
+
+        return False
+
+
 class RespondToCourseSurveyForm(ModelForm):
     class Meta:
         model = Survey
@@ -253,33 +318,33 @@ class RespondToCourseSurveyForm(ModelForm):
         super().__init__(*args, **kwargs)
         self.fields.pop('text')
 
-        # survey = self.instance
-        # responses = survey.get_responses_dict(self.me)
-        # for question in survey.get_questions():
-        #     if not question.is_active:
-        #         # skip inactive questions
-        #         continue
-        #
-        #     qid = question.qid
-        #     self.fields[qid] = forms.CharField(label=question.text)
-        #     field = self.fields[qid]
-        #
-        #     if qid in responses:
-        #         # Set input values if user has already voted
-        #         response_for_question = responses[qid]
-        #         field.initial = response_for_question['response']
-        #
-        #         # Disable editing after N time passed since user voted
-        #         delta = datetime.now() - response_for_question['object'].created_at
-        #         if delta >= timedelta(days=2):
-        #             field.widget.attrs["disabled"] = "disabled"
-        #
-        #     if survey.is_course_admin(self.me, self.course):
-        #         # Director of course can see questions but cannot vote
-        #         field.widget.attrs["disabled"] = "disabled"
-        #
-        #     if question.required:
-        #         field.required = True
-        #         field.widget.attrs["class"] = "required"
-        #     else:
-        #         field.required = False
+        survey = self.instance
+        responses = survey.get_responses_dict(self.me, self.course)
+        for question in survey.get_questions():
+            if not question.is_active:
+                # skip inactive questions
+                continue
+
+            qid = question.qid
+            self.fields[qid] = forms.CharField(label=question.text)
+            field = self.fields[qid]
+
+            if qid in responses:
+                # Set input values if user has already voted
+                response_for_question = responses[qid]
+                field.initial = response_for_question['response']
+
+                # Disable editing after N time passed since user voted
+                delta = datetime.now() - response_for_question['object'].created_at
+                if delta >= timedelta(days=2):
+                    field.widget.attrs["disabled"] = "disabled"
+
+            if survey.is_course_admin(self.me, self.course):
+                # Director of course can see questions but cannot vote
+                field.widget.attrs["disabled"] = "disabled"
+
+            if question.required:
+                field.required = True
+                field.widget.attrs["class"] = "required"
+            else:
+                field.required = False
