@@ -29,6 +29,10 @@ def course_survey(request, me, pk):
     if not survey.can_vote(me, course):
         return redirect(ERRORE_PERMESSI)
 
+    if survey.is_course_admin(me, course):
+        messages.error(request, 'Direttori e amministratori del corso non possono compilare il questionario.')
+        return redir_to_course
+
     survey_url = reverse("survey:course", args=[pk,])
 
     context = {
