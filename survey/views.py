@@ -45,9 +45,14 @@ def course_survey(request, me, pk):
     step, form, next_step = step_in_dict
 
     # Crea/trova oggetto per le risposte
-    result, created = SurveyResult.objects.get_or_create(course=course,
-                                                         user=me,
-                                                         survey=survey)
+    try:
+        result, created = SurveyResult.objects.get_or_create(course=course,
+                                                             user=me,
+                                                             survey=survey)
+    except SurveyResult.MultipleObjectsReturned:
+        if SurveyResult.get_responses_for_course(course).filter(new_version=False).exists():
+            messages.error(request, "Il questionario è stato già compilato.")
+            return redir_to_course
 
     if result.concluso:
         messages.success(request, "Grazie per la compilazione di tutto il questionario.")
@@ -137,23 +142,17 @@ def course_survey(request, me, pk):
             # Valutazione docente -> lezione
             # Prossimo step rimane sempre lo stesso finchè non sono state
             # compilate tutte le combinazioni docente\lezione.
-
-            # print(result.get_uncompleted_valutazione_docente_lezione())
             if step == 4 and result.get_uncompleted_valutazione_docente_lezione()[0] is not None:
                 return redirect(survey_url + "?step=%s" % SurveyResult.VALUTAZIONE_DOCENTE)
 
             result.response_json['step'] = next_step
             result.save()
 
-            # print(1, step, form, next_step)
-
             # Rindirizza
             next_step_qs = "?step=%s" % next_step if next_step is not None else ''
             next_step_reverse = survey_url + next_step_qs
 
             return redirect(next_step_reverse)
-
-    # print(0, step, form, next_step)
 
     context['template'] = 'survey_step_%s_inc.html' % step
     return 'corso_questionario_di_gradimento.html', context

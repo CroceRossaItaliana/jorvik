@@ -267,7 +267,9 @@ class SurveyResult(models.Model):
 
     @property
     def current_step(self):
-        return self.response_json.get('step')
+        if self.response_json is not None:
+            return self.response_json.get('step')
+        return None
 
     @property
     def concluso(self):
