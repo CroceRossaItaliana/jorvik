@@ -55,8 +55,6 @@ class QuestionarioForm(forms.Form):
 
 
 class QuestionarioPaginaIniziale(QuestionarioForm):
-    # def process(self, result, next_step):
-    #     super().process(result, next_step)
     pass
 
 
@@ -223,27 +221,46 @@ class ValutazioneDocenteCorsoForm(QuestionarioForm):
                 if lezione_pk not in lezioni_struttura[docente_pk]:
                     lezioni_struttura[docente_pk][lezione_pk] = dict(completed=False)
 
-            # # Per docenti esterni
-            # docente_esterno = lezione.docente_esterno
-            # if docente_esterno:
-            #     if docente_esterno not in lezioni_struttura:
-            #         lezioni_struttura[docente_esterno] = dict()
-            #     lezioni_struttura[docente_esterno][lezione.pk] = dict(completed=False)
+        for docente_esterno in self.course.docenti_esterni_corso():
+            docente_esterno_prefix = 'de_%s' % docente_esterno
+
+            for lezione in self.course.lezioni.all():
+                if not lezione.docente_esterno:
+                    continue
+                if docente_esterno not in lezione.docente_esterno:
+                    continue
+
+                if docente_esterno not in lezioni_struttura:
+                    lezioni_struttura[docente_esterno_prefix] = dict()
+
+                lezioni_struttura[docente_esterno_prefix][lezione.pk] = dict(completed=False)
 
         # Salva la struttura
         self.survey_result.save()
 
     def validate_questionario(self, result, **kwargs):
+        prefix = 'de'
         form = self
         if form.is_valid():
             cd = form.cleaned_data
 
-            docente, lezione = cd['docente_lezione_pk'].split('_')
+            if cd['docente_lezione_pk'].startswith('%s_' % prefix):
+                docente, lezione = [i for i in cd['docente_lezione_pk'].split('_') if i != prefix]
+                docente = "%s_%s" % (prefix, docente)
+            else:
+                docente, lezione = cd['docente_lezione_pk'].split('_')
 
             risposte = self.process_qid(cd)
             risposte['completed'] = True
 
-            result.response_json['lezioni'][docente][lezione] = risposte
+            docente_key = result.response_json['lezioni'][docente]
+            if int(lezione) in docente_key:
+                lezione = int(lezione)
+
+            elif str(lezione) in docente_key:
+                lezione = str(lezione)
+
+            result.response_json['lezioni'][docente][lezione].update(risposte)
             result.save()
 
             return True
