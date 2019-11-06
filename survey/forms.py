@@ -10,7 +10,7 @@ class QuestionarioForm(forms.Form):
     QGROUP_DOCENTI = 2
     QGROUP_ORG_SERVIZI = 3
 
-    CHOICES_1_10 = [(i, i) for i in range(1, 11)]
+    CHOICES_1_10 = [(0,'Nessuna valutazione')] + [(i, i) for i in range(1, 11)]
 
     step = forms.CharField(widget=forms.HiddenInput())
 
