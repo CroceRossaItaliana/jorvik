@@ -132,6 +132,7 @@ class SurveyResult(models.Model):
     course = models.ForeignKey('formazione.CorsoBase', blank=True, null=True)
     survey = models.ForeignKey(Survey)
     question = models.ForeignKey(Question, blank=True, null=True)
+    new_version = models.BooleanField(default=False, blank=True)
     response = models.TextField(max_length=1000, blank=True, null=True)
     response_json = JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -152,9 +153,6 @@ class SurveyResult(models.Model):
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
 
         writer = csv.writer(response, delimiter=';')
-
-        responses_to_q = cls.get_responses_for_course(course)
-        responses_with_json = responses_to_q.values_list('response_json', flat=True)
 
         def _direttori(result):
             rows = list()
@@ -200,7 +198,14 @@ class SurveyResult(models.Model):
 
             return rows
 
+        # Trova le risposte per il questionario di questo corso
+        responses_to_q = cls.get_responses_for_course(course)
+
+        # Verifica se le risposte sono JSON (nuova modalità)
+        responses_with_json = responses_to_q.filter(new_version=True).exists()
         if responses_with_json:
+
+            # Report per le risposte in JSON
             columns = [
                 '1. Valutazione direttore (nome)', 'Domanda', 'Risposta',
                 '2. Utilita lezione', 'Voto',
@@ -229,6 +234,8 @@ class SurveyResult(models.Model):
                     writer.writerow([''] * 9 + row)
 
         else:
+            # Report per le risposte vecchio formato (prima del rilascio)
+            # Ogni risposta -> record db <SurveyResult>
             columns = ['Corso', 'Domanda', 'Risposta', 'Creato', 'Modificato']
             writer.writerow(columns)
             for result in responses_to_q:
