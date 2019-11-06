@@ -137,7 +137,8 @@ class ValutazioneUtilitaLezioniForm(QuestionarioForm):
         # Risposte precedentemente salvate
         response_lezioni = self.survey_result.response_json['utilita_lezioni']
 
-        for lezione in self.course.get_lezioni_precaricate():
+        # for lezione in self.course.get_lezioni_precaricate():
+        for lezione in self.course.lezioni.all():
             lezione_pk = 'lezioni_pk_%s' % lezione.pk
 
             # Crea i campi con 10 radio-button (0-10)
