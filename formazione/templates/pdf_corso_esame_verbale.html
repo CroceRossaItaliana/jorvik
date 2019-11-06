@@ -194,7 +194,7 @@
                         {% if corso.titolo_cri.scheda_prevede_esame %}
 
                             {% if not p.get_esito_esame_display %}
-                                <span style="color:red;">{% if p.idoneo %}IDONEO{% else %}NON IDONEO{% endif %}</span>
+                                <span style="color:red;">{{ p.get_ammissione_display }}</span>
                             {% else %}
                                 {{ p.get_esito_esame_display|default:"N/D" }}
                             {% endif %}
