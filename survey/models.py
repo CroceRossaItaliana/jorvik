@@ -185,7 +185,10 @@ class SurveyResult(models.Model):
             lezioni_rows = result.response_json['lezioni']
 
             for docente_pk, lezione_data in lezioni_rows.items():
-                docente = Persona.objects.get(pk=docente_pk)
+                if docente_pk.startswith('de_'):
+                    docente = docente_pk
+                else:
+                    docente = Persona.objects.get(pk=docente_pk)
 
                 for lezione_pk, data in lezione_data.items():
                     lezione = LezioneCorsoBase.objects.get(pk=lezione_pk)
