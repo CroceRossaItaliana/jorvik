@@ -226,16 +226,16 @@ class SurveyResult(models.Model):
                 org_servizi_rows = _org_servizi(result)
 
                 for row in direttori_rows:
-                    writer.writerow(row)
+                    writer.writerow(row + [''] * 8 + [result.created_at, result.updated_at])
 
                 for row in utilita_lezioni_rows:
-                    writer.writerow([''] * 3 + row)
+                    writer.writerow([''] * 3 + row + [''] * 6 + [result.created_at, result.updated_at])
 
                 for row in valutazione_docente_rows:
-                    writer.writerow([''] * 5 + row)
+                    writer.writerow([''] * 5 + row + [''] * 2 + [result.created_at, result.updated_at])
 
                 for row in org_servizi_rows:
-                    writer.writerow([''] * 9 + row)
+                    writer.writerow([''] * 9 + row + [result.created_at, result.updated_at])
 
         else:
             # Report per le risposte vecchio formato (prima del rilascio)
