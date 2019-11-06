@@ -265,7 +265,12 @@ class SurveyResult(models.Model):
             for lezione_pk, lezione_data in lezione_data.items():
                 if lezione_data['completed']:
                     continue
-                return int(docente_pk), int(lezione_pk)
+
+                if docente_pk.startswith('de_'):
+                    return docente_pk, int(lezione_pk)
+                else:
+                    return int(docente_pk), int(lezione_pk)
+
         return None, None
 
     @property

@@ -119,7 +119,11 @@ def course_survey(request, me, pk):
     elif step_in_request == SurveyResult.VALUTAZIONE_DOCENTE:
         docente, lezione = result.get_uncompleted_valutazione_docente_lezione()
         if docente and lezione:
-            context['valutazione_docente'] = Persona.objects.get(pk=docente)
+            if isinstance(docente, int):
+                context['valutazione_docente'] = Persona.objects.get(pk=docente)
+            else:
+                context['valutazione_docente'] = docente.replace('de_', '')
+
             context['valutazione_lezione'] = LezioneCorsoBase.objects.get(pk=lezione)
         else:
             result.response_json['step'] = next_step
