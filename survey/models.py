@@ -202,12 +202,12 @@ class SurveyResult(models.Model):
         responses_to_q = cls.get_responses_for_course(course)
 
         # Verifica se le risposte sono JSON (nuova modalità)
-        responses_with_json = responses_to_q.filter(new_version=True).exists()
-        if responses_with_json:
+        responses_with_json = responses_to_q.filter(new_version=True)
+        if responses_with_json.exists():
+            responses_to_q = responses_with_json
 
             # Report per le risposte in JSON
             columns = [
-                'Utente',
                 '1. Valutazione direttore (nome)', 'Domanda', 'Risposta',
                 '2. Utilita lezione', 'Voto',
                 '3. Valutazione docente (nome)', 'Lezione', 'Domanda', 'Voto',
@@ -222,25 +222,25 @@ class SurveyResult(models.Model):
                 valutazione_docente_rows = _valutazione_docenti(result)
                 org_servizi_rows = _org_servizi(result)
 
-                persona_in_list = [str(result.user)]
-
                 for row in direttori_rows:
-                    writer.writerow(persona_in_list + row)
+                    writer.writerow(row)
 
                 for row in utilita_lezioni_rows:
-                    writer.writerow(persona_in_list + [''] * 3 + row)
+                    writer.writerow([''] * 3 + row)
 
                 for row in valutazione_docente_rows:
-                    writer.writerow(persona_in_list + [''] * 5 + row)
+                    writer.writerow([''] * 5 + row)
 
                 for row in org_servizi_rows:
-                    writer.writerow(persona_in_list + [''] * 9 + row)
+                    writer.writerow([''] * 9 + row)
 
         else:
             # Report per le risposte vecchio formato (prima del rilascio)
             # Ogni risposta -> record db <SurveyResult>
             columns = ['Corso', 'Domanda', 'Risposta', 'Creato', 'Modificato']
             writer.writerow(columns)
+
+            responses_to_q = responses_to_q.exclude(new_version=True)
             for result in responses_to_q:
                 writer.writerow([
                     course.nome,

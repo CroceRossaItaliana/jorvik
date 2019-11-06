@@ -49,12 +49,15 @@ def course_survey(request, me, pk):
         result, created = SurveyResult.objects.get_or_create(course=course,
                                                              user=me,
                                                              survey=survey)
+        result.new_version = True
+        result.save()
+
     except SurveyResult.MultipleObjectsReturned:
         if SurveyResult.get_responses_for_course(course).filter(new_version=False).exists():
             messages.error(request, "Il questionario è stato già compilato.")
             return redir_to_course
 
-    if result.concluso:
+    if result.concluso and step != 6:
         messages.success(request, "Grazie per la compilazione di tutto il questionario.")
         return redir_to_course
 
@@ -115,7 +118,11 @@ def course_survey(request, me, pk):
             context['valutazione_docente'] = Persona.objects.get(pk=docente)
             context['valutazione_lezione'] = LezioneCorsoBase.objects.get(pk=lezione)
         else:
-            messages.warning(request, "Questo step del questionario è stato già completato.")
+            result.response_json['step'] = next_step
+            result.save()
+
+            messages.warning(request, "Non ci sono docenti da valutare o "
+                                      "questo step è stato già completato.")
             return redirect(survey_url)
 
     # Arriva form da validare e salvare
