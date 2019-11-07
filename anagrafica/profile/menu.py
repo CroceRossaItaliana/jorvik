@@ -17,11 +17,38 @@ def filter_per_role(request, me, persona, sezioni):
     corsi_persona = persona.corsi(corso_stato=[Corso.ATTIVO, Corso.PREPARAZIONE])
     corsi_in_comune = corsi_direttore & corsi_persona
 
+    def delete_sessions(request):
+        session_names = ['us', 'ea',]
+        for n in session_names:
+            if n in request.session.keys():
+                # print(n)
+                del request.session[n]
+
+    def elenco_shortname_in_get():
+        for i in [ElencoPartecipantiCorsiBase.SHORT_NAME,]:
+            if i in request.GET and not corsi_in_comune:
+                return False
+        return True
+
     sezioni = OrderedDict(sezioni)
     if 'us' in request.GET or 'ea' in request.GET:
+        if 'us' in request.GET:
+            request.session['us'] = ''
+        elif 'ea' in request.GET:
+            request.session['ea'] = ''
+        return sezioni
+
+    elif 'us' in request.session.keys() and not elenco_shortname_in_get():
+        delete_sessions(request)
+        return sezioni
+
+    elif 'ea' in request.session.keys() and not elenco_shortname_in_get():
+        delete_sessions(request)
         return sezioni
 
     elif ElencoPartecipantiCorsiBase.SHORT_NAME in request.GET or corsi_in_comune:
+        delete_sessions(request)
+
         SEZIONI_VISIBILI_PER_DIRETTORE = ['appartenenze', 'curriculum',]
 
         # Trova corsi del direttore e corsi della persona
