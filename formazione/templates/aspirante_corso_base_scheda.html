@@ -160,6 +160,16 @@
         </div>
     {% endif %}
 
+    {% if puo_modificare and corso.stato == corso.ATTIVO and not corso.terminabile %}
+        <div class="alert alert-success alert-block">
+            <p>
+                <h4><i class="fa fa-fw fa-check"></i> Vuoi partecipare a questo corso?</h4>
+                Sei amministratore del corso <strong>(Responsabile della formazione, Direttore del corso, Comissario o Presidente)</strong> e vorresti partecipare a questo corso?
+                Per partecipare dovresti <a style="text-decoration:underline;" href="{{ corso.url_iscritti_aggiungi }}#id_persone-autocomplete">invitare se stesso</a> sulla pagina "Iscrizioni" inserendo il tuo Codice Fiscale.
+            </p>
+        </div>
+    {% endif %}
+
     {% if puo_modificare and corso.terminabile %}
         <div class="alert alert-success alert-block">
             <h4><i class="fa fa-fw fa-warning"></i> Terminazione corso</h4>
