@@ -1156,14 +1156,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         elif self.livello in [Titolo.CDF_LIVELLO_III, Titolo.CDF_LIVELLO_IV]:
             pass
 
-        # Invia e-mail
-        Messaggio.invia_raw(
-            oggetto=oggetto,
-            corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
-            email_mittente=Messaggio.NOREPLY_EMAIL,
-            lista_email_destinatari=email_destinatari,
-            allegati=self.delibera_file
-        )
+        if sede == REGIONALE:
+            # Invia e-mail
+            Messaggio.invia_raw(
+                oggetto=oggetto,
+                corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
+                email_mittente=Messaggio.NOREPLY_EMAIL,
+                lista_email_destinatari=email_destinatari,
+                allegati=self.delibera_file
+            )
 
         if not sede == NAZIONALE:
             email_to = self.sede.sede_regionale.presidente()
