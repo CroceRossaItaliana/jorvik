@@ -82,6 +82,10 @@ def formazione_osserva_corsi(request, me):
         for sede in sedi:
             comitati = sede.comitati_sottostanti()
             for comitato in comitati:
+
+                if comitato.pk == 524:  # Lazio
+                    comitato = Sede.objects.get(pk=1638)  # Area Metropolitana di Roma Capitale Coordinamento
+
                 corsi = CorsoBase.objects.filter(sede=comitato).count()
                 if corsi:
                     if sede not in results:
