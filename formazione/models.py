@@ -2057,7 +2057,7 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
         :return: Un elenco di Corsi.
         """
         corsi = CorsoBase.pubblici().filter(**kwargs)
-        return self.nel_raggio(corsi)
+        return self.nel_raggio(corsi.exclude(tipo=CorsoBase.CORSO_NUOVO))
 
     def corso(self):
         partecipazione = PartecipazioneCorsoBase.con_esito_ok(persona=self.persona)
