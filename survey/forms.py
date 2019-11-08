@@ -208,11 +208,11 @@ class ValutazioneDocenteCorsoForm(QuestionarioForm):
 
         lezioni_struttura = self.survey_result.response_json['lezioni']
         for lezione in self.course.lezioni.all():
+            lezione_pk = str(lezione.pk)
 
             # Per docenti (Persona)
             for docente_pk in lezione.docente.all().values_list('pk', flat=True):
                 docente_pk = str(docente_pk)
-                lezione_pk = str(lezione.pk)
 
                 # Crea dict vuoti
                 if docente_pk not in lezioni_struttura:
@@ -225,15 +225,18 @@ class ValutazioneDocenteCorsoForm(QuestionarioForm):
             docente_esterno_prefix = 'de_%s' % docente_esterno
 
             for lezione in self.course.lezioni.all():
+                lezione_pk = str(lezione.pk)
+
                 if not lezione.docente_esterno:
                     continue
                 if docente_esterno not in lezione.docente_esterno:
                     continue
 
-                if docente_esterno not in lezioni_struttura:
+                if docente_esterno_prefix not in lezioni_struttura:
                     lezioni_struttura[docente_esterno_prefix] = dict()
 
-                lezioni_struttura[docente_esterno_prefix][lezione.pk] = dict(completed=False)
+                if lezione_pk not in lezioni_struttura[docente_esterno_prefix]:
+                    lezioni_struttura[docente_esterno_prefix][lezione_pk] = dict(completed=False)
 
         # Salva la struttura
         self.survey_result.save()
@@ -253,14 +256,7 @@ class ValutazioneDocenteCorsoForm(QuestionarioForm):
             risposte = self.process_qid(cd)
             risposte['completed'] = True
 
-            docente_key = result.response_json['lezioni'][docente]
-            if int(lezione) in docente_key:
-                lezione = int(lezione)
-
-            elif str(lezione) in docente_key:
-                lezione = str(lezione)
-
-            result.response_json['lezioni'][docente][lezione].update(risposte)
+            result.response_json['lezioni'][docente][lezione] = risposte
             result.save()
 
             return True
