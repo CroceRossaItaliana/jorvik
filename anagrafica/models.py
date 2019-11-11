@@ -310,6 +310,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return self.appartenenze.filter(confermata=True, **kwargs).order_by('inizio').first()
 
+    @property
+    def appartenenza_volontario(self):
+        return self.appartenenze_attuali(membro=Appartenenza.VOLONTARIO)
+
     def appartenenze_per_presidente(self, presidente):
         """
         Ottiene il queryset delle appartenenze attuali e confermate, in base al Presidente

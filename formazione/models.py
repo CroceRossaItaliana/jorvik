@@ -770,39 +770,57 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             torna_titolo="Torna al Corso",
             torna_url=self.url)
 
+
     def _corso_activation_recipients_for_email(self):
+        """
+        Trovare destinatari aspiranti o volontari da avvisare di un nuovo corso attivato.
+        :return: <Persona>QuerySet
+        """
         if self.corso_vecchio or not self.is_nuovo_corso:
-            return self.aspiranti_nelle_vicinanze()
+            aspiranti_list = self.aspiranti_nelle_vicinanze().values_list('pk', flat=True)
+            persone = Persona.objects.filter(pk__in=aspiranti_list)
         else:
-            return self.get_volunteers_by_course_requirements()
+            persone = self.get_volunteers_by_course_requirements()
+        return persone
+
+    def _corso_activation_recipients_for_email_generator(self):
+        """
+        :return: generator
+        """
+        from django.core.paginator import Paginator
+
+        splitted = Paginator(self._corso_activation_recipients_for_email(), 1000)
+        for i in splitted.page_range:
+            current_page = splitted.page(i)
+            current_qs = current_page.object_list
+            yield current_qs
 
     def _invia_email_agli_aspiranti(self, rispondi_a=None):
-        for recipient in self._corso_activation_recipients_for_email():
-            if self.is_nuovo_corso:
-                persona = recipient
-                subject = "Nuovo %s per Volontari CRI" % self.titolo_cri
-            else:
-                persona = recipient.persona
-                subject = "Nuovo Corso per Volontari CRI"
+        if self.is_nuovo_corso:
+            subject = "Nuovo %s per Volontari CRI" % self.titolo_cri
+        else:
+            subject = "Nuovo Corso per Volontari CRI"
 
-            email_data = dict(
-                oggetto=subject,
-                modello="email_aspirante_corso.html",
-                corpo={
-                    'persona': persona,
-                    'corso': self,
-                },
-                destinatari=[persona],
-                rispondi_a=rispondi_a
-            )
+        for queryset in self._corso_activation_recipients_for_email_generator():
+            for recipient in queryset:
+                email_data = dict(
+                    oggetto=subject,
+                    modello="email_aspirante_corso.html",
+                    corpo={
+                        'persona': recipient,
+                        'corso': self,
+                    },
+                    destinatari=[recipient],
+                    rispondi_a=rispondi_a
+                )
 
-            if self.tipo == Corso.BASE and not recipient.persona.volontario:
-                # Informa solo aspiranti di zona
-                Messaggio.costruisci_e_accoda(**email_data)
+                if self.tipo == Corso.BASE and not recipient.volontario:
+                    # Informa solo aspiranti di zona
+                    Messaggio.costruisci_e_accoda(**email_data)
 
-            if self.is_nuovo_corso:
-                # Informa volontari secondo le estensioni impostate (sedi, segmenti, titoli)
-                Messaggio.costruisci_e_accoda(**email_data)
+                if self.is_nuovo_corso:
+                    # Informa volontari secondo le estensioni impostate (sedi, segmenti, titoli)
+                    Messaggio.costruisci_e_accoda(**email_data)
 
     def has_extensions(self, is_active=True, **kwargs):
         """ Case: extension_type == EXT_LVL_REGIONALE """
@@ -1131,14 +1149,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         elif self.livello in [Titolo.CDF_LIVELLO_III, Titolo.CDF_LIVELLO_IV]:
             pass
 
-        # Invia e-mail
-        Messaggio.invia_raw(
-            oggetto=oggetto,
-            corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
-            email_mittente=Messaggio.NOREPLY_EMAIL,
-            lista_email_destinatari=email_destinatari,
-            allegati=self.delibera_file
-        )
+        if sede == REGIONALE:
+            # Invia e-mail
+            Messaggio.invia_raw(
+                oggetto=oggetto,
+                corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
+                email_mittente=Messaggio.NOREPLY_EMAIL,
+                lista_email_destinatari=email_destinatari,
+                allegati=self.delibera_file
+            )
 
         if not sede == NAZIONALE:
             email_to = self.sede.sede_regionale.presidente()
@@ -2024,7 +2043,7 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
         :return: Un elenco di Corsi.
         """
         corsi = CorsoBase.pubblici().filter(**kwargs)
-        return self.nel_raggio(corsi)
+        return self.nel_raggio(corsi.exclude(tipo=CorsoBase.CORSO_NUOVO))
 
     def corso(self):
         partecipazione = PartecipazioneCorsoBase.con_esito_ok(persona=self.persona)

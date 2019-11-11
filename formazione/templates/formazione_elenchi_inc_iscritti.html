@@ -3,6 +3,7 @@
 {% block elenco_intestazione_extra %}
     <!--formazione_elenchi_inc_iscritti-->
     <th>Stato</th>
+    <th>Appartenenza</th>
 {% endblock %}
 
 {% block elenco_riga_extra %}
@@ -11,6 +12,15 @@
             Iscritto
         {% else %}
             Invitato
+        {% endif %}
+    </td>
+    <td>
+        {% if persona.volontario %}
+            {% for app in persona.appartenenza_volontario %}
+                {{ app.sede }}<br>
+            {% endfor %}
+        {% else %}
+            -
         {% endif %}
     </td>
 {% endblock %}

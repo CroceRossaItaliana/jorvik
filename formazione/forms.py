@@ -407,6 +407,23 @@ class CorsoExtensionForm(ModelForm):
 
 class ModuloConfermaIscrizioneCorso(forms.Form):
     IS_CORSO_NUOVO = True
+    MAX_ISCRIZIONI_CONFERMABILI = 30
+
+    def clean(self):
+        cd = self.cleaned_data
+
+        corso = self.instance.corso
+        max_iscrizioni = ModuloConfermaIscrizioneCorso.MAX_ISCRIZIONI_CONFERMABILI
+
+        if corso.partecipazioni_confermate().count() >= max_iscrizioni:
+            raise ValidationError('Come da regolamento non si possono iscrivere più di %s partecipanti. '
+                                  'É raggiunto il limite massimo.' % max_iscrizioni)
+        return cd
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance')
+
+        super().__init__(*args, *kwargs)
 
 
 class ModuloConfermaIscrizioneCorsoBase(forms.Form):
@@ -608,6 +625,16 @@ class FormCreateDirettoreDelega(ModelForm):
     persona = autocomplete_light.ModelChoiceField('CreateDirettoreDelegaAutocompletamento')
     has_nulla_osta = forms.BooleanField(label='Responsabilità di aver ricevuto nulla osta dal presidente del comitato di appartenenza',
                                         initial=True)
+
+    def clean(self):
+        cd = self.cleaned_data
+        corso = self.oggetto
+
+        if corso.titolo_cri and corso.titolo_cri.cdf_livello != Titolo.CDF_LIVELLO_IV:
+            if corso.direttori_corso().count() >= 1:
+                self.add_error('persona', 'I corsi di questo livello possono avere uno ed un solo direttore')
+
+        return cd
 
     class Meta:
         model = Delega
