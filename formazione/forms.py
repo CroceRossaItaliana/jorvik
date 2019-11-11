@@ -407,6 +407,23 @@ class CorsoExtensionForm(ModelForm):
 
 class ModuloConfermaIscrizioneCorso(forms.Form):
     IS_CORSO_NUOVO = True
+    MAX_ISCRIZIONI_CONFERMABILI = 30
+
+    def clean(self):
+        cd = self.cleaned_data
+
+        corso = self.instance.corso
+        max_iscrizioni = ModuloConfermaIscrizioneCorso.MAX_ISCRIZIONI_CONFERMABILI
+
+        if corso.partecipazioni_confermate().count() >= max_iscrizioni:
+            raise ValidationError('Come da regolamento non si possono iscrivere più di %s partecipanti. '
+                                  'É raggiunto il limite massimo.' % max_iscrizioni)
+        return cd
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance')
+
+        super().__init__(*args, *kwargs)
 
 
 class ModuloConfermaIscrizioneCorsoBase(forms.Form):
