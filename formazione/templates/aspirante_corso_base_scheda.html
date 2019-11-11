@@ -46,7 +46,7 @@
 
         {% can_show_tab_questionario as show_tab_questionario %}
         {% if show_tab_questionario %}
-            <li role="presentation"><a data-tab-id="#tabQuestionario" href="{% url 'survey:course' corso.pk %}" class="questionario tabSelectorLink"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</a></li>
+            <li role="presentation"><a data-tab-id="#tabQuestionario" href="#" class="questionario tabSelectorLink"><i class="fa fa-fw fa-thumbs-up"></i> Questionario</a></li>
         {% endif %}
     </ul>
 
@@ -98,6 +98,7 @@
             <li {% if 'survey/course' in request.path %}class="active_link"{% endif %} role="presentation"><a href="{% url 'survey:course' corso.pk %}"><i class="fa fa-fw fa-thumbs-up"></i> Compila il Questionario di gradimento</a></li>
             {% if puo_modificare %}
                 <li {% if 'questionnaire/send-to-participants' in request.path %}class="active_link"{% endif %} role="presentation"><a href="{% url 'courses:send_questionnaire_to_participants' corso.pk %}"><i class="fa fa-fw fa-thumbs-up"></i> Invia il Questionario di gradimento</a></li>
+                <li {% if 'survey/course' in request.path %}class="active_link"{% endif %} role="presentation"><a href="{% url 'survey:course_download_results' corso.pk %}"><i class="fa fa-fw fa-thumbs-up"></i> Scarica i risultati</a></li>
             {% endif %}
         </ul>
     </div>

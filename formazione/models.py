@@ -1232,7 +1232,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             return list(set(filter(bool, docenti_esterni_result)))
 
         except:
-            # per qualsiasi problema. fatto in fretta, per evitare 500.
+            # per qualsiasi problema, per evitare 500.
             return list()
 
     def can_modify(self, me):
