@@ -53,9 +53,24 @@ class AutorizzazioneProcess:
 
         return self._template, context
 
+    def _form_kwargs(self):
+        """
+        kwargs da passare nella form da validare.
+        :return: empty dict (default) or dict with kwargs.
+        """
+
+        try:
+            if self.richiesta.oggetto is not None:
+                return dict(instance=self.richiesta.oggetto)
+        except Exception as e:
+            return dict()
+        return dict()
+
     def _process_form(self, concedi):
+        form_kwargs = self._form_kwargs()
+
         if self.request.POST:
-            self.form = self._autorizzazione_form(self.request.POST)
+            self.form = self._autorizzazione_form(self.request.POST, **form_kwargs)
             if self.form.is_valid():
                 # Accetta la richiesta con modulo
                 if concedi:
@@ -63,7 +78,7 @@ class AutorizzazioneProcess:
                 else:
                     self.richiesta.nega(self.me, modulo=self.form)
         else:
-            self.form = self._autorizzazione_form()
+            self.form = self._autorizzazione_form(**form_kwargs)
 
     def _validate(self):
         self.torna_url = self.request.session.get('autorizzazioni_torna_url',
