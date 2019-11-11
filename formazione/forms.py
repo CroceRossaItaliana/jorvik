@@ -609,6 +609,16 @@ class FormCreateDirettoreDelega(ModelForm):
     has_nulla_osta = forms.BooleanField(label='Responsabilità di aver ricevuto nulla osta dal presidente del comitato di appartenenza',
                                         initial=True)
 
+    def clean(self):
+        cd = self.cleaned_data
+        corso = self.oggetto
+
+        if corso.titolo_cri and corso.titolo_cri.cdf_livello != Titolo.CDF_LIVELLO_IV:
+            if corso.direttori_corso().count() >= 1:
+                self.add_error('persona', 'I corsi di questo livello possono avere uno ed un solo direttore')
+
+        return cd
+
     class Meta:
         model = Delega
         fields = ['persona', 'has_nulla_osta',]
