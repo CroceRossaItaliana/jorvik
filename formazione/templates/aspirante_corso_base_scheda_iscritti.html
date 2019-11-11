@@ -1,8 +1,6 @@
 {% extends 'aspirante_corso_base_scheda.html' %}
 
-{% block scheda_titolo %}
-    Iscritti
-{% endblock %}
+{% block scheda_titolo %}Iscritti{% endblock %}
 
 {% load utils %}
 
@@ -10,19 +8,13 @@
 
     {% if in_attesa.exists %}
         <div class="alert alert-block alert-warning">
-            <h4>
-                <i class="fa fa-fw fa-warning"></i>
-                Ci sono {{ in_attesa.count }} richieste di iscrizione
-            </h4>
+            <h4><i class="fa fa-fw fa-warning"></i> Ci sono {{ in_attesa.count }} richieste di iscrizione</h4>
             <p>
-                I <strong>direttori del corso</strong> e i
-                <strong>responsabili alla formazione del Comitato</strong>
-                possono confermare o negare le richieste
-                di iscrizione dalla
+                I <strong>direttori del corso</strong> e i <strong>responsabili alla formazione del Comitato</strong>
+                possono confermare o negare le richieste di iscrizione dalla
                 <a href="/autorizzazioni/57/"><i class="fa fa-fw fa-link"></i> sezione Richieste</a>.
             </p>
         </div>
-
     {% endif %}
 
     {% if corso.possibile_aggiungere_iscritti %}

@@ -354,8 +354,18 @@ def get_top_navbar(context):
 
     return ""
 
+
 @register.filter
 def is_rifiutato(id):
     from ufficio_soci.models import Tesserino
     return False if Tesserino.objects.filter(persona=id, stato_richiesta=Tesserino.RIFIUTATO).count() else True
 
+@register.simple_tag(takes_context=True)
+def add_session_flag_to_profile_urls(context):
+    request = context['request']
+
+    if 'us' in request.session.keys():
+        return '?us'
+    elif 'ea' in request.session.keys():
+        return '?ea'
+    return ''

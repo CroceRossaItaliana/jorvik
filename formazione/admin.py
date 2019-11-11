@@ -70,7 +70,7 @@ class AdminCorsoBase(ReadonlyAdminMixin, admin.ModelAdmin):
     search_fields = ['sede__nome', 'sede__genitore__nome', 'progressivo', 'anno', ]
     list_display = ['progressivo', 'tipo', 'stato', 'anno', 'sede',
                     'data_inizio', 'data_esame', 'delibera_file_col',]
-    list_filter = ['tipo', 'anno', 'creazione', 'stato', 'data_inizio', ]
+    list_filter = ['tipo', 'stato', 'titolo_cri__cdf_livello', 'anno', 'creazione', 'data_inizio',]
     raw_id_fields = RAW_ID_FIELDS_CORSOBASE
     inlines = [InlineDelegaCorsoBase, InlinePartecipazioneCorsoBase,
                InlineInvitoCorsoBase, InlineLezioneCorsoBase, InlineEstensioneCorso]

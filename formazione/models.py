@@ -770,39 +770,57 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             torna_titolo="Torna al Corso",
             torna_url=self.url)
 
+
     def _corso_activation_recipients_for_email(self):
+        """
+        Trovare destinatari aspiranti o volontari da avvisare di un nuovo corso attivato.
+        :return: <Persona>QuerySet
+        """
         if self.corso_vecchio or not self.is_nuovo_corso:
-            return self.aspiranti_nelle_vicinanze()
+            aspiranti_list = self.aspiranti_nelle_vicinanze().values_list('pk', flat=True)
+            persone = Persona.objects.filter(pk__in=aspiranti_list)
         else:
-            return self.get_volunteers_by_course_requirements()
+            persone = self.get_volunteers_by_course_requirements()
+        return persone
+
+    def _corso_activation_recipients_for_email_generator(self):
+        """
+        :return: generator
+        """
+        from django.core.paginator import Paginator
+
+        splitted = Paginator(self._corso_activation_recipients_for_email(), 1000)
+        for i in splitted.page_range:
+            current_page = splitted.page(i)
+            current_qs = current_page.object_list
+            yield current_qs
 
     def _invia_email_agli_aspiranti(self, rispondi_a=None):
-        for recipient in self._corso_activation_recipients_for_email():
-            if self.is_nuovo_corso:
-                persona = recipient
-                subject = "Nuovo %s per Volontari CRI" % self.titolo_cri
-            else:
-                persona = recipient.persona
-                subject = "Nuovo Corso per Volontari CRI"
+        if self.is_nuovo_corso:
+            subject = "Nuovo %s per Volontari CRI" % self.titolo_cri
+        else:
+            subject = "Nuovo Corso per Volontari CRI"
 
-            email_data = dict(
-                oggetto=subject,
-                modello="email_aspirante_corso.html",
-                corpo={
-                    'persona': persona,
-                    'corso': self,
-                },
-                destinatari=[persona],
-                rispondi_a=rispondi_a
-            )
+        for queryset in self._corso_activation_recipients_for_email_generator():
+            for recipient in queryset:
+                email_data = dict(
+                    oggetto=subject,
+                    modello="email_aspirante_corso.html",
+                    corpo={
+                        'persona': recipient,
+                        'corso': self,
+                    },
+                    destinatari=[recipient],
+                    rispondi_a=rispondi_a
+                )
 
-            if self.tipo == Corso.BASE and not recipient.persona.volontario:
-                # Informa solo aspiranti di zona
-                Messaggio.costruisci_e_accoda(**email_data)
+                if self.tipo == Corso.BASE and not recipient.volontario:
+                    # Informa solo aspiranti di zona
+                    Messaggio.costruisci_e_accoda(**email_data)
 
-            if self.is_nuovo_corso:
-                # Informa volontari secondo le estensioni impostate (sedi, segmenti, titoli)
-                Messaggio.costruisci_e_accoda(**email_data)
+                if self.is_nuovo_corso:
+                    # Informa volontari secondo le estensioni impostate (sedi, segmenti, titoli)
+                    Messaggio.costruisci_e_accoda(**email_data)
 
     def has_extensions(self, is_active=True, **kwargs):
         """ Case: extension_type == EXT_LVL_REGIONALE """
@@ -1060,6 +1078,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         pdf_template = "pdf_corso_%sesame_verbale.html"
         pdf_template = pdf_template % "base_" if self.corso_vecchio else pdf_template % ""
 
+        if anteprima:
+            numero_idonei = len([p.pk for p in partecipazioni if p.idoneo])
+            numero_non_idonei = len([p.pk for p in partecipazioni if not p.idoneo])
+        else:
+            numero_idonei = self.idonei().count()
+            numero_non_idonei = self.non_idonei().count()
+
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva_con_python(
             nome="Verbale Esame del Corso Base %d-%d.pdf" % (self.progressivo, self.anno),
@@ -1068,8 +1093,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 'titolo': "Anteprima " if anteprima else "",
                 'secondo_verbale': verbale_per_seconda_data_esame,
                 "partecipazioni": sorted(partecipazioni, key=key_cognome),
-                "numero_idonei": self.idonei().count(),
-                "numero_non_idonei": self.non_idonei().count(),
+                "numero_idonei": numero_idonei,
+                "numero_non_idonei": numero_non_idonei,
                 "numero_aspiranti": self.partecipazioni_confermate().count(),
                 'request': request,
             },
@@ -1131,14 +1156,15 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         elif self.livello in [Titolo.CDF_LIVELLO_III, Titolo.CDF_LIVELLO_IV]:
             pass
 
-        # Invia e-mail
-        Messaggio.invia_raw(
-            oggetto=oggetto,
-            corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
-            email_mittente=Messaggio.NOREPLY_EMAIL,
-            lista_email_destinatari=email_destinatari,
-            allegati=self.delibera_file
-        )
+        if sede == REGIONALE:
+            # Invia e-mail
+            Messaggio.invia_raw(
+                oggetto=oggetto,
+                corpo_html="""<p>E' stato attivato un nuovo corso. La delibera si trova in allegato.</p>""",
+                email_mittente=Messaggio.NOREPLY_EMAIL,
+                lista_email_destinatari=email_destinatari,
+                allegati=self.delibera_file
+            )
 
         if not sede == NAZIONALE:
             email_to = self.sede.sede_regionale.presidente()
@@ -1154,11 +1180,18 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 allegati=[self.delibera_file,]
             )
 
-    def direttori_corso(self):
+    def direttori_corso(self, as_delega=False):
+        """
+        :param as_delega (True): return Delega<QuerySet>
+        :param as_delega (False): return Persona<QuerySet>
+        """
         oggetto_tipo = ContentType.objects.get_for_model(self)
         deleghe = Delega.objects.filter(tipo=DIRETTORE_CORSO,
                                         oggetto_tipo=oggetto_tipo.pk,
                                         oggetto_id=self.pk)
+        if as_delega == True:
+            return deleghe
+
         deleghe_persone_id = deleghe.values_list('persona__id', flat=True)
         persone_qs = Persona.objects.filter(id__in=deleghe_persone_id)
         return persone_qs
@@ -1199,7 +1232,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             return list(set(filter(bool, docenti_esterni_result)))
 
         except:
-            # per qualsiasi problema. fatto in fretta, per evitare 500.
+            # per qualsiasi problema, per evitare 500.
             return list()
 
     def can_modify(self, me):
@@ -2024,7 +2057,7 @@ class Aspirante(ModelloSemplice, ConGeolocalizzazioneRaggio, ConMarcaTemporale):
         :return: Un elenco di Corsi.
         """
         corsi = CorsoBase.pubblici().filter(**kwargs)
-        return self.nel_raggio(corsi)
+        return self.nel_raggio(corsi.exclude(tipo=CorsoBase.CORSO_NUOVO))
 
     def corso(self):
         partecipazione = PartecipazioneCorsoBase.con_esito_ok(persona=self.persona)
