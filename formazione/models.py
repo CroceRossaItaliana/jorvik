@@ -959,7 +959,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         # Per maggiore sicurezza, questa cosa viene eseguita in una transazione
         with transaction.atomic():
             for partecipante in partecipanti_qs:
-                if partecipante.ammissione == PartecipazioneCorsoBase.ASSENTE_MOTIVO:
+                if partecipante.ammissione in [PartecipazioneCorsoBase.ASSENTE_MOTIVO,
+                                               PartecipazioneCorsoBase.ESAME_NON_PREVISTO_ASSENTE]:
                     # Partecipante con questo motivo non va nel verbale_1
                     continue  # Non fare niente
 
@@ -1498,12 +1499,14 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     ASSENTE = "AS"
     ASSENTE_MOTIVO = "MO"
     ESAME_NON_PREVISTO = "EN"
+    ESAME_NON_PREVISTO_ASSENTE = "PA"
     AMMISSIONE = (
         (AMMESSO, "Ammesso"),
         (NON_AMMESSO, "Non Ammesso"),
         (ASSENTE, "Assente"),
         (ASSENTE_MOTIVO, "Assente per motivo giustificato"),
         (ESAME_NON_PREVISTO, "Esame non previsto"),
+        (ESAME_NON_PREVISTO_ASSENTE, "Esame non previsto (partecipante assente)"),
     )
 
     ammissione = models.CharField(max_length=2, choices=AMMISSIONE, default=None, blank=True, null=True, db_index=True)

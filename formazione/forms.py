@@ -521,7 +521,10 @@ class FormVerbaleCorso(ModelForm):
                 # Per i corsi senza esami nascondi i campi non necessari e mostra solo una voce nel campo Ammissione
 
                 # Mostra solo una voca
-                self.fields['ammissione'].choices = [(PartecipazioneCorsoBase.ESAME_NON_PREVISTO, "Esame non previsto"),]
+                self.fields['ammissione'].choices = [
+                    (PartecipazioneCorsoBase.ESAME_NON_PREVISTO, "Esame non previsto"),
+                    (PartecipazioneCorsoBase.ESAME_NON_PREVISTO_ASSENTE, "Esame non previsto (partecipante assente)"),
+                ]
 
                 # Nascondi campi che non servono quando il corso non prevede esame
                 for field in self.fields.copy():

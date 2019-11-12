@@ -186,16 +186,13 @@
 
             <table class="verbale__table">
                 <tr>
-                    {% if corso.esame_previsto %}
-                        <td>
-                            <a class="btn {% if corso.relazione_direttore.is_completed %}btn-success{%else%}btn-default{%endif%}" href="{% url 'courses:compila_relazione_direttore' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Inserire la relazione</a>
-                        </td>
-                    {% endif %}
+                    <td>{% if corso.esame_previsto %}{% endif %}
+                        <a class="btn {% if corso.relazione_direttore.is_completed %}btn-success{%else%}btn-default{%endif%}" href="{% url 'courses:compila_relazione_direttore' corso.pk %}"><i class="fa fa-fw fa-pencil"></i> Inserire la relazione</a>
+                    </td>
 
-                    {% if corso.esame_previsto and corso.relazione_direttore.is_completed %}
-                        {% if corso.corso_vecchio or corso.titolo_cri.scheda_prevede_esame %}
+                    {% if corso.relazione_direttore.is_completed %}
+                        {% if corso.corso_vecchio or corso.titolo_cri.scheda_prevede_esame %}{% endif %}
                             <td><a class="btn btn-default" href="{{ corso.url_termina }}?v1"><i class="fa fa-fw fa-check-circle"></i> Compila il verbale</a></td>
-                        {% endif %}
                     {% endif %}
 
                     {% if corso.relazione_direttore and corso.relazione_direttore.is_completed %}
