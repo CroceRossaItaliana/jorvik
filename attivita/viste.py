@@ -898,9 +898,13 @@ def servizio_scheda_informazioni_modifica(request, me, pk=None):
 
     if modulo.is_valid():
         testo = modulo.cleaned_data['testo']
-        stato = modulo.cleaned_data['stato']
-        if stato:
-            changeState(pk, stato)
+        new_state = modulo.cleaned_data['stato']
+        if new_state:
+            try:
+                changeState(pk, result['data']['status'], new_state)
+            except:
+                messages.error(request, 'Errore nel passaggio di stato')
+                return 'servizio_scheda_infomazioni_modifica.html', contesto
         updateServizio(pk, **{'testo': testo})
         messages.success(request, 'Salvato correttamente')
 

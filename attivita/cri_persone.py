@@ -78,16 +78,24 @@ def update_service(key, **kwargs):
     logger.debug('- _updateServizio {} {}'.format(resp['result']['code'], resp['result']['description']))
     return resp if 'result' in resp and resp['result']['code'] == 204 else {}
 
-def changeState(key='', state=''):
+def changeState(key='', state='', new_state=''):
 
     STATE_TO_CODE = {
-        "11301": "11",
-        "10413": "41",
-        "6": "21"
+        "11301": {
+            "10413": 11
+        },
+        "10413": {
+            "11301": 51,
+            "6": 21
+        },
+        "6": {
+            "10413": 31,
+            "11301": 41
+        }
     }
 
     r = requests.post(
-        '{}/offeredservice/{}/transition/{}/'.format(end_point, key, STATE_TO_CODE[state])
+        '{}/offeredservice/{}/transition/{}/'.format(end_point, key, STATE_TO_CODE[state][new_state])
     )
     resp = r.json()
     logger.debug('- changeState {} {}'.format(resp['result']['code'], resp['result']['description']))
