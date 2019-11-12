@@ -28,7 +28,7 @@
             </div>
         {% endif %}
 
-        {% if me.dipendente or me.volontario %}
+        {% if me.dipendente or me.volontario or me.operatore_villa_maraini %}
         <div class="col col-md-4">
             <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid;">
                 <span class="glyphicon glyphicon-road" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
@@ -46,6 +46,7 @@
             </div>
         {% endif %}
 
+        {% if not me.operatore_villa_maraini %}
         <div class="col col-md-4">
             <div class="alert alert-success" role="alert" style="text-align: center; margin:0; display: grid; ">
                 <span class="glyphicon glyphicon-cloud" aria-hidden="true" style="font-size:48px; margin-bottom: 0.5em;"></span>
@@ -85,6 +86,8 @@
                 <a target="_blank" href="https://gaia.cri.it/documenti/91/" class="alert-link">Edicola digitale</a>
             </div>
         </div>
+        {% endif %}
+
 
         {% if me.dipendente %}
             <div class="col col-md-4">
@@ -177,11 +180,13 @@
         </div>
     {% endif %}
 
-    <div class="articoli">
-    {% for articolo in articoli %}
-        {% include "includes/elemento_lista.html" %}
-    {% endfor %}
-    </div>
+    {% if not me.operatore_villa_maraini %}
+        <div class="articoli">
+        {% for articolo in articoli %}
+            {% include "includes/elemento_lista.html" %}
+        {% endfor %}
+        </div>
+    {% endif %}
 
     {% include "base_privacy_policy_popup.html" %}
 
