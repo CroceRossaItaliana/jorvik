@@ -79,14 +79,20 @@ class MenuUtente:
 
         me = self.me
 
-        return ((
-            self.menu_persona(),
-            self.menu_volontario() if me.volontario else None,
-            self.menu_formazione() if me.volontario or me.dipendente else None,
-            menu_rubrica_base(me),
-            self.menu_curriculum(),
-            self.menu_donatore() if self.is_volontario else None,
-            self.menu_sicurezza(),
-            self.menu_links(),
-            # menu_monitoraggio(me),
-        ))
+        if me.operatore_villa_maraini and not me.volontario:
+            return ((
+                self.menu_persona(),
+                self.menu_sicurezza(),
+            ))
+        else:
+            return ((
+                self.menu_persona(),
+                self.menu_volontario() if me.volontario else None,
+                self.menu_formazione() if me.volontario or me.dipendente else None,
+                menu_rubrica_base(me),
+                self.menu_curriculum(),
+                self.menu_donatore() if self.is_volontario else None,
+                self.menu_sicurezza(),
+                self.menu_links(),
+                # menu_monitoraggio(me),
+            ))
