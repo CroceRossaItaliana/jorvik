@@ -5,60 +5,62 @@
 
 {% block scheda_titolo %}Questionario di gradimento{% endblock %}
 {% block scheda_contenuto %}
+    <style>
+      .survey__title {text-align: center; font-size: 23px;}
+      .survey__download-text {text-align:center; font-weight:bold;}
+      .survey__group-name {text-align:center; font-size:18px;}
+
+      .step-form {}
+      .step-form h4 {text-align: center; font-size:24px;}
+      .step-form .form-group {display:block; margin: 0 0 30px; text-align: center;}
+
+      // input text
+      .step-form .form-group input[type="text"] {display: block !important; width: 75%; margin: 0 auto;}
+
+      // input radio
+      .step-form div div {text-align: center; display: inline-block;}
+      .step-form div div .radio {padding: 10px;}
+      .step-form div div .radio label {font-size:16px;}
+      .step-form div div .radio label input {margin-right: 5px;}
+    </style>
+
     <div class="panel panel-primary">
         <div class="panel-heading">
-            <h2 class="panel-title"><i class="fa fa-fw fa-pencil"></i> Questionario di gradimento</h2>
+            <p class="survey__title">{{ survey.text }}</p>
         </div>
         <div class="panel-body">
-          <h4>Introduzione</h4>
-          <p>
-            Ti chiediamo un parere sull’intervento di formazione cui hai partecipato, per conoscerne i punti di forza e le aree di miglioramento. Compilando il questionario, in forma anonima, ci consentirai di migliorare
-            continuamente la qualità della formazione della Croce Rossa Italiana. Ti preghiamo quindi di completarlo entro una settimana dalla fine della formazione.
-            Attraverso il questionario ti chiediamo di esprimere il tuo grado di soddisfazione sul corso, con particolare attenzione ai seguenti aspetti:
-          </p>
-          <p>
-            <ul>
-              <li>utilità percepita, interesse e partecipazione</li>
-              <li>didattica: docenza e materiale didattico</li>
-              <li>organizzazione e servizi</li>
-            </ul>
-          </p>
-          <p>
-            Le domande sono nella maggior parte dei casi a risposta chiusa con richiesta di attribuzione del voto da
-            1(poco) a 10 (molto), alcune domande sono a risposta aperta (campo descrittivo).
-            La tua opinione è per noi preziosa, per questo ti saremo grati se vorrai dedicare pochi minuti alla
-            compilazione del questionario che segue. <br>
-            Grazie!
-          </p>
+            {% if puo_modificare and has_responses and False %}
+                <p class="survey__download-text">
+                    <a href="{% url 'survey:course_download_results' corso.pk %}">Scaricare il Report con le risposte dei partecipanti</a>
+                    <hr>
+                </p>
+            {% endif %}
 
-          <p class="survey__title">{{ survey.text }}</p>
+            {% if continue_step and not step %}
+                <p style="text-align: center;">
+                    {% if survey_result.current_step == survey_result.GRAZIE %}
+                        Il questionario è già stato completato.
+                    {% else %}
+                        Vuoi continuare con la compilazione del questionario? <a href="{{ continue_step }}">Continua</a>
+                    {% endif %}
+                </p>
 
-          {% if puo_modificare and has_responses %}
-            <p class="survey__download-text">
-              <a href="{% url 'survey:course_download_results' corso.pk %}">Scaricare il Report con le risposte dei partecipanti</a>
-            </p>
-            <hr>
-          {% endif %}
+            {% else %}
+                {% if step and form %}
+                    <form action="." method="POST" class="step-form form-inline">
+                        {% csrf_token %}
+                        {% include template %}
+                        <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Avanti</button>
+                    </form>
 
-          <form method="POST">
-              {% csrf_token %}
+                {% elif step == survey_result.final_step_id %}
+                    {% include template %}
+                {% else %}
+                    {% include 'survey_step_0_inc.html' %}
+                {% endif %}
 
-              {% bootstrap_form form as bootstrap_form %}
-              {% add_questions_groups_to_survey_form bootstrap_form survey %}
-
-              {% if puo_modificare %}
-                {# Director of course can only read form data #}
-              {% else %}
-                <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-fw fa-save"></i> Salva</button>
-              {% endif %}
-          </form>
+            {% endif %}
         </div>
     </div>
-
-<style>
-  .survey__title {text-align: center; font-size: 23px;}
-  .survey__download-text {text-align:center; font-weight:bold;}
-  .survey__group-name {text-align:center; font-size:18px;}
-</style>
 
 {% endblock %}
