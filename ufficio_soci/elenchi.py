@@ -653,9 +653,11 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         # Update criteri query
         aggiuntivi.update({
-            # Registrazione versamento della quota associativa annuale (da commentare)
-            # 'quota__stato': Quota.REGISTRATA,
-            # 'quota__tipo': Quota.QUOTA_SOCIO,
+            # Registrazione versamento della quota associativa annuale
+            'quote__stato': Quota.REGISTRATA,
+            'quote__tipo': Quota.QUOTA_SOCIO,
+            'quote__data_versamento__lte': oggi,
+            'quote__data_versamento__gte': oggi - relativedelta(months=12),
 
             "data_nascita__lte": nascita_minima,  # Età' minima
         })
