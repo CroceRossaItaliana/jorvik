@@ -149,6 +149,7 @@ def verbale_indirizzo(corso):
                                                          locazione.via,
                                                          locazione.civico)
 
+
 @register.simple_tag
 def lezione_durata(lezione):
     durata = None

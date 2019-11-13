@@ -770,7 +770,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             torna_titolo="Torna al Corso",
             torna_url=self.url)
 
-
     def _corso_activation_recipients_for_email(self):
         """
         Trovare destinatari aspiranti o volontari da avvisare di un nuovo corso attivato.
@@ -1278,6 +1277,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         # elif self.creazione < timezone.datetime(2019, 9, 1):
         #     return True
         return False
+
+    @property
+    def lezione_salute_sicurezza(self):
+        for lezione in self.lezioni.all():
+            if lezione.is_lezione_salute_e_sicurezza:
+                return lezione
+        return None
 
     class Meta:
         verbose_name = "Corso"

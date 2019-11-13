@@ -106,6 +106,7 @@
 							</div>
 							<div style="width: 25%;">Il Presidente<br>{{ corso.sede.presidente.nome_completo }}</div>
 						</div>
+
 					</div>
 					<div style="font-size:12pt; text-align: left;">{{ corso.sigla_corso }}</div>
 				</div>
@@ -150,5 +151,44 @@
 			<div class="documento-digitale-text">Documento stampabile generato digitalmente da <strong>Gaia</strong>. Autenticato: {{ timestamp }}.</div>
 		</div><!--/.page-wrapper-->
 	</div><!--/#page_2-->
+
+	{% if corso.titolo_cri.is_titolo_corso_base %}
+		<div id="page_3" class="page" style="height:21cm; background-position: center right; background-image: url('{{SITE_URL}}{% static 'img/attestato/sfondo-vuoto-cropped.png' %}'); page-break-after: always;">
+			<div class="page-wrapper">
+				<div class="page-inner">
+					<div class="front-page" style="text-align: center;">
+						<div class="front-page-logo-wrap"><img class="front-page-logo" src="{{SITE_URL}}{% static 'img/attestato/cri-logo-transparent-small.png' %}" alt="Croce Rossa Italiana"></div>
+							<div class="front-page-heading">Attestato <span>di frequenza con verifica di apprendimento</span></div>
+							<div class="front-page-text">
+								<div>
+									Si attesta {{ persona.nome_completo }}<br>
+									CF {{ persona.codice_fiscale }}
+								</div>
+								<div>
+									Ha frequentato con profitto il<br>
+									Corso in materia di Salute e Sicurezza<br>
+									Formazione base
+								</div>
+								<div>
+									Ai sensi del D.LGS 81/08 e s.m.i. e dei regolamenti in materia di
+									Salute e Sicurezza dei Volontari in vigore nell'Associazione della Croce Rossa Italiana
+									per un totale di 2 ore<br>
+									presso il Comitato CRI {{ corso.sede.nome }}
+								</div>
+								<div class="front-page-labels">
+									<div style="width: 33%;">{{ corso.locazione }}<br>{{ corso.data_esame|date:"d/m/Y" }}</div>
+									<div style="width: 33%;">Il Docente<br>
+										{% for docente in corso.lezione_salute_sicurezza.docente.all %}
+											{{ docente }}<br>
+										{% endfor %}
+									</div>
+									<div style="width: 33%;">Il Presidente<br>{{ corso.sede.presidente.nome_completo }}</div>
+								</div>
+							</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	{% endif %}
 </body>
 </html>
