@@ -164,21 +164,7 @@ class PDF(Allegato):
 
         scadenza = scadenza or domani()
 
-        url = DOMPDF_ENDPOINT
-        corpo.update({"timestamp": datetime.now()})
-        html = get_template(modello).render(corpo)
-        values = {
-            'paper': formato,
-            'orientation': orientamento,
-            'html': html
-        }
-
-        data = urllib.parse.urlencode(values)
-        data = data.encode('UTF-8')
-        req = urllib.request.Request(url, data)
-        response = urllib.request.urlopen(req)
-
-        self.salva(posizione, nome, response, scadenza)
+        self.genera_e_salva_con_python(nome, scadenza, corpo, modello, posizione)
 
     class Meta:
         proxy = True
