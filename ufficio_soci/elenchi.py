@@ -1,5 +1,5 @@
 from dateutil.relativedelta import relativedelta
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q, F
 from django.utils.encoding import force_text
@@ -653,14 +653,40 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         # Update criteri query
         aggiuntivi.update({
+            "data_nascita__lte": nascita_minima,  # Età' minima
+
             # Registrazione versamento della quota associativa annuale
             'quote__stato': Quota.REGISTRATA,
             'quote__tipo': Quota.QUOTA_SOCIO,
-            'quote__data_versamento__lte': oggi,
-            'quote__data_versamento__gte': oggi - relativedelta(months=12),
-
-            "data_nascita__lte": nascita_minima,  # Età' minima
         })
+
+        oggi_anno = oggi.year
+        anno_corrente_01_gen = datetime(oggi_anno, 1, 1)
+        anno_corrente_31_apr = datetime(oggi_anno, 4,
+            # ultimo giorno di aprile
+            (datetime(oggi_anno, 5, 1) - timedelta(days=1)).day
+        )
+
+        if anno_corrente_01_gen <= oggi <= anno_corrente_31_apr:
+            # data richiesta nell'elenco elettorato sta nel range di date - 12 mesi
+            aggiuntivi.update({
+                'quote__data_versamento__lte': oggi,
+                'quote__data_versamento__gte': anno_corrente_31_apr - relativedelta(months=16),
+            })
+
+        elif oggi >= anno_corrente_31_apr:
+            aggiuntivi.update({
+                'quote__data_versamento__lte': oggi,
+                'quote__data_versamento__gte': anno_corrente_01_gen + relativedelta(months=4),
+            })
+        else:
+            # data richiesta non sta nel range fra 01 gen. e 31 apr
+            # cercare quota versata durante l'anno passato
+
+            aggiuntivi.update({
+                'quote__data_versamento__lte': oggi,
+                'quote__data_versamento__gte': anno_corrente_01_gen - relativedelta(months=12),
+            })
 
         # Cerca dipendenti da escludere
         dipendenti = Persona.objects.filter(
