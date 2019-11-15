@@ -165,15 +165,17 @@
         <div class="alert alert-success alert-block">
             <p>
                 <h4><i class="fa fa-fw fa-check"></i> Vuoi partecipare a questo corso?</h4>
-                Sei amministratore del corso <strong>(Responsabile della formazione, Direttore del corso, Comissario o Presidente)</strong> e vorresti partecipare a questo corso?
+                Sei amministratore del corso <strong>(Responsabile della formazione, Direttore del corso, Commissario o Presidente)</strong> e vorresti partecipare a questo corso?
                 Per partecipare puoi <a style="text-decoration:underline;" href="{{ corso.url_iscritti_aggiungi }}#id_persone-autocomplete">invitarti</a> cliccando sulla pagina iscrizioni ed inserendo il tuo Codice Fiscale.
             </p>
         </div>
     {% endif %}
 
-    {% if puo_modificare and corso.terminabile %}
+    {% if puo_modificare %}
         <div class="alert alert-success alert-block">
             <h4><i class="fa fa-fw fa-warning"></i> Terminazione corso</h4>
+
+            {% if corso.terminabile %}
             <p>Il corso si &egrave; concluso, ma &egrave; ancora necessario generare il verbale del corso e compilare la relazione.</p>
             <p>Una volta generato il verbale e compilata la relazione, tutti i partecipanti verranno informati dell'esito e,
                 coloro che saranno stati promossi,
@@ -184,7 +186,9 @@
                 {% endif %}
             </p>
             <p style="margin-top:25px; text-align:center; font-weight:bold;">Il presente verbale è da chiudere immediatamente dopo la sessione d’esame</p>
+            {% endif %}
 
+            {% if corso.terminabile %}
             <table class="verbale__table">
                 <tr>
                     <td>{% if corso.esame_previsto %}{% endif %}
@@ -219,6 +223,7 @@
                     </tr>
                 </table>
             {% endif %}
+            {% endif %}{# endif corso.terminabile #}
 
             {% if corso.esame_previsto %}
                 {% if me == corso.sede.presidente or corso.sede.presidente in corso.direttori_corso  %}
