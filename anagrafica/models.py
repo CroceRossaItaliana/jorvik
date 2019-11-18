@@ -310,6 +310,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         """
         return self.appartenenze.filter(confermata=True, **kwargs).order_by('inizio').first()
 
+    @property
+    def appartenenza_volontario(self):
+        return self.appartenenze_attuali(membro=Appartenenza.VOLONTARIO)
+
     def appartenenze_per_presidente(self, presidente):
         """
         Ottiene il queryset delle appartenenze attuali e confermate, in base al Presidente
@@ -494,11 +498,21 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.membro(Appartenenza.SOSTENITORE, **kwargs)
 
     @property
+    def operatore_villa_maraini(self):
+        return self.appartenenze_attuali(membro=Appartenenza.OPERATORE_VILLA_MARAINI)
+
+    @property
     def applicazioni_disponibili(self):
         from formazione.models import CorsoBase
 
         # Personalizzare il menu "Utente" secondo il suo ruolo
         utente_url, utente_label, utente_count = ('/utente/', 'Volontario', None)
+
+        # GAIA-246
+        if self.operatore_villa_maraini and not self.volontario:
+            return [
+                (utente_url, 'Operatore Villa Maraini', 'fa-user', utente_count),
+            ]
 
         if not self.volontario:
             utente_label = 'Utente'
@@ -1490,6 +1504,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     MILITARE = 'MI'
     DONATORE = 'DO'
     SOSTENITORE = 'SO'
+    OPERATORE_VILLA_MARAINI = 'VM'  # GAIA-246
 
     # Quale tipo di membro puo' partecipare alle attivita'?
     MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO,)
@@ -1524,6 +1539,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         (ORDINARIO, 'Socio Ordinario'),
         (SOSTENITORE, 'Sostenitore'),
         (DIPENDENTE, 'Dipendente'),
+        (OPERATORE_VILLA_MARAINI, 'Operatore Villa Maraini'),
         #(INFERMIERA, 'Infermiera Volontaria'),
         #(MILITARE, 'Membro Militare'),
         #(DONATORE, 'Donatore Finanziario'),

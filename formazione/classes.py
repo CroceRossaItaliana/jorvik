@@ -83,8 +83,8 @@ class GestionePresenza:
 
 
 class GeneraReport:
-    ATTESTATO_FILENAME = "%s - Attestato.pdf"
-    SCHEDA_FILENAME = "%s - Scheda di Valutazione.pdf"
+    ATTESTATO_FILENAME = "%s %s - Attestato.pdf"
+    SCHEDA_FILENAME = "%s %s - Scheda di Valutazione.pdf"
 
     def __init__(self, request, corso, single_attestato=False):
         self.request = request
@@ -116,7 +116,7 @@ class GeneraReport:
             return redirect(reverse('utente:cv_tipo', args=[Titolo.TITOLO_CRI,]))
 
         attestato = self._attestato(partecipazione)
-        filename = self.ATTESTATO_FILENAME % partecipazione.titolo_ottenuto.last()
+        filename = self.ATTESTATO_FILENAME % (partecipazione.titolo_ottenuto.last(), '')
 
         with open(attestato.file.path, 'rb') as f:
             pdf = f.read()
@@ -137,18 +137,20 @@ class GeneraReport:
         """ Genera la scheda di valutazione """
 
         scheda = partecipante.genera_scheda_valutazione(request=self.request)
+        persona = partecipante.persona
         self.archive.aggiungi_file(
             scheda.file.path,
-            self.SCHEDA_FILENAME % partecipante.persona.nome_completo
+            self.SCHEDA_FILENAME % (persona.cognome, persona.nome)
         )
         return scheda
 
     def _attestato(self, partecipante):
         attestato = partecipante.genera_attestato(request=self.request)
+        persona = partecipante.persona
 
         self.archive.aggiungi_file(
             attestato.file.path,
-            self.ATTESTATO_FILENAME % partecipante.persona.nome_completo
+            self.ATTESTATO_FILENAME % (persona.cognome, persona.nome)
         )
         return attestato
 
