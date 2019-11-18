@@ -143,6 +143,11 @@ def commissari_comitati_regionali(queryset):
     return _presidenze_comitati(tutti_i_commissari(queryset), REGIONALE)
 
 
+def dipendenti(queryset):
+    qs = queryset.filter(appartenenze__membro=Appartenenza.DIPENDENTE)
+    return _appartenenze_attive(qs)
+
+
 def delegati_US(queryset):
     qs = queryset.filter(delega__tipo=UFFICIO_SOCI)
     return _deleghe_attive(qs)
@@ -232,6 +237,7 @@ NOMI_SEGMENTI = (
     ('IC', 'Tutti i Commissari'),
     ('JC', 'Commissari di Comitati Locali'),
     ('KC', 'Commissari di Comitati Regionali'),
+    ('L1', 'Dipendenti'),
     ('L', 'Delegati US'),
     ('M', 'Delegati Obiettivo I'),
     ('N', 'Delegati Obiettivo II'),
@@ -268,6 +274,7 @@ SEGMENTI = {
     'JC':             commissari_comitati_locali,
     'K':              presidenti_comitati_regionali,
     'KC':             commissari_comitati_regionali,
+    'L1':             dipendenti,
     'L':              delegati_US,
     'M':              delegati_Obiettivo_I,
     'N':              delegati_Obiettivo_II,
