@@ -958,10 +958,14 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         # Per maggiore sicurezza, questa cosa viene eseguita in una transazione
         with transaction.atomic():
             for partecipante in partecipanti_qs:
-                if partecipante.ammissione in [PartecipazioneCorsoBase.ASSENTE_MOTIVO,
-                                               PartecipazioneCorsoBase.ESAME_NON_PREVISTO_ASSENTE]:
+                if partecipante.ammissione in [PartecipazioneCorsoBase.ASSENTE_MOTIVO,]:
                     # Partecipante con questo motivo non va nel verbale_1
                     continue  # Non fare niente
+
+                if partecipante.ammissione in [PartecipazioneCorsoBase.ESAME_NON_PREVISTO_ASSENTE,]:
+                    partecipante.esito_esame = partecipante.NON_IDONEO
+                    partecipante.save()
+                    continue
 
                 # Calcola e salva l'esito dell'esame
                 esito_esame = partecipante.IDONEO if partecipante.idoneo \
