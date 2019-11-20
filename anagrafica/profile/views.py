@@ -174,7 +174,8 @@ def _profilo_riserve(request, me, persona):
 
 
 def _profilo_curriculum(request, me, persona):
-    form = ModuloProfiloTitoloPersonale(request.POST or None)
+    from curriculum.forms import FormAddQualificaCRI
+    form = FormAddQualificaCRI(request.POST or None)
 
     if form.is_valid():
         tp = form.save(commit=False)
