@@ -1668,6 +1668,18 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         # else:
         #     return ModuloConfermaIscrizioneCorsoBase
 
+    @classmethod
+    def partecipazioni_ordinate_per_attestato(cls, corso):
+        from collections import OrderedDict
+
+        partecipanti_con_attestato = corso.partecipazioni_confermate().order_by('persona__cognome')
+        return OrderedDict(
+            [(i.persona.pk, line) for line, i in enumerate(partecipanti_con_attestato, 1)]
+        )
+
+    def get_partecipazione_id_per_attestato(self, corso, persona_pk):
+        return self.partecipazioni_ordinate_per_attestato(corso).get(persona_pk)
+
     def genera_scheda_valutazione(self, request=None):
         pdf = PDF(oggetto=self)
 
@@ -1703,14 +1715,18 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         if not self.corso.titolo_cri:
             pdf_template = "pdf_corso_base_attestato.html"
 
+        corso, persona = self.corso, self.persona
+
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva_con_python(
             nome="Attestato %s.pdf" % self.persona.codice_fiscale,
             corpo={
                 "partecipazione": self,
-                "corso": self.corso,
-                "persona": self.persona,
+                "corso": corso,
+                "persona": persona,
                 "request": request,
+                'partecipazione_id':
+                    self.get_partecipazione_id_per_attestato(corso, persona.pk)
             },
             modello=pdf_template,
         )
