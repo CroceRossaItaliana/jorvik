@@ -44,7 +44,7 @@
     {% get_url_for_staticfiles as SITE_URL %}
 
     {% for iscritto in iscritti %}
-        {% if forloop.first or forloop.counter0|divisibleby:16 %}
+        {% if forloop.first or forloop.counter0|divisibleby:12 %}
             <center>
                 <img id="logo" src="{{ SITE_URL }}{% static 'img/Emblema_CRI.png' %}" name="LogoCri" />
             </center>

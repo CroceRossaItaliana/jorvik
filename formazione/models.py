@@ -770,7 +770,6 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             torna_titolo="Torna al Corso",
             torna_url=self.url)
 
-
     def _corso_activation_recipients_for_email(self):
         """
         Trovare destinatari aspiranti o volontari da avvisare di un nuovo corso attivato.
@@ -959,9 +958,14 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         # Per maggiore sicurezza, questa cosa viene eseguita in una transazione
         with transaction.atomic():
             for partecipante in partecipanti_qs:
-                if partecipante.ammissione == PartecipazioneCorsoBase.ASSENTE_MOTIVO:
+                if partecipante.ammissione in [PartecipazioneCorsoBase.ASSENTE_MOTIVO,]:
                     # Partecipante con questo motivo non va nel verbale_1
                     continue  # Non fare niente
+
+                if partecipante.ammissione in [PartecipazioneCorsoBase.ESAME_NON_PREVISTO_ASSENTE,]:
+                    partecipante.esito_esame = partecipante.NON_IDONEO
+                    partecipante.save()
+                    continue
 
                 # Calcola e salva l'esito dell'esame
                 esito_esame = partecipante.IDONEO if partecipante.idoneo \
@@ -1085,6 +1089,9 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             numero_idonei = self.idonei().count()
             numero_non_idonei = self.non_idonei().count()
 
+        numero_assenti_no_esame = self.partecipazioni_confermate().filter(
+            ammissione=PartecipazioneCorsoBase.ESAME_NON_PREVISTO_ASSENTE)
+
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva_con_python(
             nome="Verbale Esame del Corso Base %d-%d.pdf" % (self.progressivo, self.anno),
@@ -1096,6 +1103,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 "numero_idonei": numero_idonei,
                 "numero_non_idonei": numero_non_idonei,
                 "numero_aspiranti": self.partecipazioni_confermate().count(),
+                'numero_assenti_no_esame': numero_assenti_no_esame,
                 'request': request,
             },
             modello=pdf_template,
@@ -1277,6 +1285,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         # elif self.creazione < timezone.datetime(2019, 9, 1):
         #     return True
         return False
+
+    @property
+    def lezione_salute_sicurezza(self):
+        for lezione in self.lezioni.all():
+            if lezione.is_lezione_salute_e_sicurezza:
+                return lezione
+        return None
 
     class Meta:
         verbose_name = "Corso"
@@ -1512,12 +1527,14 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
     ASSENTE = "AS"
     ASSENTE_MOTIVO = "MO"
     ESAME_NON_PREVISTO = "EN"
+    ESAME_NON_PREVISTO_ASSENTE = "PA"
     AMMISSIONE = (
         (AMMESSO, "Ammesso"),
         (NON_AMMESSO, "Non Ammesso"),
         (ASSENTE, "Assente"),
         (ASSENTE_MOTIVO, "Assente per motivo giustificato"),
         (ESAME_NON_PREVISTO, "Esame non previsto"),
+        (ESAME_NON_PREVISTO_ASSENTE, "Esame non previsto (partecipante assente)"),
     )
 
     ammissione = models.CharField(max_length=2, choices=AMMISSIONE, default=None, blank=True, null=True, db_index=True)
