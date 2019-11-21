@@ -134,7 +134,10 @@
                     <p>Gli esaminandi vengono sottoposti ad un esame teorico-pratico inerente gli argomenti trattati nonché le capacità e competenze acquisite.</p>
                     <p>
                         Sono stati esaminati n. {{ numero_aspiranti }}, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione d’Esame,
-                        sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati.</p>
+                        sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati
+                        {% if numero_assenti_no_esame.count %}, ASSENTI n. {{ numero_assenti_no_esame.count }} candidati{% endif %}.
+                    </p>
+
                 {% else %}
                     <p>
                         La Commissione si riunisce in data odierna per sottoporre ad esame finale n._____ candidato/i, del Corso di Formazione ({{ corso.titolo_cri }})
@@ -145,7 +148,8 @@
                     </p>
                     <p>
                         Sono stati esaminati n. {{ numero_aspiranti }}, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione d’Esame,
-                        sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati.
+                        sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati
+                        {% if numero_assenti_no_esame.count %}, ASSENTI n. {{ numero_assenti_no_esame.count }} candidati{% endif %}.
                     </p>
                 {% endif %}
 
