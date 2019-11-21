@@ -108,6 +108,15 @@
 						</div>
 
 					</div>
+
+					{% attestato_sic_ore_num corso as attestato_sic_ore_num_value %}
+					{% if attestato_sic_ore_num_value %}
+						<div style="text-align: center; margin:-10px 0 5px; font-size:11px;">
+							Ai sensi del D.LGS 81/08 e s.m.i. e dei regolamenti in materia di
+							Salute e Sicurezza dei Volontari in vigore nell'Associazione della Croce Rossa Italiana
+							per un totale di {{ attestato_sic_ore_num_value }} ore
+						</div>
+					{% endif %}
 					<div style="font-size:12pt; text-align: left;">{{ corso.sigla_corso }}</div>
 				</div>
 			</div>

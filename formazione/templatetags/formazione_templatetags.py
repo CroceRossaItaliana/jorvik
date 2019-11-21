@@ -137,6 +137,17 @@ def attestato_replace_corso_name(titolo):
 
 
 @register.simple_tag
+def attestato_sic_ore_num(corso):
+    # GAIA-253
+    titolo = corso.titolo_cri
+    if titolo.sigla in ['SIC1', 'SIC2',]:
+        return '2'
+    elif titolo.sigla in ['SICPRE', 'SICDIR',]:
+        return '4'
+    return ''
+
+
+@register.simple_tag
 def verbale_indirizzo(corso):
     locazione = corso.locazione
 

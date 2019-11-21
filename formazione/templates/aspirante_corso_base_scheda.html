@@ -171,7 +171,7 @@
         </div>
     {% endif %}
 
-    {% if puo_modificare %}
+    {% if puo_modificare and corso.stato != corso.TERMINATO %}
         <div class="alert alert-success alert-block">
             <h4><i class="fa fa-fw fa-warning"></i> Terminazione corso</h4>
 
