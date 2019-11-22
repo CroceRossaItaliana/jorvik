@@ -337,7 +337,7 @@ class ModuloOrganizzaServizio(forms.Form):
         if 'data' in serviziStandard and 'services' in serviziStandard['data']:
             for s in getServiziStandard()['data']['services']:
                 select.append(
-                    (s['key'], s['summary'])
+                    (s['key'], (s['summary'], s['description']))
                 )
         return tuple(select)
 
@@ -362,10 +362,54 @@ class ModuloOrganizzaServizio(forms.Form):
         )
         return tuple(select)
 
+    class NewSelect(forms.SelectMultiple):
+        allow_multiple_selected = True
+
+        def render_option(self, selected_choices, option_value, option_label):
+            s = super().render_option(selected_choices, option_value, option_label)
+            from django.utils.safestring import mark_safe
+            from django.utils.encoding import force_text
+            from django.utils.html import format_html
+            if option_value is None:
+                option_value = ''
+            option_value = force_text(option_value)
+            if option_value in selected_choices:
+                selected_html = mark_safe(' selected="selected"')
+                if not self.allow_multiple_selected:
+                    selected_choices.remove(option_value)
+            else:
+                selected_html = ''
+
+            return format_html(
+                '<option value="{}"{} data-toggle="tooltip" data-placement="left" title="{}">{}</option>',
+                option_value,
+                selected_html,
+                option_label[1] if option_label[1] else '',
+                force_text(option_label[0])
+            )
+
+        def render_options(self, choices, selected_choices):
+            from django.utils.encoding import force_text
+            from django.utils.html import format_html
+            from itertools import chain
+            # Normalize to strings.
+            selected_choices = set(force_text(v) for v in selected_choices)
+            output = []
+            for option_value, option_label in chain(self.choices, choices):
+                output.append(self.render_option(selected_choices, option_value, option_label))
+            return '\n'.join(output)
+
+        def value_from_datadict(self, data, files, name):
+            from django.utils.datastructures import MultiValueDict
+            if isinstance(data, MultiValueDict):
+                return data.getlist(name)
+            return data.get(name)
+
+
     progetto = forms.ChoiceField()
     servizi = forms.MultipleChoiceField(
         choices=(),
-        widget=forms.SelectMultiple,
+        widget=NewSelect,
         label="Scelta servizi standard"
     )
 
