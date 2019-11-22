@@ -156,7 +156,7 @@ class SurveyResult(models.Model):
 
         def _direttori(result):
             rows = list()
-            direttori = result.response_json['direttori']
+            direttori = result.response_json.get('direttori', dict())
             for persona_pk, response_data in direttori.items():
                 p = Persona.objects.get(pk=persona_pk)
                 for domanda_pk, risposta in response_data.items():
@@ -166,7 +166,7 @@ class SurveyResult(models.Model):
 
         def _utilita_lezioni_rows(result):
             rows = list()
-            utilita_lezioni_rows = result.response_json['utilita_lezioni']
+            utilita_lezioni_rows = result.response_json.get('utilita_lezioni', dict())
             for lezione_pk, voto in utilita_lezioni_rows.items():
                 lezione = LezioneCorsoBase.objects.get(pk=lezione_pk)
                 rows.append([lezione.nome, voto])
@@ -174,7 +174,7 @@ class SurveyResult(models.Model):
 
         def _org_servizi(result):
             rows = list()
-            org_servizi_rows = result.response_json['org_servizi']
+            org_servizi_rows = result.response_json.get('org_servizi', dict())
             for domanda_pk, voto in org_servizi_rows.items():
                 domanda = Question.objects.get(pk=domanda_pk)
                 rows.append([domanda.text, voto])
@@ -182,7 +182,7 @@ class SurveyResult(models.Model):
 
         def _valutazione_docenti(result):
             rows = list()
-            lezioni_rows = result.response_json['lezioni']
+            lezioni_rows = result.response_json.get('lezioni', dict())
 
             for docente_pk, lezione_data in lezioni_rows.items():
                 if docente_pk.startswith('de_'):
