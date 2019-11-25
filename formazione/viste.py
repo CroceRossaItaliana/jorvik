@@ -12,7 +12,7 @@ from anagrafica.models import Persona, Documento, Sede
 from anagrafica.forms import ModuloCreazioneDocumento
 from anagrafica.permessi.applicazioni import (DIRETTORE_CORSO, RESPONSABILE_FORMAZIONE,
     COMMISSARIO, PRESIDENTE)
-from anagrafica.costanti import NAZIONALE, REGIONALE
+from anagrafica.costanti import NAZIONALE, REGIONALE, LOCALE
 from anagrafica.permessi.costanti import (GESTIONE_CORSI_SEDE,
     GESTIONE_CORSO, ERRORE_PERMESSI, COMPLETO, MODIFICA, RUBRICA_DELEGATI_OBIETTIVO_ALL)
 from curriculum.models import Titolo, TitoloPersonale
@@ -67,6 +67,12 @@ def formazione_osserva_corsi(request, me):
         messages.error(request, 'Non hai accesso a questa pagina.')
         return redirect('/formazione/')
 
+    results = dict()
+    def add_corsi_count_to_result(sede, comitato, corsi):
+        if sede not in results:
+            results[sede] = list()
+        results[sede].append([comitato, corsi])
+
     sede_pk = request.GET.get('s')
     if sede_pk:
         try:
@@ -77,8 +83,13 @@ def formazione_osserva_corsi(request, me):
         context['sede'] = sede
         context['corsi'] = CorsoBase.objects.filter(sede=sede)
 
+        if sede.estensione in [NAZIONALE, REGIONALE,]:
+            context['corsi'] = CorsoBase.objects.filter(sede__in=sede.comitati_sottostanti())
+        else:
+            context['corsi'] = CorsoBase.objects.filter(sede=sede)
+
     if not sede_pk:
-        results = dict()
+
         for sede in sedi:
             comitati = sede.comitati_sottostanti()
 
@@ -89,15 +100,24 @@ def formazione_osserva_corsi(request, me):
                 results[sede].append([sede, corsi])
 
             for comitato in comitati:
+                if comitato.pk == 1663:  # Vila Maraini
+                    continue
 
                 if comitato.pk == 524:  # Lazio
-                    comitato = Sede.objects.get(pk=1638)  # Area Metropolitana di Roma Capitale Coordinamento
+                    # Area Metropolitana di Roma Capitale Coordinamento
+                    roma_comitato = Sede.objects.get(pk=1638)
+                    roma_corsi = CorsoBase.objects.filter(sede__in=roma_comitato.comitati_sottostanti()).count()
+                    add_corsi_count_to_result(sede, roma_comitato, roma_corsi)
 
-                corsi = CorsoBase.objects.filter(sede=comitato).count()
+                if sede.estensione != REGIONALE:
+                    comitati_sott_regione = comitato.comitati_sottostanti()
+                    corsi = CorsoBase.objects.filter(sede__in=comitati_sott_regione).count()
+                else:
+                    corsi = CorsoBase.objects.filter(sede=comitato).count()
+
                 if corsi:
-                    if sede not in results:
-                        results[sede] = list()
-                    results[sede].append([comitato, corsi])
+                    add_corsi_count_to_result(sede, comitato, corsi)
+
         context['results'] = results
 
     return 'formazione_osserva_corsi.html', context
