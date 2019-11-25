@@ -81,6 +81,13 @@ def formazione_osserva_corsi(request, me):
         results = dict()
         for sede in sedi:
             comitati = sede.comitati_sottostanti()
+
+            if not comitati:  # GAIA-258
+                corsi = CorsoBase.objects.filter(sede=sede).count()
+                if sede not in results:
+                    results[sede] = list()
+                results[sede].append([sede, corsi])
+
             for comitato in comitati:
 
                 if comitato.pk == 524:  # Lazio
