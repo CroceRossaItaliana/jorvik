@@ -948,6 +948,16 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def ha_verbale(self):
         return self.stato == self.TERMINATO and self.partecipazioni_confermate().exists()
 
+    def process_appartenenze(self, partecipante):
+        persona = partecipante.persona
+        if persona.sostenitore:
+            # Termina appartenenza sostenitore quando il corso base è terminato
+            app = persona.appartenenze_attuali(membro=Appartenenza.SOSTENITORE)
+            for a in app:
+                a.fine = now()
+                a.terminazione = Appartenenza.DIMISSIONE
+                a.save()
+
     def termina(self, mittente=None, partecipanti_qs=None, **kwargs):
         """ Termina il corso, genera il verbale e
         volontarizza/aggiunge titolo al cv dell'utente """
@@ -996,6 +1006,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             if not self.has_partecipazioni_confermate_con_assente_motivo:
                 # Salva lo stato del corso come terminato
                 self.stato = Corso.TERMINATO
+
+                self.process_appartenenze(partecipante)
 
             self.save()
 
