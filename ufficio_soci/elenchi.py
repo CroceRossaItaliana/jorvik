@@ -634,17 +634,18 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         # Impostazione Anzianità
         oggi = datetime.combine(oggi, datetime.min.time())  # date -> datetime
-        delta_months = oggi - relativedelta(months=Appartenenza.MEMBRO_ANZIANITA_MESI)
+        delta_months = oggi - relativedelta(
+            months=Appartenenza.MEMBRO_ANZIANITA_MESI)
         anzianita_minima = delta_months.replace(hour=23, minute=59, second=59)
 
         aggiuntivi = {
             # Anzianita' minima 
             "pk__in": Persona.objects.filter(
                 Appartenenza.con_esito_ok(
-                    membro__in=[Appartenenza.VOLONTARIO,],
+                    membro__in=[Appartenenza.VOLONTARIO, ],
                     inizio__lte=anzianita_minima
                 ).via("appartenenze")
-            ).only("id") 
+            ).only("id")
         }
 
         # Impostazione età minima
@@ -653,59 +654,33 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         # Update criteri query
         aggiuntivi.update({
+            # Registrazione versamento della quota associativa annuale (da commentare)
+            # 'quota__stato': Quota.REGISTRATA,
+            # 'quota__tipo': Quota.QUOTA_SOCIO,
+
             "data_nascita__lte": nascita_minima,  # Età' minima
-
-            # Registrazione versamento della quota associativa annuale
-            'quote__stato': Quota.REGISTRATA,
-            'quote__tipo': Quota.QUOTA_SOCIO,
         })
-
-        oggi_anno = oggi.year
-        anno_corrente_01_gen = datetime(oggi_anno, 1, 1)
-        anno_corrente_31_apr = datetime(oggi_anno, 4,
-            # ultimo giorno di aprile
-            (datetime(oggi_anno, 5, 1) - timedelta(days=1)).day
-        )
-
-        if anno_corrente_01_gen <= oggi <= anno_corrente_31_apr:
-            # data richiesta nell'elenco elettorato sta nel range di date - 12 mesi
-            aggiuntivi.update({
-                'quote__data_versamento__lte': oggi,
-                'quote__data_versamento__gte': anno_corrente_31_apr - relativedelta(months=16),
-            })
-
-        elif oggi >= anno_corrente_31_apr:
-            aggiuntivi.update({
-                'quote__data_versamento__lte': oggi,
-                'quote__data_versamento__gte': anno_corrente_01_gen + relativedelta(months=4),
-            })
-        else:
-            # data richiesta non sta nel range fra 01 gen. e 31 apr
-            # cercare quota versata durante l'anno passato
-
-            aggiuntivi.update({
-                'quote__data_versamento__lte': oggi,
-                'quote__data_versamento__gte': anno_corrente_01_gen - relativedelta(months=12),
-            })
 
         # Cerca dipendenti da escludere
         dipendenti = Persona.objects.filter(
             Q(Appartenenza.query_attuale(
-                membro=Appartenenza.DIPENDENTE, sede__in=qs_sedi, al_giorno=oggi,
+                membro=Appartenenza.DIPENDENTE, sede__in=qs_sedi,
+                al_giorno=oggi,
             ).via("appartenenze")))
-                                            
+
         # print("dipendenti", dipendenti.values_list('pk', flat=True) )
 
         # Query finale
         r = Persona.objects.filter(
             Appartenenza.query_attuale(
-                membro=Appartenenza.VOLONTARIO, sede__in=qs_sedi, al_giorno=oggi,
+                membro=Appartenenza.VOLONTARIO, sede__in=qs_sedi,
+                al_giorno=oggi,
             ).via("appartenenze"), Q(**aggiuntivi),
 
-        # ).exclude(
-        #     # Escludi quelli con dimissione negli anni di anzianità
-        #     appartenenze__terminazione__in=[Appartenenza.DIMISSIONE, Appartenenza.ESPULSIONE],
-        #     appartenenze__fine__gte=anzianita_minima,
+            # ).exclude(
+            #     # Escludi quelli con dimissione negli anni di anzianità
+            #     appartenenze__terminazione__in=[Appartenenza.DIMISSIONE, Appartenenza.ESPULSIONE],
+            #     appartenenze__fine__gte=anzianita_minima,
 
         ).exclude(
             # Escludi quelli con provvedimento di sospensione non terminato
@@ -714,7 +689,7 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
                 inizio__gte=oggi,
                 tipo__in=[ProvvedimentoDisciplinare.SOSPENSIONE,
                           ProvvedimentoDisciplinare.ESPULSIONE,
-                          ProvvedimentoDisciplinare.RADIAZIONE,]
+                          ProvvedimentoDisciplinare.RADIAZIONE, ]
             ).values_list('persona__id', flat=True)
 
         ).exclude(
