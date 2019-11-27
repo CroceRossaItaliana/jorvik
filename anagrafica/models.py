@@ -1522,6 +1522,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     MEMBRO_ANZIANITA = MEMBRO_SOCIO
     MEMBRO_ANZIANITA_ANNI = 2
     MEMBRO_ANZIANITA_ELETTORATO_ATTIVO = 1
+    MEMBRO_ANZIANITA_MESI = 3
 
     # Membri sotto il diretto controllo di una altra Sede
     MEMBRO_ESTESO = (ESTESO,)
@@ -2720,10 +2721,12 @@ class ProvvedimentoDisciplinare(ModelloSemplice, ConMarcaTemporale, ConProtocoll
     AMMONIZIONE = "A"
     SOSPENSIONE = "S"
     ESPULSIONE = "E"
+    RADIAZIONE = "R"
     TIPO = (
         (AMMONIZIONE, "Ammonizione",),
         (SOSPENSIONE, "Sospensione",),
         (ESPULSIONE, "Esplusione",),
+        (RADIAZIONE, "Radiazione",),
     )
 
     persona = models.ForeignKey(Persona, related_name="provvedimenti", on_delete=models.CASCADE)

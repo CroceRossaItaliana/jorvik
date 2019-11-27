@@ -359,4 +359,5 @@ class AdminTelefono(ReadonlyAdminMixin, admin.ModelAdmin):
 @admin.register(ProvvedimentoDisciplinare)
 class AdminProvvedimentoDisciplinare(ReadonlyAdminMixin, admin.ModelAdmin):
     raw_id_fields = ['persona', 'registrato_da', 'sede',]
-
+    list_display = ['persona', 'inizio', 'fine', 'tipo',]
+    list_filter = ['tipo',]
