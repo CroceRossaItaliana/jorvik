@@ -776,7 +776,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         :return: <Persona>QuerySet
         """
         if self.corso_vecchio or not self.is_nuovo_corso:
-            aspiranti_list = self.aspiranti_nelle_vicinanze().values_list('pk', flat=True)
+            aspiranti_list = self.aspiranti_nelle_vicinanze().values_list('persona', flat=True)
             persone = Persona.objects.filter(pk__in=aspiranti_list)
         else:
             persone = self.get_volunteers_by_course_requirements()
