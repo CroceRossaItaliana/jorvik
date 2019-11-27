@@ -58,6 +58,9 @@ def updateServizio(key, **kwargs):
     if kwargs.get('address'):
         data['address'] = kwargs.get('address')
 
+    if kwargs.get('summary'):
+        data['summary'] = kwargs.get('summary')
+
     r = requests.put(
         '{}/offeredserviceextended/{}/'.format(end_point, key),
         json=data
@@ -109,9 +112,9 @@ def createServizio(comitato, nome_progetto, servizi=[]):
 
     data = {
         "committee": str(comitato),
-        "project": "XXX" + nome_progetto + "XXX",
+        "project": nome_progetto,
         "service": [ss[:-1]],
-        "summary": "XXX" + nome_progetto + "XXX"
+        "summary": nome_progetto
     }
 
     r = requests.post(

@@ -60,13 +60,53 @@
 
 
     <script type="text/javascript">
+
+        function tutti(element){
+           $('input[name=annualPeriod]').each(
+               function (){
+                   if ($('input[id=id_tutti]').is(':checked')){
+                       $(this).prop('checked', true);
+                   }else {
+                       $(this).prop('checked', false);
+                   }
+               }
+           )
+        }
+
         $(document).ready(function () {
             $('[id=id_orario_apertura]').attr('type', 'time');
             $('[id=id_orario_chiusura]').attr('type', 'time');
             changeForm($('[name=activationPeriodType]').val());
             changeFormTurni($('[name=dayHourType]').val());
             changeFormContatti($('[name=tipo_contatto]').val());
+
+            $('[id=id_annualPeriod]').prepend(
+                '<div class="checkbox">\n' +
+                '   <label >\n' +
+                '        <input style="position: absolute;" onclick="tutti(this)" class="" id="id_tutti" title="" type="checkbox"> Tutti\n' +
+                '     </label>\n' +
+                '</div>'
+            );
+            let check = true;
+            $('input[name=annualPeriod]').each(
+                function (){
+
+                    if (!$(this).is(':checked') || !check){
+                        check = false;
+                    }
+
+                    $(this).click(
+                        function (e){
+                            if (!$(e.currentTarget).is(':checked')) {
+                                $('input[id=id_tutti]').prop('checked', false);
+                            }
+                        }
+                    );
+               }
+            );
+            $('input[id=id_tutti]').prop('checked', check);
         });
+
         $('[name=activationPeriodType]').change(function () {
             changeForm($(this).val());
         });
@@ -160,6 +200,8 @@
                     break;
              }
          }
+
+
     </script>
 {% endblock %}
 

@@ -151,7 +151,13 @@ def attivita_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
 def servizio_gestisci(request, me, stato="aperte"):
     from attivita.cri_persone import getListService, deleteService
     from anagrafica.models import Delega
-    contesto = {}
+    from attivita.forms import ModuloFiltroElencoServizi
+
+    modulo = ModuloFiltroElencoServizi(request.POST or None)
+    modulo.fields['progetto'].choices = ModuloFiltroElencoServizi.popola_progetto(me)
+
+    contesto = {"modulo": modulo}
+
     if me.is_presidente or me.is_comissario:
         sedi = me.oggetti_permesso(GESTIONE_SEDE, solo_deleghe_attive=True).values_list('id', flat=True)
     else:
@@ -171,7 +177,7 @@ def servizio_gestisci(request, me, stato="aperte"):
         if 'result' in result:
             if result['result']['code'] == 200:
                 for sevizio in result['data']['offered_services']:
-                    sevizio['project'] = Progetto.objects.filter(nome=sevizio['project'].replace('X', '')).first()
+                    sevizio['project'] = Progetto.objects.filter(nome=sevizio['project']).first()
                 contesto['servizi'] = result['data']['offered_services']
 
     return 'servizio_gestisci.html', contesto
@@ -877,6 +883,7 @@ def servizio_modifica_servizi_standard(request, me, pk=None):
 def servizio_scheda_informazioni_modifica(request, me, pk=None):
     from attivita.forms import ModuloServizioModifica
     from attivita.cri_persone import getServizio
+    from attivita.models import Progetto
     modulo = None
 
     result = getServizio(pk)
@@ -890,22 +897,29 @@ def servizio_scheda_informazioni_modifica(request, me, pk=None):
                 init.update({'stato': result['data']['status']})
             if result['data']['description']:
                 init.update({'testo': result['data']['description']})
+            if result['data']['summary']:
+                init.update({'nome_progetto': result['data']['summary']})
         modulo = ModuloServizioModifica(request.POST or None, initial=init)
     else:
         modulo = ModuloServizioModifica(request.POST or None)
 
     contesto.update({'modulo': modulo})
-
     if modulo.is_valid():
         testo = modulo.cleaned_data['testo']
+        summary = modulo.cleaned_data['nome_progetto']
+        if init['nome_progetto'] != summary:
+            p = Progetto.objects.filter(nome=init['nome_progetto'], sede=int(result['data']['committee'][0])).first()
+            p.nome = summary
+            p.save()
+            contesto.update({'nome': summary})
         new_state = modulo.cleaned_data['stato']
-        if new_state:
+        if new_state != result['data']['status']:
             try:
                 changeState(pk, result['data']['status'], new_state)
             except:
                 messages.error(request, 'Errore nel passaggio di stato')
                 return 'servizio_scheda_infomazioni_modifica.html', contesto
-        updateServizio(pk, **{'testo': testo})
+        updateServizio(pk, **{'testo': testo, 'summary': summary})
         messages.success(request, 'Salvato correttamente')
 
     return 'servizio_scheda_infomazioni_modifica.html', contesto
@@ -1064,6 +1078,7 @@ def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
             data['os_activation_period_type'] = {"value": modulo.cleaned_data['activationPeriodType']}
             data['os_activation_period_type'] = {"value": modulo.cleaned_data['activationPeriodType']}
             data['os_annual_period'] = modulo.cleaned_data['annualPeriod']
+            print(data['os_annual_period'])
             data['os_annual_period_from'] = ""
             data['os_annual_period_to'] = ""
         elif modulo.cleaned_data['activationPeriodType'] == ModuloServiziSepcificheDelServizio.DA_A:

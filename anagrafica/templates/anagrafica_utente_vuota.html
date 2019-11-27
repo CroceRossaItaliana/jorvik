@@ -81,5 +81,10 @@
             };
         }
     });
+
+    $('*[data-confirm="true"]').on('click', function() {
+        return confirm("Sei sicuro di voler cancellare questo servizio?");
+    });
+
 </script>
 {% endblock %}

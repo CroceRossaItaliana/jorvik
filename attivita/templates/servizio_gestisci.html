@@ -24,32 +24,14 @@
                 Elenco servizi gestiti
             </h2>
         </div>
-{##}
-{#        <div class="panel-body">#}
-{##}
-{#            <p>#}
-{#                <ul class="nav nav-pills">#}
-{#                  <li role="presentation" {% if stato == "aperte" %}class="active"{% endif %}>#}
-{#                      <a href="/attivita/servizio/gestisci/">#}
-{#                          <i class="fa fa-fw fa-check-circle"></i>#}
-{#                          Aperte#}
-{#                          <span class="badge">{{ attivita_aperte.count }}</span>#}
-{#                      </a>#}
-{#                  </li>#}
-{#                  <li role="presentation" {% if stato == "chiuse" %}class="active"{% endif %}>#}
-{#                      <a href="/attivita/servizio/gestisci/chiuse/">#}
-{#                          <i class="fa fa-fw fa-folder-o"></i>#}
-{#                          Chiuse#}
-{#                          <span class="badge">{{ attivita_chiuse.count }}</span>#}
-{#                      </a>#}
-{#                  </li>#}
-{#                </ul>#}
-{#            </p>#}
-{##}
-{#            {% include "attivita_gestisci_inc_paginazione.html" %}#}
-{##}
-{#        </div>#}
-
+        <form method="POST" style="padding: 10px 10px 10px 10px;">
+            {% csrf_token %}
+            {% bootstrap_form modulo %}
+            <button type="submit" class="btn btn-lg btn-success" style="width: 100%;">
+                <i class="fa fa-fw fa-search"></i>
+                Filtra
+            </button>
+        </form>
         <table class="table table-responsive table-striped">
             <thead>
                 <tr>
@@ -78,7 +60,7 @@
                             </ul>
                         </td>
                         <td>
-                            <a href="/attivita/servizio/gestisci?del={{ s.key }}" class="text-danger">
+                            <a href="/attivita/servizio/gestisci?del={{ s.key }}" class="text-danger" data-confirm="true">
                                 <i class="fa fa-fw fa-trash"></i> cancella servizio offerto
                             </a><br />
 
