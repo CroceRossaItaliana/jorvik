@@ -634,8 +634,7 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         # Impostazione Anzianità
         oggi = datetime.combine(oggi, datetime.min.time())  # date -> datetime
-        delta_months = oggi - relativedelta(
-            months=Appartenenza.MEMBRO_ANZIANITA_MESI)
+        delta_months = oggi - relativedelta(months=Appartenenza.MEMBRO_ANZIANITA_MESI)
         anzianita_minima = delta_months.replace(hour=23, minute=59, second=59)
 
         aggiuntivi = {
@@ -685,8 +684,8 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
         ).exclude(
             # Escludi quelli con provvedimento di sospensione non terminato
             pk__in=ProvvedimentoDisciplinare.objects.filter(
-                Q(fine__gte=oggi) | Q(fine__isnull=True),
-                inizio__gte=oggi,
+                Q(fine__lte=oggi) | Q(fine__isnull=True),
+                inizio__gte=oggi - relativedelta(months=24),
                 tipo__in=[ProvvedimentoDisciplinare.SOSPENSIONE,
                           ProvvedimentoDisciplinare.ESPULSIONE,
                           ProvvedimentoDisciplinare.RADIAZIONE, ]
