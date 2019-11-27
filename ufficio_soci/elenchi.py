@@ -1,4 +1,5 @@
-from datetime import date, datetime
+from dateutil.relativedelta import relativedelta
+from datetime import date, datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q, F
 from django.utils.encoding import force_text
@@ -625,57 +626,73 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
     REPORT_TYPE = ReportElenco.ELETTORATO
 
     def risultati(self):
-        qs_sedi = self.args[0]
+        from datetime import datetime
 
-        oggi = self.modulo_riempito.cleaned_data['al_giorno']
-        nascita_minima = date(oggi.year - 18, oggi.month, oggi.day)
-        if self.modulo_riempito.cleaned_data['elettorato'] == ModuloElencoElettorato.ELETTORATO_ATTIVO:
-            anzianita_minima = datetime(
-                oggi.year - Appartenenza.MEMBRO_ANZIANITA_ELETTORATO_ATTIVO, oggi.month, oggi.day, 23, 59, 59
-            )
-        else:
-            anzianita_minima = datetime(
-                oggi.year - Appartenenza.MEMBRO_ANZIANITA_ANNI, oggi.month, oggi.day, 23, 59, 59
-            )
+        qs_sedi = self.args[0]
+        form = self.modulo_riempito
+        cd = form.cleaned_data
+
+        oggi = cd['al_giorno']  # date
+        elettorato = cd['elettorato']
+
+        # Impostazione Anzianità
+        oggi = datetime.combine(oggi, datetime.min.time())  # date -> datetime
+        delta_months = oggi - relativedelta(months=Appartenenza.MEMBRO_ANZIANITA_MESI)
+        anzianita_minima = delta_months.replace(hour=23, minute=59, second=59)
 
         aggiuntivi = {
             # Anzianita' minima 
             "pk__in": Persona.objects.filter(
                 Appartenenza.con_esito_ok(
-                    membro__in=Appartenenza.MEMBRO_ANZIANITA,
+                    membro__in=[Appartenenza.VOLONTARIO, ],
                     inizio__lte=anzianita_minima
                 ).via("appartenenze")
-            ).only("id") 
+            ).only("id")
         }
-        if self.modulo_riempito.cleaned_data['elettorato'] == ModuloElencoElettorato.ELETTORATO_PASSIVO:
-            # Elettorato passivo,
-            aggiuntivi.update({
-                # Eta' minima
-                "data_nascita__lte": nascita_minima,
-            })
 
+        # Impostazione età minima
+        ETA_MINIMA_ANNI = 18 if elettorato == ModuloElencoElettorato.ELETTORATO_PASSIVO else 14
+        nascita_minima = date(oggi.year - ETA_MINIMA_ANNI, oggi.month, oggi.day)
+
+        # Update criteri query
+        aggiuntivi.update({
+            # Registrazione versamento della quota associativa annuale (da commentare)
+            # 'quota__stato': Quota.REGISTRATA,
+            # 'quota__tipo': Quota.QUOTA_SOCIO,
+
+            "data_nascita__lte": nascita_minima,  # Età' minima
+        })
+
+        # Cerca dipendenti da escludere
         dipendenti = Persona.objects.filter(
-            Q(Appartenenza.query_attuale(membro=Appartenenza.DIPENDENTE, sede__in=qs_sedi,
-                                            al_giorno=oggi
-                                            ).via("appartenenze")))
-                                            
+            Q(Appartenenza.query_attuale(
+                membro=Appartenenza.DIPENDENTE, sede__in=qs_sedi,
+                al_giorno=oggi,
+            ).via("appartenenze")))
+
         # print("dipendenti", dipendenti.values_list('pk', flat=True) )
 
+        # Query finale
         r = Persona.objects.filter(
             Appartenenza.query_attuale(
-                    al_giorno=oggi,
-                sede__in=qs_sedi, membro=Appartenenza.VOLONTARIO,
-            ).via("appartenenze"),
-            Q(**aggiuntivi),
+                membro=Appartenenza.VOLONTARIO, sede__in=qs_sedi,
+                al_giorno=oggi,
+            ).via("appartenenze"), Q(**aggiuntivi),
 
-        ).exclude(  # Escludi quelli con dimissione negli anni di anzianita'
-            appartenenze__terminazione__in=[Appartenenza.DIMISSIONE, Appartenenza.ESPULSIONE],
-            appartenenze__fine__gte=anzianita_minima,
+            # ).exclude(
+            #     # Escludi quelli con dimissione negli anni di anzianità
+            #     appartenenze__terminazione__in=[Appartenenza.DIMISSIONE, Appartenenza.ESPULSIONE],
+            #     appartenenze__fine__gte=anzianita_minima,
 
-        ).exclude(  # Escludi quelli con provvedimento di sospensione non terminato
+        ).exclude(
+            # Escludi quelli con provvedimento di sospensione non terminato
             pk__in=ProvvedimentoDisciplinare.objects.filter(
-                Q(fine__gte=oggi) | Q(fine__isnull=True), inizio__lte=oggi, tipo=ProvvedimentoDisciplinare.SOSPENSIONE
-            ).values_list('persona_id', flat=True)
+                Q(fine__lte=oggi) | Q(fine__isnull=True),
+                inizio__gte=oggi - relativedelta(months=24),
+                tipo__in=[ProvvedimentoDisciplinare.SOSPENSIONE,
+                          ProvvedimentoDisciplinare.ESPULSIONE,
+                          ProvvedimentoDisciplinare.RADIAZIONE, ]
+            ).values_list('persona__id', flat=True)
 
         ).exclude(
             pk__in=dipendenti.values_list('pk', flat=True)
@@ -684,8 +701,7 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
             appartenenza_inizio=F('appartenenze__inizio'),
             appartenenza_sede=F('appartenenze__sede'),
         ).prefetch_related(
-            'appartenenze', 'appartenenze__sede',
-            'utenza', 'numeri_telefono'
+            'appartenenze', 'appartenenze__sede', 'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
         return r
 

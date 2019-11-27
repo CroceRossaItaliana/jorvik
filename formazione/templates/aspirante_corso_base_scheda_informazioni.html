@@ -175,7 +175,7 @@
         <h3><i class="fa fa-fw fa-info-circle"></i> Informazioni</h3>
         {{ corso.descrizione|default:"<p>Ancora non disponibili</p>"|safe }}
 
-        {% if puoi_partecipare == corso.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI or puo_modificare %}
+        {% if puoi_partecipare == corso.SEI_ISCRITTO_CONFERMATO_PUOI_RITIRARTI or puoi_partecipare == corso.SEI_ISCRITTO_PUOI_RITIRARTI or puo_modificare %}
             <h3>Materiale didattico</h3>
 
             {% if corso.get_course_links %}

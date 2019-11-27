@@ -776,7 +776,7 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         :return: <Persona>QuerySet
         """
         if self.corso_vecchio or not self.is_nuovo_corso:
-            aspiranti_list = self.aspiranti_nelle_vicinanze().values_list('pk', flat=True)
+            aspiranti_list = self.aspiranti_nelle_vicinanze().values_list('persona', flat=True)
             persone = Persona.objects.filter(pk__in=aspiranti_list)
         else:
             persone = self.get_volunteers_by_course_requirements()
@@ -948,6 +948,16 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
     def ha_verbale(self):
         return self.stato == self.TERMINATO and self.partecipazioni_confermate().exists()
 
+    def process_appartenenze(self, partecipante):
+        persona = partecipante.persona
+        if persona.sostenitore:
+            # Termina appartenenza sostenitore quando il corso base è terminato
+            app = persona.appartenenze_attuali(membro=Appartenenza.SOSTENITORE)
+            for a in app:
+                a.fine = now()
+                a.terminazione = Appartenenza.DIMISSIONE
+                a.save()
+
     def termina(self, mittente=None, partecipanti_qs=None, **kwargs):
         """ Termina il corso, genera il verbale e
         volontarizza/aggiunge titolo al cv dell'utente """
@@ -996,6 +1006,8 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
             if not self.has_partecipazioni_confermate_con_assente_motivo:
                 # Salva lo stato del corso come terminato
                 self.stato = Corso.TERMINATO
+
+                self.process_appartenenze(partecipante)
 
             self.save()
 
@@ -1668,6 +1680,18 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         # else:
         #     return ModuloConfermaIscrizioneCorsoBase
 
+    @classmethod
+    def partecipazioni_ordinate_per_attestato(cls, corso):
+        from collections import OrderedDict
+
+        partecipanti_con_attestato = corso.partecipazioni_confermate().order_by('persona__cognome')
+        return OrderedDict(
+            [(i.persona.pk, line) for line, i in enumerate(partecipanti_con_attestato, 1)]
+        )
+
+    def get_partecipazione_id_per_attestato(self, corso, persona_pk):
+        return self.partecipazioni_ordinate_per_attestato(corso).get(persona_pk)
+
     def genera_scheda_valutazione(self, request=None):
         pdf = PDF(oggetto=self)
 
@@ -1703,14 +1727,18 @@ class PartecipazioneCorsoBase(ModelloSemplice, ConMarcaTemporale, ConAutorizzazi
         if not self.corso.titolo_cri:
             pdf_template = "pdf_corso_base_attestato.html"
 
+        corso, persona = self.corso, self.persona
+
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva_con_python(
             nome="Attestato %s.pdf" % self.persona.codice_fiscale,
             corpo={
                 "partecipazione": self,
-                "corso": self.corso,
-                "persona": self.persona,
+                "corso": corso,
+                "persona": persona,
                 "request": request,
+                'partecipazione_id':
+                    self.get_partecipazione_id_per_attestato(corso, persona.pk)
             },
             modello=pdf_template,
         )
