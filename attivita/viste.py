@@ -215,21 +215,44 @@ def attivita_gestisci(request, me, stato="aperte"):
     }
     return 'attivita_gestisci.html', contesto
 
+
 @pagina_privata
 def servizio_organizza(request, me):
-    from attivita.forms import ModuloOrganizzaServizio, ModuloOrganizzaServizioReferente
+    from attivita.forms import ModuloOrganizzaServizio, ModuloOrganizzaServizioReferente, ModuloServiziStandard
 
     modulo = ModuloOrganizzaServizio(request.POST or None)
-    modulo_referente = ModuloOrganizzaServizioReferente(request.POST or None)
-    modulo.fields['servizi'].choices = ModuloOrganizzaServizio.popola_scelta()
     modulo.fields['progetto'].choices = ModuloOrganizzaServizio.popola_progetto(me)
+
+    modulo_referente = ModuloOrganizzaServizioReferente(request.POST or None)
+
+    modulo_servizi = ModuloServiziStandard(request.POST or None)
+    modulo_servizi.fields['servizi'].choices, descrizione = ModuloServiziStandard.popola_scelta()
+
+    if modulo_servizi.is_valid():
+        nome = modulo_servizi.cleaned_data['nome']
+        descrizione = modulo_servizi.cleaned_data['descrizione']
+        obbiettivo = modulo_servizi.cleaned_data['obbiettivo_strategico']
+        if nome or descrizione or obbiettivo:
+            modulo_servizi = ModuloServiziStandard(None)
+            modulo_servizi.fields['servizi'].choices, descrizione = ModuloServiziStandard.popola_scelta(
+                summary=nome, description=descrizione, obbiettivo=obbiettivo
+            )
+            contesto = {
+                "modulo": modulo,
+                "modulo_referente": modulo_referente,
+                "modulo_servizi": modulo_servizi,
+                "descrizione": descrizione
+            }
+            return 'servizio_organizza.html', contesto
 
     contesto = {
         "modulo": modulo,
         "modulo_referente": modulo_referente,
+        "modulo_servizi": modulo_servizi,
+        "descrizione": descrizione
     }
 
-    if request.POST and modulo.is_valid() and modulo_referente.is_valid():
+    if request.POST and modulo.is_valid() and modulo_referente.is_valid() and modulo_servizi.is_valid():
 
         progetto = Progetto.objects.filter(nome__iexact=modulo.cleaned_data['progetto']).first()
 
@@ -238,7 +261,7 @@ def servizio_organizza(request, me):
             # comitato=646,
             comitato=int(progetto.sede.id),
             nome_progetto=modulo.cleaned_data['progetto'],
-            servizi=modulo.cleaned_data['servizi'],
+            servizi=modulo_servizi.cleaned_data['servizi'],
         )
         if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
             if 'result' in result:

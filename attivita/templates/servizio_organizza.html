@@ -33,7 +33,22 @@
                 <div class="panel panel-primary">
                     <div class="panel-heading">
                         <h2 class="panel-title">
-                            1. Informazioni sul Servizio
+                            1. Servizi Standard
+                        </h2>
+                    </div>
+                    <div class="panel-body">
+                        {% bootstrap_form modulo_servizi %}
+                        <button type="submit" class="btn btn-primary btn-block btn-lg">
+                            <i class="fa fa-fw fa-search"></i>
+                            Filtra servizi
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">
+                            2. Informazioni sul Servizio
                         </h2>
                     </div>
                     <div class="panel-body">
@@ -44,7 +59,7 @@
                 <div class="panel panel-primary">
                     <div class="panel-heading">
                         <h2 class="panel-title">
-                            2. Referenti Servizi
+                            3. Referenti Servizi
                         </h2>
                     </div>
                     <div class="panel-body">
@@ -77,4 +92,14 @@
             </div>
         </div>
     </form>
+<script>
+    let desc = {{descrizione|safe}};
+    $('select[id=id_servizi]').children().each(
+        function (element) {
+            $(this).attr('data-toggle', 'tooltip');
+            $(this).attr('data-placement', 'bottom');
+            $(this).attr('title', desc[element]);
+        }
+    )
+</script>
 {% endblock %}

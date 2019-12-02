@@ -1,17 +1,34 @@
 import requests
 from django.conf import settings
 import logging
+from urllib.parse import urlencode, quote_plus
 
 end_point = settings.APIS_CONF['crip']['endpoint']
 am_end_pont = settings.APIS_CONF['crip']['am_end_pont']
 
 logger = logging.getLogger(__name__)
 
-def getServiziStandard(max_result=200):
+
+def getServiziStandard(max_result=200, summary='', description='', obbiettivo=None):
+
+    params = {}
+    if summary:
+        params['summary'] = '{}*'.format(summary)
+    if description:
+        params['description'] = '{}*'.format(description)
+    if obbiettivo:
+        params['ObiettivoStrategico'] = 'Obiettivo {}'.format(obbiettivo)
+
     r = requests.get(
-        '{}/service/?maxResults={}'.format(end_point, max_result)
+        '{}/generic_issue/CRIP-Service/?{}'.format(
+            end_point,
+            urlencode(params, quote_plus)
+        )
     )
-    return r.json() if r.status_code == 200 else {}
+
+    resp = r.json()
+    logger.debug('- getServiziStandard {} {}'.format(resp['result']['code'], resp['result']['description']))
+    return resp if r.status_code == 200 else {}
 
 
 def getBeneficiary():
