@@ -172,7 +172,10 @@ def servizio_gestisci(request, me, stato="aperte"):
         deleteService(delServizio)
 
     for id in sedi:
-        result = getListService(id)
+        if modulo.is_valid():
+            result = getListService(id, name=modulo.cleaned_data['progetto'])
+        else:
+            result = getListService(id)
 
         if 'result' in result:
             if result['result']['code'] == 200:

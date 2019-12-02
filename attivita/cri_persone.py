@@ -1,6 +1,8 @@
 import requests
 from django.conf import settings
 import logging
+from urllib.parse import urlencode, quote_plus
+
 
 end_point = settings.APIS_CONF['crip']['endpoint']
 am_end_pont = settings.APIS_CONF['crip']['am_end_pont']
@@ -135,10 +137,21 @@ def getServizio(key=''):
     return resp if 'data' in resp and resp['data'] else {}
 
 
-def getListService(comitato):
+def getListService(comitato, name=''):
+
+    params = {}
+    if comitato:
+        params['committee'] = '{}'.format(comitato)
+    if name:
+        params['project'] = '{}'.format(name)
+
     r = requests.get(
-        '{}/offeredservice/?committee={}'.format(end_point, comitato)
+        '{}/offeredservice/?{}'.format(
+            end_point,
+            urlencode(params, quote_plus)
+        )
     )
+
     resp = r.json()
     logger.debug('- getListService {} {} {}'.format(r.url, resp['result']['code'], resp['result']['description']))
     return resp if 'data' in resp and resp['data'] else {}
