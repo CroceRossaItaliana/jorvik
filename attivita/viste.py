@@ -6,16 +6,15 @@ from attivita.stats import statistiche_attivita_persona
 from django.db.models import Count, F, Sum
 from django.utils import timezone
 
-
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.costanti import NAZIONALE
-from anagrafica.models import Sede
-from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE, REFERENTE_GRUPPO
+from anagrafica.models import Sede, Persona
+from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE, REFERENTE_GRUPPO, DELEGATO_PROGETTO
 from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO, \
     GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE, \
-    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
+    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, GESTIONE_SEDE
 from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from attivita.forms import ModuloStoricoTurni, ModuloAttivitaInformazioni, ModuloModificaTurno, \
     ModuloAggiungiPartecipanti, ModuloCreazioneTurno, ModuloCreazioneArea, ModuloOrganizzaAttivita, \
@@ -27,6 +26,10 @@ from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, err
 from base.files import Excel, FoglioExcel
 from base.utils import poco_fa, timedelta_ore
 from gruppi.models import Gruppo
+from attivita.cri_persone import createServizio, updateServizio, getServizio, changeState
+from base.geo import Locazione
+from django.core.urlresolvers import resolve, reverse
+from django.contrib import messages
 
 
 def attivita(request):
@@ -44,35 +47,79 @@ def attivita_aree(request, me):
 
 @pagina_privata
 def attivita_aree_sede(request, me, sede_pk=None):
+
+    from attivita.forms import FiltroAreaProgetto
+
     sede = get_object_or_404(Sede, pk=sede_pk)
     if not sede in me.oggetti_permesso(GESTIONE_AREE_SEDE):
         return redirect(ERRORE_PERMESSI)
-    aree = sede.aree.all()
+
+    modulo_filtro = FiltroAreaProgetto(request.POST or None)
+    aree = []
+    progetti = []
+    isFiltro = 0
+    if modulo_filtro.is_valid():
+        scelta = modulo_filtro.cleaned_data['scelta']
+        isFiltro = 1
+        if scelta == 'T':
+            aree = sede.aree.all()
+            progetti = sede.progetti.all()
+        elif scelta == 'A':
+            aree = sede.aree.all()
+        else:
+            progetti = sede.progetti.all()
+    else:
+        aree = sede.aree.all()
+        progetti = sede.progetti.all()
+
+
     modulo = ModuloCreazioneArea(request.POST or None)
+    area = None
     if modulo.is_valid():
-        area = modulo.save(commit=False)
-        area.sede = sede
-        area.save()
-        return redirect("/attivita/aree/%d/%d/responsabili/" % (
-            sede.pk, area.pk,
-        ))
+        if not modulo.cleaned_data['progetto']:
+            area = modulo.save(commit=False)
+            area.sede = sede
+            area.save()
+            return redirect("/attivita/aree/%d/%d/responsabili/" % (
+                sede.pk, area.pk,
+            ))
+        else:
+            from attivita.models import Progetto
+            progetto = Progetto(
+                sede=sede,
+                obiettivo=modulo.cleaned_data['obiettivo'],
+                nome=modulo.cleaned_data['nome']
+            )
+            progetto.save()
+            return redirect("/attivita/aree/%d/%d/responsabili/?progetto=true" % (
+                sede.pk, progetto.pk,
+            ))
+
     contesto = {
+        "filtro": modulo_filtro,
+        "isFiltro": isFiltro,
         "sede": sede,
         "aree": aree,
+        "progetti": progetti,
         "modulo": modulo,
     }
     return 'attivita_aree_sede.html', contesto
 
 
+from attivita.models import Progetto
 @pagina_privata
 def attivita_aree_sede_area_responsabili(request, me, sede_pk=None, area_pk=None):
-    area = get_object_or_404(Area, pk=area_pk)
-    if not me.permessi_almeno(area, COMPLETO):
-        return redirect(ERRORE_PERMESSI)
-    sede = area.sede
-    delega = DELEGATO_AREA
+    isProgetto = request.GET.get('progetto', False)
+    area = None
+    progetto = None
+    if isProgetto:
+        progetto = get_object_or_404(Progetto, pk=area_pk)
+    else:
+        area = get_object_or_404(Area, pk=area_pk)
+    sede = area.sede if area else progetto.sede
+    delega = DELEGATO_AREA if area else DELEGATO_PROGETTO
     contesto = {
-        "area": area,
+        "area": area if area else progetto,
         "delega": delega,
         "continua_url": "/attivita/aree/%d/" % (sede.pk,)
     }
@@ -81,19 +128,62 @@ def attivita_aree_sede_area_responsabili(request, me, sede_pk=None, area_pk=None
 
 @pagina_privata
 def attivita_aree_sede_area_cancella(request, me, sede_pk=None, area_pk=None):
-    area = get_object_or_404(Area, pk=area_pk)
-    if not me.permessi_almeno(area, COMPLETO):
-        return redirect(ERRORE_PERMESSI)
-    sede = area.sede
-    if area.attivita.exists():
-        return errore_generico(request, me, titolo="L'area ha delle attività associate",
-                               messaggio="Non è possibile cancellare delle aree che hanno delle "
-                                         "attività associate.",
-                               torna_titolo="Torna indietro",
-                               torna_url="/attivita/aree/%d/" % (sede.pk,))
-    area.delete()
+    area = None
+    progetto = None
+    if request.GET.get('progetto', False):
+        progetto = get_object_or_404(Progetto, pk=area_pk)
+    else:
+        area = get_object_or_404(Area, pk=area_pk)
+    sede = area.sede if area else progetto.sede
+    if area:
+        if area.attivita.exists():
+            return errore_generico(request, me, titolo="L'area ha delle attività associate",
+                                   messaggio="Non è possibile cancellare delle aree che hanno delle "
+                                             "attività associate.",
+                                   torna_titolo="Torna indietro",
+                                   torna_url="/attivita/aree/%d/" % (sede.pk,))
+        area.delete()
+    else:
+        progetto.delete()
     return redirect("/attivita/aree/%d/" % (sede.pk,))
 
+@pagina_privata
+def servizio_gestisci(request, me, stato="aperte"):
+    from attivita.cri_persone import getListService, deleteService
+    from anagrafica.models import Delega
+    from attivita.forms import ModuloFiltroElencoServizi
+
+    modulo = ModuloFiltroElencoServizi(request.POST or None)
+    modulo.fields['progetto'].choices = ModuloFiltroElencoServizi.popola_progetto(me)
+
+    contesto = {"modulo": modulo}
+
+    if me.is_presidente or me.is_comissario:
+        sedi = me.oggetti_permesso(GESTIONE_SEDE, solo_deleghe_attive=True).values_list('id', flat=True)
+    else:
+        sedi = Progetto.objects.filter(
+            id__in=Delega.objects.filter(tipo=DELEGATO_PROGETTO, persona=me).values_list('oggetto_id', flat=True)
+        ).values_list('sede', flat=True)
+    # Decommenta per i test
+    # sedi = [646]
+
+    delServizio = request.GET.get('del', None)
+    if delServizio:
+        deleteService(delServizio)
+
+    for id in sedi:
+        if modulo.is_valid():
+            result = getListService(id, name=modulo.cleaned_data['progetto'])
+        else:
+            result = getListService(id)
+
+        if 'result' in result:
+            if result['result']['code'] == 200:
+                for sevizio in result['data']['offered_services']:
+                    sevizio['project'] = Progetto.objects.filter(nome=sevizio['project']).first()
+                contesto['servizi'] = result['data']['offered_services']
+
+    return 'servizio_gestisci.html', contesto
 
 @pagina_privata
 def attivita_gestisci(request, me, stato="aperte"):
@@ -133,6 +223,57 @@ def attivita_gestisci(request, me, stato="aperte"):
         "attivita_referenti_modificabili": attivita_referenti_modificabili,
     }
     return 'attivita_gestisci.html', contesto
+
+@pagina_privata
+def servizio_organizza(request, me):
+    from attivita.forms import ModuloOrganizzaServizio, ModuloOrganizzaServizioReferente
+
+    modulo = ModuloOrganizzaServizio(request.POST or None)
+    modulo_referente = ModuloOrganizzaServizioReferente(request.POST or None)
+    modulo.fields['servizi'].choices = ModuloOrganizzaServizio.popola_scelta()
+    modulo.fields['progetto'].choices = ModuloOrganizzaServizio.popola_progetto(me)
+
+    contesto = {
+        "modulo": modulo,
+        "modulo_referente": modulo_referente,
+    }
+
+    if request.POST and modulo.is_valid() and modulo_referente.is_valid():
+
+        progetto = Progetto.objects.filter(nome__iexact=modulo.cleaned_data['progetto']).first()
+
+        result = createServizio(
+            # Decommenta per i test
+            # comitato=646,
+            comitato=int(progetto.sede.id),
+            nome_progetto=modulo.cleaned_data['progetto'],
+            servizi=modulo.cleaned_data['servizi'],
+        )
+        if modulo_referente.cleaned_data['scelta'] == modulo_referente.SONO_IO:
+            if 'result' in result:
+                if result['result']['code'] == 201:
+                    updateServizio(key=result["data"]["key"], referenti=[me])
+                    return redirect(
+                        "/attivita/servizio/scheda/{}/modifica".format(
+                            result["data"]["key"]
+                        )
+                    )
+                else:
+                    contesto['errore'] = True
+            else:
+                contesto['errore'] = True
+        elif modulo_referente.cleaned_data['scelta'] == modulo_referente.SCEGLI_REFERENTI:
+            if 'result' in result:
+                if result['result']['code'] == 201:
+                    return redirect("/attivita/servizio/organizza/{}/referenti/".format(
+                        result["data"]["key"])
+                    )
+                else:
+                    contesto['errore'] = True
+            else:
+                contesto['errore'] = True
+
+    return 'servizio_organizza.html', contesto
 
 
 @pagina_privata
@@ -213,6 +354,48 @@ def attivita_organizza_fatto(request, me, pk=None):
 
 
 @pagina_privata
+def servizi_referenti(request, me, pk=None, nuova=False):
+    from attivita.forms import ModuloServiziReferenti
+    import json
+
+    delete = request.GET.get('d', '')
+
+    form = ModuloServiziReferenti(request.POST or None)
+
+    contesto = {
+        "modulo": form,
+    }
+    result = getServizio(pk)
+    if 'result' in result and 'code' in result['result'] and result['result']['code'] == 200:
+        str_json = "[{}]".format(result['data']['accountables'].replace('\'', '"').replace('}', '},')[:-1])
+        referenti = [r['name'] for r in json.loads(str_json)]
+    else:
+        contesto.update({'errore': 'Ci sono problemi a connettersi al servizio riprova piu tardi.'})
+        return 'servizi_referenti.html', contesto
+
+    # elimino referente
+    if delete:
+        referenti.pop(int(delete))
+        updateServizio(pk, precedenti=referenti)
+
+    if request.POST:
+        if form.is_valid():
+            persona = form.cleaned_data['persona']
+            updateServizio(pk, referenti=persona, precedenti=referenti)
+            for ref in persona:
+                referenti.append('{}.{}'.format(ref.nome.lower(), ref.cognome.lower()))
+            contesto.update({'referenti': [
+                Persona.objects.filter(nome__iexact=r.split('.')[0], cognome__iexact=r.split('.')[1]).first() for r in referenti
+            ]})
+    else:
+        contesto.update({'referenti': [
+            Persona.objects.filter(nome__iexact=r.split('.')[0], cognome__iexact=r.split('.')[1]).first() for r in referenti
+        ]})
+
+    return 'servizi_referenti.html', contesto
+
+
+@pagina_privata
 def attivita_referenti(request, me, pk=None, nuova=False):
     attivita = get_object_or_404(Attivita, pk=pk)
     if not me.permessi_almeno(attivita, MODIFICA):
@@ -221,7 +404,7 @@ def attivita_referenti(request, me, pk=None, nuova=False):
     delega = REFERENTE
 
     if nuova:
-        continua_url = "/attivita/organizza/%d/fatto/" % (attivita.pk,)
+        continua_url = "/attivita/organizza/%d/fatto/" % (attivita.pk)
     else:
         continua_url = "/attivita/gestisci/"
 
@@ -662,6 +845,388 @@ def attivita_scheda_turni_modifica_link_permanente(request, me, pk=None, turno_p
     return redirect("/attivita/scheda/%d/turni/modifica/%d/?evidenzia_turno=%d#turno-%d" % (
         attivita.pk, pagina, turno.pk, turno.pk
     ))
+
+
+@pagina_privata
+def servizio_modifica_servizi_standard(request, me, pk=None):
+    from attivita.forms import ModuloServiziModificaStandard
+    result = getServizio(pk)
+    # service_delete = request.GET.get('key', None)
+    services = []
+    if 'result' in result and 'code' in result['result'] and result['result']['code'] == 200:
+        for s in result['data']['service']:
+            # if s['key'] == service_delete: continue
+            services.append(s['key'])
+
+    modulo = ModuloServiziModificaStandard(request.POST or None, initial={'servizi': services})
+
+
+    modulo.fields['servizi'].choices = ModuloServiziModificaStandard.popola_scelta()
+    contesto = {
+        "modulo": modulo,
+        'type': request.get_full_path().split('/')[-2].strip()
+    }
+
+    if request.POST:
+        if modulo.is_valid():
+            services.extend(modulo.cleaned_data['servizi'])
+
+    if services:
+        updateServizio(pk, servizi=services)
+        result = getServizio(pk)
+
+    if 'result' in result and 'code' in result['result'] and result['result']['code'] == 200:
+        contesto.update({'nome': result['data']['project']})
+        contesto.update({"servizi": result['data']['service']})
+
+    return 'servizi_standard_modifica.html', contesto
+
+
+@pagina_privata
+def servizio_scheda_informazioni_modifica(request, me, pk=None):
+    from attivita.forms import ModuloServizioModifica
+    from attivita.cri_persone import getServizio
+    from attivita.models import Progetto
+    modulo = None
+
+    result = getServizio(pk)
+    contesto = {'key': pk, 'type': request.get_full_path().split('/')[-1].strip()}
+    init = {}
+
+    if 'result' in result:
+        if result['result']['code'] == 200:
+            contesto.update({'nome': result['data']['summary']})
+            if result['data']['status']:
+                init.update({'stato': result['data']['status']})
+            if result['data']['description']:
+                init.update({'testo': result['data']['description']})
+            if result['data']['summary']:
+                init.update({'nome_progetto': result['data']['summary']})
+        modulo = ModuloServizioModifica(request.POST or None, initial=init)
+    else:
+        modulo = ModuloServizioModifica(request.POST or None)
+
+    contesto.update({'modulo': modulo})
+    if modulo.is_valid():
+        testo = modulo.cleaned_data['testo']
+        summary = modulo.cleaned_data['nome_progetto']
+        if init['nome_progetto'] != summary:
+            p = Progetto.objects.filter(nome=init['nome_progetto'], sede=int(result['data']['committee'][0])).first()
+            p.nome = summary
+            p.save()
+            contesto.update({'nome': summary})
+        new_state = modulo.cleaned_data['stato']
+        if new_state != result['data']['status']:
+            try:
+                changeState(pk, result['data']['status'], new_state)
+            except:
+                messages.error(request, 'Errore nel passaggio di stato')
+                return 'servizio_scheda_infomazioni_modifica.html', contesto
+        updateServizio(pk, **{'testo': testo, 'summary': summary})
+        messages.success(request, 'Salvato correttamente')
+
+    return 'servizio_scheda_infomazioni_modifica.html', contesto
+
+
+@pagina_privata
+def servizio_scheda_informazioni_modifica_accesso(request, me, pk=None):
+    from attivita.forms import ModuloServiziCriteriDiAccesso, ModuloServiziCriteriDiAccessoGeo
+    from attivita.cri_persone import update_service
+    modulo = None
+    geo = None
+    result = getServizio(pk)
+    init = {}
+    contesto = {'key': pk, 'type': resolve(request.path_info).url_name}
+
+    if 'result' in result:
+        if result['result']['code'] == 200:
+            if result['data']['address']:
+                contesto.update({'indirizzo': result['data']['address']})
+            if result['data']['geographical_scope']:
+                init['geo_scope'] = result['data']['geographical_scope']
+            if result['data']['age_from']:
+                init['eta_form'] = result['data']['age_from'].split('.')[0]
+            if result['data']['age_to']:
+                init['eta_to'] = result['data']['age_to'].split('.')[0]
+            if result['data']['beneficiary_residence_restriction']:
+                init['recidence_beneficiaries'] = result['data']['beneficiary_residence_restriction']
+            if result['data']['beneficiary_max_isee']:
+                init['beneficiaryMaxIsee'] = result['data']['beneficiary_max_isee'].split('.')[0]
+            if result['data']['beneficiary_type']:
+                init['beneficiaries'] = tuple(result['data']['beneficiary_type'].split(','))
+            if result['data']['other_beneficiary_data']:
+                init['otherBeneficiaryData'] = result['data']['other_beneficiary_data']
+            modulo = ModuloServiziCriteriDiAccesso(request.POST or None, initial=init)
+            geo = ModuloServiziCriteriDiAccessoGeo(request.POST or None)
+    else:
+        modulo = ModuloServiziCriteriDiAccesso(request.POST or None)
+        geo = ModuloServiziCriteriDiAccessoGeo(request.POST or None)
+
+    modulo.fields['beneficiaries'].choices = ModuloServiziCriteriDiAccesso.popola_beneficiaries()
+
+    contesto.update({'modulo': modulo})
+    contesto.update({'geo': geo})
+
+    if modulo.is_valid() and geo.is_valid():
+        beneficiary = ""
+        for b in modulo.cleaned_data['beneficiaries']:
+            beneficiary += "{},".format(b)
+        data = {}
+        if modulo.cleaned_data['geo_scope']:
+            data['geographical_scope'] = {'value': modulo.cleaned_data['geo_scope']}
+        if beneficiary:
+            data["beneficiary_type"] = [beneficiary[:-1] if beneficiary else ""]
+        if modulo.cleaned_data['eta_form']:
+            data['age_from'] = str(modulo.cleaned_data['eta_form'])
+        if modulo.cleaned_data['eta_to']:
+            data['age_to'] = str(modulo.cleaned_data['eta_to'])
+        if modulo.cleaned_data['recidence_beneficiaries']:
+            data['beneficiary_residence_restriction'] = {'value': modulo.cleaned_data['recidence_beneficiaries']}
+        if modulo.cleaned_data['beneficiaryMaxIsee']:
+            data['beneficiary_max_isee'] = modulo.cleaned_data['beneficiaryMaxIsee']
+        if modulo.cleaned_data['otherBeneficiaryData']:
+            data['other_beneficiary_data'] = modulo.cleaned_data['otherBeneficiaryData']
+
+        if geo.cleaned_data['comune'] and geo.cleaned_data['provincia']:
+
+            indirizzo = '{}, {}, {}'.format(geo.cleaned_data['indirizzo'], geo.cleaned_data['comune'], geo.cleaned_data['provincia'])
+            l = Locazione.oggetto(indirizzo)
+            data['address'] = l.indirizzo
+            update_service(pk, **data)
+            messages.success(request, 'Salvato correttamente')
+            return redirect(reverse('attivita:accesso', kwargs={'pk': result['data']['key']}))
+
+        update_service(pk, **data)
+        messages.success(request, 'Salvato correttamente')
+
+    return 'servizio_scheda_infomazioni_modifica_accesso.html', contesto
+
+
+@pagina_privata
+def servizio_scheda_informazioni_modifica_specifiche(request, me, pk=None):
+    from attivita.forms import ModuloServiziSepcificheDelServizio, ModuloServiziSepcificheDelServizioTurni
+    from attivita.cri_persone import update_service, deleteStagil, createStagilTurni
+    init_modulo = {}
+    init_turni = {}
+    dayHour = []
+    dt = request.GET.get('dt', '')
+
+    if dt:
+        deleteStagil(dt)
+        messages.warning(request, 'Eliminato turno')
+
+    result = getServizio(pk)
+    if 'result' in result:
+        if result['result']['code'] == 200:
+            if 'os_activation_period_type' in result['data']:
+                if result['data']['os_activation_period_type']:
+                    init_modulo['activationPeriodType'] = result['data']['os_activation_period_type']['value']
+            if 'os_annual_period' in result['data']:
+                init_modulo['annualPeriod'] = result['data']['os_annual_period']
+            if 'os_annual_period_from' in result['data']:
+                if result['data']['os_annual_period_from']:
+                    init_modulo['annualPeriodFrom'] = datetime.strptime(
+                        result['data']['os_annual_period_from'], '%Y-%m-%d'
+                    )
+            if 'os_annual_period_to' in result['data']:
+                if result['data']['os_annual_period_to']:
+                    init_modulo['annualPeriodTo'] = datetime.strptime(
+                        result['data']['os_annual_period_to'], '%Y-%m-%d'
+                    )
+            if 'variable_day' in result['data']:
+                if result['data']['variable_day']:
+                    init_modulo['variableDay'] = result['data']['variable_day']['value']
+            if 'os_due_date' in result['data']:
+                if result['data']['os_due_date']:
+                    init_modulo['dueDate'] = datetime.strptime(
+                        result['data']['os_due_date'], '%Y-%m-%d'
+                    )
+
+            if 'os_cost_' in result['data']:
+                init_modulo['costField'] = result['data']['os_cost_']
+
+            if 'access_mode' in result['data']:
+                init_modulo['accessMode'] = result['data']['access_mode']
+
+            if 'os_dayhour_type' in result['data']:
+                if result['data']['os_dayhour_type']:
+                    init_turni['dayHourType'] = result['data']['os_dayhour_type']['value']
+
+            if 'dayhour' in result['data']:
+                dayHour = result['data']['dayhour']
+
+
+            modulo = ModuloServiziSepcificheDelServizio(request.POST or None, initial=init_modulo)
+            turni = ModuloServiziSepcificheDelServizioTurni(request.POST or None, initial=init_turni)
+
+        else:
+            # Errore
+            modulo = ModuloServiziSepcificheDelServizio(request.POST or None)
+            turni = ModuloServiziSepcificheDelServizioTurni(request.POST or None)
+    else:
+        modulo = ModuloServiziSepcificheDelServizio(request.POST or None)
+        turni = ModuloServiziSepcificheDelServizioTurni(request.POST or None)
+
+    contesto = {'key': pk, 'type': resolve(request.path_info).url_name}
+    contesto.update({'modulo': modulo})
+    contesto.update({'turni': turni})
+    if dayHour:
+        contesto.update({'dayhour': dayHour})
+
+    data = {}
+
+    if modulo.is_valid() and turni.is_valid():
+
+        if modulo.cleaned_data['activationPeriodType'] == ModuloServiziSepcificheDelServizio.MENSILE:
+            data['os_activation_period_type'] = {"value": modulo.cleaned_data['activationPeriodType']}
+            data['os_activation_period_type'] = {"value": modulo.cleaned_data['activationPeriodType']}
+            data['os_annual_period'] = modulo.cleaned_data['annualPeriod']
+            print(data['os_annual_period'])
+            data['os_annual_period_from'] = ""
+            data['os_annual_period_to'] = ""
+        elif modulo.cleaned_data['activationPeriodType'] == ModuloServiziSepcificheDelServizio.DA_A:
+            data['os_activation_period_type'] = {"value": modulo.cleaned_data['activationPeriodType']}
+            data['os_annual_period'] = ""
+            data['os_annual_period_from'] = modulo.cleaned_data['annualPeriodFrom'].strftime("%Y-%m-%d")
+            data['os_annual_period_to'] = modulo.cleaned_data['annualPeriodTo'].strftime("%Y-%m-%d")
+        else:
+            data['os_activation_period_type'] = ""
+            data['os_annual_period'] = ""
+            data['os_annual_period_from'] = ""
+            data['os_annual_period_to'] = ""
+
+        if modulo.cleaned_data['variableDay']:
+            data['variable_day'] = {'value': modulo.cleaned_data['variableDay']}
+        if modulo.cleaned_data['dueDate']:
+            data['os_due_date'] = {'value': modulo.cleaned_data['dueDate'].strftime("%Y-%m-%d")}
+
+        if modulo.cleaned_data['costField']:
+            data['os_cost_'] = modulo.cleaned_data['costField']
+
+        if modulo.cleaned_data['accessMode']:
+            data['access_mode'] = modulo.cleaned_data['accessMode']
+
+        if turni.cleaned_data['dayHourType']:
+            data['os_dayhour_type'] = {'value': turni.cleaned_data['dayHourType']}
+            if turni.cleaned_data['dayHourType'] == ModuloServiziSepcificheDelServizioTurni.H24:
+                update_service(pk, **data)
+                messages.success(request, 'Salvato correttamente')
+                return redirect(reverse('attivita:specifiche', kwargs={'pk': result['data']['key']}))
+
+        update_service(pk, **data)
+        messages.success(request, 'Salvato correttamente')
+
+        if turni.cleaned_data['giorno'] and turni.cleaned_data['orario_apertura'] and turni.cleaned_data['orario_chiusura']:
+            createStagilTurni(
+                turni.cleaned_data['giorno'],
+                turni.cleaned_data['orario_apertura'].strftime("%H:%M"),
+                turni.cleaned_data['orario_chiusura'].strftime("%H:%M"),
+                result['data']['id']
+            )
+            result = getServizio(pk)
+            if 'result' in result:
+                if result['result']['code'] == 200:
+                    if 'dayhour' in result['data']:
+                        contesto.update({'dayhour': result['data']['dayhour']})
+                        return redirect(reverse('attivita:specifiche', kwargs={'pk': result['data']['key']}))
+
+
+    return 'servizio_scheda_infomazioni_modifica_specifiche.html', contesto
+
+
+@pagina_privata
+def servizio_scheda_informazioni_modifica_presentazione(request, me, pk=None):
+    from attivita.forms import ModuloServiziPrestazioni
+    from attivita.cri_persone import update_service
+    modulo = ModuloServiziPrestazioni(request.POST or None)
+    modulo.fields['provisioning'].choices = ModuloServiziPrestazioni.popola_previsioning()
+    result = getServizio(pk)
+    init = {}
+
+    if 'result' in result:
+        if result['result']['code'] == 200:
+            if result['data']['provisioning']:
+                init['provisioning'] = result['data']['provisioning'].split(',')
+            modulo = ModuloServiziPrestazioni(request.POST or None, initial=init)
+        else: # Errore
+            modulo = ModuloServiziPrestazioni(request.POST or None)
+    else:
+        modulo = ModuloServiziPrestazioni(request.POST or None)
+
+    modulo.fields['provisioning'].choices = ModuloServiziPrestazioni.popola_previsioning()
+
+    contesto = {'key': pk, 'type': resolve(request.path_info).url_name}
+    contesto.update({'modulo': modulo})
+    data = {}
+    if modulo.is_valid():
+        previsioning = ""
+        for prev in modulo.cleaned_data['provisioning']:
+            previsioning += "{},".format(prev)
+        data['provisioning'] = [previsioning[:-1] if previsioning else ""]
+        messages.success(request, 'Salvato correttamente')
+        update_service(pk, **data)
+
+    return 'servizio_scheda_infomazioni_modifica_presentazioni.html', contesto
+
+
+@pagina_privata
+def servizio_scheda_informazioni_modifica_contatti(request, me, pk=None):
+    from attivita.forms import ModuloServiziContatti
+    from attivita.cri_persone import createStagilContatti, deleteStagil
+    id = request.GET.get('d', '')
+    if id:
+        deleteStagil(id)
+        messages.warning(request, 'Eliminato Contatto')
+
+
+    modulo = ModuloServiziContatti(request.POST or None)
+    init = {}
+    contesto = {'key': pk, 'type': resolve(request.path_info).url_name}
+    contesto.update({'modulo': modulo})
+    result = getServizio(pk)
+
+    if 'result' in result:
+        if result['result']['code'] == 200:
+            if 'contact_table' in result['data']:
+                contesto.update({'contatti': result['data']['contact_table']})
+
+    if request.POST:
+        if modulo.is_valid():
+            tipo_contatto = modulo.cleaned_data['tipo_contatto']
+            if tipo_contatto == ModuloServiziContatti.CRI:
+                for p in modulo.cleaned_data['persona']:
+                    telefono = ''
+                    for x in p.numeri_pubblici():
+                        telefono += '{}, '.format(x)
+                    createStagilContatti(
+                        tipo_contatto, p.nome_completo, telefono[:-1], p.email_contatto, result['data']['id']
+                    )
+                    result = getServizio(pk)
+                    contesto.update({'contatti': result['data']['contact_table']})
+            elif tipo_contatto == ModuloServiziContatti.ALTRO_ENTE:
+                createStagilContatti(
+                    tipo_contatto,
+                    modulo.cleaned_data['nome'],
+                    modulo.cleaned_data['telefono'],
+                    modulo.cleaned_data['email'],
+                    result['data']['id']
+                )
+                result = getServizio(pk)
+                contesto.update({'contatti': result['data']['contact_table']})
+            messages.success(request, 'Salvato correttamente')
+    return 'servizio_scheda_informazioni_modifica_contatti.html', contesto
+
+
+@pagina_privata
+def servizio_scheda_informazioni_modifica_convenzioni(request, me, pk=None):
+    from attivita.forms import ModuloServiziConvenzioni
+    modulo = ModuloServiziConvenzioni(request.POST or None)
+    result = getServizio(pk)
+    init = {}
+    contesto = {'key': pk, 'type': resolve(request.path_info).url_name}
+    contesto.update({'modulo': modulo})
+    messages.success(request, 'Salvato correttamente')
+    return 'servizio_scheda_informazioni_modifica_convenzioni.html', contesto
 
 
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))

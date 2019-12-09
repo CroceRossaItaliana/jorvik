@@ -1,0 +1,84 @@
+{% extends 'attivita_vuota.html' %}
+
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Gestisci Servizi Offerti
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <div class="alert alert-block alert-info">
+        <p>
+            <i class="fa fa-fw fa-info-circle"></i>
+            Da questa pagina puoi accedere a tutti i servizi
+            che puoi gestire.
+        </p>
+    </div>
+
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                <i class="fa fa-fw fa-list"></i>
+                Elenco servizi gestiti
+            </h2>
+        </div>
+        <form method="POST" style="padding: 10px 10px 10px 10px;">
+            {% csrf_token %}
+            {% bootstrap_form modulo %}
+            <button type="submit" class="btn btn-lg btn-success" style="width: 100%;">
+                <i class="fa fa-fw fa-search"></i>
+                Filtra
+            </button>
+        </form>
+        <table class="table table-responsive table-striped">
+            <thead>
+                <tr>
+                    <th>Servizio offerto</th>
+                    <th>Progetto</th>
+                    <th>Servizi standard</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in servizi %}
+                    <tr>
+                        <td>
+                            {{ s.summary }}
+                        </td>
+                        <td>
+                            {{ s.project }}
+                        </td>
+                        <td>
+                            <ul>
+                                {% for st in s.service %}
+                                    <li>
+                                        {{ st.summary }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>
+                            <a href="/attivita/servizio/gestisci?del={{ s.key }}" class="text-danger" data-confirm="true">
+                                <i class="fa fa-fw fa-trash"></i> cancella servizio offerto
+                            </a><br />
+
+                            <a href="/attivita/servizio/scheda/{{ s.key }}/modifica">
+                                <i class="fa fa-fw fa-pencil"></i> modifica info
+                            </a><br />
+
+                            <a href="/attivita/servizio/organizza/{{ s.key }}/referenti/">
+                                <i class="fa fa-fw fa-pencil"></i> modifica referenti
+                            </a><br />
+
+                            <a href="/attivita/servizio/scheda/{{ s.key }}/modifica/servizi">
+                                <i class="fa fa-fw fa-pencil"></i> modifica servizi standard
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

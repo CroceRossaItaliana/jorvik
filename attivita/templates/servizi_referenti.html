@@ -1,0 +1,125 @@
+{% extends 'attivita_vuota.html' %}
+
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Referenti Servizio
+{% endblock %}
+
+{% block app_contenuto %}
+
+    {% if errore %}
+            <div class="alert alert-danger alert-block">
+                <p>
+                    <i class="fa fa-fw fa-exclamation-triangle"></i>
+                    {{ errore }}
+                </p>
+            </div>
+    {% endif %}
+
+    <div class="row">
+
+    <div class="col-md-9">
+
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fa-users"></i>
+                    Referenti per servizio
+                </h2>
+            </div>
+            <div class="panel-body">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            <i class="fa fa-fw fa-plus-circle"></i>
+                            Aggiungi referente servizio
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            {% bootstrap_form modulo %}
+
+                            <button class="btn btn-block btn-primary" type="submit">
+                                <i class="fa fa-fw fa-check"></i>
+                                Aggiungi referente servizio
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            <i class="fa fa-fw fa-list"></i>
+                            {% if oggetto and delega %}
+                                Elenco delegati come {{ delega }} per {{ oggetto }}
+                            {% else %}
+                                Elenco referenti
+                            {% endif %}
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                         <table class="table table-bordered table-striped">
+                            <thead>
+                                <th>Persona</th>
+                                <th>Azioni</th>
+                            </thead>
+
+                            <tbody>
+                                {% for p in referenti %}
+
+                                    <tr>
+                                        <td class="grassetto">
+                                            <a target="_new" href="{{ p.url }}">{{ p.nome_completo }}</a>
+                                        </td>
+                                        <td class="grassetto">
+                                            <a href="?d={{ forloop.counter }}">Elimina</a>
+                                        </td>
+                                    </tr>
+
+                                {% empty %}
+                                    <tr class="alert alert-warning">
+                                        <td colspan="3">
+                                            <h4><i class="fa fa-fw fa-warning"></i> Nessuna persona selezionata</h4>
+                                            <p>Nessuna persona ricopre il ruolo di <strong>{{ delega }}/Progetto</strong> per <strong>{{ oggetto }}</strong>.</p>
+                                        </td>
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+    </div>
+
+{#    <div class="col-md-3">#}
+{#            <h4 class="text-success">#}
+{#                <i class="fa fa-fw fa-support"></i>#}
+{#                Guida alla compilazione#}
+{#            </h4>#}
+{##}
+{#            <p>&nbsp;</p>#}
+{##}
+{#          <p><strong>Chi è il referente di un'attivit&agrave;?</strong>#}
+{#              <ul>#}
+{#                  <li>Punto di riferimento per i volontari che vogliono partecipare all'attività;</li>#}
+{#                  <li>I suoi contatti verranno divulgati coi volontari interessati all'attività;</li>#}
+{#                  <li>Generalmente è presente sul posto all'attività e/o conosce chi vi ci si reca;</li>#}
+{#                  <li>Potr&agrave; confermare o rifiutare le richieste di partecipazione all'attivit&agrave;.</li>#}
+{#                </ul>#}
+{##}
+{##}
+{#    </div>#}
+</div>
+
+{% endblock %}

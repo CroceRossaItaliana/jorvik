@@ -1,0 +1,209 @@
+{% extends 'attivita_vuota.html' %}
+
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    {% block scheda_titolo %}{% endblock %}
+    Servizio
+{% endblock %}
+
+{% block app_contenuto %}
+
+    <h2 class="allinea-centro grassetto text-success">
+        {% if nome %}
+            {{ nome }}
+        {% endif %}
+    </h2>
+
+    <ul class="nav nav-tabs">
+        <li role="presentation" {% if type == 'modifica' %}class="active"{% endif %}>
+            <a href="/attivita/servizio/scheda/{{ key }}/modifica">
+                <i class="fa fa-fw fa-pencil"></i>
+                Gestione Servizio
+            </a>
+        </li>
+        <li role="presentation" {% if type == 'accesso' %}class="active"{% endif %}>
+            <a href="/attivita/servizio/scheda/{{ key }}/modifica/accesso">
+                <i class="fa fa-fw fa-pencil"></i>
+                Criteri di accesso
+            </a>
+        </li>
+        <li role="presentation" {% if type == 'specifiche' %}class="active"{% endif %}>
+            <a href="/attivita/servizio/scheda/{{ key }}/modifica/specifiche">
+                <i class="fa fa-fw fa-pencil"></i>
+                Specifiche del servizio
+            </a>
+        </li>
+        <li role="presentation" {% if type == 'presentazione' %}class="active"{% endif %}>
+            <a href="/attivita/servizio/scheda/{{ key }}/modifica/presentazione">
+                <i class="fa fa-fw fa-pencil"></i>
+                Presentazioni
+            </a>
+        </li>
+        <li role="presentation" {% if type == 'contatti' %}class="active"{% endif %}>
+            <a href="/attivita/servizio/scheda/{{ key }}/modifica/contatti">
+                <i class="fa fa-fw fa-pencil"></i>
+                Contatti
+            </a>
+        </li>
+        <li role="presentation" {% if type == 'convenzioni' %}class="active"{% endif %}>
+            <a href="/attivita/servizio/scheda/{{ key }}/modifica/convenzioni">
+                <i class="fa fa-fw fa-pencil"></i>
+                Convenzioni
+            </a>
+        </li>
+    </ul>
+
+    <p>&nbsp;</p>
+    {% block scheda_contenuto %}
+    {% endblock %}
+
+
+    <script type="text/javascript">
+
+        function tutti(element){
+           $('input[name=annualPeriod]').each(
+               function (){
+                   if ($('input[id=id_tutti]').is(':checked')){
+                       $(this).prop('checked', true);
+                   }else {
+                       $(this).prop('checked', false);
+                   }
+               }
+           )
+        }
+
+        $(document).ready(function () {
+            $('[id=id_orario_apertura]').attr('type', 'time');
+            $('[id=id_orario_chiusura]').attr('type', 'time');
+            changeForm($('[name=activationPeriodType]').val());
+            changeFormTurni($('[name=dayHourType]').val());
+            changeFormContatti($('[name=tipo_contatto]').val());
+
+            $('[id=id_annualPeriod]').prepend(
+                '<div class="checkbox">\n' +
+                '   <label >\n' +
+                '        <input style="position: absolute;" onclick="tutti(this)" class="" id="id_tutti" title="" type="checkbox"> Tutti\n' +
+                '     </label>\n' +
+                '</div>'
+            );
+            let check = true;
+            $('input[name=annualPeriod]').each(
+                function (){
+
+                    if (!$(this).is(':checked') || !check){
+                        check = false;
+                    }
+
+                    $(this).click(
+                        function (e){
+                            if (!$(e.currentTarget).is(':checked')) {
+                                $('input[id=id_tutti]').prop('checked', false);
+                            }
+                        }
+                    );
+               }
+            );
+            $('input[id=id_tutti]').prop('checked', check);
+        });
+
+        $('[name=activationPeriodType]').change(function () {
+            changeForm($(this).val());
+        });
+
+        $('[name=dayHourType]').change(function () {
+            changeFormTurni($(this).val());
+        });
+
+        $('[name=tipo_contatto]').change(function () {
+            changeFormContatti($(this).val());
+        });
+
+        function showMensile() {
+            $('[id=id_annualPeriod]').parent().show();
+            $('input[id=id_annualPeriodFrom]').parent().hide();
+            $('input[id=id_annualPeriodTo]').parent().hide();
+        }
+        
+        function showDate() {
+            $('[id=id_annualPeriod]').parent().hide();
+            $('input[id=id_annualPeriodFrom]').parent().show();
+            $('input[id=id_annualPeriodTo]').parent().show();
+        }
+
+        function showTurni() {
+            $('[id=id_giorno]').parent().show();
+            $('[id=id_orario_apertura]').parent().show();
+            $('[id=id_orario_chiusura]').parent().show();
+            $('[id=turni_panel]').show();
+        }
+        
+        function showContattiCRI() {
+            $('[id=id_persona-autocomplete]').parent().parent().show();
+            $('[id=id_nome]').parent().hide();
+            $('[id=id_telefono]').parent().hide();
+            $('[id=id_email]').parent().hide();
+        }
+
+        function showContattiAltro() {
+            $('[id=id_persona-autocomplete]').parent().parent().hide();
+            $('[id=id_nome]').parent().show();
+            $('[id=id_telefono]').parent().show();
+            $('[id=id_email]').parent().show();
+        }
+
+        function changeFormTurni(val) {
+            switch (val) {
+                case 'Giorni e Orari':
+                    showTurni();
+                    break;
+                default:
+                    $('[id=id_giorno]').parent().hide();
+                    $('[id=id_orario_apertura]').parent().hide();
+                    $('[id=id_orario_chiusura]').parent().hide();
+                    $('[id=turni_panel]').hide();
+                    break;
+            }
+        }
+
+
+        function changeForm(val) {
+            switch (val) {
+                case 'Mensile':
+                    showMensile();
+                    break;
+                case 'Da - A':
+                    showDate();
+                    break;
+                default:
+                    $('[id=id_annualPeriod]').parent().hide();
+                    $('input[id=id_annualPeriodFrom]').parent().hide();
+                    $('input[id=id_annualPeriodTo]').parent().hide();
+                    break;
+            }
+        }
+
+         function changeFormContatti(val) {
+             console.log(val);
+             switch (val) {
+                case '8':
+                    showContattiCRI();
+                    break;
+                case '9':
+                    showContattiAltro();
+                    break;
+                default:
+                    $('[id=id_persona-autocomplete]').parent().parent().hide();
+                    $('[id=id_nome]').parent().hide();
+                    $('[id=id_telefono]').parent().hide();
+                    $('[id=id_email]').parent().hide();
+                    break;
+             }
+         }
+
+
+    </script>
+{% endblock %}
+
+
+

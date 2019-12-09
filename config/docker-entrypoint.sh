@@ -36,4 +36,6 @@ then
     python manage.py migrate --noinput
 fi
 
+echo '54.36.39.150        mscriperlepersone.cri.it' >> /etc/hosts
+
 exec "$@"

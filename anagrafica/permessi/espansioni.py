@@ -217,10 +217,11 @@ def espandi_gestione_attivita_sede(qs_sedi, al_giorno=None):
 
 
 def espandi_gestione_aree_sede(qs_sedi, al_giorno=None):
-    from attivita.models import Area
+    from attivita.models import Area, Progetto
     try:
         return [
             (COMPLETO, Area.objects.filter(sede__in=qs_sedi)),
+            (COMPLETO, Progetto.objects.filter(sede__in=qs_sedi)),
         ]
     except (AttributeError, ValueError, KeyError, TypeError):
         return []
@@ -235,6 +236,17 @@ def espandi_gestione_attivita_area(qs_aree, al_giorno=None):
                + espandi_gestione_attivita(Attivita.objects.filter(area__in=qs_aree))
     except (AttributeError, ValueError, KeyError, TypeError):
         return []
+
+
+# def espandi_gestione_servizi_progetti(qs_progetti, al_giorno=None):
+#     from attivita.models import Servizio
+#     try:
+#         return [
+#                    (COMPLETO, Servizio.objects.filter(progetto__in=qs_progetti)),
+#                ] \
+#                + espandi_gestione_attivita(Servizio.objects.filter(progetto__in=qs_progetti))
+#     except (AttributeError, ValueError, KeyError, TypeError):
+#         return []
 
 
 def espandi_gestione_attivita(qs_attivita, al_giorno=None):
@@ -381,5 +393,6 @@ ESPANDI_PERMESSI = {
     RUBRICA_RESPONSABILI_FORMAZIONE: espandi_rubrica_responsabili_formazione,
     RUBRICA_DIRETTORI_CORSI: espandi_rubrica_direttori_corsi,
     RUBRICA_RESPONSABILI_AUTOPARCO: espandi_rubrica_responsabili_autoparco,
+    # GESTIONE_SERVIZI_PROGETTO: espandi_gestione_servizi_progetti
 }
 

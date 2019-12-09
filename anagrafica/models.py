@@ -526,7 +526,7 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
 
         all_menus = [
             [(utente_url, utente_label, 'fa-user', utente_count), True],
-            [('/attivita/', 'Attività', 'fa-calendar'), self.volontario],
+            [('/attivita/', 'Progetti/Attività', 'fa-calendar'), self.volontario],
             [('/posta/in-arrivo/', 'Posta', 'fa-envelope'), True],
             [('/autorizzazioni/', 'Richieste', 'fa-user-plus', self.autorizzazioni_in_attesa().count()), self.ha_pannello_autorizzazioni],
             [('/presidente/', 'Sedi', 'fa-home'), self.ha_permesso(GESTIONE_SEDE)],
@@ -1218,6 +1218,10 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     @property
     def is_comissario(self):
         return self.deleghe_attuali(tipo=COMMISSARIO).exists()
+
+    @property
+    def is_ufficio_soci(self):
+        return self.deleghe_attuali(tipo=UFFICIO_SOCI).exists()
 
     @property
     def is_direttore(self):

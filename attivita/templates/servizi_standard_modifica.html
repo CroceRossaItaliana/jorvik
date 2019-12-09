@@ -1,0 +1,80 @@
+{% extends 'attivita_vuota.html' %}
+
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block pagina_titolo %}
+    Modifica servizi standard
+{% endblock %}
+
+{% block app_contenuto %}
+    <div class="row">
+
+        <div class="col-md-9">
+
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h2 class="panel-title">
+                    <i class="fa fa-fw fas fa-bookmark"></i>
+                    Servizi standard per {{ nome }}
+                </h2>
+            </div>
+            <div class="panel-body">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            <i class="fa fa-fw fa-plus-circle"></i>
+                            Aggiugni referente servizio
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            {% bootstrap_form modulo %}
+
+                            <button class="btn btn-block btn-primary" type="submit">
+                                <i class="fa fa-fw fa-check"></i>
+                                Modifica servizi standard
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            <i class="fa fa-fw fa-list"></i>
+                            Elenco servizi standard {{ nome }}
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                         <table class="table table-bordered table-striped">
+                            <thead>
+                                <th>Servizi</th>
+                                <th>Azioni</th>
+                            </thead>
+
+                            <tbody>
+                                {% for s in servizi %}
+                                    <tr>
+                                        <td class="grassetto">
+                                            {{ s.summary }}
+                                        </td>
+                                        <td class="grassetto">
+                                            <a href="?key={{ s.key }}" class="btn btn-sm btn-danger">
+                                                Elimina
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+            </div>
+
+    </div>
+{% endblock %}

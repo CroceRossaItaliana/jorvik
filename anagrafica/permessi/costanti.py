@@ -51,6 +51,7 @@ GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE = "GESTIONE_POTERI_CENTRALE_OPERATIVA_SE
 EMISSIONE_TESSERINI = "EMISSIONE_TESSERINI"
 ASPIRANTE = "ASPIRANTE"
 
+
 # Tipologia degli oggetti assegnati ad ogni Permesso.
 PERMESSI_OGGETTI = (
     (GESTIONE_SEDE,             ('anagrafica', 'Sede')),
@@ -88,7 +89,7 @@ PERMESSI_OGGETTI = (
     (GESTIONE_GRUPPI,           ('gruppi',     'Gruppo')),
     (GESTIONE_CENTRALE_OPERATIVA_SEDE,  ('anagrafica', 'Sede')),
     (GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE,  ('anagrafica', 'Sede')),
-    (ASPIRANTE,                 ('formazione', 'InvitoCorsoBase')),
+    (ASPIRANTE,                 ('formazione', 'InvitoCorsoBase'))
 )
 
 # Tipologia degli oggetti assegnati ad ogni Delega.
