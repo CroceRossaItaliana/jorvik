@@ -176,16 +176,16 @@
             <h4><i class="fa fa-fw fa-warning"></i> Terminazione corso</h4>
 
             {% if corso.terminabile %}
-            <p>Il corso si &egrave; concluso, ma &egrave; ancora necessario generare il verbale del corso e compilare la relazione.</p>
-            <p>Una volta generato il verbale e compilata la relazione, tutti i partecipanti verranno informati dell'esito e,
-                coloro che saranno stati promossi,
-                {% if corso.is_nuovo_corso %}
-                    otterranno la qualifica prevista dal corso.
-                {% else %}
-                    verranno trasformati automaticamente in volontari.
-                {% endif %}
-            </p>
-            <p style="margin-top:25px; text-align:center; font-weight:bold;">Il presente verbale è da chiudere immediatamente dopo la sessione d’esame</p>
+                <p>Il corso si &egrave; concluso, ma &egrave; ancora necessario generare il verbale del corso e compilare la relazione.</p>
+                <p>Una volta generato il verbale e compilata la relazione, tutti i partecipanti verranno informati dell'esito e,
+                    coloro che saranno stati promossi,
+                    {% if corso.is_nuovo_corso %}
+                        otterranno la qualifica prevista dal corso.
+                    {% else %}
+                        verranno trasformati automaticamente in volontari.
+                    {% endif %}
+                </p>
+                <p style="margin-top:25px; text-align:center; font-weight:bold;">Il presente verbale è da chiudere immediatamente dopo la sessione d’esame</p>
             {% endif %}
 
             {% if corso.terminabile %}
@@ -226,7 +226,7 @@
             {% endif %}{# endif corso.terminabile #}
 
             {% if corso.esame_previsto %}
-                {% if me == corso.sede.presidente or corso.sede.presidente in corso.direttori_corso  %}
+                {% if me == corso.sede.presidente or corso.sede.presidente in corso.direttori_corso or me.is_responsabile_formazione %}
                     <hr><p>Per generare il verbale è necessario <strong><a href="{% url 'courses:commissione_esame' corso.pk %}">compilare i nominativi e caricare delibera</a></strong> della commissione esame.</p>
                 {% elif not me.is_presidente and me.is_direttore %}
                     {% if not corso.ha_compilato_commissione_esame %}
