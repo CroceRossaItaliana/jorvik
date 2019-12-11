@@ -946,7 +946,17 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def ha_verbale(self):
-        return self.stato == self.TERMINATO and self.partecipazioni_confermate().exists()
+        """
+        Serve per la visualizzazione delle schede e attestati da scaricare.
+        url: /aspirante/corso-base/<pk>/report/
+        """
+        if self.partecipazioni_confermate().exists():
+            ultima_lezione_del_corso = self.lezioni.all().order_by('fine').last()
+            if ultima_lezione_del_corso.fine.date() == now().date():
+                return True
+            elif self.stato == self.TERMINATO:
+                return True
+        return False
 
     def process_appartenenze(self, partecipante):
         persona = partecipante.persona
