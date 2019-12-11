@@ -1437,6 +1437,7 @@ def course_commissione_esame(request, me, pk):
                     corpo=corpo,
                     destinatari=[corso.sede.presidente()]
                 )
+                messages.success(request, 'La commissione di esame è stata inserita correttamente.')
                 messages.success(request, 'Il presidente del comitato è stato avvisato del inserimento della commissione esame.')
 
             return redirect(reverse('courses:commissione_esame', args=[pk]))
