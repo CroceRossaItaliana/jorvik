@@ -1062,13 +1062,20 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         def key_cognome(elem):
            return elem.cognome
 
+        def lezione_suffix(lezione_datetime):
+            try:
+                return str(lezione_datetime.time()).split('.')[0].replace(':', '-')
+            except:
+                return ''
+
         iscritti = [partecipazione.persona for partecipazione in self.partecipazioni_confermate()]
 
         archivio = Zip(oggetto=self)
         for lezione in self.lezioni.all():
+            lezione_inizio, lezione_fine = lezione_suffix(lezione.inizio), lezione_suffix(lezione.fine)
             pdf = PDF(oggetto=self)
             pdf.genera_e_salva_con_python(
-                nome="Firme lezione %s.pdf" % lezione.nome,
+                nome="Firme lezione %s (%s - %s).pdf" % (lezione.nome, lezione_inizio, lezione_fine),
                 corpo={
                     "corso": self,
                     "iscritti": sorted(iscritti, key=key_cognome),
