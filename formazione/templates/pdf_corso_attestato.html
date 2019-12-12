@@ -141,10 +141,12 @@
 					</div>
 				</div>
 				<div class="page-splitter right">
-					<div class="page-content-section">
-						<h3>Tipologia verifica finale:</h3>
-						<p>{{ corso.titolo_cri.scheda_competenze_in_uscita }}</p>
-					</div>
+					{% if corso.titolo_cri.scheda_verifica_finale %}
+						<div class="page-content-section">
+							<h3>Tipologia verifica finale:</h3>
+							<p>{{ corso.titolo_cri.scheda_verifica_finale }}</p>
+						</div>
+					{% endif %}
 					<div class="page-content-section" style="margin-top:250px;">
 						{% if corso.tipo == corso.BASE %}
 							<div class="content-first-aid" style="font-size: 0">
