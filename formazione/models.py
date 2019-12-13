@@ -944,12 +944,14 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         if lezioni:
             # Case 1 (GAIA-265/Q2)
             ultima_lezione_del_corso = lezioni.order_by('fine').last()
-            return ultima_lezione_del_corso.fine.date() == now().date()
-        else:
-            # Case 2
-            return self.stato == self.ATTIVO \
-                   and self.concluso \
-                   and self.partecipazioni_confermate().exists()
+            fine = ultima_lezione_del_corso.fine
+            if fine:
+                return fine.date() == now().date()
+
+        # Case 2
+        return self.stato == self.ATTIVO \
+               and self.concluso \
+               and self.partecipazioni_confermate().exists()
 
     @property
     def ha_verbale(self):
