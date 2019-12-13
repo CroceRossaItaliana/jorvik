@@ -940,23 +940,20 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def terminabile(self):
-        return self.stato == self.ATTIVO \
-           and self.concluso \
-           and self.partecipazioni_confermate().exists()
+        lezioni = self.lezioni.all()
+        if lezioni:
+            # Case 1 (GAIA-265/Q2)
+            ultima_lezione_del_corso = lezioni.order_by('fine').last()
+            return ultima_lezione_del_corso.fine.date() == now().date()
+        else:
+            # Case 2
+            return self.stato == self.ATTIVO \
+                   and self.concluso \
+                   and self.partecipazioni_confermate().exists()
 
     @property
     def ha_verbale(self):
-        """
-        Serve per la visualizzazione delle schede e attestati da scaricare.
-        url: /aspirante/corso-base/<pk>/report/
-        """
-        if self.partecipazioni_confermate().exists():
-            ultima_lezione_del_corso = self.lezioni.all().order_by('fine').last()
-            if ultima_lezione_del_corso.fine.date() == now().date():
-                return True
-            elif self.stato == self.TERMINATO:
-                return True
-        return False
+        return self.stato == self.TERMINATO and self.partecipazioni_confermate().exists()
 
     def process_appartenenze(self, partecipante):
         persona = partecipante.persona
