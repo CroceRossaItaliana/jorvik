@@ -195,7 +195,7 @@ class GestioneLezioni:
 
         lezioni = self.corso.lezioni
         q = lezioni.filter(pk=self.lezione_pk) if self.lezione_pk else lezioni.all()
-        return q.order_by('inizio', 'fine')
+        return q.order_by('inizio', 'fine', 'scheda_lezione_num',)
 
     def get_partecipanti_senza_esonero(self, lezione):
         return self.partecipanti.exclude(

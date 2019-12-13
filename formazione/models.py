@@ -940,9 +940,18 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def terminabile(self):
+        lezioni = self.lezioni.all()
+        if lezioni:
+            # Case 1 (GAIA-265/Q2)
+            ultima_lezione_del_corso = lezioni.order_by('fine').last()
+            fine = ultima_lezione_del_corso.fine
+            if fine:
+                return fine.date() == now().date()
+
+        # Case 2
         return self.stato == self.ATTIVO \
-           and self.concluso \
-           and self.partecipazioni_confermate().exists()
+               and self.concluso \
+               and self.partecipazioni_confermate().exists()
 
     @property
     def ha_verbale(self):
@@ -1052,13 +1061,20 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
         def key_cognome(elem):
            return elem.cognome
 
+        def lezione_suffix(lezione_datetime):
+            try:
+                return str(lezione_datetime.time()).split('.')[0].replace(':', '-')
+            except:
+                return ''
+
         iscritti = [partecipazione.persona for partecipazione in self.partecipazioni_confermate()]
 
         archivio = Zip(oggetto=self)
         for lezione in self.lezioni.all():
+            lezione_inizio, lezione_fine = lezione_suffix(lezione.inizio), lezione_suffix(lezione.fine)
             pdf = PDF(oggetto=self)
             pdf.genera_e_salva_con_python(
-                nome="Firme lezione %s.pdf" % lezione.nome,
+                nome="Firme lezione %s (%s - %s).pdf" % (lezione.nome, lezione_inizio, lezione_fine),
                 corpo={
                     "corso": self,
                     "iscritti": sorted(iscritti, key=key_cognome),

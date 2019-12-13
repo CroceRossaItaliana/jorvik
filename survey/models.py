@@ -1,4 +1,9 @@
+import io
+import csv
+import xlsxwriter
+
 from django.db import models
+from django.http import HttpResponse
 from django.core.urlresolvers import reverse
 from django.contrib.postgres.fields import JSONField
 
@@ -143,63 +148,117 @@ class SurveyResult(models.Model):
         return cls.objects.filter(course=course)
 
     @classmethod
-    def generate_report_for_course(cls, course):
-        import csv
-        from django.shortcuts import HttpResponse
+    def _generate_report_for_course_new_excel(cls, course):
         from formazione.models import LezioneCorsoBase
 
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output)
+        worksheet = workbook.add_worksheet()
+
+        united = {
+            'org_servizi': dict(),
+            'lezioni': dict(),
+            'utilita_lezioni': dict(),
+            'direttori': dict(),
+        }
+
+        row = 0
+        risposte = SurveyResult.objects.filter(course=course)
+        for result in risposte:
+            response_json = result.response_json
+
+            direttori = response_json.get('direttori')
+            org_servizi = response_json.get('org_servizi')
+            utilita_lezioni = response_json.get('utilita_lezioni')
+            lezioni = response_json.get('lezioni')
+
+            if direttori:
+                for direttore_pk, voti in direttori.items():
+                    if direttore_pk not in united['direttori']:
+                        united['direttori'][direttore_pk] = list()
+                    united['direttori'][direttore_pk] = voti
+
+            if utilita_lezioni:
+                for lezione_pk, risposta in utilita_lezioni.items():
+                    if lezione_pk not in united['utilita_lezioni']:
+                        united['utilita_lezioni'][lezione_pk] = list()
+                    united['utilita_lezioni'][lezione_pk].append(risposta)
+
+            if org_servizi:
+                for question_pk, risposta in org_servizi.items():
+                    if question_pk not in united['org_servizi']:
+                        united['org_servizi'][question_pk] = list()
+                    united['org_servizi'][question_pk].append(risposta)
+
+            if lezioni:
+                united['lezioni'] = list()
+                for docente_pk, lezione in lezioni.items():
+                    for k,v in lezione.items():
+                        docente = Persona.objects.get(pk=k).nome_completo
+                        v.pop('completed')
+
+                        for lez in sorted(v.items()):
+                            domanda = Question.objects.get(pk=lez[0])
+                            lezione_col = [domanda.text, lez[1]]
+
+                            united['lezioni'].append(lezione_col + [docente])
+
+        org_servizi_columns = [[Question.objects.get(pk=k).text] + [i for i in v] for k, v in united['org_servizi'].items()]
+        utilita_lezioni_columns = [[LezioneCorsoBase.objects.get(pk=k).nome] + [i for i in v] for k, v in united['utilita_lezioni'].items()]
+
+        united['org_servizi'] = org_servizi_columns
+        united['utilita_lezioni'] = utilita_lezioni_columns
+
+        # Valorizzazione campi (nomi direttori)
+        nomi_direttori_columns = ["Chi era il tuo Direttore di Corso?"]
+        direttori_domande_columns = dict()
+
+        for direttore_pk, voti in united['direttori'].items():
+            # Calcolare lunghezza delle risposte e moltiplicare il nome
+            len_voti = len(voti.values())
+            p = [Persona.objects.get(pk=direttore_pk).nome_completo] * len_voti
+            nomi_direttori_columns.extend(p)
+
+            for domanda_pk, v in voti.items():
+                domanda = Question.objects.get(pk=domanda_pk).text
+                if domanda not in direttori_domande_columns:
+                    direttori_domande_columns[domanda] = list()
+                direttori_domande_columns[domanda].append(v)
+                q = [None for i in range(len_voti)]
+                q.pop(0)
+                direttori_domande_columns[domanda].extend(q)
+
+        united['direttori'] = [[k] + v for k,v in direttori_domande_columns.items()]
+
+        # Inserimento prima colonna (nomi direttori)
+        for col, data in enumerate([nomi_direttori_columns], 0):
+            worksheet.write_column(0, 0, data)
+
+        # Inserimento tutte le altre colonne
+        last_col_num = 0
+        for section_name, values in united.items():
+            for col, data in enumerate(values, last_col_num + 1):
+                worksheet.write_column(row, col, data)
+                last_col_num = col
+
+        bold = workbook.add_format({'bold': True,})
+
+        workbook.close()
+        output.seek(0)
+
+        filename = 'Questionario-di-gradimento.xlsx'
+        response = HttpResponse(output, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+        return response
+
+    @classmethod
+    def generate_report_for_course(cls, course):
         filename = "Questionario di gradimento [%s].csv" % course.nome
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
 
         writer = csv.writer(response, delimiter=';')
-
-        def _direttori(result):
-            rows = list()
-            direttori = result.response_json.get('direttori', dict())
-            for persona_pk, response_data in direttori.items():
-                p = Persona.objects.get(pk=persona_pk)
-                for domanda_pk, risposta in response_data.items():
-                    domanda = Question.objects.get(pk=domanda_pk)
-                    rows.append([p, domanda.text, risposta])
-            return rows
-
-        def _utilita_lezioni_rows(result):
-            rows = list()
-            utilita_lezioni_rows = result.response_json.get('utilita_lezioni', dict())
-            for lezione_pk, voto in utilita_lezioni_rows.items():
-                lezione = LezioneCorsoBase.objects.get(pk=lezione_pk)
-                rows.append([lezione.nome, voto])
-            return rows
-
-        def _org_servizi(result):
-            rows = list()
-            org_servizi_rows = result.response_json.get('org_servizi', dict())
-            for domanda_pk, voto in org_servizi_rows.items():
-                domanda = Question.objects.get(pk=domanda_pk)
-                rows.append([domanda.text, voto])
-            return rows
-
-        def _valutazione_docenti(result):
-            rows = list()
-            lezioni_rows = result.response_json.get('lezioni', dict())
-
-            for docente_pk, lezione_data in lezioni_rows.items():
-                if docente_pk.startswith('de_'):
-                    docente = docente_pk
-                else:
-                    docente = Persona.objects.get(pk=docente_pk)
-
-                for lezione_pk, data in lezione_data.items():
-                    lezione = LezioneCorsoBase.objects.get(pk=lezione_pk)
-
-                    for domanda_pk, risposta in data.items():
-                        if domanda_pk == 'completed':  continue
-                        domanda = Question.objects.get(pk=domanda_pk)
-
-                        rows.append([docente, lezione, domanda, risposta])
-
-            return rows
 
         # Trova le risposte per il questionario di questo corso
         responses_to_q = cls.get_responses_for_course(course)
@@ -207,36 +266,7 @@ class SurveyResult(models.Model):
         # Verifica se le risposte sono JSON (nuova modalità)
         responses_with_json = responses_to_q.filter(new_version=True)
         if responses_with_json.exists():
-            responses_to_q = responses_with_json
-
-            # Report per le risposte in JSON
-            columns = [
-                '1. Valutazione direttore (nome)', 'Domanda', 'Risposta',
-                '2. Utilita lezione', 'Voto',
-                '3. Valutazione docente (nome)', 'Lezione', 'Domanda', 'Voto',
-                '4. Org. e servizi (domanda)', 'Risposta',
-                'Creato', 'Modificato',
-            ]
-
-            writer.writerow(columns)
-            for result in responses_to_q:
-                direttori_rows = _direttori(result)
-                utilita_lezioni_rows = _utilita_lezioni_rows(result)
-                valutazione_docente_rows = _valutazione_docenti(result)
-                org_servizi_rows = _org_servizi(result)
-
-                for row in direttori_rows:
-                    writer.writerow(row + [''] * 8 + [result.created_at, result.updated_at])
-
-                for row in utilita_lezioni_rows:
-                    writer.writerow([''] * 3 + row + [''] * 6 + [result.created_at, result.updated_at])
-
-                for row in valutazione_docente_rows:
-                    writer.writerow([''] * 5 + row + [''] * 2 + [result.created_at, result.updated_at])
-
-                for row in org_servizi_rows:
-                    writer.writerow([''] * 9 + row + [result.created_at, result.updated_at])
-
+            return cls._generate_report_for_course_new_excel(course)
         else:
             # Report per le risposte vecchio formato (prima del rilascio)
             # Ogni risposta -> record db <SurveyResult>

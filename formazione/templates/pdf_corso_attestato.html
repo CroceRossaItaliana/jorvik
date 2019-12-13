@@ -141,10 +141,12 @@
 					</div>
 				</div>
 				<div class="page-splitter right">
-					<div class="page-content-section">
-						<h3>Tipologia verifica finale:</h3>
-						<p>{{ corso.titolo_cri.scheda_competenze_in_uscita }}</p>
-					</div>
+					{% if corso.titolo_cri.scheda_verifica_finale %}
+						<div class="page-content-section">
+							<h3>Tipologia verifica finale:</h3>
+							<p>{{ corso.titolo_cri.scheda_verifica_finale }}</p>
+						</div>
+					{% endif %}
 					<div class="page-content-section" style="margin-top:250px;">
 						{% if corso.tipo == corso.BASE %}
 							<div class="content-first-aid" style="font-size: 0">
@@ -175,9 +177,9 @@
 								</div>
 								<div>
 									Ha frequentato con profitto il<br>
-									<span style="text-decoration:uppercase;">Corso in materia di Salute e Sicurezza - Formazione Base</span>
+									<span style="text-transform: uppercase;">Corso in materia di Salute e Sicurezza - Formazione Base</span>
 								</div>
-								<div>
+								<div style="font-size:12px;">
 									Ai sensi del D.LGS 81/08 e s.m.i. e dei regolamenti in materia di
 									Salute e Sicurezza dei Volontari in vigore nell'Associazione della Croce Rossa Italiana
 									per un totale di 2 ore<br>
@@ -194,6 +196,7 @@
 								</div>
 							</div>
 					</div>
+					<div style="font-size:12pt; text-align: left;">{{ corso.sigla_corso }}/{{ partecipazione_id }}</div>
 				</div>
 			</div>
 		</div>

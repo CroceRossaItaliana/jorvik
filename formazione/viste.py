@@ -7,6 +7,7 @@ from django.shortcuts import redirect, get_object_or_404, Http404, HttpResponse
 from django.core.urlresolvers import reverse
 from django.template.loader import get_template
 from django.contrib import messages
+from django.utils.timezone import now
 
 from anagrafica.models import Persona, Documento, Sede
 from anagrafica.forms import ModuloCreazioneDocumento
@@ -284,7 +285,7 @@ def aspirante_corso_base_informazioni(request, me=None, pk=None):
         context['load_personal_document'] = load_personal_document_form
 
     context['corso'] = corso
-    context['lezioni'] = corso.lezioni.all().order_by('inizio', 'fine')
+    context['lezioni'] = corso.lezioni.all().order_by('inizio', 'fine', 'scheda_lezione_num',)
     context['puo_modificare'] = corso.can_modify(me)
     context['can_activate'] = corso.can_activate(me)
     context['puoi_partecipare'] = puoi_partecipare
@@ -711,6 +712,11 @@ def aspirante_corso_base_termina(request, me, pk):
             if me == corso.get_firmatario:
                 return redirect(corso.url_commissione_esame)
             return redirect_termina
+
+        terminabile = corso.stato == corso.ATTIVO and corso.concluso and corso.partecipazioni_confermate().exists()
+        if not terminabile:
+            messages.warning(request, "Il corso non è terminabile perchè non è giunta la data di esame.")
+            return redirect(reverse('aspirante:info', args=[pk]))
 
         # Tutto ok, posso procedere
         corso.termina(mittente=me,
@@ -1437,6 +1443,7 @@ def course_commissione_esame(request, me, pk):
                     corpo=corpo,
                     destinatari=[corso.sede.presidente()]
                 )
+                messages.success(request, 'La commissione di esame è stata inserita correttamente.')
                 messages.success(request, 'Il presidente del comitato è stato avvisato del inserimento della commissione esame.')
 
             return redirect(reverse('courses:commissione_esame', args=[pk]))
