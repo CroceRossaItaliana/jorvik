@@ -660,31 +660,27 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
             # 'quota__stato': Quota.REGISTRATA,
             # 'quota__tipo': Quota.QUOTA_SOCIO,
 
-            "data_nascita__lte": nascita_minima,  # Età' minima
+            "data_nascita__lte": nascita_minima,  # Età minima
         })
 
         # Cerca dipendenti da escludere
         dipendenti = Persona.objects.filter(
             Q(Appartenenza.query_attuale(
-                membro=Appartenenza.DIPENDENTE, sede__in=qs_sedi,
+                membro=Appartenenza.DIPENDENTE,
+                sede__in=qs_sedi,
                 al_giorno=oggi,
             ).via("appartenenze")))
 
         # print("dipendenti", dipendenti.values_list('pk', flat=True) )
 
         # Query finale
-        r = Persona.objects.filter(
-            Appartenenza.query_attuale(
-                membro=Appartenenza.VOLONTARIO, sede__in=qs_sedi,
-                al_giorno=oggi,
-            ).via("appartenenze"), Q(**aggiuntivi),
+        persone = Persona.objects.filter(Appartenenza.query_attuale(
+            membro=Appartenenza.VOLONTARIO,
+            sede__in=qs_sedi,
+            al_giorno=oggi,
+        ).via("appartenenze"), Q(**aggiuntivi))
 
-            # ).exclude(
-            #     # Escludi quelli con dimissione negli anni di anzianità
-            #     appartenenze__terminazione__in=[Appartenenza.DIMISSIONE, Appartenenza.ESPULSIONE],
-            #     appartenenze__fine__gte=anzianita_minima,
-
-        ).exclude(
+        r = persone.exclude(
             # Escludi quelli con provvedimento di sospensione non terminato
             pk__in=ProvvedimentoDisciplinare.objects.filter(
                 Q(fine__lte=oggi) | Q(fine__isnull=True),
@@ -696,6 +692,17 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         ).exclude(
             pk__in=dipendenti.values_list('pk', flat=True)
+        )
+
+        # Escludi nelle liste elettorali di dove è volontario, essendo dipendente,
+        # anche se in un altro comitato, non DEVE essere nella lista ne attiva e ne passiva
+        return r.exclude(
+            pk__in=Appartenenza.query_attuale(
+                membro=Appartenenza.DIPENDENTE,
+                al_giorno=oggi,
+                sede__pk__in=set(qs_sedi.values_list('pk', flat=True)) ^
+                             set(Persona.objects.filter(pk__in=r.values_list('pk', flat=True)).values_list('appartenenze__sede__pk', flat=True)),
+            ).values_list('persona__pk', flat=True)
         ).annotate(
             appartenenza_tipo=F('appartenenze__membro'),
             appartenenza_inizio=F('appartenenze__inizio'),
@@ -703,7 +710,6 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
         ).prefetch_related(
             'appartenenze', 'appartenenze__sede', 'utenza', 'numeri_telefono'
         ).distinct('cognome', 'nome', 'codice_fiscale')
-        return r
 
     def modulo(self):
         return ModuloElencoElettorato
