@@ -31,6 +31,7 @@ class AdminSurvey(admin.ModelAdmin):
 
 @admin.register(SurveyResult)
 class AdminSurveyResult(admin.ModelAdmin):
+    search_fields = ['=course__id',]
     list_display = ['course', 'user', 'question', 'response', 'created_at', 'updated_at']
     raw_id_fields = ['user', 'survey', 'question', 'course']
     formfield_overrides = {

@@ -940,18 +940,21 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
 
     @property
     def terminabile(self):
+        # Case 1
+        case_1 = self.stato == self.ATTIVO \
+                 and self.concluso \
+                 and self.partecipazioni_confermate().exists()
+
+        if case_1:
+            return case_1
+
+        # Case 2 (GAIA-265/Q2)
         lezioni = self.lezioni.all()
         if lezioni:
-            # Case 1 (GAIA-265/Q2)
             ultima_lezione_del_corso = lezioni.order_by('fine').last()
             fine = ultima_lezione_del_corso.fine
             if fine:
-                return fine.date() == now().date()
-
-        # Case 2
-        return self.stato == self.ATTIVO \
-               and self.concluso \
-               and self.partecipazioni_confermate().exists()
+                return fine.date() <= now().date()
 
     @property
     def ha_verbale(self):
