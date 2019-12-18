@@ -46,7 +46,7 @@
             <strong><u>Parte teorica:</u></strong>
           </td>
           <td style="text-align:center;">
-            {% if corso.titolo_cri and not self.corso.titolo_cri.scheda_prevede_esame %}
+            {% if corso.titolo_cri and not corso.titolo_cri.scheda_prevede_esame %}
               Esame non previsto
             {% else %}
               {{ partecipazione.get_esito_parte_1_display }}
@@ -58,7 +58,7 @@
             <strong><u>Parte pratica:</u></strong>
           </td>
           <td style="text-align:center;">
-            {% if corso.titolo_cri and not self.corso.titolo_cri.scheda_prevede_esame %}
+            {% if corso.titolo_cri and not corso.titolo_cri.scheda_prevede_esame %}
               Esame non previsto
             {% else %}
               {{ partecipazione.get_esito_parte_2_display }}
@@ -70,7 +70,7 @@
             <strong><u>Eventuale tirocinio/affiancamento:</u></strong>
           </td>
           <td style="text-align:center;">
-            {% if corso.titolo_cri and not self.corso.titolo_cri.scheda_prevede_esame %}
+            {% if corso.titolo_cri and not corso.titolo_cri.scheda_prevede_esame %}
               Esame non previsto
             {% else %}
               {{ partecipazione.get_eventuale_tirocinio_display }}
