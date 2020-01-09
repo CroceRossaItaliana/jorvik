@@ -150,22 +150,24 @@ class SurveyResult(models.Model):
     @classmethod
     def _generate_report_for_course_new_excel(cls, course):
         from formazione.models import LezioneCorsoBase
+        from collections import OrderedDict
 
         output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output)
         worksheet = workbook.add_worksheet()
 
-        united = {
-            'org_servizi': dict(),
-            'lezioni': dict(),
-            'utilita_lezioni': dict(),
-            'direttori': dict(),
-        }
+        united_list = list()
 
-        row = 0
         risposte = SurveyResult.objects.filter(course=course)
-        for result in risposte:
-            response_json = result.response_json
+        for num, result in enumerate(risposte):
+            united = OrderedDict({
+                'org_servizi': dict(),
+                'lezioni': dict(),
+                'utilita_lezioni': dict(),
+                'direttori': dict(),
+            })
+
+            response_json = OrderedDict(result.response_json)
 
             direttori = response_json.get('direttori')
             org_servizi = response_json.get('org_servizi')
@@ -193,8 +195,8 @@ class SurveyResult(models.Model):
             if lezioni:
                 united['lezioni'] = list()
                 for docente_pk, lezione in lezioni.items():
-                    for k,v in lezione.items():
-                        docente = Persona.objects.get(pk=k).nome_completo
+                    for k, v in lezione.items():
+                        docente = Persona.objects.get(pk=docente_pk).nome_completo
                         v.pop('completed')
 
                         for lez in sorted(v.items()):
@@ -203,45 +205,64 @@ class SurveyResult(models.Model):
 
                             united['lezioni'].append(lezione_col + [docente])
 
-        org_servizi_columns = [[Question.objects.get(pk=k).text] + [i for i in v] for k, v in united['org_servizi'].items()]
-        utilita_lezioni_columns = [[LezioneCorsoBase.objects.get(pk=k).nome] + [i for i in v] for k, v in united['utilita_lezioni'].items()]
+            org_servizi_columns = [[Question.objects.get(pk=k).text] + [i for i in v] for k, v in united['org_servizi'].items()]
+            utilita_lezioni_columns = [[LezioneCorsoBase.objects.get(pk=k).nome] + [i for i in v] for k, v in united['utilita_lezioni'].items()]
 
-        united['org_servizi'] = org_servizi_columns
-        united['utilita_lezioni'] = utilita_lezioni_columns
+            united['org_servizi'] = org_servizi_columns
+            united['utilita_lezioni'] = utilita_lezioni_columns
 
-        # Valorizzazione campi (nomi direttori)
-        nomi_direttori_columns = ["Chi era il tuo Direttore di Corso?"]
-        direttori_domande_columns = dict()
+            # Valorizzazione campi (nomi direttori)
+            nomi_direttori_columns = ["Chi era il tuo Direttore di Corso?"]
+            direttori_domande_columns = dict()
 
-        for direttore_pk, voti in united['direttori'].items():
-            # Calcolare lunghezza delle risposte e moltiplicare il nome
-            len_voti = len(voti.values())
-            p = [Persona.objects.get(pk=direttore_pk).nome_completo] * len_voti
-            nomi_direttori_columns.extend(p)
+            for direttore_pk, voti in united['direttori'].items():
+                # Calcolare lunghezza delle risposte e moltiplicare il nome
+                len_voti = len(voti.values())
+                p = [Persona.objects.get(pk=direttore_pk).nome_completo] * len_voti
+                nomi_direttori_columns.extend(p)
 
-            for domanda_pk, v in voti.items():
-                domanda = Question.objects.get(pk=domanda_pk).text
-                if domanda not in direttori_domande_columns:
-                    direttori_domande_columns[domanda] = list()
-                direttori_domande_columns[domanda].append(v)
-                q = [None for i in range(len_voti)]
-                q.pop(0)
-                direttori_domande_columns[domanda].extend(q)
+                for domanda_pk, v in voti.items():
+                    domanda = Question.objects.get(pk=domanda_pk).text
+                    if domanda not in direttori_domande_columns:
+                        direttori_domande_columns[domanda] = list()
+                    direttori_domande_columns[domanda].append(v)
+                    q = [None for i in range(len_voti)]
+                    q.pop(0)
+                    direttori_domande_columns[domanda].extend(q)
 
-        united['direttori'] = [[k] + v for k,v in direttori_domande_columns.items()]
+            united['direttori'] = [[k] + v for k,v in direttori_domande_columns.items()]
 
-        # Inserimento prima colonna (nomi direttori)
-        for col, data in enumerate([nomi_direttori_columns], 0):
-            worksheet.write_column(0, 0, data)
+            united_list.append(united)
 
-        # Inserimento tutte le altre colonne
-        last_col_num = 0
-        for section_name, values in united.items():
-            for col, data in enumerate(values, last_col_num + 1):
-                worksheet.write_column(row, col, data)
-                last_col_num = col
+            # Inserimento prima colonna (nomi direttori)
+            for col, data in enumerate([nomi_direttori_columns], 0):
+                worksheet.write_column(0, 0, data)
 
-        bold = workbook.add_format({'bold': True,})
+        row = 0
+        for line, united in enumerate(united_list):
+            col = 1
+            row_tmp = 0
+
+            for section_name, values in united.items():
+                if not len(values):
+                    continue
+
+                for data in values:
+                    if section_name == 'direttori':
+                        data = list(filter(bool, data))
+
+                    if section_name == 'lezioni':
+                        domanda, voto, docente = data
+                        data = [domanda, docente, voto]
+
+                    if line != 0:
+                        data = [data[-1:][0]]
+
+                    worksheet.write_column(row, col, data)
+                    col += 1
+                else:
+                    row_tmp = len(data)
+            row += row_tmp
 
         workbook.close()
         output.seek(0)
