@@ -180,5 +180,5 @@ def course_survey_download_results(request, me, pk):
     if not me.permessi_almeno(course, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    report = SurveyResult.generate_report_for_course(course)
+    report = SurveyResult.get_report_for_course(course, request)
     return report
