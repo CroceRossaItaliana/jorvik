@@ -125,7 +125,7 @@ class ModuloAggiungiPersona(ModuloStepAnagrafica):
 class ModuloReclamaAppartenenza(forms.ModelForm):
     class Meta:
         model = Appartenenza
-        fields = ['inizio', 'sede', 'membro',]
+        fields = ['inizio', 'sede', 'membro', 'fine',]
 
     def __init__(self, *args, sedi, **kwargs):
         super(ModuloReclamaAppartenenza, self).__init__(*args, **kwargs)
