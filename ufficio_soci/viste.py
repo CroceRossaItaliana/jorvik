@@ -251,6 +251,7 @@ def us_reclama_persona(request, me, persona_pk):
                         and (appartenenza_volontario.riserve.exclude(fine__isnull=True).exists() or not appartenenza_volontario.riserve.exclude(fine__isnull=True)) \
                         and appartenenza_volontario.appartiene_a(sede=sede) and appartenenza_volontario.sede == app.sede:
                     Riserva.objects.create(inizio=mezzanotte_24_ieri(app.inizio),
+                                           fine=app.fine,
                                            persona=persona,
                                            motivo="Adozione come dipendente",
                                            appartenenza=appartenenza_volontario)
