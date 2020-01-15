@@ -3,6 +3,8 @@ version: '3'
 services:
   db:
     image: mdillon/postgis
+    volumes:
+      - .:/code
     ports:
       - "5432:5432"
 

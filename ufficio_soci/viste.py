@@ -126,7 +126,6 @@ def us_reclama(request, me):
 
 @pagina_privata(permessi=(GESTIONE_SOCI,))
 def us_reclama_persona(request, me, persona_pk):
-
     persona = get_object_or_404(Persona, pk=persona_pk)
     volontario = False
 
@@ -138,10 +137,9 @@ def us_reclama_persona(request, me, persona_pk):
             volontario = volontario or persona.appartenenze_attuali()\
                 .filter(sede=s, membro=Appartenenza.VOLONTARIO).exists()
 
+    messaggio_extra = ""
     if persona.appartenenze_attuali().filter(membro=Appartenenza.SOSTENITORE).exists():
         messaggio_extra = "<br>Questa persona è già registrata come sostenitore. Prima di poterla reclamare deve essere dimessa dal ruolo di sostenitore"
-    else:
-        messaggio_extra = ""
 
     if not sedi:  # Se non posso reclamarlo in nessuna sede
         return errore_generico(request, me, titolo="Impossibile reclamare appartenenza",
@@ -150,14 +148,14 @@ def us_reclama_persona(request, me, persona_pk):
                                torna_titolo="Torna indietro",
                                torna_url="/us/reclama/")
 
-
     questo_anno = poco_fa().year
 
     tesseramento = Tesseramento.objects.get(anno=questo_anno)
 
     sedi_qs = Sede.objects.filter(pk__in=[x.pk for x in sedi])
 
-    modulo_appartenenza = ModuloReclamaAppartenenza(request.POST or None, sedi=sedi_qs, prefix="app")
+    modulo_appartenenza = ModuloReclamaAppartenenza(request.POST or None, sedi=sedi_qs, prefix="app",
+                                                    initial={'membro': Appartenenza.VOLONTARIO})
     modulo_appartenenza.fields['membro'].choices = ((k, v) for k, v in dict(Appartenenza.MEMBRO).items()
                                                     if k in Appartenenza.MEMBRO_RECLAMABILE)
 
@@ -236,8 +234,6 @@ def us_reclama_persona(request, me, persona_pk):
                                                     "%d anni. " % Persona.ETA_MINIMA_SOCIO)
             continua = False
 
-
-
         if continua:
             with transaction.atomic():
                 app = modulo_appartenenza.save(commit=False)
@@ -255,6 +251,7 @@ def us_reclama_persona(request, me, persona_pk):
                         and (appartenenza_volontario.riserve.exclude(fine__isnull=True).exists() or not appartenenza_volontario.riserve.exclude(fine__isnull=True)) \
                         and appartenenza_volontario.appartiene_a(sede=sede) and appartenenza_volontario.sede == app.sede:
                     Riserva.objects.create(inizio=mezzanotte_24_ieri(app.inizio),
+                                           fine=app.fine,
                                            persona=persona,
                                            motivo="Adozione come dipendente",
                                            appartenenza=appartenenza_volontario)
@@ -303,15 +300,14 @@ def us_reclama_persona(request, me, persona_pk):
 
                 return redirect(persona.url)
 
-
-    contesto = {
+    context = {
         "modulo_appartenenza": modulo_appartenenza,
         "modulo_quota": modulo_quota,
         "persona": persona,
         "volontario": volontario
     }
 
-    return 'us_reclama_persona.html', contesto
+    return 'us_reclama_persona.html', context
 
 
 @pagina_privata
