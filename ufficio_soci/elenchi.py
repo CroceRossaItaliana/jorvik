@@ -645,7 +645,8 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
             "pk__in": Persona.objects.filter(
                 Appartenenza.con_esito_ok(
                     membro__in=[Appartenenza.VOLONTARIO, ],
-                    inizio__lte=anzianita_minima
+                    inizio__lte=anzianita_minima,
+                    terminazione__isnull=True,
                 ).via("appartenenze")
             ).only("id")
         }
