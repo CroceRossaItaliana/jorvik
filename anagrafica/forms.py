@@ -609,15 +609,18 @@ class ModuloImportVolontari(forms.Form):
 class ModuloModificaDataInizioAppartenenza(ModelForm):
     class Meta:
         model = Appartenenza
-        fields = ['inizio', ]
+        fields = ['inizio', 'fine',]
 
     def clean_inizio(self):
         from django.utils import timezone
+
         inizio = self.cleaned_data['inizio']
+
         if inizio > timezone.now():
             raise ValidationError("La data non può essere nel futuro.")
         if self.instance and not self.instance.modificabile(inizio):
             raise ValidationError("La data non può sovrapporsi con appartenenze precedenti.")
+
         return inizio
 
 
