@@ -645,7 +645,8 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
             "pk__in": Persona.objects.filter(
                 Appartenenza.con_esito_ok(
                     membro__in=[Appartenenza.VOLONTARIO, ],
-                    inizio__lte=anzianita_minima
+                    inizio__lte=anzianita_minima,
+                    terminazione__isnull=True,
                 ).via("appartenenze")
             ).only("id")
         }
@@ -696,11 +697,13 @@ class ElencoElettoratoAlGiorno(ElencoVistaSoci):
 
         # Escludi nelle liste elettorali di dove è volontario, essendo dipendente,
         # anche se in un altro comitato, non DEVE essere nella lista ne attiva e ne passiva
+        qs_sedi_pk_list = qs_sedi if isinstance(qs_sedi, list) else qs_sedi.values_list('pk', flat=True)
+
         return r.exclude(
             pk__in=Appartenenza.query_attuale(
                 membro=Appartenenza.DIPENDENTE,
                 al_giorno=oggi,
-                sede__pk__in=set(qs_sedi.values_list('pk', flat=True)) ^
+                sede__pk__in=set(qs_sedi_pk_list) ^
                              set(Persona.objects.filter(pk__in=r.values_list('pk', flat=True)).values_list('appartenenze__sede__pk', flat=True)),
             ).values_list('persona__pk', flat=True)
         ).annotate(
