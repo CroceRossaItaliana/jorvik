@@ -15,16 +15,17 @@ def static_page_content_filter(context):
             # Ottieni la sede di appartenenze volontario
             persona = context.request.user.persona
             app_vo = persona.appartenenza_volontario.last()
-            sede = app_vo.sede if app_vo else ''
+            if app_vo:
+                sede = app_vo.sede
 
-            # Modifica contenuto
-            html = BeautifulSoup(page.text, 'lxml')
-            link = html.find('a', id="aggressione-btn")
-            href = link.get('href')
-            link['href'] = "%s?nomec=%s&idc=%s" % (href, sede.nome, sede.pk)
+                # Modifica contenuto
+                html = BeautifulSoup(page.text, 'lxml')
+                link = html.find('a', id="aggressione-btn")
+                href = link.get('href')
+                link['href'] = "%s?nomec=%s&idc=%s" % (href, sede.nome, sede.pk)
 
-            # get rid of html/body tags
-            page.text = ''.join([str(x) for x in html.body.children])
+                # get rid of html/body tags
+                page.text = ''.join([str(x) for x in html.body.children])
         except:
             # se qualcosa vada storto - non casca niente.
             pass
