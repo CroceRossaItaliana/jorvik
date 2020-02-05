@@ -36,7 +36,7 @@ class InterfacciaJorvik(object):
 
     @property
     def url_scarica(self):
-        return reverse('scarica_file', args=(self.pk,))
+        return reverse('documenti:scarica_file', args=(self.pk,))
 
     def lista_segmenti(self):
         return ', '.join([force_text(segmento) for segmento in self.segmenti.all()])

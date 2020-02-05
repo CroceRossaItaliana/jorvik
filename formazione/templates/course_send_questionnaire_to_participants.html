@@ -1,0 +1,42 @@
+{% extends 'aspirante_corso_base_scheda.html' %}
+{% load utils %}
+{% load bootstrap3 %}
+
+{% block scheda_titolo %}Invia il questionario di Gradimento{% endblock %}
+
+{% block scheda_contenuto %}
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h2 class="panel-title"><i class="fa fa-fw fa-pencil"></i> Invia il questionario di Gradimento ai partecipanti</h2>
+        </div>
+        <div class="panel-body">
+          <form method="POST">
+            <div style="text-align:center;">
+              <a class="selectParticipants" data-boolean="1" href="#">Seleziona tutti</a> /
+              <a class="selectParticipants" data-boolean="0" href="#">Deseleziona</a>
+            </div>
+
+            {% csrf_token %}
+
+            {% for request in corso.partecipazioni_confermate %}
+              {% with request.persona.id as persona_id %}
+              <div>
+                <input name="persona" id="persona_{{persona_id}}" type="checkbox" value="{{persona_id}}">
+                <label style="font-weight:normal;" for="persona_{{persona_id}}">{{ request.persona }}</label>
+              </div>
+              {% endwith %}
+            {% endfor %}
+
+            <input class="btn btn-primary btn-block" type="submit" value="Invia">
+          </form>
+
+          <script>
+            $('.selectParticipants').on('click', function(e) {
+              var bool = parseInt($(this).data('boolean'));
+              $('input[name="persona"]').prop('checked', bool);
+              e.preventDefault();
+            });
+          </script>
+        </div>
+    </div>
+{% endblock %}

@@ -127,7 +127,7 @@ class Tesserino(ModelloSemplice, ConMarcaTemporale, ConPDF):
         self.codice = Tesserino._genera_nuovo_codice()
         self.save()
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         codice = self.genera_codice_a_barre_png()
         sede = self.persona.sede_riferimento(al_giorno=self.creazione).comitato
         pdf = PDF(oggetto=self)
@@ -483,15 +483,14 @@ class Quota(ModelloSemplice, ConMarcaTemporale, ConVecchioID, ConPDF):
         anno = self.anno
         sede = self.sede
 
-        prec = Quota.per_sede(sede).filter(anno=anno) \
-                    .aggregate(max=Max('progressivo'))['max'] or 0
+        prec = Quota.per_sede(sede).filter(anno=anno).aggregate(max=Max('progressivo'))['max'] or 0
         return prec + 1
 
     @property
     def importo_totale(self):
         return self.importo + self.importo_extra
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         pdf = PDF(oggetto=self)
         pdf.genera_e_salva(
           nome="Ricevuta %s.pdf" % (self.persona.nome_completo, ),

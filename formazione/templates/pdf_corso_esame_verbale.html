@@ -1,0 +1,241 @@
+{% extends 'pdf_standard.html' %}
+
+{% load static %}
+{% load base_tags %}
+{% load formazione_templatetags %}
+
+{% block css_extra %}
+    body {font-family: 'Arial'; padding:0; margin:0;}
+
+    .heading-main {text-align: center; margin: 0 0 20px 0; line-height: 115%;}
+    .heading-logo-cri {display:block; margin:0 auto 10px; width:150px;}
+    .heading-comitato-name {font-family: Arial, sans-serif; font-size: 9pt; color:#cc0000;}
+    .heading-titolo-cri {margin-bottom:30px; font-size: 13px; font-weight:bold; text-align:center; text-transform: uppercase;}
+    .heading-esame {margin-bottom:30px; text-align:center; font-size:13px; font-weight:bold;}
+    .heading-esame-secondo {display:block; margin-bottom: 30px; color:#cc0000;}
+
+    .document-text {}
+    .document-text p {font-size:13px; line-height:150%; margin-bottom:12px;}
+    .commissione-nome-row {margin-left: 1.25cm; text-indent: 1.25cm; margin-bottom: 0.35cm; line-height: 140%; font-size: 14px;}
+
+    .table-elenco {border: 1px solid #bbb; width: 100%; text-align: left; font-size: 11pt; border-collapse: collapse;}
+    .table-elenco td, .table-elenco th {border: 1px solid; padding: 6px 4px;}
+    .table-elenco-col-name {font-size:11px; font-weight:bold; text-align:center;}
+{% endblock %}
+
+{% block corpo %}
+    {% get_url_for_staticfiles as SITE_URL %}
+    <div style="page-break-after: always;">
+        <div class="western heading-main">
+            <img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">
+            <span class="heading-comitato-name">{{ corso.sede.comitato }}</span>
+        </div>
+        <div class="heading-titolo-cri">
+            {% if corso.tipo == corso.BASE %}
+                Corso di formazione per volontari<br>della Croce Rossa Italiana
+            {% elif corso.tipo == corso.CORSO_NUOVO %}
+                {{ corso.titolo_cri }}
+            {% endif %}
+        </div>
+        <div class="heading-esame">
+            Verbale di Esame Finale
+
+            {% if secondo_verbale %}
+                <span class="heading-esame-secondo">Seconda sessione</span>
+            {% endif %}
+        </div>
+        <div class="document-text">
+            {% if not secondo_verbale %}
+                <p>
+                    Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell'anno {{ corso.data_esame|date:"Y" }},
+                    {% verbale_indirizzo corso %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
+                    della Croce Rossa Italiana</em> attualmente vigente, si è riunita la Commissione d’Esame convocata e composta da:
+                </p>
+            {% else %}
+                {% if corso.tipo == corso.BASE %}
+                    <p>
+                        Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell'anno {{ corso.data_esame|date:"Y" }},
+                        {% verbale_indirizzo corso %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
+                        della Croce Rossa Italiana</em> attualmente vigente, la Commissione d’Esame convocata per la seconda volta composta da:
+                    </p>
+                {% elif corso.tipo == corso.CORSO_NUOVO %}
+                    <p>
+                        Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell&#39;anno {{ corso.data_esame|date:"Y" }},
+                        {% verbale_indirizzo corso %}, <em>ai sensi del Regolamento dei Corsi di Formazione per Volontari e Dipendenti
+                        della Croce Rossa Italiana</em> attualmente vigente, la Commissione d’Esame è stata convocata per la seconda volta
+                        per n.____ candidato/i che, per giustificati e comprovati motivi di impedimento non ha/hanno potuto svolgere l’esame
+                        nel giorno_______________ ed è composta da:
+                    </p>
+                {% endif %}
+            {% endif %}
+
+            <p>&mdash; Presidente del Comitato CRI o suo delegato:<br>
+                &nbsp;&nbsp;&nbsp; {{ corso.sede.presidente }}</p>
+            <p>
+                &mdash; Direttore del Corso<br>
+                {% for direttore in corso.direttori_corso %}
+                    &nbsp;&nbsp;&nbsp; {{ direttore }}<br>
+                {% endfor %}
+            </p>
+
+            {% if corso.commissione_nomi_as_list %}
+                <p>
+                    &mdash; Commissione esame<br>
+                    {% for nome in corso.commissione_nomi_as_list %}
+                        &nbsp;&nbsp;&nbsp; {{ nome|title }}<br>
+                    {% endfor %}
+                </p>
+            {% endif %}
+
+            {% if corso.tipo == corso.BASE %}
+
+
+                {% if not secondo_verbale %}
+                    <p>per sottoporre ad esame finale i candidati del Corso di Formazione per Volontari della Croce Rossa Italiana.
+                        L’elenco dei candidati, allegato   alla presente, è parte integrante del presente verbale.</p>
+                    <p>
+                        Gli esaminandi vengono sottoposti ad un esame teorico-pratico inerente gli argomenti trattati nonché le capacità e
+                        competenze acquisite. Si precisa che gli esaminandi hanno frequentato per intero il Modulo di Salute e Sicurezza dei
+                        Volontari CRI ai sensi del D.lgs. 9 aprile 2008, n. 81 e del Regolamento per la Formazione
+                        in Materia di Salute e Sicurezza in ambito CRI per i Volontari.
+                    </p>
+                    <p>
+                        Sono stati esaminati n. {{ numero_aspiranti }} Volontari, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione d’Esame,
+                        sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati.
+                    </p>
+                {% else %}
+                    <p>
+                        per sottoporre ad esame finale i n._____ candidati, del Corso di Formazione per Volontari della Croce Rossa Italiana
+                        attivato con delibera inserita a sistema, che per giustificati e comprovati motivi di impedimento
+                        (art.13.8 del “Regolamento dei Corsi di Formazione per Volontari e Dipendenti della Croce Rossa Italiana”)
+                        non hanno potuto svolgere l’esame nel giorno _______________.
+                    </p>
+                    <p>
+                        L’elenco dei candidati, allegato alla presente, è parte integrante del presente verbale.
+                        Gli esaminandi vengono sottoposti ad un esame teorico-pratico inerente gli argomenti trattati nonché le capacità e competenze acquisite.
+                    </p>
+                    <p>
+                        Si precisa che gli esaminandi hanno frequentato per intero il Modulo di Salute e Sicurezza dei Volontari CRI
+                        ai sensi del D.lgs. 9 aprile 2008, n. 81 e del Regolamento per la Formazione in Materia di Salute e Sicurezza in ambito CRI per i Volontari.
+                    </p>
+                    <p>
+                        Sono stati esaminati n. {{ numero_aspiranti }}, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione d’Esame,
+                        sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati.
+                    </p>
+                {% endif %}
+
+
+            {% elif corso.tipo == corso.CORSO_NUOVO %}
+
+
+                {% if not secondo_verbale %}
+                    <p>per sottoporre ad esame finale i candidati del Corso di Formazione ({{ corso.titolo_cri }}) attivato con delibera inserita a sistema.
+                        L’elenco dei candidati, allegato alla presente, è parte integrante del presente verbale.</p>
+                    <p>Gli esaminandi vengono sottoposti ad un esame teorico-pratico inerente gli argomenti trattati nonché le capacità e competenze acquisite.</p>
+                    <p>
+                        Sono stati esaminati n. {{ numero_aspiranti }}, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione d’Esame,
+                        sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati
+                        {% if numero_assenti_no_esame.count %}, ASSENTI n. {{ numero_assenti_no_esame.count }} candidati{% endif %}.
+                    </p>
+
+                {% else %}
+                    <p>
+                        La Commissione si riunisce in data odierna per sottoporre ad esame finale n._____ candidato/i, del Corso di Formazione ({{ corso.titolo_cri }})
+                        attivato con delibera inserita a sistema. L’elenco dei candidati, allegato alla presente, è parte integrante del presente verbale.
+                    </p>
+                    <p>
+                        L’esaminando/ gli esaminandi vengono sottoposti ad un esame teorico-pratico inerente gli argomenti trattati nonché le capacità e competenze acquisite.
+                    </p>
+                    <p>
+                        Sono stati esaminati n. {{ numero_aspiranti }}, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione d’Esame,
+                        sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati
+                        {% if numero_assenti_no_esame.count %}, ASSENTI n. {{ numero_assenti_no_esame.count }} candidati{% endif %}.
+                    </p>
+                {% endif %}
+
+            {% endif %}
+        </div>
+    </div>
+
+    <div>
+        <div class="western heading-main">
+            <img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">
+            <span class="heading-comitato-name">{{ corso.sede.comitato }}</span>
+        </div>
+        <div class="heading-titolo-cri">
+            {% if corso.tipo == corso.BASE %}
+                Corso di formazione per volontari<br>della Croce Rossa Italiana
+            {% elif corso.tipo == corso.CORSO_NUOVO %}
+                {{ corso.titolo_cri }}
+            {% endif %}
+        </div>
+        <div class="heading-esame">
+            Verbale di Esame Finale
+
+            {% if secondo_verbale %}
+                <span class="heading-esame-secondo">Seconda sessione</span>
+            {% endif %}
+        </div>
+
+        <div style="margin-bottom:15px; font-weight:bold; font-size:13px; text-align:center;">ELENCO CANDIDATI IDONEI/NON IDONEI/ASSENTI</div>
+        <table class="table-elenco" style="margin-bottom:30px;">
+            <thead>
+                <tr>
+                    <td class="table-elenco-col-name">Cognome e Nome</td>
+                    <td class="table-elenco-col-name">Luogo di Nascita</td>
+                    <td class="table-elenco-col-name">Data di Nascita</td>
+                    <td class="table-elenco-col-name">Codice Fiscale</td>
+                    <td class="table-elenco-col-name">Esito</td>
+                </tr>
+            </thead>
+            {% for p in partecipazioni %}
+                <tr style="font-size:10px;">
+                    <td>{{ p.persona.cognome }} {{ p.persona.nome }}</td>
+                    <td>{{ p.persona.comune_nascita }}</td>
+                    <td>{{ p.persona.data_nascita|date:"SHORT_DATE_FORMAT" }}</td>
+                    <td>{{ p.persona.codice_fiscale }}</td>
+                    <td><b>
+                        {% if corso.titolo_cri.scheda_prevede_esame %}
+
+                            {% if not p.get_esito_esame_display %}
+                                <span style="color:red;">{{ p.get_ammissione_display }}</span>
+                            {% else %}
+                                {{ p.get_esito_esame_display|default:"N/D" }}
+                            {% endif %}
+
+                        {% else %}
+                            {{ p.get_ammissione_display|default:"Esame non previsto" }}
+                        {% endif %}
+                    </b></td>
+                </tr>
+            {% endfor %}
+        </table>
+        <div style="font-size:12px;">
+            Luogo e data<br>
+            Letto approvato e sottoscritto<br><br>
+
+            &ndash;	Presidente del Comitato CRI o suo delegato:<br>
+            &nbsp;&nbsp;&nbsp; {{ corso.sede.presidente }}<br><br>
+
+            &ndash;	Direttore del Corso<br>
+            {% for direttore in corso.direttori_corso %}
+                &nbsp;&nbsp;&nbsp; {{ direttore }}<br><br>
+            {% endfor %}
+
+            &ndash;	Docente/i del corso<br>
+            {% for docente in corso.docenti_corso %}
+                &nbsp;&nbsp;&nbsp; {{ docente }}<br><br>
+            {% endfor %}
+            {% for docente in corso.docenti_esterni_corso %}
+                &nbsp;&nbsp;&nbsp; {{ docente }}<br><br>
+            {% endfor %}
+
+            {% if commissione_nomi_as_list %}
+                &ndash;	Commissione esame<br>
+                {% for nome in corso.commissione_nomi_as_list %}
+                    &nbsp;&nbsp;&nbsp; {{ nome|title }}<br>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

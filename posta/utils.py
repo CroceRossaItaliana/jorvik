@@ -10,4 +10,4 @@ def imposta_destinatari_e_scrivi_messaggio(request, qs_destinatari=Persona.objec
     # qs_destinatari = Persona.objects.filter(pk__in=qs_destinatari.values_list('id', flat=True))
     request.session["messaggio_destinatari"] = qs_destinatari
     request.session["messaggio_destinatari_timestamp"] = datetime.now()
-    return redirect(reverse('posta-scrivi'))
+    return redirect(reverse('posta:scrivi'))

@@ -22,7 +22,7 @@ from base.utils import poco_fa
 from base.utils_tests import crea_persona_sede_appartenenza, crea_persona, email_fittizzia, codice_fiscale, crea_utenza, \
     crea_sede, crea_appartenenza
 from base.viste import autorizzazione_nega, autorizzazione_concedi
-from formazione.forms import ModuloVerbaleAspiranteCorsoBase
+from formazione.forms import FormVerbaleCorso
 from jorvik.settings import GOOGLE_KEY
 from .models import CorsoBase, Aspirante, InvitoCorsoBase, PartecipazioneCorsoBase
 
@@ -242,30 +242,30 @@ class TestCorsi(TestCase):
         # Test del controllo di cancellazione nei 4 stati del corso
         corso.stato = CorsoBase.TERMINATO
         corso.save()
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "stadio della vita del corso base")
 
         corso.stato = CorsoBase.ANNULLATO
         corso.save()
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "stadio della vita del corso base")
 
         corso.stato = CorsoBase.PREPARAZIONE
         corso.save()
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "Conferma cancellazione")
 
         corso.stato = CorsoBase.ATTIVO
         corso.save()
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "Conferma cancellazione")
 
         # GET chiede conferma
-        response = self.client.get(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.get(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "Conferma cancellazione")
         self.assertContains(response, force_text(sostenitore))
         # POST cancella
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, sostenitore.pk)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, sostenitore.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 2)
@@ -285,12 +285,12 @@ class TestCorsi(TestCase):
         mail.outbox = []
 
         # Cancellare utente non esistente ritorna errore
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, altro.pk + 10000)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, altro.pk + 10000)))
         self.assertContains(response, "La persona cercata non è iscritta")
 
         # Cancellare utente non associato al corso non ritorna errore -per evitare information leak- ma non cambia
         # i dati
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, altro.pk)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, altro.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 2)
@@ -299,7 +299,7 @@ class TestCorsi(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
         # Cancellare invitato confermato
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, aspirante1.pk)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, aspirante1.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 1)
@@ -319,7 +319,7 @@ class TestCorsi(TestCase):
         mail.outbox = []
 
         # Cancellare invitato in attesa
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, aspirante2.pk)))
+        response = self.client.post(reverse('aspirante:formazione_iscritti_cancella', args=(corso.pk, aspirante2.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 1)
@@ -333,7 +333,9 @@ class TestCorsi(TestCase):
         mail.outbox = []
 
         # Cancellare partecipante in attesa
-        response = self.client.post(reverse('formazione-iscritti-cancella', args=(corso.pk, aspirante3.pk)))
+        response = self.client.post(reverse(
+            'aspirante:formazione_iscritti_cancella', args=(corso.pk,
+                                                        aspirante3.pk)))
         self.assertContains(response, "Iscritto cancellato")
 
         self.assertEqual(corso.partecipazioni_confermate_o_in_attesa().count(), 0)
@@ -664,7 +666,7 @@ class TestCorsi(TestCase):
             'extra_2': False,
             'destinazione': sede.pk,
         }
-        modulo = ModuloVerbaleAspiranteCorsoBase(
+        modulo = FormVerbaleCorso(
             data=dati, generazione_verbale=True, instance=partecipazione1,
         )
         modulo.fields['destinazione'].queryset = corso.possibili_destinazioni()
@@ -758,8 +760,8 @@ class TestCorsi(TestCase):
         richieste_non_processabili = partecipazione1.autorizzazioni.all()
         for richiesta in richieste_non_processabili:
             self.assertFalse(PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta))
-            url_assenti.append(reverse('autorizzazioni-concedi', args=(richiesta.pk,)))
-            url_assenti.append(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+            url_assenti.append(reverse('autorizzazioni:concedi', args=(richiesta.pk,)))
+            url_assenti.append(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
 
         non_processabili = PartecipazioneCorsoBase.richieste_non_processabili(Autorizzazione.objects.all())
         self.assertEqual(list(non_processabili), [richiesta.pk for richiesta in richieste_non_processabili])
@@ -767,15 +769,15 @@ class TestCorsi(TestCase):
         richieste_processabili = partecipazione2.autorizzazioni.all() | partecipazione3.autorizzazioni.all()
         for richiesta in richieste_processabili:
             self.assertTrue(PartecipazioneCorsoBase.controlla_richiesta_processabile(richiesta))
-            url_presenti.append(reverse('autorizzazioni-concedi', args=(richiesta.pk,)))
-            url_presenti.append(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+            url_presenti.append(reverse('autorizzazioni:concedi', args=(richiesta.pk,)))
+            url_presenti.append(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
 
         # Mettendo nel mezzo anche autorizzazioni diverse si verifica che il meccanismo non interferisca
         richieste_estensioni = est.autorizzazioni.all()
         for richiesta in richieste_estensioni:
             pass
-            url_presenti.append(reverse('autorizzazioni-concedi', args=(richiesta.pk,)))
-            url_presenti.append(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+            url_presenti.append(reverse('autorizzazioni:concedi', args=(richiesta.pk,)))
+            url_presenti.append(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
 
         self.client.login(email=presidente.email_contatto, password='prova')
         response = self.client.get(reverse('autorizzazioni-aperte'))
@@ -790,15 +792,15 @@ class TestCorsi(TestCase):
             self.assertContains(response, 'Richiesta non processabile')
 
         for richiesta in partecipazione2.autorizzazioni.all():
-            response = self.client.get(reverse('autorizzazioni-concedi', args=(richiesta.pk,)))
+            response = self.client.get(reverse('autorizzazioni:concedi', args=(richiesta.pk,)))
             self.assertContains(response, 'Per dare consenso a questa richiesta')
 
         for richiesta in partecipazione3.autorizzazioni.all():
-            response = self.client.get(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+            response = self.client.get(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
             self.assertContains(response, 'Per negare questa richiesta')
 
         for richiesta in est.autorizzazioni.all():
-            response = self.client.get(reverse('autorizzazioni-nega', args=(richiesta.pk,)))
+            response = self.client.get(reverse('autorizzazioni:nega', args=(richiesta.pk,)))
             self.assertContains(response, 'Per negare questa richiesta')
 
 

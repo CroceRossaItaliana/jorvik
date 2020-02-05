@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from datetime import datetime
 from django import template
 from django.contrib.messages import constants
@@ -26,14 +25,15 @@ def show_test_users_with_credentials(context):
         host = request.build_absolute_uri()
 
         if "provami.gaia.cri.it" in host or "127.0.0.1" in host:
-            vo = Persona.objects.filter(nome__istartswith='volontario_').last()
-            pr = Persona.objects.filter(nome__istartswith='presidente_').last()
-
             html = ''
-            if vo:
-                html = "<div>%s : %s</div>" % (vo.utenza, vo.utenza.check_password(vo.utenza.email))
-            if pr:
-                html += "<div>%s : %s</div>" % (pr.utenza, pr.utenza.check_password(pr.utenza.email))
+
+            for delega_tipo in ['volontario_', 'presidente_',
+                                'responsabile_formazione_',
+                                'direttore_corso_', 'delegato_obiettivo_']:
+                persona = Persona.objects.filter(nome__istartswith=delega_tipo).last()
+                if persona:
+                    html += "<div>%s : %s</div>" % (persona.utenza,
+                                                    persona.utenza.check_password(persona.utenza.email))
 
             return mark_safe(html)
     except:
@@ -80,3 +80,35 @@ def select_nomina_presidenziale(sede):
     # Caso in cui non ci sono delegati
     else:
         return ''
+
+
+@register.simple_tag(takes_context=True)
+def get_url_for_staticfiles(context):
+    """ Questa funzione serve per avere url del host attuale perchè per la
+        renderizzazione del pdf server il percorso assoluto (con dominio)
+
+        - In produzione non restituire nulla perchè {% static %} restituirà percorso corretto
+            - (STATIC_URL in config/media.cnf)
+        - Per gli ambienti di sviluppo o su staging gli statici hanno staticfiles folder diverso
+            - Docker (/tmp/media)
+            - Staging (STATIC_URL; o STATIC_URL to datafiles2)
+    """
+    from jorvik.settings import STATIC_URL
+
+    if STATIC_URL.startswith('http'):
+        return ''
+
+    # request in context è passato nei metodi <genera_*> (pdf/verbale/attestato)
+    request = context.get('request')
+    if request:
+        protocol = "http" if request.is_secure else 'https'
+        return "%s://%s" % (protocol, request.get_host())
+
+    return ''
+
+
+@register.simple_tag(takes_context=True)
+def add_flag_to_profile_url(context):
+    elenco = context['elenco']
+    elenco_short_name = elenco.SHORT_NAME if hasattr(elenco, 'SHORT_NAME') else ''
+    return elenco_short_name

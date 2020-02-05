@@ -1,138 +1,91 @@
 {% extends 'aspirante_corso_base_scheda.html' %}
 
-{% block scheda_titolo %}
-    Termina Corso Base
-{% endblock %}
-
 {% load bootstrap3 %}
 
+{% block scheda_titolo %}Termina Corso Base{% endblock %}
+
 {% block scheda_contenuto %}
-
 <div class="row">
-
     <div class="col-md-8">
         <div class="panel panel-info">
-            <div class="panel-heading">
-                <h2 class="panel-title">
-                    <i class="fa fa-fw fa-list"></i>
-                    Partecipanti al corso base
-                </h2>
-            </div>
+            <div class="panel-heading"><h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Partecipanti al corso base</h2></div>
             <div class="panel-body">
-
                 <table class="table table-striped">
                     <thead>
-                    <tr>
-                        <th>Nome e cognome</th>
-                        <th>Iscritto il</th>
-                        {% if corso.ha_verbale %}
-                            <th>Ammesso</th>
-                            <th>Idoneo</th>
-                            <th>Scarica</th>
-                        {% endif %}
-                    </tr>
+                        <tr>
+                            <th>Cognome e nome</th>
+                            <th>Iscritto il</th>
+                            {% if corso.ha_verbale %}
+                                <th>Ammesso</th>
+                                <th>Idoneo</th>
+                                <th>Scarica</th>
+                            {% endif %}
+                        </tr>
                     </thead>
                     <tbody>
                     {% for p in corso.partecipazioni_confermate %}
-
                         <tr>
-                            <td>{{ p.persona.link|safe }}</td>
+                            <td><a href="{% url 'profilo:main' p.persona.pk %}">{{p.persona.cognome}} {{p.persona.nome}}</a></td>
                             <td>{{ p.creazione|date:"SHORT_DATE_FORMAT" }}</td>
                             {% if corso.ha_verbale %}
                                 <td>{{ p.get_ammissione_display|default:"N/D" }}</td>
                                 <td class="grassetto">
-                                    {{ p.get_esito_esame_display }}
+                                    {% if corso.titolo_cri %}
+                                        {% if not corso.titolo_cri.scheda_prevede_esame %}
+                                            {{ p.get_esito_esame_display }}
+                                        {% else %}
+                                            {{ p.get_esito_esame_display|default:"N/D" }}
+                                        {% endif %}
+                                    {% else %}
+                                        {{ p.get_esito_esame_display|default:"N/D" }}
+                                    {% endif %}
                                 </td>
-                                <td>
-                                    <a href="{{ p.url_pdf }}">
-                                        Scheda
-                                        {% if p.idoneo %}e Attestato{% endif %}
-                                    </a>
-                                </td>
+                                <td><a href="{{ p.url_pdf }}">Scheda {% if p.idoneo %}e Attestato{% endif %}</a></td>
                             {% endif %}
                         </tr>
 
                     {% empty %}
-                        <tr class="warning">
-                            <td colspan="4">
-                                Nessun partecipante confermato.
-                            </td>
+                        <tr class="alert alert-warning">
+                            <td colspan="4">Nessun partecipante confermato.</td>
                         </tr>
-
                     {% endfor %}
-
                     </tbody>
                 </table>
-
-
             </div>
-
-
         </div>
-
-
-
     </div>
 
     <div class="col-md-4">
         <div class="panel panel-primary">
             <div class="panel-heading">
-                <h2 class="panel-title">
-                    <i class="fa fa-fw fa-file"></i>
-                    Scarica il verbale
-                </h2>
+                <h2 class="panel-title"><i class="fa fa-fw fa-file"></i> Scarica il verbale</h2>
             </div>
             <div class="panel-body">
                 {% if corso.ha_verbale %}
                     <p>Da qui puoi scaricare il verbale del corso in formato PDF.</p>
-                    <p>
-                        <a href="{{ corso.url_pdf }}">
-                            <i class="fa fa-fw fa-download"></i>
-                            Scarica il verbale
-                        </a>
-                    </p>
-
+                    <p><a href="{{ corso.url_pdf }}" target="_blank"><i class="fa fa-fw fa-download"></i> Scarica il verbale</a></p>
+                    <p><a href="{{ corso.url_pdf }}?seconda_data_esame" target="_blank"><i class="fa fa-fw fa-download"></i> Scarica il verbale (seconda data esame)</a></p>
                 {% else %}
                     <p>Il verbale del corso non &egrave; ancora disponibile per questo corso.</p>
-                    <p>Sar&agrave; scaricabile una volta generato. La generazione sar&agrave; effettuabile
-                        non appena finiti gli esami.</p>
-
+                    <p>Sar&agrave; scaricabile una volta generato. La generazione sar&agrave; effettuabile non appena finiti gli esami.</p>
                 {% endif %}
             </div>
-
         </div>
 
         <div class="panel panel-primary">
             <div class="panel-heading">
-                <h2 class="panel-title">
-                    <i class="fa fa-fw fa-file"></i>
-                    Schede di valutazione e attestati
-                </h2>
+                <h2 class="panel-title"><i class="fa fa-fw fa-file"></i> Schede di valutazione e attestati</h2>
             </div>
             <div class="panel-body">
                 {% if corso.ha_verbale %}
                     <p>Da qui puoi scaricare tutte le schede di valutazione e gli attestati in formato ZIP.</p>
-                    <p>
-                        <a href="{{ corso.url_report_schede }}"
-                            data-caricamento="Attendi...">
-                            <i class="fa fa-fw fa-download"></i>
-                            Scarica schede e attestati
-                        </a>
-                    </p>
-
+                    <p><a href="{{ corso.url_report_schede }}" data-caricamento="Attendi..."><i class="fa fa-fw fa-download"></i> Scarica schede e attestati</a></p>
                 {% else %}
-                    <p>Le schede di valutazione e gli attestati del corso saranno disponibi una volta
-                        completato il verbale del corso.</p>
-
+                    <p>Le schede di valutazione e gli attestati del corso saranno disponibi una volta completato il verbale del corso.</p>
                 {% endif %}
             </div>
-
         </div>
-
-
-
     </div>
-
 </div>
 
 {% endblock %}

@@ -8,16 +8,16 @@ particolari. Fare riferimento alla documentazione del tratto
 utilizzato.
 """
 from datetime import date, datetime, timedelta
+
 from django.apps import AppConfig, apps
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
-from anagrafica.costanti import ESTENSIONE, ESTENSIONE_MINORE
-from base.stringhe import domani, genera_uuid_casuale
-from base.utils import concept, poco_fa
 from django.utils import timezone
+
+from anagrafica.costanti import ESTENSIONE, ESTENSIONE_MINORE
+from .utils import concept, poco_fa
 
 
 class ConMarcaTemporale(models.Model):
@@ -30,7 +30,6 @@ class ConMarcaTemporale(models.Model):
 
     creazione = models.DateTimeField(default=timezone.now, db_index=True)
     ultima_modifica = models.DateTimeField(auto_now=True, db_index=True)
-
 
 
 class ConProtocollo(models.Model):
@@ -268,10 +267,7 @@ class ConDelegati(models.Model):
         self.deleghe_attuali(solo_attive=False).update(stato=Delega.ATTIVA)
 
 
-class ConPDF():
-
-    class Meta:
-        abstract = True
+class ConPDF:
     pdf_token = models.CharField("Token Scaricamento PDF", max_length=127, blank=True, null=True, db_index=True, default=None)
     pdf_token_scadenza = models.DateTimeField(blank=True, null=True, db_index=True, default=None)
 
@@ -286,7 +282,7 @@ class ConPDF():
         token = Token.genera(persona)
         return "%s?token=%s" % (self.url_pdf, token)
 
-    def genera_pdf(self):
+    def genera_pdf(self, request=None, **kwargs):
         raise NotImplemented('La classe non implementa il metodo "genera_pdf"')
 
     @property
@@ -295,8 +291,8 @@ class ConPDF():
         app_label = content_type.app_label
         model = content_type.model
         pk = self.pk
-        return "/pdf/%s/%s/%d/" % (
-            app_label,
-            model,
-            pk
-        )
+
+        return "/pdf/%s/%s/%d/" % (app_label, model, pk)
+
+    class Meta:
+        abstract = True

@@ -1,0 +1,9 @@
+{% extends 'email.html' %}
+
+{% block corpo %}
+  <p class="grassetto">Gentile presidente,</p>
+  <p>E' stato raggiunto il limite di partecipazioni confermate al corso <a href="{{ corso.url }}">{{ corso.nome }}</a> ma ci sono ancora persone che vorrebbero partecipare a questo corso.</p>
+  {% if corso.is_nuovo_corso %}
+    <p>Se desideri modificare le impostazioni e aumentare il limite massimo di partecipazioni premi <a href="{{ corso.url_modifica }}">qui</a>.</p>
+  {% endif %}
+{% endblock %}

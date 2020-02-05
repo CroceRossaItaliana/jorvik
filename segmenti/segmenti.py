@@ -1,16 +1,13 @@
-import datetime
-import operator
-
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Count
 from django.utils.timezone import now
-from django.db.models import Q
 
-from anagrafica.costanti import LOCALE, REGIONALE, LIMITE_ETA, LIMITE_ANNI_ATTIVITA
 from anagrafica.models import Appartenenza, Delega, Sede, Persona
-from anagrafica.permessi.applicazioni import PRESIDENTE, COMMISSARIO, UFFICIO_SOCI, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, REFERENTE, RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE
+from anagrafica.costanti import LOCALE, REGIONALE, LIMITE_ETA, LIMITE_ANNI_ATTIVITA
+from anagrafica.permessi.applicazioni import (PRESIDENTE, COMMISSARIO, UFFICIO_SOCI,
+    DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3,
+    DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, REFERENTE,
+    RESPONSABILE_AUTOPARCO, RESPONSABILE_FORMAZIONE)
 from attivita.models import Attivita, Partecipazione
-
 
 
 # Utils
@@ -146,6 +143,11 @@ def commissari_comitati_regionali(queryset):
     return _presidenze_comitati(tutti_i_commissari(queryset), REGIONALE)
 
 
+def dipendenti(queryset):
+    qs = queryset.filter(appartenenze__membro=Appartenenza.DIPENDENTE)
+    return _appartenenze_attive(qs)
+
+
 def delegati_US(queryset):
     qs = queryset.filter(delega__tipo=UFFICIO_SOCI)
     return _deleghe_attive(qs)
@@ -235,6 +237,7 @@ NOMI_SEGMENTI = (
     ('IC', 'Tutti i Commissari'),
     ('JC', 'Commissari di Comitati Locali'),
     ('KC', 'Commissari di Comitati Regionali'),
+    ('L1', 'Dipendenti'),
     ('L', 'Delegati US'),
     ('M', 'Delegati Obiettivo I'),
     ('N', 'Delegati Obiettivo II'),
@@ -272,6 +275,7 @@ SEGMENTI = {
     'JC':             commissari_comitati_locali,
     'K':              presidenti_comitati_regionali,
     'KC':             commissari_comitati_regionali,
+    'L1':             dipendenti,
     'L':              delegati_US,
     'M':              delegati_Obiettivo_I,
     'N':              delegati_Obiettivo_II,

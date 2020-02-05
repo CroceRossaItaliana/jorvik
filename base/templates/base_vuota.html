@@ -18,8 +18,8 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                   </button>
-                  <a class="navbar-brand" {% if me %}href="/utente/"{% else %}href="/"{% endif %}>
-                      <img id="navbar-logo" class="pull-left" src="{% static 'img/logo-semplice.png' %}" alt="CRI" />
+                  <a class="navbar-brand nabar-brand-custom" {% if me %}href="/utente/"{% else %}href="/"{% endif %}>
+                      <img id="navbar-logo" class="pull-left" src="{% static 'img/emblema.jpg' %}" alt="CRI" />
 
                       <span class="rosso-scuro">Croce Rossa Italiana</span>
                       |
@@ -41,7 +41,7 @@
                                     Amministrazione
                                 </a>
                             {% endif %}
-                            <a class="btn btn-sm btn-info" href="{% url 'logout' %}">
+                            <a class="btn btn-sm btn-danger" href="{% url 'logout' %}">
                                 <i class="fa fa-sign-out"></i>
                                 Logout
                             </a>
@@ -50,7 +50,7 @@
                         <p class="navbar-btn btn-group">
 
                             {% if not site_url %}
-                                <a class="btn btn-sm btn-danger" href="/login/">
+                                <a class="btn btn-sm btn-success" href="/login/">
                                 <i class="fa fa-key"></i> Accedi
                             </a>
                             {% endif %}
@@ -76,7 +76,7 @@
 
 
         {% endif %}
-        
+
     {% endblock %}
 
     <!--<p style="padding: 0px 0px 0px 0px; margin: 0px 0px 0px 0px; padding-top: 50px; height: 0px;" id="nav-spacer">&nbsp;</p>-->
@@ -94,22 +94,19 @@
     {% endblock %}
 
     {% if not embed %}
-    <div class="container">
+    <div class="container margine-verticale-20">
 
       <hr>
 
       <footer class="row">
       {% block pagina_footer %}
-          <div class="col-md-6">
+          <div class="col-md-6 text-center">
             <p class="margine-nullo-sotto">
-                &copy;2017 <strong>Il Progetto Gaia</strong>
+                &copy;{% now "Y" %} <strong>Il Progetto Gaia</strong>
             </p>
             <p class="piu-piccolo">
-                <strong class="rosso-scuro">Croce Rossa Italiana</strong>. Un'Italia che aiuta.</p>
+                <strong class="rosso-scuro">Croce Rossa Italiana</strong></p>
             </p>
-          </div>
-
-          <div class="col-md-6 allinea-destra">
             <a href="/supporto/" class="grassetto">
                 <i class="fa fa-support"></i> Supporto
             </a> |
@@ -119,9 +116,14 @@
             <a href="/informazioni/verifica-tesserino/">
                 Verifica un tesserino CRI
             </a> |
-            <a href="https://wiki.gaia.cri.it/">
+            <a href="https://wiki.gaia.cri.it/" target="_blank">
                 Manuale d'uso
             </a>
+
+          </div>
+
+          <div class="col-md-6 allinea-destra">
+            <img src="{% static 'img/uica.png' %}" alt="CRI" class="logo-uica"/>
           </div>
       {% endblock %}
       </footer>

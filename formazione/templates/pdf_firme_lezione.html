@@ -1,90 +1,79 @@
 {% extends 'pdf_standard.html' %}
+
 {% load static %}
+{% load base_tags %}
 
 {% block css_extra %}
-#logo {
-    width: 40%;
-}
+    @page { margin-bottom: 50px }
+    #logo {width: 20%;}
+    h2, h3 {text-align: center;}
+    h2 {color: #c00;}
 
-@page { margin-bottom: 50px }
+    table.elenco {
+        width: 100%;
+        text-align: left;
+        font-size: 11pt;
+        border-collapse: collapse;
+    }
 
-h2, h3 {
-    text-align: center;
-}
+    table.elenco td, th {
+        border: 1px solid #666;
+        padding: 6px 4px;
+    }
 
-h2 {
-    color: #c00;
-}
+    table.elenco td:nth-child(2), th:nth-child(2) {width: 20%;}
+    #footer_pdf {position: fixed;bottom: 0;}
 
-table.elenco {
-    width: 100%;
-    text-align: left;
-    font-size: 11pt;
-    border-collapse: collapse;
-}
+    .firma {
+        position: fixed;
+        text-align: right;
+        bottom: 35mm;
+        right: 5mm;
+    }
 
-table.elenco td, th {
-    border: 1px solid #666;
-    padding: 6px 4px;
-}
-
-table.elenco td:nth-child(2), th:nth-child(2) {
-    width: 20%;
-}
-
-#footer_pdf {
-    position: fixed;
-    bottom: 0;
-}
-
-.firma {
-    position: fixed;
-    text-align: right;
-    bottom: 35mm;
-    right: 5mm;
-}
-
-.linea {
-    position: fixed;
-    border-bottom: 1px solid black;
-    width: 50mm;
-    bottom: 25mm;
-    right: 5mm;
-}
+    .linea {
+        position: fixed;
+        border-bottom: 1px solid black;
+        width: 50mm;
+        bottom: 25mm;
+        right: 5mm;
+    }
 {% endblock %}
 
 {% block corpo %}
-{% for iscritto in iscritti %}
-    {% if forloop.first or forloop.counter0|divisibleby:16 %}
-        <center>
-            <img id="logo" src="{% static 'img/Emblema_CRI.png' %}" name="LogoCri" />
-        </center>
+    {% get_url_for_staticfiles as SITE_URL %}
 
-        <h2>{{ corso.sede.comitato }}</h2>
-        <h3>CORSO DI FORMAZIONE PER VOLONTARI DELLA C.R.I.</h3>
-        <h3>{{ lezione }} del {{ lezione.inizio|date:"SHORT_DATE_FORMAT" }}</h3>
-        <br />
+    {% for iscritto in iscritti %}
+        {% if forloop.first or forloop.counter0|divisibleby:12 %}
+            <center>
+                <img id="logo" src="{{ SITE_URL }}{% static 'img/Emblema_CRI.png' %}" name="LogoCri" />
+            </center>
 
-        <table class="elenco">
-            <tr>
-                <th>Cognome e Nome</th>
-                <th style="width: 50mm;">Firma</th>
-            </tr>
-    {% endif %}
-            <tr>
-                <td>{{ iscritto.cognome_nome_completo }}</td>
-                <td>&nbsp;</td>
-            </tr>
-    {% if forloop.last or forloop.counter|divisibleby:16 %}
-        </table>
+            <h2>{{ corso.sede.comitato }}</h2>
+            <h3>CORSO DI FORMAZIONE PER VOLONTARI DELLA C.R.I.</h3>
+            <h3>{{ lezione }} del {{ lezione.inizio|date:"SHORT_DATE_FORMAT" }}</h3>
+            <br />
 
-        <div class="firma">Firma Direttore</div>
-        <div class="linea">&nbsp;</div>
-
-        {% if not forloop.last %}
-            <div style="page-break-after: always;">&nbsp;</div>
+            <table class="elenco">
+                <tr>
+                    <th>Cognome e Nome</th>
+                    <th style="width: 50mm;">Firma</th>
+                </tr>
         {% endif %}
+                <tr>
+                    <td>{{ iscritto.cognome_nome_completo }}</td>
+                    <td>&nbsp;</td>
+                </tr>
+        {% if forloop.last or forloop.counter|divisibleby:12 %}
+            </table>
 
-    {% endif %}
-{% endfor %}
+            <div class="firma">Firma Direttore</div>
+            <div class="linea">&nbsp;</div>
+
+            {% if not forloop.last %}
+                <div style="page-break-after: always;">&nbsp;</div>
+            {% endif %}
+
+        {% endif %}
+    {% endfor %}
 {% endblock %}

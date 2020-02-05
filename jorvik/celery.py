@@ -17,11 +17,14 @@ app.conf.update(CELERY_CONF.items('celery'))
 app.conf.task_routes = {
     'posta.queue.rischedula_invii_falliti': {'queue': 'coda_email_rischedula'},
     'posta.tasks.invia_mail': {'queue': 'coda_email_invio'},
+    'posta.tasks.invia_mail_forzato': {'queue': 'coda_email_invio'},
 
     'ufficio_soci.tasks.delete_generated_elenco_files': {'queue': 'periodic_ufficio_soci'},
     'ufficio_soci.tasks.generate_elenco': {'queue': 'shared_ufficio_soci'},
 
     'static_page.tasks.send_mail': {'queue': 'queue_monitoraggio'},
+
+    'formazione.tasks.task_invia_email_agli_aspiranti': {'queue': 'queue_formazione'},
 }
 
 # Load task modules from all registered Django app configs.

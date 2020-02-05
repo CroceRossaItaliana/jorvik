@@ -24,3 +24,28 @@ ESTENSIONE_MINORE = {
 
 LIMITE_ETA = 35
 LIMITE_ANNI_ATTIVITA = 1
+
+REGIONI_CON_SIGLE = {
+    1: {'sigla': 'CN', 'nome': 'Comitato Nazionale',},
+    1008: {'sigla': 'ABR', 'nome': 'Abruzzo',},
+    109: {'sigla': 'BAS', 'nome': 'Basilicata',},
+    761: {'sigla': 'CAL', 'nome': 'Calabria',},
+    645: {'sigla': 'CAM', 'nome': 'Campania',},
+    155: {'sigla': 'EMR', 'nome': 'Emilia-Romagna',},
+    1074: {'sigla': 'FVG', 'nome': 'Friuli-Venezia Giulia',},
+    524: {'sigla': 'LAZ', 'nome': 'Lazio',},
+    253: {'sigla': 'LIG', 'nome': 'Liguria',},
+    329: {'sigla': 'LOM', 'nome': 'Lombardia',},
+    957: {'sigla': 'MAR', 'nome': 'Marche',},
+    1393: {'sigla': 'MOL', 'nome': 'Molise',},
+    1193: {'sigla': 'PIE', 'nome': 'Piemonte',},
+    893: {'sigla': 'PUG', 'nome': 'Puglia',},
+    493: {'sigla': 'SAR', 'nome': 'Sardegna',},
+    2: {'sigla': 'SIC', 'nome': 'Sicilia',},
+    1105: {'sigla': 'TOS',  'nome': 'Toscana',},
+    1364: {'sigla': 'UMB',  'nome': 'Umbria',},
+    1189: {'sigla': 'VDA', 'nome': "Valle d'Aosta",},
+    835: {'sigla': 'VEN', 'nome': 'Veneto',},
+    1416: {'sigla': 'TRE', 'nome': 'Provincia Autonoma Trento',},
+    1409: {'sigla': 'BOL', 'nome': 'Provincia Autonoma Bolzano',},
+}

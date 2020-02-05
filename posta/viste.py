@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 
 from django.core.paginator import Paginator
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
+from django.utils.timezone import now
 
 from anagrafica.models import Persona
 from anagrafica.permessi.costanti import ERRORE_PERMESSI
@@ -41,7 +42,7 @@ def posta(request, me, direzione="in-arrivo", pagina=1, messaggio_id=None):
     if messaggio_id is None:
         messaggio = None
     else:
-        messaggio = Messaggio.objects.get(pk=messaggio_id)
+        messaggio = get_object_or_404(Messaggio, pk=messaggio_id)
 
         # Controlla che io abbia i permessi per leggere il messaggio:
         #  - Devo essere o mittente o destinatario
@@ -83,10 +84,17 @@ def posta_scrivi(request, me):
     MAX_VISIBILI = 20
     MAX_VISIBILI_STR = "%d destinatari selezionati"
 
+    if request.method == 'GET' and 'id' in request.GET:
+        elenco_id = request.GET.get('id')
+        elenco = request.session["elenco_%s" % (elenco_id,)]
+        filtra = request.session.get("elenco_filtra_%s" % (elenco_id,), default="")
+        destinatari = elenco.ordina(elenco.risultati())
+        if filtra:  # Se keyword specificata, filtra i risultati
+            destinatari = elenco.filtra(destinatari, filtra)
+    else:
+        destinatari = request.session.get('messaggio_destinatari')
 
-    # Prova a recuperare destinatari dalla sessione.
-    destinatari_in_sessione = request.session.get('messaggio_destinatari')
-    destinatari = destinatari_in_sessione if destinatari_in_sessione else Persona.objects.none()
+    destinatari = destinatari if destinatari else Persona.objects.none()
 
     # Svuota eventuale sessione
     request.session["messaggio_destinatari"] = None

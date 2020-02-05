@@ -2,9 +2,9 @@ import codecs, csv, datetime
 from collections import OrderedDict
 from importlib import import_module
 
+from django.db.models import Q
 from django.apps import apps
 from django.conf import settings
-from django.db import transaction
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.contenttypes.models import ContentType
@@ -15,9 +15,6 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 
 from articoli.viste import get_articoli
-from attivita.forms import ModuloStatisticheAttivitaPersona
-from attivita.models import Partecipazione
-from attivita.stats import statistiche_attivita_persona
 from autenticazione.funzioni import pagina_anonima, pagina_privata
 from autenticazione.models import Utenza
 from base.errori import (errore_generico, errore_nessuna_appartenenza,
@@ -25,12 +22,12 @@ from base.errori import (errore_generico, errore_nessuna_appartenenza,
 from base.files import Zip
 from base.models import Log
 from base.stringhe import genera_uuid_casuale
-from base.utils import remove_none, poco_fa, oggi
+from base.utils import poco_fa, oggi
 from curriculum.forms import ModuloNuovoTitoloPersonale, ModuloDettagliTitoloPersonale
 from curriculum.models import Titolo, TitoloPersonale
-from posta.models import Messaggio, Q
+from posta.models import Messaggio
 from posta.utils import imposta_destinatari_e_scrivi_messaggio
-from sangue.models import Donatore, Donazione
+from sangue.models import Donazione
 
 from .costanti import TERRITORIALE, REGIONALE
 from .elenchi import ElencoDelegati
@@ -48,16 +45,14 @@ from .permessi.incarichi import (INCARICO_GESTIONE_RISERVE, INCARICO_GESTIONE_TI
 from .importa import (VALIDAZIONE_ERRORE, VALIDAZIONE_AVVISO, VALIDAZIONE_OK, import_import_volontari)
 from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
     ModuloModificaAnagrafica, ModuloModificaAvatar, ModuloCreazioneDocumento,
-    ModuloModificaPassword, ModuloModificaEmailAccesso, ModuloModificaEmailContatto,
+    ModuloModificaEmailAccesso, ModuloModificaEmailContatto,
     ModuloCreazioneTelefono, ModuloCreazioneEstensione, ModuloCreazioneTrasferimento,
     ModuloCreazioneDelega, ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera,
-    ModuloProfiloModificaAnagrafica, ModuloProfiloTitoloPersonale, ModuloUtenza,
     ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
-    ModuloImportVolontari, ModuloModificaDataInizioAppartenenza, ModuloImportPresidenti,
-    ModuloPulisciEmail, ModuloUSModificaUtenza, ModuloReportFederazione,
-    ModuloStepCodiceFiscale, ModuloStepAnagrafica)
+    ModuloImportVolontari, ModuloImportPresidenti, ModuloPulisciEmail,
+    ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica)
 from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
-    Appartenenza, ProvvedimentoDisciplinare, Sede, Riserva, Dimissione)
+    Appartenenza, Sede, Riserva, Dimissione)
 
 
 TIPO_VOLONTARIO = 'volontario'
@@ -440,40 +435,41 @@ def utente_fotografia_fototessera(request, me):
 
 @pagina_privata
 def utente_documenti(request, me):
-    if not me.volontario and not me.dipendente:
+    if me.volontario or me.dipendente or me.ha_aspirante:
+        pass
+    else:
         return errore_no_volontario(request, me)
 
-    contesto = {
-        "documenti": me.documenti.all()
+    context = {
+        'documenti': me.documenti.all()
     }
 
-    if request.method == "POST":
-
-        nuovo_doc = Documento(persona=me)
-        modulo_aggiunta = ModuloCreazioneDocumento(request.POST, request.FILES, instance=nuovo_doc)
-
-        if modulo_aggiunta.is_valid():
-            modulo_aggiunta.save()
-
+    if request.method == 'POST':
+        doc = Documento(persona=me)
+        form = ModuloCreazioneDocumento(request.POST, request.FILES, instance=doc)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('utente:documenti'))
     else:
+        form = ModuloCreazioneDocumento()
 
-        modulo_aggiunta = ModuloCreazioneDocumento()
-
-    contesto.update({"modulo_aggiunta": modulo_aggiunta})
-
-    return 'anagrafica_utente_documenti.html', contesto
+    context.update({'modulo_aggiunta': form})
+    return 'anagrafica_utente_documenti.html', context
 
 
 @pagina_privata
 def utente_documenti_cancella(request, me, pk):
-
     doc = get_object_or_404(Documento, pk=pk)
 
     if not doc.persona == me:
         return redirect('/errore/permessi/')
 
-    doc.delete()
-    return redirect('/utente/documenti/')
+    if doc.can_be_deleted:
+        doc.delete()
+    else:
+        messages.error(request, 'Questo documento non può essere cancellato')
+
+    return redirect(reverse('utente:documenti'))
 
 
 @pagina_privata
@@ -1067,21 +1063,33 @@ def profilo_turni_foglio(request, me, pk=None):
 
 @pagina_privata
 def strumenti_delegati(request, me):
-    app_label = request.session['app_label']
-    model = request.session['model']
-    pk = int(request.session['pk'])
-    continua_url = request.session['continua_url']
-    almeno = request.session['almeno']
-    delega = request.session['delega']
-    oggetto = apps.get_model(app_label, model)
-    oggetto = oggetto.objects.get(pk=pk)
+    from formazione.forms import FormCreateDirettoreDelega
 
-    modulo = ModuloCreazioneDelega(request.POST or None, initial={
-        "inizio": datetime.date.today(),
-    }, me=me)
+    # Get values stored in the session
+    session = request.session
+    app_label = session['app_label']
+    model = session['model']
+    pk = int(session['pk'])
+    continua_url = session['continua_url']
+    almeno = session['almeno']
+    delega = session['delega']
 
-    if modulo.is_valid():
-        d = modulo.save(commit=False)
+    # Get object
+    oggetto = apps.get_model(app_label, model).objects.get(pk=pk)
+
+    # Instantiate a new form
+    form_data = {
+        'oggetto': oggetto,
+        'me': me,
+        'initial': {'inizio': datetime.date.today()},
+    }
+    form = ModuloCreazioneDelega(request.POST or None, **form_data)
+    if model == 'corsobase':
+        form = FormCreateDirettoreDelega(request.POST or None, **form_data)
+
+    # Check form is valid
+    if form.is_valid():
+        d = form.save(commit=False)
 
         if oggetto.deleghe.all().filter(Delega.query_attuale().q, tipo=delega, persona=d.persona).exists():
             return errore_generico(
@@ -1089,7 +1097,7 @@ def strumenti_delegati(request, me):
                 titolo="%s è già delegato" % (d.persona.nome_completo,),
                 messaggio="%s ha già una delega attuale come %s per %s" % (d.persona.nome_completo, PERMESSI_NOMI_DICT[delega], oggetto),
                 torna_titolo="Torna indietro",
-                torna_url="/strumenti/delegati/",
+                torna_url=reverse('strumenti_delegati'),
             )
 
         d.inizio = poco_fa()
@@ -1102,17 +1110,17 @@ def strumenti_delegati(request, me):
     deleghe = oggetto.deleghe.filter(tipo=delega)
     deleghe_attuali = oggetto.deleghe_attuali(tipo=delega)
 
-    contesto = {
+    context = {
         "continua_url": continua_url,
         "almeno": almeno,
         "delega": PERMESSI_NOMI_DICT[delega],
-        "modulo": modulo,
+        "modulo": form,
         "oggetto": oggetto,
         "deleghe": deleghe,
         "deleghe_attuali": deleghe_attuali,
     }
 
-    return 'anagrafica_strumenti_delegati.html', contesto
+    return 'anagrafica_strumenti_delegati.html', context
 
 
 @pagina_privata
@@ -1130,9 +1138,8 @@ def strumenti_delegati_termina(request, me, delega_pk=None):
     if not me.permessi_almeno(delega.oggetto, GESTIONE):
         return redirect(ERRORE_PERMESSI)
 
-    delega.termina(mittente=me,
-                   termina_at=poco_fa())
-    return redirect("/strumenti/delegati/")
+    delega.termina(mittente=me, termina_at=poco_fa())
+    return redirect(reverse('strumenti_delegati'))
 
 
 @pagina_privata
@@ -1200,10 +1207,9 @@ def utente_curriculum(request, me, tipo=None):
                 tp.autorizzazione_richiedi_sede_riferimento(
                     me, INCARICO_GESTIONE_TITOLI
                 )
-
             return redirect("/utente/curriculum/%s/?inserimento=ok" % (tipo,))
 
-    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo)
+    titoli = me.titoli_personali.all().filter(titolo__tipo=tipo).order_by('data_scadenza')
 
     contesto = {
         "tipo": tipo,
@@ -1227,260 +1233,6 @@ def utente_curriculum_cancella(request, me, pk=None):
     titolo_personale.delete()
 
     return redirect("/utente/curriculum/%s/" % (tipo,))
-
-
-def _profilo_anagrafica(request, me, persona):
-    puo_modificare = me.permessi_almeno(persona, MODIFICA)
-    modulo = ModuloProfiloModificaAnagrafica(request.POST or None,
-                                            me=me,
-                                            instance=persona,
-                                            prefix="anagrafica")
-    modulo_numero_telefono = ModuloCreazioneTelefono(request.POST or None, prefix="telefono")
-    
-    if puo_modificare and modulo.is_valid():
-        Log.registra_modifiche(me, modulo)
-        modulo.save()
-
-    if puo_modificare and modulo_numero_telefono.is_valid():
-        persona.aggiungi_numero_telefono(
-            modulo_numero_telefono.cleaned_data.get('numero_di_telefono'),
-            modulo_numero_telefono.cleaned_data.get('tipologia') == modulo_numero_telefono.SERVIZIO,
-        )
-
-    contesto = {
-        "modulo": modulo,
-        "modulo_numero_telefono": modulo_numero_telefono,
-    }
-    return 'anagrafica_profilo_anagrafica.html', contesto
-
-
-def _profilo_appartenenze(request, me, persona):
-    puo_modificare = me.permessi_almeno(persona, MODIFICA)
-    alredy_valid = False
-    moduli = []
-    terminabili = []
-    for app in persona.appartenenze.all():
-        modulo = None
-        terminabile = me.permessi_almeno(app.estensione.first(), MODIFICA)
-        for modulo in moduli:
-            if not modulo is None and modulo.is_valid:
-                alredy_valid = True
-        if app.attuale() and app.modificabile() and puo_modificare and not alredy_valid:
-            modulo = ModuloModificaDataInizioAppartenenza(request.POST or None,
-                                                          instance=app,
-                                                          prefix="%d" % (app.pk,))
-            if ("%s-inizio" % (app.pk,)) in request.POST and modulo.is_valid():
-                with transaction.atomic():
-                    if app.membro == Appartenenza.DIPENDENTE:
-                        app_volontario = persona.appartenenze_attuali(membro=Appartenenza.VOLONTARIO).first()
-                        if app_volontario:
-                            try:
-                                riserva = Riserva.objects.get(appartenenza=app_volontario)
-                            except Exception:
-                                pass
-                            else:
-                                riserva.inizio = modulo.cleaned_data['inizio']
-                                riserva.save()
-                    modulo.save()
-
-        moduli += [modulo]
-        terminabili += [terminabile]
-
-    appartenenze = zip(persona.appartenenze.all(), moduli, terminabili)
-
-    contesto = {
-        "appartenenze": appartenenze,
-        "es": Appartenenza.ESTESO
-    }
-
-    return 'anagrafica_profilo_appartenenze.html', contesto
-
-
-def _profilo_fototessera(request, me, persona):
-    puo_modificare = me.permessi_almeno(persona, MODIFICA)
-
-    modulo = ModuloNuovaFototessera(request.POST or None, request.FILES or None)
-    if modulo.is_valid():
-        fototessera = modulo.save(commit=False)
-        fototessera.persona = persona
-        fototessera.save()
-
-        # Ritira eventuali fototessere in attesa
-        if persona.fototessere_pending().exists():
-            for x in persona.fototessere_pending():
-                x.autorizzazioni_ritira()
-
-        Log.crea(me, fototessera)
-
-    contesto = {
-        "puo_modificare": puo_modificare,
-        "modulo": modulo,
-    }
-    return 'anagrafica_profilo_fototessera.html', contesto
-
-
-def _profilo_deleghe(request, me, persona):
-    return 'anagrafica_profilo_deleghe.html', {}
-
-
-def _profilo_turni(request, me, persona):
-    modulo = ModuloStatisticheAttivitaPersona(request.POST or None)
-    storico = Partecipazione.objects.filter(persona=persona).order_by('-turno__inizio')
-    statistiche = statistiche_attivita_persona(persona, modulo)
-    contesto = {
-        "storico": storico,
-        "statistiche": statistiche,
-        "statistiche_modulo": modulo,
-    }
-    return 'anagrafica_profilo_turni.html', contesto
-
-
-def _profilo_riserve(request, me, persona):
-
-    riserve = Riserva.objects.filter(persona=persona)
-
-    contesto = {
-        "riserve": riserve,
-    }
-
-
-    return 'anagrafica_profilo_riserve.html', contesto
-
-
-def _profilo_curriculum(request, me, persona):
-    modulo = ModuloProfiloTitoloPersonale(request.POST or None)
-
-    if modulo.is_valid():
-        tp = modulo.save(commit=False)
-        tp.persona = persona
-        tp.save()
-
-    contesto = {
-        "modulo": modulo,
-    }
-    return 'anagrafica_profilo_curriculum.html', contesto
-
-
-def _profilo_sangue(request, me, persona):
-    modulo_donatore = ModuloDonatore(request.POST or None, prefix="donatore", instance=Donatore.objects.filter(persona=persona).first())
-    modulo_donazione = ModuloDonazione(request.POST or None, prefix="donazione")
-
-    if modulo_donatore.is_valid():
-        donatore = modulo_donatore.save(commit=False)
-        donatore.persona = persona
-        donatore.save()
-
-    if modulo_donazione.is_valid():
-        donazione = modulo_donazione.save(commit=False)
-        donazione.persona = persona
-        r = donazione.save()
-
-    contesto = {
-        "modulo_donatore": modulo_donatore,
-        "modulo_donazione": modulo_donazione,
-    }
-
-    return 'anagrafica_profilo_sangue.html', contesto
-
-
-def _profilo_documenti(request, me, persona):
-    puo_modificare = me.permessi_almeno(persona, MODIFICA)
-    modulo = ModuloCreazioneDocumento(request.POST or None, request.FILES or None)
-    if puo_modificare and modulo.is_valid():
-        f = modulo.save(commit=False)
-        f.persona = persona
-        f.save()
-
-    contesto = {
-        "modulo": modulo,
-    }
-    return 'anagrafica_profilo_documenti.html', contesto
-
-
-def _profilo_provvedimenti(request, me, persona):
-        provvedimenti = ProvvedimentoDisciplinare.objects.filter(persona=persona)
-        contesto = {
-            "provvedimenti": provvedimenti,
-        }
-
-        return 'anagrafica_profilo_provvedimenti.html', contesto
-
-
-def _profilo_quote(request, me, persona):
-    contesto = {}
-    return 'anagrafica_profilo_quote.html', contesto
-
-
-def _profilo_credenziali(request, me, persona):
-    utenza = Utenza.objects.filter(persona=persona).first()
-
-    modulo_utenza = modulo_modifica = None
-    if utenza:
-        modulo_modifica = ModuloUSModificaUtenza(request.POST or None, instance=utenza)
-    else:
-        modulo_utenza = ModuloUtenza(request.POST or None, instance=utenza, initial={"email": persona.email_contatto})
-
-    if modulo_utenza and modulo_utenza.is_valid():
-        utenza = modulo_utenza.save(commit=False)
-        utenza.persona = persona
-        utenza.save()
-        utenza.genera_credenziali()
-        return redirect(persona.url_profilo_credenziali)
-
-    if modulo_modifica and modulo_modifica.is_valid():
-        vecchia_email_contatto = persona.email
-        vecchia_email = Utenza.objects.get(pk=utenza.pk).email
-        nuova_email = modulo_modifica.cleaned_data.get('email')
-
-        if vecchia_email == nuova_email:
-            return errore_generico(request, me, titolo="Nessun cambiamento",
-                                   messaggio="Per cambiare indirizzo e-mail, inserisci un "
-                                             "indirizzo differente.",
-                                   torna_titolo="Credenziali",
-                                   torna_url=persona.url_profilo_credenziali)
-
-        if Utenza.objects.filter(email__icontains=nuova_email).first():
-            return errore_generico(request, me, titolo="E-mail già utilizzata",
-                                   messaggio="Esiste un altro utente in Gaia che utilizza "
-                                             "questa e-mail (%s). Impossibile associarla quindi "
-                                             "a %s." % (nuova_email, persona.nome_completo),
-                                   torna_titolo="Credenziali",
-                                   torna_url=persona.url_profilo_credenziali)
-
-        def _invia_notifica():
-            Messaggio.costruisci_e_invia(
-                oggetto="IMPORTANTE: Cambio e-mail di accesso a Gaia (credenziali)",
-                modello="email_credenziali_modificate.html",
-                corpo={
-                    "vecchia_email": vecchia_email,
-                    "nuova_email": nuova_email,
-                    "persona": persona,
-                    "autore": me,
-                },
-                mittente=me,
-                destinatari=[persona],
-                utenza=True
-            )
-
-        _invia_notifica()  # Invia notifica alla vecchia e-mail
-        Log.registra_modifiche(me, modulo_modifica)
-        modulo_modifica.save()  # Effettua le modifiche
-        persona.refresh_from_db()
-        if persona.email != vecchia_email_contatto:  # Se e-mail principale cambiata
-            _invia_notifica()  # Invia la notifica anche al nuovo indirizzo
-
-        return messaggio_generico(request, me, titolo="Credenziali modificate",
-                                  messaggio="Le credenziali di %s sono state correttamente aggiornate." % persona.nome,
-                                  torna_titolo="Credenziali",
-                                  torna_url=persona.url_profilo_credenziali)
-
-    contesto = {
-        "utenza": utenza,
-        "modulo_creazione": modulo_utenza,
-        "modulo_modifica": modulo_modifica
-
-    }
-    return 'anagrafica_profilo_credenziali.html', contesto
 
 
 @pagina_privata
@@ -1521,82 +1273,6 @@ def profilo_telefono_cancella(request, me, pk, tel_pk):
         return redirect(ERRORE_PERMESSI)
     telefono.delete()
     return redirect("/profilo/%d/anagrafica/" % (persona.pk,))
-
-
-def _sezioni_profilo(puo_leggere, puo_modificare):
-    r = (
-        # (path, (
-        #   nome, icona, _funzione, permesso?,
-        # ))
-        ('anagrafica', (
-            'Anagrafica', 'fa-edit', _profilo_anagrafica, puo_leggere
-        )),
-        ('appartenenze', (
-            'Appartenenze', 'fa-clock-o', _profilo_appartenenze, puo_leggere
-        )),
-        ('deleghe', (
-            'Deleghe', 'fa-clock-o', _profilo_deleghe, puo_leggere
-        )),
-        ('turni', (
-            'Turni', 'fa-calendar', _profilo_turni, puo_leggere
-        )),
-        ('riserve', (
-            'Riserve', 'fa-pause', _profilo_riserve, puo_leggere
-        )),
-        ('fototessera', (
-            'Fototessera', 'fa-photo', _profilo_fototessera, puo_leggere
-        )),
-        ('documenti', (
-            'Documenti', 'fa-folder', _profilo_documenti, puo_leggere
-        )),
-        ('curriculum', (
-            'Curriculum', 'fa-list', _profilo_curriculum, puo_leggere
-        )),
-        ('sangue', (
-            'Sangue', 'fa-flask', _profilo_sangue, puo_modificare
-        )),
-        ('quote', (
-            'Quote/Ricevute', 'fa-money', _profilo_quote, puo_leggere
-        )),
-        ('provvedimenti', (
-            'Provvedimenti', 'fa-legal', _profilo_provvedimenti, puo_leggere
-        )),
-        ('credenziali', (
-            'Credenziali', 'fa-key', _profilo_credenziali, puo_modificare
-        )),
-    )
-    return (x for x in r if len(x[1]) < 4 or x[1][3] == True)
-
-
-@pagina_privata
-def profilo(request, me, pk, sezione=None):
-    persona = get_object_or_404(Persona, pk=pk)
-    puo_modificare = me.permessi_almeno(oggetto=persona, minimo=MODIFICA)
-    puo_leggere = me.permessi_almeno(oggetto=persona, minimo=LETTURA)
-    sezioni = OrderedDict(_sezioni_profilo(puo_leggere, puo_modificare))
-    contesto = {
-        "persona": persona,
-        "puo_modificare": puo_modificare,
-        "puo_leggere": puo_leggere,
-        "sezioni": sezioni,
-        "attuale": sezione,
-    }
-
-    if not sezione:  # Prima pagina
-        return 'anagrafica_profilo_profilo.html', contesto
-
-    else:  # Sezione aperta
-        if sezione not in sezioni:
-            return redirect(ERRORE_PERMESSI)
-
-        s = sezioni[sezione]
-        risposta = s[2](request, me, persona)
-        try:
-            f_template, f_contesto = risposta
-            contesto.update(f_contesto)
-            return f_template, contesto
-        except ValueError:
-            return risposta
 
 
 @pagina_privata
@@ -2161,7 +1837,7 @@ def admin_pulisci_email(request, me):
 
                     if not delegati.exists():
                         risultati += [
-                            (indirizzo, 'text-warning', "La persona trovata (%s) non ha delegati a cui notificare la "
+                            (indirizzo, 'alert-warning', "La persona trovata (%s) non ha delegati a cui notificare la "
                                                         "disattivazione." % persona.codice_fiscale)
                         ]
                         continue

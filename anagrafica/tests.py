@@ -2250,7 +2250,7 @@ class TestAnagrafica(TestCase):
 
         # L'autorizzazione chiesta dopo l'inizio della delega è visibile
         self.client.login(username=presidente.utenza.email, password='prova')
-        response = self.client.get(reverse('autorizzazioni-storico'))
+        response = self.client.get(reverse('autorizzazioni:storico'))
         self.assertContains(response, 'chiede il trasferimento verso')
         self.assertContains(response, sede2)
         self.assertContains(response, uff_soci.nome_completo)
@@ -2259,7 +2259,7 @@ class TestAnagrafica(TestCase):
         # L'autorizzazione chiesta prima dell'inizio della delega non è visibile
         autorizzazione.creazione = now() - datetime.timedelta(days=10)
         autorizzazione.save()
-        response = self.client.get(reverse('autorizzazioni-storico'))
+        response = self.client.get(reverse('autorizzazioni:storico'))
         self.assertNotContains(response, 'chiede il trasferimento verso')
         self.assertNotContains(response, sede2)
         self.assertNotContains(response, uff_soci.nome_completo)
@@ -2269,7 +2269,7 @@ class TestAnagrafica(TestCase):
         delega = presidente.deleghe.last()
         delega.inizio = now() - datetime.timedelta(days=20)
         delega.save()
-        response = self.client.get(reverse('autorizzazioni-storico'))
+        response = self.client.get(reverse('autorizzazioni:storico'))
         self.assertNotContains(response, 'chiede il trasferimento verso')
         self.assertNotContains(response, sede2)
         self.assertNotContains(response, uff_soci.nome_completo)
@@ -2282,7 +2282,7 @@ class TestAnagrafica(TestCase):
         delega = presidente.deleghe.last()
         delega.inizio = now() - datetime.timedelta(days=5)
         delega.save()
-        response = self.client.get(reverse('autorizzazioni-storico'))
+        response = self.client.get(reverse('autorizzazioni:storico'))
         self.assertContains(response, 'chiede il trasferimento verso')
         self.assertContains(response, sede2)
         self.assertContains(response, uff_soci.nome_completo)

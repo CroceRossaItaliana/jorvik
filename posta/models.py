@@ -1,21 +1,25 @@
-"""
-Questo modulo definisce i modelli del modulo di Posta di Gaia.
-"""
+import os
 import logging
-from smtplib import SMTPException, SMTPRecipientsRefused, SMTPResponseException, SMTPAuthenticationError
+from lxml import html
+from celery import uuid
+from smtplib import (SMTPException, SMTPRecipientsRefused,
+                     SMTPResponseException, SMTPAuthenticationError)
 
-from django.core.mail import EmailMultiAlternatives, get_connection
+
+from django.core.mail import EmailMessage, EmailMultiAlternatives, get_connection
 from django.db import transaction, DatabaseError
+from django.db import models
 from django.template.loader import get_template
 from django.utils.html import strip_tags
-from celery import uuid
 from django.utils.text import Truncator
-from lxml import html
+from django.utils import timezone
 
-from .tasks import invia_mail
-from base.models import *
-from base.tratti import *
+from jorvik import settings
+from base.models import Allegato, ModelloSemplice, ConAllegati
+from base.tratti import ConMarcaTemporale
 from social.models import ConGiudizio
+from .tasks import invia_mail
+
 
 logger = logging.getLogger('posta')
 
@@ -33,24 +37,14 @@ class ErrorePostaFatale(ErrorePosta):
 
 
 class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
-
     logging = getattr(settings, 'POSTA_LOG_DEBUG', False)
 
-    SUPPORTO_EMAIL = 'supporto@gaia.cri.it'
     SUPPORTO_NOME = 'Supporto Gaia'
+    SUPPORTO_EMAIL = 'supporto@gaia.cri.it'
     NOREPLY_EMAIL = 'noreply@gaia.cri.it'
 
-    class Meta:
-        verbose_name = "Messaggio di posta"
-        verbose_name_plural = "Messaggi di posta"
-        permissions = (
-            ("view_messaggio", "Can view messaggio"),
-        )
-
     LUNGHEZZA_MASSIMA_OGGETTO = 256
-
-    # Numero massimo di tentativi di invio prima di rinunciare all'invio
-    TENTATIVI_MAX = 3
+    TENTATIVI_MAX = 3  # Numero massimo di tentativi di invio prima di rinunciare all'invio
 
     # Limite oggetto dato da RFC 2822 e' 998 caratteri in oggetto, ma ridotto per comodita
     oggetto = models.CharField(max_length=LUNGHEZZA_MASSIMA_OGGETTO, db_index=True,
@@ -59,28 +53,25 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
 
     ultimo_tentativo = models.DateTimeField(blank=True, null=True, default=None)
     terminato = models.DateTimeField(blank=True, null=True, default=None,
-                                     help_text="La data di termine dell'invio. Questa data e' impostata "
-                                               "quando l'invio e' terminato con successo, oppure quando "
-                                               "sono esauriti i tentativi di invio.")
+         help_text="La data di termine dell'invio. Questa data e' impostata "
+                   "quando l'invio e' terminato con successo, oppure quando "
+                   "sono esauriti i tentativi di invio.")
 
     # Il mittente e' una persona o None (il sistema di Gaia)
     mittente = models.ForeignKey("anagrafica.Persona", default=None, null=True, blank=True, on_delete=models.CASCADE)
     rispondi_a = models.ForeignKey("anagrafica.Persona", default=None, null=True, blank=True,
-                                   related_name="messaggi_come_rispondi_a", on_delete=models.CASCADE)
+               related_name="messaggi_come_rispondi_a", on_delete=models.CASCADE)
 
     # Flag per i messaggi cancellati (perche' obsoleti)
     eliminato = models.BooleanField(default=False, null=False)
-
     tentativi = models.IntegerField(default=0, help_text="Il numero di tentativi di invio effettuati per questo "
                                                          "messaggio. Quando questo numero supera il massimo, non "
                                                          "verranno effettuati nuovi tentativi.")
-
     utenza = models.BooleanField(default=False, help_text="Se l'utente possiede un'email differente da quella "
                                                           "utilizzata per il login, il messaggio viene recapito ad "
                                                           "entrambe")
-
     task_id = models.CharField(max_length=36, blank=True, null=True, default=None,
-                               help_text="ID del task Celery per lo smistamento di questo messaggio.")
+           help_text="ID del task Celery per lo smistamento di questo messaggio.")
 
     @property
     def destinatari(self):
@@ -148,7 +139,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         if self.logging:
             logger.debug(*args, **kwargs)
 
-    def _genera_email_da_inviare(self, connessione=None):
+    def _genera_email_da_inviare(self, connessione=None, forced=False):
         """
         Genera gli oggetti EmailMultiAlternatives per le email ancora da inviare per questo
          messaggio di posta.
@@ -158,6 +149,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
                     (ad esempio, senza un indirizzo email) e marcarli come "inviato".
 
         :param connessione:         Opzionale. Una connessione al backed di posta da riutilizzare.
+        :param forced: Opzionale. Serve per saltare alcune verifiche (tasks.invia_mail_forzato)
         :return: Un generatore di tuple (Destinatario, EmailMultiAlternatives). Il primo oggetto
                  della tupla e' un oggetto Destinatario collegato a questo messaggio, oppure None
                  per un messaggio destinato al supporto di Gaia.
@@ -189,9 +181,14 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         connessione = connessione or get_connection()
 
         # Per ogni destinatario a cui abbiamo non e' stato inviato il messaggio
-        for destinatario in self.oggetti_destinatario.all().filter(inviato=False):
+        if forced:
+            destinatari = self.oggetti_destinatario.all()
+        else:
+            destinatari = self.oggetti_destinatario.all().filter(inviato=False)
 
-            if destinatario.inviato:
+        for destinatario in destinatari:
+
+            if destinatario.inviato and not forced:
                 continue
 
             # Se la persona non ha un indirizzo di posta, segna questo oggetto Destinatario
@@ -240,7 +237,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             # Ritorna questo oggetto
             yield None, email
 
-    def invia(self, connessione=None):
+    def invia(self, connessione=None, forced=False):
         """
         Effettua un tentativo di invio del messaggio, utilizzando il backend di posta configurato.
 
@@ -249,15 +246,18 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         "terminato".
 
         :param connessione:         Opzionale. Una connessione al backend di posta da riutilizzare.
+        :param forced: Opzionale. Serve per saltare alcune verifiche (tasks.invia_mail_forzato)
+
         :return:                    True se l'invio e' terminato per questo messaggio, False se
                                      e' necessario provare nuovamente.
         """
         # Assicurati che il contenuto di questo messaggio sia aggiornato dal database.
         self.refresh_from_db()
 
-        # Se il messaggio e' gia' stato inviato
-        if self.terminato:
-            return
+        if not forced:
+            # Se il messaggio è già stato inviato
+            if self.terminato:
+                return
 
         # Incrementa il contatore dei tentativi
         self.ultimo_tentativo = timezone.now()
@@ -266,9 +266,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         invio_terminato = True
 
         # Per ognuna delle email da inviare
-        email_da_inviare = self._genera_email_da_inviare(connessione=connessione)
+        email_da_inviare = self._genera_email_da_inviare(connessione=connessione,
+                                                         forced=True)
         for destinatario, email in email_da_inviare:
-
             # Email al supporto di Gaia (nessun destinatario)
             if destinatario is None:
                 try:
@@ -310,19 +310,14 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         return cls.objects.filter(terminato__isnull=True).order_by('ultima_modifica')
 
     @classmethod
-    def invia_raw(cls, oggetto, corpo_html, email_mittente,
-                  reply_to=None, lista_email_destinatari=None,
-                  allegati=None, fallisci_silenziosamente=False,
-                  **kwargs):
-        """
-        Questo metodo puo' essere usato per inviare una e-mail
-         immediatamente.
-        """
+    def invia_raw(cls, oggetto, corpo_html, email_mittente, reply_to=None,
+            lista_email_destinatari=None, allegati=None, fallisci_silenziosamente=False, **kwargs):
+        """ Questo metodo puo' essere usato per inviare una e-mail immediatamente. """
 
         plain_text = strip_tags(corpo_html)
         lista_reply_to = [reply_to] if reply_to else []
         lista_email_destinatari = lista_email_destinatari or []
-        allegati = allegati or []
+        attachments = allegati or []
 
         msg = EmailMultiAlternatives(
             subject=oggetto,
@@ -330,11 +325,18 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             from_email=email_mittente,
             reply_to=lista_reply_to,
             to=lista_email_destinatari,
-            **kwargs
-        )
+            **kwargs)
+
         msg.attach_alternative(corpo_html, "text/html")
-        for allegato in allegati:
-            msg.attach_file(allegato.file.path)
+
+        if type(attachments) == list:
+            for attachment in attachments:
+                if hasattr(attachment, 'file'):
+                    msg.attach_file(attachment.file.path)
+        else:
+            filename = os.path.basename(attachments.name)
+            msg.attach(filename, attachments.read())
+
         return msg.send(fail_silently=fallisci_silenziosamente)
 
     @staticmethod
@@ -359,8 +361,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             messaggio.invia()
 
     @staticmethod
-    def costruisci_email(oggetto='Nessun oggetto', modello='email_vuoto.html', corpo=None, mittente=None,
-                         destinatari=None, allegati=None, **kwargs):
+    def costruisci_email(oggetto='Nessun oggetto', modello='email_vuoto.html',
+                         corpo=None, mittente=None, destinatari=None,
+                         allegati=None, **kwargs):
         """
         :param oggetto: Oggetto del messaggio.
         :param modello: Modello da utilizzare per l'invio.
@@ -377,7 +380,6 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         corpo = corpo or {}
         corpo.update({
             'mittente': mittente,
-            'allegati': allegati,
         })
 
         oggetto = Truncator(oggetto).chars(Messaggio.LUNGHEZZA_MASSIMA_OGGETTO)
@@ -385,23 +387,33 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         with transaction.atomic():
             m = Messaggio(oggetto=oggetto,
                           mittente=mittente,
-                          corpo=get_template(modello).render(corpo),
                           **kwargs)
+
+            allegati_objects = list()
+            for a in allegati:
+                if isinstance(a, Allegato):
+                    a.oggetto = m
+                    a.save()
+                else:
+                    allegato = Allegato(file=a, nome=a.name)
+                    allegato.oggetto = m
+                    allegato.save()
+                    allegati_objects.append(allegato)
+
+            corpo['allegati'] = allegati_objects if allegati_objects else allegati
+
+            m.corpo = get_template(modello).render(corpo)
             m.processa_link()
             m.save()
 
             for d in destinatari:
                 m.oggetti_destinatario.create(persona=d)
 
-            for a in allegati:
-                a.oggetto = m
-                a.save()
-
             return m
 
     @staticmethod
-    def costruisci_e_invia(oggetto=None, modello=None, corpo=None, mittente=None, destinatari=None, allegati=None,
-                           **kwargs):
+    def costruisci_e_invia(oggetto=None, modello=None, corpo=None, mittente=None,
+                           destinatari=None, allegati=None, **kwargs):
         """
         Scorciatoia per costruire rapidamente un messaggio di posta e inviarlo immediatamente.
          IMPORTANTE. Non adatto per messaggi con molti destinatari. In caso di fallimento immediato, il messaggio
@@ -415,14 +427,16 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         :return: Un oggetto Messaggio inviato.
         """
 
-        msg = Messaggio.costruisci_email(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente,
-                                         destinatari=destinatari, allegati=allegati, **kwargs)
+        msg = Messaggio.costruisci_email(oggetto=oggetto, modello=modello,
+                                         corpo=corpo, mittente=mittente,
+                                         destinatari=destinatari,
+                                         allegati=allegati, **kwargs)
         msg.invia()
         return msg
 
     @staticmethod
-    def costruisci_e_accoda(oggetto=None, modello=None, corpo=None, mittente=None, destinatari=None, allegati=None,
-                            **kwargs):
+    def costruisci_e_accoda(oggetto=None, modello=None, corpo=None, mittente=None,
+                            destinatari=None, allegati=None, **kwargs):
         """
         Scorciatoia per costruire rapidamente un messaggio di posta e inviarlo alla coda celery.
         :param oggetto: Oggetto deltilizzare per l'invio.
@@ -434,9 +448,10 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         :return: Un oggetto Messaggio accodato.
         """
 
-
-        msg = Messaggio.costruisci_email(oggetto=oggetto, modello=modello, corpo=corpo, mittente=mittente,
-                                         destinatari=destinatari, allegati=allegati, **kwargs)
+        msg = Messaggio.costruisci_email(oggetto=oggetto, modello=modello,
+                                         corpo=corpo, mittente=mittente,
+                                         destinatari=destinatari,
+                                         allegati=allegati, **kwargs)
 
         # Crea un ID per il task Celery
         msg.task_id = uuid()
@@ -445,6 +460,13 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         invia_mail.apply_async((msg.pk,), task_id=msg.task_id)
 
         return msg
+
+    class Meta:
+        verbose_name = "Messaggio di posta"
+        verbose_name_plural = "Messaggi di posta"
+        permissions = (
+            ("view_messaggio", "Can view messaggio"),
+        )
 
     def __str__(self):
         return self.oggetto

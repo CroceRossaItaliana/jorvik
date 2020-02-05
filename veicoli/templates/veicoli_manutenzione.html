@@ -42,13 +42,13 @@
                                 <td>{{ manutenzione.numero_fattura }}</td>
                                 <td>{{ manutenzione.costo }}</td>
                                 <td>
-                                    <a href="/veicolo/manutenzione/{{ manutenzione.pk }}/modifica/">Modifica</a>
+                                    <a href="/veicoli/manutenzione/{{ manutenzione.pk }}/modifica/">Modifica</a>
                                 </td>
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="9" class="bg-warning">
-                                    <i class="fa fa-info"></i> Nessuna manutenzione.
+                                <td colspan="9" class="alert alert-warning">
+                                    <i class="fa fa-info-circle"></i> Nessuna manutenzione.
                                 </td>
                             </tr>
                         {% endfor %}

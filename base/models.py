@@ -1,6 +1,8 @@
 import os
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 
-from collections import defaultdict
+from jorvik import settings
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core import urlresolvers
@@ -9,28 +11,19 @@ from django.db import models
 from django.db.models import Q
 from django.utils.timezone import now
 from django.utils.functional import cached_property
-from django.forms import forms
 from mptt.models import MPTTModel, TreeForeignKey
 
-from anagrafica.permessi.applicazioni import PERMESSI_NOMI
-from anagrafica.permessi.costanti import MODIFICA
 from anagrafica.permessi.incarichi import INCARICHI, INCARICHI_TIPO_DICT
-from anagrafica.validators import crea_validatore_dimensione_file, valida_dimensione_file_10mb
-from base.forms import ModuloMotivoNegazione
-from base.notifiche import NOTIFICA_NON_INVIARE, NOTIFICA_INVIA
-from base.stringhe import GeneratoreNomeFile, genera_uuid_casuale
-from base.tratti import ConMarcaTemporale
-from datetime import datetime, timezone, timedelta
+from anagrafica.validators import valida_dimensione_file_10mb
 
-from base.utils import calcola_scadenza ,concept, iterabile
-
-from jorvik import settings
+from .utils import calcola_scadenza, concept, iterabile
+from .forms import ModuloMotivoNegazione
+from .stringhe import GeneratoreNomeFile, genera_uuid_casuale
+from .tratti import ConMarcaTemporale
 
 
 class ModelloSemplice(models.Model):
-    """
-    Questa classe astratta rappresenta un Modello generico.
-    """
+    """ Questa classe astratta rappresenta un Modello generico. """
 
     class Meta:
         abstract = True
@@ -128,23 +121,6 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
     PROTOCOLLO_AUTO = "AUTO"  # Applicato a protocollo_numero se approvazione automatica
 
-    class Meta:
-        verbose_name_plural = "Autorizzazioni"
-        app_label = "base"
-        index_together = [
-            ['necessaria', 'progressivo'],
-            ['necessaria', 'concessa'],
-            ['destinatario_ruolo', 'destinatario_oggetto_tipo',],
-            ['necessaria', 'destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
-            ['destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
-            ['destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
-            ['necessaria', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
-            ['necessaria', 'destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
-        ]
-        permissions = (
-            ("view_autorizzazione", "Can view autorizzazione"),
-        )
-
     richiedente = models.ForeignKey("anagrafica.Persona", db_index=True, related_name="autorizzazioni_richieste", on_delete=models.CASCADE)
     firmatario = models.ForeignKey("anagrafica.Persona", db_index=True, blank=True, null=True, default=None,
                                    related_name="autorizzazioni_firmate", on_delete=models.SET_NULL)
@@ -188,7 +164,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
             raise ValueError("Il modulo richiesto per l'accettazione non e' stato completato correttamente.")
 
         if not self.oggetto:
-            print('L\'autorizzazione {} risulta non avere oggetti collegati'.format(self.pk))
+            print("L'autorizzazione %s risulta non avere oggetti collegati" % self.pk)
             return
 
         self.concessa = concedi
@@ -274,9 +250,9 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
 
     def notifica_sede_autorizzazione_concessa(self, sede, testo_extra=''):
         """
-        Notifica presidente e ufficio soci del comitato di origine dell'avvenuta approvazione della richiesta
+        Notifica presidente e ufficio soci del comitato
+        di origine dell'avvenuta approvazione della richiesta.
         """
-        from posta.models import Messaggio
 
         notifiche = self.espandi_notifiche(sede, [], True, True)
         modello = "email_autorizzazione_concessa_notifica_origine.html"
@@ -336,31 +312,46 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         }
         self._invia_notifica(modello, oggetto, auto, aggiunte_corpo=aggiunte_corpo)
 
+    @property
+    def is_valid_per_approvazione_automatica(self):
+        if self.oggetto is None:
+            return False  # Saltare Autorizzazione senza <oggetto>
+        else:
+            return self.scadenza \
+                   and self.concessa is None \
+                   and self.scadenza < now() \
+                   and not self.oggetto.ritirata
+
     def controlla_concedi_automatico(self):
-        if self.scadenza and self.concessa is None and self.scadenza < now() and not self.oggetto.ritirata:
+        if self.is_valid_per_approvazione_automatica:
             self.concedi(auto=True)
 
     def controlla_nega_automatico(self):
-        if self.scadenza and self.concessa is None and self.scadenza < now() and not self.oggetto.ritirata:
+        if self.is_valid_per_approvazione_automatica:
             self.nega(auto=True)
-
-    def automatizza(self, concedi=None, scadenza=None):
-        if concedi and not self.oggetto.ritirata:
-            self.tipo_gestione = concedi
-            self.scadenza = calcola_scadenza(scadenza)
-            self.save()
 
     @classmethod
     def gestisci_automatiche(cls):
-        base = cls.objects.filter(
-            concessa__isnull=True, scadenza__isnull=False, scadenza__lte=now()
-        )
-        da_negare = base.filter(tipo_gestione=cls.NG_AUTO)
-        da_approvare = base.filter(tipo_gestione=cls.AP_AUTO)
+        delta = now() - relativedelta(months=1)
+        qs = cls.objects.filter(concessa__isnull=True, scadenza__isnull=False,
+                                scadenza__gte=delta, scadenza__lte=now())
+        da_negare = qs.filter(tipo_gestione=cls.NG_AUTO)
+        da_approvare = qs.filter(tipo_gestione=cls.AP_AUTO)
+
         for autorizzazione in da_negare:
             autorizzazione.controlla_nega_automatico()
         for autorizzazione in da_approvare:
             autorizzazione.controlla_concedi_automatico()
+
+    def automatizza(self, concedi=None, scadenza=None):
+        if not self.oggetto:
+            print('Autorizzazione %s non ha oggetto collegato' % autorizzazione.pk)
+            return
+
+        if concedi and not self.oggetto.ritirata:
+            self.tipo_gestione = concedi
+            self.scadenza = calcola_scadenza(scadenza)
+            self.save()
 
     @classmethod
     def notifiche_richieste_in_attesa(cls):
@@ -370,9 +361,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         oggetto = "Richieste in attesa di approvazione"
         modello = "email_richieste_pending.html"
 
-        in_attesa = cls.objects.filter(
-            concessa__isnull=True
-        )
+        in_attesa = cls.objects.filter(concessa__isnull=True)
         trasferimenti = in_attesa.filter(oggetto_tipo=ContentType.objects.get_for_model(Trasferimento))
         estensioni = in_attesa.filter(oggetto_tipo=ContentType.objects.get_for_model(Estensione))
         trasferimenti_manuali = trasferimenti.filter(scadenza__isnull=True, tipo_gestione=Autorizzazione.MANUALE)
@@ -385,7 +374,7 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
         persone = dict()
         for autorizzazione in autorizzazioni:
             if not autorizzazione.oggetto:
-                print('autorizzazione {} non ha oggetto collegato'.format(autorizzazione.pk))
+                print('Autorizzazione %s non ha oggetto collegato' % autorizzazione.pk)
                 continue
             if autorizzazione.oggetto and not autorizzazione.oggetto.ritirata and not autorizzazione.oggetto.confermata:
                 destinatari = cls.espandi_notifiche(autorizzazione.destinatario_oggetto, [], True, True)
@@ -417,6 +406,29 @@ class Autorizzazione(ModelloSemplice, ConMarcaTemporale):
                 corpo=corpo,
                 destinatari=[persona['persona']]
             )
+
+    class Meta:
+        verbose_name_plural = "Autorizzazioni"
+        app_label = "base"
+        index_together = [
+            ['necessaria', 'progressivo'],
+            ['necessaria', 'concessa'],
+            ['destinatario_ruolo', 'destinatario_oggetto_tipo',],
+            ['necessaria', 'destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+            ['destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+            ['destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+            ['necessaria', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+            ['necessaria', 'destinatario_ruolo', 'destinatario_oggetto_tipo', 'destinatario_oggetto_id'],
+        ]
+        permissions = (
+            ("view_autorizzazione", "Can view autorizzazione"),
+        )
+
+    def __str__(self):
+        if self.oggetto:
+            return str(self.oggetto)
+        else:
+            return super().__str__()
 
 
 class Log(ModelloSemplice, ConMarcaTemporale):
@@ -808,6 +820,7 @@ class ConAutorizzazioni(models.Model):
         """
         return ModuloMotivoNegazione
 
+
 class ConScadenzaPulizia(models.Model):
     """
     Aggiunge un attributo DateTimeField scadenza.
@@ -901,6 +914,7 @@ class Token(ModelloSemplice, ConMarcaTemporale):
             ("view_token", "Can view token"),
         )
 
+
 class Allegato(ConMarcaTemporale, ConScadenzaPulizia, ModelloSemplice):
     """
     Rappresenta un allegato generico in database, con potenziale scadenza.
@@ -952,6 +966,10 @@ class Allegato(ConMarcaTemporale, ConScadenzaPulizia, ModelloSemplice):
     def delete(self, *args, **kwargs):
         self.file.delete()
         super(Allegato, self).delete(*args, **kwargs)
+
+    @property
+    def filename(self):
+        return os.path.basename(self.file.name)
 
 
 class ConAllegati(models.Model):

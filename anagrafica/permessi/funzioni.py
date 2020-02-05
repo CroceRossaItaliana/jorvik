@@ -1,20 +1,14 @@
-"""
-Questo modulo contiene tutte le funzioni per testare i permessi
-a partire da un oggetto sul quale ho una delega ed un oggetto da testare.
-"""
 from datetime import timedelta
-
 from django.db.models import QuerySet, Q
 
-from anagrafica.permessi.applicazioni import PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO, REFERENTE_GRUPPO, COMMISSARIO,\
-    UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1, DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, \
-    DELEGATO_OBIETTIVO_5, DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI
-from anagrafica.permessi.applicazioni import DELEGATO_AREA
-from anagrafica.permessi.applicazioni import RESPONSABILE_AREA
-from anagrafica.permessi.applicazioni import REFERENTE
-
-from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
+from ..permessi.applicazioni import (PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO,
+    REFERENTE_GRUPPO, COMMISSARIO, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1,
+    DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5,
+    DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, CONSIGLIERE,
+    CONSIGLIERE_GIOVANE, VICE_PRESIDENTE, UFFICIO_SOCI, DELEGATO_AREA,
+    RESPONSABILE_AREA, REFERENTE)
+from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
+    GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
     GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, GESTIONE_AUTOPARCHI_SEDE, \
     GESTIONE_GRUPPI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI, GESTIONE_AREE_SEDE, GESTIONE_REFERENTI_ATTIVITA, \
     GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, \
@@ -23,7 +17,13 @@ from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_A
     RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
     RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
     RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI)
+
+
+"""
+Questo modulo contiene tutte le funzioni per testare i permessi
+a partire da un oggetto sul quale ho una delega ed un oggetto da testare.
+"""
 
 
 def permessi_persona(persona):
@@ -91,6 +91,7 @@ def permessi_presidente(sede):
         + permessi_delegato_centrale_operativa(sede) \
         + _espandi(sede)
 
+
 def permessi_commissario(sede):
     """
     Permessi della delega di COMMISSARIO.
@@ -122,7 +123,6 @@ def permessi_consigliere(sede):
     :return: Lista di permessi.
     """
     return []
-
 
 
 def permessi_ufficio_soci_unita(sede):
@@ -185,7 +185,7 @@ def permessi_delegato_obiettivo_1(sede):
     sede_espansa = sede.espandi(includi_me=True)
     return [
         (RUBRICA_DELEGATI_OBIETTIVO_1, sede.espandi(includi_me=True, pubblici=True)),
-           ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=1))
+    ] + permessi_delegato_area(Area.objects.filter(sede__in=sede_espansa, obiettivo=1))
 
 
 def permessi_delegato_obiettivo_2(sede):

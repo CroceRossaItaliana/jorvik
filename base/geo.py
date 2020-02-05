@@ -240,10 +240,14 @@ class ConGeolocalizzazioneRaggio(ConGeolocalizzazione):
         Filtra una ricerca, per gli elementi nel raggio di questo elemento.
         :return: La ricerca filtrata
         """
+        from formazione.models import CorsoBase
+
         if not self.locazione:
+            # Check per restituire <QuerySet> dello stesso tipo di oggetto <ricerca>
+            if ricerca.model is CorsoBase:
+                return CorsoBase.objects.none()
+
             return self.__class__.objects.none()
 
         q = ricerca.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=self.raggio)))
-        #q = ricerca.filter(locazione__geo__distance_lte=(self.locazione.geo, D(km=self.raggio)))
-        #print(q.query)
         return q

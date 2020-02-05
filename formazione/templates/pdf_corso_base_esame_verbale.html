@@ -1,8 +1,10 @@
 {% extends 'pdf_standard.html' %}
 
 {% load static %}
+{% load base_tags %}
 
 {% block css_extra %}
+    .heading-logo-cri {display:block; margin:0 auto 10px; width:150px;}
     table.elenco {
         border: 1px solid #bbb;
         width: 100%;
@@ -18,126 +20,131 @@
 {% endblock %}
 
 {% block corpo %}
+  {% get_url_for_staticfiles as SITE_URL %}
 
-<div lang="it-IT" text="#000000" dir="ltr" style=" line-height: 150%; background: transparent; padding-top: 0.3cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
-    <!-- Logo CRI -->
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
-        <img src="{% static "img/Emblema_CRI.png" %}" name="LogoCri" align="middle" width="300" height="270">
-        <br/>
-        <font face="Arial, sans-serif" style="font-size: 9pt" color="#cc0000">
-            {{ corso.sede.comitato }}
-        </font><
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0.20cm; line-height: 150%">
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
-        <font size="4" style="font-size: 14pt">
-            <b>CORSO DI FORMAZIONE PER VOLONTARI DELLA C.R.I. </b>
-        </font>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
-        <font size="4" style="font-size: 14pt">
-            <b>Verbale di Esame Finale</b>
-        </font>
-    </p>
-    <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
-        <br/>
-    </p>
-    <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
-        Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell'anno {{ corso.data_esame|date:"Y" }},
-        nei locali del {{ corso.sede }}, siti in {{ corso.locazione.comune }},
-        {{ corso.locazione.via }}, n. {{ corso.locazione.civico }}, ai sensi del Regolamento sul
-        Corso di Formazione per Volontari della C.R.I. attualmente vigente , si è riunita la Commissione
-        Esaminatrice convocata con protocollo n° {{ corso.op_convocazione }} del {{ corso.data_convocazione }} e composta da:</p>
-    <ul>
-        <li>
-            <div>
-                Docente del corso in possesso della qualifica di Monitore C.R.I. o del titolo di Medico o Infermiere di area critica:________________________________
-            </div>
-        </li>
-        <li>
-            <div>
-                Docente del corso in possesso della qualifica di Istruttore di Diritto Internazionale Umanitario:________________________________
-            </div>
-        </li>
-        <li>
-            <div>
-                Docente del corso che ha trattato almeno una delle lezioni sulle attività della C.R.I. e del Movimento Internazionale di croce Rossa e Mezzaluna :________________________________
-            </div>
-        </li>
-    </ul>
-    <p class="western" align="justify" style="margin-bottom: 0.35cm; line-height: 150%">
-        per sottoporre ad esame finale i candidati del Corso di Formazione per Volontari della Croce Rossa Italiana attivato con protocollo n° {{ corso.op_attivazione }} del {{ corso.data_attivazione }}. L’elenco dei candidati, allegato alla presente, è parte integrante del presente verbale.
-    </p>
-    <p class="western" align="justify" style="margin-bottom: 0.35cm; line-height: 150%">
-        Gli esaminandi vengono sottoposti ad una prova orale ed ad una prova pratica nell'applicazione delle tecniche di primo soccorso senza particolari ausili tecnici, chiamata di soccorso e verifica attitudini all'impiego nelle varie attività C.R.I.
-    </p>
-    <p class="western" align="justify" style="margin-bottom: 0.35cm; line-height: 150%">
-        Sono stati esaminati n. {{ numero_aspiranti }} aspiranti Volontari, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione Esaminatrice, sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati.
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%; page-break-before: always">
-        <img src="{% static "img/Emblema_CRI.png" %}" name="LogoCri" align="middle" width="300" height="270">
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0.35cm; line-height: 150%">
-        <font size="4" style="font-size: 14pt">
-            {{ corso.sede.comitato }}
-        </font>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
-        <font size="4" style="font-size: 14pt">
-            <b>CORSO DI FORMAZIONE PER VOLONTARI C.R.I.</b>
-        </font>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
-        <font size="4" style="font-size: 14pt">
-            <b>Verbale di Esame Finale</b>
-        </font>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
-        <br/>
-    </p>
-    <p class="western" align="center" style="margin-bottom: 0.35cm; line-height: 150%">
-        <font size="4" style="font-size: 16pt">
-            <b>ELENCO CANDIDATI IDONEI/NON IDONEI/ASSENTI</b>
-        </font>
-    </p>
-    <table class="elenco">
-    <thead>
-        <tr>
-            <th>Cognome e Nome</th>
-            <th>Luogo di Nascita</th>
-            <th>Data di Nascita</th>
-            <th>Codice fiscale</th>
-            <th>Esito</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for p in partecipazioni %}
-        <tr>
-            <td>{{ p.persona.cognome }} {{ p.persona.nome }}</td>
-            <td>{{ p.persona.comune_nascita }}</td>
-            <td>{{ p.persona.data_nascita|date:"SHORT_DATE_FORMAT" }}</td>
-            <td>{{ p.persona.codice_fiscale }}</td>
-            <td><b>{{ p.get_esito_esame_display }}</b></td>
-        </tr>
-    {% endfor %}
-    </tbody>
-    </table>
-    <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
-        <br/>
-        <br/>
-    </p>
-    <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
-        Letto approvato e sottoscritto
-    </p>
-    <p class="western" style="margin-left: 1.25cm; text-indent: 1.25cm; margin-bottom: 0.35cm; line-height: 150%">
-        ______________________________________Docente/Direttore
-    </p>
-    <p class="western" style="margin-left: 1.25cm; text-indent: 1.25cm; margin-bottom: 0.35cm; line-height: 150%">
-        ______________________________________Docente
-    </p>
-    <p class="western" style="margin-left: 1.25cm; text-indent: 1.25cm; margin-bottom: 0.35cm; line-height: 150%">
-        ______________________________________Docente
-    </p>
-</div>
+  <div lang="it-IT" text="#000000" dir="ltr" style="line-height: 150%; background: transparent; padding-top: 0.3cm; padding-bottom: 0.3cm; padding-left: 0.3cm; padding-right: 0.3cm">
+      <!-- Logo CRI -->
+      <p class="western" align="center" style="margin-bottom: 0cm; line-height: 115%">
+          <img class="heading-logo-cri" src='{{ SITE_URL }}{% static "img/Emblema_CRI.png" %}' name="Logo CRI">
+          <br/>
+          <font face="Arial, sans-serif" style="font-size: 9pt" color="#cc0000">
+              {{ corso.sede.comitato }}
+          </font>
+      </p>
+      <p class="western" align="center" style="margin-bottom: 0.20cm; line-height: 150%">
+      </p>
+      <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
+          <font size="4" style="font-size: 14pt">
+              <b>CORSO DI FORMAZIONE PER VOLONTARI DELLA C.R.I. </b>
+          </font>
+      </p>
+      <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
+          <font size="4" style="font-size: 14pt">
+              <b>Verbale di Esame Finale</b>
+          </font>
+      </p>
+      <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
+          <br/>
+      </p>
+      <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">
+          Nel giorno {{ corso.data_esame|date:"j" }} del mese di {{ corso.data_esame|date:"F" }} dell'anno {{ corso.data_esame|date:"Y" }},
+          nei locali del {{ corso.sede }}, siti in {{ corso.locazione.comune }},
+          {{ corso.locazione.via }}, n. {{ corso.locazione.civico }}, ai sensi del Regolamento sul
+          Corso di Formazione per Volontari della C.R.I. attualmente vigente , si è riunita la Commissione
+          Esaminatrice convocata con protocollo n° {{ corso.op_convocazione }} del {{ corso.data_convocazione }} e composta da:</p>
+      <ul>
+          <li>
+              <div>
+                  Docente del corso in possesso della qualifica di Monitore C.R.I. o del titolo di Medico o Infermiere di area critica:________________________________
+              </div>
+          </li>
+          <li>
+              <div>
+                  Docente del corso in possesso della qualifica di Istruttore di Diritto Internazionale Umanitario:________________________________
+              </div>
+          </li>
+          <li>
+              <div>
+                  Docente del corso che ha trattato almeno una delle lezioni sulle attività della C.R.I. e del Movimento Internazionale di croce Rossa e Mezzaluna :________________________________
+              </div>
+          </li>
+      </ul>
+      <p class="western" align="justify" style="margin-bottom: 0.35cm; line-height: 150%">
+          per sottoporre ad esame finale i candidati del Corso di Formazione per Volontari della Croce Rossa Italiana attivato con protocollo n° {{ corso.op_attivazione }} del {{ corso.data_attivazione }}. L’elenco dei candidati, allegato alla presente, è parte integrante del presente verbale.
+      </p>
+      <p class="western" align="justify" style="margin-bottom: 0.35cm; line-height: 150%">
+          Gli esaminandi vengono sottoposti ad una prova orale ed ad una prova pratica nell'applicazione delle tecniche di primo soccorso senza particolari ausili tecnici, chiamata di soccorso e verifica attitudini all'impiego nelle varie attività C.R.I.
+      </p>
+      <p class="western" align="justify" style="margin-bottom: 0.35cm; line-height: 150%">
+          Sono stati esaminati n. {{ numero_aspiranti }} aspiranti Volontari, come risulta dagli atti allegati, e, ad insindacabile giudizio della Commissione Esaminatrice, sono stati dichiarati NON IDONEI n. {{ numero_non_idonei }} candidati mentre sono stati dichiarati IDONEI n. {{ numero_idonei }} candidati.
+      </p>
+      <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%; page-break-before: always">
+          <img src="{% static "img/Emblema_CRI.png" %}" name="LogoCri" align="middle" width="300" height="270">
+      </p>
+      <p class="western" align="center" style="margin-bottom: 0.35cm; line-height: 150%">
+          <font size="4" style="font-size: 14pt">
+              {{ corso.sede.comitato }}
+          </font>
+      </p>
+      <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
+          <font size="4" style="font-size: 14pt">
+              <b>CORSO DI FORMAZIONE PER VOLONTARI C.R.I.</b>
+          </font>
+      </p>
+      <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
+          <font size="4" style="font-size: 14pt">
+              <b>Verbale di Esame Finale</b>
+          </font>
+      </p>
+      <p class="western" align="center" style="margin-bottom: 0cm; line-height: 150%">
+          <br/>
+      </p>
+      <p class="western" align="center" style="margin-bottom: 0.35cm; line-height: 150%">
+          <font size="4" style="font-size: 16pt">
+              <b>ELENCO CANDIDATI IDONEI/NON IDONEI/ASSENTI</b>
+          </font>
+      </p>
+      <table class="elenco">
+      <thead>
+          <tr>
+              <th>Cognome e Nome</th>
+              <th>Luogo di Nascita</th>
+              <th>Data di Nascita</th>
+              <th>Codice fiscale</th>
+              <th>Esito</th>
+          </tr>
+      </thead>
+      <tbody>
+      {% for p in partecipazioni %}
+          <tr>
+              <td>{{ p.persona.cognome }} {{ p.persona.nome }}</td>
+              <td>{{ p.persona.comune_nascita }}</td>
+              <td>{{ p.persona.data_nascita|date:"SHORT_DATE_FORMAT" }}</td>
+              <td>{{ p.persona.codice_fiscale }}</td>
+              <td><b>{{ p.get_esito_esame_display }}</b></td>
+          </tr>
+      {% endfor %}
+      </tbody>
+      </table>
+
+      <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">Letto approvato e sottoscritto</p>
+      <div style="font-size:12px;">
+        &ndash;	Presidente del Comitato CRI o suo delegato:<br>
+        &nbsp;&nbsp;&nbsp; {{ corso.sede.presidente }}<br><br>
+
+        &ndash;	Direttore del Corso<br>
+        {% for direttore in corso.direttori_corso %}
+            &nbsp;&nbsp;&nbsp; {{ direttore }}<br><br>
+        {% endfor %}
+
+        &ndash;	Docente/i del corso<br>
+        {% for docente in corso.docenti_corso %}
+            &nbsp;&nbsp;&nbsp; {{ docente }}<br><br>
+        {% endfor %}
+
+        {% for nome in corso.commissione_nomi_as_list %}
+            &ndash; {{ nome|title }}<br>
+        {% endfor %}
+    </div>
+  </div>
 {% endblock %}

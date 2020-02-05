@@ -1,10 +1,7 @@
-# coding=utf-8
 from collections import OrderedDict
 
-__author__ = 'alfioemanuele'
 
 # Tipologie di applicativi esistenti
-
 PRESIDENTE = 'PR'
 VICE_PRESIDENTE = 'VP'
 COMMISSARIO = 'CM'
