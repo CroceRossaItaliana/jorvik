@@ -98,9 +98,23 @@
             <li {% if 'survey/course' in request.path %}class="active_link"{% endif %} role="presentation"><a href="{% url 'survey:course' corso.pk %}"><i class="fa fa-fw fa-thumbs-up"></i> Compila il Questionario di gradimento</a></li>
             {% if puo_modificare %}
                 <li {% if 'questionnaire/send-to-participants' in request.path %}class="active_link"{% endif %} role="presentation"><a href="{% url 'courses:send_questionnaire_to_participants' corso.pk %}"><i class="fa fa-fw fa-thumbs-up"></i> Invia il Questionario di gradimento</a></li>
-                <li {% if 'survey/course' in request.path %}class="active_link"{% endif %} role="presentation"><a href="{% url 'survey:course_download_results' corso.pk %}"><i class="fa fa-fw fa-thumbs-up"></i> Scarica i risultati</a></li>
+                <li {% if 'survey/course' in request.path %}class="active_link"{% endif %} role="presentation"><a data-toggle="modal" data-target="#surveyDownloadFormat" href="#"><i class="fa fa-fw fa-thumbs-up"></i> Scarica i risultati</a></li>
             {% endif %}
         </ul>
+
+        <div class="modal" id="surveyDownloadFormat" tabindex="-1" role="dialog" aria-labelledby="modalLabelLarge" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modalLabelLarge">Scegli il formato dei risultati del questionario da scaricare</h4>
+                    </div>
+                    <div class="modal-body" style="text-align:center;">
+                        <a href="{% url 'survey:course_download_results' corso.pk %}?excel">Excel</a>  &ndash;
+                        <a href="{% url 'survey:course_download_results' corso.pk %}?pdf">Pdf</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     {% if puo_modificare and corso.stato == corso.PREPARAZIONE and corso.prossimo and not corso.is_nuovo_corso %}
