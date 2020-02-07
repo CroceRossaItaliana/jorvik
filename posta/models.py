@@ -42,6 +42,7 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
     SUPPORTO_NOME = 'Supporto Gaia'
     SUPPORTO_EMAIL = 'supporto@gaia.cri.it'
     NOREPLY_EMAIL = 'noreply@gaia.cri.it'
+    SERVIZIO_CIVILE = 'servizio.civile@cri.it'
 
     LUNGHEZZA_MASSIMA_OGGETTO = 256
     TENTATIVI_MAX = 3  # Numero massimo di tentativi di invio prima di rinunciare all'invio
@@ -225,11 +226,17 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
         if self.oggetti_destinatario.count() == 0:
 
             # Questo e' un messaggio per il supporto di Gaia.
+            # Se il mittende è noreply@gaia.cri.it la mail è destinata al supporto gaia altrimenti
+            # è destinata al servizio civile
             email = EmailMultiAlternatives(subject=self.oggetto,
                                            body=corpo_plain,
                                            from_email=mittente,
                                            reply_to=[rispondi_a],
-                                           to=[Messaggio.SUPPORTO_EMAIL],
+                                           to=[
+                                               Messaggio.SUPPORTO_EMAIL
+                                               if mittente_email == Messaggio.NOREPLY_EMAIL
+                                               else Messaggio.SERVIZIO_CIVILE
+                                           ],
                                            attachments=self.allegati_pronti(),
                                            connection=connessione)
             email.attach_alternative(self.corpo, "text/html")
@@ -407,7 +414,9 @@ class Messaggio(ModelloSemplice, ConMarcaTemporale, ConGiudizio, ConAllegati):
             m.save()
 
             for d in destinatari:
-                m.oggetti_destinatario.create(persona=d)
+                # il destinatario è una mail testiale non un oggetto persona
+                if not isinstance(d, str):
+                    m.oggetti_destinatario.create(persona=d)
 
             return m
 
