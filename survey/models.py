@@ -210,7 +210,12 @@ class SurveyResult(models.Model):
                             united['lezioni'].append(lezione_col + [docente])
 
             org_servizi_columns = [[Question.objects.get(pk=k).text] + [i for i in v] for k, v in united['org_servizi'].items()]
-            utilita_lezioni_columns = [[LezioneCorsoBase.objects.get(pk=k).nome] + [i for i in v] for k, v in united['utilita_lezioni'].items()]
+
+            utilita_lezioni_columns = list()
+            for lezione_pk, v in united['utilita_lezioni'].items():
+                if not LezioneCorsoBase.objects.filter(pk=lezione_pk).count():
+                    continue
+                utilita_lezioni_columns.append([LezioneCorsoBase.objects.get(pk=lezione_pk).nome] + [i for i in v])
 
             united['org_servizi'] = org_servizi_columns
             united['utilita_lezioni'] = utilita_lezioni_columns

@@ -37,7 +37,16 @@ def add_questions_groups_to_survey_form(form, survey):
 def questionario_pdf_utilita_lezioni(utilita_lezioni_dict):
     if not utilita_lezioni_dict:
         return dict()
-    return {LezioneCorsoBase.objects.get(pk=k).nome: v for k,v in utilita_lezioni_dict.items()}
+
+    lezioni_not_existing = list()
+    for lezione_pk in utilita_lezioni_dict.keys():
+        if not LezioneCorsoBase.objects.filter(pk=lezione_pk).count():
+            lezioni_not_existing.append(lezione_pk)
+
+    return {
+        LezioneCorsoBase.objects.get(pk=k).nome: v for k, v in utilita_lezioni_dict.items()
+        if k not in lezioni_not_existing
+    }
 
 
 @register.simple_tag
@@ -67,12 +76,18 @@ def questionario_pdf_valutazione_lezioni(lezioni_dict):
         if p not in lezioni_dict_new:
             lezioni_dict_new[p] = dict()
 
+        lezioni_not_existing = list()  # to avoid RuntimeError dictionary size changed
         lezioni_dict_new[p] = lezioni
+
+        for lezione_pk in lezioni.keys():
+            if not LezioneCorsoBase.objects.filter(pk=lezione_pk).count():
+                lezioni_not_existing.append(lezione_pk)
+
         lezioni_dict_new[p] = {
             LezioneCorsoBase.objects.get(pk=lezione_pk): {
                 Question.objects.get(pk=domanda_pk): voto for domanda_pk, voto in v.items() if domanda_pk != 'completed'
             }
-            for lezione_pk, v in lezioni.items()
+            for lezione_pk, v in lezioni.items() if lezione_pk not in lezioni_not_existing
         }
 
     return lezioni_dict_new
