@@ -148,7 +148,7 @@ class SurveyResult(models.Model):
         return cls.objects.filter(course=course)
 
     @classmethod
-    def _generate_report_for_course_new_excel(cls, course):
+    def _generate_excel(cls, course):
         from formazione.models import LezioneCorsoBase
         from collections import OrderedDict
 
@@ -196,7 +196,11 @@ class SurveyResult(models.Model):
                 united['lezioni'] = list()
                 for docente_pk, lezione in lezioni.items():
                     for k, v in lezione.items():
-                        docente = Persona.objects.get(pk=docente_pk).nome_completo
+                        if docente_pk.isalpha() or '_' in docente_pk:
+                            docente = docente_pk
+                        else:
+                            docente = Persona.objects.get(pk=docente_pk).nome_completo
+
                         v.pop('completed')
 
                         for lez in sorted(v.items()):
@@ -206,7 +210,12 @@ class SurveyResult(models.Model):
                             united['lezioni'].append(lezione_col + [docente])
 
             org_servizi_columns = [[Question.objects.get(pk=k).text] + [i for i in v] for k, v in united['org_servizi'].items()]
-            utilita_lezioni_columns = [[LezioneCorsoBase.objects.get(pk=k).nome] + [i for i in v] for k, v in united['utilita_lezioni'].items()]
+
+            utilita_lezioni_columns = list()
+            for lezione_pk, v in united['utilita_lezioni'].items():
+                if not LezioneCorsoBase.objects.filter(pk=lezione_pk).count():
+                    continue
+                utilita_lezioni_columns.append([LezioneCorsoBase.objects.get(pk=lezione_pk).nome] + [i for i in v])
 
             united['org_servizi'] = org_servizi_columns
             united['utilita_lezioni'] = utilita_lezioni_columns
@@ -274,37 +283,73 @@ class SurveyResult(models.Model):
         return response
 
     @classmethod
-    def generate_report_for_course(cls, course):
-        filename = "Questionario di gradimento [%s].csv" % course.nome
+    def _generate_pdf(cls, course):
+        from io import BytesIO
+        from xhtml2pdf import pisa
+        from django.http import HttpResponse
+        from django.template.loader import render_to_string
+
+        risposte = SurveyResult.objects.filter(course=course)
+
+        html = render_to_string('pdf_questionario.html', {
+            'risposte': risposte,
+        }).encode('utf-8')
+
+        result = BytesIO()
+        pdf = pisa.pisaDocument(BytesIO(html), result, encoding='UTF-8')
+        converted = result.getvalue() if not pdf.err else ''
+
+        filename = 'Questionario-di-gradimento.pdf'
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+        response.write(converted)
+        return response
+
+    @classmethod
+    def _process_and_generate(cls, course, request):
+        if 'excel' in request.GET:
+            return cls._generate_excel(course)
+
+        elif 'pdf' in request.GET:
+            return cls._generate_pdf(course)
+
+        return HttpResponse('No Data')
+
+    @classmethod
+    def _process_and_generate_old(cls, course, responses_to_q):
+        filename = "Questionario-di-gradimento.csv"
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
 
-        writer = csv.writer(response, delimiter=';')
+        # Report per le risposte vecchio formato (prima del rilascio)
+        # Ogni risposta -> record db <SurveyResult>
+        columns = ['Corso', 'Domanda', 'Risposta', 'Creato', 'Modificato']
 
+        writer = csv.writer(response, delimiter=';')
+        writer.writerow(columns)
+
+        for result in responses_to_q.exclude(new_version=True):
+            writer.writerow([
+                course.nome,
+                result.question,
+                result.response,
+                result.created_at,
+                result.updated_at
+            ])
+
+        return response
+
+    @classmethod
+    def get_report_for_course(cls, course, request):
         # Trova le risposte per il questionario di questo corso
         responses_to_q = cls.get_responses_for_course(course)
 
         # Verifica se le risposte sono JSON (nuova modalità)
         responses_with_json = responses_to_q.filter(new_version=True)
         if responses_with_json.exists():
-            return cls._generate_report_for_course_new_excel(course)
+            return cls._process_and_generate(course, request)
         else:
-            # Report per le risposte vecchio formato (prima del rilascio)
-            # Ogni risposta -> record db <SurveyResult>
-            columns = ['Corso', 'Domanda', 'Risposta', 'Creato', 'Modificato']
-            writer.writerow(columns)
-
-            responses_to_q = responses_to_q.exclude(new_version=True)
-            for result in responses_to_q:
-                writer.writerow([
-                    course.nome,
-                    result.question,
-                    result.response,
-                    result.created_at,
-                    result.updated_at
-                ])
-
-        return response
+            return cls._process_and_generate_old(course, responses_to_q)
 
     def get_uncompleted_valutazione_docente_lezione(self):
         """

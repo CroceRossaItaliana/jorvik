@@ -10,8 +10,9 @@ from ufficio_soci.models import ReportElenco
 def generate_elenco(self, *args):
     from .reports import ReportElencoSoci
 
+    params, report_id = args[0], args[1]
     report = ReportElencoSoci(from_celery=True)
-    report.celery(args[0], args[1])
+    report.celery(params, report_id)
 
 
 @periodic_task(run_every=timedelta(seconds=86400))  # 24h
