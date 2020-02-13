@@ -202,6 +202,9 @@ def us_reclama_persona(request, me, persona_pk):
                                                             "cambio appartenenza.")
                     continua = False
 
+        if appartenenza_dipendente and membro == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE: # Se dipendene e vuole diventare servizio civile
+            modulo_appartenenza.add_error('membro', "La persona ha gia un ruolo come dipendete")
+            continua = False
 
         sede = modulo_appartenenza.cleaned_data.get('sede')
         appartenenza_volontario = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.VOLONTARIO).first()
@@ -250,6 +253,7 @@ def us_reclama_persona(request, me, persona_pk):
             with transaction.atomic():
                 app = modulo_appartenenza.save(commit=False)
                 app.persona = persona
+
                 app.save()
 
                 # Termina app. ordinario - I dipendenti rimangono tali
