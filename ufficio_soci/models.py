@@ -575,6 +575,7 @@ class ReportElenco(ConMarcaTemporale):
         (TESSERINI_SENZA_FOTOTESSERA, 'Tesserini senza fototessera'),
         (TESSERINI_RIFIUTATI, 'Tesserini Rifiutati'),
         (GENERICO, 'Generico'),
+        (SERVIZIO_CIVILE, 'Volontari Serivzio Civile')
     )
 
     user = models.ForeignKey(Persona)
