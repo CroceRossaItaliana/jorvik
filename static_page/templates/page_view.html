@@ -1,10 +1,13 @@
 {% extends "anagrafica_utente_vuota.html" %}
 
 {% load bootstrap3 %}
+{% load static_page %}
 
 {% block app_contenuto %}
   <div class="articolo single-page">
     <h1>{{ page.title }}</h1>
+
+    {% static_page_content_filter as page %}
     {{ page.text|safe }}
   </div>
 
