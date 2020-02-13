@@ -41,7 +41,9 @@ class MenuUtente:
             ("Benvenuto", "fa-bolt", "/utente/"),
             ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
             ("Storico", "fa-clock-o", "/utente/storico/"),
-            ("Documenti", "fa-folder", "/utente/documenti/") if me and (me.volontario or me.dipendente) else None,
+            ("Documenti", "fa-folder", "/utente/documenti/") if me and (
+                    me.volontario or me.dipendente or me.servizio_civile
+            ) else None,
             ("Contatti", "fa-envelope", "/utente/contatti/"),
             ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
         ))
@@ -91,7 +93,7 @@ class MenuUtente:
             return ((
                 self.menu_persona(),
                 self.menu_volontario() if me.volontario else None,
-                self.menu_formazione() if me.volontario or me.dipendente else None,
+                self.menu_formazione() if me.volontario or me.dipendente or me.servizio_civile else None,
                 menu_rubrica_base(me),
                 self.menu_curriculum(),
                 self.menu_donatore() if self.is_volontario else None,
