@@ -24,7 +24,7 @@ django-oidc-provider==0.6.2
 django-loginas==0.3.1
 django-otp==0.6.0
 django-prettyjson==0.4.1
-djangorestframework==3.6
+djangorestframework==3.9.1
 Markdown==2.6
 phonenumbers==8.8.9
 Pillow==3.2.0
