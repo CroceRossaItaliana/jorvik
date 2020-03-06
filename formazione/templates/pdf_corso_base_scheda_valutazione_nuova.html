@@ -109,7 +109,7 @@
         </td>
         <td style="width:50%; vertical-align: top;">
           <div style="margin-bottom:10px;">Il Presidente della Commissione<</div>>
-            {{ corso.sede.presidente }}
+            {{ corso.presidente_corso.nome_completo|default:"" }}
         </td>
       </tr>
     </table>

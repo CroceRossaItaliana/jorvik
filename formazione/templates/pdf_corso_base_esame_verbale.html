@@ -130,7 +130,7 @@
       <p class="western" style="margin-bottom: 0.35cm; line-height: 150%">Letto approvato e sottoscritto</p>
       <div style="font-size:12px;">
         &ndash;	Presidente del Comitato CRI o suo delegato:<br>
-        &nbsp;&nbsp;&nbsp; {{ corso.sede.presidente }}<br><br>
+        &nbsp;&nbsp;&nbsp; {{ corso.presidente_corso.nome_completo|default:"" }}<br><br>
 
         &ndash;	Direttore del Corso<br>
         {% for direttore in corso.direttori_corso %}

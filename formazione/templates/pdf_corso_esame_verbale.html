@@ -70,7 +70,7 @@
             {% endif %}
 
             <p>&mdash; Presidente del Comitato CRI o suo delegato:<br>
-                &nbsp;&nbsp;&nbsp; {{ corso.sede.presidente }}</p>
+                &nbsp;&nbsp;&nbsp; {{ corso.presidente_corso.nome_completo|default:"" }}</p>
             <p>
                 &mdash; Direttore del Corso<br>
                 {% for direttore in corso.direttori_corso %}
@@ -215,7 +215,7 @@
             Letto approvato e sottoscritto<br><br>
 
             &ndash;	Presidente del Comitato CRI o suo delegato:<br>
-            &nbsp;&nbsp;&nbsp; {{ corso.sede.presidente }}<br><br>
+            &nbsp;&nbsp;&nbsp; {{ corso.presidente_corso.nome_completo|default:"" }}<br><br>
 
             &ndash;	Direttore del Corso<br>
             {% for direttore in corso.direttori_corso %}
