@@ -1219,6 +1219,13 @@ class CorsoBase(Corso, ConVecchioID, ConPDF):
                 allegati=[self.delibera_file,]
             )
 
+    @property
+    def presidente_corso(self):
+        """Restituisce <Persona> che aveva la delega di PRESIDENTE al giorno dell'esame."""
+        return self.sede.delegati_attuali(tipo=PRESIDENTE,
+                                          al_giorno=self.data_esame,
+                                          solo_deleghe_attive=False).last()
+
     def direttori_corso(self, as_delega=False):
         """
         :param as_delega (True): return Delega<QuerySet>
