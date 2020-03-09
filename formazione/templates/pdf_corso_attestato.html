@@ -104,7 +104,7 @@
 									{{ persona.nome_completo }}<br>
 							 {% endfor %}
 							</div>
-							<div style="width: 25%;">Il Presidente<br>{{ corso.sede.presidente.nome_completo }}</div>
+							<div style="width: 25%;">Il Presidente<br>{{ corso.presidente_corso.nome_completo|default:""  }}</div>
 						</div>
 
 					</div>
@@ -192,7 +192,7 @@
 											{{ docente }}<br>
 										{% endfor %}
 									</div>
-									<div style="width: 33%;">Il Presidente<br>{{ corso.sede.presidente.nome_completo }}</div>
+									<div style="width: 33%;">Il Presidente<br>{{ corso.presidente_corso.nome_completo|default:"" }}</div>
 								</div>
 							</div>
 					</div>
