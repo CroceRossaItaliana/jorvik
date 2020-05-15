@@ -825,10 +825,7 @@ def attivita_scheda_partecipazione_cancella(request, me, pk, partecipazione_pk):
 
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
 def attivita_scheda_report(request, me, pk=None):
-    """
-    Mostra la pagina di modifica di una attivita'.
-    """
-
+    """Mostra la pagina di modifica di una attivita'."""
     if False:
         return ci_siamo_quasi(request, me)
 
@@ -837,15 +834,14 @@ def attivita_scheda_report(request, me, pk=None):
         return redirect(ERRORE_PERMESSI)
 
     if request.POST:
-        pdf = attivita.genera_report()
-        return redirect(pdf.download_url)
+        # pdf = redirect(pdf.download_url)
+        return attivita.genera_report(format=Attivita.REPORT_FORMAT_EXCEL)
 
-    contesto = {
+    context = {
         "attivita": attivita,
         "puo_modificare": True,
     }
-
-    return 'attivita_scheda_report.html', contesto
+    return 'attivita_scheda_report.html', context
 
 
 @pagina_privata

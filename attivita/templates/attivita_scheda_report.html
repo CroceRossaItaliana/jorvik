@@ -1,11 +1,8 @@
 {% extends 'attivita_scheda.html' %}
 
-{% block scheda_titolo %}
-    Report attivit&agrave;
-{% endblock %}
-
 {% load utils %}
 
+{% block scheda_titolo %}Report attivit&agrave;{% endblock %}
 {% block scheda_contenuto %}
 
 <form method="POST">
@@ -98,21 +95,14 @@
                 </h2>
             </div>
             <div class="panel-body">
-                <p>Il report in formato PDF contiene un elenco di tutti i turni passati dell'attivit&agrave; e i nomi dei
+                <p>Il report in formato Excel contiene un elenco di tutti i turni passati dell'attivit&agrave; e i nomi dei
                     volontari che vi hanno partecipato.</p>
                 <button type="submit" target="_blank" download class="btn btn-block btn-primary">
                     <i class="fa fa-fw fa-download"></i> Scarica report
                 </button>
             </div>
         </div>
-
-
-
     </div>
-
-
-
-
 </div>
 </form>
 
