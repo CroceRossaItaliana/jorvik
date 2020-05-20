@@ -26,7 +26,7 @@ from .permessi.shortcuts import *
 from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL
 from attivita.models import Turno, Partecipazione
 from base.files import PDF, Excel, FoglioExcel
-from base.geo import ConGeolocalizzazione
+from base.geo import ConGeolocalizzazione, Locazione
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.models import (ModelloSemplice, ModelloAlbero, ConAutorizzazioni,
     ConAllegati, Autorizzazione, ConVecchioID)
@@ -1748,8 +1748,16 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     estensione = models.CharField("Estensione", max_length=1, choices=ESTENSIONE, db_index=True)
     tipo = models.CharField("Tipologia", max_length=1, choices=TIPO, default=COMITATO, db_index=True)
 
+    # GAIA-280
+    sede_operativa = models.ForeignKey(Locazione, null=True, blank=True,
+                                        related_name="locazione_sede_operativa")
+    indirizzo_per_spedizioni = models.ForeignKey(Locazione, null=True, blank=True,
+                                        related_name="locazione_indirizzo_spedizioni")
+    persona_di_riferimento = models.CharField("Persona da contattare di riferimento", max_length=250, null=True, blank=True)
+    persona_di_riferimento_telefono = models.CharField("Numero telefonico della persona di riferimento", max_length=20, null=True, blank=True)
+
     # Dati del comitato
-    # Nota: indirizzo e' gia' dentro per via di ConGeolocalizzazione
+    # Nota: indirizzo è già dentro per via di ConGeolocalizzazione
     telefono = models.CharField("Telefono", max_length=64, blank=True)
     fax = models.CharField("FAX", max_length=64, blank=True)
     email = models.EmailField("Indirizzo e-mail", max_length=64, blank=True)
@@ -1760,6 +1768,11 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                             help_text="Coordinate bancarie internazionali del "
                                       "C/C della Sede.",
                             validators=[valida_iban])
+    rea = models.CharField("Numero REA", max_length=20, blank=True, null=True)
+    cciaa = models.CharField("Iscrizione CCIAA", max_length=20, blank=True, null=True)
+    runts = models.CharField("N. Iscrizione Registro del Volontario",
+        max_length=20, blank=True, null=True)
+
     codice_fiscale = models.CharField("Codice Fiscale", max_length=32, blank=True)
     partita_iva = models.CharField("Partita IVA", max_length=32, blank=True,
                                    validators=[valida_partita_iva])
