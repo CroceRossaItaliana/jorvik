@@ -271,7 +271,7 @@ class AdminSede(ReadonlyAdminMixin, MPTTModelAdmin):
     search_fields = ['nome', 'genitore__nome']
     list_display = ('nome', 'genitore', 'tipo', 'estensione', 'creazione', 'ultima_modifica', )
     list_filter = ('tipo', 'estensione', 'creazione', )
-    raw_id_fields = ('genitore', 'locazione',)
+    raw_id_fields = ('genitore', 'locazione', 'sede_operativa', 'indirizzo_per_spedizioni',)
     list_display_links = ('nome', 'estensione',)
     inlines = [InlineDelegaSede,]
 

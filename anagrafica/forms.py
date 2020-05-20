@@ -569,18 +569,23 @@ class ModuloUtenza(ModelForm):
 class ModuloPresidenteSede(ModelForm):
     class Meta:
         model = Sede
-        fields = ['telefono', 'fax', 'email', 'pec',
-                  'sito_web', 'iban',
-                  'codice_fiscale', 'partita_iva', ]
+        fields = ['codice_fiscale', 'partita_iva',
+            'rea', 'cciaa', 'runts',
+            'email', 'pec',
+            'telefono', 'fax',
+            'sito_web', 'iban',
+        ]
 
     def clean_partita_iva(self):
         partita_iva = self.cleaned_data['partita_iva']
         return stdnum.it.iva.compact(partita_iva)
 
     def clean(self):
+        cd = self.cleaned_data
+
         # Tutti i campi obbligatori
         campi_obbligatori = ['telefono', 'email', 'pec', 'iban', 'codice_fiscale', 'partita_iva']
-        tutti_campi = {y: v for y, v in self.cleaned_data.copy().items() if y in campi_obbligatori}.items()
+        tutti_campi = {y: v for y, v in cd.copy().items() if y in campi_obbligatori}.items()
         for chiave, valore in tutti_campi:
             if not valore:
                 self.add_error(chiave, "Questo campo è obbligatorio.")
