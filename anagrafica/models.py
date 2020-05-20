@@ -2902,3 +2902,21 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
                     ]
                 )
 
+
+class Nominativo(ModelloSemplice, ConStorico, ConMarcaTemporale):
+    """Modello che viene utilizzato con il modello <Sede>"""
+    REVISORE_DEI_CONTI = 'rc'
+    ORGANO_DI_CONTROLLO = 'oc'
+    TIPI_NOMINATIVO = [
+        (REVISORE_DEI_CONTI, "Revisore dei Conti"),
+        (ORGANO_DI_CONTROLLO, "Organo di Controllo"),
+    ]
+
+    nome = models.CharField("Nome e Cognome", max_length=250)
+    tipo = models.CharField(choices=TIPI_NOMINATIVO, max_length=3)
+
+    def __str__(self):
+        return self.nome
+
+    class Meta:
+        verbose_name_plural = "Nominativi"

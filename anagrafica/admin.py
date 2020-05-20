@@ -18,7 +18,7 @@ from gruppi.readonly_admin import ReadonlyAdminMixin
 from formazione.models import PartecipazioneCorsoBase
 from .models import (Persona, Sede, Appartenenza, Delega, Documento,
     Fototessera, Estensione, Trasferimento, Riserva, Dimissione, Telefono,
-    ProvvedimentoDisciplinare)
+    ProvvedimentoDisciplinare, Nominativo)
 
 
 
@@ -360,4 +360,10 @@ class AdminTelefono(ReadonlyAdminMixin, admin.ModelAdmin):
 class AdminProvvedimentoDisciplinare(ReadonlyAdminMixin, admin.ModelAdmin):
     raw_id_fields = ['persona', 'registrato_da', 'sede',]
     list_display = ['persona', 'inizio', 'fine', 'tipo',]
+    list_filter = ['tipo',]
+
+
+@admin.register(Nominativo)
+class AdminNominativo(ReadonlyAdminMixin, admin.ModelAdmin):
+    list_display = ['nome', 'tipo',]
     list_filter = ['tipo',]
