@@ -101,12 +101,9 @@
                                         {{ valore }}
                                     </a>
                                 {% endif %}
-
                             </li>
-
                         {% endfor %}
                         </ul>
-
                     {% endfor %}
 
                 </div>
@@ -130,35 +127,31 @@
                     <p>Le richieste inviate dai Presidenti sono considerate prioritarie.</p>
                 </div>
             </div>
-
         </div>
-
-
-
     </div>
 
-    <div class="row">
+    <div id="sedi_list" class="row">
         <div class="col-md-12">
-
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <i class="fa fa-fw fa-map-marker"></i>
-                        Indirizzo e posizione geografica
+                        <i class="fa fa-fw fa-map-marker"></i> Indirizzo e posizione geografica
                     </h2>
                 </div>
                 <div class="panel-body">
+                    <h3>Sede Operativa</h3>
+                    {{ sede.sede_operativa|default:"Non impostato" }}
+                    [<strong><a href="{% url 'presidente:sede_indirizzi' sede.pk %}?f=sede_operativa">modifica o imposta l'indirizzo della sede operativa</a></strong>]
 
+
+                    <h3>Indirizzo per spedizioni</h3>
+                    {{ sede.indirizzo_per_spedizioni|default:"Non impostato" }}
+                    [<strong><a href="{% url 'presidente:sede_indirizzi' sede.pk %}?f=indirizzo_per_spedizioni">modifica o imposta l'indirizzo per spedizioni</a></strong>]
+
+                    <h3>Sede Legale</h3>
                     {% localizzatore sede solo_italia=1 %}
-
                 </div>
             </div>
-
         </div>
-
     </div>
-
-
-
-
 {% endblock %}
