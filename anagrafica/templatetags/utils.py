@@ -104,7 +104,22 @@ def checkbox(booleano, extra_classe='', con_testo=1):
 
 
 @register.simple_tag(takes_context=True)
-def localizzatore(context, oggetto_localizzatore=None, continua_url=None, solo_italia=False):
+def reload_locazione(context):
+    request = context.request
+    locazione = context['locazione']
+
+    if 'reload_locazione' in request.session:
+        locazione = getattr(context['oggetto'], request.session['reload_locazione'])
+        del request.session['reload_locazione']
+    return locazione
+
+
+@register.simple_tag(takes_context=True)
+def localizzatore(context,
+                  oggetto_localizzatore=None,
+                  continua_url=None,
+                  solo_italia=False, **kwargs):
+
     if not isinstance(oggetto_localizzatore, ConGeolocalizzazione):
         raise ValueError("Il tag localizzatore puo' solo essere usato con un oggetto ConGeolocalizzazione, ma e' stato usato con un oggetto %s." % (oggetto_localizzatore.__class__.__name__,))
 
@@ -114,6 +129,13 @@ def localizzatore(context, oggetto_localizzatore=None, continua_url=None, solo_i
     context.request.session['model'] = oggetto_tipo.model
     context.request.session['pk'] = oggetto_localizzatore.pk
     context.request.session['continua_url'] = continua_url
+
+    # (GAIA-280) Modifica degli indirizzi dei campi aggiuntivi di una <Sede>
+    modifica_indirizzo_sede = None
+    if 'modifica_indirizzo_sede' in kwargs:
+        modifica_indirizzo_sede = kwargs.pop('modifica_indirizzo_sede')
+    if modifica_indirizzo_sede is not None:
+        context.request.session['modifica_indirizzo_sede'] = modifica_indirizzo_sede
 
     url = reverse('geo_localizzatore')
     if solo_italia:

@@ -1315,19 +1315,41 @@ def presidente_sede(request, me, sede_pk):
     if not me.permessi_almeno(sede, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    modulo = ModuloPresidenteSede(request.POST or None, instance=sede)
-    if modulo.is_valid():
-        modulo.save()
+    form = ModuloPresidenteSede(request.POST or None, instance=sede)
+    if form.is_valid():
+        form.save()
 
-    sezioni = _presidente_sede_ruoli(sede)
-
-    contesto = {
+    context = {
         "sede": sede,
-        "modulo": modulo,
-        "sezioni": sezioni,
+        "modulo": form,
+        "sezioni": _presidente_sede_ruoli(sede),
     }
-    return 'anagrafica_presidente_sede.html', contesto
+    return 'anagrafica_presidente_sede.html', context
 
+
+@pagina_privata
+def presidente_sede_indirizzi(request, me, sede_pk):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    form = ModuloPresidenteSede(request.POST or None, instance=sede)
+    if form.is_valid():
+        form.save()
+
+    context = {
+        "sede": sede,
+        "modulo": form,
+    }
+
+    modifica_indirizzo_sede = request.GET.get('f')
+    if modifica_indirizzo_sede and modifica_indirizzo_sede in ['sede_operativa',
+                                                               'indirizzo_per_spedizioni']:
+        context['modifica_indirizzo_sede'] = modifica_indirizzo_sede
+    else:
+        return redirect(reverse('presidente:sedi_panoramico', args=[sede.pk,]))
+
+    return 'anagrafica_presidente_sede_indirizzi.html', context
 
 @pagina_privata
 def presidente_checklist(request, me, sede_pk):

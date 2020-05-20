@@ -399,9 +399,9 @@ def autorizzazioni_storico(request, me):
 
 @pagina_privata
 def geo_localizzatore(request, me):
-    app_label = request.session['app_label']
-    model = request.session['model']
-    pk = int(request.session['pk'])
+    app_label, model, pk = request.session['app_label'], \
+                           request.session['model'], \
+                           int(request.session['pk'])
     oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
 
@@ -420,8 +420,16 @@ def geo_localizzatore(request, me):
         risultati = Locazione.cerca(stringa)
         ricerca = True
 
+    # Cambia il campo da modificare secondo il modulo richiesto
+    locazione_da_cambiare = oggetto.locazione
+    if 'modifica_indirizzo_sede' in request.session:
+        modifica_indirizzo_sede = request.session['modifica_indirizzo_sede']
+        if modifica_indirizzo_sede in ['sede_operativa',
+                                       'indirizzo_per_spedizioni']:
+            locazione_da_cambiare = getattr(oggetto, modifica_indirizzo_sede)
+
     context = {
-        "locazione": oggetto.locazione,
+        "locazione": locazione_da_cambiare,
         "continua_url": request.session['continua_url'],
         "modulo": form,
         "ricerca": ricerca,
@@ -440,10 +448,17 @@ def geo_localizzatore_imposta(request, me):
     session = request.session
     app_label, model, pk = session['app_label'], session['model'], int(session['pk'])
 
+    modifica_indirizzo_sede = None
+    if 'modifica_indirizzo_sede' in request.session:
+        modifica_indirizzo_sede = request.session['modifica_indirizzo_sede']
+
     oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
+    oggetto.imposta_locazione(request.POST['indirizzo'], modifica_indirizzo_sede)
 
-    oggetto.imposta_locazione(request.POST['indirizzo'])
+    if modifica_indirizzo_sede:
+        del request.session['modifica_indirizzo_sede']
+        request.session['reload_locazione'] = modifica_indirizzo_sede
 
     return redirect("/geo/localizzatore/")
 
