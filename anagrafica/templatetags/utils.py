@@ -1,28 +1,28 @@
+from datetime import timezone
+
 from django import template
 from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import QuerySet, Max
 from django.template import Library
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_text
 
 from jorvik.settings import GOOGLE_KEY
-from anagrafica.models import Persona, Delega
-from anagrafica.permessi.applicazioni import UFFICIO_SOCI
-from anagrafica.permessi.costanti import PERMESSI_TESTO, NESSUNO
+from ..models import Persona, Delega
+from ..permessi.applicazioni import PRESIDENTE
+from ..permessi.applicazioni import UFFICIO_SOCI
+from ..permessi.costanti import PERMESSI_TESTO, NESSUNO
 from base.geo import ConGeolocalizzazione
 from base.stringhe import genera_uuid_casuale
 from base.tratti import ConDelegati
 from base.utils import testo_euro
 from ufficio_soci.elenchi import Elenco
-from anagrafica.permessi.applicazioni import PRESIDENTE
-from datetime import timezone
-from django.utils import timezone
 
 
 register = Library()
-
 
 @register.filter
 def stato_riserva(riserva):
@@ -381,6 +381,7 @@ def get_top_navbar(context):
 def is_rifiutato(id):
     from ufficio_soci.models import Tesserino
     return False if Tesserino.objects.filter(persona=id, stato_richiesta=Tesserino.RIFIUTATO).count() else True
+
 
 @register.simple_tag(takes_context=True)
 def add_session_flag_to_profile_urls(context):

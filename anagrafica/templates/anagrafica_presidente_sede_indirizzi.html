@@ -27,6 +27,12 @@
                             della <span style="text-transform:uppercase;">sede operativa</span>
                         {% elif modifica_indirizzo_sede == "indirizzo_per_spedizioni" %}
                             <span style="text-transform:uppercase;">per spedizioni</span>
+
+                            <form style="max-width:350px;" action="." method="post">
+                                {% csrf_token %}
+                                {% bootstrap_form persona_di_riferimento_form %}
+                                 <button class="btn btn-success" type="submit">Salva modifiche <i class="fa fa-save"></i></button>
+                            </form>
                         {% endif %}
                     </p>
 

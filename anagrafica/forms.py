@@ -591,6 +591,12 @@ class ModuloPresidenteSede(ModelForm):
                 self.add_error(chiave, "Questo campo è obbligatorio.")
 
 
+class ModuloPresidenteSedePersonaDiRiferimento(ModelForm):
+    class Meta:
+        model = Sede
+        fields = ['persona_di_riferimento', 'persona_di_riferimento_telefono',]
+
+
 class ModuloImportVolontari(forms.Form):
     file_csv = forms.FileField()
 

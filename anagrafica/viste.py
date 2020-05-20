@@ -50,7 +50,8 @@ from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
     ModuloCreazioneDelega, ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera,
     ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
     ModuloImportVolontari, ModuloImportPresidenti, ModuloPulisciEmail,
-    ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica)
+    ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica,
+    ModuloPresidenteSedePersonaDiRiferimento,)
 from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
     Appartenenza, Sede, Riserva, Dimissione)
 
@@ -1337,19 +1338,32 @@ def presidente_sede_indirizzi(request, me, sede_pk):
     if form.is_valid():
         form.save()
 
+    pdr_form = ModuloPresidenteSedePersonaDiRiferimento(request.POST or None,
+                                                        instance=sede)
+    if pdr_form.is_valid():
+        pdr_form.save()
+
     context = {
         "sede": sede,
         "modulo": form,
     }
 
+    # GAIA-280. Inizio della logica. La vista riceve un parametro GET.
+    # Tutto il resto procede attraverso lo scambio di dati fra: templatetags, session
+    # (commit 74347d34fe)
     modifica_indirizzo_sede = request.GET.get('f')
     if modifica_indirizzo_sede and modifica_indirizzo_sede in ['sede_operativa',
                                                                'indirizzo_per_spedizioni']:
         context['modifica_indirizzo_sede'] = modifica_indirizzo_sede
+
+        if modifica_indirizzo_sede == "indirizzo_per_spedizioni":
+            context['persona_di_riferimento_form'] = pdr_form
+
     else:
         return redirect(reverse('presidente:sedi_panoramico', args=[sede.pk,]))
 
     return 'anagrafica_presidente_sede_indirizzi.html', context
+
 
 @pagina_privata
 def presidente_checklist(request, me, sede_pk):
