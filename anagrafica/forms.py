@@ -22,7 +22,8 @@ from sangue.models import Donatore, Donazione
 from formazione.models import Corso
 from .costanti import REGIONALE
 from .models import (Sede, Persona, Appartenenza, Documento, Estensione,
-    ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva)
+    ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva,
+    Nominativo,)
 from .validators import valida_almeno_14_anni, valida_data_nel_passato
 from .permessi.applicazioni import (PRESIDENTE, COMMISSARIO,
     CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE)
@@ -595,6 +596,20 @@ class ModuloPresidenteSedePersonaDiRiferimento(ModelForm):
     class Meta:
         model = Sede
         fields = ['persona_di_riferimento', 'persona_di_riferimento_telefono',]
+
+
+class ModuloPresidenteSedeNominativo(ModelForm):
+    class Meta:
+        model = Nominativo
+        fields = ['nome', 'email', 'PEC', 'telefono', ]
+
+    def __init__(self, *args, **kwargs):
+        tipo = kwargs.pop('tipo') if 'tipo' in kwargs else None
+
+        super().__init__(*args, **kwargs)
+        if tipo is not None:
+            self.fields['tipo'] = forms.CharField(max_length=3, initial=tipo,
+                                                  widget=forms.HiddenInput(),)
 
 
 class ModuloImportVolontari(forms.Form):

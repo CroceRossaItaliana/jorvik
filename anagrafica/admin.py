@@ -365,5 +365,6 @@ class AdminProvvedimentoDisciplinare(ReadonlyAdminMixin, admin.ModelAdmin):
 
 @admin.register(Nominativo)
 class AdminNominativo(ReadonlyAdminMixin, admin.ModelAdmin):
-    list_display = ['nome', 'tipo',]
+    list_display = ['nome', 'tipo', 'sede', 'inizio', 'fine',]
     list_filter = ['tipo',]
+    raw_id_fields = ['sede', ]

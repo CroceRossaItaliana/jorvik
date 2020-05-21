@@ -76,11 +76,55 @@
                                 {% else %}
                                     <a href="/presidente/sedi/{{ sede.pk }}/delegati/{{ chiave }}/">{{ valore }}</a>
                                 {% endif %}
+
+                                {% if valore == 'Consigliere giovane' %}
+                                     <p style="padding-top:8px;">Per l'inserimento o modifica delle cariche elettive inviare mail a
+                                        <a href="gaia@cri.it">gaia@cri.it</a> allegando la proclamazione.
+                                     </p>
+                                {% endif %}
                             </li>
                         {% endfor %}
                         </ul>
                     {% endfor %}
 
+                    <h4>Altri organi statutari</h4>
+                    <ul>
+                        <li>
+                            <span class="badge">{{ sede.nominativi_rdc.count }}</span> <span>Revisore dei Conti (obbligatorio)
+                                {% if not sede.nominativi_rdc %}
+                                    <a href="{% url 'presidente:sede_nominativi' sede.pk %}?add=rc">[+]</a>
+                                {% endif %}
+                            </span>
+                            <ul>
+                                {% for revisore in sede.nominativi_rdc %}
+                                    <li>
+                                        <a href="{{ revisore.modifica_url }}">{{ revisore }}</a> [<a class="cancellaSedeNominativo" href="{{ revisore.termina_url }}">Termina</a>]
+                                        <span style="display:block;">E-mail: <a href="mailto:{{ revisore.email }}">{{ revisore.email }}</a></span>
+                                        <span style="display:block;">PEC: <a href="mailto:{{ revisore.PEC }}">{{ revisore.PEC }}</a></span>
+                                        <span style="display:block;">Telefono: <a href="mailto:{{ revisore.telefono }}">{{ revisore.telefono }}</a></span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+
+                        <li>
+                            <span class="badge">{{ sede.nominativi_odc.count }}</span> <span>Organo di Controllo (max. 3)
+                                {% if not sede.nominativi_odc or sede.nominativi_odc.count < 3 %}
+                                    <a href="{% url 'presidente:sede_nominativi' sede.pk %}?add=oc">[+]</a>
+                                {% endif %}
+                            </span>
+                            <ul>
+                                {% for organo_di_controllo in sede.nominativi_odc %}
+                                    <li>
+                                        <a href="{{ organo_di_controllo.modifica_url }}">{{ organo_di_controllo }}</a> [<a class="cancellaSedeNominativo" href="{{ organo_di_controllo.termina_url }}">Termina</a>]
+                                        <span style="display:block;">E-mail: <a href="mailto:{{ organo_di_controllo.email }}">{{ organo_di_controllo.email }}</a></span>
+                                        <span style="display:block;">PEC: <a href="mailto:{{ organo_di_controllo.PEC }}">{{ organo_di_controllo.PEC }}</a></span>
+                                        <span style="display:block;">Telefono: <a href="mailto:{{ organo_di_controllo.telefono }}">{{ organo_di_controllo.telefono }}</a></span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
@@ -133,4 +177,13 @@
             </div>
         </div>
     </div>
+
+    <script>
+        $('.cancellaSedeNominativo').on('click', function(e) {
+            var confirmed = confirm("Sei sicuro di voler terminare questo nominativo?");
+            if (!confirmed) {
+                e.preventDefault();
+            }
+        });
+    </script>
 {% endblock %}
