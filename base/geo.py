@@ -190,7 +190,11 @@ class ConGeolocalizzazione(models.Model):
             return None
 
         if field is not None:
-            setattr(self, field, l)
+            # sviluppato e testato solo con il modello <Sede> (presidente)
+            if field == 'sede_operativa':
+                self.sede_operativa.add(l)  # campo esistente del modello <Sede>
+            else:
+                setattr(self, field, l)
         else:
             self.locazione = l
         self.save()

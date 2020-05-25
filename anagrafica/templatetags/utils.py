@@ -109,8 +109,14 @@ def reload_locazione(context):
     locazione = context['locazione']
 
     if 'reload_locazione' in request.session:
-        locazione = getattr(context['oggetto'], request.session['reload_locazione'])
+        reload_locazione = request.session['reload_locazione']
+        locazione_field, locazione_object = reload_locazione
+        locazione = getattr(context['oggetto'], locazione_field)
+
+        if locazione_field == 'sede_operativa':
+            locazione = locazione_object
         del request.session['reload_locazione']
+
     return locazione
 
 
@@ -130,10 +136,14 @@ def localizzatore(context,
     context.request.session['pk'] = oggetto_localizzatore.pk
     context.request.session['continua_url'] = continua_url
 
+    if 'modifica_indirizzo_sede' in context.request.session:
+        del context.request.session['modifica_indirizzo_sede']
+
     # (GAIA-280) Modifica degli indirizzi dei campi aggiuntivi di una <Sede>
     modifica_indirizzo_sede = None
     if 'modifica_indirizzo_sede' in kwargs:
         modifica_indirizzo_sede = kwargs.pop('modifica_indirizzo_sede')
+
     if modifica_indirizzo_sede is not None:
         context.request.session['modifica_indirizzo_sede'] = modifica_indirizzo_sede
 

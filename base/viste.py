@@ -399,6 +399,7 @@ def autorizzazioni_storico(request, me):
 
 @pagina_privata
 def geo_localizzatore(request, me):
+    context = dict(show_locazione_block=True)
     app_label, model, pk = request.session['app_label'], \
                            request.session['model'], \
                            int(request.session['pk'])
@@ -424,18 +425,22 @@ def geo_localizzatore(request, me):
     locazione_da_cambiare = oggetto.locazione
     if 'modifica_indirizzo_sede' in request.session:
         modifica_indirizzo_sede = request.session['modifica_indirizzo_sede']
-        if modifica_indirizzo_sede in ['sede_operativa',
-                                       'indirizzo_per_spedizioni']:
-            locazione_da_cambiare = getattr(oggetto, modifica_indirizzo_sede)
+        model_field = getattr(oggetto, modifica_indirizzo_sede)
 
-    context = {
+        if modifica_indirizzo_sede == 'sede_operativa':
+            locazione_da_cambiare = model_field.all()
+            context['show_locazione_block'] = False
+        elif modifica_indirizzo_sede == 'indirizzo_per_spedizioni':
+            locazione_da_cambiare = model_field
+
+    context.update({
         "locazione": locazione_da_cambiare,
         "continua_url": request.session['continua_url'],
         "modulo": form,
         "ricerca": ricerca,
         "risultati": risultati,
         "oggetto": oggetto,
-    }
+    })
 
     if app_label == 'formazione' and model == 'corsobase':
         context['is_corsobase'] = 1  # instead of True
@@ -454,11 +459,13 @@ def geo_localizzatore_imposta(request, me):
 
     oggetto = apps.get_model(app_label, model)
     oggetto = oggetto.objects.get(pk=pk)
-    oggetto.imposta_locazione(request.POST['indirizzo'], modifica_indirizzo_sede)
+    locazione_aggiunta = oggetto.imposta_locazione(request.POST['indirizzo'],
+                                                   modifica_indirizzo_sede)
 
     if modifica_indirizzo_sede:
         del request.session['modifica_indirizzo_sede']
-        request.session['reload_locazione'] = modifica_indirizzo_sede
+        request.session['reload_locazione'] = (modifica_indirizzo_sede,
+                                               locazione_aggiunta)
 
     return redirect("/geo/localizzatore/")
 

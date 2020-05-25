@@ -8,7 +8,7 @@
 {% block pagina_corpo %}
     <div class="container-fluid">
         <div class="row">
-            {% if locazione %}
+            {% if locazione and show_locazione_block %}
                 <div class="alert alert-block alert-success">
                     {% reload_locazione as locazione_reloaded %}
 
