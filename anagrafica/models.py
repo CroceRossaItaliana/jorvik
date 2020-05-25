@@ -1749,8 +1749,7 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     tipo = models.CharField("Tipologia", max_length=1, choices=TIPO, default=COMITATO, db_index=True)
 
     # GAIA-280
-    sede_operativa = models.ForeignKey(Locazione, null=True, blank=True,
-                                        related_name="locazione_sede_operativa")
+    sede_operativa = models.ManyToManyField(Locazione)
     indirizzo_per_spedizioni = models.ForeignKey(Locazione, null=True, blank=True,
                                         related_name="locazione_indirizzo_spedizioni")
     persona_di_riferimento = models.CharField("Persona da contattare di riferimento", max_length=250, null=True, blank=True)
