@@ -1366,6 +1366,25 @@ def presidente_sede_indirizzi(request, me, sede_pk):
 
 
 @pagina_privata
+def presidente_sede_operativa_indirizzo(request, me, sede_pk, sede_operativa_pk):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    action = request.GET.get('a')
+    if action and action == 'cancella':
+        sedi_operative = sede.sede_operativa
+        sede_operativa = sedi_operative.get(pk=sede_operativa_pk)
+        sedi_operative.remove(sede_operativa)
+        sede.save()
+
+        messages.success(request, "La sede operativa è stata cancellata.")
+        return redirect(sede.presidente_url)
+
+    return 'anagrafica_presidente_sede_operativa_indirizzo.html', {}
+
+
+@pagina_privata
 def presidente_sede_nominativi(request, me, sede_pk):
     redirect_to_sede = redirect(reverse('presidente:sedi_panoramico', args=[sede_pk,]))
     sede = get_object_or_404(Sede, pk=sede_pk)

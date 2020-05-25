@@ -159,9 +159,15 @@
                 </div>
                 <div class="panel-body">
                     <h3>Sede Operativa</h3>
-                    {{ sede.sede_operativa|default:"Non impostato" }}
-                    [<strong><a href="{% url 'presidente:sede_indirizzi' sede.pk %}?f=sede_operativa">modifica o imposta l'indirizzo della sede operativa</a></strong>]
+                    {% for sede_operativa in sede.sede_operativa.all %}
+                        {{ sede_operativa }} <strong><a class="cancellaSedeIndirizzo" href="{% url 'presidente:sede_operativa' sede.pk sede_operativa.pk %}?a=cancella"><i class="fa fa-fw fa-remove"></i></a></strong>
+                    <br>
+                    {% empty %}
+                        <p>Nessun indirizzo impostato.</p>
+                    {% endfor %}
 
+
+                    <a href="{% url 'presidente:sede_indirizzi' sede.pk %}?f=sede_operativa"><i class="fa fa-fw fa-plus"></i> Aggiungi un nuovo indirizzo</a></strong>
 
                     <h3>Indirizzo per spedizioni</h3>
                     {{ sede.indirizzo_per_spedizioni|default:"Non impostato" }}
@@ -179,11 +185,15 @@
     </div>
 
     <script>
-        $('.cancellaSedeNominativo').on('click', function(e) {
-            var confirmed = confirm("Sei sicuro di voler terminare questo nominativo?");
-            if (!confirmed) {
-                e.preventDefault();
-            }
-        });
+        function confirmAction(selector, message) {
+            $(selector).on('click', function(e) {
+                var confirmed = confirm(message);
+                if (!confirmed) {
+                    e.preventDefault();
+                }
+            });
+        }
+        confirmAction('.cancellaSedeNominativo', "Sei sicuro di voler terminare questo nominativo?");
+        confirmAction('.cancellaSedeIndirizzo', "Sei sicuro di voler cancellare questo inidizzo della sede operativa?");
     </script>
 {% endblock %}

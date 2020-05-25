@@ -18,6 +18,9 @@ urlpatterns = [
     url(r'^sedi/%s/nominativi/(?P<nominativo_pk>[0-9]+)/termina/$' % pk,
         viste.sede_nominativo_termina,
         name="sede_nominativo_termina"),
+    url(r'^sedi/%s/so/(?P<sede_operativa_pk>[0-9]+)/$' % pk,
+        viste.presidente_sede_operativa_indirizzo,
+        name="sede_operativa"),
     url(r'^sedi/%s/nominativi/$' % pk, viste.presidente_sede_nominativi,
         name="sede_nominativi"),
 
