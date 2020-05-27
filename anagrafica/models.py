@@ -2942,7 +2942,7 @@ class Nominativo(ModelloSemplice, ConStorico, ConMarcaTemporale):
     sede = models.ForeignKey(Sede, null=True, blank=True)
     email = models.EmailField("E-mail", null=True, blank=True)
     PEC = models.EmailField(null=True, blank=True)
-    telefono = models.CharField("FAX", max_length=64, blank=True)
+    telefono = models.CharField("Telefono", max_length=64, blank=True)
 
     @property
     def terminata(self):

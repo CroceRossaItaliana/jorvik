@@ -101,7 +101,7 @@
                                         <a href="{{ revisore.modifica_url }}">{{ revisore }}</a> [<a class="cancellaSedeNominativo" href="{{ revisore.termina_url }}">Termina</a>]
                                         <span style="display:block;">E-mail: <a href="mailto:{{ revisore.email }}">{{ revisore.email }}</a></span>
                                         <span style="display:block;">PEC: <a href="mailto:{{ revisore.PEC }}">{{ revisore.PEC }}</a></span>
-                                        <span style="display:block;">Telefono: <a href="mailto:{{ revisore.telefono }}">{{ revisore.telefono }}</a></span>
+                                        <span style="display:block;">Telefono: <strong>{{ revisore.telefono }}</strong></span>
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -119,7 +119,7 @@
                                         <a href="{{ organo_di_controllo.modifica_url }}">{{ organo_di_controllo }}</a> [<a class="cancellaSedeNominativo" href="{{ organo_di_controllo.termina_url }}">Termina</a>]
                                         <span style="display:block;">E-mail: <a href="mailto:{{ organo_di_controllo.email }}">{{ organo_di_controllo.email }}</a></span>
                                         <span style="display:block;">PEC: <a href="mailto:{{ organo_di_controllo.PEC }}">{{ organo_di_controllo.PEC }}</a></span>
-                                        <span style="display:block;">Telefono: <a href="mailto:{{ organo_di_controllo.telefono }}">{{ organo_di_controllo.telefono }}</a></span>
+                                        <span style="display:block;">Telefono: <strong>{{ organo_di_controllo.telefono }}</strong></span>
                                     </li>
                                 {% endfor %}
                             </ul>
