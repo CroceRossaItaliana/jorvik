@@ -18,7 +18,7 @@ from gruppi.readonly_admin import ReadonlyAdminMixin
 from formazione.models import PartecipazioneCorsoBase
 from .models import (Persona, Sede, Appartenenza, Delega, Documento,
     Fototessera, Estensione, Trasferimento, Riserva, Dimissione, Telefono,
-    ProvvedimentoDisciplinare)
+    ProvvedimentoDisciplinare, Nominativo)
 
 
 
@@ -271,7 +271,7 @@ class AdminSede(ReadonlyAdminMixin, MPTTModelAdmin):
     search_fields = ['nome', 'genitore__nome']
     list_display = ('nome', 'genitore', 'tipo', 'estensione', 'creazione', 'ultima_modifica', )
     list_filter = ('tipo', 'estensione', 'creazione', )
-    raw_id_fields = ('genitore', 'locazione',)
+    raw_id_fields = ('genitore', 'locazione', 'sede_operativa', 'indirizzo_per_spedizioni',)
     list_display_links = ('nome', 'estensione',)
     inlines = [InlineDelegaSede,]
 
@@ -361,3 +361,10 @@ class AdminProvvedimentoDisciplinare(ReadonlyAdminMixin, admin.ModelAdmin):
     raw_id_fields = ['persona', 'registrato_da', 'sede',]
     list_display = ['persona', 'inizio', 'fine', 'tipo',]
     list_filter = ['tipo',]
+
+
+@admin.register(Nominativo)
+class AdminNominativo(ReadonlyAdminMixin, admin.ModelAdmin):
+    list_display = ['nome', 'tipo', 'sede', 'inizio', 'fine',]
+    list_filter = ['tipo',]
+    raw_id_fields = ['sede', ]
