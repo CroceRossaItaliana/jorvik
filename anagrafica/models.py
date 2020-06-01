@@ -26,7 +26,7 @@ from .permessi.shortcuts import *
 from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL
 from attivita.models import Turno, Partecipazione
 from base.files import PDF, Excel, FoglioExcel
-from base.geo import ConGeolocalizzazione
+from base.geo import ConGeolocalizzazione, Locazione
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.models import (ModelloSemplice, ModelloAlbero, ConAutorizzazioni,
     ConAllegati, Autorizzazione, ConVecchioID)
@@ -1748,8 +1748,15 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     estensione = models.CharField("Estensione", max_length=1, choices=ESTENSIONE, db_index=True)
     tipo = models.CharField("Tipologia", max_length=1, choices=TIPO, default=COMITATO, db_index=True)
 
+    # GAIA-280
+    sede_operativa = models.ManyToManyField(Locazione)
+    indirizzo_per_spedizioni = models.ForeignKey(Locazione, null=True, blank=True,
+                                        related_name="locazione_indirizzo_spedizioni")
+    persona_di_riferimento = models.CharField("Persona da contattare di riferimento", max_length=250, null=True, blank=True)
+    persona_di_riferimento_telefono = models.CharField("Numero telefonico della persona di riferimento", max_length=20, null=True, blank=True)
+
     # Dati del comitato
-    # Nota: indirizzo e' gia' dentro per via di ConGeolocalizzazione
+    # Nota: indirizzo è già dentro per via di ConGeolocalizzazione
     telefono = models.CharField("Telefono", max_length=64, blank=True)
     fax = models.CharField("FAX", max_length=64, blank=True)
     email = models.EmailField("Indirizzo e-mail", max_length=64, blank=True)
@@ -1760,6 +1767,11 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                             help_text="Coordinate bancarie internazionali del "
                                       "C/C della Sede.",
                             validators=[valida_iban])
+    rea = models.CharField("Numero REA", max_length=20, blank=True, null=True)
+    cciaa = models.CharField("Iscrizione CCIAA", max_length=20, blank=True, null=True)
+    runts = models.CharField("N. Iscrizione Registro del Volontario",
+        max_length=20, blank=True, null=True)
+
     codice_fiscale = models.CharField("Codice Fiscale", max_length=32, blank=True)
     partita_iva = models.CharField("Partita IVA", max_length=32, blank=True,
                                    validators=[valida_partita_iva])
@@ -1793,6 +1805,10 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     @property
     def ha_checklist(self):
         return self.tipo == self.COMITATO and self.estensione in [NAZIONALE, REGIONALE, PROVINCIALE, LOCALE]
+
+    @property
+    def presidente_url(self):
+        return reverse('presidente:sedi_panoramico', args=[self.pk, ])
 
     @property
     def richiede_revisione_dati(self):
@@ -2074,6 +2090,28 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                 regione_sigla = REGIONI_CON_SIGLE.get(sede_regionale_id, "")
 
         return regione_sigla['sigla'] if regione_sigla else None
+
+    def nominativi(self, tipo=None):
+        """
+        Restituisce i nominativi NON terminati associati a questa sede/
+        :param tipo:
+        :return: Nominativo<QeurySet>
+        """
+        if tipo is None:
+            return Nominativo.objects.none()
+        return Nominativo.objects.filter(
+            tipo=tipo,
+            sede=self,
+            fine__isnull=True,
+        )
+
+    @property
+    def nominativi_rdc(self):
+        return self.nominativi(tipo=Nominativo.REVISORE_DEI_CONTI)
+
+    @property
+    def nominativi_odc(self):
+        return self.nominativi(tipo=Nominativo.ORGANO_DI_CONTROLLO)
 
     def __init__(self, *args, **kwargs):
         super(Sede, self).__init__(*args, **kwargs)
@@ -2889,3 +2927,48 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
                     ]
                 )
 
+
+class Nominativo(ModelloSemplice, ConStorico, ConMarcaTemporale):
+    """Modello che viene utilizzato con il modello <Sede>"""
+    REVISORE_DEI_CONTI = 'rc'
+    ORGANO_DI_CONTROLLO = 'oc'
+    TIPI_NOMINATIVO = [
+        (REVISORE_DEI_CONTI, "Revisore dei Conti"),
+        (ORGANO_DI_CONTROLLO, "Organo di Controllo"),
+    ]
+
+    nome = models.CharField("Nome e Cognome", max_length=250)
+    tipo = models.CharField(choices=TIPI_NOMINATIVO, max_length=3)
+    sede = models.ForeignKey(Sede, null=True, blank=True)
+    email = models.EmailField("E-mail", null=True, blank=True)
+    PEC = models.EmailField(null=True, blank=True)
+    telefono = models.CharField("Telefono", max_length=64, blank=True)
+
+    @property
+    def terminata(self):
+        return self.fine is not None
+
+    def termina(self):
+        self.fine = timezone.now()
+        self.save()
+
+    def url(self, name=None):
+        if name is None:
+            return self.sede.presidente_url
+        else:
+            return reverse('presidente:sede_nominativo_%s' % name,
+                           args=[self.sede.pk, self.pk, ])
+
+    @property
+    def modifica_url(self):
+        return self.url('modifica')
+
+    @property
+    def termina_url(self):
+        return self.url('termina')
+
+    def __str__(self):
+        return self.nome
+
+    class Meta:
+        verbose_name_plural = "Nominativi"
