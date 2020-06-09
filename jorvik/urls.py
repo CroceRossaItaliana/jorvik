@@ -62,6 +62,7 @@ urlpatterns = [
     url(r'^posta/', include('posta.urls', namespace='posta')),
     url(r'^us/', include('ufficio_soci.urls', namespace='ufficio_soci')),
     url(r'^cv/', include('curriculum.urls', namespace='cv')),
+    url(r'^so/', include('sala_operativa.urls', namespace='so')),
 
     # Formazione
     url(r'^formazione/', include('formazione.urls.formazione', namespace='formazione')),

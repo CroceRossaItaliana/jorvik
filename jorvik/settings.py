@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'django_gravatar',
     'centrale_operativa',
+    'sala_operativa',
     'compressor',
     'easy_thumbnails',
     'gestione_file',
