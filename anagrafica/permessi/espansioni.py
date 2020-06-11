@@ -2,28 +2,28 @@ from datetime import date
 
 from django.db.models import Q
 
-__author__ = 'alfioemanuele'
+from anagrafica.permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE,
+    GESTIONE_CORSI_SEDE, GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA,
+    GESTIONE_CORSO, MODIFICA, LETTURA, COMPLETO, GESTIONE_AUTOPARCHI_SEDE,
+    GESTIONE_GRUPPO, GESTIONE_GRUPPI, GESTIONE_GRUPPI_SEDE, GESTIONE, GESTIONE_AREE_SEDE,
+    GESTIONE_REFERENTI_ATTIVITA, GESTIONE_SALA_OPERATIVA_SEDE, GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI,
+    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, GESTIONE_POTERI_SALA_OPERATIVA_SEDE, RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA,
+    RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1, RUBRICA_DELEGATI_OBIETTIVO_2,
+    RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6,
+    RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA,
+    RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE,
+    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI,
+    RUBRICA_CONSIGLIERE_GIOVANE, RUBRICA_SALE_OPERATIVE)
 
-from anagrafica.permessi.costanti import GESTIONE_SOCI, ELENCHI_SOCI, GESTIONE_ATTIVITA_SEDE, GESTIONE_CORSI_SEDE, \
-    GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, MODIFICA, LETTURA, COMPLETO, \
-    GESTIONE_AUTOPARCHI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI, GESTIONE_GRUPPI_SEDE, GESTIONE, GESTIONE_AREE_SEDE, \
-    GESTIONE_REFERENTI_ATTIVITA, GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI, \
-    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
-    RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1, RUBRICA_DELEGATI_OBIETTIVO_2, \
-    RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
-    RUBRICA_DELEGATI_GIOVANI, RUBRICA_RESPONSABILI_AREA, RUBRICA_REFERENTI_ATTIVITA, \
-    RUBRICA_REFERENTI_GRUPPI, RUBRICA_CENTRALI_OPERATIVE, RUBRICA_RESPONSABILI_FORMAZIONE, \
-    RUBRICA_DIRETTORI_CORSI, RUBRICA_RESPONSABILI_AUTOPARCO, RUBRICA_COMMISSARI, RUBRICA_CONSIGLIERE_GIOVANE
 
-"""
-Questo file gestisce la espansione dei permessi in Gaia.
 
- ============================================================================================
- |                                    ! HEEEEY, TU !                                        |
- ============================================================================================
-  Prima di avventurarti da queste parti, assicurati di leggere la documentazione a:
-   https://github.com/CroceRossaItaliana/jorvik/wiki/Deleghe,-Permessi-e-Livelli-di-Accesso
- ============================================================================================
+"""            Questo file gestisce la espansione dei permessi in Gaia.
+ ===============================================================================
+ |                                    ! HEEEEY, TU !                           |
+ ===============================================================================
+  Prima di avventurarti da queste parti, assicurati di leggere la documentazione:
+  https://github.com/CroceRossaItaliana/jorvik/wiki/Deleghe,-Permessi-e-Livelli-di-Accesso
+ ===============================================================================
 """
 
 
@@ -184,6 +184,10 @@ def espandi_rubrica_centrali_operative(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
 
+def espandi_rubrica_sale_operative(qs_sedi, al_giorno=date.today()):
+    return espandi_rubriche(qs_sedi, al_giorno)
+
+
 def espandi_rubrica_responsabili_formazione(qs_sedi, al_giorno=date.today()):
     return espandi_rubriche(qs_sedi, al_giorno)
 
@@ -268,6 +272,11 @@ def espandi_gestione_poteri_centrale_operativa_sede(qs_sedi, al_giorno=None):
     ]
 
 
+def espandi_gestione_poteri_sala_operativa_sede(qs_sedi, al_giorno=None):
+    return [
+    ]
+
+
 def espandi_gestione_referenti_attivita(qs_attivita, al_giorno=None):
     return [
     ]
@@ -345,23 +354,40 @@ def espandi_gestione_gruppi_sede(qs_sedi, al_giorno=None):
 
 
 ESPANDI_PERMESSI = {
+    # SOCI
     GESTIONE_SOCI: espandi_gestione_soci,
     ELENCHI_SOCI: espandi_elenchi_soci,
     EMISSIONE_TESSERINI: espandi_emissione_tesserini,
+
+    # ANAGRAFICA
     GESTIONE_SEDE: espandi_gestione_sede,
     GESTIONE_AREE_SEDE: espandi_gestione_aree_sede,
+
+    # ATTIVITA
     GESTIONE_ATTIVITA_SEDE: espandi_gestione_attivita_sede,
     GESTIONE_ATTIVITA_AREA: espandi_gestione_attivita_area,
     GESTIONE_REFERENTI_ATTIVITA: espandi_gestione_referenti_attivita,
     GESTIONE_ATTIVITA: espandi_gestione_attivita,
+
+    # FORMAZIONE
     GESTIONE_CORSI_SEDE: espandi_gestione_corsi_sede,
     GESTIONE_CORSO: espandi_gestione_corso,
     GESTIONE_AUTOPARCHI_SEDE: espandi_gestione_autoparchi_sede,
+
+    # GRUPPI
     GESTIONE_GRUPPO: espandi_gestione_gruppo,
     GESTIONE_GRUPPI: espandi_gestione_gruppi,
     GESTIONE_GRUPPI_SEDE: espandi_gestione_gruppi_sede,
+
+    # CO
     GESTIONE_CENTRALE_OPERATIVA_SEDE: espandi_gestione_centrale_operativa_sede,
     GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE: espandi_gestione_poteri_centrale_operativa_sede,
+
+    # SO
+    GESTIONE_SALA_OPERATIVA_SEDE: espandi_gestione_poteri_sala_operativa_sede,
+    GESTIONE_POTERI_SALA_OPERATIVA_SEDE: espandi_gestione_poteri_sala_operativa_sede,
+
+    # RUBRICA
     RUBRICA_UFFICIO_SOCI: espandi_rubrica_ufficio_soci,
     RUBRICA_UFFICIO_SOCI_UNITA: espandi_rubrica_ufficio_soci_unita,
     RUBRICA_PRESIDENTI: espandi_rubrica_presidenti,
@@ -378,6 +404,7 @@ ESPANDI_PERMESSI = {
     RUBRICA_REFERENTI_ATTIVITA: espandi_rubrica_referenti_attivita,
     RUBRICA_REFERENTI_GRUPPI: espandi_rubrica_referenti_gruppi,
     RUBRICA_CENTRALI_OPERATIVE: espandi_rubrica_centrali_operative,
+    RUBRICA_SALE_OPERATIVE: espandi_rubrica_sale_operative,
     RUBRICA_RESPONSABILI_FORMAZIONE: espandi_rubrica_responsabili_formazione,
     RUBRICA_DIRETTORI_CORSI: espandi_rubrica_direttori_corsi,
     RUBRICA_RESPONSABILI_AUTOPARCO: espandi_rubrica_responsabili_autoparco,

@@ -4,7 +4,7 @@ from django.db.models import QuerySet, Q
 from ..permessi.applicazioni import (PRESIDENTE, DIRETTORE_CORSO, RESPONSABILE_AUTOPARCO,
     REFERENTE_GRUPPO, COMMISSARIO, UFFICIO_SOCI_UNITA, DELEGATO_OBIETTIVO_1,
     DELEGATO_OBIETTIVO_2, DELEGATO_OBIETTIVO_3, DELEGATO_OBIETTIVO_4, DELEGATO_OBIETTIVO_5,
-    DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, CONSIGLIERE,
+    DELEGATO_OBIETTIVO_6, RESPONSABILE_FORMAZIONE, DELEGATO_CO, DELEGATO_SO, CONSIGLIERE,
     CONSIGLIERE_GIOVANE, VICE_PRESIDENTE, UFFICIO_SOCI, DELEGATO_AREA,
     RESPONSABILE_AREA, REFERENTE)
 from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
@@ -12,6 +12,7 @@ from ..permessi.costanti import (GESTIONE_SOCI, ELENCHI_SOCI, \
     GESTIONE_SEDE, GESTIONE_ATTIVITA_AREA, GESTIONE_ATTIVITA, GESTIONE_CORSO, GESTIONE_AUTOPARCHI_SEDE, \
     GESTIONE_GRUPPI_SEDE, GESTIONE_GRUPPO, GESTIONE_GRUPPI, GESTIONE_AREE_SEDE, GESTIONE_REFERENTI_ATTIVITA, \
     GESTIONE_CENTRALE_OPERATIVA_SEDE, EMISSIONE_TESSERINI, GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, \
+    GESTIONE_SALA_OPERATIVA_SEDE, GESTIONE_POTERI_SALA_OPERATIVA_SEDE, RUBRICA_SALE_OPERATIVE,
     RUBRICA_UFFICIO_SOCI, RUBRICA_UFFICIO_SOCI_UNITA, \
     RUBRICA_PRESIDENTI, RUBRICA_DELEGATI_AREA, RUBRICA_DELEGATI_OBIETTIVO_1, RUBRICA_DELEGATI_OBIETTIVO_2, \
     RUBRICA_DELEGATI_OBIETTIVO_3, RUBRICA_DELEGATI_OBIETTIVO_4, RUBRICA_DELEGATI_OBIETTIVO_6, \
@@ -89,6 +90,7 @@ def permessi_presidente(sede):
         + permessi_responsabile_formazione(sede) \
         + permessi_responsabile_autoparco(sede) \
         + permessi_delegato_centrale_operativa(sede) \
+        + permessi_delegato_sala_operativa(sede) \
         + _espandi(sede)
 
 
@@ -292,6 +294,14 @@ def permessi_delegato_centrale_operativa(sede):
         (GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE,   sede_espansa),
     ]
 
+def permessi_delegato_sala_operativa(sede):
+    sede_espansa = sede.espandi(includi_me=True)
+    return [
+        (RUBRICA_SALE_OPERATIVE, sede.espandi(includi_me=True, pubblici=True)),
+        (GESTIONE_SALA_OPERATIVA_SEDE,          sede_espansa),
+        (GESTIONE_POTERI_SALA_OPERATIVA_SEDE,   sede_espansa),
+    ]
+
 
 def permessi_responsabile_area(area):
     """
@@ -361,6 +371,7 @@ PERMESSI_FUNZIONI = (
     (UFFICIO_SOCI_UNITA,        permessi_ufficio_soci_unita),
     (DELEGATO_AREA,             permessi_delegato_area),
     (DELEGATO_CO,               permessi_delegato_centrale_operativa),
+    (DELEGATO_SO,               permessi_delegato_sala_operativa),
     (RESPONSABILE_AREA,         permessi_responsabile_area),
     (REFERENTE,                 permessi_referente),
     (DIRETTORE_CORSO,           permessi_direttore_corso),
