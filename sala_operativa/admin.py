@@ -1,3 +1,9 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import ReperibilitaSO
+
+
+@admin.register(ReperibilitaSO)
+class ReperibilitaSOAdmin(admin.ModelAdmin):
+    raw_id_fields = ['persona', ]
+    list_display = ['persona', 'attivazione', 'inizio', 'fine', ]

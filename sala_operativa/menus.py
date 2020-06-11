@@ -5,8 +5,8 @@ def sala_operativa(me):
     MENU_NAME = 'Sala Operativa'
     return (
         (MENU_NAME, (
-            ("Reperibilità", "fa-user-plus", reverse('so:reperibilita')),
-            ("Turni", "fa-user-plus", reverse('so:turni')),
-            ("Poteri", "fa-user-plus", reverse('so:poteri')),
+            ("Reperibilità", 'fa-clock', reverse('so:reperibilita')),
+            ("Turni", 'fa-calendar', reverse('so:turni')),
+            ("Poteri", 'fa-magic', reverse('so:poteri')),
         )),
     )
