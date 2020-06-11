@@ -1,17 +1,21 @@
 {% extends 'base_bootstrap.html' %}
 
-{% block pagina_titolo %}Localizza oggetto{% endblock %}
+{% load utils %}
 {% load bootstrap3 %}
+
+{% block pagina_titolo %}Localizza oggetto{% endblock %}
 
 {% block pagina_corpo %}
     <div class="container-fluid">
         <div class="row">
-            {% if locazione %}
+            {% if locazione and show_locazione_block %}
                 <div class="alert alert-block alert-success">
+                    {% reload_locazione as locazione_reloaded %}
+
                     {% if continua_url %}
                         <a href="{{ continua_url }}" target="_top" class="btn btn-lg btn-success pull-right"><i class="fa fa-fw fa-check-circle"></i> Continua</a>
                     {% endif %}
-                    <h4><i class="fa fa-fw fa-map-marker"></i> {{ locazione.indirizzo }}</h4>
+                    <h4><i class="fa fa-fw fa-map-marker"></i> {{ locazione_reloaded }}</h4>
                     <p>Per cambiare la posizione per '{{ oggetto }}', cerca un altro indirizzo.</p>
                     {% if continua_url %}
                         <p>Altrimenti, per continuare, clicca sul pulsante 'Continua'.</p>

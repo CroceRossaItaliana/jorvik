@@ -50,9 +50,10 @@ from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
     ModuloCreazioneDelega, ModuloDonatore, ModuloDonazione, ModuloNuovaFototessera,
     ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
     ModuloImportVolontari, ModuloImportPresidenti, ModuloPulisciEmail,
-    ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica)
+    ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica,
+    ModuloPresidenteSedePersonaDiRiferimento, ModuloPresidenteSedeNominativo,)
 from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
-    Appartenenza, Sede, Riserva, Dimissione)
+    Appartenenza, Sede, Riserva, Dimissione, Nominativo)
 
 
 TIPO_VOLONTARIO = 'volontario'
@@ -1331,18 +1332,145 @@ def presidente_sede(request, me, sede_pk):
     if not me.permessi_almeno(sede, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
-    modulo = ModuloPresidenteSede(request.POST or None, instance=sede)
-    if modulo.is_valid():
-        modulo.save()
+    form = ModuloPresidenteSede(request.POST or None, instance=sede)
+    if form.is_valid():
+        form.save()
 
-    sezioni = _presidente_sede_ruoli(sede)
-
-    contesto = {
+    context = {
         "sede": sede,
-        "modulo": modulo,
-        "sezioni": sezioni,
+        "modulo": form,
+        "sezioni": _presidente_sede_ruoli(sede),
     }
-    return 'anagrafica_presidente_sede.html', contesto
+    return 'anagrafica_presidente_sede.html', context
+
+
+@pagina_privata
+def presidente_sede_indirizzi(request, me, sede_pk):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    form = ModuloPresidenteSede(request.POST or None, instance=sede)
+    if form.is_valid():
+        form.save()
+
+    pdr_form = ModuloPresidenteSedePersonaDiRiferimento(request.POST or None,
+                                                        instance=sede)
+    if pdr_form.is_valid():
+        pdr_form.save()
+
+    context = {
+        "sede": sede,
+        "modulo": form,
+    }
+
+    # GAIA-280. Inizio della logica. La vista riceve un parametro GET.
+    # Tutto il resto procede attraverso lo scambio di dati fra: templatetags, session
+    # (commit 74347d34fe)
+    modifica_indirizzo_sede = request.GET.get('f')
+    if modifica_indirizzo_sede and modifica_indirizzo_sede in ['sede_operativa',
+                                                               'indirizzo_per_spedizioni']:
+        context['modifica_indirizzo_sede'] = modifica_indirizzo_sede
+
+        if modifica_indirizzo_sede == "indirizzo_per_spedizioni":
+            context['persona_di_riferimento_form'] = pdr_form
+
+    else:
+        return redirect(reverse('presidente:sedi_panoramico', args=[sede.pk,]))
+
+    return 'anagrafica_presidente_sede_indirizzi.html', context
+
+
+@pagina_privata
+def presidente_sede_operativa_indirizzo(request, me, sede_pk, sede_operativa_pk):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    action = request.GET.get('a')
+    if action and action == 'cancella':
+        sedi_operative = sede.sede_operativa
+        sede_operativa = sedi_operative.get(pk=sede_operativa_pk)
+        sedi_operative.remove(sede_operativa)
+        sede.save()
+
+        messages.success(request, "La sede operativa è stata cancellata.")
+        return redirect(sede.presidente_url)
+
+    return 'anagrafica_presidente_sede_operativa_indirizzo.html', {}
+
+
+@pagina_privata
+def presidente_sede_nominativi(request, me, sede_pk):
+    redirect_to_sede = redirect(reverse('presidente:sedi_panoramico', args=[sede_pk,]))
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    tipo = None
+    add_tipo = request.GET.get('add') or request.POST['tipo']
+    if add_tipo in [Nominativo.REVISORE_DEI_CONTI,
+                    Nominativo.ORGANO_DI_CONTROLLO]:
+        tipo = add_tipo
+
+    if not tipo:
+        return redirect_to_sede
+
+    form = ModuloPresidenteSedeNominativo(request.POST or None, tipo=tipo)
+    if form.is_valid():
+        cd = form.cleaned_data
+        nominativo = form.save(commit=False)
+        nominativo.tipo = cd['tipo']
+        nominativo.sede = sede
+        nominativo.inizio = timezone.now()
+        nominativo.save()
+
+        return redirect_to_sede
+
+    context = {
+        'form': form,
+    }
+
+    return 'anagrafica_presidente_sede_nominativi.html', context
+
+
+@pagina_privata
+def sede_nominativo_modifica(request, me, sede_pk, nominativo_pk):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    nominativo = Nominativo.objects.get(pk=nominativo_pk)
+
+    form = ModuloPresidenteSedeNominativo(request.POST or None, instance=nominativo)
+    if form.is_valid():
+        form.save()
+        return redirect(nominativo.url())
+
+    context = {
+        'form': form,
+        'nominativo': nominativo,
+    }
+    return 'anagrafica_sede_nominativo_modifica.html', context
+
+
+@pagina_privata
+def sede_nominativo_termina(request, me, sede_pk, nominativo_pk):
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    nominativo = Nominativo.objects.get(pk=nominativo_pk)
+
+    if not me.permessi_almeno(sede, MODIFICA):
+        return redirect(ERRORE_PERMESSI)
+
+    # if nominativo.tipo == Nominativo.REVISORE_DEI_CONTI:
+    #     tutti_nominativi_per_sede = Nominativo.objects.filter(sede=sede)
+    #     if tutti_nominativi_per_sede.count() == 1:
+    #         messages.error("")
+    #         return sede.presidente_url
+
+    nominativo.termina()
+
+    return redirect(sede.presidente_url)
 
 
 @pagina_privata

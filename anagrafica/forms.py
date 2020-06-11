@@ -22,7 +22,8 @@ from sangue.models import Donatore, Donazione
 from formazione.models import Corso
 from .costanti import REGIONALE
 from .models import (Sede, Persona, Appartenenza, Documento, Estensione,
-    ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva)
+    ProvvedimentoDisciplinare, Delega, Fototessera, Trasferimento, Riserva,
+    Nominativo,)
 from .validators import valida_almeno_14_anni, valida_data_nel_passato
 from .permessi.applicazioni import (PRESIDENTE, COMMISSARIO,
     CONSIGLIERE, CONSIGLIERE_GIOVANE, VICE_PRESIDENTE)
@@ -570,21 +571,46 @@ class ModuloUtenza(ModelForm):
 class ModuloPresidenteSede(ModelForm):
     class Meta:
         model = Sede
-        fields = ['telefono', 'fax', 'email', 'pec',
-                  'sito_web', 'iban',
-                  'codice_fiscale', 'partita_iva', ]
+        fields = ['codice_fiscale', 'partita_iva',
+            'rea', 'cciaa', 'runts',
+            'email', 'pec',
+            'telefono', 'fax',
+            'sito_web', 'iban',
+        ]
 
     def clean_partita_iva(self):
         partita_iva = self.cleaned_data['partita_iva']
         return stdnum.it.iva.compact(partita_iva)
 
     def clean(self):
+        cd = self.cleaned_data
+
         # Tutti i campi obbligatori
         campi_obbligatori = ['telefono', 'email', 'pec', 'iban', 'codice_fiscale', 'partita_iva']
-        tutti_campi = {y: v for y, v in self.cleaned_data.copy().items() if y in campi_obbligatori}.items()
+        tutti_campi = {y: v for y, v in cd.copy().items() if y in campi_obbligatori}.items()
         for chiave, valore in tutti_campi:
             if not valore:
                 self.add_error(chiave, "Questo campo è obbligatorio.")
+
+
+class ModuloPresidenteSedePersonaDiRiferimento(ModelForm):
+    class Meta:
+        model = Sede
+        fields = ['persona_di_riferimento', 'persona_di_riferimento_telefono',]
+
+
+class ModuloPresidenteSedeNominativo(ModelForm):
+    class Meta:
+        model = Nominativo
+        fields = ['nome', 'email', 'PEC', 'telefono', ]
+
+    def __init__(self, *args, **kwargs):
+        tipo = kwargs.pop('tipo') if 'tipo' in kwargs else None
+
+        super().__init__(*args, **kwargs)
+        if tipo is not None:
+            self.fields['tipo'] = forms.CharField(max_length=3, initial=tipo,
+                                                  widget=forms.HiddenInput(),)
 
 
 class ModuloImportVolontari(forms.Form):

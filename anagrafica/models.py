@@ -26,7 +26,7 @@ from .permessi.shortcuts import *
 from .permessi.costanti import RUBRICA_DELEGATI_OBIETTIVO_ALL
 from attivita.models import Turno, Partecipazione
 from base.files import PDF, Excel, FoglioExcel
-from base.geo import ConGeolocalizzazione
+from base.geo import ConGeolocalizzazione, Locazione
 from base.stringhe import normalizza_nome, GeneratoreNomeFile
 from base.models import (ModelloSemplice, ModelloAlbero, ConAutorizzazioni,
     ConAllegati, Autorizzazione, ConVecchioID)
@@ -454,13 +454,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     def volontario(self, **kwargs):
         """ Controlla se membro volontario """
         return self.membro(Appartenenza.VOLONTARIO, **kwargs)
-
-    @property
-    def servizio_civile(self, **kwargs):
-        """
-        Controlla se membro Servizio civile universale
-        """
-        return self.membro(Appartenenza.SEVIZIO_CIVILE_UNIVERSALE, **kwargs)
 
     @property
     def ordinario(self, **kwargs):
@@ -1178,14 +1171,6 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         ).exists():
             return True
 
-        if self.appartenenze_attuali().filter(
-                membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE
-        ).exists() and not self.appartenenze_attuali().exclude(
-            membro__in=[Appartenenza.ESTESO,Appartenenza.SEVIZIO_CIVILE_UNIVERSALE]
-        ).exists():
-            return True
-
-
         return False
 
     def genera_foglio_di_servizio(self):
@@ -1520,23 +1505,21 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     DONATORE = 'DO'
     SOSTENITORE = 'SO'
     OPERATORE_VILLA_MARAINI = 'VM'  # GAIA-246
-    SEVIZIO_CIVILE_UNIVERSALE = 'SC'
 
     # Quale tipo di membro puo' partecipare alle attivita'?
-    MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO, SEVIZIO_CIVILE_UNIVERSALE)
+    MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO,)
 
     # Membri sotto il diretto controllo della Sede
-    MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE, SEVIZIO_CIVILE_UNIVERSALE,)
+    MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE)
 
     # Membro che puo' essere reclamato da una Sede
-    MEMBRO_RECLAMABILE = (VOLONTARIO, ORDINARIO, DIPENDENTE, SOSTENITORE, SEVIZIO_CIVILE_UNIVERSALE,)
+    MEMBRO_RECLAMABILE = (VOLONTARIO, ORDINARIO, DIPENDENTE, SOSTENITORE,)
 
     # Membro che puo' accedere alla rubrica di una Sede
-    MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE)
+    MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE,)
 
-    #TODO: SEVIZIO_CIVILE_UNIVERSALE il tesserino puo essere pagato dal presidentte
     # Membri che possono richiedere il tesserino
-    MEMBRO_TESSERINO = (VOLONTARIO, SEVIZIO_CIVILE_UNIVERSALE)
+    MEMBRO_TESSERINO = (VOLONTARIO,)
 
     # Membri soci
     MEMBRO_SOCIO = (VOLONTARIO, ORDINARIO,)
@@ -1557,13 +1540,11 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         (ORDINARIO, 'Socio Ordinario'),
         (SOSTENITORE, 'Sostenitore'),
         (DIPENDENTE, 'Dipendente'),
-        (SEVIZIO_CIVILE_UNIVERSALE, 'Volontario in servizio civile universale'),
         (OPERATORE_VILLA_MARAINI, 'Operatore Villa Maraini'),
         #(INFERMIERA, 'Infermiera Volontaria'),
         #(MILITARE, 'Membro Militare'),
         #(DONATORE, 'Donatore Finanziario'),
     )
-
 
     MENBRO_DICT = dict(MEMBRO)
 
@@ -1632,8 +1613,6 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             return 'Donatore, '+self.sede.nome_completo
         elif self.membro == self.SOSTENITORE:
             return 'Sostenitore, '+self.sede.nome_completo
-        elif self.membro == self.SEVIZIO_CIVILE_UNIVERSALE:
-            return 'Servizio civile universale, ' + self.sede.nome_completo
 
     def richiedi(self, notifiche_attive=True):
         """
@@ -2809,7 +2788,6 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     TRASFORMAZIONE = 'TRA'
     SCADENZA = 'SCA'
     ALTRO = 'ALT'
-    FINE_SERVIZIO_CIVILE = 'FSC'
 
     MOTIVI_VOLONTARI = (
         (VOLONTARIE, 'Dimissioni Volontarie'),
@@ -2819,7 +2797,6 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         (RADIAZIONE, 'Radiazione da Croce Rossa Italiana'),
         (SCADENZA, 'Scadenza contratto o altro'),
         (DECEDUTO, 'Decesso'),
-        (FINE_SERVIZIO_CIVILE, 'Fine progetto/Interruzione servizio civile'),
     )
 
     MOTIVI_ALTRI = (
@@ -2912,20 +2889,3 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
                     ]
                 )
 
-        if precedente_appartenenza.membro == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
-            oggetto = 'Inserimento come {}'.format(
-                Appartenenza.MENBRO_DICT[Appartenenza.SEVIZIO_CIVILE_UNIVERSALE]
-            )
-
-            Messaggio.costruisci_e_accoda(
-                oggetto=oggetto,
-                modello="email_dimissioni_servizio_civile.html",
-                mittente=presidente,
-                destinatari=[],
-                corpo={
-                    "persona": self.persona.nome_completo,
-                    "codice_fiscale": self.persona.codice_fiscale,
-                    "comitato": precedente_appartenenza.sede.nome_completo,
-                    "presidente": precedente_appartenenza.sede.presidente()
-                }
-            )

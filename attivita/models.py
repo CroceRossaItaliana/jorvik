@@ -1,8 +1,3 @@
-# coding=utf-8
-
-"""
-Questo modulo definisce i modelli del modulo Attivita' di Gaia.
-"""
 from datetime import timedelta, date
 from math import floor, ceil
 
@@ -22,6 +17,8 @@ from social.models import ConGiudizio, ConCommenti
 from base.models import ModelloSemplice, ConAutorizzazioni, ConAllegati, ConVecchioID, Autorizzazione
 from base.tratti import ConMarcaTemporale, ConDelegati
 from base.geo import ConGeolocalizzazione
+
+from .reports import AttivitaReport
 
 
 class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiudizio, ConCommenti,
@@ -246,28 +243,40 @@ class Attivita(ModelloSemplice, ConGeolocalizzazione, ConMarcaTemporale, ConGiud
             Partecipazione.con_esito_ok(turno__attivita=self).via("partecipazioni")
         ).distinct('nome', 'cognome', 'codice_fiscale').order_by('nome', 'cognome', 'codice_fiscale')
 
-    def genera_report(self):
+    def _genera_report(self):
         """
         Genera il report in formato PDF.
         :return:
         """
         from anagrafica.models import Persona
-        turni = self.turni_passati()
-        turni_e_partecipanti = []
-        for turno in turni:
+        turni_e_partecipanti = list()
+        for turno in self.turni_passati():
             partecipanti = Persona.objects.filter(partecipazioni__in=turno.partecipazioni_confermate())
             turni_e_partecipanti.append((turno, partecipanti))
-        pdf = PDF(oggetto=self)
-        pdf.genera_e_salva(
-            nome="Report.pdf",
-            modello="pdf_attivita_report.html",
-            corpo={
-                "attivita": self,
-                "turni_e_partecipanti": turni_e_partecipanti,
-            },
-            orientamento=PDF.ORIENTAMENTO_ORIZZONTALE,
-        )
-        return pdf
+        return turni_e_partecipanti
+
+    REPORT_FORMAT_EXCEL = 'xls'
+    REPORT_FORMAT_PDF = 'pdf'
+
+    def genera_report(self, format=REPORT_FORMAT_PDF):
+        corpo = {
+            "attivita": self,
+            "turni_e_partecipanti": self._genera_report(),
+        }
+
+        if format == self.REPORT_FORMAT_PDF:
+            pdf = PDF(oggetto=self)
+            pdf.genera_e_salva(
+                nome="Report.pdf",
+                modello="pdf_attivita_report.html",
+                corpo=corpo,
+                orientamento=PDF.ORIENTAMENTO_ORIZZONTALE,
+            )
+            return pdf
+
+        if format == self.REPORT_FORMAT_EXCEL:
+            excel = AttivitaReport(filename='Report.xls')
+            return excel.generate_and_download(data=corpo)
 
     def chiudi(self, autore=None, invia_notifiche=True, azione_automatica=False):
         """
