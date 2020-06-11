@@ -313,23 +313,6 @@ def us_reclama_persona(request, me, persona_pk):
                             "persona": persona.nome_completo
                         }
                     )
-                elif m == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
-                    oggetto = 'Inserimento come {}'.format(
-                        Appartenenza.MENBRO_DICT[m]
-                    )
-
-                    Messaggio.costruisci_e_accoda(
-                        oggetto=oggetto,
-                        modello="email_dimissioni_servizio_civile.html",
-                        mittente=me,
-                        destinatari=[],
-                        corpo={
-                            "persona": persona.nome_completo,
-                            "codice_fiscale": persona.codice_fiscale,
-                            "comitato": sede.nome_completo,
-                            "presidente": sede.presidente()
-                        }
-                    )
 
                 return redirect(persona.url)
 
