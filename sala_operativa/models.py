@@ -13,6 +13,7 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
         help_text="Tempo necessario all'attivazione, in formato HH:mm.",)
     persona = models.ForeignKey(Persona, related_name="so_reperibilita", on_delete=models.CASCADE)
     estensione = models.CharField(choices=ESTENSIONE_CHOICES, max_length=2)
+    creato_da = models.ForeignKey(Persona, null=True, blank=True)
 
     @classmethod
     def reperibilita_di(cls, persona):

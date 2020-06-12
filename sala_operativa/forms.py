@@ -1,5 +1,7 @@
 from django.forms import ModelForm
 
+from autocomplete_light import shortcuts as autocomplete_light
+
 from .models import ReperibilitaSO
 
 
@@ -7,3 +9,11 @@ class VolontarioReperibilitaForm(ModelForm):
     class Meta:
         model = ReperibilitaSO
         fields = ['estensione', 'inizio', 'fine', 'attivazione',]
+
+
+class AggiungiReperibilitaPerVolontarioForm(ModelForm):
+    persona = autocomplete_light.ModelChoiceField("AggiungiReperibilitaPerVolontario",)
+
+    class Meta:
+        model = ReperibilitaSO
+        fields = ['persona', 'estensione', 'inizio', 'fine', 'attivazione',]

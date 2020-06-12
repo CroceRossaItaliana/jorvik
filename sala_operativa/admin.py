@@ -5,7 +5,7 @@ from .models import ReperibilitaSO
 
 @admin.register(ReperibilitaSO)
 class ReperibilitaSOAdmin(admin.ModelAdmin):
-    raw_id_fields = ['persona', ]
+    raw_id_fields = ['persona', 'creato_da', ]
     list_display = ['persona', 'estensione', 'attivazione', 'inizio', 'fine',
-                    'creazione', ]
+                    'creazione', 'creato_da', ]
     list_filter = ['estensione', ]

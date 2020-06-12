@@ -10,10 +10,9 @@
         {% for sezione_nome, sezione_pagine in menu.so %}
             <li class="dropdown-header grassetto piu-grande">{{ sezione_nome }}</li>
             {% for link_nome, link_icona, link_url, link_contatore in sezione_pagine %}
-                <li role="presentation" {% if link_url in request.path %}class="active"{% endif %}>
+                <li role="presentation" {% if link_url == request.path %}class="active"{% endif %}>
                     <a href="{{ link_url|urlencode }}">
-                        <i class="fa {{ link_icona }} fa-fw"></i>
-                        {{ link_nome }}
+                        <i class="fa {{ link_icona }} fa-fw"></i> {{ link_nome }}
                     </a>
                 </li>
             {% endfor %}
