@@ -20,6 +20,10 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
         return cls.objects.filter(persona=persona)
 
     @classmethod
+    def reperibilita_create_da(cls, persona):
+        return cls.objects.filter(creato_da=persona)
+
+    @classmethod
     def reperibilita_per_sedi(cls, sedi):
         q = cls.query_attuale(
             Appartenenza.query_attuale(sede__in=sedi).via("persona__appartenenze"),

@@ -79,11 +79,32 @@ def sala_operativa_reperibilita_cancella(request, me, r_pk):
     if not me.volontario:
         return redirect('/')
     reperibilita = get_object_or_404(ReperibilitaSO, pk=r_pk)
-    if not reperibilita.persona == me:
+    if me not in [reperibilita.persona, reperibilita.creato_da, ]:
         return redirect(ERRORE_PERMESSI)
     reperibilita.delete()
     messages.success(request, 'La reperibilita selezionata è stata rimossa.')
     return redirect(reverse('so:reperibilita'))
+
+
+@pagina_privata
+def sala_operativa_reperibilita_edit(request, me, r_pk):
+    if not me.volontario:
+        return redirect('/')
+
+    reperibilita = get_object_or_404(ReperibilitaSO, pk=r_pk)
+    if reperibilita.creato_da != me:
+        return redirect(ERRORE_PERMESSI)
+
+    form = VolontarioReperibilitaForm(request.POST or None, instance=reperibilita)
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('so:reperibilita_backup'))
+    context = {
+        'form': form,
+        'reperibilita': reperibilita,
+    }
+    return 'sala_operativa_reperibilita_edit.html', context
 
 
 @pagina_privata
@@ -96,9 +117,10 @@ def sala_operativa_reperibilita_backup(request, me):
             reperibilita.persona = cd['persona']
             reperibilita.creato_da = me
             reperibilita.save()
-            return redirect(reverse('so:reperibilita'))
+            return redirect(reverse('so:reperibilita_backup'))
 
     context = {
         'form': form,
+        'reperibilita': ReperibilitaSO.reperibilita_create_da(me),
     }
     return 'sala_operativa_add_reperibilita_per_volontario.html', context
