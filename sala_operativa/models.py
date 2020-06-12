@@ -1,14 +1,18 @@
 from django.db import models
 
 from anagrafica.models import Persona, Appartenenza
+from anagrafica.costanti import ESTENSIONE
 from base.models import ModelloSemplice
 from base.tratti import ConMarcaTemporale, ConStorico
 
 
 class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
+    ESTENSIONE_CHOICES = ESTENSIONE
+
     attivazione = models.TimeField("Tempo di attivazione", default="00:15",
         help_text="Tempo necessario all'attivazione, in formato HH:mm.",)
     persona = models.ForeignKey(Persona, related_name="so_reperibilita", on_delete=models.CASCADE)
+    estensione = models.CharField(choices=ESTENSIONE_CHOICES, max_length=2)
 
     @classmethod
     def reperibilita_di(cls, persona):

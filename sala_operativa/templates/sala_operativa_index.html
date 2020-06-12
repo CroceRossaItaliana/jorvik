@@ -61,10 +61,11 @@
                                     {{ r.persona.sede_riferimento.link|safe }}
                                 </td>
                                 <td>
+                                    <strong>{{ r.get_estensione_display }}</strong><br>
                                     {{ r.inizio|date:"SHORT_DATETIME_FORMAT" }} (inizio)<br />
                                     {{ r.fine|date:"SHORT_DATETIME_FORMAT" }} (fine)
                                 </td>
-                                <td class="piu-grande">in {{ r.attivazione }}</td>
+                                <td>in {{ r.attivazione }}</td>
                                 <td>
                                     {% for t in r.persona.numeri_telefono.all %}
                                             {{ t }} ({% if t.servizio %}Servizio{% else %}Personale{% endif %})<br />

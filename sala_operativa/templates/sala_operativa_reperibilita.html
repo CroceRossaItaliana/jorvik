@@ -30,7 +30,11 @@
                     <tbody>
                     {% for r in reperibilita %}
                         <tr>
-                            <td class="grassetto">{{ r.inizio }} (inizio) <br> {{ r.fine }} (fine)</td>
+                            <td class="grassetto">
+                                {{ r.get_estensione_display }}<br>
+                                {{ r.inizio }} (inizio)<br>
+                                {{ r.fine }} (fine)
+                            </td>
                             <td>{{ r.attivazione }}</td>
                             <td>
                                 {{ r.creazione|naturaltime }}<br />

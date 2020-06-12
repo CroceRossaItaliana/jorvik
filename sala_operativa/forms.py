@@ -6,4 +6,4 @@ from .models import ReperibilitaSO
 class VolontarioReperibilitaForm(ModelForm):
     class Meta:
         model = ReperibilitaSO
-        fields = ['inizio', 'fine', 'attivazione',]
+        fields = ['estensione', 'inizio', 'fine', 'attivazione',]
