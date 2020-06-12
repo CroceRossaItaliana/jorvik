@@ -25,6 +25,8 @@ def sala_operativa_index(request, me):
 
     context = {
         'ora': poco_fa(),
+        'sedi': sedi,
+        'reperibilita': ReperibilitaSO.reperibilita_per_sedi(sedi),
     }
     return 'sala_operativa_index.html', context
 

@@ -8,6 +8,10 @@
 {% endblock %}
 
 {% block app_contenuto %}
+    <h2 class="allinea-centro text-success">Sala Operativa</h2>
+    <p class="allinea-centro">
+        <img alt="Emblema CRI" src="https://upload.wikimedia.org/wikipedia/it/thumb/4/4a/Emblema_CRI.svg/300px-Emblema_CRI.svg.png" width="180" height="180" />
+    </p>
     <div class="row">
         <div class="col-md-6">
             <div class="alert alert-info">
@@ -20,6 +24,12 @@
             <div class="alert alert-info">
                 <p><i class="fa fa-info-circle"></i> I Volontari possono segnalare la propria disponibilità dal menu "SO", cliccando quindi su "Reperibilità".</p>
                 <p>La funzionalità è anche disponibile da dispositivi mobile.</p>
+                <p>Sei abilitato alla gestione della Sala Operativa per le seguenti sedi:</p>
+                <ul>
+                    {% for sede in sedi %}
+                        <li>{{ sede.link|safe }}</li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
         <div class="col-md-12">
