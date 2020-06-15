@@ -456,6 +456,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return self.membro(Appartenenza.VOLONTARIO, **kwargs)
 
     @property
+    def servizio_civile(self, **kwargs):
+        """
+        Controlla se membro Servizio civile universale
+        """
+        return self.membro(Appartenenza.SEVIZIO_CIVILE_UNIVERSALE, **kwargs)
+
+    @property
     def ordinario(self, **kwargs):
         """
         Controlla se membro ordinario
@@ -1171,6 +1178,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         ).exists():
             return True
 
+        if self.appartenenze_attuali().filter(
+                membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE
+        ).exists() and not self.appartenenze_attuali().exclude(
+            membro__in=[Appartenenza.ESTESO,Appartenenza.SEVIZIO_CIVILE_UNIVERSALE]
+        ).exists():
+            return True
+
+
         return False
 
     def genera_foglio_di_servizio(self):
@@ -1505,21 +1520,22 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
     DONATORE = 'DO'
     SOSTENITORE = 'SO'
     OPERATORE_VILLA_MARAINI = 'VM'  # GAIA-246
+    SEVIZIO_CIVILE_UNIVERSALE = 'SC'
 
     # Quale tipo di membro puo' partecipare alle attivita'?
-    MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO,)
+    MEMBRO_ATTIVITA = (VOLONTARIO, ESTESO, SEVIZIO_CIVILE_UNIVERSALE)
 
     # Membri sotto il diretto controllo della Sede
-    MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE)
+    MEMBRO_DIRETTO = (VOLONTARIO, ORDINARIO, DIPENDENTE, INFERMIERA, MILITARE, DONATORE, SOSTENITORE, SEVIZIO_CIVILE_UNIVERSALE,)
 
     # Membro che puo' essere reclamato da una Sede
-    MEMBRO_RECLAMABILE = (VOLONTARIO, ORDINARIO, DIPENDENTE, SOSTENITORE,)
+    MEMBRO_RECLAMABILE = (VOLONTARIO, ORDINARIO, DIPENDENTE, SOSTENITORE, SEVIZIO_CIVILE_UNIVERSALE,)
 
     # Membro che puo' accedere alla rubrica di una Sede
-    MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE,)
+    MEMBRO_RUBRICA = (VOLONTARIO, ORDINARIO, ESTESO, DIPENDENTE)
 
     # Membri che possono richiedere il tesserino
-    MEMBRO_TESSERINO = (VOLONTARIO,)
+    MEMBRO_TESSERINO = (VOLONTARIO, SEVIZIO_CIVILE_UNIVERSALE)
 
     # Membri soci
     MEMBRO_SOCIO = (VOLONTARIO, ORDINARIO,)
@@ -1541,6 +1557,7 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
         (SOSTENITORE, 'Sostenitore'),
         (DIPENDENTE, 'Dipendente'),
         (OPERATORE_VILLA_MARAINI, 'Operatore Villa Maraini'),
+        (SEVIZIO_CIVILE_UNIVERSALE, 'Volontario in servizio civile universale'),
         #(INFERMIERA, 'Infermiera Volontaria'),
         #(MILITARE, 'Membro Militare'),
         #(DONATORE, 'Donatore Finanziario'),
@@ -1613,6 +1630,8 @@ class Appartenenza(ModelloSemplice, ConStorico, ConMarcaTemporale, ConAutorizzaz
             return 'Donatore, '+self.sede.nome_completo
         elif self.membro == self.SOSTENITORE:
             return 'Sostenitore, '+self.sede.nome_completo
+        elif self.membro == self.SEVIZIO_CIVILE_UNIVERSALE:
+            return 'Servizio civile universale, ' + self.sede.nome_completo
 
     def richiedi(self, notifiche_attive=True):
         """
@@ -1748,6 +1767,15 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     estensione = models.CharField("Estensione", max_length=1, choices=ESTENSIONE, db_index=True)
     tipo = models.CharField("Tipologia", max_length=1, choices=TIPO, default=COMITATO, db_index=True)
 
+    # GAIA-280
+    sede_operativa = models.ManyToManyField(Locazione)
+    indirizzo_per_spedizioni = models.ForeignKey(Locazione, null=True, blank=True,
+                                                 related_name="locazione_indirizzo_spedizioni")
+    persona_di_riferimento = models.CharField("Persona da contattare di riferimento", max_length=250, null=True,
+                                              blank=True)
+    persona_di_riferimento_telefono = models.CharField("Numero telefonico della persona di riferimento", max_length=20,
+                                                       null=True, blank=True)
+
     # Dati del comitato
     # Nota: indirizzo e' gia' dentro per via di ConGeolocalizzazione
     telefono = models.CharField("Telefono", max_length=64, blank=True)
@@ -1760,6 +1788,12 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                             help_text="Coordinate bancarie internazionali del "
                                       "C/C della Sede.",
                             validators=[valida_iban])
+
+    rea = models.CharField("Numero REA", max_length=20, blank=True, null=True)
+    cciaa = models.CharField("Iscrizione CCIAA", max_length=20, blank=True, null=True)
+    runts = models.CharField("N. Iscrizione Registro del Volontario",
+                             max_length=20, blank=True, null=True)
+
     codice_fiscale = models.CharField("Codice Fiscale", max_length=32, blank=True)
     partita_iva = models.CharField("Partita IVA", max_length=32, blank=True,
                                    validators=[valida_partita_iva])
@@ -1793,6 +1827,10 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
     @property
     def ha_checklist(self):
         return self.tipo == self.COMITATO and self.estensione in [NAZIONALE, REGIONALE, PROVINCIALE, LOCALE]
+
+    @property
+    def presidente_url(self):
+        return reverse('presidente:sedi_panoramico', args=[self.pk, ])
 
     @property
     def richiede_revisione_dati(self):
@@ -2074,6 +2112,28 @@ class Sede(ModelloAlbero, ConMarcaTemporale, ConGeolocalizzazione, ConVecchioID,
                 regione_sigla = REGIONI_CON_SIGLE.get(sede_regionale_id, "")
 
         return regione_sigla['sigla'] if regione_sigla else None
+
+    def nominativi(self, tipo=None):
+        """
+        Restituisce i nominativi NON terminati associati a questa sede/
+        :param tipo:
+        :return: Nominativo<QeurySet>
+        """
+        if tipo is None:
+            return Nominativo.objects.none()
+        return Nominativo.objects.filter(
+            tipo=tipo,
+            sede=self,
+            fine__isnull=True,
+        )
+
+    @property
+    def nominativi_rdc(self):
+        return self.nominativi(tipo=Nominativo.REVISORE_DEI_CONTI)
+
+    @property
+    def nominativi_odc(self):
+        return self.nominativi(tipo=Nominativo.ORGANO_DI_CONTROLLO)
 
     def __init__(self, *args, **kwargs):
         super(Sede, self).__init__(*args, **kwargs)
@@ -2788,6 +2848,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
     TRASFORMAZIONE = 'TRA'
     SCADENZA = 'SCA'
     ALTRO = 'ALT'
+    FINE_SERVIZIO_CIVILE = 'FSC'
 
     MOTIVI_VOLONTARI = (
         (VOLONTARIE, 'Dimissioni Volontarie'),
@@ -2797,6 +2858,7 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
         (RADIAZIONE, 'Radiazione da Croce Rossa Italiana'),
         (SCADENZA, 'Scadenza contratto o altro'),
         (DECEDUTO, 'Decesso'),
+        (FINE_SERVIZIO_CIVILE, 'Fine progetto/Interruzione servizio civile'),
     )
 
     MOTIVI_ALTRI = (
@@ -2888,4 +2950,66 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
                         self.persona
                     ]
                 )
+                if precedente_appartenenza.membro == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
+                    oggetto = 'Inserimento come {}'.format(
+                        Appartenenza.MENBRO_DICT[Appartenenza.SEVIZIO_CIVILE_UNIVERSALE]
+                    )
 
+                    Messaggio.costruisci_e_accoda(
+                        oggetto=oggetto,
+                        modello="email_dimissioni_servizio_civile.html",
+                        mittente=presidente,
+                        destinatari=[],
+                        corpo={
+                            "persona": self.persona.nome_completo,
+                            "codice_fiscale": self.persona.codice_fiscale,
+                            "comitato": precedente_appartenenza.sede.nome_completo,
+                            "presidente": precedente_appartenenza.sede.presidente()
+                        }
+                    )
+
+
+class Nominativo(ModelloSemplice, ConStorico, ConMarcaTemporale):
+    """Modello che viene utilizzato con il modello <Sede>"""
+    REVISORE_DEI_CONTI = 'rc'
+    ORGANO_DI_CONTROLLO = 'oc'
+    TIPI_NOMINATIVO = [
+        (REVISORE_DEI_CONTI, "Revisore dei Conti"),
+        (ORGANO_DI_CONTROLLO, "Organo di Controllo"),
+    ]
+
+    nome = models.CharField("Nome e Cognome", max_length=250)
+    tipo = models.CharField(choices=TIPI_NOMINATIVO, max_length=3)
+    sede = models.ForeignKey(Sede, null=True, blank=True)
+    email = models.EmailField("E-mail", null=True, blank=True)
+    PEC = models.EmailField(null=True, blank=True)
+    telefono = models.CharField("Telefono", max_length=64, blank=True)
+
+    @property
+    def terminata(self):
+        return self.fine is not None
+
+    def termina(self):
+        self.fine = timezone.now()
+        self.save()
+
+    def url(self, name=None):
+        if name is None:
+            return self.sede.presidente_url
+        else:
+            return reverse('presidente:sede_nominativo_%s' % name,
+                           args=[self.sede.pk, self.pk, ])
+
+    @property
+    def modifica_url(self):
+        return self.url('modifica')
+
+    @property
+    def termina_url(self):
+        return self.url('termina')
+
+    def __str__(self):
+        return self.nome
+
+    class Meta:
+        verbose_name_plural = "Nominativi"
