@@ -223,6 +223,15 @@ def us_reclama_persona(request, me, persona_pk):
                 modulo_appartenenza.add_error('membro', "La persona e' gia dipendente nel tuo comitato")
                 continua = False
 
+        appartenenza_servizio_civile = Appartenenza.query_attuale(persona=persona, membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE).first()
+        if appartenenza_servizio_civile:
+            if membro == Appartenenza.DIPENDENTE:
+                modulo_appartenenza.add_error(
+                    'membro',
+                    "La persona è appartenente come servizio civile universale non può essere reclamata come dipendente"
+                )
+                continua = False
+
         # Controllo eta' minima socio
         if modulo_appartenenza.cleaned_data.get('membro') in Appartenenza.MEMBRO_SOCIO \
                 and persona.eta < Persona.ETA_MINIMA_SOCIO:
