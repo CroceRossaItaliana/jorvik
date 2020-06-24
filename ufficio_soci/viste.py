@@ -246,18 +246,6 @@ def us_reclama_persona(request, me, persona_pk):
                                                     "%d anni. " % Persona.ETA_MINIMA_SOCIO)
             continua = False
 
-        app = persona.appartenenze_attuali().filter(membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE)
-        if membro == Appartenenza.DIPENDENTE and app.exists():
-            for ap in app:
-                dim = Dimissione(
-                    richiedente=me,
-                    persona=persona,
-                    appartenenza=ap,
-                    sede=ap.sede
-                )
-                dim.applica(applicante=me)
-                dim.save()
-
         if continua:
             with transaction.atomic():
                 app = modulo_appartenenza.save(commit=False)
