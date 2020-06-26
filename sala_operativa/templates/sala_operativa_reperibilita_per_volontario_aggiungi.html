@@ -33,6 +33,7 @@
                     {% for r in reperibilita %}
                         <tr>
                             <td>
+                                <strong>{{ r.persona.link|safe }}</strong><br>
                                 <strong>{{ r.get_estensione_display }}</strong><br>
                                 {{ r.inizio }} (inizio)<br>
                                 {{ r.fine }} (fine)
