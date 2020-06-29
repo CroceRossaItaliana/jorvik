@@ -6,13 +6,29 @@ from base.models import ModelloSemplice
 from base.tratti import ConMarcaTemporale, ConStorico
 
 
+class ServizioSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
+    ESTENSIONE_CHOICES = ESTENSIONE
+
+    name = models.CharField("Nome", max_length=255)
+    estensione = models.CharField(choices=ESTENSIONE_CHOICES, max_length=2, blank=True, null=True)
+    creato_da = models.ForeignKey(Persona, null=True, blank=True)
+
+    def __str__(self):
+        return str(self.name)
+
+    class Meta:
+        verbose_name = 'Servizio'
+        verbose_name_plural = 'Servizi'
+
+
 class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
     ESTENSIONE_CHOICES = ESTENSIONE
 
     attivazione = models.TimeField("Tempo di attivazione", default="00:15",
         help_text="Tempo necessario all'attivazione, in formato HH:mm.",)
-    persona = models.ForeignKey(Persona, related_name="so_reperibilita", on_delete=models.CASCADE)
     estensione = models.CharField(choices=ESTENSIONE_CHOICES, max_length=2)
+    persona = models.ForeignKey(Persona, related_name="so_reperibilita", on_delete=models.CASCADE)
+    servizio = models.ManyToManyField(ServizioSO, blank=True)
     creato_da = models.ForeignKey(Persona, null=True, blank=True)
 
     @classmethod
@@ -40,3 +56,14 @@ class ReperibilitaSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
         permissions = (
             ("view_reperibilita", "Can view Reperibilità"),
         )
+
+
+# class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
+#     name = models.CharField("Nome", max_length=255)
+#
+#     def __str__(self):
+#         return str(self.name)
+#
+#     class Meta:
+#         verbose_name = 'Mezzo o materiale'
+#         verbose_name_plural = 'Mezzi e materiali'
