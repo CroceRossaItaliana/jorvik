@@ -1,0 +1,43 @@
+{% extends "anagrafica_utente_vuota.html" %}
+
+{% load bootstrap3 %}
+{% block pagina_titolo %}Modifica Anagrafica{% endblock %}
+
+{% block app_contenuto %}
+    <div class="alert bg-info">
+        <p>
+            <i class="fa fa-info-circle fa-fw"></i> Da questa pagina potrai gestire la tua i dati riguardanti il datore di lavoro.
+        </p>
+    </div>
+{#     action="{% url 'utente:anagrafica' %}" method="POST" enctype="multipart/form-data"#}
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-lg-7">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h4 class="panel-title"><i class="fa fa-edit fa-fw"></i> Dati datore di lavoro</h4>
+                    </div>
+                    <div class="panel-body">
+                        <h4>Modifica datore di lavoro</h4>
+                        {% bootstrap_form form %}
+
+                        <button class="btn btn-block btn-primary" type="submit">
+                             <i class="fa fa-save fa-fw"></i>
+                             Salva modifiche
+                         </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+{#                <div class="panel panel-info">#}
+{#                    <div class="panel-heading"><i class="fa fa-fw fa-user"></i> -</div>#}
+{#                    <div class="panel-body">#}
+{##}
+{#                    </div>#}
+{#                </div>#}
+            </div>
+        </div>
+    </form>
+{% endblock %}

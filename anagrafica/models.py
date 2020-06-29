@@ -90,6 +90,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
     avatar = models.ImageField("Avatar", blank=True, null=True,
         upload_to=GeneratoreNomeFile('avatar/'), validators=[valida_dimensione_file_5mb])
 
+    # Datore di lavoro
+    datore_ragione_sociale = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+    datore_p_iva = models.CharField(max_length=11, default="", db_index=True, blank=True, null=True)
+    datore_telefono = models.CharField(max_length=10, default="", db_index=True, blank=True, null=True)
+    datore_referente = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+    datore_email = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+    datore_pec = models.CharField(max_length=25, default="", db_index=True, blank=True, null=True)
+
     # Privacy
     POLICY_PUBBLICO = 9
     POLICY_REGISTRATI = 7
@@ -162,6 +170,14 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         :return: "Nome Cognome".
         """
         return normalizza_nome(self.cognome + " " + self.nome)
+
+    @property
+    def ha_datore_lavoro(self):
+        if self.datore_ragione_sociale and self.datore_p_iva \
+                and self.datore_telefono and self.datore_referente:
+            return True
+        else:
+            return False
 
     # Q: Qual e' l'email di questa persona?
     # A: Una persona puo' avere da zero a due indirizzi email.

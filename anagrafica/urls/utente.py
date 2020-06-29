@@ -11,6 +11,7 @@ app_label = 'utente'
 urlpatterns = [
     url(r'^$', views.utente, name='main'),
     url(r'^anagrafica/$', views.utente_anagrafica, name='anagrafica'),
+    url(r'^datore/lavoro/$', views.utente_datore_lavoro, name='anagrafica'),
     url(r'^estensione/$', views.utente_estensione, name='estensione'),
     url(r'^trasferimento/$', views.utente_trasferimento, name='trasferimento'),
     url(r'^fotografia/$', views.utente_fotografia, name='foto'),

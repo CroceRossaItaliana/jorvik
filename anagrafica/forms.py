@@ -251,6 +251,18 @@ class ModuloProfiloModificaAnagrafica(ModelForm):
                     self.fields[f].disabled = True
 
 
+class ModuloProfiloModificaAnagraficaDatoreLavoro(ModelForm):
+    class Meta:
+        model = Persona
+        fields = ['datore_ragione_sociale', 'datore_p_iva',
+                  'datore_telefono', 'datore_referente',
+                  'datore_email', 'datore_pec']
+
+    def clean(self):
+        cd = self.cleaned_data
+        return cd
+
+
 class ModuloProfiloModificaAnagraficaDomicilio(ModelForm):
     class Meta:
         model = Persona

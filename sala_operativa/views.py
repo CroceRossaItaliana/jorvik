@@ -109,9 +109,15 @@ def sala_operativa_reperibilita_edit(request, me, r_pk):
 
 @pagina_privata
 def sala_operativa_reperibilita_backup(request, me):
+    from anagrafica.forms import ModuloProfiloModificaAnagraficaDatoreLavoro
+    datore_lavoro = ModuloProfiloModificaAnagraficaDatoreLavoro(request.POST or None, instance=me)
     form = AggiungiReperibilitaPerVolontarioForm(request.POST or None, initial=INITIAL_INIZIO_FINE_PARAMS)
+
     if request.method == 'POST':
-        if form.is_valid():
+        if not me.ha_datore_lavoro and datore_lavoro.is_valid():
+            datore_lavoro.save()
+            return redirect(reverse('so:reperibilita_backup'))
+        elif form.is_valid():
             cd = form.cleaned_data
             reperibilita = form.save(commit=False)
             reperibilita.persona = cd['persona']
@@ -120,6 +126,8 @@ def sala_operativa_reperibilita_backup(request, me):
             return redirect(reverse('so:reperibilita_backup'))
 
     context = {
+        'me': me,
+        'datore_lavoro': datore_lavoro,
         'form': form,
         'reperibilita': ReperibilitaSO.reperibilita_create_da(me),
     }

@@ -332,6 +332,22 @@ def utente(request, me):
 
 
 @pagina_privata
+def utente_datore_lavoro(request, me):
+    from .forms import ModuloProfiloModificaAnagraficaDatoreLavoro
+
+    form = ModuloProfiloModificaAnagraficaDatoreLavoro(request.POST or None, instance=me)
+
+    if request.POST and form.is_valid():
+        form.save()
+
+    context = {
+        "form": form,
+    }
+
+    return 'anagrafica_utente_datore_lavoro.html', context
+
+
+@pagina_privata
 def utente_anagrafica(request, me):
     from .forms import ModuloProfiloModificaAnagraficaDomicilio
 

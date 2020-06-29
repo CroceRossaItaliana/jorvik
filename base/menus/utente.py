@@ -37,8 +37,9 @@ class MenuUtente:
         return ("Persona", (
             ("Benvenuto", "fa-bolt", "/utente/"),
             ("Anagrafica", "fa-edit", "/utente/anagrafica/"),
+            ("Datore di lavore", "fa-edit", "/utente/datore/lavoro/") if me and (me.volontario or me.dipendente) else None,
             ("Storico", "fa-clock-o", "/utente/storico/"),
-            ("Documenti", "fa-folder", "/utente/documenti/") if me and (me.volontario or me.dipendente) else None,
+            ("Documenti", "fa-folder", "/utente/documenti/") if me and me.volontario else None,
             ("Contatti", "fa-envelope", "/utente/contatti/"),
             ("Fotografie", "fa-credit-card", "/utente/fotografia/"),
         ))
