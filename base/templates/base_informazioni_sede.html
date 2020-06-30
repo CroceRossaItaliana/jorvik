@@ -5,40 +5,30 @@
 {% load l10n %}
 {% load base_tags %}
 
-{% block pagina_titolo %}
-    {{ sede.nome }} - {{ sede.get_tipo_display }}, {{ sede.get_estensione_display }}
-{% endblock %}
+{% block pagina_titolo %}{{ sede.nome }} - {{ sede.get_tipo_display }}, {{ sede.get_estensione_display }}{% endblock %}
 
 {% block pagina_principale %}
+    <style>
+        .sede-meta dt {width: 180px !important;}
+        .sede-meta dd {margin-left: 200px; !important;}
+    </style>
     <script>
-
         $(document).ready(function(){
-
             // cerca tag a nella lista .children che contiene la parola lazio nell href
-
             $('ul a[href*="lazio"]').parent('li').each(function() {
-
                 var text = $(this).html();
-
                 // sostituisci il testo
-
                 text = text.replace("Sede Regionale", "Sede Provinciale");
                 $(this).html(text);
-
             });
-
         });
-
     </script>
 
     <div class="container">
-
         <div class="row">
             <div class="col-md-6">
-
                 <a href="/informazioni/sedi/?embed={{ embed }}" class="btn btn-block btn-success">
-                    <i class="fa fa-fw fa-reply"></i>
-                    Torna all'elenco delle Sedi
+                    <i class="fa fa-fw fa-reply"></i> Torna all'elenco delle Sedi
                 </a>
 
                 <hr />
@@ -49,9 +39,7 @@
                     </h4>
                 {% endif %}
 
-                <h2 class="allinea-centro">
-                    {{ sede.nome }}
-                </h2>
+                <h2 class="allinea-centro">{{ sede.nome }}</h2>
 
                 <h4 class="allinea-centro">
                     {{ sede.get_tipo_display }} &mdash;
@@ -60,10 +48,9 @@
                     {% else %}
                         {{ sede.get_estensione_display }}
                     {% endif %}
-
                 </h4>
 
-                <dl class="dl-horizontal">
+                <dl class="dl-horizontal sede-meta">
                 {% if sede.email %}
                     <dt>E-mail <i class="fa fa-fw fa-envelope-o"></i></dt>
                     <dd><a href="mailto:{{ sede.email }}">{{ sede.email }}</a></dd>
@@ -98,22 +85,37 @@
 
 
                 {% if sede.locazione %}
-                    <dt>Indirizzo <i class="fa fa-fw fa-map-marker"></i></dt>
+                    <dt>Sede Legale <i class="fa fa-fw fa-map-marker"></i></dt>
                     <dd>{{ sede.locazione }}</dd>
                 {% endif %}
 
+                {% for sede_operativa in sede.sede_operativa.all %}
+                    <dt>Sede Operativa {{ forloop.counter }} <i class="fa fa-fw fa-map-marker"></i></dt>
+                    <dd>{{ sede_operativa }}</dd>
+                {% endfor %}
+
+                {% if sede.indirizzo_per_spedizioni %}
+                    <dt>Indirizzo per spedizioni <i class="fa fa-fw fa-map-marker"></i></dt>
+                    <dd>{{ sede.indirizzo_per_spedizioni }}</dd>
+                {% endif %}
+
+                {% if sede.persona_di_riferimento %}
+                    <dt>Persona di riferimento <i class="fa fa-fw fa-user"></i></dt>
+                    <dd>{{ sede.persona_di_riferimento }}</dd>
+                {% endif %}
+
+                {% if sede.persona_di_riferimento_telefono %}
+                    <dt>Numero telefonico <i class="fa fa-fw fa-phone"></i></dt>
+                    <dd>{{ sede.persona_di_riferimento_telefono }}</dd>
+                {% endif %}
                 </dl>
 
-
-
                 {% if sede.unita_sottostanti.exists %}
-
                     <p>Questa Sede CRI ha {{ sede.unita_sottostanti.count }} unit&agrave; territoriali distaccate:</p>
                     <ul>
                         {% for node in sede.unita_sottostanti %}
                             <li>
                                 <strong>{{ node.nome }}</strong>
-
                                 {% if node.email %}
                                     &mdash; <a href="mailto:{{ node.email }}">{{ node.email }}</a>
                                 {% endif %}
@@ -121,59 +123,38 @@
                                 {% if node.telefono %}
                                     &mdash; {{ node.telefono }}
                                 {% endif %}
-
                             </li>
                         {% endfor %}
                     </ul>
-
                 {% endif %}
 
                 {% if sede.comitati_sottostanti.exists %}
-
                     <p>Questa Sede CRI ha {{ sede.comitati_sottostanti.count }} Comitati nel territorio:</p>
                     <ul>
                         {% for node in sede.comitati_sottostanti %}
                             <li>
-                                <a href="{{ node.url }}?embed={{ embed }}">
-                                    <strong>{{ node.nome }}</strong>
-                                </a>
+                                <a href="{{ node.url }}?embed={{ embed }}"><strong>{{ node.nome }}</strong></a>
                                 ({{ node.get_estensione_display }})
-
                             </li>
                         {% endfor %}
                     </ul>
-
                 {% endif %}
-
 
                 {% if vicini.exists %}
-
                     <p>Vi sono {{ vicini.count }} Sedi nelle vicinanze ({{ vicini_km }} km):</p>
-
                     <ul>
                         {% for node in vicini %}
-                            <li>
-                                <a href="{{ node.url }}?embed={{ embed }}">
-                                    {{ node.nome }}
-                                </a>
+                            <li><a href="{{ node.url }}?embed={{ embed }}">{{ node.nome }}</a>
                                 ({{ node.get_estensione_display }})
-
                             </li>
                         {% endfor %}
                     </ul>
-
-
                 {% endif %}
-
-
             </div>
 
 
             <div class="col-md-6">
-
-
                 <div class="row">
-
                     {% load utils %}
                     {% mappa da_mostrare %}
                         <strong>{{ elemento.link|safe }}</strong><br />
@@ -183,13 +164,8 @@
                     {% icona_colore %}
                         {{ elemento.colore_mappa }}
                     {% endmappa %}
-
                 </div>
-
             </div>
-
         </div>
     </div>
-
-
 {% endblock %}
