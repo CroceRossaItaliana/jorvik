@@ -51,63 +51,94 @@
                 </h4>
 
                 <dl class="dl-horizontal sede-meta">
-                {% if sede.email %}
-                    <dt>E-mail <i class="fa fa-fw fa-envelope-o"></i></dt>
-                    <dd><a href="mailto:{{ sede.email }}">{{ sede.email }}</a></dd>
-                {% endif %}
+                    {% if sede.codice_fiscale %}
+                        <dt>C.F. <i class="fa fa-fw fa-plus"></i></dt>
+                        <dd>{{ sede.codice_fiscale }}</dd>
+                    {% endif %}
 
-                {% if sede.telefono %}
-                    <dt>Numero di telefono <i class="fa fa-fw fa-phone"></i></dt>
-                    <dd>{{ sede.telefono }}</dd>
-                {% endif %}
+                    {% if sede.partita_iva %}
+                        <dt>P.IVA <i class="fa fa-fw fa-plus"></i></dt>
+                        <dd>{{ sede.partita_iva }}</dd>
+                    {% endif %}
 
-                {% if presidente %}
-                    <dt>{{ sede | select_nomina_presidenziale }} <i class="fa fa-fw fa-user"></i></dt>
-                    <dd>{{ presidente.link|safe }}</dd>
-                {% endif %}
+                    {% if sede.rea %}
+                        <dt>REA <i class="fa fa-fw fa-plus"></i></dt>
+                        <dd>{{ sede.rea }}</dd>
+                    {% endif %}
 
-                {% if vice_presidente %}
-                    <dt>Vice Presidente <i class="fa fa-fw fa-user"></i></dt>
-                    <dd>{{ vice_presidente.link|safe }}</dd>
-                {% endif %}
+                    {% if sede.cciaa %}
+                        <dt>CCIAA <i class="fa fa-fw fa-plus"></i></dt>
+                        <dd>{{ sede.cciaa }}</dd>
+                    {% endif %}
 
-                {% if consiglieri %}
-                    {% for consigliere in consiglieri %}
-                        <dt>Consigliere <i class="fa fa-fw fa-user"></i></dt>
-                        <dd>{{ consigliere.link|safe }}</dd>
+                    {% if sede.runts %}
+                        <dt>RUNTS <i class="fa fa-fw fa-plus"></i></dt>
+                        <dd>{{ sede.runts }}</dd>
+                    {% endif %}
+
+                    {% if sede.email %}
+                        <dt>E-mail <i class="fa fa-fw fa-envelope-o"></i></dt>
+                        <dd><a href="mailto:{{ sede.email }}">{{ sede.email }}</a></dd>
+                    {% endif %}
+
+                    {% if sede.pec %}
+                        <dt>PEC <i class="fa fa-fw fa-envelope-o"></i></dt>
+                        <dd><a href="mailto:{{ sede.email }}">{{ sede.pec }}</a></dd>
+                    {% endif %}
+
+                    {% if sede.telefono %}
+                        <dt>Numero di telefono <i class="fa fa-fw fa-phone"></i></dt>
+                        <dd>{{ sede.telefono }}</dd>
+                    {% endif %}
+
+                    {% if presidente %}
+                        <dt>{{ sede | select_nomina_presidenziale }} <i class="fa fa-fw fa-user"></i></dt>
+                        <dd>{{ presidente.link|safe }}</dd>
+                    {% endif %}
+
+                    {% if sede.nominativi_rdc  %}
+                        {% for revisore in sede.nominativi_rdc %}
+                            <dt>Revisore dei Conti  <i class="fa fa-fw fa-user"></i></dt>
+                            <dd>
+                                <span style="display:block;">E-mail: <a href="mailto:{{ revisore.email }}">{{ revisore.email }}</a></span>
+                                <span style="display:block;">PEC: <a href="mailto:{{ revisore.PEC }}">{{ revisore.PEC }}</a></span>
+                                <span style="display:block;">Telefono: <strong>{{ revisore.telefono }}</strong></span>
+                            </dd>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if sede.nominativi_odc %}
+                        {% for organo_di_controllo in sede.nominativi_odc %}
+                            <dt>Organo di Controllo  <i class="fa fa-fw fa-user"></i></dt>
+                            <dd>
+                                <span style="display:block;">E-mail: <a href="mailto:{{ organo_di_controllo.email }}">{{ organo_di_controllo.email }}</a></span>
+                                <span style="display:block;">PEC: <a href="mailto:{{ organo_di_controllo.PEC }}">{{ organo_di_controllo.PEC }}</a></span>
+                                <span style="display:block;">Telefono: <strong>{{ organo_di_controllo.telefono }}</strong></span>
+                            </dd>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if consiglieri %}
+                        {% for consigliere in consiglieri %}
+                            <dt>Consigliere <i class="fa fa-fw fa-user"></i></dt>
+                            <dd>{{ consigliere.link|safe }}</dd>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if consigliere_giovane %}
+                        <dt>Consigliere Giovane <i class="fa fa-fw fa-user"></i></dt>
+                        <dd>{{ consigliere_giovane.link|safe }}</dd>
+                    {% endif %}
+
+                    {% if sede.locazione %}
+                        <dt>Sede Legale <i class="fa fa-fw fa-map-marker"></i></dt>
+                        <dd>{{ sede.locazione }}</dd>
+                    {% endif %}
+
+                    {% for sede_operativa in sede.sede_operativa.all %}
+                        <dt>Sede Operativa {{ forloop.counter }} <i class="fa fa-fw fa-map-marker"></i></dt>
+                        <dd>{{ sede_operativa }}</dd>
                     {% endfor %}
-                {% endif %}
-
-                {% if consigliere_giovane %}
-                    <dt>Consigliere Giovane <i class="fa fa-fw fa-user"></i></dt>
-                    <dd>{{ consigliere_giovane.link|safe }}</dd>
-                {% endif %}
-
-
-                {% if sede.locazione %}
-                    <dt>Sede Legale <i class="fa fa-fw fa-map-marker"></i></dt>
-                    <dd>{{ sede.locazione }}</dd>
-                {% endif %}
-
-                {% for sede_operativa in sede.sede_operativa.all %}
-                    <dt>Sede Operativa {{ forloop.counter }} <i class="fa fa-fw fa-map-marker"></i></dt>
-                    <dd>{{ sede_operativa }}</dd>
-                {% endfor %}
-
-                {% if sede.indirizzo_per_spedizioni %}
-                    <dt>Indirizzo per spedizioni <i class="fa fa-fw fa-map-marker"></i></dt>
-                    <dd>{{ sede.indirizzo_per_spedizioni }}</dd>
-                {% endif %}
-
-                {% if sede.persona_di_riferimento %}
-                    <dt>Persona di riferimento <i class="fa fa-fw fa-user"></i></dt>
-                    <dd>{{ sede.persona_di_riferimento }}</dd>
-                {% endif %}
-
-                {% if sede.persona_di_riferimento_telefono %}
-                    <dt>Numero telefonico <i class="fa fa-fw fa-phone"></i></dt>
-                    <dd>{{ sede.persona_di_riferimento_telefono }}</dd>
-                {% endif %}
                 </dl>
 
                 {% if sede.unita_sottostanti.exists %}
