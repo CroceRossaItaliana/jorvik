@@ -95,7 +95,7 @@ deploy_provami:
   tags:
     - staging
   before_script:
-    - export CI_MERGE_REQUEST_ID=provami
+    - export CI_MERGE_REQUEST_ID=master
   script:    
     - docker-compose -f docker-compose-staging.yml down -v 
     - docker-compose -f docker-compose-staging.yml up -d db
