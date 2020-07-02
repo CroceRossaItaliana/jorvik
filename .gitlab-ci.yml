@@ -15,9 +15,17 @@ build_containers:
     - pwd
     - docker build -t gaia:${CI_MERGE_REQUEST_ID} .
   only:
-    - master
     - merge_requests
+
+build_master_containers:
+  stage: build
+  tags:
     - staging
+  script:
+    - pwd
+    - docker build -t gaia:master .
+  only:
+    - master
 
 setup_pr:
   stage: setup
@@ -67,6 +75,8 @@ deploy_staging:
   stage: setup
   tags:
     - staging
+  before_script:
+    - export CI_MERGE_REQUEST_ID=master
   script:    
     - docker-compose -f docker-compose-staging.yml down -v 
     - docker-compose -f docker-compose-staging.yml up -d db
@@ -76,7 +86,7 @@ deploy_staging:
     - docker-compose -f docker-compose-staging.yml restart proxy
   environment:
     name: staging
-    url: http://staging.staging.gaia.cri.it
+    url: http://master.staging.gaia.cri.it
   only:
     - master
 
@@ -84,6 +94,8 @@ deploy_provami:
   stage: deploy
   tags:
     - staging
+  before_script:
+    - export CI_MERGE_REQUEST_ID=provami
   script:    
     - docker-compose -f docker-compose-staging.yml down -v 
     - docker-compose -f docker-compose-staging.yml up -d db
