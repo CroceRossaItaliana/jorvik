@@ -231,6 +231,10 @@ def us_reclama_persona(request, me, persona_pk):
                     "La persona è appartenente come servizio civile universale non può essere reclamata come dipendente"
                 )
                 continua = False
+            elif hasattr(persona, 'aspirante'):
+                from formazione.models import Aspirante
+                # delattr(me, 'aspirante')
+                Aspirante.objects.filter(persona=persona).delete()
 
         # Controllo eta' minima socio
         if modulo_appartenenza.cleaned_data.get('membro') in Appartenenza.MEMBRO_SOCIO \

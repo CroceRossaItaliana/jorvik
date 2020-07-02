@@ -9,7 +9,7 @@ class MenuUtente:
     def __call__(self, *args, **kwargs):
         if self.me and not hasattr(self.me, 'aspirante'):
             return self.get_menu()
-        elif self.me and hasattr(self.me, 'aspirante') and self.me.appartenenze_attuali(membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE).exists():
+        elif self.me.appartenenze_attuali(membro=Appartenenza.SEVIZIO_CIVILE_UNIVERSALE).exists():
             return self.get_menu()
         else:
             return None
