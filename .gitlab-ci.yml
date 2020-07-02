@@ -1,0 +1,99 @@
+stages:
+  - build
+  - setup
+  - restore_db
+  - deploy
+
+cache:
+  key: ${CI_MERGE_REQUEST_ID}
+
+build_containers:
+  stage: build
+  tags:
+    - staging
+  script:
+    - pwd
+    - docker build -t gaia:${CI_MERGE_REQUEST_ID} .
+  only:
+    - master
+    - merge_requests
+    - staging
+
+setup_pr:
+  stage: setup
+  tags:
+    - staging
+  script:
+    - echo $CI_MERGE_REQUEST_ID
+    - docker-compose -f docker-compose-staging.yml down -v 
+    - docker-compose -f docker-compose-staging.yml up -d db
+  after_script:
+    - docker-compose -f docker-compose-staging.yml ps
+  only:
+    - merge_requests
+
+restore_db:
+  stage: restore_db
+  tags:
+    - staging
+  script:
+    - docker-compose -f docker-compose-staging.yml ps
+    - docker cp /opt/gaia_dumps/smalldump "$(docker-compose ps -q db)":/tmp/.
+    - docker-compose -f docker-compose-staging.yml exec -T db createdb -U postgres jorvik
+    - docker-compose -f docker-compose-staging.yml exec -T db pg_restore -C --clean --no-acl --no-owner -j 8 -U postgres -d jorvik /tmp/smalldump
+  only:
+    - merge_requests
+    - master
+  allow_failure: true
+
+fire_pr:
+  stage: deploy
+  tags:
+    - staging
+  script:
+    - echo $CI_MERGE_REQUEST_ID
+    - docker-compose -f docker-compose-staging.yml up -d
+    - sleep 10  
+    - docker-compose -f docker-compose-staging.yml restart proxy
+  after_script:
+    - docker-compose -f docker-compose-staging.yml ps
+  environment:
+    name: pr$CI_MERGE_REQUEST_ID
+    url: http://pr$CI_MERGE_REQUEST_ID.staging.gaia.cri.it
+  only:
+    - merge_requests
+
+deploy_staging:
+  stage: setup
+  tags:
+    - staging
+  script:    
+    - docker-compose -f docker-compose-staging.yml down -v 
+    - docker-compose -f docker-compose-staging.yml up -d db
+    - sleep 10  
+    - docker-compose -f docker-compose-staging.yml up -d
+    - sleep 30
+    - docker-compose -f docker-compose-staging.yml restart proxy
+  environment:
+    name: staging
+    url: http://staging.staging.gaia.cri.it
+  only:
+    - master
+
+deploy_provami:
+  stage: deploy
+  tags:
+    - staging
+  script:    
+    - docker-compose -f docker-compose-staging.yml down -v 
+    - docker-compose -f docker-compose-staging.yml up -d db
+    - sleep 10  
+    - docker-compose -f docker-compose-staging.yml up -d
+    - sleep 30
+    - docker-compose -f docker-compose-staging.yml restart proxy
+    - docker-compose -f docker-compose-staging.yml exec -it python scramble.py --dati-di-esempio
+  environment:
+    name: provami
+    url: http://provami.gaia.cri.it
+  only:
+    - master
