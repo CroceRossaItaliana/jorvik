@@ -96,13 +96,13 @@ deploy_provami:
   before_script:
     - export CI_MERGE_REQUEST_ID=master
   script:    
-    - docker-compose -f docker-compose-staging.yml down -v 
-    - docker-compose -f docker-compose-staging.yml up -d db
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml down -v
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml up -d db
     - sleep 10  
-    - docker-compose -f docker-compose-staging.yml up -d
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml up -d
     - sleep 30
-    - docker-compose -f docker-compose-staging.yml restart proxy
-    - docker-compose -f docker-compose-staging.yml exec -it python scramble.py --dati-di-esempio
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml restart proxy
+    - docker-compose -f docker-compose-staging.yml -f docker-compose-provami.yml exec -it python scramble.py --dati-di-esempio
   environment:
     name: provami
     url: http://provami.gaia.cri.it
