@@ -56,7 +56,7 @@ def so_aree(request, me):
     context = {
         "sedi": sedi,
     }
-    return 'attivita_aree.html', context
+    return 'so_aree.html', context
 
 
 @pagina_privata
@@ -76,7 +76,7 @@ def so_aree_sede(request, me, sede_pk=None):
         "aree": aree,
         "modulo": form,
     }
-    return 'attivita_aree_sede.html', context
+    return 'so_aree_sede.html', context
 
 
 @pagina_privata
@@ -94,7 +94,7 @@ def so_aree_sede_area_responsabili(request, me, sede_pk=None, area_pk=None):
         "delega": delega,
         "continua_url": get_reverse(1, sede_pk=sede.pk),
     }
-    return 'attivita_aree_sede_area_responsabili.html', context
+    return 'so_aree_sede_area_responsabili.html', context
 
 
 @pagina_privata
@@ -124,23 +124,19 @@ def so_gestisci(request, me, stato="aperte"):
 
     if stato == "aperte":
         attivita = attivita_aperte
-
     else:  # stato == "chiuse"
         attivita = attivita_chiuse
 
     attivita_referenti_modificabili = me.oggetti_permesso(GESTIONE_REFERENTI_ATTIVITA)
 
     attivita = attivita.annotate(num_turni=Count('turni'))
-
     attivita = Paginator(attivita, 30)
     pagina = request.GET.get('pagina')
 
     try:
         attivita = attivita.page(pagina)
-
     except PageNotAnInteger:
         attivita = attivita.page(1)
-
     except EmptyPage:
         attivita = attivita.page(attivita.num_pages)
 
@@ -151,7 +147,7 @@ def so_gestisci(request, me, stato="aperte"):
         "attivita_chiuse": attivita_chiuse,
         "attivita_referenti_modificabili": attivita_referenti_modificabili,
     }
-    return 'attivita_gestisci.html', context
+    return 'so_gestisci.html', context
 
 
 @pagina_privata
@@ -183,9 +179,9 @@ def so_organizza(request, me):
                                             "attività. Per organizzare un'attività, è necessario creare "
                                             "almeno un'area di intervento. ",
                                   torna_titolo="Gestisci le Aree di intervento",
-                                  torna_url="/attivita/aree/")
+                                  torna_url=reverse('so:aree'))
 
-    modulo_referente = ModuloOrganizzaAttivitaReferente(request.POST or None)
+    modulo_referente = OrganizzaAttivitaReferenteForm(request.POST or None)
 
     form = OrganizzaAttivitaForm(request.POST or None)
     form.fields['area'].queryset = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
@@ -216,9 +212,8 @@ def so_organizza(request, me):
             attivita.aggiungi_delegato(REFERENTE, me, firmatario=me, inizio=poco_fa())
             return redirect(attivita.url_modifica)
         elif modulo_referente.cleaned_data['scelta'] == modulo_referente.SCEGLI_REFERENTI:  # Il referente e' qualcun altro.
-            return redirect("/attivita/organizza/%d/referenti/" % (attivita.pk,))
+            return redirect(reverse('so:organizza_referenti', args=[attivita.pk,]))
         else:
-
             persona = Persona.objects.get(pk=modulo_referente.cleaned_data['scelta'])
             attivita.aggiungi_delegato(REFERENTE, persona, firmatario=me, inizio=poco_fa())
             return redirect(attivita.url_modifica)
@@ -227,12 +222,12 @@ def so_organizza(request, me):
         "modulo": form,
         "modulo_referente": modulo_referente,
     }
-    return 'attivita_organizza.html', context
+    return 'so_organizza.html', context
 
 
 @pagina_privata
 def so_organizza_fatto(request, me, pk=None):
-    attivita = get_object_or_404(Attivita, pk=pk)
+    attivita = get_object_or_404(ServizioSO, pk=pk)
     if not me.permessi_almeno(attivita, MODIFICA):
         return redirect(ERRORE_PERMESSI)
 
@@ -242,7 +237,7 @@ def so_organizza_fatto(request, me, pk=None):
                                         "di darci maggiori informazioni sull'attività, come "
                                         "gli orari dei turni e l'indirizzo.",
                               torna_titolo="Torna a Gestione Attività",
-                              torna_url="/attivita/gestisci/")
+                              torna_url=reverse('so:gestisci'))
 
 
 @pagina_privata
@@ -263,7 +258,7 @@ def so_referenti(request, me, pk=None, nuova=False):
         "attivita": attivita,
         "continua_url": continua_url
     }
-    return 'attivita_referenti.html', context
+    return 'so_referenti.html', context
 
 
 @pagina_privata
@@ -337,7 +332,7 @@ def so_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
         "raggruppati": raggruppati,
     }
 
-    return 'attivita_calendario.html', context
+    return 'so_calendario.html', context
 
 
 @pagina_privata
@@ -354,7 +349,7 @@ def so_storico(request, me):
         "statistiche_modulo": form,
     }
 
-    return 'attivita_storico.html', context
+    return 'so_storico.html', context
 
 
 @pagina_privata
@@ -376,7 +371,7 @@ def so_scheda_informazioni(request, me=None, pk=None):
         "puo_modificare": puo_modificare,
         "me": me,
     }
-    return 'attivita_scheda_informazioni.html', context
+    return 'so_scheda_informazioni.html', context
 
 
 @pagina_privata
@@ -401,6 +396,8 @@ def so_scheda_cancella(request, me, pk):
         except Gruppo.DoesNotExist:
             testo_messaggio = "L'attività è stata cancellata con successo (non esisteva un gruppo associato a quest'attività)."
     attivita.delete()
+
+    # todo: reverse url
     return messaggio_generico(request, me, titolo=titolo_messaggio,
                               messaggio=testo_messaggio,
                               torna_titolo="Gestione attività", torna_url="/attivita/gestisci/")
@@ -415,7 +412,7 @@ def so_scheda_mappa(request, me=None, pk=None):
         "attivita": servizio,
         "puo_modificare": puo_modificare,
     }
-    return 'attivita_scheda_mappa.html', context
+    return 'so_scheda_mappa.html', context
 
 
 @pagina_privata
@@ -458,7 +455,7 @@ def so_scheda_turni(request, me=None, pk=None, pagina=None):
         "puo_modificare": puo_modificare,
         "evidenzia_turno": evidenzia_turno,
     }
-    return 'attivita_scheda_turni.html', context
+    return 'so_scheda_turni.html', context
 
 
 @pagina_privata
@@ -518,7 +515,7 @@ def so_scheda_turni_nuovo(request, me=None, pk=None):
         "attivita": attivita,
         "puo_modificare": True
     }
-    return 'attivita_scheda_turni_nuovo.html', context
+    return 'so_scheda_turni_nuovo.html', context
 
 
 @pagina_privata
@@ -612,7 +609,7 @@ def so_scheda_turni_partecipanti(request, me, pk=None, turno_pk=None):
         "elenco": elenco,
         "puo_modificare": True
     }
-    return "attivita_scheda_turni_elenco.html", context
+    return "so_scheda_turni_elenco.html", context
 
 
 @pagina_privata
@@ -626,7 +623,7 @@ def so_scheda_partecipanti(request, me, pk=None):
         "elenco": elenco,
         "puo_modificare": True
     }
-    return "attivita_scheda_partecipanti.html", context
+    return "so_scheda_partecipanti.html", context
 
 
 @pagina_privata
@@ -723,7 +720,7 @@ def so_scheda_informazioni_modifica(request, me, pk=None):
         "modulo": form,
     }
 
-    return 'attivita_scheda_informazioni_modifica.html', context
+    return 'so_scheda_informazioni_modifica.html', context
 
 
 @pagina_privata(permessi=(GESTIONE_ATTIVITA,))
@@ -822,7 +819,7 @@ def so_scheda_turni_modifica(request, me, pk=None, pagina=None):
         "evidenzia_turno": evidenzia_turno,
     }
 
-    return 'attivita_scheda_turni_modifica.html', context
+    return 'so_scheda_turni_modifica.html', context
 
 
 @pagina_privata
@@ -854,7 +851,7 @@ def so_scheda_report(request, me, pk=None):
         "attivita": servizio,
         "puo_modificare": True,
     }
-    return 'attivita_scheda_report.html', context
+    return 'so_scheda_report.html', context
 
 
 @pagina_privata
@@ -928,4 +925,4 @@ def so_statistiche(request, me):
         "statistiche": statistiche,
         "chart": chart,
     }
-    return 'attivita_statistiche.html', context
+    return 'so_statistiche.html', context
