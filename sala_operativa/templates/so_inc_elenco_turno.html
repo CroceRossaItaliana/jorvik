@@ -1,0 +1,45 @@
+<div class="calendario-turno {% if turno.scoperto %}alert-warning{% endif %}" onclick="javascript:location.href='{{ turno.url }}';">
+    <div class="row calendario-turno-riga1">
+        <div class="col-md-2">
+            <i class="fa fa-fw fa-clock-o text-muted"></i>
+            <span class="grassetto">
+                {{ turno.inizio.time }}&mdash;{{ turno.fine.time }}
+            </span>
+        </div>
+        <div class="col-md-10">
+            <a class="piu-grande" href="{{ turno.attivita.url }}">{{ turno.attivita.nome }}</a>,
+            <a href="{{ turno.url }}" class="grassetto">{{ turno.nome }}</a>
+            {% if turno.attivita.commenti.count %}
+                <span class="badge pull-right">
+                <i class="fa fa-fw fa-comments"></i>
+                {{ turno.attivita.commenti.count }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="row calendario-turno-riga2">
+        <div class="col-md-3">
+            {% if turno.scoperto %}
+                <i class="fa fa-fw fa-warning text-danger"></i>
+            {% else %}
+                <i class="fa fa-fw fa-users text-muted"></i>
+            {% endif %}
+            <span class="{% if turno.scoperto %}text-danger{% endif %}">
+                {{ turno.partecipazioni_confermate.count }} prenotati
+            </span>
+            {% if turno.massimo %}
+                (max. {{ turno.massimo }})
+            {% endif %}
+        </div>
+        <div class="col-md-5 piu-piccolo">
+            <i class="fa fa-fw fa-map-marker text-muted"></i>
+            {{ turno.attivita.locazione|default:"Locazione sconosciuta" }}
+        </div>
+        <div class="col-md-4 piu-piccolo">
+            <i class="fa fa-fw fa-home text-muted"></i>
+            <a href="{{ turno.attivita.sede.url }}" target="_new">
+                {{ turno.attivita.sede.nome_completo }}
+            </a>
+        </div>
+    </div>
+</div>
