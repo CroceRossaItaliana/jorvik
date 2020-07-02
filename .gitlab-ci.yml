@@ -51,7 +51,6 @@ restore_db:
     - docker-compose -f docker-compose-staging.yml exec -T db pg_restore -C --clean --no-acl --no-owner -j 8 -U postgres -d jorvik /tmp/smalldump
   only:
     - merge_requests
-    - master
   allow_failure: true
 
 fire_pr:
