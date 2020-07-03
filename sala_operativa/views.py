@@ -152,26 +152,9 @@ def so_gestisci(request, me, stato="aperte"):
 
 @pagina_privata
 def so_organizza(request, me):
-    # todo: Vittorio
-    # togliere tutto quello che non serve (bersaglio), rinominare tutti i
-    # nomi secondo questa app
-    # controllare tutto
-    # fare reverse url e non stringa
-
-    from anagrafica.permessi.applicazioni import DELEGATI_NON_SONO_UN_BERSAGLIO
     from anagrafica.models import Persona
 
     aree = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
-    sedi = Sede.objects.filter(aree__in=aree)
-    deleghe = me.deleghe_attuali()
-
-    deleghe_bersaglio = deleghe.filter(tipo__in=DELEGATI_NON_SONO_UN_BERSAGLIO)
-
-    if deleghe_bersaglio:
-        if not aree.filter(obiettivo=4, nome__icontains='non sono un bersaglio'):
-            for delega in deleghe.filter(tipo__in=DELEGATI_NON_SONO_UN_BERSAGLIO):
-                area = AreaSO(nome='Non sono un bersaglio', obiettivo=4, sede=delega.oggetto)
-                area.save()
 
     if not aree:
         return messaggio_generico(request, me, titolo="Crea un'area di intervento, prima!",
@@ -185,8 +168,6 @@ def so_organizza(request, me):
 
     form = OrganizzaAttivitaForm(request.POST or None)
     form.fields['area'].queryset = me.oggetti_permesso(GESTIONE_ATTIVITA_AREA)
-    if deleghe_bersaglio:
-        modulo_referente.fields['scelta'].choices = OrganizzaAttivitaReferenteForm.popola_scelta()
 
     if modulo_referente.is_valid() and form.is_valid():
         attivita = form.save(commit=False)
