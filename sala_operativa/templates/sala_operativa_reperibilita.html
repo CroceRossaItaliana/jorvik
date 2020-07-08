@@ -59,14 +59,22 @@
     <div class="col-md-4">
         <div class="panel panel-primary">
             <div class="panel-heading">
-                <h2 class="panel-title">
-                    <i class="fa fa-fw fa-plus-circle"></i> Segnala reperibilit&agrave;
+                <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i>
+                    {% if me.ha_datore_di_lavoro %}
+                        Segnala reperibilit&agrave;
+                    {% else %}
+                        Inserisci i dati del datore di lavoro
+                    {% endif %}
                 </h2>
             </div>
             <div class="panel-body">
                 <p>Compila questo modulo per segnalare la tua reperibilit&agrave;. Verrai contattato dalla Sala Operativa in caso di necessit&agrave;.</p>
 
-                <form method="POST" action=".">
+                {% if me.ha_datore_di_lavoro %}
+                    <form method="POST" action=".">
+                {% else %}
+                    <form method="POST" action="{% url 'utente:datore_di_lavoro' %}">
+                {% endif %}
                     {% bootstrap_form form %}
 
                     <button type="submit" class="btn btn-block btn-primary">

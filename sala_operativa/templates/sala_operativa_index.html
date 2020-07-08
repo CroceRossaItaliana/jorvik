@@ -51,6 +51,7 @@
                             <th>Reperibilit&agrave;</th>
                             <th>Attivazione</th>
                             <th>Cellulare</th>
+                            <th>E-Mail</th>
                         </tr>
                         </thead>
 
@@ -72,6 +73,12 @@
                                     {% empty %}
                                         Nessun numero di telefono.
                                     {% endfor %}
+                                </td>
+                                <td>{% if r.persona.email_contatto %}
+                                        {{ r.persona.email_contatto }}
+                                    {% else %}
+                                        {{ r.persona.email }}
+                                    {% endif %}
                                 </td>
                             </tr>
 

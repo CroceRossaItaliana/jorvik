@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
-__author__ = 'alfioemanuele'
+from django.core.exceptions import ValidationError
+
 
 def unique(items):
     found = set([])
@@ -28,3 +29,8 @@ def turni_raggruppa_giorno(qs_turni):
             if i.inizio.date() == d:
                 risultato[d].append(i)
     return risultato
+
+
+def valida_numero_obiettivo(numero):
+    if numero < 1 or numero > 6:
+        raise ValidationError("Inserisci un numero di obiettivo (1, 2, 3, 4, 5 o 6).")

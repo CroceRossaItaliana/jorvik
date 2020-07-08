@@ -1,4 +1,4 @@
-import autocomplete_light
+from autocomplete_light import shortcuts as autocomplete_light
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
@@ -6,7 +6,21 @@ from django.forms.extras import SelectDateWidget
 
 from anagrafica.models import Sede
 from base.wysiwyg import WYSIWYGSemplice
-from .models import ServizioSO, TurnoSO, AreaSO
+from .models import ServizioSO, TurnoSO, AreaSO, ReperibilitaSO
+
+
+class VolontarioReperibilitaForm(ModelForm):
+    class Meta:
+        model = ReperibilitaSO
+        fields = ['estensione', 'inizio', 'fine', 'attivazione',]
+
+
+class AggiungiReperibilitaPerVolontarioForm(ModelForm):
+    persona = autocomplete_light.ModelChoiceField("AggiungiReperibilitaPerVolontario",)
+
+    class Meta:
+        model = ReperibilitaSO
+        fields = ['persona', 'estensione', 'inizio', 'fine', 'attivazione',]
 
 
 class StoricoTurniForm(forms.Form):
@@ -17,7 +31,7 @@ class StoricoTurniForm(forms.Form):
 class AttivitaInformazioniForm(ModelForm):
     class Meta:
         model = ServizioSO
-        fields = ['stato', 'apertura', 'estensione', 'descrizione', 'centrale_operativa']
+        fields = ['stato', 'apertura', 'estensione', 'descrizione', ]
         widgets = {
             "descrizione": WYSIWYGSemplice(),
         }
@@ -59,7 +73,7 @@ class CreazioneTurnoForm(ModificaTurnoForm):
 
 
 class AggiungiPartecipantiForm(forms.Form):
-    persone = autocomplete_light.forms.ModelMultipleChoiceField("PersonaAutocompletamento",
+    persone = autocomplete_light.ModelMultipleChoiceField("PersonaAutocompletamento",
                                                                 help_text="Seleziona uno o più persone da "
                                                                           "aggiungere come partecipanti.")
 

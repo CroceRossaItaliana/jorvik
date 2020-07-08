@@ -6,11 +6,8 @@
 {% block pagina_titolo %}Sala Operativa - Le mie reperibilit&agrave;{% endblock %}
 
 {% block app_contenuto %}
-
-
     <div class="alert alert-block alert-info">
-        <i class="fa fa-fw fa-info-circle"></i> Da qui puoi fornire e visionare la reperibilità per la Sala
-        Operativa del Comitato.<br>
+        <i class="fa fa-fw fa-info-circle"></i> Da qui puoi fornire e visionare la reperibilità per la Sala Operativa del Comitato.<br>
         Compila questo modulo per segnalare reperibilit&agrave; per i Volontari della tua Sede.
     </div>
 
@@ -19,8 +16,7 @@
             <div class="panel panel-info">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <i class="fa fa-fw fa-list"></i> Ultime reperibilit&agrave; segnalate da me per i miei
-                        Volontari
+                        <i class="fa fa-fw fa-list"></i> Ultime reperibilit&agrave; segnalate da me per i miei Volontari
                     </h2>
                 </div>
                 <div class="panel-body">
@@ -66,17 +62,10 @@
         </div>
         <div class="col-md-4">
             <div class="panel panel-primary">
-                {% if me.ha_datore_lavoro %}
-                    <div class="panel-heading">
-                        <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Segnala reperibilit&agrave; per
-                            VO</h2>
-                    </div>
-                {% else %}
-                    <div class="panel-heading">
-                        <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Inserisci i dati del datore di
-                            lavoro</h2>
-                    </div>
-                {% endif %}
+                <div class="panel-heading">
+                    <h2 class="panel-title"><i class="fa fa-fw fa-plus-circle"></i> Segnala reperibilit&agrave; per VO</h2>
+                </div>
+
                 <div class="panel-body">
                     <form method="POST" action=".">
                         {% bootstrap_form form %}

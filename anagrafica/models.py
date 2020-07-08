@@ -172,12 +172,13 @@ class Persona(ModelloSemplice, ConMarcaTemporale, ConAllegati, ConVecchioID):
         return normalizza_nome(self.cognome + " " + self.nome)
 
     @property
-    def ha_datore_lavoro(self):
-        if self.datore_ragione_sociale and self.datore_p_iva \
-                and self.datore_telefono and self.datore_referente:
+    def ha_datore_di_lavoro(self):
+        if self.datore_ragione_sociale and \
+                self.datore_p_iva and \
+                self.datore_telefono and \
+                self.datore_referente:
             return True
-        else:
-            return False
+        return False
 
     # Q: Qual e' l'email di questa persona?
     # A: Una persona puo' avere da zero a due indirizzi email.

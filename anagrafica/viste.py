@@ -51,7 +51,8 @@ from .forms import (ModuloStepComitato, ModuloStepCredenziali, ModuloStepFine,
     ModuloCreazioneRiserva, ModuloModificaPrivacy, ModuloPresidenteSede,
     ModuloImportVolontari, ModuloImportPresidenti, ModuloPulisciEmail,
     ModuloReportFederazione, ModuloStepCodiceFiscale, ModuloStepAnagrafica,
-    ModuloPresidenteSedePersonaDiRiferimento, ModuloPresidenteSedeNominativo,)
+    ModuloPresidenteSedePersonaDiRiferimento, ModuloPresidenteSedeNominativo,
+    ModuloProfiloModificaAnagraficaDatoreLavoro, )
 from .models import (Persona, Documento, Telefono, Estensione, Delega, Trasferimento,
     Appartenenza, Sede, Riserva, Dimissione, Nominativo)
 
@@ -332,18 +333,22 @@ def utente(request, me):
 
 
 @pagina_privata
-def utente_datore_lavoro(request, me):
-    from .forms import ModuloProfiloModificaAnagraficaDatoreLavoro
-
+def utente_datore_di_lavoro(request, me):
     form = ModuloProfiloModificaAnagraficaDatoreLavoro(request.POST or None, instance=me)
 
-    if request.POST and form.is_valid():
-        form.save()
+    if request.POST:
+        if form.is_valid():
+            form.save()
+
+            if me.ha_datore_di_lavoro:
+                messages.error(request, "Hai salvato i dati del datore di lavoro nella tua anagrafica. Adesso puoi inserire le tue reperibilità")
+
+                # se cambi questo redirect, pensa anche a questa vista: so_reperibilita
+                return redirect(reverse('so:reperibilita'))
 
     context = {
         "form": form,
     }
-
     return 'anagrafica_utente_datore_lavoro.html', context
 
 

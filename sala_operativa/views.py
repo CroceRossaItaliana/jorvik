@@ -3,21 +3,23 @@ from datetime import date, timedelta, datetime, time
 
 from django.db.models import Count, F, Sum
 from django.utils import timezone
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect, get_object_or_404
 
 from anagrafica.costanti import NAZIONALE
 from anagrafica.models import Sede
+from anagrafica.forms import ModuloProfiloModificaAnagraficaDatoreLavoro
 from anagrafica.permessi.applicazioni import RESPONSABILE_AREA, DELEGATO_AREA, REFERENTE, REFERENTE_GRUPPO
 from anagrafica.permessi.costanti import MODIFICA, GESTIONE_ATTIVITA, ERRORE_PERMESSI, GESTIONE_GRUPPO, \
     GESTIONE_AREE_SEDE, COMPLETO, GESTIONE_ATTIVITA_AREA, GESTIONE_REFERENTI_ATTIVITA, GESTIONE_ATTIVITA_SEDE, \
-    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE
+    GESTIONE_POTERI_CENTRALE_OPERATIVA_SEDE, GESTIONE_SALA_OPERATIVA_SEDE
 from autenticazione.funzioni import pagina_privata, pagina_pubblica
 from base.errori import ci_siamo_quasi, errore_generico, messaggio_generico, errore_no_volontario
 from base.utils import poco_fa, timedelta_ore
 from gruppi.models import Gruppo
-
+from .models import ReperibilitaSO, ServizioSO
 
 
 # todo: da integrare in questa app
@@ -26,14 +28,18 @@ from attivita.elenchi import ElencoPartecipantiTurno, ElencoPartecipantiAttivita
 from attivita.utils import turni_raggruppa_giorno
 # todo:
 
-
-from .forms import (StoricoTurniForm, AttivitaInformazioniForm,
-    ModificaTurnoForm, AggiungiPartecipantiForm, CreazioneTurnoForm,
-    CreazioneAreaForm, OrganizzaAttivitaForm, OrganizzaAttivitaReferenteForm,
-    StatisticheAttivitaForm, RipetiTurnoForm, StatisticheAttivitaPersonaForm,
-    CreazioneAreaForm, StatisticheAttivitaForm, OrganizzaAttivitaForm,
-    OrganizzaAttivitaReferenteForm, StatisticheAttivitaPersonaForm, AttivitaInformazioniForm)
 from .models import PartecipazioneSO, ServizioSO, TurnoSO, AreaSO
+from .forms import (StoricoTurniForm, AttivitaInformazioniForm, OrganizzaAttivitaForm,
+    ModificaTurnoForm, AggiungiPartecipantiForm, CreazioneTurnoForm,
+    RipetiTurnoForm, CreazioneAreaForm, StatisticheAttivitaForm,
+    OrganizzaAttivitaReferenteForm, StatisticheAttivitaPersonaForm,
+    VolontarioReperibilitaForm, AggiungiReperibilitaPerVolontarioForm, )
+
+
+INITIAL_INIZIO_FINE_PARAMS = {
+    "inizio": poco_fa() + timedelta(hours=1),
+    "fine": poco_fa() + timedelta(hours=2),
+}
 
 
 def get_reverse(id, sede_pk=None, area_pk=None, attivita_pk=None):
@@ -46,8 +52,101 @@ def get_reverse(id, sede_pk=None, area_pk=None, attivita_pk=None):
     return REVERSE_MAP[id]
 
 
-def servizio(request):
-    return redirect(reverse('so:calendario'))
+@pagina_privata
+def so_index(request, me):
+    if not me.volontario:
+        return redirect('/')
+
+    sedi = me.oggetti_permesso(GESTIONE_SALA_OPERATIVA_SEDE)
+    if not sedi:
+        return redirect(reverse('so:reperibilita'))
+
+    context = {
+        'ora': poco_fa(),
+        'sedi': sedi,
+        'reperibilita': ReperibilitaSO.reperibilita_per_sedi(sedi),
+    }
+    return 'sala_operativa_index.html', context
+
+
+@pagina_privata
+def so_reperibilita(request, me):
+    if me.ha_datore_di_lavoro:
+        form = VolontarioReperibilitaForm(request.POST or None, initial=INITIAL_INIZIO_FINE_PARAMS)
+    else:
+        form = ModuloProfiloModificaAnagraficaDatoreLavoro(request.POST or None, instance=me)
+
+    if request.method == 'POST':
+        if form.is_valid():
+            if me.ha_datore_di_lavoro:
+                cd = form.cleaned_data
+                reperibilita = form.save(commit=False)
+                reperibilita.persona = me
+                reperibilita.save()
+                messages.success(request, "La nuova reperibilità è stata creata.")
+            else:
+                messages.error(request, "Non hai comunicato i dati del datore di lavoro nella tua anagrafica.")
+                form.save()
+            return redirect(reverse('so:reperibilita'))
+
+    context = {
+        'me': me,
+        'form': form,
+        'reperibilita': ReperibilitaSO.reperibilita_di(me)[:50],
+    }
+    return 'sala_operativa_reperibilita.html', context
+
+
+@pagina_privata
+def so_reperibilita_cancella(request, me, pk):
+    if not me.volontario:
+        return redirect('/')
+    reperibilita = get_object_or_404(ReperibilitaSO, pk=pk)
+    if me not in [reperibilita.persona, reperibilita.creato_da, ]:
+        return redirect(ERRORE_PERMESSI)
+    reperibilita.delete()
+    messages.success(request, 'La reperibilita selezionata è stata rimossa.')
+    return redirect(reverse('so:index'))
+
+
+@pagina_privata
+def so_reperibilita_edit(request, me, pk):
+    if not me.volontario:
+        return redirect('/')
+
+    reperibilita = get_object_or_404(ReperibilitaSO, pk=pk)
+    if reperibilita.creato_da != me:
+        return redirect(ERRORE_PERMESSI)
+
+    form = VolontarioReperibilitaForm(request.POST or None, instance=reperibilita)
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('so:reperibilita_backup'))
+    context = {
+        'form': form,
+        'reperibilita': reperibilita,
+    }
+    return 'sala_operativa_reperibilita_edit.html', context
+
+
+@pagina_privata
+def so_reperibilita_backup(request, me):
+    form = AggiungiReperibilitaPerVolontarioForm(request.POST or None, initial=INITIAL_INIZIO_FINE_PARAMS)
+    if request.method == 'POST':
+        if form.is_valid():
+            cd = form.cleaned_data
+            reperibilita = form.save(commit=False)
+            reperibilita.persona = cd['persona']
+            reperibilita.creato_da = me
+            reperibilita.save()
+            return redirect(reverse('so:reperibilita_backup'))
+
+    context = {
+        'form': form,
+        'reperibilita': ReperibilitaSO.reperibilita_create_da(me),
+    }
+    return 'sala_operativa_reperibilita_per_volontario_aggiungi.html', context
 
 
 @pagina_privata
@@ -278,10 +377,11 @@ def so_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
     successivo_fine = fine + differenza
     successivo_fine_stringa = successivo_fine.strftime(FORMATO)
 
-    successivo_url = "/attivita/calendario/%s/%s/" % (successivo_inizio_stringa, successivo_fine_stringa, )
+    successivo_url = reverse('so:calendario_con_range', args=[successivo_inizio_stringa,
+                                                              successivo_fine_stringa,])
 
     # Oggi
-    oggi_url = "/attivita/calendario/"
+    oggi_url = reverse('so:calendario')
 
     # Precedente
     precedente_inizio = inizio - differenza
@@ -289,7 +389,8 @@ def so_calendario(request, me=None, inizio=None, fine=None, vista="calendario"):
     precedente_fine = fine - differenza
     precedente_fine_stringa = precedente_fine.strftime(FORMATO)
 
-    precedente_url = "/attivita/calendario/%s/%s/" % (precedente_inizio_stringa, precedente_fine_stringa, )
+    precedente_url = reverse('so:calendario_con_range', args=[precedente_inizio_stringa,
+                                                              precedente_fine_stringa,])
 
     # Elenco
     turni = me.calendario_turni(inizio, fine)
