@@ -2950,23 +2950,6 @@ class Dimissione(ModelloSemplice, ConMarcaTemporale):
                         self.persona
                     ]
                 )
-                if precedente_appartenenza.membro == Appartenenza.SEVIZIO_CIVILE_UNIVERSALE:
-                    oggetto = 'Inserimento come {}'.format(
-                        Appartenenza.MENBRO_DICT[Appartenenza.SEVIZIO_CIVILE_UNIVERSALE]
-                    )
-
-                    Messaggio.costruisci_e_accoda(
-                        oggetto=oggetto,
-                        modello="email_dimissioni_servizio_civile.html",
-                        mittente=presidente,
-                        destinatari=[],
-                        corpo={
-                            "persona": self.persona.nome_completo,
-                            "codice_fiscale": self.persona.codice_fiscale,
-                            "comitato": precedente_appartenenza.sede.nome_completo,
-                            "presidente": precedente_appartenenza.sede.presidente()
-                        }
-                    )
 
 
 class Nominativo(ModelloSemplice, ConStorico, ConMarcaTemporale):
