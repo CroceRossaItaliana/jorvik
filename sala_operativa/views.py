@@ -161,15 +161,18 @@ def so_aree(request, me):
 @pagina_privata
 def so_aree_sede(request, me, sede_pk=None):
     sede = get_object_or_404(Sede, pk=sede_pk)
+
     if not sede in me.oggetti_permesso(GESTIONE_AREE_SEDE):
         return redirect(ERRORE_PERMESSI)
-    aree = sede.aree.all()
+
+    aree = sede.servizio.all()
     form = CreazioneAreaForm(request.POST or None)
     if form.is_valid():
         area = form.save(commit=False)
         area.sede = sede
         area.save()
         return redirect(get_reverse(2, sede_pk=sede.pk, area_pk=area.pk))
+
     context = {
         "sede": sede,
         "aree": aree,
@@ -1008,3 +1011,19 @@ def so_statistiche(request, me):
         "chart": chart,
     }
     return 'so_statistiche.html', context
+
+
+def so_mezzi():
+    return None
+
+
+def so_mezzi_aggiungi():
+    return None
+
+
+def so_mezzo_cancella():
+    return None
+
+
+def so_mezzo_modifica():
+    return None

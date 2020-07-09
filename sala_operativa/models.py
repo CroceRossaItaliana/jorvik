@@ -263,3 +263,31 @@ class AreaSO(ModelloSemplice, ConMarcaTemporale, ConDelegati):
             self.sede.nome_completo, self.obiettivo,
             self.nome,
         )
+
+
+class MezzoSO(ModelloSemplice, ConMarcaTemporale, ConStorico):
+    MEZZO = 'me'
+    MATERIALE = 'ma'
+    MEZZI_E_MATERIALI_CHOICES = (
+        (MEZZO, 'Mezzo'),
+        (MATERIALE, 'Materiale'),
+    )
+
+    MEZZO_CRI = 'm1'
+    MEZZO_LEASING = 'm2'
+    MEZZO_TIPO_CHOICES = (
+        (MEZZO_CRI, 'Mezzo CRI'),
+        (MEZZO_LEASING, 'Mezzo in leasing'),
+    )
+
+    tipo = models.CharField(choices=MEZZI_E_MATERIALI_CHOICES, max_length=3)
+    nome = models.CharField("Nome", max_length=255)
+    mezzo_tipo = models.CharField(choices=MEZZO_TIPO_CHOICES, max_length=3, null=True, blank=True)
+    creato_da = models.ForeignKey('anagrafica.Persona', null=True, blank=True)
+
+    def __str__(self):
+        return str(self.name)
+
+    class Meta:
+        verbose_name = 'Mezzo o materiale'
+        verbose_name_plural = 'Mezzi e materiali'

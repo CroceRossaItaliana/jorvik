@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ReperibilitaSO, ServizioSO
+from .models import ReperibilitaSO, ServizioSO, MezzoSO
 
 
 @admin.register(ReperibilitaSO)
@@ -18,3 +18,11 @@ class ServizioSOAdmin(admin.ModelAdmin):
                     'stato', 'apertura', 'creazione', ]
     list_filter = ['creazione', 'stato', 'apertura', ]
     raw_id_fields = ['locazione', 'sede', 'estensione', 'area', ]
+
+
+@admin.register(MezzoSO)
+class MezzoSOAdmin(admin.ModelAdmin):
+    search_fields = ['nome', 'creato_da', ]
+    list_display = ['nome', 'tipo', 'mezzo_tipo', 'inizio', 'fine',
+                    'creato_da', 'creazione', ]
+    list_filter = ['creazione', 'tipo', 'mezzo_tipo', ]

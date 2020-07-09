@@ -24,6 +24,7 @@ def sala_operativa(me):
             ('Sala Operativa', (
                 # ("Gruppi di lavoro", "fas fa-pencil-ruler", reverse('so:gruppo')) if servizio_area_exists else None,
                 ("Organizza servizi", "fa-asterisk", reverse('so:organizza')) if servizio_area_exists else None,
+                ("Mezzi e materiali", "fas fa-ambulance", reverse('so:mezzi')) if servizio_area_exists else None,
                 ("Reperibilità dei Volontari", 'fa-user', reverse('so:reperibilita_backup')),
                 ("Elenco servizi", "fa-list", reverse('so:gestisci')) if me.oggetti_permesso(GESTIONE_ATTIVITA).exists() else None,
                 ("Aree di intervento", "fa-list", reverse('so:aree')) if me.oggetti_permesso(GESTIONE_AREE_SEDE).exists() else None,
